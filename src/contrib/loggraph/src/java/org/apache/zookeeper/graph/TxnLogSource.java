@@ -76,6 +76,7 @@ public class TxnLogSource implements LogSource {
     public LogSkipList getSkipList() { return skiplist; }
 
     public static boolean isTransactionFile(String file) throws IOException {
+<<<<<<< HEAD
     	try {
     		RandomAccessFileReader reader = new RandomAccessFileReader(new File(file));
             BinaryInputArchive logStream = new BinaryInputArchive(reader);
@@ -84,6 +85,14 @@ public class TxnLogSource implements LogSource {
     	} finally {
     		reader.close();
     	}
+=======
+        RandomAccessFileReader reader = new RandomAccessFileReader(new File(file));
+        BinaryInputArchive logStream = new BinaryInputArchive(reader);
+        FileHeader fhdr = new FileHeader();
+        fhdr.deserialize(logStream, "fileheader");
+	reader.close();
+
+>>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
         return fhdr.getMagic() == FileTxnLog.TXNLOG_MAGIC;
     }
 

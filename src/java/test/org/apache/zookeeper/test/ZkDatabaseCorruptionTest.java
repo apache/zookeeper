@@ -59,6 +59,7 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
     }
 
     private void corruptFile(File f) throws IOException {
+<<<<<<< HEAD
     	try {
             RandomAccessFile outFile = new RandomAccessFile(f, "rw");
             outFile.write("fail servers".getBytes());
@@ -66,6 +67,11 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
             outFile.close();
     	}
 
+=======
+        RandomAccessFile outFile = new RandomAccessFile(f, "rw");
+        outFile.write("fail servers".getBytes());
+        outFile.close();
+>>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
     }
 
     private void corruptAllSnapshots(File snapDir) throws IOException {

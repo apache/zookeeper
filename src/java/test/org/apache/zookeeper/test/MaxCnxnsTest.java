@@ -62,6 +62,7 @@ public class MaxCnxnsTest extends ClientBase {
                 // Construct a connection request
                 ConnectRequest conReq = new ConnectRequest(0, 0,
                         10000, 0, "password".getBytes());
+<<<<<<< HEAD
                 try {
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
@@ -70,6 +71,13 @@ public class MaxCnxnsTest extends ClientBase {
                 } finally {
                     baos.close();
                 }
+=======
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
+                boa.writeInt(-1, "len");
+                conReq.serialize(boa, "connect");
+                baos.close();
+>>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
                 ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
                 bb.putInt(bb.capacity() - 4);
                 bb.rewind();

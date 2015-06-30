@@ -108,6 +108,7 @@ public class Learner {
     void validateSession(ServerCnxn cnxn, long clientId, int timeout)
             throws IOException {
         LOG.info("Revalidating client: 0x" + Long.toHexString(clientId));
+<<<<<<< HEAD
         try {
         	ByteArrayOutputStream baos = new ByteArrayOutputStream();
             DataOutputStream dos = new DataOutputStream(baos);
@@ -116,6 +117,13 @@ public class Learner {
         } finally {
         	dos.close();
         }
+=======
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream dos = new DataOutputStream(baos);
+        dos.writeLong(clientId);
+        dos.writeInt(timeout);
+        dos.close();
+>>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
         QuorumPacket qp = new QuorumPacket(Leader.REVALIDATE, -1, baos
                 .toByteArray(), null);
         pendingRevalidations.put(clientId, cnxn);

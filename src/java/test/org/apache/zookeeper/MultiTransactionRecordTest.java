@@ -53,6 +53,7 @@ public class MultiTransactionRecordTest extends TestCase {
     }
 
     private MultiTransactionRecord codeDecode(MultiTransactionRecord request) throws IOException {
+<<<<<<< HEAD
     	try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
@@ -60,6 +61,12 @@ public class MultiTransactionRecordTest extends TestCase {
     	} finally {
             baos.close();
     	}
+=======
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
+        request.serialize(boa, "request");
+        baos.close();
+>>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
         ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
         bb.rewind();
 

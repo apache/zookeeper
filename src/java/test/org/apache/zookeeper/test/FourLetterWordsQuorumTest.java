@@ -57,6 +57,7 @@ public class FourLetterWordsQuorumTest extends QuorumBase {
             verify(hp, "srvr", "Outstanding");
             verify(hp, "cons", "queued");
 
+<<<<<<< HEAD
             try {
             	TestableZooKeeper zk = createClient(hp);
                 String sid = getHexSessionId(zk.getSessionId());
@@ -79,6 +80,28 @@ public class FourLetterWordsQuorumTest extends QuorumBase {
             } finally {
                 zk.close();
             }       
+=======
+            TestableZooKeeper zk = createClient(hp);
+            String sid = getHexSessionId(zk.getSessionId());
+
+            verify(hp, "stat", "queued");
+            verify(hp, "srvr", "Outstanding");
+            verify(hp, "cons", sid);
+            verify(hp, "dump", sid);
+
+            zk.getData("/", true, null);
+
+            verify(hp, "stat", "queued");
+            verify(hp, "srvr", "Outstanding");
+            verify(hp, "cons", sid);
+            verify(hp, "dump", sid);
+            verify(hp, "wchs", "watching 1");
+            verify(hp, "wchp", sid);
+            verify(hp, "wchc", sid);
+
+            zk.close();
+
+>>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
             verify(hp, "ruok", "imok");
             verify(hp, "envi", "java.version");
             verify(hp, "conf", "clientPort");

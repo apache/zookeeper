@@ -59,6 +59,7 @@ public class FourLetterWordsTest extends ClientBase {
         verify("srvr", "Outstanding");
         verify("cons", "queued");
 
+<<<<<<< HEAD
         try {
             TestableZooKeeper zk = createClient();
             String sid = getHexSessionId(zk.getSessionId());
@@ -81,6 +82,28 @@ public class FourLetterWordsTest extends ClientBase {
         } finally {
             zk.close();
         }
+=======
+        TestableZooKeeper zk = createClient();
+        String sid = getHexSessionId(zk.getSessionId());
+
+        verify("stat", "queued");
+        verify("srvr", "Outstanding");
+        verify("cons", sid);
+        verify("dump", sid);
+
+        zk.getData("/", true, null);
+
+        verify("stat", "queued");
+        verify("srvr", "Outstanding");
+        verify("cons", sid);
+        verify("dump", sid);
+
+        verify("wchs", "watching 1");
+        verify("wchp", sid);
+        verify("wchc", sid);
+        zk.close();
+
+>>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
         verify("ruok", "imok");
         verify("envi", "java.version");
         verify("conf", "clientPort");

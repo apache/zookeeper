@@ -89,6 +89,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                 "Default value of maximumSessionTimeOut is not considered",
                 tickTime * 20, quorumPeer.getMaxSessionTimeout());
 
+<<<<<<< HEAD
         try {
             ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_QP1,
                     ClientBase.CONNECTION_TIMEOUT, this);
@@ -110,6 +111,24 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         } finally {
             zk.close();
         }
+=======
+        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_QP1,
+                ClientBase.CONNECTION_TIMEOUT, this);
+        waitForOne(zk, States.CONNECTED);
+        zk.create("/foo_q1", "foobar1".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        Assert.assertEquals(new String(zk.getData("/foo_q1", null, null)), "foobar1");
+        zk.close();
+
+        zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_QP2,
+                ClientBase.CONNECTION_TIMEOUT, this);
+        waitForOne(zk, States.CONNECTED);
+        zk.create("/foo_q2", "foobar2".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        Assert.assertEquals(new String(zk.getData("/foo_q2", null, null)), "foobar2");
+        zk.close();
+
+>>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
         q1.shutdown();
         q2.shutdown();
 

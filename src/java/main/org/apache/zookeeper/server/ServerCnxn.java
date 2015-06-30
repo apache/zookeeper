@@ -398,6 +398,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
      */
     @Override
     public String toString() {
+<<<<<<< HEAD
     	try {
     		StringWriter sw = new StringWriter();
             PrintWriter pwriter = new PrintWriter(sw);
@@ -406,6 +407,13 @@ public abstract class ServerCnxn implements Stats, Watcher {
     	} finally {
     		pwriter.close();
     	}
+=======
+        StringWriter sw = new StringWriter();
+        PrintWriter pwriter = new PrintWriter(sw);
+        dumpConnectionInfo(pwriter, false);
+        pwriter.flush();
+        pwriter.close();
+>>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
         return sw.toString();
     }
 

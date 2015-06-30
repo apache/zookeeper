@@ -129,6 +129,7 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements
 
     @Override
     public String toString() {
+<<<<<<< HEAD
     	try {
             StringWriter sw = new StringWriter();
             PrintWriter pwriter = new PrintWriter(sw);
@@ -138,6 +139,14 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements
             pwriter.close();
     	}
       return sw.toString();
+=======
+        StringWriter sw = new StringWriter();
+        PrintWriter pwriter = new PrintWriter(sw);
+        dumpSessions(pwriter);
+        pwriter.flush();
+        pwriter.close();
+        return sw.toString();
+>>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
     }
 
     @Override

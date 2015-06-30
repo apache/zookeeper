@@ -81,6 +81,7 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
                                        CONNECTION_TIMEOUT));
 
             startSignal = new CountDownLatch(1);
+<<<<<<< HEAD
             try {
             	ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
                 startSignal.await(CONNECTION_TIMEOUT,
@@ -96,94 +97,115 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
                     for (int j = 0; j < 10; j++) {
                         String subpath = path + "/" + j;
                         zk.create(subpath, (subpath + "!").getBytes(),
+=======
+            ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
+            startSignal.await(CONNECTION_TIMEOUT,
+                    TimeUnit.MILLISECONDS);
+            Assert.assertTrue("count == 0", startSignal.getCount() == 0);
+            String path;
+            LOG.info("starting creating nodes");
+            for (int i = 0; i < 10; i++) {
+                path = "/" + i;
+                zk.create(path,
+                          (path + "!").getBytes(),
+                          Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                for (int j = 0; j < 10; j++) {
+                    String subpath = path + "/" + j;
+                    zk.create(subpath, (subpath + "!").getBytes(),
+                            Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                    for (int k = 0; k < 20; k++) {
+                        String subsubpath = subpath + "/" + k;
+                        zk.create(subsubpath, (subsubpath + "!").getBytes(),
+>>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
                                 Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-                        for (int k = 0; k < 20; k++) {
-                            String subsubpath = subpath + "/" + k;
-                            zk.create(subsubpath, (subsubpath + "!").getBytes(),
-                                    Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-                        }
                     }
                 }
+            }
 
-                f.shutdown();
-                zks.shutdown();
-                Assert.assertTrue("waiting for server down",
-                           ClientBase.waitForServerDown(HOSTPORT,
-                                              CONNECTION_TIMEOUT));
+            f.shutdown();
+            zks.shutdown();
+            Assert.assertTrue("waiting for server down",
+                       ClientBase.waitForServerDown(HOSTPORT,
+                                          CONNECTION_TIMEOUT));
 
-                zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
-                f = ServerCnxnFactory.createFactory(PORT, -1);
+            zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+            f = ServerCnxnFactory.createFactory(PORT, -1);
 
-                startSignal = new CountDownLatch(1);
+            startSignal = new CountDownLatch(1);
 
-                f.startup(zks);
+            f.startup(zks);
 
-                Assert.assertTrue("waiting for server up",
-                           ClientBase.waitForServerUp(HOSTPORT,
-                                               CONNECTION_TIMEOUT));
+            Assert.assertTrue("waiting for server up",
+                       ClientBase.waitForServerUp(HOSTPORT,
+                                           CONNECTION_TIMEOUT));
 
-                startSignal.await(CONNECTION_TIMEOUT,
-                        TimeUnit.MILLISECONDS);
-                Assert.assertTrue("count == 0", startSignal.getCount() == 0);
+            startSignal.await(CONNECTION_TIMEOUT,
+                    TimeUnit.MILLISECONDS);
+            Assert.assertTrue("count == 0", startSignal.getCount() == 0);
 
-                Stat stat = new Stat();
-                for (int i = 0; i < 10; i++) {
-                    path = "/" + i;
-                    LOG.info("Checking " + path);
-                    Assert.assertEquals(new String(zk.getData(path, false, stat)), path
-                            + "!");
-                    for (int j = 0; j < 10; j++) {
-                        String subpath = path + "/" + j;
-                        Assert.assertEquals(new String(zk.getData(subpath, false, stat)),
-                                subpath + "!");
-                        for (int k = 0; k < 20; k++) {
-                            String subsubpath = subpath + "/" + k;
-                            Assert.assertEquals(new String(zk.getData(subsubpath, false,
-                                    stat)), subsubpath + "!");
-                        }
+            Stat stat = new Stat();
+            for (int i = 0; i < 10; i++) {
+                path = "/" + i;
+                LOG.info("Checking " + path);
+                Assert.assertEquals(new String(zk.getData(path, false, stat)), path
+                        + "!");
+                for (int j = 0; j < 10; j++) {
+                    String subpath = path + "/" + j;
+                    Assert.assertEquals(new String(zk.getData(subpath, false, stat)),
+                            subpath + "!");
+                    for (int k = 0; k < 20; k++) {
+                        String subsubpath = subpath + "/" + k;
+                        Assert.assertEquals(new String(zk.getData(subsubpath, false,
+                                stat)), subsubpath + "!");
                     }
                 }
-                f.shutdown();
-                zks.shutdown();
+            }
+            f.shutdown();
+            zks.shutdown();
 
-                Assert.assertTrue("waiting for server down",
-                           ClientBase.waitForServerDown(HOSTPORT,
-                                              ClientBase.CONNECTION_TIMEOUT));
+            Assert.assertTrue("waiting for server down",
+                       ClientBase.waitForServerDown(HOSTPORT,
+                                          ClientBase.CONNECTION_TIMEOUT));
 
-                zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
-                f = ServerCnxnFactory.createFactory(PORT, -1);
+            zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+            f = ServerCnxnFactory.createFactory(PORT, -1);
 
-                startSignal = new CountDownLatch(1);
+            startSignal = new CountDownLatch(1);
 
-                f.startup(zks);
+            f.startup(zks);
 
-                Assert.assertTrue("waiting for server up",
-                           ClientBase.waitForServerUp(HOSTPORT,
-                                   CONNECTION_TIMEOUT));
+            Assert.assertTrue("waiting for server up",
+                       ClientBase.waitForServerUp(HOSTPORT,
+                               CONNECTION_TIMEOUT));
 
-                startSignal.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
-                Assert.assertTrue("count == 0", startSignal.getCount() == 0);
+            startSignal.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
+            Assert.assertTrue("count == 0", startSignal.getCount() == 0);
 
-                stat = new Stat();
-                LOG.info("Check 2");
-                for (int i = 0; i < 10; i++) {
-                    path = "/" + i;
-                    Assert.assertEquals(new String(zk.getData(path, false, stat)),
-                                 path + "!");
-                    for (int j = 0; j < 10; j++) {
-                        String subpath = path + "/" + j;
-                        Assert.assertEquals(new String(zk.getData(subpath, false, stat)),
-                                subpath + "!");
-                        for (int k = 0; k < 20; k++) {
-                            String subsubpath = subpath + "/" + k;
-                            Assert.assertEquals(new String(zk.getData(subsubpath, false,
-                                    stat)), subsubpath + "!");
-                        }
+            stat = new Stat();
+            LOG.info("Check 2");
+            for (int i = 0; i < 10; i++) {
+                path = "/" + i;
+                Assert.assertEquals(new String(zk.getData(path, false, stat)),
+                             path + "!");
+                for (int j = 0; j < 10; j++) {
+                    String subpath = path + "/" + j;
+                    Assert.assertEquals(new String(zk.getData(subpath, false, stat)),
+                            subpath + "!");
+                    for (int k = 0; k < 20; k++) {
+                        String subsubpath = subpath + "/" + k;
+                        Assert.assertEquals(new String(zk.getData(subsubpath, false,
+                                stat)), subsubpath + "!");
                     }
                 }
+<<<<<<< HEAD
             } finally {
                 zk.close();
             }          
+=======
+            }
+            zk.close();
+
+>>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
             f.shutdown();
             zks.shutdown();
 

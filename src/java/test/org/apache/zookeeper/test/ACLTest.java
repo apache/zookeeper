@@ -166,9 +166,8 @@ public class ACLTest extends ZKTestCase implements Watcher {
             }
             Assert.assertTrue("acl map ", (106 == zks.getZKDatabase().getAclSize()));
     
-
-        } finally {
             zk.close();
+        } finally {
             f.shutdown();
             zks.shutdown();
             Assert.assertTrue("waiting for server down",

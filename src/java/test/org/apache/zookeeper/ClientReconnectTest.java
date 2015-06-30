@@ -67,6 +67,7 @@ public class ClientReconnectTest extends TestCase {
 
         ClientCnxnSocketNIO nioCnxn = new MockCnxn();
         ClientWatchManager watcher = mock(ClientWatchManager.class);
+<<<<<<< HEAD
         try {
             ClientCnxn clientCnxn = new ClientCnxn(
                     "tmp", hostProvider, 5000,
@@ -77,5 +78,14 @@ public class ClientReconnectTest extends TestCase {
         } finally {
             clientCnxn.close();
         }
+=======
+        ClientCnxn clientCnxn = new ClientCnxn(
+                "tmp", hostProvider, 5000,
+                zk, watcher, nioCnxn, false);
+        clientCnxn.start();
+        countDownLatch.await(5000, TimeUnit.MILLISECONDS);
+        Assert.assertTrue(countDownLatch.getCount() == 0);
+        clientCnxn.close();
+>>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
     }
 }
