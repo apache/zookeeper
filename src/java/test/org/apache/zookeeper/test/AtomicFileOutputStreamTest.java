@@ -56,7 +56,6 @@ public class AtomicFileOutputStreamTest extends ZKTestCase {
      */
     @Test
     public void testWriteNewFile() throws IOException {
-
         OutputStream fos = new AtomicFileOutputStream(dstFile);
         assertFalse(dstFile.exists());
         fos.write(TEST_STRING.getBytes());

@@ -64,6 +64,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
             super("Standalone server with clientPort:" + clientPort);
             tmpDir = ClientBase.createTmpDir();
             confFile = new File(tmpDir, "zoo.cfg");
+            
             FileWriter fwriter = new FileWriter(confFile);
             fwriter.write("tickTime=2000\n");
             fwriter.write("initLimit=10\n");
