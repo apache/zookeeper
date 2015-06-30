@@ -84,11 +84,12 @@ public class Base extends TestCase {
 
    protected static String createBaseZNode() throws Exception {
        ZooKeeper zk = new ZooKeeper(ZKHOSTPORT, 30000, new MyWatcher());
-
-       String baseZnode = zk.create("/test-", null, Ids.OPEN_ACL_UNSAFE,
-               CreateMode.PERSISTENT_SEQUENTIAL);
-       zk.close();
-
+       try {
+           String baseZnode = zk.create("/test-", null, Ids.OPEN_ACL_UNSAFE,
+                   CreateMode.PERSISTENT_SEQUENTIAL);
+       } finally {
+           zk.close();
+       }
        return baseZnode;
    }
 }

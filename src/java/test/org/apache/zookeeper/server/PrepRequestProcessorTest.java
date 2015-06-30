@@ -105,8 +105,11 @@ public class PrepRequestProcessorTest extends ClientBase {
         // encoding
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
-        record.serialize(boa, "request");
-        baos.close();
+        try {
+            record.serialize(boa, "request");
+        } finally {
+            baos.close();
+        }
         // Id
         List<Id> ids = Arrays.asList(Ids.ANYONE_ID_UNSAFE);
         return new Request(null, 1l, 0, opCode, ByteBuffer.wrap(baos.toByteArray()), ids);

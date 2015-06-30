@@ -53,24 +53,26 @@ public class InvalidSnapCountTest extends ZKTestCase implements Watcher {
             confFile = new File(tmpDir, "zoo.cfg");
 
             FileWriter fwriter = new FileWriter(confFile);
-            fwriter.write("tickTime=2000\n");
-            fwriter.write("initLimit=10\n");
-            fwriter.write("syncLimit=5\n");
-            fwriter.write("snapCount=1\n");
+            try {
+            	fwriter.write("tickTime=2000\n");
+                fwriter.write("initLimit=10\n");
+                fwriter.write("syncLimit=5\n");
+                fwriter.write("snapCount=1\n");
 
-            File dataDir = new File(tmpDir, "data");
-            if (!dataDir.mkdir()) {
-                throw new IOException("unable to mkdir " + dataDir);
-            }
-            
-            // Convert windows path to UNIX to avoid problems with "\"
-            String dir = PathUtils.normalizeFileSystemPath(dataDir.toString());
-            fwriter.write("dataDir=" + dir + "\n");
-            
-            fwriter.write("clientPort=" + clientPort + "\n");
-            fwriter.flush();
-            fwriter.close();
-
+                File dataDir = new File(tmpDir, "data");
+                if (!dataDir.mkdir()) {
+                    throw new IOException("unable to mkdir " + dataDir);
+                }
+                
+                // Convert windows path to UNIX to avoid problems with "\"
+                String dir = PathUtils.normalizeFileSystemPath(dataDir.toString());
+                fwriter.write("dataDir=" + dir + "\n");
+                
+                fwriter.write("clientPort=" + clientPort + "\n");
+                fwriter.flush();
+            } finally {
+                fwriter.close();
+            }          
             main = new TestMain();
         }
 

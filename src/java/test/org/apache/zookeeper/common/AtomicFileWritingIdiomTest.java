@@ -338,12 +338,15 @@ public class AtomicFileWritingIdiomTest extends ZKTestCase {
     private String getContent(File file, String encoding) throws IOException {
         StringBuilder result = new StringBuilder();
         FileInputStream fis = new FileInputStream(file);
-        byte[] b = new byte[20];
-        int nb;
-        while ((nb = fis.read(b)) != -1) {
-               result.append(new String(b, 0, nb, encoding));
+        try {
+            byte[] b = new byte[20];
+            int nb;
+            while ((nb = fis.read(b)) != -1) {
+                   result.append(new String(b, 0, nb, encoding));
+            }
+        } finally {
+            fis.close();
         }
-        fis.close();
         return result.toString();
     }
 
@@ -353,8 +356,11 @@ public class AtomicFileWritingIdiomTest extends ZKTestCase {
 
     private void createFile(File file, String content) throws IOException {
         FileOutputStream fos = new FileOutputStream(file);
-        fos.write(content.getBytes("ASCII"));
-        fos.close();
+        try {
+            fos.write(content.getBytes("ASCII"));
+        } finally {
+            fos.close();
+        }
     }
 
 }

@@ -176,9 +176,12 @@ public class LearnerTest extends ZKTestCase {
             CreateTxn txn = new CreateTxn("/foo", new byte[0], new ArrayList<ACL>(), false, sl.zk.getZKDatabase().getNode("/").stat.getCversion());
             ByteArrayOutputStream tbaos = new ByteArrayOutputStream();
             BinaryOutputArchive boa = BinaryOutputArchive.getArchive(tbaos);
-            hdr.serialize(boa, "hdr");
-            txn.serialize(boa, "txn");
-            tbaos.close();
+            try {
+                hdr.serialize(boa, "hdr");
+                txn.serialize(boa, "txn");
+            } finally {
+                tbaos.close();
+            }
             qp = new QuorumPacket(Leader.PROPOSAL, 1, tbaos.toByteArray(), null);
             oa.writeRecord(qp, null);
 

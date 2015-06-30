@@ -131,9 +131,12 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements
     public String toString() {
         StringWriter sw = new StringWriter();
         PrintWriter pwriter = new PrintWriter(sw);
-        dumpSessions(pwriter);
-        pwriter.flush();
-        pwriter.close();
+        try {
+            dumpSessions(pwriter);
+            pwriter.flush();
+        } finally {
+            pwriter.close();
+        }
         return sw.toString();
     }
 

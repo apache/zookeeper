@@ -400,9 +400,12 @@ public abstract class ServerCnxn implements Stats, Watcher {
     public String toString() {
         StringWriter sw = new StringWriter();
         PrintWriter pwriter = new PrintWriter(sw);
-        dumpConnectionInfo(pwriter, false);
-        pwriter.flush();
-        pwriter.close();
+        try {
+            dumpConnectionInfo(pwriter, false);
+            pwriter.flush();
+        } finally {
+            pwriter.close();
+        }
         return sw.toString();
     }
 
