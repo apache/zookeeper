@@ -1329,31 +1329,12 @@ public class Zab1_0Test {
         File version2 = new File(tmpDir, "version-2");
         version2.mkdir();
         FileOutputStream fos;
-<<<<<<< HEAD
-<<<<<<< HEAD
-        try {
-=======
-        try{
->>>>>>> parent of 9854b54... add space
-            fos = new FileOutputStream(new File(version2, "currentEpoch"));
-            fos.write("0\n".getBytes());
-        }finally{
-            fos.close();
-        }
-        try{
-            fos = new FileOutputStream(new File(version2, "acceptedEpoch"));
-            fos.write("0\n".getBytes());
-        }finally{
-            fos.close();
-        }
-=======
         fos = new FileOutputStream(new File(version2, "currentEpoch"));
         fos.write("0\n".getBytes());
         fos.close();
         fos = new FileOutputStream(new File(version2, "acceptedEpoch"));
         fos.write("0\n".getBytes());
         fos.close();
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
         return peer;
     }
 

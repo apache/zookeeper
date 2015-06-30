@@ -81,27 +81,6 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
                                        CONNECTION_TIMEOUT));
 
             startSignal = new CountDownLatch(1);
-<<<<<<< HEAD
-<<<<<<< HEAD
-            try {
-=======
-            try{
->>>>>>> parent of 9854b54... add space
-            	ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
-                startSignal.await(CONNECTION_TIMEOUT,
-                        TimeUnit.MILLISECONDS);
-                Assert.assertTrue("count == 0", startSignal.getCount() == 0);
-                String path;
-                LOG.info("starting creating nodes");
-                for (int i = 0; i < 10; i++) {
-                    path = "/" + i;
-                    zk.create(path,
-                              (path + "!").getBytes(),
-                              Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-                    for (int j = 0; j < 10; j++) {
-                        String subpath = path + "/" + j;
-                        zk.create(subpath, (subpath + "!").getBytes(),
-=======
             ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
             startSignal.await(CONNECTION_TIMEOUT,
                     TimeUnit.MILLISECONDS);
@@ -120,7 +99,6 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
                     for (int k = 0; k < 20; k++) {
                         String subsubpath = subpath + "/" + k;
                         zk.create(subsubpath, (subsubpath + "!").getBytes(),
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
                                 Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                     }
                 }
@@ -201,19 +179,9 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
                                 stat)), subsubpath + "!");
                     }
                 }
-<<<<<<< HEAD
-<<<<<<< HEAD
-            } finally {
-=======
-            }finally{
->>>>>>> parent of 9854b54... add space
-                zk.close();
-            }          
-=======
             }
             zk.close();
 
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
             f.shutdown();
             zks.shutdown();
 

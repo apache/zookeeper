@@ -222,27 +222,6 @@ public class FileSnap implements SnapShot {
     public synchronized void serialize(DataTree dt, Map<Long, Integer> sessions, File snapShot)
             throws IOException {
         if (!close) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-        	try {
-=======
-        	try{
->>>>>>> parent of 9854b54... add space
-        		 OutputStream sessOS = new BufferedOutputStream(new FileOutputStream(snapShot));
-                 CheckedOutputStream crcOut = new CheckedOutputStream(sessOS, new Adler32());
-                 //CheckedOutputStream cout = new CheckedOutputStream()
-                 OutputArchive oa = BinaryOutputArchive.getArchive(crcOut);
-                 FileHeader header = new FileHeader(SNAP_MAGIC, VERSION, dbId);
-                 serialize(dt,sessions,oa, header);
-                 long val = crcOut.getChecksum().getValue();
-                 oa.writeLong(val, "val");
-                 oa.writeString("/", "path");
-                 sessOS.flush();
-        	}finally{
-                crcOut.close();
-                sessOS.close();
-        	}
-=======
             OutputStream sessOS = new BufferedOutputStream(new FileOutputStream(snapShot));
             CheckedOutputStream crcOut = new CheckedOutputStream(sessOS, new Adler32());
             //CheckedOutputStream cout = new CheckedOutputStream()
@@ -255,7 +234,6 @@ public class FileSnap implements SnapShot {
             sessOS.flush();
             crcOut.close();
             sessOS.close();
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
         }
     }
 

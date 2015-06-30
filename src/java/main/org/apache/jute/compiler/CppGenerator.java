@@ -61,36 +61,8 @@ class CppGenerator {
                         + outputDirectory);
             }
         }
-<<<<<<< HEAD
         FileWriter cc = new FileWriter(new File(outputDirectory, mName+".cc"));
         FileWriter hh = new FileWriter(new File(outputDirectory, mName+".hh"));
-<<<<<<< HEAD
-        try {
-=======
-        try{
-        	 FileWriter cc = new FileWriter(new File(outputDirectory, mName+".cc"));
-             FileWriter hh = new FileWriter(new File(outputDirectory, mName+".hh"));
-
->>>>>>> parent of 9854b54... add space
-             hh.write("/**\n");
-             hh.write("* Licensed to the Apache Software Foundation (ASF) under one\n");
-             hh.write("* or more contributor license agreements.  See the NOTICE file\n");
-             hh.write("* distributed with this work for additional information\n");
-             hh.write("* regarding copyright ownership.  The ASF licenses this file\n");
-             hh.write("* to you under the Apache License, Version 2.0 (the\n");
-             hh.write("* \"License\"); you may not use this file except in compliance\n");
-             hh.write("* with the License.  You may obtain a copy of the License at\n");
-             hh.write("*\n");
-             hh.write("*     http://www.apache.org/licenses/LICENSE-2.0\n");
-             hh.write("*\n");
-             hh.write("* Unless required by applicable law or agreed to in writing, software\n");
-             hh.write("* distributed under the License is distributed on an \"AS IS\" BASIS,\n");
-             hh.write("* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n");
-             hh.write("* See the License for the specific language governing permissions and\n");
-             hh.write("* limitations under the License.\n");
-             hh.write("*/\n");
-             hh.write("\n");
-=======
 
         hh.write("/**\n");
         hh.write("* Licensed to the Apache Software Foundation (ASF) under one\n");
@@ -110,7 +82,6 @@ class CppGenerator {
         hh.write("* limitations under the License.\n");
         hh.write("*/\n");
         hh.write("\n");
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
 
         cc.write("/**\n");
         cc.write("* Licensed to the Apache Software Foundation (ASF) under one\n");
@@ -148,18 +119,7 @@ class CppGenerator {
 
         hh.write("#endif //"+mName.toUpperCase().replace('.','_')+"__\n");
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-        } finally {
-=======
-        }finally{
->>>>>>> parent of 9854b54... add space
-            hh.close();
-            cc.close();
-        }
-=======
         hh.close();
         cc.close();
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
     }
 }

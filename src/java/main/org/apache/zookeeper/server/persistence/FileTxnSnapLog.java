@@ -313,24 +313,10 @@ public class FileTxnSnapLog {
         close();
 
         // truncate it
-<<<<<<< HEAD
-<<<<<<< HEAD
-        try {
-=======
-        try{
->>>>>>> parent of 9854b54... add space
-            FileTxnLog truncLog = new FileTxnLog(dataDir);
-            boolean truncated = truncLog.truncate(zxid);
-
-        }finally{
-            truncLog.close();
-        }
-=======
         FileTxnLog truncLog = new FileTxnLog(dataDir);
         boolean truncated = truncLog.truncate(zxid);
         truncLog.close();
 
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
         // re-open the txnLog and snapLog
         // I'd rather just close/reopen this object itself, however that 
         // would have a big impact outside ZKDatabase as there are other

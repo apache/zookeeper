@@ -129,28 +129,12 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements
 
     @Override
     public String toString() {
-<<<<<<< HEAD
-<<<<<<< HEAD
-    	try {
-=======
-    	try{
->>>>>>> parent of 9854b54... add space
-            StringWriter sw = new StringWriter();
-            PrintWriter pwriter = new PrintWriter(sw);
-            dumpSessions(pwriter);
-            pwriter.flush();
-    	}finally{
-            pwriter.close();
-    	}
-      return sw.toString();
-=======
         StringWriter sw = new StringWriter();
         PrintWriter pwriter = new PrintWriter(sw);
         dumpSessions(pwriter);
         pwriter.flush();
         pwriter.close();
         return sw.toString();
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
     }
 
     @Override

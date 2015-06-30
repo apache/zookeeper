@@ -103,24 +103,10 @@ public class PrepRequestProcessorTest extends ClientBase {
 
     private Request createRequest(Record record, int opCode) throws IOException {
         // encoding
-<<<<<<< HEAD
-<<<<<<< HEAD
-    	try {
-=======
-    	try{
->>>>>>> parent of 9854b54... add space
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
-            record.serialize(boa, "request");
-    	}finally{
-            baos.close();
-    	}
-=======
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
         record.serialize(boa, "request");
         baos.close();
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
         // Id
         List<Id> ids = Arrays.asList(Ids.ANYONE_ID_UNSAFE);
         return new Request(null, 1l, 0, opCode, ByteBuffer.wrap(baos.toByteArray()), ids);

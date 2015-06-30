@@ -43,31 +43,6 @@ public class SaslAuthMissingClientConfigTest extends ClientBase {
         try {
             File tmpDir = createTmpDir();
             File saslConfFile = new File(tmpDir, "jaas.conf");
-<<<<<<< HEAD
-<<<<<<< HEAD
-            try {
-=======
-            try{
->>>>>>> parent of 9854b54... add space
-            	 FileWriter fwriter = new FileWriter(saslConfFile);
-
-                 fwriter.write("" +
-                     "Server {\n" +
-                     "          org.apache.zookeeper.server.auth.DigestLoginModule required\n" +
-                     "          user_myuser=\"mypassword\";\n" +
-                     "};\n" +
-                     "Client {\n" + /* this 'Client' section has the correct password, but we're not configured
-                                       to  use it - we're configured instead by the above
-                                       System.setProperty(...LOGIN_CONTEXT_NAME_KEY...) to
-                                       use the (nonexistent) 'MyZookeeperClient' section. */
-                     "       org.apache.zookeeper.server.auth.DigestLoginModule required\n" +
-                     "       username=\"myuser\"\n" +
-                     "       password=\"mypassword\";\n" +
-                     "};\n");
-            }finally{
-                fwriter.close();
-            }          
-=======
             FileWriter fwriter = new FileWriter(saslConfFile);
 
             fwriter.write("" +
@@ -84,7 +59,6 @@ public class SaslAuthMissingClientConfigTest extends ClientBase {
                 "       password=\"mypassword\";\n" +
                 "};\n");
             fwriter.close();
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
             System.setProperty("java.security.auth.login.config",saslConfFile.getAbsolutePath());
         }
         catch (IOException e) {

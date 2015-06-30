@@ -174,28 +174,12 @@ public class LearnerTest extends ZKTestCase {
             oa.writeString("BenWasHere", "signature");
             TxnHeader hdr = new TxnHeader(0, 0, 0, 0, ZooDefs.OpCode.create);
             CreateTxn txn = new CreateTxn("/foo", new byte[0], new ArrayList<ACL>(), false, sl.zk.getZKDatabase().getNode("/").stat.getCversion());
-<<<<<<< HEAD
-<<<<<<< HEAD
-            try {
-=======
-            try{
->>>>>>> parent of 9854b54... add space
-                ByteArrayOutputStream tbaos = new ByteArrayOutputStream();
-                BinaryOutputArchive boa = BinaryOutputArchive.getArchive(tbaos);
-                hdr.serialize(boa, "hdr");
-                txn.serialize(boa, "txn");
-            }finally{
-                tbaos.close();
-            }
-           qp = new QuorumPacket(Leader.PROPOSAL, 1, tbaos.toByteArray(), null);
-=======
             ByteArrayOutputStream tbaos = new ByteArrayOutputStream();
             BinaryOutputArchive boa = BinaryOutputArchive.getArchive(tbaos);
             hdr.serialize(boa, "hdr");
             txn.serialize(boa, "txn");
             tbaos.close();
             qp = new QuorumPacket(Leader.PROPOSAL, 1, tbaos.toByteArray(), null);
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
             oa.writeRecord(qp, null);
 
             // setup the messages to be streamed to follower

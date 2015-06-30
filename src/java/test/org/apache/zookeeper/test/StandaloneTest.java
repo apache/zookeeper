@@ -132,29 +132,6 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher{
                 .waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
 
         CountdownWatcher watcher = new CountdownWatcher();
-<<<<<<< HEAD
-<<<<<<< HEAD
-        try {
-=======
-        try{
->>>>>>> parent of 9854b54... add space
-        	ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, watcher);
-            watcher.waitForConnected(CONNECTION_TIMEOUT);
-
-            List<String> joiners = new ArrayList<String>();
-            joiners.add("server.2=localhost:1234:1235;1236");
-            // generate some transactions that will get logged
-            try {
-                zk.reconfig(joiners, null, null, -1, new Stat());
-                Assert.fail("Reconfiguration in standalone should trigger " +
-                            "UnimplementedException");
-            } catch (KeeperException.UnimplementedException ex) {
-                // expected
-            }
-        }finally{
-            zk.close();
-        }      
-=======
         ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, watcher);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
 
@@ -170,7 +147,6 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher{
         }
         zk.close();
 
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
         zks.shutdown();
         f.shutdown();
         Assert.assertTrue("waiting for server being down ", ClientBase

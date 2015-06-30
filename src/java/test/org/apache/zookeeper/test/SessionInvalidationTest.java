@@ -49,18 +49,8 @@ public class SessionInvalidationTest extends ClientBase {
     @Test
     public void testCreateAfterCloseShouldFail() throws Exception {
         for (int i = 0; i < 10; i++) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-        	try {
-=======
-        	try{
->>>>>>> parent of 9854b54... add space
-        		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
-=======
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
 
             // open a connection
             boa.writeInt(44, "len");
@@ -72,18 +62,6 @@ public class SessionInvalidationTest extends ClientBase {
             RequestHeader h = new RequestHeader(1, ZooDefs.OpCode.closeSession);
             h.serialize(boa, "header");
 
-<<<<<<< HEAD
-                // create ephemeral znode
-                boa.writeInt(52, "len"); // We'll fill this in later
-                RequestHeader header = new RequestHeader(2, OpCode.create);
-                header.serialize(boa, "header");
-                CreateRequest createReq = new CreateRequest("/foo" + i, new byte[0],
-                        Ids.OPEN_ACL_UNSAFE, 1);
-                createReq.serialize(boa, "request");
-        	}finally{
-                baos.close();
-        	}           
-=======
             // create ephemeral znode
             boa.writeInt(52, "len"); // We'll fill this in later
             RequestHeader header = new RequestHeader(2, OpCode.create);
@@ -93,7 +71,6 @@ public class SessionInvalidationTest extends ClientBase {
             createReq.serialize(boa, "request");
             baos.close();
             
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
             System.out.println("Length:" + baos.toByteArray().length);
             
             String hp[] = hostPort.split(":");

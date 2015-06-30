@@ -56,28 +56,13 @@ public class AtomicFileOutputStreamTest extends ZKTestCase {
      */
     @Test
     public void testWriteNewFile() throws IOException {
-<<<<<<< HEAD
-<<<<<<< HEAD
-    	try {
-=======
-    	try{
->>>>>>> parent of 9854b54... add space
-            OutputStream fos = new AtomicFileOutputStream(dstFile);
-            assertFalse(dstFile.exists());
-            fos.write(TEST_STRING.getBytes());
-            fos.flush();
-            assertFalse(dstFile.exists());
-    	}finally{
-            fos.close();
-    	}
-=======
+
         OutputStream fos = new AtomicFileOutputStream(dstFile);
         assertFalse(dstFile.exists());
         fos.write(TEST_STRING.getBytes());
         fos.flush();
         assertFalse(dstFile.exists());
         fos.close();
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
         assertTrue(dstFile.exists());
 
         String readBackData = ClientBase.readFile(dstFile);
@@ -90,15 +75,6 @@ public class AtomicFileOutputStreamTest extends ZKTestCase {
     @Test
     public void testOverwriteFile() throws IOException {
         assertTrue("Creating empty dst file", dstFile.createNewFile());
-<<<<<<< HEAD
-<<<<<<< HEAD
-        try {
-=======
-        try{
->>>>>>> parent of 9854b54... add space
-            OutputStream fos = new AtomicFileOutputStream(dstFile);
-=======
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
 
         OutputStream fos = new AtomicFileOutputStream(dstFile);
 
@@ -111,14 +87,6 @@ public class AtomicFileOutputStreamTest extends ZKTestCase {
 
         fos.close();
 
-<<<<<<< HEAD
-            // Original contents still in place
-            assertEquals("", ClientBase.readFile(dstFile));
-        }finally{
-            fos.close();
-        }
-=======
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
         // New contents replace original file
         String readBackData = ClientBase.readFile(dstFile);
         assertEquals(TEST_STRING, readBackData);
@@ -131,23 +99,10 @@ public class AtomicFileOutputStreamTest extends ZKTestCase {
     @Test
     public void testFailToFlush() throws IOException {
         // Create a file at destination
-<<<<<<< HEAD
-<<<<<<< HEAD
-    	try {
-=======
-    	try{
->>>>>>> parent of 9854b54... add space
-            FileOutputStream fos = new FileOutputStream(dstFile);
-            fos.write(TEST_STRING_2.getBytes());
-    	}finally{
-            fos.close();
-    	}
-=======
         FileOutputStream fos = new FileOutputStream(dstFile);
         fos.write(TEST_STRING_2.getBytes());
         fos.close();
 
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
         OutputStream failingStream = createFailingStream();
         failingStream.write(TEST_STRING.getBytes());
         try {
@@ -210,23 +165,10 @@ public class AtomicFileOutputStreamTest extends ZKTestCase {
      */
     @Test
     public void testAbortExistingFile() throws IOException {
-<<<<<<< HEAD
-<<<<<<< HEAD
-    	try {
-=======
-    	try{
->>>>>>> parent of 9854b54... add space
-            FileOutputStream fos1 = new FileOutputStream(dstFile);
-            fos1.write(TEST_STRING.getBytes());
-    	}finally{
-            fos1.close();
-    	}
-=======
         FileOutputStream fos1 = new FileOutputStream(dstFile);
         fos1.write(TEST_STRING.getBytes());
         fos1.close();
 
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
         AtomicFileOutputStream fos2 = new AtomicFileOutputStream(dstFile);
 
         fos2.abort();
@@ -242,23 +184,10 @@ public class AtomicFileOutputStreamTest extends ZKTestCase {
      */
     @Test
     public void testAbortExistingFileAfterFlush() throws IOException {
-<<<<<<< HEAD
-<<<<<<< HEAD
-    	try {
-=======
-    	try{
->>>>>>> parent of 9854b54... add space
-            FileOutputStream fos1 = new FileOutputStream(dstFile);
-            fos1.write(TEST_STRING.getBytes());
-    	}finally{
-            fos1.close();
-    	}
-=======
         FileOutputStream fos1 = new FileOutputStream(dstFile);
         fos1.write(TEST_STRING.getBytes());
         fos1.close();
 
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
         AtomicFileOutputStream fos2 = new AtomicFileOutputStream(dstFile);
         fos2.write(TEST_STRING_2.getBytes());
         fos2.flush();

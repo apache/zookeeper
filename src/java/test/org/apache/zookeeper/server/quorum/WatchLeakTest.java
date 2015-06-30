@@ -352,25 +352,10 @@ public class WatchLeakTest {
      */
     private QuorumPacket createValidateSessionPacket() throws Exception {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-<<<<<<< HEAD
-<<<<<<< HEAD
-        try {
-=======
-        try{
->>>>>>> parent of 9854b54... add space
-            DataOutputStream dos = new DataOutputStream(baos);
-            dos.writeLong(SESSION_ID);
-            dos.writeInt(3000);
-        }finally{
-
-            dos.close();
-        }
-=======
         DataOutputStream dos = new DataOutputStream(baos);
         dos.writeLong(SESSION_ID);
         dos.writeInt(3000);
         dos.close();
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
         QuorumPacket qp = new QuorumPacket(Leader.REVALIDATE, -1,
                 baos.toByteArray(), null);
         return qp;

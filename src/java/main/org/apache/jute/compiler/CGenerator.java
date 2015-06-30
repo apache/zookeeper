@@ -61,18 +61,8 @@ class CGenerator {
                         + outputDirectory);
             }
         }
-<<<<<<< HEAD
-<<<<<<< HEAD
-        try {
-=======
-        try{
->>>>>>> parent of 9854b54... add space
-        	FileWriter c = new FileWriter(new File(outputDirectory, mName+".c"));
-            FileWriter h = new FileWriter(new File(outputDirectory, mName+".h"));
-=======
         FileWriter c = new FileWriter(new File(outputDirectory, mName+".c"));
         FileWriter h = new FileWriter(new File(outputDirectory, mName+".h"));
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
 
         h.write("/**\n");
         h.write("* Licensed to the Apache Software Foundation (ASF) under one\n");
@@ -131,18 +121,8 @@ class CGenerator {
             jr.genCCode(h, c);
         }
 
-<<<<<<< HEAD
-            h.write("\n#ifdef __cplusplus\n}\n#endif\n\n");
-            h.write("#endif //"+mName.toUpperCase().replace('.','_')+"__\n");
-<<<<<<< HEAD
-        } finally {
-=======
         h.write("\n#ifdef __cplusplus\n}\n#endif\n\n");
         h.write("#endif //"+mName.toUpperCase().replace('.','_')+"__\n");
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
-=======
-        }finally{
->>>>>>> parent of 9854b54... add space
 
         h.close();
         c.close();

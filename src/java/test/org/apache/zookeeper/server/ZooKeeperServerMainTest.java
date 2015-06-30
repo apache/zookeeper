@@ -64,22 +64,6 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
             super("Standalone server with clientPort:" + clientPort);
             tmpDir = ClientBase.createTmpDir();
             confFile = new File(tmpDir, "zoo.cfg");
-<<<<<<< HEAD
-<<<<<<< HEAD
-            try {
-=======
-            try{
->>>>>>> parent of 9854b54... add space
-                FileWriter fwriter = new FileWriter(confFile);
-                fwriter.write("tickTime=2000\n");
-                fwriter.write("initLimit=10\n");
-                fwriter.write("syncLimit=5\n");
-                if(configs != null){
-                    fwriter.write(configs);
-                }
-=======
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
-
             FileWriter fwriter = new FileWriter(confFile);
             fwriter.write("tickTime=2000\n");
             fwriter.write("initLimit=10\n");
@@ -95,19 +79,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
                 if (!dataDir.mkdir()) {
                     throw new IOException("unable to mkdir " + dataDir);
                 }
-<<<<<<< HEAD
-                
-                dir = PathUtils.normalizeFileSystemPath(dir);
-                dirLog = PathUtils.normalizeFileSystemPath(dirLog);
-                fwriter.write("dataDir=" + dir + "\n");
-                fwriter.write("dataLogDir=" + dirLog + "\n");
-                fwriter.write("clientPort=" + clientPort + "\n");
-                fwriter.flush();
-            }finally{
-                fwriter.close();
-=======
                 dirLog = dataDir.toString();
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
             }
             
             dir = PathUtils.normalizeFileSystemPath(dir);
@@ -175,22 +147,6 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
                 ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
                         CONNECTION_TIMEOUT));
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-        try {
-=======
-        try{
->>>>>>> parent of 9854b54... add space
-            ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT,
-                    ClientBase.CONNECTION_TIMEOUT, this);
-
-            zk.create("/foo", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PERSISTENT);
-            Assert.assertEquals(new String(zk.getData("/foo", null, null)), "foobar");
-        }finally{
-            zk.close();
-        }
-=======
 
         ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT,
                 ClientBase.CONNECTION_TIMEOUT, this);
@@ -200,7 +156,6 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         Assert.assertEquals(new String(zk.getData("/foo", null, null)), "foobar");
         zk.close();
 
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
         main.shutdown();
         main.join();
         main.deleteDirs();
@@ -255,24 +210,6 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
                 ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
                         CONNECTION_TIMEOUT));
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-        try {
-=======
-        try{
->>>>>>> parent of 9854b54... add space
-            ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT,
-                    ClientBase.CONNECTION_TIMEOUT, this);
-
-            zk.create("/foo", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PERSISTENT);
-            Assert.assertEquals(new String(zk.getData("/foo", null, null)),
-                    "foobar");
-        }finally{
-
-            zk.close();
-        }
-=======
         ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT,
                 ClientBase.CONNECTION_TIMEOUT, this);
 
@@ -282,7 +219,6 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
                 "foobar");
         zk.close();
 
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
         main.shutdown();
         main.join();
         main.deleteDirs();
@@ -389,28 +325,12 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
             int expectedSessionTimeout, String HOSTPORT) throws IOException,
             KeeperException, InterruptedException {
         clientConnected = new CountDownLatch(1);
-<<<<<<< HEAD
-<<<<<<< HEAD
-        try {
-=======
-        try{
->>>>>>> parent of 9854b54... add space
-            ZooKeeper zk = new ZooKeeper(HOSTPORT, sessionTimeout, this);
-            Assert.assertTrue("Failed to establish zkclient connection!",
-                    clientConnected.await(sessionTimeout, TimeUnit.MILLISECONDS));
-            Assert.assertEquals("Not able to configure the sessionTimeout values",
-                    expectedSessionTimeout, zk.getSessionTimeout());
-        }finally{
-            zk.close();
-        }
-=======
         ZooKeeper zk = new ZooKeeper(HOSTPORT, sessionTimeout, this);
         Assert.assertTrue("Failed to establish zkclient connection!",
                 clientConnected.await(sessionTimeout, TimeUnit.MILLISECONDS));
         Assert.assertEquals("Not able to configure the sessionTimeout values",
                 expectedSessionTimeout, zk.getSessionTimeout());
         zk.close();
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
     }
 
     @Test

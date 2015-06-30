@@ -47,78 +47,33 @@ public class QuorumZxidSyncTest extends ZKTestCase {
         // crank up the epoch numbers
         ClientBase.waitForServerUp(qb.hostPort, 10000);
         ClientBase.waitForServerUp(qb.hostPort, 10000);
-<<<<<<< HEAD
-<<<<<<< HEAD
-        try {
-=======
-        try{
->>>>>>> parent of 9854b54... add space
-            ZooKeeper zk = new ZooKeeper(qb.hostPort, 10000, new Watcher() {
-                public void process(WatchedEvent event) {
-                }});
-            zk.create("/0", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        }finally{
-            zk.close();
-        }
-=======
         ZooKeeper zk = new ZooKeeper(qb.hostPort, 10000, new Watcher() {
             public void process(WatchedEvent event) {
             }});
         zk.create("/0", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.close();
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
         qb.shutdownServers();
         qb.startServers();
         ClientBase.waitForServerUp(qb.hostPort, 10000);
         qb.shutdownServers();
         qb.startServers();
         ClientBase.waitForServerUp(qb.hostPort, 10000);
-<<<<<<< HEAD
-<<<<<<< HEAD
-        try {
-=======
-        try{
->>>>>>> parent of 9854b54... add space
-            zk = new ZooKeeper(qb.hostPort, 10000, new Watcher() {
-                public void process(WatchedEvent event) {
-                }});
-            zk.create("/1", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        }finally{
-            zk.close();
-        }
-=======
         zk = new ZooKeeper(qb.hostPort, 10000, new Watcher() {
             public void process(WatchedEvent event) {
             }});
         zk.create("/1", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.close();
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
         qb.shutdownServers();
         qb.startServers();
         ClientBase.waitForServerUp(qb.hostPort, 10000);
         qb.shutdownServers();
         qb.startServers();
         ClientBase.waitForServerUp(qb.hostPort, 10000);
-<<<<<<< HEAD
-<<<<<<< HEAD
-        try {
-=======
-        try{
->>>>>>> parent of 9854b54... add space
-            zk = new ZooKeeper(qb.hostPort, 10000, new Watcher() {
-                public void process(WatchedEvent event) {
-                }});
-            zk.create("/2", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        }finally{
-            zk.close();
-        }
-=======
         zk = new ZooKeeper(qb.hostPort, 10000, new Watcher() {
             public void process(WatchedEvent event) {
             }});
         zk.create("/2", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.close();
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
         qb.shutdownServers();
         deleteFiles(qb.s1dir);
         deleteFiles(qb.s2dir);

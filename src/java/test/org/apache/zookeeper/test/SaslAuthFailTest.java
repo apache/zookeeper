@@ -40,28 +40,6 @@ public class SaslAuthFailTest extends ClientBase {
         try {
             File tmpDir = createTmpDir();
             File saslConfFile = new File(tmpDir, "jaas.conf");
-<<<<<<< HEAD
-<<<<<<< HEAD
-            try {
-=======
-            try{
->>>>>>> parent of 9854b54... add space
-                FileWriter fwriter = new FileWriter(saslConfFile);
-
-                fwriter.write("" +
-                        "Server {\n" +
-                        "          org.apache.zookeeper.server.auth.DigestLoginModule required\n" +
-                        "          user_super=\"test\";\n" +
-                        "};\n" +
-                        "Client {\n" +
-                        "       org.apache.zookeeper.server.auth.DigestLoginModule required\n" +
-                        "       username=\"super\"\n" +
-                        "       password=\"test1\";\n" + // NOTE: wrong password ('test' != 'test1') : this is to test SASL authentication failure.
-                        "};" + "\n");
-            }finally{
-                fwriter.close();
-            }
-=======
             FileWriter fwriter = new FileWriter(saslConfFile);
 
             fwriter.write("" +
@@ -75,7 +53,6 @@ public class SaslAuthFailTest extends ClientBase {
                     "       password=\"test1\";\n" + // NOTE: wrong password ('test' != 'test1') : this is to test SASL authentication failure.
                     "};" + "\n");
             fwriter.close();
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
             System.setProperty("java.security.auth.login.config",saslConfFile.getAbsolutePath());
         }
         catch (IOException e) {

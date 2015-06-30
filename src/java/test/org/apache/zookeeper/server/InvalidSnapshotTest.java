@@ -65,23 +65,10 @@ public class InvalidSnapshotTest extends ClientBase {
         // now corrupt the snapshot
         File snapFile = factory.zkServer.getTxnLogFactory().findMostRecentSnapshot();
         LOG.info("Corrupting " + snapFile);
-<<<<<<< HEAD
-<<<<<<< HEAD
-        try {
-=======
-        try{
->>>>>>> parent of 9854b54... add space
-            RandomAccessFile raf = new RandomAccessFile(snapFile, "rws");
-            raf.setLength(3);
-        }finally{
-            raf.close();
-        }
-=======
         RandomAccessFile raf = new RandomAccessFile(snapFile, "rws");
         raf.setLength(3);
         raf.close();
 
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
         // now restart the server
         startServer();
 

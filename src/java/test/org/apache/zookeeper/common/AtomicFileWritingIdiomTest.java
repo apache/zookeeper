@@ -337,27 +337,11 @@ public class AtomicFileWritingIdiomTest extends ZKTestCase {
 
     private String getContent(File file, String encoding) throws IOException {
         StringBuilder result = new StringBuilder();
-<<<<<<< HEAD
-<<<<<<< HEAD
-        try {
-=======
-        try{
->>>>>>> parent of 9854b54... add space
-        	FileInputStream fis = new FileInputStream(file);
-            byte[] b = new byte[20];
-            int nb;
-            while ((nb = fis.read(b)) != -1) {
-                   result.append(new String(b, 0, nb, encoding));
-            }
-        }finally{
-        	fis.close();
-=======
         FileInputStream fis = new FileInputStream(file);
         byte[] b = new byte[20];
         int nb;
         while ((nb = fis.read(b)) != -1) {
                result.append(new String(b, 0, nb, encoding));
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
         }
         fis.close();
         return result.toString();
@@ -368,22 +352,9 @@ public class AtomicFileWritingIdiomTest extends ZKTestCase {
     }
 
     private void createFile(File file, String content) throws IOException {
-<<<<<<< HEAD
-<<<<<<< HEAD
-    	try {
-=======
-    	try{
->>>>>>> parent of 9854b54... add space
-            FileOutputStream fos = new FileOutputStream(file);
-            fos.write(content.getBytes("ASCII"));
-    	}finally{
-            fos.close();
-    	}
-=======
         FileOutputStream fos = new FileOutputStream(file);
         fos.write(content.getBytes("ASCII"));
         fos.close();
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
     }
 
 }

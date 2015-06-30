@@ -137,55 +137,6 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
 
             confFile = new File(tmpDir, "zoo.cfg");
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-            try {
-=======
-            try{
->>>>>>> parent of 9854b54... add space
-            	FileWriter fwriter = new FileWriter(confFile);
-                fwriter.write("tickTime=4000\n");
-                fwriter.write("initLimit=10\n");
-                fwriter.write("syncLimit=5\n");
-                if(configs != null){
-                    fwriter.write(configs);
-                }
-
-                // Convert windows path to UNIX to avoid problems with "\"
-                String dir = PathUtils.normalizeFileSystemPath(dataDir.toString());
-
-                fwriter.write("dataDir=" + dir + "\n");
-                fwriter.write("admin.serverPort=" + adminServerPort + "\n");
-
-                // For backward compatibility test, some tests create dynamic configuration
-                // without setting client port.
-                // This could happen both in static file or dynamic file.
-                if (clientPort != UNSET_STATIC_CLIENTPORT) {
-                    fwriter.write("clientPort=" + clientPort + "\n");
-                }
-
-                if (secureClientPort != null) {
-                    fwriter.write("secureClientPort=" + secureClientPort + "\n");
-                }
-
-                if (writeDynamicConfigFile) {
-                    String dynamicConfigFilename = createDynamicFile(quorumCfgSection, version);
-                    fwriter.write("dynamicConfigFile=" + dynamicConfigFilename + "\n");
-                } else {
-                    fwriter.write(quorumCfgSection);
-                }
-                fwriter.flush();
-            }finally{
-                fwriter.close();
-            }
-            File myidFile = new File(dataDir, "myid");
-            try{
-                fwriter = new FileWriter(myidFile);
-                fwriter.write(Integer.toString(myid));
-                fwriter.flush();
-<<<<<<< HEAD
-            } finally {
-=======
             FileWriter fwriter = new FileWriter(confFile);
             fwriter.write("tickTime=4000\n");
             fwriter.write("initLimit=10\n");
@@ -193,9 +144,6 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             if(configs != null){
                 fwriter.write(configs);
             }
-=======
-            }finally{
->>>>>>> parent of 9854b54... add space
 
             // Convert windows path to UNIX to avoid problems with "\"
             String dir = PathUtils.normalizeFileSystemPath(dataDir.toString());
@@ -213,7 +161,6 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             if (secureClientPort != null) {
                 fwriter.write("secureClientPort=" + secureClientPort + "\n");
             }
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
 
             if (writeDynamicConfigFile) {
                 String dynamicConfigFilename = createDynamicFile(quorumCfgSection, version);
@@ -241,26 +188,10 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             File dynamicConfigFile = new File(tmpDir, filename);
             String dynamicConfigFilename = PathUtils.normalizeFileSystemPath(dynamicConfigFile.toString());
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-            try {
-                FileWriter fDynamicConfigWriter = new FileWriter(dynamicConfigFile);
-                fDynamicConfigWriter.write(quorumCfgSection);
-                fDynamicConfigWriter.flush();
-            } finally {
-=======
             FileWriter fDynamicConfigWriter = new FileWriter(dynamicConfigFile);
             fDynamicConfigWriter.write(quorumCfgSection);
             fDynamicConfigWriter.flush();
             fDynamicConfigWriter.close();
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
-=======
-            try{
-                FileWriter fDynamicConfigWriter = new FileWriter(dynamicConfigFile);
-                fDynamicConfigWriter.write(quorumCfgSection);
-                fDynamicConfigWriter.flush();
-            }finally{
->>>>>>> parent of 9854b54... add space
 
             return dynamicConfigFilename;
         }
@@ -286,29 +217,12 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
                 throws IOException {
             File nextDynamicConfigFile = new File(tmpDir,
                     "zoo.cfg" + QuorumPeerConfig.nextDynamicConfigFileSuffix);
-<<<<<<< HEAD
-<<<<<<< HEAD
-            try {
-=======
-            try{
->>>>>>> parent of 9854b54... add space
-                FileWriter fwriter = new FileWriter(nextDynamicConfigFile);
-                fwriter.write(nextQuorumCfgSection
-                        + "\n"
-                        + "version=" + version);
-                fwriter.flush();
-            }finally{
-                fwriter.close();
-            }
-
-=======
             FileWriter fwriter = new FileWriter(nextDynamicConfigFile);
             fwriter.write(nextQuorumCfgSection
                     + "\n"
                     + "version=" + version);
             fwriter.flush();
             fwriter.close();
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
         }
 
         Thread currentThread;

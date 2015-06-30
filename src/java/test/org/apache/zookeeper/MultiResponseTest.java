@@ -56,24 +56,10 @@ public class MultiResponseTest extends TestCase {
     }
 
     private MultiResponse codeDecode(MultiResponse request) throws IOException {
-<<<<<<< HEAD
-<<<<<<< HEAD
-    	try {
-=======
-    	try{
->>>>>>> parent of 9854b54... add space
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
-            request.serialize(boa, "result");
-    	}finally{
-            baos.close();
-    	}
-=======
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
         request.serialize(boa, "result");
         baos.close();
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
         ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
         bb.rewind();
 

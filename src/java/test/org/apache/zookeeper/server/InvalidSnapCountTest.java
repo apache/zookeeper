@@ -51,32 +51,6 @@ public class InvalidSnapCountTest extends ZKTestCase implements Watcher {
             super("Standalone server with clientPort:" + clientPort);
             File tmpDir = ClientBase.createTmpDir();
             confFile = new File(tmpDir, "zoo.cfg");
-<<<<<<< HEAD
-<<<<<<< HEAD
-            try {
-=======
-            try{
->>>>>>> parent of 9854b54... add space
-            	FileWriter fwriter = new FileWriter(confFile);
-                fwriter.write("tickTime=2000\n");
-                fwriter.write("initLimit=10\n");
-                fwriter.write("syncLimit=5\n");
-                fwriter.write("snapCount=1\n");
-
-                File dataDir = new File(tmpDir, "data");
-                if (!dataDir.mkdir()) {
-                    throw new IOException("unable to mkdir " + dataDir);
-                }
-                
-                // Convert windows path to UNIX to avoid problems with "\"
-                String dir = PathUtils.normalizeFileSystemPath(dataDir.toString());
-                fwriter.write("dataDir=" + dir + "\n");
-                
-                fwriter.write("clientPort=" + clientPort + "\n");
-                fwriter.flush();
-            }finally{
-                fwriter.close();
-=======
 
             FileWriter fwriter = new FileWriter(confFile);
             fwriter.write("tickTime=2000\n");
@@ -87,7 +61,6 @@ public class InvalidSnapCountTest extends ZKTestCase implements Watcher {
             File dataDir = new File(tmpDir, "data");
             if (!dataDir.mkdir()) {
                 throw new IOException("unable to mkdir " + dataDir);
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
             }
             
             // Convert windows path to UNIX to avoid problems with "\"

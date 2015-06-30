@@ -107,76 +107,28 @@ public class OOMTest extends ZKTestCase implements Watcher {
     private void utestExists(int port)
         throws IOException, InterruptedException, KeeperException
     {
-<<<<<<< HEAD
-<<<<<<< HEAD
-    	try {
-=======
-    	try{
->>>>>>> parent of 9854b54... add space
-            ZooKeeper zk =
-                    new ZooKeeper("127.0.0.1:" + port, CONNECTION_TIMEOUT, this);
-            for (int i = 0; i < 10000; i++) {
-            	zk.exists("/this/path/doesnt_exist!", true);
-            }
-    	}finally{
-            zk.close();
-    	}
-=======
         ZooKeeper zk =
             new ZooKeeper("127.0.0.1:" + port, CONNECTION_TIMEOUT, this);
         for (int i = 0; i < 10000; i++) {
             zk.exists("/this/path/doesnt_exist!", true);
         }
         zk.close();
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
     }
 
     private void utestPrep(int port)
         throws IOException, InterruptedException, KeeperException
     {
-<<<<<<< HEAD
-<<<<<<< HEAD
-    	try {
-=======
-    	try{
->>>>>>> parent of 9854b54... add space
-            ZooKeeper zk =
-                    new ZooKeeper("127.0.0.1:" + port, CONNECTION_TIMEOUT, this);
-            for (int i = 0; i < 10000; i++) {
-            	zk.create("/" + i, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            }
-    	}finally{
-            zk.close();
-    	}
-=======
         ZooKeeper zk =
             new ZooKeeper("127.0.0.1:" + port, CONNECTION_TIMEOUT, this);
         for (int i = 0; i < 10000; i++) {
             zk.create("/" + i, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         }
         zk.close();
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
     }
 
     private void utestGet(int port)
         throws IOException, InterruptedException, KeeperException
     {
-<<<<<<< HEAD
-<<<<<<< HEAD
-    	try {
-=======
-    	try{
->>>>>>> parent of 9854b54... add space
-            ZooKeeper zk =
-                    new ZooKeeper("127.0.0.1:" + port, CONNECTION_TIMEOUT, this);
-            for (int i = 0; i < 10000; i++) {
-            	Stat stat = new Stat();
-            	zk.getData("/" + i, true, stat);
-            }
-    	}finally{
-            zk.close();
-    	}
-=======
         ZooKeeper zk =
             new ZooKeeper("127.0.0.1:" + port, CONNECTION_TIMEOUT, this);
         for (int i = 0; i < 10000; i++) {
@@ -184,34 +136,17 @@ public class OOMTest extends ZKTestCase implements Watcher {
             zk.getData("/" + i, true, stat);
         }
         zk.close();
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
     }
 
     private void utestChildren(int port)
         throws IOException, InterruptedException, KeeperException
     {
-<<<<<<< HEAD
-<<<<<<< HEAD
-    	try {
-=======
-    	try{
->>>>>>> parent of 9854b54... add space
-            ZooKeeper zk =
-                    new ZooKeeper("127.0.0.1:" + port, CONNECTION_TIMEOUT, this);
-            for (int i = 0; i < 10000; i++) {
-            	zk.getChildren("/" + i, true);
-            }
-    	}finally{
-            zk.close();
-    	}
-=======
         ZooKeeper zk =
             new ZooKeeper("127.0.0.1:" + port, CONNECTION_TIMEOUT, this);
         for (int i = 0; i < 10000; i++) {
             zk.getChildren("/" + i, true);
         }
         zk.close();
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
     }
 
     /*

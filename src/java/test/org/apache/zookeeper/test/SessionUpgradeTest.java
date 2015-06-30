@@ -80,22 +80,6 @@ public class SessionUpgradeTest extends ZKTestCase {
         int testPeerIdx = testLeader ? leaderIdx : followerIdx;
         String hostPorts[] = qb.hostPort.split(",");
         CountdownWatcher watcher = new CountdownWatcher();
-<<<<<<< HEAD
-<<<<<<< HEAD
-        try {
-=======
-        try{
->>>>>>> parent of 9854b54... add space
-        	DisconnectableZooKeeper zk = new DisconnectableZooKeeper(
-                    hostPorts[testPeerIdx], CONNECTION_TIMEOUT, watcher);
-            watcher.waitForConnected(CONNECTION_TIMEOUT);
-
-            // Try creating some data.
-            for (int i = 0; i < 5; i++) {
-                zk.create(nodePrefix + i, new byte[0],
-                          ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            }
-=======
         DisconnectableZooKeeper zk = new DisconnectableZooKeeper(
                 hostPorts[testPeerIdx], CONNECTION_TIMEOUT, watcher);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
@@ -116,7 +100,6 @@ public class SessionUpgradeTest extends ZKTestCase {
             DisconnectableZooKeeper zknew = new DisconnectableZooKeeper(
                     hostPorts[otherFollowerIdx], CONNECTION_TIMEOUT, watcher,
                     localSessionId, localSessionPwd);
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
 
             zknew.create(nodePrefix + "5", new byte[0],
                          ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -157,17 +140,9 @@ public class SessionUpgradeTest extends ZKTestCase {
         zk.create(nodePrefix + "6", new byte[0],
                   ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-<<<<<<< HEAD
-            // If we explicitly close the session, then the session id should no
-            // longer be valid.
-        }finally{
-            zk.close();
-        }
-=======
         // If we explicitly close the session, then the session id should no
         // longer be valid.
         zk.close();
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
         try {
             watcher.reset();
             zk = new DisconnectableZooKeeper(
@@ -203,32 +178,9 @@ public class SessionUpgradeTest extends ZKTestCase {
         String hostPorts[] = qb.hostPort.split(",");
 
         CountdownWatcher watcher = new CountdownWatcher();
-<<<<<<< HEAD
-<<<<<<< HEAD
-        try {
-=======
-        try{
->>>>>>> parent of 9854b54... add space
-        	DisconnectableZooKeeper zk = new DisconnectableZooKeeper(
-                    hostPorts[testPeerIdx], CONNECTION_TIMEOUT, watcher);
-            watcher.waitForConnected(CONNECTION_TIMEOUT);
-
-            // Create some ephemeral nodes.  This should force the session to
-            // be propagated to the other servers in the ensemble.
-            for (int i = 0; i < 5; i++) {
-                zk.create(nodePrefix + i, new byte[0],
-                          ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
-            }
-
-            // We should be able to reconnect with the same session id on a
-            // different server, since it has been propagated.
-            long localSessionId = zk.getSessionId();
-            byte[] localSessionPwd = zk.getSessionPasswd().clone();
-=======
         DisconnectableZooKeeper zk = new DisconnectableZooKeeper(
                 hostPorts[testPeerIdx], CONNECTION_TIMEOUT, watcher);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
 
         // Create some ephemeral nodes.  This should force the session to
         // be propagated to the other servers in the ensemble.
@@ -242,24 +194,12 @@ public class SessionUpgradeTest extends ZKTestCase {
         long localSessionId = zk.getSessionId();
         byte[] localSessionPwd = zk.getSessionPasswd().clone();
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-        } finally {
-=======
-        }finally{
->>>>>>> parent of 9854b54... add space
-            
-            // When we explicitly close the session, we should not be able to
-            // reconnect with the same session id
-            zk.close();
-=======
         zk.disconnect();
         watcher.reset();
         zk = new DisconnectableZooKeeper(
                 hostPorts[otherFollowerIdx], CONNECTION_TIMEOUT, watcher,
                 localSessionId, localSessionPwd);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
->>>>>>> parent of 90745d7... #ZOOKEEPER-2218 Close IO Streams in finally block
 
         // The created ephemeral nodes are still around.
         for (int i = 0; i < 5; i++) {
