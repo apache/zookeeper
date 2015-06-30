@@ -61,10 +61,9 @@ class CppGenerator {
                         + outputDirectory);
             }
         }
+        FileWriter cc = new FileWriter(new File(outputDirectory, mName+".cc"));
+        FileWriter hh = new FileWriter(new File(outputDirectory, mName+".hh"));
         try {
-        	 FileWriter cc = new FileWriter(new File(outputDirectory, mName+".cc"));
-             FileWriter hh = new FileWriter(new File(outputDirectory, mName+".hh"));
-
              hh.write("/**\n");
              hh.write("* Licensed to the Apache Software Foundation (ASF) under one\n");
              hh.write("* or more contributor license agreements.  See the NOTICE file\n");
