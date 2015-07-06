@@ -24,9 +24,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 
 public class FourLetterWordMain {
+    //in milliseconds, socket should connect/read within this period otherwise SocketTimeoutException
+    private static final int DEFAULT_SOCKET_TIMEOUT = 5000;
     protected static final Logger LOG = Logger.getLogger(FourLetterWordMain.class);
     
     /**
@@ -40,10 +45,28 @@ public class FourLetterWordMain {
     public static String send4LetterWord(String host, int port, String cmd)
             throws IOException
     {
+        return send4LetterWord(host, port, cmd, DEFAULT_SOCKET_TIMEOUT);
+    }
+    /**
+     * Send the 4letterword
+     * @param host the destination host
+     * @param port the destination port
+     * @param cmd the 4letterword
+     * @param timeout in milliseconds, maximum time to wait while connecting/reading data
+     * @return server response
+     * @throws java.io.IOException
+     */
+    public static String send4LetterWord(String host, int port, String cmd, int timeout)
+            throws IOException
+    {
         LOG.info("connecting to " + host + " " + port);
-        Socket sock = new Socket(host, port);
+        Socket sock = new Socket();
+        InetSocketAddress hostaddress= host != null ? new InetSocketAddress(host, port) :
+            new InetSocketAddress(InetAddress.getByName(null), port);
         BufferedReader reader = null;
         try {
+            sock.setSoTimeout(timeout);
+            sock.connect(hostaddress, timeout);
             OutputStream outstream = sock.getOutputStream();
             outstream.write(cmd.getBytes());
             outstream.flush();
@@ -59,6 +82,8 @@ public class FourLetterWordMain {
                 sb.append(line + "\n");
             }
             return sb.toString();
+        } catch (SocketTimeoutException e) {
+            throw new IOException("Exception while executing four letter word: " + cmd, e);
         } finally {
             sock.close();
             if (reader != null) {

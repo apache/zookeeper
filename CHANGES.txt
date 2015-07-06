@@ -99,6 +99,9 @@ BUGFIXES:
   ZOOKEEPER-602: log all exceptions not caught by ZK threads
   (Rakesh R via rgs)
 
+  ZOOKEEPER-2224: Four letter command hangs when network is slow
+  (Arshad Mohammad via rgs)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1575. adding .gitattributes to prevent CRLF and LF mismatches for
