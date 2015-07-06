@@ -103,6 +103,10 @@ public class FourLetterWordsTest extends ClientBase {
       HostPort hpobj = ClientBase.parseHostPortList(hostPort).get(0);
       return send4LetterWord(hpobj.host, hpobj.port, cmd);
     }
+    private String sendRequest(String cmd, int timeout) throws IOException {
+        HostPort hpobj = ClientBase.parseHostPortList(hostPort).get(0);
+        return send4LetterWord(hpobj.host, hpobj.port, cmd, timeout);
+      }
 
     private void verify(String cmd, String expected) throws IOException {
         String resp = sendRequest(cmd);
@@ -111,7 +115,7 @@ public class FourLetterWordsTest extends ClientBase {
     }
     
     @Test
-    public void validateStatOutput() throws Exception {
+    public void testValidateStatOutput() throws Exception {
         ZooKeeper zk1 = createClient();
         ZooKeeper zk2 = createClient();
         
@@ -154,7 +158,7 @@ public class FourLetterWordsTest extends ClientBase {
     }
 
     @Test
-    public void validateConsOutput() throws Exception {
+    public void testValidateConsOutput() throws Exception {
         ZooKeeper zk1 = createClient();
         ZooKeeper zk2 = createClient();
         
@@ -172,5 +176,15 @@ public class FourLetterWordsTest extends ClientBase {
 
         zk1.close();
         zk2.close();
+    }
+
+    @Test(timeout=60000)
+    public void testValidateSocketTimeout() throws Exception {
+        /**
+         * testing positive scenario that even with timeout parameter the
+         * functionality works fine
+         */
+        String resp = sendRequest("isro", 2000);
+        Assert.assertTrue(resp.contains("rw"));
     }
 }
