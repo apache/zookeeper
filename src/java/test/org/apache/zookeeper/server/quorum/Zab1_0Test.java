@@ -63,6 +63,7 @@ import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.ErrorTxn;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnHeader;
+import org.apache.zookeeper.ZKTestCase;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -70,7 +71,7 @@ import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Zab1_0Test {
+public class Zab1_0Test extends ZKTestCase {
     private static final int SYNC_LIMIT = 2;
 
     private static final Logger LOG = LoggerFactory.getLogger(Zab1_0Test.class);

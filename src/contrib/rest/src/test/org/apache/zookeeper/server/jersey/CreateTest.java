@@ -30,6 +30,7 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.jersey.jaxb.ZPath;
 import org.junit.Test;
+import org.junit.Assert;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
@@ -115,8 +116,6 @@ public class CreateTest extends Base {
 
     @Test
     public void testCreate() throws Exception {
-        LOG.info("STARTING " + getName());
-
         WebResource wr = znodesr.path(path).queryParam("dataformat", encoding)
             .queryParam("name", name);
         if (data == null) {
@@ -134,7 +133,7 @@ public class CreateTest extends Base {
         } else {
             cr = builder.post(ClientResponse.class, data);
         }
-        assertEquals(expectedStatus, cr.getClientResponseStatus());
+        Assert.assertEquals(expectedStatus, cr.getClientResponseStatus());
 
         if (expectedPath == null) {
             return;
@@ -142,11 +141,11 @@ public class CreateTest extends Base {
 
         ZPath zpath = cr.getEntity(ZPath.class);
         if (sequence) {
-            assertTrue(zpath.path.startsWith(expectedPath.path));
-            assertTrue(zpath.uri.startsWith(znodesr.path(path).toString()));
+            Assert.assertTrue(zpath.path.startsWith(expectedPath.path));
+            Assert.assertTrue(zpath.uri.startsWith(znodesr.path(path).toString()));
         } else {
-            assertEquals(expectedPath, zpath);
-            assertEquals(znodesr.path(path).toString(), zpath.uri);
+            Assert.assertEquals(expectedPath, zpath);
+            Assert.assertEquals(znodesr.path(path).toString(), zpath.uri);
         }
 
         // use out-of-band method to verify
@@ -154,9 +153,9 @@ public class CreateTest extends Base {
         if (data == null && this.data == null) {
             return;
         } else if (data == null || this.data == null) {
-            assertEquals(data, this.data);
+            Assert.assertEquals(data, this.data);
         } else {
-            assertTrue(new String(data) + " == " + new String(this.data),
+            Assert.assertTrue(new String(data) + " == " + new String(this.data),
                     Arrays.equals(data, this.data));
         }
     }

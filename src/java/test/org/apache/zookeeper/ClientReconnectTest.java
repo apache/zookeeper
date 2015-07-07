@@ -28,13 +28,11 @@ import java.nio.channels.SocketChannel;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import junit.framework.Assert;
-import junit.framework.TestCase;
-
 import org.apache.zookeeper.client.HostProvider;
+import org.junit.Assert;
 import org.junit.Test;
 
-public class ClientReconnectTest extends TestCase {
+public class ClientReconnectTest extends ZKTestCase {
     private SocketChannel sc;
     private CountDownLatch countDownLatch = new CountDownLatch(3);
     

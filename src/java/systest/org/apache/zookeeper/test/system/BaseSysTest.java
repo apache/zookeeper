@@ -25,18 +25,19 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 
-import junit.framework.TestCase;
 
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.runner.JUnitCore;
 
 @Ignore("No tests in this class.")
-public class BaseSysTest extends TestCase {
+public class BaseSysTest {
     private static final File testData = new File(
             System.getProperty("test.data.dir", "build/test/data"));
     private static int fakeBasePort = 33222;
@@ -51,15 +52,15 @@ public class BaseSysTest extends TestCase {
         }
     }
     InstanceManager im;
-    @Override
-    protected void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         if (!fakeMachines) {
             zk = new ZooKeeper(zkHostPort, 15000, new Watcher() {public void process(WatchedEvent e){}});
             im = new InstanceManager(zk, prefix);
         }
     }
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         im.close();
     }
 

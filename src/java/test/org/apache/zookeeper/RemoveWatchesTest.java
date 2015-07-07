@@ -50,6 +50,7 @@ import org.slf4j.LoggerFactory;
  * Verifies removing watches using ZooKeeper client apis
  */
 @RunWith(Parameterized.class)
+@Parameterized.UseParametersRunnerFactory(ZKParameterized.RunnerFactory.class)
 public class RemoveWatchesTest extends ClientBase {
     private static final Logger LOG = LoggerFactory
             .getLogger(RemoveWatchesTest.class);

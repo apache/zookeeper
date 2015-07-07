@@ -29,6 +29,7 @@ import org.junit.runners.Parameterized.Parameters;
 import org.junit.Test;
 
 @RunWith(Parameterized.class)
+@Parameterized.UseParametersRunnerFactory(ZKParameterized.RunnerFactory.class)
 public class PortAssignmentTest {
 
     private final String strProcessCount;

@@ -40,7 +40,6 @@ import java.util.concurrent.TimeoutException;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 
-import junit.framework.TestCase;
 
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
@@ -490,7 +489,7 @@ public abstract class ClientBase extends ZKTestCase {
         for (ObjectName bean : children) {
             LOG.info("unexpected:" + bean.toString());
         }
-        TestCase.assertEquals("Unexpected bean exists!", 0, children.size());
+        Assert.assertEquals("Unexpected bean exists!", 0, children.size());
     }
 
     /**

@@ -25,6 +25,7 @@ import javax.ws.rs.core.MediaType;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -63,16 +64,15 @@ public class ExistsTest extends Base {
         ClientResponse cr = znodesr.path(path).accept(type).type(type).head();
         if (type.equals(MediaType.APPLICATION_OCTET_STREAM)
                 && expectedStatus == ClientResponse.Status.OK) {
-            assertEquals(ClientResponse.Status.NO_CONTENT,
+            Assert.assertEquals(ClientResponse.Status.NO_CONTENT,
                     cr.getClientResponseStatus());
         } else {
-            assertEquals(expectedStatus, cr.getClientResponseStatus());
+            Assert.assertEquals(expectedStatus, cr.getClientResponseStatus());
         }
     }
 
     @Test
     public void testExists() throws Exception {
-        LOG.info("STARTING " + getName());
         verify(MediaType.APPLICATION_OCTET_STREAM);
         verify(MediaType.APPLICATION_JSON);
         verify(MediaType.APPLICATION_XML);

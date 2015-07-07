@@ -31,6 +31,7 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.jersey.jaxb.ZStat;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -106,8 +107,6 @@ public class SetTest extends Base {
 
     @Test
     public void testSet() throws Exception {
-        LOG.info("STARTING " + getName());
-
         if (expectedStat != null) {
             zk.create(expectedStat.path, "initial".getBytes(), Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT);
@@ -131,24 +130,24 @@ public class SetTest extends Base {
             // TODO investigate
             cr = builder.put(ClientResponse.class, new String(data));
         }
-        assertEquals(expectedStatus, cr.getClientResponseStatus());
+        Assert.assertEquals(expectedStatus, cr.getClientResponseStatus());
 
         if (expectedStat == null) {
             return;
         }
 
         ZStat zstat = cr.getEntity(ZStat.class);
-        assertEquals(expectedStat, zstat);
+        Assert.assertEquals(expectedStat, zstat);
 
         // use out-of-band method to verify
         byte[] data = zk.getData(zstat.path, false, new Stat());
         if (data == null && this.data == null) {
             return;
         } else if (data == null || this.data == null) {
-            fail((data == null ? null : new String(data)) + " == "
+            Assert.fail((data == null ? null : new String(data)) + " == "
                     + (this.data == null ? null : new String(this.data)));
         } else {
-            assertTrue(new String(data) + " == " + new String(this.data),
+            Assert.assertTrue(new String(data) + " == " + new String(this.data),
                     Arrays.equals(data, this.data));
         }
     }

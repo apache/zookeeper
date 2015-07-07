@@ -18,13 +18,12 @@
 
 package org.apache.zookeeper.server;
 
-import junit.framework.AssertionFailedError;
-import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.ConnectionLossException;
+import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.test.ClientBase;
@@ -32,13 +31,15 @@ import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.apache.zookeeper.test.ClientTest;
 import org.apache.zookeeper.test.QuorumUtil;
 import org.apache.zookeeper.test.QuorumUtil.PeerStruct;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
  * Verify ZOOKEEPER-1277 - ensure that we handle epoch rollover correctly.
  */
-public class ZxidRolloverTest extends TestCase {
+public class ZxidRolloverTest extends ZKTestCase {
     private static final Logger LOG = Logger.getLogger(ZxidRolloverTest.class);
 
     private QuorumUtil qu;
@@ -52,9 +53,8 @@ public class ZxidRolloverTest extends TestCase {
         return zkClients[idx-1];
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        LOG.info("STARTING " + getName());
+    @Before
+    public void setUp() throws Exception {
         System.setProperty("zookeeper.admin.enableServer", "false");
 
         // set the snap count to something low so that we force log rollover
@@ -101,7 +101,7 @@ public class ZxidRolloverTest extends TestCase {
             return;
         }
         try {
-            assertNull(zk.exists("/foofoofoo-connected", false));
+            Assert.assertNull(zk.exists("/foofoofoo-connected", false));
         } catch (ConnectionLossException e) {
             // second chance...
             // in some cases, leader change in particular, the timing is
@@ -115,7 +115,7 @@ public class ZxidRolloverTest extends TestCase {
             Assert.assertTrue("Waiting for server down", ClientBase.waitForServerUp(
                     "127.0.0.1:" + peer.clientPort, ClientBase.CONNECTION_TIMEOUT));
 
-            assertNull(zk.exists("/foofoofoo-connected", false));
+            Assert.assertNull(zk.exists("/foofoofoo-connected", false));
         }
     }
 
@@ -139,8 +139,8 @@ public class ZxidRolloverTest extends TestCase {
             return;
         }
         try {
-            assertNull(zk.exists("/foofoofoo-disconnected", false));
-            fail("expected client to be disconnected");
+            Assert.assertNull(zk.exists("/foofoofoo-disconnected", false));
+            Assert.fail("expected client to be disconnected");
         } catch (KeeperException e) {
             // success
         }
@@ -195,7 +195,7 @@ public class ZxidRolloverTest extends TestCase {
             checkClientDisconnected(idx);
             try {
                 checkClientsDisconnected();
-            } catch (AssertionFailedError e) {
+            } catch (AssertionError e) {
                 // the clients may or may not have already reconnected
                 // to the recovered cluster, force a check, but ignore
             }
@@ -209,8 +209,8 @@ public class ZxidRolloverTest extends TestCase {
         zksLeader.setZxid((zksLeader.getZxid() & 0xffffffff00000000L) | 0xfffffffcL);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         LOG.info("tearDown starting");
         for (int i = 0; i < zkClients.length; i++) {
             zkClients[i].close();
@@ -244,10 +244,10 @@ public class ZxidRolloverTest extends TestCase {
     private void checkNodes(ZooKeeper zk, int start, int count) throws Exception {
         LOG.info("Validating nodes " + start + " thru " + (start + count));
         for (int i = start; i < start + count; i++) {
-            assertNotNull(zk.exists("/foo" + i, false));
+            Assert.assertNotNull(zk.exists("/foo" + i, false));
             LOG.error("Exists zxid:" + Long.toHexString(zk.exists("/foo" + i, false).getCzxid()));
         }
-        assertNull(zk.exists("/foo" + (start + count), false));
+        Assert.assertNull(zk.exists("/foo" + (start + count), false));
     }
 
     /**
@@ -305,8 +305,8 @@ public class ZxidRolloverTest extends TestCase {
         countCreated += createNodes(zk, countCreated, 10);
 
         // sanity check
-        assertTrue(countCreated > 0);
-        assertTrue(countCreated < 60);
+        Assert.assertTrue(countCreated > 0);
+        Assert.assertTrue(countCreated < 60);
     }
 
     /**
@@ -347,8 +347,8 @@ public class ZxidRolloverTest extends TestCase {
         countCreated += createNodes(zk, countCreated, 10);
 
         // sanity check
-        assertTrue(countCreated > 0);
-        assertTrue(countCreated < 60);
+        Assert.assertTrue(countCreated > 0);
+        Assert.assertTrue(countCreated < 60);
     }
 
     /**
@@ -392,8 +392,8 @@ public class ZxidRolloverTest extends TestCase {
         countCreated += createNodes(zk, countCreated, 10);
 
         // sanity check
-        assertTrue(countCreated > 0);
-        assertTrue(countCreated < 50);
+        Assert.assertTrue(countCreated > 0);
+        Assert.assertTrue(countCreated < 50);
     }
 
     /**
@@ -439,7 +439,7 @@ public class ZxidRolloverTest extends TestCase {
         countCreated += createNodes(zk, countCreated, 10);
 
         // sanity check
-        assertTrue(countCreated > 0);
-        assertTrue(countCreated < 70);
+        Assert.assertTrue(countCreated > 0);
+        Assert.assertTrue(countCreated < 70);
     }
 }
