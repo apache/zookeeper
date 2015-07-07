@@ -198,10 +198,10 @@ public class Learner {
         // Find the leader by id
         Vote current = self.getCurrentVote();
         for (QuorumServer s : self.getView().values()) {
-            // ZOOKEEPER-1846: Always recreate socket addresses for any DNS change.
-            // This fix is also related to ZOOKEEPER-1506.
-            s.recreateSocketAddresses();
             if (s.id == current.getId()) {
+                // ZOOKEEPER-1846: Always recreate socket addresses for any DNS change.
+                // This fix is also related to ZOOKEEPER-1506.
+                s.recreateSocketAddresses();
                 addr = s.addr;
                 break;
             }
