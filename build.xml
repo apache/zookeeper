@@ -1327,6 +1327,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
         <propertyref name="test.data.dir" />
         <propertyref name="log4j.configuration" />
         <propertyref name="zookeeper.DigestAuthenticationProvider.superDigest" />
+        <propertyref name="test.method" />
       </propertyset>
       <path id="junit.classpath">
         <path refid="test.java.classpath" />

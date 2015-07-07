@@ -46,6 +46,7 @@ import org.apache.zookeeper.OpResult.SetDataResult;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.SyncRequestProcessor;
+import org.apache.zookeeper.ZKParameterized;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -54,6 +55,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
+@Parameterized.UseParametersRunnerFactory(ZKParameterized.RunnerFactory.class)
 public class MultiTransactionTest extends ClientBase {
     private static final Logger LOG = Logger.getLogger(MultiTransactionTest.class);
     private ZooKeeper zk;

@@ -20,17 +20,17 @@ package org.apache.zookeeper.server.jersey;
 
 import java.io.ByteArrayInputStream;
 
-import junit.framework.TestCase;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.JUnit4ZKTestRunner;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.server.jersey.SetTest.MyWatcher;
 import org.apache.zookeeper.server.jersey.cfg.RestCfg;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.runner.RunWith;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
@@ -39,7 +39,8 @@ import com.sun.jersey.api.client.WebResource;
  * Test stand-alone server.
  * 
  */
-public class Base extends TestCase {
+@RunWith(JUnit4ZKTestRunner.class)
+public class Base {
    protected static final Logger LOG = LoggerFactory.getLogger(Base.class);
 
    protected static final String CONTEXT_PATH = "/zk";
@@ -56,8 +57,6 @@ public class Base extends TestCase {
 
    @Before
    public void setUp() throws Exception {
-       super.setUp();
-
        RestCfg cfg = new RestCfg(new ByteArrayInputStream(String.format(
                "rest.port=%s\n" + 
                "rest.endpoint.1=%s;%s\n",
@@ -75,8 +74,6 @@ public class Base extends TestCase {
 
    @After
    public void tearDown() throws Exception {
-       super.tearDown();
-
        client.destroy();
        zk.close();
        rest.stop();

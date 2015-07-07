@@ -57,7 +57,7 @@
 
     <dependency org="org.vafer" name="jdeb" rev="0.8" conf="package->master"/>
 
-    <dependency org="junit" name="junit" rev="4.9" conf="test->default"/>
+    <dependency org="junit" name="junit" rev="4.12" conf="test->default"/>
 	<dependency org="org.mockito" name="mockito-all" rev="1.8.2"
                conf="test->default"/>
     <dependency org="checkstyle" name="checkstyle" rev="5.0"

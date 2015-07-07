@@ -19,11 +19,12 @@ package org.apache.zookeeper.server.admin;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.zookeeper.ZKTestCase;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
-public class CommandResponseTest {
+public class CommandResponseTest extends ZKTestCase {
     private CommandResponse r;
 
     @Before public void setUp() throws Exception {

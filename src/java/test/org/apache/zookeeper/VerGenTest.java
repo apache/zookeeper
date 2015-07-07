@@ -36,6 +36,7 @@ import org.junit.runners.Parameterized.Parameters;
  *
  */
 @RunWith(Parameterized.class)
+@Parameterized.UseParametersRunnerFactory(ZKParameterized.RunnerFactory.class)
 public class VerGenTest extends ZKTestCase {
     @Parameters
     public static Collection<Object[]> data() {
