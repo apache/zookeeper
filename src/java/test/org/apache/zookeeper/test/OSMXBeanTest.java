@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.test;
 
+import org.apache.zookeeper.ZKTestCase;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.Before;
@@ -26,7 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import org.apache.zookeeper.server.util.OSMXBean;
 
-public class OSMXBeanTest {
+public class OSMXBeanTest extends ZKTestCase {
     
     private OSMXBean osMbean;
     private Long ofdc = 0L;

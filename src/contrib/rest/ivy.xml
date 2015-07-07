@@ -41,7 +41,7 @@
     <dependency org="com.sun.jersey" name="jersey-server" rev="1.1.5.1" />
     <dependency org="com.sun.jersey" name="jersey-json" rev="1.1.5.1" />
 
-    <dependency org="junit" name="junit" rev="4.8.1" conf="test->default"/>
+    <dependency org="junit" name="junit" rev="4.12" conf="test->default"/>
     <dependency org="com.sun.jersey" name="jersey-client" rev="1.1.5.1" conf="test->default"/>
   </dependencies>
 

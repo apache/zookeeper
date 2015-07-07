@@ -36,7 +36,7 @@
     <dependency org="org.slf4j" name="slf4j-log4j12" rev="1.6.1" transitive="false"/>
             
     <dependency org="log4j" name="log4j" rev="1.2.15" transitive="false"/>
-    <dependency org="junit" name="junit" rev="4.7" conf="test->default"/>
+    <dependency org="junit" name="junit" rev="4.12" conf="test->default"/>
         <dependency org="org.apache.rat" name="apache-rat-tasks" 
                 rev="0.6" conf="releaseaudit->default"/>
     <dependency org="commons-lang" name="commons-lang" 

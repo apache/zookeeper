@@ -29,15 +29,15 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
+import org.apache.zookeeper.ZKTestCase;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import junit.framework.TestCase;
 
-public class WatchEventWhenAutoResetTest extends TestCase {
+public class WatchEventWhenAutoResetTest extends ZKTestCase {
     protected static final Logger LOG = LoggerFactory
             .getLogger(WatchEventWhenAutoResetTest.class);
 
@@ -80,7 +80,7 @@ public class WatchEventWhenAutoResetTest extends TestCase {
         } catch (InterruptedException e) {
             // ignoring the interrupt
         } catch (TimeoutException e) {
-            fail("can not connect to " + hostPort);
+            Assert.fail("can not connect to " + hostPort);
         }
         return zk;
     }

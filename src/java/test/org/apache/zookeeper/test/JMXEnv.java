@@ -33,10 +33,10 @@ import javax.management.remote.JMXConnectorServer;
 import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXServiceURL;
 
-import junit.framework.TestCase;
 
 import org.apache.zookeeper.jmx.CommonNames;
 import org.apache.zookeeper.jmx.MBeanRegistry;
+import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,7 +121,7 @@ public class JMXEnv {
                 beans.removeAll(found);
             }
         } while ((expectedNames.length != found.size()) && (nTry < 600));
-        TestCase.assertEquals("expected " + Arrays.toString(expectedNames),
+        Assert.assertEquals("expected " + Arrays.toString(expectedNames),
                 expectedNames.length, found.size());
         return beans;
     }
@@ -144,7 +144,7 @@ public class JMXEnv {
         for (ObjectName bean : beans) {
             LOG.info("unexpected:" + bean.toString());
         }
-        TestCase.assertEquals(0, beans.size());
+        Assert.assertEquals(0, beans.size());
         return beans;
     }
     
@@ -186,7 +186,7 @@ public class JMXEnv {
             for (ObjectName bean : beans) {
                 LOG.info("bean:" + bean.toString());
             }
-            TestCase.fail(unexpectedName);
+            Assert.fail(unexpectedName);
         }
     }
 
@@ -250,7 +250,7 @@ public class JMXEnv {
                 beans.removeAll(found);
             }
         } while (expectedNames.length != found.size() && nTry < 120);
-        TestCase.assertEquals("expected " + Arrays.toString(expectedNames),
+        Assert.assertEquals("expected " + Arrays.toString(expectedNames),
                 expectedNames.length, found.size());
         return beans;
     }
@@ -296,7 +296,7 @@ public class JMXEnv {
                 }
             }
         } while (nTry < 120);
-        TestCase.fail("Failed to find bean:" + expectedName + ", attribute:"
+        Assert.fail("Failed to find bean:" + expectedName + ", attribute:"
                 + expectedAttribute);
         return value;
     }

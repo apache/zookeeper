@@ -17,13 +17,14 @@
  */
 package org.apache.jute;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 
+// TODO: introduce JuteTestCase as in ZKTestCase
 public class BinaryInputArchiveTest {
 
     @Test

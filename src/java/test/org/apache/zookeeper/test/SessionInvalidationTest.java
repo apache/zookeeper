@@ -23,7 +23,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
-import junit.framework.Assert;
 
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.ZooDefs;
@@ -33,6 +32,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.proto.ConnectRequest;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.RequestHeader;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class SessionInvalidationTest extends ClientBase {

@@ -18,17 +18,17 @@
 
 package org.apache.zookeeper;
 
-import junit.framework.TestCase;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.server.ByteBufferInputStream;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public class MultiTransactionRecordTest extends TestCase {
+public class MultiTransactionRecordTest extends ZKTestCase {
     @Test
     public void testRoundTrip() throws IOException {
         MultiTransactionRecord request = new MultiTransactionRecord();
@@ -39,8 +39,8 @@ public class MultiTransactionRecordTest extends TestCase {
 
         MultiTransactionRecord decodedRequest = codeDecode(request);
 
-        assertEquals(request, decodedRequest);
-        assertEquals(request.hashCode(), decodedRequest.hashCode());
+        Assert.assertEquals(request, decodedRequest);
+        Assert.assertEquals(request.hashCode(), decodedRequest.hashCode());
     }
 
     @Test
@@ -48,8 +48,8 @@ public class MultiTransactionRecordTest extends TestCase {
         MultiTransactionRecord request = new MultiTransactionRecord();
         MultiTransactionRecord decodedRequest = codeDecode(request);
 
-        assertEquals(request, decodedRequest);
-        assertEquals(request.hashCode(), decodedRequest.hashCode());
+        Assert.assertEquals(request, decodedRequest);
+        Assert.assertEquals(request.hashCode(), decodedRequest.hashCode());
     }
 
     private MultiTransactionRecord codeDecode(MultiTransactionRecord request) throws IOException {

@@ -18,14 +18,15 @@
 package org.apache.zookeeper.test;
 
 
+import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.common.StringUtils;
 import org.junit.Test;
 
 import java.util.Arrays;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
-public class StringUtilTest {
+public class StringUtilTest extends ZKTestCase {
 
     @Test
     public void testStrings() {

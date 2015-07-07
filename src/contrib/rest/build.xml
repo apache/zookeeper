@@ -83,6 +83,9 @@
 			target="${target.jdk}" 
 			debug="on" encoding="${build.encoding}">
 			<classpath refid="classpath" />
+			<classpath>
+			  <pathelement location="${zk.root}/build/test/classes"/>
+			</classpath>
 		</javac>
 	</target>
 	
@@ -129,6 +132,9 @@
           <classpath>
              <pathelement path="${build.test}" />
           </classpath>
+	  <classpath>
+	    <pathelement location="${zk.root}/build/test/classes"/>
+	  </classpath>
           <formatter type="${test.junit.output.format}" />
           <batchtest todir="${test.log.dir}" unless="testcase">
               <fileset dir="${test.src.dir}"
