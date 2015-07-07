@@ -17,17 +17,16 @@
  */
 package org.apache.zookeeper;
 
-import junit.framework.Assert;
-import junit.framework.TestCase;
 import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.test.ClientBase;
+import org.junit.Assert;
 import org.junit.Test;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class CustomHostProviderTest extends TestCase implements Watcher {
+public class CustomHostProviderTest extends ZKTestCase implements Watcher {
     private AtomicInteger counter = new AtomicInteger(3);
 
     private class SpecialHostProvider implements HostProvider {

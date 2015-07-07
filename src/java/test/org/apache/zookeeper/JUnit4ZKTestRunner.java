@@ -26,6 +26,8 @@ import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.Statement;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * The sole responsibility of this class is to print to the log when a test
@@ -36,6 +38,28 @@ public class JUnit4ZKTestRunner extends BlockJUnit4ClassRunner {
 
     public JUnit4ZKTestRunner(Class<?> klass) throws InitializationError {
         super(klass);
+    }
+
+    public static List<FrameworkMethod> computeTestMethodsForClass(final Class klass, final List<FrameworkMethod> defaultMethods) {
+        List<FrameworkMethod> list = defaultMethods;
+        String methodName = System.getProperty("test.method");
+        if (methodName == null) {
+            LOG.info("No test.method specified. using default methods.");
+        } else {
+            LOG.info("Picked up test.method={}", methodName);
+            try {
+                list = Arrays.asList(new FrameworkMethod(klass.getMethod(methodName)));
+            } catch (NoSuchMethodException nsme) {
+                LOG.warn("{} does not have test.method={}. failing to default methods.", klass.getName(), methodName);
+            }
+        }
+        return list;
+    }
+
+
+    @Override
+    protected List<FrameworkMethod> computeTestMethods() {
+        return computeTestMethodsForClass(getTestClass().getJavaClass(), super.computeTestMethods());
     }
 
     public static class LoggedInvokeMethod extends InvokeMethod {

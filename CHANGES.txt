@@ -143,6 +143,9 @@ BUGFIXES:
   ZOOKEEPER-2224: Four letter command hangs when network is slow
   (Arshad Mohammad via rakeshr)
 
+  ZOOKEEPER-2223: support method-level JUnit testcase
+  (Akihiro Suda via rgs)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)
 

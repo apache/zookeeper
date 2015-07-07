@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 import org.apache.jute.BinaryOutputArchive;
+import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.data.Id;
@@ -41,7 +42,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CommitProcessorConcurrencyTest {
+public class CommitProcessorConcurrencyTest extends ZKTestCase {
     protected static final Logger LOG =
             LoggerFactory.getLogger(CommitProcessorConcurrencyTest.class);
 

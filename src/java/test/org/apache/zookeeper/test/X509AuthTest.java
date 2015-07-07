@@ -39,12 +39,12 @@ import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
 
-import junit.framework.Assert;
 
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.MockServerCnxn;
 import org.apache.zookeeper.server.auth.X509AuthenticationProvider;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 

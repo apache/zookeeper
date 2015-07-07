@@ -17,11 +17,12 @@
 package org.apache.zookeeper.server;
 
 import java.util.Map;
+import org.apache.zookeeper.ZKTestCase;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-public class WatchesSummaryTest {
+public class WatchesSummaryTest extends ZKTestCase {
     private WatchesSummary s;
     @Before public void setUp() {
         s = new WatchesSummary(1, 2, 3);

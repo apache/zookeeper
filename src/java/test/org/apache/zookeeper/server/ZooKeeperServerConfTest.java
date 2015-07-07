@@ -17,11 +17,12 @@
 package org.apache.zookeeper.server;
 
 import java.util.Map;
+import org.apache.zookeeper.ZKTestCase;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-public class ZooKeeperServerConfTest {
+public class ZooKeeperServerConfTest extends ZKTestCase {
     private ZooKeeperServerConf c;
     @Before public void setUp() {
         c = new ZooKeeperServerConf(1, "a", "b", 2, 3, 4, 5, 6L);

@@ -38,8 +38,10 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.test.QuorumBase;
+import org.apache.zookeeper.ZKParameterized;
 
 @RunWith(Parameterized.class)
+@Parameterized.UseParametersRunnerFactory(ZKParameterized.RunnerFactory.class)
 public class QuorumRequestPipelineTest extends QuorumBase {
     protected ServerState serverState;
     protected final CountDownLatch callComplete = new CountDownLatch(1);

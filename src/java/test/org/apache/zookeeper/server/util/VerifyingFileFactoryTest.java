@@ -22,12 +22,13 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 
+import org.apache.zookeeper.ZKTestCase;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class VerifyingFileFactoryTest {
+public class VerifyingFileFactoryTest extends ZKTestCase {
 
     private Logger log;
 

@@ -20,11 +20,12 @@ package org.apache.zookeeper.server;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import junit.framework.Assert;
 
+import org.apache.zookeeper.ZKTestCase;
+import org.junit.Assert;
 import org.junit.Test;
 
-public class ZooKeeperThreadTest {
+public class ZooKeeperThreadTest extends ZKTestCase {
     private CountDownLatch runningLatch = new CountDownLatch(1);
 
     public class MyThread extends ZooKeeperThread {

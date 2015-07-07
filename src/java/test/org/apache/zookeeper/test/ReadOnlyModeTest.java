@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import junit.framework.Assert;
 
 import org.apache.log4j.Layout;
 import org.apache.log4j.Level;
@@ -45,6 +44,7 @@ import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
