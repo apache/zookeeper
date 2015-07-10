@@ -68,6 +68,7 @@ public class FourLetterWordsTest extends ClientBase {
         verify("srvr", "Outstanding");
         verify("cons", sid);
         verify("dump", sid);
+        verify("dirs", "size");
 
         zk.getData("/", true, null);
 
@@ -79,6 +80,7 @@ public class FourLetterWordsTest extends ClientBase {
         verify("wchs", "watching 1");
         verify("wchp", sid);
         verify("wchc", sid);
+        verify("dirs", "size");
         zk.close();
 
         verify("ruok", "imok");
@@ -102,6 +104,7 @@ public class FourLetterWordsTest extends ClientBase {
         verify("mntr", "num_alive_connections");
         verify("stat", "Connections");
         verify("srvr", "Connections");
+        verify("dirs", "size");
     }
 
     private String sendRequest(String cmd) throws IOException, SSLContextException {
