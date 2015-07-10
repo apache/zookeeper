@@ -64,6 +64,7 @@ public class FourLetterWordsQuorumTest extends QuorumBase {
             verify(hp, "srvr", "Outstanding");
             verify(hp, "cons", sid);
             verify(hp, "dump", sid);
+            verify(hp, "dirs", "size");
 
             zk.getData("/", true, null);
 
@@ -74,6 +75,7 @@ public class FourLetterWordsQuorumTest extends QuorumBase {
             verify(hp, "wchs", "watching 1");
             verify(hp, "wchp", sid);
             verify(hp, "wchc", sid);
+            verify(hp, "dirs", "size");
 
             zk.close();
 
@@ -87,6 +89,7 @@ public class FourLetterWordsQuorumTest extends QuorumBase {
             verify(hp, "wchs", "watch");
             verify(hp, "wchp", "");
             verify(hp, "wchc", "");
+            verify(hp, "dirs", "size");
 
             verify(hp, "srst", "reset");
             verify(hp, "crst", "reset");

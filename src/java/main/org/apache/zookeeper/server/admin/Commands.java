@@ -111,6 +111,7 @@ public class Commands {
         registerCommand(new CnxnStatResetCommand());
         registerCommand(new ConfCommand());
         registerCommand(new ConsCommand());
+        registerCommand(new DirsCommand());
         registerCommand(new DumpCommand());
         registerCommand(new EnvCommand());
         registerCommand(new GetTraceMaskCommand());
@@ -174,6 +175,23 @@ public class Commands {
         public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
             CommandResponse response = initializeResponse();
             response.put("connections", zkServer.getServerCnxnFactory().getAllConnectionInfo(false));
+            return response;
+        }
+    }
+
+    /**
+     * Information on ZK datadir and snapdir size in bytes
+     */
+    public static class DirsCommand extends CommandBase {
+        public DirsCommand() {
+            super(Arrays.asList("dirs"));
+        }
+
+        @Override
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+            CommandResponse response = initializeResponse();
+            response.put("datadir_size", zkServer.getDataDirSize());
+            response.put("logdir_size", zkServer.getLogDirSize());
             return response;
         }
     }

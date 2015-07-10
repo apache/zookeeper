@@ -118,6 +118,13 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
         zks.setMaxSessionTimeout(max);
     }
 
+    public long getDataDirSize() {
+        return zks.getDataDirSize();
+    }
+
+    public long getLogDirSize() {
+        return zks.getLogDirSize();
+    }
     
     public long getPacketsReceived() {
         return zks.serverStats().getPacketsReceived();

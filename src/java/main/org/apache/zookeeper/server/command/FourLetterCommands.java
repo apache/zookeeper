@@ -50,6 +50,13 @@ public class FourLetterCommands {
      * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
      * Zk Admin</a>. this link is for all the commands.
      */
+    public final static int dirsCmd =
+        ByteBuffer.wrap("dirs".getBytes()).getInt();
+
+    /*
+     * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
+     * Zk Admin</a>. this link is for all the commands.
+     */
     public final static int dumpCmd =
         ByteBuffer.wrap("dump".getBytes()).getInt();
 
@@ -152,6 +159,7 @@ public class FourLetterCommands {
         cmd2String.put(confCmd, "conf");
         cmd2String.put(consCmd, "cons");
         cmd2String.put(crstCmd, "crst");
+        cmd2String.put(dirsCmd, "dirs");
         cmd2String.put(dumpCmd, "dump");
         cmd2String.put(enviCmd, "envi");
         cmd2String.put(getTraceMaskCmd, "gtmk");
