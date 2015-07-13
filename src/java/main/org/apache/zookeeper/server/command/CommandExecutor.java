@@ -57,6 +57,8 @@ public class CommandExecutor {
             command = new StatResetCommand(pwriter, serverCnxn);
         } else if (commandCode == FourLetterCommands.crstCmd) {
             command = new CnxnStatResetCommand(pwriter, serverCnxn);
+        } else if (commandCode == FourLetterCommands.dirsCmd) {
+            command = new DirsCommand(pwriter, serverCnxn);
         } else if (commandCode == FourLetterCommands.dumpCmd) {
             command = new DumpCommand(pwriter, serverCnxn);
         } else if (commandCode == FourLetterCommands.statCmd

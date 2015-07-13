@@ -1639,6 +1639,16 @@ server.3=zoo3:2888:3888</programlisting>
           </varlistentry>
 
           <varlistentry>
+            <term>dirs</term>
+
+            <listitem>
+              <para><emphasis role="bold">New in 3.5.1:</emphasis>
+                Shows the total size of snapshot and log files in bytes
+              </para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
             <term>wchp</term>
 
             <listitem>
