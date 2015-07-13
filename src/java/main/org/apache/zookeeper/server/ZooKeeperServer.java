@@ -164,7 +164,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * creates a zookeeperserver instance.
      * @param txnLogFactory the file transaction snapshot logging class
      * @param tickTime the ticktime for the server
-     * @param treeBuilder the datatree builder
      * @throws IOException
      */
     public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime) throws IOException {
@@ -181,9 +180,13 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         pwriter.print("secureClientPort=");
         pwriter.println(getSecureClientPort());
         pwriter.print("dataDir=");
-        pwriter.println(zkDb.snapLog.getSnapDir().getAbsolutePath());
-        pwriter.print("dataLogDir=");
         pwriter.println(zkDb.snapLog.getDataDir().getAbsolutePath());
+        pwriter.print("dataDirSize=");
+        pwriter.println(getDataDirSize());
+        pwriter.print("dataLogDir=");
+        pwriter.println(zkDb.snapLog.getSnapDir().getAbsolutePath());
+        pwriter.print("dataLogSize=");
+        pwriter.println(getLogDirSize());
         pwriter.print("tickTime=");
         pwriter.println(getTickTime());
         pwriter.print("maxClientCnxns=");
@@ -302,6 +305,36 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             // so we need to exit
             System.exit(10);
         }
+    }
+
+    @Override
+    public long getDataDirSize() {
+        if (zkDb == null) {
+            return 0L;
+        }
+        File path = zkDb.snapLog.getDataDir();
+        return getDirSize(path);
+    }
+
+    @Override
+    public long getLogDirSize() {
+        if (zkDb == null) {
+            return 0L;
+        }
+        File path = zkDb.snapLog.getSnapDir();
+        return getDirSize(path);
+    }
+
+    private long getDirSize(File file) {
+        long size = 0L;
+        if (file.isDirectory()) {
+            for (File f: file.listFiles()) {
+                size += getDirSize(f);
+            }
+        } else {
+            size = file.length();
+        }
+        return size;
     }
 
     public long getZxid() {
@@ -591,9 +624,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             int sessionTimeout) throws IOException {
         boolean rc = sessionTracker.touchSession(sessionId, sessionTimeout);
         if (LOG.isTraceEnabled()) {
-            ZooTrace.logTraceMessage(LOG,ZooTrace.SESSION_TRACE_MASK,
-                                     "Session 0x" + Long.toHexString(sessionId) +
-                    " is valid: " + rc);
+            ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
+                    "Session 0x" + Long.toHexString(sessionId) +
+                            " is valid: " + rc);
         }
         finishSessionInit(cnxn, rc);
     }

@@ -40,6 +40,8 @@ public class ServerStats {
         public long getLastProcessedZxid();
         public String getState();
         public int getNumAliveConnections();
+        public long getDataDirSize();
+        public long getLogDirSize();
     }
     
     public ServerStats(Provider provider) {
@@ -68,6 +70,14 @@ public class ServerStats {
     
     public long getLastProcessedZxid(){
         return provider.getLastProcessedZxid();
+    }
+
+    public long getDataDirSize() {
+        return provider.getDataDirSize();
+    }
+
+    public long getLogDirSize() {
+        return provider.getLogDirSize();
     }
     
     synchronized public long getPacketsReceived() {
