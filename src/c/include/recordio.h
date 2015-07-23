@@ -73,6 +73,11 @@ void close_buffer_iarchive(struct iarchive **ia);
 char *get_buffer(struct oarchive *);
 int get_buffer_len(struct oarchive *);
 
+// airtime: start
+#ifdef htonll  // Mac's arpa/inet.h defines this
+# undef htonll
+#endif  // htonll
+// airtime: end
 int64_t htonll(int64_t v);
 
 #ifdef __cplusplus
