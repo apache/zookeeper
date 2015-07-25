@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
 
+using System.Threading.Tasks;
 using NUnit.Framework;
 using org.apache.utils;
 using org.apache.zookeeper.data;
@@ -513,9 +514,10 @@ namespace org.apache.zookeeper.test
 		{
             internal readonly ManualResetEventSlim triggered = new ManualResetEventSlim(false);
 
-			public override void process(WatchedEvent @event)
+			public override Task process(WatchedEvent @event)
 			{
 				triggered.Set();
+                return CompletedTask;
 			}
 		}
 		private class SyncCallback 

@@ -18,6 +18,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -28,7 +29,7 @@ namespace org.apache.utils
     /// <summary>
     /// client configuration parameters.
     /// </summary>
-    public class ZooKeeperConfiguration
+    internal class ZooKeeperConfiguration
     {
         private string SourceFile { get; set; }
 
@@ -38,7 +39,8 @@ namespace org.apache.utils
 
         const string dateFormat = "yyyy-MM-dd-HH.mm.ss.fffZ";
 
-        public readonly string TraceFileName = String.Format("ZK.{0}.{1}.log", Dns.GetHostName(), DateTime.UtcNow.ToString(dateFormat));
+        public readonly string TraceFileName = string.Format(CultureInfo.InvariantCulture, "ZK.{0}.{1}.log", Dns.GetHostName(),
+            DateTime.UtcNow.ToString(dateFormat, CultureInfo.InvariantCulture));
 
         /// <summary>
         /// </summary>
@@ -96,6 +98,7 @@ namespace org.apache.utils
             }
         }
 
+        /// <summary/>
         public override string ToString()
         {
             var sb = new StringBuilder();

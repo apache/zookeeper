@@ -16,14 +16,13 @@
 // limitations under the License.
 // </summary>
 
-using System.Threading;
-
+using System.Threading.Tasks;
 namespace org.apache.zookeeper.recipes.@lock
 {
 
 	/// <summary>
 	/// A callback object which can be used for implementing retry-able operations in the 
-	/// <seealso cref="org.apache.zookeeper.recipes.lock.ProtocolSupport"/> class
+	/// <seealso cref="ProtocolSupport"/> class
 	/// 
 	/// </summary>
 	public interface ZooKeeperOperation
@@ -35,8 +34,7 @@ namespace org.apache.zookeeper.recipes.@lock
 		/// </summary>
 		/// <returns> the result of the operation or null </returns>
 		/// <exception cref="KeeperException"> </exception>
-		/// <exception cref="ThreadInterruptedException"> </exception>
-		bool execute();
+		Task<bool> execute();
 	}
 
 }

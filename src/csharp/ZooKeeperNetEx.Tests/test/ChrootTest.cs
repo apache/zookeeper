@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
 using NUnit.Framework;
 using org.apache.utils;
 
@@ -35,11 +36,12 @@ namespace org.apache.zookeeper.test
 			{
 				this.path = path;
 			}
-			public override void process(WatchedEvent @event)
+			public override Task process(WatchedEvent @event)
 			{
 				Console.WriteLine("latch:" + path + " " + @event.getPath());
 				this.eventPath = @event.getPath();
 				latch.Set();
+			    return CompletedTask;
 			}
 
 

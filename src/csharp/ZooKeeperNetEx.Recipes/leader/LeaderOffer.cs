@@ -22,7 +22,7 @@ namespace org.apache.zookeeper.recipes.leader {
     ///     A leader offer is a numeric id / path pair. The id is the sequential node id
     ///     assigned by ZooKeeper where as the path is the absolute path to the ZNode.
     /// </summary>
-    public sealed class LeaderOffer {
+    internal sealed class LeaderOffer {
         public string HostName;
         public int Id;
         public string NodePath;
@@ -45,7 +45,9 @@ namespace org.apache.zookeeper.recipes.leader {
         ///     Compare two instances of <seealso cref="LeaderOffer" /> using only the {code}id{code}
         ///     member.
         /// </summary>
-        public sealed class IdComparator : IComparer<LeaderOffer> {
+        internal sealed class IdComparator : IComparer<LeaderOffer>
+        {
+            [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods")]
             public int Compare(LeaderOffer o1, LeaderOffer o2) {
                 return o1.Id.CompareTo(o2.Id);
             }

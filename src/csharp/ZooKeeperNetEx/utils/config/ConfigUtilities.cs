@@ -23,7 +23,7 @@ namespace org.apache.utils {
     /// <summary>
     ///     Utilities class for handling configuration.
     /// </summary>
-    public static class ConfigUtilities {
+    internal static class ConfigUtilities {
 
         internal static void ParseTracing(ZooKeeperConfiguration config, XmlElement root) {
             if (root.HasAttribute("DefaultTraceLevel")) {

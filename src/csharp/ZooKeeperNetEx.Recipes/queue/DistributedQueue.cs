@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading;
+using System.Globalization;
 
+using System.Threading.Tasks;
 using org.apache.zookeeper.data;
 using org.apache.utils;
 // 
@@ -57,27 +58,27 @@ namespace org.apache.zookeeper.recipes.queue
 		/// Returns a Map of the children, ordered by id. </summary>
 		/// <param name="watcher"> optional watcher on getChildren() operation. </param>
 		/// <returns> map from id to child name for all children </returns>
-		private SortedDictionary<long, string> getOrderedChildren(Watcher watcher)
+		private async Task<SortedDictionary<long, string>> getOrderedChildren(Watcher watcher)
 		{
 			SortedDictionary<long, string> orderedChildren = new SortedDictionary<long, string>();
 
-		    IList<string> childNames = zookeeper.getChildren(dir, watcher);
+            List<string> childNames = (await zookeeper.getChildrenAsync(dir, watcher).ConfigureAwait(false)).Children;
             
 			foreach (string childName in childNames)
 			{
 				try
 				{
 					//Check format
-					if (!childName.StartsWith(prefix))
-					{
-						LOG.warn("Found child node with improper name: " + childName);
-						continue;
-					}
-					string suffix = childName.Substring(prefix.Length);
-					long childId = Convert.ToInt64(suffix);
+				    if (!childName.StartsWith(prefix, StringComparison.Ordinal))
+                    {
+				        LOG.warn("Found child node with improper name: " + childName);
+				        continue;
+				    }
+				    string suffix = childName.Substring(prefix.Length);
+				    long childId = long.Parse(suffix, CultureInfo.InvariantCulture);
 					orderedChildren[childId] = childName;
 				}
-				catch (System.FormatException e)
+				catch (FormatException e)
 				{
 					LOG.warn("Found child node with improper format : " + childName + " " + e,e);
 				}
@@ -91,8 +92,7 @@ namespace org.apache.zookeeper.recipes.queue
 		/// <returns> the data at the head of the queue. </returns>
 		/// <exception cref="InvalidOperationException"> </exception>
 		/// <exception cref="KeeperException"> </exception>
-		/// <exception cref="ThreadInterruptedException"> </exception>
-		public byte[] element()
+		public async Task<byte[]> element()
 		{
 		    // element, take, and remove follow the same pattern.
 			// We want to return the child node with the smallest sequence number.
@@ -104,7 +104,7 @@ namespace org.apache.zookeeper.recipes.queue
 			    SortedDictionary<long, string> orderedChildren;
 			    try
 				{
-                    orderedChildren = getOrderedChildren(null);
+                    orderedChildren = await getOrderedChildren(null).ConfigureAwait(false);
 				}
 				catch (KeeperException.NoNodeException)
 				{
@@ -121,7 +121,7 @@ namespace org.apache.zookeeper.recipes.queue
 					{
 						try
 						{
-							return zookeeper.getData(dir + "/" + headNode, false, null);
+                            return (await zookeeper.getDataAsync(dir + "/" + headNode).ConfigureAwait(false)).Data;
 						}
 						catch (KeeperException.NoNodeException)
 						{
@@ -139,8 +139,7 @@ namespace org.apache.zookeeper.recipes.queue
 		/// <returns> The former head of the queue </returns>
 		/// <exception cref="InvalidOperationException"> </exception>
 		/// <exception cref="KeeperException"> </exception>
-		/// <exception cref="ThreadInterruptedException"> </exception>
-		public byte[] remove()
+		public async Task<byte[]> remove()
 		{
 		    // Same as for element.  Should refactor this.
 			while (true)
@@ -148,7 +147,7 @@ namespace org.apache.zookeeper.recipes.queue
 			    SortedDictionary<long, string> orderedChildren;
 			    try
 				{
-					orderedChildren = getOrderedChildren(null);
+                    orderedChildren = await getOrderedChildren(null).ConfigureAwait(false);
 				}
 				catch (KeeperException.NoNodeException)
 				{
@@ -164,8 +163,8 @@ namespace org.apache.zookeeper.recipes.queue
 					string path = dir + "/" + headNode;
 					try
 					{
-						byte[] data = zookeeper.getData(path, false, null);
-						zookeeper.delete(path, -1);
+                        byte[] data = (await zookeeper.getDataAsync(path).ConfigureAwait(false)).Data;
+                        await zookeeper.deleteAsync(path).ConfigureAwait(false);
 						return data;
 					}
 					catch (KeeperException.NoNodeException)
@@ -179,22 +178,23 @@ namespace org.apache.zookeeper.recipes.queue
 
 		private sealed class LatchChildWatcher : Watcher
 		{
-		    private readonly ManualResetEventSlim latch;
+		    private readonly AsyncManualResetEvent latch;
 
 			public LatchChildWatcher()
 			{
-                latch = new ManualResetEventSlim(false);
+                latch = new AsyncManualResetEvent();
 			}
 
-			public override void process(WatchedEvent @event)
+			public override Task process(WatchedEvent @event)
 			{
 				LOG.debug("Watcher fired on path: " + @event.getPath() + " state: " + @event.getState() + " type " + @event.get_Type());
 				latch.Set();
+			    return CompletedTask;
 			}
 
-			public void @await()
+			public Task getTask()
 			{
-				latch.Wait();
+				return latch.WaitAsync();
 			}
 		}
 
@@ -203,26 +203,28 @@ namespace org.apache.zookeeper.recipes.queue
 		/// <returns> The former head of the queue </returns>
 		/// <exception cref="InvalidOperationException"> </exception>
 		/// <exception cref="KeeperException"> </exception>
-		/// <exception cref="ThreadInterruptedException"> </exception>
-		public byte[] take()
+		public async Task<byte[]> take()
 		{
 		    // Same as for element.  Should refactor this.
 			while (true)
 			{
 				LatchChildWatcher childWatcher = new LatchChildWatcher();
-			    SortedDictionary<long, string> orderedChildren;
+			    SortedDictionary<long, string> orderedChildren = null;
+			    bool isNoNode = false;
 			    try
 				{
-					orderedChildren = getOrderedChildren(childWatcher);
+                    orderedChildren = await getOrderedChildren(childWatcher).ConfigureAwait(false);
 				}
-				catch (KeeperException.NoNodeException)
-				{
-					zookeeper.create(dir, new byte[0], acl, CreateMode.PERSISTENT);
-					continue;
+				catch (KeeperException.NoNodeException) {
+				    isNoNode = true;
 				}
+			    if (isNoNode) {
+                    await zookeeper.createAsync(dir, new byte[0], acl, CreateMode.PERSISTENT).ConfigureAwait(false);
+                    continue;
+			    }
 				if (orderedChildren.Count == 0)
 				{
-					childWatcher.@await();
+                    await childWatcher.getTask().ConfigureAwait(false);
 					continue;
 				}
 
@@ -231,8 +233,8 @@ namespace org.apache.zookeeper.recipes.queue
 					string path = dir + "/" + headNode;
 					try
 					{
-						byte[] data = zookeeper.getData(path, false, null);
-						zookeeper.delete(path, -1);
+						byte[] data = (await zookeeper.getDataAsync(path).ConfigureAwait(false)).Data;
+                        await zookeeper.deleteAsync(path).ConfigureAwait(false);
 						return data;
 					}
 					catch (KeeperException.NoNodeException)
@@ -247,19 +249,20 @@ namespace org.apache.zookeeper.recipes.queue
 		/// Inserts data into queue. </summary>
 		/// <param name="data"> </param>
 		/// <returns> true if data was successfully added </returns>
-		public bool offer(byte[] data)
+		public async Task<bool> offer(byte[] data)
 		{
 			for (;;)
-			{
+            {
 				try
 				{
-					zookeeper.create(dir + "/" + prefix, data, acl, CreateMode.PERSISTENT_SEQUENTIAL);
+					await zookeeper.createAsync(dir + "/" + prefix, data, acl, CreateMode.PERSISTENT_SEQUENTIAL).ConfigureAwait(false);
 					return true;
 				}
-				catch (KeeperException.NoNodeException)
-				{
-					zookeeper.create(dir, new byte[0], acl, CreateMode.PERSISTENT);
+				catch (KeeperException.NoNodeException) 
+                {
+				
 				}
+			    await zookeeper.createAsync(dir, new byte[0], acl, CreateMode.PERSISTENT).ConfigureAwait(false);
 			}
 
 		}
@@ -268,12 +271,11 @@ namespace org.apache.zookeeper.recipes.queue
 		/// Returns the data at the first element of the queue, or null if the queue is empty. </summary>
 		/// <returns> data at the first element of the queue, or null. </returns>
 		/// <exception cref="KeeperException"> </exception>
-		/// <exception cref="ThreadInterruptedException"> </exception>
-		public byte[] peek()
+		public async Task<byte[]> peek()
 		{
 			try
 			{
-				return element();
+                return await element().ConfigureAwait(false);
 			}
 			catch (InvalidOperationException)
 			{
@@ -286,21 +288,16 @@ namespace org.apache.zookeeper.recipes.queue
 		/// Attempts to remove the head of the queue and return it. Returns null if the queue is empty. </summary>
 		/// <returns> Head of the queue or null. </returns>
 		/// <exception cref="KeeperException"> </exception>
-		/// <exception cref="ThreadInterruptedException"> </exception>
-		public byte[] poll()
+		public async Task<byte[]> poll()
 		{
 			try
 			{
-				return remove();
+                return await remove().ConfigureAwait(false);
 			}
 			catch (InvalidOperationException)
 			{
 				return null;
 			}
 		}
-
-
-
 	}
-
 }

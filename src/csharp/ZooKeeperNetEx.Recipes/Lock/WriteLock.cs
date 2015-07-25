@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading;
-
+using System.Threading.Tasks;
 using org.apache.zookeeper.data;
 using org.apache.utils;
 
@@ -37,6 +36,8 @@ namespace org.apache.zookeeper.recipes.@lock
 	{
 		private static readonly TraceLogger LOG = TraceLogger.GetLogger(typeof(WriteLock));
 
+	    private readonly AsyncLock lockable = new AsyncLock();
+
 		private readonly string dir;
 	    private ZNodeName idName;
 		private string ownerId;
@@ -58,7 +59,7 @@ namespace org.apache.zookeeper.recipes.@lock
 			{
 				m_acl = acls;
 			}
-			this.zop = new LockZooKeeperOperation(this);
+			zop = new LockZooKeeperOperation(this);
 		}
 
 		/// <summary>
@@ -75,9 +76,9 @@ namespace org.apache.zookeeper.recipes.@lock
 	    /// <summary>
 	    /// return the current locklistener </summary>
 	    /// <returns> the locklistener </returns>
-	    public void setLockListener(LockListener lockListener) {
-	        lock (this) {
-	            this.callback = lockListener;
+	    public async Task setLockListener(LockListener lockListener) {
+	        using(await lockable.LockAsync()) {
+	            callback = lockListener;
 	        }
 	    }
 
@@ -87,11 +88,10 @@ namespace org.apache.zookeeper.recipes.@lock
 		/// you no longer require the lock. this also 
 		/// removes your request in the queue for locking
 		/// in case you do not already hold the lock. </summary>
-		public void unlock()
+		public async Task unlock()
 		{
-			lock (this)
+			using(await lockable.LockAsync())
 			{
-        
 				if (!Closed && Id != null)
 				{
 					// we don't need to retry this operation in the case of failure
@@ -99,15 +99,8 @@ namespace org.apache.zookeeper.recipes.@lock
 					// this process when closing if we cannot reconnect to ZK
 					try
 					{
-        
 						ZooKeeperOperation zopdel = new ZooKeeperOperationAnonymousInnerClassHelper(this);
-						zopdel.execute();
-					}
-					catch (ThreadInterruptedException e)
-					{
-						LOG.warn("Caught: " + e, e);
-						//set that we have been interrupted.
-					   Thread.CurrentThread.Interrupt();
+						await zopdel.execute();
 					}
 					catch (KeeperException.NoNodeException)
 					{
@@ -139,9 +132,9 @@ namespace org.apache.zookeeper.recipes.@lock
 				this.outerInstance = outerInstance;
 			}
 
-			public bool execute()
+			public async Task<bool> execute()
 			{
-				outerInstance.zookeeper.delete(outerInstance.Id, -1);
+				await outerInstance.zookeeper.deleteAsync(outerInstance.Id);
 				return true;
 			}
 		}
@@ -160,13 +153,13 @@ namespace org.apache.zookeeper.recipes.@lock
 				this.outerInstance = outerInstance;
 			}
 
-			public override void process(WatchedEvent @event)
+			public override async Task process(WatchedEvent @event)
 			{
 				// lets either become the leader or watch the new/updated node
 				LOG.debug("Watcher fired on path: " + @event.getPath() + " state: " + @event.getState() + " type " + @event.get_Type());
 				try
 				{
-					outerInstance.Lock();
+					await outerInstance.Lock();
 				}
 				catch (Exception e)
 				{
@@ -196,10 +189,9 @@ namespace org.apache.zookeeper.recipes.@lock
 			/// <param name="zookeeper"> teh zookeeper client </param>
 			/// <param name="dir"> the dir paretn </param>
 			/// <exception cref="KeeperException"> </exception>
-			/// <exception cref="ThreadInterruptedException"> </exception>
-			private void findPrefixInChildren(string prefix, ZooKeeper zookeeper, string dir)
+			private async Task findPrefixInChildren(string prefix, ZooKeeper zookeeper, string dir)
 			{
-				IList<string> names = zookeeper.getChildren(dir, false);
+				IList<string> names = (await zookeeper.getChildrenAsync(dir)).Children;
 				foreach (string name in names)
 				{
 					if (name.StartsWith(prefix, StringComparison.Ordinal))
@@ -214,7 +206,7 @@ namespace org.apache.zookeeper.recipes.@lock
 				}
 				if (outerInstance.Id == null)
 				{
-					outerInstance.Id = zookeeper.create(dir + "/" + prefix, outerInstance.data, outerInstance.Acl, CreateMode.EPHEMERAL_SEQUENTIAL);
+					outerInstance.Id = await zookeeper.createAsync(dir + "/" + prefix, outerInstance.data, outerInstance.Acl, CreateMode.EPHEMERAL_SEQUENTIAL);
 
                     if (LOG.isDebugEnabled())
 					{
@@ -228,7 +220,7 @@ namespace org.apache.zookeeper.recipes.@lock
 			/// the command that is run and retried for actually 
 			/// obtaining the lock </summary>
 			/// <returns> if the command was successful or not </returns>
-			public bool execute()
+			public async Task<bool> execute()
 			{
 				do
 				{
@@ -238,12 +230,12 @@ namespace org.apache.zookeeper.recipes.@lock
 						string prefix = "x-" + sessionId + "-";
 						// lets try look up the current ID if we failed 
 						// in the middle of creating the znode
-						findPrefixInChildren(prefix, outerInstance.zookeeper, outerInstance.dir);
+						await findPrefixInChildren(prefix, outerInstance.zookeeper, outerInstance.dir);
 						outerInstance.idName = new ZNodeName(outerInstance.Id);
 					}
 					if (outerInstance.Id != null)
 					{
-						IList<string> names = outerInstance.zookeeper.getChildren(outerInstance.dir, false);
+						List<string> names = (await outerInstance.zookeeper.getChildrenAsync(outerInstance.dir).ConfigureAwait(false)).Children;
 						if (names.Count == 0)
 						{
 							LOG.warn("No children in: " + outerInstance.dir + " when we've just " + "created one! Lets recreate it...");
@@ -274,7 +266,7 @@ namespace org.apache.zookeeper.recipes.@lock
 								{
 									LOG.debug("watching less than me node: " + outerInstance.lastChildId);
 								}
-								Stat stat = outerInstance.zookeeper.exists(outerInstance.lastChildId, new LockWatcher(outerInstance));
+								Stat stat = await outerInstance.zookeeper.existsAsync(outerInstance.lastChildId, new LockWatcher(outerInstance));
 								if (stat != null)
 								{
 									return false;
@@ -308,17 +300,17 @@ namespace org.apache.zookeeper.recipes.@lock
 		/// acquired. Note that the exclusive lock may be acquired some time later after
 		/// this method has been invoked due to the current lock owner going away.
 		/// </summary>
-		public bool Lock()
+		public async Task<bool> Lock()
 		{
-			lock (this)
+            using(await lockable.LockAsync())
 			{
 				if (Closed)
 				{
 					return false;
 				}
-				ensurePathExists(dir);
+				await ensurePathExists(dir);
         
-				return retryOperation(zop);
+				return await retryOperation(zop);
 			}
 		}
 

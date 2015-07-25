@@ -103,7 +103,7 @@ namespace org.apache.zookeeper
 			    }
 				catch(Exception e)
 				{
-					throw new EndOfStreamException("Unable to read additional data from server sessionid 0x" + sessionId.ToString("x") + ", likely server has closed socket",e);
+					throw new EndOfStreamException("Unable to read additional data from server sessionid 0x" + sessionId.ToHexString() + ", likely server has closed socket",e);
 				}
 				if (!incomingBuffer.hasRemaining())
 				{
@@ -177,16 +177,8 @@ namespace org.apache.zookeeper
 					}
 					else if (!initialized && p != null && !p.bb.hasRemaining())
 					{
-						// On initial connection, write the complete connect request
-						// packet, but then disable further writes until after
-						// receiving a successful connection response.  If the
-						// session is expired, then the server sends the expiration
-						// response and immediately closes its end of the socket.  If
-						// the client is simultaneously writing on its end, then the
-						// TCP stack may choose to abort with RST, in which case the
-						// client would never receive the session expired event.  See
-						// http://docs.oracle.com/javase/6/docs/technotes/guides/net/articles/connection_release.html
-						disableWrite();
+                        p.bb.Stream.Dispose();
+                        disableWrite();
 					}
 					else
 					{
@@ -260,10 +252,11 @@ namespace org.apache.zookeeper
 		}
 
 
-	    /// <summary>
-	    /// create a socket channel. </summary>
-	    /// <returns> the created socket channel </returns>
-	    private static Socket createSock()
+        /// <summary>
+        /// create a socket channel. </summary>
+        /// <returns> the created socket channel </returns>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope")]
+        private static Socket createSock()
 	    {
 			Socket sock=new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 			sock.Blocking = false;
@@ -288,6 +281,7 @@ namespace org.apache.zookeeper
 	        }
 		}
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope")]
         internal override void connect(DnsEndPoint addr)
 		{
 			Socket sock = createSock();
@@ -459,6 +453,12 @@ namespace org.apache.zookeeper
 	    {
             get { return connectingState.TrySetValue(PENDINGCONNECTASYNC, CONNECTDONE); }
 	    }
-	}
+
+        internal override void close() {
+            base.close();
+            connectEventArgs.Dispose();
+            receiveEventArgs.Dispose();
+        }
+    }
 
 }

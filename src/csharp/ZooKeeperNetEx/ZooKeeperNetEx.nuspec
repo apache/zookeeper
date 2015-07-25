@@ -1,25 +1,33 @@
 <?xml version="1.0"?>
-<package >
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
-    <id>ZooKeeperNetEx</id>
-    <version>3.4.6.1001</version>
-    <title>.Net client for ZK server 3.4.6</title>
+    <id>$id$</id>
+    <version>$version$</version>
+    <title>Apache ZooKeeper .NET async Client</title>
     <authors>Shay Hazor</authors>
     <owners>Shay Hazor</owners>
-	  <summary>.Net async client for ZooKeeper server 3.4.6</summary>
+    <summary>A .NET async Client for ZooKeeper v3.4.6.</summary>
     <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
-    <projectUrl>https://github.com/shayhatsor/zookeeper/tree/CSharp</projectUrl>
-    <iconUrl>http://zookeeper.apache.org/images/zookeeper_small.gif</iconUrl>
+    <projectUrl>https://github.com/shayhatsor/zookeeper</projectUrl>
+    <iconUrl>https://ccdce73789835b39c0952535276de3b7772f802f.googledrive.com/host/0B_hNtILvKRsifnpVRnp4NVRKcHltY05FSGM2bzg5ZGNaVHRqcW9GVFJnWjczSFUtNk40OTA/zookeeper.bmp</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>this client is for latest stable version of ZooKeeper, which is 3.4.6
-the client is Task based async and the code is 100% CoreCLR compliant. 
-As soon as CoreCLR/FX will be out, i'll post a nuget.
-    </description>
-    <releaseNotes>
+    <description>A .NET async Client fully compliant with ZooKeeper v3.4.6, supporting all features. Compatible with the Task-based Asynchronous Pattern (async/await), allowing fully asynchronous operation. CLS compliant for consumption from any .NET language and CoreCLR future-proof (100% compatible in Microsoft .NET Portability Analyzer). A great measure has been taken to follow the logic of the official Java client. In fact, the code is almost identical. Thus allowing easy evolution alongside the Java version. </description>
+    
+    <releaseNotes>This project is actively maintained at: https://github.com/shayhatsor/zookeeper
+
+Please feel free to open an issue or ask a question there. A CoreCLR release is planned when a non-prerelease version of .NET Core is made available.
+
+
 Known limitations:
-No support for system properties (currently the defaults are used).
+
+No support for system properties (currently the defaults are used). 
 No SASL support</releaseNotes>
-  <copyright>Shay Hazor - Copyright 2015</copyright>
-	<tags>Apache ZooKeeper .NET C# 3.4.6 client async 4.5 zk</tags>
+    <copyright>Shay Hazor - Copyright 2015</copyright>
+    <tags>apache zookeeper Apache ZooKeeper .NET .Net client async zk CLSCompliant</tags>
   </metadata>
+  	<files>
+		<file src="bin\Debug.Net4.6\ZooKeeperNetEx.dll" target="lib\net46" /> 
+		<file src="bin\Debug.Net4.6\ZooKeeperNetEx.pdb" target="lib\net46" /> 
+		<file src="bin\Debug.Net4.6\ZooKeeperNetEx.xml" target="lib\net46" /> 
+	</files>
 </package>

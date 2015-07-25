@@ -20,25 +20,31 @@ using org.apache.utils;
 
 namespace org.apache.zookeeper
 {
+    /// <summary>
+    /// The type of node creation
+    /// </summary>
     public sealed class CreateMode
     {
-        /**
-     * The znode will not be automatically deleted upon client's disconnect.
-     */
+        /// <summary>
+        /// The znode will not be automatically deleted upon client's disconnect.
+        /// </summary>
         public static readonly CreateMode PERSISTENT = new CreateMode(0, false, false);
-        /**
-    * The znode will not be automatically deleted upon client's disconnect,
-    * and its name will be appended with a monotonically increasing number.
-    */
+
+        /// <summary>
+        /// The znode will not be automatically deleted upon client's disconnect,
+        /// and its name will be appended with a monotonically increasing number.
+        /// </summary>
         public static readonly CreateMode PERSISTENT_SEQUENTIAL = new CreateMode(2, false, true);
-        /**
-     * The znode will be deleted upon the client's disconnect.
-     */
+
+        /// <summary>
+        /// The znode will be deleted upon the client's disconnect.
+        /// </summary>
         public static readonly CreateMode EPHEMERAL = new CreateMode(1, true, false);
-        /**
-     * The znode will be deleted upon the client's disconnect, and its name
-     * will be appended with a monotonically increasing number.
-     */
+        
+        /// <summary>
+        /// The znode will be deleted upon the client's disconnect, and its name
+        /// will be appended with a monotonically increasing number.
+        /// </summary>
         public static readonly CreateMode EPHEMERAL_SEQUENTIAL = new CreateMode(3, true, true);
 
         private static readonly TraceLogger LOG = TraceLogger.GetLogger(typeof(CreateMode));
@@ -54,17 +60,25 @@ namespace org.apache.zookeeper
             this.sequential = sequential;
         }
 
+        /// <summary>
+        /// Determines whether this instance is ephemeral.
+        /// </summary>
+        /// <returns></returns>
         public bool isEphemeral()
         {
             return ephemeral;
         }
 
+        /// <summary>
+        /// Determines whether this instance is sequential.
+        /// </summary>
+        /// <returns></returns>
         public bool isSequential()
         {
             return sequential;
         }
 
-        public int toFlag()
+        internal int toFlag()
         {
             return flag;
         }
@@ -72,7 +86,8 @@ namespace org.apache.zookeeper
         /**
      * Map an integer value to a CreateMode value
      */
-        public static CreateMode fromFlag(int flag)
+
+        internal static CreateMode fromFlag(int flag)
         {
             switch (flag)
             {

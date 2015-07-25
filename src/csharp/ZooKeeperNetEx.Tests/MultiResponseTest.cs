@@ -54,7 +54,7 @@ namespace org.apache.zookeeper
             Assert.assertEquals(result.GetHashCode(), decodedResult.GetHashCode());
 		}
 
-		private MultiResponse codeDecode(MultiResponse request)
+		private static MultiResponse codeDecode(MultiResponse request)
 		{
             var ms = new MemoryStream();
             BigEndianBinaryWriter baos = new BigEndianBinaryWriter(ms);

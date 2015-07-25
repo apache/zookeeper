@@ -30,7 +30,7 @@ namespace org.apache.utils
     /// The TraceLogger class is a convenient wrapper around the .Net Trace class.
     /// It provides more flexible configuration than the Trace class.
     /// </summary>
-    public class TraceLogger
+    internal class TraceLogger
     {
         internal static readonly string[] SeverityTable = { "OFF  ", "ERROR  ", "WARNING", "INFO   ", "VERBOSE "};
 
@@ -174,7 +174,7 @@ namespace org.apache.utils
                 {
                     foreach (var o in traceLevelOverrides)
                     {
-                        if (source.StartsWith(o.Item1))
+                        if (source.StartsWith(o.Item1, StringComparison.Ordinal))
                         {
                             return o.Item2;
                         }
@@ -255,7 +255,7 @@ namespace org.apache.utils
         {
             // avoids exceptions if format string contains braces in calls that were not
             // designed to use format strings
-            return (args == null || args.Length == 0) ? format : String.Format(format, args);
+            return (args == null || args.Length == 0) ? format : string.Format(CultureInfo.InvariantCulture, format, args);
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
@@ -293,18 +293,18 @@ namespace org.apache.utils
         /// <returns>Formatted string representation of the exception, including expanding and formatting any nested sub-expressions.</returns>
         public static string PrintException(Exception exception)
         {
-            return exception == null ? String.Empty : PrintException_Helper(exception, 0, true);
+            return exception == null ? string.Empty : PrintException_Helper(exception, 0, true);
         }
         
         private static string PrintException_Helper(Exception exception, int level, bool includeStackTrace)
         {
-            if (exception == null) return String.Empty;
+            if (exception == null) return string.Empty;
             var sb = new StringBuilder();
             sb.Append(PrintOneException(exception, level, includeStackTrace));
-            if (exception is ReflectionTypeLoadException)
+            var reflectionException = exception as ReflectionTypeLoadException;
+            if (reflectionException != null)
             {
-                Exception[] loaderExceptions =
-                    ((ReflectionTypeLoadException)exception).LoaderExceptions;
+                Exception[] loaderExceptions = reflectionException.LoaderExceptions;
                 if (loaderExceptions == null || loaderExceptions.Length == 0)
                 {
                     sb.Append("No LoaderExceptions found");
@@ -318,35 +318,38 @@ namespace org.apache.utils
                     }
                 }
             }
-            else if (exception is AggregateException)
-            {
-                var innerExceptions = ((AggregateException)exception).InnerExceptions;
-                if (innerExceptions == null) return sb.ToString();
-
-                foreach (Exception inner in innerExceptions)
+            else {
+                AggregateException aggregateException = exception as AggregateException;
+                if (aggregateException != null)
                 {
-                    // call recursively on all inner exceptions. Same level for all.
-                    sb.Append(PrintException_Helper(inner, level + 1, includeStackTrace));
+                    var innerExceptions = aggregateException.InnerExceptions;
+                    if (innerExceptions == null) return sb.ToString();
+
+                    foreach (Exception inner in innerExceptions)
+                    {
+                        // call recursively on all inner exceptions. Same level for all.
+                        sb.Append(PrintException_Helper(inner, level + 1, includeStackTrace));
+                    }
                 }
-            }
-            else if (exception.InnerException != null)
-            {
-                // call recursively on a single inner exception.
-                sb.Append(PrintException_Helper(exception.InnerException, level + 1, includeStackTrace));
+                else if (exception.InnerException != null)
+                {
+                    // call recursively on a single inner exception.
+                    sb.Append(PrintException_Helper(exception.InnerException, level + 1, includeStackTrace));
+                }
             }
             return sb.ToString();
         }
 
         private static string PrintOneException(Exception exception, int level, bool includeStackTrace)
         {
-            if (exception == null) return String.Empty;
-            string stack = String.Empty;
+            if (exception == null) return string.Empty;
+            string stack = string.Empty;
             if (includeStackTrace && exception.StackTrace != null)
-                stack = String.Format(Environment.NewLine + exception.StackTrace);
+                stack = string.Format(CultureInfo.InvariantCulture, Environment.NewLine + exception.StackTrace);
             
             string message = exception.Message;
             
-            return String.Format(Environment.NewLine + "Exc level {0}: {1}: {2}{3}",
+            return string.Format(CultureInfo.InvariantCulture, Environment.NewLine + "Exc level {0}: {1}: {2}{3}",
                 level,
                 ((object)exception).GetType(),
                 message,
@@ -358,6 +361,7 @@ namespace org.apache.utils
         /// </summary>
         private class TraceOverrideComparer : Comparer<Tuple<string, TraceLevel>>
         {
+            [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods")]
             public override int Compare(Tuple<string, TraceLevel> x, Tuple<string, TraceLevel> y)
             {
                 return y.Item1.Length.CompareTo(x.Item1.Length);

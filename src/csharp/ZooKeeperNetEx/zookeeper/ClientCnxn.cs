@@ -93,19 +93,19 @@ namespace org.apache.zookeeper {
 	 * A set of ZooKeeper hosts this client could connect to.
 	 */
         private readonly HostProvider hostProvider;
-        /**
-	 * Is set to true when a connection to a r/w server is established for the
-	 * first time; never changed afterwards.
-	 * <p>
-	 * Is used to handle situations when client without sessionId connects to a
-	 * read-only server. Such client receives "fake" sessionId from read-only
-	 * server, but this sessionId is invalid for other servers. So when such
-	 * client finds a r/w server, it sends 0 instead of fake sessionId during
-	 * connection handshake and establishes new, valid session.
-	 * <p>
-	 * If this field is false (which implies we haven't seen r/w server before)
-	 * then non-zero sessionId is fake, otherwise it is valid.
-	 */
+
+	 // Is set to true when a connection to a r/w server is established for the
+	 // first time; never changed afterwards.
+
+	 // Is used to handle situations when client without sessionId connects to a
+	 // read-only server. Such client receives "fake" sessionId from read-only
+	 // server, but this sessionId is invalid for other servers. So when such
+	 // client finds a r/w server, it sends 0 instead of fake sessionId during
+	 // connection handshake and establishes new, valid session.
+
+	 // If this field is false (which implies we haven't seen r/w server before)
+	 // then non-zero sessionId is fake, otherwise it is valid.
+	 //
         internal readonly Fenced<bool> seenRwServerBefore = new Fenced<bool>(false);
 
         //public ZooKeeperSaslClient zooKeeperSaslClient;
@@ -128,7 +128,7 @@ namespace org.apache.zookeeper {
                 .getLocalSocketAddress();
             EndPoint remote = clientCnxnSocket
                 .getRemoteSocketAddress();
-            sb.Append("sessionid:0x").Append(getSessionId().ToString(("x")))
+            sb.Append("sessionid:0x").Append(getSessionId().ToHexString())
                 .Append(" local:").Append(local).Append(" remoteserver:")
                 .Append(remote).Append(" lastZxid:").Append(lastZxid)
                 .Append(" xid:").Append(xid).Append(" sent:")
@@ -273,7 +273,7 @@ namespace org.apache.zookeeper {
             connectTimeout = sessionTimeout/hostProvider.size();
             readTimeout = sessionTimeout*2/3;
             readOnly = canBeReadOnly;
-            this.clientCnxnSocket = new ClientCnxnSocketNIO(this);
+            clientCnxnSocket = new ClientCnxnSocketNIO(this);
             state.Value = ZooKeeper.States.CONNECTING;
         }
 
@@ -322,7 +322,7 @@ namespace org.apache.zookeeper {
         
 
 /**
-		 * This is really the queued session state until the event thread
+		 * This is really the queued session state until the event task
 		 * actually processes the event and hands it to the watcher. But for all
 		 * intents and purposes this is the state.
 		 */
@@ -364,16 +364,16 @@ namespace org.apache.zookeeper {
                         wasKilled = true;
                     }
                     else {
-                        processEvent(@event);
+                        await processEvent(@event).ConfigureAwait(false);
                     }
                 }
             }
         }
 
-        private static void processEvent(WatcherSetEventPair @event) {
+        private static async Task processEvent(WatcherSetEventPair @event) {
             foreach (Watcher watcher in @event.watchers) {
                 try {
-                    watcher.process(@event.@event);
+                    await watcher.process(@event.@event).ConfigureAwait(false);
                 }
                 catch (Exception t) {
                     LOG.error("Error while calling watcher ", t);
@@ -394,7 +394,7 @@ namespace org.apache.zookeeper {
             }
             switch (getState()) {
                 case ZooKeeper.States.AUTH_FAILED:
-                    p.replyHeader.setErr((int) ZooKeeper.States.AUTH_FAILED);
+                    p.replyHeader.setErr((int) KeeperException.Code.AUTHFAILED);
                     break;
                 case ZooKeeper.States.CLOSED:
                     p.replyHeader.setErr((int) KeeperException.Code.SESSIONEXPIRED);
@@ -439,7 +439,7 @@ namespace org.apache.zookeeper {
                 if (replyHdr.getXid() == -2) {
                     // -2 is the xid for pings
                     if (LOG.isDebugEnabled()) {
-                        LOG.debug("Got ping response for sessionid: 0x" + sessionId.ToString("x") + " after " +
+                        LOG.debug("Got ping response for sessionid: 0x" + sessionId.ToHexString() + " after " +
                                   ((TimeHelper.ElapsedNanoseconds - lastPingSentNs) / 1000000) + "ms");
                     }
                     return;
@@ -453,7 +453,7 @@ namespace org.apache.zookeeper {
                     }
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("Got auth sessionid:0x"
-                                  + sessionId.ToString("x"));
+                                  + sessionId.ToHexString());
                     }
                     return;
                 }
@@ -461,7 +461,7 @@ namespace org.apache.zookeeper {
                     // -1 means notification
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("Got notification sessionid:0x"
-                                  + sessionId.ToString("x"));
+                                  + sessionId.ToHexString());
                     }
                     WatcherEvent @event = new WatcherEvent();
                     ((Record) @event).deserialize(bbia, "response");
@@ -482,7 +482,7 @@ namespace org.apache.zookeeper {
                     }
                     WatchedEvent we = new WatchedEvent(@event);
                     if (LOG.isDebugEnabled()) {
-                        LOG.debug("Got " + we + " for sessionid 0x" + sessionId.ToString("x"));
+                        LOG.debug("Got " + we + " for sessionid 0x" + sessionId.ToHexString());
                     }
                     queueEvent(we);
                     return;
@@ -520,7 +520,7 @@ namespace org.apache.zookeeper {
                         packet.response.deserialize(bbia, "response");
                     }
                     if (LOG.isDebugEnabled()) {
-                        LOG.debug("Reading reply sessionid:0x" + sessionId.ToString("x") + ", packet:: " +
+                        LOG.debug("Reading reply sessionid:0x" + sessionId.ToHexString() + ", packet:: " +
                                   packet);
                     }
                 }
@@ -659,7 +659,7 @@ namespace org.apache.zookeeper {
                                 "Client session timed out, have not heard from server in "
                                 + clientCnxnSocket.getIdleRecv() + "ms"
                                 + " for sessionid 0x"
-                                + clientCnxnSocket.sessionId.ToString("x"));
+                                + clientCnxnSocket.sessionId.ToHexString());
                         }
                         if (getState().isConnected())
                         {
@@ -705,8 +705,8 @@ namespace org.apache.zookeeper {
                         if (closing.Value) {
                             if (LOG.isDebugEnabled()) {
                                 // closing so this is expected
-                                LOG.debug("An exception was thrown while closing send thread for session 0x" +
-                                          getSessionId().ToString("x")
+                                LOG.debug("An exception was thrown while closing send task for session 0x" +
+                                          getSessionId().ToHexString()
                                           + " : "
                                           + e.Message);
                             }
@@ -728,7 +728,7 @@ namespace org.apache.zookeeper {
                             }
                             else {
                                 LOG.warn(
-                                    "Session 0x" + getSessionId().ToString("x") +
+                                    "Session 0x" + getSessionId().ToHexString() +
                                     " for server " +
                                     clientCnxnSocket.getRemoteSocketAddress()
                                     + ", unexpected error" +
@@ -752,12 +752,12 @@ namespace org.apache.zookeeper {
                 }
 
                 await cleanup().ConfigureAwait(false);
-                //clientCnxnSocket.close();
+                clientCnxnSocket.close();
                 if (getState().isAlive()) {
                     queueEvent(new WatchedEvent(Watcher.Event.EventType.None,
                         Watcher.Event.KeeperState.Disconnected, null));
                 }
-                LOG.debug("SendThread exitedloop.");
+                LOG.debug("SendTask exitedloop.");
             }
 
             private async Task pingRwServer() {
@@ -853,7 +853,7 @@ namespace org.apache.zookeeper {
                         Watcher.Event.KeeperState.Expired, null));
                     queueEventOfDeath();
                     throw new SessionExpiredException("Unable to reconnect to ZooKeeper service, session 0x" +
-                                                      sessionId.ToString("x") + " has expired");
+                                                      sessionId.ToHexString() + " has expired");
                 }
                 if (!readOnly && isRO) {
                     LOG.error("Read/write client got connected to read-only server");
@@ -866,7 +866,7 @@ namespace org.apache.zookeeper {
                 state.Value = (isRO) ? ZooKeeper.States.CONNECTEDREADONLY : ZooKeeper.States.CONNECTED;
                 seenRwServerBefore.Value |= !isRO;
                 LOG.info("Session establishment complete on server " + clientCnxnSocket.getRemoteSocketAddress() +
-                         ", sessionid = 0x" + sessionId.ToString("x")
+                         ", sessionid = 0x" + sessionId.ToHexString()
                          + ", negotiated timeout = " + negotiatedSessionTimeout.Value
                          + (isRO ? " (READ-ONLY mode)" : ""));
                 Watcher.Event.KeeperState eventState = (isRO)
@@ -883,7 +883,7 @@ namespace org.apache.zookeeper {
         
 
         /**
-             * Shutdown the send/event threads. This method should not be called
+             * Shutdown the send/event tasks. This method should not be called
              * directly - rather it should be called as part of close operation. This
              * method is primarily here to allow the tests to verify disconnection
              * behavior.
@@ -891,7 +891,7 @@ namespace org.apache.zookeeper {
 
         private void disconnect() {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Disconnecting client for session: 0x" + getSessionId().ToString("x"));
+                LOG.debug("Disconnecting client for session: 0x" + getSessionId().ToHexString());
             }
             close();
             queueEventOfDeath();
@@ -901,14 +901,14 @@ namespace org.apache.zookeeper {
 
         /**
              * Close the connection, which includes; send session disconnect to the
-             * server, shutdown the send/event threads.
+             * server, shutdown the send/event tasks.
              *
              */
 
         internal async Task closeAsync() {
             if (Interlocked.CompareExchange(ref isDisposed, 1, 0) == 0) {
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("Closing client for session: 0x" + getSessionId().ToString("x"));
+                    LOG.debug("Closing client for session: 0x" + getSessionId().ToHexString());
                 }
 
                 RequestHeader h = new RequestHeader();

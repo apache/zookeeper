@@ -85,12 +85,12 @@ namespace org.apache.zookeeper {
 
         [SetUp]
         public virtual void setUp() {
-            m_currentRoot=createNode(testsNode + "/", CreateMode.PERSISTENT_SEQUENTIAL).Result;
+            m_currentRoot=createNode(testsNode + "/", CreateMode.PERSISTENT_SEQUENTIAL).GetAwaiter().GetResult();
         }
 
         [TearDown]
         public virtual void tearDown() {
-            deleteNode(m_currentRoot).Wait();
+            deleteNode(m_currentRoot).GetAwaiter().GetResult();
         }
 
         [TestFixtureSetUp]
@@ -148,8 +148,9 @@ namespace org.apache.zookeeper {
         /// </summary>
         protected class NullWatcher : Watcher
         {
-            public override void process(WatchedEvent @event)
+            public override Task process(WatchedEvent @event)
             {
+                return CompletedTask;
                 // nada
             }
         }
@@ -167,7 +168,7 @@ namespace org.apache.zookeeper {
                 }
             }
 
-            public override void process(WatchedEvent @event) {
+            public override Task process(WatchedEvent @event) {
                 lock (this) {
                     if (@event.getState() == Event.KeeperState.SyncConnected ||
                         @event.getState() == Event.KeeperState.ConnectedReadOnly) {
@@ -178,6 +179,7 @@ namespace org.apache.zookeeper {
                         Monitor.PulseAll(this);
                     }
                 }
+                return CompletedTask;
             }
         }
     }

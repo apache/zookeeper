@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using NUnit.Framework;
 using org.apache.utils;
 
@@ -36,9 +37,9 @@ namespace org.apache.zookeeper.test
 				this.latch = latch;
 			}
 
-		    public override void process(WatchedEvent @event) 
+		    public async override Task process(WatchedEvent @event) 
             {
-		        base.process(@event);
+		        await base.process(@event);
                 if (@event.getState() == Event.KeeperState.SyncConnected)
                 {
                     if (latch != null)

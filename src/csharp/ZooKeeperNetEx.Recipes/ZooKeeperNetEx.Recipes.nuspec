@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>$id$</id>
+    <version>$version$</version>
+	  <title>Apache ZooKeeper .NET async Recipes</title>
+    <authors>Shay Hazor</authors>
+    <owners>Shay Hazor</owners>
+    <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+    <projectUrl>https://github.com/shayhatsor/zookeeper</projectUrl>
+    <iconUrl>https://ccdce73789835b39c0952535276de3b7772f802f.googledrive.com/host/0B_hNtILvKRsifnpVRnp4NVRKcHltY05FSGM2bzg5ZGNaVHRqcW9GVFJnWjczSFUtNk40OTA/zookeeper.bmp</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>A .NET async Client Recipes for ZooKeeper v3.4.6. Compatible with the Task-based Asynchronous Pattern (async/await), allowing fully asynchronous operation. CLS compliant for consumption from any .NET language and CoreCLR future-proof (100% compatible in Microsoft .NET Portability Analyzer). A great measure has been taken to follow the logic of the official Java client. In fact, the code is almost identical. Thus allowing easy evolution alongside the Java version. </description>
+    <summary>.NET async Client Recipes for ZooKeeper v3.4.6</summary>
+    <releaseNotes>This project is actively maintained at: https://github.com/shayhatsor/zookeeper
+
+Please feel free to open an issue or ask a question there. A CoreCLR release is planned when a non-prerelease version of .NET Core is made available.
+	</releaseNotes>
+	
+    <dependencies>
+      <dependency id="ZooKeeperNetEx" version="$version$" />
+    </dependencies>
+	<copyright>Shay Hazor - Copyright 2015</copyright>
+	<tags>apache zookeeper Apache ZooKeeper Recipes recipes .NET .Net client async zk CLSCompliant</tags>
+  </metadata>
+	<files>
+		<file src="bin\Debug.Net4.6\ZooKeeperNetEx.Recipes.dll" target="lib\net46" /> 
+		<file src="bin\Debug.Net4.6\ZooKeeperNetEx.Recipes.pdb" target="lib\net46" /> 
+		<file src="bin\Debug.Net4.6\ZooKeeperNetEx.Recipes.xml" target="lib\net46" /> 
+	</files>
+</package>

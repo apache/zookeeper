@@ -171,6 +171,7 @@ namespace org.apache.zookeeper
             PathUtils.validatePath(path);
         }
 
+        /// <summary/>
         public override bool Equals(object obj) {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
@@ -178,6 +179,7 @@ namespace org.apache.zookeeper
             return Equals((Op) obj);
         }
 
+        /// <summary/>
         public override int GetHashCode() {
             unchecked {
                 return (type*397) ^ (path != null ? path.GetHashCode() : 0);

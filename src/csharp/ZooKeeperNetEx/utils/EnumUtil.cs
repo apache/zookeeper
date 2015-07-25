@@ -29,7 +29,7 @@ namespace org.apache.utils
     /// you try to provide a value that is not an enum.
     /// </summary>
     /// <typeparam name="T">An enum type. </typeparam>
-    public static class EnumUtil<T>
+    internal static class EnumUtil<T>
         where T : struct
     {
         /// <summary>
@@ -39,7 +39,6 @@ namespace org.apache.utils
         /// Cast the given value as the given enum type.
         /// Throw an exception if the value is not defined for the given enum type.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
         /// <param name="enumValue"></param>
         /// <exception cref="InvalidCastException">
         /// If the given value is not a defined value of the enum type.

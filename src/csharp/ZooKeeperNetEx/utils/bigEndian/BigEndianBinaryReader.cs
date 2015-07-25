@@ -77,7 +77,7 @@ namespace org.apache.utils
         public bool ReadBoolean()
         {
             ReadInternal(byteBuffer, 1);
-            return EndianBitConverter.Big.ToBoolean(byteBuffer, 0);
+            return BigEndianBitConverter.ToBoolean(byteBuffer, 0);
         }
 
         /// <summary>
@@ -88,7 +88,7 @@ namespace org.apache.utils
         public int ReadInt32()
         {
             ReadInternal(byteBuffer, 4);
-            return EndianBitConverter.Big.ToInt32(byteBuffer, 0);
+            return BigEndianBitConverter.ToInt32(byteBuffer, 0);
         }
 
         /// <summary>
@@ -99,7 +99,7 @@ namespace org.apache.utils
         public long ReadInt64()
         {
             ReadInternal(byteBuffer, 8);
-            return EndianBitConverter.Big.ToInt64(byteBuffer, 0);
+            return BigEndianBitConverter.ToInt64(byteBuffer, 0);
         }
 
         /// <summary>

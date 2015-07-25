@@ -52,7 +52,7 @@ namespace org.apache.zookeeper
             Assert.assertTrue(children.Contains("b"));
             Assert.assertTrue(children.Contains("c"));
 
-            ZKUtil.deleteRecursiveAsync(zk, "/a").Wait();
+            ZKUtil.deleteRecursiveAsync(zk, "/a").GetAwaiter().GetResult();
             Assert.assertNull(zk.exists("/a", null));
 		}
 

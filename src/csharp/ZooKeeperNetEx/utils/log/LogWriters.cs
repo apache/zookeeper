@@ -18,6 +18,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,7 +28,7 @@ namespace org.apache.utils
     /// <summary>
     /// The Log Writer base class provides default partial implementation suitable for most specific log writer.
     /// </summary>
-    public abstract class LogWriterBase {
+    internal abstract class LogWriterBase {
         /// <summary>
         /// The method to call during logging.
         /// This method should be very fast, since it is called synchronously during logging.
@@ -46,7 +47,7 @@ namespace org.apache.utils
         public void Log(TraceLevel severity, string caller, string message, Exception exception) 
         {
             string exc = TraceLogger.PrintException(exception);
-            string msg1 = String.Format("[{0} {1,5}\t{2}\t{3}\t{4}]\t{5}",
+            string msg1 = string.Format(CultureInfo.InvariantCulture,"[{0} {1,5}\t{2}\t{3}\t{4}]\t{5}",
                 TraceLogger.PrintDate(DateTime.UtcNow),            //0
                 Thread.CurrentThread.ManagedThreadId,   //1
                 TraceLogger.SeverityTable[(int)severity],    //2
@@ -76,7 +77,7 @@ namespace org.apache.utils
     /// <summary>
     /// The Log Writer class is a convenient wrapper around the .Net Trace class.
     /// </summary>
-    public class LogWriterToTrace : LogWriterBase
+    internal class LogWriterToTrace : LogWriterBase
     {
         /// <summary>Write the log message for this log.</summary>
         protected override void WriteLogMessage(string msg, TraceLevel severity)
@@ -105,7 +106,7 @@ namespace org.apache.utils
     /// <summary>
     /// This Log Writer class is an Log Consumer wrapper class which writes to a specified log file.
     /// </summary>
-    public class LogWriterToFile : LogWriterBase
+    internal class LogWriterToFile : LogWriterBase
     {
         private readonly StreamWriter logOutput;
         private readonly AsyncManualResetEvent logEvent = new AsyncManualResetEvent();
@@ -119,7 +120,7 @@ namespace org.apache.utils
         public LogWriterToFile(FileInfo logFile)
         {
             bool fileExists = File.Exists(logFile.FullName);
-            this.logOutput = fileExists ? logFile.AppendText() : logFile.CreateText();
+            logOutput = fileExists ? logFile.AppendText() : logFile.CreateText();
             logFile.Refresh(); // Refresh the cached view of FileInfo
             logTask = startLogTask();
         }
@@ -135,12 +136,12 @@ namespace org.apache.utils
         {
             while (true) 
             {
-                await logEvent.WaitAsync();
+                await logEvent.WaitAsync().ConfigureAwait(false);
                 logEvent.Reset();
                 string msg;
                 while (logQueue.TryDequeue(out msg)) 
                 {
-                    await logOutput.WriteLineAsync(msg);
+                    await logOutput.WriteLineAsync(msg).ConfigureAwait(false);
                 }
             }
         }

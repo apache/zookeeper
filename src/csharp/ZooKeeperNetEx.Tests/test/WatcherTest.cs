@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Threading;
+using System.Threading.Tasks;
 using NUnit.Framework;
 using org.apache.zookeeper.data;
 using org.apache.utils;
@@ -40,8 +41,8 @@ namespace org.apache.zookeeper.test
             internal readonly BlockingCollection<WatchedEvent> events =
             new BlockingCollection<WatchedEvent>();
 
-        public override void process(WatchedEvent @event) {
-            base.process(@event);
+        public override async Task process(WatchedEvent @event) {
+            await base.process(@event);
             if (@event.get_Type() != Event.EventType.None) {
                 try {
                     events.Add(@event);

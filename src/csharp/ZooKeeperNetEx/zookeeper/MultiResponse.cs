@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using org.apache.jute;
@@ -45,7 +44,8 @@ namespace org.apache.zookeeper
         return results.GetEnumerator();
     }
 
-    public void serialize(OutputArchive archive, string tag) {
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1800:DoNotCastUnnecessarily")]
+        public void serialize(OutputArchive archive, string tag) {
         archive.startRecord(this, tag);
 
 			foreach (OpResult result in results) {

@@ -1,5 +1,4 @@
-﻿using System;
-using org.apache.zookeeper.data;
+﻿using org.apache.zookeeper.data;
 
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
@@ -34,6 +33,7 @@ namespace org.apache.zookeeper
             return type == other.type;
         }
 
+        /// <summary/>
         public override bool Equals(object obj) 
         {
             if (ReferenceEquals(null, obj)) return false;
@@ -42,6 +42,7 @@ namespace org.apache.zookeeper
             return Equals((OpResult) obj);
         }
 
+        /// <summary/>
         public override int GetHashCode() 
         {
             return type;
@@ -51,15 +52,14 @@ namespace org.apache.zookeeper
         {
             this.type = (int) type;
         }
-
-        /**
-     * Encodes the return type as from ZooDefs.OpCode.  Can be used
-     * to dispatch to the correct cast needed for getting the desired
-     * additional result data.
-     * @see ZooDefs.OpCode
-     * @return an integer identifying what kind of operation this result came from.
-     */
-        public int get_Type() {
+        
+        /// <summary>
+        /// Encodes the return type as from <see cref="ZooDefs.OpCode"/>.  Can be used
+        ///to dispatch to the correct cast needed for getting the desired
+        ///additional result data
+        /// </summary>
+        /// <returns>an integer identifying what kind of operation this result came from.</returns>
+        internal int get_Type() {
             return type;
         }
 
@@ -77,6 +77,9 @@ namespace org.apache.zookeeper
                 this.path = path;
             }
 
+            /// <summary>
+            /// Gets the path.
+            /// </summary>
             public string getPath() {
                 return path;
             }
@@ -88,6 +91,7 @@ namespace org.apache.zookeeper
                 return base.Equals(other) && string.Equals(path, other.path);
             }
 
+            /// <summary/>
             public override bool Equals(object obj) 
             {
                 if (ReferenceEquals(null, obj)) return false;
@@ -96,6 +100,7 @@ namespace org.apache.zookeeper
                 return Equals((CreateResult) obj);
             }
 
+            /// <summary/>
             public override int GetHashCode() 
             {
                 unchecked 
@@ -126,6 +131,10 @@ namespace org.apache.zookeeper
                 this.stat = stat;
             }
 
+            /// <summary>
+            /// Gets the stat.
+            /// </summary>
+            /// <returns></returns>
             public Stat getStat() {
                 return stat;
             }
@@ -138,6 +147,7 @@ namespace org.apache.zookeeper
             }
 
 
+            /// <summary/>
             public override bool Equals(object obj) {
                 if (ReferenceEquals(null, obj)) return false;
                 if (ReferenceEquals(this, obj)) return true;
@@ -145,6 +155,7 @@ namespace org.apache.zookeeper
                 return Equals((SetDataResult) obj);
             }
 
+            /// <summary/>
             public override int GetHashCode() {
                 unchecked {
                     return (base.GetHashCode()*397) ^ (stat != null ? stat.GetHashCode() : 0);
@@ -175,6 +186,9 @@ namespace org.apache.zookeeper
                 this.err = err;
             }
 
+            /// <summary>
+            /// Gets the error.
+            /// </summary>
             public int getErr() {
                 return err;
             }
@@ -185,6 +199,8 @@ namespace org.apache.zookeeper
                 if (ReferenceEquals(this, other)) return true;
                 return base.Equals(other) && err == other.err;
             }
+
+            /// <summary/>
             public override bool Equals(object obj) 
             {
                 if (ReferenceEquals(null, obj)) return false;
@@ -193,6 +209,7 @@ namespace org.apache.zookeeper
                 return Equals((ErrorResult) obj);
             }
 
+            /// <summary/>
             public override int GetHashCode() 
             {
                 unchecked 

@@ -13,7 +13,7 @@ namespace org.apache.zookeeper
             ClientBase.createNode(ClientBase.testsNode, CreateMode.PERSISTENT).ContinueWith(t =>
             {
                 if (t.Exception != null && !(t.Exception.InnerExceptions[0] is KeeperException.NodeExistsException)) throw t.Exception;
-            }).Wait();
+            }).GetAwaiter().GetResult();
         }
 
         [TearDown]
@@ -22,7 +22,7 @@ namespace org.apache.zookeeper
             ClientBase.deleteNode(ClientBase.testsNode).ContinueWith(t =>
             {
                 if (t.Exception != null && !(t.Exception.InnerExceptions[0] is KeeperException.NoNodeException)) throw t.Exception;
-            }).Wait();
+            }).GetAwaiter().GetResult();
         }
     }
 }

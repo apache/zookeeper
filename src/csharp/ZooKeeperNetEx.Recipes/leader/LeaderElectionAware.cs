@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+using System.Threading.Tasks;
 namespace org.apache.zookeeper.recipes.leader {
     /// <summary>
     ///     An interface to be implemented by clients that want to receive election
@@ -28,6 +29,6 @@ namespace org.apache.zookeeper.recipes.leader {
         ///     on.
         /// </summary>
         /// <param name="eventType"> </param>
-        void onElectionEvent(LeaderElectionSupport.EventType eventType);
+        Task onElectionEvent(ElectionEventType eventType);
     }
 }

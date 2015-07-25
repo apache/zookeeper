@@ -22,7 +22,10 @@ using org.apache.zookeeper.common;
 // </summary>
 namespace org.apache.zookeeper
 {
-	public class ZKUtil
+    /// <summary>
+    /// Some ZooKeeper Utilities
+    /// </summary>
+    public static class ZKUtil
 	{
         private static readonly TraceLogger LOG = TraceLogger.GetLogger(typeof(ZKUtil));
 		/// <summary>

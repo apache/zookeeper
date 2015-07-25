@@ -1,68 +1,59 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug.Net4.5</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.30729</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{5C6774FB-2350-46B2-B1DF-1CCC757C7727}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>org.apache</RootNamespace>
     <AssemblyName>ZooKeeperNetEx</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\ZooKeeperNetEx.snk</AssemblyOriginatorKeyFile>
-    <FileUpgradeFlags>
-    </FileUpgradeFlags>
-    <UpgradeBackupLocation>
-    </UpgradeBackupLocation>
-    <OldToolsVersion>3.5</OldToolsVersion>
-    <PublishUrl>publish\</PublishUrl>
-    <Install>true</Install>
-    <InstallFrom>Disk</InstallFrom>
-    <UpdateEnabled>false</UpdateEnabled>
-    <UpdateMode>Foreground</UpdateMode>
-    <UpdateInterval>7</UpdateInterval>
-    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
-    <UpdatePeriodically>false</UpdatePeriodically>
-    <UpdateRequired>false</UpdateRequired>
-    <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>0</ApplicationRevision>
-    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
-    <UseApplicationTrust>false</UseApplicationTrust>
-    <BootstrapperEnabled>true</BootstrapperEnabled>
-    <TargetFrameworkProfile />
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>..\ZooKeeperCodeRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>false</Prefer32Bit>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug.Net4.5|AnyCPU' ">
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>bin\Debug.Net4.5\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>false</Prefer32Bit>
+	<DocumentationFile>bin\Debug.Net4.5\ZooKeeperNetEx.XML</DocumentationFile>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release.Net4.5|AnyCPU' ">
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>bin\Release.Net4.5\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>false</Prefer32Bit>
+    <DocumentationFile>bin\Release.Net4.5\ZooKeeperNetEx.XML</DocumentationFile>
+  </PropertyGroup>
+   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug.Net4.6|AnyCPU'">
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug.Net4.6\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+	<DocumentationFile>bin\Debug.Net4.6\ZooKeeperNetEx.XML</DocumentationFile>
+    <DebugType>full</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release.Net4.6|AnyCPU' ">
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <OutputPath>bin\Release.Net4.6\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <DocumentationFile>bin\Release.Net4.6\ZooKeeperNetEx.XML</DocumentationFile>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
-    <Reference Include="System.Core">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
+    <Reference Include="System.Core"/>
     <Reference Include="System.Data" />
     <Reference Include="System.XML" />
   </ItemGroup>
@@ -102,16 +93,16 @@
     <Compile Include="Generated\proto\SyncRequest.cs" />
     <Compile Include="Generated\proto\SyncResponse.cs" />
     <Compile Include="Generated\proto\WatcherEvent.cs" />
+    <Compile Include="utils\asyncs\AsyncLock.cs" />
     <Compile Include="utils\config\ZooKeeperConfiguration.cs" />
     <Compile Include="utils\config\ConfigUtilities.cs" />
     <Compile Include="utils\log\LogWriters.cs" />
     <Compile Include="utils\log\TraceLogger.cs" />
-    <Compile Include="utils\AsyncManualResetEvent.cs" />
+    <Compile Include="utils\asyncs\AsyncManualResetEvent.cs" />
     <Compile Include="utils\ByteBuffer.cs" />
     <Compile Include="utils\EnumUtil.cs" />
     <Compile Include="utils\SocketEx.cs" />
     <Compile Include="utils\TimeHelper.cs" />
-    <Compile Include="utils\ZooKeeperSyncEx.cs" />
     <Compile Include="zookeeper\AsyncResults.cs" />
     <Compile Include="zookeeper\ClientCnxn.cs" />
     <Compile Include="zookeeper\ClientCnxnSocket.cs" />
@@ -126,15 +117,12 @@
     <Compile Include="zookeeper\MultiTransactionRecord.cs" />
     <Compile Include="zookeeper\Op.cs" />
     <Compile Include="zookeeper\OpResult.cs" />
-    <Compile Include="zookeeper\client\StaticHostProvider.cs">
-      <SubType>Code</SubType>
-    </Compile>
+    <Compile Include="zookeeper\client\StaticHostProvider.cs" />
     <Compile Include="zookeeper\StatsTrack.cs" />
     <Compile Include="zookeeper\Transaction.cs" />
     <Compile Include="zookeeper\CreateMode.cs" />
     <Compile Include="utils\bigEndian\BigEndianBitConverter.cs" />
     <Compile Include="utils\bigEndian\BigEndianBinaryWriter.cs" />
-    <Compile Include="utils\bigEndian\EndianBitConverter.cs" />
     <Compile Include="jute\BinaryInputArchive.cs" />
     <Compile Include="jute\BinaryOutputArchive.cs" />
     <Compile Include="jute\Index.cs" />
@@ -153,36 +141,10 @@
     <Compile Include="utils\MiscEx.cs" />
   </ItemGroup>
   <ItemGroup>
-    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
-      <Install>false</Install>
-    </BootstrapperPackage>
-    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.5 SP1</ProductName>
-      <Install>true</Install>
-    </BootstrapperPackage>
-    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
-      <Visible>False</Visible>
-      <ProductName>Windows Installer 3.1</ProductName>
-      <Install>true</Install>
-    </BootstrapperPackage>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\ZooKeeperNetEx.snk">
       <Link>ZooKeeperNetEx.snk</Link>
     </None>
-    <None Include="ZooKeeperNetEx.nuspec">
-      <SubType>Designer</SubType>
-    </None>
+    <None Include="ZooKeeperNetEx.nuspec"/>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>

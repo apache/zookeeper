@@ -22,7 +22,10 @@ using org.apache.utils;
 
 namespace org.apache.zookeeper
  {
-﻿    public abstract class KeeperException : Exception
+    /// <summary>
+    /// ZooKeeper Base Exception
+    /// </summary>
+    public abstract class KeeperException : Exception
 ﻿    {
 /**
      * All multi-requests that result in an exception retain the results
@@ -112,15 +115,15 @@ namespace org.apache.zookeeper
 ﻿            /** Everything is OK */
 ﻿            OK = 0,
 
-﻿            /** System and server-side errors.
-             * This is never thrown by the server, it shouldn't be used other than
-             * to indicate a range. Specifically error codes greater than this
-             * value, but lesser than {@link #APIERROR}, are system errors.
-             */
-﻿            //SYSTEMERROR = -1,
+            // System and server-side errors.
+            // This is never thrown by the server, it shouldn't be used other than
+            // to indicate a range. Specifically error codes greater than this
+            // value, but lesser than {@link #APIERROR}, are system errors.
+            //
+            //SYSTEMERROR = -1,
 
-﻿            /** A runtime inconsistency was found */
-﻿            RUNTIMEINCONSISTENCY = -2,
+            /** A runtime inconsistency was found */
+            RUNTIMEINCONSISTENCY = -2,
 ﻿            /** A data inconsistency was found */
 ﻿            DATAINCONSISTENCY = -3,
 ﻿            /** Connection to the server has been lost */
@@ -134,16 +137,16 @@ namespace org.apache.zookeeper
 ﻿            /** Invalid arguments */
 ﻿            BADARGUMENTS = -8,
 
-﻿            /** API errors.
-             * This is never thrown by the server, it shouldn't be used other than
-             * to indicate a range. Specifically error codes greater than this
-             * value are API errors (while values less than this indicate a
-             * {@link #SYSTEMERROR}).
-             */
-﻿            //APIERROR = -100,
+            // API errors.
+            // This is never thrown by the server, it shouldn't be used other than
+            // to indicate a range. Specifically error codes greater than this
+            // value are API errors (while values less than this indicate a
+            // {@link #SYSTEMERROR}).
+            //
+            //APIERROR = -100,
 
-﻿            /** Node does not exist */
-﻿            NONODE = -101,
+            /** Node does not exist */
+            NONODE = -101,
 ﻿            /** Not authenticated */
 ﻿            NOAUTH = -102,
 ﻿            /** Version conflict */
@@ -219,24 +222,10 @@ namespace org.apache.zookeeper
              return results != null ? new List<OpResult>(results) : null;
          }
 
-         /**
-         *  @see Code#APIERROR
-         */
-
-//﻿        private class APIErrorException : KeeperException
-//﻿        {
-//﻿            internal APIErrorException()
-//﻿                : base(Code.APIERROR)
-//﻿            {
-//﻿            }
-//﻿        }
-
-﻿        /**
-         *  @see Code#AUTHFAILED
-         */
-
-﻿        
-﻿        public class AuthFailedException : KeeperException
+        /// <summary>
+        /// <see cref="Code.AUTHFAILED"/>
+        /// </summary>
+        public class AuthFailedException : KeeperException
 ﻿        {
 ﻿            internal AuthFailedException()
 ﻿                : base(Code.AUTHFAILED)
@@ -244,64 +233,54 @@ namespace org.apache.zookeeper
 ﻿            }
 ﻿        }
 
-﻿        /**
-         *  @see Code#BADARGUMENTS
-         */
-
-﻿        
-﻿        public class BadArgumentsException : KeeperException
+        /// <summary>
+        /// <see cref="Code.BADARGUMENTS"/>
+        /// </summary>
+        public class BadArgumentsException : KeeperException
 ﻿        {
 ﻿            internal BadArgumentsException(string path)
 ﻿                : base(Code.BADARGUMENTS, path)
 ﻿            {
 ﻿            }
 ﻿        }
-
-﻿        /**
-         * @see Code#BADVERSION
-         */
-
-﻿        
-﻿        public class BadVersionException : KeeperException
+        
+        /// <summary>
+        /// <see cref="Code.BADVERSION"/>
+        /// </summary>
+        public class BadVersionException : KeeperException
 ﻿        {
 ﻿            internal BadVersionException(string path)
 ﻿                : base(Code.BADVERSION, path)
 ﻿            {
 ﻿            }
 ﻿        }
-
-﻿        /**
-         * @see Code#CONNECTIONLOSS
-         */
-
-﻿        
-﻿        public class ConnectionLossException : KeeperException
+        
+        /// <summary>
+        /// <see cref="Code.CONNECTIONLOSS"/>
+        /// </summary>
+        public class ConnectionLossException : KeeperException
 ﻿        {
 ﻿            internal ConnectionLossException()
 ﻿                : base(Code.CONNECTIONLOSS)
 ﻿            {
 ﻿            }
 ﻿        }
-
-﻿        /**
-         * @see Code#DATAINCONSISTENCY
-         */
-
-﻿        
-﻿        public class DataInconsistencyException : KeeperException
+        
+        /// <summary>
+        /// <see cref="Code.DATAINCONSISTENCY"/>
+        /// </summary>
+        public class DataInconsistencyException : KeeperException
 ﻿        {
 ﻿            internal DataInconsistencyException()
 ﻿                : base(Code.DATAINCONSISTENCY)
 ﻿            {
 ﻿            }
 ﻿        }
-
-﻿        /**
-         * @see Code#INVALIDACL
-         */
-
-﻿        
-﻿        public class InvalidACLException : KeeperException
+        
+        /// <summary>
+        /// <see cref="Code.INVALIDACL"/>
+        /// </summary>
+        public class InvalidACLException : KeeperException
 ﻿        {
 ﻿            internal InvalidACLException()
 ﻿                : base(Code.INVALIDACL)
@@ -313,13 +292,11 @@ namespace org.apache.zookeeper
 ﻿            {
 ﻿            }
 ﻿        }
-
-﻿        /**
-         * @see Code#INVALIDCALLBACK
-         */
-
-﻿        
-﻿        public class InvalidCallbackException : KeeperException
+        
+        /// <summary>
+        /// <see cref="Code.INVALIDCALLBACK"/>
+        /// </summary>
+        public class InvalidCallbackException : KeeperException
 ﻿        {
 ﻿            internal InvalidCallbackException()
 ﻿                : base(Code.INVALIDCALLBACK)
@@ -327,12 +304,10 @@ namespace org.apache.zookeeper
 ﻿            }
 ﻿        }
 
-﻿        /**
-         * @see Code#MARSHALLINGERROR
-         */
-
-﻿        
-﻿        public class MarshallingErrorException : KeeperException
+        /// <summary>
+        /// <see cref="Code.MARSHALLINGERROR"/>
+        /// </summary>
+        public class MarshallingErrorException : KeeperException
 ﻿        {
 ﻿            internal MarshallingErrorException()
 ﻿                : base(Code.MARSHALLINGERROR)
@@ -340,154 +315,120 @@ namespace org.apache.zookeeper
 ﻿            }
 ﻿        }
 
-﻿        /**
-         * @see Code#NOAUTH
-         */
-
-﻿        
-﻿        public class NoAuthException : KeeperException
+        /// <summary>
+        /// <see cref="Code.NOAUTH"/>
+        /// </summary>
+        public class NoAuthException : KeeperException
 ﻿        {
 ﻿            internal NoAuthException()
 ﻿                : base(Code.NOAUTH)
 ﻿            {
 ﻿            }
 ﻿        }
-
-﻿        /**
-         * @see Code#NOCHILDRENFOREPHEMERALS
-         */
-
-﻿        
-﻿        public class NoChildrenForEphemeralsException : KeeperException
+        
+        /// <summary>
+        /// <see cref="Code.NOCHILDRENFOREPHEMERALS"/>
+        /// </summary>
+        public class NoChildrenForEphemeralsException : KeeperException
 ﻿        {
 ﻿            internal NoChildrenForEphemeralsException(string path)
 ﻿                : base(Code.NOCHILDRENFOREPHEMERALS, path)
 ﻿            {
 ﻿            }
 ﻿        }
+        
+        /// <summary>
+        /// <see cref="Code.NODEEXISTS"/>
+        /// </summary>
 
-﻿        /**
-         * @see Code#NODEEXISTS
-         */
-
-﻿        
-﻿        public class NodeExistsException : KeeperException
+        public class NodeExistsException : KeeperException
 ﻿        {
 ﻿            internal NodeExistsException(string path)
 ﻿                : base(Code.NODEEXISTS, path)
 ﻿            {
 ﻿            }
 ﻿        }
-
-﻿        /**
-         * @see Code#NONODE
-         */
-
-﻿        
-﻿        public class NoNodeException : KeeperException
+        
+        /// <summary>
+        /// <see cref="Code.NONODE"/>
+        /// </summary>
+        public class NoNodeException : KeeperException
 ﻿        {
 ﻿            internal NoNodeException(string path)
 ﻿                : base(Code.NONODE, path)
 ﻿            {
 ﻿            }
 ﻿        }
-
-﻿        /**
-         * @see Code#NOTEMPTY
-         */
-
-﻿        
-﻿        public class NotEmptyException : KeeperException
+        
+        /// <summary>
+        /// <see cref="Code.NOTEMPTY"/>
+        /// </summary>
+        public class NotEmptyException : KeeperException
 ﻿        {
 ﻿            internal NotEmptyException(string path)
 ﻿                : base(Code.NOTEMPTY, path)
 ﻿            {
 ﻿            }
 ﻿        }
-
-﻿        /**
-         * @see Code#OPERATIONTIMEOUT
-         */
-
-﻿        
-﻿        public class OperationTimeoutException : KeeperException
+        
+        /// <summary>
+        /// <see cref="Code.OPERATIONTIMEOUT"/>
+        /// </summary>
+        public class OperationTimeoutException : KeeperException
 ﻿        {
 ﻿            internal OperationTimeoutException()
 ﻿                : base(Code.OPERATIONTIMEOUT)
 ﻿            {
 ﻿            }
 ﻿        }
-
-﻿        /**
-         * @see Code#RUNTIMEINCONSISTENCY
-         */
-
-﻿        
-﻿        public class RuntimeInconsistencyException : KeeperException
+        
+        /// <summary>
+        /// <see cref="Code.RUNTIMEINCONSISTENCY"/>
+        /// </summary>
+        public class RuntimeInconsistencyException : KeeperException
 ﻿        {
 ﻿            internal RuntimeInconsistencyException()
 ﻿                : base(Code.RUNTIMEINCONSISTENCY)
 ﻿            {
 ﻿            }
 ﻿        }
-
-﻿        /**
-         * @see Code#SESSIONEXPIRED
-         */
-
-﻿        
-﻿        public class SessionExpiredException : KeeperException
+        
+        /// <summary>
+        /// <see cref="Code.SESSIONEXPIRED"/>
+        /// </summary>
+        public class SessionExpiredException : KeeperException
 ﻿        {
 ﻿            internal SessionExpiredException()
 ﻿                : base(Code.SESSIONEXPIRED)
 ﻿            {
 ﻿            }
 ﻿        }
-
-﻿        /**
-         * @see Code#SESSIONMOVED
-         */
-
-﻿        
-﻿        public class SessionMovedException : KeeperException
+        
+        /// <summary>
+        /// <see cref="Code.SESSIONMOVED"/>
+        /// </summary>
+        public class SessionMovedException : KeeperException
 ﻿        {
 ﻿            internal SessionMovedException()
 ﻿                : base(Code.SESSIONMOVED)
 ﻿            {
 ﻿            }
 ﻿        }
-
-﻿        /**
-        * @see Code#NOTREADONLY
-        */
-
-﻿        
-﻿        public class NotReadOnlyException : KeeperException
+        
+        /// <summary>
+        /// <see cref="Code.NOTREADONLY"/>
+        /// </summary>
+        public class NotReadOnlyException : KeeperException
 ﻿        {
 ﻿            internal NotReadOnlyException() : base(Code.NOTREADONLY)
 ﻿            {
 ﻿            }
 ﻿        }
-
-﻿        /**
-         * @see Code#SYSTEMERROR
-         */
-
-﻿        //
-﻿        //public class SystemErrorException : KeeperException
-﻿        //{
-﻿        //    internal SystemErrorException()
-﻿        //        : base(Code.SYSTEMERROR)
-﻿        //    {
-﻿        //    }
-﻿        //}
-
-﻿        /**
-         * @see Code#UNIMPLEMENTED
-         */
-
-﻿        
-﻿        public class UnimplementedException : KeeperException
+        
+        /// <summary>
+        /// <see cref="Code.UNIMPLEMENTED"/>
+        /// </summary>
+        public class UnimplementedException : KeeperException
 ﻿        {
 ﻿            internal UnimplementedException()
 ﻿                : base(Code.UNIMPLEMENTED)

@@ -23,7 +23,7 @@ using org.apache.utils;
 namespace org.apache.zookeeper.test
 {
     [TestFixture]
-	public sealed class KeeperStateTest
+	internal sealed class KeeperStateTest
 	{
         //[Test]
         //public void testIntConversion()

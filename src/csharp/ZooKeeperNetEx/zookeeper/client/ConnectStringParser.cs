@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Net;
 using org.apache.zookeeper.common;
 
@@ -74,9 +75,9 @@ namespace org.apache.zookeeper.client
 				if (pidx >= 0)
 				{
 					// otherwise : is at the end of the string, ignore
-					if (pidx < host.Length - 1)
-					{
-						port = int.Parse(host.Substring(pidx + 1));
+					if (pidx < host.Length - 1) 
+                    {
+					    port = int.Parse(host.Substring(pidx + 1), CultureInfo.InvariantCulture);
 					}
                     parsedHost = host.Substring(0, pidx);
 				}

@@ -38,20 +38,18 @@ namespace org.apache.zookeeper
     internal abstract class ClientCnxnSocket {
         private static readonly TraceLogger LOG = TraceLogger.GetLogger(typeof(ClientCnxnSocket));
 
-        /**
-        * This buffer is only used to read the length of the incoming message.
-        */
-        protected readonly ByteBuffer lenBuffer = ByteBuffer.allocateDirect(4);
-
-        /// <summary>
-        /// After the length is read, a new incomingBuffer is allocated in
-        /// readLength() to receive the full message.
-        /// </summary>
+        //This buffer is only used to read the length of the incoming message.
+        protected readonly ByteBuffer lenBuffer = ByteBuffer.allocate(4);
+        
+        //This is the current incoming data buffer
         protected ByteBuffer incomingBuffer;
+
+        // This buffer is only used to read the incoming message contents (not the length) 
+        private readonly ByteBuffer messageBuffer = ByteBuffer.allocate(256);
 
         protected ClientCnxnSocket(ClientCnxn cnxn) {
             incomingBuffer = lenBuffer;
-            this.clientCnxn = cnxn;
+            clientCnxn = cnxn;
         }
 
         protected long sentCount;
@@ -92,16 +90,16 @@ namespace org.apache.zookeeper
         }
 
         internal void updateLastHeard() {
-            this.lastHeard = now;
+            lastHeard = now;
         }
 
         internal void updateLastSend() {
-            this.lastSend = now;
+            lastSend = now;
         }
 
         internal void updateLastSendAndHeard() {
-            this.lastSend = now;
-            this.lastHeard = now;
+            lastSend = now;
+            lastHeard = now;
         }
 
         protected void readLength() {
@@ -110,14 +108,18 @@ namespace org.apache.zookeeper
             if (len < 0 || len >= ClientCnxn.packetLen) {
                 throw new IOException("Packet len" + len + " is out of range!");
             }
-            incomingBuffer = ByteBuffer.allocate(len);
+            messageBuffer.clear();
+            messageBuffer.Stream.SetLength(len);
+            messageBuffer.Stream.Capacity = len;
+
+            incomingBuffer = messageBuffer;
         }
 
         internal void readConnectResult() {
             if (LOG.isDebugEnabled()) {
                 StringBuilder buf = new StringBuilder("0x[");
-                foreach (byte b in incomingBuffer.array()) {
-                    buf.Append(b.ToString("x") + ",");
+                foreach (byte b in incomingBuffer.Stream.ToArray()){
+                    buf.Append(b.ToHexString() + ",");
                 }
                 buf.Append("]");
                 LOG.debug("readConnectResult " + incomingBuffer.remaining() + " " + buf);
@@ -159,5 +161,9 @@ namespace org.apache.zookeeper
 
         internal abstract Task doTransport(int to);
 
+        internal virtual void close() {
+            lenBuffer.Stream.Dispose();
+            messageBuffer.Stream.Dispose();
+        }
     }
 }

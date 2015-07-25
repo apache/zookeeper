@@ -17,12 +17,11 @@
  * All rights reserved.
  * 
  */
-using System.Collections.Generic;
 using System.IO;
 
 namespace org.apache.utils
 {
-    public class ByteBuffer
+    internal class ByteBuffer
     {
         public readonly MemoryStream Stream;
         private Mode mode;
@@ -40,11 +39,6 @@ namespace org.apache.utils
         {
             var buffer = new ByteBuffer {Stream = {Capacity = capacity}, mode = Mode.Write};
             return buffer;
-        }
-
-        public static ByteBuffer allocateDirect(int capacity)
-        {
-            return allocate(capacity);
         }
         
         public void flip()
@@ -83,11 +77,6 @@ namespace org.apache.utils
         {
             Read,
             Write
-        }
-
-        public IEnumerable<byte> array()
-        {
-            return Stream.ToArray();
         }
     }
 }

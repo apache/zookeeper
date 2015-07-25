@@ -31,7 +31,7 @@ namespace org.apache.jute
  * </code>
  *
  */
-    public interface Index
+    internal interface Index
     {
         bool done();
         void incr();        

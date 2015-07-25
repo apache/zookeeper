@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using NUnit.Framework;
-using org.apache.zookeeper.recipes.@lock;
 
 // 
 // <summary>
@@ -25,7 +24,7 @@ namespace org.apache.zookeeper.recipes.@lock
 	/// test for znodenames
 	/// </summary>
 	[TestFixture]
-	public sealed class ZNodeNameTest 
+	internal sealed class ZNodeNameTest 
 	{
         [Test]
 		public void testOrderWithSamePrefix()

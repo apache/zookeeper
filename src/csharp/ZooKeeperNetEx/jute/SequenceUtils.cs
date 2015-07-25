@@ -23,7 +23,7 @@ using System.Runtime.InteropServices;
 
 namespace org.apache.jute
 {
-    public static class SequenceUtils
+    internal static class SequenceUtils
     {
         [DllImport("msvcrt.dll", CallingConvention = CallingConvention.Cdecl)]
         private static extern int memcmp(byte[] b1, byte[] b2, long count);

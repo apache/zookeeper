@@ -16,6 +16,8 @@
 // limitations under the License.
 // </summary>
 
+using System.Globalization;
+
 namespace org.apache.zookeeper
 {
 
@@ -38,7 +40,7 @@ namespace org.apache.zookeeper
 		/// the stat string should be of the form count=int,bytes=long
 		/// if stats is called with null the count and bytes are initialized
 		/// to -1. </summary>
-		/// <param name="stats"> the stat string to be intialized with </param>
+		/// <param name="stats"> the stat string to be initialized with </param>
 		public StatsTrack(string stats)
 		{
 			if (stats == null)
@@ -50,8 +52,8 @@ namespace org.apache.zookeeper
 			{
 				throw new System.ArgumentException("invalid string " + stats);
 			}
-			Count = int.Parse(split[0].Split('=')[1]);
-			Bytes = long.Parse(split[1].Split('=')[1]);
+		    Count = int.Parse(split[0].Split('=')[1], CultureInfo.InvariantCulture);
+		    Bytes = long.Parse(split[1].Split('=')[1], CultureInfo.InvariantCulture);
 		}
 
 
@@ -69,10 +71,10 @@ namespace org.apache.zookeeper
 	    public readonly long Bytes;
 
 
-	    public override string ToString()
-		/*
-		 * returns the string that maps to this stat tracking.
-		 */
+        /// <summary>
+        /// returns the string that maps to this stat tracking.
+        /// </summary>
+        public override string ToString()
 		{
 			return countStr + "=" + Count + "," + byteStr + "=" + Bytes;
 		}

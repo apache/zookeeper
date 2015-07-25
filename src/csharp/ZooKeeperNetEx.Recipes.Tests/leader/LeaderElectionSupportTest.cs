@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading;
 using NUnit.Framework;
 using org.apache.utils;
@@ -32,13 +31,13 @@ namespace org.apache.zookeeper.recipes.leader {
 
             zooKeeper = createClient();
 
-            zooKeeper.create(testRootNode + Thread.CurrentThread.ManagedThreadId, new byte[0],
-                ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zooKeeper.createAsync(testRootNode + Thread.CurrentThread.ManagedThreadId, new byte[0],
+                ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT).Wait();
         }
 
         public override void tearDown() {
             if (zooKeeper != null) {
-                zooKeeper.delete(testRootNode + Thread.CurrentThread.ManagedThreadId, -1);
+                zooKeeper.deleteAsync(testRootNode + Thread.CurrentThread.ManagedThreadId).Wait();
             }
 
             base.tearDown();
@@ -48,9 +47,9 @@ namespace org.apache.zookeeper.recipes.leader {
         public void testNode() {
             var electionSupport = createLeaderElectionSupport();
 
-            electionSupport.start();
+            electionSupport.start().GetAwaiter().GetResult();
             Thread.Sleep(3000);
-            electionSupport.stop();
+            electionSupport.stop().GetAwaiter().GetResult();
         }
 
         [Test]
@@ -142,10 +141,9 @@ namespace org.apache.zookeeper.recipes.leader {
 
 
             ThreadSafeInt failureCounter = new ThreadSafeInt(0);
-            IList<Thread> threads = new List<Thread>(testIterations);
 
             for (var i = 1; i <= testIterations; i++) {
-                threads.Add(runElectionSupportThread(latch, failureCounter, Math.Min(i*1200, 10000)));
+                runElectionSupportThread(latch, failureCounter, Math.Min(i*1200, 10000));
             }
 
             if (!latch.Wait(60* 1000)) {
@@ -157,17 +155,17 @@ namespace org.apache.zookeeper.recipes.leader {
         public void testGetLeaderHostName() {
             var electionSupport = createLeaderElectionSupport();
 
-            electionSupport.start();
+            electionSupport.start().GetAwaiter().GetResult();
 
             // Sketchy: We assume there will be a leader (probably us) in 3 seconds.
             Thread.Sleep(3000);
 
-            var leaderHostName = electionSupport.LeaderHostName;
+            var leaderHostName = electionSupport.getLeaderHostName().GetAwaiter().GetResult();
 
             Assert.assertNotNull(leaderHostName);
             Assert.assertEquals("foohost", leaderHostName);
 
-            electionSupport.stop();
+            electionSupport.stop().GetAwaiter().GetResult();
         }
 
         private LeaderElectionSupport createLeaderElectionSupport() {
@@ -180,11 +178,11 @@ namespace org.apache.zookeeper.recipes.leader {
             return electionSupport;
         }
 
-        private Thread runElectionSupportThread(CountdownEvent latch, ThreadSafeInt failureCounter) {
-            return runElectionSupportThread(latch, failureCounter, 3000);
+        private void runElectionSupportThread(CountdownEvent latch, ThreadSafeInt failureCounter) {
+            runElectionSupportThread(latch, failureCounter, 3000);
         }
 
-        private Thread runElectionSupportThread(CountdownEvent latch, ThreadSafeInt failureCounter, int sleepDuration) {
+        private void runElectionSupportThread(CountdownEvent latch, ThreadSafeInt failureCounter, int sleepDuration) {
 
             var electionSupport = createLeaderElectionSupport();
 
@@ -192,9 +190,9 @@ namespace org.apache.zookeeper.recipes.leader {
             {
                 try
                 {
-                    electionSupport.start();
+                    electionSupport.start().GetAwaiter().GetResult();
                     Thread.Sleep(sleepDuration);
-                    electionSupport.stop();
+                    electionSupport.stop().GetAwaiter().GetResult();
                     lock (latch)
                     {
                         if (!latch.IsSet)
@@ -209,8 +207,6 @@ namespace org.apache.zookeeper.recipes.leader {
             }); 
 
             t.Start();
-
-            return t;
         }
     }
 }

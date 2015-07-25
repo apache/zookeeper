@@ -39,11 +39,12 @@ namespace org.apache.zookeeper.common
 			validatePath(isSequential? path + "1": path);
 		}
 
-		/// <summary>
-		/// Validate the provided znode path string </summary>
-		/// <param name="path"> znode path string </param>
+        /// <summary>
+        /// Validate the provided znode path string </summary>
+        /// <param name="path"> znode path string </param>
         /// <exception cref="ArgumentException"> if the path is invalid </exception>
-		public static void validatePath(string path)
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity")]
+        public static void validatePath(string path)
 		{
 			if (path == null) 
             {

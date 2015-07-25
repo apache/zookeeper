@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
-using System.Threading;
-
+using System.Threading.Tasks;
 using org.apache.utils;
 
 /*
@@ -91,25 +91,9 @@ namespace org.apache.zookeeper.recipes.leader {
     ///         </ul>
     ///     </para>
     /// </summary>
-    public sealed class LeaderElectionSupport : Watcher {
-        /// <summary>
-        ///     The type of event.
-        /// </summary>
-        public enum EventType {
-            START,
-            OFFER_START,
-            OFFER_COMPLETE,
-            DETERMINE_START,
-            DETERMINE_COMPLETE,
-            ELECTED_START,
-            ELECTED_COMPLETE,
-            READY_START,
-            READY_COMPLETE,
-            FAILED,
-            STOP_START,
-            STOP_COMPLETE
-        }
-
+    internal  sealed class LeaderElectionSupport : Watcher {
+        private readonly AsyncLock lockable = new AsyncLock();
+  
         private static readonly TraceLogger logger = TraceLogger.GetLogger(typeof (LeaderElectionSupport));
         private readonly ConcurrentDictionary<LeaderElectionAware, byte> listeners;
         private byte dummy;
@@ -131,17 +115,14 @@ namespace org.apache.zookeeper.recipes.leader {
         /// </summary>
         /// <returns> hostname of the current leader </returns>
         /// <exception cref="KeeperException"> </exception>
-        /// <exception cref="ThreadInterruptedException"> </exception>
-        public string LeaderHostName {
-            get {
-                var leaderOffers = toLeaderOffers(ZooKeeper.getChildren(RootNodeName, false));
+        public async Task<string> getLeaderHostName() {
+            var leaderOffers = await toLeaderOffers((await ZooKeeper.getChildrenAsync(RootNodeName).ConfigureAwait(false)).Children).ConfigureAwait(false);
 
-                if (leaderOffers.Count > 0) {
-                    return leaderOffers[0].HostName;
-                }
-
-                return null;
+            if (leaderOffers.Count > 0) {
+                return leaderOffers[0].HostName;
             }
+
+            return null;
         }
 
         /// <summary>
@@ -166,7 +147,7 @@ namespace org.apache.zookeeper.recipes.leader {
 
         /// <summary>
         ///     The hostname of this process. Mostly used as a convenience for logging and
-        ///     to respond to <seealso cref="LeaderHostName()" /> requests.
+        ///     to respond to <seealso cref="getLeaderHostName()" /> requests.
         /// </summary>
         internal string HostName { private get; set; }
 
@@ -182,10 +163,11 @@ namespace org.apache.zookeeper.recipes.leader {
         ///         listeners.
         ///     </para>
         /// </summary>
-        public void start() {
-            lock (this) {
+        public async Task start() {
+            using (await lockable.LockAsync().ConfigureAwait(false))
+             {
                 state = State.START;
-                dispatchEvent(EventType.START);
+                await dispatchEvent(ElectionEventType.START).ConfigureAwait(false);
 
                 logger.info("Starting leader election support");
 
@@ -196,16 +178,16 @@ namespace org.apache.zookeeper.recipes.leader {
                 if (HostName == null) {
                     throw new InvalidOperationException("No hostname provided. Hint: use setHostName()");
                 }
-
+                KeeperException ke = null;
                 try {
-                    makeOffer();
-                    determineElectionStatus();
+                    await makeOffer().ConfigureAwait(false);
+                    await determineElectionStatus().ConfigureAwait(false);
                 }
                 catch (KeeperException e) {
-                    becomeFailed(e);
+                    ke = e;
                 }
-                catch (ThreadInterruptedException e) {
-                    becomeFailed(e);
+                if (ke != null) {
+                    await becomeFailed(ke).ConfigureAwait(false);
                 }
             }
         }
@@ -214,54 +196,59 @@ namespace org.apache.zookeeper.recipes.leader {
         ///     Stops all election services, revokes any outstanding leader offers, and
         ///     disconnects from ZooKeeper.
         /// </summary>
-        public void stop() {
-            lock (this) {
+        public async Task stop()
+        {
+            using (await lockable.LockAsync().ConfigureAwait(false))
+             {
                 state = State.STOP;
-                dispatchEvent(EventType.STOP_START);
+                await dispatchEvent(ElectionEventType.STOP_START).ConfigureAwait(false);
 
                 logger.info("Stopping leader election support");
 
                 if (leaderOffer != null) {
+                    KeeperException ke = null;
                     try {
-                        ZooKeeper.delete(leaderOffer.NodePath, -1);
+                        await ZooKeeper.deleteAsync(leaderOffer.NodePath).ConfigureAwait(false);
                         logger.debugFormat("Removed leader offer {0}", leaderOffer.NodePath);
                     }
-                    catch (ThreadInterruptedException e) {
-                        becomeFailed(e);
+                    catch (KeeperException e)
+                    {
+                        ke = e;
                     }
-                    catch (KeeperException e) {
-                        becomeFailed(e);
+                    if (ke != null)
+                    {
+                        await becomeFailed(ke).ConfigureAwait(false);
                     }
                 }
 
-                dispatchEvent(EventType.STOP_COMPLETE);
+                await dispatchEvent(ElectionEventType.STOP_COMPLETE).ConfigureAwait(false);
             }
         }
 
-        private void makeOffer() {
+        private async Task makeOffer() {
             state = State.OFFER;
-            dispatchEvent(EventType.OFFER_START);
+            await dispatchEvent(ElectionEventType.OFFER_START).ConfigureAwait(false);
 
             leaderOffer = new LeaderOffer();
 
             leaderOffer.HostName = HostName;
-            leaderOffer.NodePath = ZooKeeper.create(RootNodeName + "/" + "n_", HostName.getBytes(),
-                ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
+            leaderOffer.NodePath = await ZooKeeper.createAsync(RootNodeName + "/" + "n_", HostName.getBytes(),
+                ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL).ConfigureAwait(false);
 
             logger.debugFormat("Created leader offer {0}", leaderOffer);
 
-            dispatchEvent(EventType.OFFER_COMPLETE);
+            await dispatchEvent(ElectionEventType.OFFER_COMPLETE).ConfigureAwait(false);
         }
 
-        private void determineElectionStatus() {
+        private async Task determineElectionStatus() {
             state = State.DETERMINE;
-            dispatchEvent(EventType.DETERMINE_START);
+            await dispatchEvent(ElectionEventType.DETERMINE_START).ConfigureAwait(false);
 
             var components = leaderOffer.NodePath.Split('/');
 
-            leaderOffer.Id = Convert.ToInt32(components[components.Length - 1].Substring("n_".Length));
+            leaderOffer.Id = int.Parse(components[components.Length - 1].Substring("n_".Length), CultureInfo.InvariantCulture);
 
-            var leaderOffers = toLeaderOffers(ZooKeeper.getChildren(RootNodeName, false));
+            var leaderOffers = await toLeaderOffers((await ZooKeeper.getChildrenAsync(RootNodeName).ConfigureAwait(false)).Children).ConfigureAwait(false);
 
             /*
 		 * For each leader offer, find out where we fit in. If we're first, we
@@ -270,16 +257,16 @@ namespace org.apache.zookeeper.recipes.leader {
 		 * they don't, become the leader.
 		 */
             for (var i = 0; i < leaderOffers.Count; i++) {
-                if (leaderOffers[i].Id.Equals(this.leaderOffer.Id)) {
+                if (leaderOffers[i].Id.Equals(leaderOffer.Id)) {
                     logger.debugFormat("There are {0} leader offers. I am {1} in line.", leaderOffers.Count, i);
 
-                    dispatchEvent(EventType.DETERMINE_COMPLETE);
+                    await dispatchEvent(ElectionEventType.DETERMINE_COMPLETE).ConfigureAwait(false);
 
                     if (i == 0) {
-                        becomeLeader();
+                        await becomeLeader().ConfigureAwait(false);
                     }
                     else {
-                        becomeReady(leaderOffers[i - 1]);
+                        await becomeReady(leaderOffers[i - 1]).ConfigureAwait(false);
                     }
 
                     /* Once we've figured out where we are, we're done. */
@@ -288,8 +275,8 @@ namespace org.apache.zookeeper.recipes.leader {
             }
         }
 
-        private void becomeReady(LeaderOffer neighborLeaderOffer) {
-            dispatchEvent(EventType.READY_START);
+        private async Task becomeReady(LeaderOffer neighborLeaderOffer) {
+            await dispatchEvent(ElectionEventType.READY_START).ConfigureAwait(false);
 
             logger.debugFormat("{0} not elected leader. Watching node:{1}", leaderOffer.NodePath,
                 neighborLeaderOffer.NodePath);
@@ -298,13 +285,13 @@ namespace org.apache.zookeeper.recipes.leader {
 		 * Make sure to pass an explicit Watcher because we could be sharing this
 		 * zooKeeper instance with someone else.
 		 */
-            var stat = ZooKeeper.exists(neighborLeaderOffer.NodePath, this);
+            var stat = await ZooKeeper.existsAsync(neighborLeaderOffer.NodePath, this).ConfigureAwait(false);
 
             if (stat != null) {
                 logger.debugFormat("We're behind {0} in line and they're alive. Keeping an eye on them.",
                     neighborLeaderOffer.NodePath);
                 state = State.READY;
-                dispatchEvent(EventType.READY_COMPLETE);
+                await dispatchEvent(ElectionEventType.READY_COMPLETE).ConfigureAwait(false);
             }
             else {
                 /*
@@ -313,27 +300,28 @@ namespace org.apache.zookeeper.recipes.leader {
 		   */
                 logger.debugFormat("We were behind {0} but it looks like they died. Back to determination.",
                     neighborLeaderOffer.NodePath);
-                determineElectionStatus();
+                await determineElectionStatus().ConfigureAwait(false);
             }
         }
 
-        private void becomeLeader() {
+        private async Task becomeLeader()
+        {
             state = State.ELECTED;
-            dispatchEvent(EventType.ELECTED_START);
+            await dispatchEvent(ElectionEventType.ELECTED_START).ConfigureAwait(false);
 
             logger.debugFormat("Becoming leader with node:{0}", leaderOffer.NodePath);
 
-            dispatchEvent(EventType.ELECTED_COMPLETE);
+            await dispatchEvent(ElectionEventType.ELECTED_COMPLETE).ConfigureAwait(false);
         }
 
-        private void becomeFailed(Exception e) {
+        private Task becomeFailed(Exception e) {
             logger.debugFormat("Failed in state {0} - Exception:{1}", state, e);
 
             state = State.FAILED;
-            dispatchEvent(EventType.FAILED);
+            return dispatchEvent(ElectionEventType.FAILED);
         }
 
-        private IList<LeaderOffer> toLeaderOffers(IList<string> strings) {
+        private async Task<List<LeaderOffer>> toLeaderOffers(List<string> strings) {
             var leaderOffers = new List<LeaderOffer>(strings.Count);
 
             /*
@@ -341,9 +329,9 @@ namespace org.apache.zookeeper.recipes.leader {
 		 * the sequence number and the node name.
 		 */
             foreach (var offer in strings) {
-                var currentHostName = Encoding.UTF8.GetString(ZooKeeper.getData(RootNodeName + "/" + offer, false, null));
+                var currentHostName = Encoding.UTF8.GetString((await ZooKeeper.getDataAsync(RootNodeName + "/" + offer).ConfigureAwait(false)).Data);
 
-                leaderOffers.Add(new LeaderOffer(Convert.ToInt32(offer.Substring("n_".Length)),
+                leaderOffers.Add(new LeaderOffer(int.Parse(offer.Substring("n_".Length),CultureInfo.InvariantCulture),
                     RootNodeName + "/" + offer, currentHostName));
             }
 
@@ -356,30 +344,38 @@ namespace org.apache.zookeeper.recipes.leader {
             return leaderOffers;
         }
 
-        public override void process(WatchedEvent @event) {
+        public async override Task process(WatchedEvent @event) {
             if (@event.get_Type().Equals(Event.EventType.NodeDeleted)) {
                 if (!@event.get_Type().ToString().Equals(leaderOffer.NodePath) && state != State.STOP) {
                     logger.debugFormat("Node {0} deleted. Need to run through the election process.", @event.getPath());
+                    KeeperException ke = null;
                     try {
-                        determineElectionStatus();
+                        await determineElectionStatus().ConfigureAwait(false);
                     }
                     catch (KeeperException e) {
-                        becomeFailed(e);
+                        ke = e;
                     }
-                    catch (ThreadInterruptedException e) {
-                        becomeFailed(e);
+                    if (ke != null) {
+                        await becomeFailed(ke).ConfigureAwait(false);
                     }
                 }
             }
         }
 
-        private void dispatchEvent(EventType eventType) {
+        private readonly AsyncLock listenersLock = new AsyncLock();
+
+        private async Task dispatchEvent(ElectionEventType eventType) {
             logger.debugFormat("Dispatching event:{0}", eventType);
 
-            lock (listeners) {
+            using (await listenersLock.LockAsync().ConfigureAwait(false)) {
                 if (listeners.Count > 0) {
                     foreach (var observer in listeners.Keys) {
-                        observer.onElectionEvent(eventType);
+                        try {
+                            await observer.onElectionEvent(eventType).ConfigureAwait(false);
+                        }
+                        catch (Exception e) {
+                            logger.warn("error while calling observer", e);
+                        }
                     }
                 }
             }
@@ -418,5 +414,25 @@ namespace org.apache.zookeeper.recipes.leader {
             FAILED,
             STOP
         }
+    }
+    /// <summary>
+    ///     The type of election event.
+    /// </summary>
+    public enum ElectionEventType
+    {
+#pragma warning disable 1591
+        START,
+        OFFER_START,
+        OFFER_COMPLETE,
+        DETERMINE_START,
+        DETERMINE_COMPLETE,
+        ELECTED_START,
+        ELECTED_COMPLETE,
+        READY_START,
+        READY_COMPLETE,
+        FAILED,
+        STOP_START,
+        STOP_COMPLETE
+#pragma warning restore 1591
     }
 }

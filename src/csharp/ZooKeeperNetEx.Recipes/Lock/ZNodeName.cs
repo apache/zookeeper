@@ -1,5 +1,6 @@
 ﻿using System;
 
+using System.Globalization;
 using org.apache.utils;
 
 // 
@@ -33,29 +34,29 @@ namespace org.apache.zookeeper.recipes.@lock
 		private readonly int sequence = -1;
 		private static readonly TraceLogger LOG = TraceLogger.GetLogger(typeof(ZNodeName));
 
-		public ZNodeName(string name)
+		public ZNodeName(string id)
 		{
-			if (name == null)
+			if (id == null)
 			{
-				throw new System.NullReferenceException("id cannot be null");
+				throw new ArgumentNullException("id","id cannot be null");
 			}
-			this.name = name;
-			this.prefix = name;
+			name = id;
+			prefix = name;
 			int idx = name.LastIndexOf('-');
 			if (idx >= 0)
 			{
-				this.prefix = name.Substring(0, idx);
+                prefix = name.Substring(0, idx);
 				try
 				{
-					this.sequence = int.Parse(name.Substring(idx + 1));
+                    sequence = int.Parse(name.Substring(idx + 1),CultureInfo.InvariantCulture);
 					// If an exception occurred we misdetected a sequence suffix,
 					// so return -1.
 				}
-				catch (System.FormatException e)
+				catch (FormatException e)
 				{
 					LOG.info("Number format exception for " + idx, e);
 				}
-				catch (System.IndexOutOfRangeException e)
+				catch (IndexOutOfRangeException e)
 				{
 				   LOG.info("Array out of bounds for " + idx, e);
 				}
@@ -64,7 +65,7 @@ namespace org.apache.zookeeper.recipes.@lock
 
 		public override string ToString()
 		{
-			return name.ToString();
+			return name;
 		}
 
 		public override bool Equals(object o)
@@ -73,7 +74,7 @@ namespace org.apache.zookeeper.recipes.@lock
 			{
 				return true;
 			}
-			if (o == null || this.GetType() != o.GetType())
+			if (o == null || GetType() != o.GetType())
 			{
 				return false;
 			}
@@ -93,16 +94,17 @@ namespace org.apache.zookeeper.recipes.@lock
 			return name.GetHashCode() + 37;
 		}
 
-		public int CompareTo(ZNodeName that)
-		{
-			int answer = this.prefix.CompareTo(that.prefix);
+		public int CompareTo(ZNodeName that) 
+        {
+		    if (that == null) throw new ArgumentNullException(nameof(that));
+		    int answer = string.CompareOrdinal(prefix, that.prefix);
 			if (answer == 0)
 			{
-				int s1 = this.sequence;
+				int s1 = sequence;
 				int s2 = that.sequence;
-				if (s1 == -1 && s2 == -1)
-				{
-					return this.name.CompareTo(that.name);
+				if (s1 == -1 && s2 == -1) 
+                {
+				    return string.CompareOrdinal(name, that.name);
 				}
 				answer = s1 == -1 ? 1 : s2 == -1 ? - 1 : s1 - s2;
 			}
@@ -112,15 +114,9 @@ namespace org.apache.zookeeper.recipes.@lock
 		/// <summary>
 		/// Returns the name of the znode
 		/// </summary>
-		public string Name
-		{
-			get
-			{
-				return name;
-			}
-		}
+		public string Name => name;
 
-		/// <summary>
+	    /// <summary>
 		/// Returns the sequence number
 		/// </summary>
 		public int getZNodeName()
@@ -131,13 +127,7 @@ namespace org.apache.zookeeper.recipes.@lock
 		/// <summary>
 		/// Returns the text prefix before the sequence number
 		/// </summary>
-		public string Prefix
-		{
-			get
-			{
-				return prefix;
-			}
-		}
+		public string Prefix => prefix;
 	}
 
 }

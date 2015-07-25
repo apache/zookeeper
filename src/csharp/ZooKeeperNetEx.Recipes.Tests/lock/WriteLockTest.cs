@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading;
 using NUnit.Framework;
-using org.apache.utils;
 
 // 
 // <summary>
@@ -29,8 +28,6 @@ namespace org.apache.zookeeper.recipes.@lock
 	{
 	    private WriteLock[] nodes;
 	    private ManualResetEventSlim latch = new ManualResetEventSlim(false);
-	    private const bool workAroundClosingLastZNodeFails = true;
-	    private const bool killLeader = true;
 
 	    [Test]
 		public void testRun()
@@ -66,10 +63,10 @@ namespace org.apache.zookeeper.recipes.@lock
 			{
 				ZooKeeper keeper = createClient();
 				WriteLock leader = new WriteLock(keeper, "/test", null);
-				leader.setLockListener(new LockCallback(this));
+				leader.setLockListener(new LockCallback(this)).GetAwaiter().GetResult();
 				nodes[i] = leader;
 
-				leader.Lock();
+				leader.Lock().GetAwaiter().GetResult();
 			}
 
 			// lets wait for any previous leaders to die and one of our new
@@ -90,25 +87,21 @@ namespace org.apache.zookeeper.recipes.@lock
 
 			if (count > 1)
 			{
-				if (killLeader)
-				{
-				Console.WriteLine("Now killing the leader");
-				// now lets kill the leader
-				latch = new ManualResetEventSlim(false);
-				first.unlock();
-				latch.Wait(30*1000);
-				//Thread.sleep(10000);
-				WriteLock second = nodes[1];
-				dumpNodes(count);
-				// lets assert that the first election is the leader
-				Assert.assertTrue("The second znode should be the leader " + second.Id, second.Owner);
+			    Console.WriteLine("Now killing the leader");
+			    // now lets kill the leader
+			    latch = new ManualResetEventSlim(false);
+			    first.unlock().GetAwaiter().GetResult();
+			    latch.Wait(30*1000);
+			    WriteLock second = nodes[1];
+			    dumpNodes(count);
+			    // lets assert that the first election is the leader
+			    Assert.assertTrue("The second znode should be the leader " + second.Id, second.Owner);
 
-				for (int i = 2; i < count; i++)
-				{
-					WriteLock node = nodes[i];
-					Assert.assertFalse("Node should not be the leader " + node.Id, node.Owner);
-				}
-				}
+			    for (int i = 2; i < count; i++)
+			    {
+			        WriteLock node = nodes[i];
+			        Assert.assertFalse("Node should not be the leader " + node.Id, node.Owner);
+			    }
 			}
 		}
 
@@ -132,14 +125,14 @@ namespace org.apache.zookeeper.recipes.@lock
 					{
 						Console.WriteLine("Closing node: " + i);
 						node.close();
-						if (workAroundClosingLastZNodeFails && i == nodes.Length - 1)
+						if (i == nodes.Length - 1)
 						{
 							Console.WriteLine("Not closing zookeeper: " + i + " due to bug!");
 						}
 						else
 						{
 							Console.WriteLine("Closing zookeeper: " + i);
-							node.getZookeeper().close();
+							node.getZookeeper().closeAsync().Wait();
 							Console.WriteLine("Closed zookeeper: " + i);
 						}
 					}
