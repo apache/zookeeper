@@ -1,0 +1,9 @@
+Apache ZooKeeper
+Copyright 2009-2015 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+The bundled servlet-api-2.5.jar is under the CDDL license,
+the original source code for this can be found at
+http://repo1.maven.org/maven2/javax/servlet/servlet-api/2.5/
