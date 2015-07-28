@@ -149,6 +149,8 @@ BUGFIXES:
   ZOOKEEPER-2223: support method-level JUnit testcase
   (Akihiro Suda via rgs)
 
+  ZOOKEEPER-2235 License update (fpj via michim)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
