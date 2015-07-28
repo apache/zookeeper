@@ -102,6 +102,8 @@ BUGFIXES:
   ZOOKEEPER-2224: Four letter command hangs when network is slow
   (Arshad Mohammad via rgs)
 
+  ZOOKEEPER-2235: License update (fpj via michim)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1575. adding .gitattributes to prevent CRLF and LF mismatches for
