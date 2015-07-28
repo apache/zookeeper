@@ -787,12 +787,14 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
       </copy>
 
       <copy todir="${dist.dir}">
-        <fileset dir=".">
-          <include name="*.txt" />
-        </fileset>
+        <fileset file="CHANGES.txt"/>
+        <fileset file="README.txt"/>
+        <fileset file="README_packaging.txt"/>
         <fileset file="build.xml"/>
         <fileset file="ivy.xml"/>
         <fileset file="ivysettings.xml"/>
+        <fileset file="src/NOTICE.txt"/>
+        <fileset file="src/LICENSE.txt"/>
       </copy>
 
       <copy todir="${dist.dir}/src" includeEmptyDirs="true">
@@ -902,12 +904,14 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
       </copy>
 
       <copy todir="${dist.dir}">
-        <fileset dir=".">
-          <include name="*.txt" />
-        </fileset>
+        <fileset file="CHANGES.txt"/>
+        <fileset file="README.txt"/>
+        <fileset file="README_packaging.txt"/>
         <fileset file="build.xml"/>
         <fileset file="ivy.xml"/>
         <fileset file="ivysettings.xml"/>
+        <fileset file="src/NOTICE.txt"/>
+        <fileset file="src/LICENSE.txt"/>
       </copy>
 
       <copy todir="${dist.dir}/src" includeEmptyDirs="true">
