@@ -47,9 +47,11 @@ import org.apache.zookeeper.AsyncCallback.ACLCallback;
 import org.apache.zookeeper.AsyncCallback.Children2Callback;
 import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
+import org.apache.zookeeper.AsyncCallback.MultiCallback;
 import org.apache.zookeeper.AsyncCallback.StatCallback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
+import org.apache.zookeeper.OpResult.ErrorResult;
 import org.apache.zookeeper.Watcher.Event;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
@@ -610,7 +612,24 @@ public class ClientCnxn {
                       } else {
                           cb.processResult(rc, clientPath, p.ctx, null);
                       }
-                  } else if (p.cb instanceof VoidCallback) {
+                  } else if (p.response instanceof MultiResponse) {
+                          MultiCallback cb = (MultiCallback) p.cb;
+                          MultiResponse rsp = (MultiResponse) p.response;
+                          if (rc == 0) {
+                                  List<OpResult> results = rsp.getResultList();
+                                  int newRc = rc;
+                                  for (OpResult result : results) {
+                                          if (result instanceof ErrorResult
+                                              && KeeperException.Code.OK.intValue()
+                                                  != (newRc = ((ErrorResult) result).getErr())) {
+                                                  break;
+                                          }
+                                  }
+                                  cb.processResult(newRc, clientPath, p.ctx, results);
+                          } else {
+                                  cb.processResult(rc, clientPath, p.ctx, null);
+                          }
+                  }  else if (p.cb instanceof VoidCallback) {
                       VoidCallback cb = (VoidCallback) p.cb;
                       cb.processResult(rc, clientPath, p.ctx);
                   }

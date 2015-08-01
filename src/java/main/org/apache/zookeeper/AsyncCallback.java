@@ -261,4 +261,39 @@ public interface AsyncCallback {
          */
         public void processResult(int rc, String path, Object ctx);
     }
+
+    /**
+     * This callback is used to process the multiple results from
+     * a single multi call.
+     * See {@link org.apache.zookeeper.ZooKeeper#multi} for more information.
+     * @since 3.4.7
+     */
+    interface MultiCallback extends AsyncCallback {
+        /**
+         * Process the result of the asynchronous call.
+         * <p/>
+         * On success, rc is
+         * {@link org.apache.zookeeper.KeeperException.Code#OK}.
+         * All opResults are
+         * non-{@link org.apache.zookeeper.OpResult.ErrorResult},
+         *
+         * <p/>
+         * On failure, rc is a failure code in
+         * {@link org.apache.zookeeper.KeeperException.Code}.
+         * All opResults are
+         * {@link org.apache.zookeeper.OpResult.ErrorResult}.
+         * All operations will be rollback-ed even if operations
+         * before the failing one were successful.
+         *
+         * @param rc   The return code or the result of the call.
+         * @param path The path that we passed to asynchronous calls.
+         * @param ctx  Whatever context object that we passed to
+         *             asynchronous calls.
+         * @param opResults The list of results.
+         *                  One result for each operation,
+         *                  and the order matches that of input.
+         */
+        public void processResult(int rc, String path, Object ctx,
+                List<OpResult> opResults);
+    }
 }
