@@ -151,6 +151,9 @@ BUGFIXES:
 
   ZOOKEEPER-2235 License update (fpj via michim)
 
+  ZOOKEEPER-2239: JMX State from LocalPeerBean incorrect
+  (Kevin Lee via rgs)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
