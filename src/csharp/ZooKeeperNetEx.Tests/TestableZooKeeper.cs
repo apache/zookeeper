@@ -22,7 +22,7 @@ using org.apache.zookeeper.proto;
 
 namespace org.apache.zookeeper {
 
-    public sealed class TestableZooKeeper : ZooKeeper {
+    internal sealed class TestableZooKeeper : ZooKeeper {
         public TestableZooKeeper(string host, int sessionTimeout, Watcher watcher)
             : base(host, sessionTimeout, watcher)
         {

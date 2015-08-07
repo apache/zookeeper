@@ -271,8 +271,8 @@ namespace org.apache.utils
                 }
                 catch (Exception exc)
                 {
-                    Console.WriteLine("Exception while passing a log message to log consumer. TraceLogger type:{0}, name:{1}, severity:{2}, message:{3}, message exception:{4}, log consumer exception:{5}",
-                        consumer.GetType().FullName, logName, sev, message, exception, exc);
+                    Trace.WriteLine(string.Format(CultureInfo.InvariantCulture,"Exception while passing a log message to log consumer. TraceLogger type:{0}, name:{1}, severity:{2}, message:{3}, message exception:{4}, log consumer exception:{5}",
+                        consumer.GetType().FullName, logName, sev, message, exception, exc));
                 }
             }
         }

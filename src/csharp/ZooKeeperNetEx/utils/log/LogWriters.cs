@@ -20,7 +20,6 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace org.apache.utils
@@ -47,13 +46,12 @@ namespace org.apache.utils
         public void Log(TraceLevel severity, string caller, string message, Exception exception) 
         {
             string exc = TraceLogger.PrintException(exception);
-            string msg1 = string.Format(CultureInfo.InvariantCulture,"[{0} {1,5}\t{2}\t{3}\t{4}]\t{5}",
-                TraceLogger.PrintDate(DateTime.UtcNow),            //0
-                Thread.CurrentThread.ManagedThreadId,   //1
-                TraceLogger.SeverityTable[(int)severity],    //2
-                caller,                                 //3
-                message,                                //4
-                exc);      //5
+            string msg1 = string.Format(CultureInfo.InvariantCulture,"[{0}\t{1}\t{2}\t{3}]\t{4}",
+                TraceLogger.PrintDate(DateTime.UtcNow),     //0
+                TraceLogger.SeverityTable[(int)severity],   //1
+                caller,                                     //2
+                message,                                    //3
+                exc);                                       //4
             var msg = msg1;
 
             try
@@ -110,7 +108,6 @@ namespace org.apache.utils
     {
         private readonly StreamWriter logOutput;
         private readonly AsyncManualResetEvent logEvent = new AsyncManualResetEvent();
-        private readonly Task logTask;
         private readonly ConcurrentQueue<string> logQueue = new ConcurrentQueue<string>();
 
         /// <summary>
@@ -122,7 +119,13 @@ namespace org.apache.utils
             bool fileExists = File.Exists(logFile.FullName);
             logOutput = fileExists ? logFile.AppendText() : logFile.CreateText();
             logFile.Refresh(); // Refresh the cached view of FileInfo
-            logTask = startLogTask();
+            startLogTask().ContinueWith(t =>
+            {
+                if (t.Exception != null)
+                {
+                    Trace.WriteLine("Error while writing to log. Exception:" + t.Exception);
+                }
+            });
         }
 
         /// <summary>Write the log message for this log.</summary>

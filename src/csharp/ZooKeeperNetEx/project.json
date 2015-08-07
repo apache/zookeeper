@@ -1,0 +1,47 @@
+﻿{
+  "exclude": [
+    "Generated/server/**/*.*",
+    "Generated/txn/**/*.*",
+    "Generated/data/StatPersisted*.*",
+    "Generated/proto/*SASL*.*",
+    "Generated/proto/GetChildrenR*.*",
+    "Generated/proto/GetMaxChildren*.*"
+  ],
+  "userSecretsId": "dotnet-ZooKeeperNetEx-150815",
+  "title": "Apache ZooKeeper .NET async Client",
+  "version": "3.4.6.1003",
+  "description": "A .NET async Client fully compliant with ZooKeeper v3.4.6, supporting all features. Fully Task-based Asynchronous (async/await). A great measure has been taken to follow the logic of the official Java client, including all relevant unit tests. In fact, the code is almost identical. Thus allowing easy evolution alongside the Java version.",
+  "authors": [ "Shay Hazor" ],
+  "owners": [ "Shay Hazor" ],
+  "summary": "A .NET async Client for ZooKeeper v3.4.6",
+  "releaseNotes": "Support the new \"dotnet\" target. This project is actively maintained at: https://github.com/shayhatsor/zookeeper Please feel free to open an issue or ask a question there.",
+  "tags": [ "Apache", "ZooKeeper", ".NET", "Client", "Async", "ZK", "C#" ],
+  "projectUrl": "https://github.com/shayhatsor/zookeeper",
+  "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
+  "iconUrl": "https://ccdce73789835b39c0952535276de3b7772f802f.googledrive.com/host/0B_hNtILvKRsifnpVRnp4NVRKcHltY05FSGM2bzg5ZGNaVHRqcW9GVFJnWjczSFUtNk40OTA/zookeeper.bmp",
+  "copyright": "Shay Hazor - Copyright 2015",
+  "compilationOptions": { "keyFile": "../ZooKeeperNetEx.snk" },
+  "frameworks": {
+    "dotnet": {
+      "dependencies": {
+        "Microsoft.CSharp": "4.0.1-*",
+        "System.Collections": "4.0.11-*",
+        "System.Collections.Concurrent": "4.0.11-*",
+        "System.Diagnostics.TraceSource": "4.0.0-*",
+        "System.Linq": "4.0.1-*",
+        "System.Net.NameResolution": "4.0.0-*",
+        "System.Net.Primitives": "4.0.11-*",
+        "System.Net.Sockets": "4.0.10-*",
+        "System.Threading": "4.0.11-*",
+        "System.Threading.Tasks": "4.0.11-*",
+        "System.Xml.XmlDocument": "4.0.1-*",
+        "System.Diagnostics.Tools": "4.0.1-*"
+      }
+    },
+    "net45": {
+      "frameworkAssemblies": {
+        "System.Xml": "4.0.0"
+      }
+    }
+  }
+}
