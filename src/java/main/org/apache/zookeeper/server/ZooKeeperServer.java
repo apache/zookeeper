@@ -110,7 +110,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected long hzxid = 0;
     public final static Exception ok = new Exception("No prob");
     protected RequestProcessor firstProcessor;
-    protected volatile boolean running;
+    protected volatile State state = State.INITIAL;
+
+    enum State {
+        INITIAL, RUNNING, SHUTDOWN;
+    }
 
     /**
      * This is the secret that we use to generate passwords, for the moment it
@@ -127,6 +131,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     private ServerCnxnFactory serverCnxnFactory;
 
     private final ServerStats serverStats;
+
+    private final ZooKeeperServerListener listener = new ZooKeeperServerListenerImpl();
 
     void removeCnxn(ServerCnxn cnxn) {
         zkDb.removeCnxn(cnxn);
@@ -400,7 +406,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
     }
     
-    public void startup() {        
+    public synchronized void startup() {        
         if (sessionTracker == null) {
             createSessionTracker();
         }
@@ -409,10 +415,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         registerJMX();
 
-        synchronized (this) {
-            running = true;
-            notifyAll();
-        }
+        state = State.RUNNING;
+        notifyAll();
     }
 
     protected void setupRequestProcessors() {
@@ -424,9 +428,27 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         ((PrepRequestProcessor)firstProcessor).start();
     }
 
+    public ZooKeeperServerListener getZooKeeperServerListener() {
+        return listener;
+    }
+
+    /**
+     * Default listener implementation, which will do a graceful shutdown on
+     * notification
+     */
+    private class ZooKeeperServerListenerImpl implements
+            ZooKeeperServerListener {
+
+        @Override
+        public void notifyStopping(String threadName, int exitCode) {
+            LOG.info("Thread {} exits, error code {}", threadName, exitCode);
+            shutdown();
+        }
+    }
+
     protected void createSessionTracker() {
         sessionTracker = new SessionTrackerImpl(this, zkDb.getSessionWithTimeOuts(),
-                tickTime, 1);
+                tickTime, 1, getZooKeeperServerListener());
     }
     
     protected void startSessionTracker() {
@@ -434,14 +456,18 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public boolean isRunning() {
-        return running;
+        return state == State.RUNNING;
     }
 
-    public void shutdown() {
+    public synchronized void shutdown() {
+        if (!isRunning()) {
+            LOG.debug("ZooKeeper server is not running, so not proceeding to shutdown!");
+            return;
+        }
         LOG.info("shutting down");
 
         // new RuntimeException("Calling shutdown").printStackTrace();
-        this.running = false;
+        state = State.SHUTDOWN;
         // Since sessionTracker and syncThreads poll we just have to
         // set running to false and they will detect it during the poll
         // interval.
@@ -652,13 +678,17 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         if (firstProcessor == null) {
             synchronized (this) {
                 try {
-                    while (!running) {
+                    // Since all requests are passed to the request
+                    // processor it should wait for setting up the request
+                    // processor chain. The state will be updated to RUNNING
+                    // after the setup.
+                    while (state == State.INITIAL) {
                         wait(1000);
                     }
                 } catch (InterruptedException e) {
                     LOG.warn("Unexpected interruption", e);
                 }
-                if (firstProcessor == null) {
+                if (firstProcessor == null || state != State.RUNNING) {
                     throw new RuntimeException("Not started");
                 }
             }
