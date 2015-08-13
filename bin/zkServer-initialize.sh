@@ -24,7 +24,7 @@
 # use POSIX interface, symlink is followed automatically
 ZOOBIN="${BASH_SOURCE-$0}"
 ZOOBIN="$(dirname "${ZOOBIN}")"
-ZOOBINDIR="$(cd "${ZOOBIN}"; pwd)"
+ZOOBINDIR="$(cd "${ZOOBIN}" >/dev/null && pwd)"
 
 if [ -e "$ZOOBIN/../libexec/zkEnv.sh" ]; then
   . "$ZOOBINDIR"/../libexec/zkEnv.sh
