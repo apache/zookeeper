@@ -46,7 +46,13 @@ public class ZooKeeperThreadTest {
     public class MyCriticalThread extends ZooKeeperCriticalThread {
 
         public MyCriticalThread(String threadName) {
-            super(threadName);
+            super(threadName, new ZooKeeperServerListener() {
+
+                @Override
+                public void notifyStopping(String threadName, int erroCode) {
+
+                }
+            });
         }
 
         public void run() {

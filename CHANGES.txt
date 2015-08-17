@@ -131,6 +131,9 @@ IMPROVEMENTS:
   ZOOKEEPER-2205: Log type of unexpected quorum packet in learner handler loop
   (Hitoshi Mitake via rgs)
 
+  ZOOKEEPER-1907 Improve Thread handling
+  (Rakesh R via hdeng)
+
 NEW FEATURES:
 
   ZOOKEEPER-2237 Port async multi to 3.4 branch (Ivan Kelly via rakeshr)
