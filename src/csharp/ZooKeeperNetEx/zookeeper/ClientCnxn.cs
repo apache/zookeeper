@@ -656,7 +656,7 @@ namespace org.apache.zookeeper {
                     try {
                         if (!clientCnxnSocket.isConnected()) {
                             if (!isFirstConnect) {
-                                await Task.Delay(r.Next(1000)).ConfigureAwait(false);
+                                await TaskUtils.Delay(r.Next(1000)).ConfigureAwait(false);
                             }
                             // don't re-establish connection if we are closing
                             if (closing.Value || !getState().isAlive()) {
@@ -731,30 +731,28 @@ namespace org.apache.zookeeper {
                             }
                             break;
                         }
-                        else {
-                            // this is ugly, you have a better way speak up
-                            if (e is SessionExpiredException) {
-                                LOG.info(e.Message + ", closing socket connection");
-                            }
-                            else if (e is SessionTimeoutException) {
-                                LOG.info(e.Message + RETRY_CONN_MSG);
-                            }
-                            else if (e is EndOfStreamException) {
-                                LOG.info(e.Message + RETRY_CONN_MSG);
-                            }
-                            else if (e is RWServerFoundException) {
-                                LOG.info(e.Message);
-                            }
-                            else {
-                                LOG.warn(
-                                    "Session 0x" + getSessionId().ToHexString() +
-                                    " for server " +
-                                    clientCnxnSocket.getRemoteSocketAddress()
-                                    + ", unexpected error" +
-                                    RETRY_CONN_MSG, e);
-                            }
-                            notClosingAndExceptional = true;
+                        // this is ugly, you have a better way speak up
+                        if (e is SessionExpiredException) {
+                            LOG.info(e.Message + ", closing socket connection");
                         }
+                        else if (e is SessionTimeoutException) {
+                            LOG.info(e.Message + RETRY_CONN_MSG);
+                        }
+                        else if (e is EndOfStreamException) {
+                            LOG.info(e.Message + RETRY_CONN_MSG);
+                        }
+                        else if (e is RWServerFoundException) {
+                            LOG.info(e.Message);
+                        }
+                        else {
+                            LOG.warn(
+                                "Session 0x" + getSessionId().ToHexString() +
+                                " for server " +
+                                clientCnxnSocket.getRemoteSocketAddress()
+                                + ", unexpected error" +
+                                RETRY_CONN_MSG, e);
+                        }
+                        notClosingAndExceptional = true;
                     }
                     if (notClosingAndExceptional)
                     {
@@ -938,8 +936,8 @@ namespace org.apache.zookeeper {
                     disconnect();
                     await closeTask.ConfigureAwait(false);
                 });
-                var closeDelay = Task.Delay(5000);
-                await Task.WhenAny(Task.WhenAll(sendTask, eventTask), closeDelay).ConfigureAwait(false);
+                var closeDelay = TaskUtils.Delay(5000);
+                await TaskUtils.WhenAny(TaskUtils.WhenAll(sendTask, eventTask), closeDelay).ConfigureAwait(false);
                 if (closeDelay.IsCompleted) {
                     throw new TimeoutException("waited more the 5 seconds for disonnection");
                 }

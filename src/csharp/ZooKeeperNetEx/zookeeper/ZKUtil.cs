@@ -81,9 +81,7 @@ namespace org.apache.zookeeper
 			    if (queue.Count == 0) {
 			        break;
 			    }
-			    else {
-			        node = queue.Dequeue();
-			    }
+			    node = queue.Dequeue();
 			    IList<string> children = (await zk.getChildrenAsync(node).ConfigureAwait(false)).Children;
 				foreach (string child in children)
 				{

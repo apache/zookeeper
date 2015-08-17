@@ -351,7 +351,7 @@ namespace org.apache.utils
             
             return string.Format(CultureInfo.InvariantCulture, Environment.NewLine + "Exc level {0}: {1}: {2}{3}",
                 level,
-                ((object)exception).GetType(),
+                exception.GetType(),
                 message,
                 stack);
         }

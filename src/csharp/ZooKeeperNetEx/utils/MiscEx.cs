@@ -21,9 +21,9 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
-using org.apache.zookeeper;
 
-namespace org.apache.utils {
+namespace org.apache.zookeeper
+{
     internal static class MiscEx {
         public static TValue remove<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key) {
             TValue value;

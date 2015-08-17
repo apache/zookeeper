@@ -168,12 +168,10 @@ namespace org.apache.zookeeper.recipes.leader {
             electionSupport.stop().GetAwaiter().GetResult();
         }
 
-        private LeaderElectionSupport createLeaderElectionSupport() {
-            var electionSupport = new LeaderElectionSupport();
-
-            electionSupport.ZooKeeper = zooKeeper;
-            electionSupport.RootNodeName = testRootNode + Thread.CurrentThread.ManagedThreadId;
-            electionSupport.HostName = "foohost";
+        private LeaderElectionSupport createLeaderElectionSupport()
+        {
+            var electionSupport = new LeaderElectionSupport(zooKeeper,
+                testRootNode + Thread.CurrentThread.ManagedThreadId, "foohost");
 
             return electionSupport;
         }

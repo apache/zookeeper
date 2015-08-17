@@ -271,10 +271,7 @@ namespace org.apache.zookeeper.recipes.@lock
 								{
 									return false;
 								}
-								else
-								{
-									LOG.warn("Could not find the" + " stats for less than me: " + lastChildName.Name);
-								}
+							    LOG.warn("Could not find the" + " stats for less than me: " + lastChildName.Name);
 							}
 							else
 							{

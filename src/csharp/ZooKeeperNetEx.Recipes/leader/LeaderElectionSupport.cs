@@ -91,7 +91,7 @@ namespace org.apache.zookeeper.recipes.leader {
     ///         </ul>
     ///     </para>
     /// </summary>
-    internal  sealed class LeaderElectionSupport : Watcher {
+    public sealed class LeaderElectionSupport : Watcher {
         private readonly AsyncLock lockable = new AsyncLock();
   
         private static readonly TraceLogger logger = TraceLogger.GetLogger(typeof (LeaderElectionSupport));
@@ -100,7 +100,10 @@ namespace org.apache.zookeeper.recipes.leader {
         private LeaderOffer leaderOffer;
         private State state;
 
-        public LeaderElectionSupport() {
+        public LeaderElectionSupport(ZooKeeper zooKeeper, string rootNodeName, string hostName) {
+            ZooKeeper = zooKeeper;
+            RootNodeName = rootNodeName;
+            HostName = hostName;
             state = State.STOP;
             listeners = new ConcurrentDictionary<LeaderElectionAware, byte>();
         }
@@ -137,19 +140,19 @@ namespace org.apache.zookeeper.recipes.leader {
         ///     </para>
         /// </summary>
         /// <returns> a znode path </returns>
-        internal string RootNodeName { private get; set; }
+        private readonly string RootNodeName;
 
         /// <summary>
         ///     The <seealso cref="ZooKeeper" /> instance to use for all operations. Provided this
         ///     overrides any connectString or sessionTimeout set.
         /// </summary>
-        internal ZooKeeper ZooKeeper { private get; set; }
+        private readonly ZooKeeper ZooKeeper;
 
         /// <summary>
         ///     The hostname of this process. Mostly used as a convenience for logging and
         ///     to respond to <seealso cref="getLeaderHostName()" /> requests.
         /// </summary>
-        internal string HostName { private get; set; }
+        private readonly string HostName;
 
         /// <summary>
         ///     <para>

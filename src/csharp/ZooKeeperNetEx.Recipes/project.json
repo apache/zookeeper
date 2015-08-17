@@ -1,13 +1,13 @@
 ﻿{
   "userSecretsId": "dotnet-ZooKeeperNetEx-150815",
   "title": "Apache ZooKeeper .NET async Recipes",
-  "version": "3.4.6.1003",
-  "description": "A .NET async Recipes fully compliant with ZooKeeper v3.4.6, supporting all features. Fully Task-based Asynchronous (async/await). A great measure has been taken to follow the logic of the official Java client, including all relevant unit tests. In fact, the code is almost identical. Thus allowing easy evolution alongside the Java version.",
+  "version": "3.4.6.1004",
+  "description": "A .NET async Recipes fully compliant with ZooKeeper v3.4.6, supporting all features. Fully Task-based Asynchronous (async/await). A great measure has been taken to follow the logic of the official Java client, including all relevant unit tests. In fact, the code is almost identical. Thus allowing easy evolution alongside the Java version. Distributed Recipes included: Queue, Lock, Leader.",
   "authors": [ "Shay Hazor" ],
   "owners": [ "Shay Hazor" ],
   "summary": "A .NET async Recipes for ZooKeeper v3.4.6",
-  "releaseNotes": "Support the new \"dotnet\" target. This project is actively maintained at: https://github.com/shayhatsor/zookeeper Please feel free to open an issue or ask a question there.",
-  "tags": [ "Apache", "ZooKeeper", ".NET", "Recipes", "Async", "ZK", "C#" ],
+  "releaseNotes": "Support the new \"dotnet\" target and backward compatible with .NET 4. This project is actively maintained at: https://github.com/shayhatsor/zookeeper Please feel free to open an issue or ask a question there.",
+  "tags": [ "Apache", "ZooKeeper", ".NET", "Recipes", "Async", "ZK", "C#", "Distributed", "Lock", "Leader", "Election", "Queue" ],
   "projectUrl": "https://github.com/shayhatsor/zookeeper",
   "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
   "iconUrl": "https://ccdce73789835b39c0952535276de3b7772f802f.googledrive.com/host/0B_hNtILvKRsifnpVRnp4NVRKcHltY05FSGM2bzg5ZGNaVHRqcW9GVFJnWjczSFUtNk40OTA/zookeeper.bmp",
@@ -20,9 +20,14 @@
         "System.Diagnostics.Tools": "4.0.1-*"
       }
     },
-    "net45": {}
+    "net45": { },
+    "net4": {
+      "dependencies": {
+        "Microsoft.Bcl.Async": "1.0.168"
+      }
+    }
   },
   "dependencies": {
-    "ZooKeeperNetEx": "3.4.6.1003"
+    "ZooKeeperNetEx": "3.4.6.1004"
   }
 }

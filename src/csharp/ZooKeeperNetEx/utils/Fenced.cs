@@ -33,21 +33,29 @@ namespace org.apache.utils
         {
             get
             {
-                Interlocked.MemoryBarrier();
+                MemoryBarrier();
                 var value = m_Value;
-                Interlocked.MemoryBarrier();
+                MemoryBarrier();
                 return value;
             }
             set
             {
-                Interlocked.MemoryBarrier();
+                MemoryBarrier();
                 m_Value = value;
-                Interlocked.MemoryBarrier();
+                MemoryBarrier();
             }
         }
 
         public override string ToString() {
             return m_Value.ToString();
+        }
+        private static void MemoryBarrier()
+        {
+#if NET4
+          Thread.MemoryBarrier();
+#else
+            Interlocked.MemoryBarrier();
+#endif
         }
     }
 

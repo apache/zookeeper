@@ -29,7 +29,7 @@ namespace org.apache.zookeeper
     /// Watcher class.
     /// </summary>
     public abstract class Watcher {
-        internal static readonly Task CompletedTask = Task.FromResult(1);
+        internal static readonly Task CompletedTask = TaskUtils.FromResult(1);
 
         /// <summary>
         /// Processes the specified event.

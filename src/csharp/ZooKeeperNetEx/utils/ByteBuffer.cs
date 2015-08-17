@@ -58,8 +58,7 @@ namespace org.apache.utils
         {
             if (mode == Mode.Write)
                 return Stream.Capacity;
-            else
-                return (int) Stream.Length;
+            return (int) Stream.Length;
         }
 
         public int remaining()

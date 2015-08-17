@@ -507,7 +507,7 @@ namespace org.apache.zookeeper.test {
             try {
                 zk.create(path, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
-            catch (System.ArgumentException) {
+            catch (ArgumentException) {
                 // this is good
                 return;
             }
@@ -549,7 +549,7 @@ namespace org.apache.zookeeper.test {
                 zk.create("/createseqpar/", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                 Assert.assertTrue(false);
             }
-            catch (System.ArgumentException) {
+            catch (ArgumentException) {
                 // catch this.
             }
 
@@ -561,21 +561,21 @@ namespace org.apache.zookeeper.test {
                 zk.create("/createseqpar//", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
                 Assert.assertTrue(false);
             }
-            catch (System.ArgumentException) {
+            catch (ArgumentException) {
                 // catch this.
             }
             try {
                 zk.create("/createseqpar/./", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
                 Assert.assertTrue(false);
             }
-            catch (System.ArgumentException) {
+            catch (ArgumentException) {
                 // catch this.
             }
             try {
                 zk.create("/createseqpar/../", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
                 Assert.assertTrue(false);
             }
-            catch (System.ArgumentException) {
+            catch (ArgumentException) {
                 // catch this.
             }
         }

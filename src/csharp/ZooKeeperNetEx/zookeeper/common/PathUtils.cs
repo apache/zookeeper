@@ -80,32 +80,32 @@ namespace org.apache.zookeeper.common
 					reason = "null character not allowed @" + i;
 					break;
 				}
-				else if (c == '/' && lastc == '/')
-				{
-					reason = "empty node name specified @" + i;
-					break;
-				}
-				else if (c == '.' && lastc == '.')
-				{
-					if (chars[i - 2] == '/' && ((i + 1 == chars.Length) || chars[i + 1] == '/'))
-					{
-						reason = "relative paths not allowed @" + i;
-						break;
-					}
-				}
-				else if (c == '.')
-				{
-					if (chars[i - 1] == '/' && ((i + 1 == chars.Length) || chars[i + 1] == '/'))
-					{
-						reason = "relative paths not allowed @" + i;
-						break;
-					}
-				}
-				else if (c > '\u0000' && c < '\u001f' || c > '\u007f' && c < '\u009F' || c > '\ud800' && c < '\uf8ff' || c > '\ufff0' && c < '\uffff')
-				{
-					reason = "invalid charater @" + i;
-					break;
-				}
+			    if (c == '/' && lastc == '/')
+			    {
+			        reason = "empty node name specified @" + i;
+			        break;
+			    }
+			    if (c == '.' && lastc == '.')
+			    {
+			        if (chars[i - 2] == '/' && ((i + 1 == chars.Length) || chars[i + 1] == '/'))
+			        {
+			            reason = "relative paths not allowed @" + i;
+			            break;
+			        }
+			    }
+			    else if (c == '.')
+			    {
+			        if (chars[i - 1] == '/' && ((i + 1 == chars.Length) || chars[i + 1] == '/'))
+			        {
+			            reason = "relative paths not allowed @" + i;
+			            break;
+			        }
+			    }
+			    else if (c > '\u0000' && c < '\u001f' || c > '\u007f' && c < '\u009F' || c > '\ud800' && c < '\uf8ff' || c > '\ufff0' && c < '\uffff')
+			    {
+			        reason = "invalid charater @" + i;
+			        break;
+			    }
 			}
 
 			if (reason != null)

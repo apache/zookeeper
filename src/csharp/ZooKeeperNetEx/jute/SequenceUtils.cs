@@ -49,14 +49,8 @@ namespace org.apache.jute
             int length1 = b1.Length;
             int length2 = b2.Length;
             if (length1 < length2) return -1;
-            else
-            {
-                if (length2 < length1) return 1;
-                else
-                {
-                    return memcmp(b1, b2, length1);
-                }
-            }
+            if (length2 < length1) return 1;
+            return memcmp(b1, b2, length1);
         }
 
         public static bool EqualsEx<T>(IEnumerable<T> ar1, IEnumerable<T> ar2)

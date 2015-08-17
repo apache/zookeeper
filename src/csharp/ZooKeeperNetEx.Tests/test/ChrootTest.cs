@@ -39,7 +39,7 @@ namespace org.apache.zookeeper.test
 			public override Task process(WatchedEvent @event)
 			{
 				Console.WriteLine("latch:" + path + " " + @event.getPath());
-				this.eventPath = @event.getPath();
+				eventPath = @event.getPath();
 				latch.Set();
 			    return CompletedTask;
 			}

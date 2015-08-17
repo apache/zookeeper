@@ -185,7 +185,7 @@ namespace org.apache.zookeeper.recipes.@lock
         {
             if (attemptCount > 0) 
             {
-                await Task.Delay(attemptCount*retryDelayInMs);
+                await TaskUtils.Delay(attemptCount*retryDelayInMs);
             }
         }
     }

@@ -60,7 +60,7 @@ namespace org.apache.zookeeper.client
 			}
 			if (currentIndex == lastIndex && spinDelay > 0) 
             {
-			    await Task.Delay(TimeSpan.FromMilliseconds(spinDelay)).ConfigureAwait(false);
+			    await TaskUtils.Delay(TimeSpan.FromMilliseconds(spinDelay)).ConfigureAwait(false);
 			}
 			else if (lastIndex == -1)
 			{

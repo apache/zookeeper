@@ -33,7 +33,8 @@ namespace org.apache.zookeeper {
     /// service, an application must first instantiate an object of ZooKeeper class.
     /// All the iterations will be done by calling the methods of ZooKeeper class.
     /// The methods of this class are thread-safe unless otherwise noted.
-    /// 
+    /// </summary>
+    /// <remarks>
     /// Once a connection to a server is established, a session ID is assigned to the
     /// client. The client will send heart beats to the server periodically to keep
     /// the session valid.
@@ -73,7 +74,7 @@ namespace org.apache.zookeeper {
     /// are lost. To emulate this, the client will generate a special event to tell
     /// the event handler a connection has been dropped. This special event has type
     /// EventNone and state sKeeperStateDisconnected
-    /// </summary>
+    /// </remarks>
     public class ZooKeeper {
         static ZooKeeper() {
             const string ZKConfigFile = "ZooKeeperConfiguration.xml";
@@ -515,9 +516,7 @@ namespace org.apache.zookeeper {
                 }
                 return cnxn.chrootPath + clientPath;
             }
-            else {
-                return clientPath;
-            }
+            return clientPath;
         }
 
         /// <summary>
@@ -577,9 +576,7 @@ namespace org.apache.zookeeper {
             if (cnxn.chrootPath == null) {
                 return response.getPath();
             }
-            else {
-                return response.getPath().Substring(cnxn.chrootPath.Length);
-            }
+            return response.getPath().Substring(cnxn.chrootPath.Length);
         }
 
         /// <summary>
@@ -1122,9 +1119,9 @@ namespace org.apache.zookeeper {
                 catch (KeeperException.ConnectionLossException) {
                 }
                 if (timeoutTask == null)
-                    timeoutTask = Task.Delay(zk.userDefinedSessionTimeout);
+                    timeoutTask = TaskUtils.Delay(zk.userDefinedSessionTimeout);
 
-                await Task.WhenAny(zk.connectedTask.WaitAsync(), timeoutTask).ConfigureAwait(false);
+                await TaskUtils.WhenAny(zk.connectedTask.WaitAsync(), timeoutTask).ConfigureAwait(false);
             } while (!timeoutTask.IsCompleted);
             return await zkMethodTask.ConfigureAwait(false);
         }
