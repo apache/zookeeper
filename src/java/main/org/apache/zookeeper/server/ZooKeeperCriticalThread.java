@@ -27,24 +27,26 @@ import org.slf4j.LoggerFactory;
 public class ZooKeeperCriticalThread extends ZooKeeperThread {
     private static final Logger LOG = LoggerFactory
             .getLogger(ZooKeeperCriticalThread.class);
-    private static final int DEFAULT_EXIT_CODE = 1;
+    private final ZooKeeperServerListener listener;
 
-    public ZooKeeperCriticalThread(String threadName) {
+    public ZooKeeperCriticalThread(String threadName,
+            ZooKeeperServerListener listener) {
         super(threadName);
+        this.listener = listener;
     }
 
     /**
      * This will be used by the uncaught exception handler and make the system
      * exit.
      * 
-     * @param thName
+     * @param threadName
      *            - thread name
      * @param e
      *            - exception object
      */
     @Override
-    protected void handleException(String thName, Throwable e) {
-        LOG.error("Severe unrecoverable error, from thread : {}", thName, e);
-        System.exit(DEFAULT_EXIT_CODE);
+    protected void handleException(String threadName, Throwable e) {
+        LOG.error("Severe unrecoverable error, from thread : {}", threadName, e);
+        listener.notifyStopping(threadName, ExitCode.UNEXPECTED_ERROR);
     }
 }

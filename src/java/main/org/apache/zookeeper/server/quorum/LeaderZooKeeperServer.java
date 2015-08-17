@@ -62,7 +62,8 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
         RequestProcessor toBeAppliedProcessor = new Leader.ToBeAppliedRequestProcessor(
                 finalProcessor, getLeader().toBeApplied);
         commitProcessor = new CommitProcessor(toBeAppliedProcessor,
-                Long.toString(getServerId()), false);
+                Long.toString(getServerId()), false,
+                getZooKeeperServerListener());
         commitProcessor.start();
         ProposalRequestProcessor proposalProcessor = new ProposalRequestProcessor(this,
                 commitProcessor);
@@ -78,8 +79,9 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     
     @Override
     public void createSessionTracker() {
-        sessionTracker = new SessionTrackerImpl(this, getZKDatabase().getSessionWithTimeOuts(),
-                tickTime, self.getId());
+        sessionTracker = new SessionTrackerImpl(this, getZKDatabase()
+                .getSessionWithTimeOuts(), tickTime, self.getId(),
+                getZooKeeperServerListener());
     }
     
     @Override

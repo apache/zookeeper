@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.zookeeper.server.SessionTracker;
 import org.apache.zookeeper.server.SessionTrackerImpl;
+import org.apache.zookeeper.server.ZooKeeperServerListener;
 
 /**
  * This is really just a shell of a SessionTracker that tracks session activity
@@ -39,7 +40,8 @@ public class LearnerSessionTracker implements SessionTracker {
     private ConcurrentHashMap<Long, Integer> sessionsWithTimeouts;
 
     public LearnerSessionTracker(SessionExpirer expirer,
-            ConcurrentHashMap<Long, Integer> sessionsWithTimeouts, long id) {
+            ConcurrentHashMap<Long, Integer> sessionsWithTimeouts, long id,
+            ZooKeeperServerListener listener) {
         this.expirer = expirer;
         this.sessionsWithTimeouts = sessionsWithTimeouts;
         this.serverId = id;
