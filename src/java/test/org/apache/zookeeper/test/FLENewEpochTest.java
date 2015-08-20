@@ -78,7 +78,7 @@ public class FLENewEpochTest extends ZKTestCase {
     }
 
 
-    class LEThread extends Thread {
+    private class LEThread extends Thread {
         int i;
         QuorumPeer peer;
 
@@ -86,12 +86,11 @@ public class FLENewEpochTest extends ZKTestCase {
             this.i = i;
             this.peer = peer;
             LOG.info("Constructor: " + getName());
-
         }
 
         public void run(){
             boolean flag = true;
-            try{
+            try {
                 while(flag){
                     Vote v = null;
                     peer.setPeerState(ServerState.LOOKING);
@@ -114,7 +113,7 @@ public class FLENewEpochTest extends ZKTestCase {
                     switch (i) {
                     case 0:
                         LOG.info("First peer, do nothing, just join");
-                        if(finish0.tryAcquire(1000, java.util.concurrent.TimeUnit.MILLISECONDS)){
+                        if (finish0.tryAcquire(1000, java.util.concurrent.TimeUnit.MILLISECONDS)) {
                         //if(threads.get(0).peer.getPeerState() == ServerState.LEADING ){
                             LOG.info("Setting flag to false");
                             flag = false;

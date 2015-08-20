@@ -345,19 +345,19 @@ public class Zab1_0Test extends ZKTestCase {
         }
     }
     
-    static public interface LeaderConversation {
+    public static interface LeaderConversation {
         void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l) throws Exception;
     }
     
-    static public interface PopulatedLeaderConversation {
+    public static interface PopulatedLeaderConversation {
         void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l, long zxid) throws Exception;
     }
     
-    static public interface FollowerConversation {
+    public static interface FollowerConversation {
         void converseWithFollower(InputArchive ia, OutputArchive oa, Follower f) throws Exception;
     }
     
-    static public interface ObserverConversation {
+    public static interface ObserverConversation {
         void converseWithObserver(InputArchive ia, OutputArchive oa, Observer o) throws Exception;
     }
 
@@ -617,7 +617,7 @@ public class Zab1_0Test extends ZKTestCase {
     }
     
     // We want to track the change with a callback rather than depending on timing
-    class TrackerWatcher implements Watcher {
+    private static class TrackerWatcher implements Watcher {
         boolean changed;
         synchronized void waitForChange() throws InterruptedException {
             while(!changed) {

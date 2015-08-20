@@ -42,15 +42,18 @@ public class LETest extends ZKTestCase {
     volatile boolean leaderDies;
     volatile long leader = -1;
     Random rand = new Random();
-    class LEThread extends Thread {
+
+    private class LEThread extends Thread {
         LeaderElection le;
         int i;
         QuorumPeer peer;
+
         LEThread(LeaderElection le, QuorumPeer peer, int i) {
             this.le = le;
             this.i = i;
             this.peer = peer;
         }
+
         public void run() {
             try {
                 Vote v = null;
@@ -58,7 +61,7 @@ public class LETest extends ZKTestCase {
                     v = le.lookForLeader();
                     votes[i] = v;
                     if (v.getId() == i) {
-                        synchronized(LETest.this) {
+                        synchronized (LETest.this) {
                             if (leaderDies) {
                                 leaderDies = false;
                                 peer.stopLeaderElection();
@@ -71,7 +74,7 @@ public class LETest extends ZKTestCase {
                         }
                         break;
                     }
-                    synchronized(LETest.this) {
+                    synchronized (LETest.this) {
                         if (leader == -1) {
                             LETest.this.wait();
                         }
@@ -97,7 +100,7 @@ public class LETest extends ZKTestCase {
         File tmpdir[] = new File[count];
         int port[] = new int[count];
         votes = new Vote[count];
-        for(int i = 0; i < count; i++) {
+        for (int i = 0; i < count; i++) {
             peers.put(Long.valueOf(i),
                     new QuorumServer(i,
                             new InetSocketAddress("127.0.0.1",
@@ -108,7 +111,7 @@ public class LETest extends ZKTestCase {
         LeaderElection le[] = new LeaderElection[count];
         leaderDies = true;
         boolean allowOneBadLeader = leaderDies;
-        for(int i = 0; i < le.length; i++) {
+        for (int i = 0; i < le.length; i++) {
             QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i],
                     port[i], 0, i, 1000, 2, 2);
             peer.startLeaderElection();
@@ -117,14 +120,14 @@ public class LETest extends ZKTestCase {
             thread.start();
             threads.add(thread);
         }
-        for(int i = 0; i < threads.size(); i++) {
+        for (int i = 0; i < threads.size(); i++) {
             threads.get(i).join(15000);
             if (threads.get(i).isAlive()) {
                 Assert.fail("Threads didn't join");
             }
         }
         long id = votes[0].getId();
-        for(int i = 1; i < votes.length; i++) {
+        for (int i = 1; i < votes.length; i++) {
             if (votes[i] == null) {
                 Assert.fail("Thread " + i + " had a null vote");
             }

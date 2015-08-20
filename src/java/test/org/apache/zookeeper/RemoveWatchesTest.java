@@ -1109,8 +1109,8 @@ public class RemoveWatchesTest extends ClientBase {
 
     /* a mocked ZK class that doesn't do client-side verification
      * before/after calling removeWatches */
-    private class MyZooKeeper extends ZooKeeper {
-        class MyWatchManager extends ZKWatchManager {
+    private static class MyZooKeeper extends ZooKeeper {
+        private class MyWatchManager extends ZKWatchManager {
             public int lastrc;
 
             /* Pretend that any watcher exists */
@@ -1145,7 +1145,7 @@ public class RemoveWatchesTest extends ClientBase {
         }
     }
 
-    private class MyWatcher implements Watcher {
+    private static class MyWatcher implements Watcher {
         private final String path;
         private String eventPath;
         private CountDownLatch latch;
@@ -1194,7 +1194,7 @@ public class RemoveWatchesTest extends ClientBase {
         }
     }
 
-    private class MyCallback implements AsyncCallback.VoidCallback {
+    private static class MyCallback implements AsyncCallback.VoidCallback {
         private final String path;
         private final int rc;
         private String eventPath;

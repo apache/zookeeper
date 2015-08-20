@@ -35,7 +35,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 
 class QuorumPeerInstance implements Instance {
-    final private static Logger LOG = LoggerFactory.getLogger(QuorumPeerInstance.class);
+    private static final Logger LOG = LoggerFactory.getLogger(QuorumPeerInstance.class);
     private static final File testData = new File(
         System.getProperty("test.data.dir", "build/test/data"));
 
@@ -209,7 +209,7 @@ class QuorumPeerInstance implements Instance {
     public void start() {
     }
 
-    static private void recursiveDelete(File dir) {
+    private static void recursiveDelete(File dir) {
         if (!dir.isDirectory()) {
             dir.delete();
             return;

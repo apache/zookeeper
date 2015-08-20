@@ -33,7 +33,7 @@ import java.util.Map;
 abstract public class JsonServlet extends HttpServlet {
     abstract String handleRequest(JsonRequest request) throws Exception;
 
-    protected class JsonRequest {
+    protected static class JsonRequest {
 	private Map map;
 
 	public JsonRequest(ServletRequest request) {

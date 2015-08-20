@@ -59,7 +59,7 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
         processor.shutdown();
     }
 
-    class MockCommitProcessor extends CommitProcessor {
+    private class MockCommitProcessor extends CommitProcessor {
 
         MockCommitProcessor() {
           super( 

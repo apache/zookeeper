@@ -58,12 +58,12 @@ import org.slf4j.LoggerFactory;
 public class Leader {
     private static final Logger LOG = LoggerFactory.getLogger(Leader.class);
 
-    static final private boolean nodelay = System.getProperty("leader.nodelay", "true").equals("true");
+    private static final boolean nodelay = System.getProperty("leader.nodelay", "true").equals("true");
     static {
         LOG.info("TCP NoDelay set to: " + nodelay);
     }
 
-    static public class Proposal  extends SyncedLearnerTracker {
+    public static class Proposal  extends SyncedLearnerTracker {
         public QuorumPacket packet;
         public Request request;
 

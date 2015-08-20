@@ -212,7 +212,7 @@ public class PrepRequestProcessorTest extends ClientBase {
         }
     }
     
-    private class MySessionTracker implements SessionTracker {
+    private static class MySessionTracker implements SessionTracker {
         @Override
         public boolean addGlobalSession(long id, int to) {
             // TODO Auto-generated method stub

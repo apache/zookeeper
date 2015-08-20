@@ -104,7 +104,7 @@ public class GenerateLoad {
         return total == null ? -1 : total;
     }
 
-    static class SlaveThread extends Thread {
+    private static class SlaveThread extends Thread {
         Socket s;
 
         SlaveThread(Socket s) {
@@ -161,7 +161,7 @@ public class GenerateLoad {
         }
     }
 
-    static class AcceptorThread extends Thread {
+    private static class AcceptorThread extends Thread {
         AcceptorThread() {
             setDaemon(true);
             start();
@@ -186,7 +186,7 @@ public class GenerateLoad {
         }
     }
 
-    static class ReporterThread extends Thread {
+    private static class ReporterThread extends Thread {
         static int percentage;
 
         ReporterThread() {
@@ -265,7 +265,7 @@ public class GenerateLoad {
         lastChange = now;
     }
 
-    static public class GeneratorInstance implements Instance {
+    public static class GeneratorInstance implements Instance {
 
         byte bytes[];
         
@@ -289,7 +289,7 @@ public class GenerateLoad {
         
         volatile boolean alive;
 
-        class ZooKeeperThread extends Thread implements Watcher, DataCallback,
+        private class ZooKeeperThread extends Thread implements Watcher, DataCallback,
                 StatCallback {
             String host;
 
@@ -410,7 +410,7 @@ public class GenerateLoad {
             }
         }
 
-        class SenderThread extends Thread {
+        private class SenderThread extends Thread {
             Socket s;
 
             SenderThread(Socket s) {

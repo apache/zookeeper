@@ -43,7 +43,7 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
         return "digest";
     }
 
-    static final private String base64Encode(byte b[]) {
+    private static final String base64Encode(byte b[]) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < b.length;) {
             int pad = 0;
@@ -74,7 +74,7 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
         return sb.toString();
     }
 
-    static final private char encode(int i) {
+    private static final char encode(int i) {
         i &= 0x3f;
         if (i < 26) {
             return (char) ('A' + i);
@@ -88,7 +88,7 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
         return i == 62 ? '+' : '/';
     }
 
-    static public String generateDigest(String idPassword)
+    public static String generateDigest(String idPassword)
             throws NoSuchAlgorithmException {
         String parts[] = idPassword.split(":", 2);
         byte digest[] = MessageDigest.getInstance("SHA1").digest(

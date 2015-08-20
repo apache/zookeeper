@@ -22,11 +22,11 @@ public class QuorumStats {
     private final Provider provider;
     
     public interface Provider {
-        static public final String UNKNOWN_STATE = "unknown";
-        static public final String LOOKING_STATE = "leaderelection";
-        static public final String LEADING_STATE = "leading";
-        static public final String FOLLOWING_STATE = "following";
-        static public final String OBSERVING_STATE = "observing";
+        public static final String UNKNOWN_STATE = "unknown";
+        public static final String LOOKING_STATE = "leaderelection";
+        public static final String LEADING_STATE = "leading";
+        public static final String FOLLOWING_STATE = "following";
+        public static final String OBSERVING_STATE = "observing";
         public String[] getQuorumPeers();
         public String getServerState();
     }

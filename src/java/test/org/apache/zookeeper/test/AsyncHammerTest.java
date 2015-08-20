@@ -69,7 +69,7 @@ public class AsyncHammerTest extends ZKTestCase
     /**
      * Create /test- sequence nodes asynchronously, max 30 outstanding
      */
-    class HammerThread extends Thread implements StringCallback, VoidCallback {
+    private class HammerThread extends Thread implements StringCallback, VoidCallback {
         private static final int MAX_OUTSTANDING = 30;
 
         private TestableZooKeeper zk;

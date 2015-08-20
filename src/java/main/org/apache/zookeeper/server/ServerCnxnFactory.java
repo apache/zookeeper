@@ -122,7 +122,7 @@ public abstract class ServerCnxnFactory {
 
     public abstract void closeAll();
     
-    static public ServerCnxnFactory createFactory() throws IOException {
+    public static ServerCnxnFactory createFactory() throws IOException {
         String serverCnxnFactoryName =
             System.getProperty(ZOOKEEPER_SERVER_CNXN_FACTORY);
         if (serverCnxnFactoryName == null) {
@@ -139,13 +139,13 @@ public abstract class ServerCnxnFactory {
         }
     }
     
-    static public ServerCnxnFactory createFactory(int clientPort,
+    public static ServerCnxnFactory createFactory(int clientPort,
             int maxClientCnxns) throws IOException
     {
         return createFactory(new InetSocketAddress(clientPort), maxClientCnxns);
     }
 
-    static public ServerCnxnFactory createFactory(InetSocketAddress addr,
+    public static ServerCnxnFactory createFactory(InetSocketAddress addr,
             int maxClientCnxns) throws IOException
     {
         ServerCnxnFactory factory = createFactory();

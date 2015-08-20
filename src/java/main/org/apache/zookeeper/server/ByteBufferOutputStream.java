@@ -42,7 +42,7 @@ public class ByteBufferOutputStream extends OutputStream {
     public void write(byte[] b, int off, int len) throws IOException {
         bb.put(b, off, len);
     }
-    static public void record2ByteBuffer(Record record, ByteBuffer bb)
+    public static void record2ByteBuffer(Record record, ByteBuffer bb)
     throws IOException {
         BinaryOutputArchive oa;
         oa = BinaryOutputArchive.getArchive(new ByteBufferOutputStream(bb));

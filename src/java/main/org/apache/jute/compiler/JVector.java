@@ -23,15 +23,15 @@ package org.apache.jute.compiler;
  */
 public class JVector extends JCompType {
     
-    static private int level = 0;
+    private static int level = 0;
     
-    static private String getId(String id) { return id+getLevel(); }
+    private static String getId(String id) { return id+getLevel(); }
     
-    static private String getLevel() { return Integer.toString(level); }
+    private static String getLevel() { return Integer.toString(level); }
     
-    static private void incrLevel() { level++; }
+    private static void incrLevel() { level++; }
     
-    static private void decrLevel() { level--; }
+    private static void decrLevel() { level--; }
     
     private JType mElement;
     
@@ -147,7 +147,7 @@ public class JVector extends JCompType {
         return genCsharpReadWrapper(fname, tag, false);
     }
 
-    static public String extractVectorName(JType jvType) {
+    public static String extractVectorName(JType jvType) {
 		return JRecord.extractMethodSuffix(jvType)+"_vector";
 	}
 }

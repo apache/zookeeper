@@ -23,15 +23,15 @@ package org.apache.jute.compiler;
  */
 public class JMap extends JCompType {
    
-    static private int level = 0;
+    private static int level = 0;
     
-    static private String getLevel() { return Integer.toString(level); }
+    private static String getLevel() { return Integer.toString(level); }
     
-    static private void incrLevel() { level++; }
+    private static void incrLevel() { level++; }
     
-    static private void decrLevel() { level--; }
+    private static void decrLevel() { level--; }
     
-    static private String getId(String id) { return id+getLevel(); }
+    private static String getId(String id) { return id+getLevel(); }
     
     private JType mKey;
     private JType mValue;

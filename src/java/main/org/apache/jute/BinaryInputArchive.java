@@ -27,14 +27,14 @@ import java.io.InputStream;
  *
  */
 public class BinaryInputArchive implements InputArchive {
-    static public final String UNREASONBLE_LENGTH= "Unreasonable length = ";
+    public static final String UNREASONBLE_LENGTH= "Unreasonable length = ";
     private DataInput in;
     
-    static public BinaryInputArchive getArchive(InputStream strm) {
+    public static BinaryInputArchive getArchive(InputStream strm) {
         return new BinaryInputArchive(new DataInputStream(strm));
     }
     
-    static private class BinaryIndex implements Index {
+    private static class BinaryIndex implements Index {
         private int nelems;
         BinaryIndex(int nelems) {
             this.nelems = nelems;
@@ -84,7 +84,7 @@ public class BinaryInputArchive implements InputArchive {
     	return new String(b, "UTF8");
     }
     
-    static public final int maxBuffer = Integer.getInteger("jute.maxbuffer", 0xfffff);
+    public static final int maxBuffer = Integer.getInteger("jute.maxbuffer", 0xfffff);
 
     public byte[] readBuffer(String tag) throws IOException {
         int len = readInt(tag);

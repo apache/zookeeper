@@ -36,7 +36,7 @@ public class ClientReconnectTest extends ZKTestCase {
     private SocketChannel sc;
     private CountDownLatch countDownLatch = new CountDownLatch(3);
     
-    class MockCnxn extends ClientCnxnSocketNIO {
+    private class MockCnxn extends ClientCnxnSocketNIO {
         MockCnxn() throws IOException {
             super();
         }

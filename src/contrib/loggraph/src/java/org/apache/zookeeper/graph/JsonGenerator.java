@@ -36,7 +36,7 @@ public class JsonGenerator {
     private JSONObject root;
     private HashSet<Integer> servers;
 
-    private class Message {
+    private static class Message {
 	private int from;
 	private int to;
 	private long zxid;

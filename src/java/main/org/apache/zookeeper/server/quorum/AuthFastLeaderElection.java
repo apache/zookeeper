@@ -76,7 +76,7 @@ public class AuthFastLeaderElection implements Election {
 
     private boolean authEnabled = false;
 
-    static public class Notification {
+    public static class Notification {
         /*
          * Proposed leader
          */
@@ -106,7 +106,7 @@ public class AuthFastLeaderElection implements Election {
     /*
      * Messages to send, both Notifications and Acks
      */
-    static public class ToSend {
+    public static class ToSend {
         static enum mType {
             crequest, challenge, notification, ack
         }
@@ -209,7 +209,7 @@ public class AuthFastLeaderElection implements Election {
         final ConcurrentHashMap<Long, Semaphore> ackMutex;
         final ConcurrentHashMap<InetSocketAddress, ConcurrentHashMap<Long, Long>> addrChallengeMap;
 
-        class WorkerReceiver extends ZooKeeperThread {
+        private class WorkerReceiver extends ZooKeeperThread {
 
             DatagramSocket mySocket;
             Messenger myMsg;
@@ -404,7 +404,7 @@ public class AuthFastLeaderElection implements Election {
             }
         }
 
-        class WorkerSender extends ZooKeeperThread {
+        private class WorkerSender extends ZooKeeperThread {
 
             Random rand;
             int maxAttempts;

@@ -73,7 +73,7 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
         }
     }
 
-    private class NoopStringCallback implements AsyncCallback.StringCallback {
+    private static class NoopStringCallback implements AsyncCallback.StringCallback {
         @Override
         public void processResult(int rc, String path, Object ctx,
                                   String name) {

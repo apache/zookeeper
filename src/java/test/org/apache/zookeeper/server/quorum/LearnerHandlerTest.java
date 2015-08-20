@@ -50,7 +50,7 @@ public class LearnerHandlerTest extends ZKTestCase {
     protected static final Logger LOG = LoggerFactory
             .getLogger(LearnerHandlerTest.class);
 
-    class MockLearnerHandler extends LearnerHandler {
+    private static class MockLearnerHandler extends LearnerHandler {
         boolean threadStarted = false;
 
         MockLearnerHandler(Socket sock, Leader leader) throws IOException {
@@ -62,7 +62,7 @@ public class LearnerHandlerTest extends ZKTestCase {
         }
     }
 
-    class MockZKDatabase extends ZKDatabase {
+    private static class MockZKDatabase extends ZKDatabase {
         long lastProcessedZxid;
         ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
         LinkedList<Proposal> committedLog = new LinkedList<Leader.Proposal>();

@@ -548,7 +548,7 @@ public class ZooKeeper {
     /** Handle the special case of exists watches - they add a watcher
      * even in the case where NONODE result code is returned.
      */
-    class ExistsWatchRegistration extends WatchRegistration {
+    private class ExistsWatchRegistration extends WatchRegistration {
         public ExistsWatchRegistration(Watcher watcher, String clientPath) {
             super(watcher, clientPath);
         }
@@ -564,7 +564,7 @@ public class ZooKeeper {
         }
     }
 
-    class DataWatchRegistration extends WatchRegistration {
+    private class DataWatchRegistration extends WatchRegistration {
         public DataWatchRegistration(Watcher watcher, String clientPath) {
             super(watcher, clientPath);
         }
@@ -575,7 +575,7 @@ public class ZooKeeper {
         }
     }
 
-    class ChildWatchRegistration extends WatchRegistration {
+    private class ChildWatchRegistration extends WatchRegistration {
         public ChildWatchRegistration(Watcher watcher, String clientPath) {
             super(watcher, clientPath);
         }

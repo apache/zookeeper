@@ -53,9 +53,9 @@ public class RecordWriter {
         return factory;
     }
     
-    static private HashMap<String, Method> archiveFactory = constructFactory();
+    private static HashMap<String, Method> archiveFactory = constructFactory();
     
-    static private OutputArchive createArchive(OutputStream out,
+    private static OutputArchive createArchive(OutputStream out,
             String format)
             throws IOException {
         Method factory = (Method) archiveFactory.get(format);

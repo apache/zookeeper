@@ -34,7 +34,7 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 class XmlInputArchive implements InputArchive {
     
-    static private class Value {
+    private static class Value {
         private String type;
         private StringBuffer sb;
         

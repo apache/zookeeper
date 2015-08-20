@@ -28,7 +28,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 
 
 public class ConfigUtils {
-	static public String getClientConfigStr(String configData) {
+	public static String getClientConfigStr(String configData) {
         Properties props = new Properties();    	
         try {
           props.load(new StringReader(configData));

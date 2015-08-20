@@ -90,7 +90,7 @@ public class FLEZeroWeightTest extends ZKTestCase {
         }
     }
 
-    class LEThread extends Thread {
+    private class LEThread extends Thread {
         int i;
         QuorumPeer peer;
         boolean fail;

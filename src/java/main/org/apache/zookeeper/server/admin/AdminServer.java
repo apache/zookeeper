@@ -30,7 +30,7 @@ public interface AdminServer {
     public void shutdown() throws AdminServerException;
     public void setZooKeeperServer(ZooKeeperServer zkServer);
 
-    public class AdminServerException extends Exception {
+    public static class AdminServerException extends Exception {
         public AdminServerException(String message, Throwable cause) {
             super(message, cause);
         }

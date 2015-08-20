@@ -327,7 +327,7 @@ public class DataTree {
         return false;
     }
 
-    static public void copyStatPersisted(StatPersisted from, StatPersisted to) {
+    public static void copyStatPersisted(StatPersisted from, StatPersisted to) {
         to.setAversion(from.getAversion());
         to.setCtime(from.getCtime());
         to.setCversion(from.getCversion());
@@ -339,7 +339,7 @@ public class DataTree {
         to.setEphemeralOwner(from.getEphemeralOwner());
     }
 
-    static public void copyStat(Stat from, Stat to) {
+    public static void copyStat(Stat from, Stat to) {
         to.setAversion(from.getAversion());
         to.setCtime(from.getCtime());
         to.setCversion(from.getCversion());
@@ -759,7 +759,7 @@ public class DataTree {
         }
     }
 
-    static public class ProcessTxnResult {
+    public static class ProcessTxnResult {
         public long clientId;
 
         public int cxid;

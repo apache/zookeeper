@@ -95,7 +95,7 @@ public class FastLeaderElection implements Election {
      * peer with higher zxid or same zxid and higher server id
      */
 
-    static public class Notification {
+    public static class Notification {
         /*
          * Format version, introduced in 3.4.6
          */
@@ -142,7 +142,7 @@ public class FastLeaderElection implements Election {
      * These messages can be both Notifications and Acks
      * of reception of notification.
      */
-    static public class ToSend {
+    public static class ToSend {
         static enum mType {crequest, challenge, notification, ack}
 
         ToSend(mType type,
@@ -216,7 +216,7 @@ public class FastLeaderElection implements Election {
          * method run(), and processes such messages.
          */
 
-        class WorkerReceiver extends ZooKeeperThread  {
+        private class WorkerReceiver extends ZooKeeperThread  {
             volatile boolean stop;
             QuorumCnxManager manager;
 
@@ -446,7 +446,7 @@ public class FastLeaderElection implements Election {
          * and queues it on the manager's queue.
          */
 
-        class WorkerSender extends ZooKeeperThread {
+        private class WorkerSender extends ZooKeeperThread {
             volatile boolean stop;
             QuorumCnxManager manager;
 

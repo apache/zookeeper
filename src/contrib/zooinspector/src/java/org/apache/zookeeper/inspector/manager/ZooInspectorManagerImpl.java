@@ -660,7 +660,7 @@ public class ZooInspectorManagerImpl implements ZooInspectorManager {
      * A Watcher which will re-add itself every time an event is fired
      * 
      */
-    public class NodeWatcher implements Watcher {
+    public static class NodeWatcher implements Watcher {
 
         private final String nodePath;
         private final NodeListener nodeListener;

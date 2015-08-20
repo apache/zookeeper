@@ -42,7 +42,7 @@ public class MaxCnxnsTest extends ClientBase {
         super.setUp();
     }
 
-    class CnxnThread extends Thread {
+    private class CnxnThread extends Thread {
 
         public CnxnThread(int i) {
             super("CnxnThread-"+i);
@@ -58,7 +58,7 @@ public class MaxCnxnsTest extends ClientBase {
                  * this for loop.
                  */
                 sChannel = SocketChannel.open();
-                sChannel.connect(new InetSocketAddress(host,port));
+                sChannel.connect(new InetSocketAddress(host, port));
                 // Construct a connection request
                 ConnectRequest conReq = new ConnectRequest(0, 0,
                         10000, 0, "password".getBytes());

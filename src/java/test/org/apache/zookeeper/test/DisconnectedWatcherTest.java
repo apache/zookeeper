@@ -37,7 +37,7 @@ public class DisconnectedWatcherTest extends ClientBase {
     protected static final Logger LOG = LoggerFactory.getLogger(DisconnectedWatcherTest.class);
     final int TIMEOUT = 5000;
 
-    private class MyWatcher extends CountdownWatcher {
+    private static class MyWatcher extends CountdownWatcher {
         LinkedBlockingQueue<WatchedEvent> events =
             new LinkedBlockingQueue<WatchedEvent>();
 

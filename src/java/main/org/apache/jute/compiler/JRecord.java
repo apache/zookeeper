@@ -273,7 +273,7 @@ public class JRecord extends JCompType {
         return t.getMethodSuffix();
     }
 
-    static private String extractStructName(JType t) {
+    private static String extractStructName(JType t) {
         String type = t.getCType();
         if (!type.startsWith("struct ")) return type;
         return type.substring("struct ".length());

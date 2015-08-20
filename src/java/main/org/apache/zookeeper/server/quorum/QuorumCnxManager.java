@@ -92,7 +92,7 @@ public class QuorumCnxManager {
     /*
      * Max buffer size to be read from the network.
      */
-    static public final int maxBuffer = 2048;
+    public static final int maxBuffer = 2048;
 
     /*
      * Connection time out value in milliseconds 
@@ -137,7 +137,7 @@ public class QuorumCnxManager {
      */
     private AtomicInteger threadCnt = new AtomicInteger(0);
 
-    static public class Message {
+    public static class Message {
         Message(ByteBuffer buffer, long sid) {
             this.buffer = buffer;
             this.sid = sid;
@@ -151,7 +151,7 @@ public class QuorumCnxManager {
      * This class parses the initial identification sent out by peers with their
      * sid & hostname.
      */
-    static public class InitialMessage {
+    public static class InitialMessage {
         public Long sid;
         public InetSocketAddress electionAddr;
 
@@ -167,7 +167,7 @@ public class QuorumCnxManager {
             }
         }
 
-        static public InitialMessage parse(Long protocolVersion, DataInputStream din)
+        public static InitialMessage parse(Long protocolVersion, DataInputStream din)
             throws InitialMessageException, IOException {
             Long sid;
 
@@ -694,7 +694,7 @@ public class QuorumCnxManager {
      * soon as there is one available. If connection breaks, then opens a new
      * one.
      */
-    class SendWorker extends ZooKeeperThread {
+    private class SendWorker extends ZooKeeperThread {
         Long sid;
         Socket sock;
         RecvWorker recvWorker;
@@ -848,7 +848,7 @@ public class QuorumCnxManager {
      * Thread to receive messages. Instance waits on a socket read. If the
      * channel breaks, then removes itself from the pool of receivers.
      */
-    class RecvWorker extends ZooKeeperThread {
+    private class RecvWorker extends ZooKeeperThread {
         Long sid;
         Socket sock;
         volatile boolean running = true;

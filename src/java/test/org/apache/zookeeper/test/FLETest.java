@@ -46,7 +46,7 @@ public class FLETest extends ZKTestCase {
     private final int MAX_LOOP_COUNTER = 300;
     private FLETest.LEThread leThread;
 
-    static class TestVote {
+    private static class TestVote {
         TestVote(int id, long leader) {
             this.leader = leader;
         }
@@ -56,8 +56,8 @@ public class FLETest extends ZKTestCase {
 
     int countVotes(HashSet<TestVote> hs, long id) {
         int counter = 0;
-        for(TestVote v : hs){
-            if(v.leader == id) counter++;
+        for (TestVote v : hs) {
+            if (v.leader == id) counter++;
         }
 
         return counter;
@@ -66,7 +66,7 @@ public class FLETest extends ZKTestCase {
     int count;
     HashMap<Long,QuorumServer> peers;
     ArrayList<LEThread> threads;
-    HashMap<Integer, HashSet<TestVote> > voteMap;
+    HashMap<Integer, HashSet<TestVote>> voteMap;
     HashMap<Long, LEThread> quora;
     File tmpdir[];
     int port[];
@@ -84,7 +84,7 @@ public class FLETest extends ZKTestCase {
 
         peers = new HashMap<Long,QuorumServer>(count);
         threads = new ArrayList<LEThread>(count);
-        voteMap = new HashMap<Integer, HashSet<TestVote> >();
+        voteMap = new HashMap<Integer, HashSet<TestVote>>();
         votes = new Vote[count];
         tmpdir = new File[count];
         port = new int[count];
@@ -105,14 +105,14 @@ public class FLETest extends ZKTestCase {
      * Implements the behavior of a peer during the leader election rounds
      * of tests.
      */
-    class LEThread extends Thread {
+    private class LEThread extends Thread {
         FLETest self;
         int i;
         QuorumPeer peer;
         int totalRounds;
-        ConcurrentHashMap<Long, HashSet<Integer> > quora;
+        ConcurrentHashMap<Long, HashSet<Integer>> quora;
 
-        LEThread(FLETest self, QuorumPeer peer, int i, int rounds, ConcurrentHashMap<Long, HashSet<Integer> > quora) {
+        LEThread(FLETest self, QuorumPeer peer, int i, int rounds, ConcurrentHashMap<Long, HashSet<Integer>> quora) {
             this.self = self;
             this.i = i;
             this.peer = peer;
@@ -125,7 +125,7 @@ public class FLETest extends ZKTestCase {
         public void run() {
             try {
                 Vote v = null;
-                while(true) {
+                while (true) {
                     
                     /*
                      * Set the state of the peer to LOOKING and look for leader
@@ -133,7 +133,7 @@ public class FLETest extends ZKTestCase {
                     peer.setPeerState(ServerState.LOOKING);
                     LOG.info("Going to call leader election again.");
                     v = peer.getElectionAlg().lookForLeader();
-                    if(v == null){
+                    if (v == null) {
                         LOG.info("Thread " + i + " got a null vote");
                         break;
                     }
@@ -183,14 +183,14 @@ public class FLETest extends ZKTestCase {
                          * quora keeps the supporters of a given leader, so 
                          * we first update it with the vote of this peer.
                          */
-                        if(quora.get(v.getId()) == null) quora.put(v.getId(), new HashSet<Integer>());
+                        if (quora.get(v.getId()) == null) quora.put(v.getId(), new HashSet<Integer>());
                         quora.get(v.getId()).add(i);
                         
                         /*
                          * we now wait until a quorum supports the same leader.
                          */
-                        if(waitForQuorum(v.getId())){   
-                            synchronized(self){
+                        if (waitForQuorum(v.getId())) {   
+                            synchronized (self) {
                                 
                                 /*
                                  * Assert that the state of the thread is the one expected.
@@ -245,12 +245,12 @@ public class FLETest extends ZKTestCase {
         boolean waitForQuorum(long id)
         throws InterruptedException {
             int loopCounter = 0;
-            while((quora.get(id).size() <= count/2) && (loopCounter < MAX_LOOP_COUNTER)){
+            while ((quora.get(id).size() <= count/2) && (loopCounter < MAX_LOOP_COUNTER)) {
                 Thread.sleep(100);
                 loopCounter++;
             }
             
-            if((loopCounter >= MAX_LOOP_COUNTER) && (quora.get(id).size() <= count/2)){
+            if ((loopCounter >= MAX_LOOP_COUNTER) && (quora.get(id).size() <= count/2)) {
                 return false;
             } else {
                 return true;
@@ -263,7 +263,7 @@ public class FLETest extends ZKTestCase {
     
     @Test
     public void testSingleElection() throws Exception {
-        try{
+        try {
             runElection(1);
         } catch (Exception e) {
             Assert.fail(e.toString());
@@ -273,7 +273,7 @@ public class FLETest extends ZKTestCase {
     
     @Test
     public void testDoubleElection() throws Exception {
-        try{
+        try {
             runElection(2);
         } catch (Exception e) {
             Assert.fail(e.toString());
@@ -282,7 +282,7 @@ public class FLETest extends ZKTestCase {
     
     @Test
     public void testTripleElection() throws Exception {
-        try{
+        try {
             runElection(3);
         } catch (Exception e) {
             Assert.fail(e.toString());
@@ -297,8 +297,8 @@ public class FLETest extends ZKTestCase {
      * @throws Exception
      */
     private void runElection(int rounds) throws Exception {
-        ConcurrentHashMap<Long, HashSet<Integer> > quora = 
-            new ConcurrentHashMap<Long, HashSet<Integer> >();
+        ConcurrentHashMap<Long, HashSet<Integer>> quora = 
+            new ConcurrentHashMap<Long, HashSet<Integer>>();
 
         LOG.info("TestLE: " + getTestName()+ ", " + count);
 
@@ -321,7 +321,7 @@ public class FLETest extends ZKTestCase {
         /*
          * Start one LEThread for each peer we want to run.
          */
-        for(int i = 0; i < count; i++) {
+        for (int i = 0; i < count; i++) {
             QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i],
                     port[i], 3, i, 1000, 2, 2);
             peer.startLeaderElection();
@@ -332,8 +332,8 @@ public class FLETest extends ZKTestCase {
         LOG.info("Started threads " + getTestName());
 
         int waitCounter = 0;
-        synchronized(this){
-            while(((successCount <= count/2) || (leader == -1))
+        synchronized (this) {
+            while (((successCount <= count/2) || (leader == -1))
                 && (waitCounter < MAX_LOOP_COUNTER))
             {
                 this.wait(200);
@@ -357,14 +357,14 @@ public class FLETest extends ZKTestCase {
        /*
         * If we have a majority, then we are good to go.
         */
-       if(successCount <= count/2){
+       if (successCount <= count/2) {
            Assert.fail("Fewer than a a majority has joined");
        }
 
        /*
         * I'm done so joining.
         */
-       if(!joinedThreads.contains(leader)){
+       if (!joinedThreads.contains(leader)) {
            Assert.fail("Leader hasn't joined: " + leader);
        }
     }
@@ -373,7 +373,7 @@ public class FLETest extends ZKTestCase {
     /*
      * Class to verify of the thread has become a follower
      */
-    static class VerifyState extends Thread {
+    private static class VerifyState extends Thread {
         volatile private boolean success = false;
         private QuorumPeer peer;
         public VerifyState(QuorumPeer peer) {

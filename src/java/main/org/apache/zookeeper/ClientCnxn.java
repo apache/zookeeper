@@ -126,7 +126,7 @@ public class ClientCnxn {
         }
     }
 
-    static class AuthData {
+    private static class AuthData {
         AuthData(String scheme, byte data[]) {
             this.scheme = scheme;
             this.data = data;

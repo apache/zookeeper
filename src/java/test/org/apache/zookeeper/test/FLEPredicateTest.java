@@ -39,7 +39,7 @@ public class FLEPredicateTest extends ZKTestCase {
     
     protected static final Logger LOG = LoggerFactory.getLogger(FLEPredicateTest.class);
     
-    class MockFLE extends FastLeaderElection {
+    private static class MockFLE extends FastLeaderElection {
         MockFLE(QuorumPeer peer){
             super(peer, new QuorumCnxManager(peer));
         }

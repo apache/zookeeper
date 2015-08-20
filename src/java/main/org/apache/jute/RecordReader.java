@@ -33,7 +33,7 @@ public class RecordReader {
     
     private InputArchive archive;
 
-    static private HashMap<String, Method> archiveFactory;
+    private static HashMap<String, Method> archiveFactory;
     
     static {
         archiveFactory = new HashMap<String, Method>();
@@ -55,7 +55,7 @@ public class RecordReader {
         }
     }
     
-    static private InputArchive createArchive(InputStream in, String format)
+    private static InputArchive createArchive(InputStream in, String format)
     throws IOException {
         Method factory = (Method) archiveFactory.get(format);
         if (factory != null) {

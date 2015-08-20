@@ -48,7 +48,7 @@ public class SessionTrackerCheckTest extends ZKTestCase {
     private ConcurrentHashMap<Long, Integer> sessionsWithTimeouts =
             new ConcurrentHashMap<Long, Integer>();
 
-    private class Expirer implements SessionExpirer {
+    private static class Expirer implements SessionExpirer {
         long sid;
 
         public Expirer(long sid) {

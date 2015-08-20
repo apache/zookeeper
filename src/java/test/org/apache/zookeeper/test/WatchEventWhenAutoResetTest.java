@@ -44,7 +44,7 @@ public class WatchEventWhenAutoResetTest extends ZKTestCase {
     // waiting time for expected condition
     private static final int TIMEOUT = 30000;
 
-    static public class EventsWatcher extends CountdownWatcher {
+    public static class EventsWatcher extends CountdownWatcher {
         private LinkedBlockingQueue<WatchedEvent> dataEvents = new LinkedBlockingQueue<WatchedEvent>();
 
         @Override

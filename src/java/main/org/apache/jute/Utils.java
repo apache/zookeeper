@@ -84,7 +84,7 @@ public class Utils {
         return sb.toString();
     }
     
-    static private int h2c(char ch) {
+    private static int h2c(char ch) {
       if (ch >= '0' && ch <= '9') {
         return ch - '0';
       } else if (ch >= 'A' && ch <= 'F') {

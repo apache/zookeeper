@@ -164,7 +164,7 @@ public class ZooInspectorTreeViewer extends JPanel implements NodeListener {
         }
     }
 
-    private class ZooInspectorTreeNode implements TreeNode {
+    private static class ZooInspectorTreeNode implements TreeNode {
         private final String nodePath;
         private final String nodeName;
         private final ZooInspectorTreeNode parent;

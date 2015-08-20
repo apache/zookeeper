@@ -99,7 +99,7 @@ public class CnxManagerTest extends ZKTestCase {
         return requestBuffer;
     }
 
-    class CnxManagerThread extends Thread {
+    private class CnxManagerThread extends Thread {
 
         boolean failed;
         CnxManagerThread(){

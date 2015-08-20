@@ -246,7 +246,7 @@ public class CommitProcessorTest extends ZKTestCase {
         }
     }
 
-    private class MockProposalRequestProcessor extends Thread
+    private static class MockProposalRequestProcessor extends Thread
             implements RequestProcessor {
         private final CommitProcessor commitProcessor;
         private final LinkedBlockingQueue<Request> proposals =

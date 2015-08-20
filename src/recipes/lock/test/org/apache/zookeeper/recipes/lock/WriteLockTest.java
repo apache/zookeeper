@@ -44,7 +44,7 @@ public class WriteLockTest extends ClientBase {
         runTest(3);
     }
 
-    class LockCallback implements LockListener {
+    private class LockCallback implements LockListener {
         public void lockAcquired() {
             latch.countDown();
         }

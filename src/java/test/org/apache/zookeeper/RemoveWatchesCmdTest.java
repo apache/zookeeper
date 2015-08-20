@@ -310,7 +310,7 @@ public class RemoveWatchesCmdTest extends ClientBase {
                 .get("/testnode1").contains(EventType.ChildWatchRemoved));
     }
 
-    private class MyWatcher implements Watcher {
+    private static class MyWatcher implements Watcher {
         private final String path;
         private String eventPath;
         private final CountDownLatch latch;

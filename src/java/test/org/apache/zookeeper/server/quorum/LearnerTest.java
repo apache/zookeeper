@@ -66,7 +66,7 @@ public class LearnerTest extends ZKTestCase {
         }
     }
 
-    static private void recursiveDelete(File dir) {
+    private static void recursiveDelete(File dir) {
         if (dir == null || !dir.exists()) {
             return;
         }

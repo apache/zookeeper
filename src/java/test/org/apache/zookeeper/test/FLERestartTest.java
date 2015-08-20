@@ -83,7 +83,7 @@ public class FLERestartTest extends ZKTestCase {
         }
     }
 
-    class FLERestartThread extends Thread {
+    private class FLERestartThread extends Thread {
         int i;
         QuorumPeer peer;
         int peerRound = 0;
@@ -114,9 +114,9 @@ public class FLERestartTest extends ZKTestCase {
                     LOG.info("Finished election: " + i + ", " + v.getId());
                     //votes[i] = v;
 
-                    switch(i){
+                    switch (i) {
                     case 0:
-                        if(peerRound == 0){
+                        if (peerRound == 0) {
                             LOG.info("First peer, shutting it down");
                             QuorumBase.shutdown(peer);
                             ((FastLeaderElection) restartThreads.get(i).peer.getElectionAlg()).shutdown();

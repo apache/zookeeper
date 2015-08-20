@@ -110,7 +110,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * This is the secret that we use to generate passwords, for the moment it
      * is more of a sanity check.
      */
-    static final private long superSecret = 0XB3415C00L;
+    private static final long superSecret = 0XB3415C00L;
 
     private final AtomicInteger requestsInProcess = new AtomicInteger(0);
     final List<ChangeRecord> outstandingChanges = new ArrayList<ChangeRecord>();

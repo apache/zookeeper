@@ -208,7 +208,7 @@ public class DistributedQueue {
         }
     }
 
-    private class LatchChildWatcher implements Watcher {
+    private static class LatchChildWatcher implements Watcher {
 
         CountDownLatch latch;
 

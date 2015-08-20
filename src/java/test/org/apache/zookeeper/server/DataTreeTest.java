@@ -118,18 +118,18 @@ public class DataTreeTest extends ZKTestCase {
     
     @Test(timeout = 60000)
     public void testRootWatchTriggered() throws Exception {
-        class MyWatcher implements Watcher{
-            boolean fired=false;
+        class MyWatcher implements Watcher {
+            boolean fired = false;
             public void process(WatchedEvent event) {
                 if(event.getPath().equals("/"))
-                    fired=true;
+                    fired = true;
             }
         }
-        MyWatcher watcher=new MyWatcher();
+        MyWatcher watcher = new MyWatcher();
         // set a watch on the root node
         dt.getChildren("/", new Stat(), watcher);
         // add a new node, should trigger a watch
-        dt.createNode("/xyz", new byte[0], null, 0, dt.getNode("/").stat.getCversion()+1, 1, 1);
+        dt.createNode("/xyz", new byte[0], null, 0, dt.getNode("/").stat.getCversion() + 1, 1, 1);
         Assert.assertFalse("Root node watch not triggered",!watcher.fired);
     }
 

@@ -254,7 +254,7 @@ public class LearnerHandler extends ZooKeeperThread {
         }
     }
 
-    static public String packetToString(QuorumPacket p) {
+    public static String packetToString(QuorumPacket p) {
         String type;
         String mess = null;
 

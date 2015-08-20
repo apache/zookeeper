@@ -30,23 +30,23 @@ import org.apache.zookeeper.server.quorum.QuorumPacket;
  * Log4j must be correctly configured to capture the TRACE messages.
  */
 public class ZooTrace {
-    final static public long CLIENT_REQUEST_TRACE_MASK = 1 << 1;
+    public static final long CLIENT_REQUEST_TRACE_MASK = 1 << 1;
 
-    final static public long CLIENT_DATA_PACKET_TRACE_MASK = 1 << 2;
+    public static final long CLIENT_DATA_PACKET_TRACE_MASK = 1 << 2;
 
-    final static public long CLIENT_PING_TRACE_MASK = 1 << 3;
+    public static final long CLIENT_PING_TRACE_MASK = 1 << 3;
 
-    final static public long SERVER_PACKET_TRACE_MASK = 1 << 4;
+    public static final long SERVER_PACKET_TRACE_MASK = 1 << 4;
 
-    final static public long SESSION_TRACE_MASK = 1 << 5;
+    public static final long SESSION_TRACE_MASK = 1 << 5;
 
-    final static public long EVENT_DELIVERY_TRACE_MASK = 1 << 6;
+    public static final long EVENT_DELIVERY_TRACE_MASK = 1 << 6;
 
-    final static public long SERVER_PING_TRACE_MASK = 1 << 7;
+    public static final long SERVER_PING_TRACE_MASK = 1 << 7;
 
-    final static public long WARNING_TRACE_MASK = 1 << 8;
+    public static final long WARNING_TRACE_MASK = 1 << 8;
 
-    final static public long JMX_TRACE_MASK = 1 << 9;
+    public static final long JMX_TRACE_MASK = 1 << 9;
 
     private static long traceMask = CLIENT_REQUEST_TRACE_MASK
             | SERVER_PACKET_TRACE_MASK | SESSION_TRACE_MASK
@@ -72,7 +72,7 @@ public class ZooTrace {
         }
     }
 
-    static public void logQuorumPacket(Logger log, long mask,
+    public static void logQuorumPacket(Logger log, long mask,
             char direction, QuorumPacket qp)
     {
         return;
@@ -83,7 +83,7 @@ public class ZooTrace {
         // }
     }
 
-    static public void logRequest(Logger log, long mask,
+    public static void logRequest(Logger log, long mask,
             char rp, Request request, String header)
     {
         if (isTraceEnabled(log, mask)) {
