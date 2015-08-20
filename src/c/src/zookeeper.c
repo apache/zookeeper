@@ -1515,7 +1515,11 @@ static struct timeval get_timeval(int interval)
 static void get_current_time(struct timeval* tv) {
 #ifdef __gnu_linux__
   struct timespec ts = {0, 0};
+#ifdef CLOCK_MONOTONIC_RAW
+  clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
+#else
   clock_gettime(CLOCK_MONOTONIC, &ts);
+#endif
   tv->tv_sec = ts.tv_sec;
   tv->tv_usec = ts.tv_nsec / 1000;
 #else
