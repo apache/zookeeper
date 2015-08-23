@@ -154,6 +154,9 @@ BUGFIXES:
   ZOOKEEPER-2239: JMX State from LocalPeerBean incorrect
   (Kevin Lee via rgs)
 
+  ZOOKEEPER-2245: SimpleSysTest test cases fails
+  (Arshad Mohammad via rgs)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
