@@ -61,7 +61,9 @@ public class BaseSysTest {
     }
     @After
     public void tearDown() throws Exception {
-        im.close();
+        if (null != im) {
+            im.close();
+        }
     }
 
     int serverCount = defaultServerCount;
@@ -148,10 +150,17 @@ public class BaseSysTest {
         qps = new QuorumPeer[count];
         qpsDirs = new File[count];
         for(int i = 1; i <= count; i++) {
-            peers.put(Long.valueOf(i), new QuorumServer(i, new InetSocketAddress("127.0.0.1", fakeBasePort + i)));
+            InetSocketAddress peerAddress = new InetSocketAddress("127.0.0.1",
+                    fakeBasePort + i);
+            InetSocketAddress electionAddr = new InetSocketAddress("127.0.0.1",
+                    serverCount + fakeBasePort + i);
+            peers.put(Long.valueOf(i), new QuorumServer(i, peerAddress,
+                    electionAddr));
         }
         StringBuilder sb = new StringBuilder();
         for(int i = 0; i < count; i++) {
+            //make that testData exists otherwise it fails on windows
+            testData.mkdirs();
             qpsDirs[i] = File.createTempFile("sysTest", ".tmp", testData);
             qpsDirs[i].delete();
             qpsDirs[i].mkdir();
