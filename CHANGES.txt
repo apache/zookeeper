@@ -107,6 +107,10 @@ BUGFIXES:
   ZOOKEEPER-2239: JMX State from LocalPeerBean incorrect
   (Kevin Lee via rgs)
 
+  ZOOKEEPER-1927: zkServer.sh fails to read dataDir (and others)
+  from zoo.cfg on Solaris 10 (grep issue, manifests as FAILED TO WRITE PID)
+  (Chris Nauroth via rgs)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1575. adding .gitattributes to prevent CRLF and LF mismatches for
