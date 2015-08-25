@@ -101,8 +101,16 @@ fi
 
 echo "Using config: $ZOOCFG" >&2
 
+case "$OSTYPE" in
+*solaris*)
+  GREP=/usr/xpg4/bin/grep
+  ;;
+*)
+  GREP=grep
+  ;;
+esac
 if [ -z "$ZOOPIDFILE" ]; then
-    ZOO_DATADIR="$(grep "^[[:space:]]*dataDir" "$ZOOCFG" | sed -e 's/.*=//')"
+    ZOO_DATADIR="$($GREP "^[[:space:]]*dataDir" "$ZOOCFG" | sed -e 's/.*=//')"
     if [ ! -d "$ZOO_DATADIR" ]; then
         mkdir -p "$ZOO_DATADIR"
     fi
@@ -131,7 +139,15 @@ start)
     -cp "$CLASSPATH" $JVMFLAGS $ZOOMAIN "$ZOOCFG" > "$_ZOO_DAEMON_OUT" 2>&1 < /dev/null &
     if [ $? -eq 0 ]
     then
-      if /bin/echo -n $! > "$ZOOPIDFILE"
+      case "$OSTYPE" in
+      *solaris*)
+        /bin/echo "${!}\\c" > "$ZOOPIDFILE"
+        ;;
+      *)
+        /bin/echo -n $! > "$ZOOPIDFILE"
+        ;;
+      esac
+      if [ $? -eq 0 ];
       then
         sleep 1
         echo STARTED
@@ -182,16 +198,16 @@ restart)
     ;;
 status)
     # -q is necessary on some versions of linux where nc returns too quickly, and no stat result is output
-    clientPortAddress=`grep "^[[:space:]]*clientPortAddress[^[:alpha:]]" "$ZOOCFG" | sed -e 's/.*=//'`
+    clientPortAddress=`$GREP "^[[:space:]]*clientPortAddress[^[:alpha:]]" "$ZOOCFG" | sed -e 's/.*=//'`
     if ! [ $clientPortAddress ]
     then
 	clientPortAddress="localhost"
     fi
-    clientPort=`grep "^[[:space:]]*clientPort[^[:alpha:]]" "$ZOOCFG" | sed -e 's/.*=//'`
+    clientPort=`$GREP "^[[:space:]]*clientPort[^[:alpha:]]" "$ZOOCFG" | sed -e 's/.*=//'`
     STAT=`"$JAVA" "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
              -cp "$CLASSPATH" $JVMFLAGS org.apache.zookeeper.client.FourLetterWordMain \
              $clientPortAddress $clientPort srvr 2> /dev/null    \
-          | grep Mode`
+          | $GREP Mode`
     if [ "x$STAT" = "x" ]
     then
         echo "Error contacting service. It is probably not running."
