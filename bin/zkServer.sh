@@ -101,8 +101,16 @@ fi
 
 echo "Using config: $ZOOCFG" >&2
 
-ZOO_DATADIR="$(grep "^[[:space:]]*dataDir" "$ZOOCFG" | sed -e 's/.*=//')"
-ZOO_DATALOGDIR="$(grep "^[[:space:]]*dataLogDir" "$ZOOCFG" | sed -e 's/.*=//')"
+case "$OSTYPE" in
+*solaris*)
+  GREP=/usr/xpg4/bin/grep
+  ;;
+*)
+  GREP=grep
+  ;;
+esac
+ZOO_DATADIR="$($GREP "^[[:space:]]*dataDir" "$ZOOCFG" | sed -e 's/.*=//')"
+ZOO_DATALOGDIR="$($GREP "^[[:space:]]*dataLogDir" "$ZOOCFG" | sed -e 's/.*=//')"
 
 # iff autocreate is turned off and the datadirs don't exist fail
 # immediately as we can't create the PID file, etc..., anyway.
@@ -151,7 +159,15 @@ start)
     -cp "$CLASSPATH" $JVMFLAGS $ZOOMAIN "$ZOOCFG" > "$_ZOO_DAEMON_OUT" 2>&1 < /dev/null &
     if [ $? -eq 0 ]
     then
-      if /bin/echo -n $! > "$ZOOPIDFILE"
+      case "$OSTYPE" in
+      *solaris*)
+        /bin/echo "${!}\\c" > "$ZOOPIDFILE"
+        ;;
+      *)
+        /bin/echo -n $! > "$ZOOPIDFILE"
+        ;;
+      esac
+      if [ $? -eq 0 ];
       then
         sleep 1
         pid=$(cat "${ZOOPIDFILE}")
@@ -206,25 +222,25 @@ restart)
     ;;
 status)
     # -q is necessary on some versions of linux where nc returns too quickly, and no stat result is output
-    clientPortAddress=`grep "^[[:space:]]*clientPortAddress[^[:alpha:]]" "$ZOOCFG" | sed -e 's/.*=//'`
+    clientPortAddress=`$GREP "^[[:space:]]*clientPortAddress[^[:alpha:]]" "$ZOOCFG" | sed -e 's/.*=//'`
     if ! [ $clientPortAddress ]
     then
 	clientPortAddress="localhost"
     fi
-    clientPort=`grep "^[[:space:]]*clientPort[^[:alpha:]]" "$ZOOCFG" | sed -e 's/.*=//'`
+    clientPort=`$GREP "^[[:space:]]*clientPort[^[:alpha:]]" "$ZOOCFG" | sed -e 's/.*=//'`
     if ! [[ "$clientPort"  =~ ^[0-9]+$ ]]
     then
-       dataDir=`grep "^[[:space:]]*dataDir" "$ZOOCFG" | sed -e 's/.*=//'`
+       dataDir=`$GREP "^[[:space:]]*dataDir" "$ZOOCFG" | sed -e 's/.*=//'`
        myid=`cat "$dataDir/myid"`
        if ! [[ "$myid" =~ ^[0-9]+$ ]] ; then
          echo "clientPort not found and myid could not be determined. Terminating."
          exit 1
        fi
-       clientPortAndAddress=`grep "^[[:space:]]*server.$myid=.*;.*" "$ZOOCFG" | sed -e 's/.*=//' | sed -e 's/.*;//'`
+       clientPortAndAddress=`$GREP "^[[:space:]]*server.$myid=.*;.*" "$ZOOCFG" | sed -e 's/.*=//' | sed -e 's/.*;//'`
        if [ ! "$clientPortAndAddress" ] ; then
            echo "Client port not found in static config file. Looking in dynamic config file."
-           dynamicConfigFile=`grep "^[[:space:]]*dynamicConfigFile" "$ZOOCFG" | sed -e 's/.*=//'`
-           clientPortAndAddress=`grep "^[[:space:]]*server.$myid=.*;.*" "$dynamicConfigFile" | sed -e 's/.*=//' | sed -e 's/.*;//'`
+           dynamicConfigFile=`$GREP "^[[:space:]]*dynamicConfigFile" "$ZOOCFG" | sed -e 's/.*=//'`
+           clientPortAndAddress=`$GREP "^[[:space:]]*server.$myid=.*;.*" "$dynamicConfigFile" | sed -e 's/.*=//' | sed -e 's/.*;//'`
        fi
        if [ ! "$clientPortAndAddress" ] ; then
           echo "Client port not found. Terminating."
@@ -243,7 +259,7 @@ status)
     STAT=`"$JAVA" "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" "-Dzookeeper.log.file=${ZOO_LOG_FILE}" \
              -cp "$CLASSPATH" $JVMFLAGS org.apache.zookeeper.client.FourLetterWordMain \
              $clientPortAddress $clientPort srvr 2> /dev/null    \
-          | grep Mode`
+          | $GREP Mode`
     if [ "x$STAT" = "x" ]
     then
         echo "Error contacting service. It is probably not running."
