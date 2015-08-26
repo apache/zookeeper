@@ -1119,9 +1119,9 @@ namespace org.apache.zookeeper {
                 catch (KeeperException.ConnectionLossException) {
                 }
                 if (timeoutTask == null)
-                    timeoutTask = TaskUtils.Delay(zk.userDefinedSessionTimeout);
+                    timeoutTask = TaskEx.Delay(zk.userDefinedSessionTimeout);
 
-                await TaskUtils.WhenAny(zk.connectedTask.WaitAsync(), timeoutTask).ConfigureAwait(false);
+                await TaskEx.WhenAny(zk.connectedTask.WaitAsync(), timeoutTask).ConfigureAwait(false);
             } while (!timeoutTask.IsCompleted);
             return await zkMethodTask.ConfigureAwait(false);
         }

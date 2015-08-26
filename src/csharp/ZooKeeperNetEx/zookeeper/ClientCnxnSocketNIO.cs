@@ -245,7 +245,7 @@ namespace org.apache.zookeeper
 					}
 				}
 			}
-		    await TaskUtils.Delay(100).ConfigureAwait(false);
+		    await TaskEx.Delay(100).ConfigureAwait(false);
             wakeupCnxn();
 			socket = null;
             connectingState.Value = BEFORECONNECTING;
@@ -351,7 +351,7 @@ namespace org.apache.zookeeper
 
         internal override async Task doTransport(int waitTimeOut) 
         {
-            await TaskUtils.WhenAny(somethingIsPending.WaitAsync(), TaskUtils.Delay(waitTimeOut < 0 ? 0 : waitTimeOut)).ConfigureAwait(false);
+            await TaskEx.WhenAny(somethingIsPending.WaitAsync(), TaskEx.Delay(waitTimeOut < 0 ? 0 : waitTimeOut)).ConfigureAwait(false);
             somethingIsPending.Reset();
 
             // Everything below and until we get back to the select is

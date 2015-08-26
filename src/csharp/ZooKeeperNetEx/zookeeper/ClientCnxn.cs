@@ -656,7 +656,7 @@ namespace org.apache.zookeeper {
                     try {
                         if (!clientCnxnSocket.isConnected()) {
                             if (!isFirstConnect) {
-                                await TaskUtils.Delay(r.Next(1000)).ConfigureAwait(false);
+                                await TaskEx.Delay(r.Next(1000)).ConfigureAwait(false);
                             }
                             // don't re-establish connection if we are closing
                             if (closing.Value || !getState().isAlive()) {
@@ -936,8 +936,8 @@ namespace org.apache.zookeeper {
                     disconnect();
                     await closeTask.ConfigureAwait(false);
                 });
-                var closeDelay = TaskUtils.Delay(5000);
-                await TaskUtils.WhenAny(TaskUtils.WhenAll(sendTask, eventTask), closeDelay).ConfigureAwait(false);
+                var closeDelay = TaskEx.Delay(5000);
+                await TaskEx.WhenAny(TaskEx.WhenAll(sendTask, eventTask), closeDelay).ConfigureAwait(false);
                 if (closeDelay.IsCompleted) {
                     throw new TimeoutException("waited more the 5 seconds for disonnection");
                 }

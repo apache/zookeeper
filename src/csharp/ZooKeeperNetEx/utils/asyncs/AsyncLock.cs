@@ -83,7 +83,7 @@ namespace System.Threading.Tasks
         [Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope")]
         public AsyncLock()
         {
-            m_releaser = TaskUtils.FromResult((IDisposable)new Releaser(this));
+            m_releaser = TaskEx.FromResult((IDisposable)new Releaser(this));
         }
 
         public Task<IDisposable> LockAsync()

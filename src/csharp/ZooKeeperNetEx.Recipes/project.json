@@ -1,12 +1,12 @@
 ﻿{
-  "userSecretsId": "dotnet-ZooKeeperNetEx-150815",
+  "userSecretsId": "dotnet-ZooKeeperNetEx-270815",
   "title": "Apache ZooKeeper .NET async Recipes",
-  "version": "3.4.6.1004",
+  "version": "3.4.6.1005",
   "description": "A .NET async Recipes fully compliant with ZooKeeper v3.4.6, supporting all features. Fully Task-based Asynchronous (async/await). A great measure has been taken to follow the logic of the official Java client, including all relevant unit tests. In fact, the code is almost identical. Thus allowing easy evolution alongside the Java version. Distributed Recipes included: Queue, Lock, Leader.",
   "authors": [ "Shay Hazor" ],
   "owners": [ "Shay Hazor" ],
   "summary": "A .NET async Recipes for ZooKeeper v3.4.6",
-  "releaseNotes": "Support the new \"dotnet\" target and backward compatible with .NET 4. This project is actively maintained at: https://github.com/shayhatsor/zookeeper Please feel free to open an issue or ask a question there.",
+  "releaseNotes": "Removed unused dependencies from .NETCore5 target\nThis project is actively maintained at: https://github.com/shayhatsor/zookeeper Please feel free to open an issue or ask a question there.",
   "tags": [ "Apache", "ZooKeeper", ".NET", "Recipes", "Async", "ZK", "C#", "Distributed", "Lock", "Leader", "Election", "Queue" ],
   "projectUrl": "https://github.com/shayhatsor/zookeeper",
   "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
@@ -15,10 +15,6 @@
   "compilationOptions": { "keyFile": "../ZooKeeperNetEx.snk" },
   "frameworks": {
     "dotnet": {
-      "dependencies": {
-        "System.Threading.Tasks": "4.0.11-*",
-        "System.Diagnostics.Tools": "4.0.1-*"
-      }
     },
     "net45": { },
     "net4": {
@@ -28,6 +24,6 @@
     }
   },
   "dependencies": {
-    "ZooKeeperNetEx": "3.4.6.1004"
+    "ZooKeeperNetEx": "3.4.6.1005"
   }
 }
