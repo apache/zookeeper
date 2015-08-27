@@ -21,6 +21,18 @@
 # relative to the canonical path of this script.
 #
 
+
+# use POSTIX interface, symlink is followed automatically
+ZOOBIN="${BASH_SOURCE-$0}"
+ZOOBIN="$(dirname "${ZOOBIN}")"
+ZOOBINDIR="$(cd "${ZOOBIN}"; pwd)"
+
+if [ -e "$ZOOBIN/../libexec/zkEnv.sh" ]; then
+  . "$ZOOBINDIR"/../libexec/zkEnv.sh
+else
+  . "$ZOOBINDIR"/zkEnv.sh
+fi
+
 # See the following page for extensive details on setting
 # up the JVM to accept JMX remote management:
 # http://java.sun.com/javase/6/docs/technotes/guides/management/agent.html
@@ -61,17 +73,6 @@ then
 else
     echo "JMX disabled by user request" >&2
     ZOOMAIN="org.apache.zookeeper.server.quorum.QuorumPeerMain"
-fi
-
-# use POSTIX interface, symlink is followed automatically
-ZOOBIN="${BASH_SOURCE-$0}"
-ZOOBIN="$(dirname "${ZOOBIN}")"
-ZOOBINDIR="$(cd "${ZOOBIN}"; pwd)"
-
-if [ -e "$ZOOBIN/../libexec/zkEnv.sh" ]; then
-  . "$ZOOBINDIR"/../libexec/zkEnv.sh
-else
-  . "$ZOOBINDIR"/zkEnv.sh
 fi
 
 if [ "x$SERVER_JVMFLAGS" != "x" ]
