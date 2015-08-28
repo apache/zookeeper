@@ -1646,6 +1646,14 @@ int zookeeper_interest(zhandle_t *zh, int *fd, int *interest,
         int idle_send = calculate_interval(&zh->last_send, &now);
         int recv_to = zh->recv_timeout*2/3 - idle_recv;
         int send_to = zh->recv_timeout/3;
+
+// TODO(Art): temporary
+int time_left = calculate_interval(&zh->next_deadline, &now);
+LOG_DEBUG(("next_deadline=%d now=%d time_left=%d idle_recv=%d idle_send=%d recv_to=%d send_to=%d",
+            zh->next_deadline.tv_sec*1000 + zh->next_deadline.tv_usec/1000,
+            now.tv_sec*1000 + now.tv_usec/1000,
+            time_left, idle_recv, idle_send, recv_to, send_to));
+
         // have we exceeded the receive timeout threshold?
         if (recv_to <= 0) {
             // We gotta cut our losses and connect to someone else
@@ -1669,8 +1677,9 @@ int zookeeper_interest(zhandle_t *zh, int *fd, int *interest,
             send_to = zh->recv_timeout/3 - idle_send;
             if (send_to <= 0) {
                 if (zh->sent_requests.head==0) {
-//                    LOG_DEBUG(("Sending PING to %s (exceeded idle by %dms)",
-//                                    format_current_endpoint_info(zh),-send_to));
+// TODO(Art): Temporary uncommented
+                    LOG_DEBUG(("Sending PING to %s (exceeded idle by %dms)",
+                                    format_current_endpoint_info(zh),-send_to));
                     int rc=send_ping(zh);
                     if (rc < 0){
                         LOG_ERROR(("failed to send PING request (zk retcode=%d)",rc));
