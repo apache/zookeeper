@@ -795,4 +795,55 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         Assert.assertFalse("updatingEpoch file should get deleted",
                            updatingEpochFile.exists());
     }
+
+    @Test
+    public void testNewFollowerRestartAfterNewEpoch() throws Exception {
+        numServers = 3;
+
+        servers = LaunchServers(numServers);
+        waitForAll(servers.zk, States.CONNECTED);
+        String inputString = "test";
+        byte[] input = inputString.getBytes();
+        byte[] output;
+        String path = "/newepochzxidtest";
+
+        // Create a couple of nodes
+        servers.zk[0].create(path, input, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        servers.zk[0].setData(path, input, -1);
+
+        // make sure the updates indeed committed. If it is not
+        // the following statement will throw.
+        output = servers.zk[1].getData(path, false, null);
+
+        // Shutdown every one
+        for (int i=0; i < numServers; i++) {
+            servers.mt[i].shutdown();
+        }
+
+        LOG.info("resetting follower");
+        MainThread follower = servers.mt[0];
+        // delete followers information
+        File followerDataDir = new File(follower.dataDir, "version-2");
+        for(File file: followerDataDir.listFiles()) {
+            LOG.info("deleting " + file.getName());
+            file.delete();
+        }
+
+        // Startup everyone except follower, wait for election.
+        for (int i=1; i < numServers; i++) {
+            servers.mt[i].start();
+        }
+        for (int i=1; i < numServers; i++) {
+            waitForOne(servers.zk[i], States.CONNECTED);
+        }
+
+        follower.start();
+        waitForAll(servers.zk, States.CONNECTED); // snapshot should be recieved
+
+        follower.shutdown();
+        follower.start();
+
+        Assert.assertFalse(follower.mainFailed.await(10, TimeUnit.SECONDS));
+        waitForAll(servers.zk, States.CONNECTED);
+    }
 }

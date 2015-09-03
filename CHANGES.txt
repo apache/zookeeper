@@ -111,6 +111,9 @@ BUGFIXES:
   from zoo.cfg on Solaris 10 (grep issue, manifests as FAILED TO WRITE PID)
   (Chris Nauroth via rgs)
 
+  ZOOKEEPER-2033: zookeeper follower fails to start after
+  a restart immediately following a new epoch (Asad Saeed via fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1575. adding .gitattributes to prevent CRLF and LF mismatches for
