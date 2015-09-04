@@ -21,13 +21,13 @@
   <parent>
     <groupId>com.cloudera.cdh</groupId>
     <artifactId>zookeeper-root</artifactId>
-    <version>3.4.5-cdh5.5.0-SNAPSHOT</version>
+    <version>3.4.5-cdh5.7.0-SNAPSHOT</version>
     <relativePath>cloudera/maven-packaging/pom.xml</relativePath>
   </parent>
   
   <groupId>com.cloudera.cdh</groupId>
   <artifactId>zookeeper-ant</artifactId>
-  <version>3.4.5-cdh5.5.0-SNAPSHOT</version>
+  <version>3.4.5-cdh5.7.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   
   <scm>
