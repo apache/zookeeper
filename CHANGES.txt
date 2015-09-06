@@ -114,6 +114,9 @@ BUGFIXES:
   ZOOKEEPER-2033: zookeeper follower fails to start after
   a restart immediately following a new epoch (Asad Saeed via fpj)
 
+  ZOOKEEPER-2256: Zookeeper is not using specified JMX port in zkEnv.sh
+  (Arshad Mohammad via rakeshr)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1575. adding .gitattributes to prevent CRLF and LF mismatches for
