@@ -5,6 +5,8 @@ BUGFIXES:
   ZOOKEEPER-2256: Zookeeper is not using specified JMX port in zkEnv.sh
   (Arshad Mohammad via rakeshr)
 
+  ZOOKEEPER-2264: Wrong error message when secureClientPortAddress is
+  configured but secureClientPort is not configured (Arshad Mohammad via rakeshr)
 
 Release 3.5.1 - 07/27/2015
 
