@@ -61,19 +61,17 @@ namespace org.apache.zookeeper
         
 	    private readonly SocketAsyncEventArgs receiveEventArgs;
 
-        private readonly SocketAsyncEventArgs connectEventArgs;
+        private SocketAsyncEventArgs connectEventArgs;
 
         internal ClientCnxnSocketNIO(ClientCnxn cnxn) : base(cnxn) 
         {
             receiveEventArgs = new SocketAsyncEventArgs();
             receiveEventArgs.SetBuffer(new byte[0], 0, 0);
             receiveEventArgs.Completed += delegate { ReceiveCompleted(); };
-            connectEventArgs = new SocketAsyncEventArgs();
-            connectEventArgs.Completed += delegate { ConnectAsyncCompleted(); };
         }
 
-        void ConnectAsyncCompleted() {
-	        connectingState.SetValue(CONNECTING, PENDINGCONNECTASYNC);
+        void ConnectAsyncCompleted(object sender, SocketAsyncEventArgs eventArgs) {
+            connectingState.SetValue(CONNECTING, PENDINGCONNECTASYNC);
             wakeupCnxn();
 	    }
 
@@ -205,8 +203,10 @@ namespace org.apache.zookeeper
 
 		internal override async Task cleanup()
 		{
-		    readEnabled.Value = false;
-		    writeEnabled.Value = false;
+		    connectEventArgs.Completed -= ConnectAsyncCompleted;
+            connectEventArgs.Dispose();
+            readEnabled.Value = false;
+            writeEnabled.Value = false;
 			if (socket != null)
 			{
 				try
@@ -286,7 +286,9 @@ namespace org.apache.zookeeper
 		{
 			Socket sock = createSock();
             
-			try
+            connectEventArgs = new SocketAsyncEventArgs();
+            connectEventArgs.Completed += ConnectAsyncCompleted;
+            try
 			{
 			   registerAndConnect(sock, addr);
 			}
