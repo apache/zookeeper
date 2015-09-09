@@ -68,6 +68,7 @@ tar fxz %{_python_lib} -C %{_build_dir}
 #### INSTALL SECTION ####
 #########################
 %install
+%{__mv} %{_build_dir}/* %{buildroot}
 
 %pre
 
