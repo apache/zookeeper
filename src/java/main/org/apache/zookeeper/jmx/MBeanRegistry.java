@@ -43,7 +43,7 @@ import org.slf4j.LoggerFactory;
 public class MBeanRegistry {
     private static final Logger LOG = LoggerFactory.getLogger(MBeanRegistry.class);
     
-    private static MBeanRegistry instance = new MBeanRegistry(); 
+    private static volatile MBeanRegistry instance = new MBeanRegistry();
     
     private final Object LOCK = new Object();
     
@@ -51,6 +51,15 @@ public class MBeanRegistry {
         new ConcurrentHashMap<ZKMBeanInfo, String>();
     
     private MBeanServer mBeanServer;
+
+    /**
+     * Useful for unit tests. Change the MBeanRegistry instance
+     *
+     * @param instance new instance
+     */
+    public static void setInstance(MBeanRegistry instance) {
+        MBeanRegistry.instance = instance;
+    }
 
     public static MBeanRegistry getInstance() {
         return instance;
