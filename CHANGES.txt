@@ -250,6 +250,9 @@ IMPROVEMENTS:
   ZOOKEEPER-1423: 4lw and jmx should expose the size of the datadir/datalogdir
   (Edward Ribeiro via rgs)
 
+  ZOOKEEPER-2270: Allow MBeanRegistry to be overridden for better unit tests
+  (Jordan Zimmerman via rgs)
+
 Release 3.5.0 - 8/4/2014
 
 NEW FEATURES:
