@@ -167,6 +167,9 @@ BUGFIXES:
   ZOOKEEPER-2264: Wrong error message when secureClientPortAddress is
   configured but secureClientPort is not configured (Arshad Mohammad via rakeshr)
 
+  ZOOKEEPER-2269: NullPointerException in RemotePeerBean
+  (Arshad Mohammad via rgs)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 

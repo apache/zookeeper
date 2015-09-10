@@ -51,7 +51,11 @@ public class RemotePeerBean implements RemotePeerMXBean,ZKMBeanInfo {
     }
 
     public String getClientAddress() {
-        return peer.clientAddr.getHostString() + ":" + peer.clientAddr.getPort();
+        if (null == peer.clientAddr) {
+            return "";
+        }
+        return peer.clientAddr.getHostString() + ":"
+                + peer.clientAddr.getPort();
     }
 
     public String getLearnerType() {
