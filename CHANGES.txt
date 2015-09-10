@@ -8,6 +8,8 @@ BUGFIXES:
   ZOOKEEPER-2264: Wrong error message when secureClientPortAddress is
   configured but secureClientPort is not configured (Arshad Mohammad via rakeshr)
 
+IMPROVEMENTS:
+
   ZOOKEEPER-2270: Allow MBeanRegistry to be overridden for better unit tests
   (Jordan Zimmerman via rgs)
 
