@@ -62,7 +62,7 @@ Vendor: Apache Software Foundation
 Group: Development/Libraries
 Name: %{name}
 Version: %{version}
-Release: %{release} 
+Release: %{release}
 Source0: %{_final_name}.tar.gz
 Source1: %{_final_name}-lib.tar.gz
 Prefix: %{_prefix}
@@ -123,7 +123,7 @@ cp -a ${RPM_BUILD_DIR}/%{_final_name}/sbin/*.sh ${RPM_BUILD_DIR}%{_sbin_dir}
 rm -r ${RPM_BUILD_DIR}/usr/include
 rm -r ${RPM_BUILD_DIR}/usr/man
 mv etc usr var %{buildroot}
-popd ${RPM_BUILD_DIR}
+popd
 
 %pre
 getent group hadoop 2>/dev/null >/dev/null || /usr/sbin/groupadd -r hadoop
@@ -147,7 +147,7 @@ bash ${RPM_INSTALL_PREFIX0}/sbin/update-zookeeper-env.sh \
        --var-dir=${RPM_INSTALL_PREFIX4} \
        --uninstall
 
-%files 
+%files
 %defattr(-,root,root)
 %attr(0755,root,hadoop) %{_log_dir}
 %attr(0775,root,hadoop) %{_pid_dir}
