@@ -1077,7 +1077,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 }
             }
             catch (SaslException e) {
-                LOG.warn("Client failed to SASL authenticate: " + e);
+                LOG.warn("Client failed to SASL authenticate: " + e, e);
                 if ((System.getProperty("zookeeper.allowSaslFailedClients") != null)
                   &&
                   (System.getProperty("zookeeper.allowSaslFailedClients").equals("true"))) {
