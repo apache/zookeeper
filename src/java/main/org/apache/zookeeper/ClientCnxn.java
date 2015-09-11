@@ -120,10 +120,7 @@ public class ClientCnxn {
         // to test
         disableAutoWatchReset =
             Boolean.getBoolean("zookeeper.disableAutoWatchReset");
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("zookeeper.disableAutoWatchReset is "
-                    + disableAutoWatchReset);
-        }
+        LOG.debug("zookeeper.disableAutoWatchReset is {}", disableAutoWatchReset);
     }
 
     static class AuthData {
@@ -220,6 +217,10 @@ public class ClientCnxn {
         return sessionId;
     }
 
+    private String getSessionIdHex() {
+        return String.format("0x{}", Long.toHexString(getSessionId()));
+    }
+
     public byte[] getSessionPasswd() {
         return sessionPasswd;
     }
@@ -235,7 +236,7 @@ public class ClientCnxn {
         SocketAddress local = sendThread.getClientCnxnSocket().getLocalSocketAddress();
         SocketAddress remote = sendThread.getClientCnxnSocket().getRemoteSocketAddress();
         sb
-            .append("sessionid:0x").append(Long.toHexString(getSessionId()))
+            .append("sessionid:").append(getSessionIdHex())
             .append(" local:").append(local)
             .append(" remoteserver:").append(remote)
             .append(" lastZxid:").append(lastZxid)
@@ -539,8 +540,7 @@ public class ClientCnxn {
               LOG.error("Event thread exiting due to interruption", e);
            }
 
-            LOG.info("EventThread shut down for session: 0x{}",
-                     Long.toHexString(getSessionId()));
+           LOG.info("EventThread shut down for session: {}", getSessionIdHex());
         }
 
        private void processEvent(Object event) {
@@ -840,11 +840,9 @@ public class ClientCnxn {
             if (replyHdr.getXid() == -2) {
                 // -2 is the xid for pings
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("Got ping response for sessionid: 0x"
-                            + Long.toHexString(sessionId)
-                            + " after "
-                            + ((System.nanoTime() - lastPingSentNs) / 1000000)
-                            + "ms");
+                    long after = (System.nanoTime() - lastPingSentNs) / 1000000;
+                    LOG.debug("Got ping response for sessionid {} after {}ms",
+                        getSessionIdHex(), String.valueOf(after));
                 }
                 return;
             }
@@ -855,18 +853,17 @@ public class ClientCnxn {
                     eventThread.queueEvent( new WatchedEvent(Watcher.Event.EventType.None, 
                             Watcher.Event.KeeperState.AuthFailed, null) );            		            		
                 }
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Got auth sessionid:0x"
-                            + Long.toHexString(sessionId));
-                }
+
+                LOG.debug("Got auth sessionid: {}", getSessionIdHex());
+
                 return;
             }
             if (replyHdr.getXid() == -1) {
                 // -1 means notification
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("Got notification sessionid:0x"
-                        + Long.toHexString(sessionId));
+                    LOG.debug("Got notification sessionid: {}", getSessionIdHex());
                 }
+
                 WatcherEvent event = new WatcherEvent();
                 event.deserialize(bbia, "response");
 
@@ -878,16 +875,14 @@ public class ClientCnxn {
                     else if (serverPath.length() > chrootPath.length())
                         event.setPath(serverPath.substring(chrootPath.length()));
                     else {
-                    	LOG.warn("Got server path " + event.getPath()
-                    			+ " which is too short for chroot path "
-                    			+ chrootPath);
+                        LOG.warn("Got server {} path which is too short for chroot path {}",
+                            event.getPath(), chrootPath);
                     }
                 }
 
                 WatchedEvent we = new WatchedEvent(event);
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("Got " + we + " for sessionid 0x"
-                            + Long.toHexString(sessionId));
+                    LOG.debug("Got {} for sessionid {}", we, getSessionIdHex());
                 }
 
                 eventThread.queueEvent( we );
@@ -941,8 +936,8 @@ public class ClientCnxn {
                 }
 
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("Reading reply sessionid:0x"
-                            + Long.toHexString(sessionId) + ", packet:: " + packet);
+                    LOG.debug("Reading reply sessionid: {}, packet: {}",
+                        getSessionIdHex(), packet);
                 }
             } finally {
                 finishPacket(packet);
@@ -1044,10 +1039,8 @@ public class ClientCnxn {
             outgoingQueue.addFirst(new Packet(null, null, conReq,
                     null, null, readOnly));
             clientCnxnSocket.connectionPrimed();
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Session establishment request sent on "
-                        + clientCnxnSocket.getRemoteSocketAddress());
-            }
+            LOG.debug("Session establishment request sent on {}",
+                clientCnxnSocket.getRemoteSocketAddress());
         }
 
         private List<String> prependChroot(List<String> paths) {
@@ -1200,8 +1193,7 @@ public class ClientCnxn {
                         throw new SessionTimeoutException(
                                 "Client session timed out, have not heard from server in "
                                         + clientCnxnSocket.getIdleRecv() + "ms"
-                                        + " for sessionid 0x"
-                                        + Long.toHexString(sessionId));
+                                        + " for sessionid " + getSessionIdHex());
                     }
                     if (state.isConnected()) {
                     	//1000(1 second) is to prevent race condition missing to send the second ping
@@ -1238,15 +1230,15 @@ public class ClientCnxn {
                     if (closing) {
                         if (LOG.isDebugEnabled()) {
                             // closing so this is expected
-                            LOG.debug("An exception was thrown while closing send thread for session 0x"
-                                    + Long.toHexString(getSessionId())
-                                    + " : " + e.getMessage());
+                            LOG.debug(
+                                "An exception was thrown while closing send thread for session {}: {}",
+                                getSessionIdHex(), e.getMessage());
                         }
                         break;
                     } else {
                         // this is ugly, you have a better way speak up
                         if (e instanceof SessionExpiredException) {
-                            LOG.info(e.getMessage() + ", closing socket connection");
+                            LOG.info("{}, closing socket connection", e.getMessage());
                         } else if (e instanceof SessionTimeoutException) {
                             LOG.info(e.getMessage() + RETRY_CONN_MSG);
                         } else if (e instanceof EndOfStreamException) {
@@ -1254,13 +1246,13 @@ public class ClientCnxn {
                         } else if (e instanceof RWServerFoundException) {
                             LOG.info(e.getMessage());
                         } else {
-                            LOG.warn(
-                                    "Session 0x"
-                                            + Long.toHexString(getSessionId())
-                                            + " for server "
-                                            + clientCnxnSocket.getRemoteSocketAddress()
-                                            + ", unexpected error"
-                                            + RETRY_CONN_MSG, e);
+                            String msg = String.format(
+                                "Session {} for server {}, unexpected error{}{}",
+                                getSessionIdHex(),
+                                clientCnxnSocket.getRemoteSocketAddress(),
+                                RETRY_CONN_MSG);
+
+                            LOG.warn(msg, e);
                         }
                         // At this point, there might still be new packets appended to outgoingQueue.
                         // they will be handled in next connection or cleared up if closed.
@@ -1287,15 +1279,15 @@ public class ClientCnxn {
                         Event.KeeperState.Disconnected, null));
             }
             ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),
-                    "SendThread exited loop for session: 0x"
-                           + Long.toHexString(getSessionId()));
+                    "SendThread exited loop for session: " + getSessionIdHex());
         }
 
         private void pingRwServer() throws RWServerFoundException {
             String result = null;
             InetSocketAddress addr = hostProvider.next(0);
-            LOG.info("Checking server " + addr + " for being r/w." +
-                    " Timeout " + pingRwTimeout);
+
+            LOG.info("Checking server {} for being r/w. Timeout: {}",
+                addr, pingRwTimeout);
 
             Socket sock = null;
             BufferedReader br = null;
@@ -1383,8 +1375,8 @@ public class ClientCnxn {
                         Watcher.Event.KeeperState.Expired, null));
                 eventThread.queueEventOfDeath();
                 throw new SessionExpiredException(
-                        "Unable to reconnect to ZooKeeper service, session 0x"
-                                + Long.toHexString(sessionId) + " has expired");
+                        "Unable to reconnect to ZooKeeper service, session "
+                        + getSessionIdHex() + " has expired");
             }
             if (!readOnly && isRO) {
                 LOG.error("Read/write client got connected to read-only server");
@@ -1399,7 +1391,7 @@ public class ClientCnxn {
             seenRwServerBefore |= !isRO;
             LOG.info("Session establishment complete on server "
                     + clientCnxnSocket.getRemoteSocketAddress()
-                    + ", sessionid = 0x" + Long.toHexString(sessionId)
+                    + ", sessionid = " + getSessionIdHex()
                     + ", negotiated timeout = " + negotiatedSessionTimeout
                     + (isRO ? " (READ-ONLY mode)" : ""));
             KeeperState eventState = (isRO) ?
@@ -1451,11 +1443,7 @@ public class ClientCnxn {
      * behavior.
      */
     public void disconnect() {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Disconnecting client for session: 0x"
-                      + Long.toHexString(getSessionId()));
-        }
-
+        LOG.debug("Disconnecting client for session: {}", getSessionIdHex());
         sendThread.close();
         eventThread.queueEventOfDeath();
     }
@@ -1467,10 +1455,7 @@ public class ClientCnxn {
      * @throws IOException
      */
     public void close() throws IOException {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Closing client for session: 0x"
-                      + Long.toHexString(getSessionId()));
-        }
+        LOG.debug("Closing client for session: {}", getSessionIdHex());
 
         try {
             RequestHeader h = new RequestHeader();
