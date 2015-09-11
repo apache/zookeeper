@@ -147,6 +147,9 @@ IMPROVEMENTS:
   ZOOKEEPER-2270: Allow MBeanRegistry to be overridden for better unit tests
   (Jordan Zimmerman via rgs)
 
+  ZOOKEEPER-2040: Server to log underlying cause of SASL connection problems.
+  (Steve Loughran via cnauroth)
+
 NEW FEATURES:
 
   ZOOKEEPER-2237 Port async multi to 3.4 branch (Ivan Kelly via rakeshr)
