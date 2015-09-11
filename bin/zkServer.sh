@@ -172,7 +172,7 @@ start)
       then
         sleep 1
         pid=$(cat "${ZOOPIDFILE}")
-        if ps -p "${pid}" > /dev/null 2>&1; then
+        if ps -o pid | grep "${pid}" > /dev/null 2>&1; then
           echo STARTED
         else
           echo FAILED TO START
