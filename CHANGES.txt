@@ -256,6 +256,9 @@ IMPROVEMENTS:
   ZOOKEEPER-2270: Allow MBeanRegistry to be overridden for better unit tests
   (Jordan Zimmerman via rgs)
 
+  ZOOKEEPER-2040: Server to log underlying cause of SASL connection problems.
+  (Steve Loughran via cnauroth)
+
 Release 3.5.0 - 8/4/2014
 
 NEW FEATURES:
