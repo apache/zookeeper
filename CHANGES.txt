@@ -150,6 +150,8 @@ IMPROVEMENTS:
   ZOOKEEPER-2040: Server to log underlying cause of SASL connection problems.
   (Steve Loughran via cnauroth)
 
+  ZOOKEEPER-2245: SimpleSysTest test cases fails (Arshad Mohammad via rakeshr)
+
 NEW FEATURES:
 
   ZOOKEEPER-2237 Port async multi to 3.4 branch (Ivan Kelly via rakeshr)
