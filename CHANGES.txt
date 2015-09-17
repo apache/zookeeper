@@ -11,6 +11,8 @@ BUGFIXES:
   ZOOKEEPER-2269: NullPointerException in RemotePeerBean
   (Arshad Mohammad via rgs)
 
+  ZOOKEEPER-2245: SimpleSysTest test cases fails (Arshad Mohammad via rakeshr)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-2270: Allow MBeanRegistry to be overridden for better unit tests
