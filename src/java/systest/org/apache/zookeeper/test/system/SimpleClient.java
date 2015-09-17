@@ -53,7 +53,9 @@ public class SimpleClient implements Instance, Watcher, AsyncCallback.DataCallba
         try {
             zk = new ZooKeeper(hostPort, 15000, this);
             zk.getData("/simpleCase", true, this, null);
-            r.report("Client " + index + " connecting to " + hostPort); 
+            if (null != r) {
+                r.report("Client " + index + " connecting to " + hostPort);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
