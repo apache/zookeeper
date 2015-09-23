@@ -185,30 +185,26 @@ public class QuorumPeerConfig {
                        + " does not have the form host:port or host:port:port " +
                        " or host:port:port:type");
                 }
-                InetSocketAddress addr = new InetSocketAddress(parts[0],
-                        Integer.parseInt(parts[1]));
-                if (parts.length == 2) {
-                    servers.put(Long.valueOf(sid), new QuorumServer(sid, addr));
-                } else if (parts.length == 3) {
-                    InetSocketAddress electionAddr = new InetSocketAddress(
-                            parts[0], Integer.parseInt(parts[2]));
-                    servers.put(Long.valueOf(sid), new QuorumServer(sid, addr,
-                            electionAddr));
-                } else if (parts.length == 4) {
-                    InetSocketAddress electionAddr = new InetSocketAddress(
-                            parts[0], Integer.parseInt(parts[2]));
-                    LearnerType type = LearnerType.PARTICIPANT;
+                LearnerType type = null;
+                String hostname = parts[0];
+                Integer port = Integer.parseInt(parts[1]);
+                Integer electionPort = null;
+                if (parts.length > 2){
+                	electionPort=Integer.parseInt(parts[2]);
+                }
+                if (parts.length > 3){
                     if (parts[3].toLowerCase().equals("observer")) {
                         type = LearnerType.OBSERVER;
-                        observers.put(Long.valueOf(sid), new QuorumServer(sid, addr,
-                                electionAddr,type));
                     } else if (parts[3].toLowerCase().equals("participant")) {
                         type = LearnerType.PARTICIPANT;
-                        servers.put(Long.valueOf(sid), new QuorumServer(sid, addr,
-                                electionAddr,type));
                     } else {
                         throw new ConfigException("Unrecognised peertype: " + value);
                     }
+                }
+                if (type == LearnerType.OBSERVER){
+                    observers.put(Long.valueOf(sid), new QuorumServer(sid, hostname, port, electionPort, type));
+                } else {
+                    servers.put(Long.valueOf(sid), new QuorumServer(sid, hostname, port, electionPort, type));
                 }
             } else if (key.startsWith("group")) {
                 int dot = key.indexOf('.');

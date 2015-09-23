@@ -62,9 +62,8 @@ public class FLEPredicateTest extends ZKTestCase {
          */
         for(int i = 0; i < 3; i++) {
             peers.put(Long.valueOf(i),
-                    new QuorumServer(i,
-                            new InetSocketAddress(PortAssignment.unique()),
-                    new InetSocketAddress(PortAssignment.unique())));
+                      new QuorumServer(i, "0.0.0.0", PortAssignment.unique(),
+                                       PortAssignment.unique(), null));
         }
 
         /*

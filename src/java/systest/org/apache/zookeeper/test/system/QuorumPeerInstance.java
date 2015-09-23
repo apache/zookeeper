@@ -163,7 +163,7 @@ class QuorumPeerInstance implements Instance {
             peers = new HashMap<Long,QuorumServer>();
             for(int i = 0; i < parts.length; i++) {
                 String subparts[] = parts[i].split(":");
-                peers.put(Long.valueOf(i), new QuorumServer(i, new InetSocketAddress(subparts[0], Integer.parseInt(subparts[1]))));
+                peers.put(Long.valueOf(i), new QuorumServer(i, subparts[0], Integer.parseInt(subparts[1]), 0, null));
             }
             try {
                 if (LOG.isDebugEnabled()) {
