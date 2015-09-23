@@ -153,9 +153,7 @@ public class FLEZeroWeightTest extends ZKTestCase {
         LOG.info("TestZeroWeightQuorum: " + getTestName()+ ", " + count);
         for(int i = 0; i < count; i++) {
             peers.put(Long.valueOf(i),
-                    new QuorumServer(i,
-                            new InetSocketAddress(PortAssignment.unique()),
-                    new InetSocketAddress(PortAssignment.unique())));
+                      new QuorumServer(i, "0.0.0.0", PortAssignment.unique(), PortAssignment.unique(), null));
             tmpdir[i] = ClientBase.createTmpDir();
             port[i] = PortAssignment.unique();
         }

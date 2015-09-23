@@ -149,12 +149,8 @@ public class BaseSysTest extends TestCase {
         qps = new QuorumPeer[count];
         qpsDirs = new File[count];
         for(int i = 1; i <= count; i++) {
-            InetSocketAddress peerAddress = new InetSocketAddress("127.0.0.1",
-                    fakeBasePort + i);
-            InetSocketAddress electionAddr = new InetSocketAddress("127.0.0.1",
-                    serverCount + fakeBasePort + i);
-            peers.put(Long.valueOf(i), new QuorumServer(i, peerAddress,
-                    electionAddr));
+            peers.put(Long.valueOf(i), new QuorumServer(
+                i, "127.0.0.1", fakeBasePort + i, serverCount + fakeBasePort + i, null));
         }
         StringBuilder sb = new StringBuilder();
         for(int i = 0; i < count; i++) {

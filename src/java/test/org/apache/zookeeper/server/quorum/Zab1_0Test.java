@@ -1394,8 +1394,8 @@ public class Zab1_0Test {
         peer.initLimit = 2;
         peer.tickTime = 2000;
         peer.quorumPeers = new HashMap<Long, QuorumServer>();
-        peer.quorumPeers.put(1L, new QuorumServer(0, new InetSocketAddress(33221)));
-        peer.quorumPeers.put(1L, new QuorumServer(1, new InetSocketAddress(33223)));
+        peer.quorumPeers.put(1L, new QuorumServer(0, "0.0.0.0", 33221, 0, null));
+        peer.quorumPeers.put(1L, new QuorumServer(1, "0.0.0.0", 33223, 0, null));
         peer.setQuorumVerifier(new QuorumMaj(3));
         peer.setCnxnFactory(new NullServerCnxnFactory());
         File version2 = new File(tmpDir, "version-2");
