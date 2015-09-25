@@ -13,6 +13,9 @@ BUGFIXES:
 
   ZOOKEEPER-2245: SimpleSysTest test cases fails (Arshad Mohammad via rakeshr)
 
+  ZOOKEEPER-2279: QuorumPeer loadDataBase() error message is incorrect
+  (Arshad Mohammad via rakeshr)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-2270: Allow MBeanRegistry to be overridden for better unit tests
