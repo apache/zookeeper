@@ -331,6 +331,12 @@
         </listitem>
 
         <listitem>
+          <para><emphasis role="bold">pzxid</emphasis></para>
+
+          <para>The zxid of the change that last modified children of this znode.</para>
+        </listitem>
+
+        <listitem>
           <para><emphasis role="bold">ctime</emphasis></para>
 
           <para>The time in milliseconds from epoch when this znode was
