@@ -173,6 +173,9 @@ BUGFIXES:
   ZOOKEEPER-2279: QuorumPeer loadDataBase() error message is incorrect
   (Arshad Mohammad via rakeshr)
 
+  ZOOKEEPER-1803: Add description for pzxid in programmer's guide
+  (Arshad Mohammad via rakeshr)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
