@@ -176,6 +176,9 @@ BUGFIXES:
   ZOOKEEPER-1803: Add description for pzxid in programmer's guide
   (Arshad Mohammad via rakeshr)
 
+  ZOOKEEPER-2253: C asserts ordering of ping requests, while Java client does not
+  (Chris Chen via rgs)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
