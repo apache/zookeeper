@@ -19,6 +19,9 @@ BUGFIXES:
   ZOOKEEPER-1803: Add description for pzxid in programmer's guide
   (Arshad Mohammad via rakeshr)
 
+  ZOOKEEPER-2253: C asserts ordering of ping requests, while Java client does not
+  (Chris Chen via rgs)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-2270: Allow MBeanRegistry to be overridden for better unit tests
