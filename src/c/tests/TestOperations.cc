@@ -29,6 +29,7 @@ class Zookeeper_operations : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST_SUITE(Zookeeper_operations);
 #ifndef THREADED
     CPPUNIT_TEST(testPing);
+    CPPUNIT_TEST(testUnsolicitedPing);
     CPPUNIT_TEST(testTimeoutCausedByWatches1);
     CPPUNIT_TEST(testTimeoutCausedByWatches2);
 #else    
@@ -303,6 +304,40 @@ public:
         CPPUNIT_ASSERT_EQUAL((int)ZNOTHING,rc);
         // only one ping so far?
         CPPUNIT_ASSERT_EQUAL(1,zkServer.pingCount_);
+    }
+
+    // ZOOKEEPER-2253: Permit unsolicited pings
+    void testUnsolicitedPing()
+    {
+        const int TIMEOUT=9; // timeout in secs
+        Mock_gettimeofday timeMock;
+        PingCountingServer zkServer;
+        // must call zookeeper_close() while all the mocks are in scope
+        CloseFinally guard(&zh);
+
+        // receive timeout is in milliseconds
+        zh=zookeeper_init("localhost:1234",watcher,TIMEOUT*1000,TEST_CLIENT_ID,0,0);
+        CPPUNIT_ASSERT(zh!=0);
+        // simulate connected state
+        forceConnected(zh);
+
+        int fd=0;
+        int interest=0;
+        timeval tv;
+
+        int rc=zookeeper_interest(zh,&fd,&interest,&tv);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
+
+        // verify no ping sent
+        CPPUNIT_ASSERT(zkServer.pingCount_==0);
+
+        // we're going to receive a unsolicited PING response; ensure
+        // that the client has updated its last_recv timestamp
+        timeMock.tick(tv);
+        zkServer.addRecvResponse(new PingResponse);
+        rc=zookeeper_process(zh,interest);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
+        CPPUNIT_ASSERT(timeMock==zh->last_recv);
     }
 
     // simulate a watch arriving right before a ping is due
