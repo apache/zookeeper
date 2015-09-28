@@ -112,7 +112,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             InetAddress addr = ((InetSocketAddress)cnxn.channel.getRemoteAddress()).getAddress();
             int cnxncount = getClientCnxnCount(addr);
             if (maxClientCnxns > 0 && cnxncount >= maxClientCnxns) {
-                LOG.error("Too many connections from " + addr + " - max is " + maxClientCnxns);
+                LOG.error("Too many connections from {} - max is {}", addr, maxClientCnxns);
                 cnxn.close();
                 ctx.getChannel().close().awaitUninterruptibly();
                 return;
@@ -182,8 +182,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
 
         private final int getClientCnxnCount(InetAddress ia) {
             Set<NettyServerCnxn> s = ipMap.get(ia);
-            if (s == null) return 0;
-                return s.size();
+            return (s == null) ? 0 : s.size();
         }
 
         private void processMessage(MessageEvent e, NettyServerCnxn cnxn) {
@@ -535,17 +534,14 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
 
     private void addCnxn(NettyServerCnxn cnxn) {
         cnxns.add(cnxn);
-        synchronized (ipMap){
-            InetAddress addr =
-                ((InetSocketAddress)cnxn.channel.getRemoteAddress())
-                    .getAddress();
-            Set<NettyServerCnxn> s = ipMap.get(addr);
-            if (s == null) {
-                s = new HashSet<NettyServerCnxn>();
-            }
-            s.add(cnxn);
-            ipMap.put(addr,s);
+
+        InetAddress addr = ((InetSocketAddress)cnxn.channel.getRemoteAddress()).getAddress();
+        Set<NettyServerCnxn> newSet = new HashSet<>();
+        Set<NettyServerCnxn> s = ipMap.putIfAbsent(addr, newSet);
+        if (s == null) {
+          s = newSet;
         }
+        s.add(cnxn);
     }
 
     @Override

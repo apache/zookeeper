@@ -99,11 +99,13 @@ public class NettyServerCnxn extends ServerCnxn {
                         + Long.toHexString(sessionId));
             }
 
-            synchronized (factory.ipMap) {
-                Set<NettyServerCnxn> s =
-                    factory.ipMap.get(((InetSocketAddress)channel
-                            .getRemoteAddress()).getAddress());
-                s.remove(this);
+            Set<NettyServerCnxn> s = factory.ipMap.get(((InetSocketAddress)channel.getRemoteAddress()).getAddress());
+            if (s != null)
+            {
+                synchronized (s)
+                {
+                    s.remove(this);
+                }
             }
         }
 
