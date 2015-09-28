@@ -100,10 +100,8 @@ public class NettyServerCnxn extends ServerCnxn {
             }
 
             Set<NettyServerCnxn> s = factory.ipMap.get(((InetSocketAddress)channel.getRemoteAddress()).getAddress());
-            if (s != null)
-            {
-                synchronized (s)
-                {
+            if (s != null) {
+                synchronized (s) {
                     s.remove(this);
                 }
             }
