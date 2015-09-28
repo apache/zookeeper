@@ -20,6 +20,8 @@ package org.apache.zookeeper.server;
 
 
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.test.ClientBase;
@@ -27,6 +29,11 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+
+import static junit.framework.TestCase.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test verifies the behavior of NettyServerCnxn which represents a connection
@@ -53,7 +60,7 @@ public class NettyServerCnxnTest extends ClientBase {
      */
     @Test(timeout = 40000)
     public void testSendCloseSession() throws Exception {
-        Assert.assertTrue(
+        assertTrue(
                 "Didn't instantiate ServerCnxnFactory with NettyServerCnxnFactory!",
                 serverFactory instanceof NettyServerCnxnFactory);
 
@@ -82,6 +89,88 @@ public class NettyServerCnxnTest extends ClientBase {
             }
         } finally {
             zk.close();
+        }
+    }
+
+    @Test(timeout = 40000)
+         public void testMaxClientConnections() throws Exception {
+
+        File tmpDir = ClientBase.createTmpDir();
+        final int CLIENT_PORT = PortAssignment.unique();
+
+        final int MAX_CLIENT_CONN = 1;
+        final int CLIENTS = 3 ;
+
+        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        ServerCnxnFactory scf = ServerCnxnFactory.createFactory(CLIENT_PORT, MAX_CLIENT_CONN);
+        scf.startup(zks);
+
+        try {
+            assertTrue("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, CONNECTION_TIMEOUT));
+            assertTrue("Didn't instantiate ServerCnxnFactory with NettyServerCnxnFactory!", scf instanceof NettyServerCnxnFactory);
+
+            assertEquals(0, scf.getNumAliveConnections());
+
+            TestableZooKeeper[] clients = new TestableZooKeeper[CLIENTS];
+            for (int i = 0; i < CLIENTS; i++) {
+                clients[i] = new TestableZooKeeper("127.0.0.1:" + CLIENT_PORT, 3000, new CountdownWatcher());
+            }
+
+            Thread.sleep(5000);
+
+            assertEquals(MAX_CLIENT_CONN, scf.getNumAliveConnections());
+
+            int connected = 0;
+            for (int i = 0; i < CLIENTS; i++) {
+                if (clients[i].getState().isConnected()) connected++;
+            }
+
+            assertEquals(MAX_CLIENT_CONN, connected);
+        }
+        finally {
+            scf.shutdown();
+            zks.shutdown();
+        }
+    }
+
+    @Test(timeout = 40000)
+    public void testConnections() throws Exception {
+
+        File tmpDir = ClientBase.createTmpDir();
+        final int CLIENT_PORT = PortAssignment.unique();
+
+        final int MAX_CLIENT_CONN = -1;
+        final int CLIENTS = 3 ;
+
+        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        ServerCnxnFactory scf = ServerCnxnFactory.createFactory(CLIENT_PORT, MAX_CLIENT_CONN);
+        scf.startup(zks);
+
+        try {
+            assertTrue("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, CONNECTION_TIMEOUT));
+            assertTrue("Didn't instantiate ServerCnxnFactory with NettyServerCnxnFactory!", scf instanceof NettyServerCnxnFactory);
+
+            assertEquals(0, scf.getNumAliveConnections());
+
+            TestableZooKeeper[] clients = new TestableZooKeeper[CLIENTS];
+            for (int i = 0; i < CLIENTS; i++) {
+                clients[i] = new TestableZooKeeper("127.0.0.1:" + CLIENT_PORT, 3000, new CountdownWatcher());
+            }
+
+            Thread.sleep(5000);
+
+            assertEquals(CLIENTS, scf.getNumAliveConnections());
+
+            int connected = 0;
+            for (int i = 0; i < CLIENTS; i++) {
+                if (clients[i].getState().isConnected()) connected++;
+            }
+
+            assertEquals(CLIENTS, connected);
+        }
+        finally {
+            scf.shutdown();
+            zks.shutdown();
         }
     }
 }

@@ -29,6 +29,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 
 import javax.net.ssl.SSLContext;
@@ -73,8 +75,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     ServerBootstrap bootstrap;
     Channel parentChannel;
     ChannelGroup allChannels = new DefaultChannelGroup("zkServerCnxns");
-    HashMap<InetAddress, Set<NettyServerCnxn>> ipMap =
-        new HashMap<InetAddress, Set<NettyServerCnxn>>( );
+    ConcurrentMap<InetAddress, Set<NettyServerCnxn>> ipMap = new ConcurrentHashMap<>();
     InetSocketAddress localAddress;
     int maxClientCnxns = 60;
 
@@ -107,6 +108,15 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             NettyServerCnxn cnxn = new NettyServerCnxn(ctx.getChannel(),
                     zkServer, NettyServerCnxnFactory.this);
             ctx.setAttachment(cnxn);
+
+            InetAddress addr = ((InetSocketAddress)cnxn.channel.getRemoteAddress()).getAddress();
+            int cnxncount = getClientCnxnCount(addr);
+            if (maxClientCnxns > 0 && cnxncount >= maxClientCnxns) {
+                LOG.error("Too many connections from " + addr + " - max is " + maxClientCnxns);
+                cnxn.close();
+                ctx.getChannel().close().awaitUninterruptibly();
+                return;
+            }
 
             if (secure) {
                 SslHandler sslHandler = ctx.getPipeline().get(SslHandler.class);
@@ -168,6 +178,12 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                 LOG.error("Unexpected exception in receive", ex);
                 throw ex;
             }
+        }
+
+        private final int getClientCnxnCount(InetAddress ia) {
+            Set<NettyServerCnxn> s = ipMap.get(ia);
+            if (s == null) return 0;
+                return s.size();
         }
 
         private void processMessage(MessageEvent e, NettyServerCnxn cnxn) {
