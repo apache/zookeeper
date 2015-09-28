@@ -20,6 +20,10 @@ package org.apache.zookeeper.server;
 
 
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.TestableZooKeeper;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.test.ClientBase;
@@ -27,6 +31,13 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static junit.framework.TestCase.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test verifies the behavior of NettyServerCnxn which represents a connection
@@ -53,7 +64,7 @@ public class NettyServerCnxnTest extends ClientBase {
      */
     @Test(timeout = 40000)
     public void testSendCloseSession() throws Exception {
-        Assert.assertTrue(
+        assertTrue(
                 "Didn't instantiate ServerCnxnFactory with NettyServerCnxnFactory!",
                 serverFactory instanceof NettyServerCnxnFactory);
 
@@ -82,6 +93,67 @@ public class NettyServerCnxnTest extends ClientBase {
             }
         } finally {
             zk.close();
+        }
+    }
+
+    @Test(timeout = 40000)
+    public void testMaxClientConnections() throws Exception {
+        final int maxClientCnxns = 2;
+        final int numClients = 3;
+        testConns(numClients, maxClientCnxns, maxClientCnxns);
+    }
+
+    @Test(timeout = 40000)
+    public void testClientConnections() throws Exception {
+        final int maxClientCnxns = -1; // disabled cnxns limit
+        final int numClients = 3;
+        testConns(numClients, maxClientCnxns, numClients);
+    }
+
+    public void testConns(int numClients, int maxClientCnxns, int cnxnsAccepted) throws Exception {
+
+        File tmpDir = ClientBase.createTmpDir();
+        final int CLIENT_PORT = PortAssignment.unique();
+
+        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        ServerCnxnFactory scf = ServerCnxnFactory.createFactory(CLIENT_PORT, maxClientCnxns);
+        scf.startup(zks);
+
+        try {
+            assertTrue("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, CONNECTION_TIMEOUT));
+            assertTrue("Didn't instantiate ServerCnxnFactory with NettyServerCnxnFactory!", scf instanceof NettyServerCnxnFactory);
+
+            assertEquals(0, scf.getNumAliveConnections());
+
+            final CountDownLatch countDownLatch = new CountDownLatch(cnxnsAccepted);
+
+            TestableZooKeeper[] clients = new TestableZooKeeper[numClients];
+            for (int i = 0; i < numClients; i++) {
+                clients[i] = new TestableZooKeeper("127.0.0.1:" + CLIENT_PORT, 3000, new Watcher() {
+                    @Override
+                    public void process(WatchedEvent event)
+                    {
+                        if (event.getState() == Event.KeeperState.SyncConnected) {
+                           countDownLatch.countDown();
+                        }
+                    }
+                });
+            }
+
+            countDownLatch.await();
+
+            assertEquals(cnxnsAccepted, scf.getNumAliveConnections());
+
+            int connected = 0;
+            for (int i = 0; i < numClients; i++) {
+                if (clients[i].getState().isConnected()) connected++;
+            }
+
+            assertEquals(cnxnsAccepted, connected);
+
+        } finally {
+            scf.shutdown();
+            zks.shutdown();
         }
     }
 }
