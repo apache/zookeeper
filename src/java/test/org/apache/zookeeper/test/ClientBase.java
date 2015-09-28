@@ -74,6 +74,7 @@ public abstract class ClientBase extends ZKTestCase {
 
     protected String hostPort = "127.0.0.1:" + PortAssignment.unique();
     protected int maxCnxns = 0;
+    protected int maxClientCnxns = 0;
     protected ServerCnxnFactory serverFactory = null;
     protected File tmpDir = null;
 
@@ -374,12 +375,12 @@ public abstract class ClientBase extends ZKTestCase {
      *      for more information.
      */
     public static ServerCnxnFactory createNewServerInstance(
-            ServerCnxnFactory factory, String hostPort, int maxCnxns)
+            ServerCnxnFactory factory, String hostPort, int maxCnxns, int maxClientCnxns)
             throws IOException, InterruptedException {
         final int port = getPort(hostPort);
         LOG.info("CREATING server instance 127.0.0.1:{}", port);
         if (factory == null) {
-            factory = ServerCnxnFactory.createFactory(port, maxCnxns);
+            factory = ServerCnxnFactory.createFactory(port, maxCnxns, maxClientCnxns);
         }
         return factory;
     }
@@ -459,7 +460,7 @@ public abstract class ClientBase extends ZKTestCase {
     protected void startServer() throws Exception {
         LOG.info("STARTING server");
         serverFactory = createNewServerInstance(serverFactory, hostPort,
-                maxCnxns);
+                maxCnxns, maxClientCnxns);
         startServerInstance(tmpDir, serverFactory, hostPort);
         // ensure that server and data bean are registered
         Set<ObjectName> children = JMXEnv.ensureParent("InMemoryDataTree",

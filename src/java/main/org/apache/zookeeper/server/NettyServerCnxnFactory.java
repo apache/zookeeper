@@ -424,13 +424,24 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     }
 
     @Override
-    public void configure(InetSocketAddress addr, int maxClientCnxns, boolean secure)
+    public void configure(InetSocketAddress addr, int maxCnxns, int maxClientCnxns, boolean secure)
             throws IOException
     {
         configureSaslLogin();
         localAddress = addr;
+        this.maxCnxns = maxCnxns;
         this.maxClientCnxns = maxClientCnxns;
         this.secure = secure;
+    }
+
+    /** {@inheritDoc} */
+    public int getMaxCnxns() {
+        return maxCnxns;
+    }
+
+    /** {@inheritDoc} */
+    public void setMaxCnxns(int max) {
+        maxCnxns = max;
     }
 
     /** {@inheritDoc} */

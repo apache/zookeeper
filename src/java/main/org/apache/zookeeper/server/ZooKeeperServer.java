@@ -189,6 +189,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         pwriter.println(getLogDirSize());
         pwriter.print("tickTime=");
         pwriter.println(getTickTime());
+        pwriter.print("maxCnxns=");
+        pwriter.println(getMaxCnxns());
         pwriter.print("maxClientCnxns=");
         pwriter.println(getMaxClientCnxnsPerHost());
         pwriter.print("minSessionTimeout=");
@@ -646,9 +648,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         // register with JMX
         try {
             if (valid) {
-                if (serverCnxnFactory != null && serverCnxnFactory.cnxns.contains(cnxn)) {
+                if (serverCnxnFactory != null && ServerCnxnFactory.cnxns.contains(cnxn)) {
                     serverCnxnFactory.registerConnection(cnxn);
-                } else if (secureServerCnxnFactory != null && secureServerCnxnFactory.cnxns.contains(cnxn)) {
+                } else if (secureServerCnxnFactory != null && ServerCnxnFactory.cnxns.contains(cnxn)) {
                     secureServerCnxnFactory.registerConnection(cnxn);
                 }
             }
@@ -820,9 +822,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         if (serverCnxnFactory != null) {
             numAliveConnections += serverCnxnFactory.getNumAliveConnections();
-        }
-
-        if (secureServerCnxnFactory != null) {
+        } else if (secureServerCnxnFactory != null) {
             numAliveConnections += secureServerCnxnFactory.getNumAliveConnections();
         }
 
@@ -873,6 +873,17 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     public int getSecureClientPort() {
         return secureServerCnxnFactory != null ? secureServerCnxnFactory.getLocalPort() : -1;
+    }
+
+    /** Maximum number of connections allowed from particular host (ip) */
+    public int getMaxCnxns() {
+        if (serverCnxnFactory != null) {
+            return serverCnxnFactory.getMaxCnxns();
+        }
+        if (secureServerCnxnFactory != null) {
+            return secureServerCnxnFactory.getMaxCnxns();
+        }
+        return -1;
     }
 
     /** Maximum number of connections allowed from particular host (ip) */

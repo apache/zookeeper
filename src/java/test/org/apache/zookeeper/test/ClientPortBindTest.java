@@ -82,7 +82,7 @@ public class ClientPortBindTest extends ZKTestCase implements Watcher {
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
 
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(
-                new InetSocketAddress(bindAddress, PORT), -1);
+                new InetSocketAddress(bindAddress, PORT), -1, -1);
         f.startup(zks);
         LOG.info("starting up the the server, waiting");
 

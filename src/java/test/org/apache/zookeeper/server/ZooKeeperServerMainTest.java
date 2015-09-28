@@ -396,7 +396,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
             InterruptedException {
         final int CLIENT_PORT = PortAssignment.unique();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
-        ServerCnxnFactory f = ServerCnxnFactory.createFactory(CLIENT_PORT, -1);
+        ServerCnxnFactory f = ServerCnxnFactory.createFactory(CLIENT_PORT, -1, -1);
         f.startup(zks);
         Assert.assertNotNull("JMX initialization failed!", zks.jmxServerBean);
         Assert.assertTrue("waiting for server being up",

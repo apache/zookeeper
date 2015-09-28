@@ -89,6 +89,19 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
         zks.setTickTime(tickTime);
     }
 
+    public int getMaxCnxns() {
+        return zks.getMaxCnxns();
+    }
+
+    public void setMaxCnxns(int max) {
+        if (zks.serverCnxnFactory != null) {
+            zks.serverCnxnFactory.setMaxCnxns(max);
+        }
+        if (zks.secureServerCnxnFactory != null) {
+            zks.secureServerCnxnFactory.setMaxCnxns(max);
+        }
+    }
+
     public int getMaxClientCnxnsPerHost() {
         return zks.getMaxClientCnxnsPerHost();
     }

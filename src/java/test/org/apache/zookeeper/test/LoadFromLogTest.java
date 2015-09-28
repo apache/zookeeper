@@ -84,7 +84,7 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         SyncRequestProcessor.setSnapCount(100);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
-        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
+        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1, -1);
         f.startup(zks);
         Assert.assertTrue("waiting for server being up ",
                 ClientBase.waitForServerUp(HOSTPORT,CONNECTION_TIMEOUT));
@@ -145,7 +145,7 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
         // So we have at least 4 logs
         SyncRequestProcessor.setSnapCount(50);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
-        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
+        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1, -1);
         f.startup(zks);
         Assert.assertTrue("waiting for server being up ",
                 ClientBase.waitForServerUp(HOSTPORT,CONNECTION_TIMEOUT));
@@ -358,7 +358,7 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
 		ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
 		SyncRequestProcessor.setSnapCount(10000);
 		final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
-		ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
+		ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1, -1);
 		f.startup(zks);
 		Assert.assertTrue("waiting for server being up ", ClientBase
 				.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
@@ -393,7 +393,7 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
 
 		zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
 		SyncRequestProcessor.setSnapCount(10000);
-		f = ServerCnxnFactory.createFactory(PORT, -1);
+		f = ServerCnxnFactory.createFactory(PORT, -1, -1);
 		f.startup(zks);
 		Assert.assertTrue("waiting for server being up ", ClientBase
 				.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
@@ -439,7 +439,7 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         SyncRequestProcessor.setSnapCount(10000);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
-        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
+        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1, -1);
         f.startup(zks);
         Assert.assertTrue("waiting for server being up ", ClientBase
                 .waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
@@ -472,7 +472,7 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
 
         zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         SyncRequestProcessor.setSnapCount(10000);
-        f = ServerCnxnFactory.createFactory(PORT, -1);
+        f = ServerCnxnFactory.createFactory(PORT, -1, -1);
         f.startup(zks);
         Assert.assertTrue("waiting for server being up ", ClientBase
                 .waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
@@ -492,7 +492,7 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
         File tmpDir = ClientBase.createTmpDir();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
-        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
+        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1, -1);
         f.startup(zks);
         Assert.assertTrue("waiting for server being up ", ClientBase
                 .waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
@@ -507,7 +507,7 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
 
             tmpDir = ClientBase.createTmpDir();
             zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
-            f = ServerCnxnFactory.createFactory(PORT, -1);
+            f = ServerCnxnFactory.createFactory(PORT, -1, -1);
             f.startup(zks);
             Assert.assertTrue("waiting for server being up ", ClientBase
                     .waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
@@ -533,7 +533,7 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         SyncRequestProcessor.setSnapCount(10000);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
-        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
+        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1, -1);
         f.startup(zks);
         Assert.assertTrue("waiting for server being up ",
                 ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
@@ -559,7 +559,7 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
 
         zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         SyncRequestProcessor.setSnapCount(10000);
-        f = ServerCnxnFactory.createFactory(PORT, -1);
+        f = ServerCnxnFactory.createFactory(PORT, -1, -1);
         f.startup(zks);
         Assert.assertTrue("waiting for server being up ",
                 ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));

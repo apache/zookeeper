@@ -156,8 +156,9 @@ public class TruncateTest extends ZKTestCase {
         // Prime the server that is going to come in late with 50 txns
         String hostPort = "127.0.0.1:" + PortAssignment.unique();
         int maxCnxns = 100;
+        int maxClientCnxns = 101;
         ServerCnxnFactory factory = ClientBase.createNewServerInstance(null,
-                hostPort, maxCnxns);
+                hostPort, maxCnxns, maxClientCnxns);
         ClientBase.startServerInstance(dataDir1, factory, hostPort);
         ClientBase.shutdownServerInstance(factory, hostPort);
 
@@ -166,7 +167,7 @@ public class TruncateTest extends ZKTestCase {
         File newfile = new File(new File(dataDir1, "version-2"), "snapshot.100000000");
         origfile.renameTo(newfile);
 
-        factory = ClientBase.createNewServerInstance(null, hostPort, maxCnxns);
+        factory = ClientBase.createNewServerInstance(null, hostPort, maxCnxns, maxClientCnxns);
         ClientBase.startServerInstance(dataDir1, factory, hostPort);
 
         ZooKeeper zk = new ZooKeeper(hostPort, 15000, nullWatcher);

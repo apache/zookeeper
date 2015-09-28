@@ -53,7 +53,7 @@ public class NIOConnectionFactoryFdLeakTest extends ZKTestCase {
             NIOServerCnxnFactory factory = new NIOServerCnxnFactory();
             factory.configure(
                 new InetSocketAddress(
-                    "127.0.0.1", PortAssignment.unique()), 10);
+                    "127.0.0.1", PortAssignment.unique()), 10, 10);
             factory.start();
             Thread.sleep(100);
             factory.shutdown();

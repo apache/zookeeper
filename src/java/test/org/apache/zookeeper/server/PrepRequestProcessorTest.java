@@ -72,7 +72,7 @@ public class PrepRequestProcessorTest extends ClientBase {
         SyncRequestProcessor.setSnapCount(100);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
 
-        servcnxnf = ServerCnxnFactory.createFactory(PORT, -1);
+        servcnxnf = ServerCnxnFactory.createFactory(PORT, -1, -1);
         servcnxnf.startup(zks);
         Assert.assertTrue("waiting for server being up ",
                 ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));

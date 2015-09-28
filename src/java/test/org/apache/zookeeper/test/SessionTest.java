@@ -74,7 +74,7 @@ public class SessionTest extends ZKTestCase {
         zs = new ZooKeeperServer(tmpDir, tmpDir, TICK_TIME);
 
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
-        serverFactory = ServerCnxnFactory.createFactory(PORT, -1);
+        serverFactory = ServerCnxnFactory.createFactory(PORT, -1, -1);
         serverFactory.startup(zs);
 
         Assert.assertTrue("waiting for server up",

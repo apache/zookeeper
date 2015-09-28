@@ -67,7 +67,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         SyncRequestProcessor.setSnapCount(1000);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
-        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
+        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1, -1);
         f.startup(zks);
         try {
             LOG.info("starting up the zookeeper server .. waiting");
@@ -101,7 +101,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         SyncRequestProcessor.setSnapCount(1000);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
-        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
+        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1, -1);
         f.startup(zks);
         ZooKeeper zk;
         String path;
@@ -140,7 +140,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
         startSignal = new CountDownLatch(1);
 
         zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
-        f = ServerCnxnFactory.createFactory(PORT, -1);
+        f = ServerCnxnFactory.createFactory(PORT, -1, -1);
 
         f.startup(zks);
         try {

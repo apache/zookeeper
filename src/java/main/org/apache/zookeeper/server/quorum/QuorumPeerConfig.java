@@ -66,6 +66,7 @@ public class QuorumPeerConfig {
     protected String dynamicConfigFileStr = null;
     protected String configFileStr = null;
     protected int tickTime = ZooKeeperServer.DEFAULT_TICK_TIME;
+    protected int maxCnxns = 0;
     protected int maxClientCnxns = 60;
     /** defaults to -1 if not set explicitly */
     protected int minSessionTimeout = -1;
@@ -240,6 +241,8 @@ public class QuorumPeerConfig {
                 secureClientPortAddress = value.trim();
             } else if (key.equals("tickTime")) {
                 tickTime = Integer.parseInt(value);
+            } else if (key.equals("maxCnxns")) {
+                maxCnxns = Integer.parseInt(value);
             } else if (key.equals("maxClientCnxns")) {
                 maxClientCnxns = Integer.parseInt(value);
             } else if (key.equals("minSessionTimeout")) {
@@ -644,6 +647,7 @@ public class QuorumPeerConfig {
     public File getDataDir() { return dataDir; }
     public File getDataLogDir() { return dataLogDir; }
     public int getTickTime() { return tickTime; }
+    public int getMaxCnxns() { return maxCnxns; }
     public int getMaxClientCnxns() { return maxClientCnxns; }
     public int getMinSessionTimeout() { return minSessionTimeout; }
     public int getMaxSessionTimeout() { return maxSessionTimeout; }

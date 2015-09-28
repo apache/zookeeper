@@ -37,6 +37,7 @@ import java.util.Queue;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.slf4j.Logger;
@@ -286,8 +287,15 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 sc = acceptSocket.accept();
                 accepted = true;
                 InetAddress ia = sc.socket().getInetAddress();
-                int cnxncount = getClientCnxnCount(ia);
 
+                int cnxns = getNumAliveConnections();
+                int maxCnxns = getMaxCnxns();
+                if (maxCnxns > 0 && cnxns >= maxCnxns){
+                    throw new IOException("Too many connections " + cnxns
+                                          + " - max is " + maxCnxns);
+                }
+
+                int cnxncount = getClientCnxnCount(ia);
                 if (maxClientCnxns > 0 && cnxncount >= maxClientCnxns){
                     throw new IOException("Too many connections from " + ia
                                           + " - max is " + maxClientCnxns );
@@ -605,8 +613,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     }
 
     // sessionMap is used by closeSession()
-    private final ConcurrentHashMap<Long, NIOServerCnxn> sessionMap =
-        new ConcurrentHashMap<Long, NIOServerCnxn>();
+    private final ConcurrentMap<Long, NIOServerCnxn> sessionMap = new ConcurrentHashMap<>();
     // ipMap is used to limit connections per IP
     private final ConcurrentHashMap<InetAddress, Set<NIOServerCnxn>> ipMap =
         new ConcurrentHashMap<InetAddress, Set<NIOServerCnxn>>( );
@@ -639,12 +646,13 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         new HashSet<SelectorThread>();
 
     @Override
-    public void configure(InetSocketAddress addr, int maxcc, boolean secure) throws IOException {
+    public void configure(InetSocketAddress addr, int maxc, int maxcc, boolean secure) throws IOException {
         if (secure) {
             throw new UnsupportedOperationException("SSL isn't supported in NIOServerCnxn");
         }
         configureSaslLogin();
 
+        setMaxCnxns(maxc);
         maxClientCnxns = maxcc;
         sessionlessCnxnTimeout = Integer.getInteger(
             ZOOKEEPER_NIO_SESSIONLESS_CNXN_TIMEOUT, 10000);
@@ -712,7 +720,6 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
            LOG.error("Error reconfiguring client port to " + addr + " " + e.getMessage());
         }
     }
-    
     /** {@inheritDoc} */
     public int getMaxClientCnxnsPerHost() {
         return maxClientCnxns;

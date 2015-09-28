@@ -771,6 +771,19 @@ server.3=zoo3:2888:3888</programlisting>
           </varlistentry>
 
           <varlistentry>
+            <term>maxCnxns</term>
+            <listitem>
+              <para>(No Java system property)</para>
+
+              <para>Limits the *total* number of concurrent connections (at the socket
+                level) to a single member of the ZooKeeper ensemble. This is used to
+                prevent certain classes of DoS attacks, including file
+                descriptor exhaustion. The default is 0 (unlimited number accross all
+                clients).</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
             <term>maxClientCnxns</term>
             <listitem>
               <para>(No Java system property)</para>

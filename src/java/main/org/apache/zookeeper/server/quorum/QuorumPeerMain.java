@@ -141,6 +141,7 @@ public class QuorumPeerMain {
           if (config.getClientPortAddress() != null) {
               cnxnFactory = ServerCnxnFactory.createFactory();
               cnxnFactory.configure(config.getClientPortAddress(),
+                      config.getMaxCnxns(),
                       config.getMaxClientCnxns(),
                       false);
           }
@@ -148,6 +149,7 @@ public class QuorumPeerMain {
           if (config.getSecureClientPortAddress() != null) {
               secureCnxnFactory = ServerCnxnFactory.createFactory();
               secureCnxnFactory.configure(config.getSecureClientPortAddress(),
+                      config.getMaxCnxns(),
                       config.getMaxClientCnxns(),
                       true);
           }

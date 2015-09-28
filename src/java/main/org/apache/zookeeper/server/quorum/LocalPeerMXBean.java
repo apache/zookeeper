@@ -30,6 +30,9 @@ public interface LocalPeerMXBean extends ServerMXBean {
      * @return the number of milliseconds of each tick
      */
     public int getTickTime();
+
+    /** Current maxCnxns allowed to a single server */
+    public int getMaxCnxns();
     
     /** Current maxClientCnxns allowed from a particular host */
     public int getMaxClientCnxnsPerHost();

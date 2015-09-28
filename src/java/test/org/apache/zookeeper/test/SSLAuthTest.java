@@ -49,7 +49,7 @@ public class SSLAuthTest extends ClientBase {
         hostPort = host + ":" + port;
 
         serverFactory = ServerCnxnFactory.createFactory();
-        serverFactory.configure(new InetSocketAddress(host, port), maxCnxns, true);
+        serverFactory.configure(new InetSocketAddress(host, port), maxCnxns, maxClientCnxns, true);
 
         super.setUp();
     }

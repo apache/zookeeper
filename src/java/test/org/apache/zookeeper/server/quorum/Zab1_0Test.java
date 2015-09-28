@@ -305,7 +305,7 @@ public class Zab1_0Test extends ZKTestCase {
         public Iterable<ServerCnxn> getConnections() {
             return null;
         }
-        public void configure(InetSocketAddress addr, int maxcc, boolean secure)
+        public void configure(InetSocketAddress addr, int maxc, int maxcc, boolean secure)
                 throws IOException {
         }
 

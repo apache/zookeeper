@@ -40,7 +40,12 @@ public class LocalPeerBean extends ServerBean implements LocalPeerMXBean {
     public int getTickTime() {
         return peer.getTickTime();
     }
-    
+
+    @Override
+    public int getMaxCnxns() {
+        return peer.getMaxCnxns();
+    }
+
     public int getMaxClientCnxnsPerHost() {
         return peer.getMaxClientCnxnsPerHost();
     }

@@ -126,7 +126,7 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher{
         File tmpDir = ClientBase.createTmpDir();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
 
-        ServerCnxnFactory f = ServerCnxnFactory.createFactory(CLIENT_PORT, -1);
+        ServerCnxnFactory f = ServerCnxnFactory.createFactory(CLIENT_PORT, -1, -1);
         f.startup(zks);
         Assert.assertTrue("waiting for server being up ", ClientBase
                 .waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));

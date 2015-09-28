@@ -41,6 +41,9 @@ public class ServerConfig {
     protected File dataDir;
     protected File dataLogDir;
     protected int tickTime = ZooKeeperServer.DEFAULT_TICK_TIME;
+    /** the maximum number of connections accepted by a single server regardless of the source IP of the clients **/
+    protected int maxCnxns;
+    /** the maximum number of connections allowed from particular client host (ip) **/
     protected int maxClientCnxns;
     /** defaults to -1 if not set explicitly */
     protected int minSessionTimeout = -1;
@@ -67,6 +70,9 @@ public class ServerConfig {
         }
         if (args.length == 4) {
             maxClientCnxns = Integer.parseInt(args[3]);
+        }
+        if (args.length == 5) {
+            maxCnxns = Integer.parseInt(args[4]);
         }
     }
 
@@ -95,6 +101,7 @@ public class ServerConfig {
         dataDir = config.getDataDir();
         dataLogDir = config.getDataLogDir();
         tickTime = config.getTickTime();
+        maxCnxns = config.getMaxCnxns();
         maxClientCnxns = config.getMaxClientCnxns();
         minSessionTimeout = config.getMinSessionTimeout();
         maxSessionTimeout = config.getMaxSessionTimeout();
@@ -109,6 +116,7 @@ public class ServerConfig {
     public File getDataDir() { return dataDir; }
     public File getDataLogDir() { return dataLogDir; }
     public int getTickTime() { return tickTime; }
+    public int getMaxCnxns() { return maxCnxns; }
     public int getMaxClientCnxns() { return maxClientCnxns; }
     /** minimum session timeout in milliseconds, -1 if unset */
     public int getMinSessionTimeout() { return minSessionTimeout; }

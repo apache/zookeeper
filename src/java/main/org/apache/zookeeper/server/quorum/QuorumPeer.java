@@ -829,7 +829,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     {
         this(quorumPeers, snapDir, logDir, electionAlg,
                 myid,tickTime, initLimit,syncLimit, false,
-                ServerCnxnFactory.createFactory(new InetSocketAddress(clientPort), -1),
+                ServerCnxnFactory.createFactory(new InetSocketAddress(clientPort), -1, -1),
                 new QuorumMaj(quorumPeers));
     }
 
@@ -845,7 +845,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     {
         this(quorumPeers, snapDir, logDir, electionAlg,
                 myid,tickTime, initLimit,syncLimit, false,
-                ServerCnxnFactory.createFactory(new InetSocketAddress(clientPort), -1),
+                ServerCnxnFactory.createFactory(new InetSocketAddress(clientPort), -1, -1),
                 quorumConfig);
     }
 
@@ -1257,6 +1257,17 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     public void setTickTime(int tickTime) {
         LOG.info("tickTime set to " + tickTime);
         this.tickTime = tickTime;
+    }
+
+    /** Maximum number of connections allowed to a single server. */
+    public int getMaxCnxns() {
+        if (cnxnFactory != null) {
+            return cnxnFactory.getMaxCnxns();
+        }
+        if (secureCnxnFactory != null) {
+            return secureCnxnFactory.getMaxCnxns();
+        }
+        return -1;
     }
 
     /** Maximum number of connections allowed from particular host (ip) */

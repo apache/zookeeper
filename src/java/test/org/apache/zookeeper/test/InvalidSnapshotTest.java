@@ -91,7 +91,7 @@ public class InvalidSnapshotTest extends ZKTestCase implements Watcher {
         ZooKeeperServer zks = new ZooKeeperServer(snapDir, snapDir, 3000);
         SyncRequestProcessor.setSnapCount(1000);
         final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
-        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
+        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1, -1);
         f.startup(zks);
         LOG.info("starting up the zookeeper server .. waiting");
         Assert.assertTrue("waiting for server being up",

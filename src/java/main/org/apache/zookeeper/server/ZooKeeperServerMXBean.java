@@ -67,6 +67,12 @@ public interface ZooKeeperServerMXBean {
      */
     public void setTickTime(int tickTime);
 
+    /** Current maxCnxns allowed to a single server */
+    public int getMaxCnxns();
+
+    /** Set maxCnxns allow to a single server */
+    public void setMaxCnxns(int max);
+
     /** Current maxClientCnxns allowed from a particular host */
     public int getMaxClientCnxnsPerHost();
 

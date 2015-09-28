@@ -60,7 +60,7 @@ public class OOMTest extends ZKTestCase implements Watcher {
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
 
         final int PORT = PortAssignment.unique();
-        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
+        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1, -1);
         f.startup(zks);
         Assert.assertTrue("waiting for server up",
                    ClientBase.waitForServerUp("127.0.0.1:" + PORT,

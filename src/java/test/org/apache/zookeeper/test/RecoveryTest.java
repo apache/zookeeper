@@ -72,7 +72,7 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
         SyncRequestProcessor.setSnapCount(1000);
         try {
             final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
-            ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
+            ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1, -1);
             f.startup(zks);
             LOG.info("starting up the the server, waiting");
 
@@ -111,7 +111,7 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
                                           CONNECTION_TIMEOUT));
 
             zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
-            f = ServerCnxnFactory.createFactory(PORT, -1);
+            f = ServerCnxnFactory.createFactory(PORT, -1, -1);
 
             startSignal = new CountDownLatch(1);
 
@@ -150,7 +150,7 @@ public class RecoveryTest extends ZKTestCase implements Watcher {
                                           ClientBase.CONNECTION_TIMEOUT));
 
             zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
-            f = ServerCnxnFactory.createFactory(PORT, -1);
+            f = ServerCnxnFactory.createFactory(PORT, -1, -1);
 
             startSignal = new CountDownLatch(1);
 

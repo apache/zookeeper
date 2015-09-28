@@ -218,7 +218,7 @@ public class LENonTerminateTest extends ZKTestCase {
         {
             super(quorumPeers, snapDir, logDir, electionAlg,
                     myid,tickTime, initLimit,syncLimit, false,
-                    ServerCnxnFactory.createFactory(clientPort, -1),
+                    ServerCnxnFactory.createFactory(clientPort, -1, -1),
                     new QuorumMaj(quorumPeers));
         }
 

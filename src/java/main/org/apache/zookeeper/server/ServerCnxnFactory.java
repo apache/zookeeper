@@ -53,6 +53,9 @@ public abstract class ServerCnxnFactory {
      */
     static final ByteBuffer closeConn = ByteBuffer.allocate(0);
 
+    // max connections accepted by the server, regardless of the ip address
+    protected int maxCnxns = 0;
+
     public abstract int getLocalPort();
     
     public abstract Iterable<ServerCnxn> getConnections();
@@ -71,11 +74,26 @@ public abstract class ServerCnxnFactory {
      */
     public abstract boolean closeSession(long sessionId);
 
-    public void configure(InetSocketAddress addr, int maxcc) throws IOException {
-        configure(addr, maxcc, false);
+    /**
+     *
+     * @param addr ZK address that listen for client connections
+     * @param maxc Maximum number of connections allowed to this server regardless of the client's ip address
+     * @param maxcc Maximum number of connections allowed from a particular client IP address.
+     * @throws IOException
+     */
+    public void configure(InetSocketAddress addr, int maxc, int maxcc) throws IOException {
+        configure(addr, maxc, maxcc, false);
     }
 
-    public abstract void configure(InetSocketAddress addr, int maxcc, boolean secure)
+    /**
+     *
+     * @param addr ZK address that listens for client connections
+     * @param maxc Maximum number of connections allowed to this server regardless of the client's ip address
+     * @param maxcc Maximum number of connections allowed from a particular client IP address.
+     * @param secure enabled secure connections
+     * @throws IOException
+     */
+    public abstract void configure(InetSocketAddress addr, int maxc, int maxcc, boolean secure)
             throws IOException;
 
     public abstract void reconfigure(InetSocketAddress addr);
@@ -83,10 +101,26 @@ public abstract class ServerCnxnFactory {
     protected SaslServerCallbackHandler saslServerCallbackHandler;
     public Login login;
 
-    /** Maximum number of connections allowed from particular host (ip) */
+    /**
+     * Returns the total number of connections allowed by a single server
+     * regardless of the source IP of the clients
+     **/
+    public int getMaxCnxns() {
+        return this.maxCnxns;
+    }
+
+    /**
+     * Sets the total number of connections allowed by a single server
+     * regardless of the source IP of the clients
+     **/
+    public void setMaxCnxns(int max) {
+        this.maxCnxns = max;
+    }
+
+    /** Returns the maximum number of connections allowed from particular client host (ip) */
     public abstract int getMaxClientCnxnsPerHost();
 
-    /** Maximum number of connections allowed from particular host (ip) */
+    /** Sets the maximum number of connections allowed from particular client host (ip) */
     public abstract void setMaxClientCnxnsPerHost(int max);
 
     public boolean isSecure() {
@@ -140,16 +174,16 @@ public abstract class ServerCnxnFactory {
     }
     
     static public ServerCnxnFactory createFactory(int clientPort,
-            int maxClientCnxns) throws IOException
+            int maxCnxns, int maxClientCnxns) throws IOException
     {
-        return createFactory(new InetSocketAddress(clientPort), maxClientCnxns);
+        return createFactory(new InetSocketAddress(clientPort), maxCnxns, maxClientCnxns);
     }
 
     static public ServerCnxnFactory createFactory(InetSocketAddress addr,
-            int maxClientCnxns) throws IOException
+             int maxCnxns, int maxClientCnxns) throws IOException
     {
         ServerCnxnFactory factory = createFactory();
-        factory.configure(addr, maxClientCnxns);
+        factory.configure(addr, maxCnxns, maxClientCnxns);
         return factory;
     }
 
@@ -164,7 +198,7 @@ public abstract class ServerCnxnFactory {
 
     // Connection set is relied on heavily by four letter commands
     // Construct a ConcurrentHashSet using a ConcurrentHashMap
-    protected final Set<ServerCnxn> cnxns = Collections.newSetFromMap(
+    protected static final Set<ServerCnxn> cnxns = Collections.newSetFromMap(
         new ConcurrentHashMap<ServerCnxn, Boolean>());
     public void unregisterConnection(ServerCnxn serverCnxn) {
         ConnectionBean jmxConnectionBean = connectionBeans.remove(serverCnxn);

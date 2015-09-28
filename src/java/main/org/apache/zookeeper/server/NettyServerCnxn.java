@@ -86,11 +86,11 @@ public class NettyServerCnxn extends ServerCnxn {
             LOG.debug("close called for sessionid:0x"
                     + Long.toHexString(sessionId));
         }
-        synchronized(factory.cnxns){
+        synchronized(NettyServerCnxnFactory.cnxns){
             // if this is not in cnxns then it's already closed
-            if (!factory.cnxns.remove(this)) {
+            if (!NettyServerCnxnFactory.cnxns.remove(this)) {
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("cnxns size:" + factory.cnxns.size());
+                    LOG.debug("cnxns size:" + NettyServerCnxnFactory.cnxns.size());
                 }
                 return;
             }

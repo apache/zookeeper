@@ -1141,6 +1141,19 @@ server.3=zoo3:2888:3888</pre>
               entirely removes the limit on concurrent connections.</p>
 </dd>
 
+    <dt>
+        <term>maxCnxns</term>
+    </dt>
+    <dd>
+        <p>(No Java system property)</p>
+        <para>Limits the *total* number of concurrent connections (at the socket
+            level) to a single member of the ZooKeeper ensemble. This is used to
+            prevent certain classes of DoS attacks, including file
+            descriptor exhaustion. The default is 0 (unlimited number accross all
+            clients).</para>
+    </dd>
+
+
            
 <dt>
 <term>clientPortAddress</term>
