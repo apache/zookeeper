@@ -43,6 +43,7 @@ import org.slf4j.MDC;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.OutputStreamStatement;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
+import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
@@ -467,8 +468,9 @@ public class QuorumPeerConfig {
                 }
 
                 // updates the dynamic file pointer
+                String dynamicConfigFilePath = PathUtils.normalizeFileSystemPath(dynamicFile.getCanonicalPath());
                 out.write("dynamicConfigFile="
-                         .concat(dynamicFile.getCanonicalPath())
+                         .concat(dynamicConfigFilePath)
                          .concat("\n"));
             }
         });
