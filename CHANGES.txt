@@ -179,6 +179,8 @@ BUGFIXES:
   ZOOKEEPER-2253: C asserts ordering of ping requests, while Java client does not
   (Chris Chen via rgs)
 
+  ZOOKEEPER-2244: On Windows zookeeper fails to restart (Arshad Mohammad via rakeshr)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
