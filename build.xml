@@ -480,7 +480,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
       <condition property="forrest.exec" value="forrest.bat" else="forrest">
       	<os family="windows"/>
       </condition>
-      <exec dir="${docs.src}" executable="${forrest.home}/bin/forrest"
+      <exec dir="${docs.src}" executable="${forrest.home}/bin/${forrest.exec}"
             failonerror="true">
       </exec>
       <copy todir="${docs.dir}">
