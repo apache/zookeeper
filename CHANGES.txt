@@ -129,6 +129,9 @@ BUGFIXES:
   ZOOKEEPER-2253: C asserts ordering of ping requests, while Java client does not
   (Chris Chen via rgs)
 
+  ZOOKEEPER-2268: Zookeeper doc creation fails on windows
+  (Arshad Mohammad via cnauroth)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1575. adding .gitattributes to prevent CRLF and LF mismatches for
