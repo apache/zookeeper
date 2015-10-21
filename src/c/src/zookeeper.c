@@ -2196,7 +2196,7 @@ int zookeeper_process(zhandle_t *zh, int events)
             struct timeval now;
             gettimeofday(&now, 0);
             elapsed = calculate_interval(&zh->last_ping, &now);
-            LOG_DEBUG(LOGCALLBACK(zh), "Got ping response in %d ms", elapsed);
+            LOG_DEBUG(("Got ping response in %d ms", elapsed));
             free_buffer(bptr);
         } else if (hdr.xid == WATCHER_EVENT_XID) {
             struct WatcherEvent evt;
@@ -2265,7 +2265,7 @@ int zookeeper_process(zhandle_t *zh, int events)
             activateWatcher(zh, cptr->watcher, rc);
 
             if (cptr->c.void_result != SYNCHRONOUS_MARKER) {
-                LOG_DEBUG(LOGCALLBACK(zh), "Queueing asynchronous response");
+                LOG_DEBUG(("Queueing asynchronous response"));
                 cptr->buffer = bptr;
                 queue_completion(&zh->completions_to_process, cptr, 0);
             } else {
