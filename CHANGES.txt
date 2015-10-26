@@ -33,6 +33,8 @@ BUGFIXES:
   ZOOKEEPER-1460: IPv6 literal address not supported for quorum members
   (Joseph Walton via cnauroth)
 
+  ZOOKEEPER-2239: JMX State from LocalPeerBean incorrect (Kevin Lee via rakeshr)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-2270: Allow MBeanRegistry to be overridden for better unit tests
