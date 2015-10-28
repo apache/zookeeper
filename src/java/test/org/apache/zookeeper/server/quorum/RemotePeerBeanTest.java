@@ -26,7 +26,7 @@ import java.net.InetSocketAddress;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.junit.Test;
 
-public class TestRemotePeerBean {
+public class RemotePeerBeanTest {
 
     /**
      * Test case for https://issues.apache.org/jira/browse/ZOOKEEPER-2269

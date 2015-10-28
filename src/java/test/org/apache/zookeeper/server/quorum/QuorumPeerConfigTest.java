@@ -28,7 +28,7 @@ import java.util.Properties;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.junit.Test;
 
-public class TestQuorumPeerConfig {
+public class QuorumPeerConfigTest {
 
     /**
      * test case for https://issues.apache.org/jira/browse/ZOOKEEPER-2264

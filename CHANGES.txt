@@ -190,6 +190,9 @@ BUGFIXES:
   ZOOKEEPER-1460: IPv6 literal address not supported for quorum members
   (Joseph Walton via cnauroth)
 
+  ZOOKEEPER-2302: Some test cases are not running because wrongly named
+  (Arshad Mohammad via fpj)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
