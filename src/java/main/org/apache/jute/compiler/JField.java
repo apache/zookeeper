@@ -96,15 +96,6 @@ public class JField {
         return mType.genCsharpReadMethod(getCsharpName(), getTag());
     }
 
-    public String genCsharpEquals() {
-        return mType.genCsharpEquals(getCsharpName(), "peer."+getCsharpName());
-    }
-
-    public String genCsharpHashCode() {
-        return mType.genCsharpHashCode(getCsharpName());
-    }
-    
-
     public String genJavaGetSet(int fIdx) {
         return mType.genJavaGetSet(mName, fIdx);
     }

@@ -19,7 +19,7 @@
  */
 
 
-#if NET4
+#if NET40
 using System.Collections.Generic;
 #endif
 
@@ -30,7 +30,7 @@ namespace System.Threading.Tasks
     [Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable")]
     internal sealed class AsyncLock
     {
-#if NET4
+#if NET40
         private class AsyncSemaphore
         {
             private readonly static Task s_completed = TaskEx.FromResult(true);
@@ -91,7 +91,7 @@ namespace System.Threading.Tasks
             var wait = m_semaphore.WaitAsync();
             return wait.IsCompleted ?
                         m_releaser : wait.ContinueWith(
-#if NET4
+#if NET40
                         (_) => m_releaser.Result
 #else
                         (_, state) => (IDisposable)state,

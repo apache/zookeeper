@@ -110,21 +110,6 @@ namespace org.apache.zookeeper {
             archive.endRecord(tag);
         }
 
-        private bool Equals(MultiTransactionRecord other) {
-            return SequenceUtils.EqualsEx(ops, other.ops);
-        }
-
-        public override bool Equals(object obj) {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != GetType()) return false;
-            return Equals((MultiTransactionRecord) obj);
-        }
-
-        public override int GetHashCode() {
-            return SequenceUtils.GetHashCodeEx(ops);
-        }
-
         IEnumerator IEnumerable.GetEnumerator() {
             return GetEnumerator();
         }

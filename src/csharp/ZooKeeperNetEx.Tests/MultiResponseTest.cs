@@ -41,7 +41,6 @@ namespace org.apache.zookeeper
 			MultiResponse decodedResponse = codeDecode(response);
 
 			Assert.assertEquals(response, decodedResponse);
-            Assert.assertEquals(response.GetHashCode(), decodedResponse.GetHashCode());
 		}
 
         [Test]
@@ -51,7 +50,6 @@ namespace org.apache.zookeeper
 			MultiResponse decodedResult = codeDecode(result);
 
             Assert.assertEquals(result, decodedResult);
-            Assert.assertEquals(result.GetHashCode(), decodedResult.GetHashCode());
 		}
 
 		private static MultiResponse codeDecode(MultiResponse request)

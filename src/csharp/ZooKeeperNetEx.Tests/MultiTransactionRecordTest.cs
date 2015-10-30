@@ -37,7 +37,6 @@ namespace org.apache.zookeeper
 			MultiTransactionRecord decodedRequest = codeDecode(request);
 
 			Assert.assertEquals(request, decodedRequest);
-            Assert.assertEquals(request.GetHashCode(), decodedRequest.GetHashCode());
 		}
 
         [Test]
@@ -47,7 +46,6 @@ namespace org.apache.zookeeper
 			MultiTransactionRecord decodedRequest = codeDecode(request);
 
             Assert.assertEquals(request, decodedRequest);
-            Assert.assertEquals(request.GetHashCode(), decodedRequest.GetHashCode());
 		}
 
 		private MultiTransactionRecord codeDecode(MultiTransactionRecord request) {

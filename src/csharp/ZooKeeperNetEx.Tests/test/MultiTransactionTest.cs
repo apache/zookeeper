@@ -186,7 +186,7 @@ namespace org.apache.zookeeper.test
 
 			for (int i = 0; i < names.Length; i++)
 			{
-				Assert.assertArrayEquals("zNode data not matching", names[i].getBytes(), zk_chroot.getData(names[i], false, null));
+				Assert.assertEquals("zNode data not matching", names[i].getBytes(), zk_chroot.getData(names[i], false, null));
 			}
 		}
 
@@ -227,7 +227,7 @@ namespace org.apache.zookeeper.test
 			Assert.assertNotNull("zNode is not created under chroot:" + chRoot, zk.exists(chRoot + childPath, false));
 			Assert.assertNotNull("zNode is not created under chroot:" + chRoot, zk_chroot.exists(childPath, false));
 			Assert.assertNull("zNode is created directly under '/', ignored configured chroot", zk.exists(childPath, false));
-			Assert.assertArrayEquals("zNode data not matching", childPath.getBytes(), zk_chroot.getData(childPath, false, null));
+			Assert.assertEquals("zNode data not matching", childPath.getBytes(), zk_chroot.getData(childPath, false, null));
 
 			transaction = zk_chroot.transaction();
 			// Deleting child using chRoot client.
@@ -312,7 +312,7 @@ namespace org.apache.zookeeper.test
 
 			for (int i = 0; i < names.Length; i++)
 			{
-				Assert.assertArrayEquals(names[i].getBytes(), zk.getData(names[i], false, null));
+				Assert.assertEquals(names[i].getBytes(), zk.getData(names[i], false, null));
 			}
 		}
 
@@ -338,7 +338,7 @@ namespace org.apache.zookeeper.test
 			//Updating version solves conflict -- order matters
 			zk.multi(Arrays.asList(Op.create("/multi", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT), Op.setData("/multi", "X".getBytes(), 0), Op.setData("/multi", "Y".getBytes(), 1)));
 
-			Assert.assertArrayEquals(zk.getData("/multi", false, null), "Y".getBytes());
+			Assert.assertEquals(zk.getData("/multi", false, null), "Y".getBytes());
 		}
 
         [Test]
@@ -384,34 +384,6 @@ namespace org.apache.zookeeper.test
 					}
 				}
 			}
-		}
-
-		/// <summary>
-		/// Exercise the equals methods of OpResult classes.
-		/// </summary>
-        [Test]
-		public void testOpResultEquals()
-		{
-			opEquals(new OpResult.CreateResult("/foo"), new OpResult.CreateResult("/foo"), new OpResult.CreateResult("nope"));
-
-			opEquals(new OpResult.CheckResult(), new OpResult.CheckResult(), null);
-
-			opEquals(new OpResult.SetDataResult(new Stat(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)), new OpResult.SetDataResult(new Stat(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)), new OpResult.SetDataResult(new Stat(11, 12, 13, 14, 15, 16, 17, 18, 19, 110, 111)));
-
-			opEquals(new OpResult.ErrorResult(1), new OpResult.ErrorResult(1), new OpResult.ErrorResult(2));
-
-			opEquals(new OpResult.DeleteResult(), new OpResult.DeleteResult(), null);
-
-			opEquals(new OpResult.ErrorResult(1), new OpResult.ErrorResult(1), new OpResult.ErrorResult(2));
-		}
-
-		private static void opEquals(OpResult expected, OpResult value, OpResult near)
-		{
-            Assert.assertEquals(value, value);
-            Assert.assertFalse(value.Equals(new object()));
-            Assert.assertFalse(value.Equals(near));
-            Assert.assertFalse(Equals(value, value is OpResult.CreateResult ? (object)new OpResult.ErrorResult(1) : new OpResult.CreateResult("nope2")));
-            Assert.assertTrue(value.Equals(expected));
 		}
 
         [Test]

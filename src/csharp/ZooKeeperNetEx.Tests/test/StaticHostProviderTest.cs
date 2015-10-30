@@ -66,7 +66,7 @@ namespace org.apache.zookeeper.test {
         [Test]
         public async Task testTwoConsequitiveCallsToNextReturnDifferentElement() {
             HostProvider hostProvider = getHostProvider(2);
-            Assert.assertNotSame(await hostProvider.next(0), await hostProvider.next(0));
+            Assert.assertNotEquals(await hostProvider.next(0), await hostProvider.next(0));
         }
 
         [Test]
@@ -75,7 +75,7 @@ namespace org.apache.zookeeper.test {
             var first = await hostProvider.next(0);
             hostProvider.onConnected();
             var second = await hostProvider.next(0);
-            Assert.assertNotSame(first, second);
+            Assert.assertNotEquals(first, second);
         }
 
 

@@ -170,9 +170,9 @@ namespace org.apache.zookeeper.test
 			stat = newStat();
 			zk.getData(name, false, stat);
 
-			Assert.assertNotSame(stat.getCzxid(), stat.getMzxid());
+			Assert.assertNotEquals(stat.getCzxid(), stat.getMzxid());
 			Assert.assertEquals(stat.getCzxid(), stat.getPzxid());
-			Assert.assertNotSame(stat.getCtime(), stat.getMtime());
+			Assert.assertNotEquals(stat.getCtime(), stat.getMtime());
 			Assert.assertEquals(0, stat.getCversion());
 			Assert.assertEquals(1, stat.getVersion());
 			Assert.assertEquals(0, stat.getAversion());

@@ -1,6 +1,6 @@
 ﻿namespace System.Threading.Tasks
     {
-#if !NET4
+#if !NET40
     public class TaskEx
     {
         public static Task<TResult> FromResult<TResult>(TResult result)

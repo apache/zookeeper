@@ -37,7 +37,7 @@ namespace org.apache.zookeeper.test
 				zk.exists(path, false);
                 zk.existsAsync(path, false).ContinueWith(t => { cn.Set(); });
                 cn.Wait(10 * 1000);
-				Assert.assertSame(true, cn.IsSet);
+				Assert.assertTrue(cn.IsSet);
 			}
 			finally
 			{

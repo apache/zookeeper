@@ -564,7 +564,7 @@ namespace org.apache.zookeeper {
                         List<string> dataWatches = zooKeeper.getDataWatches();
                         List<string> existWatches = zooKeeper.getExistWatches();
                         List<string> childWatches = zooKeeper.getChildWatches();
-                        if (!dataWatches.isEmpty() || !existWatches.isEmpty() || !childWatches.isEmpty()) {
+                        if (dataWatches.Count > 0 || existWatches.Count > 0 || childWatches.Count > 0) {
                             SetWatches sw = new SetWatches(lastZxid.Value,
                                 prependChroot(dataWatches),
                                 prependChroot(existWatches),
@@ -592,7 +592,7 @@ namespace org.apache.zookeeper {
             }
 
             private List<string> prependChroot(List<string> paths) {
-                if (chrootPath != null && !paths.isEmpty()) 
+                if (chrootPath != null && paths.Count > 0) 
                 {
                     for (int i = 0; i < paths.size(); ++i) {
                         string clientPath = paths[i];

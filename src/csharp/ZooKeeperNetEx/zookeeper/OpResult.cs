@@ -25,29 +25,6 @@ namespace org.apache.zookeeper
     public abstract class OpResult 
     {
         private readonly int type;
-
-        private bool Equals(OpResult other) 
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return type == other.type;
-        }
-
-        /// <summary/>
-        public override bool Equals(object obj) 
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != GetType()) return false;
-            return Equals((OpResult) obj);
-        }
-
-        /// <summary/>
-        public override int GetHashCode() 
-        {
-            return type;
-        }
-
         private OpResult(ZooDefs.OpCode type) 
         {
             this.type = (int) type;
@@ -83,31 +60,6 @@ namespace org.apache.zookeeper
             public string getPath() {
                 return path;
             }
-
-            private bool Equals(CreateResult other) 
-            {
-                if (ReferenceEquals(null, other)) return false;
-                if (ReferenceEquals(this, other)) return true;
-                return base.Equals(other) && string.Equals(path, other.path);
-            }
-
-            /// <summary/>
-            public override bool Equals(object obj) 
-            {
-                if (ReferenceEquals(null, obj)) return false;
-                if (ReferenceEquals(this, obj)) return true;
-                if (obj.GetType() != GetType()) return false;
-                return Equals((CreateResult) obj);
-            }
-
-            /// <summary/>
-            public override int GetHashCode() 
-            {
-                unchecked 
-                {
-                    return (base.GetHashCode()*397) ^ (path != null ? path.GetHashCode() : 0);
-                }
-            }
         }
 
         /// <summary>
@@ -137,29 +89,6 @@ namespace org.apache.zookeeper
             /// <returns></returns>
             public Stat getStat() {
                 return stat;
-            }
-
-            private bool Equals(SetDataResult other) 
-            {
-                if (ReferenceEquals(null, other)) return false;
-                if (ReferenceEquals(this, other)) return true;
-                return base.Equals(other) && Equals(stat, other.stat);
-            }
-
-
-            /// <summary/>
-            public override bool Equals(object obj) {
-                if (ReferenceEquals(null, obj)) return false;
-                if (ReferenceEquals(this, obj)) return true;
-                if (obj.GetType() != GetType()) return false;
-                return Equals((SetDataResult) obj);
-            }
-
-            /// <summary/>
-            public override int GetHashCode() {
-                unchecked {
-                    return (base.GetHashCode()*397) ^ (stat != null ? stat.GetHashCode() : 0);
-                }
             }
         }
 
@@ -191,31 +120,6 @@ namespace org.apache.zookeeper
             /// </summary>
             public int getErr() {
                 return err;
-            }
-
-            private bool Equals(ErrorResult other) 
-            {
-                if (ReferenceEquals(null, other)) return false;
-                if (ReferenceEquals(this, other)) return true;
-                return base.Equals(other) && err == other.err;
-            }
-
-            /// <summary/>
-            public override bool Equals(object obj) 
-            {
-                if (ReferenceEquals(null, obj)) return false;
-                if (ReferenceEquals(this, obj)) return true;
-                if (obj.GetType() != GetType()) return false;
-                return Equals((ErrorResult) obj);
-            }
-
-            /// <summary/>
-            public override int GetHashCode() 
-            {
-                unchecked 
-                {
-                    return (base.GetHashCode()*397) ^ err;
-                }
             }
         }
     }

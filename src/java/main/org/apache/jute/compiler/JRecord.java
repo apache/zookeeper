@@ -677,33 +677,6 @@ public class JRecord extends JCompType {
         cs.write("    return \"ERROR\";\n");
         cs.write("  }\n");
 
-        cs.write("  public override bool Equals(object obj)\n{\n");
-        cs.write(" " + getCsharpName() + " peer = (" + getCsharpName() + ") obj;\n");
-        cs.write("    if (peer == null) {\n");
-        cs.write("      return false;\n");
-        cs.write("    }\n");
-        cs.write("    if (ReferenceEquals(peer,this))return true;\n");
-        cs.write("    bool ret = false;\n");
-        for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {
-            JField jf = i.next();
-            cs.write(jf.genCsharpEquals());
-            cs.write("    if (!ret) return ret;\n");
-        }
-        cs.write("     return ret;\n");
-        cs.write("  }\n");
-
-        cs.write("  public override int GetHashCode()\n{\n");
-        cs.write("    int result = 17;\n");
-        cs.write("    int ret = GetType().GetHashCode();\n");
-	   cs.write("    result = 37*result + ret;\n");
-        for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {
-            JField jf = i.next();
-            cs.write(jf.genCsharpHashCode());
-            cs.write("    result = 37*result + ret;\n");
-        }
-        cs.write("    return result;\n");
-        cs.write("  }\n");
-
         cs.write("}\n");
         cs.write("}\n");
 

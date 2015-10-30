@@ -70,28 +70,14 @@ namespace org.apache.zookeeper.recipes.@lock
 
 		public override bool Equals(object o)
 		{
-			if (this == o)
-			{
-				return true;
-			}
-			if (o == null || GetType() != o.GetType())
-			{
-				return false;
-			}
-
 			ZNodeName seq = (ZNodeName) o;
 
-			if (!name.Equals(seq.name))
-			{
-				return false;
-			}
-
-			return true;
+		    return name == seq.name;
 		}
 
 		public override int GetHashCode()
 		{
-			return name.GetHashCode() + 37;
+			return name.GetHashCode();
 		}
 
 		public int CompareTo(ZNodeName that) 

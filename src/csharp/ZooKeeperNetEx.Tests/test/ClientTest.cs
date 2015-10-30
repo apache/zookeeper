@@ -464,7 +464,7 @@ namespace org.apache.zookeeper.test {
                 string child1 = children[0];
                 string child2 = children[1];
                 int compareResult = child1.CompareTo(child2);
-                Assert.assertNotSame(compareResult, 0);
+                Assert.assertNotEquals(compareResult, 0);
                 if (compareResult < 0) {
                 }
                 else {

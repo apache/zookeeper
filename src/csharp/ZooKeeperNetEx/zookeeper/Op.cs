@@ -38,14 +38,6 @@ namespace org.apache.zookeeper
             this.type = (int) type;
             this.path = path;
         }
-
-        private bool Equals(Op other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return type == other.type && string.Equals(path, other.path);
-        }
-
         /// <summary>
         ///     Constructs a create operation.  Arguments are as for the ZooKeeper method of the same name.
         /// </summary>
@@ -170,22 +162,6 @@ namespace org.apache.zookeeper
         internal virtual void validate() {
             PathUtils.validatePath(path);
         }
-
-        /// <summary/>
-        public override bool Equals(object obj) {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != GetType()) return false;
-            return Equals((Op) obj);
-        }
-
-        /// <summary/>
-        public override int GetHashCode() {
-            unchecked {
-                return (type*397) ^ (path != null ? path.GetHashCode() : 0);
-            }
-        }
-
         private class Create : Op {
             private readonly List<ACL> acl;
             private readonly byte[] data;
@@ -203,31 +179,6 @@ namespace org.apache.zookeeper
                 this.data = data;
                 this.acl = acl;
                 flags = createMode.toFlag();
-            }
-
-            private bool Equals(Create other) {
-                if (ReferenceEquals(null, other)) return false;
-                if (ReferenceEquals(this, other)) return true;
-                return base.Equals(other) && SequenceUtils.EqualsEx(data, other.data) &&
-                       SequenceUtils.EqualsEx(acl, other.acl) &&
-                       flags == other.flags;
-            }
-
-            public override bool Equals(object obj) {
-                if (ReferenceEquals(null, obj)) return false;
-                if (ReferenceEquals(this, obj)) return true;
-                if (obj.GetType() != GetType()) return false;
-                return Equals((Create) obj);
-            }
-
-            public override int GetHashCode() {
-                unchecked {
-                    var hashCode = base.GetHashCode();
-                    hashCode = (hashCode*397) ^ (SequenceUtils.GetHashCodeEx(data));
-                    hashCode = (hashCode*397) ^ (SequenceUtils.GetHashCodeEx(acl));
-                    hashCode = (hashCode*397) ^ flags;
-                    return hashCode;
-                }
             }
 
             internal override Record toRequestRecord() {
@@ -251,25 +202,6 @@ namespace org.apache.zookeeper
                 this.version = version;
             }
 
-            private bool Equals(Delete other) {
-                if (ReferenceEquals(null, other)) return false;
-                if (ReferenceEquals(this, other)) return true;
-                return base.Equals(other) && version == other.version;
-            }
-
-            public override bool Equals(object obj) {
-                if (ReferenceEquals(null, obj)) return false;
-                if (ReferenceEquals(this, obj)) return true;
-                if (obj.GetType() != GetType()) return false;
-                return Equals((Delete) obj);
-            }
-
-            public override int GetHashCode() {
-                unchecked {
-                    return (base.GetHashCode()*397) ^ version;
-                }
-            }
-
             internal override Record toRequestRecord() {
                 return new DeleteRequest(getPath(), version);
             }
@@ -288,25 +220,6 @@ namespace org.apache.zookeeper
                 this.version = version;
             }
 
-            private bool Equals(SetData other) {
-                if (ReferenceEquals(null, other)) return false;
-                if (ReferenceEquals(this, other)) return true;
-                return SequenceUtils.EqualsEx(data, other.data) && version == other.version;
-            }
-
-            public override bool Equals(object obj) {
-                if (ReferenceEquals(null, obj)) return false;
-                if (ReferenceEquals(this, obj)) return true;
-                if (obj.GetType() != GetType()) return false;
-                return Equals((SetData) obj);
-            }
-
-            public override int GetHashCode() {
-                unchecked {
-                    return (SequenceUtils.GetHashCodeEx(data)*397) ^ version;
-                }
-            }
-
             internal override Record toRequestRecord() {
                 return new SetDataRequest(getPath(), data, version);
             }
@@ -321,25 +234,6 @@ namespace org.apache.zookeeper
 
             internal Check(string path, int version) : base(ZooDefs.OpCode.check, path) {
                 this.version = version;
-            }
-
-            private bool Equals(Check other) {
-                if (ReferenceEquals(null, other)) return false;
-                if (ReferenceEquals(this, other)) return true;
-                return base.Equals(other) && version == other.version;
-            }
-
-            public override bool Equals(object obj) {
-                if (ReferenceEquals(null, obj)) return false;
-                if (ReferenceEquals(this, obj)) return true;
-                if (obj.GetType() != GetType()) return false;
-                return Equals((Check) obj);
-            }
-
-            public override int GetHashCode() {
-                unchecked {
-                    return (base.GetHashCode()*397) ^ version;
-                }
             }
 
             internal override Record toRequestRecord() {
