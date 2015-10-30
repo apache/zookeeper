@@ -24,23 +24,29 @@
 #include <stdlib.h>
 #include <time.h>
 
-void zoo_lock_auth(zhandle_t *zh)
+int zoo_lock_auth(zhandle_t *zh)
 {
+	return 0;
 }
-void zoo_unlock_auth(zhandle_t *zh)
+int zoo_unlock_auth(zhandle_t *zh)
 {
+	return 0;
 }
-void lock_buffer_list(buffer_head_t *l)
+int lock_buffer_list(buffer_head_t *l)
 {
+	return 0;
 }
-void unlock_buffer_list(buffer_head_t *l)
+int unlock_buffer_list(buffer_head_t *l)
 {
+	return 0;
 }
-void lock_completion_list(completion_head_t *l)
+int lock_completion_list(completion_head_t *l)
 {
+	return 0;
 }
-void unlock_completion_list(completion_head_t *l)
+int unlock_completion_list(completion_head_t *l)
 {
+	return 0;
 }
 struct sync_completion *alloc_sync_completion(void)
 {
@@ -95,5 +101,13 @@ int32_t get_xid()
     }
     return xid++;
 }
-void enter_critical(zhandle_t* zh){}
-void leave_critical(zhandle_t* zh){}
+
+int enter_critical(zhandle_t* zh)
+{
+	return 0;
+}
+
+int leave_critical(zhandle_t* zh)
+{
+	return 0;
+}

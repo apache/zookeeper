@@ -135,6 +135,9 @@ BUGFIXES:
   ZOOKEEPER-2296: compilation broken for 3.4
   (Raul Gutierrez Segales via cnauroth)
 
+  ZOOKEEPER-1029: C client bug in zookeeper_init (if bad hostname is given)
+  (fpj via cnauroth)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1575. adding .gitattributes to prevent CRLF and LF mismatches for
