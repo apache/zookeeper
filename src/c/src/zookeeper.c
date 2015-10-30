@@ -1150,52 +1150,57 @@ void free_completions(zhandle_t *zh,int callCompletion,int reason)
     void_completion_t auth_completion = NULL;
     auth_completion_list_t a_list, *a_tmp;
 
-    lock_completion_list(&zh->sent_requests);
-    tmp_list = zh->sent_requests;
-    zh->sent_requests.head = 0;
-    zh->sent_requests.last = 0;
-    unlock_completion_list(&zh->sent_requests);
-    while (tmp_list.head) {
-        completion_list_t *cptr = tmp_list.head;
+    if (lock_completion_list(&zh->sent_requests) == 0) {
+        tmp_list = zh->sent_requests;
+        zh->sent_requests.head = 0;
+        zh->sent_requests.last = 0;
+        unlock_completion_list(&zh->sent_requests);
+    
+        while (tmp_list.head) {
+            completion_list_t *cptr = tmp_list.head;
 
-        tmp_list.head = cptr->next;
-        if (cptr->c.data_result == SYNCHRONOUS_MARKER) {
-            struct sync_completion
-                        *sc = (struct sync_completion*)cptr->data;
-            sc->rc = reason;
-            notify_sync_completion(sc);
-            zh->outstanding_sync--;
-            destroy_completion_entry(cptr);
-        } else if (callCompletion) {
-            // Fake the response
-            buffer_list_t *bptr;
-            h.xid = cptr->xid;
-            h.zxid = -1;
-            h.err = reason;
-            oa = create_buffer_oarchive();
-            serialize_ReplyHeader(oa, "header", &h);
-            bptr = calloc(sizeof(*bptr), 1);
-            assert(bptr);
-            bptr->len = get_buffer_len(oa);
-            bptr->buffer = get_buffer(oa);
-            close_buffer_oarchive(&oa, 0);
-            cptr->buffer = bptr;
-            queue_completion(&zh->completions_to_process, cptr, 0);
+            tmp_list.head = cptr->next;
+            if (cptr->c.data_result == SYNCHRONOUS_MARKER) {
+                struct sync_completion
+                            *sc = (struct sync_completion*)cptr->data;
+                sc->rc = reason;
+                notify_sync_completion(sc);
+                zh->outstanding_sync--;
+                destroy_completion_entry(cptr);
+            } else if (callCompletion) {
+                // Fake the response
+                buffer_list_t *bptr;
+                h.xid = cptr->xid;
+                h.zxid = -1;
+                h.err = reason;
+                oa = create_buffer_oarchive();
+                serialize_ReplyHeader(oa, "header", &h);
+                bptr = calloc(sizeof(*bptr), 1);
+                assert(bptr);
+                bptr->len = get_buffer_len(oa);
+                bptr->buffer = get_buffer(oa);
+                close_buffer_oarchive(&oa, 0);
+                cptr->buffer = bptr;
+                queue_completion(&zh->completions_to_process, cptr, 0);
+            }
         }
     }
-    a_list.completion = NULL;
-    a_list.next = NULL;
-    zoo_lock_auth(zh);
-    get_auth_completions(&zh->auth_h, &a_list);
-    zoo_unlock_auth(zh);
-    a_tmp = &a_list;
-    // chain call user's completion function
-    while (a_tmp->completion != NULL) {
-        auth_completion = a_tmp->completion;
-        auth_completion(reason, a_tmp->auth_data);
-        a_tmp = a_tmp->next;
-        if (a_tmp == NULL)
-            break;
+    if (zoo_lock_auth(zh) == 0) {
+        a_list.completion = NULL;
+        a_list.next = NULL;
+    
+        get_auth_completions(&zh->auth_h, &a_list);
+        zoo_unlock_auth(zh);
+    
+        a_tmp = &a_list;
+        // chain call user's completion function
+        while (a_tmp->completion != NULL) {
+            auth_completion = a_tmp->completion;
+            auth_completion(reason, a_tmp->auth_data);
+            a_tmp = a_tmp->next;
+            if (a_tmp == NULL)
+                break;
+        }
     }
     free_auth_completion(&a_list);
 }

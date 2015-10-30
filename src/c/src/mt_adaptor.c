@@ -44,30 +44,30 @@
 #include <sys/time.h>
 #endif
 
-void zoo_lock_auth(zhandle_t *zh)
+int zoo_lock_auth(zhandle_t *zh)
 {
-    pthread_mutex_lock(&zh->auth_h.lock);
+    return pthread_mutex_lock(&zh->auth_h.lock);
 }
-void zoo_unlock_auth(zhandle_t *zh)
+int zoo_unlock_auth(zhandle_t *zh)
 {
-    pthread_mutex_unlock(&zh->auth_h.lock);
+    return pthread_mutex_unlock(&zh->auth_h.lock);
 }
-void lock_buffer_list(buffer_head_t *l)
+int lock_buffer_list(buffer_head_t *l)
 {
-    pthread_mutex_lock(&l->lock);
+    return pthread_mutex_lock(&l->lock);
 }
-void unlock_buffer_list(buffer_head_t *l)
+int  unlock_buffer_list(buffer_head_t *l)
 {
-    pthread_mutex_unlock(&l->lock);
+    return pthread_mutex_unlock(&l->lock);
 }
-void lock_completion_list(completion_head_t *l)
+int lock_completion_list(completion_head_t *l)
 {
-    pthread_mutex_lock(&l->lock);
+    return pthread_mutex_lock(&l->lock);
 }
-void unlock_completion_list(completion_head_t *l)
+int unlock_completion_list(completion_head_t *l)
 {
     pthread_cond_broadcast(&l->cond);
-    pthread_mutex_unlock(&l->lock);
+    return pthread_mutex_unlock(&l->lock);
 }
 struct sync_completion *alloc_sync_completion(void)
 {
@@ -515,16 +515,22 @@ __attribute__((constructor)) int32_t get_xid()
     return fetch_and_add(&xid,1);
 }
 
-void enter_critical(zhandle_t* zh)
+int enter_critical(zhandle_t* zh)
 {
     struct adaptor_threads *adaptor = zh->adaptor_priv;
-    if(adaptor)
-        pthread_mutex_lock(&adaptor->zh_lock);
+    if (adaptor) {
+        return pthread_mutex_lock(&adaptor->zh_lock);
+    } else {
+        return 0;
+    }
 }
 
-void leave_critical(zhandle_t* zh)
+int leave_critical(zhandle_t* zh)
 {
     struct adaptor_threads *adaptor = zh->adaptor_priv;
-    if(adaptor)
-        pthread_mutex_unlock(&adaptor->zh_lock);    
+    if (adaptor) {
+        return pthread_mutex_unlock(&adaptor->zh_lock);
+    } else {
+        return 0;
+    }
 }

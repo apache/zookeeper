@@ -75,10 +75,10 @@ typedef struct _completion_head {
 #endif
 } completion_head_t;
 
-void lock_buffer_list(buffer_head_t *l);
-void unlock_buffer_list(buffer_head_t *l);
-void lock_completion_list(completion_head_t *l);
-void unlock_completion_list(completion_head_t *l);
+int lock_buffer_list(buffer_head_t *l);
+int unlock_buffer_list(buffer_head_t *l);
+int lock_completion_list(completion_head_t *l);
+int unlock_completion_list(completion_head_t *l);
 
 struct sync_completion {
     int rc;
@@ -243,12 +243,12 @@ void process_completions(zhandle_t *zh);
 int flush_send_queue(zhandle_t*zh, int timeout);
 char* sub_string(zhandle_t *zh, const char* server_path);
 void free_duplicate_path(const char* free_path, const char* path);
-void zoo_lock_auth(zhandle_t *zh);
-void zoo_unlock_auth(zhandle_t *zh);
+int zoo_lock_auth(zhandle_t *zh);
+int zoo_unlock_auth(zhandle_t *zh);
 
 // critical section guards
-void enter_critical(zhandle_t* zh);
-void leave_critical(zhandle_t* zh);
+int enter_critical(zhandle_t* zh);
+int leave_critical(zhandle_t* zh);
 // zhandle object reference counting
 void api_prolog(zhandle_t* zh);
 int api_epilog(zhandle_t *zh, int rc);
