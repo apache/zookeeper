@@ -193,6 +193,9 @@ BUGFIXES:
   ZOOKEEPER-2302: Some test cases are not running because wrongly named
   (Arshad Mohammad via fpj)
 
+  ZOOKEEPER-2142: JMX ObjectName is incorrect for observers (Edward Ribeiro
+  via michim)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
