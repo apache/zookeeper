@@ -39,7 +39,7 @@ abstract public class JType {
     JType(String cname, String cppname, String csharpName, String javaname, String suffix, String wrapper, String csharpWrapper, String unwrap) {
     	mCName = cname;
         mCppName = cppname;
-        mCsharpName = "Id".equals(csharpName) ? "ZKId" : csharpName;
+        mCsharpName = csharpName;
         mJavaName = javaname;
         mMethodSuffix = suffix;
         mWrapper = wrapper;
@@ -78,12 +78,18 @@ abstract public class JType {
         setFunc += "  }\n";
         return getFunc+setFunc;
     }
-
-    String genCsharpGetSet(String fname, int fIdx) {
-        String getFunc = "  public " + getCsharpType() + " " + capitalize(fname) + " { get; set; } ";
-        return getFunc;
-    }
     
+	 String genCsharpGetSet(String fname, int fIdx) {
+		 String funName=fname.equals("type")?"_Type":fname;
+		 String getFunc = "  public "+getCsharpType()+" get"+capitalize(funName)+"() {";
+	        getFunc += "return "+fname+";";
+	        getFunc += "  }\n";
+	        String setFunc = "  internal void set"+capitalize(funName)+"("+getCsharpType()+" m_) {";
+	        setFunc += fname+"=m_;";
+	        setFunc += "  }\n";
+	        return getFunc+setFunc;
+    }
+
     static String capitalize(String s) {
         return s.substring(0,1).toUpperCase()+s.substring(1);
     }
@@ -161,11 +167,11 @@ abstract public class JType {
     }
 
     String genCsharpWriteMethod(String fname, String tag) {
-        return "    a_.Write"+mMethodSuffix+"("+capitalize(fname)+",\""+tag+"\");\n";
+        return "    a_.write"+mMethodSuffix+"("+fname+",\""+tag+"\");\n";
     }
 
     String genCsharpReadMethod(String fname, String tag) {
-        return "    "+capitalize(fname)+"=a_.Read"+mMethodSuffix+"(\""+tag+"\");\n";
+        return "    "+fname+"=a_.read"+mMethodSuffix+"(\""+tag+"\");\n";
     }
 
     String genCsharpReadWrapper(String fname, String tag, boolean decl) {
@@ -173,32 +179,27 @@ abstract public class JType {
         if (decl) {
             ret = "    "+mWrapper+" "+fname+";\n";
         }
-        return ret + "    "+fname+"=a_.Read"+mMethodSuffix+"(\""+tag+"\");\n";
+        return ret + "    "+fname+"=a_.read"+mMethodSuffix+"(\""+tag+"\");\n";
     }
 
     String genCsharpWriteWrapper(String fname, String tag) {
-        if (mUnwrapMethod == null) return "        a_.Write"+mMethodSuffix+"("+fname+","+tag+");\n";
-        return "        a_.Write"+mMethodSuffix+"("+fname+"."+mUnwrapMethod+"(),\""+tag+"\");\n";
+        if (mUnwrapMethod == null) return "a_.write"+mMethodSuffix+"("+fname+","+tag+");\n";
+        return "        a_.write"+mMethodSuffix+"("+fname+"."+mUnwrapMethod+"(),\""+tag+"\");\n";
     }
 
-    String genCsharpCompareTo(String name) {
-        return "    ret = ("+capitalize(name)+" == peer."+capitalize(name)+")? 0 :(("+capitalize(name)+"<peer."+capitalize(name)+")?-1:1);\n";
-    }
-
-    String genCsharpEquals(String name, String peer) {
-        String[] peerSplit = peer.split("\\.");
-        return "    ret = ("+capitalize(name)+"=="+peerSplit[0] + "." + capitalize(peerSplit[1]) + ");\n";
+    String genCsharpEquals(String fname, String peer) {
+    	return "    ret = ("+fname+"=="+peer+");\n";
     }
 
     String genCsharpHashCode(String fname) {
-        return "    ret = (int)"+capitalize(fname)+";\n";
+        return "    ret = (int)"+fname+";\n";
     }
 
     String genCsharpConstructorSet(String mName, String fname) {
-        return capitalize(fname)+"="+mName+";\n";
+        return "this."+fname+"="+mName+";\n";
     }
 
     public String genCsharpConstructorParam(String fname) {
-        return "  "+mCsharpName+" " +fname+"\n";
+        return "  "+mCsharpName+" " +fname;
     }
 }

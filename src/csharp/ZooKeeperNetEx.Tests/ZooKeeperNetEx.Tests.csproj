@@ -1,0 +1,92 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{F1BEB393-A3A0-4A6E-A9B2-C58493B4EE00}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>org.apache.zookeeper</RootNamespace>
+    <AssemblyName>ZooKeeperNetEx.Tests</AssemblyName>
+    <FileAlignment>512</FileAlignment>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\ZooKeeperNetEx.snk</AssemblyOriginatorKeyFile>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=7.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.7.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="nunit.framework, Version=2.6.4.14350, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
+      <HintPath>..\packages\NUnit.2.6.4\lib\nunit.framework.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="ZooKeeperNetEx">
+      <HintPath>..\artifacts\bin\ZooKeeperNetEx\Debug\net45\ZooKeeperNetEx.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Assert.cs" />
+    <Compile Include="ClientBase.cs" />
+    <Compile Include="MultiResponseTest.cs" />
+    <Compile Include="MultiTransactionRecordTest.cs" />
+    <Compile Include="TestsSetup.cs" />
+    <Compile Include="test\ACLCountTest.cs" />
+    <Compile Include="test\ACLRootTest.cs" />
+    <Compile Include="test\ChrootTest.cs" />
+    <Compile Include="test\ClientHammerTest.cs" />
+    <Compile Include="test\ConnectStringParserTest.cs" />
+    <Compile Include="test\CreateModeTest.cs" />
+    <Compile Include="test\EventTypeTest.cs" />
+    <Compile Include="test\GetChildren2Test.cs" />
+    <Compile Include="test\KeeperStateTest.cs" />
+    <Compile Include="test\MultiTransactionTest.cs" />
+    <Compile Include="test\ClientTest.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TestableZooKeeper.cs" />
+    <Compile Include="test\NullDataTest.cs" />
+    <Compile Include="test\StaticHostProviderTest.cs" />
+    <Compile Include="test\StatTest.cs" />
+    <Compile Include="test\SyncCallTest.cs" />
+    <Compile Include="test\WatchedEventTest.cs" />
+    <Compile Include="test\WatcherFuncTest.cs" />
+    <Compile Include="test\WatcherTest.cs" />
+    <Compile Include="ZooKeeperSyncEx.cs" />
+    <Compile Include="ZooKeeperTest.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\ZooKeeperNetEx.snk">
+      <Link>ZooKeeperNetEx.snk</Link>
+    </None>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="ZooKeeperConfiguration.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

@@ -1,0 +1,77 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{4173A470-3202-4810-90A5-DA84B0C2E701}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>org.apache.zookeeper.recipes</RootNamespace>
+    <AssemblyName>ZooKeeperNetEx.Recipes.Tests</AssemblyName>
+    <FileAlignment>512</FileAlignment>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\ZooKeeperNetEx.snk</AssemblyOriginatorKeyFile>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="nunit.framework, Version=2.6.4.14350, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
+      <HintPath>..\packages\NUnit.2.6.4\lib\nunit.framework.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="ZooKeeperNetEx">
+      <HintPath>..\artifacts\bin\ZooKeeperNetEx\Debug\net45\ZooKeeperNetEx.dll</HintPath>
+    </Reference>
+    <Reference Include="ZooKeeperNetEx.Recipes">
+      <HintPath>..\artifacts\bin\ZooKeeperNetEx.Recipes\Debug\net45\ZooKeeperNetEx.Recipes.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\ZooKeeperNetEx.Tests\TestsSetup.cs">
+      <Link>TestsSetup.cs</Link>
+    </Compile>
+    <Compile Include="leader\LeaderElectionSupportTest.cs" />
+    <Compile Include="lock\WriteLockTest.cs" />
+    <Compile Include="lock\ZNodeNameTest.cs" />
+    <Compile Include="queue\DistributedQueueTest.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\ZooKeeperNetEx.snk">
+      <Link>ZooKeeperNetEx.snk</Link>
+    </None>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ZooKeeperNetEx.Tests\ZooKeeperNetEx.Tests.csproj">
+      <Project>{f1beb393-a3a0-4a6e-a9b2-c58493b4ee00}</Project>
+      <Name>ZooKeeperNetEx.Tests</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\ZooKeeperNetEx.Tests\ZooKeeperConfiguration.xml">
+      <Link>ZooKeeperConfiguration.xml</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

@@ -65,7 +65,7 @@ public class JField {
     }
 
     public String getCsharpName() {
-        return "Id".equals(mName) ? "ZKId" : mName;
+        return mName;
     }
     
     public String getTag() {
@@ -84,7 +84,7 @@ public class JField {
         return mType.genCsharpConstructorSet(mName, fname);
     }
 
-    public String genCsharpGetSet(int fIdx) {
+ public String genCsharpGetSet(int fIdx) {
         return mType.genCsharpGetSet(getCsharpName(), fIdx);
     }
 
@@ -96,19 +96,6 @@ public class JField {
         return mType.genCsharpReadMethod(getCsharpName(), getTag());
     }
 
-    public String genCsharpCompareTo() {
-        return mType.genCsharpCompareTo(getCsharpName());
-    }
-
-    public String genCsharpEquals() {
-        return mType.genCsharpEquals(getCsharpName(), "peer."+getCsharpName());
-    }
-
-    public String genCsharpHashCode() {
-        return mType.genCsharpHashCode(getCsharpName());
-    }
-
-    
     public String genJavaGetSet(int fIdx) {
         return mType.genJavaGetSet(mName, fIdx);
     }

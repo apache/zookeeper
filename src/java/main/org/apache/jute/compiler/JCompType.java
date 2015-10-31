@@ -52,15 +52,10 @@ abstract class JCompType extends JType {
     }
 
     String genCsharpHashCode(String fname) {
-        return "    ret = "+capitalize(fname)+".GetHashCode();\n";
+        return "    ret = "+fname+".GetHashCode();\n";
     }
 
     String genCsharpEquals(String name, String peer) {
-        String[] peerSplit = peer.split("\\.");
-        return "    ret = "+capitalize(name)+".Equals("+peerSplit[0] + "." + capitalize(peerSplit[1]) + ");\n";
-    }
-
-    String genCsharpCompareTo(String name) {
-        return "    ret = "+capitalize(name)+".CompareTo(peer."+capitalize(name)+");\n";
+        return "    ret = "+name+".Equals("+peer+");\n";
     }
 }

@@ -67,12 +67,20 @@ public class JBuffer extends JCompType {
     public String genJavaCompareTo(String fname) {
         return genJavaCompareTo(fname, "peer."+fname);
     }
-    public String genJavaCompareToWrapper(String fname, String other) {
+	   public String genJavaCompareToWrapper(String fname, String other) {
       return "    "+genJavaCompareTo(fname, other);
     }
-    
+	   
+	public String genCsharpHashCode(String fname) {
+	    return "    ret = SequenceUtils.GetHashCodeEx("+fname+");\n";
+	}
+
     public String genJavaEquals(String fname, String peer) {
         return "    ret = org.apache.jute.Utils.bufEquals("+fname+","+peer+");\n";
+    }
+    
+    public String genCsharpEquals(String fname, String peer) {
+        return "    ret = SequenceUtils.EqualsEx("+fname+","+peer+");\n";
     }
     
     public String genJavaHashCode(String fname) {

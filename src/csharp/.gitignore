@@ -1,0 +1,5 @@
+packages
+artifacts
+*.suo
+*.user
+project.lock.json
