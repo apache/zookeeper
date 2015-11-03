@@ -53,6 +53,7 @@ public class QuorumTest extends ZKTestCase {
 
     private final QuorumBase qb = new QuorumBase();
     private final ClientTest ct = new ClientTest();
+    private QuorumUtil qu;
 
     @Before
     public void setUp() throws Exception {
@@ -65,6 +66,9 @@ public class QuorumTest extends ZKTestCase {
     public void tearDown() throws Exception {
         ct.tearDownAll();
         qb.tearDown();
+        if (qu != null) {
+            qu.tearDown();
+        }
     }
 
     @Test
@@ -296,7 +300,7 @@ public class QuorumTest extends ZKTestCase {
      * */
     @Test
     public void testFollowersStartAfterLeader() throws Exception {
-        QuorumUtil qu = new QuorumUtil(1);
+        qu = new QuorumUtil(1);
         CountdownWatcher watcher = new CountdownWatcher();
         qu.startQuorum();
 
@@ -346,11 +350,10 @@ public class QuorumTest extends ZKTestCase {
      * 
      */
     @Test
-    public void testNoLogBeforeLeaderEstablishment () 
-    throws IOException, InterruptedException, KeeperException{
+    public void testNoLogBeforeLeaderEstablishment () throws Exception {
         final Semaphore sem = new Semaphore(0);
 
-        QuorumUtil qu = new QuorumUtil(2, 10);
+        qu = new QuorumUtil(2, 10);
         qu.startQuorum();
 
         int index = 1;
@@ -411,6 +414,7 @@ public class QuorumTest extends ZKTestCase {
         Assert.assertTrue("Zxid: " + qu.getPeer(index).peer.getActiveServer().getZxid() + 
                 "Current epoch: " + epochF, epochF == epochL);
 
+        zk.close();
     }
 
     // skip superhammer and clientcleanup as they are too expensive for quorum
@@ -426,7 +430,7 @@ public class QuorumTest extends ZKTestCase {
      */
     @Test
     public void testMultiToFollower() throws Exception {
-        QuorumUtil qu = new QuorumUtil(1);
+        qu = new QuorumUtil(1);
         CountdownWatcher watcher = new CountdownWatcher();
         qu.startQuorum();
 
