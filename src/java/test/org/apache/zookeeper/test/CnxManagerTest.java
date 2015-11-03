@@ -368,40 +368,42 @@ public class CnxManagerTest extends ZKTestCase {
     @Test
     public void testWorkerThreads() throws Exception {
         ArrayList<QuorumPeer> peerList = new ArrayList<QuorumPeer>();
-
-        for (int sid = 0; sid < 3; sid++) {
-            QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[sid], peerTmpdir[sid],
-                                             peerClientPort[sid], 3, sid, 1000, 2, 2);
-            LOG.info("Starting peer " + peer.getId());
-            peer.start();
-            peerList.add(sid, peer);
-        }
-        String failure = verifyThreadCount(peerList, 4);
-        if (failure != null) {
-            Assert.fail(failure);
-        }
-        for (int myid = 0; myid < 3; myid++) {
-            for (int i = 0; i < 5; i++) {
-                // halt one of the listeners and verify count
-                QuorumPeer peer = peerList.get(myid);
-                LOG.info("Round " + i + ", halting peer " + peer.getId());
-                peer.shutdown();
-                peerList.remove(myid);
-                failure = verifyThreadCount(peerList, 2);
-                if (failure != null) {
-                    Assert.fail(failure);
-                }
-
-                // Restart halted node and verify count
-                peer = new QuorumPeer(peers, peerTmpdir[myid], peerTmpdir[myid],
-                                        peerClientPort[myid], 3, myid, 1000, 2, 2);
-                LOG.info("Round " + i + ", restarting peer " + peer.getId());
+        try {
+            for (int sid = 0; sid < 3; sid++) {
+                QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[sid],
+                        peerTmpdir[sid], peerClientPort[sid], 3, sid, 1000, 2,
+                        2);
+                LOG.info("Starting peer {}", peer.getId());
                 peer.start();
-                peerList.add(myid, peer);
-                failure = verifyThreadCount(peerList, 4);
-                if (failure != null) {
-                    Assert.fail(failure);
+                peerList.add(sid, peer);
+            }
+            String failure = verifyThreadCount(peerList, 4);
+            Assert.assertNull(failure, failure);
+            for (int myid = 0; myid < 3; myid++) {
+                for (int i = 0; i < 5; i++) {
+                    // halt one of the listeners and verify count
+                    QuorumPeer peer = peerList.get(myid);
+                    LOG.info("Round {}, halting peer ",
+                            new Object[] { i, peer.getId() });
+                    peer.shutdown();
+                    peerList.remove(myid);
+                    failure = verifyThreadCount(peerList, 2);
+                    Assert.assertNull(failure, failure);
+                    // Restart halted node and verify count
+                    peer = new QuorumPeer(peers, peerTmpdir[myid],
+                            peerTmpdir[myid], peerClientPort[myid], 3, myid,
+                            1000, 2, 2);
+                    LOG.info("Round {}, restarting peer ",
+                            new Object[] { i, peer.getId() });
+                    peer.start();
+                    peerList.add(myid, peer);
+                    failure = verifyThreadCount(peerList, 4);
+                    Assert.assertNull(failure, failure);
                 }
+            }
+        } finally {
+            for (QuorumPeer quorumPeer : peerList) {
+                quorumPeer.shutdown();
             }
         }
     }
