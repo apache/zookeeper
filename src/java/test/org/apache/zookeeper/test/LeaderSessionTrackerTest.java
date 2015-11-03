@@ -85,12 +85,10 @@ public class LeaderSessionTrackerTest extends ZKTestCase implements Watcher {
      * is not in closing state
      */
     public void testCreateEphemeral(boolean localSessionEnabled) throws Exception {
-        QuorumUtil qu = new QuorumUtil(1);
         if (localSessionEnabled) {
             qu.enableLocalSession(true);
         }
         qu.startAll();
-
         QuorumPeer leader = qu.getLeaderQuorumPeer();
 
         ZooKeeper zk = new ZooKeeper(qu.getConnectString(leader),
@@ -131,7 +129,6 @@ public class LeaderSessionTrackerTest extends ZKTestCase implements Watcher {
      */
     @Test
     public void testCreatePersistent() throws Exception {
-        QuorumUtil qu = new QuorumUtil(1);
         qu.enableLocalSession(true);
         qu.startAll();
 
