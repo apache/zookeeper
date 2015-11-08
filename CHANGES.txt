@@ -64,6 +64,9 @@ IMPROVEMENTS:
   ZOOKEEPER-2315: Change client connect zk service timeout log level from Info
   to Warn level (Lin Yiqun via rgs)
 
+  ZOOKEEPER-2240: Make the three-node minimum more explicit in documentation
+  and on website (Shawn Heisey via rgs)
+
 Release 3.5.1 - 07/27/2015
 
 NEW FEATURES:
