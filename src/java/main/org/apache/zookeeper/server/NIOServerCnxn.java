@@ -856,6 +856,7 @@ public class NIOServerCnxn extends ServerCnxn {
             tmask.start();
             return true;
         } else if (len == setTraceMaskCmd) {
+            incomingBuffer = ByteBuffer.allocate(8);
             int rc = sock.read(incomingBuffer);
             if (rc < 0) {
                 throw new IOException("Read error");
