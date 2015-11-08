@@ -279,10 +279,9 @@ public class NettyServerCnxn extends ServerCnxn {
         final PrintWriter pwriter = new PrintWriter(
                 new BufferedWriter(new SendBufferWriter()));
        if (len == FourLetterCommands.setTraceMaskCmd) {
-            ByteBuffer mask = ByteBuffer.allocate(4);
+            ByteBuffer mask = ByteBuffer.allocate(8);
             message.readBytes(mask);
-
-            bb.flip();
+            mask.flip();
             long traceMask = mask.getLong();
             ZooTrace.setTextTraceLevel(traceMask);
             SetTraceMaskCommand setMask = new SetTraceMaskCommand(pwriter, this, traceMask);

@@ -506,6 +506,7 @@ public class NIOServerCnxn extends ServerCnxn {
         final PrintWriter pwriter = new PrintWriter(
                 new BufferedWriter(new SendBufferWriter()));
         if (len == FourLetterCommands.setTraceMaskCmd) {
+            incomingBuffer = ByteBuffer.allocate(8);
             int rc = sock.read(incomingBuffer);
             if (rc < 0) {
                 throw new IOException("Read error");
