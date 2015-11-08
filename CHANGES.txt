@@ -182,6 +182,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-2245: SimpleSysTest test cases fails (Arshad Mohammad via rakeshr)
 
+  ZOOKEEPER-2315: Change client connect zk service timeout log level from Info
+  to Warn level (Lin Yiqun via rgs)
+
 NEW FEATURES:
 
   ZOOKEEPER-2237 Port async multi to 3.4 branch (Ivan Kelly via rakeshr)
