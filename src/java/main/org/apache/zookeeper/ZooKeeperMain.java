@@ -39,6 +39,9 @@ import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.commons.cli.ParseException;
 import org.apache.zookeeper.cli.AddAuthCommand;
 import org.apache.zookeeper.cli.CliCommand;
@@ -145,6 +148,8 @@ public class ZooKeeperMain {
         private Map<String,String> options = new HashMap<String,String>();
         private List<String> cmdArgs = null;
         private String command = null;
+        public static final Pattern ARGS_PATTERN = Pattern.compile("\\s*([^\"\']\\S*|\"[^\"]*\"|'[^']*')\\s*");
+        public static final Pattern QUOTED_PATTERN = Pattern.compile("^([\'\"])(.*)(\\1)$");
 
         public MyCommandOptions() {
           options.put("server", "localhost:2181");
@@ -216,18 +221,22 @@ public class ZooKeeperMain {
          * @return true if parsing succeeded.
          */
         public boolean parseCommand( String cmdstring ) {
-            StringTokenizer cmdTokens = new StringTokenizer(cmdstring, " ");          
-            String[] args = new String[cmdTokens.countTokens()];
-            int tokenIndex = 0;
-            while (cmdTokens.hasMoreTokens()) {
-                args[tokenIndex] = cmdTokens.nextToken();
-                tokenIndex++;
+            Matcher matcher = ARGS_PATTERN.matcher(cmdstring);
+
+            List args = new LinkedList();
+            while (matcher.find()) {
+                String value = matcher.group(1);
+                if (QUOTED_PATTERN.matcher(value).matches()) {
+                    // Strip off the surrounding quotes
+                    value = value.substring(1, value.length() - 1);
+                }
+                args.add(value);
             }
-            if (args.length == 0){
+            if (args.isEmpty()){
                 return false;
             }
-            command = args[0];
-            cmdArgs = Arrays.asList(args);
+            command = (String)args.get(0);
+            cmdArgs = args;
             return true;
         }
     }

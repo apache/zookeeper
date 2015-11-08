@@ -1,9 +1,12 @@
 .classpath
 .eclipse/
+.idea/
 .project
 .revision/
 .settings/
 build/
+out/
+*.iml
 src/c/core.*
 src/c/TEST-*.txt
 src/c/*.la
