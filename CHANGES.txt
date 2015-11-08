@@ -144,6 +144,9 @@ BUGFIXES:
   ZOOKEEPER-1853: zkCli.sh can't issue a CREATE command containing
   spaces in the data (Jun Gong via rgs)
 
+  ZOOKEEPER-2227: stmk four-letter word fails execution at server while reading
+  trace mask argument (Chris Nauroth via rgs)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1575. adding .gitattributes to prevent CRLF and LF mismatches for
