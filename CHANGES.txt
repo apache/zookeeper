@@ -205,6 +205,9 @@ BUGFIXES:
   ZOOKEEPER-2227: stmk four-letter word fails execution at server while reading
   trace mask argument (Chris Nauroth via rgs)
 
+  ZOOKEEPER-1853: zkCli.sh can't issue a CREATE command containing spaces in
+  the data (Ryan Lamore via rgs)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
