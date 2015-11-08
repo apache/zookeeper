@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.server;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -293,6 +295,93 @@ public class PurgeTxnTest extends ZKTestCase implements  Watcher {
         verifyFilesAfterPurge(logsToPurge, false);
         verifyFilesAfterPurge(snaps, true);
         verifyFilesAfterPurge(logs, true);
+    }
+
+    /**
+     * PurgeTxnLog is called with dataLogDir snapDir -n count This test case
+     * verify these values are parsed properly and functionality works fine
+     */
+    @Test
+    public void testPurgeTxnLogWithDataDir()
+            throws Exception {
+        tmpDir = ClientBase.createTmpDir();
+        File dataDir = new File(tmpDir, "dataDir");
+        File dataLogDir = new File(tmpDir, "dataLogDir");
+
+        File dataDirVersion2 = new File(dataDir, "version-2");
+        dataDirVersion2.mkdirs();
+        File dataLogDirVersion2 = new File(dataLogDir, "version-2");
+        dataLogDirVersion2.mkdirs();
+
+        // create dummy log and transaction file
+        int totalFiles = 20;
+
+        // create transaction and snapshot files in different-different
+        // directories
+        for (int i = 0; i < totalFiles; i++) {
+            // simulate log file
+            File logFile = new File(dataLogDirVersion2, "log."
+                    + Long.toHexString(i));
+            logFile.createNewFile();
+            // simulate snapshot file
+            File snapFile = new File(dataDirVersion2, "snapshot."
+                    + Long.toHexString(i));
+            snapFile.createNewFile();
+        }
+
+        int numberOfFilesToKeep = 10;
+        // scenario where four parameter are passed
+        String[] args = new String[] { dataLogDir.getAbsolutePath(),
+                dataDir.getAbsolutePath(), "-n",
+                Integer.toString(numberOfFilesToKeep) };
+        PurgeTxnLog.main(args);
+
+        assertEquals(numberOfFilesToKeep, dataDirVersion2.listFiles().length);
+        assertEquals(numberOfFilesToKeep, dataLogDirVersion2.listFiles().length);
+        ClientBase.recursiveDelete(tmpDir);
+
+    }
+
+    /**
+     * PurgeTxnLog is called with dataLogDir -n count This test case verify
+     * these values are parsed properly and functionality works fine
+     */
+    @Test
+    public void testPurgeTxnLogWithoutDataDir()
+            throws Exception {
+        tmpDir = ClientBase.createTmpDir();
+        File dataDir = new File(tmpDir, "dataDir");
+        File dataLogDir = new File(tmpDir, "dataLogDir");
+
+        File dataDirVersion2 = new File(dataDir, "version-2");
+        dataDirVersion2.mkdirs();
+        File dataLogDirVersion2 = new File(dataLogDir, "version-2");
+        dataLogDirVersion2.mkdirs();
+
+        // create dummy log and transaction file
+        int totalFiles = 20;
+
+        // create transaction and snapshot files in data directory
+        for (int i = 0; i < totalFiles; i++) {
+            // simulate log file
+            File logFile = new File(dataLogDirVersion2, "log."
+                    + Long.toHexString(i));
+            logFile.createNewFile();
+            // simulate snapshot file
+            File snapFile = new File(dataLogDirVersion2, "snapshot."
+                    + Long.toHexString(i));
+            snapFile.createNewFile();
+        }
+
+        int numberOfFilesToKeep = 10;
+        // scenario where only three parameter are passed
+        String[] args = new String[] { dataLogDir.getAbsolutePath(), "-n",
+                Integer.toString(numberOfFilesToKeep) };
+        PurgeTxnLog.main(args);
+        assertEquals(numberOfFilesToKeep + numberOfFilesToKeep,
+                dataLogDirVersion2.listFiles().length);
+        ClientBase.recursiveDelete(tmpDir);
+
     }
 
     private void createDataDirFiles(AtomicInteger offset, int limit,
