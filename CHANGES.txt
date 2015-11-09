@@ -1,3 +1,5 @@
+Release 3.4.7 - 2015-11-08
+
 Backward compatible changes:
 
 BUGFIXES:
