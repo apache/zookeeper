@@ -1699,6 +1699,113 @@ server.3=zoo3:2888:3888</programlisting>
               <programlisting>key \t value</programlisting>
             </listitem>
           </varlistentry>
+
+          <varlistentry>
+            <term>isro</term>
+
+            <listitem>
+              <para><emphasis role="bold">New in 3.4.0:</emphasis> Tests if
+              server is running in read-only mode.  The server will respond with
+              "ro" if in read-only mode or "rw" if not in read-only mode.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>gtmk</term>
+
+            <listitem>
+              <para>Gets the current trace mask as a 64-bit signed long value in
+              decimal format.  See <command>stmk</command> for an explanation of
+              the possible values.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>stmk</term>
+
+            <listitem>
+              <para>Sets the current trace mask.  The trace mask is 64 bits,
+              where each bit enables or disables a specific category of trace
+              logging on the server.  Log4J must be configured to enable
+              <command>TRACE</command> level first in order to see trace logging
+              messages.  The bits of the trace mask correspond to the following
+              trace logging categories.</para>
+
+              <table>
+                <title>Trace Mask Bit Values</title>
+                <tgroup cols="2" align="left" colsep="1" rowsep="1">
+                  <tbody>
+                    <row>
+                      <entry>0b0000000000</entry>
+                      <entry>Unused, reserved for future use.</entry>
+                    </row>
+                    <row>
+                      <entry>0b0000000010</entry>
+                      <entry>Logs client requests, excluding ping
+                      requests.</entry>
+                    </row>
+                    <row>
+                      <entry>0b0000000100</entry>
+                      <entry>Unused, reserved for future use.</entry>
+                    </row>
+                    <row>
+                      <entry>0b0000001000</entry>
+                      <entry>Logs client ping requests.</entry>
+                    </row>
+                    <row>
+                      <entry>0b0000010000</entry>
+                      <entry>Logs packets received from the quorum peer that is
+                      the current leader, excluding ping requests.</entry>
+                    </row>
+                    <row>
+                      <entry>0b0000100000</entry>
+                      <entry>Logs addition, removal and validation of client
+                      sessions.</entry>
+                    </row>
+                    <row>
+                      <entry>0b0001000000</entry>
+                      <entry>Logs delivery of watch events to client
+                      sessions.</entry>
+                    </row>
+                    <row>
+                      <entry>0b0010000000</entry>
+                      <entry>Logs ping packets received from the quorum peer
+                      that is the current leader.</entry>
+                    </row>
+                    <row>
+                      <entry>0b0100000000</entry>
+                      <entry>Unused, reserved for future use.</entry>
+                    </row>
+                    <row>
+                      <entry>0b1000000000</entry>
+                      <entry>Unused, reserved for future use.</entry>
+                    </row>
+                  </tbody>
+                </tgroup>
+              </table>
+
+              <para>All remaining bits in the 64-bit value are unused and
+              reserved for future use.  Multiple trace logging categories are
+              specified by calculating the bitwise OR of the documented values.
+              The default trace mask is 0b0100110010.  Thus, by default, trace
+              logging includes client requests, packets received from the
+              leader and sessions.</para>
+
+              <para>To set a different trace mask, send a request containing the
+              <command>stmk</command> four-letter word followed by the trace
+              mask represented as a 64-bit signed long value.  This example uses
+              the Perl <command>pack</command> function to construct a trace
+              mask that enables all trace logging categories described above and
+              convert it to a 64-bit signed long value with big-endian byte
+              order.  The result is appended to <command>stmk</command> and sent
+              to the server using netcat.  The server responds with the new
+              trace mask in decimal format.</para>
+
+              <programlisting>$ perl -e "print 'stmk', pack('q>', 0b0011111010)" | nc localhost 2181
+250
+              </programlisting>
+            </listitem>
+          </varlistentry>
         </variablelist>
 
         <para>Here's an example of the <emphasis role="bold">ruok</emphasis>
