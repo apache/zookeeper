@@ -208,6 +208,9 @@ BUGFIXES:
   ZOOKEEPER-1853: zkCli.sh can't issue a CREATE command containing spaces in
   the data (Ryan Lamore via rgs)
 
+  ZOOKEEPER-2229: Several four-letter words are undocumented
+  (Chris Nauroth via rgs)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
