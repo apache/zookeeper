@@ -167,7 +167,7 @@ public class PurgeTxnLog {
      * error and usage and then exits
      *
      * @param number
-     * @return
+     * @return count
      */
     private static int validateAndGetCount(String number) {
         int result = 0;
