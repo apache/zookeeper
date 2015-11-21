@@ -140,6 +140,8 @@ public class JettyAdminServer implements AdminServer {
     }
 
     private class CommandServlet extends HttpServlet {
+        private static final long serialVersionUID = 1L;
+
         protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
             // Capture the command name from the URL
             String cmd = request.getPathInfo();
