@@ -21,7 +21,6 @@ package org.apache.zookeeper.test;
 import java.io.File;
 import java.util.List;
 
-import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
@@ -35,12 +34,14 @@ import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** After a replica starts, it should load commits in its committedLog list.
  *  This test checks if committedLog != 0 after replica restarted.
  */
 public class RestoreCommittedLogTest extends ZKTestCase implements  Watcher {
-    private static final Logger LOG = Logger.getLogger(RestoreCommittedLogTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(RestoreCommittedLogTest.class);
     private static final String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
     private static final int CONNECTION_TIMEOUT = 3000;
     /**
@@ -77,7 +78,7 @@ public class RestoreCommittedLogTest extends ZKTestCase implements  Watcher {
         zks.startdata();
         List<Proposal> committedLog = zks.getZKDatabase().getCommittedLog();
         int logsize = committedLog.size();
-        LOG.info("committedLog size = " + logsize);
+        LOG.info("committedLog size = {}", logsize);
         Assert.assertTrue("log size != 0", (logsize != 0));
         zks.shutdown();
     }

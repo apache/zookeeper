@@ -31,14 +31,15 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
-import org.apache.log4j.Logger;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
 import org.apache.zookeeper.common.X509Util;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FourLetterWordMain {
     //in milliseconds, socket should connect/read within this period otherwise SocketTimeoutException
     private static final int DEFAULT_SOCKET_TIMEOUT = 5000;
-    protected static final Logger LOG = Logger.getLogger(FourLetterWordMain.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(FourLetterWordMain.class);
     /**
      * Send the 4letterword
      * @param host the destination host
@@ -81,7 +82,7 @@ public class FourLetterWordMain {
      */
     public static String send4LetterWord(String host, int port, String cmd, boolean secure, int timeout)
             throws IOException, SSLContextException {
-        LOG.info("connecting to " + host + " " + port);
+        LOG.info("connecting to {} {}", host, port);
         Socket sock;
         InetSocketAddress hostaddress= host != null ? new InetSocketAddress(host, port) :
             new InetSocketAddress(InetAddress.getByName(null), port);

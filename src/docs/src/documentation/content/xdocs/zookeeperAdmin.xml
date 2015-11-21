@@ -560,13 +560,24 @@ server.3=zoo3:2888:3888</programlisting>
     <section id="sc_logging">
       <title>Logging</title>
 
-      <para>ZooKeeper uses <emphasis role="bold">log4j</emphasis> version 1.2 as 
-      its logging infrastructure. The  ZooKeeper default <filename>log4j.properties</filename> 
-      file resides in the <filename>conf</filename> directory. Log4j requires that 
-      <filename>log4j.properties</filename> either be in the working directory 
-      (the directory from which ZooKeeper is run) or be accessible from the classpath.</para>
+    <para>
+        ZooKeeper uses <emphasis role="bold"><ulink url="http://www.slf4j.org">SLF4J</ulink></emphasis>
+        version 1.7 as its logging infrastructure. For backward compatibility it is bound to
+        <emphasis role="bold">LOG4J</emphasis> but you can use
+        <emphasis role="bold"><ulink url="http://logback.qos.ch/">LOGBack</ulink></emphasis>
+        or any other supported logging framework of your choice.
+    </para>
+    <para>
+        The ZooKeeper default <filename>log4j.properties</filename>
+        file resides in the <filename>conf</filename> directory. Log4j requires that
+        <filename>log4j.properties</filename> either be in the working directory
+        (the directory from which ZooKeeper is run) or be accessible from the classpath.
+    </para>
 
-      <para>For more information, see 
+    <para>For more information about SLF4J, see
+      <ulink url="http://www.slf4j.org/manual.html">its manual</ulink>.</para>
+
+    <para>For more information about LOG4J, see
       <ulink url="http://logging.apache.org/log4j/1.2/manual.html#defaultInit">Log4j Default Initialization Procedure</ulink> 
       of the log4j manual.</para>
       
