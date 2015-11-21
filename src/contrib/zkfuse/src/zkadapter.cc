@@ -845,7 +845,10 @@ ZooKeeperAdapter::getNodeData(const string &path,
             string("Unable to get data of node ") + path, rc 
         );
     } else {
-        return string( buffer, buffer + len );
+        if (len == -1) {
+            len = 0;
+        }
+        return string( buffer, len );
     }
 }
 
