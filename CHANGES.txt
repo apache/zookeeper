@@ -214,6 +214,9 @@ BUGFIXES:
   ZOOKEEPER-1929: std::length_error on update children
   (Charles Strahan via rgs)
 
+  ZOOKEEPER-1371: Remove dependency on log4j in the source code
+  (Arshad Mohammad via rgs)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 

@@ -38,8 +38,10 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.apache.log4j.Logger;
+
 import org.apache.zookeeper.common.Time;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A base class for running a Unix command.
@@ -50,7 +52,7 @@ import org.apache.zookeeper.common.Time;
  */
 abstract public class Shell {
   
-  private static final Logger LOG = Logger.getLogger(Shell.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Shell.class);
   
   /** a Unix command to get the current user's name */
   public final static String USER_NAME_COMMAND = "whoami";

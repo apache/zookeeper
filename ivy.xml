@@ -42,13 +42,13 @@
 
   <dependencies>
     <dependency org="org.slf4j" name="slf4j-api" rev="1.7.5"/>
-    <dependency org="org.slf4j" name="slf4j-log4j12" rev="1.7.5" transitive="false"/>
+    <dependency org="org.slf4j" name="slf4j-log4j12" rev="1.7.5" transitive="false" conf="test->default"/>
     <dependency org="commons-cli" name="commons-cli" rev="1.2" />
   
     <dependency org="org.apache.maven.wagon" name="wagon-http" rev="2.4" conf="mvn-ant-task->default"/>
     <dependency org="org.apache.maven" name="maven-ant-tasks" rev="2.1.3" conf="mvn-ant-task->master"/>
     <!-- transitive false turns off dependency checking, log4j deps seem borked -->
-    <dependency org="log4j" name="log4j" rev="1.2.16" transitive="false" conf="default"/>
+    <dependency org="log4j" name="log4j" rev="1.2.17" transitive="false" conf="test->default"/>
     <dependency org="jline" name="jline" rev="2.11" transitive="false" conf="optional->default"/>
 
     <dependency org="io.netty" name="netty" conf="default" rev="3.7.0.Final">
