@@ -19,7 +19,6 @@
 package org.apache.zookeeper.server;
 
 
-import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.ConnectionLossException;
@@ -35,12 +34,14 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Verify ZOOKEEPER-1277 - ensure that we handle epoch rollover correctly.
  */
 public class ZxidRolloverTest extends ZKTestCase {
-    private static final Logger LOG = Logger.getLogger(ZxidRolloverTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ZxidRolloverTest.class);
 
     private QuorumUtil qu;
     private ZooKeeperServer zksLeader;
@@ -223,7 +224,7 @@ public class ZxidRolloverTest extends ZKTestCase {
      * wait for the clients to be re-connected after the re-election
      */
     private int createNodes(ZooKeeper zk, int start, int count) throws Exception {
-        LOG.info("Creating nodes " + start + " thru " + (start + count));
+        LOG.info("Creating nodes {} thru {}", start, (start + count));
         int j = 0;
         try {
             for (int i = start; i < start + count; i++) {
@@ -242,10 +243,10 @@ public class ZxidRolloverTest extends ZKTestCase {
      * caused the roll-over, did not.
      */
     private void checkNodes(ZooKeeper zk, int start, int count) throws Exception {
-        LOG.info("Validating nodes " + start + " thru " + (start + count));
+        LOG.info("Validating nodes {} thru {}", start, (start + count));
         for (int i = start; i < start + count; i++) {
             Assert.assertNotNull(zk.exists("/foo" + i, false));
-            LOG.error("Exists zxid:" + Long.toHexString(zk.exists("/foo" + i, false).getCzxid()));
+            LOG.error("Exists zxid:{}", Long.toHexString(zk.exists("/foo" + i, false).getCzxid()));
         }
         Assert.assertNull(zk.exists("/foo" + (start + count), false));
     }

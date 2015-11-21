@@ -241,7 +241,14 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
       </fileset>
       <path refid="java.classpath"/>
     </path>
-
+	<path id="test.java.classpath.without.log4j">
+        <pathelement location="${test.java.classes}" />
+        <fileset dir="${ivy.test.lib}">
+            <include name="**/*.jar" />
+            <exclude name="**/*log4j*.jar"/>
+        </fileset>
+        <path refid="java.classpath"/>
+    </path>
     <path id="package.classpath">
       <fileset dir="${ivy.package.lib}">
         <include name="**/jdeb*.jar" />
@@ -1340,15 +1347,46 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
       <fileset id="quicktest.files" dir="${test.src.dir}">
         <include name="**/*${test.category}Test.java" />
         <exclude name="**/*HammerTest.java" />
+        <exclude name="**/*${test.category}NoLog4j*.java"/>
       </fileset>
       <fileset id="fulltest.files" dir="${test.src.dir}">
         <include name="**/*${test.category}Test.java" />
+        <exclude name="**/*${test.category}NoLog4j*.java"/>
       </fileset>
       <fileset id="testcase.files" dir="${test.src.dir}">
         <include name="**/${testcase}.java" />
+        <exclude name="**/*${test.category}NoLog4j*.java"/>
       </fileset>
     </target>
 
+    <target name="junit.run.nolog4j">
+        <junit showoutput="${test.output}"
+               printsummary="${test.junit.printsummary}"
+               haltonfailure="${test.junit.haltonfailure}"
+               fork="yes"
+               forkmode="${test.junit.fork.mode}"
+               maxmemory="${test.junit.maxmem}"
+               dir="${basedir}" timeout="${test.timeout}"
+               errorProperty="tests.failed.nolog4j"
+               failureProperty="tests.failed.nolog4j">
+            <sysproperty key="build.test.dir" value="${test.tmp.dir}"/>
+            <sysproperty key="test.data.dir" value="${test.data.dir}"/>
+            <!-- superDigest is used by the tests/main code. If this is not set
+                 as part of starting the jvm there is no guarantee that the static
+                 initializers in the java code will see this (esp when running
+                 with junit fork mode set to "once")-->
+            <sysproperty key="zookeeper.DigestAuthenticationProvider.superDigest"
+                         value="super:D/InIHSb7yEEbrWz8b9l71RjZJU="/>
+            <classpath refid="test.java.classpath.without.log4j"/>
+            <formatter type="${test.junit.output.format}"/>
+            <batchtest todir="${test.log.dir}" if="fulltest">
+                <fileset dir="${test.src.dir}">
+                    <include name="**/*${test.category}NoLog4j*.java"/>
+                </fileset>
+            </batchtest>
+        </junit>
+        <fail if="tests.failed.nolog4j">Tests failed!</fail>
+    </target>
     <target name="junit.run" depends="junit-init,junit.run-single,junit.run-concurrent" />
 
     <target name="junit.run-concurrent" if="ant.supports.concurrent.junit.processes">
@@ -1499,11 +1537,13 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
 	<!-- yet to implement -->
     </target>
     
-    <target name="test-core-java" depends="test-init, test-category, junit.run"/> 
+    <target name="test-core-java" depends="test-init, test-category, junit.run"/>
 
-    <target name="test-core-cppunit" depends="test-init, test-category, call-test-cppunit"/> 
+    <target name="test-core-java-nolog4j" depends="test-init, test-category, junit.run.nolog4j"/>
 
-    <target name="test-core" depends="test-core-java, test-core-cppunit"/> 
+    <target name="test-core-cppunit" depends="test-init, test-category, call-test-cppunit"/>
+
+    <target name="test-core" depends="test-core-java, test-core-java-nolog4j, test-core-cppunit"/>
 
     <!-- ====================================================== -->
     <!-- Run optional third-party tool targets                  -->
