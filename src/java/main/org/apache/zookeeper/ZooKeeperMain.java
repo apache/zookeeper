@@ -38,7 +38,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
-import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -223,7 +222,7 @@ public class ZooKeeperMain {
         public boolean parseCommand( String cmdstring ) {
             Matcher matcher = ARGS_PATTERN.matcher(cmdstring);
 
-            List args = new LinkedList();
+            List<String> args = new LinkedList<String>();
             while (matcher.find()) {
                 String value = matcher.group(1);
                 if (QUOTED_PATTERN.matcher(value).matches()) {
@@ -235,7 +234,7 @@ public class ZooKeeperMain {
             if (args.isEmpty()){
                 return false;
             }
-            command = (String)args.get(0);
+            command = args.get(0);
             cmdArgs = args;
             return true;
         }
