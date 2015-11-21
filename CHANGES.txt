@@ -1,3 +1,10 @@
+Backward compatible changes:
+
+BUGFIXES:
+
+  ZOOKEEPER-1929: std::length_error on update children
+  (Charles Strahan via rgs)
+
 Release 3.4.7 - 2015-11-08
 
 Backward compatible changes:
