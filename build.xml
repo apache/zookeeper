@@ -58,7 +58,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
     <property name="src_generated.dir" value="${src.dir}/java/generated" />
     <property name="c.src.dir" value="${src.dir}/c" />    
     <property name="csrc_generated.dir" value="${c.src.dir}/generated" />
-    <property name="csharp.src.dir" value="${src.dir}/csharp"/>
+    <property name="csharp.src.dir" value="${src.dir}/csharp/src"/>
     <property name="csharpsrc_generated.dir" value="${csharp.src.dir}/ZooKeeperNetEx/Generated"/>
 
     <property name="jute.file" value="${src.dir}/zookeeper.jute" />
@@ -304,7 +304,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
       <java dir="${csharpsrc_generated.dir}" classname="org.apache.jute.compiler.generated.Rcc" fork="true">
         <arg value="-l"/>
         <arg value="csharp"/>
-        <arg value="../../../zookeeper.jute"/>
+        <arg value="../../../../zookeeper.jute"/>
             <classpath>
                 <pathelement path="${build.classes}" />
             </classpath>

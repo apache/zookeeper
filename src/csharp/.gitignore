@@ -1,5 +1,43 @@
-packages
-artifacts
-*.suo
-*.user
+# Things related to tests
+.pester/
+testwork/
+.urchin*
+
+# Ignore the folder created when pushing to Home - It should be cleaned up by the task, but sometimes isn't.
+.pushdnvm/
+
+# Ignore lock files
 project.lock.json
+
+[Oo]bj/
+[Bb]in/
+TestResults/
+.nuget/
+.vs/
+*.sln.ide/
+_ReSharper.*/
+packages/
+artifacts/
+PublishProfiles/
+*.user
+*.suo
+*.cache
+*.docstates
+_ReSharper.*
+nuget.exe
+*net45.csproj
+*net451.csproj
+*k10.csproj
+*.psess
+*.vsp
+*.pidb
+*.userprefs
+*DS_Store
+*.ncrunchsolution
+*.*sdf
+*.ipch
+*.sln.ide
+
+# Vim files
+*.swp
+*.swo

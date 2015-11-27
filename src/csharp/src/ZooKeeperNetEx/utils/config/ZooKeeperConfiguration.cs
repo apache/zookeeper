@@ -22,7 +22,7 @@ using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Text;
-using System.Xml;
+using System.Xml.Linq;
 
 namespace org.apache.utils
 {
@@ -50,24 +50,13 @@ namespace org.apache.utils
             TraceLevelOverrides = new List<Tuple<string, TraceLevel>>();
         }
 
-        private void Load(TextReader input)
+        private void LoadFromXml(XElement root)
         {
-            var xml = new XmlDocument();
-            var xmlReader = XmlReader.Create(input);
-            xml.Load(xmlReader);
-            XmlElement root = xml.DocumentElement;
-
-            LoadFromXml(root);
-        }
-
-        private void LoadFromXml(XmlElement root)
-        {
-            foreach (XmlNode node in root.ChildNodes)
+            foreach (XElement child in root.Elements())
             {
-                var child = node as XmlElement;
                 if (child != null)
                 {
-                    switch (child.LocalName)
+                    switch (child.Name.LocalName)
                     {
                         case "Tracing":
                             ConfigUtilities.ParseTracing(this, child);
@@ -81,21 +70,15 @@ namespace org.apache.utils
         /// </summary>
         public static ZooKeeperConfiguration LoadFromFile(string fileName)
         {
-            if (fileName == null) return null;
+            if (fileName == null) throw new ArgumentNullException("fileName");
 
-            TextReader input = null;
-            try
-            {
-                var config = new ZooKeeperConfiguration();
-                input = File.OpenText(fileName);
-                config.Load(input);
-                config.SourceFile = fileName;
-                return config;
-            }
-            finally
-            {
-                if (input != null) input.Dispose();
-            }
+            var config = new ZooKeeperConfiguration();
+            string xml = File.ReadAllText(fileName);
+            XElement root = XDocument.Load(xml).Root;
+
+            config.LoadFromXml(root);
+            config.SourceFile = fileName;
+            return config;
         }
 
         /// <summary/>

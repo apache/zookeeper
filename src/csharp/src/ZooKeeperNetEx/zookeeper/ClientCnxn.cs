@@ -786,14 +786,16 @@ namespace org.apache.zookeeper {
                 TcpClient sock = null;
                 StreamReader br = null;
                 try {
-                    sock = new TcpClient(addr.Host, addr.Port);
+                    sock = new TcpClient();
                     sock.LingerState = new LingerOption(false, 0);
                     sock.SendTimeout = 1000;
                     sock.NoDelay = true;
-                    sock.GetStream().Write("isro".getBytes(), 0, 4);
-                    sock.GetStream().Flush();
-                    br = new StreamReader(sock.GetStream());
-                    result = br.ReadLine();
+                    await sock.ConnectAsync(addr.Host, addr.Port);
+                    var networkStream = sock.GetStream();
+                    await networkStream.WriteAsync("isro".getBytes(), 0, 4);
+                    await networkStream.FlushAsync();
+                    br = new StreamReader(networkStream);
+                    result = await br.ReadLineAsync();
                 }
                 catch (Exception e) {
                     var se = e.InnerException as SocketException;

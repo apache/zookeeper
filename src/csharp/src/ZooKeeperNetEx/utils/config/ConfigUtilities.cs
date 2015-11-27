@@ -17,7 +17,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 using System;
 using System.Diagnostics;
-using System.Xml;
+using System.Xml.Linq;
 
 namespace org.apache.utils {
     /// <summary>
@@ -25,22 +25,21 @@ namespace org.apache.utils {
     /// </summary>
     internal static class ConfigUtilities {
 
-        internal static void ParseTracing(ZooKeeperConfiguration config, XmlElement root) {
-            if (root.HasAttribute("DefaultTraceLevel")) {
-                config.DefaultTraceLevel = ParseSeverity(root.GetAttribute("DefaultTraceLevel"),
+        internal static void ParseTracing(ZooKeeperConfiguration config, XElement root) {
+            if (root.Attribute("DefaultTraceLevel")!=null) {
+                config.DefaultTraceLevel = ParseSeverity(root.Attribute("DefaultTraceLevel").Value,
                     "Invalid trace level DefaultTraceLevel attribute value on Tracing element for ZooKeeper Client");
             }
 
-            foreach (XmlNode node in root.ChildNodes) {
-                var grandchild = node as XmlElement;
+            foreach (XElement grandchild in root.Elements()) {
                 if (grandchild == null) continue;
 
-                if (grandchild.LocalName.Equals("TraceLevelOverride") && grandchild.HasAttribute("TraceLevel") &&
-                    grandchild.HasAttribute("LogPrefix")) {
-                        config.TraceLevelOverrides.Add(new Tuple<string, TraceLevel>(grandchild.GetAttribute("LogPrefix"),
-                        ParseSeverity(grandchild.GetAttribute("TraceLevel"),
+                if (grandchild.Name.LocalName.Equals("TraceLevelOverride") && grandchild.Attribute("TraceLevel")!=null &&
+                    grandchild.Attribute("LogPrefix")!=null) {
+                        config.TraceLevelOverrides.Add(new Tuple<string, TraceLevel>(grandchild.Attribute("LogPrefix").Value,
+                        ParseSeverity(grandchild.Attribute("TraceLevel").Value,
                             "Invalid trace level TraceLevel attribute value on TraceLevelOverride element for ZooKeeper Client prefix " +
-                            grandchild.GetAttribute("LogPrefix"))));
+                            grandchild.Attribute("LogPrefix").Value)));
                 }
             }
         }

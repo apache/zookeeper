@@ -1,0 +1,7 @@
+
+var VERSION='3.4.6.1008'
+var FULL_VERSION='3.4.6.1008'
+var AUTHORS='Shay Hazor'
+
+use-standard-lifecycle
+k-standard-goals
