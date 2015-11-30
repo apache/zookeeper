@@ -12,7 +12,10 @@
   "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
   "iconUrl": "https://ccdce73789835b39c0952535276de3b7772f802f.googledrive.com/host/0B_hNtILvKRsifnpVRnp4NVRKcHltY05FSGM2bzg5ZGNaVHRqcW9GVFJnWjczSFUtNk40OTA/zookeeper.bmp",
   "copyright": "Shay Hazor - Copyright 2015",
-  "compilationOptions": { "keyFile": "../../ZooKeeperNetEx.snk" },
+  "compilationOptions": {
+    "keyFile": "../../ZooKeeperNetEx.snk",
+    "warningsAsErrors": true
+  },
   "frameworks": {
     "dotnet5.4": { },
     "net45": { },
