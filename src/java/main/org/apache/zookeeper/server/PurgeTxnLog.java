@@ -26,8 +26,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.Util;
 
@@ -40,14 +38,16 @@ import org.apache.zookeeper.server.persistence.Util;
  * and the corresponding logs.
  */
 public class PurgeTxnLog {
-    private static final Logger LOG = LoggerFactory.getLogger(PurgeTxnLog.class);
+
+    private static final String COUNT_ERR_MSG = "count should be greater than or equal to 3";
 
     static void printUsage(){
+        System.out.println("Usage:");
         System.out.println("PurgeTxnLog dataLogDir [snapDir] -n count");
         System.out.println("\tdataLogDir -- path to the txn log directory");
         System.out.println("\tsnapDir -- path to the snapshot directory");
-        System.out.println("\tcount -- the number of old snaps/logs you want to keep");
-        System.exit(1);
+        System.out.println("\tcount -- the number of old snaps/logs you want " +
+            "to keep, value should be greater than or equal to 3");
     }
 
     private static final String PREFIX_SNAPSHOT = "snapshot";
@@ -66,7 +66,7 @@ public class PurgeTxnLog {
      */
     public static void purge(File dataDir, File snapDir, int num) throws IOException {
         if (num < 3) {
-            throw new IllegalArgumentException("count should be greater than 3");
+            throw new IllegalArgumentException(COUNT_ERR_MSG);
         }
 
         FileTxnSnapLog txnLog = new FileTxnSnapLog(dataDir, snapDir);
@@ -119,22 +119,74 @@ public class PurgeTxnLog {
     }
     
     /**
-     * @param args PurgeTxnLog dataLogDir
-     *     dataLogDir -- txn log directory
-     *     -n num (number of snapshots to keep)
+     * @param args dataLogDir [snapDir] -n count
+     * dataLogDir -- path to the txn log directory
+     * snapDir -- path to the snapshot directory
+     * count -- the number of old snaps/logs you want to keep, value should be greater than or equal to 3<br>
      */
     public static void main(String[] args) throws IOException {
-        if(args.length<3 || args.length>4)
-            printUsage();
-        int i = 0;
-        File dataDir=new File(args[0]);
-        File snapDir=dataDir;
-        if(args.length==4){
-            i++;
-            snapDir=new File(args[i]);
+        if (args.length < 3 || args.length > 4) {
+            printUsageThenExit();
         }
-        i++; i++;
-        int num = Integer.parseInt(args[i]);
+        File dataDir = validateAndGetFile(args[0]);
+        File snapDir = dataDir;
+        int num = -1;
+        String countOption = "";
+        if (args.length == 3) {
+            countOption = args[1];
+            num = validateAndGetCount(args[2]);
+        } else {
+            snapDir = validateAndGetFile(args[1]);
+            countOption = args[2];
+            num = validateAndGetCount(args[3]);
+        }
+        if (!"-n".equals(countOption)) {
+            printUsageThenExit();
+        }
         purge(dataDir, snapDir, num);
+    }
+
+    /**
+     * validates file existence and returns the file
+     *
+     * @param path
+     * @return File
+     */
+    private static File validateAndGetFile(String path) {
+        File file = new File(path);
+        if (!file.exists()) {
+            System.err.println("Path '" + file.getAbsolutePath()
+                    + "' does not exist. ");
+            printUsageThenExit();
+        }
+        return file;
+    }
+
+    /**
+     * Returns integer if parsed successfully and it is valid otherwise prints
+     * error and usage and then exits
+     *
+     * @param number
+     * @return
+     */
+    private static int validateAndGetCount(String number) {
+        int result = 0;
+        try {
+            result = Integer.parseInt(number);
+            if (result < 3) {
+                System.err.println(COUNT_ERR_MSG);
+                printUsageThenExit();
+            }
+        } catch (NumberFormatException e) {
+            System.err
+                    .println("'" + number + "' can not be parsed to integer.");
+            printUsageThenExit();
+        }
+        return result;
+    }
+
+    private static void printUsageThenExit() {
+        printUsage();
+        System.exit(1);
     }
 }
