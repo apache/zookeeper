@@ -1464,6 +1464,9 @@ public class ClientCnxn {
 
         sendThread.close();
         eventThread.queueEventOfDeath();
+        if (null != zooKeeperSaslClient) {
+            zooKeeperSaslClient.shutdown();
+        }
     }
 
     /**

@@ -580,5 +580,12 @@ public class ZooKeeperSaslClient {
         }
     }
 
-
+    /**
+     * close login thread if running
+     */
+    public void shutdown() {
+        if (null != login) {
+            login.shutdown();
+        }
+    }
 }
