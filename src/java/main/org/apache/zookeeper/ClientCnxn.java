@@ -46,6 +46,7 @@ import javax.security.sasl.SaslException;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
+import org.apache.log4j.MDC;
 import org.apache.zookeeper.AsyncCallback.ACLCallback;
 import org.apache.zookeeper.AsyncCallback.Children2Callback;
 import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
@@ -1103,8 +1104,9 @@ public class ClientCnxn {
                 addr = hostProvider.next(1000);
             }
 
-            setName(getName().replaceAll("\\(.*\\)",
-                    "(" + addr.getHostString() + ":" + addr.getPort() + ")"));
+            String hostPort = addr.getHostString() + ":" + addr.getPort();
+            MDC.put("myid", hostPort);
+            setName(getName().replaceAll("\\(.*\\)", "(" + hostPort + ")"));
             if (ZooKeeperSaslClient.isEnabled()) {
                 try {
                     String principalUserName = System.getProperty(
