@@ -82,6 +82,9 @@ IMPROVEMENTS:
   ZOOKEEPER-2240: Make the three-node minimum more explicit in documentation
   and on website (Shawn Heisey via rgs)
 
+  ZOOKEEPER-2326: Include connected server address:port in log
+  (Arshad Mohammad via rgs)
+
 Release 3.5.1 - 07/27/2015
 
 NEW FEATURES:
