@@ -321,6 +321,9 @@ IMPROVEMENTS:
   ZOOKEEPER-2326: Include connected server address:port in log
   (Arshad Mohammad via rgs)
 
+  ZOOKEEPER-2335: Java Compilation Error in ClientCnxn.java
+  (Arshad Mohammad via rgs)
+
 Release 3.5.0 - 8/4/2014
 
 NEW FEATURES:
