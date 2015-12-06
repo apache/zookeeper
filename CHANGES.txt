@@ -8,6 +8,9 @@ BUGFIXES:
   ZOOKEEPER-2211: PurgeTxnLog does not correctly purge when snapshots and
   logs are at different locations (Arshad Mohammad via rgs)
 
+  ZOOKEEPER-2311: assert in setup_random
+  (Marshall McMullen via rgs)
+
 Release 3.4.7 - 2015-11-08
 
 Backward compatible changes:
