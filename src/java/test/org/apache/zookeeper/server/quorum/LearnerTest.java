@@ -35,6 +35,7 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.test.TestUtils;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.Assert;
@@ -63,18 +64,6 @@ public class LearnerTest extends ZKTestCase {
             self = new QuorumPeer();
             zk = new SimpleLearnerZooKeeperServer(ftsl, self);
             ((SimpleLearnerZooKeeperServer) zk).learner = this;
-        }
-    }
-
-    static private void recursiveDelete(File dir) {
-        if (dir == null || !dir.exists()) {
-            return;
-        }
-        if (!dir.isDirectory()) {
-            dir.delete();
-        }
-        for (File child : dir.listFiles()) {
-            recursiveDelete(child);
         }
     }
 
@@ -193,7 +182,7 @@ public class LearnerTest extends ZKTestCase {
             sl = new SimpleLearner(ftsl);
             Assert.assertEquals(startZxid, sl.zk.getLastProcessedZxid());
         } finally {
-            recursiveDelete(tmpFile);
+            TestUtils.deleteFileRecursively(tmpFile);
         }
     }
 }
