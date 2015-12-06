@@ -28,7 +28,6 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.EOFException;
-import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -58,6 +57,7 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.util.ZxidUtils;
+import org.apache.zookeeper.test.TestUtils;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.ErrorTxn;
@@ -67,7 +67,6 @@ import org.apache.zookeeper.ZKTestCase;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -188,7 +187,7 @@ public class Zab1_0Test extends ZKTestCase {
             if (leader != null) {
                 leader.shutdown("end of test");
             }
-            recursiveDelete(tmpDir);
+            TestUtils.deleteFileRecursively(tmpDir);
         }
     }
     
@@ -240,7 +239,7 @@ public class Zab1_0Test extends ZKTestCase {
                 leadThread.interrupt();
                 leadThread.join();
             }
-            recursiveDelete(tmpDir);
+            TestUtils.deleteFileRecursively(tmpDir);
         }
     }
     
@@ -277,7 +276,7 @@ public class Zab1_0Test extends ZKTestCase {
             if (leader != null) {
                 leader.shutdown("end of test");
             }
-            recursiveDelete(tmpDir);
+            TestUtils.deleteFileRecursively(tmpDir);
         }
     }
 
@@ -399,7 +398,7 @@ public class Zab1_0Test extends ZKTestCase {
                 leadThread.interrupt();
                 leadThread.join();
             }
-            recursiveDelete(tmpDir);
+            TestUtils.deleteFileRecursively(tmpDir);
         }
     }
     
@@ -468,7 +467,7 @@ public class Zab1_0Test extends ZKTestCase {
                 leadThread.interrupt();
                 leadThread.join();
             }
-            recursiveDelete(tmpDir);
+            TestUtils.deleteFileRecursively(tmpDir);
         }
     }
     
@@ -521,7 +520,7 @@ public class Zab1_0Test extends ZKTestCase {
             if (peer != null) {
                 peer.shutdown();
             }
-            recursiveDelete(tmpDir);
+            TestUtils.deleteFileRecursively(tmpDir);
         }
     }
 
@@ -572,7 +571,7 @@ public class Zab1_0Test extends ZKTestCase {
             if (peer != null) {
                 peer.shutdown();
             }
-            recursiveDelete(tmpDir);
+            TestUtils.deleteFileRecursively(tmpDir);
         }
     }
 
@@ -748,7 +747,7 @@ public class Zab1_0Test extends ZKTestCase {
                     Assert.assertEquals("data2", new String(zkDb2.getData("/foo", stat, null)));
                     Assert.assertEquals(proposalZxid, lastZxid);
                 } finally {
-                    recursiveDelete(tmpDir);
+                    TestUtils.deleteFileRecursively(tmpDir);
                 }
                 
             }
@@ -853,7 +852,7 @@ public class Zab1_0Test extends ZKTestCase {
                     LOG.info("zkdb2 sessions:" + zkDb2.getSessions());
                     Assert.assertNotNull(zkDb2.getSessionWithTimeOuts().get(4L));
                 } finally {
-                    recursiveDelete(tmpDir);
+                    TestUtils.deleteFileRecursively(tmpDir);
                 }
                 
             }
@@ -1127,7 +1126,7 @@ public class Zab1_0Test extends ZKTestCase {
                     Assert.assertEquals("data2", new String(zkDb2.getData("/foo2", stat, null)));
                     Assert.assertEquals(informZxid, lastZxid);
                 } finally {
-                    recursiveDelete(tmpDir);
+                    TestUtils.deleteFileRecursively(tmpDir);
                 }
 
             }
@@ -1216,21 +1215,6 @@ public class Zab1_0Test extends ZKTestCase {
         });
     }
     
-    private void recursiveDelete(File file) {
-        if (file.isFile()) {
-            file.delete();
-        } else {
-            // might return null if deleted out from under us...
-            File[] files = file.listFiles();
-            if (files != null) {
-                for(File c: files) {
-                    recursiveDelete(c);
-                }
-            }
-            file.delete();
-        }
-    }
-
     private Leader createLeader(File tmpDir, QuorumPeer peer)
     throws IOException, NoSuchFieldException, IllegalAccessException{
         LeaderZooKeeperServer zk = prepareLeader(tmpDir, peer);
@@ -1371,7 +1355,7 @@ public class Zab1_0Test extends ZKTestCase {
                     .parseInt(readContentsOfFile(new File(version2,
                             QuorumPeer.ACCEPTED_EPOCH_FILENAME))));
         } finally {
-            recursiveDelete(tmpDir);
+            TestUtils.deleteFileRecursively(tmpDir);
         }
     }
 }

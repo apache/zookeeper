@@ -327,6 +327,9 @@ IMPROVEMENTS:
   ZOOKEEPER-2335: Java Compilation Error in ClientCnxn.java
   (Arshad Mohammad via rgs)
 
+  ZOOKEEPER-2306: Remove file delete duplicate code from test code
+  (Arshad Mohammad via rgs)
+
 Release 3.5.0 - 8/4/2014
 
 NEW FEATURES:
