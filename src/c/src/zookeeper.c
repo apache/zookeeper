@@ -424,8 +424,22 @@ static void setup_random()
     if (fd == -1) {
         seed = getpid();
     } else {
-        int rc = read(fd, &seed, sizeof(seed));
-        assert(rc == sizeof(seed));
+        int seed_len = 0;
+
+        /* Enter a loop to fill in seed with random data from /dev/urandom.
+         * This is done in a loop so that we can safely handle short reads
+         * which can happen due to signal interruptions.
+         */
+        while (seed_len < sizeof(seed)) {
+            /* Assert we either read something or we were interrupted due to a
+             * signal (errno == EINTR) in which case we need to retry.
+             */
+            int rc = read(fd, &seed + seed_len, sizeof(seed) - seed_len);
+            assert(rc > 0 || errno == EINTR);
+            if (rc > 0) {
+                seed_len += rc;
+            }
+        }
         close(fd);
     }
     srandom(seed);
