@@ -91,6 +91,9 @@ IMPROVEMENTS:
   ZOOKEEPER-2326: Include connected server address:port in log
   (Arshad Mohammad via rgs)
 
+  ZOOKEEPER-2306: Remove file delete duplicate code from test code
+  (Arshad Mohammad via rgs)
+
 Release 3.5.1 - 07/27/2015
 
 NEW FEATURES:
