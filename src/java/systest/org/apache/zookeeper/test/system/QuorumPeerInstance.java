@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
+import org.apache.zookeeper.test.TestUtils;
 
 class QuorumPeerInstance implements Instance {
     final private static Logger LOG = LoggerFactory.getLogger(QuorumPeerInstance.class);
@@ -208,17 +209,6 @@ class QuorumPeerInstance implements Instance {
 
     public void start() {
     }
-
-    static private void recursiveDelete(File dir) {
-        if (!dir.isDirectory()) {
-            dir.delete();
-            return;
-        }
-        for(File f: dir.listFiles()) {
-            recursiveDelete(f);
-        }
-        dir.delete();
-    }
     
     public void stop() {
         if (LOG.isDebugEnabled()) {
@@ -228,10 +218,10 @@ class QuorumPeerInstance implements Instance {
             peer.shutdown();
         }
         if (logDir != null) {
-            recursiveDelete(logDir);
+            TestUtils.deleteFileRecursively(logDir);
         }
         if (snapDir != null) {
-            recursiveDelete(snapDir);
+            TestUtils.deleteFileRecursively(snapDir);
         }
     }
 
