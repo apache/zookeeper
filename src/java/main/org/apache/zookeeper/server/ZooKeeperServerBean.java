@@ -18,8 +18,6 @@
 
 package org.apache.zookeeper.server;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Date;
 
 import org.apache.zookeeper.Version;
@@ -41,12 +39,7 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
     }
     
     public String getClientPort() {
-        try {
-            return InetAddress.getLocalHost().getHostAddress() + ":"
-                + zks.getClientPort();
-        } catch (UnknownHostException e) {
-            return "localhost:" + zks.getClientPort();
-        }
+        return Integer.toString(zks.getClientPort());
     }
     
     public String getName() {
