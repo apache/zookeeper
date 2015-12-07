@@ -144,4 +144,22 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
     public long getNumAliveConnections() {
         return zks.getNumAliveConnections();
     }
+
+    @Override
+    public String getSecureClientPort() {
+        if (zks.secureServerCnxnFactory != null) {
+            return Integer.toString(zks.secureServerCnxnFactory.getLocalPort());
+        }
+        return "";
+    }
+
+    @Override
+    public String getSecureClientAddress() {
+        if (zks.secureServerCnxnFactory != null) {
+            return String.format("%s:%d", zks.secureServerCnxnFactory
+                    .getLocalAddress().getHostString(),
+                    zks.secureServerCnxnFactory.getLocalPort());
+        }
+        return "";
+    }
 }
