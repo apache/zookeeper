@@ -200,15 +200,15 @@ public class TruncateTest extends ZKTestCase {
         peers.put(Long.valueOf(1), new QuorumServer(1,
                        new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
                        new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-                       new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
+                       new InetSocketAddress("127.0.0.1", port1)));
         peers.put(Long.valueOf(2), new QuorumServer(2,
                        new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
                        new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-                       new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
+                       new InetSocketAddress("127.0.0.1", port2)));
         peers.put(Long.valueOf(3), new QuorumServer(3,
                        new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
                        new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-                       new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
+                       new InetSocketAddress("127.0.0.1", port3)));
 
         QuorumPeer s2 = new QuorumPeer(peers, dataDir2, dataDir2, port2, 0, 2, tickTime, initLimit, syncLimit);
         s2.start();
