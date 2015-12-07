@@ -116,4 +116,13 @@ public interface ZooKeeperServerMXBean {
      * @return estimated size of log directory in bytes
      */
     public long getLogDirSize();
+
+    /**
+     * @return secure client port
+    */
+    public String getSecureClientPort();
+    /**
+     * @return secure client address
+     */
+    public String getSecureClientAddress();
 }
