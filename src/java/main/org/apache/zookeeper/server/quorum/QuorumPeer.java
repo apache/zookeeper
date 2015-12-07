@@ -858,9 +858,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             long myid, int tickTime, int initLimit, int syncLimit)
         throws IOException
     {
-        this(quorumPeers, snapDir, logDir, electionAlg,
-                myid,tickTime, initLimit,syncLimit, false,
-                ServerCnxnFactory.createFactory(new InetSocketAddress(clientPort), -1),
+        this(quorumPeers, snapDir, logDir, electionAlg, myid, tickTime, initLimit, syncLimit, false,
+                ServerCnxnFactory.createFactory(getClientAddress(quorumPeers, myid, clientPort), -1),
                 new QuorumMaj(quorumPeers));
     }
 
@@ -876,8 +875,24 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     {
         this(quorumPeers, snapDir, logDir, electionAlg,
                 myid,tickTime, initLimit,syncLimit, false,
-                ServerCnxnFactory.createFactory(new InetSocketAddress(clientPort), -1),
+                ServerCnxnFactory.createFactory(getClientAddress(quorumPeers, myid, clientPort), -1),
                 quorumConfig);
+    }
+
+    private static InetSocketAddress getClientAddress(Map<Long, QuorumServer> quorumPeers, long myid, int clientPort)
+            throws IOException {
+        QuorumServer quorumServer = quorumPeers.get(myid);
+        if (null == quorumServer) {
+            throw new IOException("No QuorumServer correspoding to myid " + myid);
+        }
+        if (null == quorumServer.clientAddr) {
+            return new InetSocketAddress(clientPort);
+        }
+        if (quorumServer.clientAddr.getPort() != clientPort) {
+            throw new IOException("QuorumServer port " + quorumServer.clientAddr.getPort()
+                    + " does not match with given port " + clientPort);
+        }
+        return quorumServer.clientAddr;
     }
 
     /**
