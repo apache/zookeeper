@@ -155,7 +155,6 @@ public class Login {
                         if ((nextRefresh > expiry) ||
                                 ((now + MIN_TIME_BEFORE_RELOGIN) > expiry)) {
                             // expiry is before next scheduled refresh).
-                            LOG.info("refreshing now because expiry is before next scheduled refresh time.");
                             nextRefresh = now;
                         } else {
                             if (nextRefresh < (now + MIN_TIME_BEFORE_RELOGIN)) {
@@ -176,7 +175,9 @@ public class Login {
                             return;
                         }
                     }
-                    if (now < nextRefresh) {
+                    if (now == nextRefresh) {
+                        LOG.info("refreshing now because expiry is before next scheduled refresh time.");
+                    } else if (now < nextRefresh) {
                         Date until = new Date(nextRefresh);
                         LOG.info("TGT refresh sleeping until: " + until.toString());
                         try {
@@ -191,7 +192,7 @@ public class Login {
                                 + " clock sync between this host and KDC - (KDC's clock is likely ahead of this host)."
                                 + " Manual intervention will be required for this client to successfully authenticate."
                                 + " Exiting refresh thread.");
-                        return;
+                        break;
                     }
                     if (isUsingTicketCache) {
                         String cmd = "/usr/bin/kinit";
