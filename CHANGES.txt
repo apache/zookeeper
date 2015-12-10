@@ -17,6 +17,9 @@ BUGFIXES:
   ZOOKEEPER-2281: ZK Server startup fails if there are spaces in the JAVA_HOME
   path (Neha Bathra via cnauroth)
 
+  ZOOKEEPER-2340: JMX is disabled even if JMXDISABLE is false
+  (Arshad Mohammad via rgs)
+
 Release 3.4.7 - 2015-11-08
 
 Backward compatible changes:

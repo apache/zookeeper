@@ -43,7 +43,7 @@ then
     JMXLOCALONLY=false
 fi
 
-if [ "x$JMXDISABLE" = "x" ]
+if [ "x$JMXDISABLE" = "x" ] || [ "$JMXDISABLE" = 'false' ]
 then
   echo "ZooKeeper JMX enabled by default" >&2
   if [ "x$JMXPORT" = "x" ]
