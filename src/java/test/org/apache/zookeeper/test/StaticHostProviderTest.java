@@ -79,15 +79,15 @@ public class StaticHostProviderTest extends ZKTestCase {
     @Test(expected = IllegalArgumentException.class)
     public void testTwoInvalidHostAddresses() {
         ArrayList<InetSocketAddress> list = new ArrayList<InetSocketAddress>();
-        list.add(new InetSocketAddress("a", 2181));
-        list.add(new InetSocketAddress("b", 2181));
+        list.add(new InetSocketAddress("a...", 2181));
+        list.add(new InetSocketAddress("b...", 2181));
         new StaticHostProvider(list);
     }
 
     @Test
     public void testOneInvalidHostAddresses() {
         Collection<InetSocketAddress> addr = getServerAddresses((byte) 1);
-        addr.add(new InetSocketAddress("a", 2181));
+        addr.add(new InetSocketAddress("a...", 2181));
 
         StaticHostProvider sp = new StaticHostProvider(addr);
         InetSocketAddress n1 = sp.next(0);
