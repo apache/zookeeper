@@ -244,6 +244,9 @@ BUGFIXES:
   ZOOKEEPER-2252: Random test case failure in
   org.apache.zookeeper.test.StaticHostProviderTest (Timothy Ward via cnauroth)
 
+  ZOOKEEPER-1029: C client bug in zookeeper_init (if bad hostname is given)
+  (fpj via cnauroth)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
