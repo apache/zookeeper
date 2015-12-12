@@ -201,9 +201,9 @@ public class TruncateTest extends ZKTestCase {
         
         // Start up two of the quorum and add 10 txns
         HashMap<Long,QuorumServer> peers = new HashMap<Long,QuorumServer>();
-        peers.put(Long.valueOf(1), new QuorumServer(1, new InetSocketAddress("127.0.0.1", port1 + 1000)));
-        peers.put(Long.valueOf(2), new QuorumServer(2, new InetSocketAddress("127.0.0.1", port2 + 1000)));
-        peers.put(Long.valueOf(3), new QuorumServer(3, new InetSocketAddress("127.0.0.1", port3 + 1000)));
+        peers.put(Long.valueOf(1), new QuorumServer(1, "127.0.0.1", port1 + 1000, 0, null));
+        peers.put(Long.valueOf(2), new QuorumServer(2, "127.0.0.1", port2 + 1000, 0, null));
+        peers.put(Long.valueOf(3), new QuorumServer(3, "127.0.0.1", port3 + 1000, 0, null));
 
         QuorumPeer s2 = new QuorumPeer(peers, dataDir2, dataDir2, port2, 0, 2, tickTime, initLimit, syncLimit);
         s2.start();

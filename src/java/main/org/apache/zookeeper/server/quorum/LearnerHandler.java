@@ -388,7 +388,13 @@ public class LearnerHandler extends ZooKeeperThread {
 
                 LinkedList<Proposal> proposals = leader.zk.getZKDatabase().getCommittedLog();
 
-                if (proposals.size() != 0) {
+                if (peerLastZxid == leader.zk.getZKDatabase().getDataTreeLastProcessedZxid()) {
+                    // Follower is already sync with us, send empty diff
+                    LOG.info("leader and follower are in sync, zxid=0x{}",
+                            Long.toHexString(peerLastZxid));
+                    packetToSend = Leader.DIFF;
+                    zxidToSend = peerLastZxid;
+                } else if (proposals.size() != 0) {
                     LOG.debug("proposal size is {}", proposals.size());
                     if ((maxCommittedLog >= peerLastZxid)
                             && (minCommittedLog <= peerLastZxid)) {
@@ -444,15 +450,6 @@ public class LearnerHandler extends ZooKeeperThread {
                     } else {
                         LOG.warn("Unhandled proposal scenario");
                     }
-                } else if (peerLastZxid == leader.zk.getZKDatabase().getDataTreeLastProcessedZxid()) {
-                    // The leader may recently take a snapshot, so the committedLog
-                    // is empty. We don't need to send snapshot if the follow
-                    // is already sync with in-memory db.
-                    LOG.debug("committedLog is empty but leader and follower "
-                            + "are in sync, zxid=0x{}",
-                            Long.toHexString(peerLastZxid));
-                    packetToSend = Leader.DIFF;
-                    zxidToSend = peerLastZxid;
                 } else {
                     // just let the state transfer happen
                     LOG.debug("proposals is empty");

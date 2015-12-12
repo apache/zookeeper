@@ -390,11 +390,22 @@ public class QuorumCnxManager {
                 // detail.
                 LOG.warn("Cannot open channel to " + sid
                         + " at election address " + electionAddr, e);
+                // Resolve hostname for this server in case the
+                // underlying ip address has changed.
+                if (self.getView().containsKey(sid)) {
+                    self.getView().get(sid).recreateSocketAddresses();
+                }
                 throw e;
             } catch (IOException e) {
                 LOG.warn("Cannot open channel to " + sid
                         + " at election address " + electionAddr,
                         e);
+                // We can't really tell if the server is actually down or it failed
+                // to connect to the server because the underlying IP address
+                // changed. Resolve the hostname again just in case.
+                if (self.getView().containsKey(sid)) {
+                    self.getView().get(sid).recreateSocketAddresses();
+                }
             }
         } else {
             LOG.debug("There is a connection already for server " + sid);

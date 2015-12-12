@@ -15,19 +15,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ZOOKEEPER_VERSION_H_
-#define ZOOKEEPER_VERSION_H_
+package org.apache.zookeeper.server;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+/**
+ * Listener for the critical resource events.
+ */
+public interface ZooKeeperServerListener {
 
-#define ZOO_MAJOR_VERSION 3
-#define ZOO_MINOR_VERSION 4
-#define ZOO_PATCH_VERSION 7
-
-#ifdef __cplusplus
+    /**
+     * This will notify the server that some critical thread has stopped. It
+     * usually takes place when fatal error occurred.
+     * 
+     * @param threadName
+     *            - name of the thread
+     * @param errorCode
+     *            - error code
+     */
+    void notifyStopping(String threadName, int errorCode);
 }
-#endif
-
-#endif /* ZOOKEEPER_VERSION_H_ */

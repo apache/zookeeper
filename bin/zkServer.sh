@@ -21,6 +21,19 @@
 # relative to the canonical path of this script.
 #
 
+
+
+# use POSTIX interface, symlink is followed automatically
+ZOOBIN="${BASH_SOURCE-$0}"
+ZOOBIN="$(dirname "${ZOOBIN}")"
+ZOOBINDIR="$(cd "${ZOOBIN}"; pwd)"
+
+if [ -e "$ZOOBIN/../libexec/zkEnv.sh" ]; then
+  . "$ZOOBINDIR/../libexec/zkEnv.sh"
+else
+  . "$ZOOBINDIR/zkEnv.sh"
+fi
+
 # See the following page for extensive details on setting
 # up the JVM to accept JMX remote management:
 # http://java.sun.com/javase/6/docs/technotes/guides/management/agent.html
@@ -30,7 +43,7 @@ then
     JMXLOCALONLY=false
 fi
 
-if [ "x$JMXDISABLE" = "x" ]
+if [ "x$JMXDISABLE" = "x" ] || [ "$JMXDISABLE" = 'false' ]
 then
   echo "ZooKeeper JMX enabled by default" >&2
   if [ "x$JMXPORT" = "x" ]
@@ -63,17 +76,6 @@ else
     ZOOMAIN="org.apache.zookeeper.server.quorum.QuorumPeerMain"
 fi
 
-# use POSTIX interface, symlink is followed automatically
-ZOOBIN="${BASH_SOURCE-$0}"
-ZOOBIN="$(dirname "${ZOOBIN}")"
-ZOOBINDIR="$(cd "${ZOOBIN}"; pwd)"
-
-if [ -e "$ZOOBIN/../libexec/zkEnv.sh" ]; then
-  . "$ZOOBINDIR/../libexec/zkEnv.sh"
-else
-  . "$ZOOBINDIR/zkEnv.sh"
-fi
-
 if [ "x$SERVER_JVMFLAGS"  != "x" ]
 then
     JVMFLAGS="$SERVER_JVMFLAGS $JVMFLAGS"
@@ -101,8 +103,16 @@ fi
 
 echo "Using config: $ZOOCFG" >&2
 
+case "$OSTYPE" in
+*solaris*)
+  GREP=/usr/xpg4/bin/grep
+  ;;
+*)
+  GREP=grep
+  ;;
+esac
 if [ -z "$ZOOPIDFILE" ]; then
-    ZOO_DATADIR="$(grep "^[[:space:]]*dataDir" "$ZOOCFG" | sed -e 's/.*=//')"
+    ZOO_DATADIR="$($GREP "^[[:space:]]*dataDir" "$ZOOCFG" | sed -e 's/.*=//')"
     if [ ! -d "$ZOO_DATADIR" ]; then
         mkdir -p "$ZOO_DATADIR"
     fi
@@ -131,7 +141,15 @@ start)
     -cp "$CLASSPATH" $JVMFLAGS $ZOOMAIN "$ZOOCFG" > "$_ZOO_DAEMON_OUT" 2>&1 < /dev/null &
     if [ $? -eq 0 ]
     then
-      if /bin/echo -n $! > "$ZOOPIDFILE"
+      case "$OSTYPE" in
+      *solaris*)
+        /bin/echo "${!}\\c" > "$ZOOPIDFILE"
+        ;;
+      *)
+        /bin/echo -n $! > "$ZOOPIDFILE"
+        ;;
+      esac
+      if [ $? -eq 0 ];
       then
         sleep 1
         echo STARTED
@@ -182,16 +200,16 @@ restart)
     ;;
 status)
     # -q is necessary on some versions of linux where nc returns too quickly, and no stat result is output
-    clientPortAddress=`grep "^[[:space:]]*clientPortAddress[^[:alpha:]]" "$ZOOCFG" | sed -e 's/.*=//'`
+    clientPortAddress=`$GREP "^[[:space:]]*clientPortAddress[^[:alpha:]]" "$ZOOCFG" | sed -e 's/.*=//'`
     if ! [ $clientPortAddress ]
     then
 	clientPortAddress="localhost"
     fi
-    clientPort=`grep "^[[:space:]]*clientPort[^[:alpha:]]" "$ZOOCFG" | sed -e 's/.*=//'`
+    clientPort=`$GREP "^[[:space:]]*clientPort[^[:alpha:]]" "$ZOOCFG" | sed -e 's/.*=//'`
     STAT=`"$JAVA" "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
              -cp "$CLASSPATH" $JVMFLAGS org.apache.zookeeper.client.FourLetterWordMain \
              $clientPortAddress $clientPort srvr 2> /dev/null    \
-          | grep Mode`
+          | $GREP Mode`
     if [ "x$STAT" = "x" ]
     then
         echo "Error contacting service. It is probably not running."

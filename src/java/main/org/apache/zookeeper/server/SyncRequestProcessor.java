@@ -75,9 +75,9 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
     private final Request requestOfDeath = Request.requestOfDeath;
 
     public SyncRequestProcessor(ZooKeeperServer zks,
-            RequestProcessor nextProcessor)
-    {
-        super("SyncThread:" + zks.getServerId());
+            RequestProcessor nextProcessor) {
+        super("SyncThread:" + zks.getServerId(), zks
+                .getZooKeeperServerListener());
         this.zks = zks;
         this.nextProcessor = nextProcessor;
         running = true;
@@ -180,7 +180,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
                 }
             }
         } catch (Throwable t) {
-            super.handleException(this.getName(), t);
+            handleException(this.getName(), t);
             running = false;
             System.exit(11);
         }

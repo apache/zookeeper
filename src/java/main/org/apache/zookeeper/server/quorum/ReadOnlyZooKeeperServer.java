@@ -131,6 +131,10 @@ public class ReadOnlyZooKeeperServer extends QuorumZooKeeperServer {
 
     @Override
     public synchronized void shutdown() {
+        if (!isRunning()) {
+            LOG.debug("ZooKeeper server is not running, so not proceeding to shutdown!");
+            return;
+        }
         shutdown = true;
         unregisterJMX(this);
 

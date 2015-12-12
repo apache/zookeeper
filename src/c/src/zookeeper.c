@@ -424,8 +424,22 @@ static void setup_random()
     if (fd == -1) {
         seed = getpid();
     } else {
-        int rc = read(fd, &seed, sizeof(seed));
-        assert(rc == sizeof(seed));
+        int seed_len = 0;
+
+        /* Enter a loop to fill in seed with random data from /dev/urandom.
+         * This is done in a loop so that we can safely handle short reads
+         * which can happen due to signal interruptions.
+         */
+        while (seed_len < sizeof(seed)) {
+            /* Assert we either read something or we were interrupted due to a
+             * signal (errno == EINTR) in which case we need to retry.
+             */
+            int rc = read(fd, &seed + seed_len, sizeof(seed) - seed_len);
+            assert(rc > 0 || errno == EINTR);
+            if (rc > 0) {
+                seed_len += rc;
+            }
+        }
         close(fd);
     }
     srandom(seed);
@@ -1150,27 +1164,24 @@ void free_completions(zhandle_t *zh,int callCompletion,int reason)
     void_completion_t auth_completion = NULL;
     auth_completion_list_t a_list, *a_tmp;
 
-    lock_completion_list(&zh->sent_requests);
-    tmp_list = zh->sent_requests;
-    zh->sent_requests.head = 0;
-    zh->sent_requests.last = 0;
-    unlock_completion_list(&zh->sent_requests);
-    while (tmp_list.head) {
-        completion_list_t *cptr = tmp_list.head;
+    if (lock_completion_list(&zh->sent_requests) == 0) {
+        tmp_list = zh->sent_requests;
+        zh->sent_requests.head = 0;
+        zh->sent_requests.last = 0;
+        unlock_completion_list(&zh->sent_requests);
+    
+        while (tmp_list.head) {
+            completion_list_t *cptr = tmp_list.head;
 
-        tmp_list.head = cptr->next;
-        if (cptr->c.data_result == SYNCHRONOUS_MARKER) {
-            struct sync_completion
-                        *sc = (struct sync_completion*)cptr->data;
-            sc->rc = reason;
-            notify_sync_completion(sc);
-            zh->outstanding_sync--;
-            destroy_completion_entry(cptr);
-        } else if (callCompletion) {
-            if(cptr->xid == PING_XID){
-                // Nothing to do with a ping response
+            tmp_list.head = cptr->next;
+            if (cptr->c.data_result == SYNCHRONOUS_MARKER) {
+                struct sync_completion
+                            *sc = (struct sync_completion*)cptr->data;
+                sc->rc = reason;
+                notify_sync_completion(sc);
+                zh->outstanding_sync--;
                 destroy_completion_entry(cptr);
-            } else {
+            } else if (callCompletion) {
                 // Fake the response
                 buffer_list_t *bptr;
                 h.xid = cptr->xid;
@@ -1188,19 +1199,22 @@ void free_completions(zhandle_t *zh,int callCompletion,int reason)
             }
         }
     }
-    a_list.completion = NULL;
-    a_list.next = NULL;
-    zoo_lock_auth(zh);
-    get_auth_completions(&zh->auth_h, &a_list);
-    zoo_unlock_auth(zh);
-    a_tmp = &a_list;
-    // chain call user's completion function
-    while (a_tmp->completion != NULL) {
-        auth_completion = a_tmp->completion;
-        auth_completion(reason, a_tmp->auth_data);
-        a_tmp = a_tmp->next;
-        if (a_tmp == NULL)
-            break;
+    if (zoo_lock_auth(zh) == 0) {
+        a_list.completion = NULL;
+        a_list.next = NULL;
+    
+        get_auth_completions(&zh->auth_h, &a_list);
+        zoo_unlock_auth(zh);
+    
+        a_tmp = &a_list;
+        // chain call user's completion function
+        while (a_tmp->completion != NULL) {
+            auth_completion = a_tmp->completion;
+            auth_completion(reason, a_tmp->auth_data);
+            a_tmp = a_tmp->next;
+            if (a_tmp == NULL)
+                break;
+        }
     }
     free_auth_completion(&a_list);
 }
@@ -1526,7 +1540,6 @@ static struct timeval get_timeval(int interval)
     rc = serialize_RequestHeader(oa, "header", &h);
     enter_critical(zh);
     gettimeofday(&zh->last_ping, 0);
-    rc = rc < 0 ? rc : add_void_completion(zh, h.xid, 0, 0);
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
     leave_critical(zh);
@@ -2079,12 +2092,8 @@ static void deserialize_response(int type, int xid, int failed, int rc, completi
     case COMPLETION_VOID:
         LOG_DEBUG(("Calling COMPLETION_VOID for xid=%#x failed=%d rc=%d",
                     cptr->xid, failed, rc));
-        if (xid == PING_XID) {
-            // We want to skip the ping
-        } else {
-            assert(cptr->c.void_result);
-            cptr->c.void_result(rc, cptr->data);
-        }
+        assert(cptr->c.void_result);
+        cptr->c.void_result(rc, cptr->data);
         break;
     case COMPLETION_MULTI:
         LOG_DEBUG(("Calling COMPLETION_MULTI for xid=%#x failed=%d rc=%d",
@@ -2200,7 +2209,15 @@ int zookeeper_process(zhandle_t *zh, int events)
             // fprintf(stderr, "Got %#x for %#x\n", hdr.zxid, hdr.xid);
         }
 
-        if (hdr.xid == WATCHER_EVENT_XID) {
+        if (hdr.xid == PING_XID) {
+            // Ping replies can arrive out-of-order
+            int elapsed = 0;
+            struct timeval now;
+            gettimeofday(&now, 0);
+            elapsed = calculate_interval(&zh->last_ping, &now);
+            LOG_DEBUG(("Got ping response in %d ms", elapsed));
+            free_buffer(bptr);
+        } else if (hdr.xid == WATCHER_EVENT_XID) {
             struct WatcherEvent evt;
             int type = 0;
             char *path = NULL;
@@ -2267,22 +2284,9 @@ int zookeeper_process(zhandle_t *zh, int events)
             activateWatcher(zh, cptr->watcher, rc);
 
             if (cptr->c.void_result != SYNCHRONOUS_MARKER) {
-                if(hdr.xid == PING_XID){
-                    int elapsed = 0;
-                    struct timeval now;
-                    gettimeofday(&now, 0);
-                    elapsed = calculate_interval(&zh->last_ping, &now);
-                    LOG_DEBUG(("Got ping response in %d ms", elapsed));
-
-                    // Nothing to do with a ping response
-                    free_buffer(bptr);
-                    destroy_completion_entry(cptr);
-                } else {
-                    LOG_DEBUG(("Queueing asynchronous response"));
-
-                    cptr->buffer = bptr;
-                    queue_completion(&zh->completions_to_process, cptr, 0);
-                }
+                LOG_DEBUG(("Queueing asynchronous response"));
+                cptr->buffer = bptr;
+                queue_completion(&zh->completions_to_process, cptr, 0);
             } else {
                 struct sync_completion
                         *sc = (struct sync_completion*)cptr->data;

@@ -26,8 +26,10 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -93,20 +95,20 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     private ZKDatabase zkDb;
 
     public static class QuorumServer {
-        public QuorumServer(long id, InetSocketAddress addr,
+        private QuorumServer(long id, InetSocketAddress addr,
                 InetSocketAddress electionAddr) {
             this.id = id;
             this.addr = addr;
             this.electionAddr = electionAddr;
         }
 
-        public QuorumServer(long id, InetSocketAddress addr) {
+        private QuorumServer(long id, InetSocketAddress addr) {
             this.id = id;
             this.addr = addr;
             this.electionAddr = null;
         }
         
-        public QuorumServer(long id, InetSocketAddress addr,
+        private QuorumServer(long id, InetSocketAddress addr,
                     InetSocketAddress electionAddr, LearnerType type) {
             this.id = id;
             this.addr = addr;
@@ -114,10 +116,67 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             this.type = type;
         }
         
+        public QuorumServer(long id, String hostname,
+                            Integer port, Integer electionPort,
+                            LearnerType type) {
+	        this.id = id;
+	        this.hostname=hostname;
+	        if (port!=null){
+                this.port=port;
+	        }
+	        if (electionPort!=null){
+                this.electionPort=electionPort;
+	        }
+	        if (type!=null){
+                this.type = type;
+	        }
+	        this.recreateSocketAddresses();
+	    }
+
+        /**
+         * Performs a DNS lookup of hostname and (re)creates the this.addr and
+         * this.electionAddr InetSocketAddress objects as appropriate
+         *
+         * If the DNS lookup fails, this.addr and electionAddr remain
+         * unmodified, unless they were never set. If this.addr is null, then
+         * it is set with an unresolved InetSocketAddress object. this.electionAddr
+         * is handled similarly.
+         */
+        public void recreateSocketAddresses() {
+            InetAddress address = null;
+            try {
+                address = InetAddress.getByName(this.hostname);
+                LOG.info("Resolved hostname: {} to address: {}", this.hostname, address);
+                this.addr = new InetSocketAddress(address, this.port);
+                if (this.electionPort > 0){
+                    this.electionAddr = new InetSocketAddress(address, this.electionPort);
+                }
+            } catch (UnknownHostException ex) {
+                LOG.warn("Failed to resolve address: {}", this.hostname, ex);
+                // Have we succeeded in the past?
+                if (this.addr != null) {
+                    // Yes, previously the lookup succeeded. Leave things as they are
+                    return;
+                }
+                // The hostname has never resolved. Create our InetSocketAddress(es) as unresolved
+                this.addr = InetSocketAddress.createUnresolved(this.hostname, this.port);
+                if (this.electionPort > 0){
+                    this.electionAddr = InetSocketAddress.createUnresolved(this.hostname,
+                                                                           this.electionPort);
+                }
+            }
+        }
+
         public InetSocketAddress addr;
 
         public InetSocketAddress electionAddr;
         
+        public String hostname;
+
+        public int port=2888;
+
+        public int electionPort=-1;
+
         public long id;
         
         public LearnerType type = LearnerType.PARTICIPANT;
@@ -492,7 +551,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             	writeLongToFile(ACCEPTED_EPOCH_FILENAME, acceptedEpoch);
             }
             if (acceptedEpoch < currentEpoch) {
-            	throw new IOException("The current epoch, " + ZxidUtils.zxidToString(currentEpoch) + " is less than the accepted epoch, " + ZxidUtils.zxidToString(acceptedEpoch));
+            	throw new IOException("The accepted epoch, " + ZxidUtils.zxidToString(acceptedEpoch) + " is less than the current epoch, " + ZxidUtils.zxidToString(currentEpoch));
             }
         } catch(IOException ie) {
             LOG.error("Unable to load database on disk", ie);

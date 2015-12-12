@@ -300,9 +300,8 @@ public class LENonTerminateTest extends ZKTestCase {
         for(int i = 0; i < count; i++) {
             int clientport = PortAssignment.unique();
             peers.put(Long.valueOf(i),
-                    new QuorumServer(i,
-                            new InetSocketAddress("127.0.0.1", clientport),
-                            new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
+                      new QuorumServer(i, "127.0.0.1", clientport,
+                                       PortAssignment.unique(), null));
             tmpdir[i] = ClientBase.createTmpDir();
             port[i] = clientport;
         }

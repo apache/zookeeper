@@ -2,6 +2,33 @@ Backward compatible changes:
 
 BUGFIXES:
 
+  ZOOKEEPER-1929: std::length_error on update children
+  (Charles Strahan via rgs)
+
+  ZOOKEEPER-2211: PurgeTxnLog does not correctly purge when snapshots and
+  logs are at different locations (Arshad Mohammad via rgs)
+
+  ZOOKEEPER-2311: assert in setup_random
+  (Marshall McMullen via rgs)
+
+  ZOOKEEPER-2295: TGT refresh time logic is wrong
+  (Arshad Mohammad via rgs)
+
+  ZOOKEEPER-2281: ZK Server startup fails if there are spaces in the JAVA_HOME
+  path (Neha Bathra via cnauroth)
+
+  ZOOKEEPER-2340: JMX is disabled even if JMXDISABLE is false
+  (Arshad Mohammad via rgs)
+
+  ZOOKEEPER-2229: Several four-letter words are undocumented
+  (Chris Nauroth via rgs)
+
+Release 3.4.7 - 2015-11-08
+
+Backward compatible changes:
+
+BUGFIXES:
+
   ZOOKEEPER-1888. ZkCli.cmd commands fail with "'java' is not recognized as an
   internal or external command" (Ivan Mitic via michim)
 
@@ -107,6 +134,46 @@ BUGFIXES:
   ZOOKEEPER-2239: JMX State from LocalPeerBean incorrect
   (Kevin Lee via rgs)
 
+  ZOOKEEPER-1927: zkServer.sh fails to read dataDir (and others)
+  from zoo.cfg on Solaris 10 (grep issue, manifests as FAILED TO WRITE PID)
+  (Chris Nauroth via rgs)
+
+  ZOOKEEPER-2033: zookeeper follower fails to start after
+  a restart immediately following a new epoch (Asad Saeed via fpj)
+
+  ZOOKEEPER-2256: Zookeeper is not using specified JMX port in zkEnv.sh
+  (Arshad Mohammad via rakeshr)
+ 
+  ZOOKEEPER-1506: Re-try DNS hostname -> IP resolution if node connection
+  fails (Robert Thille via fpj)
+
+  ZOOKEEPER-2279: QuorumPeer loadDataBase() error message is incorrect
+  (Arshad Mohammad via rakeshr)
+
+  ZOOKEEPER-1803: Add description for pzxid in programmer's guide
+  (Arshad Mohammad via rakeshr)
+
+  ZOOKEEPER-2253: C asserts ordering of ping requests, while Java client does not
+  (Chris Chen via rgs)
+
+  ZOOKEEPER-2268: Zookeeper doc creation fails on windows
+  (Arshad Mohammad via cnauroth)
+
+  ZOOKEEPER-2296: compilation broken for 3.4
+  (Raul Gutierrez Segales via cnauroth)
+
+  ZOOKEEPER-1029: C client bug in zookeeper_init (if bad hostname is given)
+  (fpj via cnauroth)
+
+  ZOOKEEPER-2142: JMX ObjectName is incorrect for observers (Edward Ribeiro
+  via michim)
+
+  ZOOKEEPER-1853: zkCli.sh can't issue a CREATE command containing
+  spaces in the data (Jun Gong via rgs)
+
+  ZOOKEEPER-2227: stmk four-letter word fails execution at server while reading
+  trace mask argument (Chris Nauroth via rgs)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-1575. adding .gitattributes to prevent CRLF and LF mismatches for
@@ -130,6 +197,23 @@ IMPROVEMENTS:
 
   ZOOKEEPER-2205: Log type of unexpected quorum packet in learner handler loop
   (Hitoshi Mitake via rgs)
+
+  ZOOKEEPER-1907 Improve Thread handling
+  (Rakesh R via hdeng)
+
+  ZOOKEEPER-2270: Allow MBeanRegistry to be overridden for better unit tests
+  (Jordan Zimmerman via rgs)
+
+  ZOOKEEPER-2040: Server to log underlying cause of SASL connection problems.
+  (Steve Loughran via cnauroth)
+
+  ZOOKEEPER-2245: SimpleSysTest test cases fails (Arshad Mohammad via rakeshr)
+
+  ZOOKEEPER-2315: Change client connect zk service timeout log level from Info
+  to Warn level (Lin Yiqun via rgs)
+
+  ZOOKEEPER-2240: Make the three-node minimum more explicit in documentation
+  and on website (Shawn Heisey via rgs)
 
 NEW FEATURES:
 

@@ -15,19 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ZOOKEEPER_VERSION_H_
-#define ZOOKEEPER_VERSION_H_
+package org.apache.zookeeper.server;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+/**
+ * Exit code used to exit server
+ */
+public class ExitCode {
 
-#define ZOO_MAJOR_VERSION 3
-#define ZOO_MINOR_VERSION 4
-#define ZOO_PATCH_VERSION 7
-
-#ifdef __cplusplus
+    /* Represents unexpected error */
+    public final static int UNEXPECTED_ERROR = 1;
 }
-#endif
-
-#endif /* ZOOKEEPER_VERSION_H_ */
