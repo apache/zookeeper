@@ -73,8 +73,7 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
     protected void setupRequestProcessors() {
         RequestProcessor finalProcessor = new FinalRequestProcessor(this);
         commitProcessor = new CommitProcessor(finalProcessor,
-                Long.toString(getServerId()), true,
-                getZooKeeperServerListener());
+                Long.toString(getServerId()), true);
         commitProcessor.start();
         firstProcessor = new FollowerRequestProcessor(this, commitProcessor);
         ((FollowerRequestProcessor) firstProcessor).start();

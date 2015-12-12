@@ -27,7 +27,6 @@ import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperCriticalThread;
-import org.apache.zookeeper.server.ZooKeeperServerListener;
 
 /**
  * This RequestProcessor matches the incoming committed requests with the
@@ -58,9 +57,8 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
      */
     boolean matchSyncs;
 
-    public CommitProcessor(RequestProcessor nextProcessor, String id,
-            boolean matchSyncs, ZooKeeperServerListener listener) {
-        super("CommitProcessor:" + id, listener);
+    public CommitProcessor(RequestProcessor nextProcessor, String id, boolean matchSyncs) {
+        super("CommitProcessor:" + id);
         this.nextProcessor = nextProcessor;
         this.matchSyncs = matchSyncs;
     }

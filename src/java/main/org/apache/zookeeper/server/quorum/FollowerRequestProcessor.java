@@ -47,8 +47,7 @@ public class FollowerRequestProcessor extends ZooKeeperCriticalThread implements
 
     public FollowerRequestProcessor(FollowerZooKeeperServer zks,
             RequestProcessor nextProcessor) {
-        super("FollowerRequestProcessor:" + zks.getServerId(), zks
-                .getZooKeeperServerListener());
+        super("FollowerRequestProcessor:" + zks.getServerId());
         this.zks = zks;
         this.nextProcessor = nextProcessor;
     }

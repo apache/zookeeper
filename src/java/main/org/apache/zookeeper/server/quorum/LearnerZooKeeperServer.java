@@ -71,9 +71,8 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
     
     @Override
     public void createSessionTracker() {
-        sessionTracker = new LearnerSessionTracker(this, getZKDatabase()
-                .getSessionWithTimeOuts(), self.getId(),
-                getZooKeeperServerListener());
+        sessionTracker = new LearnerSessionTracker(this, getZKDatabase().getSessionWithTimeOuts(),
+                self.getId());
     }
     
     @Override
