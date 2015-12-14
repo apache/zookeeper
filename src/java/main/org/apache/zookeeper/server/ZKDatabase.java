@@ -43,6 +43,7 @@ import org.apache.zookeeper.Watcher.WatcherType;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.PathWithStat;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -472,6 +473,20 @@ public class ZKDatabase {
     public List<String> getChildren(String path, Stat stat, Watcher watcher)
     throws KeeperException.NoNodeException {
         return dataTree.getChildren(path, stat, watcher);
+    }
+
+    /**
+     * get paginated children list for this path
+     * @param path the path of the node
+     * @param stat the stat of the node
+     * @param watcher the watcher function for this path
+     * @param maxReturned the maximum number of nodes to be returned. One more will be returned to indicate truncation
+     * @param minZkId We want to filter out any node whose zkID is <= to minZkId
+     * @return  A list of PathWithStat not bounded by maxReturned
+     * @throws NoNodeException
+     */
+    public List<PathWithStat> getPaginatedChildren(String path, Stat stat, Watcher watcher, int maxReturned, long minZkId) throws NoNodeException {
+        return dataTree.getPaginatedChildren(path, stat, watcher, maxReturned, minZkId);
     }
 
     /**

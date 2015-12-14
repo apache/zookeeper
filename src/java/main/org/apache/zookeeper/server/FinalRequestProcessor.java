@@ -34,6 +34,7 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.PathWithStat;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.CheckWatchesRequest;
 import org.apache.zookeeper.proto.Create2Response;
@@ -44,6 +45,8 @@ import org.apache.zookeeper.proto.GetACLRequest;
 import org.apache.zookeeper.proto.GetACLResponse;
 import org.apache.zookeeper.proto.GetChildren2Request;
 import org.apache.zookeeper.proto.GetChildren2Response;
+import org.apache.zookeeper.proto.GetChildrenPaginatedResponse;
+import org.apache.zookeeper.proto.GetChildrenPaginatedRequest;
 import org.apache.zookeeper.proto.GetChildrenRequest;
 import org.apache.zookeeper.proto.GetChildrenResponse;
 import org.apache.zookeeper.proto.GetDataRequest;
@@ -417,6 +420,38 @@ public class FinalRequestProcessor implements RequestProcessor {
                             new Object[] { removeWatches.getPath(), type });
                     throw new KeeperException.NoWatcherException(msg);
                 }
+                break;
+            }
+            case OpCode.getChildrenPaginated: {
+                lastOp = "GETC";
+                GetChildrenPaginatedRequest getChildrenPaginatedRequest = new GetChildrenPaginatedRequest();
+                ByteBufferInputStream.byteBuffer2Record(request.request,
+                        getChildrenPaginatedRequest);
+                Stat stat = new Stat();
+                DataNode n = zks.getZKDatabase().getNode(getChildrenPaginatedRequest.getPath());
+                if (n == null) {
+                    throw new KeeperException.NoNodeException();
+                }
+                Long aclG;
+                synchronized(n) {
+                    aclG = n.acl;
+                }
+                PrepRequestProcessor.checkACL(zks, zks.getZKDatabase().convertLong(aclG),
+                        ZooDefs.Perms.READ,
+                        request.authInfo);
+                final int maxReturned = getChildrenPaginatedRequest.getMaxReturned();
+                List<PathWithStat> list = zks.getZKDatabase().getPaginatedChildren(
+                        getChildrenPaginatedRequest.getPath(), stat,
+                        getChildrenPaginatedRequest.getWatch() ? cnxn : null,
+                        maxReturned,
+                        getChildrenPaginatedRequest.getMinzkid());
+                //  Check if we truncated...
+                boolean watching = false;
+                if (list.size() > maxReturned) {
+                    watching = true;
+                    list = list.subList(0, maxReturned);
+                }
+                rsp = new GetChildrenPaginatedResponse(list, watching, stat);
                 break;
             }
             }

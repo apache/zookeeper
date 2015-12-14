@@ -37,6 +37,7 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.PathTrie;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.PathWithStat;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.txn.CheckVersionTxn;
@@ -59,11 +60,14 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -683,6 +687,64 @@ public class DataTree {
                 childWatches.addWatch(path, watcher);
             }
             return children;
+        }
+    }
+
+    /**
+     * This will return a paginated list of children for a given path
+     * @param path          The path we want to list
+     * @param stat          The current stat for this path
+     * @param watcher       The watcher to attach to this path. The watcher will be added only when we return <= maxReturned items
+     * @param maxReturned   How many to return max. We will return one more than this number to indicate truncation
+     * @param minZkId       The last zkID to not return. Any returned item will have a zkid > minZkId
+     * @return              A list of path with stats
+     * @throws NoNodeException
+     */
+    public List<PathWithStat> getPaginatedChildren(String path, Stat stat, Watcher watcher, int maxReturned, long minZkId) throws NoNodeException {
+        DataNode n = nodes.get(path);
+        if (n == null) {
+            throw new KeeperException.NoNodeException();
+        }
+        synchronized (n) {
+            if (stat != null) {
+                n.copyStat(stat);
+            }
+            PriorityQueue<PathWithStat> children;
+            Set<String> childs = n.getChildren();
+            if (childs == null) {
+                children = new PriorityQueue<PathWithStat>(1);
+            } else {
+                children = new PriorityQueue<PathWithStat>(maxReturned + 1, new Comparator<PathWithStat>() {
+                    @Override
+                    public int compare(PathWithStat o1, PathWithStat o2) {
+                        final long l = o2.getStat().getMzxid() - o1.getStat().getMzxid();
+                        return l < 0 ? -1 : (l == 0 ? 0 : 1);
+                    }
+                });
+                for (String child: childs) {
+                    DataNode childNode = nodes.get(path + "/" + child);
+                    if (null != childNode) {
+                        final long mzxid = childNode.stat.getMzxid();
+                        if (mzxid <= minZkId) continue; // Filter out the nodes that are below our water mark
+                        Stat childStat = new Stat();
+                        childNode.copyStat(childStat);
+                        children.add(new PathWithStat(child, childStat));
+                        //  Do we have more than we want (maxReturned + 1), if so discard right away the extra one
+                        if (children.size() > maxReturned + 1) {
+                            children.poll();
+                        }
+                    }
+                }
+            }
+
+            if (children.size() <= maxReturned) {
+                if (watcher != null) {
+                    childWatches.addWatch(path, watcher);
+                }
+            }
+            LinkedList<PathWithStat> result = new LinkedList<PathWithStat>();
+            while (!children.isEmpty()) result.addFirst(children.poll());
+            return result;
         }
     }
 

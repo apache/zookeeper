@@ -156,6 +156,7 @@ public class Request {
         case OpCode.sync:
         case OpCode.checkWatches:
         case OpCode.removeWatches:
+        case OpCode.getChildrenPaginated:
             return true;
         default:
             return false;
