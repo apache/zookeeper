@@ -247,6 +247,8 @@ BUGFIXES:
   ZOOKEEPER-1029: C client bug in zookeeper_init (if bad hostname is given)
   (fpj via cnauroth)
 
+  ZOOKEEPER-412: checkstyle target fails trunk build (Akihiro Suda via cnauroth)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
