@@ -95,6 +95,8 @@ BUGFIXES:
   ZOOKEEPER-1029: C client bug in zookeeper_init (if bad hostname is given)
   (fpj via cnauroth)
 
+  ZOOKEEPER-412: checkstyle target fails trunk build (Akihiro Suda via cnauroth)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-2270: Allow MBeanRegistry to be overridden for better unit tests

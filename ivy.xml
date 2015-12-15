@@ -60,7 +60,7 @@
     <dependency org="junit" name="junit" rev="4.12" conf="test->default"/>
 	<dependency org="org.mockito" name="mockito-all" rev="1.8.2"
                conf="test->default"/>
-    <dependency org="checkstyle" name="checkstyle" rev="5.0"
+    <dependency org="com.puppycrawl.tools" name="checkstyle" rev="6.13"
                 conf="test->default"/>
 
     <dependency org="jdiff" name="jdiff" rev="1.0.9"
