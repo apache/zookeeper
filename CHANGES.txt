@@ -828,6 +828,8 @@ BUGFIXES:
   
   ZOOKEEPER-1299. Add winconfig.h file to ignore in release audit. (mahadev)
 
+  ZOOKEEPER-412: checkstyle target fails trunk build (Akihiro Suda via cnauroth)
+
 IMPROVEMENTS:
   ZOOKEEPER-724. Improve junit test integration - log harness information 
   (phunt via mahadev)

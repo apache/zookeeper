@@ -20,7 +20,8 @@
 <project name="ZooKeeper" default="jar" 
 xmlns:ivy="antlib:org.apache.ivy.ant"
 xmlns:artifact="antlib:org.apache.maven.artifact.ant"
-xmlns:maven="antlib:org.apache.maven.artifact.ant">
+xmlns:maven="antlib:org.apache.maven.artifact.ant"
+xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
   <!-- load ant-contrib tasks to get the "if" task. -->
   <taskdef resource="net/sf/antcontrib/antcontrib.properties">
@@ -60,7 +61,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
     <property name="netty.version" value="3.10.6.Final"/>
     <property name="junit.version" value="4.12"/>
     <property name="mockito.version" value="1.8.5"/>
-    <property name="checkstyle.version" value="5.0"/>
+    <property name="checkstyle.version" value="6.13"/>
     <property name="commons-collections.version" value="3.2.2"/>
     <property name="commons-io.version" value="2.6"/>
     <property name="jdiff.version" value="1.0.9"/>
@@ -1680,31 +1681,19 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
         </cobertura-report>
     </target>
 
-    <target name="checkstyle" depends="checkstyle.check, set-checkstyle-classpath" if="checkstyle.home"
-			description="Run optional third-party tool targets">
-    	<taskdef resource="checkstyletask.properties">
-        	<classpath refid="checkstyle-classpath"/>
-        </taskdef>
-        <mkdir dir="${test.java.build.dir}"/>
-        <checkstyle config="${test.src.dir}/checkstyle.xml" failOnViolation="false">
-        	<fileset dir="${src.dir}/java" includes="**/*.java" excludes="**/generated/**"/>
-        	<formatter type="xml" toFile="${test.java.build.dir}/checkstyle-errors.xml"/>
-        </checkstyle>
-        <xslt style="${test.src.dir}/checkstyle-noframes-sorted.xsl" in="${test.java.build.dir}/checkstyle-errors.xml"
-        	out="${test.java.build.dir}/checkstyle-errors.html"/>
-    </target>
-
-    <target name="checkstyle.check" unless="checkstyle.home">
-    	<fail message="'checkstyle.home' is not defined. Please pass -Dcheckstyle.home=&lt;base of checkstyle installation&gt;
-		to Ant on the command-line." />
-    </target>
-
-    <target name="set-checkstyle-classpath">
-    	<path id="checkstyle-classpath">
-        	<fileset dir="${checkstyle.home}">
-			<include name="**/*.jar"/>
-         	</fileset>
- 	</path>
+    <target name="checkstyle" depends="ivy-retrieve-test" description="Run Checkstyle coding standard checks">
+      <taskdef resource="com/puppycrawl/tools/checkstyle/ant/checkstyle-ant-task.properties" uri="antlib:com.puppycrawl.tools.checkstyle.ant">
+        <classpath>
+          <fileset dir="${ivy.test.lib}" includes="*.jar" />
+        </classpath>
+      </taskdef>
+      <mkdir dir="${test.java.build.dir}"/>
+      <cs:checkstyle config="${test.src.dir}/checkstyle.xml" failOnViolation="false">
+        <fileset dir="${src.dir}/java" includes="**/*.java" excludes="**/generated/**"/>
+        <formatter type="xml" toFile="${test.java.build.dir}/checkstyle-errors.xml"/>
+      </cs:checkstyle>
+      <xslt style="${test.src.dir}/checkstyle-noframes-sorted.xsl" in="${test.java.build.dir}/checkstyle-errors.xml"
+            out="${test.java.build.dir}/checkstyle-errors.html"/>
     </target>
 
     <!-- ================================================================== -->

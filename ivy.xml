@@ -61,7 +61,7 @@
     <dependency org="junit" name="junit" rev="${junit.version}" conf="test->default"/>
     <dependency org="org.mockito" name="mockito-all" rev="${mockito.version}"
                conf="test->default"/>
-    <dependency org="checkstyle" name="checkstyle" rev="${checkstyle.version}"
+    <dependency org="com.puppycrawl.tools" name="checkstyle" rev="${checkstyle.version}"
                 conf="test->default"/>
     <dependency org="commons-collections" name="commons-collections" 
                 rev="${commons-collections.version}" conf="test->default"/>
