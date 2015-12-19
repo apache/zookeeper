@@ -1,4 +1,5 @@
 {
+  "parallelizeAssembly": true,
   "appDomain": "denied",
   "shadowCopy": false
 }

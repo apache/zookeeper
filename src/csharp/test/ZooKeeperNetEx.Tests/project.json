@@ -1,9 +1,8 @@
 {
   "compilationOptions": { "keyFile": "../../ZooKeeperNetEx.snk" },
   "dependencies": {
-    "xunit": "2.1.0",
     "ZooKeeperNetEx": "3.4.6.1008",
-    "xunit.runner.dnx": "2.1.0-rc1-build204",
+    "xunit.runner.aspnet": "2.0.0-aspnet-*",
     "Newtonsoft.Json": "7.0.1"
   },
   "frameworks": {
@@ -11,6 +10,6 @@
     "dnxcore50": {}
   },
   "commands": {
-    "test": "xunit.runner.dnx"
+    "test": "xunit.runner.aspnet"
   }
 }
