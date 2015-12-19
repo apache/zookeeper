@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Text;
 using System.Threading.Tasks;
 using org.apache.utils;
@@ -249,7 +248,7 @@ namespace org.apache.zookeeper.recipes.leader {
 
             var components = leaderOffer.NodePath.Split('/');
 
-            leaderOffer.Id = int.Parse(components[components.Length - 1].Substring("n_".Length), CultureInfo.InvariantCulture);
+            leaderOffer.Id = int.Parse(components[components.Length - 1].Substring("n_".Length));
 
             var leaderOffers = await toLeaderOffers((await ZooKeeper.getChildrenAsync(RootNodeName).ConfigureAwait(false)).Children).ConfigureAwait(false);
 
@@ -334,7 +333,7 @@ namespace org.apache.zookeeper.recipes.leader {
             foreach (var offer in strings) {
                 var currentHostName = Encoding.UTF8.GetString((await ZooKeeper.getDataAsync(RootNodeName + "/" + offer).ConfigureAwait(false)).Data);
 
-                leaderOffers.Add(new LeaderOffer(int.Parse(offer.Substring("n_".Length),CultureInfo.InvariantCulture),
+                leaderOffers.Add(new LeaderOffer(int.Parse(offer.Substring("n_".Length)),
                     RootNodeName + "/" + offer, currentHostName));
             }
 

@@ -16,8 +16,6 @@
 // limitations under the License.
 // </summary>
 
-using System.Globalization;
-
 namespace org.apache.zookeeper
 {
 
@@ -52,8 +50,8 @@ namespace org.apache.zookeeper
 			{
 				throw new System.ArgumentException("invalid string " + stats);
 			}
-		    Count = int.Parse(split[0].Split('=')[1], CultureInfo.InvariantCulture);
-		    Bytes = long.Parse(split[1].Split('=')[1], CultureInfo.InvariantCulture);
+		    Count = int.Parse(split[0].Split('=')[1]);
+		    Bytes = long.Parse(split[1].Split('=')[1]);
 		}
 
 

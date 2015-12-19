@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 
 using System.Threading.Tasks;
 using org.apache.zookeeper.data;
@@ -75,7 +74,7 @@ namespace org.apache.zookeeper.recipes.queue
 				        continue;
 				    }
 				    string suffix = childName.Substring(prefix.Length);
-				    long childId = long.Parse(suffix, CultureInfo.InvariantCulture);
+				    long childId = long.Parse(suffix);
 					orderedChildren[childId] = childName;
 				}
 				catch (FormatException e)

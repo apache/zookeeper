@@ -1,6 +1,5 @@
 ﻿using System;
 
-using System.Globalization;
 using org.apache.utils;
 
 // 
@@ -48,7 +47,7 @@ namespace org.apache.zookeeper.recipes.@lock
                 prefix = name.Substring(0, idx);
 				try
 				{
-                    sequence = int.Parse(name.Substring(idx + 1),CultureInfo.InvariantCulture);
+                    sequence = int.Parse(name.Substring(idx + 1));
 					// If an exception occurred we misdetected a sequence suffix,
 					// so return -1.
 				}

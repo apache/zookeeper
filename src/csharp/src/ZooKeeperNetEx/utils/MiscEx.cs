@@ -19,7 +19,6 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Text;
 
 namespace org.apache.zookeeper
@@ -59,11 +58,11 @@ namespace org.apache.zookeeper
         }
 
         public static string ToHexString(this long num) {
-            return num.ToString("x", CultureInfo.InvariantCulture);
+            return num.ToString("x");
         }
         public static string ToHexString(this byte num)
         {
-            return num.ToString("x", CultureInfo.InvariantCulture);
+            return num.ToString("x");
         }
 
         public static T poll<T>(this BlockingCollection<T> blockingCollection,int milliSeconds) {
