@@ -669,7 +669,8 @@ public class JRecord extends JCompType {
         }
         cs.write("      a_.endRecord(this,string.Empty);\n");
         cs.write("      ms.Position = 0;\n");
-        cs.write("      return Encoding.UTF8.GetString(ms.ToArray());\n");
+        cs.write("      var msArray = ms.ToArray();\n");
+        cs.write("      return Encoding.UTF8.GetString(msArray,0,msArray.Length);\n");
         cs.write("    }");
         cs.write("    } catch (Exception ex) {\n");
         cs.write("      log.error(ex);\n");

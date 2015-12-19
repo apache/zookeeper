@@ -331,7 +331,8 @@ namespace org.apache.zookeeper.recipes.leader {
 		 * the sequence number and the node name.
 		 */
             foreach (var offer in strings) {
-                var currentHostName = Encoding.UTF8.GetString((await ZooKeeper.getDataAsync(RootNodeName + "/" + offer).ConfigureAwait(false)).Data);
+                var data = (await ZooKeeper.getDataAsync(RootNodeName + "/" + offer).ConfigureAwait(false)).Data;
+                var currentHostName = Encoding.UTF8.GetString(data, 0, data.Length);
 
                 leaderOffers.Add(new LeaderOffer(int.Parse(offer.Substring("n_".Length)),
                     RootNodeName + "/" + offer, currentHostName));
