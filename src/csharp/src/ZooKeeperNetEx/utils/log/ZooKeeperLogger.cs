@@ -51,7 +51,7 @@ namespace org.apache.utils
             LogConfig logConfig = LogConfig.Default;
             try
             {
-                var dir = GetConfigLocation();
+                var dir = GetApplicationBasePath();
                 Trace.TraceInformation($"ZooKeeperNetEx directory is: {dir}");
                 var logfileText = File.ReadAllText($"{dir}{Path.DirectorySeparatorChar}ZooKeeperNetEx.config");
                 Trace.TraceInformation($"Configuration Loaded:{Environment.NewLine}{logfileText}");
@@ -66,7 +66,7 @@ namespace org.apache.utils
             return logConfig;
         }
 
-        private static string GetConfigLocation()
+        internal static string GetApplicationBasePath()
         {
 #if NET40 || NET45
             object dir = AppDomain.CurrentDomain.GetData("APP_CONTEXT_BASE_DIRECTORY");

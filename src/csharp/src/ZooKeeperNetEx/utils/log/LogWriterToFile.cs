@@ -51,10 +51,7 @@ namespace org.apache.utils
             {
                 Trace.TraceError("Unable to open log file, will not try again. Exception:" + e);
             }
-
-#pragma warning disable 4014
             startLogTask();
-#pragma warning restore 4014
         }
 
         /// <summary>Write the log message for this log.</summary>
