@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using org.apache.utils;
 using Xunit;
@@ -28,7 +27,8 @@ namespace org.apache.zookeeper.test
 	{
 		private sealed class MyWatcher : Watcher
 		{
-		    private readonly string path;
+            private static readonly ILogProducer LOG = TypeLogger<Watcher>.Instance;
+            private readonly string path;
 		    private string eventPath;
 		    private readonly ManualResetEventSlim latch = new ManualResetEventSlim(false);
 
@@ -38,7 +38,7 @@ namespace org.apache.zookeeper.test
 			}
 			public override Task process(WatchedEvent @event)
 			{
-				Console.WriteLine("latch:" + path + " " + @event.getPath());
+                LOG.debug("latch:" + path + " " + @event.getPath());
 				eventPath = @event.getPath();
 				latch.Set();
 			    return CompletedTask;

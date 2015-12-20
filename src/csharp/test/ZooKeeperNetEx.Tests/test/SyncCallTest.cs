@@ -84,7 +84,7 @@ namespace org.apache.zookeeper.test
 			}
 			catch (IOException e)
 			{
-				Console.WriteLine(e.ToString());
+                LOG.error(e.ToString());
 			}
 		}
 

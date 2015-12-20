@@ -1,5 +1,5 @@
-﻿using System;
 using System.Threading;
+using org.apache.utils;
 using Xunit;
 
 // 
@@ -26,7 +26,9 @@ namespace org.apache.zookeeper.recipes.@lock
 	/// </summary>
 	public sealed class WriteLockTest : ClientBase
 	{
-	    private WriteLock[] nodes;
+        private static readonly ILogProducer LOG = TypeLogger<WriteLockTest>.Instance;
+
+        private WriteLock[] nodes;
 	    private ManualResetEventSlim latch = new ManualResetEventSlim(false);
 
 	    [Fact]
@@ -87,7 +89,7 @@ namespace org.apache.zookeeper.recipes.@lock
 
 			if (count > 1)
 			{
-			    Console.WriteLine("Now killing the leader");
+			    LOG.debug("Now killing the leader");
 			    // now lets kill the leader
 			    latch = new ManualResetEventSlim(false);
 			    first.unlock().GetAwaiter().GetResult();
@@ -110,7 +112,7 @@ namespace org.apache.zookeeper.recipes.@lock
 			for (int i = 0; i < count; i++)
 			{
 				WriteLock node = nodes[i];
-				Console.WriteLine("node: " + i + " id: " + node.Id + " is leader: " + node.Owner);
+                LOG.debug("node: " + i + " id: " + node.Id + " is leader: " + node.Owner);
 			}
 		}
 
@@ -123,22 +125,22 @@ namespace org.apache.zookeeper.recipes.@lock
 					WriteLock node = nodes[i];
 					if (node != null)
 					{
-						Console.WriteLine("Closing node: " + i);
+                        LOG.debug("Closing node: " + i);
 						node.close();
 						if (i == nodes.Length - 1)
 						{
-							Console.WriteLine("Not closing zookeeper: " + i + " due to bug!");
+                            LOG.debug("Not closing zookeeper: " + i + " due to bug!");
 						}
 						else
 						{
-							Console.WriteLine("Closing zookeeper: " + i);
+                            LOG.debug("Closing zookeeper: " + i);
 							node.getZookeeper().closeAsync().Wait();
-							Console.WriteLine("Closed zookeeper: " + i);
+                            LOG.debug("Closed zookeeper: " + i);
 						}
 					}
 				}
 			}
-			Console.WriteLine("Now lets stop the server");
+            LOG.debug("Now lets stop the server");
 			base.Dispose();
 
 		}
