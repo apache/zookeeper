@@ -43,7 +43,7 @@ namespace org.apache.utils
         public void Log(TraceLevel severity, string className, string message, Exception exception)
         {
             var exc = PrintException(exception);
-            string msg = $"[{PrintDate()}\t{SEVERITY_TABLE[(int) severity]}\t{className}\t{message}]\t{exc}";
+            string msg = $"[{PrintDate()} \t{SEVERITY_TABLE[(int) severity]} \t{className} \t{message}] \t{exc}";
 
             WriteLogMessage(msg, severity);
         }

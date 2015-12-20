@@ -32,7 +32,7 @@ namespace org.apache.utils
     internal class LogWriterToFile : LogWriterBase
     {
         private readonly Fenced<bool> isValid = new Fenced<bool>(false);
-        private readonly AsyncManualResetEvent logEvent = new AsyncManualResetEvent();
+        private readonly ThreadSafeInt pendingMessages = new ThreadSafeInt(0);
         private readonly StreamWriter logOutput;
         private readonly ConcurrentQueue<string> logQueue = new ConcurrentQueue<string>();
 
@@ -51,7 +51,6 @@ namespace org.apache.utils
             {
                 Trace.TraceError("Unable to open log file, will not try again. Exception:" + e);
             }
-            startLogTask();
         }
 
         /// <summary>Write the log message for this log.</summary>
@@ -60,7 +59,10 @@ namespace org.apache.utils
             if (isValid.Value)
             {
                 logQueue.Enqueue(msg);
-                logEvent.Set();
+                if (pendingMessages.Increment() == 1)
+                {
+                    startLogTask();
+                }
             }
         }
 
@@ -68,18 +70,15 @@ namespace org.apache.utils
         {
             try
             {
-                while (true)
+                do
                 {
-                    await logEvent.WaitAsync().ConfigureAwait(false);
-                    logEvent.Reset();
-                    
                     string msg;
-                    while (logQueue.TryDequeue(out msg))
+                    if (logQueue.TryDequeue(out msg))
                     {
                         await logOutput.WriteLineAsync(msg).ConfigureAwait(false);
                         await logOutput.FlushAsync().ConfigureAwait(false);
                     }
-                }
+                } while (pendingMessages.Decrement() > 0);
             }
             catch (Exception e)
             {

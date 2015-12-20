@@ -81,5 +81,10 @@ namespace org.apache.utils
         public int Increment() {
             return Interlocked.Increment(ref m_Value);
         }
+
+        public int Decrement()
+        {
+            return Interlocked.Decrement(ref m_Value);
+        }
     }
 }
