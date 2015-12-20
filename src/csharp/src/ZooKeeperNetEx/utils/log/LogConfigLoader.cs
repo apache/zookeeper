@@ -9,47 +9,31 @@ namespace org.apache.utils.log
 {
     internal static class LogConfigLoader
     {
-        internal static LogConfig LoadFromFileOrDefault()
+        internal static LogConfig LoadFromElement(XElement rootElement)
         {
-            try
-            {
-                var dir = GetAssemblyLocation();
-                Trace.TraceInformation($"ZooKeeperNetEx directory is: {dir}");
-                var logfileText = File.ReadAllText($"{dir}{Path.DirectorySeparatorChar}ZooKeeperNetEx.config");
-                Trace.TraceInformation($"Configuration Loaded:{Environment.NewLine}{logfileText}");
-                var rootElement = XDocument.Parse(logfileText).Root;
-                var parsedRoot = new SimpleElement(rootElement);
-                if (parsedRoot.Name != "ZooKeeperNetEx") throw new FormatException("Root is not ZooKeeperNetEx");
-                var logToTrace = GetBool(parsedRoot, "LogToTrace", mandatory: false);
-                var logToFile = GetBool(parsedRoot, "LogToFile", mandatory: false);
-                var logLevel = GetLogLevel(parsedRoot, mandatory: false);
-                var logOverrides = GetLogOverrides(parsedRoot);
-                return new LogConfig(logToTrace, logToFile, logLevel, logOverrides);
-            }
-            catch (Exception e)
-            {
-                Trace.TraceError("Error opening log configuration file, using defaults. Exception:" + e);
-                return LogConfig.Default;
-            }
+            var parsedRoot = new SimpleElement(rootElement);
+            if (parsedRoot.Name != "ZooKeeperNetEx") throw new FormatException("Root is not ZooKeeperNetEx");
+            var logToTrace = GetBool(parsedRoot, "LogToTrace", mandatory: false);
+            var logToFile = GetBool(parsedRoot, "LogToFile", mandatory: false);
+            var logLevel = GetLogLevel(parsedRoot, mandatory: false);
+            var logOverrides = GetLogOverrides(parsedRoot);
+            return new LogConfig(logToTrace, logToFile, logLevel, logOverrides);
         }
 
-        private static LogOverride[] GetLogOverrides(SimpleElement root)
+        private static Dictionary<string, TraceLevel> GetLogOverrides(SimpleElement root)
         {
             var logOverridesElement = GetChild(root, "LogOverrides", mandatory: false);
             if (logOverridesElement == null) return null;
-            var overrides = new List<LogOverride>();
+            var overrides = new Dictionary<string, TraceLevel>();
             foreach (var overrideChild in logOverridesElement.Children)
             {
                 if (overrideChild.Key != "LogOverride") throw new FormatException("LogOverride");
-                var className = GetChild(overrideChild.Value, "ClassName", mandatory: true);
-                var logLevel = GetLogLevel(overrideChild.Value, mandatory: true);
-                overrides.Add(new LogOverride(className.Value, logLevel.GetValueOrDefault()));
+                var className = GetChild(overrideChild.Value, "ClassName", mandatory: true).Value;
+                var logLevel = GetLogLevel(overrideChild.Value, mandatory: true).GetValueOrDefault();
+                if (overrides.ContainsKey(className)) throw new FormatException($"{className} is duplicate");
+                overrides.Add(className, logLevel);
             }
-            if (overrides.Select(ov => ov.ClassName).Distinct().Count() < overrides.Count)
-            {
-                throw new FormatException("Duplicate overrides");
-            }
-            return overrides.ToArray();
+            return overrides;
         }
 
         private static bool? GetBool(SimpleElement root, string elementName, bool mandatory)
@@ -75,17 +59,6 @@ namespace org.apache.utils.log
             var element = GetChild(root, "LogLevel", mandatory);
             if (element == null) return null;
             return (TraceLevel) Enum.Parse(typeof (TraceLevel), element.Value);
-        }
-
-        private static string GetAssemblyLocation()
-        {
-#if NET40 || NET45
-            object dir = AppDomain.CurrentDomain.GetData("APP_CONTEXT_BASE_DIRECTORY");
-            if (dir != null) return dir.ToString();
-            return Path.GetDirectoryName(new Uri(System.Reflection.Assembly.GetExecutingAssembly().CodeBase).LocalPath);
-#else
-            return Microsoft.Extensions.PlatformAbstractions.PlatformServices.Default.Application.ApplicationBasePath;
-#endif
         }
 
         private class SimpleElement

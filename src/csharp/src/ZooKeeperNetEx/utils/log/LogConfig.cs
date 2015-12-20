@@ -18,6 +18,7 @@
  * 
  */
 
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace org.apache.utils
@@ -26,28 +27,16 @@ namespace org.apache.utils
     {
         public static readonly LogConfig Default = new LogConfig(null, null, null, null);
         public readonly TraceLevel LogLevel = TraceLevel.Warning;
-        public readonly LogOverride[] LogOverrides = new LogOverride[0];
+        public readonly Dictionary<string, TraceLevel> LogOverrides = new Dictionary<string, TraceLevel>();
         public readonly bool LogToFile = true;
         public readonly bool LogToTrace = true;
 
-        public LogConfig(bool? logToTrace, bool? logToFile, TraceLevel? logLevel, LogOverride[] logOverrides)
+        public LogConfig(bool? logToTrace, bool? logToFile, TraceLevel? logLevel, Dictionary<string, TraceLevel> logOverrides)
         {
             if (logToTrace != null) LogToTrace = (bool) logToTrace;
             if (logToFile != null) LogToFile = (bool) logToFile;
             if (logLevel != null) LogLevel = (TraceLevel) logLevel;
             if (logOverrides != null) LogOverrides = logOverrides;
-        }
-    }
-
-    internal class LogOverride
-    {
-        public readonly string ClassName;
-        public readonly TraceLevel LogLevel;
-
-        public LogOverride(string className, TraceLevel logLevel)
-        {
-            ClassName = className;
-            LogLevel = logLevel;
         }
     }
 }

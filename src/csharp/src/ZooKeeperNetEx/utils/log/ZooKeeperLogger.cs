@@ -22,7 +22,9 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Xml.Linq;
 using org.apache.utils.log;
 
 namespace org.apache.utils
@@ -36,13 +38,43 @@ namespace org.apache.utils
 
         private ZooKeeperLogger()
         {
-            var logConfig = LogConfigLoader.LoadFromFileOrDefault();
+            var logConfig = LoadConfigOrDefault();
 
             if (logConfig.LogToFile) logConsumers.Add(new LogWriterToFile());
             if (logConfig.LogToTrace) logConsumers.Add(new LogWriterToTrace());
             defaultLogLevel = logConfig.LogLevel;
+            logOverrides = logConfig.LogOverrides;
+        }
 
-            logOverrides = logConfig.LogOverrides.ToDictionary(x => x.ClassName, x => x.LogLevel);
+        private static LogConfig LoadConfigOrDefault()
+        {
+            LogConfig logConfig = LogConfig.Default;
+            try
+            {
+                var dir = GetConfigLocation();
+                Trace.TraceInformation($"ZooKeeperNetEx directory is: {dir}");
+                var logfileText = File.ReadAllText($"{dir}{Path.DirectorySeparatorChar}ZooKeeperNetEx.config");
+                Trace.TraceInformation($"Configuration Loaded:{Environment.NewLine}{logfileText}");
+                var rootElement = XDocument.Parse(logfileText).Root;
+
+                logConfig = LogConfigLoader.LoadFromElement(rootElement);
+            }
+            catch (Exception e)
+            {
+                Trace.TraceError("Error opening log configuration file, using defaults. Exception:" + e);
+            }
+            return logConfig;
+        }
+
+        private static string GetConfigLocation()
+        {
+#if NET40 || NET45
+            object dir = AppDomain.CurrentDomain.GetData("APP_CONTEXT_BASE_DIRECTORY");
+            if (dir != null) return dir.ToString();
+            return Path.GetDirectoryName(new Uri(System.Reflection.Assembly.GetExecutingAssembly().CodeBase).LocalPath);
+#else
+            return Microsoft.Extensions.PlatformAbstractions.PlatformServices.Default.Application.ApplicationBasePath;
+#endif
         }
 
         internal TraceLevel GetLogLevel(string className)
@@ -71,13 +103,9 @@ namespace org.apache.utils
                 }
                 catch (Exception e)
                 {
-                    Trace.TraceError(
-                        $@"Exception while passing a log message to log consumer. TraceLogger 
-                                    type:{
-                            consumer.GetType().FullName}, name:{className}, severity:{sev
-                            }, 
-                                    message:{message}, message exception:{exception
-                            }, 
+                    Trace.TraceError($@"Exception while passing a log message to log consumer. TraceLogger 
+                                    type:{consumer.GetType().FullName}, name:{className}, severity:{sev}, 
+                                    message:{message}, message exception:{exception}, 
                                     log consumer exception:{e}");
                 }
             }

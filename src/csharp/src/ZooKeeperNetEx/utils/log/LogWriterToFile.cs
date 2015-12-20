@@ -31,7 +31,7 @@ namespace org.apache.utils
     /// </summary>
     internal class LogWriterToFile : LogWriterBase
     {
-        private bool isValid;
+        private readonly Fenced<bool> isValid = new Fenced<bool>(false);
         private readonly AsyncManualResetEvent logEvent = new AsyncManualResetEvent();
         private readonly StreamWriter logOutput;
         private readonly ConcurrentQueue<string> logQueue = new ConcurrentQueue<string>();
@@ -45,7 +45,7 @@ namespace org.apache.utils
             {
                 var logFile = new FileInfo(fileName);
                 logOutput = logFile.Exists ? logFile.AppendText() : logFile.CreateText();
-                isValid = true;
+                isValid.Value = true;
             }
             catch (Exception e)
             {
@@ -60,7 +60,7 @@ namespace org.apache.utils
         /// <summary>Write the log message for this log.</summary>
         protected override void WriteLogMessage(string msg, TraceLevel severity)
         {
-            if (isValid)
+            if (isValid.Value)
             {
                 logQueue.Enqueue(msg);
                 logEvent.Set();
@@ -69,7 +69,6 @@ namespace org.apache.utils
 
         private async void startLogTask()
         {
-            string msg;
             try
             {
                 while (true)
@@ -77,6 +76,7 @@ namespace org.apache.utils
                     await logEvent.WaitAsync().ConfigureAwait(false);
                     logEvent.Reset();
                     
+                    string msg;
                     while (logQueue.TryDequeue(out msg))
                     {
                         await logOutput.WriteLineAsync(msg).ConfigureAwait(false);
@@ -86,9 +86,8 @@ namespace org.apache.utils
             }
             catch (Exception e)
             {
-                isValid = false;
+                isValid.Value = false;
                 logOutput.Dispose();
-                while (logQueue.TryDequeue(out msg)) ;
                 Trace.TraceError("Error while writing to log, will not try again. Exception:" + e);
             }
         }
