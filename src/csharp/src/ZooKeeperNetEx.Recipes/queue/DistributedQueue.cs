@@ -31,7 +31,7 @@ namespace org.apache.zookeeper.recipes.queue
 
 	public sealed class DistributedQueue
 	{
-		private static readonly TraceLogger LOG = TraceLogger.GetLogger(typeof(DistributedQueue));
+		private static readonly ILogProducer LOG = TypeLogger<DistributedQueue>.Instance;
 
 		private readonly string dir;
 

@@ -1,13 +1,14 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{3124BC6C-39C6-473D-B3E5-E04C85D922F4}"
 	ProjectSection(SolutionItems) = preProject
-		ZooKeeperCodeRules.ruleset = ZooKeeperCodeRules.ruleset
-		ZooKeeperConfiguration.xml = ZooKeeperConfiguration.xml
-		ZooKeeperConfiguration.xsd = ZooKeeperConfiguration.xsd
+		ZooKeeperNetEx.config = ZooKeeperNetEx.config
+		ZooKeeperNetEx.ruleset = ZooKeeperNetEx.ruleset
+		ZooKeeperNetEx.snk = ZooKeeperNetEx.snk
+		ZooKeeperNetEx.xsd = ZooKeeperNetEx.xsd
 	EndProjectSection
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "ZooKeeperNetEx", "src\ZooKeeperNetEx\ZooKeeperNetEx.xproj", "{FF7547E8-BD4F-4D3A-AC29-C9DD74E48CB3}"

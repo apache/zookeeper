@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" 
+  targetNamespace="urn:zookeeper" xmlns="urn:zookeeper" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="ZooKeeperNetEx" nillable="false" type="LogConfig" />
+  <xs:complexType name="LogConfig">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="1" name="LogToTrace" type="xs:boolean" />
+      <xs:element minOccurs="0" maxOccurs="1" name="LogToFile" type="xs:boolean" />
+      <xs:element minOccurs="0" maxOccurs="1" name="LogLevel" type="TraceLevel" />
+      <xs:element minOccurs="0" maxOccurs="1" name="LogOverrides" type="ArrayOfLogOverride" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:simpleType name="TraceLevel">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Off" />
+      <xs:enumeration value="Error" />
+      <xs:enumeration value="Warning" />
+      <xs:enumeration value="Info" />
+      <xs:enumeration value="Verbose" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="ArrayOfLogOverride">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="LogOverride" nillable="true" type="LogOverride" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="LogOverride">
+    <xs:sequence>
+      <xs:element minOccurs="1" maxOccurs="1" name="ClassName" type="xs:string" />
+      <xs:element minOccurs="1" maxOccurs="1" name="LogLevel" type="TraceLevel" />
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

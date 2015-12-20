@@ -29,7 +29,7 @@ namespace org.apache.zookeeper.test
 {
     public sealed class SyncCallTest : ClientBase
 	{
-        private static readonly TraceLogger LOG = TraceLogger.GetLogger(typeof(SyncCallTest));
+        private static readonly ILogProducer LOG = TypeLogger<SyncCallTest>.Instance;
 		private int opsCount;
 
 	    private ManualResetEventSlim countFinished;

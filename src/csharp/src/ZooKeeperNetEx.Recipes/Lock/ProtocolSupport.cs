@@ -32,7 +32,7 @@ namespace org.apache.zookeeper.recipes.@lock
     /// </summary>
     public class ProtocolSupport 
     {
-        private static readonly TraceLogger LOG = TraceLogger.GetLogger(typeof(ProtocolSupport));
+        private static readonly ILogProducer LOG = TypeLogger<ProtocolSupport>.Instance;
 
         internal readonly ZooKeeper zookeeper;
         private readonly ThreadSafeInt closed = new ThreadSafeInt(0);

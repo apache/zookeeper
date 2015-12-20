@@ -93,7 +93,7 @@ namespace org.apache.zookeeper.recipes.leader {
     public sealed class LeaderElectionSupport : Watcher {
         private readonly AsyncLock lockable = new AsyncLock();
   
-        private static readonly TraceLogger logger = TraceLogger.GetLogger(typeof (LeaderElectionSupport));
+        private static readonly ILogProducer logger = TypeLogger<LeaderElectionSupport>.Instance;
         private readonly ConcurrentDictionary<LeaderElectionAware, byte> listeners;
         private byte dummy;
         private LeaderOffer leaderOffer;

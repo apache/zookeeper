@@ -1,4 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<ZooKeeperConfiguration xmlns="urn:zookeeper">
-  <Tracing DefaultTraceLevel="Info"/>
-</ZooKeeperConfiguration>

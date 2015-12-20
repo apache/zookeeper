@@ -28,7 +28,7 @@ namespace org.apache.zookeeper.test
 {
     public sealed class ClientHammerTest : ClientBase
 	{
-		private static readonly TraceLogger LOG = TraceLogger.GetLogger(typeof(ClientHammerTest));
+		private static readonly ILogProducer LOG = TypeLogger<ClientHammerTest>.Instance;
 
 		private const int HAMMERTHREAD_LATENCY = 5;
 
@@ -269,7 +269,7 @@ namespace org.apache.zookeeper.test
         {
             private readonly Thread m_Thread;
 
-            protected BackgroundThread(string name, TraceLogger log)
+            protected BackgroundThread(string name, ILogProducer log)
             {
                 m_Thread = new Thread(() => RunAndLogException(run, log)) { Name = name, IsBackground = true };
             }
@@ -296,7 +296,7 @@ namespace org.apache.zookeeper.test
                 return m_Thread.Name;
             }
 
-            private static void RunAndLogException(Action action, TraceLogger log)
+            private static void RunAndLogException(Action action, ILogProducer log)
             {
                 try
                 {

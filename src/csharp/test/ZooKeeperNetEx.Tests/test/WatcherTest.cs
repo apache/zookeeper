@@ -27,7 +27,7 @@ namespace org.apache.zookeeper.test
 {
     public class WatcherTest : ClientBase
 	{
-	    private static readonly TraceLogger LOG = TraceLogger.GetLogger(typeof(WatcherTest));
+	    private static readonly ILogProducer LOG = TypeLogger<WatcherTest>.Instance;
 
 		public WatcherTest()
 		{

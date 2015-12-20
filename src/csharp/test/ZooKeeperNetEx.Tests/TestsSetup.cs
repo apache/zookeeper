@@ -18,12 +18,17 @@
  * 
  */
 using System;
+using System.Diagnostics;
 using Xunit;
 
 namespace org.apache.zookeeper
 {
     public class TestsSetup : IDisposable
     {
+        static TestsSetup()
+        {
+            Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
+        }
         public TestsSetup()
         {
             Dispose();

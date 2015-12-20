@@ -613,7 +613,7 @@ public class JRecord extends JCompType {
             JField jf = i.next();
             cs.write(jf.genCsharpDecl());
         }
-        cs.write("private static readonly TraceLogger log = TraceLogger.GetLogger(typeof(" + getName() + "));\n");
+        cs.write("private static readonly ILogProducer log = TypeLogger<" + getName() + ">.Instance;\n");
 		cs.write("  public "+ getName()+"() {}\n");
 		cs.write("  public "+getName()+"(");
         int fIdx = 0;

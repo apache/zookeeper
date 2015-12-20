@@ -28,7 +28,7 @@ namespace org.apache.zookeeper
 {
     internal sealed class ClientCnxnSocketNIO : ClientCnxnSocket
 	{
-        private static readonly TraceLogger LOG = TraceLogger.GetLogger(typeof(ClientCnxnSocketNIO));
+        private static readonly ILogProducer LOG = TypeLogger<ClientCnxnSocketNIO>.Instance;
 
 	    private bool initialized;
 

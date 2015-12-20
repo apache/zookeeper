@@ -76,21 +76,8 @@ namespace org.apache.zookeeper {
     /// EventNone and state sKeeperStateDisconnected
     /// </remarks>
     public class ZooKeeper {
-        static ZooKeeper() {
-            const string ZKConfigFile = "ZooKeeperConfiguration.xml";
-            ZooKeeperConfiguration config = null;
-            FileInfo fileInfo = new FileInfo(ZKConfigFile);
-            if (fileInfo.Exists) {
-                try {
-                    config = ZooKeeperConfiguration.LoadFromFile(ZKConfigFile);
-                }
-                    // ReSharper disable once EmptyGeneralCatchClause
-                catch {}
-            }
-            TraceLogger.Initialize(config);
-        }
         private static readonly byte[] NO_PASSWORD = new byte[0];
-        private static readonly TraceLogger LOG = TraceLogger.GetLogger(typeof (ZooKeeper));
+        private static readonly ILogProducer LOG = TypeLogger<ZooKeeper>.Instance;
 
         private readonly ZKWatchManager watchManager = new ZKWatchManager();
 
@@ -1050,6 +1037,14 @@ namespace org.apache.zookeeper {
         public override string ToString() {
             States state = getState();
             return ("State:" + state + (cnxn.getState().isConnected() ? " Timeout:" + getSessionTimeout() + " " : " ") + cnxn);
+        }
+
+        /// <summary>
+        /// Adds a custom log consumer. For integration with third party logging systems.
+        /// </summary>
+        public static void AddLogConsumer(ILogConsumer logConsumer)
+        {
+            ZooKeeperLogger.Instance.AddLogConsumer(logConsumer);
         }
 
         #region Using        

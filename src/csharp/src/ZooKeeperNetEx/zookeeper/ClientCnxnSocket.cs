@@ -36,7 +36,7 @@ namespace org.apache.zookeeper
     /// 
     /// </summary>
     internal abstract class ClientCnxnSocket {
-        private static readonly TraceLogger LOG = TraceLogger.GetLogger(typeof(ClientCnxnSocket));
+        private static readonly ILogProducer LOG = TypeLogger<ClientCnxnSocket>.Instance;
 
         //This buffer is only used to read the length of the incoming message.
         protected readonly ByteBuffer lenBuffer = ByteBuffer.allocate(4);

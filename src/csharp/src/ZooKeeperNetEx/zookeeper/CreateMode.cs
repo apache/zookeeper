@@ -47,7 +47,7 @@ namespace org.apache.zookeeper
         /// </summary>
         public static readonly CreateMode EPHEMERAL_SEQUENTIAL = new CreateMode(3, true, true);
 
-        private static readonly TraceLogger LOG = TraceLogger.GetLogger(typeof(CreateMode));
+        private static readonly ILogProducer LOG = TypeLogger<CreateMode>.Instance;
 
         private readonly bool ephemeral;
         private readonly bool sequential;

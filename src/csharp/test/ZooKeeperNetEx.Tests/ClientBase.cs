@@ -39,7 +39,7 @@ namespace org.apache.zookeeper {
         private const string hostPort = "127.0.0.1";
         internal const string testsNode = "/tests";
 
-        private static readonly TraceLogger LOG = TraceLogger.GetLogger(typeof(ClientBase));
+        private static readonly ILogProducer LOG = TypeLogger<ClientBase>.Instance;
         private LinkedList<TestableZooKeeper> allClients;
         private bool allClientsSetup;
         

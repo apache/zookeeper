@@ -22,7 +22,7 @@ using Xunit;
 
 namespace org.apache.zookeeper.recipes.leader {
     public sealed class LeaderElectionSupportTest : ClientBase {
-        private static readonly TraceLogger logger = TraceLogger.GetLogger(typeof(LeaderElectionSupportTest));
+        private static readonly ILogProducer logger = TypeLogger<LeaderElectionSupportTest>.Instance;
         private static readonly string testRootNode = "/" + TimeHelper.ElapsedMiliseconds + "_";
         private ZooKeeper zooKeeper;
 

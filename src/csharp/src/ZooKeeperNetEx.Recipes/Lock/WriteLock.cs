@@ -34,7 +34,7 @@ namespace org.apache.zookeeper.recipes.@lock
 	/// </summary>
 	public sealed class WriteLock : ProtocolSupport
 	{
-		private static readonly TraceLogger LOG = TraceLogger.GetLogger(typeof(WriteLock));
+		private static readonly ILogProducer LOG = TypeLogger<WriteLock>.Instance;
 
 	    private readonly AsyncLock lockable = new AsyncLock();
 

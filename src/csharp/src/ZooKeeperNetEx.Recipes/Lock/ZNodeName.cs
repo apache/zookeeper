@@ -31,7 +31,7 @@ namespace org.apache.zookeeper.recipes.@lock
 		private readonly string name;
 		private readonly string prefix;
 		private readonly int sequence = -1;
-		private static readonly TraceLogger LOG = TraceLogger.GetLogger(typeof(ZNodeName));
+		private static readonly ILogProducer LOG = TypeLogger<ZNodeName>.Instance;
 
 		public ZNodeName(string id)
 		{

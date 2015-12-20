@@ -30,7 +30,7 @@ using Xunit;
 namespace org.apache.zookeeper.test {
    
     public sealed class ClientTest : ClientBase {
-        private static readonly TraceLogger LOG = TraceLogger.GetLogger(typeof (ClientTest));
+        private static readonly ILogProducer LOG = TypeLogger<ClientTest>.Instance;
 
         /// <summary>
         /// Verify that pings are sent, keeping the "idle" client alive </summary>

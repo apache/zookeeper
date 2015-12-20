@@ -28,7 +28,7 @@ namespace org.apache.zookeeper.test
 
     public sealed class MultiTransactionTest : ClientBase
 	{
-		private static readonly TraceLogger LOG = TraceLogger.GetLogger(typeof(MultiTransactionTest));
+		private static readonly ILogProducer LOG = TypeLogger<MultiTransactionTest>.Instance;
 
 	    private ZooKeeper zk;
 		private ZooKeeper zk_chroot;

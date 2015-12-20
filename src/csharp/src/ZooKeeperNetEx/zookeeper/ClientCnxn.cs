@@ -39,7 +39,7 @@ namespace org.apache.zookeeper {
  *
  */
     internal sealed class ClientCnxn {
-        private static readonly TraceLogger LOG = TraceLogger.GetLogger(typeof (ClientCnxn));
+        private static readonly ILogProducer LOG = TypeLogger<ClientCnxn>.Instance;
         //private const string ZK_SASL_CLIENT_USERNAME = "zookeeper.sasl.client.username";
 
         /**

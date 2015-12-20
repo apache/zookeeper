@@ -25,9 +25,10 @@ namespace org.apache.zookeeper
     /// <summary>
     /// Some ZooKeeper Utilities
     /// </summary>
-    public static class ZKUtil
+    public class ZKUtil
 	{
-        private static readonly TraceLogger LOG = TraceLogger.GetLogger(typeof(ZKUtil));
+        private ZKUtil(){}
+        private static readonly ILogProducer LOG = TypeLogger<ZKUtil>.Instance;
 		/// <summary>
 		/// Recursively delete the node with the given path. 
 		/// <para>
