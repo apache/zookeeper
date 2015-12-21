@@ -326,10 +326,9 @@ namespace org.apache.zookeeper.test
 				zk.multi(Arrays.asList(Op.create("/multi", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT), Op.setData("/multi", "X".getBytes(), 0), Op.setData("/multi", "Y".getBytes(), 0)));
 				Assert.fail("Should have thrown a KeeperException for invalid version");
 			}
-			catch (KeeperException e)
+			catch (KeeperException)
 			{
 				//PASS
-				LOG.error("STACKTRACE: " + e);
 			}
 
 			Assert.assertNull(zk.exists("/multi", null));

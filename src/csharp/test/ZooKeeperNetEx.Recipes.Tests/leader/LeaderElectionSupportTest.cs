@@ -23,23 +23,16 @@ using Xunit;
 namespace org.apache.zookeeper.recipes.leader {
     public sealed class LeaderElectionSupportTest : ClientBase {
         private static readonly ILogProducer logger = TypeLogger<LeaderElectionSupportTest>.Instance;
-        private static readonly string testRootNode = "/" + TimeHelper.ElapsedMiliseconds + "_";
+        private static int globalCounter;
+        private readonly string root = "/" + Interlocked.Increment(ref globalCounter);
         private ZooKeeper zooKeeper;
 
         public LeaderElectionSupportTest() {
 
             zooKeeper = createClient();
 
-            zooKeeper.createAsync(testRootNode + Thread.CurrentThread.ManagedThreadId, new byte[0],
+            zooKeeper.createAsync(root, new byte[0],
                 ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT).Wait();
-        }
-
-        public override void Dispose() {
-            if (zooKeeper != null) {
-                zooKeeper.deleteAsync(testRootNode + Thread.CurrentThread.ManagedThreadId).Wait();
-            }
-
-            base.Dispose();
         }
 
         [Fact]
@@ -169,8 +162,7 @@ namespace org.apache.zookeeper.recipes.leader {
 
         private LeaderElectionSupport createLeaderElectionSupport()
         {
-            var electionSupport = new LeaderElectionSupport(zooKeeper,
-                testRootNode + Thread.CurrentThread.ManagedThreadId, "foohost");
+            var electionSupport = new LeaderElectionSupport(zooKeeper, root, "foohost");
 
             return electionSupport;
         }
