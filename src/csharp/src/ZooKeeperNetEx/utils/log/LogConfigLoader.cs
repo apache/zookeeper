@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 
-namespace org.apache.utils.log
+namespace org.apache.utils
 {
     internal static class LogConfigLoader
     {
@@ -27,9 +26,9 @@ namespace org.apache.utils.log
             var overrides = new Dictionary<string, TraceLevel>();
             foreach (var overrideChild in logOverridesElement.Children)
             {
-                if (overrideChild.Key != "LogOverride") throw new FormatException("LogOverride");
-                var className = GetChild(overrideChild.Value, "ClassName", mandatory: true).Value;
-                var logLevel = GetLogLevel(overrideChild.Value, mandatory: true).GetValueOrDefault();
+                if (overrideChild.Name != "LogOverride") throw new FormatException("LogOverride");
+                var className = GetChild(overrideChild, "ClassName", mandatory: true).Value;
+                var logLevel = GetLogLevel(overrideChild, mandatory: true).GetValueOrDefault();
                 if (overrides.ContainsKey(className)) throw new FormatException($"{className} is duplicate");
                 overrides.Add(className, logLevel);
             }
@@ -48,8 +47,8 @@ namespace org.apache.utils.log
 
         private static SimpleElement GetChild(SimpleElement root, string elementName, bool mandatory)
         {
-            SimpleElement element;
-            if (!root.Children.TryGetValue(elementName, out element) && mandatory)
+            SimpleElement element = root.Children.FirstOrDefault(x => x.Name == elementName);
+            if (element == null && mandatory)
                 throw new FormatException(elementName);
             return element;
         }
@@ -63,7 +62,7 @@ namespace org.apache.utils.log
 
         private class SimpleElement
         {
-            public readonly Dictionary<string, SimpleElement> Children = new Dictionary<string, SimpleElement>();
+            public readonly List<SimpleElement> Children = new List<SimpleElement>();
             public readonly string Name;
             public readonly string Value;
 
@@ -75,7 +74,7 @@ namespace org.apache.utils.log
 
                 foreach (XElement element in elementNode.Elements())
                 {
-                    Children.Add(element.Name.LocalName, new SimpleElement(element));
+                    Children.Add(new SimpleElement(element));
                 }
             }
         }
