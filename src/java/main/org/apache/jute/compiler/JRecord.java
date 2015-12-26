@@ -591,12 +591,8 @@ public class JRecord extends JCompType {
         cs.write("\n");
         cs.write("#pragma warning disable\n");
         cs.write("\n");
-        cs.write("using System;\n");
-        cs.write("using System.IO;\n");
-        cs.write("using System.Text;\n");
         cs.write("using System.Collections.Generic;\n");
         cs.write("using org.apache.jute;\n");
-        cs.write("using org.apache.utils;\n");
         cs.write("\n");        
 		cs.write("namespace "+getJavaPackage()+"\n");
         cs.write("{\n");
@@ -613,7 +609,6 @@ public class JRecord extends JCompType {
             JField jf = i.next();
             cs.write(jf.genCsharpDecl());
         }
-        cs.write("private static readonly ILogProducer log = TypeLogger<" + getName() + ">.Instance;\n");
 		cs.write("  public "+ getName()+"() {}\n");
 		cs.write("  public "+getName()+"(");
         int fIdx = 0;
@@ -637,47 +632,20 @@ public class JRecord extends JCompType {
             cs.write("\n");
         }
         cs.write("  void Record.serialize(OutputArchive a_, string tag)\n {\n");
-        cs.write("    a_.startRecord(this,tag);\n");
         fIdx = 0;
         for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {
             JField jf = i.next();
             cs.write(jf.genCsharpWriteMethodName());
         }
-        cs.write("    a_.endRecord(this,tag);\n");
         cs.write("  }\n");
 
         cs.write("  void Record.deserialize(InputArchive a_, string tag)\n{\n");
-        cs.write("    a_.startRecord(tag);\n");
         fIdx = 0;
         for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {
             JField jf = i.next();
             cs.write(jf.genCsharpReadMethodName());
         }
-        cs.write("    a_.endRecord(tag);\n");
         cs.write("}\n");
-
-        cs.write("  public override string ToString()\n{\n");
-        cs.write("    try {\n");
-        cs.write("      using(var ms = new MemoryStream()){\n");
-        cs.write("      var writer = new BigEndianBinaryWriter(ms);\n");
-        cs.write("      var a_ = new BinaryOutputArchive(writer);\n");
-        cs.write("      a_.startRecord(this,string.Empty);\n");
-        fIdx = 0;
-        for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {
-            JField jf = i.next();
-            cs.write(jf.genCsharpWriteMethodName());
-        }
-        cs.write("      a_.endRecord(this,string.Empty);\n");
-        cs.write("      ms.Position = 0;\n");
-        cs.write("      var msArray = ms.ToArray();\n");
-        cs.write("      return Encoding.UTF8.GetString(msArray,0,msArray.Length);\n");
-        cs.write("    }");
-        cs.write("    } catch (Exception ex) {\n");
-        cs.write("      log.error(ex);\n");
-        cs.write("    }\n");
-        cs.write("    return \"ERROR\";\n");
-        cs.write("  }\n");
-
         cs.write("}\n");
         cs.write("}\n");
 

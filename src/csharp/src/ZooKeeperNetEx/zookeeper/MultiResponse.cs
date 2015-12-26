@@ -46,7 +46,6 @@ namespace org.apache.zookeeper
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1800:DoNotCastUnnecessarily")]
         public void serialize(OutputArchive archive, string tag) {
-        archive.startRecord(this, tag);
 
 			foreach (OpResult result in results) {
 			    ZooDefs.OpCode opcode = EnumUtil<ZooDefs.OpCode>.DefinedCast(result.get_Type());
@@ -73,15 +72,12 @@ namespace org.apache.zookeeper
 				}
 			}
 			((Record) new MultiHeader(-1, true, -1)).serialize(archive, tag);
-			archive.endRecord(this, tag);
 		}
 
 
 		public void deserialize(InputArchive archive, string tag)
 		{
             results=new List<OpResult>();
-
-			archive.startRecord(tag);
 			MultiHeader h = new MultiHeader();
 			((Record) h).deserialize(archive, tag);
 			while (!h.getDone())
@@ -121,7 +117,6 @@ namespace org.apache.zookeeper
 				}
 				((Record) h).deserialize(archive, tag);
 			}
-			archive.endRecord(tag);
 		}
 
     public List<OpResult> getResultList() {

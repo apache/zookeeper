@@ -32,8 +32,6 @@ namespace org.apache.jute
         void writeString(string s, string tag);
         void writeBuffer(byte[] buf, string tag);
         void writeRecord(Record r, string tag);
-        void startRecord(Record r, string tag);
-        void endRecord(Record r, string tag);
         void startVector<T>(List<T> v, string tag);
         void endVector<T>(List<T> v, string tag);
     }

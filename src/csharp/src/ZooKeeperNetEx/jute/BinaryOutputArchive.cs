@@ -81,11 +81,6 @@ namespace org.apache.jute
 
             r.serialize(this, tag);
         }
-
-        public void startRecord(Record r, string tag) { }
-
-        public void endRecord(Record r, string tag) { }
-
         public void startVector<T>(List<T> v, string tag)
         {
             if (v == null)

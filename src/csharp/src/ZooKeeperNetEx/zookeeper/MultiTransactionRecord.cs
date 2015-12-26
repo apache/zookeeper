@@ -48,7 +48,6 @@ namespace org.apache.zookeeper {
         }
 
         public void serialize(OutputArchive archive, string tag) {
-            archive.startRecord(this, tag);
             foreach (Op op in ops) {
                 MultiHeader h = new MultiHeader(op.get_Type(), false, -1);
                 ((Record) h).serialize(archive, tag);
@@ -71,11 +70,9 @@ namespace org.apache.zookeeper {
                 }
             }
             ((Record) new MultiHeader(-1, true, -1)).serialize(archive, tag);
-            archive.endRecord(this, tag);
         }
 
         public void deserialize(InputArchive archive, string tag) {
-            archive.startRecord(tag);
             MultiHeader h = new MultiHeader();
             ((Record) h).deserialize(archive, tag);
 
@@ -107,7 +104,6 @@ namespace org.apache.zookeeper {
                 }
                 ((Record) h).deserialize(archive, tag);
             }
-            archive.endRecord(tag);
         }
 
         IEnumerator IEnumerable.GetEnumerator() {

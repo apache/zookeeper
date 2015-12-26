@@ -177,7 +177,7 @@ abstract public class JType {
     String genCsharpReadWrapper(String fname, String tag, boolean decl) {
         String ret = "";
         if (decl) {
-            ret = "    "+mWrapper+" "+fname+";\n";
+            ret = "    "+mSharpWrapper+" "+fname+";\n";
         }
         return ret + "    "+fname+"=a_.read"+mMethodSuffix+"(\""+tag+"\");\n";
     }

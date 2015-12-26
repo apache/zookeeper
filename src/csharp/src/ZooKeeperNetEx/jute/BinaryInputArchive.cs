@@ -96,11 +96,6 @@ namespace org.apache.jute
         {
             r.deserialize(this, tag);
         }
-
-        public void startRecord(string tag) { }
-
-        public void endRecord(string tag) { }
-
         public Index startVector(string tag)
         {
             int len = readInt(tag);
@@ -110,7 +105,5 @@ namespace org.apache.jute
             }
             return new BinaryIndex(len);
         }
-
-        public void endVector(string tag) { }
     }
 }

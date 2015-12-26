@@ -108,7 +108,6 @@ public class JVector extends JCompType {
         ret.append("      if ("+fname+"!= null) {");
 	    ret.append("\n      foreach(var "+getId("e")+" in " + fname + ")"+mElement.genCsharpWriteWrapper(getId("e"), getId("e")));
         ret.append("      }\n");
-        ret.append("      a_.endVector("+fname+",\""+tag+"\");\n");
         ret.append("    }\n");
         decrLevel();
         return ret.toString();
@@ -138,7 +137,6 @@ public class JVector extends JCompType {
         ret.append("          }\n");
         ret.append("            "+fname + "=tmpLst;\n");
         ret.append("      }\n");
-        ret.append("    a_.endVector(\""+tag+"\");\n");
         decrLevel();
         ret.append("    }\n");
         return ret.toString();

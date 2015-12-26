@@ -30,9 +30,6 @@ namespace org.apache.jute
         string readString(string tag);
         byte[] readBuffer(string tag);
         void readRecord(Record r, string tag);
-        void startRecord(string tag);
-        void endRecord(string tag);
         Index startVector(string tag);
-        void endVector(string tag);
     }
 }
