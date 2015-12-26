@@ -66,7 +66,7 @@ namespace org.apache.zookeeper.test
 		public void testBasic()
 		{
 			const string name = "/foo";
-			zk.create(name, name.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			zk.create(name, name.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
             var stat = newStat();
 			zk.getData(name, false, stat);
@@ -86,10 +86,10 @@ namespace org.apache.zookeeper.test
 		public void testChild()
 		{
 			const string name = "/foo";
-			zk.create(name, name.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			zk.create(name, name.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
 			const string childname = name + "/bar";
-			zk.create(childname, childname.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+			zk.create(childname, childname.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
 
             var stat = newStat();
 			zk.getData(name, false, stat);
@@ -122,12 +122,12 @@ namespace org.apache.zookeeper.test
 		public void testChildren()
 		{
 			const string name = "/foo";
-			zk.create(name, name.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			zk.create(name, name.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
 			for (int i = 0; i < 10; i++)
 			{
 				string childname = name + "/bar" + i;
-				zk.create(childname, childname.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+				zk.create(childname, childname.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
 
 			    var stat = newStat();
 				zk.getData(name, false, stat);
@@ -148,7 +148,7 @@ namespace org.apache.zookeeper.test
 		public void testDataSizeChange()
 		{
 			const string name = "/foo";
-			zk.create(name, name.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			zk.create(name, name.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
             var stat = newStat();
 			zk.getData(name, false, stat);
@@ -163,7 +163,7 @@ namespace org.apache.zookeeper.test
 			Assert.assertEquals(name.Length, stat.getDataLength());
 			Assert.assertEquals(0, stat.getNumChildren());
 
-			zk.setData(name, (name + name).getBytes(), -1);
+			zk.setData(name, (name + name).UTF8getBytes(), -1);
 
 			stat = newStat();
 			zk.getData(name, false, stat);

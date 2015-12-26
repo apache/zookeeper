@@ -30,9 +30,9 @@ namespace org.apache.zookeeper
 		{
 			MultiTransactionRecord request = new MultiTransactionRecord();
 			request.add(Op.check("check", 1));
-			request.add(Op.create("create", "create data".getBytes(), ZooDefs.Ids.CREATOR_ALL_ACL, (int) ZooDefs.Perms.ALL));
+			request.add(Op.create("create", "create data".UTF8getBytes(), ZooDefs.Ids.CREATOR_ALL_ACL, (int) ZooDefs.Perms.ALL));
 			request.add(Op.delete("delete", 17));
-			request.add(Op.setData("setData", "set data".getBytes(), 19));
+			request.add(Op.setData("setData", "set data".UTF8getBytes(), 19));
 
 			MultiTransactionRecord decodedRequest = codeDecode(request);
 

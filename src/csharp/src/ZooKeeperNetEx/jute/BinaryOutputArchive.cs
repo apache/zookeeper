@@ -17,12 +17,11 @@
  */
 
 using org.apache.utils;
+using org.apache.zookeeper;
+using System.Collections.Generic;
 
 namespace org.apache.jute
 {
-    using System.Collections.Generic;
-    using System.Text;
-
     internal class BinaryOutputArchive : OutputArchive
     {
         private readonly BigEndianBinaryWriter writer;
@@ -60,7 +59,7 @@ namespace org.apache.jute
                 writeInt(-1, "len");
                 return;
             }
-            byte[] bb = Encoding.UTF8.GetBytes(s);
+            byte[] bb = s.UTF8getBytes();
             writeInt(bb.Length, "len");
             writer.Write(bb);
         }

@@ -105,8 +105,8 @@ namespace org.apache.zookeeper.test
 				zk2.getChildren("/",w5);
 
 				// check set
-				zk1.setData("/ch1", "1".getBytes(), -1);
-				zk2.setData("/ch2", "2".getBytes(), -1);
+				zk1.setData("/ch1", "1".UTF8getBytes(), -1);
+				zk2.setData("/ch2", "2".UTF8getBytes(), -1);
 
 				// check watches
 				Assert.assertTrue(w1.matches());
@@ -116,16 +116,16 @@ namespace org.apache.zookeeper.test
 				// check exceptions
 				try
 				{
-					zk2.setData("/ch3", "3".getBytes(), -1);
+					zk2.setData("/ch3", "3".UTF8getBytes(), -1);
 				}
 				catch (KeeperException.NoNodeException e)
 				{
 					Assert.assertEquals("/ch3", e.getPath());
 				}
 
-                Assert.assertEquals("1".getBytes(), zk1.getData("/ch1", false, null));
-				Assert.assertEquals("2".getBytes(), zk1.getData("/ch1/ch2", false, null));
-				Assert.assertEquals("2".getBytes(), zk2.getData("/ch2", false, null));
+                Assert.assertEquals("1".UTF8getBytes(), zk1.getData("/ch1", false, null));
+				Assert.assertEquals("2".UTF8getBytes(), zk1.getData("/ch1/ch2", false, null));
+				Assert.assertEquals("2".UTF8getBytes(), zk2.getData("/ch2", false, null));
 
 				// check delete
 				zk2.delete("/ch2", -1);

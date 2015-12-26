@@ -178,14 +178,14 @@ namespace org.apache.zookeeper.test
 			for (int i = 0; i < names.Length; i++)
 			{
 				ops.Add(Op.create(names[i], new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
-				ops.Add(Op.setData(names[i], names[i].getBytes(), 0));
+				ops.Add(Op.setData(names[i], names[i].UTF8getBytes(), 0));
 			}
 
 			zk_chroot.multi(ops);
 
 			for (int i = 0; i < names.Length; i++)
 			{
-				Assert.assertEquals("zNode data not matching", names[i].getBytes(), zk_chroot.getData(names[i], false, null));
+				Assert.assertEquals("zNode data not matching", names[i].UTF8getBytes(), zk_chroot.getData(names[i], false, null));
 			}
 		}
 
@@ -220,13 +220,13 @@ namespace org.apache.zookeeper.test
 			Transaction transaction = zk_chroot.transaction();
 			transaction.create(childPath, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 			transaction.check(childPath, 0);
-			transaction.setData(childPath, childPath.getBytes(), 0);
+			transaction.setData(childPath, childPath.UTF8getBytes(), 0);
 			transaction.commit();
 
 			Assert.assertNotNull("zNode is not created under chroot:" + chRoot, zk.exists(chRoot + childPath, false));
 			Assert.assertNotNull("zNode is not created under chroot:" + chRoot, zk_chroot.exists(childPath, false));
 			Assert.assertNull("zNode is created directly under '/', ignored configured chroot", zk.exists(childPath, false));
-			Assert.assertEquals("zNode data not matching", childPath.getBytes(), zk_chroot.getData(childPath, false, null));
+			Assert.assertEquals("zNode data not matching", childPath.UTF8getBytes(), zk_chroot.getData(childPath, false, null));
 
 			transaction = zk_chroot.transaction();
 			// Deleting child using chRoot client.
@@ -304,14 +304,14 @@ namespace org.apache.zookeeper.test
 			for (int i = 0; i < names.Length; i++)
 			{
 				ops.Add(Op.create(names[i], new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT));
-				ops.Add(Op.setData(names[i], names[i].getBytes(), 0));
+				ops.Add(Op.setData(names[i], names[i].UTF8getBytes(), 0));
 			}
 
 			zk.multi(ops);
 
 			for (int i = 0; i < names.Length; i++)
 			{
-				Assert.assertEquals(names[i].getBytes(), zk.getData(names[i], false, null));
+				Assert.assertEquals(names[i].UTF8getBytes(), zk.getData(names[i], false, null));
 			}
 		}
 
@@ -323,7 +323,7 @@ namespace org.apache.zookeeper.test
 
 			try
 			{
-				zk.multi(Arrays.asList(Op.create("/multi", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT), Op.setData("/multi", "X".getBytes(), 0), Op.setData("/multi", "Y".getBytes(), 0)));
+				zk.multi(Arrays.asList(Op.create("/multi", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT), Op.setData("/multi", "X".UTF8getBytes(), 0), Op.setData("/multi", "Y".UTF8getBytes(), 0)));
 				Assert.fail("Should have thrown a KeeperException for invalid version");
 			}
 			catch (KeeperException)
@@ -334,9 +334,9 @@ namespace org.apache.zookeeper.test
 			Assert.assertNull(zk.exists("/multi", null));
 
 			//Updating version solves conflict -- order matters
-			zk.multi(Arrays.asList(Op.create("/multi", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT), Op.setData("/multi", "X".getBytes(), 0), Op.setData("/multi", "Y".getBytes(), 1)));
+			zk.multi(Arrays.asList(Op.create("/multi", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT), Op.setData("/multi", "X".UTF8getBytes(), 0), Op.setData("/multi", "Y".UTF8getBytes(), 1)));
 
-			Assert.assertEquals(zk.getData("/multi", false, null), "Y".getBytes());
+			Assert.assertEquals(zk.getData("/multi", false, null), "Y".UTF8getBytes());
 		}
 
         [Fact]
@@ -346,7 +346,7 @@ namespace org.apache.zookeeper.test
 			/* Delete of a node folowed by an update of the (now) deleted node */
 			try
 			{
-				zk.multi(Arrays.asList(Op.create("/multi", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT), Op.delete("/multi", 0), Op.setData("/multi", "Y".getBytes(), 0)));
+				zk.multi(Arrays.asList(Op.create("/multi", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT), Op.delete("/multi", 0), Op.setData("/multi", "Y".UTF8getBytes(), 0)));
 				Assert.fail("/multi should have been deleted so setData should have failed");
 			}
 			catch (KeeperException)
@@ -364,7 +364,7 @@ namespace org.apache.zookeeper.test
 			/* Delete of a node folowed by an update of the (now) deleted node */
 			try
 			{
-				zk.multi(Arrays.asList(Op.create("/multi", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT), Op.delete("/multi", 0), Op.setData("/multi", "Y".getBytes(), 0), Op.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT)));
+				zk.multi(Arrays.asList(Op.create("/multi", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT), Op.delete("/multi", 0), Op.setData("/multi", "Y".UTF8getBytes(), 0), Op.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT)));
 				Assert.fail("/multi should have been deleted so setData should have failed");
 			}
 			catch (KeeperException e)

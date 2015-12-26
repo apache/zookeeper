@@ -792,7 +792,7 @@ namespace org.apache.zookeeper {
                     sock.NoDelay = true;
                     await sock.ConnectAsync(addr.Host, addr.Port);
                     var networkStream = sock.GetStream();
-                    await networkStream.WriteAsync("isro".getBytes(), 0, 4);
+                    await networkStream.WriteAsync("isro".UTF8getBytes(), 0, 4);
                     await networkStream.FlushAsync();
                     br = new StreamReader(networkStream);
                     result = await br.ReadLineAsync();

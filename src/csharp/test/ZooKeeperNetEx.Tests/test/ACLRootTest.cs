@@ -30,7 +30,7 @@ namespace org.apache.zookeeper.test
 			try
 			{
 				// set auth using digest
-				zk.addAuthInfo("digest", "pat:test".getBytes());
+				zk.addAuthInfo("digest", "pat:test".UTF8getBytes());
 				zk.setACL("/", ZooDefs.Ids.CREATOR_ALL_ACL, -1);
 				zk.getData("/", false, null);
 				zk.close();
@@ -54,7 +54,7 @@ namespace org.apache.zookeeper.test
 				{
 					// expected
 				}
-				zk.addAuthInfo("digest", "world:anyone".getBytes());
+				zk.addAuthInfo("digest", "world:anyone".UTF8getBytes());
 				try
 				{
 					zk.create("/apps", null, ZooDefs.Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
@@ -67,7 +67,7 @@ namespace org.apache.zookeeper.test
 				zk.close();
 				// verify access using original auth
 				zk = createClient();
-				zk.addAuthInfo("digest", "pat:test".getBytes());
+				zk.addAuthInfo("digest", "pat:test".UTF8getBytes());
 				zk.getData("/", false, null);
 				zk.create("/apps", null, ZooDefs.Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
 				zk.delete("/apps", -1);
@@ -87,7 +87,7 @@ namespace org.apache.zookeeper.test
 					// expected
 				}
 				zk.delete("/apps", -1);
-				zk.addAuthInfo("digest", "world:anyone".getBytes());
+				zk.addAuthInfo("digest", "world:anyone".UTF8getBytes());
 				zk.create("/apps", null, ZooDefs.Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
 				zk.close();
 				zk = createClient();

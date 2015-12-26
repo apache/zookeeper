@@ -71,12 +71,12 @@ namespace org.apache.zookeeper.test
 				string[] names = new string[10];
 				for (int i = 0; i < names.Length; i++)
 				{
-					string name = zk.create("/tc-", "initialvalue".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+					string name = zk.create("/tc-", "initialvalue".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
 					names[i] = name;
 
 					Stat stat = new Stat();
 					zk.getData(name, watcher, stat);
-					zk.setData(name, "new".getBytes(), stat.getVersion());
+					zk.setData(name, "new".UTF8getBytes(), stat.getVersion());
 					stat = zk.exists(name, watcher);
 					zk.delete(name, stat.getVersion());
 				}

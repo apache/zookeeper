@@ -120,9 +120,9 @@ namespace org.apache.zookeeper.test
 			Assert.assertNull(lsnr.exists("/foo", true));
 			Assert.assertNull(lsnr.exists("/foo/bar", true));
 
-			client.create("/foo", "parent".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			client.create("/foo", "parent".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 			expected.Add(Watcher.Event.EventType.NodeCreated);
-			client.create("/foo/bar", "child".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			client.create("/foo/bar", "child".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 			expected.Add(Watcher.Event.EventType.NodeCreated);
 
 			verify();
@@ -133,7 +133,7 @@ namespace org.apache.zookeeper.test
 			try
 			{
 				Assert.assertNull(lsnr.exists("/car", true));
-				client.setData("/car", "missing".getBytes(), -1);
+				client.setData("/car", "missing".UTF8getBytes(), -1);
 				Assert.fail();
 			}
 			catch (KeeperException e)
@@ -145,7 +145,7 @@ namespace org.apache.zookeeper.test
 			try
 			{
 				Assert.assertNull(lsnr.exists("/foo/car", true));
-				client.setData("/foo/car", "missing".getBytes(), -1);
+				client.setData("/foo/car", "missing".UTF8getBytes(), -1);
 				Assert.fail();
 			}
 			catch (KeeperException e)
@@ -154,9 +154,9 @@ namespace org.apache.zookeeper.test
 				Assert.assertEquals("/foo/car", e.getPath());
 			}
 
-			client.setData("/foo", "parent".getBytes(), -1);
+			client.setData("/foo", "parent".UTF8getBytes(), -1);
 			expected.Add(Watcher.Event.EventType.NodeDataChanged);
-			client.setData("/foo/bar", "child".getBytes(), -1);
+			client.setData("/foo/bar", "child".UTF8getBytes(), -1);
 			expected.Add(Watcher.Event.EventType.NodeDataChanged);
 
 			verify();
@@ -196,14 +196,14 @@ namespace org.apache.zookeeper.test
 				Assert.assertEquals("/foo/bar", e.getPath());
 			}
 
-			client.create("/foo", "parent".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			client.create("/foo", "parent".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 			Assert.assertNotNull(lsnr.getData("/foo", true, null));
-			client.create("/foo/bar", "child".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			client.create("/foo/bar", "child".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 			Assert.assertNotNull(lsnr.getData("/foo/bar", true, null));
 
-			client.setData("/foo", "parent".getBytes(), -1);
+			client.setData("/foo", "parent".UTF8getBytes(), -1);
 			expected.Add(Watcher.Event.EventType.NodeDataChanged);
-			client.setData("/foo/bar", "child".getBytes(), -1);
+			client.setData("/foo/bar", "child".UTF8getBytes(), -1);
 			expected.Add(Watcher.Event.EventType.NodeDataChanged);
 
 			verify();
@@ -243,16 +243,16 @@ namespace org.apache.zookeeper.test
 				Assert.assertEquals("/foo/bar", e.getPath());
 			}
 
-			client.create("/foo", "parent".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			client.create("/foo", "parent".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 			Assert.assertNotNull(lsnr.getChildren("/foo", true));
 
-			client.create("/foo/bar", "child".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			client.create("/foo/bar", "child".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 			expected.Add(Watcher.Event.EventType.NodeChildrenChanged); // /foo
 			Assert.assertNotNull(lsnr.getChildren("/foo/bar", true));
 
 
-			client.setData("/foo", "parent".getBytes(), -1);
-			client.setData("/foo/bar", "child".getBytes(), -1);
+			client.setData("/foo", "parent".UTF8getBytes(), -1);
+			client.setData("/foo/bar", "child".UTF8getBytes(), -1);
 
 
 			Assert.assertNotNull(lsnr.exists("/foo", true));
@@ -287,9 +287,9 @@ namespace org.apache.zookeeper.test
 			Assert.assertNull(lsnr.exists("/foo/bar", w3));
 			Assert.assertNull(lsnr.exists("/foo/bar", w4));
 
-			client.create("/foo", "parent".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			client.create("/foo", "parent".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 			expected.Add(Watcher.Event.EventType.NodeCreated);
-			client.create("/foo/bar", "child".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			client.create("/foo/bar", "child".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 			e2.Add(Watcher.Event.EventType.NodeCreated);
 
 			lsnr_dwatch.verify(expected);
@@ -308,9 +308,9 @@ namespace org.apache.zookeeper.test
 			Assert.assertNotNull(lsnr.exists("/foo/bar", w4));
 			Assert.assertNotNull(lsnr.exists("/foo/bar", w4));
 
-			client.setData("/foo", "parent".getBytes(), -1);
+			client.setData("/foo", "parent".UTF8getBytes(), -1);
 			expected.Add(Watcher.Event.EventType.NodeDataChanged);
-			client.setData("/foo/bar", "child".getBytes(), -1);
+			client.setData("/foo/bar", "child".UTF8getBytes(), -1);
 			e2.Add(Watcher.Event.EventType.NodeDataChanged);
 
 			lsnr_dwatch.verify(new List<Watcher.Event.EventType>()); // not reg so should = 0
@@ -375,18 +375,18 @@ namespace org.apache.zookeeper.test
 				Assert.assertEquals("/foo/bar", e.getPath());
 			}
 
-			client.create("/foo", "parent".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			client.create("/foo", "parent".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 			Assert.assertNotNull(lsnr.getData("/foo", true, null));
 			Assert.assertNotNull(lsnr.getData("/foo", w1, null));
-			client.create("/foo/bar", "child".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			client.create("/foo/bar", "child".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 			Assert.assertNotNull(lsnr.getData("/foo/bar", w2, null));
 			Assert.assertNotNull(lsnr.getData("/foo/bar", w3, null));
 			Assert.assertNotNull(lsnr.getData("/foo/bar", w4, null));
 			Assert.assertNotNull(lsnr.getData("/foo/bar", w4, null));
 
-			client.setData("/foo", "parent".getBytes(), -1);
+			client.setData("/foo", "parent".UTF8getBytes(), -1);
 			expected.Add(Watcher.Event.EventType.NodeDataChanged);
-			client.setData("/foo/bar", "child".getBytes(), -1);
+			client.setData("/foo/bar", "child".UTF8getBytes(), -1);
 			e2.Add(Watcher.Event.EventType.NodeDataChanged);
 
 			lsnr_dwatch.verify(expected);
@@ -449,11 +449,11 @@ namespace org.apache.zookeeper.test
 				Assert.assertEquals("/foo/bar", e.getPath());
 			}
 
-			client.create("/foo", "parent".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			client.create("/foo", "parent".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 			Assert.assertNotNull(lsnr.getChildren("/foo", true));
 			Assert.assertNotNull(lsnr.getChildren("/foo", w1));
 
-			client.create("/foo/bar", "child".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			client.create("/foo/bar", "child".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 			expected.Add(Watcher.Event.EventType.NodeChildrenChanged); // /foo
 			Assert.assertNotNull(lsnr.getChildren("/foo/bar", w2));
 			Assert.assertNotNull(lsnr.getChildren("/foo/bar", w2));
@@ -461,8 +461,8 @@ namespace org.apache.zookeeper.test
 			Assert.assertNotNull(lsnr.getChildren("/foo/bar", w4));
 
 
-			client.setData("/foo", "parent".getBytes(), -1);
-			client.setData("/foo/bar", "child".getBytes(), -1);
+			client.setData("/foo", "parent".UTF8getBytes(), -1);
+			client.setData("/foo/bar", "child".UTF8getBytes(), -1);
 
 
 			Assert.assertNotNull(lsnr.exists("/foo", true));

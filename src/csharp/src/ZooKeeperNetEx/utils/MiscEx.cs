@@ -53,8 +53,13 @@ namespace org.apache.zookeeper
             hashSet.UnionWith(another);
         }
 
-        public static byte[] getBytes(this string @string) {
-            return Encoding.UTF8.GetBytes(@string);
+        public static byte[] UTF8getBytes(this string str) {
+            return Encoding.UTF8.GetBytes(str);
+        }
+
+        public static string UTF8bytesToString(this byte[] buffer)
+        {
+            return Encoding.UTF8.GetString(buffer, 0, buffer.Length);
         }
 
         public static string ToHexString(this long num) {

@@ -77,7 +77,7 @@ namespace org.apache.jute
             int len = reader.ReadInt32();
             if (len == -1) return null;
             var b = reader.ReadBytesOrThrow(len);
-            return Encoding.UTF8.GetString(b, 0, b.Length);
+            return b.UTF8bytesToString();
         }
 
         public byte[] readBuffer(string tag)

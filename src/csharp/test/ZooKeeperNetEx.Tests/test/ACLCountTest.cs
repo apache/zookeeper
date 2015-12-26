@@ -54,10 +54,10 @@ namespace org.apache.zookeeper.test
 		    try {
 		        var zk = createClient();
 
-		        zk.addAuthInfo("digest", "pat:test".getBytes());
+		        zk.addAuthInfo("digest", "pat:test".UTF8getBytes());
 		        zk.setACL("/", ZooDefs.Ids.CREATOR_ALL_ACL, -1);
 
-		        zk.create("/path", "/path".getBytes(), CREATOR_ALL_AND_WORLD_READABLE, CreateMode.PERSISTENT);
+		        zk.create("/path", "/path".UTF8getBytes(), CREATOR_ALL_AND_WORLD_READABLE, CreateMode.PERSISTENT);
 		        IList<ACL> acls = zk.getACL("/path", new Stat());
 		        Assert.assertEquals(2, acls.Count);
 		        zk.setACL("/", ZooDefs.Ids.OPEN_ACL_UNSAFE, -1);

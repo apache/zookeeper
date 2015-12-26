@@ -36,6 +36,7 @@ nuget.exe
 *.ncrunchsolution
 *.*sdf
 *.ipch
+*.playlist
 *.sln.ide
 
 # Vim files

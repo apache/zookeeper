@@ -104,11 +104,11 @@ namespace org.apache.zookeeper.test {
                 catch (KeeperException.InvalidACLException e) {
                     LOG.info("Test successful, invalid acl received : " + e.Message);
                 }
-                zk.addAuthInfo("digest", "ben:passwd".getBytes());
+                zk.addAuthInfo("digest", "ben:passwd".UTF8getBytes());
                 zk.create("/acltest", new byte[0], ZooDefs.Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
                 zk.close();
                 zk = createClient();
-                zk.addAuthInfo("digest", "ben:passwd2".getBytes());
+                zk.addAuthInfo("digest", "ben:passwd2".UTF8getBytes());
                 try {
                     zk.getData("/acltest", false, new Stat());
                     Assert.fail("Should have received a permission error");
@@ -116,7 +116,7 @@ namespace org.apache.zookeeper.test {
                 catch (KeeperException e) {
                     Assert.assertEquals(KeeperException.Code.NOAUTH, e.getCode());
                 }
-                zk.addAuthInfo("digest", "ben:passwd".getBytes());
+                zk.addAuthInfo("digest", "ben:passwd".UTF8getBytes());
                 zk.getData("/acltest", false, new Stat());
                 zk.setACL("/acltest", ZooDefs.Ids.OPEN_ACL_UNSAFE, -1);
                 zk.close();
@@ -158,7 +158,7 @@ namespace org.apache.zookeeper.test {
                 for (int i = 0; i < watchers.Length; i++) {
                     watchers[i] = new MyWatcher();
                     watchers2[i] = new MyWatcher();
-                    zk.create("/foo-" + i, ("foodata" + i).getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                    zk.create("/foo-" + i, ("foodata" + i).UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
                         CreateMode.PERSISTENT);
                 }
                 Stat stat = new Stat();
@@ -175,8 +175,8 @@ namespace org.apache.zookeeper.test {
                 }
                 // trigger the watches
                 for (int i = 0; i < watchers.Length; i++) {
-                    zk.setData("/foo-" + i, ("foodata2-" + i).getBytes(), -1);
-                    zk.setData("/foo-" + i, ("foodata3-" + i).getBytes(), -1);
+                    zk.setData("/foo-" + i, ("foodata2-" + i).UTF8getBytes(), -1);
+                    zk.setData("/foo-" + i, ("foodata3-" + i).UTF8getBytes(), -1);
                 }
                 for (int i = 0; i < watchers.Length; i++) {
                     WatchedEvent @event = watchers[i].events.poll(10 * 1000);
@@ -200,8 +200,8 @@ namespace org.apache.zookeeper.test {
                 }
                 // trigger the watches
                 for (int i = 0; i < watchers.Length; i++) {
-                    zk.setData("/foo-" + i, ("foodata4-" + i).getBytes(), -1);
-                    zk.setData("/foo-" + i, ("foodata5-" + i).getBytes(), -1);
+                    zk.setData("/foo-" + i, ("foodata4-" + i).UTF8getBytes(), -1);
+                    zk.setData("/foo-" + i, ("foodata5-" + i).UTF8getBytes(), -1);
                 }
                 for (int i = 0; i < watchers.Length; i++) {
                     WatchedEvent @event = watchers[i].events.poll(10 * 1000);
@@ -224,8 +224,8 @@ namespace org.apache.zookeeper.test {
                 }
                 // trigger the watches
                 for (int i = 0; i < watchers.Length; i++) {
-                    zk.setData("/foo-" + i, ("foodata6-" + i).getBytes(), -1);
-                    zk.setData("/foo-" + i, ("foodata7-" + i).getBytes(), -1);
+                    zk.setData("/foo-" + i, ("foodata6-" + i).UTF8getBytes(), -1);
+                    zk.setData("/foo-" + i, ("foodata7-" + i).UTF8getBytes(), -1);
                 }
                 for (int i = 0; i < watchers.Length; i++) {
                     WatchedEvent @event = watchers[i].events.poll(10 * 1000);
@@ -265,10 +265,10 @@ namespace org.apache.zookeeper.test {
                 MyWatcher watcher = new MyWatcher();
                 zk = createClient(watcher);
                 LOG.info("Before create /benwashere");
-                zk.create("/benwashere", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                zk.create("/benwashere", "".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                 LOG.info("After create /benwashere");
                 try {
-                    zk.setData("/benwashere", "hi".getBytes(), 57);
+                    zk.setData("/benwashere", "hi".UTF8getBytes(), 57);
                     Assert.fail("Should have gotten BadVersion exception");
                 }
                 catch (KeeperException.BadVersionException) {
@@ -297,17 +297,16 @@ namespace org.apache.zookeeper.test {
                 }
                 Stat stat = new Stat();
                 // Test basic create, ls, and getData
-                zk.create("/pat", "Pat was here".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                zk.create("/pat", "Pat was here".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                 LOG.info("Before create /ben");
-                zk.create("/pat/ben", "Ben was here".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                zk.create("/pat/ben", "Ben was here".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                 LOG.info("Before getChildren /pat");
                 List<string> children = zk.getChildren("/pat", false);
                 Assert.assertEquals(1, children.Count);
                 Assert.assertEquals("ben", children[0]);
                 IList<string> children2 = zk.getChildren("/pat", false, null);
                 Assert.assertEquals(children, children2);
-                string value = Encoding.UTF8.GetString(zk.getData("/pat/ben", false, stat));
-                Assert.assertEquals("Ben was here", value);
+                Assert.assertEquals("Ben was here", zk.getData("/pat/ben", false, stat).UTF8bytesToString());
                 // Test stat and watch of non existent node
 
                 try {
@@ -322,7 +321,7 @@ namespace org.apache.zookeeper.test {
                 catch (KeeperException.NoNodeException) {
                     // OK, expected that
                 }
-                zk.create("/frog", "hi".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                zk.create("/frog", "hi".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                 // the first poll is just a session delivery
                 LOG.info("Comment: checking for events length " + watcher.events.size());
                 WatchedEvent @event = watcher.events.poll(10 * 1000);
@@ -332,7 +331,7 @@ namespace org.apache.zookeeper.test {
                 // Test child watch and create with sequence
                 zk.getChildren("/pat/ben", true);
                 for (int i = 0; i < 10; i++) {
-                    zk.create("/pat/ben/" + i + "-", Convert.ToString(i).getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                    zk.create("/pat/ben/" + i + "-", Convert.ToString(i).UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
                         CreateMode.PERSISTENT_SEQUENTIAL);
                 }
                 children = zk.getChildren("/pat/ben", false);
@@ -350,8 +349,8 @@ namespace org.apache.zookeeper.test {
                     else {
                         b = zk.getData("/pat/ben/" + name, true, stat);
                     }
-                    Assert.assertEquals(i, int.Parse(Encoding.UTF8.GetString(b)));
-                    zk.setData("/pat/ben/" + name, "new".getBytes(), stat.getVersion());
+                    Assert.assertEquals(i, int.Parse(b.UTF8bytesToString()));
+                    zk.setData("/pat/ben/" + name, "new".UTF8getBytes(), stat.getVersion());
                     if (withWatcherObj) {
                         stat = zk.exists("/pat/ben/" + name, watcher);
                     }
@@ -377,11 +376,11 @@ namespace org.apache.zookeeper.test {
                     Assert.assertEquals(Watcher.Event.EventType.NodeDeleted, @event.get_Type());
                     Assert.assertEquals(Watcher.Event.KeeperState.SyncConnected, @event.getState());
                 }
-                zk.create("/good\u0040path", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                zk.create("/good\u0040path", "".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-                zk.create("/duplicate", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                zk.create("/duplicate", "".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                 try {
-                    zk.create("/duplicate", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                    zk.create("/duplicate", "".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                     Assert.fail("duplicate create allowed");
                 }
                 catch (KeeperException.NodeExistsException) {
@@ -450,9 +449,9 @@ namespace org.apache.zookeeper.test {
                 zk = createClient();
 
                 zk.create(queue_handle, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-                zk.create(queue_handle + "/element", "0".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                zk.create(queue_handle + "/element", "0".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT_SEQUENTIAL);
-                zk.create(queue_handle + "/element", "1".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                zk.create(queue_handle + "/element", "1".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT_SEQUENTIAL);
                 IList<string> children = zk.getChildren(queue_handle, true);
                 Assert.assertEquals(children.Count, 2);
@@ -467,8 +466,8 @@ namespace org.apache.zookeeper.test {
                     child1 = child2;
                     child2 = temp;
                 }
-                string child1data = Encoding.UTF8.GetString(zk.getData(queue_handle + "/" + child1, false, null));
-                string child2data = Encoding.UTF8.GetString(zk.getData(queue_handle + "/" + child2, false, null));
+                string child1data = zk.getData(queue_handle + "/" + child1, false, null).UTF8bytesToString();
+                string child2data = zk.getData(queue_handle + "/" + child2, false, null).UTF8bytesToString();
                 Assert.assertEquals(child1data, "0");
                 Assert.assertEquals(child2data, "1");
             }

@@ -234,7 +234,7 @@ namespace org.apache.zookeeper.recipes.leader {
             leaderOffer = new LeaderOffer();
 
             leaderOffer.HostName = HostName;
-            leaderOffer.NodePath = await ZooKeeper.createAsync(RootNodeName + "/" + "n_", HostName.getBytes(),
+            leaderOffer.NodePath = await ZooKeeper.createAsync(RootNodeName + "/" + "n_", HostName.UTF8getBytes(),
                 ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL).ConfigureAwait(false);
 
             logger.debugFormat("Created leader offer {0}", leaderOffer);
@@ -331,8 +331,7 @@ namespace org.apache.zookeeper.recipes.leader {
 		 * the sequence number and the node name.
 		 */
             foreach (var offer in strings) {
-                var data = (await ZooKeeper.getDataAsync(RootNodeName + "/" + offer).ConfigureAwait(false)).Data;
-                var currentHostName = Encoding.UTF8.GetString(data, 0, data.Length);
+                var currentHostName = (await ZooKeeper.getDataAsync(RootNodeName + "/" + offer).ConfigureAwait(false)).Data.UTF8bytesToString();
 
                 leaderOffers.Add(new LeaderOffer(int.Parse(offer.Substring("n_".Length)),
                     RootNodeName + "/" + offer, currentHostName));

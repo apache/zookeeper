@@ -50,10 +50,10 @@ namespace org.apache.zookeeper.test
 		public void testChild()
 		{
 			string name = "/foo";
-			zk.create(name, name.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			zk.create(name, name.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
 			string childname = name + "/bar";
-			zk.create(childname, childname.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+			zk.create(childname, childname.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
 
 			Stat stat = new Stat();
 			IList<string> s = zk.getChildren(name, false, stat);
@@ -89,7 +89,7 @@ namespace org.apache.zookeeper.test
 		public void testChildren()
 		{
 			string name = "/foo";
-			zk.create(name, name.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			zk.create(name, name.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
 			IList<string> children = new List<string>();
 			List<string> children_s = new List<string>();
@@ -105,7 +105,7 @@ namespace org.apache.zookeeper.test
 			for (int i = 0; i < children.Count; i++)
 			{
 				string childname = children[i];
-				zk.create(childname, childname.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+				zk.create(childname, childname.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
 
 				Stat stat = new Stat();
 				IList<string> s = zk.getChildren(name, false, stat);

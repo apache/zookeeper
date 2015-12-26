@@ -36,10 +36,10 @@ namespace org.apache.zookeeper.recipes.queue {
                 queueHandles[i] = new DistributedQueue(clients[i], dir, null);
             }
 
-            queueHandles[0].offer(testString.getBytes()).GetAwaiter().GetResult();
+            queueHandles[0].offer(testString.UTF8getBytes()).GetAwaiter().GetResult();
 
             byte[] dequeuedBytes = queueHandles[0].remove().GetAwaiter().GetResult();
-            Assert.assertEquals(Encoding.UTF8.GetString(dequeuedBytes), testString);
+            Assert.assertEquals(dequeuedBytes.UTF8bytesToString(), testString);
         }
 
         [Fact]
@@ -54,10 +54,10 @@ namespace org.apache.zookeeper.recipes.queue {
                 queueHandles[i] = new DistributedQueue(clients[i], dir, null);
             }
 
-            queueHandles[0].offer(testString.getBytes()).GetAwaiter().GetResult();
+            queueHandles[0].offer(testString.UTF8getBytes()).GetAwaiter().GetResult();
 
             byte[] dequeuedBytes = queueHandles[1].remove().GetAwaiter().GetResult();
-            Assert.assertEquals(Encoding.UTF8.GetString(dequeuedBytes), testString);
+            Assert.assertEquals(dequeuedBytes.UTF8bytesToString(), testString);
         }
 
         [Fact]
@@ -72,10 +72,10 @@ namespace org.apache.zookeeper.recipes.queue {
                 queueHandles[i] = new DistributedQueue(clients[i], dir, null);
             }
 
-            queueHandles[0].offer(testString.getBytes()).GetAwaiter().GetResult();
+            queueHandles[0].offer(testString.UTF8getBytes()).GetAwaiter().GetResult();
 
             byte[] dequeuedBytes = queueHandles[0].take().GetAwaiter().GetResult();
-            Assert.assertEquals(Encoding.UTF8.GetString(dequeuedBytes), testString);
+            Assert.assertEquals(dequeuedBytes.UTF8bytesToString(), testString);
         }
 
         [Fact]
@@ -110,7 +110,7 @@ namespace org.apache.zookeeper.recipes.queue {
 
             for (int i = 0; i < n; i++) {
                 string offerString = testString + i;
-                queueHandles[0].offer(offerString.getBytes()).GetAwaiter().GetResult();
+                queueHandles[0].offer(offerString.UTF8getBytes()).GetAwaiter().GetResult();
             }
 
             byte[] data = null;
@@ -118,7 +118,7 @@ namespace org.apache.zookeeper.recipes.queue {
                 data = queueHandles[1].remove().GetAwaiter().GetResult();
             }
             // ReSharper disable once AssignNullToNotNullAttribute
-            Assert.assertEquals(Encoding.UTF8.GetString(data), testString + (m - 1));
+            Assert.assertEquals(data.UTF8bytesToString(), testString + (m - 1));
         }
 
         [Fact]
@@ -143,13 +143,13 @@ namespace org.apache.zookeeper.recipes.queue {
 
             for (int i = 0; i < n; i++) {
                 string offerString = testString + i;
-                queueHandles[0].offer(offerString.getBytes()).GetAwaiter().GetResult();
+                queueHandles[0].offer(offerString.UTF8getBytes()).GetAwaiter().GetResult();
             }
 
             for (int i = 0; i < m; i++) {
                 queueHandles[1].remove().GetAwaiter().GetResult();
             }
-            Assert.assertEquals(Encoding.UTF8.GetString(queueHandles[1].element().GetAwaiter().GetResult()), testString + m);
+            Assert.assertEquals(queueHandles[1].element().GetAwaiter().GetResult().UTF8bytesToString(), testString + m);
         }
 
         [Fact]
@@ -196,7 +196,7 @@ namespace org.apache.zookeeper.recipes.queue {
             Thread.Sleep(1000);
             Thread offerThread = new Thread(()=>{
                 try {
-                    queueHandles[0].offer(testString.getBytes()).GetAwaiter().GetResult();
+                    queueHandles[0].offer(testString.UTF8getBytes()).GetAwaiter().GetResult();
                 }
                 catch (KeeperException) {
 
@@ -208,7 +208,7 @@ namespace org.apache.zookeeper.recipes.queue {
 
             Assert.assertTrue(takeResult[0] != null);
             // ReSharper disable once AssignNullToNotNullAttribute
-            Assert.assertEquals(Encoding.UTF8.GetString(takeResult[0]), testString);
+            Assert.assertEquals(takeResult[0].UTF8bytesToString(), testString);
         }
 
         [Fact]
@@ -241,7 +241,7 @@ namespace org.apache.zookeeper.recipes.queue {
                 Thread offerThread = new Thread(() =>
                 {
                     try {
-                        queueHandles[0].offer(threadTestString.getBytes()).GetAwaiter().GetResult();
+                        queueHandles[0].offer(threadTestString.UTF8getBytes()).GetAwaiter().GetResult();
                     }
                     catch (KeeperException) {
 
@@ -254,7 +254,7 @@ namespace org.apache.zookeeper.recipes.queue {
 
                 Assert.assertTrue(takeResult[0] != null);
                 // ReSharper disable once AssignNullToNotNullAttribute
-                Assert.assertEquals(Encoding.UTF8.GetString(takeResult[0]), threadTestString);
+                Assert.assertEquals(takeResult[0].UTF8bytesToString(), threadTestString);
             }
         }
     }
