@@ -18,7 +18,6 @@
  * 
  */
 using System;
-using System.Diagnostics;
 using Xunit;
 
 namespace org.apache.zookeeper
@@ -27,7 +26,8 @@ namespace org.apache.zookeeper
     {
         static TestsSetup()
         {
-            Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
+            ZooKeeper.LogToFile = false;
+            ZooKeeper.LogToTrace = false;
         }
         public TestsSetup()
         {

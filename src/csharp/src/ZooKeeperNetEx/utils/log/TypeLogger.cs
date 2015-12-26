@@ -60,7 +60,7 @@ namespace org.apache.utils
 
         public bool isDebugEnabled()
         {
-            return ZooKeeperLogger.Instance.GetLogLevel(className) == TraceLevel.Verbose;
+            return ZooKeeperLogger.Instance.LogLevel == TraceLevel.Verbose;
         }
 
         private void log(TraceLevel traceLevel, object message, Exception e = null)

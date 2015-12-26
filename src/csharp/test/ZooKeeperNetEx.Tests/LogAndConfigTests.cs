@@ -1,9 +1,10 @@
 ﻿using System;
-using System.Linq;
-using System.Xml.Linq;
 using Xunit;
 using org.apache.utils;
 using System.Diagnostics;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using org.apache.zookeeper;
 using Assert = Xunit.Assert;
 
@@ -11,82 +12,109 @@ namespace ZooKeeperNetEx.Tests
 {
     public class LogAndConfigTests
     {
-        private const string configXml =
-            @"<ZooKeeperNetEx xmlns='urn:zookeeper'>
-               <LogToTrace>true</LogToTrace>
-               <LogToFile>false</LogToFile>
-               <LogLevel>Warning</LogLevel>
-               <LogOverrides>
-                <LogOverride>
-                 <ClassName>ZooKeeper</ClassName>
-                 <LogLevel>Verbose</LogLevel>
-                </LogOverride>
-                <LogOverride>
-                 <ClassName>ClientCnxn</ClassName>
-                 <LogLevel>Warning</LogLevel>
-                </LogOverride>
-               </LogOverrides>
-              </ZooKeeperNetEx>";
-        
         [Fact]
-        public void SanityApplicationBasePath()
+        public async Task TestFileWriter()
         {
-            Assert.False(string.IsNullOrWhiteSpace(ZooKeeperLogger.GetApplicationBasePath()));
+            string filename = Guid.NewGuid().ToString();
+            NonBlockingFileWriter writer = new NonBlockingFileWriter(filename);
+            Assert.False(File.Exists(filename));
+            Assert.False(writer.HasFailed);
+            Assert.True(writer.IsEnabled);
+            Assert.True(writer.IsDisposed);
+            Assert.True(writer.IsEmpty);
+            for (int j = 0; j < 3; j++)
+            {
+                writer.IsEnabled = true;
+
+                for (int i = 0; i < 50; i++) writer.Write("test" + i);
+                await Task.Delay(300);
+                Assert.True(File.Exists(filename));
+
+                Assert.False(writer.HasFailed);
+                Assert.True(writer.IsEnabled);
+                Assert.False(writer.IsDisposed);
+                Assert.True(writer.IsEmpty);
+
+                writer.IsEnabled = false;
+
+                for (int i = 0; i < 50; i++) writer.Write("test" + i);
+                await Task.Delay(300);
+                Assert.False(writer.HasFailed);
+                Assert.False(writer.IsEnabled);
+                Assert.True(writer.IsDisposed);
+                Assert.True(writer.IsEmpty);
+
+                File.Delete(filename);
+
+                writer.Write("should not write");
+                await Task.Delay(300);
+                Assert.False(writer.HasFailed);
+                Assert.False(writer.IsEnabled);
+                Assert.True(writer.IsDisposed);
+                Assert.True(writer.IsEmpty);
+            }
+            var cancellationTokenSource = new CancellationTokenSource();
+            var token = cancellationTokenSource.Token;
+            var concurrentWrites = new[]
+            {
+                CreateWriteTask(token, writer), CreateWriteTask(token, writer), CreateWriteTask(token, writer),
+                CreateWriteTask(token, writer)
+            };
+
+            for (int i = 0; i < 3; i++)
+            {
+                writer.IsEnabled = true;
+                await Task.Delay(50);
+                writer.IsEnabled = false;
+                await Task.Delay(500);
+                Assert.False(writer.HasFailed);
+                Assert.False(writer.IsEnabled);
+                Assert.True(writer.IsDisposed);
+                Assert.True(writer.IsEmpty);
+            }
+
+            writer.IsEnabled = true;
+            writer.ThrowWrite = true;
+            await Task.Delay(100);
+            Assert.True(writer.HasFailed);
+            Assert.True(writer.IsEnabled);
+            Assert.True(writer.IsDisposed);
+            cancellationTokenSource.Cancel();
+            await Task.WhenAll(concurrentWrites);
+            Assert.True(writer.IsEmpty);
+
+            File.Delete(filename);
+            writer.Write("should not write");
+            Assert.False(File.Exists(filename));
+        }
+
+        private Task CreateWriteTask(CancellationToken cancellationToken, NonBlockingFileWriter writer)
+        {
+            return Task.Run(async () =>
+            {
+                int i = 0;
+                Random random = new Random();
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    writer.Write("test" + i);
+                    await Task.Delay(random.Next(50) + 10);
+                    i++;
+                }
+            });
         }
 
         [Fact]
-        public void TestWrongValues()
-        {
-            var configXDocument = XDocument.Parse(configXml);
-            configXDocument.Root.Name = "bla";
-            TestThrows<FormatException>(configXDocument);
-
-            configXDocument = XDocument.Parse(configXml);
-            SetElementValue(configXDocument, "LogToTrace", "bla");
-            TestThrows<FormatException>(configXDocument);
-
-            configXDocument = XDocument.Parse(configXml);
-            SetElementValue(configXDocument, "LogToFile", "bla");
-            TestThrows<FormatException>(configXDocument);
-
-            configXDocument = XDocument.Parse(configXml);
-            SetElementValue(configXDocument, "LogLevel", "bla");
-            TestThrows<ArgumentException>(configXDocument);
-        }
-
-        [Fact]
-        public void TestAddConsumer()
+        public void TestCustomConsumer()
         {
             var dummy = new DummyConsumer();
             ILogProducer log = TypeLogger<LogAndConfigTests>.Instance;
-            ZooKeeper.AddLogConsumer(dummy);
+            ZooKeeper.CustomLogConsumer = dummy;
             log.warn("test");
             Assert.True(dummy.called);
-        }
-
-        [Fact]
-        public void TestParse()
-        {
-            var configXDocument = XDocument.Parse(configXml);
-            var logConfig = LogConfigLoader.LoadFromElement(configXDocument.Root);
-            Assert.Equal(logConfig.LogLevel, TraceLevel.Warning);
-            Assert.Equal(logConfig.LogToTrace, true);
-            Assert.Equal(logConfig.LogToFile, false);
-            Assert.Equal(logConfig.LogOverrides.Count, 2);
-            Assert.Equal(logConfig.LogOverrides["ZooKeeper"], TraceLevel.Verbose);
-            Assert.Equal(logConfig.LogOverrides["ClientCnxn"], TraceLevel.Warning);
-        }
-
-        [Fact]
-        public void TestMandatory()
-        {
-            var configXDocument = XDocument.Parse(configXml);
-            configXDocument.Root.Descendants().First(x => x.Name.LocalName == "ClassName").Remove();
-            TestThrows<FormatException>(configXDocument);
-
-            configXDocument = XDocument.Parse(configXml);
-            configXDocument.Root.Descendants().Last(x => x.Name.LocalName == "LogLevel").Remove();
-            TestThrows<FormatException>(configXDocument);
+            dummy.called = false;
+            ZooKeeper.CustomLogConsumer = null;
+            log.warn("test");
+            Assert.False(dummy.called);
         }
 
         private class DummyConsumer : ILogConsumer
@@ -97,16 +125,6 @@ namespace ZooKeeperNetEx.Tests
                 if (className == "LogAndConfigTests")
                     called = true;
             }
-        }
-
-        private void TestThrows<T>(XDocument xDocument) where T : Exception
-        {
-            Assert.Throws<T>(() => LogConfigLoader.LoadFromElement(xDocument.Root));
-        }
-
-        private void SetElementValue(XDocument xDocument, string elementName, string value)
-        {
-            xDocument.Root.Elements().First(x => x.Name.LocalName == elementName).Value = value;
         }
     }
 }

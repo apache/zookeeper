@@ -20,92 +20,52 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Xml.Linq;
 
 namespace org.apache.utils
 {
     internal class ZooKeeperLogger
     {
         internal static readonly ZooKeeperLogger Instance = new ZooKeeperLogger();
-        private readonly ConcurrentBag<ILogConsumer> logConsumers = new ConcurrentBag<ILogConsumer>();
-        private readonly Dictionary<string, TraceLevel> logOverrides;
-        private readonly TraceLevel defaultLogLevel;
-
-        private ZooKeeperLogger()
+        internal ILogConsumer CustomLogConsumer;
+        internal TraceLevel LogLevel = TraceLevel.Warning;
+        private readonly LogWriter logWriter = new LogWriter();
+        internal bool LogToFile
         {
-            var logConfig = LoadConfigOrDefault();
-
-            if (logConfig.LogToFile) logConsumers.Add(new LogWriterToFile());
-            if (logConfig.LogToTrace) logConsumers.Add(new LogWriterToTrace());
-            defaultLogLevel = logConfig.LogLevel;
-            logOverrides = logConfig.LogOverrides;
+            get { return logWriter.LogToFile; }
+            set { logWriter.LogToFile = value; }
         }
 
-        private static LogConfig LoadConfigOrDefault()
+        internal bool LogToTrace
         {
-            LogConfig logConfig = LogConfig.Default;
-            try
-            {
-                var dir = GetApplicationBasePath();
-                Trace.TraceInformation($"ZooKeeperNetEx directory is: {dir}");
-                var logfileText = File.ReadAllText($"{dir}{Path.DirectorySeparatorChar}ZooKeeperNetEx.config");
-                Trace.TraceInformation($"Configuration Loaded:{Environment.NewLine}{logfileText}");
-                var rootElement = XDocument.Parse(logfileText).Root;
-
-                logConfig = LogConfigLoader.LoadFromElement(rootElement);
-            }
-            catch (Exception e)
-            {
-                Trace.TraceError("Error opening log configuration file, using defaults. Exception:" + e);
-            }
-            return logConfig;
+            get { return logWriter.LogToTrace; }
+            set { logWriter.LogToTrace = value; }
         }
 
-        internal static string GetApplicationBasePath()
+        internal string LogFileName
         {
-#if NET40 || NET45
-            object dir = AppDomain.CurrentDomain.GetData("APP_CONTEXT_BASE_DIRECTORY");
-            if (dir != null) return dir.ToString();
-            return Path.GetDirectoryName(new Uri(System.Reflection.Assembly.GetExecutingAssembly().CodeBase).LocalPath);
-#else
-            return Microsoft.Extensions.PlatformAbstractions.PlatformServices.Default.Application.ApplicationBasePath;
-#endif
+            get { return logWriter.FileName; }
         }
 
-        internal TraceLevel GetLogLevel(string className)
-        {
-            TraceLevel logLevel;
-            return logOverrides.TryGetValue(className, out logLevel) ? logLevel : defaultLogLevel;
-        }
-
-        internal void AddLogConsumer(ILogConsumer logConsumer)
-        {
-            logConsumers.Add(logConsumer);
-        }
-        
         internal void Log(TraceLevel sev, string className, string message, Exception exception = null)
         {
-            if (sev > GetLogLevel(className))
+            if (sev > LogLevel)
             {
                 return;
             }
 
-            foreach (var consumer in logConsumers)
+            logWriter.Log(sev, className, message, exception);
+            var logConsumer = CustomLogConsumer;
+            if (logConsumer == null) return;
+            try
             {
-                try
-                {
-                    consumer.Log(sev, className, message, exception);
-                }
-                catch (Exception e)
-                {
-                    Trace.TraceError($@"Exception while passing a log message to log consumer. TraceLogger 
-                                    type:{consumer.GetType().FullName}, name:{className}, severity:{sev}, 
-                                    message:{message}, message exception:{exception}, 
-                                    log consumer exception:{e}");
-                }
+                logConsumer.Log(sev, className, message, exception);
+            }
+            catch (Exception e)
+            {
+                Trace.TraceError(
+                    $@"Exception while passing a log message to log consumer. TraceLogger type:{logConsumer.GetType().FullName},
+                       name:{className}, severity:{sev}, message:{message}, message exception:{exception}, log consumer exception:{e}");
             }
         }
     }

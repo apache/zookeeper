@@ -17,8 +17,9 @@
  */
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.IO;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 using org.apache.utils;
@@ -1038,13 +1039,34 @@ namespace org.apache.zookeeper {
             States state = getState();
             return ("State:" + state + (cnxn.getState().isConnected() ? " Timeout:" + getSessionTimeout() + " " : " ") + cnxn);
         }
-
-        /// <summary>
-        /// Adds a custom log consumer. For integration with third party logging systems.
-        /// </summary>
-        public static void AddLogConsumer(ILogConsumer logConsumer)
+        
+        public static bool LogToFile
         {
-            ZooKeeperLogger.Instance.AddLogConsumer(logConsumer);
+            get { return ZooKeeperLogger.Instance.LogToFile; }
+            set { ZooKeeperLogger.Instance.LogToFile = value; }
+        }
+
+        public static bool LogToTrace
+        {
+            get { return ZooKeeperLogger.Instance.LogToTrace; }
+            set { ZooKeeperLogger.Instance.LogToTrace = value; }
+        }
+
+        public static string LogFileName
+        {
+            get { return ZooKeeperLogger.Instance.LogFileName; }
+        }
+
+        public static TraceLevel LogLevel
+        {
+            get { return ZooKeeperLogger.Instance.LogLevel; }
+            set { ZooKeeperLogger.Instance.LogLevel = value; }
+        }
+
+        public static ILogConsumer CustomLogConsumer
+        {
+            get { return ZooKeeperLogger.Instance.CustomLogConsumer; }
+            set { ZooKeeperLogger.Instance.CustomLogConsumer = value; }
         }
 
         #region Using        

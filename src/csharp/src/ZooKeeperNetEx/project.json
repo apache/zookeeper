@@ -7,14 +7,14 @@
     "Generated/proto/GetChildrenR*.*",
     "Generated/proto/GetMaxChildren*.*"
   ],
-  "userSecretsId": "dotnet-ZooKeeperNetEx-171215",
+  "userSecretsId": "dotnet-ZooKeeperNetEx-261215",
   "title": "Apache ZooKeeper .NET async Client",
-  "version": "3.4.6.1009",
+  "version": "3.4.6.1011",
   "description": "A .NET async Client fully compliant with ZooKeeper v3.4.6, supporting all features. Fully Task-based Asynchronous (async/await). A great measure has been taken to follow the logic of the official Java client, including all relevant unit tests. In fact, the code is almost identical. Thus allowing easy evolution alongside the Java version.",
   "authors": [ "Shay Hazor" ],
   "owners": [ "Shay Hazor" ],
   "summary": "A .NET async Client for ZooKeeper v3.4.6",
-  "releaseNotes": "Rewritten log system.\nThis project is actively maintained at: https://github.com/shayhatsor/zookeeper \nPlease feel free to open an issue or ask a question there.\n\nKnown limitations:\nNo SASL support",
+  "releaseNotes": "Log is now configurable on the fly on runtime, no config file needed.\nThis project is actively maintained at: https://github.com/shayhatsor/zookeeper \nPlease feel free to open an issue or ask a question there.\n\nKnown limitations:\nNo SASL support",
   "tags": [ "Apache", "ZooKeeper", ".NET", "Client", "Async", "ZK", "C#" ],
   "projectUrl": "https://github.com/shayhatsor/zookeeper",
   "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
@@ -31,28 +31,20 @@
   "frameworks": {
     "dotnet5.4": {
       "dependencies": {
-        "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*",
         "System.Collections.Concurrent": "4.0.11-*",
         "System.Diagnostics.TraceSource": "4.0.0-*",
+        "System.Diagnostics.Tools": "4.0.1-*",
         "System.Linq": "4.0.1-*",
         "System.Net.NameResolution": "4.0.0-*",
         "System.Net.Sockets": "4.1.0-*",
-        "System.Xml.XDocument": "4.0.11-*"
+        "System.IO": "4.0.11-*",
+        "System.IO.FileSystem": "4.0.1-*"
       }
     },
-    "net45": {
-      "frameworkAssemblies": {
-        "System.Xml": "4.0.0",
-        "System.Xml.Linq": "4.0.0"
-      }
-    },
+    "net45": { },
     "net4": {
       "dependencies": {
-        "Microsoft.Bcl.Async": "1.0.168" 
-      },
-      "frameworkAssemblies": {
-        "System.Xml": "4.0.0",
-        "System.Xml.Linq": "4.0.0"
+        "Microsoft.Bcl.Async": "1.0.168"
       }
     }
   }

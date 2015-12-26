@@ -20,41 +20,54 @@
 
 using System;
 using System.Diagnostics;
+using System.Net;
 using System.Reflection;
 using System.Text;
 
 namespace org.apache.utils
 {
-    /// <summary>
-    ///     The Log Writer base class provides default partial implementation suitable for most specific log writer.
-    /// </summary>
-    internal abstract class LogWriterBase : ILogConsumer
+    internal class LogWriter
     {
-        private static readonly string[] SEVERITY_TABLE = {"OFF  ", "ERROR  ", "WARNING", "INFO   ", "VERBOSE "};
+        private static readonly string[] TRACE_TABLE = { "OFF", "ERROR", "WARNING", "INFO", "VERBOSE" };
+        private readonly NonBlockingFileWriter logFileWriter;
+        public readonly string FileName;
 
+        public LogWriter()
+        {
+            const string dateFormat = "yyyy-MM-dd-HH.mm.ss.fffZ";
+            FileName = $"ZK.{Dns.GetHostName()}.{DateTime.UtcNow.ToString(dateFormat)}.log";
+            logFileWriter = new NonBlockingFileWriter(FileName);
+        }
+        
         /// <summary>
         ///     The method to call during logging.
         ///     This method should be very fast, since it is called synchronously during logging.
         /// </summary>
-        /// <param name="severity">The severity of the message being traced.</param>
+        /// <param name="traceLevel">The severity of the message being traced.</param>
         /// <param name="className">The name of the logger tracing the message.</param>
         /// <param name="message">The message to log.</param>
         /// <param name="exception">The exception to log. May be null.</param>
-        public void Log(TraceLevel severity, string className, string message, Exception exception)
+        public void Log(TraceLevel traceLevel, string className, string message, Exception exception)
         {
             var exc = PrintException(exception);
-            string msg = $"[{PrintDate()} \t{SEVERITY_TABLE[(int) severity]} \t{className} \t{message}] \t{exc}";
+            string msg = $"[{PrintDate()} \t{TRACE_TABLE[(int)traceLevel]} \t{className} \t{message}] \t{exc}";
 
-            WriteLogMessage(msg, severity);
+            TraceWriter.Write(msg, traceLevel);
+            logFileWriter.Write(msg);
         }
 
-        /// <summary>
-        ///     The method to call during logging to write the log message by this log.
-        /// </summary>
-        /// <param name="msg">Message string to be written</param>
-        /// <param name="severity">The severity level of this message</param>
-        protected abstract void WriteLogMessage(string msg, TraceLevel severity);
+        public bool LogToFile
+        {
+            get { return logFileWriter.IsEnabled; }
+            set { logFileWriter.IsEnabled = value; }
+        }
 
+        public bool LogToTrace
+        {
+            get { return TraceWriter.LogToTrace; }
+            set { TraceWriter.LogToTrace = value; }
+        }
+        
         /// <summary>
         ///     Utility function to convert a <c>DateTime</c> object into printable data format used by the TraceLogger subsystem.
         /// </summary>
@@ -65,7 +78,7 @@ namespace org.apache.utils
             // http://msdn.microsoft.com/en-us/library/system.globalization.datetimeformatinfo.aspx
             const string TIME_FORMAT = "HH:mm:ss.fff 'GMT'"; // Example: 09:50:43.341 GMT
             const string DATE_FORMAT = "yyyy-MM-dd " + TIME_FORMAT;
-                // Example: 2010-09-02 09:50:43.341 GMT - Variant of UniversalSorta­bleDateTimePat­tern
+            // Example: 2010-09-02 09:50:43.341 GMT - Variant of UniversalSorta­bleDateTimePat­tern
             return DateTime.UtcNow.ToString(DATE_FORMAT);
         }
 
