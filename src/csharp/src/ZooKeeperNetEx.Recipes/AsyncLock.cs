@@ -27,7 +27,6 @@ namespace System.Threading.Tasks
 {
     //http://blogs.msdn.com/b/pfxteam/archive/2012/02/12/10266988.aspx
     //http://www.hanselman.com/blog/ComparingTwoTechniquesInNETAsynchronousCoordinationPrimitives.aspx
-    [Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable")]
     internal sealed class AsyncLock
     {
 #if NET40
@@ -80,7 +79,6 @@ namespace System.Threading.Tasks
 #endif
         private readonly Task<IDisposable> m_releaser;
 
-        [Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope")]
         public AsyncLock()
         {
             m_releaser = TaskEx.FromResult((IDisposable)new Releaser(this));

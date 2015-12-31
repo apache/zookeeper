@@ -33,7 +33,6 @@
       "dependencies": {
         "System.Collections.Concurrent": "4.0.11-*",
         "System.Diagnostics.TraceSource": "4.0.0-*",
-        "System.Diagnostics.Tools": "4.0.1-*",
         "System.Linq": "4.0.1-*",
         "System.Net.NameResolution": "4.0.0-*",
         "System.Net.Sockets": "4.1.0-*",

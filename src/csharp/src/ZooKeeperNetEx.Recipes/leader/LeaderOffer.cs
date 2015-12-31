@@ -47,7 +47,6 @@ namespace org.apache.zookeeper.recipes.leader {
         /// </summary>
         internal sealed class IdComparator : IComparer<LeaderOffer>
         {
-            [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1062:Validate arguments of public methods")]
             public int Compare(LeaderOffer o1, LeaderOffer o2) {
                 return o1.Id.CompareTo(o2.Id);
             }

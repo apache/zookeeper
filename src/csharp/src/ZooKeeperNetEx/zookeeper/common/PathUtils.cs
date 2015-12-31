@@ -43,7 +43,6 @@ namespace org.apache.zookeeper.common
         /// Validate the provided znode path string </summary>
         /// <param name="path"> znode path string </param>
         /// <exception cref="ArgumentException"> if the path is invalid </exception>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity")]
         public static void validatePath(string path)
 		{
 			if (path == null) 

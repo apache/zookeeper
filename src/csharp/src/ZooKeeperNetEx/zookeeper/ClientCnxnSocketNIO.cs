@@ -255,7 +255,6 @@ namespace org.apache.zookeeper
         /// <summary>
         /// create a socket channel. </summary>
         /// <returns> the created socket channel </returns>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope")]
         private static Socket createSock()
 	    {
 			Socket sock=new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -281,7 +280,6 @@ namespace org.apache.zookeeper
 	        }
 		}
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope")]
         internal override void connect(DnsEndPoint addr)
 		{
 			Socket sock = createSock();

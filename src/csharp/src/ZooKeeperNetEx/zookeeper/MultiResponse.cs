@@ -44,7 +44,6 @@ namespace org.apache.zookeeper
         return results.GetEnumerator();
     }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1800:DoNotCastUnnecessarily")]
         public void serialize(OutputArchive archive, string tag) {
 
 			foreach (OpResult result in results) {
