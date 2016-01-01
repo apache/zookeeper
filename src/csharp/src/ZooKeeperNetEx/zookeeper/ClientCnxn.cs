@@ -641,11 +641,13 @@ namespace org.apache.zookeeper {
                         }
 
                         if (to <= 0) {
-                            throw new SessionTimeoutException(
+                            string warnInfo = 
                                 "Client session timed out, have not heard from server in "
                                 + clientCnxnSocket.getIdleRecv() + "ms"
                                 + " for sessionid 0x"
-                                + clientCnxnSocket.sessionId.ToHexString());
+                                + clientCnxnSocket.sessionId.ToHexString();
+                            LOG.warn(warnInfo);
+                            throw new SessionTimeoutException(warnInfo);
                         }
                         if (getState().isConnected())
                         {
@@ -843,8 +845,10 @@ namespace org.apache.zookeeper {
                         Watcher.Event.EventType.None,
                         Watcher.Event.KeeperState.Expired, null));
                     queueEventOfDeath();
-                    throw new SessionExpiredException("Unable to reconnect to ZooKeeper service, session 0x" +
-                                                      sessionId.ToHexString() + " has expired");
+                string warnInfo = "Unable to reconnect to ZooKeeper service, session 0x" +
+                                                      sessionId.ToHexString() + " has expired";
+                LOG.warn(warnInfo);
+                throw new SessionExpiredException(warnInfo);
                 }
                 if (!readOnly && isRO) {
                     LOG.error("Read/write client got connected to read-only server");
