@@ -125,6 +125,12 @@ namespace org.apache.zookeeper.test {
                 IList<ACL> acls = zk.getACL("/acltest", new Stat());
                 Assert.assertEquals(1, acls.Count);
                 Assert.assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE, acls);
+
+                // The stat parameter should be optional.
+                acls = zk.getACL("/acltest", null);
+                Assert.assertEquals(1, acls.Count);
+                Assert.assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE, acls);
+
                 zk.close();
             }
             finally {
