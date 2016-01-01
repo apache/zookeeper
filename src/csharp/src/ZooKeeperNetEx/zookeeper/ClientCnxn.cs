@@ -335,6 +335,7 @@ namespace org.apache.zookeeper {
         private async Task startEventTask() {
             bool wasKilled = false;
 
+            try {
             while (!(wasKilled && waitingEvents.IsEmpty)) {
                 await waitingEventsManualResetEvent.WaitAsync().ConfigureAwait(false);
                 waitingEventsManualResetEvent.Reset();
@@ -348,7 +349,12 @@ namespace org.apache.zookeeper {
                         await processEvent(@event).ConfigureAwait(false);
                     }
                 }
+                }
+            } catch (Exception e) {
+                LOG.warn("Exception occurred in EventTask", e);
             }
+            LOG.info("EventTask shut down for session: 0x" +
+                     getSessionId().ToHexString());
         }
 
         private static async Task processEvent(WatcherSetEventPair @event) {
@@ -606,6 +612,7 @@ namespace org.apache.zookeeper {
             private const string RETRY_CONN_MSG = ", closing socket connection and attempting reconnect";
 
             private async Task startSendTask() {
+                try { 
                 clientCnxnSocket.introduce(sessionId);
                 clientCnxnSocket.updateNow();
                 clientCnxnSocket.updateLastSendAndHeard();
@@ -734,7 +741,12 @@ namespace org.apache.zookeeper {
                     queueEvent(new WatchedEvent(Watcher.Event.EventType.None,
                         Watcher.Event.KeeperState.Disconnected, null));
                 }
-                LOG.debug("SendTask exitedloop.");
+                }
+                catch(Exception e){
+                LOG.warn("Exception occurred in SendTask", e);
+                }
+            LOG.debug("SendTask exited loop for session: 0x" +
+                     getSessionId().ToHexString());
             }
 
             private async Task pingRwServer() {
