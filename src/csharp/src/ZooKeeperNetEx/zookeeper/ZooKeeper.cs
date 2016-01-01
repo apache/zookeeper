@@ -17,7 +17,6 @@
  */
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -137,32 +136,19 @@ namespace org.apache.zookeeper {
                 switch (type) {
                     case Watcher.Event.EventType.None:
                         result.Add(defaultWatcher);
-                        bool clear = ClientCnxn.getDisableAutoResetWatch() && state != Watcher.Event.KeeperState.SyncConnected;
                         lock (dataWatches) {
                             foreach (HashSet<Watcher> ws in dataWatches.Values) {
                                 result.addAll(ws);
-                            }
-                            if (clear)
-                            {
-                                dataWatches.Clear();
                             }
                         }
                         lock (existWatches) {
                             foreach (HashSet<Watcher> ws in existWatches.Values) {
                                 result.addAll(ws);
                             }
-                            if (clear)
-                            {
-                                existWatches.Clear();
-                            }
                         }
                         lock (childWatches) {
                             foreach (HashSet<Watcher> ws in childWatches.Values) {
                                 result.addAll(ws);
-                            }
-                            if (clear)
-                            {
-                                childWatches.Clear();
                             }
                         }
                         return result;

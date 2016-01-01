@@ -40,22 +40,6 @@ namespace org.apache.zookeeper {
  */
     internal sealed class ClientCnxn {
         private static readonly ILogProducer LOG = TypeLogger<ClientCnxn>.Instance;
-        //private const string ZK_SASL_CLIENT_USERNAME = "zookeeper.sasl.client.username";
-
-        /**
-	 * This controls whether automatic watch resetting is enabled. Clients
-	 * automatically reset watches during session reconnect, this option allows
-	 * the client to turn off this behavior by setting the environment variable
-	 * "zookeeper.disableAutoWatchReset" to "true"
-	 */
-        private static bool disableAutoWatchReset = false;
-
-        static ClientCnxn() {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("zookeeper.disableAutoWatchReset is "
-                          + disableAutoWatchReset);
-            }
-        }
 
         private class AuthData {
             internal AuthData(string scheme, byte[] data) {
@@ -295,28 +279,6 @@ namespace org.apache.zookeeper {
             clientCnxnSocket = new ClientCnxnSocketNIO(this);
             state.Value = ZooKeeper.States.CONNECTING;
         }
-
-        /**
-	 * tests use this to check on reset of watches
-	 * 
-	 * @return if the auto reset of watches are disabled
-	 */
-        public static bool getDisableAutoResetWatch() 
-        {
-            return disableAutoWatchReset;
-        }
-
-        /**
-	 * tests use this to set the auto reset
-	 * 
-	 * @param disableAutoResetWatch
-	 *        the value to set disable watches to
-	 */
-        public static void setDisableAutoResetWatch(bool disableAutoResetWatch)
-        {
-            disableAutoWatchReset = disableAutoResetWatch;
-        }
-
         public void start() {
             sendTask = startSendTask();
             eventTask = startEventTask();
@@ -560,7 +522,6 @@ namespace org.apache.zookeeper {
                     // Only send if there's a pending watch
                     // TODO: here we have the only remaining use of zooKeeper in
                     // this class. It's to be eliminated!
-                    if (!disableAutoWatchReset) {
                         List<string> dataWatches = zooKeeper.getDataWatches();
                         List<string> existWatches = zooKeeper.getExistWatches();
                         List<string> childWatches = zooKeeper.getChildWatches();
@@ -575,7 +536,6 @@ namespace org.apache.zookeeper {
                             Packet packet = new Packet(h, new ReplyHeader(), sw,
                                 null, null);
                             outgoingQueue.AddFirst(packet);
-                        }
                     }
                     foreach (AuthData id in authInfo) {
                         outgoingQueue.AddFirst(new Packet(new RequestHeader(-4,

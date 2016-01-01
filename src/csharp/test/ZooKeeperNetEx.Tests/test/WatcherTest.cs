@@ -27,15 +27,6 @@ namespace org.apache.zookeeper.test
 {
     public class WatcherTest : ClientBase
 	{
-	    private static readonly ILogProducer LOG = TypeLogger<WatcherTest>.Instance;
-
-		public WatcherTest()
-		{
-			// Reset to default value since some test cases set this to true.
-			// Needed for JDK7 since unit test can run is random order
-			ClientCnxn.setDisableAutoResetWatch(false);
-		}
-
         private class MyWatcher : CountdownWatcher {
             internal readonly BlockingCollection<WatchedEvent> events =
             new BlockingCollection<WatchedEvent>();
