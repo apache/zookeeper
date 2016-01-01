@@ -442,7 +442,7 @@ namespace org.apache.zookeeper {
             }
         }
 
-        public const int packetLen = 1024*1024*4;
+        public const int packetLen = 0xfffff;
 
             private long lastPingSentNs;
             private readonly ClientCnxnSocket clientCnxnSocket;
