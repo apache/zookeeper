@@ -619,15 +619,51 @@ namespace org.apache.zookeeper {
         /// the specified ops.contains partial results and error details, see <see cref="KeeperException.getResults()"/></exception> 
         public Task<List<OpResult>> multiAsync(List<Op> ops) {
             if (ops == null) throw new ArgumentNullException("ops");
-            foreach (Op op in ops) {
-                op.validate();
+            List<OpResult> results = validatePath(ops);
+            if (results.size() > 0) {
+                var ex = new KeeperException.BadArgumentsException(ops[0].getPath());
+                ex.setMultiResults(results);
+                throw ex;
             }
-            // reconstructing transaction with the chroot prefix
-            IList<Op> transaction = new List<Op>();
+            return multiInternal(generateMultiTransaction(ops));
+        }
+        private List<OpResult> validatePath(List<Op> ops) {
+            List<OpResult> results = new List<OpResult>();
+            bool error = false;
+            foreach (Op op in ops) {
+                OpResult.ErrorResult err;
+                try {
+                    op.validate();
+                } catch (ArgumentException iae) {
+                    LOG.error("ArgumentException: " + iae.Message);
+                    err = new OpResult.ErrorResult(
+                            (int) KeeperException.Code.BADARGUMENTS);
+                    results.Add(err);
+                    error = true;
+                    continue;
+                } catch (KeeperException ke) {
+                    LOG.error("KeeperException: " + ke.Message);
+                    err = new OpResult.ErrorResult((int) ke.getCode());
+                    results.Add(err);
+                    error = true;
+                    continue;
+                }
+                err = new OpResult.ErrorResult(
+                        (int) KeeperException.Code.RUNTIMEINCONSISTENCY);
+                results.Add(err);
+            }
+            if (false == error) {
+                results.Clear();
+            }
+            return results;
+        }
+        private MultiTransactionRecord generateMultiTransaction(List<Op> ops) {
+            List<Op> transaction = new List<Op>();
+
             foreach (Op op in ops) {
                 transaction.Add(withRootPrefix(op));
             }
-            return multiInternal(new MultiTransactionRecord(transaction));
+            return new MultiTransactionRecord(transaction);
         }
 
         private Op withRootPrefix(Op op) {

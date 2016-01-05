@@ -153,7 +153,7 @@ namespace org.apache.zookeeper
         /// <summary>
         ///     Performs client path validations.
         /// </summary>
-        /// <exception cref="InvalidOperationException">
+        /// <exception cref="ArgumentException">
         ///     if an invalid path is specified
         /// </exception>
         /// <exception cref="KeeperException.BadArgumentsException">
