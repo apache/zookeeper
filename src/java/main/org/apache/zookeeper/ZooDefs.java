@@ -71,7 +71,7 @@ public class ZooDefs {
 
         public final int createTTL = 21;
 
-        public final int getChildrenPaginated = 71;
+        public final int getChildrenPaginated = 22;
 
         public final int auth = 100;
 

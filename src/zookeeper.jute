@@ -53,7 +53,7 @@ module org.apache.zookeeper.data {
     }
     class PathWithStat {
         ustring path;
-        Stat  stat;
+        org.apache.zookeeper.data.Stat  stat;
     }
 }
 

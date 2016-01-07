@@ -47,7 +47,7 @@ public class GetChildrenPaginatedTest extends ClientBase {
         zk.close();
     }
 
-    @Test
+    @Test(timeout = 30000)
     public void testPagination() throws Exception {
 
         final String testId = UUID.randomUUID().toString();
@@ -71,7 +71,7 @@ public class GetChildrenPaginatedTest extends ClientBase {
         final int pageSize = 3;
 
         while (true) {
-            final List<PathWithStat> page = zk.getChildrenPaginated(basePath, null, pageSize, minZkId);
+            final List<PathWithStat> page = zk.getChildren(basePath, null, pageSize, minZkId);
 
             if(page.isEmpty()) {
                 break;
@@ -97,15 +97,18 @@ public class GetChildrenPaginatedTest extends ClientBase {
         }
     }
 
-    class MyWatcher implements Watcher {
-        boolean watchFired = false;
+    class FireOnlyOnceWatcher implements Watcher {
+        int watchFiredCount = 0;
 
         @Override
         public void process(WatchedEvent event) {
-            Assert.assertFalse("Watch fired multiple times " + event.toString(), watchFired);
-            watchFired = true;
+
+            synchronized (this) {
+                watchFiredCount += 1;
+                this.notify();
+            }
         }
-    };
+    }
 
     @Test(timeout = 30000)
     public void testPaginationWatch() throws Exception {
@@ -119,10 +122,11 @@ public class GetChildrenPaginatedTest extends ClientBase {
         final int pageSize = 3;
         int pageCount = 0;
 
-        MyWatcher myWatcher = new MyWatcher();
+        FireOnlyOnceWatcher fireOnlyOnceWatcher = new FireOnlyOnceWatcher();
 
         while (true) {
-            final List<PathWithStat> page = zk.getChildrenPaginated(basePath, myWatcher, pageSize, minZkId);
+
+            final List<PathWithStat> page = zk.getChildren(basePath, fireOnlyOnceWatcher, pageSize, minZkId);
 
             if(page.isEmpty()) {
                 break;
@@ -132,6 +136,13 @@ public class GetChildrenPaginatedTest extends ClientBase {
             if(pageCount < 3) {
                 String childPath = basePath + "/" + "before-pagination-" + pageCount;
                 zk.create(childPath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            }
+
+
+            // Modify the first child of each page.
+            // This should not trigger additional watches or create duplicates in the set of children returned
+            if(pageCount == 1) {
+                zk.setData(basePath + "/" + page.get(0).getPath(), new byte[3], -1);
             }
 
             for (PathWithStat pathWithStat : page) {
@@ -146,6 +157,10 @@ public class GetChildrenPaginatedTest extends ClientBase {
             }
 
             pageCount += 1;
+
+            synchronized (fireOnlyOnceWatcher) {
+                Assert.assertEquals("Watch should not have fired yet", 0, fireOnlyOnceWatcher.watchFiredCount);
+            }
         }
 
         // Create another children after pagination is completed -- should trigger watch
@@ -154,20 +169,25 @@ public class GetChildrenPaginatedTest extends ClientBase {
             zk.create(childPath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         }
 
+
+        // Test eventually times out and fails if watches does not fire
         while (true) {
-            // Test times-out if this doesn't become true in a reasonable amount of time
-            if(!myWatcher.watchFired) {
-                LOG.info("Watch did not fire yet");
-                Thread.sleep(1000);
-            } else {
-                LOG.info("Watch fired");
-                break;
+            synchronized (fireOnlyOnceWatcher) {
+                if (fireOnlyOnceWatcher.watchFiredCount > 0) {
+                    Assert.assertEquals("Watch should have fired once", 1, fireOnlyOnceWatcher.watchFiredCount);
+                    break;
+                }
+                fireOnlyOnceWatcher.wait(1000);
             }
         }
 
-        //Sleep a bit more, to allow any duplicated watch to fire again
-        Thread.sleep(1000);
-        Assert.assertTrue(myWatcher.watchFired);
+        // Watch fired once.
+
+        // Give it another chance to fire (i.e. a duplicate) which would make the test fail
+        synchronized (fireOnlyOnceWatcher) {
+            fireOnlyOnceWatcher.wait(1000);
+            Assert.assertEquals("Watch should have fired once", 1, fireOnlyOnceWatcher.watchFiredCount);
+        }
     }
 
     private Map<String, Stat> createChildren(String basePath, int numChildren, int firstChildrenNameOffset) throws KeeperException, InterruptedException {

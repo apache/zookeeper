@@ -717,15 +717,15 @@ public class DataTree {
                 children = new PriorityQueue<PathWithStat>(maxReturned + 1, new Comparator<PathWithStat>() {
                     @Override
                     public int compare(PathWithStat o1, PathWithStat o2) {
-                        final long l = o2.getStat().getMzxid() - o1.getStat().getMzxid();
+                        final long l = o2.getStat().getCzxid() - o1.getStat().getCzxid();
                         return l < 0 ? -1 : (l == 0 ? 0 : 1);
                     }
                 });
                 for (String child: childs) {
                     DataNode childNode = nodes.get(path + "/" + child);
                     if (null != childNode) {
-                        final long mzxid = childNode.stat.getMzxid();
-                        if (mzxid <= minZkId) continue; // Filter out the nodes that are below our water mark
+                        final long czxid = childNode.stat.getCzxid();
+                        if (czxid <= minZkId) continue; // Filter out the nodes that are below our water mark
                         Stat childStat = new Stat();
                         childNode.copyStat(childStat);
                         children.add(new PathWithStat(child, childStat));

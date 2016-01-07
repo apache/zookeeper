@@ -2447,16 +2447,17 @@ public class ZooKeeper implements AutoCloseable {
     }
 
     /**
-     *
+     * Return the a subset (a "page") of the children node of the given path.
+     * <p>
      * @param path
      * @param watcher explicit watcher
      * @param maxReturned   The maximum number of children to return
-     * @param minZkid The result will be filtered out to nodes having a zkid > minZkid
-     * @return an ordered list of child nodes, ordered by mZkid
-     * @throws KeeperException
-     * @throws InterruptedException
+     * @param minZkid The result will be filtered out to nodes having a czkid > minZkid
+     * @return an ordered list of child nodes, ordered by czkid
+     * @throws KeeperException If the server signals an error with a non-zero error code.
+     * @throws IllegalArgumentException if an invalid path is specified
      */
-    public List<PathWithStat> getChildrenPaginated(final String path, Watcher watcher, final int maxReturned, final long minZkid)
+    public List<PathWithStat> getChildren(final String path, Watcher watcher, final int maxReturned, final long minZkid)
             throws KeeperException, InterruptedException
     {
         final String clientPath = path;
