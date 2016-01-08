@@ -81,6 +81,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -2485,6 +2486,22 @@ public class ZooKeeper implements AutoCloseable {
                     clientPath);
         }
         return response.getChildren();
+    }
+
+    /**
+     * Return the an iterator over the children node of the given path.
+     * <p>
+     * @param path
+     * @param watcher explicit watcher, set when the end of the list is reached
+     * @param batchSize number of children in each batch fetched by the iterator in the background
+     * @param minZkid The result will be filtered out to nodes having a czkid > minZkid
+     * @return an iterator, ordered by czkid
+     * @throws KeeperException If the server signals an error with a non-zero error code.
+     * @throws IllegalArgumentException if an invalid path is specified
+     */
+    public Iterator<PathWithStat> getChildrenIterator(String path, Watcher watcher, int batchSize, int minZkid)
+            throws KeeperException, InterruptedException {
+        return new ChildrenBatchIterator(this, path, watcher, batchSize, minZkid);
     }
 
     /**

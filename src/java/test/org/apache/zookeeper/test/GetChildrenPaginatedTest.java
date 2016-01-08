@@ -26,8 +26,10 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
 
 public class GetChildrenPaginatedTest extends ClientBase {
@@ -88,6 +90,39 @@ public class GetChildrenPaginatedTest extends ClientBase {
                 Assert.assertTrue(nodeStat.getCzxid() > minZkId);
                 minZkId = nodeStat.getCzxid();
             }
+        }
+
+        Assert.assertEquals(createdChildrenMetadata.keySet(), readChildrenMetadata.keySet());
+
+        for (String child : createdChildrenMetadata.keySet()) {
+            Assert.assertEquals(createdChildrenMetadata.get(child), readChildrenMetadata.get(child));
+        }
+    }
+
+    @Test(timeout = 30000)
+    public void testPaginationIterator() throws Exception {
+
+        final String testId = UUID.randomUUID().toString();
+        final String basePath = "/testPagination-" + testId;
+
+        Map<String, Stat> createdChildrenMetadata = createChildren(basePath, new Random().nextInt(50)+1, 0);
+
+        Map<String, Stat> readChildrenMetadata = new HashMap<String, Stat>();
+
+        final int batchSize = 3;
+
+
+        Iterator<PathWithStat> childrenIterator = zk.getChildrenIterator(basePath, null, batchSize, -1);
+
+
+        while(childrenIterator.hasNext()) {
+            PathWithStat child = childrenIterator.next();
+
+            final String nodePath = child.getPath();
+            final Stat nodeStat = child.getStat();
+
+            LOG.info("Read: " + nodePath + " zkId: " + nodeStat.getCzxid());
+            readChildrenMetadata.put(nodePath, nodeStat);
         }
 
         Assert.assertEquals(createdChildrenMetadata.keySet(), readChildrenMetadata.keySet());
