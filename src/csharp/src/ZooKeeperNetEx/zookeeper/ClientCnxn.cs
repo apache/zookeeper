@@ -957,11 +957,6 @@ namespace org.apache.zookeeper {
                     disconnect();
                     await closeTask.ConfigureAwait(false);
                 });
-                var closeDelay = TaskEx.Delay(5000);
-                await TaskEx.WhenAny(TaskEx.WhenAll(sendTask, eventTask), closeDelay).ConfigureAwait(false);
-                if (closeDelay.IsCompleted) {
-                    throw new TimeoutException("waited more the 5 seconds for disonnection");
-                }
             }
         }
 
