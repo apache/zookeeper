@@ -30,7 +30,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
 
     <property environment="env"/>
     
-    <property name="version" value="3.4.6" />
+    <property name="version" value="3.4.7" />
     <property name="final.name" value="${name}-${version}"/>
     <property name="revision.dir" value="${basedir}/.revision" />
     <property name="revision.properties" value="revision.properties" />
@@ -453,7 +453,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
       <condition property="forrest.exec" value="forrest.bat" else="forrest">
       	<os family="windows"/>
       </condition>
-      <exec dir="${docs.src}" executable="${forrest.home}/bin/forrest"
+      <exec dir="${docs.src}" executable="${forrest.home}/bin/${forrest.exec}"
             failonerror="true">
       </exec>
       <copy todir="${docs.dir}">
@@ -542,7 +542,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
     <!-- ====================================================== -->
     <target name="jar" depends="compile">
         <java classname="org.apache.zookeeper.Version" fork="true"
-              outputproperty="revision" failonerror="true">
+              outputproperty="revision" errorproperty="revision.error" failonerror="true">
             <arg value="--revision" />
             <classpath>
                 <pathelement path="${build.classes}" />
@@ -574,7 +574,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
                 <attribute name="Bundle-Version" value="${version}"/>
                 <attribute name="Bundle-License" value="http://www.apache.org/licenses/LICENSE-2.0.txt"/>
                 <attribute name="Bundle-DocURL" value="http://hadoop.apache.org/zookeeper"/>
-                <attribute name="Import-Package" value='javax.management;resolution:=optional,javax.security.auth.callback,javax.security.auth.login,javax.security.sasl,org.slf4j;version="[1.6,2)",org.jboss.netty.buffer;resolution:=optional;version="[3.2,4)",org.jboss.netty.channel;resolution:=optional;version="[3.2,4)",org.jboss.netty.channel.group;resolution:=optional;version="[3.2,4)",org.jboss.netty.channel.socket.nio;resolution:=optional;version="[3.2,4)",org.osgi.framework;resolution:=optional;version="[1.5,2)",org.osgi.util.tracker;resolution:=optional;version="[1.4,2)"'/>
+                <attribute name="Import-Package" value='javax.management;resolution:=optional,javax.security.auth.callback,javax.security.auth.login,javax.security.sasl,org.slf4j;version="[1.6,2)",org.jboss.netty.buffer;resolution:=optional;version="[3.2,4)",org.jboss.netty.channel;resolution:=optional;version="[3.2,4)",org.jboss.netty.channel.group;resolution:=optional;version="[3.2,4)",org.jboss.netty.channel.socket.nio;resolution:=optional;version="[3.2,4)",org.osgi.framework;resolution:=optional;version="[1.5,2)",org.osgi.util.tracker;resolution:=optional;version="[1.4,2)",org.ietf.jgss'/>
                 <attribute name="Export-Package" value='org.apache.zookeeper;version="${version}",org.apache.zookeeper.client;version="${version}",org.apache.zookeeper.data;version="${version}",org.apache.zookeeper.version;version="${version}",org.apache.zookeeper.server;version="${version}",org.apache.zookeeper.server.auth;version="${version}",org.apache.zookeeper.server.persistence;version="${version}",org.apache.zookeeper.server.quorum;version="${version}",org.apache.zookeeper.common;version="${version}"'/>
             </manifest>
         </jar>
@@ -615,7 +615,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
                 <attribute name="Bundle-Version" value="${version}"/>
                 <attribute name="Bundle-License" value="http://www.apache.org/licenses/LICENSE-2.0.txt"/>
                 <attribute name="Bundle-DocURL" value="http://hadoop.apache.org/zookeeper"/>
-                <attribute name="Import-Package" value='javax.management;resolution:=optional,javax.security.auth.callback,javax.security.auth.login,javax.security.sasl,org.slf4j;version="[1.6,2)",org.jboss.netty.buffer;resolution:=optional;version="[3.2,4)",org.jboss.netty.channel;resolution:=optional;version="[3.2,4)",org.jboss.netty.channel.group;resolution:=optional;version="[3.2,4)",org.jboss.netty.channel.socket.nio;resolution:=optional;version="[3.2,4)",org.osgi.framework;resolution:=optional;version="[1.5,2)",org.osgi.util.tracker;resolution:=optional;version="[1.4,2)"'/>
+                <attribute name="Import-Package" value='javax.management;resolution:=optional,javax.security.auth.callback,javax.security.auth.login,javax.security.sasl,org.slf4j;version="[1.6,2)",org.jboss.netty.buffer;resolution:=optional;version="[3.2,4)",org.jboss.netty.channel;resolution:=optional;version="[3.2,4)",org.jboss.netty.channel.group;resolution:=optional;version="[3.2,4)",org.jboss.netty.channel.socket.nio;resolution:=optional;version="[3.2,4)",org.osgi.framework;resolution:=optional;version="[1.5,2)",org.osgi.util.tracker;resolution:=optional;version="[1.4,2)",org.ietf.jgss'/>
                 <attribute name="Export-Package" value='org.apache.zookeeper;version="${version}",org.apache.zookeeper.client;version="${version}",org.apache.zookeeper.data;version="${version}",org.apache.zookeeper.version;version="${version}",org.apache.zookeeper.server;version="${version}",org.apache.zookeeper.server.auth;version="${version}",org.apache.zookeeper.server.persistence;version="${version}",org.apache.zookeeper.server.quorum;version="${version}",org.apache.zookeeper.common;version="${version}"'/>
             </manifest>
         </jar>
@@ -760,12 +760,14 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
       </copy>
 
       <copy todir="${dist.dir}">
-        <fileset dir=".">
-          <include name="*.txt" />
-        </fileset>
+        <fileset file="CHANGES.txt"/>
+        <fileset file="README.txt"/>
+        <fileset file="README_packaging.txt"/>
         <fileset file="build.xml"/>
         <fileset file="ivy.xml"/>
         <fileset file="ivysettings.xml"/>
+        <fileset file="src/NOTICE.txt"/>
+        <fileset file="src/LICENSE.txt"/>
       </copy>
 
       <copy todir="${dist.dir}/src" includeEmptyDirs="true">
@@ -875,12 +877,14 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
       </copy>
 
       <copy todir="${dist.dir}">
-        <fileset dir=".">
-          <include name="*.txt" />
-        </fileset>
+        <fileset file="CHANGES.txt"/>
+        <fileset file="README.txt"/>
+        <fileset file="README_packaging.txt"/>
         <fileset file="build.xml"/>
         <fileset file="ivy.xml"/>
         <fileset file="ivysettings.xml"/>
+        <fileset file="src/NOTICE.txt"/>
+        <fileset file="src/LICENSE.txt"/>
       </copy>
 
       <copy todir="${dist.dir}/src" includeEmptyDirs="true">
@@ -992,10 +996,21 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
     </target>
 
     <target name="rpm" depends="package-native, tar" description="Make rpm package">
+      <!--The RPM spec file format disallows hyphen in the version.  Replace with
+          underscore to support version tags like -alpha or -SNAPSHOT.-->
+      <loadresource property="rpm.version">
+        <propertyresource name="version" />
+        <filterchain>
+          <tokenfilter>
+            <replacestring from="-" to="_" />
+          </tokenfilter>
+        </filterchain>
+      </loadresource>
       <subant target="rpm">
         <!--Pass down the version in case its needed again and the target
             distribution directory so contribs know where to install to.-->
         <property name="version" value="${version}"/>
+        <property name="rpm.version" value="${rpm.version}"/>
         <property name="dist.dir" value="${dist.dir}"/>
         <fileset file="${contrib.dir}/build.xml"/>
         <fileset file="${recipes.dir}/build.xml"/>
@@ -1021,7 +1036,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
         <filterchain>
           <replacetokens>
             <token key="final.name" value="${final.name}" />
-            <token key="version" value="${version}" />
+            <token key="version" value="${rpm.version}" />
             <token key="package.release" value="${package.release}" />
             <token key="package.build.dir" value="${package.build.dir}" />
             <token key="package.prefix" value="${package.prefix}" />

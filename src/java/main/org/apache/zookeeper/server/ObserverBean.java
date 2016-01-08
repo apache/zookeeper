@@ -34,6 +34,10 @@ public class ObserverBean extends ZooKeeperServerBean implements ObserverMXBean{
         this.observer = observer;
     }
 
+    public String getName() {
+        return "Observer";
+    }
+
     public int getPendingRevalidationCount() {
        return this.observer.getPendingRevalidationsCount(); 
     }

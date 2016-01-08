@@ -74,8 +74,7 @@ public class FLEDontCareTest {
         peers = new HashMap<Long,QuorumServer>();
         for(int i = 0; i < 5; i++) {
             peers.put(Long.valueOf(i),
-                    new QuorumServer(Long.valueOf(i),
-                            new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
+                      new QuorumServer(Long.valueOf(i), "127.0.0.1", PortAssignment.unique(), 0, null));
         }
         peer = new QuorumPeer(peers,
                 tmpdir,

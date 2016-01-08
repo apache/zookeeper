@@ -17,6 +17,7 @@
 
 package org.apache.zookeeper;
 
+import org.apache.zookeeper.AsyncCallback.MultiCallback;
 import org.apache.zookeeper.data.ACL;
 import java.util.ArrayList;
 import java.util.List;
@@ -59,5 +60,9 @@ public class Transaction {
 
     public List<OpResult> commit() throws InterruptedException, KeeperException {
         return zk.multi(ops);
+    }
+
+    public void commit(MultiCallback cb, Object ctx) {
+        zk.multi(ops, cb, ctx);
     }
 }

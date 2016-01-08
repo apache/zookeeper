@@ -37,6 +37,8 @@ import org.junit.runner.JUnitCore;
 
 @Ignore("No tests in this class.")
 public class BaseSysTest extends TestCase {
+    private static final File testData = new File(
+            System.getProperty("test.data.dir", "build/test/data"));
     private static int fakeBasePort = 33222;
     private static String zkHostPort;
     protected String prefix = "/sysTest";
@@ -59,7 +61,9 @@ public class BaseSysTest extends TestCase {
     }
     @Override
     protected void tearDown() throws Exception {
-        im.close();
+        if (null != im) {
+            im.close();
+        }
     }
 
     int serverCount = defaultServerCount;
@@ -145,11 +149,14 @@ public class BaseSysTest extends TestCase {
         qps = new QuorumPeer[count];
         qpsDirs = new File[count];
         for(int i = 1; i <= count; i++) {
-            peers.put(Long.valueOf(i), new QuorumServer(i, new InetSocketAddress("127.0.0.1", fakeBasePort + i)));
+            peers.put(Long.valueOf(i), new QuorumServer(
+                i, "127.0.0.1", fakeBasePort + i, serverCount + fakeBasePort + i, null));
         }
         StringBuilder sb = new StringBuilder();
         for(int i = 0; i < count; i++) {
-            qpsDirs[i] = File.createTempFile("sysTest", ".tmp");
+            //make that testData exists otherwise it fails on windows
+            testData.mkdirs();
+            qpsDirs[i] = File.createTempFile("sysTest", ".tmp", testData);
             qpsDirs[i].delete();
             qpsDirs[i].mkdir();
             int port = fakeBasePort+10+i;

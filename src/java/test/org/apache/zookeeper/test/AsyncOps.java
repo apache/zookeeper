@@ -19,6 +19,7 @@
 package org.apache.zookeeper.test;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -147,9 +148,19 @@ public class AsyncOps {
             zk.create(path, data, acl, flags, this, toString());
             return this;
         }
+
+        public AsyncCB createEphemeral() {
+            zk.create(path, data, acl, CreateMode.EPHEMERAL, this, toString());
+            return this;
+        }
         
         public void verifyCreate() {
             create();
+            verify();
+        }
+
+        public void verifyCreateEphemeral() {
+            createEphemeral();
             verify();
         }
         
@@ -161,7 +172,28 @@ public class AsyncOps {
             zk.create(path, data, acl, flags, this, toString());
             verify();
         }
-        
+
+        public void verifyCreateFailure_NoNode() {
+
+            rc = Code.NONODE;
+            name = null;
+            path = path + "/bar";
+            zk.create(path, data, acl, flags, this, toString());
+
+            verify();
+        }
+
+        public void verifyCreateFailure_NoChildForEphemeral() {
+            new StringCB(zk).verifyCreateEphemeral();
+
+            rc = Code.NOCHILDRENFOREPHEMERALS;
+            name = null;
+            path = path + "/bar";
+            zk.create(path, data, acl, flags, this, toString());
+
+            verify();
+        }
+
         @Override
         public String toString() {
             return super.toString() + name; 
@@ -200,8 +232,21 @@ public class AsyncOps {
             zk.getACL(path, stat, this, toString());
             verify();
         }
+
+        public void verifyGetACLFailure_NoNode(){
+            rc = Code.NONODE;
+            stat = null;
+            acl = null;
+            zk.getACL(path, stat, this, toString());
+
+            verify();
+        }
         
         public String toString(List<ACL> acls) {
+            if (acls == null) {
+                return "";
+            }
+
             StringBuilder result = new StringBuilder();
             for(ACL acl : acls) {
                 result.append(acl.getPerms() + "::");
@@ -235,6 +280,7 @@ public class AsyncOps {
         {
             this.children =
                 (children == null ? new ArrayList<String>() : children);
+            Collections.sort(this.children);
             super.processResult(Code.get(rc), path, ctx);
         }
         
@@ -320,6 +366,7 @@ public class AsyncOps {
         {
             this.children =
                 (children == null ? new ArrayList<String>() : children);
+            Collections.sort(this.children);
             super.processResult(Code.get(rc), path, ctx);
         }
         
@@ -475,6 +522,16 @@ public class AsyncOps {
             zk.setACL(path, acl, version, this, toString());
             verify();
         }
+
+        public void verifySetACLFailure_BadVersion() {
+            new StringCB(zk).verifyCreate();
+
+            rc = Code.BADVERSION;
+            stat = null;
+            zk.setACL(path, acl, version + 1, this, toString());
+
+            verify();
+        }
         
         public void setData() {
             zk.setData(path, data, version, this, toString());
@@ -492,6 +549,16 @@ public class AsyncOps {
             rc = KeeperException.Code.NONODE;
             stat = null;
             zk.setData(path, data, version, this, toString());
+            verify();
+        }
+
+        public void verifySetDataFailure_BadVersion() {
+            new StringCB(zk).verifyCreate();
+
+            rc = Code.BADVERSION;
+            stat = null;
+            zk.setData(path, data, version + 1, this, toString());
+
             verify();
         }
         
@@ -547,6 +614,24 @@ public class AsyncOps {
         
         public void verifyDeleteFailure_NoNode() {
             rc = Code.NONODE;
+            zk.delete(path, version, this, toString());
+            verify();
+        }
+
+        public void verifyDeleteFailure_BadVersion() {
+            new StringCB(zk).verifyCreate();
+            rc = Code.BADVERSION;
+            zk.delete(path, version + 1, this, toString());
+            verify();
+        }
+
+        public void verifyDeleteFailure_NotEmpty() {
+            StringCB scb = new StringCB(zk);
+            scb.create();
+            scb.setPath(path + "/bar");
+            scb.create();
+
+            rc = Code.NOTEMPTY;
             zk.delete(path, version, this, toString());
             verify();
         }

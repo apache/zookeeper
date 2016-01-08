@@ -28,6 +28,8 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -45,9 +47,11 @@ import org.apache.zookeeper.AsyncCallback.ACLCallback;
 import org.apache.zookeeper.AsyncCallback.Children2Callback;
 import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
+import org.apache.zookeeper.AsyncCallback.MultiCallback;
 import org.apache.zookeeper.AsyncCallback.StatCallback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
+import org.apache.zookeeper.OpResult.ErrorResult;
 import org.apache.zookeeper.Watcher.Event;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
@@ -72,6 +76,7 @@ import org.apache.zookeeper.proto.SetDataResponse;
 import org.apache.zookeeper.proto.SetWatches;
 import org.apache.zookeeper.proto.WatcherEvent;
 import org.apache.zookeeper.server.ByteBufferInputStream;
+import org.apache.zookeeper.server.ZooKeeperThread;
 import org.apache.zookeeper.server.ZooTrace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,6 +92,16 @@ public class ClientCnxn {
 
     private static final String ZK_SASL_CLIENT_USERNAME =
         "zookeeper.sasl.client.username";
+
+    /* ZOOKEEPER-706: If a session has a large number of watches set then
+     * attempting to re-establish those watches after a connection loss may
+     * fail due to the SetWatches request exceeding the server's configured
+     * jute.maxBuffer value. To avoid this we instead split the watch
+     * re-establishement across multiple SetWatches calls. This constant
+     * controls the size of each call. It is set to 128kB to be conservative
+     * with respect to the server's 1MB default for jute.maxBuffer.
+     */
+    private static final int SET_WATCHES_MAX_LENGTH = 128 * 1024;
 
     /** This controls whether automatic watch resetting is enabled.
      * Clients automatically reset watches during session reconnect, this
@@ -408,13 +423,6 @@ public class ClientCnxn {
 
     private Object eventOfDeath = new Object();
 
-    private final static UncaughtExceptionHandler uncaughtExceptionHandler = new UncaughtExceptionHandler() {
-        @Override
-        public void uncaughtException(Thread t, Throwable e) {
-            LOG.error("from " + t.getName(), e);
-        }
-    };
-
     private static class WatcherSetEventPair {
         private final Set<Watcher> watchers;
         private final WatchedEvent event;
@@ -436,7 +444,7 @@ public class ClientCnxn {
         return name + suffix;
     }
 
-    class EventThread extends Thread {
+    class EventThread extends ZooKeeperThread {
         private final LinkedBlockingQueue<Object> waitingEvents =
             new LinkedBlockingQueue<Object>();
 
@@ -451,7 +459,6 @@ public class ClientCnxn {
 
         EventThread() {
             super(makeThreadName("-EventThread"));
-            setUncaughtExceptionHandler(uncaughtExceptionHandler);
             setDaemon(true);
         }
 
@@ -509,7 +516,8 @@ public class ClientCnxn {
               LOG.error("Event thread exiting due to interruption", e);
            }
 
-            LOG.info("EventThread shut down");
+            LOG.info("EventThread shut down for session: 0x{}",
+                     Long.toHexString(getSessionId()));
         }
 
        private void processEvent(Object event) {
@@ -604,7 +612,24 @@ public class ClientCnxn {
                       } else {
                           cb.processResult(rc, clientPath, p.ctx, null);
                       }
-                  } else if (p.cb instanceof VoidCallback) {
+                  } else if (p.response instanceof MultiResponse) {
+                          MultiCallback cb = (MultiCallback) p.cb;
+                          MultiResponse rsp = (MultiResponse) p.response;
+                          if (rc == 0) {
+                                  List<OpResult> results = rsp.getResultList();
+                                  int newRc = rc;
+                                  for (OpResult result : results) {
+                                          if (result instanceof ErrorResult
+                                              && KeeperException.Code.OK.intValue()
+                                                  != (newRc = ((ErrorResult) result).getErr())) {
+                                                  break;
+                                          }
+                                  }
+                                  cb.processResult(newRc, clientPath, p.ctx, results);
+                          } else {
+                                  cb.processResult(rc, clientPath, p.ctx, null);
+                          }
+                  }  else if (p.cb instanceof VoidCallback) {
                       VoidCallback cb = (VoidCallback) p.cb;
                       cb.processResult(rc, clientPath, p.ctx);
                   }
@@ -698,7 +723,7 @@ public class ClientCnxn {
      * This class services the outgoing request queue and generates the heart
      * beats. It also spawns the ReadThread.
      */
-    class SendThread extends Thread {
+    class SendThread extends ZooKeeperThread {
         private long lastPingSentNs;
         private final ClientCnxnSocket clientCnxnSocket;
         private Random r = new Random(System.nanoTime());        
@@ -827,7 +852,6 @@ public class ClientCnxn {
             super(makeThreadName("-SendThread()"));
             state = States.CONNECTING;
             this.clientCnxnSocket = clientCnxnSocket;
-            setUncaughtExceptionHandler(uncaughtExceptionHandler);
             setDaemon(true);
         }
 
@@ -867,15 +891,48 @@ public class ClientCnxn {
                     List<String> childWatches = zooKeeper.getChildWatches();
                     if (!dataWatches.isEmpty()
                                 || !existWatches.isEmpty() || !childWatches.isEmpty()) {
-                        SetWatches sw = new SetWatches(lastZxid,
-                                prependChroot(dataWatches),
-                                prependChroot(existWatches),
-                                prependChroot(childWatches));
-                        RequestHeader h = new RequestHeader();
-                        h.setType(ZooDefs.OpCode.setWatches);
-                        h.setXid(-8);
-                        Packet packet = new Packet(h, new ReplyHeader(), sw, null, null);
-                        outgoingQueue.addFirst(packet);
+
+                        Iterator<String> dataWatchesIter = prependChroot(dataWatches).iterator();
+                        Iterator<String> existWatchesIter = prependChroot(existWatches).iterator();
+                        Iterator<String> childWatchesIter = prependChroot(childWatches).iterator();
+                        long setWatchesLastZxid = lastZxid;
+
+                        while (dataWatchesIter.hasNext()
+                                       || existWatchesIter.hasNext() || childWatchesIter.hasNext()) {
+                            List<String> dataWatchesBatch = new ArrayList<String>();
+                            List<String> existWatchesBatch = new ArrayList<String>();
+                            List<String> childWatchesBatch = new ArrayList<String>();
+                            int batchLength = 0;
+
+                            // Note, we may exceed our max length by a bit when we add the last
+                            // watch in the batch. This isn't ideal, but it makes the code simpler.
+                            while (batchLength < SET_WATCHES_MAX_LENGTH) {
+                                final String watch;
+                                if (dataWatchesIter.hasNext()) {
+                                    watch = dataWatchesIter.next();
+                                    dataWatchesBatch.add(watch);
+                                } else if (existWatchesIter.hasNext()) {
+                                    watch = existWatchesIter.next();
+                                    existWatchesBatch.add(watch);
+                                } else if (childWatchesIter.hasNext()) {
+                                    watch = childWatchesIter.next();
+                                    childWatchesBatch.add(watch);
+                                } else {
+                                    break;
+                                }
+                                batchLength += watch.length();
+                            }
+
+                            SetWatches sw = new SetWatches(setWatchesLastZxid,
+                                    dataWatchesBatch,
+                                    existWatchesBatch,
+                                    childWatchesBatch);
+                            RequestHeader h = new RequestHeader();
+                            h.setType(ZooDefs.OpCode.setWatches);
+                            h.setXid(-8);
+                            Packet packet = new Packet(h, new ReplyHeader(), sw, null, null);
+                            outgoingQueue.addFirst(packet);
+                        }
                     }
                 }
 
@@ -1042,11 +1099,14 @@ public class ClientCnxn {
                     }
                     
                     if (to <= 0) {
-                        throw new SessionTimeoutException(
-                                "Client session timed out, have not heard from server in "
-                                        + clientCnxnSocket.getIdleRecv() + "ms"
-                                        + " for sessionid 0x"
-                                        + Long.toHexString(sessionId));
+                        String warnInfo;
+                        warnInfo = "Client session timed out, have not heard from server in "
+                            + clientCnxnSocket.getIdleRecv()
+                            + "ms"
+                            + " for sessionid 0x"
+                            + Long.toHexString(sessionId);
+                        LOG.warn(warnInfo);
+                        throw new SessionTimeoutException(warnInfo);
                     }
                     if (state.isConnected()) {
                     	//1000(1 second) is to prevent race condition missing to send the second ping
@@ -1126,7 +1186,8 @@ public class ClientCnxn {
                         Event.KeeperState.Disconnected, null));
             }
             ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),
-                                     "SendThread exitedloop.");
+                    "SendThread exited loop for session: 0x"
+                           + Long.toHexString(getSessionId()));
         }
 
         private void pingRwServer() throws RWServerFoundException {
@@ -1217,9 +1278,12 @@ public class ClientCnxn {
                         Watcher.Event.EventType.None,
                         Watcher.Event.KeeperState.Expired, null));
                 eventThread.queueEventOfDeath();
-                throw new SessionExpiredException(
-                        "Unable to reconnect to ZooKeeper service, session 0x"
-                                + Long.toHexString(sessionId) + " has expired");
+
+                String warnInfo;
+                warnInfo = "Unable to reconnect to ZooKeeper service, session 0x"
+                    + Long.toHexString(sessionId) + " has expired";
+                LOG.warn(warnInfo);
+                throw new SessionExpiredException(warnInfo);
             }
             if (!readOnly && isRO) {
                 LOG.error("Read/write client got connected to read-only server");

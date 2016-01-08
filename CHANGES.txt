@@ -1,8 +1,206 @@
+Release 3.4.7 - 2015-11-08
+
+Backward compatible changes:
+
+BUGFIXES:
+
+  ZOOKEEPER-1888. ZkCli.cmd commands fail with "'java' is not recognized as an
+  internal or external command" (Ivan Mitic via michim)
+
+  ZOOKEEPER-1878. Inconsistent behavior in autocreation of dataDir and
+  dataLogDir (Rakesh R via michim)
+
+  ZOOKEEPER-1901. [JDK8] Sort children for comparison in AsyncOps tests
+  (Andrew Purtell via michim)
+
+  ZOOKEEPER-1906. zkpython: invalid data in GetData for empty node
+  (Nikita Vetoshkin via michim)
+
+  ZOOKEEPER-1897. ZK Shell/Cli not processing commands (stack via michim)
+
+  ZOOKEEPER-1913. Invalid manifest files due to bogus revision property value
+  (Raul Gutierrez Segales via michim)
+
+  ZOOKEEPER-1911. REST contrib module does not include all required files when
+  packaged (Sean Mackrory via michim)
+
+  ZOOKEEPER-1926. Unit tests should only use build/test/data for data (Enis
+  Soztutar via michim)
+
+  ZOOKEEPER-1062. Net-ZooKeeper: Net::ZooKeeper consumes 100% cpu on wait
+  (Botond Hejj via michim)
+
+  ZOOKEEPER-1797. PurgeTxnLog may delete data logs during roll (Rakesh R via
+  michim)
+
+  ZOOKEEPER-1945. deb - zkCli.sh, zkServer.sh and zkEnv.sh regression caused
+  by ZOOKEEPER-1663 (Mark Flickinger via fpj) 
+
+  ZOOKEEPER-1939. ReconfigRecoveryTest.testNextConfigUnreachable is
+  failing (Rakesh R via phunt)
+
+  ZOOKEEPER-1222. getACL should only call DataTree.copyStat when passed in
+  stat is not null (Michi Mutsuzaki via rakeshr)
+
+  ZOOKEEPER-2146 BinaryInputArchive readString should check length before
+  allocating memory (Hongchao Deng via michim)
+
+  ZOOKEEPER-2039. Jute compareBytes incorrect comparison index (Ian Dimayuga via fpj)
+
+  ZOOKEEPER-2047 testTruncationNullLog fails on windows (flavio via rakeshr)
+
+  ZOOKEEPER-2026 Startup order in ServerCnxnFactory-ies is wrong (Stevo Slavic via rakeshr)
+
+  ZOOKEEPER-2049 Yosemite build failure: htonll conflict (Till Toenshoff via
+  michim)
+
+  ZOOKEEPER-2052 Unable to delete a node when the node has no children 
+  (Hongchao Deng and Yip Ng via rakeshr)
+ 
+  ZOOKEEPER-2060 Trace bug in NettyServerCnxnFactory (Ian via fpj)
+
+  ZOOKEEPER-2064 Prevent resource leak in various classes (Ted Yu via fpj)
+
+  ZOOKEEPER-1949 recipes jar not included in the distribution package (Rakesh R
+  via michim)
+
+  ZOOKEEPER-2114 jute generated allocate_* functions are not externally visible
+  (Tim Crowder via michim)
+
+  ZOOKEEPER-2073 Memory leak on zookeeper_close (Dave Gosselin via michim)
+
+  ZOOKEEPER-2056 Zookeeper 3.4.x and 3.5.0-alpha is not OSGi compliant
+  (Deiwin Sarjas via rgs)
+
+  ZOOKEEPER-2174 JUnit4ZKTestRunner logs test failure for all exceptions even
+  if the test method is annotated with an expected exception (Chris Nauroth
+  via rgs)
+
+  ZOOKEEPER-1077: C client lib doesn't build on Solaris (Chris Nauroth via rgs)
+
+  ZOOKEEPER-2186 QuorumCnxManager#receiveConnection may crash with random input
+  (rgs via michim)
+
+  ZOOKEEPER-2179: Typo in Watcher.java (Archana T via rgs)
+
+  ZOOKEEPER-2096: C client builds with incorrect error codes in VisualStudio 2010+
+  (Vitaly Stakhovsky via rgs)
+
+  ZOOKEEPER-2194: Let DataNode.getChildren() return an unmodifiable view of its children set
+  (Hitoshi Mitake via rgs)
+
+  ZOOKEEPER-2201: Network issues can cause cluster to hang due to near-deadlock
+  (Donny Nadolny via rgs)
+
+  ZOOKEEPER-2213: Empty path in Set crashes server and prevents restart
+  (Hongchao Deng via rgs)
+
+  ZOOKEEPER-706: Large numbers of watches can cause session re-establishment to fail
+  (Chris Thunes via rgs)
+
+  ZOOKEEPER-602: log all exceptions not caught by ZK threads
+  (Rakesh R via rgs)
+
+  ZOOKEEPER-2224: Four letter command hangs when network is slow
+  (Arshad Mohammad via rgs)
+
+  ZOOKEEPER-2235: License update (fpj via michim)
+
+  ZOOKEEPER-2239: JMX State from LocalPeerBean incorrect
+  (Kevin Lee via rgs)
+
+  ZOOKEEPER-1927: zkServer.sh fails to read dataDir (and others)
+  from zoo.cfg on Solaris 10 (grep issue, manifests as FAILED TO WRITE PID)
+  (Chris Nauroth via rgs)
+
+  ZOOKEEPER-2033: zookeeper follower fails to start after
+  a restart immediately following a new epoch (Asad Saeed via fpj)
+
+  ZOOKEEPER-2256: Zookeeper is not using specified JMX port in zkEnv.sh
+  (Arshad Mohammad via rakeshr)
+ 
+  ZOOKEEPER-1506: Re-try DNS hostname -> IP resolution if node connection
+  fails (Robert Thille via fpj)
+
+  ZOOKEEPER-2279: QuorumPeer loadDataBase() error message is incorrect
+  (Arshad Mohammad via rakeshr)
+
+  ZOOKEEPER-1803: Add description for pzxid in programmer's guide
+  (Arshad Mohammad via rakeshr)
+
+  ZOOKEEPER-2253: C asserts ordering of ping requests, while Java client does not
+  (Chris Chen via rgs)
+
+  ZOOKEEPER-2268: Zookeeper doc creation fails on windows
+  (Arshad Mohammad via cnauroth)
+
+  ZOOKEEPER-2296: compilation broken for 3.4
+  (Raul Gutierrez Segales via cnauroth)
+
+  ZOOKEEPER-1029: C client bug in zookeeper_init (if bad hostname is given)
+  (fpj via cnauroth)
+
+  ZOOKEEPER-2142: JMX ObjectName is incorrect for observers (Edward Ribeiro
+  via michim)
+
+  ZOOKEEPER-1853: zkCli.sh can't issue a CREATE command containing
+  spaces in the data (Jun Gong via rgs)
+
+  ZOOKEEPER-2227: stmk four-letter word fails execution at server while reading
+  trace mask argument (Chris Nauroth via rgs)
+
+IMPROVEMENTS:
+
+  ZOOKEEPER-1575. adding .gitattributes to prevent CRLF and LF mismatches for
+  source and text files (Raja Aluri via michim)
+
+  ZOOKEEPER-657. Cut down the running time of ZKDatabase corruption
+  (Michi Mutsuzaki via rakeshr)
+
+  ZOOKEEPER-1746. AsyncCallback.*Callback don't have any Javadoc
+  (Hongchao Deng via phunt)
+
+  ZOOKEEPER-1917. Apache Zookeeper logs cleartext admin passwords (fpj via michim)
+
+  ZOOKEEPER-1948 Enable JMX remote monitoring (Biju Nair via rakeshr)
+
+  ZOOKEEPER-2126 Improve exit log messsage of EventThread and SendThread by
+  adding SessionId (surendra singh lilhore via rakeshr)
+
+  ZOOKEEPER-2124 Allow Zookeeper version string to have underscore '_'
+  (Chris Nauroth via michim)
+
+  ZOOKEEPER-2205: Log type of unexpected quorum packet in learner handler loop
+  (Hitoshi Mitake via rgs)
+
+  ZOOKEEPER-1907 Improve Thread handling
+  (Rakesh R via hdeng)
+
+  ZOOKEEPER-2270: Allow MBeanRegistry to be overridden for better unit tests
+  (Jordan Zimmerman via rgs)
+
+  ZOOKEEPER-2040: Server to log underlying cause of SASL connection problems.
+  (Steve Loughran via cnauroth)
+
+  ZOOKEEPER-2245: SimpleSysTest test cases fails (Arshad Mohammad via rakeshr)
+
+  ZOOKEEPER-2315: Change client connect zk service timeout log level from Info
+  to Warn level (Lin Yiqun via rgs)
+
+  ZOOKEEPER-2240: Make the three-node minimum more explicit in documentation
+  and on website (Shawn Heisey via rgs)
+
+NEW FEATURES:
+
+  ZOOKEEPER-2237 Port async multi to 3.4 branch (Ivan Kelly via rakeshr)
+
 Release 3.4.6 - 2014-03-10 
 
 Backward compatible changes:
 
 BUGFIXES:
+
+  ZOOKEEPER-1900. NullPointerException in truncate (Camille Fournier)
 
   ZOOKEEPER-1474. Cannot build Zookeeper with IBM Java: use of Sun
   MXBean classes (Adalberto Medeiros via phunt)
@@ -248,6 +446,9 @@ BUGFIXES:
   
   ZOOKEEPER-1755. Concurrent operations of four letter 'dump' ephemeral 
   command and killSession causing NPE (Rakesh R via camille)
+
+  ZOOKEEPER-1904. WatcherTest#testWatchAutoResetWithPending is failing
+  (Rakesh R via michim)
 
 IMPROVEMENTS:
 

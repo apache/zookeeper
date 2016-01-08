@@ -39,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.KeeperException.BadArgumentsException;
 import org.apache.zookeeper.MultiTransactionRecord;
 import org.apache.zookeeper.Op;
 import org.apache.zookeeper.ZooDefs;
@@ -75,7 +76,8 @@ import org.apache.zookeeper.txn.TxnHeader;
  * outstandingRequests, so that it can take into account transactions that are
  * in the queue to be applied when generating a transaction.
  */
-public class PrepRequestProcessor extends Thread implements RequestProcessor {
+public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
+        RequestProcessor {
     private static final Logger LOG = LoggerFactory.getLogger(PrepRequestProcessor.class);
 
     static boolean skipACL;
@@ -100,8 +102,8 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
 
     public PrepRequestProcessor(ZooKeeperServer zks,
             RequestProcessor nextProcessor) {
-        super("ProcessThread(sid:" + zks.getServerId()
-                + " cport:" + zks.getClientPort() + "):");
+        super("ProcessThread(sid:" + zks.getServerId() + " cport:"
+                + zks.getClientPort() + "):", zks.getZooKeeperServerListener());
         this.nextProcessor = nextProcessor;
         this.zks = zks;
     }
@@ -130,15 +132,13 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 }
                 pRequest(request);
             }
-        } catch (InterruptedException e) {
-            LOG.error("Unexpected interruption", e);
         } catch (RequestProcessorException e) {
             if (e.getCause() instanceof XidRolloverException) {
                 LOG.info(e.getCause().getMessage());
             }
-            LOG.error("Unexpected exception", e);
+            handleException(this.getName(), e);
         } catch (Exception e) {
-            LOG.error("Unexpected exception", e);
+            handleException(this.getName(), e);
         }
         LOG.info("PrepRequestProcessor exited loop!");
     }
@@ -147,14 +147,6 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
         ChangeRecord lastChange = null;
         synchronized (zks.outstandingChanges) {
             lastChange = zks.outstandingChangesForPath.get(path);
-            /*
-            for (int i = 0; i < zks.outstandingChanges.size(); i++) {
-                ChangeRecord c = zks.outstandingChanges.get(i);
-                if (c.path.equals(path)) {
-                    lastChange = c;
-                }
-            }
-            */
             if (lastChange == null) {
                 DataNode n = zks.getZKDatabase().getNode(path);
                 if (n != null) {
@@ -176,6 +168,12 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
         return lastChange;
     }
 
+    private ChangeRecord getOutstandingChange(String path) {
+        synchronized (zks.outstandingChanges) {
+            return zks.outstandingChangesForPath.get(path);
+        }
+    }
+
     void addChangeRecord(ChangeRecord c) {
         synchronized (zks.outstandingChanges) {
             zks.outstandingChanges.add(c);
@@ -190,41 +188,40 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
      * of a failed multi-op.
      *
      * @param multiRequest
+     * @return a map that contains previously existed records that probably need to be
+     *         rolled back in any failure.
      */
     HashMap<String, ChangeRecord> getPendingChanges(MultiTransactionRecord multiRequest) {
-    	HashMap<String, ChangeRecord> pendingChangeRecords = new HashMap<String, ChangeRecord>();
-    	
-        for(Op op: multiRequest) {
-    		String path = op.getPath();
+        HashMap<String, ChangeRecord> pendingChangeRecords = new HashMap<String, ChangeRecord>();
 
-    		try {
-    		    ChangeRecord cr = getRecordForPath(path);
-    		    if (cr != null) {
-    		        pendingChangeRecords.put(path, cr);
-    		    }
-    		    /*
-    		     * ZOOKEEPER-1624 - We need to store for parent's ChangeRecord
-    		     * of the parent node of a request. So that if this is a
-    		     * sequential node creation request, rollbackPendingChanges()
-    		     * can restore previous parent's ChangeRecord correctly.
-    		     *
-    		     * Otherwise, sequential node name generation will be incorrect
-    		     * for a subsequent request.
-    		     */
-    		    int lastSlash = path.lastIndexOf('/');
-    		    if (lastSlash == -1 || path.indexOf('\0') != -1) {
-    		        continue;
-    		    }
-    		    String parentPath = path.substring(0, lastSlash);
-    		    ChangeRecord parentCr = getRecordForPath(parentPath);
-    		    if (parentCr != null) {
-    		        pendingChangeRecords.put(parentPath, parentCr);
-    		    }
-    		} catch (KeeperException.NoNodeException e) {
-    			// ignore this one
-    		}
-    	}
-        
+        for (Op op : multiRequest) {
+            String path = op.getPath();
+            ChangeRecord cr = getOutstandingChange(path);
+            // only previously existing records need to be rolled back.
+            if (cr != null) {
+                pendingChangeRecords.put(path, cr);
+            }
+
+            /*
+             * ZOOKEEPER-1624 - We need to store for parent's ChangeRecord
+             * of the parent node of a request. So that if this is a
+             * sequential node creation request, rollbackPendingChanges()
+             * can restore previous parent's ChangeRecord correctly.
+             *
+             * Otherwise, sequential node name generation will be incorrect
+             * for a subsequent request.
+             */
+            int lastSlash = path.lastIndexOf('/');
+            if (lastSlash == -1 || path.indexOf('\0') != -1) {
+                continue;
+            }
+            String parentPath = path.substring(0, lastSlash);
+            ChangeRecord parentCr = getOutstandingChange(parentPath);
+            if (parentCr != null) {
+                pendingChangeRecords.put(parentPath, parentCr);
+            }
+        }
+
         return pendingChangeRecords;
     }
 
@@ -239,7 +236,6 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
      * @param pendingChangeRecords
      */
     void rollbackPendingChanges(long zxid, HashMap<String, ChangeRecord>pendingChangeRecords) {
-
         synchronized (zks.outstandingChanges) {
             // Grab a list iterator starting at the END of the list so we can iterate in reverse
             ListIterator<ChangeRecord> iter = zks.outstandingChanges.listIterator(zks.outstandingChanges.size());
@@ -247,27 +243,30 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 ChangeRecord c = iter.previous();
                 if (c.zxid == zxid) {
                     iter.remove();
+                    // Remove all outstanding changes for paths of this multi.
+                    // Previous records will be added back later.
                     zks.outstandingChangesForPath.remove(c.path);
                 } else {
                     break;
                 }
             }
-           
-            boolean empty = zks.outstandingChanges.isEmpty();
-            long firstZxid = 0;
-            if (!empty) {
-                firstZxid = zks.outstandingChanges.get(0).zxid;
+
+            // we don't need to roll back any records because there is nothing left.
+            if (zks.outstandingChanges.isEmpty()) {
+                return;
             }
 
-            Iterator<ChangeRecord> priorIter = pendingChangeRecords.values().iterator();
-            while (priorIter.hasNext()) {
-                ChangeRecord c = priorIter.next();
-                 
-                /* Don't apply any prior change records less than firstZxid */
-                if (!empty && (c.zxid < firstZxid)) {
+            long firstZxid = zks.outstandingChanges.get(0).zxid;
+
+            for (ChangeRecord c : pendingChangeRecords.values()) {
+                // Don't apply any prior change records less than firstZxid.
+                // Note that previous outstanding requests might have been removed
+                // once they are completed.
+                if (c.zxid < firstZxid) {
                     continue;
                 }
 
+                // add previously existing records back.
                 zks.outstandingChangesForPath.put(c.path, c);
             }
         }
@@ -352,13 +351,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 if (createMode.isSequential()) {
                     path = path + String.format(Locale.ENGLISH, "%010d", parentCVersion);
                 }
-                try {
-                    PathUtils.validatePath(path);
-                } catch(IllegalArgumentException ie) {
-                    LOG.info("Invalid path " + path + " with session 0x" +
-                            Long.toHexString(request.sessionId));
-                    throw new KeeperException.BadArgumentsException(path);
-                }
+                validatePath(path, request.sessionId);
                 try {
                     if (getRecordForPath(path) != null) {
                         throw new KeeperException.NodeExistsException(path);
@@ -421,6 +414,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 if(deserialize)
                     ByteBufferInputStream.byteBuffer2Record(request.request, setDataRequest);
                 path = setDataRequest.getPath();
+                validatePath(path, request.sessionId);
                 nodeRecord = getRecordForPath(path);
                 checkACL(zks, nodeRecord.acl, ZooDefs.Perms.WRITE,
                         request.authInfo);
@@ -441,6 +435,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 if(deserialize)
                     ByteBufferInputStream.byteBuffer2Record(request.request, setAclRequest);
                 path = setAclRequest.getPath();
+                validatePath(path, request.sessionId);
                 listACL = removeDuplicates(setAclRequest.getAcl());
                 if (!fixupACL(request.authInfo, listACL)) {
                     throw new KeeperException.InvalidACLException(path);
@@ -500,6 +495,7 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 if(deserialize)
                     ByteBufferInputStream.byteBuffer2Record(request.request, checkVersionRequest);
                 path = checkVersionRequest.getPath();
+                validatePath(path, request.sessionId);
                 nodeRecord = getRecordForPath(path);
                 checkACL(zks, nodeRecord.acl, ZooDefs.Perms.READ,
                         request.authInfo);
@@ -511,6 +507,16 @@ public class PrepRequestProcessor extends Thread implements RequestProcessor {
                 version = currentVersion + 1;
                 request.txn = new CheckVersionTxn(path, version);
                 break;
+        }
+    }
+
+    private void validatePath(String path, long sessionId) throws BadArgumentsException {
+        try {
+            PathUtils.validatePath(path);
+        } catch(IllegalArgumentException ie) {
+            LOG.info("Invalid path " +  path + " with session 0x" + Long.toHexString(sessionId) +
+                    ", reason: " + ie.getMessage());
+            throw new BadArgumentsException(path);
         }
     }
 

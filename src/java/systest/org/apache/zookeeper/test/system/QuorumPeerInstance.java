@@ -36,6 +36,9 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 
 class QuorumPeerInstance implements Instance {
     final private static Logger LOG = LoggerFactory.getLogger(QuorumPeerInstance.class);
+    private static final File testData = new File(
+        System.getProperty("test.data.dir", "build/test/data"));
+
     private static final int syncLimit = 3;
     private static final int initLimit = 3;
     private static final int tickTime = 2000;
@@ -55,7 +58,7 @@ class QuorumPeerInstance implements Instance {
 
     public QuorumPeerInstance() {
         try {
-            File tmpFile = File.createTempFile("test", ".dir");
+            File tmpFile = File.createTempFile("test", ".dir", testData);
             File tmpDir = tmpFile.getParentFile();
             tmpFile.delete();
             File zkDirs = new File(tmpDir, "zktmp.cfg");
@@ -64,7 +67,12 @@ class QuorumPeerInstance implements Instance {
             Properties p;
             if (zkDirs.exists()) {
                 p = new Properties();
-                p.load(new FileInputStream(zkDirs));
+                FileInputStream input = new FileInputStream(zkDirs);
+                try {
+                  p.load(input);
+                } finally {
+                  input.close();
+                }
             } else {
                 p = System.getProperties();
             }
@@ -155,7 +163,7 @@ class QuorumPeerInstance implements Instance {
             peers = new HashMap<Long,QuorumServer>();
             for(int i = 0; i < parts.length; i++) {
                 String subparts[] = parts[i].split(":");
-                peers.put(Long.valueOf(i), new QuorumServer(i, new InetSocketAddress(subparts[0], Integer.parseInt(subparts[1]))));
+                peers.put(Long.valueOf(i), new QuorumServer(i, subparts[0], Integer.parseInt(subparts[1]), 0, null));
             }
             try {
                 if (LOG.isDebugEnabled()) {

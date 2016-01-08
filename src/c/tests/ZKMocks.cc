@@ -41,7 +41,7 @@ HandshakeRequest* HandshakeRequest::parse(const std::string& buf){
     int offset=sizeof(req->protocolVersion);
     
     memcpy(&req->lastZxidSeen,buf.data()+offset,sizeof(req->lastZxidSeen));
-    req->lastZxidSeen = htonll(req->lastZxidSeen);
+    req->lastZxidSeen = zoo_htonll(req->lastZxidSeen);
     offset+=sizeof(req->lastZxidSeen);
     
     memcpy(&req->timeOut,buf.data()+offset,sizeof(req->timeOut));
@@ -49,7 +49,7 @@ HandshakeRequest* HandshakeRequest::parse(const std::string& buf){
     offset+=sizeof(req->timeOut);
     
     memcpy(&req->sessionId,buf.data()+offset,sizeof(req->sessionId));
-    req->sessionId = htonll(req->sessionId);
+    req->sessionId = zoo_htonll(req->sessionId);
     offset+=sizeof(req->sessionId);
     
     memcpy(&req->passwd_len,buf.data()+offset,sizeof(req->passwd_len));
@@ -322,7 +322,7 @@ string HandshakeResponse::toString() const {
     buf.append((char*)&tmp,sizeof(tmp));
     tmp=htonl(timeOut);
     buf.append((char*)&tmp,sizeof(tmp));
-    int64_t tmp64=htonll(sessionId);
+    int64_t tmp64=zoo_htonll(sessionId);
     buf.append((char*)&tmp64,sizeof(sessionId));
     tmp=htonl(passwd_len);
     buf.append((char*)&tmp,sizeof(tmp));

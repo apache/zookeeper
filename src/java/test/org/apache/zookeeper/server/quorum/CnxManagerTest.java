@@ -66,9 +66,9 @@ public class CnxManagerTest extends ZKTestCase {
             peerQuorumPort[i] = PortAssignment.unique();
             peerClientPort[i] = PortAssignment.unique();
             peers.put(Long.valueOf(i),
-                    new QuorumServer(i,
-                            new InetSocketAddress(peerQuorumPort[i]),
-                    new InetSocketAddress(PortAssignment.unique())));
+                      new QuorumServer(i, "0.0.0.0",
+                                       peerQuorumPort[i],
+                                       PortAssignment.unique(), null));
             peerTmpdir[i] = ClientBase.createTmpDir();
         }
     }
@@ -164,15 +164,14 @@ public class CnxManagerTest extends ZKTestCase {
     public void testCnxManagerTimeout() throws Exception {
         Random rand = new Random();
         byte b = (byte) rand.nextInt();
+        int finalOctet = b & 0xFF;
         int deadPort = PortAssignment.unique();
-        String deadAddress = new String("10.1.1." + b);
+        String deadAddress = new String("192.0.2." + finalOctet);
             
         LOG.info("This is the dead address I'm trying: " + deadAddress);
             
         peers.put(Long.valueOf(2),
-                new QuorumServer(2,
-                        new InetSocketAddress(deadAddress, deadPort),
-                        new InetSocketAddress(deadAddress, PortAssignment.unique())));
+                  new QuorumServer(2, deadAddress, deadPort, PortAssignment.unique(), null));
         peerTmpdir[2] = ClientBase.createTmpDir();
     
         QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[1], peerTmpdir[1], peerClientPort[1], 3, 1, 1000, 2, 2);

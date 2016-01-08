@@ -1150,27 +1150,24 @@ void free_completions(zhandle_t *zh,int callCompletion,int reason)
     void_completion_t auth_completion = NULL;
     auth_completion_list_t a_list, *a_tmp;
 
-    lock_completion_list(&zh->sent_requests);
-    tmp_list = zh->sent_requests;
-    zh->sent_requests.head = 0;
-    zh->sent_requests.last = 0;
-    unlock_completion_list(&zh->sent_requests);
-    while (tmp_list.head) {
-        completion_list_t *cptr = tmp_list.head;
+    if (lock_completion_list(&zh->sent_requests) == 0) {
+        tmp_list = zh->sent_requests;
+        zh->sent_requests.head = 0;
+        zh->sent_requests.last = 0;
+        unlock_completion_list(&zh->sent_requests);
+    
+        while (tmp_list.head) {
+            completion_list_t *cptr = tmp_list.head;
 
-        tmp_list.head = cptr->next;
-        if (cptr->c.data_result == SYNCHRONOUS_MARKER) {
-            struct sync_completion
-                        *sc = (struct sync_completion*)cptr->data;
-            sc->rc = reason;
-            notify_sync_completion(sc);
-            zh->outstanding_sync--;
-            destroy_completion_entry(cptr);
-        } else if (callCompletion) {
-            if(cptr->xid == PING_XID){
-                // Nothing to do with a ping response
+            tmp_list.head = cptr->next;
+            if (cptr->c.data_result == SYNCHRONOUS_MARKER) {
+                struct sync_completion
+                            *sc = (struct sync_completion*)cptr->data;
+                sc->rc = reason;
+                notify_sync_completion(sc);
+                zh->outstanding_sync--;
                 destroy_completion_entry(cptr);
-            } else {
+            } else if (callCompletion) {
                 // Fake the response
                 buffer_list_t *bptr;
                 h.xid = cptr->xid;
@@ -1188,19 +1185,22 @@ void free_completions(zhandle_t *zh,int callCompletion,int reason)
             }
         }
     }
-    a_list.completion = NULL;
-    a_list.next = NULL;
-    zoo_lock_auth(zh);
-    get_auth_completions(&zh->auth_h, &a_list);
-    zoo_unlock_auth(zh);
-    a_tmp = &a_list;
-    // chain call user's completion function
-    while (a_tmp->completion != NULL) {
-        auth_completion = a_tmp->completion;
-        auth_completion(reason, a_tmp->auth_data);
-        a_tmp = a_tmp->next;
-        if (a_tmp == NULL)
-            break;
+    if (zoo_lock_auth(zh) == 0) {
+        a_list.completion = NULL;
+        a_list.next = NULL;
+    
+        get_auth_completions(&zh->auth_h, &a_list);
+        zoo_unlock_auth(zh);
+    
+        a_tmp = &a_list;
+        // chain call user's completion function
+        while (a_tmp->completion != NULL) {
+            auth_completion = a_tmp->completion;
+            auth_completion(reason, a_tmp->auth_data);
+            a_tmp = a_tmp->next;
+            if (a_tmp == NULL)
+                break;
+        }
     }
     free_auth_completion(&a_list);
 }
@@ -1408,7 +1408,7 @@ static int serialize_prime_connect(struct connect_req *req, char* buffer){
     memcpy(buffer + offset, &req->protocolVersion, sizeof(req->protocolVersion));
     offset = offset +  sizeof(req->protocolVersion);
 
-    req->lastZxidSeen = htonll(req->lastZxidSeen);
+    req->lastZxidSeen = zoo_htonll(req->lastZxidSeen);
     memcpy(buffer + offset, &req->lastZxidSeen, sizeof(req->lastZxidSeen));
     offset = offset +  sizeof(req->lastZxidSeen);
 
@@ -1416,7 +1416,7 @@ static int serialize_prime_connect(struct connect_req *req, char* buffer){
     memcpy(buffer + offset, &req->timeOut, sizeof(req->timeOut));
     offset = offset +  sizeof(req->timeOut);
 
-    req->sessionId = htonll(req->sessionId);
+    req->sessionId = zoo_htonll(req->sessionId);
     memcpy(buffer + offset, &req->sessionId, sizeof(req->sessionId));
     offset = offset +  sizeof(req->sessionId);
 
@@ -1447,7 +1447,7 @@ static int serialize_prime_connect(struct connect_req *req, char* buffer){
      memcpy(&req->sessionId, buffer + offset, sizeof(req->sessionId));
      offset = offset +  sizeof(req->sessionId);
 
-     req->sessionId = htonll(req->sessionId);
+     req->sessionId = zoo_htonll(req->sessionId);
      memcpy(&req->passwd_len, buffer + offset, sizeof(req->passwd_len));
      offset = offset +  sizeof(req->passwd_len);
 
@@ -1526,7 +1526,6 @@ static struct timeval get_timeval(int interval)
     rc = serialize_RequestHeader(oa, "header", &h);
     enter_critical(zh);
     gettimeofday(&zh->last_ping, 0);
-    rc = rc < 0 ? rc : add_void_completion(zh, h.xid, 0, 0);
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
     leave_critical(zh);
@@ -1599,6 +1598,16 @@ int zookeeper_interest(zhandle_t *zh, int *fd, int *interest,
                 rc = connect(zh->fd, (struct sockaddr*) &zh->addrs[zh->connect_index], sizeof(struct sockaddr_in));
 #ifdef WIN32
                 get_errno();
+#if _MSC_VER >= 1600
+                switch (errno) {
+                case WSAEWOULDBLOCK:
+                    errno = EWOULDBLOCK;
+                    break;
+                case WSAEINPROGRESS:
+                    errno = EINPROGRESS;
+                    break;
+                }
+#endif
 #endif
             }
             if (rc == -1) {
@@ -2069,12 +2078,8 @@ static void deserialize_response(int type, int xid, int failed, int rc, completi
     case COMPLETION_VOID:
         LOG_DEBUG(("Calling COMPLETION_VOID for xid=%#x failed=%d rc=%d",
                     cptr->xid, failed, rc));
-        if (xid == PING_XID) {
-            // We want to skip the ping
-        } else {
-            assert(cptr->c.void_result);
-            cptr->c.void_result(rc, cptr->data);
-        }
+        assert(cptr->c.void_result);
+        cptr->c.void_result(rc, cptr->data);
         break;
     case COMPLETION_MULTI:
         LOG_DEBUG(("Calling COMPLETION_MULTI for xid=%#x failed=%d rc=%d",
@@ -2190,7 +2195,15 @@ int zookeeper_process(zhandle_t *zh, int events)
             // fprintf(stderr, "Got %#x for %#x\n", hdr.zxid, hdr.xid);
         }
 
-        if (hdr.xid == WATCHER_EVENT_XID) {
+        if (hdr.xid == PING_XID) {
+            // Ping replies can arrive out-of-order
+            int elapsed = 0;
+            struct timeval now;
+            gettimeofday(&now, 0);
+            elapsed = calculate_interval(&zh->last_ping, &now);
+            LOG_DEBUG(("Got ping response in %d ms", elapsed));
+            free_buffer(bptr);
+        } else if (hdr.xid == WATCHER_EVENT_XID) {
             struct WatcherEvent evt;
             int type = 0;
             char *path = NULL;
@@ -2235,6 +2248,7 @@ int zookeeper_process(zhandle_t *zh, int events)
             if (zh->close_requested == 1 && cptr == NULL) {
                 LOG_DEBUG(("Completion queue has been cleared by zookeeper_close()"));
                 close_buffer_iarchive(&ia);
+                free_buffer(bptr);
                 return api_epilog(zh,ZINVALIDSTATE);
             }
             assert(cptr);
@@ -2256,22 +2270,9 @@ int zookeeper_process(zhandle_t *zh, int events)
             activateWatcher(zh, cptr->watcher, rc);
 
             if (cptr->c.void_result != SYNCHRONOUS_MARKER) {
-                if(hdr.xid == PING_XID){
-                    int elapsed = 0;
-                    struct timeval now;
-                    gettimeofday(&now, 0);
-                    elapsed = calculate_interval(&zh->last_ping, &now);
-                    LOG_DEBUG(("Got ping response in %d ms", elapsed));
-
-                    // Nothing to do with a ping response
-                    free_buffer(bptr);
-                    destroy_completion_entry(cptr);
-                } else {
-                    LOG_DEBUG(("Queueing asynchronous response"));
-
-                    cptr->buffer = bptr;
-                    queue_completion(&zh->completions_to_process, cptr, 0);
-                }
+                LOG_DEBUG(("Queueing asynchronous response"));
+                cptr->buffer = bptr;
+                queue_completion(&zh->completions_to_process, cptr, 0);
             } else {
                 struct sync_completion
                         *sc = (struct sync_completion*)cptr->data;

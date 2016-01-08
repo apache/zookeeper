@@ -19,21 +19,29 @@
 package org.apache.zookeeper.test;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.regex.Pattern;
 
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.common.IOUtils;
 import static org.apache.zookeeper.client.FourLetterWordMain.send4LetterWord;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class FourLetterWordsTest extends ClientBase {
     protected static final Logger LOG =
         LoggerFactory.getLogger(FourLetterWordsTest.class);
+
+    @Rule
+    public Timeout timeout = new Timeout(30000);
 
     /** Test the various four letter words */
     @Test
@@ -103,6 +111,10 @@ public class FourLetterWordsTest extends ClientBase {
       HostPort hpobj = ClientBase.parseHostPortList(hostPort).get(0);
       return send4LetterWord(hpobj.host, hpobj.port, cmd);
     }
+    private String sendRequest(String cmd, int timeout) throws IOException {
+        HostPort hpobj = ClientBase.parseHostPortList(hostPort).get(0);
+        return send4LetterWord(hpobj.host, hpobj.port, cmd, timeout);
+      }
 
     private void verify(String cmd, String expected) throws IOException {
         String resp = sendRequest(cmd);
@@ -111,7 +123,7 @@ public class FourLetterWordsTest extends ClientBase {
     }
     
     @Test
-    public void validateStatOutput() throws Exception {
+    public void testValidateStatOutput() throws Exception {
         ZooKeeper zk1 = createClient();
         ZooKeeper zk2 = createClient();
         
@@ -154,7 +166,7 @@ public class FourLetterWordsTest extends ClientBase {
     }
 
     @Test
-    public void validateConsOutput() throws Exception {
+    public void testValidateConsOutput() throws Exception {
         ZooKeeper zk1 = createClient();
         ZooKeeper zk2 = createClient();
         
@@ -172,5 +184,54 @@ public class FourLetterWordsTest extends ClientBase {
 
         zk1.close();
         zk2.close();
+    }
+
+    @Test(timeout=60000)
+    public void testValidateSocketTimeout() throws Exception {
+        /**
+         * testing positive scenario that even with timeout parameter the
+         * functionality works fine
+         */
+        String resp = sendRequest("isro", 2000);
+        Assert.assertTrue(resp.contains("rw"));
+    }
+
+    @Test
+    public void testSetTraceMask() throws Exception {
+        String gtmkResp = sendRequest("gtmk");
+        Assert.assertNotNull(gtmkResp);
+        gtmkResp = gtmkResp.trim();
+        Assert.assertFalse(gtmkResp.isEmpty());
+        long formerMask = Long.valueOf(gtmkResp);
+        try {
+            verify(buildSetTraceMaskRequest(0), "0");
+            verify("gtmk", "0");
+        } finally {
+            // Restore former value.
+            sendRequest(buildSetTraceMaskRequest(formerMask));
+        }
+    }
+
+    /**
+     * Builds a SetTraceMask request to be sent to the server, consisting of
+     * "stmk" followed by the 8-byte long representation of the trace mask.
+     *
+     * @param mask trace mask to set
+     * @return built request
+     * @throws IOException if there is an I/O error
+     */
+    private String buildSetTraceMaskRequest(long mask) throws IOException {
+        ByteArrayOutputStream baos = null;
+        DataOutputStream dos = null;
+        try {
+            baos = new ByteArrayOutputStream();
+            dos = new DataOutputStream(baos);
+            dos.writeBytes("stmk");
+            dos.writeLong(mask);
+        } finally {
+            IOUtils.closeStream(dos);
+            IOUtils.closeStream(baos);
+        }
+        return new String(baos.toByteArray());
     }
 }

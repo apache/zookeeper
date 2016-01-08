@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 public class MBeanRegistry {
     private static final Logger LOG = LoggerFactory.getLogger(MBeanRegistry.class);
     
-    private static MBeanRegistry instance = new MBeanRegistry(); 
+    private static volatile MBeanRegistry instance = new MBeanRegistry();
     
     private Map<ZKMBeanInfo, String> mapBean2Path =
         new ConcurrentHashMap<ZKMBeanInfo, String>();
@@ -49,6 +49,10 @@ public class MBeanRegistry {
         new ConcurrentHashMap<String, ZKMBeanInfo>();
 
     private MBeanServer mBeanServer;
+
+    public static void setInstance(MBeanRegistry instance) {
+        MBeanRegistry.instance = instance;
+    }
 
     public static MBeanRegistry getInstance() {
         return instance;

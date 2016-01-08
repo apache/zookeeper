@@ -1,11 +1,15 @@
 # need this for Doxygen integration
 include $(top_srcdir)/aminclude.am
 
-AM_CPPFLAGS = -I${srcdir}/include -I${srcdir}/tests -I${srcdir}/generated
+if SOLARIS
+  SOLARIS_CPPFLAGS = -D_POSIX_PTHREAD_SEMANTICS
+  SOLARIS_LIB_LDFLAGS = -lnsl -lsocket
+endif
+AM_CPPFLAGS = -I${srcdir}/include -I${srcdir}/tests -I${srcdir}/generated $(SOLARIS_CPPFLAGS)
 AM_CFLAGS = -Wall -Werror 
 AM_CXXFLAGS = -Wall $(USEIPV6)
 
-LIB_LDFLAGS = -no-undefined -version-info 2
+LIB_LDFLAGS = -no-undefined -version-info 2 $(SOLARIS_LIB_LDFLAGS)
 
 pkginclude_HEADERS = include/zookeeper.h include/zookeeper_version.h include/zookeeper_log.h include/proto.h include/recordio.h generated/zookeeper.jute.h
 EXTRA_DIST=LICENSE
@@ -22,7 +26,7 @@ COMMON_SRC = src/zookeeper.c include/zookeeper.h include/zookeeper_version.h inc
     src/zookeeper_log.h src/zk_log.c src/zk_hashtable.h src/zk_hashtable.c
 
 # These are the symbols (classes, mostly) we want to export from our library.
-EXPORT_SYMBOLS = '(zoo_|zookeeper_|zhandle|Z|format_log_message|log_message|logLevel|deallocate_|zerror|is_unrecoverable)'
+EXPORT_SYMBOLS = '(zoo_|zookeeper_|zhandle|Z|format_log_message|log_message|logLevel|deallocate_|allocate_|zerror|is_unrecoverable)'
 noinst_LTLIBRARIES += libzkst.la
 libzkst_la_SOURCES =$(COMMON_SRC) src/st_adaptor.c
 libzkst_la_LIBADD = -lm
@@ -78,21 +82,31 @@ TEST_SOURCES = tests/TestDriver.cc tests/LibCMocks.cc tests/LibCSymTable.cc \
     tests/TestMulti.cc tests/TestWatchers.cc
 
 
-SYMBOL_WRAPPERS=$(shell cat ${srcdir}/tests/wrappers.opt)
+if SOLARIS
+  SHELL_SYMBOL_WRAPPERS = cat ${srcdir}/tests/wrappers.opt
+  SYMBOL_WRAPPERS=$(SHELL_SYMBOL_WRAPPERS:sh)
+else
+  SYMBOL_WRAPPERS=$(shell cat ${srcdir}/tests/wrappers.opt)
+endif
 
 check_PROGRAMS = zktest-st
 nodist_zktest_st_SOURCES = $(TEST_SOURCES)
 zktest_st_LDADD = libzkst.la libhashtable.la $(CPPUNIT_LIBS)
-zktest_st_CXXFLAGS = -DUSE_STATIC_LIB $(CPPUNIT_CFLAGS) $(USEIPV6)
-zktest_st_LDFLAGS = -static-libtool-libs $(SYMBOL_WRAPPERS)
+zktest_st_CXXFLAGS = -DUSE_STATIC_LIB $(CPPUNIT_CFLAGS) $(USEIPV6) $(SOLARIS_CPPFLAGS)
+zktest_st_LDFLAGS = -static-libtool-libs $(SYMBOL_WRAPPERS) $(SOLARIS_LIB_LDFLAGS)
 
 if WANT_SYNCAPI
   check_PROGRAMS += zktest-mt
   nodist_zktest_mt_SOURCES = $(TEST_SOURCES) tests/PthreadMocks.cc
   zktest_mt_LDADD = libzkmt.la libhashtable.la -lpthread $(CPPUNIT_LIBS)
   zktest_mt_CXXFLAGS = -DUSE_STATIC_LIB -DTHREADED $(CPPUNIT_CFLAGS) $(USEIPV6)
+if SOLARIS
+  SHELL_SYMBOL_WRAPPERS_MT = cat ${srcdir}/tests/wrappers-mt.opt
+  SYMBOL_WRAPPERS_MT=$(SYMBOL_WRAPPERS) $(SHELL_SYMBOL_WRAPPERS_MT:sh)
+else
   SYMBOL_WRAPPERS_MT=$(SYMBOL_WRAPPERS) $(shell cat ${srcdir}/tests/wrappers-mt.opt)
-  zktest_mt_LDFLAGS = -static-libtool-libs $(SYMBOL_WRAPPERS_MT)
+endif
+  zktest_mt_LDFLAGS = -static-libtool-libs $(SYMBOL_WRAPPERS_MT) $(SOLARIS_LIB_LDFLAGS)
 endif
 
 run-check: check

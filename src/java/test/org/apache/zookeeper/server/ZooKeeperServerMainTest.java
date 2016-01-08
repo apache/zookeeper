@@ -27,6 +27,7 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
@@ -49,7 +50,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         final TestZKSMain main;
         final File tmpDir;
 
-        public MainThread(int clientPort) throws IOException {
+        public MainThread(int clientPort, boolean preCreateDirs) throws IOException {
             super("Standalone server with clientPort:" + clientPort);
             tmpDir = ClientBase.createTmpDir();
             confFile = new File(tmpDir, "zoo.cfg");
@@ -60,18 +61,23 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
             fwriter.write("syncLimit=5\n");
 
             File dataDir = new File(tmpDir, "data");
-            if (!dataDir.mkdir()) {
-                throw new IOException("unable to mkdir " + dataDir);
+            String dir = dataDir.toString();
+            String dirLog = dataDir.toString() + "_txnlog";
+            if (preCreateDirs) {
+                if (!dataDir.mkdir()) {
+                    throw new IOException("unable to mkdir " + dataDir);
+                }
+                dirLog = dataDir.toString();
             }
             
             // Convert windows path to UNIX to avoid problems with "\"
-            String dir = dataDir.toString();
             String osname = java.lang.System.getProperty("os.name");
             if (osname.toLowerCase().contains("windows")) {
                 dir = dir.replace('\\', '/');
+                dirLog = dirLog.replace('\\', '/');
             }
             fwriter.write("dataDir=" + dir + "\n");
-            
+            fwriter.write("dataLogDir=" + dirLog + "\n");
             fwriter.write("clientPort=" + clientPort + "\n");
             fwriter.flush();
             fwriter.close();
@@ -124,9 +130,9 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
     public void testStandalone() throws Exception {
         ClientBase.setupTestEnv();
 
-        final int CLIENT_PORT = 3181;
+        final int CLIENT_PORT = PortAssignment.unique();
 
-        MainThread main = new MainThread(CLIENT_PORT);
+        MainThread main = new MainThread(CLIENT_PORT, true);
         main.start();
 
         Assert.assertTrue("waiting for server being up",
@@ -149,6 +155,112 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         Assert.assertTrue("waiting for server down",
                 ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT,
                         ClientBase.CONNECTION_TIMEOUT));
+    }
+
+    /**
+     * Test verifies the auto creation of data dir and data log dir.
+     */
+    @Test(timeout = 30000)
+    public void testAutoCreateDataLogDir() throws Exception {
+        ClientBase.setupTestEnv();
+        final int CLIENT_PORT = PortAssignment.unique();
+
+        MainThread main = new MainThread(CLIENT_PORT, false);
+        String args[] = new String[1];
+        args[0] = main.confFile.toString();
+        main.start();
+
+        Assert.assertTrue("waiting for server being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
+                        CONNECTION_TIMEOUT));
+
+        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT,
+                ClientBase.CONNECTION_TIMEOUT, this);
+
+        zk.create("/foo", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        Assert.assertEquals(new String(zk.getData("/foo", null, null)),
+                "foobar");
+        zk.close();
+
+        main.shutdown();
+        main.join();
+        main.deleteDirs();
+
+        Assert.assertTrue("waiting for server down", ClientBase
+                .waitForServerDown("127.0.0.1:" + CLIENT_PORT,
+                        ClientBase.CONNECTION_TIMEOUT));
+    }
+
+    @Test
+    public void testJMXRegistrationWithNIO() throws Exception {
+        ClientBase.setupTestEnv();
+        File tmpDir_1 = ClientBase.createTmpDir();
+        ServerCnxnFactory server_1 = startServer(tmpDir_1);
+        File tmpDir_2 = ClientBase.createTmpDir();
+        ServerCnxnFactory server_2 = startServer(tmpDir_2);
+
+        server_1.shutdown();
+        server_2.shutdown();
+
+        deleteFile(tmpDir_1);
+        deleteFile(tmpDir_2);
+    }
+
+    @Test
+    public void testJMXRegistrationWithNetty() throws Exception {
+        String originalServerCnxnFactory = System
+                .getProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
+        System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY,
+                NettyServerCnxnFactory.class.getName());
+        try {
+            ClientBase.setupTestEnv();
+            File tmpDir_1 = ClientBase.createTmpDir();
+            ServerCnxnFactory server_1 = startServer(tmpDir_1);
+            File tmpDir_2 = ClientBase.createTmpDir();
+            ServerCnxnFactory server_2 = startServer(tmpDir_2);
+
+            server_1.shutdown();
+            server_2.shutdown();
+
+            deleteFile(tmpDir_1);
+            deleteFile(tmpDir_2);
+        } finally {
+            // setting back
+            if (originalServerCnxnFactory == null
+                    || originalServerCnxnFactory.isEmpty()) {
+                System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
+            } else {
+                System.setProperty(
+                        ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY,
+                        originalServerCnxnFactory);
+            }
+        }
+    }
+
+    private void deleteFile(File f) throws IOException {
+        if (f.isDirectory()) {
+            for (File c : f.listFiles())
+                deleteFile(c);
+        }
+        if (!f.delete())
+            // double check for the file existence
+            if (f.exists()) {
+                throw new IOException("Failed to delete file: " + f);
+            }
+    }
+
+    private ServerCnxnFactory startServer(File tmpDir) throws IOException,
+            InterruptedException {
+        final int CLIENT_PORT = PortAssignment.unique();
+        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        ServerCnxnFactory f = ServerCnxnFactory.createFactory(CLIENT_PORT, -1);
+        f.startup(zks);
+        Assert.assertNotNull("JMX initialization failed!", zks.jmxServerBean);
+        Assert.assertTrue("waiting for server being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
+                        CONNECTION_TIMEOUT));
+        return f;
     }
 
     public void process(WatchedEvent event) {

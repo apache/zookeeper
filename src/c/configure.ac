@@ -3,7 +3,7 @@
 
 AC_PREREQ(2.59)
 
-AC_INIT([zookeeper C client],3.4.6,[user@zookeeper.apache.org],[zookeeper])
+AC_INIT([zookeeper C client],3.4.7,[user@zookeeper.apache.org],[zookeeper])
 AC_CONFIG_SRCDIR([src/zookeeper.c])
 
 # Save initial CFLAGS and CXXFLAGS values before AC_PROG_CC and AC_PROG_CXX
@@ -146,4 +146,14 @@ fi
 AC_CHECK_FUNCS([getcwd gethostbyname gethostname getlogin getpwuid_r gettimeofday getuid memmove memset poll socket strchr strdup strerror strtol])
 
 AC_CONFIG_FILES([Makefile])
+AC_CANONICAL_HOST
+AM_CONDITIONAL([SOLARIS],[
+  case "$host_os" in
+  *solaris*)
+    true
+    ;;
+  *)
+    false
+    ;;
+  esac ])
 AC_OUTPUT

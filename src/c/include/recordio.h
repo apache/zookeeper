@@ -73,7 +73,7 @@ void close_buffer_iarchive(struct iarchive **ia);
 char *get_buffer(struct oarchive *);
 int get_buffer_len(struct oarchive *);
 
-int64_t htonll(int64_t v);
+int64_t zoo_htonll(int64_t v);
 
 #ifdef __cplusplus
 }

@@ -39,11 +39,6 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory implements Runnable 
     private static final Logger LOG = LoggerFactory.getLogger(NIOServerCnxnFactory.class);
 
     static {
-        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-                public void uncaughtException(Thread t, Throwable e) {
-                    LOG.error("Thread " + t + " died", e);
-                }
-            });
         /**
          * this is to avoid the jvm bug:
          * NullPointerException in Selector.open()
@@ -86,7 +81,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory implements Runnable 
     public void configure(InetSocketAddress addr, int maxcc) throws IOException {
         configureSaslLogin();
 
-        thread = new Thread(this, "NIOServerCxn.Factory:" + addr);
+        thread = new ZooKeeperThread(this, "NIOServerCxn.Factory:" + addr);
         thread.setDaemon(true);
         maxClientCnxns = maxcc;
         this.ss = ServerSocketChannel.open();
@@ -119,9 +114,9 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory implements Runnable 
     public void startup(ZooKeeperServer zks) throws IOException,
             InterruptedException {
         start();
+        setZooKeeperServer(zks);
         zks.startdata();
         zks.startup();
-        setZooKeeperServer(zks);
     }
 
     @Override

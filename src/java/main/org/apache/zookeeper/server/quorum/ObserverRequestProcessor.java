@@ -26,13 +26,14 @@ import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.Request;
+import org.apache.zookeeper.server.ZooKeeperCriticalThread;
 import org.apache.zookeeper.server.ZooTrace;
 
 /**
  * This RequestProcessor forwards any requests that modify the state of the
  * system to the Leader.
  */
-public class ObserverRequestProcessor extends Thread implements
+public class ObserverRequestProcessor extends ZooKeeperCriticalThread implements
         RequestProcessor {
     private static final Logger LOG = LoggerFactory.getLogger(ObserverRequestProcessor.class);
 
@@ -54,7 +55,8 @@ public class ObserverRequestProcessor extends Thread implements
      */
     public ObserverRequestProcessor(ObserverZooKeeperServer zks,
             RequestProcessor nextProcessor) {
-        super("ObserverRequestProcessor:" + zks.getServerId());
+        super("ObserverRequestProcessor:" + zks.getServerId(), zks
+                .getZooKeeperServerListener());
         this.zks = zks;
         this.nextProcessor = nextProcessor;
     }
@@ -98,7 +100,7 @@ public class ObserverRequestProcessor extends Thread implements
                 }
             }
         } catch (Exception e) {
-            LOG.error("Unexpected exception causing exit", e);
+            handleException(this.getName(), e);
         }
         LOG.info("ObserverRequestProcessor exited loop!");
     }

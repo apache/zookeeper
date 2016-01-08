@@ -133,7 +133,8 @@ void log_message(ZooLogLevel curLevel,int line,const char* funcName,
 #endif
     if(pid==0)pid=getpid();
 #ifndef THREADED
-    fprintf(LOGSTREAM, "%s:%d:%s@%s@%d: %s\n", time_now(get_time_buffer()),pid,
+    // pid_t is long on Solaris
+    fprintf(LOGSTREAM, "%s:%ld:%s@%s@%d: %s\n", time_now(get_time_buffer()),(long)pid,
             dbgLevelStr[curLevel],funcName,line,message);
 #else
 #ifdef WIN32
@@ -141,7 +142,7 @@ void log_message(ZooLogLevel curLevel,int line,const char* funcName,
             (unsigned long int)(pthread_self().thread_id),
             dbgLevelStr[curLevel],funcName,line,message);      
 #else
-    fprintf(LOGSTREAM, "%s:%d(0x%lx):%s@%s@%d: %s\n", time_now(get_time_buffer()),pid,
+    fprintf(LOGSTREAM, "%s:%ld(0x%lx):%s@%s@%d: %s\n", time_now(get_time_buffer()),(long)pid,
             (unsigned long int)pthread_self(),
             dbgLevelStr[curLevel],funcName,line,message);      
 #endif
