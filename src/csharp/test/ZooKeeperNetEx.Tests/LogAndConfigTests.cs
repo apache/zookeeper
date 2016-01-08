@@ -27,7 +27,7 @@ namespace ZooKeeperNetEx.Tests
                 writer.IsEnabled = true;
 
                 for (int i = 0; i < 50; i++) writer.Write("test" + i);
-                await Task.Delay(300);
+                await Task.Delay(4000);
                 Assert.True(File.Exists(filename));
 
                 Assert.False(writer.HasFailed);
@@ -38,7 +38,7 @@ namespace ZooKeeperNetEx.Tests
                 writer.IsEnabled = false;
 
                 for (int i = 0; i < 50; i++) writer.Write("test" + i);
-                await Task.Delay(300);
+                await Task.Delay(1000);
                 Assert.False(writer.HasFailed);
                 Assert.False(writer.IsEnabled);
                 Assert.True(writer.IsDisposed);
@@ -75,7 +75,7 @@ namespace ZooKeeperNetEx.Tests
 
             writer.IsEnabled = true;
             writer.ThrowWrite = true;
-            await Task.Delay(100);
+            await Task.Delay(500);
             Assert.True(writer.HasFailed);
             Assert.True(writer.IsEnabled);
             Assert.True(writer.IsDisposed);
@@ -93,11 +93,10 @@ namespace ZooKeeperNetEx.Tests
             return Task.Run(async () =>
             {
                 int i = 0;
-                Random random = new Random();
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     writer.Write("test" + i);
-                    await Task.Delay(random.Next(50) + 10);
+                    await Task.Delay(i%50 + 10);
                     i++;
                 }
             });
