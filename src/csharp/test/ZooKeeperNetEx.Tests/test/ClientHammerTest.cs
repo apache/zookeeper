@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading;
-
+using System.Threading.Tasks;
 using org.apache.utils;
 using Xunit;
 
@@ -29,284 +28,98 @@ namespace org.apache.zookeeper.test
     public sealed class ClientHammerTest : ClientBase
 	{
 		private static readonly ILogProducer LOG = TypeLogger<ClientHammerTest>.Instance;
+        private static readonly byte[] b = new byte[256];
 
-		private const int HAMMERTHREAD_LATENCY = 5;
+        private const int HAMMERTHREAD_LATENCY = 5;
 
-	    private abstract class HammerThread : BackgroundThread
-		{
-			protected internal readonly int count;
-			protected internal volatile int current;
-
-		    protected HammerThread(string name, int count) : base(name,LOG)
-			{
-				this.count = count;
-			}
-		}
-
-		private sealed class BasicHammerThread : HammerThread
-		{
-		    private readonly ZooKeeper zk;
-		    private readonly string prefix;
-
-			internal BasicHammerThread(string name, ZooKeeper zk, string prefix, int count) : base(name, count)
-			{
-				this.zk = zk;
-				this.prefix = prefix;
-			}
-
-		    protected override void run()
-			{
-				byte[] b = new byte[256];
-				try
-				{
-					for (; current < count; current++)
-					{
-						// Simulate a bit of network latency...
-						Thread.Sleep(HAMMERTHREAD_LATENCY);
-						zk.create(prefix + current, b, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-					}
-				}
-				catch (Exception t)
-				{
-					LOG.error("Client create operation Assert.failed", t);
-				}
-				finally
-				{
-					zk.close();
-				}
-			}
-		}
-
-		private sealed class SuperHammerThread : HammerThread
-		{
-		    private readonly ClientHammerTest parent;
-		    private readonly string prefix;
-
-			internal SuperHammerThread(string name, ClientHammerTest parent, string prefix, int count) : base(name, count)
-			{
-				this.parent = parent;
-				this.prefix = prefix;
-			}
-
-		    protected override void run()
-		    {
-		        byte[] b = new byte[256];
-		        for (; current < count; current++)
-		        {
-		            ZooKeeper zk = parent.createClient();
-		            try
-		            {
-		                zk.create(prefix + current, b, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-		            }
-		            finally
-		            {
-		                zk.close();
-		            }
-		        }
-		    }
-		}
-
-		// <summary>
-		// Separate threads each creating a number of nodes. Each thread
-		// is using a non-shared (owned by thread) client for all node creations. </summary>
-		// <exception cref="Throwable"> </exception>
-        [Fact]
-		public void testHammerBasic()
-		{
-			runHammer(10, 1000);
-		}
-
-        private void runHammer(int threadCount, int childCount)
-		{
-			try
-			{
-				HammerThread[] threads = new HammerThread[threadCount];
-				long start = TimeHelper.ElapsedMiliseconds;
-				for (int i = 0; i < threads.Length; i++)
-				{
-					ZooKeeper zk = createClient();
-					string prefix = "/test-" + i;
-					zk.create(prefix, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-					prefix += "/";
-					HammerThread thread = new BasicHammerThread("BasicHammerThread-" + i, zk, prefix, childCount);
-					thread.start();
-
-					threads[i] = thread;
-				}
-
-				verifyHammer(start, threads, childCount);
-			}
-			catch (Exception t)
-			{
-				LOG.error("test Assert.failed", t);
-				throw;
-			}
-		}
-
-		// <summary>
-		// Separate threads each creating a number of nodes. Each thread
-		// is creating a new client for each node creation. </summary>
-		// <exception cref="Throwable"> </exception>
-        [Fact]
-		public void testHammerSuper()
-		{
-			try
-			{
-				const int threadCount = 5;
-				const int childCount = 10;
-
-				HammerThread[] threads = new HammerThread[threadCount];
-				long start = TimeHelper.ElapsedMiliseconds;
-				for (int i = 0; i < threads.Length; i++)
-				{
-					string prefix = "/test-" + i;
-					{
-						ZooKeeper zk = createClient();
-						try
-						{
-							zk.create(prefix, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-						}
-						finally
-						{
-							zk.close();
-						}
-					}
-					prefix += "/";
-					HammerThread thread = new SuperHammerThread("SuperHammerThread-" + i, this, prefix, childCount);
-					thread.start();
-
-					threads[i] = thread;
-				}
-
-				verifyHammer(start, threads, childCount);
-			}
-			catch (Exception t)
-			{
-				LOG.error("test Assert.failed", t);
-				throw;
-			}
-		}
-
-
-	    private void verifyHammer(long start, HammerThread[] threads, int childCount)
-		{
-			// look for the clients to finish their create operations
-			LOG.info("Starting check for completed hammers");
-			int workingCount = threads.Length;
-			for (int i = 0; i < 120; i++)
-			{
-				Thread.Sleep(10000);
-				foreach (HammerThread h in threads)
-				{
-					if (!h.isAlive() || h.current == h.count)
-					{
-						workingCount--;
-					}
-				}
-				if (workingCount == 0)
-				{
-					break;
-				}
-				workingCount = threads.Length;
-			}
-			if (workingCount > 0)
-			{
-				foreach (HammerThread h in threads)
-				{
-					LOG.warn(h.getName() + " never finished creation, current:" + h.current);
-				}
-			}
-			else
-			{
-				LOG.info("Hammer threads completed creation operations");
-			}
-
-			foreach (HammerThread h in threads)
-			{
-				const int safetyFactor = 3;
-				verifyThreadTerminated(h, threads.Length * childCount * HAMMERTHREAD_LATENCY * safetyFactor);
-			}
-			LOG.info(DateTime.Now + " Total time " + (TimeHelper.ElapsedMiliseconds - start));
-
-			ZooKeeper zk = createClient();
-			try
-			{
-				LOG.info("******************* Connected to ZooKeeper" + DateTime.Now);
-				for (int i = 0; i < threads.Length; i++)
-				{
-					LOG.info("Doing thread: " + i + " " + DateTime.Now);
-					IList<string> children = zk.getChildren("/test-" + i, false);
-					Assert.assertEquals(childCount, children.Count);
-					children = zk.getChildren("/test-" + i, false, null);
-					Assert.assertEquals(childCount, children.Count);
-				}
-				for (int i = 0; i < threads.Length; i++)
-				{
-					IList<string> children = zk.getChildren("/test-" + i, false);
-					Assert.assertEquals(childCount, children.Count);
-					children = zk.getChildren("/test-" + i, false, null);
-					Assert.assertEquals(childCount, children.Count);
-				}
-			}
-			finally
-			{
-				zk.close();
-			}
-		}
-
-        private static void verifyThreadTerminated(BackgroundThread thread, int millis)
+        private async Task GetBasicHammerTask(ZooKeeper zk, string prefix, int count)
         {
-            thread.join(millis);
-            if (thread.isAlive())
+            for (int current = 0; current < count; current++)
             {
-                LOG.error("Thread " + thread.getName());
-                Assert.assertFalse("thread " + thread.getName()
-                                   + " still alive after join", true);
+                // Simulate a bit of network latency...
+                await Task.Delay(HAMMERTHREAD_LATENCY);
+                await zk.createAsync(prefix + current, b, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                LOG.warn("created:" + prefix + current);
+            }
+            await zk.closeAsync();
+        }
+
+        private async Task GetSuperHammerTask(Func<ZooKeeper> zkFunc, string prefix, int count)
+        {
+            for (int current = 0; current < count; current++)
+            {
+                ZooKeeper zk = zkFunc();
+                await zk.createAsync(prefix + current, b, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                LOG.warn("created:" + prefix + current);
+                await zk.closeAsync();
             }
         }
 
-        private abstract class BackgroundThread
+
+        // <summary>
+		// Separate tasks each creating a number of nodes. Each task
+		// is using a non-shared (owned by task) client for all node creations. </summary>
+		// <exception cref="Throwable"> </exception>
+        [Fact]
+        public async Task testHammerBasic()
         {
-            private readonly Thread m_Thread;
-
-            protected BackgroundThread(string name, ILogProducer log)
+            int threadCount = 10;
+            int childCount = 1000;
+            Task[] tasks = new Task[threadCount];
+            for (int i = 0; i < tasks.Length; i++)
             {
-                m_Thread = new Thread(() => RunAndLogException(run, log)) { Name = name, IsBackground = true };
+                ZooKeeper zk = createClient();
+                string prefix = "/test-" + i;
+                await zk.createAsync(prefix, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                LOG.warn("created:" + prefix);
+                prefix += "/";
+                tasks[i] = GetBasicHammerTask(zk, prefix, childCount);
             }
 
-            protected abstract void run();
+            await verifyHammer(tasks, childCount);
+        }
 
-            public void start()
+        // <summary>
+		// Separate tasks each creating a number of nodes. Each task
+		// is creating a new client for each node creation. </summary>
+        [Fact]
+        public async Task testHammerSuper()
+        {
+            const int threadCount = 5;
+            const int childCount = 10;
+
+            Task[] tasks = new Task[threadCount];
+            for (int i = 0; i < tasks.Length; i++)
             {
-                m_Thread.Start();
+                string prefix = "/test-" + i;
+                ZooKeeper zk = createClient();
+                await zk.createAsync(prefix, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                LOG.warn("created:" + prefix);
+                prefix += "/";
+                tasks[i] = GetSuperHammerTask(() => createClient(), prefix, childCount);
             }
 
-            public void join(int wait)
-            {
-                m_Thread.Join(wait);
-            }
+            await verifyHammer(tasks, childCount);
+        }
 
-            public bool isAlive()
-            {
-                return m_Thread.IsAlive;
-            }
 
-            public string getName()
-            {
-                return m_Thread.Name;
-            }
-
-            private static void RunAndLogException(Action action, ILogProducer log)
-            {
-                try
-                {
-                    action();
-                }
-                catch (Exception e)
-                {
-                    log.error(e);
-                }
-            }
+        private async Task verifyHammer(Task[] tasks, int childCount)
+		{
+			// look for the clients to finish their create operations
+			LOG.warn("Starting check for completed hammers");
+            var delay = Task.Delay(30000);
+            await Task.WhenAny(delay, Task.WhenAll(tasks));
+			Assert.assertFalse(delay.IsCompleted);
+            
+			ZooKeeper zk = createClient();
+	        for (int i = 0; i < tasks.Length; i++)
+	        {
+	            LOG.info("Doing task: " + i + " " + DateTime.Now);
+	            IList<string> children = (await zk.getChildrenAsync("/test-" + i, false)).Children;
+	            Assert.assertEquals(childCount, children.Count);
+	        }
+            await zk.closeAsync();
+            LOG.warn("Done");
         }
 	}
 }
