@@ -2,7 +2,7 @@
   "compilationOptions": { "keyFile": "../../ZooKeeperNetEx.snk" },
   "dependencies": {
     "ZooKeeperNetEx.Tests": "",
-    "ZooKeeperNetEx.Recipes": "3.4.6.1011",
+    "ZooKeeperNetEx.Recipes": "3.4.7.0",
     "xunit.runner.aspnet": "2.0.0-aspnet-*",
     "Newtonsoft.Json": "7.0.1"
   },
