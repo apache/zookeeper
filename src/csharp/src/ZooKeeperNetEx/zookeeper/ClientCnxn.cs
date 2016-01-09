@@ -41,6 +41,16 @@ namespace org.apache.zookeeper {
     internal sealed class ClientCnxn {
         private static readonly ILogProducer LOG = TypeLogger<ClientCnxn>.Instance;
 
+        /* ZOOKEEPER-706: If a session has a large number of watches set then
+         * attempting to re-establish those watches after a connection loss may
+         * fail due to the SetWatches request exceeding the server's configured
+         * jute.maxBuffer value. To avoid this we instead split the watch
+         * re-establishement across multiple SetWatches calls. This constant
+         * controls the size of each call. It is set to 128kB to be conservative
+         * with respect to the server's 1MB default for jute.maxBuffer.
+         */
+        private const int SET_WATCHES_MAX_LENGTH = 128 * 1024;
+        
         private class AuthData {
             internal AuthData(string scheme, byte[] data) {
                 this.scheme = scheme;
@@ -532,16 +542,49 @@ namespace org.apache.zookeeper {
                         List<string> existWatches = zooKeeper.getExistWatches();
                         List<string> childWatches = zooKeeper.getChildWatches();
                         if (dataWatches.Count > 0 || existWatches.Count > 0 || childWatches.Count > 0) {
-                            SetWatches sw = new SetWatches(lastZxid.Value,
-                                prependChroot(dataWatches),
-                                prependChroot(existWatches),
-                                prependChroot(childWatches));
+                        var dataWatchesIter = prependChroot(dataWatches).GetEnumerator();
+                        var existWatchesIter = prependChroot(existWatches).GetEnumerator();
+                        var childWatchesIter = prependChroot(childWatches).GetEnumerator();
+                        long setWatchesLastZxid = lastZxid.Value;
+                        bool done = false;
+
+                        while (!done) {
+                            var dataWatchesBatch = new List<string>();
+                            var existWatchesBatch = new List<string>();
+                            var childWatchesBatch = new List<string>();
+                            int batchLength = 0;
+
+                            // Note, we may exceed our max length by a bit when we add the last
+                            // watch in the batch. This isn't ideal, but it makes the code simpler.
+                            while (batchLength < SET_WATCHES_MAX_LENGTH) {
+                                string watch;
+                                if (dataWatchesIter.MoveNext()) {
+                                    watch = dataWatchesIter.Current;
+                                    dataWatchesBatch.Add(watch);
+                                } else if (existWatchesIter.MoveNext()) {
+                                    watch = existWatchesIter.Current;
+                                    existWatchesBatch.Add(watch);
+                                } else if (childWatchesIter.MoveNext()) {
+                                    watch = childWatchesIter.Current;
+                                    childWatchesBatch.Add(watch);
+                                } else {
+                                    done = true;
+                                    break;
+                                }
+                                batchLength += watch.Length;
+                            }
+
+                            SetWatches sw = new SetWatches(setWatchesLastZxid,
+                                    dataWatchesBatch,
+                                    existWatchesBatch,
+                                    childWatchesBatch);
                             RequestHeader h = new RequestHeader();
                             h.set_Type((int) ZooDefs.OpCode.setWatches);
                             h.setXid(-8);
                             Packet packet = new Packet(h, new ReplyHeader(), sw,
                                 null, null);
                             outgoingQueue.AddFirst(packet);
+                        }
                     }
                     foreach (AuthData id in authInfo) {
                         outgoingQueue.AddFirst(new Packet(new RequestHeader(-4,
