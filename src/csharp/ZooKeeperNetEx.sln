@@ -5,6 +5,11 @@ VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{3124BC6C-39C6-473D-B3E5-E04C85D922F4}"
 	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		build.cmd = build.cmd
+		global.json = global.json
+		makefile.shade = makefile.shade
+		NuGet.config = NuGet.config
 		ZooKeeperNetEx.snk = ZooKeeperNetEx.snk
 	EndProjectSection
 EndProject
