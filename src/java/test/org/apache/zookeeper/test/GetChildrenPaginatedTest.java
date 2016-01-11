@@ -22,11 +22,11 @@ import org.apache.zookeeper.*;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.PathWithStat;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.RemoteIterator;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -34,6 +34,8 @@ import java.util.UUID;
 
 public class GetChildrenPaginatedTest extends ClientBase {
     private ZooKeeper zk;
+    private final Random random = new Random();
+
 
     @Override
     public void setUp() throws Exception {
@@ -105,14 +107,13 @@ public class GetChildrenPaginatedTest extends ClientBase {
         final String testId = UUID.randomUUID().toString();
         final String basePath = "/testPagination-" + testId;
 
-        Map<String, Stat> createdChildrenMetadata = createChildren(basePath, new Random().nextInt(50)+1, 0);
+        Map<String, Stat> createdChildrenMetadata = createChildren(basePath, random.nextInt(50)+1, 0);
 
         Map<String, Stat> readChildrenMetadata = new HashMap<String, Stat>();
 
-        final int batchSize = 3;
+        final int batchSize = random.nextInt(3)+1;
 
-
-        Iterator<PathWithStat> childrenIterator = zk.getChildrenIterator(basePath, null, batchSize, -1);
+        RemoteIterator<PathWithStat> childrenIterator = zk.getChildrenIterator(basePath, null, batchSize, -1);
 
 
         while(childrenIterator.hasNext()) {
@@ -131,6 +132,83 @@ public class GetChildrenPaginatedTest extends ClientBase {
             Assert.assertEquals(createdChildrenMetadata.get(child), readChildrenMetadata.get(child));
         }
     }
+
+    @Test(timeout = 30000)
+    public void testPaginationWithServerDown() throws Exception {
+
+        final String testId = UUID.randomUUID().toString();
+        final String basePath = "/testPagination-" + testId;
+
+        Map<String, Stat> createdChildrenMetadata = createChildren(basePath, random.nextInt(25)+1, 0);
+
+        Map<String, Stat> readChildrenMetadata = new HashMap<String, Stat>();
+
+        final int batchSize = random.nextInt(3)+1;
+
+        RemoteIterator<PathWithStat> childrenIterator = zk.getChildrenIterator(basePath, null, batchSize, -1);
+
+        boolean serverDown = false;
+
+        while(true) {
+
+            // Randomly change the up/down state of the server
+            if(random.nextBoolean()) {
+                if (serverDown) {
+                    LOG.info("Bringing server UP");
+                    startServer();
+                    serverDown = false;
+                } else {
+                    LOG.info("Taking server DOWN");
+                    stopServer();
+                    serverDown = true;
+                }
+            }
+
+            try {
+                if(!childrenIterator.hasNext()) {
+                    // Reached end of children
+                    break;
+                }
+            } catch (InterruptedException|KeeperException e) {
+                // Just try again until the server is up
+                LOG.info("Exception in #hasNext()");
+                continue;
+            }
+
+
+            PathWithStat child = null;
+
+            boolean exception = false;
+                try {
+                    child = childrenIterator.next();
+                } catch (InterruptedException|KeeperException e) {
+                    LOG.info("Exception in #next()");
+                    exception = true;
+                }
+
+            if(exception) {
+                // Only expect exception if server is not running
+                Assert.assertTrue(serverDown);
+
+            } else {
+                // next() returned (either more elements in current batch or server is up)
+                Assert.assertNotNull(child);
+
+                final String nodePath = child.getPath();
+                final Stat nodeStat = child.getStat();
+
+                LOG.info("Read: " + nodePath + " zkId: " + nodeStat.getCzxid());
+                readChildrenMetadata.put(nodePath, nodeStat);
+            }
+        }
+
+        Assert.assertEquals(createdChildrenMetadata.keySet(), readChildrenMetadata.keySet());
+
+        for (String child : createdChildrenMetadata.keySet()) {
+            Assert.assertEquals(createdChildrenMetadata.get(child), readChildrenMetadata.get(child));
+        }
+    }
+
 
     class FireOnlyOnceWatcher implements Watcher {
         int watchFiredCount = 0;

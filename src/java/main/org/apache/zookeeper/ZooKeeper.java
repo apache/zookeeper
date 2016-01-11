@@ -2453,16 +2453,20 @@ public class ZooKeeper implements AutoCloseable {
      * @param path
      * @param watcher explicit watcher
      * @param maxReturned   The maximum number of children to return
-     * @param minZkid The result will be filtered out to nodes having a czkid > minZkid
+     * @param minZxid The result will be filtered out to nodes having a czkid > minZxid
      * @return an ordered list of child nodes, ordered by czkid
      * @throws KeeperException If the server signals an error with a non-zero error code.
      * @throws IllegalArgumentException if an invalid path is specified
      */
-    public List<PathWithStat> getChildren(final String path, Watcher watcher, final int maxReturned, final long minZkid)
+    public List<PathWithStat> getChildren(final String path, Watcher watcher, final int maxReturned, final long minZxid)
             throws KeeperException, InterruptedException
     {
         final String clientPath = path;
         PathUtils.validatePath(clientPath);
+
+        if(maxReturned <= 0) {
+            throw new IllegalArgumentException("Cannot return less than 1 children at the time");
+        }
 
         // the watch contains the un-chroot path
         WatchRegistration wcb = null;
@@ -2478,7 +2482,7 @@ public class ZooKeeper implements AutoCloseable {
         request.setPath(serverPath);
         request.setWatch(watcher != null);
         request.setMaxReturned(maxReturned);
-        request.setMinzkid(minZkid);
+        request.setMinzkid(minZxid);
         GetChildrenPaginatedResponse response = new GetChildrenPaginatedResponse();
         ReplyHeader r = cnxn.submitRequest(h, request, response, wcb);
         if (r.getErr() != 0) {
@@ -2489,19 +2493,19 @@ public class ZooKeeper implements AutoCloseable {
     }
 
     /**
-     * Return the an iterator over the children node of the given path.
+     * Return the a RemoteIterator over the children node of the given path.
      * <p>
      * @param path
      * @param watcher explicit watcher, set when the end of the list is reached
      * @param batchSize number of children in each batch fetched by the iterator in the background
-     * @param minZkid The result will be filtered out to nodes having a czkid > minZkid
+     * @param minZxid The result will be filtered out to nodes having a czkid > minZxid
      * @return an iterator, ordered by czkid
      * @throws KeeperException If the server signals an error with a non-zero error code.
      * @throws IllegalArgumentException if an invalid path is specified
      */
-    public Iterator<PathWithStat> getChildrenIterator(String path, Watcher watcher, int batchSize, int minZkid)
+    public RemoteIterator<PathWithStat> getChildrenIterator(String path, Watcher watcher, int batchSize, int minZxid)
             throws KeeperException, InterruptedException {
-        return new ChildrenBatchIterator(this, path, watcher, batchSize, minZkid);
+        return new ChildrenBatchIterator(this, path, watcher, batchSize, minZxid);
     }
 
     /**

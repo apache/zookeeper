@@ -2,14 +2,14 @@ package org.apache.zookeeper;
 
 import org.apache.zookeeper.data.PathWithStat;
 
-import javax.naming.OperationNotSupportedException;
 import java.util.Iterator;
 import java.util.List;
 
 /**
  * Iterator over children nodes of a given path.
  */
-class ChildrenBatchIterator implements Iterator<PathWithStat> {
+class ChildrenBatchIterator implements RemoteIterator<PathWithStat> {
+
     private final ZooKeeper zooKeeper;
     private final String path;
     private final Watcher watcher;
@@ -17,6 +17,8 @@ class ChildrenBatchIterator implements Iterator<PathWithStat> {
     private Iterator<PathWithStat> currentBatchIterator;
     private List<PathWithStat> currentBatch;
     private long highestCZkId = -1;
+    private boolean noMoreChildren = false;
+
 
     ChildrenBatchIterator(ZooKeeper zooKeeper, String path, Watcher watcher, int batchSize, int minZkid)
             throws KeeperException, InterruptedException {
@@ -26,17 +28,39 @@ class ChildrenBatchIterator implements Iterator<PathWithStat> {
         this.batchSize = batchSize;
         this.highestCZkId = minZkid;
 
-        this.currentBatch = zooKeeper.getChildren(path, watcher, batchSize, minZkid);
+        this.currentBatch = zooKeeper.getChildren(path, watcher, batchSize, highestCZkId);
         this.currentBatchIterator = currentBatch.iterator();
     }
 
     @Override
-    public boolean hasNext() {
-        return currentBatchIterator.hasNext();
+    public boolean hasNext() throws InterruptedException, KeeperException {
+
+        // More element in current batch
+        if (currentBatchIterator.hasNext()) {
+            return true;
+        }
+
+        // Server already said no more elements (and possibly set a watch)
+        if (noMoreChildren) {
+            return false;
+        }
+
+        // No more element in current batch, but server may have more
+        this.currentBatch = zooKeeper.getChildren(path, watcher, batchSize, highestCZkId);
+        this.currentBatchIterator = currentBatch.iterator();
+
+        // Definitely reached the end of pagination
+        if(currentBatch.isEmpty()) {
+            noMoreChildren = true;
+            return false;
+        }
+
+        // We fetched a new non-empty batch
+        return true;
     }
 
     @Override
-    public PathWithStat next() {
+    public PathWithStat next() throws KeeperException, InterruptedException {
 
         if(!hasNext()) {
             throw new RuntimeException("No more element");
@@ -46,21 +70,6 @@ class ChildrenBatchIterator implements Iterator<PathWithStat> {
 
         highestCZkId = returnChildren.getStat().getCzxid();
 
-        // If we reached the end of the current batch, fetch the next one
-
-        try {
-            this.currentBatch = zooKeeper.getChildren(path, watcher, batchSize, highestCZkId);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to fetch next batch", e);
-        }
-
-        this.currentBatchIterator = currentBatch.iterator();
-
         return returnChildren;
-    }
-
-    @Override
-    public void remove() {
-        throw new RuntimeException(new OperationNotSupportedException("remove not supported"));
     }
 }
