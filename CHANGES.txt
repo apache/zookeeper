@@ -23,6 +23,9 @@ BUGFIXES:
   ZOOKEEPER-2229: Several four-letter words are undocumented
   (Chris Nauroth via rgs)
 
+  ZOOKEEPER-2347: Deadlock shutting down zookeeper
+  (Rakesh R via rgs)
+
 Release 3.4.7 - 2015-11-08
 
 Backward compatible changes:

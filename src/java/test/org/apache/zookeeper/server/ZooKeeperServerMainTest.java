@@ -23,17 +23,29 @@ import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.jute.Record;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.proto.ReplyHeader;
+import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.persistence.Util;
+import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.test.ClientBase;
+import org.apache.zookeeper.txn.SetDataTxn;
+import org.apache.zookeeper.txn.TxnHeader;
+import org.jboss.netty.channel.Channel;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -235,6 +247,188 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
                         ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY,
                         originalServerCnxnFactory);
             }
+        }
+    }
+
+    /**
+     * Test case to verify that ZooKeeper server is able to shutdown properly
+     * when there are pending request(s) in the RequestProcessor chain.
+     *
+     * {@link https://issues.apache.org/jira/browse/ZOOKEEPER-2347}
+     */
+    @Test(timeout = 30000)
+    public void testRaceBetweenSyncFlushAndZKShutdown() throws Exception {
+        File tmpDir = ClientBase.createTmpDir();
+        File testDir = File.createTempFile("test", ".dir", tmpDir);
+        testDir.delete();
+
+        // Following are the sequence of steps to simulate the deadlock
+        // situation - SyncRequestProcessor#shutdown holds a lock and waits on
+        // FinalRequestProcessor to complete a pending operation, which in turn
+        // also needs the ZooKeeperServer lock
+
+        // 1. start zk server
+        FileTxnSnapLog ftsl = new FileTxnSnapLog(testDir, testDir);
+        final SimpleZooKeeperServer zkServer = new SimpleZooKeeperServer(ftsl);
+        zkServer.startup();
+        // 2. Wait for setting up request processor chain. At the end of setup,
+        // it will add a mock request into the chain
+        // 3. Also, waiting for FinalRequestProcessor to start processing request
+        zkServer.waitForFinalProcessRequest();
+        // 4. Above step ensures that there is a request in the processor chain.
+        // Now invoke shutdown, which will acquire zks lock
+        Thread shutdownThread = new Thread() {
+            public void run() {
+                zkServer.shutdown();
+            };
+        };
+        shutdownThread.start();
+        // 5. Wait for SyncRequestProcessor to trigger shutdown function.
+        // This is to ensure that zks lock is acquired
+        zkServer.waitForSyncReqProcessorShutdown();
+        // 6. Now resume FinalRequestProcessor which in turn call
+        // zks#decInProcess() function and tries to acquire zks lock.
+        // This results in deadlock
+        zkServer.resumeFinalProcessRequest();
+        // 7. Waiting to finish server shutdown. Testing that
+        // SyncRequestProcessor#shutdown holds a lock and waits on
+        // FinalRequestProcessor to complete a pending operation, which in turn
+        // also needs the ZooKeeperServer lock
+        shutdownThread.join();
+    }
+
+    private class SimpleZooKeeperServer extends ZooKeeperServer {
+        private SimpleSyncRequestProcessor syncProcessor;
+        private SimpleFinalRequestProcessor finalProcessor;
+
+        SimpleZooKeeperServer(FileTxnSnapLog ftsl) throws IOException {
+            super(ftsl, 2000, 2000, 4000, null, new ZKDatabase(ftsl));
+        }
+
+        @Override
+        protected void setupRequestProcessors() {
+            finalProcessor = new SimpleFinalRequestProcessor(this);
+            syncProcessor = new SimpleSyncRequestProcessor(this,
+                    finalProcessor);
+            syncProcessor.start();
+            firstProcessor = new PrepRequestProcessor(this, syncProcessor);
+            ((PrepRequestProcessor) firstProcessor).start();
+
+            // add request to the chain
+            addRequestToSyncProcessor();
+        }
+
+        private void addRequestToSyncProcessor() {
+            long zxid = ZxidUtils.makeZxid(3, 7);
+            TxnHeader hdr = new TxnHeader(1, 1, zxid, 1,
+                    ZooDefs.OpCode.setData);
+            Record txn = new SetDataTxn("/foo" + zxid, new byte[0], 1);
+            byte[] buf;
+            try {
+                buf = Util.marshallTxnEntry(hdr, txn);
+            } catch (IOException e) {
+                LOG.error("IOException while adding request to SyncRequestProcessor", e);
+                Assert.fail("IOException while adding request to SyncRequestProcessor!");
+                return;
+            }
+            NettyServerCnxnFactory factory = new NettyServerCnxnFactory();
+            final MockNettyServerCnxn nettyCnxn = new MockNettyServerCnxn(null,
+                    this, factory);
+            Request req = new Request(nettyCnxn, 1, 1, ZooDefs.OpCode.setData,
+                    ByteBuffer.wrap(buf), null);
+            req.hdr = hdr;
+            req.txn = txn;
+            syncProcessor.processRequest(req);
+        }
+
+        void waitForFinalProcessRequest() throws InterruptedException {
+            Assert.assertTrue("Waiting for FinalRequestProcessor to start processing request",
+                    finalProcessor.waitForProcessRequestToBeCalled());
+        }
+
+        void waitForSyncReqProcessorShutdown() throws InterruptedException {
+            Assert.assertTrue("Waiting for SyncRequestProcessor to shut down",
+                    syncProcessor.waitForShutdownToBeCalled());
+        }
+
+        void resumeFinalProcessRequest() throws InterruptedException {
+            finalProcessor.resumeProcessRequest();
+        }
+    }
+
+    private class MockNettyServerCnxn extends NettyServerCnxn {
+        public MockNettyServerCnxn(Channel channel, ZooKeeperServer zks,
+                NettyServerCnxnFactory factory) {
+            super(null, null, factory);
+        }
+
+        @Override
+        protected synchronized void updateStatsForResponse(long cxid, long zxid,
+                String op, long start, long end) {
+            return;
+        }
+
+        @Override
+        public synchronized void sendResponse(ReplyHeader h, Record r,
+                String tag) {
+            return;
+        }
+    }
+
+    private class SimpleFinalRequestProcessor extends FinalRequestProcessor {
+        private CountDownLatch finalReqProcessCalled = new CountDownLatch(1);
+        private CountDownLatch resumeFinalReqProcess = new CountDownLatch(1);
+        private volatile boolean interrupted = false;
+        public SimpleFinalRequestProcessor(ZooKeeperServer zks) {
+            super(zks);
+        }
+
+        @Override
+        public void processRequest(Request request) {
+            finalReqProcessCalled.countDown();
+            try {
+                resumeFinalReqProcess.await(ClientBase.CONNECTION_TIMEOUT,
+                        TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                LOG.error("Interrupted while waiting to process request", e);
+                interrupted = true; // Marked as interrupted
+                resumeFinalReqProcess.countDown();
+                return;
+            }
+            super.processRequest(request);
+        }
+
+        boolean waitForProcessRequestToBeCalled() throws InterruptedException {
+            return finalReqProcessCalled.await(ClientBase.CONNECTION_TIMEOUT,
+                    TimeUnit.MILLISECONDS);
+        }
+
+        void resumeProcessRequest() throws InterruptedException {
+            resumeFinalReqProcess.countDown();
+            resumeFinalReqProcess.await(ClientBase.CONNECTION_TIMEOUT,
+                    TimeUnit.MILLISECONDS);
+            Assert.assertFalse("Interrupted while waiting to process request",
+                    interrupted);
+        }
+    }
+
+    private class SimpleSyncRequestProcessor extends SyncRequestProcessor {
+        private final CountDownLatch shutdownCalled = new CountDownLatch(1);
+
+        public SimpleSyncRequestProcessor(ZooKeeperServer zks,
+                RequestProcessor nextProcessor) {
+            super(zks, nextProcessor);
+        }
+
+        @Override
+        public void shutdown() {
+            shutdownCalled.countDown();
+            super.shutdown();
+        }
+
+        boolean waitForShutdownToBeCalled() throws InterruptedException {
+            return shutdownCalled.await(ClientBase.CONNECTION_TIMEOUT / 3,
+                    TimeUnit.MILLISECONDS);
         }
     }
 
