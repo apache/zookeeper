@@ -1098,9 +1098,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                     } catch (Exception e) {
                         LOG.warn("Unexpected exception",e );
                     } finally {
-                        observer.shutdown();
-                        setObserver(null);  
-                       updateServerState();
+                        stopObserver();
                     }
                     break;
                 case FOLLOWING:
@@ -1111,9 +1109,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                     } catch (Exception e) {
                        LOG.warn("Unexpected exception",e);
                     } finally {
-                       follower.shutdown();
-                       setFollower(null);
-                       updateServerState();
+                       stopFollower();
                     }
                     break;
                 case LEADING:
@@ -1125,11 +1121,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                     } catch (Exception e) {
                         LOG.warn("Unexpected exception",e);
                     } finally {
-                        if (leader != null) {
-                            leader.shutdown("Forcing shutdown");
-                            setLeader(null);
-                        }
-                        updateServerState();
+                        stopLeader();
                     }
                     break;
                 }
@@ -1149,6 +1141,30 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             jmxLocalPeerBean = null;
             jmxRemotePeerBean = null;
         }
+    }
+    
+    private void stopObserver() {
+        if (null != observer) {
+            observer.shutdown();
+            setObserver(null);
+        }
+        updateServerState();
+    }
+
+    private void stopFollower() {
+        if (null != follower) {
+            follower.shutdown();
+            setFollower(null);
+        }
+        updateServerState();
+    }
+
+    private void stopLeader() {
+        if (leader != null) {
+            leader.shutdown("Forcing shutdown");
+            setLeader(null);
+        }
+        updateServerState();
     }
 
     private synchronized void updateServerState(){
@@ -1175,6 +1191,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
     
     public void shutdown() {
+        if (!isRunning()) {
+            LOG.debug("ZooKeeper server is not running, so not proceeding to shutdown!");
+            return;
+        }
         running = false;
         if (leader != null) {
             leader.shutdown("quorum Peer shutdown");
@@ -1201,6 +1221,26 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             zkDb.close();
         } catch (IOException ie) {
             LOG.warn("Error closing logs ", ie);
+        }
+    }
+
+    /**
+     * Stops leader, follower or observer
+     */
+    public synchronized void stopService() {
+        switch (state) {
+        case LEADING:
+            stopLeader();
+            break;
+        case FOLLOWING:
+            stopFollower();
+            break;
+        case OBSERVING:
+            stopObserver();
+            break;
+        default:
+            LOG.info("Unknown server state: " + state);
+            break;
         }
     }
 
