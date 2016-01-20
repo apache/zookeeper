@@ -32,7 +32,6 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
-import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.Assert;
@@ -85,7 +84,7 @@ public class NonRecoverableErrorTest extends QuorumPeerTestBase {
                 CreateMode.PERSISTENT);
 
         // get information of current leader
-        QuorumPeer leader = getLeaderQuorumPeer(mt);
+        QuorumPeer leader = getLeader(mt);
         assertNotNull("Leader must have been elected by now", leader);
 
         // inject problem in leader
@@ -107,7 +106,7 @@ public class NonRecoverableErrorTest extends QuorumPeerTestBase {
             // do create operation, so that injected IOException is thrown
             zk.create(uniqueNode(), data.getBytes(), Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT);
-            fail("IOException is expected as error is injected in transaction log commit funtionality");
+            fail("IOException was expected");
         } catch (Exception e) {
             // do nothing
         }
@@ -124,7 +123,7 @@ public class NonRecoverableErrorTest extends QuorumPeerTestBase {
         leader.getActiveServer().setZKDatabase(originalZKDatabase);
 
         // verify that now ZooKeeper service is up and running
-        QuorumPeer currentleader = getLeaderQuorumPeer(mt);
+        QuorumPeer currentleader = getLeader(mt);
         assertNotNull("New leader must have been elected by now", currentleader);
 
         String uniqueNode = uniqueNode();
@@ -140,21 +139,9 @@ public class NonRecoverableErrorTest extends QuorumPeerTestBase {
         }
     }
 
-    private QuorumPeer getLeaderQuorumPeer(MainThread[] mt) {
-        for (int i = mt.length - 1; i >= 0; i--) {
-            QuorumPeer quorumPeer = mt[i].getQuorumPeer();
-            if (null != quorumPeer
-                    && ServerState.LEADING == quorumPeer.getPeerState()) {
-                return quorumPeer;
-            }
-        }
-        return null;
-    }
-
     private String uniqueNode() {
         UUID randomUUID = UUID.randomUUID();
         String node = NODE_PATH + "/" + randomUUID.toString();
         return node;
     }
-
 }
