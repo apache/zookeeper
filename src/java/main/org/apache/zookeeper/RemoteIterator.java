@@ -5,7 +5,7 @@ package org.apache.zookeeper;
  */
 public interface RemoteIterator<E> {
 
-    boolean hasNext() throws InterruptedException, KeeperException;
+    boolean hasNext();
 
     E next() throws InterruptedException, KeeperException;
 }

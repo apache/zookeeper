@@ -22,7 +22,6 @@ import org.apache.zookeeper.*;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.PathWithStat;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.RemoteIterator;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -133,13 +132,13 @@ public class GetChildrenPaginatedTest extends ClientBase {
         }
     }
 
-    @Test(timeout = 30000)
+    @Test(timeout = 60000)
     public void testPaginationWithServerDown() throws Exception {
 
         final String testId = UUID.randomUUID().toString();
         final String basePath = "/testPagination-" + testId;
 
-        Map<String, Stat> createdChildrenMetadata = createChildren(basePath, random.nextInt(25)+1, 0);
+        Map<String, Stat> createdChildrenMetadata = createChildren(basePath, random.nextInt(15)+10, 0);
 
         Map<String, Stat> readChildrenMetadata = new HashMap<String, Stat>();
 
@@ -149,13 +148,14 @@ public class GetChildrenPaginatedTest extends ClientBase {
 
         boolean serverDown = false;
 
-        while(true) {
+        while(childrenIterator.hasNext()) {
 
             // Randomly change the up/down state of the server
             if(random.nextBoolean()) {
                 if (serverDown) {
                     LOG.info("Bringing server UP");
                     startServer();
+                    waitForServerUp(hostPort, 5000);
                     serverDown = false;
                 } else {
                     LOG.info("Taking server DOWN");
@@ -164,33 +164,17 @@ public class GetChildrenPaginatedTest extends ClientBase {
                 }
             }
 
-            try {
-                if(!childrenIterator.hasNext()) {
-                    // Reached end of children
-                    break;
-                }
-            } catch (InterruptedException|KeeperException e) {
-                // Just try again until the server is up
-                LOG.info("Exception in #hasNext()");
-                continue;
-            }
-
-
             PathWithStat child = null;
 
             boolean exception = false;
                 try {
                     child = childrenIterator.next();
                 } catch (InterruptedException|KeeperException e) {
-                    LOG.info("Exception in #next()");
+                    LOG.info("Exception in #next(): " + e.getMessage());
                     exception = true;
                 }
 
-            if(exception) {
-                // Only expect exception if server is not running
-                Assert.assertTrue(serverDown);
-
-            } else {
+            if (! exception) {
                 // next() returned (either more elements in current batch or server is up)
                 Assert.assertNotNull(child);
 
