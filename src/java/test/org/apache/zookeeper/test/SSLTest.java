@@ -50,6 +50,7 @@ public class SSLTest extends QuorumPeerTestBase {
         System.setProperty(X509Util.SSL_KEYSTORE_PASSWD, "testpass");
         System.setProperty(X509Util.SSL_TRUSTSTORE_LOCATION, testDataPath + "/ssl/testTrustStore.jks");
         System.setProperty(X509Util.SSL_TRUSTSTORE_PASSWD, "testpass");
+        System.setProperty("zookeeper.authProvider.x509", "org.apache.zookeeper.server.auth.X509AuthenticationProvider");
     }
 
     @After

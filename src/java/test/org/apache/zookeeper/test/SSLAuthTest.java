@@ -43,6 +43,7 @@ public class SSLAuthTest extends ClientBase {
         System.setProperty(X509Util.SSL_TRUSTSTORE_LOCATION, testDataPath + "/ssl/testTrustStore.jks");
         System.setProperty(X509Util.SSL_TRUSTSTORE_PASSWD, "testpass");
         System.setProperty("javax.net.debug", "ssl");
+        System.setProperty("zookeeper.authProvider.x509", "org.apache.zookeeper.server.auth.X509AuthenticationProvider");
 
         String host = "localhost";
         int port = PortAssignment.unique();
