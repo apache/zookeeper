@@ -97,9 +97,6 @@ BUGFIXES:
 
   ZOOKEEPER-412: checkstyle target fails trunk build (Akihiro Suda via cnauroth)
 
-  ZOOKEEPER-2297: NPE is thrown while creating "key manager" and "trust manager"
-  (Arshad Mohammad via rakeshr)
-
 IMPROVEMENTS:
 
   ZOOKEEPER-2270: Allow MBeanRegistry to be overridden for better unit tests
