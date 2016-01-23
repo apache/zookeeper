@@ -249,9 +249,6 @@ BUGFIXES:
 
   ZOOKEEPER-412: checkstyle target fails trunk build (Akihiro Suda via cnauroth)
 
-  ZOOKEEPER-2297: NPE is thrown while creating "key manager" and "trust manager"
-  (Arshad Mohammad via rakeshr)
-
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
