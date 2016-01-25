@@ -1,20 +1,7 @@
-# Things related to tests
-.pester/
-testwork/
-.urchin*
-
-# Ignore the folder created when pushing to Home - It should be cleaned up by the task, but sometimes isn't.
-.pushdnvm/
-
-# Ignore lock files
-project.lock.json
-
 [Oo]bj/
 [Bb]in/
 TestResults/
 .nuget/
-.vs/
-*.sln.ide/
 _ReSharper.*/
 packages/
 artifacts/
@@ -36,9 +23,8 @@ nuget.exe
 *.ncrunchsolution
 *.*sdf
 *.ipch
-*.playlist
 *.sln.ide
-
-# Vim files
-*.swp
-*.swo
+project.lock.json
+/.vs/
+.build/
+.testPublish/
