@@ -807,13 +807,13 @@ namespace org.apache.zookeeper {
                     sock.LingerState = new LingerOption(false, 0);
                     sock.SendTimeout = 1000;
                     sock.NoDelay = true;
-                    await sock.ConnectAsync(addr.Host, addr.Port);
+                    await sock.ConnectAsync(addr.Host, addr.Port).ConfigureAwait(false);
                     var networkStream = sock.GetStream();
-                    await networkStream.WriteAsync("isro".UTF8getBytes(), 0, 4);
-                    await networkStream.FlushAsync();
+                    await networkStream.WriteAsync("isro".UTF8getBytes(), 0, 4).ConfigureAwait(false);
+                    await networkStream.FlushAsync().ConfigureAwait(false);
                     br = new StreamReader(networkStream);
-                    result = await br.ReadLineAsync();
-                }
+                    result = await br.ReadLineAsync().ConfigureAwait(false);
+            }
                 catch (Exception e) {
                     var se = e.InnerException as SocketException;
                     if (se != null && se.SocketErrorCode == SocketError.ConnectionRefused) {
@@ -952,11 +952,11 @@ namespace org.apache.zookeeper {
                 RequestHeader h = new RequestHeader();
                 h.set_Type((int) ZooDefs.OpCode.closeSession);
 
-                await await submitRequest(h, null, null, null).ContinueWith(async closeTask=>
+                await (await submitRequest(h, null, null, null).ContinueWith(async closeTask=>
                 {
                     disconnect();
                     await closeTask.ConfigureAwait(false);
-                });
+                }).ConfigureAwait(false)).ConfigureAwait(false);
             }
         }
 

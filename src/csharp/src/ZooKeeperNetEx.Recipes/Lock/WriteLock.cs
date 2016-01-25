@@ -77,7 +77,7 @@ namespace org.apache.zookeeper.recipes.@lock
 	    /// return the current locklistener </summary>
 	    /// <returns> the locklistener </returns>
 	    public async Task setLockListener(LockListener lockListener) {
-	        using(await lockable.LockAsync()) {
+	        using(await lockable.LockAsync().ConfigureAwait(false)) {
 	            callback = lockListener;
 	        }
 	    }
@@ -90,7 +90,7 @@ namespace org.apache.zookeeper.recipes.@lock
 		/// in case you do not already hold the lock. </summary>
 		public async Task unlock()
 		{
-			using(await lockable.LockAsync())
+			using(await lockable.LockAsync().ConfigureAwait(false))
 			{
 				if (!Closed && Id != null)
 				{
@@ -99,8 +99,8 @@ namespace org.apache.zookeeper.recipes.@lock
 					// this process when closing if we cannot reconnect to ZK
 					try
 					{
-						ZooKeeperOperation zopdel = new ZooKeeperOperationAnonymousInnerClassHelper(this);
-						await zopdel.execute();
+						ZooKeeperOperation zopdel = new DeleteNode(this);
+						await zopdel.execute().ConfigureAwait(false);
 					}
 					catch (KeeperException.NoNodeException)
 					{
@@ -123,18 +123,18 @@ namespace org.apache.zookeeper.recipes.@lock
 			}
 		}
 
-		private sealed class ZooKeeperOperationAnonymousInnerClassHelper : ZooKeeperOperation
+		private sealed class DeleteNode : ZooKeeperOperation
 		{
-			private readonly WriteLock outerInstance;
+			private readonly WriteLock writeLock;
 
-			public ZooKeeperOperationAnonymousInnerClassHelper(WriteLock outerInstance)
+			public DeleteNode(WriteLock writeLock)
 			{
-				this.outerInstance = outerInstance;
+				this.writeLock = writeLock;
 			}
 
 			public async Task<bool> execute()
 			{
-				await outerInstance.zookeeper.deleteAsync(outerInstance.Id);
+				await writeLock.zookeeper.deleteAsync(writeLock.Id).ConfigureAwait(false);
 				return true;
 			}
 		}
@@ -159,7 +159,7 @@ namespace org.apache.zookeeper.recipes.@lock
 				LOG.debug("Watcher fired on path: " + @event.getPath() + " state: " + @event.getState() + " type " + @event.get_Type());
 				try
 				{
-					await outerInstance.Lock();
+					await outerInstance.Lock().ConfigureAwait(false);
 				}
 				catch (Exception e)
 				{
@@ -174,11 +174,11 @@ namespace org.apache.zookeeper.recipes.@lock
 		/// </summary>
 		private sealed class LockZooKeeperOperation : ZooKeeperOperation
 		{
-			private readonly WriteLock outerInstance;
+			private readonly WriteLock writeLock;
 
-			public LockZooKeeperOperation(WriteLock outerInstance)
+			public LockZooKeeperOperation(WriteLock writeLock)
 			{
-				this.outerInstance = outerInstance;
+				this.writeLock = writeLock;
 			}
 
 
@@ -191,26 +191,26 @@ namespace org.apache.zookeeper.recipes.@lock
 			/// <exception cref="KeeperException"> </exception>
 			private async Task findPrefixInChildren(string prefix, ZooKeeper zookeeper, string dir)
 			{
-				IList<string> names = (await zookeeper.getChildrenAsync(dir)).Children;
+				IList<string> names = (await zookeeper.getChildrenAsync(dir).ConfigureAwait(false)).Children;
 				foreach (string name in names)
 				{
 					if (name.StartsWith(prefix, StringComparison.Ordinal))
 					{
-						outerInstance.Id = name;
+                        writeLock.Id = name;
 						if (LOG.isDebugEnabled())
 						{
-							LOG.debug("Found id created last time: " + outerInstance.Id);
+							LOG.debug("Found id created last time: " + writeLock.Id);
 						}
 						break;
 					}
 				}
-				if (outerInstance.Id == null)
+				if (writeLock.Id == null)
 				{
-					outerInstance.Id = await zookeeper.createAsync(dir + "/" + prefix, outerInstance.data, outerInstance.Acl, CreateMode.EPHEMERAL_SEQUENTIAL);
+                    writeLock.Id = await zookeeper.createAsync(dir + "/" + prefix, writeLock.data, writeLock.Acl, CreateMode.EPHEMERAL_SEQUENTIAL).ConfigureAwait(false);
 
                     if (LOG.isDebugEnabled())
 					{
-						LOG.debug("Created id: " + outerInstance.Id);
+						LOG.debug("Created id: " + writeLock.Id);
 					}
 				}
 
@@ -224,23 +224,23 @@ namespace org.apache.zookeeper.recipes.@lock
 			{
 				do
 				{
-					if (outerInstance.Id == null)
+					if (writeLock.Id == null)
 					{
-						long sessionId = outerInstance.zookeeper.getSessionId();
+						long sessionId = writeLock.zookeeper.getSessionId();
 						string prefix = "x-" + sessionId + "-";
 						// lets try look up the current ID if we failed 
 						// in the middle of creating the znode
-						await findPrefixInChildren(prefix, outerInstance.zookeeper, outerInstance.dir);
-						outerInstance.idName = new ZNodeName(outerInstance.Id);
+						await findPrefixInChildren(prefix, writeLock.zookeeper, writeLock.dir).ConfigureAwait(false);
+                        writeLock.idName = new ZNodeName(writeLock.Id);
 					}
-					if (outerInstance.Id != null)
+					if (writeLock.Id != null)
 					{
-						List<string> names = (await outerInstance.zookeeper.getChildrenAsync(outerInstance.dir).ConfigureAwait(false)).Children;
+						List<string> names = (await writeLock.zookeeper.getChildrenAsync(writeLock.dir).ConfigureAwait(false)).Children;
 						if (names.Count == 0)
 						{
-							LOG.warn("No children in: " + outerInstance.dir + " when we've just " + "created one! Lets recreate it...");
-							// lets force the recreation of the id
-							outerInstance.Id = null;
+							LOG.warn("No children in: " + writeLock.dir + " when we've just " + "created one! Lets recreate it...");
+                            // lets force the recreation of the id
+                            writeLock.Id = null;
 						}
 						else
 						{
@@ -248,25 +248,25 @@ namespace org.apache.zookeeper.recipes.@lock
 							SortedSet<ZNodeName> sortedNames = new SortedSet<ZNodeName>();
 							foreach (string name in names)
 							{
-								sortedNames.Add(new ZNodeName(outerInstance.dir + "/" + name));
+								sortedNames.Add(new ZNodeName(writeLock.dir + "/" + name));
 							}
-							outerInstance.ownerId = sortedNames.Min.Name;
+                            writeLock.ownerId = sortedNames.Min.Name;
                             SortedSet<ZNodeName> lessThanMe = new SortedSet<ZNodeName>();
 
 						    foreach (ZNodeName name in sortedNames) {
-						        if (outerInstance.idName.CompareTo(name) > 0) lessThanMe.Add(name);
+						        if (writeLock.idName.CompareTo(name) > 0) lessThanMe.Add(name);
                                 else break;
 						    }
 
 						    if (lessThanMe.Count > 0)
 							{
 								ZNodeName lastChildName = lessThanMe.Max;
-								outerInstance.lastChildId = lastChildName.Name;
+                                writeLock.lastChildId = lastChildName.Name;
 								if (LOG.isDebugEnabled())
 								{
-									LOG.debug("watching less than me node: " + outerInstance.lastChildId);
+									LOG.debug("watching less than me node: " + writeLock.lastChildId);
 								}
-								Stat stat = await outerInstance.zookeeper.existsAsync(outerInstance.lastChildId, new LockWatcher(outerInstance));
+								Stat stat = await writeLock.zookeeper.existsAsync(writeLock.lastChildId, new LockWatcher(writeLock)).ConfigureAwait(false);
 								if (stat != null)
 								{
 									return false;
@@ -275,11 +275,11 @@ namespace org.apache.zookeeper.recipes.@lock
 							}
 							else
 							{
-								if (outerInstance.Owner)
+								if (writeLock.Owner)
 								{
-								    lock (outerInstance.callback) {
-								        if (outerInstance.callback != null) {
-								            outerInstance.callback.lockAcquired();
+								    lock (writeLock.callback) {
+								        if (writeLock.callback != null) {
+                                            writeLock.callback.lockAcquired();
 								        }
 								    }
 								    return true;
@@ -287,7 +287,7 @@ namespace org.apache.zookeeper.recipes.@lock
 							}
 						}
 					}
-				} while (outerInstance.Id == null);
+				} while (writeLock.Id == null);
 				return false;
 			}
 		}
@@ -299,15 +299,15 @@ namespace org.apache.zookeeper.recipes.@lock
 		/// </summary>
 		public async Task<bool> Lock()
 		{
-            using(await lockable.LockAsync())
+            using(await lockable.LockAsync().ConfigureAwait(false))
 			{
 				if (Closed)
 				{
 					return false;
 				}
-				await ensurePathExists(dir);
+				await ensurePathExists(dir).ConfigureAwait(false);
         
-				return await retryOperation(zop);
+				return await retryOperation(zop).ConfigureAwait(false);
 			}
 		}
 

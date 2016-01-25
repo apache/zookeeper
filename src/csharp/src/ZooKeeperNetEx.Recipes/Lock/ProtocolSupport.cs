@@ -94,7 +94,7 @@ namespace org.apache.zookeeper.recipes.@lock
             {
                 try 
                 {
-                    return await operation.execute();
+                    return await operation.execute().ConfigureAwait(false);
                 }
                 catch (KeeperException.SessionExpiredException e) 
                 {
@@ -109,7 +109,7 @@ namespace org.apache.zookeeper.recipes.@lock
                     }
                     LOG.debug("Attempt " + i + " failed with connection loss so " + "attempting to reconnect: " + e, e);
                 }
-                await retryDelay(i);
+                await retryDelay(i).ConfigureAwait(false);
             }
             throw exception;
         }
@@ -132,7 +132,7 @@ namespace org.apache.zookeeper.recipes.@lock
         private async Task ensureExists(string path, byte[] data, List<ACL> acl, CreateMode flags) {
             try 
 			{
-                await retryOperation(new ZooKeeperOperationAnonymousInnerClassHelper(this, path, data, acl, flags));
+                await retryOperation(new EnsureExists(zookeeper, path, data, acl, flags)).ConfigureAwait(false);
             }
             catch (KeeperException e) 
             {
@@ -140,18 +140,18 @@ namespace org.apache.zookeeper.recipes.@lock
             }
         }
 
-        private sealed class ZooKeeperOperationAnonymousInnerClassHelper : ZooKeeperOperation 
+        private sealed class EnsureExists : ZooKeeperOperation
         {
-            private readonly ProtocolSupport outerInstance;
+            private readonly ZooKeeper zookeeper;
 
             private readonly string path;
             private readonly byte[] data;
             private readonly List<ACL> acl;
             private readonly CreateMode flags;
 
-            public ZooKeeperOperationAnonymousInnerClassHelper(ProtocolSupport outerInstance, string path, byte[] data, List<ACL> acl, CreateMode flags) 
+            public EnsureExists(ZooKeeper zookeeper, string path, byte[] data, List<ACL> acl, CreateMode flags) 
             {
-                this.outerInstance = outerInstance;
+                this.zookeeper = zookeeper;
                 this.path = path;
                 this.data = data;
                 this.acl = acl;
@@ -160,12 +160,12 @@ namespace org.apache.zookeeper.recipes.@lock
 
             public async Task<bool> execute() 
             {
-                Stat stat = await outerInstance.zookeeper.existsAsync(path);
+                Stat stat = await zookeeper.existsAsync(path).ConfigureAwait(false);
                 if (stat != null) 
                 {
                     return true;
                 }
-                await outerInstance.zookeeper.createAsync(path, data, acl, flags);
+                await zookeeper.createAsync(path, data, acl, flags).ConfigureAwait(false);
                 return true;
             }
         }
@@ -185,7 +185,7 @@ namespace org.apache.zookeeper.recipes.@lock
         {
             if (attemptCount > 0) 
             {
-                await TaskEx.Delay(attemptCount*retryDelayInMs);
+                await TaskEx.Delay(attemptCount*retryDelayInMs).ConfigureAwait(false);
             }
         }
     }
