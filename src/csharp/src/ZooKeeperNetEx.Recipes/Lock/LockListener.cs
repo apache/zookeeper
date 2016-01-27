@@ -15,6 +15,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </summary>
+
+using System.Threading.Tasks;
+
 namespace org.apache.zookeeper.recipes.@lock
 {
 
@@ -30,13 +33,13 @@ namespace org.apache.zookeeper.recipes.@lock
 		/// call back called when the lock 
 		/// is acquired
 		/// </summary>
-		void lockAcquired();
+		Task lockAcquired();
 
 		/// <summary>
 		/// call back called when the lock is 
 		/// released.
 		/// </summary>
-		void lockReleased();
+		Task lockReleased();
 	}
 
 }

@@ -1,4 +1,5 @@
 using System.Threading;
+using System.Threading.Tasks;
 using org.apache.utils;
 using Xunit;
 
@@ -46,15 +47,16 @@ namespace org.apache.zookeeper.recipes.@lock
 				this.outerInstance = outerInstance;
 			}
 
-			public void lockAcquired()
+			public Task lockAcquired()
 			{
 				outerInstance.latch.Set();
+			    return Task.FromResult(0);
 			}
 
-			public void lockReleased()
+			public Task lockReleased()
 			{
-
-			}
+                return Task.FromResult(0);
+            }
 
 		}
 
