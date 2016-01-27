@@ -1,7 +1,7 @@
 ﻿{
   "userSecretsId": "dotnet-ZooKeeperNetEx-270116",
   "title": "Apache ZooKeeper .NET async Recipes",
-  "version": "3.4.7.3",
+  "version": "3.4.7.4",
   "description": ".NET async Distributed recipes for ZooKeeper: Queue, Lock and Leader.",
   "authors": [ "Shay Hazor" ],
   "owners": [ "Shay Hazor" ],
@@ -30,6 +30,6 @@
     }
   },
   "dependencies": {
-    "ZooKeeperNetEx": "3.4.7.3"
+    "ZooKeeperNetEx": "3.4.7.4"
   }
 }
