@@ -1,7 +1,5 @@
 ﻿using System;
 
-using org.apache.utils;
-
 // 
 // <summary>
 // Licensed to the Apache Software Foundation (ASF) under one or more
@@ -28,91 +26,35 @@ namespace org.apache.zookeeper.recipes.@lock
 	/// </summary>
 	internal sealed class ZNodeName : IComparable<ZNodeName>
 	{
-		private readonly string name;
-		private readonly string prefix;
-		private readonly int sequence = -1;
-		private static readonly ILogProducer LOG = TypeLogger<ZNodeName>.Instance;
+		public readonly string Name;
+	    private readonly int sequence;
 
-		public ZNodeName(string id)
-		{
-			if (id == null)
-			{
-				throw new ArgumentNullException("id","id cannot be null");
-			}
-			name = id;
-			prefix = name;
-			int idx = name.LastIndexOf('-');
-			if (idx >= 0)
-			{
-                prefix = name.Substring(0, idx);
-				try
-				{
-                    sequence = int.Parse(name.Substring(idx + 1));
-					// If an exception occurred we misdetected a sequence suffix,
-					// so return -1.
-				}
-				catch (FormatException e)
-				{
-					LOG.info("Number format exception for " + idx, e);
-				}
-				catch (IndexOutOfRangeException e)
-				{
-				   LOG.info("Array out of bounds for " + idx, e);
-				}
-			}
-		}
+	    public ZNodeName(string id)
+	    {
+            Name = id;
+	        sequence = int.Parse(Name.Substring(Name.LastIndexOf('-') + 1));
+	    }
 
 		public override string ToString()
 		{
-			return name;
+			return Name;
 		}
 
 		public override bool Equals(object o)
 		{
 			ZNodeName seq = (ZNodeName) o;
 
-		    return name == seq.name;
+		    return Name == seq.Name;
 		}
 
 		public override int GetHashCode()
 		{
-			return name.GetHashCode();
+			return Name.GetHashCode();
 		}
 
-		public int CompareTo(ZNodeName that) 
-        {
-		    if (that == null) throw new ArgumentNullException(nameof(that));
-		    int answer = string.CompareOrdinal(prefix, that.prefix);
-			if (answer == 0)
-			{
-				int s1 = sequence;
-				int s2 = that.sequence;
-				if (s1 == -1 && s2 == -1) 
-                {
-				    return string.CompareOrdinal(name, that.name);
-				}
-				answer = s1 == -1 ? 1 : s2 == -1 ? - 1 : s1 - s2;
-			}
-			return answer;
-		}
-
-		/// <summary>
-		/// Returns the name of the znode
-		/// </summary>
-		public string Name => name;
-
-	    /// <summary>
-		/// Returns the sequence number
-		/// </summary>
-		public int getZNodeName()
-		{
-			return sequence;
-		}
-
-		/// <summary>
-		/// Returns the text prefix before the sequence number
-		/// </summary>
-		public string Prefix => prefix;
+	    public int CompareTo(ZNodeName that)
+	    {
+	        return sequence - that.sequence;
+	    }
 	}
-
 }
