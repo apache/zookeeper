@@ -65,7 +65,7 @@ namespace org.apache.zookeeper.recipes.@lock
 			{
 				ZooKeeper keeper = createClient();
 				WriteLock leader = new WriteLock(keeper, "/test", null);
-				leader.setLockListener(new LockCallback(this)).GetAwaiter().GetResult();
+				leader.setLockListener(new LockCallback(this));
 				nodes[i] = leader;
 
 				leader.Lock().GetAwaiter().GetResult();

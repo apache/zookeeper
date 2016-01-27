@@ -43,7 +43,7 @@ namespace org.apache.zookeeper.recipes.@lock
 		private string ownerId;
 		private string lastChildId;
 		private readonly byte[] data = {0x12, 0x34};
-		private LockListener callback;
+	    private readonly Fenced<LockListener> callback = new Fenced<LockListener>(null);
 		private readonly LockZooKeeperOperation zop;
 
 		/// <summary>
@@ -70,16 +70,14 @@ namespace org.apache.zookeeper.recipes.@lock
 		/// <param name="callback"> the call back instance </param>
 		public WriteLock(ZooKeeper zookeeper, string dir, List<ACL> acl, LockListener callback) : this(zookeeper, dir, acl)
 		{
-			this.callback = callback;
+		    setLockListener(callback);
 		}
 
 	    /// <summary>
 	    /// return the current locklistener </summary>
 	    /// <returns> the locklistener </returns>
-	    public async Task setLockListener(LockListener lockListener) {
-	        using(await lockable.LockAsync().ConfigureAwait(false)) {
-	            callback = lockListener;
-	        }
+	    public void setLockListener(LockListener lockListener) {
+	            callback.Value = lockListener;
 	    }
 
 
@@ -113,9 +111,10 @@ namespace org.apache.zookeeper.recipes.@lock
 					}
 					finally
 					{
-						if (callback != null)
+					    var tempCallback = callback.Value;
+						if (tempCallback != null)
 						{
-							callback.lockReleased();
+                            tempCallback.lockReleased();
 						}
 						Id = null;
 					}
@@ -277,12 +276,11 @@ namespace org.apache.zookeeper.recipes.@lock
 							{
 								if (writeLock.Owner)
 								{
-								    lock (writeLock.callback) {
-								        if (writeLock.callback != null) {
-                                            writeLock.callback.lockAcquired();
-								        }
-								    }
-								    return true;
+                                    var tempCallback = writeLock.callback.Value;
+                                    if (tempCallback != null) {
+                                        tempCallback.lockAcquired();
+                                    }
+                                    return true;
 								}
 							}
 						}

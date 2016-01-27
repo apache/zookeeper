@@ -1,7 +1,7 @@
 {
   "compilationOptions": { "keyFile": "../../ZooKeeperNetEx.snk" },
   "dependencies": {
-    "ZooKeeperNetEx": "3.4.7.2",
+    "ZooKeeperNetEx": "3.4.7.3",
     "xunit.runner.dnx": "2.1.0-rc1-build204",
     "Newtonsoft.Json": "8.0.2",
     "xunit": "2.1.0"
