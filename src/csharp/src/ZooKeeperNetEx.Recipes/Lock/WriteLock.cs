@@ -114,7 +114,7 @@ namespace org.apache.zookeeper.recipes.@lock
 					    var tempCallback = callback.Value;
 						if (tempCallback != null)
 						{
-                            await tempCallback.lockReleased();
+                            await tempCallback.lockReleased().ConfigureAwait(false);
 						}
 						Id = null;
 					}
@@ -278,7 +278,7 @@ namespace org.apache.zookeeper.recipes.@lock
 								{
                                     var tempCallback = writeLock.callback.Value;
                                     if (tempCallback != null) {
-                                        await tempCallback.lockAcquired();
+                                        await tempCallback.lockAcquired().ConfigureAwait(false);
                                     }
                                     return true;
 								}
