@@ -9,7 +9,7 @@
   ],
   "userSecretsId": "dotnet-ZooKeeperNetEx-270116",
   "title": "Apache ZooKeeper .NET async Client",
-  "version": "3.4.7.4",
+  "version": "3.4.7.5",
   "description": "A .NET async Client fully compliant with ZooKeeper, supporting all features. Fully Task-based Asynchronous (async/await). A great measure has been taken to follow the logic of the official Java client, including all relevant unit tests. In fact, the code is almost identical. Thus allowing easy evolution alongside the Java version.",
   "authors": [ "Shay Hazor" ],
   "owners": [ "Shay Hazor" ],
