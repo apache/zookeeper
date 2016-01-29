@@ -90,7 +90,7 @@ namespace org.apache.zookeeper.recipes.@lock
 		{
 			using(await lockable.LockAsync().ConfigureAwait(false))
 			{
-				if (!Closed && Id != null)
+				if (Id != null)
 				{
 					// we don't need to retry this operation in the case of failure
 					// as ZK will remove ephemeral files and we don't wanna hang
@@ -299,10 +299,6 @@ namespace org.apache.zookeeper.recipes.@lock
 		{
             using(await lockable.LockAsync().ConfigureAwait(false))
 			{
-				if (Closed)
-				{
-					return false;
-				}
 				await ensurePathExists(dir).ConfigureAwait(false);
         
 				return await retryOperation(zop).ConfigureAwait(false);

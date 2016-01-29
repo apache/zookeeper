@@ -127,8 +127,6 @@ namespace org.apache.zookeeper.recipes.@lock
 					WriteLock node = nodes[i];
 					if (node != null)
 					{
-                        LOG.debug("Closing node: " + i);
-						node.close();
 						if (i == nodes.Length - 1)
 						{
                             LOG.debug("Not closing zookeeper: " + i + " due to bug!");
@@ -142,9 +140,7 @@ namespace org.apache.zookeeper.recipes.@lock
 					}
 				}
 			}
-            LOG.debug("Now lets stop the server");
 			base.Dispose();
-
 		}
 	}
 

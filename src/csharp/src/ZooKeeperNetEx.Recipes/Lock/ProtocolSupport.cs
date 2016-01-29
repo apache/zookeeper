@@ -35,7 +35,6 @@ namespace org.apache.zookeeper.recipes.@lock
         private static readonly ILogProducer LOG = TypeLogger<ProtocolSupport>.Instance;
 
         internal readonly ZooKeeper zookeeper;
-        private readonly ThreadSafeInt closed = new ThreadSafeInt(0);
         private const int retryDelayInMs = 500;
         private const int retryCount = 10;
         internal List<ACL> m_acl = ZooDefs.Ids.OPEN_ACL_UNSAFE;
@@ -43,17 +42,6 @@ namespace org.apache.zookeeper.recipes.@lock
         internal  ProtocolSupport(ZooKeeper zookeeper) 
         {
             this.zookeeper = zookeeper;
-        }
-
-        /// <summary>
-        /// Closes this strategy and releases any ZooKeeper resources; but keeps the
-        ///  ZooKeeper instance open
-        /// </summary>
-        public void close() 
-        {
-            if (closed.TrySetValue(0,1)) {
-                doClose();
-            }
         }
 
         /// <summary>
@@ -73,16 +61,6 @@ namespace org.apache.zookeeper.recipes.@lock
                 return m_acl;
             }
         }
-
-        /// <summary>
-        /// Allow derived classes to perform 
-        /// some custom closing operations to release resources
-        /// </summary>
-        protected virtual void doClose() 
-        {
-        }
-
-
         /// <summary>
         /// Perform the given operation, retrying if the connection fails </summary>
         /// <returns> object. it needs to be cast to the callee's expected 
@@ -168,14 +146,6 @@ namespace org.apache.zookeeper.recipes.@lock
                 await zookeeper.createAsync(path, data, acl, flags).ConfigureAwait(false);
                 return true;
             }
-        }
-
-        /// <summary>
-        /// Returns true if this protocol has been closed </summary>
-        /// <returns> true if this protocol is closed </returns>
-        protected bool Closed 
-        {
-            get { return closed.Value == 1; }
         }
 
         /// <summary>
