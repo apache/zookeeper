@@ -62,6 +62,9 @@
                conf="test->default"/>
     <dependency org="com.puppycrawl.tools" name="checkstyle" rev="6.13"
                 conf="test->default"/>
+    <!-- force the tests to pull the latest commons-collections jar -->
+    <dependency org="commons-collections" name="commons-collections" 
+                rev="3.2.2" conf="test->default"/>
 
     <dependency org="jdiff" name="jdiff" rev="1.0.9"
                 conf="jdiff->default"/>
@@ -73,7 +76,7 @@
     <dependency org="commons-lang" name="commons-lang" 
                 rev="2.6" conf="releaseaudit->default"/>
     <dependency org="commons-collections" name="commons-collections" 
-                rev="3.2.1" conf="releaseaudit->default"/>
+                rev="3.2.2" conf="releaseaudit->default"/>
 
     <dependency org="net.java.dev.javacc" name="javacc" rev="5.0" />
 
