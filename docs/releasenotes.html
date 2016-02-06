@@ -5,7 +5,7 @@
 <meta content="Apache Forrest" name="Generator">
 <meta name="Forrest-version" content="0.9">
 <meta name="Forrest-skin-name" content="pelt">
-<title>ZooKeeper 3.4.7 Release Notes</title>
+<title>ZooKeeper 3.4.8 Release Notes</title>
 <link type="text/css" href="skin/basic.css" rel="stylesheet">
 <link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
 <link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
@@ -202,10 +202,13 @@ document.write("Last Published: " + document.lastModified);
 <a class="dida" href="releasenotes.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
         PDF</a>
 </div>
-<h1>ZooKeeper 3.4.7 Release Notes</h1>
+<h1>ZooKeeper 3.4.8 Release Notes</h1>
 <div id="front-matter">
 <div id="minitoc-area">
 <ul class="minitoc">
+<li>
+<a href="#changes_3.4.7">Changes Since ZooKeeper 3.4.7</a>
+</li>
 <li>
 <a href="#changes_3.4.6">Changes Since ZooKeeper 3.4.6</a>
 </li>
@@ -252,6 +255,63 @@ These release notes include new developer and user facing incompatibilities, fea
 </li>
 
 </ul>
+
+<a name="changes_3.4.7"></a>
+<h2 class="h3">Changes Since 3.4.7</h2>
+
+<div class="section">
+<table class="ForrestTable" cellspacing="1" cellpadding="4">
+<caption>Changes Since ZooKeeper 3.4.7</caption>
+
+<title>Changes Since ZooKeeper 3.4.7</title>
+
+<h4>Bug</h4>
+
+<tr>
+  <th>Issue</th>
+  <th>Notes</th>
+</tr>
+
+<tr>
+  <td><a href='https://issues.apache.org/jira/browse/ZOOKEEPER-1929'>ZOOKEEPER-1929</a></td>
+  <td>std::length_error on update children</td>
+</td>
+<tr>
+  <td><a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2211'>ZOOKEEPER-2211</a></td>
+  <td>PurgeTxnLog does not correctly purge when snapshots and logs are at different locations</td>
+</tr>
+<tr>
+  <td><a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2229'>ZOOKEEPER-2229</a></td>
+  <td>Several four-letter words are undocumented.</td>
+</tr>
+<tr>
+  <td><a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2281'>ZOOKEEPER-2281</a></td>
+  <td>ZK Server startup fails if there are spaces in the JAVA_HOME path</td>
+</tr>
+<tr>
+  <td><a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2295'>ZOOKEEPER-2295</a></td>
+  <td>TGT refresh time logic is wrong</td>
+</tr>
+<tr>
+  <td><a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2311'>ZOOKEEPER-2311</a></td>
+  <td>assert in setup_random</td>
+</tr>
+<tr>
+  <td><a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2340'>ZOOKEEPER-2340</a></td>
+  <td>JMX is disabled even if JMXDISABLE is false</td>
+</tr>
+<tr>
+  <td><a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2347'>ZOOKEEPER-2347</a></td>
+  <td>Deadlock shutting down zookeeper</td>
+</tr>
+<tr>
+  <td><a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2360'>ZOOKEEPER-2360</a></td>
+  <td>Update commons collections version used by tests/releaseaudit</td>
+</tr>
+
+</table>
+</div>
+
 
 <a name="changes_3.4.6"></a>
 <h2 class="h3">Changes Since 3.4.6</h2>
