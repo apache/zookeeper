@@ -74,32 +74,90 @@
       <section id="sc_supportedPlatforms">
         <title>Supported Platforms</title>
 
+        <para>ZooKeeper consists of multiple components.  Some components are
+        supported broadly, and other components are supported only on a smaller
+        set of platforms.</para>
+
         <itemizedlist>
           <listitem>
-            <para>GNU/Linux is supported as a development and production
-              platform for both server and client.</para>
+            <para><emphasis role="bold">Client</emphasis> is the Java client
+            library, used by applications to connect to a ZooKeeper ensemble.
+            </para>
           </listitem>
           <listitem>
-            <para>Sun Solaris is supported as a development and production
-              platform for both server and client.</para>
+            <para><emphasis role="bold">Server</emphasis> is the Java server
+            that runs on the ZooKeeper ensemble nodes.</para>
           </listitem>
           <listitem>
-            <para>FreeBSD is supported as a development and production
-              platform for both server and client.</para>
+            <para><emphasis role="bold">Native Client</emphasis> is a client
+            implemented in C, similar to the Java client, used by applications
+            to connect to a ZooKeeper ensemble.</para>
           </listitem>
           <listitem>
-            <para>Win32 is supported as a <emphasis>development
-            platform</emphasis> only for both server and client.</para>
-          </listitem>
-          <listitem>
-            <para>Win64 is supported as a <emphasis>development
-            platform</emphasis> only for both server and client.</para>
-          </listitem>
-          <listitem>
-            <para>MacOSX is supported as a <emphasis>development
-            platform</emphasis> only for both server and client.</para>
+            <para><emphasis role="bold">Contrib</emphasis> refers to multiple
+            optional add-on components.</para>
           </listitem>
         </itemizedlist>
+
+        <para>The following matrix describes the level of support committed for
+        running each component on different operating system platforms.</para>
+
+        <table>
+          <title>Support Matrix</title>
+          <tgroup cols="5" align="left" colsep="1" rowsep="1">
+            <thead>
+              <row>
+                <entry>Operating System</entry>
+                <entry>Client</entry>
+                <entry>Server</entry>
+                <entry>Native Client</entry>
+                <entry>Contrib</entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry>GNU/Linux</entry>
+                <entry>Development and Production</entry>
+                <entry>Development and Production</entry>
+                <entry>Development and Production</entry>
+                <entry>Development and Production</entry>
+              </row>
+              <row>
+                <entry>Solaris</entry>
+                <entry>Development and Production</entry>
+                <entry>Development and Production</entry>
+                <entry>Not Supported</entry>
+                <entry>Not Supported</entry>
+              </row>
+              <row>
+                <entry>FreeBSD</entry>
+                <entry>Development and Production</entry>
+                <entry>Development and Production</entry>
+                <entry>Not Supported</entry>
+                <entry>Not Supported</entry>
+              </row>
+              <row>
+                <entry>Windows</entry>
+                <entry>Development and Production</entry>
+                <entry>Development and Production</entry>
+                <entry>Not Supported</entry>
+                <entry>Not Supported</entry>
+              </row>
+              <row>
+                <entry>Mac OS X</entry>
+                <entry>Development Only</entry>
+                <entry>Development Only</entry>
+                <entry>Not Supported</entry>
+                <entry>Not Supported</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+
+        <para>For any operating system not explicitly mentioned as supported in
+        the matrix, components may or may not work.  The ZooKeeper community
+        will fix obvious bugs that are reported for other platforms, but there
+        is no full support.</para>
       </section>
 
       <section id="sc_requiredSoftware">
