@@ -1,7 +1,6 @@
 ﻿using System.Collections.Concurrent;
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 using org.apache.utils;
 using Xunit;
@@ -28,39 +27,24 @@ namespace org.apache.zookeeper.test
 {
     public sealed class WatcherFuncTest : ClientBase
 	{
-		private sealed class SimpleWatcher : CountdownWatcher
+		private sealed class SimpleWatcher : Watcher
 		{
 		    private readonly BlockingCollection<WatchedEvent> events = new BlockingCollection<WatchedEvent>();
-		    private readonly ManualResetEventSlim latch;
 
-            public SimpleWatcher(ManualResetEventSlim latch)
-			{
-				this.latch = latch;
-			}
-
-		    public async override Task process(WatchedEvent @event) 
+		    public override Task process(WatchedEvent @event) 
             {
-		        await base.process(@event);
-                if (@event.getState() == Event.KeeperState.SyncConnected)
-                {
-                    if (latch != null)
-                    {
-                        latch.Set();
-                    }
-                }
-
-                if (@event.get_Type() == Event.EventType.None)
-                {
-                    return;
-                }
-                try
-                {
-                    events.Add(@event);
-                }
-                catch
-                {
-                    Assert.assertTrue("interruption unexpected", false);
-                }
+                if (@event.get_Type() != Event.EventType.None)
+		        {
+		            try
+		            {
+		                events.Add(@event);
+		            }
+		            catch
+		            {
+		                Assert.assertTrue("interruption unexpected", false);
+		            }
+		        }
+		        return CompletedTask;
             }
 
 
@@ -78,35 +62,23 @@ namespace org.apache.zookeeper.test
 			}
 		}
 		private SimpleWatcher client_dwatch;
-        private volatile ManualResetEventSlim client_latch;
-		private ZooKeeper client;
-		private SimpleWatcher lsnr_dwatch;
-		private volatile ManualResetEventSlim lsnr_latch;
-		private ZooKeeper lsnr;
+		private readonly ZooKeeper client;
+		private readonly SimpleWatcher lsnr_dwatch;
+		private readonly ZooKeeper lsnr;
 
-		private IList<Watcher.Event.EventType> expected;
+		private readonly IList<Watcher.Event.EventType> expected;
 
 
 		public WatcherFuncTest()
 		{
-            client_latch = new ManualResetEventSlim(false);
-			client_dwatch = new SimpleWatcher(client_latch);
-			client = createClient(client_dwatch);
+			client_dwatch = new SimpleWatcher();
+			client = createClient(client_dwatch).Result;
 
-            lsnr_latch = new ManualResetEventSlim(false);
-			lsnr_dwatch = new SimpleWatcher(lsnr_latch);
-			lsnr = createClient(lsnr_dwatch);
+			lsnr_dwatch = new SimpleWatcher();
+			lsnr = createClient(lsnr_dwatch).Result;
 
 			expected = new List<Watcher.Event.EventType>();
 		}
-
-
-        public override void Dispose()
-        {
-			client.close();
-			lsnr.close();
-            base.Dispose();
-        }
 
 		private void verify()
 		{
@@ -115,25 +87,25 @@ namespace org.apache.zookeeper.test
 		}
 
         [Fact]
-		public void testExistsSync()
+		public async Task testExistsSync()
 		{
-			Assert.assertNull(lsnr.exists("/foo", true));
-			Assert.assertNull(lsnr.exists("/foo/bar", true));
+			Assert.assertNull(await lsnr.existsAsync("/foo", true));
+			Assert.assertNull(await lsnr.existsAsync("/foo/bar", true));
 
-			client.create("/foo", "parent".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			await client.createAsync("/foo", "parent".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 			expected.Add(Watcher.Event.EventType.NodeCreated);
-			client.create("/foo/bar", "child".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			await client.createAsync("/foo/bar", "child".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 			expected.Add(Watcher.Event.EventType.NodeCreated);
 
 			verify();
 
-			Assert.assertNotNull(lsnr.exists("/foo", true));
-			Assert.assertNotNull(lsnr.exists("/foo/bar", true));
+			Assert.assertNotNull(await lsnr.existsAsync("/foo", true));
+			Assert.assertNotNull(await lsnr.existsAsync("/foo/bar", true));
 
 			try
 			{
-				Assert.assertNull(lsnr.exists("/car", true));
-				client.setData("/car", "missing".UTF8getBytes(), -1);
+				Assert.assertNull(await lsnr.existsAsync("/car", true));
+				await client.setDataAsync("/car", "missing".UTF8getBytes(), -1);
 				Assert.fail();
 			}
 			catch (KeeperException e)
@@ -144,8 +116,8 @@ namespace org.apache.zookeeper.test
 
 			try
 			{
-				Assert.assertNull(lsnr.exists("/foo/car", true));
-				client.setData("/foo/car", "missing".UTF8getBytes(), -1);
+				Assert.assertNull(await lsnr.existsAsync("/foo/car", true));
+				await client.setDataAsync("/foo/car", "missing".UTF8getBytes(), -1);
 				Assert.fail();
 			}
 			catch (KeeperException e)
@@ -154,30 +126,30 @@ namespace org.apache.zookeeper.test
 				Assert.assertEquals("/foo/car", e.getPath());
 			}
 
-			client.setData("/foo", "parent".UTF8getBytes(), -1);
+			await client.setDataAsync("/foo", "parent".UTF8getBytes(), -1);
 			expected.Add(Watcher.Event.EventType.NodeDataChanged);
-			client.setData("/foo/bar", "child".UTF8getBytes(), -1);
+			await client.setDataAsync("/foo/bar", "child".UTF8getBytes(), -1);
 			expected.Add(Watcher.Event.EventType.NodeDataChanged);
 
 			verify();
 
-			Assert.assertNotNull(lsnr.exists("/foo", true));
-			Assert.assertNotNull(lsnr.exists("/foo/bar", true));
+			Assert.assertNotNull(await lsnr.existsAsync("/foo", true));
+			Assert.assertNotNull(await lsnr.existsAsync("/foo/bar", true));
 
-			client.delete("/foo/bar", -1);
+			await client.deleteAsync("/foo/bar", -1);
 			expected.Add(Watcher.Event.EventType.NodeDeleted);
-			client.delete("/foo", -1);
+			await client.deleteAsync("/foo", -1);
 			expected.Add(Watcher.Event.EventType.NodeDeleted);
 
 			verify();
 		}
 
         [Fact]
-		public void testGetDataSync()
+		public async Task testGetDataSync()
 		{
 			try
 			{
-				lsnr.getData("/foo", true, null);
+				await lsnr.getDataAsync("/foo", true);
 				Assert.fail();
 			}
 			catch (KeeperException e)
@@ -187,7 +159,7 @@ namespace org.apache.zookeeper.test
 			}
 			try
 			{
-				lsnr.getData("/foo/bar", true, null);
+				await lsnr.getDataAsync("/foo/bar", true);
 				Assert.fail();
 			}
 			catch (KeeperException e)
@@ -196,35 +168,35 @@ namespace org.apache.zookeeper.test
 				Assert.assertEquals("/foo/bar", e.getPath());
 			}
 
-			client.create("/foo", "parent".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-			Assert.assertNotNull(lsnr.getData("/foo", true, null));
-			client.create("/foo/bar", "child".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-			Assert.assertNotNull(lsnr.getData("/foo/bar", true, null));
+			await client.createAsync("/foo", "parent".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			Assert.assertNotNull((await lsnr.getDataAsync("/foo", true)).Data);
+            await client.createAsync("/foo/bar", "child".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			Assert.assertNotNull((await lsnr.getDataAsync("/foo/bar", true)).Data);
 
-			client.setData("/foo", "parent".UTF8getBytes(), -1);
+            await client.setDataAsync("/foo", "parent".UTF8getBytes(), -1);
 			expected.Add(Watcher.Event.EventType.NodeDataChanged);
-			client.setData("/foo/bar", "child".UTF8getBytes(), -1);
+			await client.setDataAsync("/foo/bar", "child".UTF8getBytes(), -1);
 			expected.Add(Watcher.Event.EventType.NodeDataChanged);
 
 			verify();
 
-			Assert.assertNotNull(lsnr.getData("/foo", true, null));
-			Assert.assertNotNull(lsnr.getData("/foo/bar", true, null));
+			Assert.assertNotNull((await lsnr.getDataAsync("/foo", true)).Data);
+            Assert.assertNotNull((await lsnr.getDataAsync("/foo/bar", true)).Data);
 
-			client.delete("/foo/bar", -1);
+            await client.deleteAsync("/foo/bar", -1);
 			expected.Add(Watcher.Event.EventType.NodeDeleted);
-			client.delete("/foo", -1);
+			await client.deleteAsync("/foo", -1);
 			expected.Add(Watcher.Event.EventType.NodeDeleted);
 
 			verify();
 		}
 
         [Fact]
-		public void testGetChildrenSync()
+		public async Task testGetChildrenSync()
 		{
 			try
 			{
-				lsnr.getChildren("/foo", true);
+				await lsnr.getChildrenAsync("/foo", true);
 				Assert.fail();
 			}
 			catch (KeeperException e)
@@ -234,7 +206,7 @@ namespace org.apache.zookeeper.test
 			}
 			try
 			{
-				lsnr.getChildren("/foo/bar", true);
+				await lsnr.getChildrenAsync("/foo/bar", true);
 				Assert.fail();
 			}
 			catch (KeeperException e)
@@ -243,53 +215,53 @@ namespace org.apache.zookeeper.test
 				Assert.assertEquals("/foo/bar", e.getPath());
 			}
 
-			client.create("/foo", "parent".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-			Assert.assertNotNull(lsnr.getChildren("/foo", true));
+			await client.createAsync("/foo", "parent".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			Assert.assertNotNull((await lsnr.getChildrenAsync("/foo", true)).Children);
 
-			client.create("/foo/bar", "child".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			await client.createAsync("/foo/bar", "child".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 			expected.Add(Watcher.Event.EventType.NodeChildrenChanged); // /foo
-			Assert.assertNotNull(lsnr.getChildren("/foo/bar", true));
+			Assert.assertNotNull((await lsnr.getChildrenAsync("/foo/bar", true)).Children);
 
 
-			client.setData("/foo", "parent".UTF8getBytes(), -1);
-			client.setData("/foo/bar", "child".UTF8getBytes(), -1);
+            await client.setDataAsync("/foo", "parent".UTF8getBytes(), -1);
+			await client.setDataAsync("/foo/bar", "child".UTF8getBytes(), -1);
 
 
-			Assert.assertNotNull(lsnr.exists("/foo", true));
+			Assert.assertNotNull(await lsnr.existsAsync("/foo", true));
 
-			Assert.assertNotNull(lsnr.getChildren("/foo", true));
-			Assert.assertNotNull(lsnr.getChildren("/foo/bar", true));
+			Assert.assertNotNull((await lsnr.getChildrenAsync("/foo", true)).Children);
+            Assert.assertNotNull((await lsnr.getChildrenAsync("/foo/bar", true)).Children);
 
-			client.delete("/foo/bar", -1);
+            await client.deleteAsync("/foo/bar", -1);
 			expected.Add(Watcher.Event.EventType.NodeDeleted); // /foo/bar childwatch
 			expected.Add(Watcher.Event.EventType.NodeChildrenChanged); // /foo
-			client.delete("/foo", -1);
+			await client.deleteAsync("/foo", -1);
 			expected.Add(Watcher.Event.EventType.NodeDeleted);
 
 			verify();
 		}
 
         [Fact]
-		public void testExistsSyncWObj()
+		public async Task testExistsSyncWObj()
 		{
-			SimpleWatcher w1 = new SimpleWatcher(null);
-			SimpleWatcher w2 = new SimpleWatcher(null);
-			SimpleWatcher w3 = new SimpleWatcher(null);
-			SimpleWatcher w4 = new SimpleWatcher(null);
+			SimpleWatcher w1 = new SimpleWatcher();
+			SimpleWatcher w2 = new SimpleWatcher();
+			SimpleWatcher w3 = new SimpleWatcher();
+			SimpleWatcher w4 = new SimpleWatcher();
 
 			IList<Watcher.Event.EventType> e2 = new List<Watcher.Event.EventType>();
 
-			Assert.assertNull(lsnr.exists("/foo", true));
-			Assert.assertNull(lsnr.exists("/foo", w1));
+			Assert.assertNull(await lsnr.existsAsync("/foo", true));
+			Assert.assertNull(await lsnr.existsAsync("/foo", w1));
 
-			Assert.assertNull(lsnr.exists("/foo/bar", w2));
-			Assert.assertNull(lsnr.exists("/foo/bar", w3));
-			Assert.assertNull(lsnr.exists("/foo/bar", w3));
-			Assert.assertNull(lsnr.exists("/foo/bar", w4));
+			Assert.assertNull(await lsnr.existsAsync("/foo/bar", w2));
+			Assert.assertNull(await lsnr.existsAsync("/foo/bar", w3));
+			Assert.assertNull(await lsnr.existsAsync("/foo/bar", w3));
+			Assert.assertNull(await lsnr.existsAsync("/foo/bar", w4));
 
-			client.create("/foo", "parent".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			await client.createAsync("/foo", "parent".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 			expected.Add(Watcher.Event.EventType.NodeCreated);
-			client.create("/foo/bar", "child".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			await client.createAsync("/foo/bar", "child".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 			e2.Add(Watcher.Event.EventType.NodeCreated);
 
 			lsnr_dwatch.verify(expected);
@@ -301,16 +273,16 @@ namespace org.apache.zookeeper.test
 			e2.Clear();
 
 			// default not registered
-			Assert.assertNotNull(lsnr.exists("/foo", w1));
+			Assert.assertNotNull(await lsnr.existsAsync("/foo", w1));
 
-			Assert.assertNotNull(lsnr.exists("/foo/bar", w2));
-			Assert.assertNotNull(lsnr.exists("/foo/bar", w3));
-			Assert.assertNotNull(lsnr.exists("/foo/bar", w4));
-			Assert.assertNotNull(lsnr.exists("/foo/bar", w4));
+			Assert.assertNotNull(await lsnr.existsAsync("/foo/bar", w2));
+			Assert.assertNotNull(await lsnr.existsAsync("/foo/bar", w3));
+			Assert.assertNotNull(await lsnr.existsAsync("/foo/bar", w4));
+			Assert.assertNotNull(await lsnr.existsAsync("/foo/bar", w4));
 
-			client.setData("/foo", "parent".UTF8getBytes(), -1);
+			await client.setDataAsync("/foo", "parent".UTF8getBytes(), -1);
 			expected.Add(Watcher.Event.EventType.NodeDataChanged);
-			client.setData("/foo/bar", "child".UTF8getBytes(), -1);
+			await client.setDataAsync("/foo/bar", "child".UTF8getBytes(), -1);
 			e2.Add(Watcher.Event.EventType.NodeDataChanged);
 
 			lsnr_dwatch.verify(new List<Watcher.Event.EventType>()); // not reg so should = 0
@@ -321,18 +293,18 @@ namespace org.apache.zookeeper.test
 			expected.Clear();
 			e2.Clear();
 
-			Assert.assertNotNull(lsnr.exists("/foo", true));
-			Assert.assertNotNull(lsnr.exists("/foo", w1));
-			Assert.assertNotNull(lsnr.exists("/foo", w1));
+			Assert.assertNotNull(await lsnr.existsAsync("/foo", true));
+			Assert.assertNotNull(await lsnr.existsAsync("/foo", w1));
+			Assert.assertNotNull(await lsnr.existsAsync("/foo", w1));
 
-			Assert.assertNotNull(lsnr.exists("/foo/bar", w2));
-			Assert.assertNotNull(lsnr.exists("/foo/bar", w2));
-			Assert.assertNotNull(lsnr.exists("/foo/bar", w3));
-			Assert.assertNotNull(lsnr.exists("/foo/bar", w4));
+			Assert.assertNotNull(await lsnr.existsAsync("/foo/bar", w2));
+			Assert.assertNotNull(await lsnr.existsAsync("/foo/bar", w2));
+			Assert.assertNotNull(await lsnr.existsAsync("/foo/bar", w3));
+			Assert.assertNotNull(await lsnr.existsAsync("/foo/bar", w4));
 
-			client.delete("/foo/bar", -1);
+			await client.deleteAsync("/foo/bar", -1);
 			expected.Add(Watcher.Event.EventType.NodeDeleted);
-			client.delete("/foo", -1);
+			await client.deleteAsync("/foo", -1);
 			e2.Add(Watcher.Event.EventType.NodeDeleted);
 
 			lsnr_dwatch.verify(expected);
@@ -345,18 +317,18 @@ namespace org.apache.zookeeper.test
 		}
 
         [Fact]
-		public void testGetDataSyncWObj()
+		public async Task testGetDataSyncWObj()
 		{
-			SimpleWatcher w1 = new SimpleWatcher(null);
-			SimpleWatcher w2 = new SimpleWatcher(null);
-			SimpleWatcher w3 = new SimpleWatcher(null);
-			SimpleWatcher w4 = new SimpleWatcher(null);
+			SimpleWatcher w1 = new SimpleWatcher();
+			SimpleWatcher w2 = new SimpleWatcher();
+			SimpleWatcher w3 = new SimpleWatcher();
+			SimpleWatcher w4 = new SimpleWatcher();
 
 			IList<Watcher.Event.EventType> e2 = new List<Watcher.Event.EventType>();
 
 			try
 			{
-				lsnr.getData("/foo", w1, null);
+				await lsnr.getDataAsync("/foo", w1);
 				Assert.fail();
 			}
 			catch (KeeperException e)
@@ -366,7 +338,7 @@ namespace org.apache.zookeeper.test
 			}
 			try
 			{
-				lsnr.getData("/foo/bar", w2, null);
+				await lsnr.getDataAsync("/foo/bar", w2);
 				Assert.fail();
 			}
 			catch (KeeperException e)
@@ -375,18 +347,18 @@ namespace org.apache.zookeeper.test
 				Assert.assertEquals("/foo/bar", e.getPath());
 			}
 
-			client.create("/foo", "parent".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-			Assert.assertNotNull(lsnr.getData("/foo", true, null));
-			Assert.assertNotNull(lsnr.getData("/foo", w1, null));
-			client.create("/foo/bar", "child".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-			Assert.assertNotNull(lsnr.getData("/foo/bar", w2, null));
-			Assert.assertNotNull(lsnr.getData("/foo/bar", w3, null));
-			Assert.assertNotNull(lsnr.getData("/foo/bar", w4, null));
-			Assert.assertNotNull(lsnr.getData("/foo/bar", w4, null));
+			await client.createAsync("/foo", "parent".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			Assert.assertNotNull((await lsnr.getDataAsync("/foo", true)).Data);
+            Assert.assertNotNull((await lsnr.getDataAsync("/foo", w1)).Data);
+            await client.createAsync("/foo/bar", "child".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			Assert.assertNotNull((await lsnr.getDataAsync("/foo/bar", w2)).Data);
+            Assert.assertNotNull((await lsnr.getDataAsync("/foo/bar", w3)).Data);
+            Assert.assertNotNull((await lsnr.getDataAsync("/foo/bar", w4)).Data);
+            Assert.assertNotNull((await lsnr.getDataAsync("/foo/bar", w4)).Data);
 
-			client.setData("/foo", "parent".UTF8getBytes(), -1);
+            await client.setDataAsync("/foo", "parent".UTF8getBytes(), -1);
 			expected.Add(Watcher.Event.EventType.NodeDataChanged);
-			client.setData("/foo/bar", "child".UTF8getBytes(), -1);
+			await client.setDataAsync("/foo/bar", "child".UTF8getBytes(), -1);
 			e2.Add(Watcher.Event.EventType.NodeDataChanged);
 
 			lsnr_dwatch.verify(expected);
@@ -397,16 +369,16 @@ namespace org.apache.zookeeper.test
 			expected.Clear();
 			e2.Clear();
 
-			Assert.assertNotNull(lsnr.getData("/foo", true, null));
-			Assert.assertNotNull(lsnr.getData("/foo", w1, null));
-			Assert.assertNotNull(lsnr.getData("/foo/bar", w2, null));
-			Assert.assertNotNull(lsnr.getData("/foo/bar", w3, null));
-			Assert.assertNotNull(lsnr.getData("/foo/bar", w3, null));
-			Assert.assertNotNull(lsnr.getData("/foo/bar", w4, null));
+			Assert.assertNotNull((await lsnr.getDataAsync("/foo", true)).Data);
+			Assert.assertNotNull((await lsnr.getDataAsync("/foo", w1)).Data);
+            Assert.assertNotNull((await lsnr.getDataAsync("/foo/bar", w2)).Data);
+            Assert.assertNotNull((await lsnr.getDataAsync("/foo/bar", w3)).Data);
+            Assert.assertNotNull((await lsnr.getDataAsync("/foo/bar", w3)).Data);
+            Assert.assertNotNull((await lsnr.getDataAsync("/foo/bar", w4)).Data);
 
-			client.delete("/foo/bar", -1);
+            await client.deleteAsync("/foo/bar", -1);
 			expected.Add(Watcher.Event.EventType.NodeDeleted);
-			client.delete("/foo", -1);
+			await client.deleteAsync("/foo", -1);
 			e2.Add(Watcher.Event.EventType.NodeDeleted);
 
 			lsnr_dwatch.verify(expected);
@@ -419,18 +391,18 @@ namespace org.apache.zookeeper.test
 		}
 
         [Fact]
-		public void testGetChildrenSyncWObj()
+		public async Task testGetChildrenSyncWObj()
 		{
-			SimpleWatcher w1 = new SimpleWatcher(null);
-			SimpleWatcher w2 = new SimpleWatcher(null);
-			SimpleWatcher w3 = new SimpleWatcher(null);
-			SimpleWatcher w4 = new SimpleWatcher(null);
+			SimpleWatcher w1 = new SimpleWatcher();
+			SimpleWatcher w2 = new SimpleWatcher();
+			SimpleWatcher w3 = new SimpleWatcher();
+			SimpleWatcher w4 = new SimpleWatcher();
 
 			IList<Watcher.Event.EventType> e2 = new List<Watcher.Event.EventType>();
 
 			try
 			{
-				lsnr.getChildren("/foo", true);
+				await lsnr.getChildrenAsync("/foo", true);
 				Assert.fail();
 			}
 			catch (KeeperException e)
@@ -440,7 +412,7 @@ namespace org.apache.zookeeper.test
 			}
 			try
 			{
-				lsnr.getChildren("/foo/bar", true);
+				await lsnr.getChildrenAsync("/foo/bar", true);
 				Assert.fail();
 			}
 			catch (KeeperException e)
@@ -449,38 +421,38 @@ namespace org.apache.zookeeper.test
 				Assert.assertEquals("/foo/bar", e.getPath());
 			}
 
-			client.create("/foo", "parent".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-			Assert.assertNotNull(lsnr.getChildren("/foo", true));
-			Assert.assertNotNull(lsnr.getChildren("/foo", w1));
+			await client.createAsync("/foo", "parent".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			Assert.assertNotNull((await lsnr.getChildrenAsync("/foo", true)).Children);
+            Assert.assertNotNull((await lsnr.getChildrenAsync("/foo", w1)).Children);
 
-			client.create("/foo/bar", "child".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            await client.createAsync("/foo/bar", "child".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 			expected.Add(Watcher.Event.EventType.NodeChildrenChanged); // /foo
-			Assert.assertNotNull(lsnr.getChildren("/foo/bar", w2));
-			Assert.assertNotNull(lsnr.getChildren("/foo/bar", w2));
-			Assert.assertNotNull(lsnr.getChildren("/foo/bar", w3));
-			Assert.assertNotNull(lsnr.getChildren("/foo/bar", w4));
+			Assert.assertNotNull((await lsnr.getChildrenAsync("/foo/bar", w2)).Children);
+            Assert.assertNotNull((await lsnr.getChildrenAsync("/foo/bar", w2)).Children);
+            Assert.assertNotNull((await lsnr.getChildrenAsync("/foo/bar", w3)).Children);
+            Assert.assertNotNull((await lsnr.getChildrenAsync("/foo/bar", w4)).Children);
 
 
-			client.setData("/foo", "parent".UTF8getBytes(), -1);
-			client.setData("/foo/bar", "child".UTF8getBytes(), -1);
+            await client.setDataAsync("/foo", "parent".UTF8getBytes(), -1);
+			await client.setDataAsync("/foo/bar", "child".UTF8getBytes(), -1);
 
 
-			Assert.assertNotNull(lsnr.exists("/foo", true));
-			Assert.assertNotNull(lsnr.exists("/foo", w1));
-			Assert.assertNotNull(lsnr.exists("/foo", true));
-			Assert.assertNotNull(lsnr.exists("/foo", w1));
+			Assert.assertNotNull(await lsnr.existsAsync("/foo", true));
+			Assert.assertNotNull(await lsnr.existsAsync("/foo", w1));
+			Assert.assertNotNull(await lsnr.existsAsync("/foo", true));
+			Assert.assertNotNull(await lsnr.existsAsync("/foo", w1));
 
-			Assert.assertNotNull(lsnr.getChildren("/foo", true));
-			Assert.assertNotNull(lsnr.getChildren("/foo", w1));
-			Assert.assertNotNull(lsnr.getChildren("/foo/bar", w2));
-			Assert.assertNotNull(lsnr.getChildren("/foo/bar", w3));
-			Assert.assertNotNull(lsnr.getChildren("/foo/bar", w4));
-			Assert.assertNotNull(lsnr.getChildren("/foo/bar", w4));
+			Assert.assertNotNull((await lsnr.getChildrenAsync("/foo", true)).Children);
+            Assert.assertNotNull((await lsnr.getChildrenAsync("/foo", w1)).Children);
+            Assert.assertNotNull((await lsnr.getChildrenAsync("/foo/bar", w2)).Children);
+            Assert.assertNotNull((await lsnr.getChildrenAsync("/foo/bar", w3)).Children);
+            Assert.assertNotNull((await lsnr.getChildrenAsync("/foo/bar", w4)).Children);
+            Assert.assertNotNull((await lsnr.getChildrenAsync("/foo/bar", w4)).Children);
 
-			client.delete("/foo/bar", -1);
+            await client.deleteAsync("/foo/bar", -1);
 			e2.Add(Watcher.Event.EventType.NodeDeleted); // /foo/bar childwatch
 			expected.Add(Watcher.Event.EventType.NodeChildrenChanged); // /foo
-			client.delete("/foo", -1);
+			await client.deleteAsync("/foo", -1);
 			expected.Add(Watcher.Event.EventType.NodeDeleted);
 
 			lsnr_dwatch.verify(expected);

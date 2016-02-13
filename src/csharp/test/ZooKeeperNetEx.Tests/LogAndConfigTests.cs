@@ -17,41 +17,37 @@ namespace ZooKeeperNetEx.Tests
         {
             string filename = Guid.NewGuid().ToString();
             NonBlockingFileWriter writer = new NonBlockingFileWriter(filename);
-            Assert.False(File.Exists(filename));
-            Assert.False(writer.HasFailed);
-            Assert.True(writer.IsEnabled);
-            Assert.True(writer.IsDisposed);
-            Assert.True(writer.IsEmpty);
+            await AssertInTimeout(() => File.Exists(filename) == false);
+            await AssertInTimeout(() => writer.HasFailed == false);
+            await AssertInTimeout(() => writer.IsEnabled);
+            await AssertInTimeout(() => writer.IsDisposed);
+            await AssertInTimeout(() => writer.IsEmpty);
             for (int j = 0; j < 3; j++)
             {
                 writer.IsEnabled = true;
 
                 for (int i = 0; i < 50; i++) writer.Write("test" + i);
-                await Task.Delay(4000);
-                Assert.True(File.Exists(filename));
-
-                Assert.False(writer.HasFailed);
-                Assert.True(writer.IsEnabled);
-                Assert.False(writer.IsDisposed);
-                Assert.True(writer.IsEmpty);
-
+                await AssertInTimeout(() => File.Exists(filename));
+                await AssertInTimeout(() => writer.HasFailed == false);
+                await AssertInTimeout(() => writer.IsEnabled);
+                await AssertInTimeout(() => writer.IsDisposed == false);
+                await AssertInTimeout(() => writer.IsEmpty);
+                
                 writer.IsEnabled = false;
 
                 for (int i = 0; i < 50; i++) writer.Write("test" + i);
-                await Task.Delay(1000);
-                Assert.False(writer.HasFailed);
-                Assert.False(writer.IsEnabled);
-                Assert.True(writer.IsDisposed);
-                Assert.True(writer.IsEmpty);
+                await AssertInTimeout(() => writer.HasFailed == false);
+                await AssertInTimeout(() => writer.IsEnabled == false);
+                await AssertInTimeout(() => writer.IsDisposed);
+                await AssertInTimeout(() => writer.IsEmpty);
 
                 File.Delete(filename);
 
                 writer.Write("should not write");
-                await Task.Delay(300);
-                Assert.False(writer.HasFailed);
-                Assert.False(writer.IsEnabled);
-                Assert.True(writer.IsDisposed);
-                Assert.True(writer.IsEmpty);
+                await AssertInTimeout(() => writer.HasFailed == false);
+                await AssertInTimeout(() => writer.IsEnabled == false);
+                await AssertInTimeout(() => writer.IsDisposed);
+                await AssertInTimeout(() => writer.IsEmpty);
             }
             var cancellationTokenSource = new CancellationTokenSource();
             var token = cancellationTokenSource.Token;
@@ -66,26 +62,32 @@ namespace ZooKeeperNetEx.Tests
                 writer.IsEnabled = true;
                 await Task.Delay(50);
                 writer.IsEnabled = false;
-                await Task.Delay(500);
-                Assert.False(writer.HasFailed);
-                Assert.False(writer.IsEnabled);
-                Assert.True(writer.IsDisposed);
-                Assert.True(writer.IsEmpty);
+                await AssertInTimeout(() => writer.HasFailed == false);
+                await AssertInTimeout(() => writer.IsEnabled == false);
+                await AssertInTimeout(() => writer.IsDisposed);
+                await AssertInTimeout(() => writer.IsEmpty);
             }
 
             writer.IsEnabled = true;
             writer.ThrowWrite = true;
-            await Task.Delay(500);
-            Assert.True(writer.HasFailed);
-            Assert.True(writer.IsEnabled);
-            Assert.True(writer.IsDisposed);
+            await AssertInTimeout(() => writer.HasFailed);
+            await AssertInTimeout(() => writer.IsEnabled);
+            await AssertInTimeout(() => writer.IsDisposed);
             cancellationTokenSource.Cancel();
             await Task.WhenAll(concurrentWrites);
-            Assert.True(writer.IsEmpty);
+            await AssertInTimeout(() => writer.IsEmpty);
 
             File.Delete(filename);
             writer.Write("should not write");
             Assert.False(File.Exists(filename));
+        }
+
+        private async Task AssertInTimeout(Func<bool> assertion)
+        {
+            for (int i = 0; i < 300 && !assertion(); i++)
+                await Task.Delay(100);
+
+            Assert.True(assertion());
         }
 
         private Task CreateWriteTask(CancellationToken cancellationToken, NonBlockingFileWriter writer)
@@ -105,6 +107,7 @@ namespace ZooKeeperNetEx.Tests
         [Fact]
         public void TestCustomConsumer()
         {
+            ZooKeeper.LogToFile = false;
             var dummy = new DummyConsumer();
             ILogProducer log = TypeLogger<LogAndConfigTests>.Instance;
             ZooKeeper.CustomLogConsumer = dummy;

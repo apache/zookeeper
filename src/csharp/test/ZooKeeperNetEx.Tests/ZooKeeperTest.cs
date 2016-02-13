@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using org.apache.utils;
 using Xunit;
 
@@ -28,31 +29,31 @@ namespace org.apache.zookeeper
 	public class ZooKeeperTest : ClientBase
 	{
         [Fact]
-		public void testDeleteRecursive()
+		public async Task testDeleteRecursive()
 		{
-			ZooKeeper zk = createClient();
+			ZooKeeper zk = await createClient();
 			// making sure setdata works on /
-            zk.setData("/", "some".UTF8getBytes(), -1);
-            zk.create("/a", "some".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            await zk.setDataAsync("/", "some".UTF8getBytes(), -1);
+            await zk.createAsync("/a", "some".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-            zk.create("/a/b", "some".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            await zk.createAsync("/a/b", "some".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-            zk.create("/a/b/v", "some".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            await zk.createAsync("/a/b/v", "some".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-            zk.create("/a/b/v/1", "some".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            await zk.createAsync("/a/b/v/1", "some".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-            zk.create("/a/c", "some".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            await zk.createAsync("/a/c", "some".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-            zk.create("/a/c/v", "some".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            await zk.createAsync("/a/c/v", "some".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-			IList<string> children = zk.getChildren("/a", false);
+			IList<string> children = (await zk.getChildrenAsync("/a", false)).Children;
 
             Assert.assertEquals("2 children - b & c should be present ", children.Count, 2);
             Assert.assertTrue(children.Contains("b"));
             Assert.assertTrue(children.Contains("c"));
 
             ZKUtil.deleteRecursiveAsync(zk, "/a").GetAwaiter().GetResult();
-            Assert.assertNull(zk.exists("/a", null));
+            Assert.assertNull(await zk.existsAsync("/a", null));
 		}
 
 	}

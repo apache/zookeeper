@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading;
 
 using System.Threading.Tasks;
 using org.apache.utils;
@@ -33,26 +32,16 @@ namespace org.apache.zookeeper.test
     {
         private static readonly ILogProducer LOG = TypeLogger<MultiTransactionTest>.Instance;
 
-        private ZooKeeper zk;
-        private ZooKeeper zk_chroot;
-
-
-        public MultiTransactionTest()
+        private Task<List<OpResult>> multiAsync(ZooKeeper zk, List<Op> ops)
         {
-            zk = createClient();
+            return zk.multiAsync(ops);
         }
 
-
-        private List<OpResult> multi(ZooKeeper zk, List<Op> ops)
-        {
-            return zk.multi(ops);
-        }
-
-        private void multiHavingErrors(ZooKeeper zk, List<Op> ops, List<KeeperException.Code> expectedResultCodes)
+        private async Task multiHavingErrors(ZooKeeper zk, List<Op> ops, List<KeeperException.Code> expectedResultCodes)
         {
             try
             {
-                multi(zk, ops);
+                await multiAsync(zk, ops);
                 Assert.fail("Shouldn't have validated in ZooKeeper client!");
             }
             catch (KeeperException e)
@@ -68,17 +57,18 @@ namespace org.apache.zookeeper.test
             }
         }
 
-        private List<OpResult> commit(Transaction txn)
+        private Task<List<OpResult>> commitAsync(Transaction txn)
         {
-            return txn.commit();
+            return txn.commitAsync();
         }
 
         /// <summary>
         /// Test verifies the multi calls with invalid znode path
         /// </summary>
         [Fact]
-        public void testInvalidPath()
+        public async Task testInvalidPath()
         {
+            var zk = await createClient();
             List<KeeperException.Code> expectedResultCodes = new List<KeeperException.Code>();
             expectedResultCodes.Add(KeeperException.Code.RUNTIMEINCONSISTENCY);
             expectedResultCodes.Add(KeeperException.Code.BADARGUMENTS);
@@ -94,7 +84,7 @@ namespace org.apache.zookeeper.test
                                           Op.create("/multi2", new byte[0],
                                                     ZooDefs.Ids.OPEN_ACL_UNSAFE,
                                                     CreateMode.PERSISTENT));
-            multiHavingErrors(zk, opList, expectedResultCodes);
+            await multiHavingErrors(zk, opList, expectedResultCodes);
 
             // create with valid sequential flag
             opList = Arrays.asList(Op.create("/multi0", new byte[0],
@@ -106,19 +96,19 @@ namespace org.apache.zookeeper.test
                                    Op.create("/multi2",
                                              new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE,
                                              CreateMode.PERSISTENT));
-            multiHavingErrors(zk, opList, expectedResultCodes);
+            await multiHavingErrors(zk, opList, expectedResultCodes);
 
             // check
             opList = Arrays.asList(Op.check("/multi0", -1),
                                    Op.check("/multi1/", 100),
                                    Op.check("/multi2", 5));
-            multiHavingErrors(zk, opList, expectedResultCodes);
+            await multiHavingErrors(zk, opList, expectedResultCodes);
 
             // delete
             opList = Arrays.asList(Op.delete("/multi0", -1),
                                    Op.delete("/multi1/", 100),
                                    Op.delete("/multi2", 5));
-            multiHavingErrors(zk, opList, expectedResultCodes);
+            await multiHavingErrors(zk, opList, expectedResultCodes);
 
             // Multiple bad arguments
             expectedResultCodes.Add(KeeperException.Code.BADARGUMENTS);
@@ -128,15 +118,16 @@ namespace org.apache.zookeeper.test
                                    Op.setData("/multi1/", new byte[0], -1),
                                    Op.setData("/multi2", new byte[0], -1),
                                    Op.setData("multi3", new byte[0], -1));
-            multiHavingErrors(zk, opList, expectedResultCodes);
+            await multiHavingErrors(zk, opList, expectedResultCodes);
         }
 
         /// <summary>
         /// Test verifies the multi calls with blank znode path
         /// </summary>:
         [Fact]
-        public void testBlankPath()
+        public async Task testBlankPath()
         {
+            var zk = await createClient();
             List<KeeperException.Code> expectedResultCodes = new List<KeeperException.Code>();
             expectedResultCodes.Add(KeeperException.Code.RUNTIMEINCONSISTENCY);
             expectedResultCodes.Add(KeeperException.Code.BADARGUMENTS);
@@ -148,7 +139,7 @@ namespace org.apache.zookeeper.test
                                             Op.delete(null, 100),
                                             Op.delete("/multi2", 5),
                                             Op.delete("", -1));
-            multiHavingErrors(zk, opList, expectedResultCodes);
+            await multiHavingErrors(zk, opList, expectedResultCodes);
         }
 
 
@@ -156,8 +147,9 @@ namespace org.apache.zookeeper.test
         /// Test verifies the multi.create with invalid createModeFlag
         /// </summary>
         [Fact]
-        public void testInvalidCreateModeFlag()
+        public async Task testInvalidCreateModeFlag()
         {
+            var zk = await createClient();
             List<KeeperException.Code> expectedResultCodes = new List<KeeperException.Code>();
             expectedResultCodes.Add(KeeperException.Code.RUNTIMEINCONSISTENCY);
             expectedResultCodes.Add(KeeperException.Code.BADARGUMENTS);
@@ -173,7 +165,7 @@ namespace org.apache.zookeeper.test
                                             Op.create("/multi2", new byte[0],
                                                       ZooDefs.Ids.OPEN_ACL_UNSAFE,
                                                       CreateMode.PERSISTENT));
-            multiHavingErrors(zk, opList, expectedResultCodes);
+            await multiHavingErrors(zk, opList, expectedResultCodes);
         }
 
         /**
@@ -185,17 +177,18 @@ namespace org.apache.zookeeper.test
          * 3. multi delete should succeed.
          */
         [Fact]
-        public void testMultiRollback()
+        public async Task testMultiRollback()
         {
-            zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            var zk = await createClient();
+            await zk.createAsync("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-            ZooKeeper epheZk = createClient();
-            epheZk.create("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+            ZooKeeper epheZk = await createClient();
+            await epheZk.createAsync("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
 
             List<Op> opList = Arrays.asList(Op.delete("/foo", -1));
             try
             {
-                multi(zk, opList);
+                await multiAsync(zk, opList);
                 Assert.fail("multi delete should failed for not empty directory");
             }
             catch (KeeperException.NotEmptyException)
@@ -204,26 +197,26 @@ namespace org.apache.zookeeper.test
 
             var hasBeenDeleted = new HasBeenDeletedWatcher();
 
-            zk.exists("/foo/bar", hasBeenDeleted);
+            await zk.existsAsync("/foo/bar", hasBeenDeleted);
 
-            epheZk.close();
+            await epheZk.closeAsync();
 
-            hasBeenDeleted.triggered.Wait();
+            await hasBeenDeleted.triggered.WaitAsync();
 
             try
             {
-                zk.getData("/foo/bar", false, null);
+                await zk.getDataAsync("/foo/bar", false);
                 Assert.fail("ephemeral node should have been deleted");
             }
             catch (KeeperException.NoNodeException)
             {
             }
 
-            multi(zk, opList);
+            await multiAsync(zk, opList);
 
             try
             {
-                zk.getData("/foo", false, null);
+                await zk.getDataAsync("/foo", false);
                 Assert.fail("persistent node should have been deleted after multi");
             }
             catch (KeeperException.NoNodeException)
@@ -233,39 +226,40 @@ namespace org.apache.zookeeper.test
 
 
         [Fact]
-        public void testChRootCreateDelete()
+        public async Task testChRootCreateDelete()
         {
+            var zk = await createClient();
             // creating the subtree for chRoot clients.
-            string chRoot = createNameSpace();
+            string chRoot = await createNameSpace();
             // Creating child using chRoot client.
-            zk_chroot = createClient(chRoot);
+            var zk_chroot = await createClient(chRoot);
             Op createChild = Op.create("/myid", new byte[0],
                     ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            multi(zk_chroot, Arrays.asList(createChild));
+            await multiAsync(zk_chroot, Arrays.asList(createChild));
 
-            Assert.assertNotNull("zNode is not created under chroot:" + chRoot, zk
-                    .exists(chRoot + "/myid", false));
-            Assert.assertNotNull("zNode is not created under chroot:" + chRoot,
-                    zk_chroot.exists("/myid", false));
+            Assert.assertNotNull("zNode is not created under chroot:" + chRoot, await zk
+                    .existsAsync(chRoot + "/myid", false));
+            Assert.assertNotNull("zNode is not created under chroot:" + chRoot, await 
+                    zk_chroot.existsAsync("/myid", false));
             Assert.assertNull("zNode is created directly under '/', ignored configured chroot",
-                    zk.exists("/myid", false));
+                    await zk.existsAsync("/myid", false));
 
             // Deleting child using chRoot client.
             Op deleteChild = Op.delete("/myid", 0);
-            multi(zk_chroot, Arrays.asList(deleteChild));
-            Assert.assertNull("zNode exists under chroot:" + chRoot, zk.exists(
+            await multiAsync(zk_chroot, Arrays.asList(deleteChild));
+            Assert.assertNull("zNode exists under chroot:" + chRoot, await zk.existsAsync(
                     chRoot + "/myid", false));
-            Assert.assertNull("zNode exists under chroot:" + chRoot, zk_chroot
-                    .exists("/myid", false));
+            Assert.assertNull("zNode exists under chroot:" + chRoot, await zk_chroot
+                    .existsAsync("/myid", false));
         }
 
         [Fact]
-        public void testChRootSetData()
+        public async Task testChRootSetData()
         {
             // creating the subtree for chRoot clients.
-            string chRoot = createNameSpace();
+            string chRoot = await createNameSpace();
             // setData using chRoot client.
-            zk_chroot = createClient(chRoot);
+            var zk_chroot = await createClient(chRoot);
             string[] names = new[] { "/multi0", "/multi1", "/multi2" };
             List<Op> ops = new List<Op>();
 
@@ -276,113 +270,119 @@ namespace org.apache.zookeeper.test
                 ops.Add(Op.setData(names[i], names[i].UTF8getBytes(), 0));
             }
 
-            multi(zk_chroot, ops);
+            await multiAsync(zk_chroot, ops);
 
             for (int i = 0; i < names.Length; i++)
             {
                 Assert.assertEquals("zNode data not matching", names[i]
-                    .UTF8getBytes(), zk_chroot.getData(names[i], false, null));
-            }
+                    .UTF8getBytes(), (await zk_chroot.getDataAsync(names[i], false)).Data);
+        }
         }
 
         [Fact]
-        public void testChRootCheck()
+        public async Task testChRootCheck()
         {
+            var zk = await createClient();
             // creating the subtree for chRoot clients.
-            string chRoot = createNameSpace();
+            string chRoot = await createNameSpace();
             // checking the child version using chRoot client.
-            zk_chroot = createClient(chRoot);
+            var zk_chroot = await createClient(chRoot);
             string[] names = { "/multi0", "/multi1", "/multi2" };
             List<Op> ops = new List<Op>();
             for (int i = 0; i < names.Length; i++)
             {
-                zk.create(chRoot + names[i], new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                await zk.createAsync(chRoot + names[i], new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE,
                         CreateMode.PERSISTENT);
             }
             for (int i = 0; i < names.Length; i++)
             {
                 ops.Add(Op.check(names[i], 0));
             }
-            multi(zk_chroot, ops);
+            await multiAsync(zk_chroot, ops);
         }
 
         [Fact]
-        public void testChRootTransaction()
+        public async Task testChRootTransaction()
         {
+            var zk = await createClient();
             // creating the subtree for chRoot clients.
-            string chRoot = createNameSpace();
+            string chRoot = await createNameSpace();
             // checking the child version using chRoot client.
-            zk_chroot = createClient(chRoot);
+            var zk_chroot = await createClient(chRoot);
             const string childPath = "/myid";
             Transaction transaction = zk_chroot.transaction();
             transaction.create(childPath, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT);
             transaction.check(childPath, 0);
             transaction.setData(childPath, childPath.UTF8getBytes(), 0);
-            commit(transaction);
+            await commitAsync(transaction);
 
-            Assert.assertNotNull("zNode is not created under chroot:" + chRoot, zk
-                    .exists(chRoot + childPath, false));
-            Assert.assertNotNull("zNode is not created under chroot:" + chRoot,
-                    zk_chroot.exists(childPath, false));
+            Assert.assertNotNull("zNode is not created under chroot:" + chRoot, await zk
+                    .existsAsync(chRoot + childPath, false));
+            Assert.assertNotNull("zNode is not created under chroot:" + chRoot, await
+                    zk_chroot.existsAsync(childPath, false));
             Assert.assertNull("zNode is created directly under '/', ignored configured chroot",
-                            zk.exists(childPath, false));
+                            await zk.existsAsync(childPath, false));
             Assert.assertEquals("zNode data not matching", childPath
-            .UTF8getBytes(), zk_chroot.getData(childPath, false, null));
+            .UTF8getBytes(), (await zk_chroot.getDataAsync(childPath, false)).Data);
 
             transaction = zk_chroot.transaction();
             // Deleting child using chRoot client.
             transaction.delete(childPath, 1);
-            commit(transaction);
+            await commitAsync(transaction);
 
-            Assert.assertNull("chroot:" + chRoot + " exists after delete", zk
-                    .exists(chRoot + "/myid", false));
-            Assert.assertNull("chroot:" + chRoot + " exists after delete",
-                    zk_chroot.exists("/myid", false));
+            Assert.assertNull("chroot:" + chRoot + " exists after delete", await zk
+                    .existsAsync(chRoot + "/myid", false));
+            Assert.assertNull("chroot:" + chRoot + " exists after delete", await
+                    zk_chroot.existsAsync("/myid", false));
         }
 
-        private string createNameSpace()
+        private async Task<string> createNameSpace()
         {
+            var zk = await createClient();
             // creating the subtree for chRoot clients.
-            String chRoot = "/appsX";
+            string chRoot = "/appsX";
             Op createChRoot = Op.create(chRoot, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT);
-            multi(zk, Arrays.asList(createChRoot));
+            await multiAsync(zk, Arrays.asList(createChRoot));
             return chRoot;
         }
 
         [Fact]
-        public void testCreate()
+        public async Task testCreate()
         {
-            multi(zk, Arrays.asList(
+            var zk = await createClient();
+            await multiAsync(zk, Arrays.asList(
                     Op.create("/multi0", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
                     Op.create("/multi1", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
                     Op.create("/multi2", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT)
                     ));
-            zk.getData("/multi0", false, null);
-            zk.getData("/multi1", false, null);
-            zk.getData("/multi2", false, null);
+            await zk.getDataAsync("/multi0", false);
+            await zk.getDataAsync("/multi1", false);
+            await zk.getDataAsync("/multi2", false);
         }
 
         [Fact]
-        public void testCreateDelete()
+        public async Task testCreateDelete()
         {
-            multi(zk, Arrays.asList(
+            var zk = await createClient();
+            await multiAsync(zk, Arrays.asList(
                     Op.create("/multi", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
                     Op.delete("/multi", 0)
                     ));
 
             // '/multi' should have been deleted
-            Assert.assertNull(zk.exists("/multi", null));
+            Assert.assertNull(await zk.existsAsync("/multi", null));
         }
 
         [Fact]
-        public void testInvalidVersion()
+        public async Task testInvalidVersion()
         {
 
+            var zk = await createClient();
             try
             {
-                multi(zk, Arrays.asList(
+                await multiAsync(zk, Arrays.asList(
                         Op.create("/multi", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
                         Op.delete("/multi", 1)
                 ));
@@ -395,9 +395,10 @@ namespace org.apache.zookeeper.test
         }
 
         [Fact]
-        public void testNestedCreate()
+        public async Task testNestedCreate()
         {
-            multi(zk, Arrays.asList(
+            var zk = await createClient();
+            await multiAsync(zk, Arrays.asList(
                     /* Create */
                     Op.create("/multi", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
                     Op.create("/multi/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
@@ -410,15 +411,16 @@ namespace org.apache.zookeeper.test
                     ));
 
             //Verify tree deleted
-            Assert.assertNull(zk.exists("/multi/a/1", null));
-            Assert.assertNull(zk.exists("/multi/a", null));
-            Assert.assertNull(zk.exists("/multi", null));
+            Assert.assertNull(await zk.existsAsync("/multi/a/1", null));
+            Assert.assertNull(await zk.existsAsync("/multi/a", null));
+            Assert.assertNull(await zk.existsAsync("/multi", null));
         }
 
         [Fact]
-        public void testSetData()
+        public async Task testSetData()
         {
 
+            var zk = await createClient();
             string[] names = new string[] { "/multi0", "/multi1", "/multi2" };
             List<Op> ops = new List<Op>();
 
@@ -428,23 +430,24 @@ namespace org.apache.zookeeper.test
                 ops.Add(Op.setData(names[i], names[i].UTF8getBytes(), 0));
             }
 
-            multi(zk, ops);
+            await multiAsync(zk, ops);
 
             for (int i = 0; i < names.Length; i++)
             {
-                Assert.assertEquals(names[i].UTF8getBytes(), zk.getData(names[i], false, null));
+                Assert.assertEquals(names[i].UTF8getBytes(), (await zk.getDataAsync(names[i], false)).Data);
             }
         }
 
         [Fact]
-        public void testUpdateConflict()
+        public async Task testUpdateConflict()
         {
 
-            Assert.assertNull(zk.exists("/multi", null));
+            var zk = await createClient();
+            Assert.assertNull(await zk.existsAsync("/multi", null));
 
             try
             {
-                multi(zk, Arrays.asList(
+                await multiAsync(zk, Arrays.asList(
                         Op.create("/multi", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
                         Op.setData("/multi", "X".UTF8getBytes(), 0),
                         Op.setData("/multi", "Y".UTF8getBytes(), 0)
@@ -457,26 +460,27 @@ namespace org.apache.zookeeper.test
                 LOG.error("STACKTRACE: " + e);
             }
 
-            Assert.assertNull(zk.exists("/multi", null));
+            Assert.assertNull(await zk.existsAsync("/multi", null));
 
             //Updating version solves conflict -- order matters
-            multi(zk, Arrays.asList(
+            await multiAsync(zk, Arrays.asList(
                     Op.create("/multi", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
                     Op.setData("/multi", "X".UTF8getBytes(), 0),
                     Op.setData("/multi", "Y".UTF8getBytes(), 1)
                     ));
 
-            Assert.assertEquals(zk.getData("/multi", false, null), "Y".UTF8getBytes());
+            Assert.assertEquals((await zk.getDataAsync("/multi", false)).Data, "Y".UTF8getBytes());
         }
 
         [Fact]
-        public void TestDeleteUpdateConflict()
+        public async Task TestDeleteUpdateConflict()
         {
 
+            var zk = await createClient();
             /* Delete of a node folowed by an update of the (now) deleted node */
             try
             {
-                multi(zk, Arrays.asList(
+                await multiAsync(zk, Arrays.asList(
                     Op.create("/multi", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
                     Op.delete("/multi", 0),
                     Op.setData("/multi", "Y".UTF8getBytes(), 0)
@@ -489,12 +493,13 @@ namespace org.apache.zookeeper.test
             }
 
             // '/multi' should never have been created as entire op should fail
-            Assert.assertNull(zk.exists("/multi", null));
+            Assert.assertNull(await zk.existsAsync("/multi", null));
         }
 
         [Fact]
-        public void TestGetResults()
+        public async Task TestGetResults()
         {
+            var zk = await createClient();
             /* Delete of a node folowed by an update of the (now) deleted node */
             var ops = Arrays.asList(
                     Op.create("/multi", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
@@ -505,13 +510,13 @@ namespace org.apache.zookeeper.test
             List<OpResult> results = null;
             try
             {
-                zk.multi(ops);
+                await zk.multiAsync(ops);
                 Assert.fail("/multi should have been deleted so setData should have failed");
             }
             catch (KeeperException e)
             {
                 // '/multi' should never have been created as entire op should fail
-                Assert.assertNull(zk.exists("/multi", null));
+                Assert.assertNull(await zk.existsAsync("/multi", null));
                 results = e.getResults();
             }
 
@@ -528,25 +533,27 @@ namespace org.apache.zookeeper.test
         }
 
         [Fact]
-        public void testWatchesTriggered()
+        public async Task testWatchesTriggered()
         {
+            var zk = await createClient();
             HasTriggeredWatcher watcher = new HasTriggeredWatcher();
-            zk.getChildren("/", watcher);
-            multi(zk, Arrays.asList(
+            await zk.getChildrenAsync("/", watcher);
+            await multiAsync(zk, Arrays.asList(
                     Op.create("/t", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
                     Op.delete("/t", -1)
             ));
-            Assert.assertTrue(watcher.triggered.Wait(CONNECTION_TIMEOUT));
+            Assert.assertTrue(await watcher.triggered.WaitAsync().WithTimeout(CONNECTION_TIMEOUT));
         }
 
         [Fact]
-        public void testNoWatchesTriggeredForFailedMultiRequest()
+        public async Task testNoWatchesTriggeredForFailedMultiRequest()
         {
+            var zk = await createClient();
             HasTriggeredWatcher watcher = new HasTriggeredWatcher();
-            zk.getChildren("/", watcher);
+            await zk.getChildrenAsync("/", watcher);
             try
             {
-                multi(zk, Arrays.asList(
+                await multiAsync(zk, Arrays.asList(
                         Op.create("/t", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
                         Op.delete("/nonexisting", -1)
                 ));
@@ -556,18 +563,16 @@ namespace org.apache.zookeeper.test
             {
                 // expected
             }
-            SyncCallback cb = new SyncCallback();
-            zk.sync("/").ContinueWith(t => cb.processResult());
-
+            
             // by waiting for the callback we're assured that the event queue is flushed
-            cb.done.Wait(CONNECTION_TIMEOUT);
-            Assert.assertEquals(false, watcher.triggered.IsSet);
+            Assert.assertTrue(await zk.sync("/").WithTimeout(CONNECTION_TIMEOUT));
         }
 
         [Fact]
-        public void testTransactionBuilder()
+        public async Task testTransactionBuilder()
         {
-            List<OpResult> results = commit(zk.transaction()
+            var zk = await createClient();
+            List<OpResult> results = await commitAsync(zk.transaction()
                     .create("/t1", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT)
                     .create("/t1/child", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT)
                     .create("/t2", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL));
@@ -578,11 +583,11 @@ namespace org.apache.zookeeper.test
                 Assert.assertTrue(c.getPath().StartsWith("/t"));
                 Assert.assertNotNull(c.ToString());
             }
-            Assert.assertNotNull(zk.exists("/t1", false));
-            Assert.assertNotNull(zk.exists("/t1/child", false));
-            Assert.assertNotNull(zk.exists("/t2", false));
+            Assert.assertNotNull(await zk.existsAsync("/t1", false));
+            Assert.assertNotNull(await zk.existsAsync("/t1/child", false));
+            Assert.assertNotNull(await zk.existsAsync("/t2", false));
 
-            results = commit(zk.transaction()
+            results = await commitAsync(zk.transaction()
                     .check("/t1", 0)
                     .check("/t1/child", 0)
                     .check("/t2", 0));
@@ -595,7 +600,7 @@ namespace org.apache.zookeeper.test
 
             try
             {
-                results = commit(zk.transaction()
+                await commitAsync(zk.transaction()
                         .check("/t1", 0)
                         .check("/t1/child", 0)
                         .check("/t2", 1));
@@ -606,7 +611,7 @@ namespace org.apache.zookeeper.test
                 // expected
             }
 
-            results = commit(zk.transaction()
+            results = await commitAsync(zk.transaction()
                     .check("/t1", 0)
                     .setData("/t1", new byte[0], 0));
             Assert.assertEquals(2, results.Count);
@@ -617,7 +622,7 @@ namespace org.apache.zookeeper.test
 
             try
             {
-                results = commit(zk.transaction()
+                results = await commitAsync(zk.transaction()
                         .check("/t1", 1)
                         .setData("/t1", new byte[0], 2));
                 Assert.fail();
@@ -627,13 +632,13 @@ namespace org.apache.zookeeper.test
                 // expected
             }
 
-            results = commit(zk.transaction()
+            results = await commitAsync(zk.transaction()
                     .check("/t1", 1)
                     .check("/t1/child", 0)
                     .check("/t2", 0));
             Assert.assertEquals(3, results.Count);
 
-            results = commit(zk.transaction()
+            results = await commitAsync(zk.transaction()
                     .delete("/t2", -1)
                     .delete("/t1/child", -1));
             Assert.assertEquals(2, results.Count);
@@ -642,14 +647,14 @@ namespace org.apache.zookeeper.test
                 OpResult.DeleteResult d = (OpResult.DeleteResult)r;
                 Assert.assertNotNull(d.ToString());
             }
-            Assert.assertNotNull(zk.exists("/t1", false));
-            Assert.assertNull(zk.exists("/t1/child", false));
-            Assert.assertNull(zk.exists("/t2", false));
+            Assert.assertNotNull(await zk.existsAsync("/t1", false));
+            Assert.assertNull(await zk.existsAsync("/t1/child", false));
+            Assert.assertNull(await zk.existsAsync("/t2", false));
         }
 
         private class HasTriggeredWatcher : Watcher
         {
-            internal readonly ManualResetEventSlim triggered = new ManualResetEventSlim(false);
+            internal readonly AsyncManualResetEvent triggered = new AsyncManualResetEvent();
 
             public override Task process(WatchedEvent @event)
             {
@@ -660,7 +665,7 @@ namespace org.apache.zookeeper.test
 
         private class HasBeenDeletedWatcher : Watcher
         {
-            internal readonly ManualResetEventSlim triggered = new ManualResetEventSlim(false);
+            internal readonly AsyncManualResetEvent triggered = new AsyncManualResetEvent();
 
             public override Task process(WatchedEvent @event)
             {
@@ -669,16 +674,6 @@ namespace org.apache.zookeeper.test
                     triggered.Set();
                 }
                 return CompletedTask;
-            }
-        }
-
-        private class SyncCallback
-        {
-            internal readonly ManualResetEventSlim done = new ManualResetEventSlim(false);
-
-            public void processResult()
-            {
-                done.Set();
             }
         }
     }

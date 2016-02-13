@@ -1,4 +1,3 @@
-using System.Threading;
 using System.Threading.Tasks;
 using org.apache.utils;
 using Xunit;
@@ -29,27 +28,24 @@ namespace org.apache.zookeeper.recipes.@lock
 	{
         private static readonly ILogProducer LOG = TypeLogger<WriteLockTest>.Instance;
 
-        private WriteLock[] nodes;
-	    private ManualResetEventSlim latch = new ManualResetEventSlim(false);
-
 	    [Fact]
-		public void testRun()
+		public Task testRun()
 		{
-			runTest(3);
+			return runTest(3);
 		}
 
 	    private sealed class LockCallback : LockListener
 		{
-			private readonly WriteLockTest outerInstance;
+			private readonly AsyncManualResetEvent asyncManualResetEvent;
 
-			public LockCallback(WriteLockTest outerInstance)
+			public LockCallback(AsyncManualResetEvent asyncManualResetEvent)
 			{
-				this.outerInstance = outerInstance;
+				this.asyncManualResetEvent = asyncManualResetEvent;
 			}
 
 			public Task lockAcquired()
 			{
-				outerInstance.latch.Set();
+                asyncManualResetEvent.Set();
 			    return Task.FromResult(0);
 			}
 
@@ -60,25 +56,26 @@ namespace org.apache.zookeeper.recipes.@lock
 
 		}
 
-	    private void runTest(int count)
+	    private async Task runTest(int count)
 		{
-			nodes = new WriteLock[count];
+			var nodes = new WriteLock[count];
+	        var asyncManualResetEvent = new AsyncManualResetEvent();
 			for (int i = 0; i < count; i++)
 			{
-				ZooKeeper keeper = createClient();
+				ZooKeeper keeper = await createClient();
 				WriteLock leader = new WriteLock(keeper, "/test", null);
-				leader.setLockListener(new LockCallback(this));
+				leader.setLockListener(new LockCallback(asyncManualResetEvent));
 				nodes[i] = leader;
 
-				leader.Lock().GetAwaiter().GetResult();
+				await leader.Lock();
 			}
 
 			// lets wait for any previous leaders to die and one of our new
 			// nodes to become the new leader
-			latch.Wait(30*1000);
+            await asyncManualResetEvent.WaitAsync().WithTimeout(30*1000);
 
 			WriteLock first = nodes[0];
-			dumpNodes(count);
+			dumpNodes(nodes,count);
 
 			// lets assert that the first election is the leader
 			Assert.assertTrue("The first znode should be the leader " + first.Id, first.Owner);
@@ -93,11 +90,11 @@ namespace org.apache.zookeeper.recipes.@lock
 			{
 			    LOG.debug("Now killing the leader");
 			    // now lets kill the leader
-			    latch = new ManualResetEventSlim(false);
-			    first.unlock().GetAwaiter().GetResult();
-			    latch.Wait(30*1000);
-			    WriteLock second = nodes[1];
-			    dumpNodes(count);
+			    asyncManualResetEvent.Reset();
+			    await first.unlock();
+                await asyncManualResetEvent.WaitAsync().WithTimeout(30 * 1000);
+                WriteLock second = nodes[1];
+			    dumpNodes(nodes, count);
 			    // lets assert that the first election is the leader
 			    Assert.assertTrue("The second znode should be the leader " + second.Id, second.Owner);
 
@@ -109,38 +106,13 @@ namespace org.apache.zookeeper.recipes.@lock
 			}
 		}
 
-	    private void dumpNodes(int count)
+	    private static void dumpNodes(WriteLock[] nodes, int count)
 		{
 			for (int i = 0; i < count; i++)
 			{
 				WriteLock node = nodes[i];
                 LOG.debug("node: " + i + " id: " + node.Id + " is leader: " + node.Owner);
 			}
-		}
-
-		public override void Dispose()
-		{
-			if (nodes != null)
-			{
-				for (int i = 0; i < nodes.Length; i++)
-				{
-					WriteLock node = nodes[i];
-					if (node != null)
-					{
-						if (i == nodes.Length - 1)
-						{
-                            LOG.debug("Not closing zookeeper: " + i + " due to bug!");
-						}
-						else
-						{
-                            LOG.debug("Closing zookeeper: " + i);
-							node.getZookeeper().closeAsync().Wait();
-                            LOG.debug("Closed zookeeper: " + i);
-						}
-					}
-				}
-			}
-			base.Dispose();
 		}
 	}
 

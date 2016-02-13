@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using org.apache.utils;
 using org.apache.zookeeper.data;
 using Xunit;
@@ -41,7 +42,7 @@ namespace org.apache.zookeeper.test
 		/// </summary>
 
         [Fact]
-		public void testAclCount() {
+		public async Task testAclCount() {
 
 		    List<ACL> CREATOR_ALL_AND_WORLD_READABLE = new List<ACL>
 		    {
@@ -50,23 +51,16 @@ namespace org.apache.zookeeper.test
 		        new ACL((int) ZooDefs.Perms.READ, ZooDefs.Ids.ANYONE_ID_UNSAFE),
 		        new ACL((int) ZooDefs.Perms.ALL, ZooDefs.Ids.AUTH_IDS)
 		    };
-
-		    try {
-		        var zk = createClient();
+		        var zk = await createClient();
 
 		        zk.addAuthInfo("digest", "pat:test".UTF8getBytes());
-		        zk.setACL("/", ZooDefs.Ids.CREATOR_ALL_ACL, -1);
+		        await zk.setACLAsync("/", ZooDefs.Ids.CREATOR_ALL_ACL, -1);
 
-		        zk.create("/path", "/path".UTF8getBytes(), CREATOR_ALL_AND_WORLD_READABLE, CreateMode.PERSISTENT);
-		        IList<ACL> acls = zk.getACL("/path", new Stat());
+		        await zk.createAsync("/path", "/path".UTF8getBytes(), CREATOR_ALL_AND_WORLD_READABLE, CreateMode.PERSISTENT);
+		        IList<ACL> acls = (await zk.getACLAsync("/path")).Acls;
 		        Assert.assertEquals(2, acls.Count);
-		        zk.setACL("/", ZooDefs.Ids.OPEN_ACL_UNSAFE, -1);
-                zk.setACL("/path", ZooDefs.Ids.OPEN_ACL_UNSAFE, -1);
-		    }
-		    catch (Exception) {
-		        // test failed somehow.
-		        Assert.assertTrue(false);
-		    }
+		        await zk.setACLAsync("/", ZooDefs.Ids.OPEN_ACL_UNSAFE, -1);
+                await zk.setACLAsync("/path", ZooDefs.Ids.OPEN_ACL_UNSAFE, -1);
 		}
 
 	}

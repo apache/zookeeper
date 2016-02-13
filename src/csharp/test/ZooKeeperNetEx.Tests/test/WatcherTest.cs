@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System.Threading;
 using System.Threading.Tasks;
 using org.apache.zookeeper.data;
 using org.apache.utils;
@@ -27,15 +26,15 @@ namespace org.apache.zookeeper.test
 {
     public class WatcherTest : ClientBase
 	{
-        private class MyWatcher : CountdownWatcher {
+        private class MyWatcher : Watcher {
             internal readonly BlockingCollection<WatchedEvent> events =
             new BlockingCollection<WatchedEvent>();
 
-        public override async Task process(WatchedEvent @event) {
-            await base.process(@event);
+        public override Task process(WatchedEvent @event) {
             if (@event.get_Type() != Event.EventType.None) {
                 events.Add(@event);
             }
+            return CompletedTask;
         }
     }
 
@@ -51,25 +50,22 @@ namespace org.apache.zookeeper.test
 
 
         [Fact]
-		public void testWatcherCorrectness()
+		public async Task testWatcherCorrectness()
 		{
 			ZooKeeper zk = null;
-			try
-			{
 				MyWatcher watcher = new MyWatcher();
-				zk = createClient(watcher);
+				zk = await createClient(watcher);
 
 				string[] names = new string[10];
 				for (int i = 0; i < names.Length; i++)
 				{
-					string name = zk.create("/tc-", "initialvalue".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+					string name = await zk.createAsync("/tc-", "initialvalue".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
 					names[i] = name;
 
-					Stat stat = new Stat();
-					zk.getData(name, watcher, stat);
-					zk.setData(name, "new".UTF8getBytes(), stat.getVersion());
-					stat = zk.exists(name, watcher);
-					zk.delete(name, stat.getVersion());
+					Stat stat = (await zk.getDataAsync(name, watcher)).Stat;
+					await zk.setDataAsync(name, "new".UTF8getBytes(), stat.getVersion());
+					stat = await zk.existsAsync(name, watcher);
+					await zk.deleteAsync(name, stat.getVersion());
 				}
 
 				for (int i = 0; i < names.Length; i++)
@@ -84,14 +80,6 @@ namespace org.apache.zookeeper.test
 					Assert.assertEquals(Watcher.Event.EventType.NodeDeleted, @event.get_Type());
 					Assert.assertEquals(Watcher.Event.KeeperState.SyncConnected, @event.getState());
 				}
-			}
-			finally
-			{
-				if (zk != null)
-				{
-					zk.close();
-				}
-			}
 		}
 	}
 

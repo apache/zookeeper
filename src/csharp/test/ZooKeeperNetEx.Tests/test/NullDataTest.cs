@@ -16,7 +16,7 @@
 // limitations under the License.
 // </summary>
 
-using System.Threading;
+using System.Threading.Tasks;
 using org.apache.utils;
 using Xunit;
 
@@ -25,28 +25,14 @@ namespace org.apache.zookeeper.test
     public sealed class NullDataTest : ClientBase {
 
         [Fact]
-		public void testNullData()
+		public async Task testNullData()
 		{
 			const string path = "/SIZE";
-			ZooKeeper zk = null;
-			zk = createClient();
-			try {
-                ManualResetEventSlim cn = new ManualResetEventSlim(false);
-				zk.create(path, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            ZooKeeper zk = await createClient();
+				await zk.createAsync(path, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 				// try sync zk exists 
-				zk.exists(path, false);
-                zk.existsAsync(path, false).ContinueWith(t => { cn.Set(); });
-                cn.Wait(10 * 1000);
-				Assert.assertTrue(cn.IsSet);
-			}
-			finally
-			{
-				if (zk != null)
-				{
-					zk.close();
-				}
-			}
-
+				await zk.existsAsync(path, false);
+				Assert.assertTrue(await zk.existsAsync(path, false).WithTimeout(10*1000));
 		}
 	}
 

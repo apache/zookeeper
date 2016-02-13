@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Text;
-using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 
 // 
@@ -25,72 +24,72 @@ namespace org.apache.zookeeper.recipes.queue {
     public sealed class DistributedQueueTest : ClientBase {
 
         [Fact]
-        public void testOffer1() {
+        public async Task testOffer1() {
             const string dir = "/testOffer1";
             const string testString = "Hello World";
             const int num_clients = 1;
             ZooKeeper[] clients = new ZooKeeper[num_clients];
             DistributedQueue[] queueHandles = new DistributedQueue[num_clients];
             for (int i = 0; i < clients.Length; i++) {
-                clients[i] = createClient();
+                clients[i] = await createClient();
                 queueHandles[i] = new DistributedQueue(clients[i], dir, null);
             }
 
-            queueHandles[0].offer(testString.UTF8getBytes()).GetAwaiter().GetResult();
+            await queueHandles[0].offer(testString.UTF8getBytes());
 
-            byte[] dequeuedBytes = queueHandles[0].remove().GetAwaiter().GetResult();
+            byte[] dequeuedBytes = await queueHandles[0].remove();
             Assert.assertEquals(dequeuedBytes.UTF8bytesToString(), testString);
         }
 
         [Fact]
-        public void testOffer2() {
+        public async Task testOffer2() {
             const string dir = "/testOffer2";
             const string testString = "Hello World";
             const int num_clients = 2;
             ZooKeeper[] clients = new ZooKeeper[num_clients];
             DistributedQueue[] queueHandles = new DistributedQueue[num_clients];
             for (int i = 0; i < clients.Length; i++) {
-                clients[i] = createClient();
+                clients[i] = await createClient();
                 queueHandles[i] = new DistributedQueue(clients[i], dir, null);
             }
 
-            queueHandles[0].offer(testString.UTF8getBytes()).GetAwaiter().GetResult();
+            await queueHandles[0].offer(testString.UTF8getBytes());
 
-            byte[] dequeuedBytes = queueHandles[1].remove().GetAwaiter().GetResult();
+            byte[] dequeuedBytes = await queueHandles[1].remove();
             Assert.assertEquals(dequeuedBytes.UTF8bytesToString(), testString);
         }
 
         [Fact]
-        public void testTake1() {
+        public async Task testTake1() {
             const string dir = "/testTake1";
             const string testString = "Hello World";
             const int num_clients = 1;
             ZooKeeper[] clients = new ZooKeeper[num_clients];
             DistributedQueue[] queueHandles = new DistributedQueue[num_clients];
             for (int i = 0; i < clients.Length; i++) {
-                clients[i] = createClient();
+                clients[i] = await createClient();
                 queueHandles[i] = new DistributedQueue(clients[i], dir, null);
             }
 
-            queueHandles[0].offer(testString.UTF8getBytes()).GetAwaiter().GetResult();
+            await queueHandles[0].offer(testString.UTF8getBytes());
 
-            byte[] dequeuedBytes = queueHandles[0].take().GetAwaiter().GetResult();
+            byte[] dequeuedBytes = await queueHandles[0].take();
             Assert.assertEquals(dequeuedBytes.UTF8bytesToString(), testString);
         }
 
         [Fact]
-        public void testRemove1() {
+        public async Task testRemove1() {
             const string dir = "/testRemove1";
             const int num_clients = 1;
             ZooKeeper[] clients = new ZooKeeper[num_clients];
             DistributedQueue[] queueHandles = new DistributedQueue[num_clients];
             for (int i = 0; i < clients.Length; i++) {
-                clients[i] = createClient();
+                clients[i] = await createClient();
                 queueHandles[i] = new DistributedQueue(clients[i], dir, null);
             }
 
             try {
-                queueHandles[0].remove().GetAwaiter().GetResult();
+                await queueHandles[0].remove();
             }
             catch (InvalidOperationException) {
                 return;
@@ -98,113 +97,110 @@ namespace org.apache.zookeeper.recipes.queue {
             Assert.assertTrue(false);
         }
 
-        private void createNremoveMtest(string dir, int n, int m) {
+        private async Task createNremoveMtest(string dir, int n, int m) {
             const string testString = "Hello World";
             const int num_clients = 2;
             ZooKeeper[] clients = new ZooKeeper[num_clients];
             DistributedQueue[] queueHandles = new DistributedQueue[num_clients];
             for (int i = 0; i < clients.Length; i++) {
-                clients[i] = createClient();
+                clients[i] = await createClient();
                 queueHandles[i] = new DistributedQueue(clients[i], dir, null);
             }
 
             for (int i = 0; i < n; i++) {
                 string offerString = testString + i;
-                queueHandles[0].offer(offerString.UTF8getBytes()).GetAwaiter().GetResult();
+                await queueHandles[0].offer(offerString.UTF8getBytes());
             }
 
             byte[] data = null;
             for (int i = 0; i < m; i++) {
-                data = queueHandles[1].remove().GetAwaiter().GetResult();
+                data = await queueHandles[1].remove();
             }
             // ReSharper disable once AssignNullToNotNullAttribute
             Assert.assertEquals(data.UTF8bytesToString(), testString + (m - 1));
         }
 
         [Fact]
-        public void testRemove2() {
-            createNremoveMtest("/testRemove2", 10, 2);
+        public Task testRemove2() {
+            return createNremoveMtest("/testRemove2", 10, 2);
         }
 
         [Fact]
-        public void testRemove3() {
-            createNremoveMtest("/testRemove3", 1000, 1000);
+        public Task testRemove3() {
+            return createNremoveMtest("/testRemove3", 1000, 1000);
         }
 
-        private void createNremoveMelementTest(string dir, int n, int m) {
+        private async Task createNremoveMelementTest(string dir, int n, int m) {
             const string testString = "Hello World";
             const int num_clients = 2;
             ZooKeeper[] clients = new ZooKeeper[num_clients];
             DistributedQueue[] queueHandles = new DistributedQueue[num_clients];
             for (int i = 0; i < clients.Length; i++) {
-                clients[i] = createClient();
+                clients[i] = await createClient();
                 queueHandles[i] = new DistributedQueue(clients[i], dir, null);
             }
 
             for (int i = 0; i < n; i++) {
                 string offerString = testString + i;
-                queueHandles[0].offer(offerString.UTF8getBytes()).GetAwaiter().GetResult();
+                await queueHandles[0].offer(offerString.UTF8getBytes());
             }
 
             for (int i = 0; i < m; i++) {
-                queueHandles[1].remove().GetAwaiter().GetResult();
+                await queueHandles[1].remove();
             }
-            Assert.assertEquals(queueHandles[1].element().GetAwaiter().GetResult().UTF8bytesToString(), testString + m);
+            Assert.assertEquals((await queueHandles[1].element()).UTF8bytesToString(), testString + m);
         }
 
         [Fact]
-        public void testElement1() {
-            createNremoveMelementTest("/testElement1", 1, 0);
+        public Task testElement1() {
+            return createNremoveMelementTest("/testElement1", 1, 0);
         }
 
         [Fact]
-        public void testElement2() {
-            createNremoveMelementTest("/testElement2", 10, 2);
+        public Task testElement2() {
+            return createNremoveMelementTest("/testElement2", 10, 2);
         }
 
         [Fact]
-        public void testElement3() {
-            createNremoveMelementTest("/testElement3", 1000, 500);
+        public Task testElement3() {
+            return createNremoveMelementTest("/testElement3", 1000, 500);
         }
 
         [Fact]
-        public void testElement4() {
-            createNremoveMelementTest("/testElement4", 1000, 1000 - 1);
+        public Task testElement4() {
+            return createNremoveMelementTest("/testElement4", 1000, 1000 - 1);
         }
 
         [Fact]
-        public void testTakeWait1() {
+        public async Task testTakeWait1() {
             const string dir = "/testTakeWait1";
             const string testString = "Hello World";
             const int num_clients = 1;
             ZooKeeper[] clients = new ZooKeeper[num_clients];
             DistributedQueue[] queueHandles = new DistributedQueue[num_clients];
             for (int i = 0; i < clients.Length; i++) {
-                clients[i] = createClient();
+                clients[i] = await createClient();
                 queueHandles[i] = new DistributedQueue(clients[i], dir, null);
             }
 
             byte[][] takeResult = new byte[1][];
-            Thread takeThread = new Thread(()=>{try {
-                  takeResult[0] = queueHandles[0].take().GetAwaiter().GetResult();
+            Task takeTask = Task.Run(async ()=>{try {
+                  takeResult[0] = await queueHandles[0].take();
                 }
                 catch (KeeperException) {
 
                 }});
-            takeThread.Start();
-
-            Thread.Sleep(1000);
-            Thread offerThread = new Thread(()=>{
+            await Task.Delay(1000);
+            Task offerTask = Task.Run(async ()=>{
                 try {
-                    queueHandles[0].offer(testString.UTF8getBytes()).GetAwaiter().GetResult();
+                    await queueHandles[0].offer(testString.UTF8getBytes());
                 }
                 catch (KeeperException) {
 
                 }});
-            offerThread.Start();
-            offerThread.Join();
+            await offerTask;
 
-            takeThread.Join();
+            await takeTask;
 
             Assert.assertTrue(takeResult[0] != null);
             // ReSharper disable once AssignNullToNotNullAttribute
@@ -212,45 +208,43 @@ namespace org.apache.zookeeper.recipes.queue {
         }
 
         [Fact]
-        public void testTakeWait2() {
+        public async Task testTakeWait2() {
             const string dir = "/testTakeWait2";
             const string testString = "Hello World";
             const int num_clients = 1;
             ZooKeeper[] clients = new ZooKeeper[num_clients];
             DistributedQueue[] queueHandles = new DistributedQueue[num_clients];
             for (int i = 0; i < clients.Length; i++) {
-                clients[i] = createClient();
+                clients[i] = await createClient();
                 queueHandles[i] = new DistributedQueue(clients[i], dir, null);
             }
             const int num_attempts = 2;
             for (int i = 0; i < num_attempts; i++) {
                 byte[][] takeResult = new byte[1][];
                 string threadTestString = testString + i;
-                Thread takeThread = new Thread(() =>
+                Task takeTask = Task.Run(async() =>
                 {
                     try {
-                        takeResult[0] = queueHandles[0].take().GetAwaiter().GetResult();
+                        takeResult[0] = await queueHandles[0].take();
                     }
                     catch (KeeperException) {
 
                     }
                 });
-                takeThread.Start();
 
-                Thread.Sleep(1000);
-                Thread offerThread = new Thread(() =>
+                await Task.Delay(1000);
+                Task offerTask = Task.Run(async () =>
                 {
                     try {
-                        queueHandles[0].offer(threadTestString.UTF8getBytes()).GetAwaiter().GetResult();
+                        await queueHandles[0].offer(threadTestString.UTF8getBytes());
                     }
                     catch (KeeperException) {
 
                     }
                 });
-                offerThread.Start();
-                offerThread.Join();
+                await offerTask;
 
-                takeThread.Join();
+                await takeTask;
 
                 Assert.assertTrue(takeResult[0] != null);
                 // ReSharper disable once AssignNullToNotNullAttribute

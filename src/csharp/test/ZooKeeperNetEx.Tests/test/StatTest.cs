@@ -16,6 +16,7 @@
 // limitations under the License.
 // </summary>
 
+using System.Threading.Tasks;
 using org.apache.zookeeper.data;
 using org.apache.utils;
 using Xunit;
@@ -24,52 +25,14 @@ namespace org.apache.zookeeper.test
 {
     public sealed class StatTest : ClientBase
 	{
-		private ZooKeeper zk;
-
-		public StatTest()
-		{
-			zk = createClient();
-		}
-
-		public override void Dispose()
-		{
-			base.Dispose();
-
-			zk.close();
-		}
-
-		// <summary>
-		// Create a new Stat, fill in dummy values trying to catch Assert.failure
-		// to copy in client or server code.
-		// </summary>
-		// <returns> a new stat with dummy values </returns>
-        private static Stat newStat()
-		{
-			Stat stat = new Stat();
-
-			stat.setAversion(100);
-			stat.setCtime(100);
-			stat.setCversion(100);
-			stat.setCzxid(100);
-			stat.setDataLength(100);
-			stat.setEphemeralOwner(100);
-			stat.setMtime(100);
-			stat.setMzxid(100);
-			stat.setNumChildren(100);
-			stat.setPzxid(100);
-			stat.setVersion(100);
-
-			return stat;
-		}
-
         [Fact]
-		public void testBasic()
+		public async Task testBasic()
 		{
-			const string name = "/foo";
-			zk.create(name, name.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-
-            var stat = newStat();
-			zk.getData(name, false, stat);
+            var zk = await createClient();
+            const string name = "/foo";
+			await zk.createAsync(name, name.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            
+            var stat=(await zk.getDataAsync(name, false)).Stat;
 
 			Assert.assertEquals(stat.getCzxid(), stat.getMzxid());
 			Assert.assertEquals(stat.getCzxid(), stat.getPzxid());
@@ -83,16 +46,16 @@ namespace org.apache.zookeeper.test
 		}
 
         [Fact]
-		public void testChild()
+		public async Task testChild()
 		{
-			const string name = "/foo";
-			zk.create(name, name.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            var zk = await createClient();
+            const string name = "/foo";
+			await zk.createAsync(name, name.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
 			const string childname = name + "/bar";
-			zk.create(childname, childname.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+			await zk.createAsync(childname, childname.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
 
-            var stat = newStat();
-			zk.getData(name, false, stat);
+            var stat = (await zk.getDataAsync(name, false)).Stat;
 
 			Assert.assertEquals(stat.getCzxid(), stat.getMzxid());
 			Assert.assertEquals(stat.getCzxid() + 1, stat.getPzxid());
@@ -104,8 +67,7 @@ namespace org.apache.zookeeper.test
 			Assert.assertEquals(name.Length, stat.getDataLength());
 			Assert.assertEquals(1, stat.getNumChildren());
 
-			stat = newStat();
-			zk.getData(childname, false, stat);
+			stat = (await zk.getDataAsync(childname, false)).Stat;
 
 			Assert.assertEquals(stat.getCzxid(), stat.getMzxid());
 			Assert.assertEquals(stat.getCzxid(), stat.getPzxid());
@@ -119,18 +81,18 @@ namespace org.apache.zookeeper.test
 		}
 
         [Fact]
-		public void testChildren()
+		public async Task testChildren()
 		{
-			const string name = "/foo";
-			zk.create(name, name.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            var zk = await createClient();
+            const string name = "/foo";
+			await zk.createAsync(name, name.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
 			for (int i = 0; i < 10; i++)
 			{
 				string childname = name + "/bar" + i;
-				zk.create(childname, childname.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+				await zk.createAsync(childname, childname.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
 
-			    var stat = newStat();
-				zk.getData(name, false, stat);
+			    var stat = (await zk.getDataAsync(name, false)).Stat;
 
 				Assert.assertEquals(stat.getCzxid(), stat.getMzxid());
 				Assert.assertEquals(stat.getCzxid() + i + 1, stat.getPzxid());
@@ -145,13 +107,13 @@ namespace org.apache.zookeeper.test
 		}
 
         [Fact]
-		public void testDataSizeChange()
+		public async Task testDataSizeChange()
 		{
-			const string name = "/foo";
-			zk.create(name, name.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            var zk = await createClient();
+            const string name = "/foo";
+			await zk.createAsync(name, name.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-            var stat = newStat();
-			zk.getData(name, false, stat);
+            var stat = (await zk.getDataAsync(name, false)).Stat;
 
 			Assert.assertEquals(stat.getCzxid(), stat.getMzxid());
 			Assert.assertEquals(stat.getCzxid(), stat.getPzxid());
@@ -163,10 +125,9 @@ namespace org.apache.zookeeper.test
 			Assert.assertEquals(name.Length, stat.getDataLength());
 			Assert.assertEquals(0, stat.getNumChildren());
 
-			zk.setData(name, (name + name).UTF8getBytes(), -1);
+			await zk.setDataAsync(name, (name + name).UTF8getBytes(), -1);
 
-			stat = newStat();
-			zk.getData(name, false, stat);
+			stat = (await zk.getDataAsync(name, false)).Stat;
 
 			Assert.assertNotEquals(stat.getCzxid(), stat.getMzxid());
 			Assert.assertEquals(stat.getCzxid(), stat.getPzxid());

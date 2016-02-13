@@ -16,6 +16,7 @@
 // limitations under the License.
 // </summary>
 
+using System.Threading.Tasks;
 using org.apache.utils;
 using Xunit;
 
@@ -24,21 +25,19 @@ namespace org.apache.zookeeper.test
     public sealed class ACLRootTest : ClientBase
 	{
         [Fact]
-		public void testRootAcl()
+		public async Task testRootAcl()
 		{
-			ZooKeeper zk = createClient();
-			try
-			{
+			var zk = await createClient();
 				// set auth using digest
 				zk.addAuthInfo("digest", "pat:test".UTF8getBytes());
-				zk.setACL("/", ZooDefs.Ids.CREATOR_ALL_ACL, -1);
-				zk.getData("/", false, null);
-				zk.close();
+				await zk.setACLAsync("/", ZooDefs.Ids.CREATOR_ALL_ACL, -1);
+				await zk.getDataAsync("/", false);
+                await zk.closeAsync();
 				// verify no access
-				zk = createClient();
+				zk = await createClient();
 				try
 				{
-					zk.getData("/", false, null);
+					await zk.getDataAsync("/", false);
 					Assert.fail("validate auth");
 				}
 				catch (KeeperException.NoAuthException)
@@ -47,7 +46,7 @@ namespace org.apache.zookeeper.test
 				}
 				try
 				{
-					zk.create("/apps", null, ZooDefs.Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
+					await zk.createAsync("/apps", null, ZooDefs.Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
 					Assert.fail("validate auth");
 				}
 				catch (KeeperException.InvalidACLException)
@@ -57,46 +56,43 @@ namespace org.apache.zookeeper.test
 				zk.addAuthInfo("digest", "world:anyone".UTF8getBytes());
 				try
 				{
-					zk.create("/apps", null, ZooDefs.Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
+					await zk.createAsync("/apps", null, ZooDefs.Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
 					Assert.fail("validate auth");
 				}
 				catch (KeeperException.NoAuthException)
 				{
 					// expected
 				}
-				zk.close();
+                await zk.closeAsync();
 				// verify access using original auth
-				zk = createClient();
+				zk = await createClient();
 				zk.addAuthInfo("digest", "pat:test".UTF8getBytes());
-				zk.getData("/", false, null);
-				zk.create("/apps", null, ZooDefs.Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
-				zk.delete("/apps", -1);
+				await zk.getDataAsync("/", false);
+				await zk.createAsync("/apps", null, ZooDefs.Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
+				await zk.deleteAsync("/apps", -1);
 				// reset acl (back to open) and verify accessible again
-				zk.setACL("/", ZooDefs.Ids.OPEN_ACL_UNSAFE, -1);
-				zk.close();
-				zk = createClient();
-				zk.getData("/", false, null);
-				zk.create("/apps", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+				await zk.setACLAsync("/", ZooDefs.Ids.OPEN_ACL_UNSAFE, -1);
+                await zk.closeAsync();
+
+                zk = await createClient();
+				await zk.getDataAsync("/", false);
+				await zk.createAsync("/apps", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 				try
 				{
-					zk.create("/apps", null, ZooDefs.Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
+					await zk.createAsync("/apps", null, ZooDefs.Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
 					Assert.fail("validate auth");
 				}
 				catch (KeeperException.InvalidACLException)
 				{
 					// expected
 				}
-				zk.delete("/apps", -1);
+				await zk.deleteAsync("/apps", -1);
 				zk.addAuthInfo("digest", "world:anyone".UTF8getBytes());
-				zk.create("/apps", null, ZooDefs.Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
-				zk.close();
-				zk = createClient();
-				zk.delete("/apps", -1);
-			}
-			finally
-			{
-				zk.close();
-			}
+				await zk.createAsync("/apps", null, ZooDefs.Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
+                await zk.closeAsync();
+
+                zk = await createClient();
+				await zk.deleteAsync("/apps", -1);
 		}
 	}
 

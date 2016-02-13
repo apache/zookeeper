@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using org.apache.utils;
 using org.apache.zookeeper.data;
@@ -35,60 +33,45 @@ namespace org.apache.zookeeper.test {
         /// <summary>
         /// Verify that pings are sent, keeping the "idle" client alive </summary>
         [Fact]
-        public void testPing() {
-            ZooKeeper zkIdle = null;
-            ZooKeeper zkWatchCreator = null;
-            try {
-                CountdownWatcher watcher = new CountdownWatcher();
-                zkIdle = createClient(watcher, 10000);
+        public async Task testPing() {
+                ZooKeeper zkIdle = await createClient();
 
-                zkWatchCreator = createClient();
+                ZooKeeper zkWatchCreator = await createClient();
 
                 for (int i = 0; i < 10; i++) {
-                    zkWatchCreator.create("/" + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                    await zkWatchCreator.createAsync("/" + i, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                 }
                 for (int i = 0; i < 10; i++) {
-                    zkIdle.exists("/" + i, true);
+                    await zkIdle.existsAsync("/" + i, true);
                 }
                 for (int i = 0; i < 10; i++) {
-                    Thread.Sleep(1000);
-                    zkWatchCreator.delete("/" + i, -1);
+                    await Task.Delay(1000);
+                    await zkWatchCreator.deleteAsync("/" + i, -1);
                 }
                 // The bug will manifest itself here because zkIdle will expire
-                zkIdle.exists("/0", false);
-            }
-            finally {
-                if (zkIdle != null) {
-                    zkIdle.close();
-                }
-                if (zkWatchCreator != null) {
-                    zkWatchCreator.close();
-                }
-            }
+                await zkIdle.existsAsync("/0", false);
         }
 
 
 
         [Fact]
-        public void testClientwithoutWatcherObj() {
-            performClientTest(false);
+        public Task testClientwithoutWatcherObj() {
+            return performClientTest(false);
         }
 
 
 
         [Fact]
-        public void testClientWithWatcherObj() {
-            performClientTest(true);
+        public Task testClientWithWatcherObj() {
+            return performClientTest(true);
         }
         
 
         [Fact]
-        public void testACLs() {
-            ZooKeeper zk = null;
-            try {
-                zk = createClient();
+        public async Task testACLs() {
+            ZooKeeper zk = await createClient();
                 try {
-                    zk.create("/acltest", new byte[0], ZooDefs.Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
+                    await zk.createAsync("/acltest", new byte[0], ZooDefs.Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
                     Assert.fail("Should have received an invalid acl error");
                 }
                 catch (KeeperException.InvalidACLException e) {
@@ -98,56 +81,50 @@ namespace org.apache.zookeeper.test {
                     List<ACL> testACL = new List<ACL>();
                     testACL.Add(new ACL((int) (ZooDefs.Perms.ALL | ZooDefs.Perms.ADMIN), ZooDefs.Ids.AUTH_IDS));
                     testACL.Add(new ACL((int) (ZooDefs.Perms.ALL | ZooDefs.Perms.ADMIN), new Id("ip", "127.0.0.1/8")));
-                    zk.create("/acltest", new byte[0], testACL, CreateMode.PERSISTENT);
+                    await zk.createAsync("/acltest", new byte[0], testACL, CreateMode.PERSISTENT);
                     Assert.fail("Should have received an invalid acl error");
                 }
                 catch (KeeperException.InvalidACLException e) {
                     LOG.info("Test successful, invalid acl received : " + e.Message);
                 }
                 zk.addAuthInfo("digest", "ben:passwd".UTF8getBytes());
-                zk.create("/acltest", new byte[0], ZooDefs.Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
-                zk.close();
-                zk = createClient();
+                await zk.createAsync("/acltest", new byte[0], ZooDefs.Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
+                await zk.closeAsync();
+
+                zk = await createClient();
                 zk.addAuthInfo("digest", "ben:passwd2".UTF8getBytes());
                 try {
-                    zk.getData("/acltest", false, new Stat());
+                    await zk.getDataAsync("/acltest", false);
                     Assert.fail("Should have received a permission error");
                 }
                 catch (KeeperException e) {
                     Assert.assertEquals(KeeperException.Code.NOAUTH, e.getCode());
                 }
                 zk.addAuthInfo("digest", "ben:passwd".UTF8getBytes());
-                zk.getData("/acltest", false, new Stat());
-                zk.setACL("/acltest", ZooDefs.Ids.OPEN_ACL_UNSAFE, -1);
-                zk.close();
-                zk = createClient();
-                zk.getData("/acltest", false, new Stat());
-                IList<ACL> acls = zk.getACL("/acltest", new Stat());
+                await zk.getDataAsync("/acltest", false);
+                await zk.setACLAsync("/acltest", ZooDefs.Ids.OPEN_ACL_UNSAFE, -1);
+                await zk.closeAsync();
+
+                zk = await createClient();
+                await zk.getDataAsync("/acltest", false);
+                IList<ACL> acls = (await zk.getACLAsync("/acltest")).Acls;
                 Assert.assertEquals(1, acls.Count);
                 Assert.assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE, acls);
 
                 // The stat parameter should be optional.
-                acls = zk.getACL("/acltest", null);
+                acls = (await zk.getACLAsync("/acltest")).Acls;
                 Assert.assertEquals(1, acls.Count);
                 Assert.assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE, acls);
-
-                zk.close();
-            }
-            finally {
-                if (zk != null) {
-                    zk.close();
-                }
-            }
         }
 
-        private class MyWatcher : CountdownWatcher {
+        private class MyWatcher : Watcher {
             internal readonly BlockingCollection<WatchedEvent> events = new BlockingCollection<WatchedEvent>();
 
-            public override async Task process(WatchedEvent @event) {
-                await base.process(@event);
+            public override Task process(WatchedEvent @event) {
                 if (@event.get_Type() != Event.EventType.None) {
                     events.Add(@event);
                 }
+                return CompletedTask;
             }
         }
 
@@ -156,33 +133,31 @@ namespace org.apache.zookeeper.test {
         /// in the right order.
         /// </summary>
         [Fact]
-        public void testMutipleWatcherObjs() {
-            ZooKeeper zk = createClient(new CountdownWatcher());
-            try {
+        public async Task testMutipleWatcherObjs() {
+            ZooKeeper zk = await createClient();
                 MyWatcher[] watchers = new MyWatcher[100];
                 MyWatcher[] watchers2 = new MyWatcher[watchers.Length];
                 for (int i = 0; i < watchers.Length; i++) {
                     watchers[i] = new MyWatcher();
                     watchers2[i] = new MyWatcher();
-                    zk.create("/foo-" + i, ("foodata" + i).UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                    await zk.createAsync("/foo-" + i, ("foodata" + i).UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
                         CreateMode.PERSISTENT);
                 }
-                Stat stat = new Stat();
 
                 //
                 // test get/exists with single set of watchers
                 //   get all, then exists all
                 //
                 for (int i = 0; i < watchers.Length; i++) {
-                    Assert.assertNotNull(zk.getData("/foo-" + i, watchers[i], stat));
-                }
+                    Assert.assertNotNull((await zk.getDataAsync("/foo-" + i, watchers[i])).Data);
+            }
                 for (int i = 0; i < watchers.Length; i++) {
-                    Assert.assertNotNull(zk.exists("/foo-" + i, watchers[i]));
+                    Assert.assertNotNull(await zk.existsAsync("/foo-" + i, watchers[i]));
                 }
                 // trigger the watches
                 for (int i = 0; i < watchers.Length; i++) {
-                    zk.setData("/foo-" + i, ("foodata2-" + i).UTF8getBytes(), -1);
-                    zk.setData("/foo-" + i, ("foodata3-" + i).UTF8getBytes(), -1);
+                    await zk.setDataAsync("/foo-" + i, ("foodata2-" + i).UTF8getBytes(), -1);
+                    await zk.setDataAsync("/foo-" + i, ("foodata3-" + i).UTF8getBytes(), -1);
                 }
                 for (int i = 0; i < watchers.Length; i++) {
                     WatchedEvent @event = watchers[i].events.poll(10 * 1000);
@@ -201,13 +176,13 @@ namespace org.apache.zookeeper.test {
                 //  get/exists together
                 //
                 for (int i = 0; i < watchers.Length; i++) {
-                    Assert.assertNotNull(zk.getData("/foo-" + i, watchers[i], stat));
-                    Assert.assertNotNull(zk.exists("/foo-" + i, watchers[i]));
+                    Assert.assertNotNull((await zk.getDataAsync("/foo-" + i, watchers[i])).Data);
+                Assert.assertNotNull(await zk.existsAsync("/foo-" + i, watchers[i]));
                 }
                 // trigger the watches
                 for (int i = 0; i < watchers.Length; i++) {
-                    zk.setData("/foo-" + i, ("foodata4-" + i).UTF8getBytes(), -1);
-                    zk.setData("/foo-" + i, ("foodata5-" + i).UTF8getBytes(), -1);
+                    await zk.setDataAsync("/foo-" + i, ("foodata4-" + i).UTF8getBytes(), -1);
+                    await zk.setDataAsync("/foo-" + i, ("foodata5-" + i).UTF8getBytes(), -1);
                 }
                 for (int i = 0; i < watchers.Length; i++) {
                     WatchedEvent @event = watchers[i].events.poll(10 * 1000);
@@ -225,13 +200,13 @@ namespace org.apache.zookeeper.test {
                 // test get/exists with two sets of watchers
                 //
                 for (int i = 0; i < watchers.Length; i++) {
-                    Assert.assertNotNull(zk.getData("/foo-" + i, watchers[i], stat));
-                    Assert.assertNotNull(zk.exists("/foo-" + i, watchers2[i]));
+                    Assert.assertNotNull((await zk.getDataAsync("/foo-" + i, watchers[i])).Data);
+                Assert.assertNotNull(await zk.existsAsync("/foo-" + i, watchers2[i]));
                 }
                 // trigger the watches
                 for (int i = 0; i < watchers.Length; i++) {
-                    zk.setData("/foo-" + i, ("foodata6-" + i).UTF8getBytes(), -1);
-                    zk.setData("/foo-" + i, ("foodata7-" + i).UTF8getBytes(), -1);
+                    await zk.setDataAsync("/foo-" + i, ("foodata6-" + i).UTF8getBytes(), -1);
+                    await zk.setDataAsync("/foo-" + i, ("foodata7-" + i).UTF8getBytes(), -1);
                 }
                 for (int i = 0; i < watchers.Length; i++) {
                     WatchedEvent @event = watchers[i].events.poll(10 * 1000);
@@ -255,26 +230,18 @@ namespace org.apache.zookeeper.test {
                     //  we check events
                     Assert.assertEquals(0, watchers2[i].events.size());
                 }
-
-            }
-            finally {
-                if (zk != null) {
-                    zk.close();
-                }
-            }
         }
 
 
-        private void performClientTest(bool withWatcherObj) {
+        private async Task performClientTest(bool withWatcherObj) {
             ZooKeeper zk = null;
-            try {
                 MyWatcher watcher = new MyWatcher();
-                zk = createClient(watcher);
+                zk = await createClient(watcher);
                 LOG.info("Before create /benwashere");
-                zk.create("/benwashere", "".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                await zk.createAsync("/benwashere", "".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                 LOG.info("After create /benwashere");
                 try {
-                    zk.setData("/benwashere", "hi".UTF8getBytes(), 57);
+                    await zk.setDataAsync("/benwashere", "hi".UTF8getBytes(), 57);
                     Assert.fail("Should have gotten BadVersion exception");
                 }
                 catch (KeeperException.BadVersionException) {
@@ -284,50 +251,49 @@ namespace org.apache.zookeeper.test {
                     Assert.fail("Should have gotten BadVersion exception");
                 }
                 LOG.info("Before delete /benwashere");
-                zk.delete("/benwashere", 0);
+                await zk.deleteAsync("/benwashere", 0);
                 LOG.info("After delete /benwashere");
-                zk.close();
                 //LOG.info("Closed client: " + zk.describeCNXN());
-                Thread.Sleep(2000);
+                await Task.Delay(2000);
 
-                zk = createClient(watcher);
+                zk = await createClient(watcher);
                 //LOG.info("Created a new client: " + zk.describeCNXN());
                 LOG.info("Before delete /");
 
                 try {
-                    zk.delete("/", -1);
+                    await zk.deleteAsync("/", -1);
                     Assert.fail("deleted root!");
                 }
                 catch (KeeperException.BadArgumentsException) {
                     // good, expected that
                 }
-                Stat stat = new Stat();
+
                 // Test basic create, ls, and getData
-                zk.create("/pat", "Pat was here".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                await zk.createAsync("/pat", "Pat was here".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                 LOG.info("Before create /ben");
-                zk.create("/pat/ben", "Ben was here".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                await zk.createAsync("/pat/ben", "Ben was here".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                 LOG.info("Before getChildren /pat");
-                List<string> children = zk.getChildren("/pat", false);
+                List<string> children = (await zk.getChildrenAsync("/pat", false)).Children;
                 Assert.assertEquals(1, children.Count);
                 Assert.assertEquals("ben", children[0]);
-                IList<string> children2 = zk.getChildren("/pat", false, null);
+                IList<string> children2 = (await zk.getChildrenAsync("/pat", false)).Children;
                 Assert.assertEquals(children, children2);
-                Assert.assertEquals("Ben was here", zk.getData("/pat/ben", false, stat).UTF8bytesToString());
+                Assert.assertEquals("Ben was here", (await zk.getDataAsync("/pat/ben", false)).Data.UTF8bytesToString());
                 // Test stat and watch of non existent node
 
                 try {
                     if (withWatcherObj) {
-                        Assert.assertEquals(null, zk.exists("/frog", watcher));
+                        Assert.assertEquals(null, await zk.existsAsync("/frog", watcher));
                     }
                     else {
-                        Assert.assertEquals(null, zk.exists("/frog", true));
+                        Assert.assertEquals(null, await zk.existsAsync("/frog", true));
                     }
                     LOG.info("Comment: asseting passed for frog setting /");
                 }
                 catch (KeeperException.NoNodeException) {
                     // OK, expected that
                 }
-                zk.create("/frog", "hi".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                await zk.createAsync("/frog", "hi".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                 // the first poll is just a session delivery
                 LOG.info("Comment: checking for events length " + watcher.events.size());
                 WatchedEvent @event = watcher.events.poll(10 * 1000);
@@ -335,12 +301,12 @@ namespace org.apache.zookeeper.test {
                 Assert.assertEquals(Watcher.Event.EventType.NodeCreated, @event.get_Type());
                 Assert.assertEquals(Watcher.Event.KeeperState.SyncConnected, @event.getState());
                 // Test child watch and create with sequence
-                zk.getChildren("/pat/ben", true);
+                await zk.getChildrenAsync("/pat/ben", true);
                 for (int i = 0; i < 10; i++) {
-                    zk.create("/pat/ben/" + i + "-", Convert.ToString(i).UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                    await zk.createAsync("/pat/ben/" + i + "-", Convert.ToString(i).UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
                         CreateMode.PERSISTENT_SEQUENTIAL);
                 }
-                children = zk.getChildren("/pat/ben", false);
+                children = (await zk.getChildrenAsync("/pat/ben", false)).Children;
                 children.Sort();
                 Assert.assertEquals(10, children.Count);
                 for (int i = 0; i < 10; i++) {
@@ -348,22 +314,23 @@ namespace org.apache.zookeeper.test {
 
                     string name = children[i];
                     Assert.assertTrue("starts with -", name.StartsWith(i + "-", StringComparison.Ordinal));
-                    byte[] b;
+                    DataResult dataResult;
                     if (withWatcherObj) {
-                        b = zk.getData("/pat/ben/" + name, watcher, stat);
+                        dataResult = await zk.getDataAsync("/pat/ben/" + name, watcher);
                     }
                     else {
-                        b = zk.getData("/pat/ben/" + name, true, stat);
+                        dataResult = await zk.getDataAsync("/pat/ben/" + name, true);
                     }
-                    Assert.assertEquals(i, int.Parse(b.UTF8bytesToString()));
-                    zk.setData("/pat/ben/" + name, "new".UTF8getBytes(), stat.getVersion());
+                    Assert.assertEquals(i, int.Parse(dataResult.Data.UTF8bytesToString()));
+                    await zk.setDataAsync("/pat/ben/" + name, "new".UTF8getBytes(), dataResult.Stat.getVersion());
+                    Stat stat;
                     if (withWatcherObj) {
-                        stat = zk.exists("/pat/ben/" + name, watcher);
+                        stat = await zk.existsAsync("/pat/ben/" + name, watcher);
                     }
                     else {
-                        stat = zk.exists("/pat/ben/" + name, true);
+                        stat = await zk.existsAsync("/pat/ben/" + name, true);
                     }
-                    zk.delete("/pat/ben/" + name, stat.getVersion());
+                    await zk.deleteAsync("/pat/ben/" + name, stat.getVersion());
                 }
                 @event = watcher.events.poll(10 * 1000);
                 Assert.assertEquals("/pat/ben", @event.getPath());
@@ -382,84 +349,67 @@ namespace org.apache.zookeeper.test {
                     Assert.assertEquals(Watcher.Event.EventType.NodeDeleted, @event.get_Type());
                     Assert.assertEquals(Watcher.Event.KeeperState.SyncConnected, @event.getState());
                 }
-                zk.create("/good\u0040path", "".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                await zk.createAsync("/good\u0040path", "".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-                zk.create("/duplicate", "".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                await zk.createAsync("/duplicate", "".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                 try {
-                    zk.create("/duplicate", "".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                    await zk.createAsync("/duplicate", "".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                     Assert.fail("duplicate create allowed");
                 }
                 catch (KeeperException.NodeExistsException) {
                     // OK, expected that
                 }
-            }
-            finally {
-                if (zk != null) {
-                    zk.close();
-                }
-            }
         }
 
         // Test that sequential filenames are being created correctly,
         // with 0-padding in the filename
 
         [Fact]
-        public void testSequentialNodeNames() {
+        public async Task testSequentialNodeNames() {
             string path = "/SEQUENCE";
             string file = "TEST";
             string filepath = path + "/" + file;
 
-            ZooKeeper zk = null;
-            try {
-                zk = createClient();
-                zk.create(path, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-                zk.create(filepath, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
-                IList<string> children = zk.getChildren(path, false);
+            ZooKeeper zk = await createClient();
+                await zk.createAsync(path, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                await zk.createAsync(filepath, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+                IList<string> children = (await zk.getChildrenAsync(path, false)).Children;
                 Assert.assertEquals(1, children.Count);
                 Assert.assertEquals(file + "0000000000", children[0]);
 
-                zk.create(filepath, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
-                children = zk.getChildren(path, false);
+                await zk.createAsync(filepath, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+                children = (await zk.getChildrenAsync(path, false)).Children;
                 Assert.assertEquals(2, children.Count);
                 Assert.assertTrue("contains child 1", children.Contains(file + "0000000001"));
 
-                zk.create(filepath, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
-                children = zk.getChildren(path, false);
+                await zk.createAsync(filepath, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+                children = (await zk.getChildrenAsync(path, false)).Children;
                 Assert.assertEquals(3, children.Count);
                 Assert.assertTrue("contains child 2", children.Contains(file + "0000000002"));
 
                 // The pattern is holding so far.  Let's run the counter a bit
                 // to be sure it continues to spit out the correct answer
                 for (int i = children.Count; i < 105; i++) {
-                    zk.create(filepath, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+                    await zk.createAsync(filepath, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
                 }
 
-                children = zk.getChildren(path, false);
+                children = (await zk.getChildrenAsync(path, false)).Children;
                 Assert.assertTrue("contains child 104", children.Contains(file + "0000000104"));
-
-            }
-            finally {
-                if (zk != null) {
-                    zk.close();
-                }
-            }
         }
 
         // Test that data provided when 
         // creating sequential nodes is stored properly
         [Fact]
-        public void testSequentialNodeData() {
-            ZooKeeper zk = null;
+        public async Task testSequentialNodeData() {
             const string queue_handle = "/queue";
-            try {
-                zk = createClient();
+                ZooKeeper zk = await createClient();
 
-                zk.create(queue_handle, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-                zk.create(queue_handle + "/element", "0".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                await zk.createAsync(queue_handle, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                await zk.createAsync(queue_handle + "/element", "0".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT_SEQUENTIAL);
-                zk.create(queue_handle + "/element", "1".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                await zk.createAsync(queue_handle + "/element", "1".UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT_SEQUENTIAL);
-                IList<string> children = zk.getChildren(queue_handle, true);
+                IList<string> children = (await zk.getChildrenAsync(queue_handle, true)).Children;
                 Assert.assertEquals(children.Count, 2);
                 string child1 = children[0];
                 string child2 = children[1];
@@ -472,40 +422,25 @@ namespace org.apache.zookeeper.test {
                     child1 = child2;
                     child2 = temp;
                 }
-                string child1data = zk.getData(queue_handle + "/" + child1, false, null).UTF8bytesToString();
-                string child2data = zk.getData(queue_handle + "/" + child2, false, null).UTF8bytesToString();
+                string child1data = (await zk.getDataAsync(queue_handle + "/" + child1, false)).Data.UTF8bytesToString();
+                string child2data = (await zk.getDataAsync(queue_handle + "/" + child2, false)).Data.UTF8bytesToString();
                 Assert.assertEquals(child1data, "0");
                 Assert.assertEquals(child2data, "1");
-            }
-            finally {
-                if (zk != null) {
-                    zk.close();
-                }
-            }
-
         }
         
         [Fact]
-        public void testLargeNodeData() {
+        public async Task testLargeNodeData() {
             ZooKeeper zk = null;
             const string queue_handle = "/large";
-            try {
-                zk = createClient();
+                zk = await createClient();
 
-                zk.create(queue_handle, new byte[500000], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            }
-            finally {
-                if (zk != null) {
-                    zk.close();
-                }
-            }
-
+                await zk.createAsync(queue_handle, new byte[500000], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         }
 
 
-        private void verifyCreateFails(string path, ZooKeeper zk) {
+        private async Task verifyCreateFails(string path, ZooKeeper zk) {
             try {
-                zk.create(path, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                await zk.createAsync(path, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
             catch (ArgumentException) {
                 // this is good
@@ -516,37 +451,36 @@ namespace org.apache.zookeeper.test {
 
         // Test that the path string is validated
         [Fact]
-        public void testPathValidation() {
-            ZooKeeper zk = createClient();
+        public async Task testPathValidation() {
+            ZooKeeper zk = await createClient();
+            await Task.WhenAll(
+                verifyCreateFails(null, zk),
+                verifyCreateFails("", zk),
+                verifyCreateFails("//", zk),
+                verifyCreateFails("///", zk),
+                verifyCreateFails("////", zk),
+                verifyCreateFails("/.", zk),
+                verifyCreateFails("/..", zk),
+                verifyCreateFails("/./", zk),
+                verifyCreateFails("/../", zk),
+                verifyCreateFails("/foo/./", zk),
+                verifyCreateFails("/foo/../", zk),
+                verifyCreateFails("/foo/.", zk),
+                verifyCreateFails("/foo/..", zk),
+                verifyCreateFails("/./.", zk),
+                verifyCreateFails("/../..", zk),
+                verifyCreateFails("/\u0001foo", zk),
+                verifyCreateFails("/foo/bar/", zk),
+                verifyCreateFails("/foo//bar", zk),
+                verifyCreateFails("/foo/bar//", zk),
+                verifyCreateFails("foo", zk),
+                verifyCreateFails("a", zk));
 
-            verifyCreateFails(null, zk);
-            verifyCreateFails("", zk);
-            verifyCreateFails("//", zk);
-            verifyCreateFails("///", zk);
-            verifyCreateFails("////", zk);
-            verifyCreateFails("/.", zk);
-            verifyCreateFails("/..", zk);
-            verifyCreateFails("/./", zk);
-            verifyCreateFails("/../", zk);
-            verifyCreateFails("/foo/./", zk);
-            verifyCreateFails("/foo/../", zk);
-            verifyCreateFails("/foo/.", zk);
-            verifyCreateFails("/foo/..", zk);
-            verifyCreateFails("/./.", zk);
-            verifyCreateFails("/../..", zk);
-            verifyCreateFails("/\u0001foo", zk);
-            verifyCreateFails("/foo/bar/", zk);
-            verifyCreateFails("/foo//bar", zk);
-            verifyCreateFails("/foo/bar//", zk);
-
-            verifyCreateFails("foo", zk);
-            verifyCreateFails("a", zk);
-
-            zk.create("/createseqpar", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            await zk.createAsync("/createseqpar", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             // next two steps - related to sequential processing
             // 1) verify that empty child name Assert.fails if not sequential
             try {
-                zk.create("/createseqpar/", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                await zk.createAsync("/createseqpar/", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                 Assert.assertTrue(false);
             }
             catch (ArgumentException) {
@@ -554,25 +488,25 @@ namespace org.apache.zookeeper.test {
             }
 
             // 2) verify that empty child name success if sequential 
-            zk.create("/createseqpar/", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
-            zk.create("/createseqpar/.", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
-            zk.create("/createseqpar/..", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+            await zk.createAsync("/createseqpar/", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+            await zk.createAsync("/createseqpar/.", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+            await zk.createAsync("/createseqpar/..", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
             try {
-                zk.create("/createseqpar//", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+                await zk.createAsync("/createseqpar//", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
                 Assert.assertTrue(false);
             }
             catch (ArgumentException) {
                 // catch this.
             }
             try {
-                zk.create("/createseqpar/./", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+                await zk.createAsync("/createseqpar/./", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
                 Assert.assertTrue(false);
             }
             catch (ArgumentException) {
                 // catch this.
             }
             try {
-                zk.create("/createseqpar/../", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+                await zk.createAsync("/createseqpar/../", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
                 Assert.assertTrue(false);
             }
             catch (ArgumentException) {
@@ -580,36 +514,20 @@ namespace org.apache.zookeeper.test {
             }
         }
 
-        //    private void notestConnections()
-        //        throws IOException, InterruptedException, KeeperException
-        //    {
-        //        ZooKeeper zk;
-        //        for(int i = 0; i < 2000; i++) {
-        //            if (i % 100 == 0) {
-        //                LOG.info("Testing " + i + " connections");
-        //            }
-        //            // We want to make sure socket descriptors are going away
-        //            zk = new ZooKeeper(hostPort, 30000, this);
-        //            zk.getData("/", false, new Stat());
-        //            zk.close();
-        //        }
-        //    }
-
         [Fact]
-        public void testDeleteWithChildren() {
-            ZooKeeper zk = createClient();
-            zk.create("/parent", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            zk.create("/parent/child", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        public async Task testDeleteWithChildren() {
+            ZooKeeper zk = await createClient();
+            await zk.createAsync("/parent", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            await zk.createAsync("/parent/child", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             try {
-                zk.delete("/parent", -1);
+                await zk.deleteAsync("/parent", -1);
                 Assert.fail("Should have received a not equals message");
             }
             catch (KeeperException e) {
                 Assert.assertEquals(KeeperException.Code.NOTEMPTY, e.getCode());
             }
-            zk.delete("/parent/child", -1);
-            zk.delete("/parent", -1);
-            zk.close();
+            await zk.deleteAsync("/parent/child", -1);
+            await zk.deleteAsync("/parent", -1);
         }
         
         /// <summary>
@@ -617,8 +535,8 @@ namespace org.apache.zookeeper.test {
         /// @return </summary>
         /// <exception cref="Exception"> </exception>
         [Fact]
-        public void testNonExistingOpCode() {
-            TestableZooKeeper zk = createClient();
+        public async Task testNonExistingOpCode() {
+            ZooKeeper zk = await createClient();
 
             const string path = "/m1";
 
@@ -628,12 +546,12 @@ namespace org.apache.zookeeper.test {
             request.setPath(path);
             request.setWatch(false);
             ExistsResponse response = new ExistsResponse();
-            ReplyHeader r = zk.submitRequest(h, request, response, null);
+            ReplyHeader r = await zk.cnxn.submitRequest(h, request, response, null);
 
             Assert.assertEquals(r.getErr(), (int) KeeperException.Code.UNIMPLEMENTED);
 
             try {
-                zk.exists("/m1", false);
+                await zk.existsAsync("/m1", false);
                 Assert.fail("The connection should have been closed");
             }
             catch (KeeperException.ConnectionLossException) {

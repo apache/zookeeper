@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using org.apache.utils;
 using Xunit;
 
@@ -25,177 +27,89 @@ namespace org.apache.zookeeper.recipes.leader {
         private static readonly ILogProducer logger = TypeLogger<LeaderElectionSupportTest>.Instance;
         private static int globalCounter;
         private readonly string root = "/" + Interlocked.Increment(ref globalCounter);
-        private ZooKeeper zooKeeper;
+        private readonly ZooKeeper zooKeeper;
 
         public LeaderElectionSupportTest() {
 
-            zooKeeper = createClient();
+            zooKeeper = createClient().Result;
 
             zooKeeper.createAsync(root, new byte[0],
                 ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT).Wait();
         }
 
         [Fact]
-        public void testNode() {
+        public async Task testNode() {
             var electionSupport = createLeaderElectionSupport();
 
-            electionSupport.start().GetAwaiter().GetResult();
-            Thread.Sleep(3000);
-            electionSupport.stop().GetAwaiter().GetResult();
+            await electionSupport.start();
+            await Task.Delay(3000);
+            await electionSupport.stop();
+        }
+
+        private async Task CreateTestNodesTask(int testIterations, int millisecondsDelay)
+        {
+            Assert.assertTrue(await Task.WhenAll(Enumerable.Repeat(runElectionSupportTask(), testIterations))
+                        .WithTimeout(millisecondsDelay));
         }
 
         [Fact]
-        public void testNodes3() {
-            const int testIterations = 3;
-            CountdownEvent latch = new CountdownEvent(testIterations);
-            ThreadSafeInt failureCounter = new ThreadSafeInt(0);
-
-            for (var i = 0; i < testIterations; i++) {
-                runElectionSupportThread(latch, failureCounter);
-            }
-
-            Assert.assertEquals(0, failureCounter.Value);
-
-            if (!latch.Wait(10* 1000)) {
-                logger.debugFormat("Waited for all threads to start, but timed out. We had {0} failures.", failureCounter);
-            }
+        public Task testNodes3() {
+            return CreateTestNodesTask(3, 10 * 1000);
         }
 
         [Fact]
-        public void testNodes9() {
-            const int testIterations = 9;
-            
-
-            CountdownEvent latch = new CountdownEvent(testIterations);
-
-
-            ThreadSafeInt failureCounter = new ThreadSafeInt(0);
-
-            for (var i = 0; i < testIterations; i++) {
-                runElectionSupportThread(latch, failureCounter);
-            }
-
-            Assert.assertEquals(0, failureCounter.Value);
-
-            if (!latch.Wait(10* 1000)) {
-                logger.debugFormat("Waited for all threads to start, but timed out. We had {0} failures.", failureCounter.Value);
-            }
+        public Task testNodes9() {
+            return CreateTestNodesTask(9, 10 * 1000);
         }
 
         [Fact]
-        public void testNodes20() {
-            const int testIterations = 20;
-
-
-            CountdownEvent latch = new CountdownEvent(testIterations);
-
-
-            ThreadSafeInt failureCounter = new ThreadSafeInt(0);
-
-            for (var i = 0; i < testIterations; i++) {
-                runElectionSupportThread(latch, failureCounter);
-            }
-
-            Assert.assertEquals(0, failureCounter.Value);
-
-            if (!latch.Wait(10* 1000)) {
-                logger.debugFormat("Waited for all threads to start, but timed out. We had {0} failures.", failureCounter);
-            }
+        public Task testNodes20() {
+            return CreateTestNodesTask(20, 10 * 1000);
         }
 
         [Fact]
-        public void testNodes100() {
-            const int testIterations = 100;
-
-
-            CountdownEvent latch = new CountdownEvent(testIterations);
-
-
-            ThreadSafeInt failureCounter = new ThreadSafeInt(0);
-
-            for (var i = 0; i < testIterations; i++) {
-                runElectionSupportThread(latch, failureCounter);
-            }
-
-            Assert.assertEquals(0, failureCounter.Value);
-
-            if (!latch.Wait(20* 1000)) {
-                logger.debugFormat("Waited for all threads to start, but timed out. We had {0} failures.", failureCounter);
-            }
+        public Task testNodes100() {
+            return CreateTestNodesTask(100, 20 * 1000);
         }
 
         [Fact]
-        public void testOfferShuffle() {
+        public async Task testOfferShuffle() {
             const int testIterations = 10;
 
-
-            CountdownEvent latch = new CountdownEvent(testIterations);
-
-
-            ThreadSafeInt failureCounter = new ThreadSafeInt(0);
-
-            for (var i = 1; i <= testIterations; i++) {
-                runElectionSupportThread(latch, failureCounter, Math.Min(i*1200, 10000));
-            }
-
-            if (!latch.Wait(60* 1000)) {
-                logger.debugFormat("Waited for all threads to start, but timed out. We had {0} failures.", failureCounter);
-            }
+            var elections = Enumerable.Range(1, testIterations)
+                .Select(i => runElectionSupportTask(Math.Min(i*1200, 10000)));
+            Assert.assertTrue(await Task.WhenAll(elections).WithTimeout(60*1000));
         }
 
         [Fact]
-        public void testGetLeaderHostName() {
+        public async Task testGetLeaderHostName() {
             var electionSupport = createLeaderElectionSupport();
 
-            electionSupport.start().GetAwaiter().GetResult();
+            await electionSupport.start();
 
             // Sketchy: We assume there will be a leader (probably us) in 3 seconds.
-            Thread.Sleep(3000);
+            await Task.Delay(3000);
 
-            var leaderHostName = electionSupport.getLeaderHostName().GetAwaiter().GetResult();
+            var leaderHostName = await electionSupport.getLeaderHostName();
 
             Assert.assertNotNull(leaderHostName);
             Assert.assertEquals("foohost", leaderHostName);
 
-            electionSupport.stop().GetAwaiter().GetResult();
+            await electionSupport.stop();
         }
 
         private LeaderElectionSupport createLeaderElectionSupport()
         {
-            var electionSupport = new LeaderElectionSupport(zooKeeper, root, "foohost");
-
-            return electionSupport;
+            return new LeaderElectionSupport(zooKeeper, root, "foohost");
         }
 
-        private void runElectionSupportThread(CountdownEvent latch, ThreadSafeInt failureCounter) {
-            runElectionSupportThread(latch, failureCounter, 3000);
-        }
-
-        private void runElectionSupportThread(CountdownEvent latch, ThreadSafeInt failureCounter, int sleepDuration) {
-
+        private async Task runElectionSupportTask(int sleepDuration = 3000)
+        {
             var electionSupport = createLeaderElectionSupport();
 
-            Thread t = new Thread(() =>
-            {
-                try
-                {
-                    electionSupport.start().GetAwaiter().GetResult();
-                    Thread.Sleep(sleepDuration);
-                    electionSupport.stop().GetAwaiter().GetResult();
-                    lock (latch)
-                    {
-                        if (!latch.IsSet)
-                            latch.Signal();
-                    }
-                }
-                catch (Exception e)
-                {
-                    logger.debugFormat("Failed to run leader election due to: {0}", e.Message);
-                    failureCounter.Increment();
-                }
-            }); 
-
-            t.Start();
+            await electionSupport.start();
+            await Task.Delay(sleepDuration);
+            await electionSupport.stop();
         }
     }
 }

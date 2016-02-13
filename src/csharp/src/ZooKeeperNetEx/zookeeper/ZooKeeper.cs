@@ -407,7 +407,7 @@ namespace org.apache.zookeeper {
 
         private readonly int userDefinedSessionTimeout;
 
-        private readonly AsyncManualResetEvent connectedTask = new AsyncManualResetEvent();
+        internal readonly AsyncManualResetEvent connectedTask = new AsyncManualResetEvent();
         
         /// <summary>
         /// The session id for this ZooKeeper client instance. The value returned is not valid until the client connects to a 

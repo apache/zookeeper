@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using org.apache.zookeeper.data;
 using org.apache.utils;
 using Xunit;
@@ -26,37 +27,20 @@ namespace org.apache.zookeeper.test
 
     public sealed class GetChildren2Test : ClientBase
 	{
-		private ZooKeeper zk;
-
-
-
-		public GetChildren2Test()
-		{
-			zk = createClient();
-		}
-
-
-
-		public override void Dispose()
-		{
-			base.Dispose();
-
-			zk.close();
-		}
-
-
 
         [Fact]
-		public void testChild()
+		public async Task testChild()
 		{
+            var zk = await createClient();
 			string name = "/foo";
-			zk.create(name, name.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+			await zk.createAsync(name, name.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
 			string childname = name + "/bar";
-			zk.create(childname, childname.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+			await zk.createAsync(childname, childname.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
 
-			Stat stat = new Stat();
-			IList<string> s = zk.getChildren(name, false, stat);
+            var childrenResult = await zk.getChildrenAsync(name, false);
+
+            Stat stat = childrenResult.Stat;
 
 			Assert.assertEquals(stat.getCzxid(), stat.getMzxid());
 			Assert.assertEquals(stat.getCzxid() + 1, stat.getPzxid());
@@ -67,11 +51,12 @@ namespace org.apache.zookeeper.test
 			Assert.assertEquals(0, stat.getEphemeralOwner());
 			Assert.assertEquals(name.Length, stat.getDataLength());
 			Assert.assertEquals(1, stat.getNumChildren());
-			Assert.assertEquals(s.Count, stat.getNumChildren());
+			Assert.assertEquals(childrenResult.Children.Count, stat.getNumChildren());
 
-			s = zk.getChildren(childname, false, stat);
+            childrenResult = await zk.getChildrenAsync(childname, false);
+            stat = childrenResult.Stat;
 
-			Assert.assertEquals(stat.getCzxid(), stat.getMzxid());
+            Assert.assertEquals(stat.getCzxid(), stat.getMzxid());
 			Assert.assertEquals(stat.getCzxid(), stat.getPzxid());
 			Assert.assertEquals(stat.getCtime(), stat.getMtime());
 			Assert.assertEquals(0, stat.getCversion());
@@ -80,16 +65,18 @@ namespace org.apache.zookeeper.test
 			Assert.assertEquals(zk.getSessionId(), stat.getEphemeralOwner());
 			Assert.assertEquals(childname.Length, stat.getDataLength());
 			Assert.assertEquals(0, stat.getNumChildren());
-			Assert.assertEquals(s.Count, stat.getNumChildren());
+			Assert.assertEquals(childrenResult.Children.Count, stat.getNumChildren());
 		}
 
 
 
         [Fact]
-		public void testChildren()
-		{
-			string name = "/foo";
-			zk.create(name, name.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+		public async Task testChildren()
+        {
+            var zk = await createClient();
+
+            string name = "/foo";
+			await zk.createAsync(name, name.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
 			IList<string> children = new List<string>();
 			List<string> children_s = new List<string>();
@@ -105,10 +92,10 @@ namespace org.apache.zookeeper.test
 			for (int i = 0; i < children.Count; i++)
 			{
 				string childname = children[i];
-				zk.create(childname, childname.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+				await zk.createAsync(childname, childname.UTF8getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
 
-				Stat stat = new Stat();
-				IList<string> s = zk.getChildren(name, false, stat);
+			    var childrenResult = await zk.getChildrenAsync(name, false);
+                Stat stat = childrenResult.Stat;
 
 				Assert.assertEquals(stat.getCzxid(), stat.getMzxid());
 				Assert.assertEquals(stat.getCzxid() + i + 1, stat.getPzxid());
@@ -119,9 +106,9 @@ namespace org.apache.zookeeper.test
 				Assert.assertEquals(0, stat.getEphemeralOwner());
 				Assert.assertEquals(name.Length, stat.getDataLength());
 				Assert.assertEquals(i + 1, stat.getNumChildren());
-				Assert.assertEquals(s.Count, stat.getNumChildren());
+				Assert.assertEquals(childrenResult.Children.Count, stat.getNumChildren());
 			}
-			List<string> p = zk.getChildren(name, false, null);
+			List<string> p = (await zk.getChildrenAsync(name, false)).Children;
 			List<string> c_a = children_s;
 			List<string> c_b = p;
 			c_a.Sort();
