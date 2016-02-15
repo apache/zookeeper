@@ -89,20 +89,28 @@ namespace org.apache.zookeeper.recipes.leader {
     ///         </ul>
     ///     </para>
     /// </summary>
-    public sealed class LeaderElectionSupport : Watcher {
+    public sealed class LeaderElectionSupport {
         private readonly AsyncLock lockable = new AsyncLock();
   
         private static readonly ILogProducer logger = TypeLogger<LeaderElectionSupport>.Instance;
         private readonly ConcurrentDictionary<LeaderElectionAware, byte> listeners;
+        private readonly ElectionWatcher electionWatcher;
         private byte dummy;
         private LeaderOffer leaderOffer;
         private State state;
 
+        /// <summary>
+        /// Create a new instance of leader election recipe.
+        /// </summary>
+        /// <param name="zooKeeper">the zookeeper instance to use</param>
+        /// <param name="rootNodeName">the root node to perform elections on</param>
+        /// <param name="hostName">the name of the current host</param>
         public LeaderElectionSupport(ZooKeeper zooKeeper, string rootNodeName, string hostName) {
             ZooKeeper = zooKeeper;
             RootNodeName = rootNodeName;
             HostName = hostName;
             state = State.STOP;
+            electionWatcher = new ElectionWatcher(this);
             listeners = new ConcurrentDictionary<LeaderElectionAware, byte>();
         }
 
@@ -286,7 +294,7 @@ namespace org.apache.zookeeper.recipes.leader {
 		 * Make sure to pass an explicit Watcher because we could be sharing this
 		 * zooKeeper instance with someone else.
 		 */
-            var stat = await ZooKeeper.existsAsync(neighborLeaderOffer.NodePath, this).ConfigureAwait(false);
+            var stat = await ZooKeeper.existsAsync(neighborLeaderOffer.NodePath, electionWatcher).ConfigureAwait(false);
 
             if (stat != null) {
                 logger.debugFormat("We're behind {0} in line and they're alive. Keeping an eye on them.",
@@ -344,20 +352,29 @@ namespace org.apache.zookeeper.recipes.leader {
 
             return leaderOffers;
         }
+        private class ElectionWatcher:Watcher
+        {
+            private readonly LeaderElectionSupport les;
 
-        public async override Task process(WatchedEvent @event) {
-            if (@event.get_Type().Equals(Event.EventType.NodeDeleted)) {
-                if (!@event.get_Type().ToString().Equals(leaderOffer.NodePath) && state != State.STOP) {
-                    logger.debugFormat("Node {0} deleted. Need to run through the election process.", @event.getPath());
-                    KeeperException ke = null;
-                    try {
-                        await determineElectionStatus().ConfigureAwait(false);
-                    }
-                    catch (KeeperException e) {
-                        ke = e;
-                    }
-                    if (ke != null) {
-                        await becomeFailed(ke).ConfigureAwait(false);
+            public ElectionWatcher(LeaderElectionSupport leaderElectionSupport)
+            {
+                les = leaderElectionSupport;
+            }
+
+            public async override Task process(WatchedEvent @event) {
+                if (@event.get_Type().Equals(Event.EventType.NodeDeleted)) {
+                    if (!@event.get_Type().ToString().Equals(les.leaderOffer.NodePath) && les.state != State.STOP) {
+                        logger.debugFormat("Node {0} deleted. Need to run through the election process.", @event.getPath());
+                        KeeperException ke = null;
+                        try {
+                            await les.determineElectionStatus().ConfigureAwait(false);
+                        }
+                        catch (KeeperException e) {
+                            ke = e;
+                        }
+                        if (ke != null) {
+                            await les.becomeFailed(ke).ConfigureAwait(false);
+                        }
                     }
                 }
             }
@@ -398,9 +415,11 @@ namespace org.apache.zookeeper.recipes.leader {
             listeners.TryRemove(listener, out dummy);
         }
 
+        /// <summary>
+        /// </summary>
         public override string ToString() {
             return "{ state:" + state + " leaderOffer:" + leaderOffer + " zooKeeper:" + ZooKeeper + " hostName:" +
-                   HostName + " listeners:" + listeners + " }";
+                   HostName + " listeners:" + string.Join(",",listeners.Keys )+" }";
         }
 
         /// <summary>

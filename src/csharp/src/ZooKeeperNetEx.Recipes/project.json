@@ -1,12 +1,12 @@
 ﻿{
-  "userSecretsId": "dotnet-ZooKeeperNetEx-290116",
+  "userSecretsId": "dotnet-ZooKeeperNetEx-140216",
   "title": "Apache ZooKeeper .NET async Recipes",
-  "version": "3.4.7.6",
+  "version": "3.4.7.7",
   "description": ".NET async Distributed recipes for ZooKeeper: Queue, Lock and Leader.",
   "authors": [ "Shay Hazor" ],
   "owners": [ "Shay Hazor" ],
   "summary": ".NET async Recipes for ZooKeeper",
-  "releaseNotes": "Aligned with the official Apache ZooKeeper 3.4.7 release.\nThis project is actively maintained at: https://github.com/shayhatsor/zookeeper \nPlease feel free to open an issue or ask a question there.",
+  "releaseNotes": "Built with dotnet cli\nThis project is actively maintained at: https://github.com/shayhatsor/zookeeper \nPlease feel free to open an issue or ask a question there.",
   "tags": [ "Apache", "ZooKeeper", ".NET", "Recipes", "Async", "ZK", "C#", "Distributed", "Lock", "Leader", "Election", "Queue" ],
   "projectUrl": "https://github.com/shayhatsor/zookeeper",
   "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
@@ -14,7 +14,8 @@
   "copyright": "Shay Hazor - Copyright 2016",
   "compilationOptions": {
     "keyFile": "../../ZooKeeperNetEx.snk",
-    "warningsAsErrors": true
+    "warningsAsErrors": true,
+    "xmlDoc": true
   },
   "repository": {
     "type": "git",
@@ -30,6 +31,6 @@
     }
   },
   "dependencies": {
-    "ZooKeeperNetEx": "3.4.7.6"
+    "ZooKeeperNetEx": "3.4.7.7"
   }
 }

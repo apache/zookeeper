@@ -2,16 +2,11 @@
   "compilationOptions": { "keyFile": "../../ZooKeeperNetEx.snk" },
   "dependencies": {
     "ZooKeeperNetEx.Tests": "",
-    "ZooKeeperNetEx.Recipes": "3.4.7.6",
-    "xunit.runner.dnx": "2.1.0-rc1-build204",
-    "Newtonsoft.Json": "8.0.2",
-    "xunit": "2.1.0"
+    "ZooKeeperNetEx.Recipes": "3.4.7.7"
   },
   "frameworks": {
-    "dnx451": {},
-    "dnxcore50": {}
+    "dnxcore50": { "imports": "portable-net451+win8" },
+    "dnx451": {}
   },
-  "commands": {
-    "test": "xunit.runner.dnx"
-  }
+  "testRunner": "xunit"
 }

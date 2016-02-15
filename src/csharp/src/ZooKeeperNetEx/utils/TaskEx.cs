@@ -1,7 +1,7 @@
 ﻿namespace System.Threading.Tasks
     {
 #if !NET40
-    public class TaskEx
+    internal class TaskEx
     {
         public static Task<TResult> FromResult<TResult>(TResult result)
         {
@@ -32,7 +32,7 @@
 #endif
   
 
-    public static class TaskExtensions
+    internal static class TaskExtensions
     {
         public static async Task<bool> WithTimeout(this Task task, int millisecondsTimeout)
         {

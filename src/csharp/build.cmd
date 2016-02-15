@@ -1,31 +1,40 @@
-@echo off
-cd %~dp0
-
+@ECHO off
 SETLOCAL
-if exist .nuget RD /S /Q .nuget
-if exist packages RD /S /Q packages
-if exist artifacts RD /S /Q artifacts
 
-echo Downloading latest version of NuGet.exe...
-md .nuget
-@powershell -NoProfile -ExecutionPolicy unrestricted -Command "$ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest 'https://dist.nuget.org/win-x86-commandline/latest/nuget.exe' -OutFile .nuget\NuGet.exe"
+SET REPO_FOLDER=%~dp0
+CD "%REPO_FOLDER%"
 
-echo Downloading KoreBuild...
-.nuget\nuget.exe install KoreBuild -ExcludeVersion -o packages -nocache -pre
+SET BUILD_FOLDER=.build
+SET KOREBUILD_FOLDER=%BUILD_FOLDER%\KoreBuild-dotnet
+SET KOREBUILD_VERSION=
 
-echo Downloading Sake...
-.nuget\NuGet.exe install Sake -ExcludeVersion -Source https://www.nuget.org/api/v2/ -Out packages
+SET NUGET_PATH=%BUILD_FOLDER%\NuGet.exe
+SET NUGET_VERSION=latest
+SET CACHED_NUGET=%LocalAppData%\NuGet\nuget.%NUGET_VERSION%.exe
 
-echo Updating DNVM...
-CALL packages\KoreBuild\build\dnvm update-self
+IF NOT EXIST %BUILD_FOLDER% (
+    md %BUILD_FOLDER%
+)
 
-echo Downloading DNX...
-CALL packages\KoreBuild\build\dnvm install latest -runtime CoreCLR -arch x86 -alias default
-CALL packages\KoreBuild\build\dnvm install default -runtime CLR -arch x86 -alias default
+IF NOT EXIST %NUGET_PATH% (
+    IF NOT EXIST %CACHED_NUGET% (
+        echo Downloading latest version of NuGet.exe...
+        IF NOT EXIST %LocalAppData%\NuGet ( 
+            md %LocalAppData%\NuGet
+        )
+        @powershell -NoProfile -ExecutionPolicy unrestricted -Command "$ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest 'https://dist.nuget.org/win-x86-commandline/%NUGET_VERSION%/nuget.exe' -OutFile '%CACHED_NUGET%'"
+    )
 
-echo Running Sake Build...
-packages\Sake\tools\Sake.exe -I packages\KoreBuild\build -f makefile.shade %*
+    copy %CACHED_NUGET% %NUGET_PATH% > nul
+)
 
-echo Packing nugets...
-call dnu pack src\ZooKeeperNetEx --configuration release --out artifacts\nugets
-call dnu pack src\ZooKeeperNetEx.Recipes --configuration release --out artifacts\nugets
+IF NOT EXIST %KOREBUILD_FOLDER% (
+    SET KOREBUILD_DOWNLOAD_ARGS=
+    IF NOT "%KOREBUILD_VERSION%"=="" (
+        SET KOREBUILD_DOWNLOAD_ARGS=-version %KOREBUILD_VERSION%
+    )
+    
+    %BUILD_FOLDER%\nuget.exe install KoreBuild-dotnet -ExcludeVersion -o %BUILD_FOLDER% -nocache -pre %KOREBUILD_DOWNLOAD_ARGS%
+)
+
+"%KOREBUILD_FOLDER%\build\KoreBuild.cmd" %*

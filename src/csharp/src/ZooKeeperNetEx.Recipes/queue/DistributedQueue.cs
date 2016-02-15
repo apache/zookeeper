@@ -40,8 +40,13 @@ namespace org.apache.zookeeper.recipes.queue
 
 	    private const string prefix = "qn-";
 
-
-	    public DistributedQueue(ZooKeeper zookeeper, string dir, List<ACL> acl)
+        /// <summary>
+        /// Create an instance of distributed queue recipe
+        /// </summary>
+        /// <param name="zookeeper">the zookeeper instance to use</param>
+        /// <param name="dir">the node to use for the queue</param>
+        /// <param name="acl">the acl for the queue</param>
+	    public DistributedQueue(ZooKeeper zookeeper, string dir, List<ACL> acl=null)
 		{
 			this.dir = dir;
 
