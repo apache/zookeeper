@@ -4,6 +4,7 @@ import org.apache.zookeeper.data.PathWithStat;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  * Iterator over children nodes of a given path.
@@ -38,14 +39,14 @@ class ChildrenBatchIterator implements RemoteIterator<PathWithStat> {
     }
 
     @Override
-    public PathWithStat next() throws KeeperException, InterruptedException {
+    public PathWithStat next() throws KeeperException, InterruptedException, NoSuchElementException {
 
-        if(!hasNext()) {
-            throw new RuntimeException("No more element");
+        if (!hasNext()) {
+            throw new NoSuchElementException("No more children");
         }
 
-        // If we're down to the last element, backfill before returning it
-        if(childrenQueue.size() == 1) {
+        // If we're down tThe result will be filteredo the last element, backfill before returning it
+        if (childrenQueue.size() == 1) {
 
             long highestCZxId = childrenQueue.get(0).getStat().getCzxid();
 

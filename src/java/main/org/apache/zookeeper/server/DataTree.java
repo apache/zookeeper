@@ -691,16 +691,42 @@ public class DataTree {
     }
 
     /**
-     * This will return a paginated list of children for a given path
-     * @param path          The path we want to list
-     * @param stat          The current stat for this path
-     * @param watcher       The watcher to attach to this path. The watcher will be added only when we return <= maxReturned items
-     * @param maxReturned   How many to return max. We will return one more than this number to indicate truncation
-     * @param minZkId       The last zkID to not return. Any returned item will have a zkid > minZkId
-     * @return              A list of path with stats
-     * @throws NoNodeException
+     * Comparator used to sort children by creation time
      */
-    public List<PathWithStat> getPaginatedChildren(String path, Stat stat, Watcher watcher, int maxReturned, long minZkId) throws NoNodeException {
+    private static class NodeCreationComparator implements Comparator<PathWithStat> {
+        @Override
+        public int compare(PathWithStat left, PathWithStat right) {
+            final long leftCzxId = left.getStat().getCzxid();
+            final long rightCzxId = right.getStat().getCzxid();
+
+            if (leftCzxId > rightCzxId) {
+                return -1;
+            } else if (rightCzxId > leftCzxId) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+    }
+
+    /**
+     * Static comparator instance, avoids creating and destroying a new one at each invocation of the method below
+     */
+    private static NodeCreationComparator staticNodeCreationComparator = new NodeCreationComparator();
+
+    /**
+     * Produces a paginated list of the children of a given path
+     * @param path path of node node to list
+     * @param stat stat of the node to list
+     * @param watcher an optional watcher to attach to the node. The watcher is added only once when reaching the end of pagination
+     * @param maxReturned maximum number of children to return. Return one more than this number to indicate truncation
+     * @param minCzxId only return children whose creation zxid greater than minCzxId
+     * @return A list of path with stats
+     * @throws NoNodeException if the path does not exist
+     */
+    public List<PathWithStat> getPaginatedChildren(String path, Stat stat, Watcher watcher, int maxReturned,
+                                                   long minCzxId)
+            throws NoNodeException {
         DataNode n = nodes.get(path);
         if (n == null) {
             throw new KeeperException.NoNodeException();
@@ -709,41 +735,39 @@ public class DataTree {
             if (stat != null) {
                 n.copyStat(stat);
             }
-            PriorityQueue<PathWithStat> children;
-            Set<String> childs = n.getChildren();
-            if (childs == null) {
-                children = new PriorityQueue<PathWithStat>(1);
+            PriorityQueue<PathWithStat> childrenQueue;
+            Set<String> actualChildren = n.getChildren();
+            if (actualChildren == null) {
+                childrenQueue = new PriorityQueue<PathWithStat>(1);
             } else {
-                children = new PriorityQueue<PathWithStat>(maxReturned + 1, new Comparator<PathWithStat>() {
-                    @Override
-                    public int compare(PathWithStat o1, PathWithStat o2) {
-                        final long l = o2.getStat().getCzxid() - o1.getStat().getCzxid();
-                        return l < 0 ? -1 : (l == 0 ? 0 : 1);
-                    }
-                });
-                for (String child: childs) {
+                childrenQueue = new PriorityQueue<PathWithStat>(maxReturned + 1, staticNodeCreationComparator);
+                for (String child: actualChildren) {
                     DataNode childNode = nodes.get(path + "/" + child);
                     if (null != childNode) {
-                        final long czxid = childNode.stat.getCzxid();
-                        if (czxid <= minZkId) continue; // Filter out the nodes that are below our water mark
+                        final long czxId = childNode.stat.getCzxid();
+                        if (czxId <= minCzxId) continue; // Filter out the nodes that are below minCzxId
                         Stat childStat = new Stat();
                         childNode.copyStat(childStat);
-                        children.add(new PathWithStat(child, childStat));
-                        //  Do we have more than we want (maxReturned + 1), if so discard right away the extra one
-                        if (children.size() > maxReturned + 1) {
-                            children.poll();
+                        childrenQueue.add(new PathWithStat(child, childStat));
+                        // Do we have more than we want (maxReturned + 1), if so discard right away the extra one
+                        if (childrenQueue.size() > maxReturned + 1) {
+                            // Drop the node with highest CzxId in the queue.
+                            childrenQueue.poll();
                         }
                     }
                 }
             }
-
-            if (children.size() <= maxReturned) {
+            // This is the last page, set the watch
+            if (childrenQueue.size() <= maxReturned) {
                 if (watcher != null) {
                     childWatches.addWatch(path, watcher);
                 }
             }
+            // Return as list preserving newer-to-older order
             LinkedList<PathWithStat> result = new LinkedList<PathWithStat>();
-            while (!children.isEmpty()) result.addFirst(children.poll());
+            while (!childrenQueue.isEmpty()) {
+                result.addFirst(childrenQueue.poll());
+            }
             return result;
         }
     }

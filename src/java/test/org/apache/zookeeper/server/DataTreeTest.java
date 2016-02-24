@@ -241,7 +241,7 @@ public class DataTreeTest extends ZKTestCase {
     @Test(timeout = 60000)
     public void getChildrenPaginated() throws NodeExistsException, NoNodeException {
         final String rootPath   = "/children";
-        final int firstZkID     = 1000;
+        final int firstCzxId    = 1000;
         final int countNodes    = 10;
 
         //  Create the parent node
@@ -249,7 +249,7 @@ public class DataTreeTest extends ZKTestCase {
 
         //  Create 10 child nodes
         for (int i = 0; i < countNodes; ++i) {
-            dt.createNode(rootPath + "/test-" + i, new byte[0], null, 0, dt.getNode(rootPath).stat.getCversion() + i + 1, firstZkID + i, 1);
+            dt.createNode(rootPath + "/test-" + i, new byte[0], null, 0, dt.getNode(rootPath).stat.getCversion() + i + 1, firstCzxId + i, 1);
         }
 
         //  Asking from a negative would give me all children, and set the watch
@@ -271,7 +271,7 @@ public class DataTreeTest extends ZKTestCase {
         result = dt.getPaginatedChildren(rootPath, null, new DummyWatcher(), 2, 1000 + countNodes - 2);
         Assert.assertEquals(1, result.size());
         Assert.assertEquals("test-" + (countNodes - 1), result.get(0).getPath());
-        Assert.assertEquals(firstZkID + countNodes - 1, result.get(0).getStat().getMzxid());
+        Assert.assertEquals(firstCzxId + countNodes - 1, result.get(0).getStat().getMzxid());
         Assert.assertEquals("The watch should have been set", curWatchCount + 1, dt.getWatchCount());
 
         //  Asking from the last created node should return an empty list and set the watch
@@ -293,7 +293,7 @@ public class DataTreeTest extends ZKTestCase {
     @Test(timeout = 60000)
     public void getChildrenPaginatedEmpty() throws NodeExistsException, NoNodeException {
         final String rootPath   = "/children";
-        final int firstZkID     = 1000;
+        final int firstCzxId    = 1000;
 
         //  Create the parent node
         dt.createNode(rootPath, new byte[0], null, 0, dt.getNode("/").stat.getCversion()+1, 1, 1);

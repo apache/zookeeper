@@ -153,7 +153,7 @@ module org.apache.zookeeper.proto {
     class GetChildrenPaginatedRequest {
         ustring path;
         int maxReturned;
-        long minzkid;
+        long minCzxId;
         boolean watch;
     }
     class CheckVersionRequest {

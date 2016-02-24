@@ -28,8 +28,11 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.UUID;
+
+import static org.junit.Assert.fail;
 
 public class GetChildrenPaginatedTest extends ClientBase {
     private ZooKeeper zk;
@@ -66,15 +69,15 @@ public class GetChildrenPaginatedTest extends ClientBase {
 
             createdChildrenMetadata.put(String.valueOf(0), stat);
 
-            LOG.info("Created: " + childPath + " zkId: " + stat.getCzxid());
+            LOG.info("Created: " + childPath + " czxId: " + stat.getCzxid());
         }
 
-        long minZkId = -1;
+        long minCzxId = -1;
         Map<String, Stat> readChildrenMetadata = new HashMap<String, Stat>();
         final int pageSize = 3;
 
         while (true) {
-            final List<PathWithStat> page = zk.getChildren(basePath, null, pageSize, minZkId);
+            final List<PathWithStat> page = zk.getChildren(basePath, null, pageSize, minCzxId);
 
             if(page.isEmpty()) {
                 break;
@@ -85,11 +88,11 @@ public class GetChildrenPaginatedTest extends ClientBase {
                 final String nodePath = pathWithStat.getPath();
                 final Stat nodeStat = pathWithStat.getStat();
 
-                LOG.info("Read: " + nodePath + " zkId: " + nodeStat.getCzxid());
+                LOG.info("Read: " + nodePath + " czxid: " + nodeStat.getCzxid());
                 readChildrenMetadata.put(nodePath, nodeStat);
 
-                Assert.assertTrue(nodeStat.getCzxid() > minZkId);
-                minZkId = nodeStat.getCzxid();
+                Assert.assertTrue(nodeStat.getCzxid() > minCzxId);
+                minCzxId = nodeStat.getCzxid();
             }
         }
 
@@ -121,7 +124,7 @@ public class GetChildrenPaginatedTest extends ClientBase {
             final String nodePath = child.getPath();
             final Stat nodeStat = child.getStat();
 
-            LOG.info("Read: " + nodePath + " zkId: " + nodeStat.getCzxid());
+            LOG.info("Read: " + nodePath + " czxid: " + nodeStat.getCzxid());
             readChildrenMetadata.put(nodePath, nodeStat);
         }
 
@@ -132,6 +135,15 @@ public class GetChildrenPaginatedTest extends ClientBase {
         }
     }
 
+    /*
+     * This test validates a known list of children is returned by the iterator despite server failures.
+     * After the iterator is created successfully, the following logic drives the rest of the test:
+     * <ul>
+     *     <li>Randomly change the server state (down to up or up to down)</li>
+     *     <li>Try to fetch the next element, swallowing exception produced by the server being down</li>
+     * </ul>
+     * Eventually, all children should be returned regardless of the number of times the server was unavailable.
+     */
     @Test(timeout = 60000)
     public void testPaginationWithServerDown() throws Exception {
 
@@ -181,7 +193,7 @@ public class GetChildrenPaginatedTest extends ClientBase {
                 final String nodePath = child.getPath();
                 final Stat nodeStat = child.getStat();
 
-                LOG.info("Read: " + nodePath + " zkId: " + nodeStat.getCzxid());
+                LOG.info("Read: " + nodePath + " czxid: " + nodeStat.getCzxid());
                 readChildrenMetadata.put(nodePath, nodeStat);
             }
         }
@@ -215,7 +227,7 @@ public class GetChildrenPaginatedTest extends ClientBase {
 
         createChildren(basePath, 10, 0);
 
-        long minZkId = -1;
+        long minCzxId = -1;
         final int pageSize = 3;
         int pageCount = 0;
 
@@ -223,7 +235,7 @@ public class GetChildrenPaginatedTest extends ClientBase {
 
         while (true) {
 
-            final List<PathWithStat> page = zk.getChildren(basePath, fireOnlyOnceWatcher, pageSize, minZkId);
+            final List<PathWithStat> page = zk.getChildren(basePath, fireOnlyOnceWatcher, pageSize, minCzxId);
 
             if(page.isEmpty()) {
                 break;
@@ -249,8 +261,8 @@ public class GetChildrenPaginatedTest extends ClientBase {
 
                 final Stat nodeStat = pathWithStat.getStat();
 
-                Assert.assertTrue(nodeStat.getCzxid() > minZkId);
-                minZkId = nodeStat.getCzxid();
+                Assert.assertTrue(nodeStat.getCzxid() > minCzxId);
+                minCzxId = nodeStat.getCzxid();
             }
 
             pageCount += 1;
@@ -287,6 +299,24 @@ public class GetChildrenPaginatedTest extends ClientBase {
         }
     }
 
+    @Test(timeout = 60000, expected = NoSuchElementException.class)
+    public void testPaginationWithNoChildren() throws Exception {
+
+        final String testId = UUID.randomUUID().toString();
+        final String basePath = "/testPagination-" + testId;
+
+        Map<String, Stat> createdChildrenMetadata = createChildren(basePath, 0, 0);
+
+        final int batchSize = 10;
+
+        RemoteIterator<PathWithStat> childrenIterator = zk.getChildrenIterator(basePath, null, batchSize, -1);
+
+        Assert.assertFalse(childrenIterator.hasNext());
+
+        childrenIterator.next();
+        fail("NoSuchElementException is expected");
+    }
+
     private Map<String, Stat> createChildren(String basePath, int numChildren, int firstChildrenNameOffset) throws KeeperException, InterruptedException {
         zk.create(basePath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
@@ -299,7 +329,7 @@ public class GetChildrenPaginatedTest extends ClientBase {
 
             createdChildrenMetadata.put(String.valueOf(i), stat);
 
-            LOG.info("Created: " + childPath + " zkId: " + stat.getCzxid());
+            LOG.info("Created: " + childPath + " czxid: " + stat.getCzxid());
         }
         return createdChildrenMetadata;
     }

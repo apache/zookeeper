@@ -444,11 +444,12 @@ public class FinalRequestProcessor implements RequestProcessor {
                         getChildrenPaginatedRequest.getPath(), stat,
                         getChildrenPaginatedRequest.getWatch() ? cnxn : null,
                         maxReturned,
-                        getChildrenPaginatedRequest.getMinzkid());
-                //  Check if we truncated...
+                        getChildrenPaginatedRequest.getMinCzxId());
+                //  If the returned size is maxReturned+1, more children are available
                 boolean watching = false;
                 if (list.size() > maxReturned) {
                     watching = true;
+                    // Drop the extra children
                     list = list.subList(0, maxReturned);
                 }
                 rsp = new GetChildrenPaginatedResponse(list, watching, stat);

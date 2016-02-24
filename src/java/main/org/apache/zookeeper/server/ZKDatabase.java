@@ -476,17 +476,17 @@ public class ZKDatabase {
     }
 
     /**
-     * get paginated children list for this path
+     * Get a subset (a page) of the children of the given node
      * @param path the path of the node
      * @param stat the stat of the node
-     * @param watcher the watcher function for this path
-     * @param maxReturned the maximum number of nodes to be returned. One more will be returned to indicate truncation
-     * @param minZkId We want to filter out any node whose zkID is <= to minZkId
-     * @return  A list of PathWithStat not bounded by maxReturned
-     * @throws NoNodeException
+     * @param watcher an optional watcher for this node children
+     * @param maxReturned the maximum number of nodes to be returned
+     * @param minCzxId only return children whose creation zxid greater than minCzxId
+     * @return  A list of PathWithStat for the children. Size is bound to maxReturned (maxReturned+1 indicates truncation)
+     * @throws NoNodeException if the given path does not exist
      */
-    public List<PathWithStat> getPaginatedChildren(String path, Stat stat, Watcher watcher, int maxReturned, long minZkId) throws NoNodeException {
-        return dataTree.getPaginatedChildren(path, stat, watcher, maxReturned, minZkId);
+    public List<PathWithStat> getPaginatedChildren(String path, Stat stat, Watcher watcher, int maxReturned, long minCzxId) throws NoNodeException {
+        return dataTree.getPaginatedChildren(path, stat, watcher, maxReturned, minCzxId);
     }
 
     /**
