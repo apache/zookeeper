@@ -17,7 +17,6 @@
  */
 
 using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
 
@@ -68,12 +67,6 @@ namespace org.apache.zookeeper
         public static string ToHexString(this byte num)
         {
             return num.ToString("x");
-        }
-
-        public static T poll<T>(this BlockingCollection<T> blockingCollection,int milliSeconds) {
-            T item;
-            blockingCollection.TryTake(out item, milliSeconds);
-            return item;
         }
     }
 }

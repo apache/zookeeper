@@ -17,6 +17,8 @@
  * All rights reserved.
  * 
  */
+
+using System.Collections.Concurrent;
 using Newtonsoft.Json;
 using AssertXunit=Xunit.Assert;
 
@@ -86,6 +88,13 @@ namespace org.apache.zookeeper {
             string aJson = JsonConvert.SerializeObject(a);
             string bJson = JsonConvert.SerializeObject(b);
             AssertXunit.NotEqual(aJson, bJson);
+        }
+
+        public static T poll<T>(this BlockingCollection<T> blockingCollection, int milliSeconds)
+        {
+            T item;
+            blockingCollection.TryTake(out item, milliSeconds);
+            return item;
         }
     }
 }
