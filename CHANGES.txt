@@ -254,6 +254,9 @@ BUGFIXES:
 
   ZOOKEEPER-2243: Supported platforms is completely out of date (cnauroth)
 
+  ZOOKEEPER-2375: Prevent multiple initialization of login object in each
+  ZooKeeperSaslClient instance (yuemeng via rakeshr)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
