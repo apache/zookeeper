@@ -143,7 +143,7 @@ start)
     if [ -f "$ZOOPIDFILE" ]; then
       if kill -0 `cat "$ZOOPIDFILE"` > /dev/null 2>&1; then
          echo $command already running as process `cat "$ZOOPIDFILE"`.
-         exit 0
+         exit 1
       fi
     fi
     nohup "$JAVA" $ZOO_DATADIR_AUTOCREATE "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" \
