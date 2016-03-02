@@ -214,17 +214,21 @@ public class ZooKeeperSaslClient {
         }
     }
 
-    synchronized private SaslClient createSaslClient(final String servicePrincipal,
+    private SaslClient createSaslClient(final String servicePrincipal,
                                                      final String loginContext) throws LoginException {
         try {
             if (login == null) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("JAAS loginContext is: " + loginContext);
+                synchronized (ZooKeeperSaslClient.class) {
+                    if (login == null) {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("JAAS loginContext is: " + loginContext);
+                        }
+                        // note that the login object is static: it's shared amongst all zookeeper-related connections.
+                        // in order to ensure the login is initialized only once, it must be synchronized the code snippet.
+                        login = new Login(loginContext, new ClientCallbackHandler(null));
+                        login.startThreadIfNeeded();
+                    }
                 }
-                // note that the login object is static: it's shared amongst all zookeeper-related connections.
-                // createSaslClient() must be declared synchronized so that login is initialized only once.
-                login = new Login(loginContext, new ClientCallbackHandler(null));
-                login.startThreadIfNeeded();
             }
             Subject subject = login.getSubject();
             SaslClient saslClient;
