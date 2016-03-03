@@ -1454,12 +1454,14 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
 
     <target name="generate-clover-reports" depends="clover.check, clover">
       <mkdir dir="${clover.report.dir}"/>
-      <clover-report>
+      <taskdef resource="cloverlib.xml" classpath="${clover.jar}"/> 
+      
+      <clover-report initString="${clover.db.dir}/zookeeper_coverage.db">
         <current outfile="${clover.report.dir}" title="${final.name}">
           <format type="html"/>
         </current>
       </clover-report>
-      <clover-report>
+      <clover-report initString="${clover.db.dir}/zookeeper_coverage.db">
         <current outfile="${clover.report.dir}/clover.xml" title="${final.name}">
           <format type="xml"/>
         </current>
