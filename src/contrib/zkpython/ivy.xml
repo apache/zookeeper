@@ -32,12 +32,4 @@
     <conf name="releaseaudit" visibility="private" description="Artifacts required for releaseaudit target"/>
   </configurations>
 
-  <dependencies>
-
-    <dependency org="org.vafer" name="jdeb" rev="0.8">
-      <artifact name="jdeb" type="jar" conf="default"/>
-    </dependency>
-
-  </dependencies>
-
 </ivy-module>
