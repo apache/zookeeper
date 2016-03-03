@@ -31,7 +31,6 @@
     <conf name="test"/>
     <conf name="mvn-ant-task" visibility="private"/>
     <conf name="optional"/> <!-- optional in generated pom -->
-    <conf name="package" extends="master"/>
     <conf name="jdiff" visibility="private"/>
     <conf name="releaseaudit" visibility="private" description="Artifacts required for releaseaudit target"/>
   </configurations>
@@ -54,8 +53,6 @@
     <dependency org="io.netty" name="netty" conf="default" rev="3.7.0.Final">
       <artifact name="netty" type="jar" conf="default"/>
     </dependency>
-
-    <dependency org="org.vafer" name="jdeb" rev="0.8" conf="package->master"/>
 
     <dependency org="junit" name="junit" rev="4.12" conf="test->default"/>
 	<dependency org="org.mockito" name="mockito-all" rev="1.8.2"

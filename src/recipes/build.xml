@@ -58,22 +58,4 @@
       <fileset dir="." includes="*/build.xml"/>
     </subant>
   </target>
-
-  <!-- ====================================================== -->
-  <!-- rpm all the contribs.                                  -->
-  <!-- ====================================================== -->
-  <target name="rpm">
-    <subant target="rpm">
-      <fileset dir="." includes="*/build.xml"/>
-    </subant>
-  </target>
-
-  <!-- ====================================================== -->
-  <!-- deb all the contribs.                                  -->
-  <!-- ====================================================== -->
-  <target name="deb">
-    <subant target="deb">
-      <fileset dir="." includes="*/build.xml"/>
-    </subant>
-  </target>
 </project>
