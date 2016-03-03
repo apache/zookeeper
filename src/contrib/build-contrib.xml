@@ -160,21 +160,6 @@
     <echo message="contrib: ${name}"/>
   </target>
 
-  <!-- ====================================================== -->
-  <!-- rpm a contrib's files                                  -->
-  <!-- ====================================================== -->
-  <target name="rpm" depends="jar" unless="skip.contrib"> 
-    <echo message="contrib: ${name}"/>
-
-  </target>
-
-  <!-- ====================================================== -->
-  <!-- deb a contrib's files                                  -->
-  <!-- ====================================================== -->
-  <target name="deb" depends="jar" unless="skip.contrib"> 
-    <echo message="contrib: ${name}"/>
-
-  </target>
   <!-- ================================================================== -->
   <!-- Clean.  Delete the build files, and their directories              -->
   <!-- ================================================================== -->
