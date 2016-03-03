@@ -753,7 +753,8 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <checksum file="${dist.maven.dir}/${final.name}-javadoc.jar" algorithm="sha1"/>
 
       <ivy:makepom settingsRef="${ant.project.name}" ivyfile="${basedir}/ivy.xml"
-                   pomfile="${dist.maven.dir}/${final.name}.pom">
+                   pomfile="${dist.maven.dir}/${final.name}.pom"
+                   templatefile="${basedir}/src/pom.template">
         <mapping conf="default" scope="compile"/>
         <mapping conf="test" scope="test"/>
       </ivy:makepom>
@@ -858,7 +859,8 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <checksum file="${dist.maven.dir}/${final.name}-javadoc.jar" algorithm="sha1"/>
 
       <ivy:makepom settingsRef="${ant.project.name}" ivyfile="${basedir}/ivy.xml"
-                   pomfile="${dist.maven.dir}/${name}.pom">
+                   pomfile="${dist.maven.dir}/${name}.pom"
+                   templatefile="${basedir}/src/pom.template">
         <mapping conf="default" scope="compile"/>
         <mapping conf="test" scope="test"/>
       </ivy:makepom>
