@@ -20,47 +20,26 @@ apt-get --install python-setuptools
 Package build command
 ---------------------
 
-Command to build Debian package: ant deb
-Command to build RPM Package: ant rpm
+The ZooKeeper project publishes releases as tarballs.  For ZooKeeper packages
+specific to your OS (such as rpm and deb), consider using Apache Bigtop:
 
-rpm and deb packages are generated and placed in:
+http://bigtop.apache.org/
 
-build/zookeeper*.[rpm|deb]
-build/contrib/**.[rpm|deb]
+Command to build tarball package: ant tar
 
-Default package file structure layout
+zookeeper-<version>.tar.gz tarball file structure layout
 
-  /usr/bin                           - User executable
-  /usr/sbin                          - System executable
-  /usr/libexec                       - Configuration boot trap script
-  /usr/lib                           - Native libraries
-  /usr/share/doc/zookeeper           - Documents
-  /usr/share/zookeeper               - Project files
-  /usr/share/zookeeper/template/conf - Configuration template files
-  /etc/zookeeper                     - Configuration files
-  /etc/init.d/zookeeper              - OS startup script
+  /bin                               - User executable
+  /sbin                              - System executable
+  /libexec                           - Configuration boot trap script
+  /lib                               - Library dependencies
+  /docs                              - Documents
+  /share/zookeeper                   - Project files
 
-Source file structure layout
----------------------
+Command to build tarball package with native components: ant package-native tar
 
-src/packages/update-zookeeper-env.sh 
-  - setup environment variables and symlink $PREFIX/etc/zookeeper to 
-    /etc/zookeeper.
-  - This script is designed to run in post installation, and pre-remove 
-    phase of ZooKeeper package.
-  - Run update-zookeeper-env.sh -h to get a list of supported parameters.
+zookeeper-<version>-lib.tar.gz tarball file structure layout
 
-src/packages/template
-  - Standard configuration template
-
-src/packages/deb 
-  Meta data for creating Debian package
-
-src/packages/deb/init.d
-  Daemon start/stop script for Debian flavor of Linux
-
-src/packages/rpm 
-  Meta data for creating RPM package
-
-src/packages/rpm/init.d
-  Daemon start/stop script for Redhat flavor of Linux
+  /bin                               - User executable
+  /lib                               - Native libraries
+  /include/zookeeper                 - Native library headers
