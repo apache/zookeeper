@@ -105,6 +105,9 @@ BUGFIXES:
   ZOOKEEPER-2375: Prevent multiple initialization of login object in each
   ZooKeeperSaslClient instance (yuemeng via rakeshr)
 
+  ZOOKEEPER-2379: recent commit broke findbugs qabot check
+  (rakeshr via cnauroth)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-2270: Allow MBeanRegistry to be overridden for better unit tests
