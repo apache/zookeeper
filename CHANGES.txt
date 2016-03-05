@@ -5,6 +5,8 @@ BUGFIXES:
   ZOOKEEPER-2375: Prevent multiple initialization of login object in each
   ZooKeeperSaslClient instance (yuemeng via rakeshr)
 
+  ZOOKEEPER-2379: recent commit broke findbugs qabot check
+  (rakeshr via cnauroth)
 
 Release 3.4.8 - 2016-02-05
 
