@@ -64,6 +64,7 @@ public class ZooKeeperSaslClient {
     public static final String LOGIN_CONTEXT_NAME_KEY = "zookeeper.sasl.clientconfig";
     public static final String ENABLE_CLIENT_SASL_KEY = "zookeeper.sasl.client";
     public static final String ENABLE_CLIENT_SASL_DEFAULT = "true";
+    private static volatile boolean initializedLogin = false; 
 
     /**
      * Returns true if the SASL client is enabled. By default, the client
@@ -217,7 +218,7 @@ public class ZooKeeperSaslClient {
     private SaslClient createSaslClient(final String servicePrincipal,
                                                      final String loginContext) throws LoginException {
         try {
-            if (login == null) {
+            if (!initializedLogin) {
                 synchronized (ZooKeeperSaslClient.class) {
                     if (login == null) {
                         if (LOG.isDebugEnabled()) {
@@ -227,6 +228,7 @@ public class ZooKeeperSaslClient {
                         // in order to ensure the login is initialized only once, it must be synchronized the code snippet.
                         login = new Login(loginContext, new ClientCallbackHandler(null));
                         login.startThreadIfNeeded();
+                        initializedLogin = true;
                     }
                 }
             }
