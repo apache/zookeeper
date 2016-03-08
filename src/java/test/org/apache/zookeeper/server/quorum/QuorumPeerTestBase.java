@@ -35,6 +35,7 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.server.admin.JettyAdminServer;
+import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.QuorumBase;
 
@@ -280,5 +281,19 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             props.load(new FileReader(confFile));
             return props.getProperty(key, "");
         }
+
+        public QuorumPeer getQuorumPeer() {
+            return main.quorumPeer;
+        }
+    }
+
+    public QuorumPeer getLeader(MainThread[] mt) {
+        for (int i = mt.length - 1; i >= 0; i--) {
+            QuorumPeer quorumPeer = mt[i].getQuorumPeer();
+            if (null != quorumPeer && ServerState.LEADING == quorumPeer.getPeerState()) {
+                return quorumPeer;
+            }
+        }
+        return null;
     }
 }

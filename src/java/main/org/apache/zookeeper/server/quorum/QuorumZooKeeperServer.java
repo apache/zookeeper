@@ -26,9 +26,11 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.server.ByteBufferInputStream;
+import org.apache.zookeeper.server.QuorumListenerImpl;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.ZooKeeperServerListener;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 
 /**
@@ -39,6 +41,7 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
 
     public final QuorumPeer self;
     protected UpgradeableSessionTracker upgradeableSessionTracker;
+    private final ZooKeeperServerListener listener = new QuorumListenerImpl(this);
 
     protected QuorumZooKeeperServer(FileTxnSnapLog logFactory, int tickTime,
             int minSessionTimeout, int maxSessionTimeout,
@@ -155,5 +158,19 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
         pwriter.println(self.getLearnerType().ordinal());
         pwriter.println("membership: ");
         pwriter.print(new String(self.getQuorumVerifier().toString().getBytes()));
+    }
+    
+    @Override
+    public synchronized void shutdown() {
+        if (!isRunning()) {
+            LOG.debug("ZooKeeper server is not running, so not proceeding to shutdown!");
+            return;
+        }
+        super.shutdown();
+        self.stopService();
+    }
+    
+    public ZooKeeperServerListener getZooKeeperServerListener() {
+        return this.listener;
     }
 }

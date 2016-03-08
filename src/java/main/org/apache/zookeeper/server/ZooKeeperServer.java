@@ -122,7 +122,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected ServerCnxnFactory secureServerCnxnFactory;
 
     private final ServerStats serverStats;
-    private final ZooKeeperServerListener listener = new ZooKeeperServerListenerImpl();
+    private final ZooKeeperServerListener listener = new ZooKeeperServerListenerImpl(this);
     void removeCnxn(ServerCnxn cnxn) {
         zkDb.removeCnxn(cnxn);
     }
@@ -463,19 +463,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return listener;
     }
 
-    /**
-     * Default listener implementation, which will do a graceful shutdown on
-     * notification
-     */
-    private class ZooKeeperServerListenerImpl implements
-            ZooKeeperServerListener {
 
-        @Override
-        public void notifyStopping(String threadName, int exitCode) {
-            LOG.info("Thread {} exits, error code {}", threadName, exitCode);
-            shutdown();
-        }
-    }
 
     protected void createSessionTracker() {
         sessionTracker = new SessionTrackerImpl(this, zkDb.getSessionWithTimeOuts(),
@@ -792,6 +780,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     public void setSecureServerCnxnFactory(ServerCnxnFactory factory) {
         secureServerCnxnFactory = factory;
+    }
+    public ServerCnxnFactory getSecureServerCnxnFactory() {
+        return secureServerCnxnFactory;
     }
 
     /**
