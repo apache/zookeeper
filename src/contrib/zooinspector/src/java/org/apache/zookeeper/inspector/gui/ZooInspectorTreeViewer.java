@@ -21,6 +21,8 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -35,6 +37,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JComponent;
 import javax.swing.JTree;
 import javax.swing.SwingWorker;
 import javax.swing.event.TreeSelectionListener;
@@ -44,10 +47,13 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
+import org.apache.zookeeper.inspector.gui.actions.AddNodeAction;
+import org.apache.zookeeper.inspector.gui.actions.DeleteNodeAction;
 import org.apache.zookeeper.inspector.manager.NodeListener;
 import org.apache.zookeeper.inspector.manager.ZooInspectorManager;
 
 import com.nitido.utils.toaster.Toaster;
+import static javax.swing.KeyStroke.getKeyStroke;
 
 /**
  * A {@link JPanel} for showing the tree view of all the nodes in the zookeeper
@@ -69,9 +75,29 @@ public class ZooInspectorTreeViewer extends JPanel implements NodeListener {
     public ZooInspectorTreeViewer(
             final ZooInspectorManager zooInspectorManager,
             TreeSelectionListener listener, IconResource iconResource) {
+
+        this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                .put(getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK), "deleteNode");
+
+        this.getActionMap().put("deleteNode",
+                new DeleteNodeAction(this, this, zooInspectorManager));
+
+        this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                .put(getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_MASK), "addNode");
+
+        this.getActionMap().put("addNode",
+                new AddNodeAction(this, this, zooInspectorManager));
+
         this.zooInspectorManager = zooInspectorManager;
         this.setLayout(new BorderLayout());
         final JPopupMenu popupMenu = new JPopupMenu();
+
+        final JMenuItem addNode = new JMenuItem("Add Node");
+        addNode.addActionListener(new AddNodeAction(this, this, zooInspectorManager));
+
+        final JMenuItem deleteNode = new JMenuItem("Delete Node");
+        deleteNode.addActionListener(new DeleteNodeAction(this, this, zooInspectorManager));
+
         final JMenuItem addNotify = new JMenuItem("Add Change Notification");
         this.toasterManager = new Toaster();
         this.toasterManager.setBorderColor(Color.BLACK);
@@ -105,6 +131,8 @@ public class ZooInspectorTreeViewer extends JPanel implements NodeListener {
                     // watched, and only show remove if a selected node is being
                     // watched
                     popupMenu.removeAll();
+                    popupMenu.add(addNode);
+                    popupMenu.add(deleteNode);
                     popupMenu.add(addNotify);
                     popupMenu.add(removeNotify);
                     popupMenu.show(ZooInspectorTreeViewer.this, e.getX(), e
