@@ -329,7 +329,7 @@ document.write("Last Published: " + document.lastModified);
 </table>
 <a name="Nodes+and+ephemeral+nodes"></a>
 <h3 class="h4">Nodes and ephemeral nodes</h3>
-<p>Unlike is standard file systems, each node in a ZooKeeper
+<p>Unlike in standard file systems, each node in a ZooKeeper
       namespace can have data associated with it as well as children. It is
       like having a file-system that allows a file to also be a directory.
       (ZooKeeper was designed to store coordination data: status information,
@@ -353,7 +353,7 @@ document.write("Last Published: " + document.lastModified);
 <a name="Conditional+updates+and+watches"></a>
 <h3 class="h4">Conditional updates and watches</h3>
 <p>ZooKeeper supports the concept of <em>watches</em>.
-      Clients can set a watch on a znodes. A watch will be triggered and
+      Clients can set a watch on a znode. A watch will be triggered and
       removed when the znode changes. When a watch is triggered the client
       receives a packet saying that the znode has changed. And if the
       connection between the client and one of the Zoo Keeper servers is
