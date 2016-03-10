@@ -109,6 +109,7 @@ public class ZooInspectorManagerImpl implements ZooInspectorManager {
     private String defaultHosts;
     private String defaultAuthScheme;
     private String defaultAuthValue;
+    private NodesCache nodesCache;
 
     /**
      * @throws IOException
@@ -181,6 +182,8 @@ public class ZooInspectorManagerImpl implements ZooInspectorManager {
         }
         if (!connected){
         	disconnect();
+        } else {
+            this.nodesCache = new NodesCache(zooKeeper);
         }
         return connected;
     }
@@ -216,14 +219,7 @@ public class ZooInspectorManagerImpl implements ZooInspectorManager {
      */
     public List<String> getChildren(String nodePath) {
         if (connected) {
-            try {
-
-                return zooKeeper.getChildren(nodePath, false);
-            } catch (Exception e) {
-                LoggerFactory.getLogger().error(
-                        "Error occurred retrieving children of node: "
-                                + nodePath, e);
-            }
+            return nodesCache.getChildren(nodePath);
         }
         return null;
 
@@ -263,17 +259,7 @@ public class ZooInspectorManagerImpl implements ZooInspectorManager {
      */
     public String getNodeChild(String nodePath, int childIndex) {
         if (connected) {
-            try {
-                Stat s = zooKeeper.exists(nodePath, false);
-                if (s != null) {
-                    return this.zooKeeper.getChildren(nodePath, false).get(
-                            childIndex);
-                }
-            } catch (Exception e) {
-                LoggerFactory.getLogger().error(
-                        "Error occurred retrieving child " + childIndex
-                                + " of node: " + nodePath, e);
-            }
+             return this.nodesCache.getNodeChild(nodePath, childIndex);
         }
         return null;
     }
@@ -296,7 +282,7 @@ public class ZooInspectorManagerImpl implements ZooInspectorManager {
             String parentPath = nodePath.substring(0, index);
             String child = nodePath.substring(index + 1);
             if (parentPath != null && parentPath.length() > 0) {
-                List<String> children = this.getChildren(parentPath);
+                List<String> children = this.nodesCache.getChildren(parentPath);
                 if (children != null) {
                     return children.indexOf(child);
                 }
@@ -860,7 +846,11 @@ public class ZooInspectorManagerImpl implements ZooInspectorManager {
     }
 
     public List<String> getDefaultNodeViewerConfiguration() throws IOException {
-        return loadNodeViewersFile(defaultNodeViewersFile);
+        List<String> defaultNodeViewers = loadNodeViewersFile(defaultNodeViewersFile);
+        if (defaultNodeViewers.isEmpty()) {
+            LoggerFactory.getLogger().warn("List of default node viewers is empty");
+        }
+        return defaultNodeViewers;
     }
 
     /*
