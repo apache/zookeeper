@@ -8,6 +8,13 @@ BUGFIXES:
   ZOOKEEPER-2379: recent commit broke findbugs qabot check
   (rakeshr via cnauroth)
 
+  ZOOKEEPER-2294 Ant target generate-clover-reports is broken
+  (charlie via phunt)
+
+  ZOOKEEPER-2378 upgrade ivy to recent version (phunt)
+
+  ZOOKEEPER-2373 Licenses section missing from pom file (phunt)
+
   ZOOKEEPER-2133 zkperl: Segmentation fault if getting a node with
   null value (Botond Hejj via phunt)
 
