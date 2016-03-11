@@ -260,6 +260,21 @@ BUGFIXES:
   ZOOKEEPER-2379: recent commit broke findbugs qabot check
   (rakeshr via cnauroth)
 
+  ZOOKEEPER-1991 zkServer.sh returns with a zero exit status when a
+  ZooKeeper process is already running (gsbiju via phunt)
+
+  ZOOKEEPER-1604 remove rpm/deb/... packaging (cnauroth via phunt
+
+  ZOOKEEPER-2294 Ant target generate-clover-reports is broken
+  (charlie via phunt)
+
+  ZOOKEEPER-2378 upgrade ivy to recent version (phunt)
+
+  ZOOKEEPER-2373 Licenses section missing from pom file (phunt)
+
+  ZOOKEEPER-2087 Few UX improvements in ZooInspector
+  (Adam Dudczak via phunt)
+
   ZOOKEEPER-2133 zkperl: Segmentation fault if getting a node with
   null value (Botond Hejj via phunt)
 
