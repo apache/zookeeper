@@ -2,7 +2,7 @@
   "version": "1.0.0.0",
   "compilationOptions": { "keyFile": "../../ZooKeeperNetEx.snk" },
   "dependencies": {
-    "ZooKeeperNetEx": "3.4.7.9",
+    "ZooKeeperNetEx": "3.4.8.0",
     "Microsoft.NETCore.Platforms": "1.0.1-*",
     "Newtonsoft.Json": "8.0.2",
     "xunit": "2.1.0"

@@ -3,7 +3,7 @@
   "compilationOptions": { "keyFile": "../../ZooKeeperNetEx.snk" },
   "dependencies": {
     "ZooKeeperNetEx.Tests": "1.0.0.0",
-    "ZooKeeperNetEx.Recipes": "3.4.7.9"
+    "ZooKeeperNetEx.Recipes": "3.4.8.0"
   },
   "frameworks": {
     "dnxcore50": { "imports": "portable-net451+win8" },
