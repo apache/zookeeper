@@ -18,6 +18,9 @@ BUGFIXES:
   ZOOKEEPER-2133 zkperl: Segmentation fault if getting a node with
   null value (Botond Hejj via phunt)
 
+  ZOOKEEPER-2283 traceFile property is not used in the ZooKeeper, it
+  should be removed from documentation (Arshad Mohammad via phunt)
+
 Release 3.4.8 - 2016-02-05
 
 Backward compatible changes:
