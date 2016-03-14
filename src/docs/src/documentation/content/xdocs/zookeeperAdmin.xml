@@ -824,22 +824,6 @@ server.3=zoo3:2888:3888</programlisting>
           </varlistentry>
 
           <varlistentry>
-            <term>traceFile</term>
-
-            <listitem>
-              <para>(Java system property: <emphasis
-              role="bold">requestTraceFile</emphasis>)</para>
-
-              <para>If this option is defined, requests will be will logged to
-              a trace file named traceFile.year.month.day. Use of this option
-              provides useful debugging information, but will impact
-              performance. (Note: The system property has no zookeeper prefix,
-              and the configuration variable name is different from the system
-              property. Yes - it's not consistent, and it's annoying.)</para>
-            </listitem>
-          </varlistentry>
-
-          <varlistentry>
             <term>maxClientCnxns</term>
             <listitem>
               <para>(No Java system property)</para>

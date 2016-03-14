@@ -329,7 +329,7 @@ document.write("Last Published: " + document.lastModified);
 </table>
 <a name="Nodes+and+ephemeral+nodes"></a>
 <h3 class="h4">Nodes and ephemeral nodes</h3>
-<p>Unlike is standard file systems, each node in a ZooKeeper
+<p>Unlike standard file systems, each node in a ZooKeeper
       namespace can have data associated with it as well as children. It is
       like having a file-system that allows a file to also be a directory.
       (ZooKeeper was designed to store coordination data: status information,
@@ -353,9 +353,9 @@ document.write("Last Published: " + document.lastModified);
 <a name="Conditional+updates+and+watches"></a>
 <h3 class="h4">Conditional updates and watches</h3>
 <p>ZooKeeper supports the concept of <em>watches</em>.
-      Clients can set a watch on a znodes. A watch will be triggered and
-      removed when the znode changes. When a watch is triggered the client
-      receives a packet saying that the znode has changed. And if the
+      Clients can set a watch on a znode. A watch will be triggered and
+      removed when the znode changes. When a watch is triggered, the client
+      receives a packet saying that the znode has changed. If the
       connection between the client and one of the Zoo Keeper servers is
       broken, the client will receive a local notification. These can be used
       to <em>[tbd]</em>.</p>
@@ -487,7 +487,7 @@ document.write("Last Published: " + document.lastModified);
       of the ZooKeeper service. With the exception of the request processor,
      each of
       the servers that make up the ZooKeeper service replicates its own copy
-      of each of components.</p>
+      of each of the components.</p>
 <table class="ForrestTable" cellspacing="1" cellpadding="4">
 <tr>
 <td>ZooKeeper Components</td>
