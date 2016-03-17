@@ -284,6 +284,8 @@ BUGFIXES:
   ZOOKEEPER-2385 Zookeeper trunk build is failing on windows
   (Arshad Mohammad via phunt)
 
+  ZOOKEEPER-2388 Unit tests failing on Solaris (Arshad Mohammad via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
