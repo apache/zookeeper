@@ -22,6 +22,7 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
@@ -47,12 +48,12 @@ public class QuorumPeerTest {
         long myId = 1;
         File dataDir = ClientBase.createTmpDir();
         int clientPort = PortAssignment.unique();
-        String clientIP = "127.0.0.2";
         Map<Long, QuorumServer> peersView = new HashMap<Long, QuorumServer>();
+        InetAddress clientIP = InetAddress.getLoopbackAddress();
 
         peersView.put(Long.valueOf(myId),
-                new QuorumServer(myId, new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-                        new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                new QuorumServer(myId, new InetSocketAddress(clientIP, PortAssignment.unique()),
+                        new InetSocketAddress(clientIP, PortAssignment.unique()),
                         new InetSocketAddress(clientIP, clientPort), LearnerType.PARTICIPANT));
 
         /**
@@ -61,7 +62,7 @@ public class QuorumPeerTest {
         QuorumPeer peer1 = new QuorumPeer(peersView, dataDir, dataDir, clientPort, electionAlg, myId, tickTime,
                 initLimit, syncLimit);
         String hostString1 = peer1.cnxnFactory.getLocalAddress().getHostString();
-        assertEquals(clientIP, hostString1);
+        assertEquals(clientIP.getHostAddress(), hostString1);
 
         // cleanup
         peer1.shutdown();
@@ -71,15 +72,14 @@ public class QuorumPeerTest {
          */
         peersView.clear();
         clientPort = PortAssignment.unique();
-        clientIP = "127.0.0.3";
         peersView.put(Long.valueOf(myId),
-                new QuorumServer(myId, new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-                        new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
+                new QuorumServer(myId, new InetSocketAddress(clientIP, PortAssignment.unique()),
+                        new InetSocketAddress(clientIP, PortAssignment.unique()),
                         new InetSocketAddress(clientIP, clientPort), LearnerType.PARTICIPANT));
         QuorumPeer peer2 = new QuorumPeer(peersView, dataDir, dataDir, clientPort, electionAlg, myId, tickTime,
                 initLimit, syncLimit);
         String hostString2 = peer2.cnxnFactory.getLocalAddress().getHostString();
-        assertEquals(clientIP, hostString2);
+        assertEquals(clientIP.getHostAddress(), hostString2);
         // cleanup
         peer2.shutdown();
     }

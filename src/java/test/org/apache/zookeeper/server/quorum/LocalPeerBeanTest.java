@@ -25,6 +25,7 @@ import static org.junit.Assert.assertTrue;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
+import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.junit.Test;
 
@@ -49,7 +50,7 @@ public class LocalPeerBeanTest {
          * Case 2: When only client port is configured
          */
         ServerCnxnFactory cnxnFactory = ServerCnxnFactory.createFactory();
-        int clientPort = 2181;
+        int clientPort = PortAssignment.unique();
         InetSocketAddress address = new InetSocketAddress(clientPort);
         cnxnFactory.configure(address, 5, false);
         quorumPeer.setCnxnFactory(cnxnFactory);
@@ -64,15 +65,15 @@ public class LocalPeerBeanTest {
         /**
          * Case 3: When both client port and client address is configured
          */
-        InetAddress clientIP = InetAddress.getByAddress(new byte[] { 127, 0, 0,
-                2 });
+        clientPort = PortAssignment.unique();
+        InetAddress clientIP = InetAddress.getLoopbackAddress();
         address = new InetSocketAddress(clientIP, clientPort);
         cnxnFactory = ServerCnxnFactory.createFactory();
         cnxnFactory.configure(address, 5, false);
         quorumPeer.setCnxnFactory(cnxnFactory);
 
         result = remotePeerBean.getClientAddress();
-        String expectedResult = "127.0.0.2:" + clientPort;
+        String expectedResult = clientIP.getHostAddress() + ":" + clientPort;
         assertEquals(expectedResult, result);
         // cleanup
         cnxnFactory.shutdown();
