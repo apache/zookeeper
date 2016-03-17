@@ -132,6 +132,8 @@ BUGFIXES:
   ZOOKEEPER-2385 Zookeeper trunk build is failing on windows
   (Arshad Mohammad via phunt)
 
+  ZOOKEEPER-2388 Unit tests failing on Solaris (Arshad Mohammad via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-2270: Allow MBeanRegistry to be overridden for better unit tests
