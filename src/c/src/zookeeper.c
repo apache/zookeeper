@@ -4247,6 +4247,8 @@ const char* zerror(int c)
       return "session moved to another server, so operation is ignored";
     case ZNOTREADONLY:
       return "state-changing request is passed to read-only server";
+    case ZNOWATCHER:
+      return "no watcher";
    case ZNEWCONFIGNOQUORUM:
        return "no quorum of new config is connected and up-to-date with the leader of last commmitted config - try invoking reconfiguration after new servers are connected and synced";
    case ZRECONFIGINPROGRESS:
