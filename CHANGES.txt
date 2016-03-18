@@ -134,6 +134,8 @@ BUGFIXES:
 
   ZOOKEEPER-2388 Unit tests failing on Solaris (Arshad Mohammad via phunt)
 
+  ZOOKEEPER-2392 Update netty to 3.7.1.Final (Hendy Irawan via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-2270: Allow MBeanRegistry to be overridden for better unit tests
