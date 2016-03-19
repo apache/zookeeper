@@ -32,10 +32,10 @@
 
   <dependencies>
     <dependency org="org.slf4j" name="slf4j-api" rev="1.7.5"/>
-    <dependency org="org.slf4j" name="slf4j-log4j12" rev="1.7.5" transitive="false" conf="test->default" />
+    <dependency org="org.slf4j" name="slf4j-log4j12" rev="1.7.5" transitive="false"/>
   
     <!-- transitive false turns off dependency checking, log4j deps seem borked -->
-    <dependency org="log4j" name="log4j" rev="1.2.17" transitive="false" conf="test->default" />
+    <dependency org="log4j" name="log4j" rev="1.2.17" transitive="false"/>
     <dependency org="org.eclipse.jetty" name="jetty-server" rev="7.0.1.v20091125" />
     <dependency org="org.eclipse.jetty" name="jetty-servlet" rev="7.0.1.v20091125" />
     <dependency org="com.googlecode.json-simple" name="json-simple" rev="1.1" />

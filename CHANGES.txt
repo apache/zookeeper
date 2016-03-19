@@ -288,6 +288,9 @@ BUGFIXES:
 
   ZOOKEEPER-2392 Update netty to 3.7.1.Final (Hendy Irawan via phunt)
 
+  ZOOKEEPER-2393: Revert run-time dependency on log4j and slf4j-log4j12
+  (Arshad Mohammad via cnauroth)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
