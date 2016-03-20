@@ -162,6 +162,9 @@ IMPROVEMENTS:
   ZOOKEEPER-2300: Expose SecureClientPort and SecureClientAddress JMX properties
   (Arshad Mohammad via rgs)
 
+  ZOOKEEPER-2240 Make the three-node minimum more explicit in 
+  documentation and on website (Shawn Heisey and Arshad Mohammad via phunt)
+
 Release 3.5.1 - 07/27/2015
 
 NEW FEATURES:
