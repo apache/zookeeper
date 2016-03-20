@@ -853,7 +853,7 @@ server.3=zoo3:2888:3888</programlisting>
              <term>fsync.warningthresholdms</term>
              <listitem>
                <para>(Java system property: <emphasis
-               role="bold">fsync.warningthresholdms</emphasis>)</para>
+               role="bold">zookeeper.fsync.warningthresholdms</emphasis>)</para>
 
                <para><emphasis role="bold">New in 3.3.4:</emphasis> A
                warning message will be output to the log whenever an
