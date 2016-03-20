@@ -112,7 +112,11 @@ public class FileTxnLog implements TxnLog {
                 LOG.warn(size + " is not a valid value for preAllocSize");
             }
         }
-        fsyncWarningThresholdMS = Long.getLong("fsync.warningthresholdms", 1000);
+        /** Local variable to read fsync.warningthresholdms into */
+        Long fsyncWarningThreshold;
+        if ((fsyncWarningThreshold = Long.getLong("zookeeper.fsync.warningthresholdms")) == null)
+            fsyncWarningThreshold = Long.getLong("fsync.warningthresholdms", 1000);
+        fsyncWarningThresholdMS = fsyncWarningThreshold;
     }
 
     long lastZxidSeen;
