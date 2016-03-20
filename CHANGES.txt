@@ -24,6 +24,9 @@ BUGFIXES:
   ZOOKEEPER-2385 Zookeeper trunk build is failing on windows
   (Arshad Mohammad via phunt)
 
+  ZOOKEEPER-2195 fsync.warningthresholdms in zoo.cfg not working
+  (Biju Nair via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-2240 Make the three-node minimum more explicit in 
