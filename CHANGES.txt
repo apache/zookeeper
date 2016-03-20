@@ -24,6 +24,12 @@ BUGFIXES:
   ZOOKEEPER-2385 Zookeeper trunk build is failing on windows
   (Arshad Mohammad via phunt)
 
+IMPROVEMENTS:
+
+  ZOOKEEPER-2240 Make the three-node minimum more explicit in 
+  documentation and on website (Shawn Heisey and Arshad Mohammad via phunt)
+
+
 Release 3.4.8 - 2016-02-05
 
 Backward compatible changes:
