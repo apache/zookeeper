@@ -186,7 +186,28 @@
       only handle the failure of a single machine; if two machines fail, the
       remaining two machines do not constitute a majority. However, with five
       machines ZooKeeper can handle the failure of two machines. </para>
-
+      <note>
+         <para>
+            As mentioned in the
+            <ulink url="zookeeperStarted.html">ZooKeeper Getting Started Guide</ulink>
+            , a minimum of three servers are required for a fault tolerant
+            clustered setup, and it is strongly recommended that you have an
+            odd number of servers.
+         </para>
+         <para>Usually three servers is more than enough for a production
+            install, but for maximum reliability during maintenance, you may
+            wish to install five servers. With three servers, if you perform
+            maintenance on one of them, you are vulnerable to a failure on one
+            of the other two servers during that maintenance. If you have five
+            of them running, you can take one down for maintenance, and know
+            that you're still OK if one of the other four suddenly fails.
+         </para>
+         <para>Your redundancy considerations should include all aspects of
+            your environment. If you have three ZooKeeper servers, but their
+            network cables are all plugged into the same network switch, then
+            the failure of that switch will take down your entire ensemble.
+         </para>
+      </note>
       <para>Here are the steps to setting a server that will be part of an
       ensemble. These steps should be performed on every host in the
       ensemble:</para>

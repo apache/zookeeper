@@ -342,8 +342,25 @@ numChildren = 0
       ZooKeeper in replicated mode. A replicated group of servers in the same
       application is called a <emphasis>quorum</emphasis>, and in replicated
       mode, all servers in the quorum have copies of the same configuration
-      file. The file is similar to the one used in standalone mode, but with a
-      few differences. Here is an example:</para>
+      file.</para>
+   <note>
+      <para>
+         For replicated mode, a minimum of three servers are required,
+         and it is strongly recommended that you have an odd number of
+         servers. If you only have two servers, then you are in a
+         situation where if one of them fails, there are not enough
+         machines to form a majority quorum. Two servers is inherently
+         <emphasis role="bold">less</emphasis>
+         stable than a single server, because there are two single
+         points of failure.
+      </para>
+   </note>
+   <para>
+      The required
+      <emphasis role="bold">conf/zoo.cfg</emphasis>
+      file for replicated mode is similar to the one used in standalone
+      mode, but with a few differences. Here is an example:
+   </para>
 
 <programlisting>
 tickTime=2000
@@ -396,6 +413,13 @@ server.3=zoo3:2888:3888
         (in the above replicated example, running on a
         single <emphasis>localhost</emphasis>, you would still have
         three config files).</para>
+        <para>Please be aware that setting up multiple servers on a single
+            machine will not create any redundancy. If something were to
+            happen which caused the machine to die, all of the zookeeper
+            servers would be offline. Full redundancy requires that each
+            server have its own machine. It must be a completely separate
+            physical server. Multiple virtual machines on the same physical
+            host are still vulnerable to the complete failure of that host.</para>
       </note>
     </section>
 
