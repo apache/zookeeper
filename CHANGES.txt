@@ -142,6 +142,9 @@ BUGFIXES:
   ZOOKEEPER-2195 fsync.warningthresholdms in zoo.cfg not working
   (Biju Nair via phunt)
 
+  ZOOKEEPER-2364: "ant docs" fails on branch-3.5 due to missing releasenotes.xml.
+  (phunt via cnauroth)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-2270: Allow MBeanRegistry to be overridden for better unit tests
