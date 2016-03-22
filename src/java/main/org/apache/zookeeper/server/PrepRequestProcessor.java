@@ -161,15 +161,13 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
             if (lastChange == null) {
                 DataNode n = zks.getZKDatabase().getNode(path);
                 if (n != null) {
-                    Long acl;
                     Set<String> children;
                     synchronized(n) {
-                        acl = n.acl;
                         children = n.getChildren();
                     }
                     lastChange = new ChangeRecord(-1, path, n.stat,
                         children != null ? children.size() : 0,
-                            zks.getZKDatabase().convertLong(acl));
+                            zks.getZKDatabase().aclForNode(n));
                 }
             }
         }
