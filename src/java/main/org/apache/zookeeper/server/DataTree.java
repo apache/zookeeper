@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.server;
 
-import org.apache.jute.Index;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
@@ -35,7 +34,6 @@ import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.Watcher.WatcherType;
 import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.PathTrie;
 import org.apache.zookeeper.data.ACL;
@@ -139,23 +137,7 @@ public class DataTree {
     private final Set<String> containers =
             Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 
-    /**
-     * this is map from longs to acl's. It saves acl's being stored for each
-     * datanode.
-     */
-    private final Map<Long, List<ACL>> longKeyMap =
-        new HashMap<Long, List<ACL>>();
-
-    /**
-     * this a map from acls to long.
-     */
-    private final Map<List<ACL>, Long> aclKeyMap =
-        new HashMap<List<ACL>, Long>();
-
-    /**
-     * these are the number of acls that we have in the datatree
-     */
-    private long aclIndex = 0;
+    private final ReferenceCountedACLCache aclCache = new ReferenceCountedACLCache();
 
     @SuppressWarnings("unchecked")
     public Set<String> getEphemerals(long sessionId) {
@@ -172,54 +154,6 @@ public class DataTree {
 
     public Set<String> getContainers() {
         return new HashSet<String>(containers);
-    }
-
-    int getAclSize() {
-        return longKeyMap.size();
-    }
-
-    private long incrementIndex() {
-        return ++aclIndex;
-    }
-
-    /**
-     * converts the list of acls to a list of longs.
-     *
-     * @param acls
-     * @return a list of longs that map to the acls
-     */
-    public synchronized Long convertAcls(List<ACL> acls) {
-        if (acls == null)
-            return -1L;
-        // get the value from the map
-        Long ret = aclKeyMap.get(acls);
-        // could not find the map
-        if (ret != null)
-            return ret;
-        long val = incrementIndex();
-        longKeyMap.put(val, acls);
-        aclKeyMap.put(acls, val);
-        return val;
-    }
-
-    /**
-     * converts a list of longs to a list of acls.
-     *
-     * @param longVal
-     *            the list of longs
-     * @return a list of ACLs that map to longs
-     */
-    public synchronized List<ACL> convertLong(Long longVal) {
-        if (longVal == null)
-            return null;
-        if (longVal == -1L)
-            return Ids.OPEN_ACL_UNSAFE;
-        List<ACL> acls = longKeyMap.get(longVal);
-        if (acls == null) {
-            LOG.error("ERROR: ACL not available for long " + longVal);
-            throw new RuntimeException("Failed to fetch acls for " + longVal);
-        }
-        return acls;
     }
 
     public Collection<Long> getSessions() {
@@ -517,7 +451,7 @@ public class DataTree {
             }
             parent.stat.setCversion(parentCVersion);
             parent.stat.setPzxid(zxid);
-            Long longval = convertAcls(acl);
+            Long longval = aclCache.convertAcls(acl);
             DataNode child = new DataNode(data, longval, stat);
             parent.addChild(childName);
             nodes.put(path, child);
@@ -581,6 +515,9 @@ public class DataTree {
             throw new KeeperException.NoNodeException();
         }
         nodes.remove(path);
+        synchronized (node) {
+            aclCache.removeUsage(node.acl);
+        }
         DataNode parent = nodes.get(parentName);
         if (parent == null) {
             throw new KeeperException.NoNodeException();
@@ -740,8 +677,9 @@ public class DataTree {
             throw new KeeperException.NoNodeException();
         }
         synchronized (n) {
+            aclCache.removeUsage(n.acl);
             n.stat.setAversion(version);
-            n.acl = convertAcls(acl);
+            n.acl = aclCache.convertAcls(acl);
             n.copyStat(stat);
             return stat;
         }
@@ -755,8 +693,18 @@ public class DataTree {
         }
         synchronized (n) {
             n.copyStat(stat);
-            return new ArrayList<ACL>(convertLong(n.acl));
+            return new ArrayList<ACL>(aclCache.convertLong(n.acl));
         }
+    }
+
+    public List<ACL> getACL(DataNode node) {
+        synchronized (node) {
+            return aclCache.convertLong(node.acl);
+        }
+    }
+
+    public int aclCacheSize() {
+        return aclCache.size();
     }
 
     static public class ProcessTxnResult {
@@ -1202,45 +1150,8 @@ public class DataTree {
         }
     }
 
-    private void deserializeList(Map<Long, List<ACL>> longKeyMap,
-            InputArchive ia) throws IOException {
-        int i = ia.readInt("map");
-        while (i > 0) {
-            Long val = ia.readLong("long");
-            if (aclIndex < val) {
-                aclIndex = val;
-            }
-            List<ACL> aclList = new ArrayList<ACL>();
-            Index j = ia.startVector("acls");
-            while (!j.done()) {
-                ACL acl = new ACL();
-                acl.deserialize(ia, "acl");
-                aclList.add(acl);
-                j.incr();
-            }
-            longKeyMap.put(val, aclList);
-            aclKeyMap.put(aclList, val);
-            i--;
-        }
-    }
-
-    private synchronized void serializeList(Map<Long, List<ACL>> longKeyMap,
-            OutputArchive oa) throws IOException {
-        oa.writeInt(longKeyMap.size(), "map");
-        Set<Map.Entry<Long, List<ACL>>> set = longKeyMap.entrySet();
-        for (Map.Entry<Long, List<ACL>> val : set) {
-            oa.writeLong(val.getKey(), "long");
-            List<ACL> aclList = val.getValue();
-            oa.startVector(aclList, "acls");
-            for (ACL acl : aclList) {
-                acl.serialize(oa, "acl");
-            }
-            oa.endVector(aclList, "acls");
-        }
-    }
-
     public void serialize(OutputArchive oa, String tag) throws IOException {
-        serializeList(longKeyMap, oa);
+        aclCache.serialize(oa);
         serializeNode(oa, new StringBuilder(""));
         // / marks end of stream
         // we need to check if clear had been called in between the snapshot.
@@ -1250,7 +1161,7 @@ public class DataTree {
     }
 
     public void deserialize(InputArchive ia, String tag) throws IOException {
-        deserializeList(longKeyMap, ia);
+        aclCache.deserialize(ia);
         nodes.clear();
         pTrie.clear();
         String path = ia.readString("path");
@@ -1258,6 +1169,9 @@ public class DataTree {
             DataNode node = new DataNode();
             ia.readRecord(node, "node");
             nodes.put(path, node);
+            synchronized (node) {
+                aclCache.addUsage(node.acl);
+            }
             int lastSlash = path.lastIndexOf('/');
             if (lastSlash == -1) {
                 root = node;
@@ -1289,6 +1203,8 @@ public class DataTree {
         // update the quotas - create path trie
         // and also update the stat nodes
         setupQuota();
+
+        aclCache.purgeUnused();
     }
 
     /**
