@@ -26,6 +26,7 @@ import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
 
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.common.X509Exception.KeyManagerException;
 import org.apache.zookeeper.common.X509Exception.TrustManagerException;
 import org.apache.zookeeper.common.X509Util;
@@ -65,9 +66,9 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
      */
     public X509AuthenticationProvider() {
         String keyStoreLocationProp = System.getProperty(
-                X509Util.SSL_KEYSTORE_LOCATION);
+                ZKConfig.SSL_KEYSTORE_LOCATION);
         String keyStorePasswordProp = System.getProperty(
-                X509Util.SSL_KEYSTORE_PASSWD);
+                ZKConfig.SSL_KEYSTORE_PASSWD);
 
         X509KeyManager km = null;
         X509TrustManager tm = null;
@@ -79,9 +80,9 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
         }
 
         String trustStoreLocationProp = System.getProperty(
-                X509Util.SSL_TRUSTSTORE_LOCATION);
+                ZKConfig.SSL_TRUSTSTORE_LOCATION);
         String trustStorePasswordProp = System.getProperty(
-                X509Util.SSL_TRUSTSTORE_PASSWD);
+                ZKConfig.SSL_TRUSTSTORE_PASSWD);
 
         try {
             tm = X509Util.createTrustManager(

@@ -43,18 +43,53 @@ import static org.apache.zookeeper.common.X509Exception.TrustManagerException;
 public class X509Util {
     private static final Logger LOG = LoggerFactory.getLogger(X509Util.class);
 
+    /**
+     * @deprecated Use {@link ZKConfig#SSL_KEYSTORE_LOCATION}
+     *             instead.
+     */
+    @Deprecated
     public static final String SSL_KEYSTORE_LOCATION = "zookeeper.ssl.keyStore.location";
+    /**
+     * @deprecated Use {@link ZKConfig#SSL_KEYSTORE_PASSWD}
+     *             instead.
+     */
+    @Deprecated
     public static final String SSL_KEYSTORE_PASSWD = "zookeeper.ssl.keyStore.password";
+    /**
+     * @deprecated Use {@link ZKConfig#SSL_TRUSTSTORE_LOCATION}
+     *             instead.
+     */
+    @Deprecated
     public static final String SSL_TRUSTSTORE_LOCATION = "zookeeper.ssl.trustStore.location";
+    /**
+     * @deprecated Use {@link ZKConfig#SSL_TRUSTSTORE_PASSWD}
+     *             instead.
+     */
+    @Deprecated
     public static final String SSL_TRUSTSTORE_PASSWD = "zookeeper.ssl.trustStore.password";
+    /**
+     * @deprecated Use {@link ZKConfig#SSL_AUTHPROVIDER}
+     *             instead.
+     */
+    @Deprecated
     public static final String SSL_AUTHPROVIDER = "zookeeper.ssl.authProvider";
 
     public static SSLContext createSSLContext() throws SSLContextException {
+        /**
+         * Since Configuration initializes the key store and trust store related
+         * configuration from system property. Reading property from
+         * configuration will be same reading from system property
+         */
+        ZKConfig config=new ZKConfig();
+        return createSSLContext(config);
+    }
+
+    public static SSLContext createSSLContext(ZKConfig config) throws SSLContextException {
         KeyManager[] keyManagers = null;
         TrustManager[] trustManagers = null;
 
-        String keyStoreLocationProp = System.getProperty(SSL_KEYSTORE_LOCATION);
-        String keyStorePasswordProp = System.getProperty(SSL_KEYSTORE_PASSWD);
+        String keyStoreLocationProp = config.getProperty(ZKConfig.SSL_KEYSTORE_LOCATION);
+        String keyStorePasswordProp = config.getProperty(ZKConfig.SSL_KEYSTORE_PASSWD);
 
         // There are legal states in some use cases for null KeyManager or TrustManager.
         // But if a user wanna specify one, location and password are required.
@@ -76,8 +111,8 @@ public class X509Util {
             }
         }
 
-        String trustStoreLocationProp = System.getProperty(SSL_TRUSTSTORE_LOCATION);
-        String trustStorePasswordProp = System.getProperty(SSL_TRUSTSTORE_PASSWD);
+        String trustStoreLocationProp = config.getProperty(ZKConfig.SSL_TRUSTSTORE_LOCATION);
+        String trustStorePasswordProp = config.getProperty(ZKConfig.SSL_TRUSTSTORE_PASSWD);
 
         if (trustStoreLocationProp == null && trustStorePasswordProp == null) {
             LOG.warn("keystore not specified for client connection");

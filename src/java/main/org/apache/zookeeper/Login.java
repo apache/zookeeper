@@ -27,12 +27,12 @@ package org.apache.zookeeper;
 
 import javax.security.auth.kerberos.KerberosPrincipal;
 import javax.security.auth.login.AppConfigurationEntry;
-import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
 import javax.security.auth.callback.CallbackHandler;
 
-import org.apache.zookeeper.client.ZooKeeperSaslClient;
+import org.apache.zookeeper.client.ZKClientConfig;
+import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.common.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,14 +90,14 @@ public class Login {
      * @throws javax.security.auth.login.LoginException
      *               Thrown if authentication fails.
      */
-    public Login(final String loginContextName, CallbackHandler callbackHandler)
+    public Login(final String loginContextName, CallbackHandler callbackHandler, final ZKConfig config)
             throws LoginException {
         this.callbackHandler = callbackHandler;
         login = login(loginContextName);
         this.loginContextName = loginContextName;
         subject = login.getSubject();
         isKrbTicket = !subject.getPrivateCredentials(KerberosTicket.class).isEmpty();
-        AppConfigurationEntry entries[] = Configuration.getConfiguration().getAppConfigurationEntry(loginContextName);
+        AppConfigurationEntry entries[] = javax.security.auth.login.Configuration.getConfiguration().getAppConfigurationEntry(loginContextName);
         for (AppConfigurationEntry entry: entries) {
             // there will only be a single entry, so this for() loop will only be iterated through once.
             if (entry.getOptions().get("useTicketCache") != null) {
@@ -198,8 +198,8 @@ public class Login {
                     }
                     if (isUsingTicketCache) {
                         String cmd = "/usr/bin/kinit";
-                        if (System.getProperty("zookeeper.kinit") != null) {
-                            cmd = System.getProperty("zookeeper.kinit");
+                        if (config.getProperty(ZKConfig.KINIT_COMMAND) != null) {
+                            cmd = config.getProperty(ZKConfig.KINIT_COMMAND);
                         }
                         String kinitArgs = "-R";
                         int retry = 1;
@@ -289,8 +289,8 @@ public class Login {
             throw new LoginException("loginContext name (JAAS file section header) was null. " +
                     "Please check your java.security.login.auth.config (=" +
                     System.getProperty("java.security.login.auth.config") +
-                    ") and your " + ZooKeeperSaslClient.LOGIN_CONTEXT_NAME_KEY + "(=" + 
-                    System.getProperty(ZooKeeperSaslClient.LOGIN_CONTEXT_NAME_KEY, "Client") + ")");
+                    ") and your " + ZKClientConfig.LOGIN_CONTEXT_NAME_KEY + "(=" +
+                    System.getProperty(ZKClientConfig.LOGIN_CONTEXT_NAME_KEY, "Client") + ")");
         }
         LoginContext loginContext = new LoginContext(loginContextName,callbackHandler);
         loginContext.login();
