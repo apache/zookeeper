@@ -34,6 +34,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import org.apache.zookeeper.ClientCnxn.EndOfStreamException;
 import org.apache.zookeeper.ClientCnxn.Packet;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.client.ZKClientConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,8 +50,9 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
 
     private SocketAddress remoteSocketAddress;
 
-    ClientCnxnSocketNIO() throws IOException {
-        super();
+    public ClientCnxnSocketNIO(ZKClientConfig clientConfig) throws IOException {
+        this.clientConfig = clientConfig;
+        initProperties();
     }
 
     @Override

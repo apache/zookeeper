@@ -65,7 +65,7 @@ abstract class ClientCnxnSocket {
     protected long now;
     protected ClientCnxn.SendThread sendThread;
     protected LinkedBlockingDeque<Packet> outgoingQueue;
-    private ZKClientConfig clientConfig;
+    protected ZKClientConfig clientConfig;
     /**
      * 4 MB
      */
@@ -232,16 +232,7 @@ abstract class ClientCnxnSocket {
      */
     abstract void sendPacket(Packet p) throws IOException;
 
-    public ZKClientConfig getClientConfig() {
-        return clientConfig;
-    }
-
-    public void setClientConfig(ZKClientConfig clientConfig) {
-        this.clientConfig = clientConfig;
-        initProperties();
-    }
-
-    private void initProperties() {
+    protected void initProperties() {
         packetLen = Integer.getInteger(
                 clientConfig.getProperty(ZKConfig.JUTE_MAXBUFFER),
                 CLIENT_MAX_PACKET_LENTH_DEFAULT);

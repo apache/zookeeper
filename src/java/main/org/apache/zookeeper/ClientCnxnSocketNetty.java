@@ -78,6 +78,11 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
     AtomicBoolean needSasl = new AtomicBoolean();
     Semaphore waitSasl = new Semaphore(0);
 
+    public ClientCnxnSocketNetty(ZKClientConfig clientConfig) {
+        this.clientConfig = clientConfig;
+        initProperties();
+    }
+
     /**
      * lifecycles diagram:
      * <p/>
@@ -346,7 +351,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         @Override
         public ChannelPipeline getPipeline() throws Exception {
             ChannelPipeline pipeline = Channels.pipeline();
-            if (getClientConfig().getBoolean(ZKClientConfig.SECURE_CLIENT)) {
+            if (clientConfig.getBoolean(ZKClientConfig.SECURE_CLIENT)) {
                 initSSL(pipeline);
             }
             pipeline.addLast("handler", new ZKClientHandler());
@@ -357,7 +362,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         // Basically we only need to create it once.
         private synchronized void initSSL(ChannelPipeline pipeline) throws SSLContextException {
             if (sslContext == null || sslEngine == null) {
-                sslContext = X509Util.createSSLContext(getClientConfig());
+                sslContext = X509Util.createSSLContext(clientConfig);
                 sslEngine = sslContext.createSSLEngine();
                 sslEngine.setUseClientMode(true);
             }

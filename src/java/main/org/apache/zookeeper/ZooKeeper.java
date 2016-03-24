@@ -19,6 +19,7 @@
 package org.apache.zookeeper;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.ArrayList;
@@ -712,7 +713,9 @@ public class ZooKeeper {
      *            a watcher object which will be notified of state changes, may
      *            also be notified for node events
      * @param conf
-     *            client configurations
+     *            complete client configuration which are applicable to only
+     *            this ZooKeeper instance. This gives flexibility each client to
+     *            have separate set of configurations
      * @throws IOException
      *             in cases of network failure
      * @throws IllegalArgumentException
@@ -840,7 +843,9 @@ public class ZooKeeper {
      * @param aHostProvider
      *            use this as HostProvider to enable custom behaviour.
      * @param clientConfig
-     *            client configuration
+     *            complete client configuration which are applicable to only
+     *            this ZooKeeper instance. This gives flexibility each client to
+     *            have separate set of configurations
      * @throws IOException
      *             in cases of network failure
      * @throws IllegalArgumentException
@@ -970,7 +975,9 @@ public class ZooKeeper {
      *            allowed while write requests are not. It continues seeking for
      *            majority in the background.
      * @param conf
-     *            client configuration
+     *            complete client configuration which are applicable to only
+     *            this ZooKeeper instance. This gives flexibility each client to
+     *            have separate set of configurations
      * @throws IOException
      *             in cases of network failure
      * @throws IllegalArgumentException
@@ -2921,9 +2928,8 @@ public class ZooKeeper {
             clientCnxnSocketName = ClientCnxnSocketNIO.class.getName();
         }
         try {
-            ClientCnxnSocket clientCxnSocket = (ClientCnxnSocket) Class.forName(clientCnxnSocketName)
-                    .newInstance();
-            clientCxnSocket.setClientConfig(getClientConfig());
+            Constructor<?> clientCxnConstructor = Class.forName(clientCnxnSocketName).getConstructor(ZKClientConfig.class);
+            ClientCnxnSocket clientCxnSocket = (ClientCnxnSocket) clientCxnConstructor.newInstance(getClientConfig());
             return clientCxnSocket;
         } catch (Exception e) {
             IOException ioe = new IOException("Couldn't instantiate "

@@ -39,7 +39,7 @@ public class ClientReconnectTest extends ZKTestCase {
     
     class MockCnxn extends ClientCnxnSocketNIO {
         MockCnxn() throws IOException {
-            super();
+            super(new ZKClientConfig());
         }
 
         @Override

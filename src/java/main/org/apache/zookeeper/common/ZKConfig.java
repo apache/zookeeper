@@ -33,12 +33,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class is used as base class for ZooKeeper Client and Server
- * configuration. Its support to read client configuration from system property
- * and configuration file. User can override system property by
- * {@link #setProperty(String, String)} API.
+ * This class is a base class for the configurations of both client and server.
+ * It supports reading client configuration from both system properties and
+ * configuration file. A user can override any system property by calling
+ * {@link #setProperty(String, String)}.
  */
-
 public class ZKConfig {
 
     private static final Logger LOG = LoggerFactory.getLogger(ZKConfig.class);
@@ -54,14 +53,14 @@ public class ZKConfig {
     private Map<String, String> properties = new HashMap<String, String>();
 
     /**
-     * values are ini
+     * properties, which are common to both client and server, are initialized
+     * from system properties
      */
     public ZKConfig() {
         init();
     }
 
     /**
-     *
      * @param configPath
      *            Configuration file path
      * @throws ConfigException
