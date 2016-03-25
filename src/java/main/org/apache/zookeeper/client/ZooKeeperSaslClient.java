@@ -79,7 +79,7 @@ public class ZooKeeperSaslClient {
      */
     @Deprecated
     public static final String ENABLE_CLIENT_SASL_DEFAULT = "true";
-    private static volatile boolean initializedLogin = false; 
+    private volatile boolean initializedLogin = false; 
 
     /**
      * Returns true if the SASL client is enabled. By default, the client
