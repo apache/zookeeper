@@ -74,29 +74,90 @@
       <section id="sc_supportedPlatforms">
         <title>Supported Platforms</title>
 
+        <para>ZooKeeper consists of multiple components. Some components are
+        supported broadly, and other components are supported only on a smaller
+        set of platforms.</para>
+
         <itemizedlist>
           <listitem>
-            <para>GNU/Linux is supported as a development and production
-              platform for both server and client.</para>
+            <para><emphasis role="bold">Client</emphasis> is the Java client
+            library, used by applications to connect to a ZooKeeper ensemble.
+            </para>
           </listitem>
           <listitem>
-            <para>Sun Solaris is supported as a development and production
-              platform for both server and client.</para>
+            <para><emphasis role="bold">Server</emphasis> is the Java server
+            that runs on the ZooKeeper ensemble nodes.</para>
           </listitem>
           <listitem>
-            <para>FreeBSD is supported as a development and production
-              platform for clients only. Java NIO selector support in
-              the FreeBSD JVM is broken.</para>
+            <para><emphasis role="bold">Native Client</emphasis> is a client
+            implemented in C, similar to the Java client, used by applications
+            to connect to a ZooKeeper ensemble.</para>
           </listitem>
           <listitem>
-            <para>Win32 is supported as a <emphasis>development
-            platform</emphasis> only for both server and client.</para>
-          </listitem>
-          <listitem>
-            <para>MacOSX is supported as a <emphasis>development
-            platform</emphasis> only for both server and client.</para>
+            <para><emphasis role="bold">Contrib</emphasis> refers to multiple
+            optional add-on components.</para>
           </listitem>
         </itemizedlist>
+
+        <para>The following matrix describes the level of support committed for
+        running each component on different operating system platforms.</para>
+
+        <table>
+          <title>Support Matrix</title>
+          <tgroup cols="5" align="left" colsep="1" rowsep="1">
+            <thead>
+              <row>
+                <entry>Operating System</entry>
+                <entry>Client</entry>
+                <entry>Server</entry>
+                <entry>Native Client</entry>
+                <entry>Contrib</entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry>GNU/Linux</entry>
+                <entry>Development and Production</entry>
+                <entry>Development and Production</entry>
+                <entry>Development and Production</entry>
+                <entry>Development and Production</entry>
+              </row>
+              <row>
+                <entry>Solaris</entry>
+                <entry>Development and Production</entry>
+                <entry>Development and Production</entry>
+                <entry>Not Supported</entry>
+                <entry>Not Supported</entry>
+              </row>
+              <row>
+                <entry>FreeBSD</entry>
+                <entry>Development and Production</entry>
+                <entry>Development and Production</entry>
+                <entry>Not Supported</entry>
+                <entry>Not Supported</entry>
+              </row>
+              <row>
+                <entry>Windows</entry>
+                <entry>Development and Production</entry>
+                <entry>Development and Production</entry>
+                <entry>Not Supported</entry>
+                <entry>Not Supported</entry>
+              </row>
+              <row>
+                <entry>Mac OS X</entry>
+                <entry>Development Only</entry>
+                <entry>Development Only</entry>
+                <entry>Not Supported</entry>
+                <entry>Not Supported</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+
+        <para>For any operating system not explicitly mentioned as supported in
+        the matrix, components may or may not work.  The ZooKeeper community
+        will fix obvious bugs that are reported for other platforms, but there
+        is no full support.</para>
       </section>
 
       <section id="sc_requiredSoftware">
@@ -124,7 +185,28 @@
       only handle the failure of a single machine; if two machines fail, the
       remaining two machines do not constitute a majority. However, with five
       machines ZooKeeper can handle the failure of two machines. </para>
-
+      <note>
+         <para>
+            As mentioned in the
+            <ulink url="zookeeperStarted.html">ZooKeeper Getting Started Guide</ulink>
+            , a minimum of three servers are required for a fault tolerant
+            clustered setup, and it is strongly recommended that you have an
+            odd number of servers.
+         </para>
+         <para>Usually three servers is more than enough for a production
+            install, but for maximum reliability during maintenance, you may
+            wish to install five servers. With three servers, if you perform
+            maintenance on one of them, you are vulnerable to a failure on one
+            of the other two servers during that maintenance. If you have five
+            of them running, you can take one down for maintenance, and know
+            that you're still OK if one of the other four suddenly fails.
+         </para>
+         <para>Your redundancy considerations should include all aspects of
+            your environment. If you have three ZooKeeper servers, but their
+            network cables are all plugged into the same network switch, then
+            the failure of that switch will take down your entire ensemble.
+         </para>
+      </note>
       <para>Here are the steps to setting a server that will be part of an
       ensemble. These steps should be performed on every host in the
       ensemble:</para>
@@ -715,22 +797,6 @@ server.3=zoo3:2888:3888</programlisting>
           </varlistentry>
 
           <varlistentry>
-            <term>traceFile</term>
-
-            <listitem>
-              <para>(Java system property: <emphasis
-              role="bold">requestTraceFile</emphasis>)</para>
-
-              <para>If this option is defined, requests will be will logged to
-              a trace file named traceFile.year.month.day. Use of this option
-              provides useful debugging information, but will impact
-              performance. (Note: The system property has no zookeeper prefix,
-              and the configuration variable name is different from the system
-              property. Yes - it's not consistent, and it's annoying.)</para>
-            </listitem>
-          </varlistentry>
-
-          <varlistentry>
             <term>maxClientCnxns</term>
             <listitem>
               <para>(No Java system property)</para>
@@ -787,7 +853,7 @@ server.3=zoo3:2888:3888</programlisting>
              <term>fsync.warningthresholdms</term>
              <listitem>
                <para>(Java system property: <emphasis
-               role="bold">fsync.warningthresholdms</emphasis>)</para>
+               role="bold">zookeeper.fsync.warningthresholdms</emphasis>)</para>
 
                <para><emphasis role="bold">New in 3.3.4:</emphasis> A
                warning message will be output to the log whenever an

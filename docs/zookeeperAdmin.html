@@ -379,45 +379,121 @@ document.write("Last Published: " + document.lastModified);
 <h3 class="h4">System Requirements</h3>
 <a name="sc_supportedPlatforms"></a>
 <h4>Supported Platforms</h4>
+<p>ZooKeeper consists of multiple components. Some components are
+        supported broadly, and other components are supported only on a smaller
+        set of platforms.</p>
 <ul>
           
 <li>
             
-<p>GNU/Linux is supported as a development and production
-              platform for both server and client.</p>
+<p>
+<strong>Client</strong> is the Java client
+            library, used by applications to connect to a ZooKeeper ensemble.
+            </p>
           
 </li>
           
 <li>
             
-<p>Sun Solaris is supported as a development and production
-              platform for both server and client.</p>
+<p>
+<strong>Server</strong> is the Java server
+            that runs on the ZooKeeper ensemble nodes.</p>
           
 </li>
           
 <li>
             
-<p>FreeBSD is supported as a development and production
-              platform for clients only. Java NIO selector support in
-              the FreeBSD JVM is broken.</p>
+<p>
+<strong>Native Client</strong> is a client
+            implemented in C, similar to the Java client, used by applications
+            to connect to a ZooKeeper ensemble.</p>
           
 </li>
           
 <li>
             
-<p>Win32 is supported as a <em>development
-            platform</em> only for both server and client.</p>
-          
-</li>
-          
-<li>
-            
-<p>MacOSX is supported as a <em>development
-            platform</em> only for both server and client.</p>
+<p>
+<strong>Contrib</strong> refers to multiple
+            optional add-on components.</p>
           
 </li>
         
 </ul>
+<p>The following matrix describes the level of support committed for
+        running each component on different operating system platforms.</p>
+<table class="ForrestTable" cellspacing="1" cellpadding="4">
+<caption>Support Matrix</caption>
+          
+<title>Support Matrix</title>
+          
+              
+<tr>
+                
+<th>Operating System</th>
+                <th>Client</th>
+                <th>Server</th>
+                <th>Native Client</th>
+                <th>Contrib</th>
+              
+</tr>
+            
+              
+<tr>
+                
+<td>GNU/Linux</td>
+                <td>Development and Production</td>
+                <td>Development and Production</td>
+                <td>Development and Production</td>
+                <td>Development and Production</td>
+              
+</tr>
+              
+<tr>
+                
+<td>Solaris</td>
+                <td>Development and Production</td>
+                <td>Development and Production</td>
+                <td>Not Supported</td>
+                <td>Not Supported</td>
+              
+</tr>
+              
+<tr>
+                
+<td>FreeBSD</td>
+                <td>Development and Production</td>
+                <td>Development and Production</td>
+                <td>Not Supported</td>
+                <td>Not Supported</td>
+              
+</tr>
+              
+<tr>
+                
+<td>Windows</td>
+                <td>Development and Production</td>
+                <td>Development and Production</td>
+                <td>Not Supported</td>
+                <td>Not Supported</td>
+              
+</tr>
+              
+<tr>
+                
+<td>Mac OS X</td>
+                <td>Development Only</td>
+                <td>Development Only</td>
+                <td>Not Supported</td>
+                <td>Not Supported</td>
+              
+</tr>
+            
+        
+</table>
+<p>For any operating system not explicitly mentioned as supported in
+        the matrix, components may or may not work.  The ZooKeeper community
+        will fix obvious bugs that are reported for other platforms, but there
+        is no full support.</p>
 <a name="sc_requiredSoftware"></a>
 <h4>Required Software </h4>
 <p>ZooKeeper runs in Java, release 1.6 or greater (JDK 6 or
@@ -437,27 +513,35 @@ document.write("Last Published: " + document.lastModified);
       only handle the failure of a single machine; if two machines fail, the
       remaining two machines do not constitute a majority. However, with five
       machines ZooKeeper can handle the failure of two machines. </p>
-
 <div class="note">
 <div class="label">Note</div>
 <div class="content">
-<p>As mentioned in the Getting Started guide, a minimum of three servers are
-      required for a fault tolerant clustered setup, and it is strongly
-      recommended that you have an odd number of servers.</p>
-<p>Usually three servers is more than enough for a production install, but
-      for maximum reliability during maintenance, you may wish to install
-      five servers.  With three servers, if you perform maintenance on
-      one of them, you are vulnerable to a failure on one of the other
-      two servers during that maintenance.  If you have five of them
-      running, you can take one down for maintenance, and know that
-      you're still OK if one of the other four suddenly fails.</p>
-<p>Your redundancy considerations should include all aspects of your
-      environment.  If you have three zookeeper servers, but their
-      network cables are all plugged into the same network switch, then
-      the failure of that switch will take down your entire ensemble.</p>
+         
+<p>
+            As mentioned in the
+            <a href="zookeeperStarted.html">ZooKeeper Getting Started Guide</a>
+            , a minimum of three servers are required for a fault tolerant
+            clustered setup, and it is strongly recommended that you have an
+            odd number of servers.
+         </p>
+         
+<p>Usually three servers is more than enough for a production
+            install, but for maximum reliability during maintenance, you may
+            wish to install five servers. With three servers, if you perform
+            maintenance on one of them, you are vulnerable to a failure on one
+            of the other two servers during that maintenance. If you have five
+            of them running, you can take one down for maintenance, and know
+            that you're still OK if one of the other four suddenly fails.
+         </p>
+         
+<p>Your redundancy considerations should include all aspects of
+            your environment. If you have three ZooKeeper servers, but their
+            network cables are all plugged into the same network switch, then
+            the failure of that switch will take down your entire ensemble.
+         </p>
+      
 </div>
 </div>
-
 <p>Here are the steps to setting a server that will be part of an
       ensemble. These steps should be performed on every host in the
       ensemble:</p>
@@ -1112,20 +1196,6 @@ server.3=zoo3:2888:3888</pre>
 
           
 <dt>
-<term>traceFile</term>
-</dt>
-<dd>
-<p>(Java system property: <strong>requestTraceFile</strong>)</p>
-<p>If this option is defined, requests will be will logged to
-              a trace file named traceFile.year.month.day. Use of this option
-              provides useful debugging information, but will impact
-              performance. (Note: The system property has no zookeeper prefix,
-              and the configuration variable name is different from the system
-              property. Yes - it's not consistent, and it's annoying.)</p>
-</dd>
-
-          
-<dt>
 <term>maxClientCnxns</term>
 </dt>
 <dd>
@@ -1184,7 +1254,7 @@ server.3=zoo3:2888:3888</pre>
 <term>fsync.warningthresholdms</term>
 </dt>
 <dd>
-<p>(Java system property: <strong>fsync.warningthresholdms</strong>)</p>
+<p>(Java system property: <strong>zookeeper.fsync.warningthresholdms</strong>)</p>
 <p>
 <strong>New in 3.3.4:</strong> A
                warning message will be output to the log whenever an
@@ -1422,6 +1492,141 @@ server.3=zoo3:2888:3888</pre>
               prudent to use this authentication method only on
               localhost (not over the network) or over an encrypted
               connection.</p>
+</dd>
+
+          
+<dt>
+<term>isro</term>
+</dt>
+<dd>
+<p>
+<strong>New in 3.4.0:</strong> Tests if
+              server is running in read-only mode.  The server will respond with
+              "ro" if in read-only mode or "rw" if not in read-only mode.</p>
+</dd>
+
+          
+<dt>
+<term>gtmk</term>
+</dt>
+<dd>
+<p>Gets the current trace mask as a 64-bit signed long value in
+              decimal format.  See <span class="codefrag command">stmk</span> for an explanation of
+              the possible values.</p>
+</dd>
+
+          
+<dt>
+<term>stmk</term>
+</dt>
+<dd>
+<p>Sets the current trace mask.  The trace mask is 64 bits,
+              where each bit enables or disables a specific category of trace
+              logging on the server.  Log4J must be configured to enable
+              <span class="codefrag command">TRACE</span> level first in order to see trace logging
+              messages.  The bits of the trace mask correspond to the following
+              trace logging categories.</p>
+<table class="ForrestTable" cellspacing="1" cellpadding="4">
+<caption>Trace Mask Bit Values</caption>
+                
+<title>Trace Mask Bit Values</title>
+                
+                    
+<tr>
+                      
+<td>0b0000000000</td>
+                      <td>Unused, reserved for future use.</td>
+                    
+</tr>
+                    
+<tr>
+                      
+<td>0b0000000010</td>
+                      <td>Logs client requests, excluding ping
+                      requests.</td>
+                    
+</tr>
+                    
+<tr>
+                      
+<td>0b0000000100</td>
+                      <td>Unused, reserved for future use.</td>
+                    
+</tr>
+                    
+<tr>
+                      
+<td>0b0000001000</td>
+                      <td>Logs client ping requests.</td>
+                    
+</tr>
+                    
+<tr>
+                      
+<td>0b0000010000</td>
+                      <td>Logs packets received from the quorum peer that is
+                      the current leader, excluding ping requests.</td>
+                    
+</tr>
+                    
+<tr>
+                      
+<td>0b0000100000</td>
+                      <td>Logs addition, removal and validation of client
+                      sessions.</td>
+                    
+</tr>
+                    
+<tr>
+                      
+<td>0b0001000000</td>
+                      <td>Logs delivery of watch events to client
+                      sessions.</td>
+                    
+</tr>
+                    
+<tr>
+                      
+<td>0b0010000000</td>
+                      <td>Logs ping packets received from the quorum peer
+                      that is the current leader.</td>
+                    
+</tr>
+                    
+<tr>
+                      
+<td>0b0100000000</td>
+                      <td>Unused, reserved for future use.</td>
+                    
+</tr>
+                    
+<tr>
+                      
+<td>0b1000000000</td>
+                      <td>Unused, reserved for future use.</td>
+                    
+</tr>
+                  
+              
+</table>
+<p>All remaining bits in the 64-bit value are unused and
+              reserved for future use.  Multiple trace logging categories are
+              specified by calculating the bitwise OR of the documented values.
+              The default trace mask is 0b0100110010.  Thus, by default, trace
+              logging includes client requests, packets received from the
+              leader and sessions.</p>
+<p>To set a different trace mask, send a request containing the
+              <span class="codefrag command">stmk</span> four-letter word followed by the trace
+              mask represented as a 64-bit signed long value.  This example uses
+              the Perl <span class="codefrag command">pack</span> function to construct a trace
+              mask that enables all trace logging categories described above and
+              convert it to a 64-bit signed long value with big-endian byte
+              order.  The result is appended to <span class="codefrag command">stmk</span> and sent
+              to the server using netcat.  The server responds with the new
+              trace mask in decimal format.</p>
+<pre class="code">$ perl -e "print 'stmk', pack('q&gt;', 0b0011111010)" | nc localhost 2181
+250
+              </pre>
 </dd>
         
 </dl>
@@ -1804,6 +2009,18 @@ imok
         this document for more details on setting a retention policy
         and maintenance of ZooKeeper storage.
         </p>
+<div class="note">
+<div class="label">Note</div>
+<div class="content">
+        
+<p>The data stored in these files is not encrypted. In the case of
+        storing sensitive data in ZooKeeper, necessary measures need to be
+        taken to prevent unauthorized access. Such measures are external to
+        ZooKeeper (e.g., control access to the files) and depend on the
+        individual settings in which it is being deployed. </p>
+        
+</div>
+</div>
 <a name="sc_commonProblems"></a>
 <h3 class="h4">Things to Avoid</h3>
 <p>Here are some common problems you can avoid by configuring

@@ -42,7 +42,7 @@
     <dependency org="commons-lang" name="commons-lang" 
                 rev="2.4" conf="releaseaudit->default"/>
     <dependency org="commons-collections" name="commons-collections" 
-                rev="3.1" conf="releaseaudit->default"/>
+                rev="3.2.2" conf="releaseaudit->default"/>
   </dependencies>
 
 </ivy-module>

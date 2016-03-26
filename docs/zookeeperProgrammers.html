@@ -245,6 +245,9 @@ document.write("Last Published: " + document.lastModified);
 <a href="#ch_zkWatches">ZooKeeper Watches</a>
 <ul class="minitoc">
 <li>
+<a href="#sc_WatchSemantics">Semantics of Watches</a>
+</li>
+<li>
 <a href="#sc_WatchGuarantees">What ZooKeeper Guarantees about Watches</a>
 </li>
 <li>
@@ -467,8 +470,7 @@ document.write("Last Published: " + document.lastModified);
 <li>
         
 <p>The following characters are not allowed: \ud800 -uF8FFF,
-        \uFFF0-uFFFF, \uXFFFE - \uXFFFF (where X is a digit 1 - E), \uF0000 -
-        \uFFFFF.</p>
+        \uFFF0 - uFFFF.</p>
       
 </li>
 
@@ -520,7 +522,7 @@ document.write("Last Published: " + document.lastModified);
       
 </div>
 </div>
-<p>Znodes are the main enitity that a programmer access. They have
+<p> A znode is the main abstraction a programmer needs to be aware of. Znodes have
       several characteristics that are worth mentioning here.</p>
 <a name="sc_zkDataMode_watches"></a>
 <h4>Watches</h4>
@@ -665,6 +667,18 @@ document.write("Last Published: " + document.lastModified);
 
           
 <p>The zxid of the change that last modified this znode.</p>
+        
+</li>
+
+        
+<li>
+          
+<p>
+<strong>pzxid</strong>
+</p>
+
+          
+<p>The zxid of the change that last modified children of this znode.</p>
         
 </li>
 
@@ -1038,6 +1052,58 @@ document.write("Last Published: " + document.lastModified);
     general this all occurs transparently. There is one case where a watch
     may be missed: a watch for the existence of a znode not yet created will
     be missed if the znode is created and deleted while disconnected.</p>
+<a name="sc_WatchSemantics"></a>
+<h3 class="h4">Semantics of Watches</h3>
+<p> We can set watches with the three calls that read the state of 
+	  ZooKeeper: exists, getData, and getChildren. The following list details
+	  the events that a watch can trigger and the calls that enable them:
+	  </p>
+<ul>
+        
+<li>
+          
+<p>
+<strong>Created event:</strong>
+</p>
+          
+<p>Enabled with a call to exists.</p>
+        
+</li>
+        
+        
+<li>
+          
+<p>
+<strong>Deleted event:</strong>
+</p>
+          
+<p>Enabled with a call to exists, getData, and getChildren.</p>
+        
+</li>
+        
+        
+<li>
+          
+<p>
+<strong>Changed event:</strong>
+</p>
+          
+<p>Enabled with a call to exists and getData.</p>
+        
+</li>
+        
+        
+<li>
+          
+<p>
+<strong>Child event:</strong>
+</p>
+          
+<p>Enabled with a call to getChildren.</p>
+        
+</li>
+      
+</ul>
 <a name="sc_WatchGuarantees"></a>
 <h3 class="h4">What ZooKeeper Guarantees about Watches</h3>
 <p>With regard to watches, ZooKeeper maintains these

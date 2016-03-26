@@ -30,7 +30,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
 
     <property environment="env"/>
     
-    <property name="version" value="3.4.8-SNAPSHOT" />
+    <property name="version" value="3.4.9-SNAPSHOT" />
     <property name="final.name" value="${name}-${version}"/>
     <property name="revision.dir" value="${basedir}/.revision" />
     <property name="revision.properties" value="revision.properties" />
@@ -105,7 +105,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
     <property name="contrib.dir" value="${src.dir}/contrib"/>
     <property name="recipes.dir" value="${src.dir}/recipes"/>
 
-    <property name="ivy.version" value="2.2.0"/>
+    <property name="ivy.version" value="2.4.0"/>
     <property name="ivy.url"
               value="http://repo2.maven.org/maven2/org/apache/ivy/ivy" />
     <property name="ivy.home" value="${user.home}/.ant" />
@@ -723,7 +723,8 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
       <checksum file="${dist.maven.dir}/${final.name}-javadoc.jar" algorithm="sha1"/>
 
       <ivy:makepom settingsRef="${ant.project.name}" ivyfile="${basedir}/ivy.xml"
-                   pomfile="${dist.maven.dir}/${final.name}.pom">
+                   pomfile="${dist.maven.dir}/${final.name}.pom"
+                   templatefile="${basedir}/src/pom.template">
         <mapping conf="default" scope="compile"/>
         <mapping conf="test" scope="test"/>
       </ivy:makepom>
@@ -830,7 +831,8 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
       <checksum file="${dist.maven.dir}/${final.name}-javadoc.jar" algorithm="sha1"/>
 
       <ivy:makepom settingsRef="${ant.project.name}" ivyfile="${basedir}/ivy.xml"
-                   pomfile="${dist.maven.dir}/${name}.pom">
+                   pomfile="${dist.maven.dir}/${name}.pom"
+                   templatefile="${basedir}/src/pom.template">
         <mapping conf="default" scope="compile"/>
         <mapping conf="test" scope="test"/>
       </ivy:makepom>
@@ -1454,12 +1456,14 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
 
     <target name="generate-clover-reports" depends="clover.check, clover">
       <mkdir dir="${clover.report.dir}"/>
-      <clover-report>
+      <taskdef resource="cloverlib.xml" classpath="${clover.jar}"/> 
+      
+      <clover-report initString="${clover.db.dir}/zookeeper_coverage.db">
         <current outfile="${clover.report.dir}" title="${final.name}">
           <format type="html"/>
         </current>
       </clover-report>
-      <clover-report>
+      <clover-report initString="${clover.db.dir}/zookeeper_coverage.db">
         <current outfile="${clover.report.dir}/clover.xml" title="${final.name}">
           <format type="xml"/>
         </current>
