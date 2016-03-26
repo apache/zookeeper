@@ -50,7 +50,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
 
     private SocketAddress remoteSocketAddress;
 
-    public ClientCnxnSocketNIO(ZKClientConfig clientConfig) throws IOException {
+    ClientCnxnSocketNIO(ZKClientConfig clientConfig) throws IOException {
         this.clientConfig = clientConfig;
         initProperties();
     }

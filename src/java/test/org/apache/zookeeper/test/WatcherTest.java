@@ -281,7 +281,8 @@ public class WatcherTest extends ClientBase {
         localWatcher.waitForDisconnected(500);
         startServer();
         globalWatcher.waitForConnected(3000);
-        if (!isGlobal && !zk.getCnxn().getDisableAutoResetWatch()) {
+        boolean disableAutoWatchReset = zk.getClientConfig().getBoolean(ZKClientConfig.DISABLE_AUTO_WATCH_RESET);
+        if (!isGlobal && !disableAutoWatchReset) {
             localWatcher.waitForConnected(500);
         }
 
@@ -291,7 +292,7 @@ public class WatcherTest extends ClientBase {
                 CreateMode.PERSISTENT);
 
         WatchedEvent e;
-        if (!zk.getCnxn().getDisableAutoResetWatch()) {
+        if (!disableAutoWatchReset) {
             e = localWatcher.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
             Assert.assertEquals(e.getPath(), EventType.NodeDataChanged, e.getType());
             Assert.assertEquals("/watchtest/child", e.getPath());
@@ -300,7 +301,7 @@ public class WatcherTest extends ClientBase {
             // why waste the time on poll
         }
 
-        if (!zk.getCnxn().getDisableAutoResetWatch()) {
+        if (!disableAutoWatchReset) {
             e = localWatcher.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
             // The create will trigger the get children and the exist
             // watches
@@ -311,7 +312,7 @@ public class WatcherTest extends ClientBase {
             // why waste the time on poll
         }
 
-        if (!zk.getCnxn().getDisableAutoResetWatch()) {
+        if (!disableAutoWatchReset) {
             e = localWatcher.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
             Assert.assertEquals(EventType.NodeChildrenChanged, e.getType());
             Assert.assertEquals("/watchtest", e.getPath());
@@ -326,11 +327,11 @@ public class WatcherTest extends ClientBase {
         try {
             try {
                 localWatcher.waitForDisconnected(500);
-                if (!isGlobal && !zk.getCnxn().getDisableAutoResetWatch()) {
+                if (!isGlobal && !disableAutoWatchReset) {
                     Assert.fail("Got an event when I shouldn't have");
                 }
             } catch(TimeoutException toe) {
-                if (zk.getCnxn().getDisableAutoResetWatch()) {
+                if (disableAutoWatchReset) {
                     Assert.fail("Didn't get an event when I should have");
                 }
                 // Else what we are expecting since there are no outstanding watches
@@ -371,14 +372,14 @@ public class WatcherTest extends ClientBase {
         localWatcher.waitForDisconnected(500);
         startServer();
         globalWatcher.waitForConnected(TIMEOUT);
-        if (!isGlobal && !zk.getCnxn().getDisableAutoResetWatch()) {
+        if (!isGlobal && !disableAutoWatchReset) {
             localWatcher.waitForConnected(500);
         }
 
         zk.delete("/watchtest/child", -1);
         zk.delete("/watchtest", -1);
 
-        if (!zk.getCnxn().getDisableAutoResetWatch()) {
+        if (!disableAutoWatchReset) {
             e = localWatcher.events.poll(TIMEOUT, TimeUnit.MILLISECONDS);
             Assert.assertEquals(EventType.NodeDeleted, e.getType());
             Assert.assertEquals("/watchtest/child", e.getPath());

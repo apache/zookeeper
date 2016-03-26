@@ -125,10 +125,7 @@ public class ZooKeeperSaslClient {
         return null;
     }
 
-    public ZooKeeperSaslClient(final String serverPrincipal,
-            ZKClientConfig clientConfig)
-
-            throws LoginException {
+    public ZooKeeperSaslClient(final String serverPrincipal, ZKClientConfig clientConfig) throws LoginException {
         /**
          * ZOOKEEPER-1373: allow system property to specify the JAAS
          * configuration section that the zookeeper client should use.
@@ -249,10 +246,6 @@ public class ZooKeeperSaslClient {
             }
             client.respondToServer(usedata, (ClientCnxn)ctx);
         }
-    }
-
-    public void reCreateSaslClient(final String servicePrincipal, final String loginContext) throws LoginException {
-        this.saslClient = createSaslClient(servicePrincipal, loginContext);
     }
 
     private SaslClient createSaslClient(final String servicePrincipal, final String loginContext)

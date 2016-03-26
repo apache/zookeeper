@@ -250,13 +250,18 @@ public class ZooKeeper {
      * the public methods will not be exposed as part of the ZooKeeper client
      * API.
      */
-    class ZKWatchManager implements ClientWatchManager {
+    static class ZKWatchManager implements ClientWatchManager {
         private final Map<String, Set<Watcher>> dataWatches =
             new HashMap<String, Set<Watcher>>();
         private final Map<String, Set<Watcher>> existWatches =
             new HashMap<String, Set<Watcher>>();
         private final Map<String, Set<Watcher>> childWatches =
             new HashMap<String, Set<Watcher>>();
+        private boolean disableAutoWatchReset;
+
+        ZKWatchManager(boolean disableAutoWatchReset) {
+            this.disableAutoWatchReset = disableAutoWatchReset;
+        }
 
         private volatile Watcher defaultWatcher;
 
@@ -452,9 +457,7 @@ public class ZooKeeper {
             switch (type) {
             case None:
                 result.add(defaultWatcher);
-                boolean clear = cnxn.getDisableAutoResetWatch() &&
-                        state != Watcher.Event.KeeperState.SyncConnected;
-
+                boolean clear = disableAutoWatchReset && state != Watcher.Event.KeeperState.SyncConnected;
                 synchronized(dataWatches) {
                     for(Set<Watcher> ws: dataWatches.values()) {
                         result.addAll(ws);
@@ -713,9 +716,8 @@ public class ZooKeeper {
      *            a watcher object which will be notified of state changes, may
      *            also be notified for node events
      * @param conf
-     *            complete client configuration which are applicable to only
-     *            this ZooKeeper instance. This gives flexibility each client to
-     *            have separate set of configurations
+     *            passing this conf object gives each client the flexibility of
+     *            configuring properties differently compared to other instances
      * @throws IOException
      *             in cases of network failure
      * @throws IllegalArgumentException
@@ -843,9 +845,8 @@ public class ZooKeeper {
      * @param aHostProvider
      *            use this as HostProvider to enable custom behaviour.
      * @param clientConfig
-     *            complete client configuration which are applicable to only
-     *            this ZooKeeper instance. This gives flexibility each client to
-     *            have separate set of configurations
+     *            passing this conf object gives each client the flexibility of
+     *            configuring properties differently compared to other instances
      * @throws IOException
      *             in cases of network failure
      * @throws IllegalArgumentException
@@ -975,9 +976,8 @@ public class ZooKeeper {
      *            allowed while write requests are not. It continues seeking for
      *            majority in the background.
      * @param conf
-     *            complete client configuration which are applicable to only
-     *            this ZooKeeper instance. This gives flexibility each client to
-     *            have separate set of configurations
+     *            passing this conf object gives each client the flexibility of
+     *            configuring properties differently compared to other instances
      * @throws IOException
      *             in cases of network failure
      * @throws IllegalArgumentException
@@ -1217,7 +1217,7 @@ public class ZooKeeper {
 
     /* Useful for testing watch handling behavior */
     protected ZKWatchManager defaultWatchManager() {
-        return new ZKWatchManager();
+        return new ZKWatchManager(getClientConfig().getBoolean(ZKClientConfig.DISABLE_AUTO_WATCH_RESET));
     }
 
     /**
@@ -2928,7 +2928,7 @@ public class ZooKeeper {
             clientCnxnSocketName = ClientCnxnSocketNIO.class.getName();
         }
         try {
-            Constructor<?> clientCxnConstructor = Class.forName(clientCnxnSocketName).getConstructor(ZKClientConfig.class);
+            Constructor<?> clientCxnConstructor = Class.forName(clientCnxnSocketName).getDeclaredConstructor(ZKClientConfig.class);
             ClientCnxnSocket clientCxnSocket = (ClientCnxnSocket) clientCxnConstructor.newInstance(getClientConfig());
             return clientCxnSocket;
         } catch (Exception e) {
@@ -2938,14 +2938,4 @@ public class ZooKeeper {
             throw ioe;
         }
     }
-
-    /**
-     * VisibleForTesting
-     * @return ClientCnxn
-     */
-    public ClientCnxn getCnxn() {
-        return cnxn;
-    }
-
-
 }

@@ -66,7 +66,6 @@ import org.apache.zookeeper.ZooKeeper.WatchRegistration;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
-import org.apache.zookeeper.client.ZooKeeperSaslClient.SaslState;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.proto.AuthPacket;
 import org.apache.zookeeper.proto.ConnectRequest;
@@ -109,14 +108,6 @@ public class ClientCnxn {
      * with respect to the server's 1MB default for jute.maxBuffer.
      */
     private static final int SET_WATCHES_MAX_LENGTH = 128 * 1024;
-
-    /**
-     * This controls whether automatic watch resetting is enabled. Clients
-     * automatically reset watches during session reconnect, this option allows
-     * the client to turn off this behavior by setting the environment variable
-     * "zookeeper.disableAutoWatchReset" to "true"
-     */
-    private boolean disableAutoWatchReset;
 
     static class AuthData {
         AuthData(String scheme, byte data[]) {
@@ -207,6 +198,8 @@ public class ClientCnxn {
 
 
     public ZooKeeperSaslClient zooKeeperSaslClient;
+
+    private ZKClientConfig clientConfig;
 
     public long getSessionId() {
         return sessionId;
@@ -400,24 +393,7 @@ public class ClientCnxn {
 
         sendThread = new SendThread(clientCnxnSocket);
         eventThread = new EventThread();
-        initProperties();
-    }
-
-    private void initProperties() {
-        disableAutoWatchReset = zooKeeper.getClientConfig().getBoolean(
-                ZKClientConfig.DISABLE_AUTO_WATCH_RESET);
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("{} is {}", ZKClientConfig.DISABLE_AUTO_WATCH_RESET,
-                    disableAutoWatchReset);
-        }
-    }
-
-    /**
-     * tests use this to check on reset of watches
-     * @return if the auto reset of watches are disabled
-     */
-    public boolean getDisableAutoResetWatch() {
-        return disableAutoWatchReset;
+        this.clientConfig=zooKeeper.getClientConfig();
     }
 
     public void start() {
@@ -980,7 +956,7 @@ public class ClientCnxn {
             // Only send if there's a pending watch
             // TODO: here we have the only remaining use of zooKeeper in
             // this class. It's to be eliminated!
-            if (!disableAutoWatchReset) {
+            if (!clientConfig.getBoolean(ZKClientConfig.DISABLE_AUTO_WATCH_RESET)) {
                 List<String> dataWatches = zooKeeper.getDataWatches();
                 List<String> existWatches = zooKeeper.getExistWatches();
                 List<String> childWatches = zooKeeper.getChildWatches();
@@ -1098,23 +1074,12 @@ public class ClientCnxn {
             String hostPort = addr.getHostString() + ":" + addr.getPort();
             MDC.put("myid", hostPort);
             setName(getName().replaceAll("\\(.*\\)", "(" + hostPort + ")"));
-            ZKClientConfig conf = zooKeeper.getClientConfig();
-            if (conf.isSaslClientEnabled()) {
+            if (clientConfig.isSaslClientEnabled()) {
                 try {
-                    String principalUserName = conf.getProperty(ZKClientConfig.ZK_SASL_CLIENT_USERNAME,
-                            ZKClientConfig.ZK_SASL_CLIENT_USERNAME_DEFAULT);
-                    String serverPrincipal = principalUserName + "/" + addr.getHostString();
-                    // default is Client
-                    String loginContext = conf.getProperty(ZKClientConfig.LOGIN_CONTEXT_NAME_KEY,
-                            ZKClientConfig.LOGIN_CONTEXT_NAME_KEY_DEFAULT);
-                    if (null != zooKeeperSaslClient && zooKeeperSaslClient.getSaslState() != SaslState.FAILED) {
-                        zooKeeperSaslClient.reCreateSaslClient(serverPrincipal, loginContext);
-                    } else {
-                        if (null != zooKeeperSaslClient) {
-                            zooKeeperSaslClient.shutdown();
-                        }
-                        zooKeeperSaslClient = new ZooKeeperSaslClient(serverPrincipal, conf);
+                    if (null != zooKeeperSaslClient) {
+                        zooKeeperSaslClient.shutdown();
                     }
+                    zooKeeperSaslClient = new ZooKeeperSaslClient(getServerPrincipal(addr), clientConfig);
                 } catch (LoginException e) {
                     // An authentication error occurred when the SASL client tried to initialize:
                     // for Kerberos this means that the client failed to authenticate with the KDC.
@@ -1131,6 +1096,13 @@ public class ClientCnxn {
             logStartConnect(addr);
 
             clientCnxnSocket.connect(addr);
+        }
+
+        private String getServerPrincipal(InetSocketAddress addr) {
+            String principalUserName = clientConfig.getProperty(ZKClientConfig.ZK_SASL_CLIENT_USERNAME,
+                    ZKClientConfig.ZK_SASL_CLIENT_USERNAME_DEFAULT);
+            String serverPrincipal = principalUserName + "/" + addr.getHostString();
+            return serverPrincipal;
         }
 
         private void logStartConnect(InetSocketAddress addr) {
