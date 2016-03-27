@@ -12,7 +12,7 @@ src/c/TEST-*.txt
 src/c/*.la
 src/c/*.lo
 src/c/*.o
-src/c/generated/
+#src/c/generated/
 src/java/generated/
 src/java/lib/ant-eclipse-*
 src/java/lib/ivy-*
