@@ -26,6 +26,8 @@ BUGFIXES:
 
   ZOOKEEPER-2195 fsync.warningthresholdms in zoo.cfg not working
   (Biju Nair via phunt)
+  
+  ZOOKEEPER-2141 ACL cache in DataTree never removes entries (Adam Milne-Smith via camille)
 
 IMPROVEMENTS:
 
