@@ -73,7 +73,7 @@ public class DataNodeV1 implements Record {
 
     byte data[];
 
-    List<ACL> acl;
+    public List<ACL> acl;
 
     public StatPersistedV1 stat;
 

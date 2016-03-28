@@ -257,7 +257,10 @@ public class ZKDatabase {
         }
     }
 
-    
+
+    public List<ACL> aclForNode(DataNode n) {
+        return dataTree.getACL(n);
+    }
     /**
      * remove a cnxn from the datatree
      * @param cnxn the cnxn to remove from the datatree
@@ -340,15 +343,6 @@ public class ZKDatabase {
     }
 
     /**
-     * convert from long to the acl entry
-     * @param aclL the long for which to get the acl
-     * @return the acl corresponding to this long entry
-     */
-    public List<ACL> convertLong(Long aclL) {
-        return dataTree.convertLong(aclL);
-    }
-
-    /**
      * get data and stat for a path 
      * @param path the path being queried
      * @param stat the stat for this path
@@ -412,7 +406,7 @@ public class ZKDatabase {
      * @return the acl size of the datatree
      */
     public int getAclSize() {
-        return dataTree.longKeyMap.size();
+        return dataTree.aclCacheSize();
     }
 
     /**
