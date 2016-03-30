@@ -20,6 +20,7 @@ package org.apache.zookeeper.client;
 
 import java.io.File;
 
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 
@@ -29,10 +30,13 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 public class ZKClientConfig extends ZKConfig {
     public static final String ZK_SASL_CLIENT_USERNAME = "zookeeper.sasl.client.username";
     public static final String ZK_SASL_CLIENT_USERNAME_DEFAULT = "zookeeper";
-    public static final String LOGIN_CONTEXT_NAME_KEY = "zookeeper.sasl.clientconfig";
+    @SuppressWarnings("deprecation")
+    public static final String LOGIN_CONTEXT_NAME_KEY = ZooKeeperSaslClient.LOGIN_CONTEXT_NAME_KEY;;
     public static final String LOGIN_CONTEXT_NAME_KEY_DEFAULT = "Client";
-    public static final String ENABLE_CLIENT_SASL_KEY = "zookeeper.sasl.client";
-    public static final String ENABLE_CLIENT_SASL_DEFAULT = "true";
+    @SuppressWarnings("deprecation")
+    public static final String ENABLE_CLIENT_SASL_KEY = ZooKeeperSaslClient.ENABLE_CLIENT_SASL_KEY;
+    @SuppressWarnings("deprecation")
+    public static final String ENABLE_CLIENT_SASL_DEFAULT = ZooKeeperSaslClient.ENABLE_CLIENT_SASL_DEFAULT;
     public static final String ZOOKEEPER_SERVER_REALM = "zookeeper.server.realm";
     /**
      * This controls whether automatic watch resetting is enabled. Clients
@@ -41,11 +45,13 @@ public class ZKClientConfig extends ZKConfig {
      * "zookeeper.disableAutoWatchReset" to "true"
      */
     public static final String DISABLE_AUTO_WATCH_RESET = "zookeeper.disableAutoWatchReset";
-    public static final String ZOOKEEPER_CLIENT_CNXN_SOCKET = "zookeeper.clientCnxnSocket";
+    @SuppressWarnings("deprecation")
+    public static final String ZOOKEEPER_CLIENT_CNXN_SOCKET = ZooKeeper.ZOOKEEPER_CLIENT_CNXN_SOCKET;
     /**
      * Setting this to "true" will enable encrypted client-server communication.
      */
-    public static final String SECURE_CLIENT = "zookeeper.client.secure";
+    @SuppressWarnings("deprecation")
+    public static final String SECURE_CLIENT = ZooKeeper.SECURE_CLIENT;
 
     public ZKClientConfig() {
         super();

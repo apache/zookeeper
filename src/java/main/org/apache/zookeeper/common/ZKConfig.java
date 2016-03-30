@@ -41,12 +41,21 @@ import org.slf4j.LoggerFactory;
 public class ZKConfig {
 
     private static final Logger LOG = LoggerFactory.getLogger(ZKConfig.class);
-    public static final String SSL_KEYSTORE_LOCATION = "zookeeper.ssl.keyStore.location";
-    public static final String SSL_KEYSTORE_PASSWD = "zookeeper.ssl.keyStore.password";
-    public static final String SSL_TRUSTSTORE_LOCATION = "zookeeper.ssl.trustStore.location";
-    public static final String SSL_TRUSTSTORE_PASSWD = "zookeeper.ssl.trustStore.password";
-    public static final String SSL_AUTHPROVIDER = "zookeeper.ssl.authProvider";
+    @SuppressWarnings("deprecation")
+    public static final String SSL_KEYSTORE_LOCATION = X509Util.SSL_KEYSTORE_LOCATION;
+    @SuppressWarnings("deprecation")
+    public static final String SSL_KEYSTORE_PASSWD = X509Util.SSL_KEYSTORE_PASSWD;
+    @SuppressWarnings("deprecation")
+    public static final String SSL_TRUSTSTORE_LOCATION = X509Util.SSL_TRUSTSTORE_LOCATION;
+    @SuppressWarnings("deprecation")
+    public static final String SSL_TRUSTSTORE_PASSWD = X509Util.SSL_TRUSTSTORE_PASSWD;
+    @SuppressWarnings("deprecation")
+    public static final String SSL_AUTHPROVIDER = X509Util.SSL_AUTHPROVIDER;
     public static final String JUTE_MAXBUFFER = "jute.maxbuffer";
+    /**
+     * Path to a kinit binary: {@value}. Defaults to
+     * <code>"/usr/bin/kinit"</code>
+     */
     public static final String KINIT_COMMAND = "zookeeper.kinit";
     public static final String JGSS_NATIVE = "sun.security.jgss.native";
 
