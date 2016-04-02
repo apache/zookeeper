@@ -32,10 +32,10 @@
   "frameworks": {
     "netstandard13": {
       "dependencies": {
-        "Microsoft.NETCore": "5.0.1-rc3-*",
-        "System.Diagnostics.TraceSource": "4.0.0-rc3-*",
-        "System.Net.NameResolution": "4.0.0-rc3-*",
-        "System.Net.Sockets": "4.1.0-rc3-*"
+        "NETStandard.Library": "1.5.0-*",
+        "System.Diagnostics.TraceSource": "4.0.0-*",
+        "System.Net.NameResolution": "4.0.0-*",
+        "System.Net.Sockets": "4.1.0-*"
       }
     },
     "net45": { },
