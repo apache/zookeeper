@@ -111,7 +111,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="contrib.dir" value="${src.dir}/contrib"/>
     <property name="recipes.dir" value="${src.dir}/recipes"/>
 
-    <property name="ivy.version" value="2.2.0"/>
+    <property name="ivy.version" value="2.4.0"/>
     <property name="ivy.url"
               value="http://repo2.maven.org/maven2/org/apache/ivy/ivy" />
     <property name="ivy.home" value="${user.home}/.ant" />
@@ -170,17 +170,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <!-- cppunit property set -->
     <property name="cppunit.lib" value="/usr/lib"/>
     <property name="cppunit.m4" value="/usr/share/aclocal"/>
-
-    <!-- packaging property set -->
-    <property name="package.release" value="1"/>
-    <property name="package.prefix" value="/usr"/>
-    <property name="package.conf.dir" value="/etc/zookeeper"/>
-    <property name="package.log.dir" value="/var/log/zookeeper"/>
-    <property name="package.pid.dir" value="/var/run/zookeeper"/>
-    <property name="package.var.dir" value="/var/lib/zookeeper"/>
-    <property name="package.share.dir" value="/share/zookeeper"/>
-    <property name="package.buildroot" value="/tmp/zookeeper_package_build_${user.name}"/>
-    <property name="package.build.dir" value="/tmp/zookeeper_package_build_${user.name}/BUILD"/>
 
     <!-- artifact publishing property set -->
     <property name="staging_repo_id" value="apache.staging.https"/>
@@ -241,19 +230,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <include name="**/*.jar" />
       </fileset>
       <path refid="java.classpath"/>
-    </path>
-	<path id="test.java.classpath.without.log4j">
-        <pathelement location="${test.java.classes}" />
-        <fileset dir="${ivy.test.lib}">
-            <include name="**/*.jar" />
-            <exclude name="**/*log4j*.jar"/>
-        </fileset>
-        <path refid="java.classpath"/>
-    </path>
-    <path id="package.classpath">
-      <fileset dir="${ivy.package.lib}">
-        <include name="**/jdeb*.jar" />
-      </fileset>
     </path>
 
     <!-- ====================================================== -->
@@ -769,7 +745,8 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <checksum file="${dist.maven.dir}/${final.name}-javadoc.jar" algorithm="sha1"/>
 
       <ivy:makepom settingsRef="${ant.project.name}" ivyfile="${basedir}/ivy.xml"
-                   pomfile="${dist.maven.dir}/${final.name}.pom">
+                   pomfile="${dist.maven.dir}/${final.name}.pom"
+                   templatefile="${basedir}/src/pom.template">
         <mapping conf="default" scope="compile"/>
         <mapping conf="test" scope="test"/>
       </ivy:makepom>
@@ -836,12 +813,10 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <copy todir="${dist.dir}/share/zookeeper" includeEmptyDirs="false">
         <fileset dir="${lib.dir}">
           <exclude name="**/ivy*.jar" />
-          <exclude name="**/deb*.jar" />
         </fileset>
         <fileset dir="${ivy.lib}"/>
       </copy>
 
-      <copy file="${basedir}/src/packages/update-zookeeper-env.sh" tofile="${dist.dir}/sbin/update-zookeeper-env.sh"/>
       <subant target="package">
         <!--Pass down the version in case its needed again and the target
             distribution directory so contribs know where to install to.-->
@@ -876,7 +851,8 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <checksum file="${dist.maven.dir}/${final.name}-javadoc.jar" algorithm="sha1"/>
 
       <ivy:makepom settingsRef="${ant.project.name}" ivyfile="${basedir}/ivy.xml"
-                   pomfile="${dist.maven.dir}/${name}.pom">
+                   pomfile="${dist.maven.dir}/${name}.pom"
+                   templatefile="${basedir}/src/pom.template">
         <mapping conf="default" scope="compile"/>
         <mapping conf="test" scope="test"/>
       </ivy:makepom>
@@ -925,16 +901,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <copy todir="${dist.dir}/src" includeEmptyDirs="true">
         <fileset dir="src" excludes="**/*.template **/docs/build/**/* **/ivy*.jar"/>
       </copy>
-
-      <copy todir="${dist.dir}/${package.share.dir}/templates/conf">
-        <fileset dir="src/packages/templates/conf"/>
-      </copy>
-
-      <copy file="${basedir}/conf/zoo_sample.cfg" tofile="${dist.dir}/${package.share.dir}/templates/conf/zoo.cfg" />
-      <replace file="${dist.dir}/${package.share.dir}/templates/conf/zoo.cfg">
-        <replacetoken>/tmp/zookeeper</replacetoken>
-        <replacevalue>${VAR_DIR}/data</replacevalue>
-      </replace>
   	  
       <chmod perm="ugo+x" type="file" parallel="false">
         <fileset dir="${dist.dir}/bin"/>
@@ -1030,151 +996,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       </subant>
     </target>
 
-    <target name="rpm" depends="package-native, tar" description="Make rpm package">
-      <!--The RPM spec file format disallows hyphen in the version.  Replace with
-          underscore to support version tags like -alpha or -SNAPSHOT.-->
-      <loadresource property="rpm.version">
-        <propertyresource name="version" />
-        <filterchain>
-          <tokenfilter>
-            <replacestring from="-" to="_" />
-          </tokenfilter>
-        </filterchain>
-      </loadresource>
-      <subant target="rpm">
-        <!--Pass down the version in case its needed again and the target
-            distribution directory so contribs know where to install to.-->
-        <property name="version" value="${version}"/>
-        <property name="rpm.version" value="${rpm.version}"/>
-        <property name="dist.dir" value="${dist.dir}"/>
-        <fileset file="${contrib.dir}/build.xml"/>
-        <fileset file="${recipes.dir}/build.xml"/>
-      </subant>  	
-      <path id="c.lib">
-        <fileset dir="${build.dir}">
-          <include name="${final.name}-lib.tar.gz"/>
-        </fileset>
-      </path>
-      <property name="c.lib" refid="c.lib"/>
-      <mkdir dir="${package.buildroot}/BUILD" />
-      <mkdir dir="${package.buildroot}/RPMS" />
-      <mkdir dir="${package.buildroot}/SRPMS" />
-      <mkdir dir="${package.buildroot}/SOURCES" />
-      <mkdir dir="${package.buildroot}/SPECS" />
-      <copy todir="${package.buildroot}/SOURCES">
-        <fileset dir="${build.dir}">
-          <include name="${final.name}.tar.gz" />
-        </fileset>
-        <fileset file="${c.lib}" />
-      </copy>
-      <copy file="${src.dir}/packages/rpm/spec/zookeeper.spec" todir="${package.buildroot}/SPECS">
-        <filterchain>
-          <replacetokens>
-            <token key="final.name" value="${final.name}" />
-            <token key="version" value="${rpm.version}" />
-            <token key="package.release" value="${package.release}" />
-            <token key="package.build.dir" value="${package.build.dir}" />
-            <token key="package.prefix" value="${package.prefix}" />
-            <token key="package.conf.dir" value="${package.conf.dir}" />
-            <token key="package.log.dir" value="${package.log.dir}" />
-            <token key="package.pid.dir" value="${package.pid.dir}" />
-            <token key="package.var.dir" value="${package.var.dir}" />
-            <token key="c.lib" value="${c.lib}" />
-          </replacetokens>
-        </filterchain>
-      </copy>
-      <rpm specFile="zookeeper.spec" command="-ba --buildroot=${package.buildroot}/BUILD" topDir="${package.buildroot}" cleanBuildDir="true" failOnError="true"
-/>
-      <copy todir="${build.dir}/" flatten="true">
-        <fileset dir="${package.buildroot}/RPMS">
-          <include name="**/${name}*.rpm" />
-        </fileset>
-        <fileset dir="${package.buildroot}/SRPMS">
-          <include name="**/${name}*.rpm" />
-        </fileset>
-      </copy>
-      <delete dir="${package.buildroot}" quiet="true" verbose="false"/>
-    </target>
-
-    <target name="deb" depends="ivy-retrieve-package, package-native, tar" description="Make deb package">
-      <subant target="deb">
-        <!--Pass down the version in case its needed again and the target
-            distribution directory so contribs know where to install to.-->
-        <property name="version" value="${version}"/>
-        <property name="dist.dir" value="${dist.dir}"/>
-        <fileset file="${contrib.dir}/build.xml"/>
-        <fileset file="${recipes.dir}/build.xml"/>
-      </subant>
-      <taskdef name="deb" classname="org.vafer.jdeb.ant.DebAntTask">
-        <classpath refid="java.classpath"/>
-        <classpath refid="package.classpath"/>
-      </taskdef>
-
-      <mkdir dir="${package.build.dir}/zookeeper.control" />
-      <copy todir="${package.buildroot}/${package.prefix}">
-        <fileset dir="${build.dir}/${final.name}">
-          <include name="bin/**" />
-          <include name="conf/**" />
-          <include name="sbin/**" />
-          <include name="share/**" />
-        </fileset>
-      </copy>
-      <copy todir="${package.build.dir}/zookeeper.control">
-        <fileset dir="${src.dir}/packages/deb/zookeeper.control">
-          <exclude name="control" />
-        </fileset>
-      </copy>
-      <copy file="${src.dir}/packages/deb/zookeeper.control/control" todir="${package.build.dir}/zookeeper.control">
-        <filterchain>
-          <replacetokens>
-            <token key="final.name" value="${final.name}" />
-            <token key="version" value="${version}" />
-            <token key="package.release" value="${package.release}" />
-            <token key="package.build.dir" value="${package.build.dir}" />
-            <token key="package.prefix" value="${package.prefix}" />
-            <token key="package.conf.dir" value="${package.conf.dir}" />
-            <token key="package.log.dir" value="${package.log.dir}" />
-            <token key="package.pid.dir" value="${package.pid.dir}" />
-            <token key="package.var.dir" value="${package.var.dir}" />
-          </replacetokens>
-        </filterchain>
-      </copy>
-      <deb destfile="${package.buildroot}/${name}_${version}-${package.release}_${os.arch}.deb" control="${package.build.dir}/zookeeper.control">
-        <tarfileset dir="${build.dir}/${final.name}/share/zookeeper" filemode="644" prefix="${package.prefix}/share/zookeeper">
-          <include name="**" />
-        </tarfileset>
-        <tarfileset dir="${build.dir}/${final.name}/bin" filemode="755" prefix="${package.prefix}/bin">
-          <include name="zkCli.sh" />
-        </tarfileset>
-        <tarfileset dir="${build.dir}/${final.name}/sbin" filemode="755" prefix="${package.prefix}/sbin">
-          <include name="**.sh" />
-        </tarfileset>
-        <tarfileset dir="${build.dir}/${final.name}/libexec" filemode="755" prefix="${package.prefix}/libexec">
-          <include name="zkEnv.sh" />
-        </tarfileset>
-        <tarfileset dir="${build.dir}/c/build/${package.prefix}/include" prefix="${package.prefix}/include">
-          <include name="**" />
-        </tarfileset> 
-        <tarfileset dir="${build.dir}/c/build/${package.prefix}/lib" filemode="755" prefix="${package.prefix}/lib">
-          <include name="**" />
-        </tarfileset> 
-        <tarfileset dir="${build.dir}/${final.name}/conf" filemode="644" prefix="${package.conf.dir}">
-          <include name="**" />
-        </tarfileset>
-        <tarfileset dir="${build.dir}/${final.name}/src/packages/deb/init.d" filemode="755" prefix="/etc/init.d">
-          <include name="**" />
-        </tarfileset>
-      </deb>
-
-      <copy todir="${build.dir}/" flatten="true">
-        <fileset dir="${package.buildroot}">
-          <include name="**/${name}*.deb" />
-        </fileset>
-      </copy>
-      <delete dir="${package.buildroot}" quiet="true" verbose="false"/>
-
-    </target>
-
     <!-- ====================================================== -->
     <!-- mvn-deploy. Publishing jars to nexus -->
     <!-- ====================================================== -->
@@ -1262,7 +1083,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <delete>
         <fileset dir="${basedir}" includes="*.jar,*.tar.gz"/>
       </delete>
-      <delete dir="${package.buildroot}" />
     </target>
 
     <target name="clean-contrib">
@@ -1348,46 +1168,15 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <fileset id="quicktest.files" dir="${test.src.dir}">
         <include name="**/*${test.category}Test.java" />
         <exclude name="**/*HammerTest.java" />
-        <exclude name="**/*${test.category}NoLog4j*.java"/>
       </fileset>
       <fileset id="fulltest.files" dir="${test.src.dir}">
         <include name="**/*${test.category}Test.java" />
-        <exclude name="**/*${test.category}NoLog4j*.java"/>
       </fileset>
       <fileset id="testcase.files" dir="${test.src.dir}">
         <include name="**/${testcase}.java" />
-        <exclude name="**/*${test.category}NoLog4j*.java"/>
       </fileset>
     </target>
 
-    <target name="junit.run.nolog4j">
-        <junit showoutput="${test.output}"
-               printsummary="${test.junit.printsummary}"
-               haltonfailure="${test.junit.haltonfailure}"
-               fork="yes"
-               forkmode="${test.junit.fork.mode}"
-               maxmemory="${test.junit.maxmem}"
-               dir="${basedir}" timeout="${test.timeout}"
-               errorProperty="tests.failed.nolog4j"
-               failureProperty="tests.failed.nolog4j">
-            <sysproperty key="build.test.dir" value="${test.tmp.dir}"/>
-            <sysproperty key="test.data.dir" value="${test.data.dir}"/>
-            <!-- superDigest is used by the tests/main code. If this is not set
-                 as part of starting the jvm there is no guarantee that the static
-                 initializers in the java code will see this (esp when running
-                 with junit fork mode set to "once")-->
-            <sysproperty key="zookeeper.DigestAuthenticationProvider.superDigest"
-                         value="super:D/InIHSb7yEEbrWz8b9l71RjZJU="/>
-            <classpath refid="test.java.classpath.without.log4j"/>
-            <formatter type="${test.junit.output.format}"/>
-            <batchtest todir="${test.log.dir}" if="fulltest">
-                <fileset dir="${test.src.dir}">
-                    <include name="**/*${test.category}NoLog4j*.java"/>
-                </fileset>
-            </batchtest>
-        </junit>
-        <fail if="tests.failed.nolog4j">Tests failed!</fail>
-    </target>
     <target name="junit.run" depends="junit-init,junit.run-single,junit.run-concurrent" />
 
     <target name="junit.run-concurrent" if="ant.supports.concurrent.junit.processes">
@@ -1540,11 +1329,9 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     
     <target name="test-core-java" depends="test-init, test-category, junit.run"/>
 
-    <target name="test-core-java-nolog4j" depends="test-init, test-category, junit.run.nolog4j"/>
-
     <target name="test-core-cppunit" depends="test-init, test-category, call-test-cppunit"/>
 
-    <target name="test-core" depends="test-core-java, test-core-java-nolog4j, test-core-cppunit"/>
+    <target name="test-core" depends="test-core-java, test-core-cppunit"/>
 
     <!-- ====================================================== -->
     <!-- Run optional third-party tool targets                  -->
@@ -1582,12 +1369,14 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
     <target name="generate-clover-reports" depends="clover.check, clover">
       <mkdir dir="${clover.report.dir}"/>
-      <clover-report>
+      <taskdef resource="cloverlib.xml" classpath="${clover.jar}"/> 
+      
+      <clover-report initString="${clover.db.dir}/zookeeper_coverage.db">
         <current outfile="${clover.report.dir}" title="${final.name}">
           <format type="html"/>
         </current>
       </clover-report>
-      <clover-report>
+      <clover-report initString="${clover.db.dir}/zookeeper_coverage.db">
         <current outfile="${clover.report.dir}/clover.xml" title="${final.name}">
           <format type="xml"/>
         </current>

@@ -216,6 +216,9 @@ document.write("Last Published: " + document.lastModified);
 <li>
 <a href="#Sequence+Nodes+--+Unique+Naming">Sequence Nodes -- Unique Naming</a>
 </li>
+<li>
+<a href="#Container+Nodes">Container Nodes</a>
+</li>
 </ul>
 </li>
 <li>
@@ -562,6 +565,20 @@ document.write("Last Published: " + document.lastModified);
         (4bytes) maintained by the parent node, the counter will
         overflow when incremented beyond 2147483647 (resulting in a
         name "&lt;path&gt;-2147483647").</p>
+<a name="Container+Nodes"></a>
+<h4>Container Nodes</h4>
+<p>
+<strong>Added in 3.6.0</strong>
+</p>
+<p>ZooKeeper has the notion of container nodes. Container nodes are
+          special purpose nodes useful for recipes such as leader, lock, etc.
+          When the last child of a container is deleted, the container becomes
+          a candidate to be deleted by the server at some point in the future.</p>
+<p>Given this property, you should be prepared to get
+          KeeperException.NoNodeException when creating children inside of
+          container nodes. i.e. when creating child nodes inside of container nodes
+          always check for KeeperException.NoNodeException and recreate the container
+          node when it occurs.</p>
 <a name="sc_timeInZk"></a>
 <h3 class="h4">Time in ZooKeeper</h3>
 <p>ZooKeeper tracks time multiple ways:</p>
@@ -658,6 +675,18 @@ document.write("Last Published: " + document.lastModified);
 
           
 <p>The zxid of the change that last modified this znode.</p>
+        
+</li>
+
+        
+<li>
+          
+<p>
+<strong>pzxid</strong>
+</p>
+
+          
+<p>The zxid of the change that last modified children of this znode.</p>
         
 </li>
 
@@ -1377,6 +1406,16 @@ document.write("Last Published: " + document.lastModified);
         of <em>addr</em> are matched against the most
         significant <em>bits</em> of the client host
         IP.</p>
+</li>
+
+        
+<li>
+<p>
+<strong>x509</strong> uses the client
+        X500 Principal as an ACL ID identity. The ACL expression is the exact
+        X500 Principal name of a client. When using the secure port, clients
+        are automatically authenticated and their auth info for the x509 scheme
+        is set.</p>
 </li>
 
       

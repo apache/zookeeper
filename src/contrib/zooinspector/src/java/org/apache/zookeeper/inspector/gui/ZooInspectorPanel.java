@@ -34,6 +34,8 @@ import javax.swing.JSplitPane;
 import javax.swing.JToolBar;
 import javax.swing.SwingWorker;
 
+import org.apache.zookeeper.inspector.gui.actions.AddNodeAction;
+import org.apache.zookeeper.inspector.gui.actions.DeleteNodeAction;
 import org.apache.zookeeper.inspector.gui.nodeviewer.ZooInspectorNodeViewer;
 import org.apache.zookeeper.inspector.logger.LoggerFactory;
 import org.apache.zookeeper.inspector.manager.ZooInspectorManager;
@@ -102,74 +104,12 @@ public class ZooInspectorPanel extends JPanel implements
                 treeViewer.refreshView();
             }
         });
-        toolbar.addActionListener(Toolbar.Button.addNode, new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                final List<String> selectedNodes = treeViewer
-                        .getSelectedNodes();
-                if (selectedNodes.size() == 1) {
-                    final String nodeName = JOptionPane.showInputDialog(
-                            ZooInspectorPanel.this,
-                            "Please Enter a name for the new node",
-                            "Create Node", JOptionPane.INFORMATION_MESSAGE);
-                    if (nodeName != null && nodeName.length() > 0) {
-                        SwingWorker<Boolean, Void> worker = new SwingWorker<Boolean, Void>() {
 
-                            @Override
-                            protected Boolean doInBackground() throws Exception {
-                                return ZooInspectorPanel.this.zooInspectorManager
-                                        .createNode(selectedNodes.get(0),
-                                                nodeName);
-                            }
+        toolbar.addActionListener(Toolbar.Button.addNode,
+                    new AddNodeAction(this, treeViewer, zooInspectorManager));
+        toolbar.addActionListener(Toolbar.Button.deleteNode,
+                    new DeleteNodeAction(this, treeViewer, zooInspectorManager));
 
-                            @Override
-                            protected void done() {
-                                treeViewer.refreshView();
-                            }
-                        };
-                        worker.execute();
-                    }
-                } else {
-                    JOptionPane.showMessageDialog(ZooInspectorPanel.this,
-                            "Please select 1 parent node for the new node.");
-                }
-            }
-        });
-        toolbar.addActionListener(Toolbar.Button.deleteNode, new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                final List<String> selectedNodes = treeViewer
-                        .getSelectedNodes();
-                if (selectedNodes.size() == 0) {
-                    JOptionPane.showMessageDialog(ZooInspectorPanel.this,
-                            "Please select at least 1 node to be deleted");
-                } else {
-                    int answer = JOptionPane.showConfirmDialog(
-                            ZooInspectorPanel.this,
-                            "Are you sure you want to delete the selected nodes?"
-                                    + "(This action cannot be reverted)",
-                            "Confirm Delete", JOptionPane.YES_NO_OPTION,
-                            JOptionPane.WARNING_MESSAGE);
-                    if (answer == JOptionPane.YES_OPTION) {
-                        SwingWorker<Boolean, Void> worker = new SwingWorker<Boolean, Void>() {
-
-                            @Override
-                            protected Boolean doInBackground() throws Exception {
-                                for (String nodePath : selectedNodes) {
-                                    ZooInspectorPanel.this.zooInspectorManager
-                                            .deleteNode(nodePath);
-                                }
-                                return true;
-                            }
-
-                            @Override
-                            protected void done() {
-                                treeViewer.refreshView();
-                            }
-                        };
-                        worker.execute();
-                    }
-                }
-            }
-        });
         toolbar.addActionListener(Toolbar.Button.nodeViewers, new ActionListener() {
 
             public void actionPerformed(ActionEvent e) {

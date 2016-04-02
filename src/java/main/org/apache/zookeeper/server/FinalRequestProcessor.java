@@ -261,9 +261,9 @@ public class FinalRequestProcessor implements RequestProcessor {
                 rsp = new SetDataResponse(rc.stat);
                 err = Code.get(rc.err);
                 break;
-            }           
+            }
             case OpCode.reconfig: {
-                lastOp = "RECO";               
+                lastOp = "RECO";
                 rsp = new GetDataResponse(((QuorumZooKeeperServer)zks).self.getQuorumVerifier().toString().getBytes(), rc.stat);
                 err = Code.get(rc.err);
                 break;
@@ -317,11 +317,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 if (n == null) {
                     throw new KeeperException.NoNodeException();
                 }
-                Long aclL;
-                synchronized(n) {
-                    aclL = n.acl;
-                }
-                PrepRequestProcessor.checkACL(zks, zks.getZKDatabase().convertLong(aclL),
+                PrepRequestProcessor.checkACL(zks, zks.getZKDatabase().aclForNode(n),
                         ZooDefs.Perms.READ,
                         request.authInfo);
                 Stat stat = new Stat();
@@ -363,12 +359,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 if (n == null) {
                     throw new KeeperException.NoNodeException();
                 }
-                Long aclG;
-                synchronized(n) {
-                    aclG = n.acl;
-
-                }
-                PrepRequestProcessor.checkACL(zks, zks.getZKDatabase().convertLong(aclG),
+                PrepRequestProcessor.checkACL(zks, zks.getZKDatabase().aclForNode(n),
                         ZooDefs.Perms.READ,
                         request.authInfo);
                 List<String> children = zks.getZKDatabase().getChildren(
@@ -387,11 +378,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 if (n == null) {
                     throw new KeeperException.NoNodeException();
                 }
-                Long aclG;
-                synchronized(n) {
-                    aclG = n.acl;
-                }
-                PrepRequestProcessor.checkACL(zks, zks.getZKDatabase().convertLong(aclG),
+                PrepRequestProcessor.checkACL(zks, zks.getZKDatabase().aclForNode(n),
                         ZooDefs.Perms.READ,
                         request.authInfo);
                 List<String> children = zks.getZKDatabase().getChildren(

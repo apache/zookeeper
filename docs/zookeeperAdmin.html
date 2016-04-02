@@ -276,7 +276,7 @@ document.write("Last Published: " + document.lastModified);
 <a href="#sc_clusterOptions">Cluster Options</a>
 </li>
 <li>
-<a href="#sc_authOptions">Authentication &amp; Authorization Options</a>
+<a href="#sc_authOptions">Encryption, Authentication, Authorization Options</a>
 </li>
 <li>
 <a href="#Experimental+Options%2FFeatures">Experimental Options/Features</a>
@@ -384,54 +384,124 @@ document.write("Last Published: " + document.lastModified);
 <h3 class="h4">System Requirements</h3>
 <a name="sc_supportedPlatforms"></a>
 <h4>Supported Platforms</h4>
+<p>ZooKeeper consists of multiple components.  Some components are
+        supported broadly, and other components are supported only on a smaller
+        set of platforms.</p>
 <ul>
           
 <li>
             
-<p>GNU/Linux is supported as a development and production
-              platform for both server and client.</p>
+<p>
+<strong>Client</strong> is the Java client
+            library, used by applications to connect to a ZooKeeper ensemble.
+            </p>
           
 </li>
           
 <li>
             
-<p>Sun Solaris is supported as a development and production
-              platform for both server and client.</p>
+<p>
+<strong>Server</strong> is the Java server
+            that runs on the ZooKeeper ensemble nodes.</p>
           
 </li>
           
 <li>
             
-<p>FreeBSD is supported as a development and production
-              platform for both server and client.</p>
+<p>
+<strong>Native Client</strong> is a client
+            implemented in C, similar to the Java client, used by applications
+            to connect to a ZooKeeper ensemble.</p>
           
 </li>
           
 <li>
             
-<p>Win32 is supported as a <em>development
-            platform</em> only for both server and client.</p>
-          
-</li>
-          
-<li>
-            
-<p>Win64 is supported as a <em>development
-            platform</em> only for both server and client.</p>
-          
-</li>
-          
-<li>
-            
-<p>MacOSX is supported as a <em>development
-            platform</em> only for both server and client.</p>
+<p>
+<strong>Contrib</strong> refers to multiple
+            optional add-on components.</p>
           
 </li>
         
 </ul>
+<p>The following matrix describes the level of support committed for
+        running each component on different operating system platforms.</p>
+<table class="ForrestTable" cellspacing="1" cellpadding="4">
+<caption>Support Matrix</caption>
+          
+<title>Support Matrix</title>
+          
+              
+<tr>
+                
+<th>Operating System</th>
+                <th>Client</th>
+                <th>Server</th>
+                <th>Native Client</th>
+                <th>Contrib</th>
+              
+</tr>
+            
+              
+<tr>
+                
+<td>GNU/Linux</td>
+                <td>Development and Production</td>
+                <td>Development and Production</td>
+                <td>Development and Production</td>
+                <td>Development and Production</td>
+              
+</tr>
+              
+<tr>
+                
+<td>Solaris</td>
+                <td>Development and Production</td>
+                <td>Development and Production</td>
+                <td>Not Supported</td>
+                <td>Not Supported</td>
+              
+</tr>
+              
+<tr>
+                
+<td>FreeBSD</td>
+                <td>Development and Production</td>
+                <td>Development and Production</td>
+                <td>Not Supported</td>
+                <td>Not Supported</td>
+              
+</tr>
+              
+<tr>
+                
+<td>Windows</td>
+                <td>Development and Production</td>
+                <td>Development and Production</td>
+                <td>Not Supported</td>
+                <td>Not Supported</td>
+              
+</tr>
+              
+<tr>
+                
+<td>Mac OS X</td>
+                <td>Development Only</td>
+                <td>Development Only</td>
+                <td>Not Supported</td>
+                <td>Not Supported</td>
+              
+</tr>
+            
+        
+</table>
+<p>For any operating system not explicitly mentioned as supported in
+        the matrix, components may or may not work.  The ZooKeeper community
+        will fix obvious bugs that are reported for other platforms, but there
+        is no full support.</p>
 <a name="sc_requiredSoftware"></a>
 <h4>Required Software </h4>
-<p>ZooKeeper runs in Java, release 1.6 or greater (JDK 6 or
+<p>ZooKeeper runs in Java, release 1.7 or greater (JDK 7 or
         greater, FreeBSD support requires openjdk7).  It runs as an
         <em>ensemble</em> of ZooKeeper servers. Three
         ZooKeeper servers is the minimum recommended size for an
@@ -449,27 +519,35 @@ document.write("Last Published: " + document.lastModified);
       only handle the failure of a single machine; if two machines fail, the
       remaining two machines do not constitute a majority. However, with five
       machines ZooKeeper can handle the failure of two machines. </p>
-
 <div class="note">
 <div class="label">Note</div>
 <div class="content">
-<p>As mentioned in the Getting Started guide, a minimum of three servers are
-      required for a fault tolerant clustered setup, and it is strongly
-      recommended that you have an odd number of servers.</p>
-<p>Usually three servers is more than enough for a production install, but
-      for maximum reliability during maintenance, you may wish to install
-      five servers.  With three servers, if you perform maintenance on
-      one of them, you are vulnerable to a failure on one of the other
-      two servers during that maintenance.  If you have five of them
-      running, you can take one down for maintenance, and know that
-      you're still OK if one of the other four suddenly fails.</p>
-<p>Your redundancy considerations should include all aspects of your
-      environment.  If you have three zookeeper servers, but their
-      network cables are all plugged into the same network switch, then
-      the failure of that switch will take down your entire ensemble.</p>
+         
+<p>
+            As mentioned in the
+            <a href="zookeeperStarted.html">ZooKeeper Getting Started Guide</a>
+            , a minimum of three servers are required for a fault tolerant
+            clustered setup, and it is strongly recommended that you have an
+            odd number of servers.
+         </p>
+         
+<p>Usually three servers is more than enough for a production
+            install, but for maximum reliability during maintenance, you may
+            wish to install five servers. With three servers, if you perform
+            maintenance on one of them, you are vulnerable to a failure on one
+            of the other two servers during that maintenance. If you have five
+            of them running, you can take one down for maintenance, and know
+            that you're still OK if one of the other four suddenly fails.
+         </p>
+         
+<p>Your redundancy considerations should include all aspects of
+            your environment. If you have three ZooKeeper servers, but their
+            network cables are all plugged into the same network switch, then
+            the failure of that switch will take down your entire ensemble.
+         </p>
+      
 </div>
 </div>
-
 <p>Here are the steps to setting a server that will be part of an
       ensemble. These steps should be performed on every host in the
       ensemble:</p>
@@ -566,7 +644,7 @@ server.3=zoo3:2888:3888</pre>
 
           
 <p>
-<span class="codefrag computeroutput">$ java -cp zookeeper.jar:lib/slf4j-api-1.7.5.jar:lib/slf4j-log4j12-1.7.5.jar:lib/log4j-1.2.16.jar:conf \
+<span class="codefrag computeroutput">$ java -cp zookeeper.jar:lib/slf4j-api-1.7.5.jar:lib/slf4j-log4j12-1.7.5.jar:lib/log4j-1.2.17.jar:conf \
               org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.cfg
           </span>
 </p>
@@ -603,7 +681,7 @@ server.3=zoo3:2888:3888</pre>
 
               
 <p>
-<span class="codefrag computeroutput">$ java -cp zookeeper.jar:lib/slf4j-api-1.7.5.jar:lib/slf4j-log4j12-1.7.5.jar:lib/log4j-1.2.16.jar:conf:src/java/lib/jline-2.11.jar \
+<span class="codefrag computeroutput">$ java -cp zookeeper.jar:lib/slf4j-api-1.7.5.jar:lib/slf4j-log4j12-1.7.5.jar:lib/log4j-1.2.17.jar:conf:src/java/lib/jline-2.11.jar \
       org.apache.zookeeper.ZooKeeperMain -server 127.0.0.1:2181</span>
 </p>
             
@@ -846,7 +924,7 @@ server.3=zoo3:2888:3888</pre>
 <a name="Single+Machine+Requirements"></a>
 <h4>Single Machine Requirements</h4>
 <p>If ZooKeeper has to contend with other applications for
-        access to resourses like storage media, CPU, network, or
+        access to resources like storage media, CPU, network, or
         memory, its performance will suffer markedly.  ZooKeeper has
         strong durability guarantees, which means it uses storage
         media to log changes before the operation responsible for the
@@ -927,7 +1005,7 @@ server.3=zoo3:2888:3888</pre>
         in the unlikely event a recent log has become corrupted). This
         can be run as a cron job on the ZooKeeper server machines to
         clean up the logs daily.</p>
-<pre class="code"> java -cp zookeeper.jar:lib/slf4j-api-1.7.5.jar:lib/slf4j-log4j12-1.7.5.jar:lib/log4j-1.2.16.jar:conf org.apache.zookeeper.server.PurgeTxnLog &lt;dataDir&gt; &lt;snapDir&gt; -n &lt;count&gt;</pre>
+<pre class="code"> java -cp zookeeper.jar:lib/slf4j-api-1.7.5.jar:lib/slf4j-log4j12-1.7.5.jar:lib/log4j-1.2.17.jar:conf org.apache.zookeeper.server.PurgeTxnLog &lt;dataDir&gt; &lt;snapDir&gt; -n &lt;count&gt;</pre>
 <p>Automatic purging of the snapshots and corresponding
         transaction logs was introduced in version 3.4.0 and can be
         enabled via the following configuration parameters <strong>autopurge.snapRetainCount</strong> and <strong>autopurge.purgeInterval</strong>. For more on
@@ -960,6 +1038,16 @@ server.3=zoo3:2888:3888</pre>
       examples) managing your ZooKeeper server ensures that if the
       process does exit abnormally it will automatically be restarted
       and will quickly rejoin the cluster.</p>
+<p>It is also recommended to configure the ZooKeeper server process to
+      terminate and dump its heap if an
+      <span class="codefrag computeroutput">OutOfMemoryError</span> occurs.  This is achieved
+      by launching the JVM with the following arguments on Linux and Windows
+      respectively.  The <span class="codefrag filename">zkServer.sh</span> and
+      <span class="codefrag filename">zkServer.cmd</span> scripts that ship with ZooKeeper set
+      these options.
+      </p>
+<pre class="code">-XX:+HeapDumpOnOutOfMemoryError -XX:OnOutOfMemoryError='kill -9 %p'</pre>
+<pre class="code">"-XX:+HeapDumpOnOutOfMemoryError" "-XX:OnOutOfMemoryError=cmd /c taskkill /pid %%%%p /t /f"</pre>
 <a name="sc_monitoring"></a>
 <h3 class="h4">Monitoring</h3>
 <p>The ZooKeeper service can be monitored in one of two
@@ -967,12 +1055,22 @@ server.3=zoo3:2888:3888</pre>
       your environment/requirements.</p>
 <a name="sc_logging"></a>
 <h3 class="h4">Logging</h3>
-<p>ZooKeeper uses <strong>log4j</strong> version 1.2 as 
-      its logging infrastructure. The  ZooKeeper default <span class="codefrag filename">log4j.properties</span> 
-      file resides in the <span class="codefrag filename">conf</span> directory. Log4j requires that 
-      <span class="codefrag filename">log4j.properties</span> either be in the working directory 
-      (the directory from which ZooKeeper is run) or be accessible from the classpath.</p>
-<p>For more information, see 
+<p>
+        ZooKeeper uses <strong><a href="http://www.slf4j.org">SLF4J</a></strong>
+        version 1.7.5 as its logging infrastructure. For backward compatibility it is bound to
+        <strong>LOG4J</strong> but you can use
+        <strong><a href="http://logback.qos.ch/">LOGBack</a></strong>
+        or any other supported logging framework of your choice.
+    </p>
+<p>
+        The ZooKeeper default <span class="codefrag filename">log4j.properties</span>
+        file resides in the <span class="codefrag filename">conf</span> directory. Log4j requires that
+        <span class="codefrag filename">log4j.properties</span> either be in the working directory
+        (the directory from which ZooKeeper is run) or be accessible from the classpath.
+    </p>
+<p>For more information about SLF4J, see
+      <a href="http://www.slf4j.org/manual.html">its manual</a>.</p>
+<p>For more information about LOG4J, see
       <a href="http://logging.apache.org/log4j/1.2/manual.html#defaultInit">Log4j Default Initialization Procedure</a> 
       of the log4j manual.</p>
 <a name="sc_troubleshooting"></a>
@@ -1027,6 +1125,22 @@ server.3=zoo3:2888:3888</pre>
 <dd>
 <p>the port to listen for client connections; that is, the
               port that clients attempt to connect to.</p>
+</dd>
+
+          
+<dt>
+<term>secureClientPort</term>
+</dt>
+<dd>
+<p>the port to listen on for secure client connections using SSL.
+
+              <strong>clientPort</strong> specifies
+                the port for plaintext connections while <strong>
+                  secureClientPort</strong> specifies the port for SSL
+                connections. Specifying both enables mixed-mode while omitting
+                either will disable that mode.</p>
+<p>Note that SSL feature will be enabled when user plugs-in
+                zookeeper.serverCnxnFactory, zookeeper.clientCnxnSocket as Netty.</p>
 </dd>
 
           
@@ -1136,20 +1250,6 @@ server.3=zoo3:2888:3888</pre>
 
           
 <dt>
-<term>traceFile</term>
-</dt>
-<dd>
-<p>(Java system property: <strong>requestTraceFile</strong>)</p>
-<p>If this option is defined, requests will be will logged to
-              a trace file named traceFile.year.month.day. Use of this option
-              provides useful debugging information, but will impact
-              performance. (Note: The system property has no zookeeper prefix,
-              and the configuration variable name is different from the system
-              property. Yes - it's not consistent, and it's annoying.)</p>
-</dd>
-
-          
-<dt>
 <term>maxClientCnxns</term>
 </dt>
 <dd>
@@ -1208,7 +1308,7 @@ server.3=zoo3:2888:3888</pre>
 <term>fsync.warningthresholdms</term>
 </dt>
 <dd>
-<p>(Java system property: <strong>fsync.warningthresholdms</strong>)</p>
+<p>(Java system property: <strong>zookeeper.fsync.warningthresholdms</strong>)</p>
 <p>
 <strong>New in 3.3.4:</strong> A
                warning message will be output to the log whenever an
@@ -1434,16 +1534,16 @@ server.3=zoo3:2888:3888</pre>
 </dl>
 <p></p>
 <a name="sc_authOptions"></a>
-<h4>Authentication &amp; Authorization Options</h4>
+<h4>Encryption, Authentication, Authorization Options</h4>
 <p>The options in this section allow control over
-        authentication/authorization performed by the service.</p>
+        encryption/authentication/authorization performed by the service.</p>
 <dl>
           
 <dt>
-<term>zookeeper.DigestAuthenticationProvider.superDigest</term>
+<term>DigestAuthenticationProvider.superDigest</term>
 </dt>
 <dd>
-<p>(Java system property only: <strong>zookeeper.DigestAuthenticationProvider.superDigest</strong>)</p>
+<p>(Java system property: <strong>zookeeper.DigestAuthenticationProvider.superDigest</strong>)</p>
 <p>By default this feature is <strong>disabled</strong>
 </p>
 <p>
@@ -1465,6 +1565,80 @@ server.3=zoo3:2888:3888</pre>
               localhost (not over the network) or over an encrypted
               connection.</p>
 </dd>
+
+          
+<dt>
+<term>X509AuthenticationProvider.superUser</term>
+</dt>
+<dd>
+<p>(Java system property: <strong>zookeeper.X509AuthenticationProvider.superUser</strong>)</p>
+<p>The SSL-backed way to enable a ZooKeeper ensemble
+              administrator to access the znode hierarchy as a "super" user.
+              When this parameter is set to an X500 principal name, only an
+              authenticated client with that principal will be able to bypass
+              ACL checking and have full privileges to all znodes.</p>
+</dd>
+
+          
+<dt>
+<term>ssl.keyStore.location and ssl.keyStore.password</term>
+</dt>
+<dd>
+<p>(Java system properties: <strong>
+                zookeeper.ssl.keyStore.location</strong> and <strong>zookeeper.ssl.keyStore.password</strong>)</p>
+<p>Specifies the file path to a JKS containing the local
+                credentials to be used for SSL connections, and the
+                password to unlock the file.</p>
+</dd>
+
+          
+<dt>
+<term>ssl.trustStore.location and ssl.trustStore.password</term>
+</dt>
+<dd>
+<p>(Java system properties: <strong>
+                zookeeper.ssl.trustStore.location</strong> and <strong>zookeeper.ssl.trustStore.password</strong>)</p>
+<p>Specifies the file path to a JKS containing the remote
+                credentials to be used for SSL connections, and the
+                password to unlock the file.</p>
+</dd>
+
+          
+<dt>
+<term>ssl.authProvider</term>
+</dt>
+<dd>
+<p>(Java system property: <strong>zookeeper.ssl.authProvider</strong>)</p>
+<p>Specifies a subclass of <strong>
+              org.apache.zookeeper.auth.X509AuthenticationProvider</strong>
+              to use for secure client authentication. This is useful in
+              certificate key infrastructures that do not use JKS. It may be
+              necessary to extend <strong>javax.net.ssl.X509KeyManager
+              </strong> and <strong>javax.net.ssl.X509TrustManager</strong>
+              to get the desired behavior from the SSL stack. To configure the
+              ZooKeeper server to use the custom provider for authentication,
+              choose a scheme name for the custom AuthenticationProvider and
+              set the property <strong>zookeeper.authProvider.[scheme]
+              </strong> to the fully-qualified class name of the custom
+              implementation. This will load the provider into the ProviderRegistry.
+              Then set this property <strong>
+              zookeeper.ssl.authProvider=[scheme]</strong> and that provider
+              will be used for secure authentication.</p>
+</dd>
+
+          
+<dt>
+<term>zookeeper.client.secure</term>
+</dt>
+<dd>
+<p>(Java system property only: <strong>zookeeper.client.secure</strong>)</p>
+<p>If you want to connect to server's secure client port, you need to
+                set this property to <strong>true</strong> on client.
+                This will connect to server using SSL with specified credentials. Note that
+                you also need to plug-in Netty client.
+              </p>
+</dd>
+
         
 </dl>
 <a name="Experimental+Options%2FFeatures"></a>
@@ -1660,13 +1834,36 @@ server.3=zoo3:2888:3888</pre>
               </p>
 </dd>
 
+          
+<dt>
+<term>znode.container.checkIntervalMs</term>
+</dt>
+<dd>
+<p>(Java system property only)</p>
+<p>
+<strong>New in 3.6.0:</strong> The
+                time interval in milliseconds for each check of candidate container
+                nodes. Default is "60000".</p>
+</dd>
+
+          
+<dt>
+<term>znode.container.maxPerMinute</term>
+</dt>
+<dd>
+<p>(Java system property only)</p>
+<p>
+<strong>New in 3.6.0:</strong> The
+                maximum number of container nodes that can be deleted per
+                minute. This prevents herding during container deletion.
+                Default is "10000".</p>
+</dd>
         
 </dl>
 <a name="Communication+using+the+Netty+framework"></a>
 <h4>Communication using the Netty framework</h4>
 <p>
-<strong>New in
-            3.4:</strong> <a href="http://jboss.org/netty">Netty</a>
+<a href="http://netty.io">Netty</a>
             is an NIO based client/server communication framework, it
             simplifies (over NIO being used directly) many of the
             complexities of network level communication for java
@@ -1675,16 +1872,12 @@ server.3=zoo3:2888:3888</pre>
             (certificates). These are optional features and can be
             turned on or off individually.
         </p>
-<p>Prior to version 3.4 ZooKeeper has always used NIO
-            directly, however in versions 3.4 and later Netty is
-            supported as an option to NIO (replaces). NIO continues to
-            be the default, however Netty based communication can be
-            used in place of NIO by setting the environment variable
-            "zookeeper.serverCnxnFactory" to
-            "org.apache.zookeeper.server.NettyServerCnxnFactory". You
-            have the option of setting this on either the client(s) or
-            server(s), typically you would want to set this on both,
-            however that is at your discretion.
+<p>In versions 3.5+, a ZooKeeper server can use Netty
+            instead of NIO (default option) by setting the environment
+            variable <strong>zookeeper.serverCnxnFactory</strong>
+            to <strong>org.apache.zookeeper.server.NettyServerCnxnFactory</strong>;
+            for the client, set <strong>zookeeper.clientCnxnSocket</strong>
+            to <strong>org.apache.zookeeper.ClientCnxnSocketNetty</strong>.
         </p>
 <p>
           TBD - tuning options for netty - currently there are none that are netty specific but we should add some. Esp around max bound on the number of reader worker threads netty creates.
@@ -1709,6 +1902,15 @@ server.3=zoo3:2888:3888</pre>
 <p>(Java system property: <strong>zookeeper.admin.enableServer</strong>)</p>
 <p>Set to "false" to disable the AdminServer.  By default the
               AdminServer is enabled.</p>
+</dd>
+
+          
+<dt>
+<term>admin.serverAddress</term>
+</dt>
+<dd>
+<p>(Java system property: <strong>zookeeper.admin.serverAddress</strong>)</p>
+<p>The address the embedded Jetty server listens on. Defaults to 0.0.0.0.</p>
 </dd>
 
           
@@ -1860,6 +2062,17 @@ server.3=zoo3:2888:3888</pre>
 
           
 <dt>
+<term>dirs</term>
+</dt>
+<dd>
+<p>
+<strong>New in 3.5.1:</strong>
+                Shows the total size of snapshot and log files in bytes
+              </p>
+</dd>
+
+          
+<dt>
 <term>wchp</term>
 </dt>
 <dd>
@@ -1906,6 +2119,141 @@ server.3=zoo3:2888:3888</pre>
 <p>ATTENTION: Some of the keys are platform specific and some of the keys are only exported by the Leader. </p>
 <p>The output contains multiple lines with the following format:</p>
 <pre class="code">key \t value</pre>
+</dd>
+
+          
+<dt>
+<term>isro</term>
+</dt>
+<dd>
+<p>
+<strong>New in 3.4.0:</strong> Tests if
+              server is running in read-only mode.  The server will respond with
+              "ro" if in read-only mode or "rw" if not in read-only mode.</p>
+</dd>
+
+          
+<dt>
+<term>gtmk</term>
+</dt>
+<dd>
+<p>Gets the current trace mask as a 64-bit signed long value in
+              decimal format.  See <span class="codefrag command">stmk</span> for an explanation of
+              the possible values.</p>
+</dd>
+
+          
+<dt>
+<term>stmk</term>
+</dt>
+<dd>
+<p>Sets the current trace mask.  The trace mask is 64 bits,
+              where each bit enables or disables a specific category of trace
+              logging on the server.  Log4J must be configured to enable
+              <span class="codefrag command">TRACE</span> level first in order to see trace logging
+              messages.  The bits of the trace mask correspond to the following
+              trace logging categories.</p>
+<table class="ForrestTable" cellspacing="1" cellpadding="4">
+<caption>Trace Mask Bit Values</caption>
+                
+<title>Trace Mask Bit Values</title>
+                
+                    
+<tr>
+                      
+<td>0b0000000000</td>
+                      <td>Unused, reserved for future use.</td>
+                    
+</tr>
+                    
+<tr>
+                      
+<td>0b0000000010</td>
+                      <td>Logs client requests, excluding ping
+                      requests.</td>
+                    
+</tr>
+                    
+<tr>
+                      
+<td>0b0000000100</td>
+                      <td>Unused, reserved for future use.</td>
+                    
+</tr>
+                    
+<tr>
+                      
+<td>0b0000001000</td>
+                      <td>Logs client ping requests.</td>
+                    
+</tr>
+                    
+<tr>
+                      
+<td>0b0000010000</td>
+                      <td>Logs packets received from the quorum peer that is
+                      the current leader, excluding ping requests.</td>
+                    
+</tr>
+                    
+<tr>
+                      
+<td>0b0000100000</td>
+                      <td>Logs addition, removal and validation of client
+                      sessions.</td>
+                    
+</tr>
+                    
+<tr>
+                      
+<td>0b0001000000</td>
+                      <td>Logs delivery of watch events to client
+                      sessions.</td>
+                    
+</tr>
+                    
+<tr>
+                      
+<td>0b0010000000</td>
+                      <td>Logs ping packets received from the quorum peer
+                      that is the current leader.</td>
+                    
+</tr>
+                    
+<tr>
+                      
+<td>0b0100000000</td>
+                      <td>Unused, reserved for future use.</td>
+                    
+</tr>
+                    
+<tr>
+                      
+<td>0b1000000000</td>
+                      <td>Unused, reserved for future use.</td>
+                    
+</tr>
+                  
+              
+</table>
+<p>All remaining bits in the 64-bit value are unused and
+              reserved for future use.  Multiple trace logging categories are
+              specified by calculating the bitwise OR of the documented values.
+              The default trace mask is 0b0100110010.  Thus, by default, trace
+              logging includes client requests, packets received from the
+              leader and sessions.</p>
+<p>To set a different trace mask, send a request containing the
+              <span class="codefrag command">stmk</span> four-letter word followed by the trace
+              mask represented as a 64-bit signed long value.  This example uses
+              the Perl <span class="codefrag command">pack</span> function to construct a trace
+              mask that enables all trace logging categories described above and
+              convert it to a 64-bit signed long value with big-endian byte
+              order.  The result is appended to <span class="codefrag command">stmk</span> and sent
+              to the server using netcat.  The server responds with the new
+              trace mask in decimal format.</p>
+<pre class="code">$ perl -e "print 'stmk', pack('q&gt;', 0b0011111010)" | nc localhost 2181
+250
+              </pre>
 </dd>
         
 </dl>

@@ -373,14 +373,14 @@ a boolean flag that enables the process to set a watch. In the code the flag is 
 </pre>
 <p>
 Note that enter() throws both KeeperException and InterruptedException, so it is 
-the reponsability of the application to catch and handle such exceptions.</p>
+the responsibility of the application to catch and handle such exceptions.</p>
 <p>
 Once the computation is finished, a process calls leave() to leave the barrier. 
 First it deletes its corresponding node, and then it gets the children of the root 
 node. If there is at least one child, then it waits for a notification (obs: note 
 that the second parameter of the call to getChildren() is true, meaning that 
 ZooKeeper has to set a watch on the the root node). Upon reception of a notification, 
-it checks once more whether the root node has any child.</p>
+it checks once more whether the root node has any children.</p>
 <pre class="code">
         /**
          * Wait until all reach barrier
@@ -411,7 +411,7 @@ it checks once more whether the root node has any child.</p>
 <h2 class="h3">Producer-Consumer Queues</h2>
 <div class="section">
 <p>
-A producer-consumer queue is a distributed data estructure thata group of processes 
+A producer-consumer queue is a distributed data structure that groups of processes 
 use to generate and consume items. Producer processes create new elements and add 
 them to the queue. Consumer processes remove elements from the list, and process them. 
 In this implementation, the elements are simple integers. The queue is represented 

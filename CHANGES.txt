@@ -254,6 +254,51 @@ BUGFIXES:
 
   ZOOKEEPER-2243: Supported platforms is completely out of date (cnauroth)
 
+  ZOOKEEPER-2375: Prevent multiple initialization of login object in each
+  ZooKeeperSaslClient instance (yuemeng via rakeshr)
+
+  ZOOKEEPER-2379: recent commit broke findbugs qabot check
+  (rakeshr via cnauroth)
+
+  ZOOKEEPER-1991 zkServer.sh returns with a zero exit status when a
+  ZooKeeper process is already running (gsbiju via phunt)
+
+  ZOOKEEPER-1604 remove rpm/deb/... packaging (cnauroth via phunt
+
+  ZOOKEEPER-2294 Ant target generate-clover-reports is broken
+  (charlie via phunt)
+
+  ZOOKEEPER-2378 upgrade ivy to recent version (phunt)
+
+  ZOOKEEPER-2373 Licenses section missing from pom file (phunt)
+
+  ZOOKEEPER-2087 Few UX improvements in ZooInspector
+  (Adam Dudczak via phunt)
+
+  ZOOKEEPER-2133 zkperl: Segmentation fault if getting a node with
+  null value (Botond Hejj via phunt)
+
+  ZOOKEEPER-2283 traceFile property is not used in the ZooKeeper, it
+  should be removed from documentation (Arshad Mohammad via phunt)
+
+  ZOOKEEPER-2385 Zookeeper trunk build is failing on windows
+  (Arshad Mohammad via phunt)
+
+  ZOOKEEPER-2388 Unit tests failing on Solaris (Arshad Mohammad via phunt)
+
+  ZOOKEEPER-2392 Update netty to 3.7.1.Final (Hendy Irawan via phunt)
+
+  ZOOKEEPER-2393: Revert run-time dependency on log4j and slf4j-log4j12
+  (Arshad Mohammad via cnauroth)
+
+  ZOOKEEPER-2195 fsync.warningthresholdms in zoo.cfg not working
+  (Biju Nair via phunt)
+  
+  ZOOKEEPER-2141 ACL cache in DataTree never removes entries (Adam Milne-Smith via camille)
+
+  ZOOKEEPER-2364: "ant docs" fails on branch-3.5 due to missing releasenotes.xml.
+  (phunt via cnauroth)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
@@ -360,6 +405,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-2300: Expose SecureClientPort and SecureClientAddress JMX properties
   (Arshad Mohammad via rgs)
+
+  ZOOKEEPER-2240 Make the three-node minimum more explicit in 
+  documentation and on website (Shawn Heisey and Arshad Mohammad via phunt)
 
 Release 3.5.0 - 8/4/2014
 

@@ -32,10 +32,10 @@
 
   <dependencies>
     <dependency org="org.slf4j" name="slf4j-api" rev="1.7.5"/>
-    <dependency org="org.slf4j" name="slf4j-log4j12" rev="1.7.5" transitive="false" conf="test->default" />
+    <dependency org="org.slf4j" name="slf4j-log4j12" rev="1.7.5" transitive="false"/>
   
     <!-- transitive false turns off dependency checking, log4j deps seem borked -->
-    <dependency org="log4j" name="log4j" rev="1.2.17" transitive="false" conf="test->default" />
+    <dependency org="log4j" name="log4j" rev="1.2.17" transitive="false"/>
     <dependency org="asm" name="asm" rev="3.1" />
     <dependency org="com.sun.grizzly" name="grizzly-servlet-webserver" rev="1.9.8" />
     <dependency org="com.sun.jersey" name="jersey-server" rev="1.1.5.1" />

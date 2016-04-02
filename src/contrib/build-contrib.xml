@@ -41,7 +41,7 @@
 
   <property name="build.encoding" value="utf8"/>
 
-  <property name="ivy.version" value="2.2.0"/>
+  <property name="ivy.version" value="2.4.0"/>
   <property name="ivy.url"
             value="http://repo2.maven.org/maven2/org/apache/ivy/ivy" />
   <property name="ivy.home" value="${user.home}/.ant" />
@@ -160,21 +160,6 @@
     <echo message="contrib: ${name}"/>
   </target>
 
-  <!-- ====================================================== -->
-  <!-- rpm a contrib's files                                  -->
-  <!-- ====================================================== -->
-  <target name="rpm" depends="jar" unless="skip.contrib"> 
-    <echo message="contrib: ${name}"/>
-
-  </target>
-
-  <!-- ====================================================== -->
-  <!-- deb a contrib's files                                  -->
-  <!-- ====================================================== -->
-  <target name="deb" depends="jar" unless="skip.contrib"> 
-    <echo message="contrib: ${name}"/>
-
-  </target>
   <!-- ================================================================== -->
   <!-- Clean.  Delete the build files, and their directories              -->
   <!-- ================================================================== -->
