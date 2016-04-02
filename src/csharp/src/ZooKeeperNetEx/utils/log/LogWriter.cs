@@ -20,7 +20,6 @@
 
 using System;
 using System.Diagnostics;
-using System.Net;
 using System.Reflection;
 using System.Text;
 
@@ -35,7 +34,7 @@ namespace org.apache.utils
         public LogWriter()
         {
             const string dateFormat = "yyyy-MM-dd-HH.mm.ss.fffZ";
-            FileName = $"ZK.{Dns.GetHostName()}.{DateTime.UtcNow.ToString(dateFormat)}.log";
+            FileName = $"ZK.{DateTime.UtcNow.ToString(dateFormat)}.log";
             logFileWriter = new NonBlockingFileWriter(FileName);
         }
         
