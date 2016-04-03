@@ -736,24 +736,22 @@ namespace org.apache.zookeeper {
                             if (LOG.isDebugEnabled()) {
                                 // closing so this is expected
                                 LOG.debug("An exception was thrown while closing send task for session 0x" +
-                                          getSessionId().ToHexString()
-                                          + " : "
-                                          + e.Message);
+                                          getSessionId().ToHexString(), e);
                             }
                             break;
                         }
                         // this is ugly, you have a better way speak up
                         if (e is SessionExpiredException) {
-                            LOG.info(e.Message + ", closing socket connection");
+                            LOG.info("closing socket connection", e);
                         }
                         else if (e is SessionTimeoutException) {
-                            LOG.info(e.Message + RETRY_CONN_MSG);
+                            LOG.info(RETRY_CONN_MSG, e);
                         }
                         else if (e is EndOfStreamException) {
-                            LOG.info(e.Message + RETRY_CONN_MSG);
+                            LOG.info(RETRY_CONN_MSG, e);
                         }
                         else if (e is RWServerFoundException) {
-                            LOG.info(e.Message);
+                            LOG.info(e);
                         }
                         else {
                             LOG.warn(
@@ -816,8 +814,7 @@ namespace org.apache.zookeeper {
                     }
                     else {
                         // some unexpected error, warn about it
-                        LOG.warn("Exception while seeking for r/w server " +
-                                 e.Message, e);
+                        LOG.warn("Exception while seeking for r/w server ", e);
                     }
                 }
                 if (sock != null) {
@@ -842,8 +839,7 @@ namespace org.apache.zookeeper {
                     // save the found address so that it's used during the next
                     // connection attempt
                     rwServerAddress = addr;
-                    throw new RWServerFoundException("Majority server found at " + addr.Host + ":" +
-                                                    addr.Port);
+                    throw new RWServerFoundException("Majority server found at " + addr);
                 }
             }
 

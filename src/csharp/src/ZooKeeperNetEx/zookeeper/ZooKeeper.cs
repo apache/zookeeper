@@ -635,14 +635,14 @@ namespace org.apache.zookeeper {
                 try {
                     op.validate();
                 } catch (ArgumentException iae) {
-                    LOG.error("ArgumentException: " + iae.Message);
+                    LOG.error("ArgumentException: ", iae);
                     err = new OpResult.ErrorResult(
                             (int) KeeperException.Code.BADARGUMENTS);
                     results.Add(err);
                     error = true;
                     continue;
                 } catch (KeeperException ke) {
-                    LOG.error("KeeperException: " + ke.Message);
+                    LOG.error("KeeperException: ", ke);
                     err = new OpResult.ErrorResult((int) ke.getCode());
                     results.Add(err);
                     error = true;
