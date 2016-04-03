@@ -120,8 +120,7 @@ namespace org.apache.zookeeper {
 	 // then non-zero sessionId is fake, otherwise it is valid.
 	 //
         internal readonly Fenced<bool> seenRwServerBefore = new Fenced<bool>(false);
-
-        //public ZooKeeperSaslClient zooKeeperSaslClient;
+        
         public long getSessionId() {
             return sessionId;
         }
@@ -628,9 +627,6 @@ namespace org.apache.zookeeper {
             private const int minPingRwTimeout = 100;
             private const int maxPingRwTimeout = 60000;
             private int pingRwTimeout = minPingRwTimeout;
-            // Set to true if and only if constructor of ZooKeeperSaslClient
-            // throws a LoginException: see startConnect() below.
-            //internal bool saslLoginFailed = false;
 
             private async Task startConnect() {
                 state.Value = ZooKeeper.States.CONNECTING;

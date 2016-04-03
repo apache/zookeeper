@@ -166,11 +166,9 @@ namespace org.apache.zookeeper
 					}
                     if (clientCnxn.outgoingQueue.Count == 0)
 					{
-						// No more packets to send: turn off write interest flag.
-						// Will be turned on later by a later call to enableWrite(),
-						// from within ZooKeeperSaslClient (if client is configured
-						// to attempt SASL authentication), or in either doIO() or
-						// in doTransport() if not.
+                        // No more packets to send: turn off write interest flag.
+                        // Will be turned on later by a later call to enableWrite(),
+                        // or in either doIO() or in doTransport() if not.
 						disableWrite();
 					}
 					else if (!initialized && p != null && !p.bb.hasRemaining())
