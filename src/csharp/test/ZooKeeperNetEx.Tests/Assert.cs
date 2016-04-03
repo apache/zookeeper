@@ -19,6 +19,7 @@
  */
 
 using System.Collections.Concurrent;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using AssertXunit=Xunit.Assert;
 
@@ -95,6 +96,13 @@ namespace org.apache.zookeeper {
             T item;
             blockingCollection.TryTake(out item, milliSeconds);
             return item;
+        }
+
+        public static async Task<bool> WithTimeout(this Task task, int millisecondsTimeout)
+        {
+            Task delayTask = Task.Delay(millisecondsTimeout);
+            await Task.WhenAny(task, delayTask).ConfigureAwait(false);
+            return !delayTask.IsCompleted;
         }
     }
 }

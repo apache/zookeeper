@@ -30,15 +30,4 @@
     }
 
 #endif
-  
-
-    internal static class TaskExtensions
-    {
-        public static async Task<bool> WithTimeout(this Task task, int millisecondsTimeout)
-        {
-            Task delayTask = TaskEx.Delay(millisecondsTimeout);
-            await TaskEx.WhenAny(task, delayTask);
-            return !delayTask.IsCompleted;
-        }
-    }
 }
