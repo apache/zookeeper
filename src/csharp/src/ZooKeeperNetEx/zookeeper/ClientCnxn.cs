@@ -662,7 +662,6 @@ namespace org.apache.zookeeper {
                 long lastPingRwServer = TimeHelper.ElapsedMiliseconds;
                 const int MAX_SEND_PING_INTERVAL = 10000; //10 seconds
                 while (getState().isAlive()) {
-                    bool notClosingAndExceptional = false;
                     try {
                         if (!clientCnxnSocket.isConnected()) {
                             if (!isFirstConnect) {
@@ -764,10 +763,6 @@ namespace org.apache.zookeeper {
                                 + ", unexpected error" +
                                 RETRY_CONN_MSG, e);
                         }
-                        notClosingAndExceptional = true;
-                    }
-                    if (notClosingAndExceptional)
-                    {
                         await cleanup().ConfigureAwait(false);
                         if (getState().isAlive())
                         {
