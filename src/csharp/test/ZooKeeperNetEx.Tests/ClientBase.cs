@@ -34,10 +34,10 @@ namespace org.apache.zookeeper {
             }
         }
 
-        protected const int CONNECTION_TIMEOUT = 10000;
+        protected const int CONNECTION_TIMEOUT = 4000;
         private readonly string m_currentRoot;
 
-        private const string hostPort = "127.0.0.1";
+        private const string hostPort = "127.0.0.1,localhost";
         internal const string testsNode = "/tests";
 
         private readonly ConcurrentBag<ZooKeeper> allClients = new ConcurrentBag<ZooKeeper>();
@@ -74,7 +74,7 @@ namespace org.apache.zookeeper {
 
         internal static Task deleteNode(string path)
         {
-            return ZooKeeper.Using(hostPort, 10000, NullWatcher.Instance, zk =>
+            return ZooKeeper.Using(hostPort, CONNECTION_TIMEOUT, NullWatcher.Instance, zk =>
             {
                 return ZKUtil.deleteRecursiveAsync(zk, path);
             });
@@ -82,7 +82,7 @@ namespace org.apache.zookeeper {
 
         internal static Task<string> createNode(string path, CreateMode createMode)
         {
-            return ZooKeeper.Using(hostPort, 10000, NullWatcher.Instance, async zk =>
+            return ZooKeeper.Using(hostPort, CONNECTION_TIMEOUT, NullWatcher.Instance, async zk =>
             {
                 string newNode = await zk.createAsync(path, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, createMode);
                 await zk.sync("/");
