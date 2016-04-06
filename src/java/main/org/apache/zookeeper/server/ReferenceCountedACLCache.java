@@ -38,33 +38,26 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ReferenceCountedACLCache {
     private static final Logger LOG = LoggerFactory.getLogger(ReferenceCountedACLCache.class);
 
-    /**
-     * this is map from longs to acl's. It saves acl's being stored for each
-     * datanode.
-     */
-    private final Map<Long, List<ACL>> longKeyMap =
+    final Map<Long, List<ACL>> longKeyMap =
             new HashMap<Long, List<ACL>>();
 
-    /**
-     * this a map from acls to long.
-     */
-    private final Map<List<ACL>, Long> aclKeyMap =
+    final Map<List<ACL>, Long> aclKeyMap =
             new HashMap<List<ACL>, Long>();
 
-    private final Map<Long, AtomicLongWithEquals> referenceCounter =
+    final Map<Long, AtomicLongWithEquals> referenceCounter =
             new HashMap<Long, AtomicLongWithEquals>();
-    private final long OPEN_UNSAFE_ACL_ID = -1L;
+    private static final long OPEN_UNSAFE_ACL_ID = -1L;
 
     /**
      * these are the number of acls that we have in the datatree
      */
-    private long aclIndex = 0;
+    long aclIndex = 0;
 
     /**
-     * converts the list of acls to a list of longs.
+     * converts the list of acls to a long.
      * Increments the reference counter for this ACL.
      * @param acls
-     * @return a list of longs that map to the acls
+     * @return a long that map to the acls
      */
     public synchronized Long convertAcls(List<ACL> acls) {
         if (acls == null)
@@ -84,11 +77,10 @@ public class ReferenceCountedACLCache {
     }
 
     /**
-     * converts a list of longs to a list of acls.
+     * converts a long to a list of acls.
      *
      * @param longVal
-     *            the list of longs
-     * @return a list of ACLs that map to longs
+     * @return a list of ACLs that map to the long
      */
     public synchronized List<ACL> convertLong(Long longVal) {
         if (longVal == null)
@@ -203,34 +195,6 @@ public class ReferenceCountedACLCache {
         }
     }
 
-    @Override
-    public synchronized boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        ReferenceCountedACLCache that = (ReferenceCountedACLCache) o;
-        synchronized (that) {
-            if (aclIndex != that.aclIndex) return false;
-        }
-        if (aclKeyMap != null ? !aclKeyMap.equals(that.aclKeyMap) : that.aclKeyMap != null) return false;
-        if (longKeyMap != null ? !longKeyMap.equals(that.longKeyMap) : that.longKeyMap != null) return false;
-        if (referenceCounter != null ? !referenceCounter.equals(that.referenceCounter) : that.referenceCounter != null)
-            return false;
-        return true;
-    }
-
-    @Override
-    public synchronized int hashCode() {
-        int result = longKeyMap != null ? longKeyMap.hashCode() : 0;
-        result = 31 * result + (aclKeyMap != null ? aclKeyMap.hashCode() : 0);
-        result = 31 * result + (referenceCounter != null ? referenceCounter.hashCode() : 0);
-        result = 31 * result + (int) (aclIndex ^ (aclIndex >>> 32));
-        return result;
-    }
-
-    /*
-    For reasons we don't all agree with, AtomicLong does not have an equals.
-     */
     private static class AtomicLongWithEquals extends AtomicLong {
 
         private static final long serialVersionUID = 3355155896813725462L;
