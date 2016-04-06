@@ -189,7 +189,14 @@ public class ReferenceCountedACLCacheTest {
         callAddUsageNTimes(deserializedCache, aclId4, 4);
         callAddUsageNTimes(deserializedCache, aclId5, 5);
 
-        assertEquals(cache, deserializedCache);
+        assertCachesEqual(cache, deserializedCache);
+    }
+
+    private void assertCachesEqual(ReferenceCountedACLCache expected, ReferenceCountedACLCache actual){
+        assertEquals(expected.aclIndex, actual.aclIndex);
+        assertEquals(expected.aclKeyMap, actual.aclKeyMap);
+        assertEquals(expected.longKeyMap, actual.longKeyMap);
+        assertEquals(expected.referenceCounter, actual.referenceCounter);
     }
 
     @Test
