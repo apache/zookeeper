@@ -65,8 +65,7 @@ public class ZKClientConfigTest {
         /**
          * clear properties
          */
-        for (int i = 0; i < properties.length; i++) {
-            String prop = properties[i];
+        for (String prop : properties) {
             System.clearProperty(prop);
         }
 
@@ -74,8 +73,7 @@ public class ZKClientConfigTest {
         /**
          * test that all the properties are null
          */
-        for (int i = 0; i < properties.length; i++) {
-            String prop = properties[i];
+        for (String prop : properties) {
             String result = conf.getProperty(prop);
             assertNull(result);
         }
