@@ -207,11 +207,23 @@ public class LeaderElectionSupportTest extends ClientBase {
   public void testReadyOffer() throws Exception {
       final ArrayList<EventType> events = new ArrayList<EventType>();
       final CountDownLatch electedComplete = new CountDownLatch(1);
-
+      
+      final CountDownLatch e1BecomeLeader = new CountDownLatch(1);
       final LeaderElectionSupport electionSupport1 = createLeaderElectionSupport();
+      //guarantee electionSupport1 become leader first.
+       LeaderElectionAware listener1 = new LeaderElectionAware() {
+          @Override
+          public void onElectionEvent(EventType eventType) {
+              if (eventType == EventType.ELECTED_COMPLETE) {
+                  e1BecomeLeader.countDown();
+              }
+          }
+      };
+      electionSupport1.addListener(listener1);
       electionSupport1.start();
+
       LeaderElectionSupport electionSupport2 = createLeaderElectionSupport();
-      LeaderElectionAware listener = new LeaderElectionAware() {
+      LeaderElectionAware listener2 = new LeaderElectionAware() {
           boolean stoppedElectedNode = false;
           @Override
           public void onElectionEvent(EventType eventType) {
@@ -221,6 +233,8 @@ public class LeaderElectionSupportTest extends ClientBase {
                   stoppedElectedNode = true;
                   try {
                       // stopping the ELECTED node, so re-election will happen.
+                      // must guarantee electionSupport1 already be leader.
+                      e1BecomeLeader.await(5, TimeUnit.SECONDS);
                       electionSupport1.stop();
                   } catch (Exception e) {
                       logger.error("Unexpected error", e);
@@ -231,7 +245,7 @@ public class LeaderElectionSupportTest extends ClientBase {
               }
           }
       };
-      electionSupport2.addListener(listener);
+      electionSupport2.addListener(listener2);
       electionSupport2.start();
       // waiting for re-election.
       electedComplete.await(CONNECTION_TIMEOUT / 3, TimeUnit.MILLISECONDS);
