@@ -36,8 +36,8 @@ else
   . "$ZOOBINDIR"/zkEnv.sh
 fi
 
-ZOODATADIR="$(grep "^[[:space:]]*dataDir=" "$ZOOCFG" | sed -e 's/.*=//')"
-ZOODATALOGDIR="$(grep "^[[:space:]]*dataLogDir=" "$ZOOCFG" | sed -e 's/.*=//')"
+ZOODATADIR="$(grep "^[[:space:]]*dataDir=" "$ZOOCFG" | sed -e 's/.*=//' | sed -e 's/[[:space:]]*$//')"
+ZOODATALOGDIR="$(grep "^[[:space:]]*dataLogDir=" "$ZOOCFG" | sed -e 's/.*=//' | sed -e 's/[[:space:]]*$//')"
 
 ZOO_LOG_FILE=zookeeper-$USER-cleanup-$HOSTNAME.log
 
