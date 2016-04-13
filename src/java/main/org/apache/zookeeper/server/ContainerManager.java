@@ -42,7 +42,7 @@ public class ContainerManager {
     private final RequestProcessor requestProcessor;
     private final int checkIntervalMs;
     private final int maxPerMinute;
-    private final Timer timer;
+    private Timer timer;
     private final AtomicReference<TimerTask> task = new AtomicReference<TimerTask>(null);
 
     /**
@@ -59,7 +59,6 @@ public class ContainerManager {
         this.requestProcessor = requestProcessor;
         this.checkIntervalMs = checkIntervalMs;
         this.maxPerMinute = maxPerMinute;
-        timer = new Timer("ContainerManagerTask", true);
 
         LOG.info(String.format("Using checkIntervalMs=%d maxPerMinute=%d",
                 checkIntervalMs, maxPerMinute));
@@ -70,6 +69,10 @@ public class ContainerManager {
      * multiple times.
      */
     public void start() {
+        if (timer != null) {
+            timer.cancel();
+        }
+        timer = new Timer("ContainerManagerTask", true);
         if (task.get() == null) {
             TimerTask timerTask = new TimerTask() {
                 @Override
@@ -99,6 +102,10 @@ public class ContainerManager {
         TimerTask timerTask = task.getAndSet(null);
         if (timerTask != null) {
             timerTask.cancel();
+        }
+        if (timer != null) {
+            timer.cancel();
+            timer = null;
         }
     }
 
