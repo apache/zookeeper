@@ -107,6 +107,7 @@ namespace ZooKeeperNetEx.Tests
         [Fact]
         public void TestCustomConsumer()
         {
+            bool logToFile = ZooKeeper.LogToFile;
             ZooKeeper.LogToFile = false;
             var dummy = new DummyConsumer();
             ILogProducer log = TypeLogger<LogAndConfigTests>.Instance;
@@ -117,6 +118,7 @@ namespace ZooKeeperNetEx.Tests
             ZooKeeper.CustomLogConsumer = null;
             log.warn("test");
             Assert.False(dummy.called);
+            ZooKeeper.LogToFile = logToFile;
         }
 
         private class DummyConsumer : ILogConsumer

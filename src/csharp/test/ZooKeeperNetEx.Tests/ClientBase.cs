@@ -95,7 +95,7 @@ namespace org.apache.zookeeper {
         ///     want to ignore results (for whatever reason) in your test. Don't
         ///     use empty watchers in real code!
         /// </summary>
-        private class NullWatcher : Watcher
+        protected class NullWatcher : Watcher
         {
             public static readonly NullWatcher Instance = new NullWatcher();
             private NullWatcher() { }

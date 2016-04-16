@@ -68,5 +68,10 @@ namespace org.apache.zookeeper
         {
             return num.ToString("x");
         }
+
+        public static string ToCommaDelimited<T>(this IEnumerable<T> enumerable)
+        {
+            return string.Join(",", enumerable);
+        }
     }
 }

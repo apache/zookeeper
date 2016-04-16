@@ -70,7 +70,16 @@ namespace org.apache.zookeeper {
 	 * These are the packets that need to be sent.
 	 */
         internal readonly LinkedList<Packet> outgoingQueue = new LinkedList<Packet>();
-        private int connectTimeout;
+        private int connectTimeout
+        {
+            get
+            {
+                int timeout = negotiatedSessionTimeout.Value;
+                if (timeout == 0) timeout = sessionTimeout;
+                return timeout / hostProvider.size();
+            }
+        }
+
         /**
 	 * The timeout in ms the client negotiated with the server. This is the
 	 * "real" timeout, not the timeout request by the client (which may have
@@ -282,7 +291,6 @@ namespace org.apache.zookeeper {
             this.sessionTimeout = sessionTimeout;
             this.hostProvider = hostProvider;
             this.chrootPath = chrootPath;
-            connectTimeout = sessionTimeout/hostProvider.size();
             readTimeout = sessionTimeout*2/3;
             readOnly = canBeReadOnly;
             clientCnxnSocket = new ClientCnxnSocketNIO(this);
@@ -623,14 +631,14 @@ namespace org.apache.zookeeper {
                 queuePacket(h, null, null, null, null, null, null);
             }
 
-            private DnsEndPoint rwServerAddress;
+            private ResolvedEndPoint rwServerAddress;
             private const int minPingRwTimeout = 100;
             private const int maxPingRwTimeout = 60000;
             private int pingRwTimeout = minPingRwTimeout;
 
             private async Task startConnect() {
                 state.Value = ZooKeeper.States.CONNECTING;
-                DnsEndPoint addr;
+                ResolvedEndPoint addr;
                 if (rwServerAddress != null) {
                     addr = rwServerAddress;
                     rwServerAddress = null;
@@ -643,7 +651,7 @@ namespace org.apache.zookeeper {
                 clientCnxnSocket.connect(addr);
             }
 
-            private static void logStartConnect(DnsEndPoint addr) {
+            private static void logStartConnect(ResolvedEndPoint addr) {
                 string msg = "Opening socket connection to server " + addr;
                 LOG.info(msg);
             }
@@ -662,6 +670,10 @@ namespace org.apache.zookeeper {
                         if (!clientCnxnSocket.isConnected()) {
                             if (!isFirstConnect) {
                                 await TaskEx.Delay(r.Next(1000)).ConfigureAwait(false);
+                            }
+                            else
+                            {
+                                await hostProvider.next(1000).ConfigureAwait(false);
                             }
                             // don't re-establish connection if we are closing
                             if (closing.Value || !getState().isAlive()) {
@@ -740,6 +752,10 @@ namespace org.apache.zookeeper {
                         if (e is SessionExpiredException) {
                             LOG.info("closing socket connection", e);
                         }
+                        if (e is SocketException)
+                        {
+                            LOG.info(RETRY_CONN_MSG, e);
+                        }
                         else if (e is SessionTimeoutException) {
                             LOG.info(RETRY_CONN_MSG, e);
                         }
@@ -751,7 +767,7 @@ namespace org.apache.zookeeper {
                         }
                         else {
                             LOG.warn(
-                                "Session 0x" + getSessionId().ToHexString() +
+                                "!!!Session 0x" + getSessionId().ToHexString() +
                                 " for server " +
                                 clientCnxnSocket.getRemoteSocketAddress()
                                 + ", unexpected error" +
@@ -785,7 +801,7 @@ namespace org.apache.zookeeper {
 
             private async Task pingRwServer() {
                 string result = null;
-                DnsEndPoint addr = await hostProvider.next(0).ConfigureAwait(false);
+                ResolvedEndPoint addr = await hostProvider.next(0).ConfigureAwait(false);
                 LOG.info("Checking server " + addr + " for being r/w." +
                          " Timeout " + pingRwTimeout);
 
@@ -796,7 +812,7 @@ namespace org.apache.zookeeper {
                     sock.LingerState = new LingerOption(false, 0);
                     sock.SendTimeout = 1000;
                     sock.NoDelay = true;
-                    await sock.ConnectAsync(addr.Host, addr.Port).ConfigureAwait(false);
+                    await sock.ConnectAsync(addr.Address, addr.Port).ConfigureAwait(false);
                     var networkStream = sock.GetStream();
                     await networkStream.WriteAsync("isro".UTF8getBytes(), 0, 4).ConfigureAwait(false);
                     await networkStream.FlushAsync().ConfigureAwait(false);
@@ -884,7 +900,6 @@ namespace org.apache.zookeeper {
                     LOG.error("Read/write client got connected to read-only server");
                 }
                 readTimeout = negotiatedSessionTimeout.Value*2/3;
-                connectTimeout = negotiatedSessionTimeout.Value/hostProvider.size();
                 hostProvider.onConnected();
                 sessionId = _sessionId;
                 sessionPasswd = _sessionPasswd;
@@ -944,6 +959,13 @@ namespace org.apache.zookeeper {
                     disconnect();
                     await closeTask.ConfigureAwait(false);
                 }).ConfigureAwait(false)).ConfigureAwait(false);
+                var closeDelay = TaskEx.Delay(1000);
+                await TaskEx.WhenAny(TaskEx.WhenAll(sendTask, eventTask), closeDelay).ConfigureAwait(false);
+                if (closeDelay.IsCompleted)
+                {
+                    throw new TimeoutException("waited more the a second for disconnection");
+                }
+
             }
         }
 

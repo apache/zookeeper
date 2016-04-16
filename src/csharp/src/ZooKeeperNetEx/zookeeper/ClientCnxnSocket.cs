@@ -147,7 +147,7 @@ namespace org.apache.zookeeper
 
         internal abstract bool isConnected();
 
-        internal abstract void connect(DnsEndPoint addr);
+        internal abstract void connect(IPEndPoint ipEndPoint);
 
         internal abstract EndPoint getRemoteSocketAddress();
 

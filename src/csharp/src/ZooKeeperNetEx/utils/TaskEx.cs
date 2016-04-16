@@ -1,5 +1,7 @@
-﻿namespace System.Threading.Tasks
-    {
+﻿using System.Collections.Generic;
+
+namespace System.Threading.Tasks
+{
 #if !NET40
     internal class TaskEx
     {
@@ -7,12 +9,6 @@
         {
             return Task.FromResult(result);
         }
-
-        public static Task Delay(TimeSpan fromMilliseconds)
-        {
-            return Task.Delay(fromMilliseconds);
-        }
-
         public static Task Delay(int next)
         {
             return Task.Delay(next);
@@ -27,7 +23,32 @@
         {
             return Task.WhenAll(tasks);
         }
+
+        public static Task<T[]> WhenAll<T>(IEnumerable<Task<T>> tasks)
+        {
+            return Task.WhenAll(tasks);
+        }
     }
 
 #endif
+
+
+    internal static class TaskExtensions
+    {
+        public static void Ignore(this Task task)
+        {
+            if (task.IsCompleted)
+            {
+                var ignored = task.Exception;
+            }
+            else
+            {
+                task.ContinueWith(
+                    t => { var ignored = t.Exception; },
+                    CancellationToken.None,
+                    TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
+                    TaskScheduler.Default);
+            }
+        }
+    }
 }

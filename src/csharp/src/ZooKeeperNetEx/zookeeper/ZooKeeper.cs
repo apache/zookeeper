@@ -395,7 +395,7 @@ namespace org.apache.zookeeper {
             });
 
             ConnectStringParser connectStringParser = new ConnectStringParser(connectString);
-            HostProvider hostProvider = new StaticHostProvider(
+            HostProvider hostProvider = new DynamicHostProvider(
                 connectStringParser.getServerAddresses());
             cnxn = new ClientCnxn(connectStringParser.getChrootPath(),
                 hostProvider, sessionTimeout, this, watchManager, 

@@ -16,7 +16,6 @@
 // limitations under the License.
 // </summary>
 
-using System.Net;
 using System.Threading.Tasks;
 
 namespace org.apache.zookeeper.client
@@ -52,7 +51,7 @@ namespace org.apache.zookeeper.client
 	    /// </summary>
 	    /// <param name="spinDelay">
 	    ///     Milliseconds to wait if all hosts have been tried once. </param>
-	    Task<DnsEndPoint> next(long spinDelay);
+	    Task<ResolvedEndPoint> next(int spinDelay);
 
 		/// <summary>
 		/// Notify the HostProvider of a successful connection.

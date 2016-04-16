@@ -61,7 +61,7 @@ namespace org.apache.zookeeper
         
 	    private readonly SocketAsyncEventArgs receiveEventArgs;
 
-        private SocketAsyncEventArgs connectEventArgs;
+        private SocketAsyncEventArgs connectEventArgs = new SocketAsyncEventArgs();
 
         internal ClientCnxnSocketNIO(ClientCnxn cnxn) : base(cnxn) 
         {
@@ -266,7 +266,7 @@ namespace org.apache.zookeeper
 		/// register with the selection and connect </summary>
         /// <param name="sock"> the <seealso cref="Socket"/> </param>
 		/// <param name="addr"> the address of remote host </param>
-        private void registerAndConnect(Socket sock, DnsEndPoint addr)
+        private void registerAndConnect(Socket sock, IPEndPoint addr)
 		{
 		    socket = sock;
 	        connectEventArgs.RemoteEndPoint = addr;
@@ -278,7 +278,7 @@ namespace org.apache.zookeeper
 	        }
 		}
 
-        internal override void connect(DnsEndPoint addr)
+        internal override void connect(IPEndPoint addr)
 		{
 			Socket sock = createSock();
             

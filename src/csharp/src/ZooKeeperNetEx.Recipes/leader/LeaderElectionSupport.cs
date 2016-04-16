@@ -419,7 +419,7 @@ namespace org.apache.zookeeper.recipes.leader {
         /// </summary>
         public override string ToString() {
             return "{ state:" + state + " leaderOffer:" + leaderOffer + " zooKeeper:" + ZooKeeper + " hostName:" +
-                   HostName + " listeners:" + string.Join(",",listeners.Keys )+" }";
+                   HostName + " listeners:" + listeners.Keys.ToCommaDelimited() +" }";
         }
 
         /// <summary>

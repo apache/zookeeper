@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net;
+using System.Linq;
 using org.apache.zookeeper.common;
 
 // <summary>
@@ -37,7 +37,7 @@ namespace org.apache.zookeeper.client
 
 		private readonly string chrootPath;
 
-        private readonly List<DnsEndPoint> serverAddresses = new List<DnsEndPoint>();
+        private readonly List<HostAndPort> serverAddresses = new List<HostAndPort>();
 
         private static readonly char[] splitter = {','};
 
@@ -80,7 +80,7 @@ namespace org.apache.zookeeper.client
 					}
                     parsedHost = host.Substring(0, pidx);
 				}
-			    serverAddresses.Add(new DnsEndPoint(parsedHost, port));
+			    serverAddresses.Add(new HostAndPort(parsedHost, port));
 			}
 		}
 
@@ -89,9 +89,9 @@ namespace org.apache.zookeeper.client
             return chrootPath;
         }
 
-        public List<DnsEndPoint> getServerAddresses()
+        public List<HostAndPort> getServerAddresses()
         {
-                return serverAddresses;
+                return serverAddresses.Distinct().ToList();
         }
 	}
 }
