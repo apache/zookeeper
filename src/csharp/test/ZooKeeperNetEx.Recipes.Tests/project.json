@@ -1,6 +1,9 @@
 {
   "version": "1.0.0.0",
-  "compilationOptions": { "keyFile": "../../ZooKeeperNetEx.snk" },
+  "compilationOptions": {
+    "keyFile": "../../ZooKeeperNetEx.snk",
+    "warningsAsErrors": true
+  },
   "dependencies": {
     "ZooKeeperNetEx.Tests": "1.0.0.0",
     "ZooKeeperNetEx.Recipes": "3.4.8.1"
