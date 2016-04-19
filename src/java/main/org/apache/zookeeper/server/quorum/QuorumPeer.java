@@ -17,6 +17,28 @@
  */
 package org.apache.zookeeper.server.quorum;
 
+import org.apache.zookeeper.KeeperException.BadArgumentsException;
+import org.apache.zookeeper.common.AtomicFileWritingIdiom;
+import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
+import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.jmx.MBeanRegistry;
+import org.apache.zookeeper.jmx.ZKMBeanInfo;
+import org.apache.zookeeper.server.ServerCnxnFactory;
+import org.apache.zookeeper.server.ZKDatabase;
+import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.ZooKeeperThread;
+import org.apache.zookeeper.server.admin.AdminServer;
+import org.apache.zookeeper.server.admin.AdminServer.AdminServerException;
+import org.apache.zookeeper.server.admin.AdminServerFactory;
+import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
+import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
+import org.apache.zookeeper.server.quorum.util.QuorumSocketFactory;
+import org.apache.zookeeper.server.util.ZxidUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -42,27 +64,6 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import org.apache.zookeeper.KeeperException.BadArgumentsException;
-import org.apache.zookeeper.common.AtomicFileWritingIdiom;
-import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
-import org.apache.zookeeper.common.Time;
-import org.apache.zookeeper.jmx.MBeanRegistry;
-import org.apache.zookeeper.jmx.ZKMBeanInfo;
-import org.apache.zookeeper.server.ServerCnxnFactory;
-import org.apache.zookeeper.server.ZKDatabase;
-import org.apache.zookeeper.server.ZooKeeperServer;
-import org.apache.zookeeper.server.ZooKeeperThread;
-import org.apache.zookeeper.server.admin.AdminServer;
-import org.apache.zookeeper.server.admin.AdminServer.AdminServerException;
-import org.apache.zookeeper.server.admin.AdminServerFactory;
-import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
-import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
-import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
-import org.apache.zookeeper.server.util.ZxidUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This class manages the quorum protocol. There are three states this server
@@ -119,6 +120,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         public long id;
         
         public LearnerType type = LearnerType.PARTICIPANT;
+
+        public String nodeCertFingerprint = null;
+
+        public String caCertFingerprint = null;
         
         private List<InetSocketAddress> myAddrs;
 
@@ -166,6 +171,19 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             this.electionAddr = new InetSocketAddress(address, port);
         }
 
+        private void setType(final HashMap<String, Integer> propKvMap)
+            throws ConfigException {
+            if (propKvMap.containsKey("participant")) {
+                type = LearnerType.PARTICIPANT;
+            } else if (propKvMap.containsKey("observer")) {
+                type = LearnerType.OBSERVER;
+            } else if (propKvMap.containsKey("participant") &&
+                    propKvMap.containsKey("observer")) {
+                throw new ConfigException("Contains both participant and " +
+                        "observer type");
+            }
+        }
+
         private void setType(String s) throws ConfigException {
             if (s.toLowerCase().equals("observer")) {
                type = LearnerType.OBSERVER;
@@ -174,6 +192,66 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             } else {
                throw new ConfigException("Unrecognised peertype: " + s);
             }
+        }
+
+        private String getCertFingerPrint(
+                final String certStr, final HashMap<String, Integer> propKvMap,
+                final String serverParts[]) {
+            Integer idx = propKvMap.get(certStr);
+            if (idx == null) {
+                return null;
+            }
+
+            return serverParts[idx+1];
+        }
+
+        private void setCertFingerPrint(
+                final HashMap<String, Integer> propKvMap,
+                final String serverParts[]) throws ConfigException {
+            final String certFp = getCertFingerPrint("cert", propKvMap,
+                    serverParts);
+
+            if (certFp == null) {
+                return;
+            }
+
+            if (nodeCertFingerprint != null) {
+                throw new ConfigException("node's cert fingerprint is already" +
+                        " set to: " + nodeCertFingerprint +
+                        " given fingerprint: " + certFp);
+            }
+
+            if (caCertFingerprint != null) {
+                throw new ConfigException("node's ca cert fingerprint is " +
+                        "already set to: " + caCertFingerprint + " cannot " +
+                        "accept self signed cert fingerprint");
+            }
+
+            nodeCertFingerprint = certFp;
+        }
+
+        private void setCaCertFingerPrint(
+                final HashMap<String, Integer> propKvMap,
+                final String serverParts[]) throws ConfigException {
+            final String certFp = getCertFingerPrint("cacert", propKvMap,
+                    serverParts);
+
+            if (certFp == null) {
+                return;
+            }
+
+            if (caCertFingerprint != null) {
+                throw new ConfigException("node's ca cert fingerprint is " +
+                        "already set to: " + caCertFingerprint +
+                        " given ca fingerprint: " + certFp);
+            }
+
+            if (nodeCertFingerprint != null) {
+                throw new ConfigException("node's self-signed cert " +
+                        "fingerprint is already set to: " + nodeCertFingerprint
+                        + " cannot accept ca cert fingerprint");
+            }
+            caCertFingerprint = certFp;
         }
 
         private static String[] splitWithLeadingHostname(String s)
@@ -206,7 +284,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             String serverClientParts[] = addressStr.split(";");
             String serverParts[] = splitWithLeadingHostname(serverClientParts[0]);
             if ((serverClientParts.length > 2) || (serverParts.length < 3)
-                    || (serverParts.length > 4)) {
+                    || (serverParts.length > 6)) {
                 throw new ConfigException(addressStr + wrongFormat);
             }
 
@@ -242,8 +320,24 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 throw new ConfigException("Address unresolved: " + serverParts[0] + ":" + serverParts[2]);
             }
 
+            // Now we can expect the following
+            // participant:cert:<sha256 cert fp>:cacert:<sha256 ca cert fp>
             if (serverParts.length == 4) {
+                // backward compatibility first.
                 setType(serverParts[3]);
+            } else if (serverParts.length >= 4) {
+                final HashMap<String, Integer> propKvMap = new HashMap<>();
+                for (int i = 3; i < serverParts.length; i++) {
+                    propKvMap.put(serverParts[i].trim().toLowerCase(), i);
+                }
+
+                setType(propKvMap);
+
+                // Set the node's certificate fingerprint if given
+                setCertFingerPrint(propKvMap, serverParts);
+
+                // Set the node's CA certificate fingerprint if given
+                setCaCertFingerPrint(propKvMap, serverParts);
             }
 
             setMyAddrs();
@@ -296,7 +390,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 sw.append(String.valueOf(electionAddr.getPort()));
             }           
             if (type == LearnerType.OBSERVER) sw.append(":observer");
-            else if (type == LearnerType.PARTICIPANT) sw.append(":participant");            
+            else if (type == LearnerType.PARTICIPANT) sw.append(":participant");
+            if (nodeCertFingerprint != null) {
+                sw.append(":cert:");
+                sw.append(nodeCertFingerprint);
+            } else if (caCertFingerprint != null) {
+                sw.append(":cacert:");
+                sw.append(caCertFingerprint);
+            }
             if (clientAddr!=null){
                 sw.append(";");
                 sw.append(delimitedHostString(clientAddr));
@@ -688,6 +789,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     ServerCnxnFactory cnxnFactory;
     ServerCnxnFactory secureCnxnFactory;
+    QuorumSocketFactory socketFactory;
 
     private FileTxnSnapLog logFactory = null;
 
@@ -710,9 +812,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File dataDir,
             File dataLogDir, int electionType,
             long myid, int tickTime, int initLimit, int syncLimit,
-            ServerCnxnFactory cnxnFactory) throws IOException {
+            ServerCnxnFactory cnxnFactory,
+                      QuorumSocketFactory socketFactory) throws IOException {
         this(quorumPeers, dataDir, dataLogDir, electionType, myid, tickTime,
-                initLimit, syncLimit, false, cnxnFactory,
+                initLimit, syncLimit, false, cnxnFactory, socketFactory,
                 new QuorumMaj(quorumPeers));
     }
 
@@ -721,9 +824,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             long myid, int tickTime, int initLimit, int syncLimit,
             boolean quorumListenOnAllIPs,
             ServerCnxnFactory cnxnFactory,
+                      QuorumSocketFactory socketFactory,
             QuorumVerifier quorumConfig) throws IOException {
         this();
         this.cnxnFactory = cnxnFactory;
+        this.socketFactory = socketFactory;
         this.electionType = electionType;
         this.myid = myid;
         this.tickTime = tickTime;
@@ -860,6 +965,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     {
         this(quorumPeers, snapDir, logDir, electionAlg, myid, tickTime, initLimit, syncLimit, false,
                 ServerCnxnFactory.createFactory(getClientAddress(quorumPeers, myid, clientPort), -1),
+                QuorumSocketFactory.createWithoutSSL(),
                 new QuorumMaj(quorumPeers));
     }
 
@@ -876,6 +982,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         this(quorumPeers, snapDir, logDir, electionAlg,
                 myid,tickTime, initLimit,syncLimit, false,
                 ServerCnxnFactory.createFactory(getClientAddress(quorumPeers, myid, clientPort), -1),
+                QuorumSocketFactory.createWithoutSSL(),
                 quorumConfig);
     }
 
@@ -1580,6 +1687,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     public void setSecureCnxnFactory(ServerCnxnFactory secureCnxnFactory) {
         this.secureCnxnFactory = secureCnxnFactory;
+    }
+
+    public void setSocketFactory(QuorumSocketFactory socketFactory) {
+        this.socketFactory = socketFactory;
     }
 
     private void startServerCnxnFactory() {
