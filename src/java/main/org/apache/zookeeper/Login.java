@@ -46,6 +46,7 @@ import java.util.Random;
 import java.util.Set;
 
 public class Login {
+    private static final String KINIT_COMMAND_DEFAULT = "/usr/bin/kinit";
     private static final Logger LOG = LoggerFactory.getLogger(Login.class);
     public CallbackHandler callbackHandler;
 
@@ -198,10 +199,7 @@ public class Login {
                         break;
                     }
                     if (isUsingTicketCache) {
-                        String cmd = "/usr/bin/kinit";
-                        if (config.getProperty(ZKConfig.KINIT_COMMAND) != null) {
-                            cmd = config.getProperty(ZKConfig.KINIT_COMMAND);
-                        }
+                        String cmd = config.getProperty(ZKConfig.KINIT_COMMAND, KINIT_COMMAND_DEFAULT);
                         String kinitArgs = "-R";
                         int retry = 1;
                         while (retry >= 0) {

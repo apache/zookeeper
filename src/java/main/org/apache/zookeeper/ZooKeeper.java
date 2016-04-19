@@ -215,12 +215,9 @@ public class ZooKeeper {
 
     private final ZKWatchManager watchManager;
 
-    private ZKClientConfig clientConfig;
+    private final ZKClientConfig clientConfig;
 
     public ZKClientConfig getClientConfig() {
-        if (clientConfig == null) {
-            clientConfig = new ZKClientConfig();
-        }
         return clientConfig;
     }
 
@@ -858,6 +855,9 @@ public class ZooKeeper {
         LOG.info("Initiating client connection, connectString=" + connectString
                 + " sessionTimeout=" + sessionTimeout + " watcher=" + watcher);
 
+        if (clientConfig == null) {
+            clientConfig = new ZKClientConfig();
+        }
         this.clientConfig = clientConfig;
         watchManager = defaultWatchManager();
         watchManager.defaultWatcher = watcher;
@@ -1122,6 +1122,7 @@ public class ZooKeeper {
                 + " sessionPasswd="
                 + (sessionPasswd == null ? "<null>" : "<hidden>"));
 
+        this.clientConfig = new ZKClientConfig();
         watchManager = defaultWatchManager();
         watchManager.defaultWatcher = watcher;
        

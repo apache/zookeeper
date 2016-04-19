@@ -66,10 +66,7 @@ abstract class ClientCnxnSocket {
     protected ClientCnxn.SendThread sendThread;
     protected LinkedBlockingDeque<Packet> outgoingQueue;
     protected ZKClientConfig clientConfig;
-    /**
-     * 4 MB
-     */
-    private static int CLIENT_MAX_PACKET_LENTH_DEFAULT = 4096 * 1024;
+    private static int CLIENT_MAX_PACKET_LENTH_DEFAULT = 4096 * 1024; /* 4 MB */
     private int packetLen = CLIENT_MAX_PACKET_LENTH_DEFAULT;
 
     /**

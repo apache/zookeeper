@@ -199,7 +199,7 @@ public class ClientCnxn {
 
     public ZooKeeperSaslClient zooKeeperSaslClient;
 
-    private ZKClientConfig clientConfig;
+    private final ZKClientConfig clientConfig;
 
     public long getSessionId() {
         return sessionId;
@@ -1401,7 +1401,7 @@ public class ClientCnxn {
 
         public boolean tunnelAuthInProgress() {
             // 1. SASL client is disabled.
-            if (!zooKeeper.getClientConfig().isSaslClientEnabled()) {
+            if (!clientConfig.isSaslClientEnabled()) {
                 return false;
             }
 

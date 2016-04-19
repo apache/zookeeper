@@ -26,7 +26,6 @@ import static org.apache.zookeeper.client.ZKClientConfig.ZK_SASL_CLIENT_USERNAME
 import static org.apache.zookeeper.client.ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET;
 import static org.apache.zookeeper.client.ZKClientConfig.ZOOKEEPER_SERVER_REALM;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -34,54 +33,64 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class ZKClientConfigTest {
+    private static final File testData = new File(System.getProperty("test.data.dir", "build/test/data"));
+
+    @BeforeClass
+    public static void init() {
+        if (!testData.exists()) {
+            testData.mkdirs();
+        }
+    }
 
     @Test
     public void testDefaultConfiguration() {
+        Map<String, String> properties = new HashMap<>();
+        properties.put(ZK_SASL_CLIENT_USERNAME, "zookeeper1");
+        properties.put(LOGIN_CONTEXT_NAME_KEY, "Client1");
+        properties.put(ENABLE_CLIENT_SASL_KEY, "true");
+        properties.put(ZOOKEEPER_SERVER_REALM, "zookeeper/hadoop.hadoop.com");
+        properties.put(DISABLE_AUTO_WATCH_RESET, "true");
+        properties.put(ZOOKEEPER_CLIENT_CNXN_SOCKET, "ClientCnxnSocketNetty");
+        properties.put(SECURE_CLIENT, "true");
 
-        String[] values = new String[] { "zookeeper1", "Client1", "true", "zookeeper/hadoop.hadoop.com", "true",
-                "ClientCnxnSocketNetty", "true" };
-        String[] properties = new String[] { ZK_SASL_CLIENT_USERNAME, LOGIN_CONTEXT_NAME_KEY, ENABLE_CLIENT_SASL_KEY,
-                ZOOKEEPER_SERVER_REALM, DISABLE_AUTO_WATCH_RESET, ZOOKEEPER_CLIENT_CNXN_SOCKET, SECURE_CLIENT };
-        assertEquals(properties.length,values.length);
-        for (int i = 0; i < properties.length; i++) {
-            String prop = properties[i];
-            System.setProperty(prop, values[i]);
+        for (Map.Entry<String, String> e : properties.entrySet()) {
+            System.setProperty(e.getKey(), e.getValue());
         }
         /**
          * ZKClientConfig should get initialized with system properties
          */
         ZKClientConfig conf = new ZKClientConfig();
-        for (int i = 0; i < properties.length; i++) {
-            String prop = properties[i];
-            String result = conf.getProperty(prop);
-            assertEquals(values[i], result);
+        for (Map.Entry<String, String> e : properties.entrySet()) {
+            assertEquals(e.getValue(), conf.getProperty(e.getKey()));
         }
-
         /**
          * clear properties
          */
-        for (String prop : properties) {
-            System.clearProperty(prop);
+        for (Map.Entry<String, String> e : properties.entrySet()) {
+            System.clearProperty(e.getKey());
         }
 
         conf = new ZKClientConfig();
         /**
          * test that all the properties are null
          */
-        for (String prop : properties) {
-            String result = conf.getProperty(prop);
+        for (Map.Entry<String, String> e : properties.entrySet()) {
+            String result = conf.getProperty(e.getKey());
             assertNull(result);
         }
-
     }
 
     @Test
-    public void testSystemProprtyValue() {
+    public void testSystemPropertyValue() {
         String clientName = "zookeeper1";
         System.setProperty(ZK_SASL_CLIENT_USERNAME, clientName);
 
@@ -96,32 +105,32 @@ public class ZKClientConfigTest {
 
     @Test
     public void testReadConfigurationFile() throws IOException, ConfigException {
-        File file = new File("test.conf");
+        File file = File.createTempFile("clientConfig", ".conf", testData);
+        file.deleteOnExit();
+        Properties clientConfProp = new Properties();
+        clientConfProp.setProperty(ENABLE_CLIENT_SASL_KEY, "true");
+        clientConfProp.setProperty(ZK_SASL_CLIENT_USERNAME, "ZK");
+        clientConfProp.setProperty(LOGIN_CONTEXT_NAME_KEY, "MyClient");
+        clientConfProp.setProperty(ZOOKEEPER_SERVER_REALM, "HADOOP.COM");
+        clientConfProp.setProperty("dummyProperty", "dummyValue");
         OutputStream io = new FileOutputStream(file);
         try {
-            io.write((ENABLE_CLIENT_SASL_KEY + "=true\n").getBytes());
-            io.write((ZK_SASL_CLIENT_USERNAME + "=ZK\n").getBytes());
-            io.write((LOGIN_CONTEXT_NAME_KEY + "=MyClient\n").getBytes());
-            io.write((ZOOKEEPER_SERVER_REALM + "=HADOOP.COM\n").getBytes());
-            io.write(("dummyProperty=dummyValue").getBytes());
-            io.flush();
+            clientConfProp.store(io, "Client Configurations");
         } finally {
             io.close();
         }
 
-        try {
-            ZKClientConfig conf = new ZKClientConfig();
-            conf.addConfiguration(file.getAbsolutePath());
-            assertEquals(conf.getProperty(ENABLE_CLIENT_SASL_KEY), "true");
-            assertEquals(conf.getProperty(ZK_SASL_CLIENT_USERNAME), "ZK");
-            assertEquals(conf.getProperty(LOGIN_CONTEXT_NAME_KEY), "MyClient");
-            assertEquals(conf.getProperty(ZOOKEEPER_SERVER_REALM), "HADOOP.COM");
-            assertNotNull(conf.getProperty("dummyProperty"));
-        } finally {
-            if (file != null) {
-                file.delete();
-            }
-        }
+        ZKClientConfig conf = new ZKClientConfig();
+        conf.addConfiguration(file.getAbsolutePath());
+        assertEquals(conf.getProperty(ENABLE_CLIENT_SASL_KEY), "true");
+        assertEquals(conf.getProperty(ZK_SASL_CLIENT_USERNAME), "ZK");
+        assertEquals(conf.getProperty(LOGIN_CONTEXT_NAME_KEY), "MyClient");
+        assertEquals(conf.getProperty(ZOOKEEPER_SERVER_REALM), "HADOOP.COM");
+        assertEquals(conf.getProperty("dummyProperty"), "dummyValue");
+
+        // try to delete it now as we have done with the created file, why to
+        // wait for deleteOnExit() deletion
+        file.delete();
 
     }
 

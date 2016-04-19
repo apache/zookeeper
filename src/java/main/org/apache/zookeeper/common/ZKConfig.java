@@ -59,7 +59,7 @@ public class ZKConfig {
     public static final String KINIT_COMMAND = "zookeeper.kinit";
     public static final String JGSS_NATIVE = "sun.security.jgss.native";
 
-    private Map<String, String> properties = new HashMap<String, String>();
+    private final Map<String, String> properties = new HashMap<String, String>();
 
     /**
      * properties, which are common to both client and server, are initialized
@@ -88,7 +88,7 @@ public class ZKConfig {
      *             if failed to load configuration properties
      */
     public ZKConfig(File configFile) throws ConfigException {
-        init();
+        this();
         addConfiguration(configFile);
     }
 
@@ -119,28 +119,24 @@ public class ZKConfig {
     /**
      * Get the property value
      *
-     * @param name
+     * @param key
      * @return property value
      */
-    public String getProperty(String name) {
-        return properties.get(name);
+    public String getProperty(String key) {
+        return properties.get(key);
     }
 
     /**
      * Get the property value, if it is null return default value
      *
-     * @param name
-     *            Property name
+     * @param key
+     *            property key
      * @param defaultValue
-     * @return
+     * @return property value or default value
      */
-    public String getProperty(String name, String defaultValue) {
-        String value = properties.get(name);
-        if (value == null) {
-            return defaultValue;
-        } else {
-            return value;
-        }
+    public String getProperty(String key, String defaultValue) {
+        String value = properties.get(key);
+        return (value == null) ? defaultValue : value;
     }
 
     /**
@@ -153,9 +149,12 @@ public class ZKConfig {
     }
 
     /**
-     * Set the property value
-     *
-     * @param name
+     * Maps the specified <code>key</code> to the specified <code>value</code>.
+     * key can not be <code>null</code>. If key is already mapped then the old
+     * value of the <code>key</code> is replaced by the specified
+     * <code>value</code>.
+     * 
+     * @param key
      * @param value
      */
     public void setProperty(String key, String value) {
