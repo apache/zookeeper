@@ -18,17 +18,6 @@
 
 package org.apache.zookeeper;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.jute.Record;
 import org.apache.zookeeper.AsyncCallback.ACLCallback;
 import org.apache.zookeeper.AsyncCallback.Children2Callback;
@@ -52,33 +41,21 @@ import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.proto.CheckWatchesRequest;
-import org.apache.zookeeper.proto.Create2Response;
-import org.apache.zookeeper.proto.CreateRequest;
-import org.apache.zookeeper.proto.CreateResponse;
-import org.apache.zookeeper.proto.DeleteRequest;
-import org.apache.zookeeper.proto.ExistsRequest;
-import org.apache.zookeeper.proto.GetACLRequest;
-import org.apache.zookeeper.proto.GetACLResponse;
-import org.apache.zookeeper.proto.GetChildren2Request;
-import org.apache.zookeeper.proto.GetChildren2Response;
-import org.apache.zookeeper.proto.GetChildrenRequest;
-import org.apache.zookeeper.proto.GetChildrenResponse;
-import org.apache.zookeeper.proto.GetDataRequest;
-import org.apache.zookeeper.proto.GetDataResponse;
-import org.apache.zookeeper.proto.ReconfigRequest;
-import org.apache.zookeeper.proto.RemoveWatchesRequest;
-import org.apache.zookeeper.proto.ReplyHeader;
-import org.apache.zookeeper.proto.RequestHeader;
-import org.apache.zookeeper.proto.SetACLRequest;
-import org.apache.zookeeper.proto.SetACLResponse;
-import org.apache.zookeeper.proto.SetDataRequest;
-import org.apache.zookeeper.proto.SetDataResponse;
-import org.apache.zookeeper.proto.SyncRequest;
-import org.apache.zookeeper.proto.SyncResponse;
+import org.apache.zookeeper.proto.*;
 import org.apache.zookeeper.server.DataTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * This is the main class of ZooKeeper client library. To use a ZooKeeper
@@ -132,6 +109,8 @@ public class ZooKeeper {
     public static final String ZOOKEEPER_CLIENT_CNXN_SOCKET = "zookeeper.clientCnxnSocket";
     // Setting this to "true" will enable encrypted client-server communication.
     public static final String SECURE_CLIENT = "zookeeper.client.secure";
+    public static final String PEER_HOST_CERT_FINGERPRINT
+            = "zookeeper.client.peer.cert.fingerprint";
 
     protected final ClientCnxn cnxn;
     private static final Logger LOG;
@@ -183,13 +162,16 @@ public class ZooKeeper {
      * @throws IOException in cases of network failure     
      */
     public void updateServerList(String connectString) throws IOException {
-        ConnectStringParser connectStringParser = new ConnectStringParser(connectString);
-        Collection<InetSocketAddress> serverAddresses = connectStringParser.getServerAddresses();
+        final ConnectStringParser connectStringParser =
+                new ConnectStringParser(connectString);
+        final Collection<ServerCfg> serversCfg =
+                connectStringParser.getServersCfg();
 
         ClientCnxnSocket clientCnxnSocket = cnxn.sendThread.getClientCnxnSocket();
         InetSocketAddress currentHost = (InetSocketAddress) clientCnxnSocket.getRemoteSocketAddress();
 
-        boolean reconfigMode = hostProvider.updateServerList(serverAddresses, currentHost);
+        boolean reconfigMode = hostProvider.updateServerList(serversCfg,
+                currentHost);
 
         // cause disconnection - this will cause next to be called
         // which will in turn call nextReconfigMode
@@ -975,6 +957,9 @@ public class ZooKeeper {
      *            would be relative to this root - ie getting/setting/etc...
      *            "/foo/bar" would result in operations being run on
      *            "/app/a/foo/bar" (from the server perspective).
+     *            With SSL support the string might look like this:
+     *            "127.0.0.1:3000:SHA-256-XXXXX,127.0.0.1:3001:SHA-256-XXXXX,
+     *            127.0.0.1:3002:SHA-256-XXXXX"
      * @param sessionTimeout
      *            session timeout in milliseconds
      * @param watcher
@@ -1005,7 +990,7 @@ public class ZooKeeper {
     // default hostprovider
     private static HostProvider createDefaultHostProvider(String connectString) {
         return new StaticHostProvider(
-                new ConnectStringParser(connectString).getServerAddresses());
+                new ConnectStringParser(connectString).getServersCfg());
     }
 
     // VisibleForTesting

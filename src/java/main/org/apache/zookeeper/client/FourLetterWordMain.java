@@ -18,6 +18,14 @@
 
 package org.apache.zookeeper.client;
 
+import org.apache.zookeeper.common.X509Exception.SSLContextException;
+import org.apache.zookeeper.common.X509Util;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -26,15 +34,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
-
-import org.apache.zookeeper.common.X509Exception.SSLContextException;
-import org.apache.zookeeper.common.X509Util;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class FourLetterWordMain {
     //in milliseconds, socket should connect/read within this period otherwise SocketTimeoutException
@@ -88,7 +87,9 @@ public class FourLetterWordMain {
             new InetSocketAddress(InetAddress.getByName(null), port);
         if (secure) {
             LOG.info("using secure socket");
-            SSLContext sslContext = X509Util.createSSLContext();
+            // TODO: 4 letter main cannot be secure!, not supported yet.
+            // Which means this has to be local only.
+            SSLContext sslContext = X509Util.createSSLContext(null);
             SSLSocketFactory socketFactory = sslContext.getSocketFactory();
             SSLSocket sslSock = (SSLSocket) socketFactory.createSocket();
             sslSock.connect(hostaddress, timeout);

@@ -18,8 +18,27 @@
 
 package org.apache.zookeeper.server;
 
-import static org.jboss.netty.buffer.ChannelBuffers.dynamicBuffer;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.common.X509Exception;
+import org.apache.zookeeper.common.X509Util;
+import org.apache.zookeeper.server.auth.ProviderRegistry;
+import org.apache.zookeeper.server.auth.X509AuthenticationProvider;
+import org.jboss.netty.bootstrap.ServerBootstrap;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBuffers;
+import org.jboss.netty.channel.*;
+import org.jboss.netty.channel.ChannelHandler.Sharable;
+import org.jboss.netty.channel.group.ChannelGroup;
+import org.jboss.netty.channel.group.DefaultChannelGroup;
+import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+import org.jboss.netty.handler.ssl.SslHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSession;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -31,41 +50,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executors;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.X509KeyManager;
-import javax.net.ssl.X509TrustManager;
-
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.common.X509Exception;
-import org.apache.zookeeper.common.X509Exception.SSLContextException;
-import org.apache.zookeeper.common.X509Util;
-import org.apache.zookeeper.server.auth.ProviderRegistry;
-import org.apache.zookeeper.server.auth.X509AuthenticationProvider;
-import org.jboss.netty.bootstrap.ServerBootstrap;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelFuture;
-import org.jboss.netty.channel.ChannelFutureListener;
-import org.jboss.netty.channel.ChannelHandler.Sharable;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.ChannelPipelineFactory;
-import org.jboss.netty.channel.ChannelStateEvent;
-import org.jboss.netty.channel.Channels;
-import org.jboss.netty.channel.ExceptionEvent;
-import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.channel.SimpleChannelHandler;
-import org.jboss.netty.channel.WriteCompletionEvent;
-import org.jboss.netty.channel.group.ChannelGroup;
-import org.jboss.netty.channel.group.DefaultChannelGroup;
-import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
-import org.jboss.netty.handler.ssl.SslHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.jboss.netty.buffer.ChannelBuffers.dynamicBuffer;
 
 public class NettyServerCnxnFactory extends ServerCnxnFactory {
     private static final Logger LOG = LoggerFactory.getLogger(NettyServerCnxnFactory.class);
@@ -108,14 +93,8 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                     zkServer, NettyServerCnxnFactory.this);
             ctx.setAttachment(cnxn);
 
-            if (secure) {
-                SslHandler sslHandler = ctx.getPipeline().get(SslHandler.class);
-                ChannelFuture handshakeFuture = sslHandler.handshake();
-                handshakeFuture.addListener(new CertificateVerifier(sslHandler, cnxn));
-            } else {
-                allChannels.add(ctx.getChannel());
-                addCnxn(cnxn);
-            }
+            allChannels.add(ctx.getChannel());
+            addCnxn(cnxn);
         }
 
         @Override
@@ -354,8 +333,11 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         String authProviderProp = System.getProperty(X509Util.SSL_AUTHPROVIDER);
         SSLContext sslContext;
         if (authProviderProp == null) {
-            sslContext = X509Util.createSSLContext();
+            sslContext = X509Util.createSSLContext(quorumPeer);
         } else {
+            throw new IllegalAccessError("No support for auth provider: " +
+                    authProviderProp);
+            /*
             sslContext = SSLContext.getInstance("TLSv1");
             X509AuthenticationProvider authProvider =
                     (X509AuthenticationProvider)ProviderRegistry.getProvider(
@@ -373,6 +355,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             sslContext.init(new X509KeyManager[] { authProvider.getKeyManager() },
                             new X509TrustManager[] { authProvider.getTrustManager() },
                             null);
+            */
         }
 
         SSLEngine sslEngine = sslContext.createSSLEngine();

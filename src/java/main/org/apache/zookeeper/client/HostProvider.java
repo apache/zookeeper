@@ -18,8 +18,9 @@
 
 package org.apache.zookeeper.client;
 
+import org.apache.zookeeper.ServerCfg;
+
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.util.Collection;
 
 /**
@@ -52,7 +53,7 @@ public interface HostProvider {
      * @param spinDelay
      *            Milliseconds to wait if all hosts have been tried once.
      */
-    public InetSocketAddress next(long spinDelay);
+    public ServerCfg next(long spinDelay);
 
     /**
      * Notify the HostProvider of a successful connection.
@@ -63,10 +64,10 @@ public interface HostProvider {
 
     /**
      * Update the list of servers. This returns true if changing connections is necessary for load-balancing, false otherwise.
-     * @param serverAddresses new host list
+     * @param serversCfg new host list with optional SSL config.
      * @param currentHost the host to which this client is currently connected
      * @return true if changing connections is necessary for load-balancing, false otherwise  
      */
-    boolean updateServerList(Collection<InetSocketAddress> serverAddresses,
-        InetSocketAddress currentHost);
+    boolean updateServerList(final Collection<ServerCfg> serversCfg,
+                             final InetSocketAddress currentHost);
 }

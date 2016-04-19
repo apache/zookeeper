@@ -18,6 +18,12 @@
 
 package org.apache.zookeeper;
 
+import org.apache.zookeeper.ClientCnxn.EndOfStreamException;
+import org.apache.zookeeper.ClientCnxn.Packet;
+import org.apache.zookeeper.ZooDefs.OpCode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -30,12 +36,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingDeque;
-
-import org.apache.zookeeper.ClientCnxn.EndOfStreamException;
-import org.apache.zookeeper.ClientCnxn.Packet;
-import org.apache.zookeeper.ZooDefs.OpCode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ClientCnxnSocketNIO extends ClientCnxnSocket {
     private static final Logger LOG = LoggerFactory
@@ -277,12 +277,12 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
     }
     
     @Override
-    void connect(InetSocketAddress addr) throws IOException {
+    void connect(final ServerCfg serverCfg) throws IOException {
         SocketChannel sock = createSock();
         try {
-           registerAndConnect(sock, addr);
+           registerAndConnect(sock, serverCfg.getInetAddress());
       } catch (IOException e) {
-            LOG.error("Unable to open socket to " + addr);
+            LOG.error("Unable to open socket to " + serverCfg.getInetAddress());
             sock.close();
             throw e;
         }

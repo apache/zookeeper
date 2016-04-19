@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import org.apache.zookeeper.ServerCfg;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,8 +39,7 @@ public final class StaticHostProvider implements HostProvider {
     private static final Logger LOG = LoggerFactory
             .getLogger(StaticHostProvider.class);
 
-    private List<InetSocketAddress> serverAddresses = new ArrayList<InetSocketAddress>(
-            5);
+    private List<ServerCfg> serversCfg = new ArrayList<ServerCfg>(5);
 
     private Random sourceOfRandomness;
     private int lastIndex = -1;
@@ -51,11 +51,9 @@ public final class StaticHostProvider implements HostProvider {
      */
     private boolean reconfigMode = false;
 
-    private final List<InetSocketAddress> oldServers = new ArrayList<InetSocketAddress>(
-            5);
+    private final List<ServerCfg> oldServers = new ArrayList<ServerCfg>(5);
 
-    private final List<InetSocketAddress> newServers = new ArrayList<InetSocketAddress>(
-            5);
+    private final List<ServerCfg> newServers = new ArrayList<ServerCfg>(5);
 
     private int currentIndexOld = -1;
     private int currentIndexNew = -1;
@@ -65,16 +63,18 @@ public final class StaticHostProvider implements HostProvider {
     /**
      * Constructs a SimpleHostSet.
      * 
-     * @param serverAddresses
-     *            possibly unresolved ZooKeeper server addresses
+     * @param serversCfg
+     *            possibly unresolved ZooKeeper server addresses with
+     *            optional ssl cfg.
      * @throws IllegalArgumentException
      *             if serverAddresses is empty or resolves to an empty list
      */
-    public StaticHostProvider(Collection<InetSocketAddress> serverAddresses) {
+    public StaticHostProvider(
+            final Collection<ServerCfg> serversCfg) {
        sourceOfRandomness = new Random(System.currentTimeMillis() ^ this.hashCode());
 
-        this.serverAddresses = resolveAndShuffle(serverAddresses);
-        if (this.serverAddresses.isEmpty()) {
+        this.serversCfg = resolveAndShuffle(serversCfg);
+        if (this.serversCfg.isEmpty()) {
             throw new IllegalArgumentException(
                     "A HostProvider may not be empty!");
         }       
@@ -86,18 +86,19 @@ public final class StaticHostProvider implements HostProvider {
      * Constructs a SimpleHostSet. This constructor is used from StaticHostProviderTest to produce deterministic test results
      * by initializing sourceOfRandomness with the same seed
      * 
-     * @param serverAddresses
-     *            possibly unresolved ZooKeeper server addresses
+     * @param serversCfg
+     *            possibly unresolved ZooKeeper server addresses with
+     *            optional ssl cfg.
      * @param randomnessSeed a seed used to initialize sourceOfRandomnes
      * @throws IllegalArgumentException
      *             if serverAddresses is empty or resolves to an empty list
      */
-    public StaticHostProvider(Collection<InetSocketAddress> serverAddresses,
+    public StaticHostProvider(final Collection<ServerCfg> serversCfg,
         long randomnessSeed) {
         sourceOfRandomness = new Random(randomnessSeed);
 
-        this.serverAddresses = resolveAndShuffle(serverAddresses);
-        if (this.serverAddresses.isEmpty()) {
+        this.serversCfg = resolveAndShuffle(serversCfg);
+        if (this.serversCfg.isEmpty()) {
             throw new IllegalArgumentException(
                     "A HostProvider may not be empty!");
         }       
@@ -105,24 +106,35 @@ public final class StaticHostProvider implements HostProvider {
         lastIndex = -1;              
     }
 
-    private List<InetSocketAddress> resolveAndShuffle(Collection<InetSocketAddress> serverAddresses) {
-        List<InetSocketAddress> tmpList = new ArrayList<InetSocketAddress>(serverAddresses.size());       
-        for (InetSocketAddress address : serverAddresses) {
+    private List<ServerCfg> resolveAndShuffle(
+            final Collection<ServerCfg> serversCfg) {
+        final List<ServerCfg> tmpList =
+                new ArrayList<ServerCfg>(serversCfg.size());
+
+        for (final ServerCfg cfg : serversCfg) {
             try {
-                InetAddress ia = address.getAddress();
-                String addr = (ia != null) ? ia.getHostAddress() : address.getHostString();
-                InetAddress resolvedAddresses[] = InetAddress.getAllByName(addr);
-                for (InetAddress resolvedAddress : resolvedAddresses) {
-                    InetAddress taddr = InetAddress.getByAddress(address.getHostString(), resolvedAddress.getAddress());
-                    tmpList.add(new InetSocketAddress(taddr, address.getPort()));
+                final InetAddress ia = cfg.getInetAddress().getAddress();
+                String addr = (ia != null) ? ia.getHostAddress() :
+                        cfg.getInetAddress().getHostString();
+                final InetAddress resolvedAddresses[] =
+                        InetAddress.getAllByName(addr);
+                for (final InetAddress resolvedAddress : resolvedAddresses) {
+                    final InetAddress taddr = InetAddress.getByAddress(
+                            cfg.getInetAddress().getHostString(),
+                            resolvedAddress.getAddress());
+                    tmpList.add(new ServerCfg(cfg.getHostStr(),
+                            new InetSocketAddress(taddr,
+                                    cfg.getInetAddress().getPort()),
+                            cfg.getSslCertCfg()));
                 }
             } catch (UnknownHostException ex) {
-                LOG.warn("No IP address found for server: {}", address, ex);
+                LOG.warn("No IP address found for server: {}",
+                        cfg.getInetAddress(), ex);
             }
         }
         Collections.shuffle(tmpList, sourceOfRandomness);
-        return tmpList;
-    } 
+        return Collections.unmodifiableList(tmpList);
+    }
 
 
     /**
@@ -141,7 +153,7 @@ public final class StaticHostProvider implements HostProvider {
      * 
      * See {@link https://issues.apache.org/jira/browse/ZOOKEEPER-1355} for the protocol and its evaluation, and
 	 * StaticHostProviderTest for the tests that illustrate how load balancing works with this policy.
-     * @param serverAddresses new host list
+     * @param serversCfg new host list with optional SSL config.
      * @param currentHost the host to which this client is currently connected
      * @return true if changing connections is necessary for load-balancing, false otherwise  
      */
@@ -149,10 +161,10 @@ public final class StaticHostProvider implements HostProvider {
 
     @Override
     public synchronized boolean updateServerList(
-            Collection<InetSocketAddress> serverAddresses,
-            InetSocketAddress currentHost) {
+            final Collection<ServerCfg> serversCfg,
+            final InetSocketAddress currentHost) {
         // Resolve server addresses and shuffle them
-        List<InetSocketAddress> resolvedList = resolveAndShuffle(serverAddresses);
+        final List<ServerCfg> resolvedList = resolveAndShuffle(serversCfg);
         if (resolvedList.isEmpty()) {
             throw new IllegalArgumentException(
                     "A HostProvider may not be empty!");
@@ -164,7 +176,7 @@ public final class StaticHostProvider implements HostProvider {
 
         // choose "current" server according to the client rebalancing algorithm
         if (reconfigMode) {
-            myServer = next(0);
+            myServer = next(0).getInetAddress();
         }
 
         // if the client is not currently connected to any server
@@ -172,19 +184,21 @@ public final class StaticHostProvider implements HostProvider {
             // reconfigMode = false (next shouldn't return null).
             if (lastIndex >= 0) {
                 // take the last server to which we were connected
-                myServer = this.serverAddresses.get(lastIndex);
+                myServer = this.serversCfg.get(lastIndex).getInetAddress();
             } else {
                 // take the first server on the list
-                myServer = this.serverAddresses.get(0);
+                myServer = this.serversCfg.get(0).getInetAddress();
             }
         }
 
-        for (InetSocketAddress addr : resolvedList) {
-            if (addr.getPort() == myServer.getPort()
-                    && ((addr.getAddress() != null
-                            && myServer.getAddress() != null && addr
-                            .getAddress().equals(myServer.getAddress())) || addr
-                            .getHostString().equals(myServer.getHostString()))) {
+        for (final ServerCfg serverCfg : resolvedList) {
+            if (serverCfg.getInetAddress().getPort() == myServer.getPort()
+                    && ((serverCfg.getInetAddress().getAddress() != null
+                            && myServer.getAddress() != null
+                    && serverCfg.getInetAddress().getAddress().equals(
+                    myServer.getAddress())) ||
+                    serverCfg.getInetAddress().getHostString().equals(
+                            myServer.getHostString()))) {
                 myServerInNewConfig = true;
                 break;
             }
@@ -196,11 +210,11 @@ public final class StaticHostProvider implements HostProvider {
         oldServers.clear();
         // Divide the new servers into oldServers that were in the previous list
         // and newServers that were not in the previous list
-        for (InetSocketAddress resolvedAddress : resolvedList) {
-            if (this.serverAddresses.contains(resolvedAddress)) {
-                oldServers.add(resolvedAddress);
+        for (final ServerCfg resolvedCfg : resolvedList) {
+            if (this.serversCfg.contains(resolvedCfg)) {
+                oldServers.add(resolvedCfg);
             } else {
-                newServers.add(resolvedAddress);
+                newServers.add(resolvedCfg);
             }
         }
 
@@ -208,13 +222,13 @@ public final class StaticHostProvider implements HostProvider {
         int numNew = newServers.size();
 
         // number of servers increased
-        if (numOld + numNew > this.serverAddresses.size()) {
+        if (numOld + numNew > this.serversCfg.size()) {
             if (myServerInNewConfig) {
                 // my server is in new config, but load should be decreased.
                 // Need to decide if this client
                 // is moving to one of the new servers
-                if (sourceOfRandomness.nextFloat() <= (1 - ((float) this.serverAddresses
-                        .size()) / (numOld + numNew))) {
+                if (sourceOfRandomness.nextFloat() <= (1 -
+                        ((float) this.serversCfg.size()) / (numOld + numNew))) {
                     pNew = 1;
                     pOld = 0;
                 } else {
@@ -234,8 +248,10 @@ public final class StaticHostProvider implements HostProvider {
                 // stay with this server and do nothing special
                 reconfigMode = false;
             } else {
-                pOld = ((float) (numOld * (this.serverAddresses.size() - (numOld + numNew))))
-                        / ((numOld + numNew) * (this.serverAddresses.size() - numOld));
+                pOld = ((float) (numOld * (this.serversCfg.size() -
+                        (numOld + numNew))))
+                        / ((numOld + numNew) *
+                        (this.serversCfg.size() - numOld));
                 pNew = 1 - pOld;
             }
         }
@@ -245,24 +261,24 @@ public final class StaticHostProvider implements HostProvider {
         } else {
             currentIndex = -1;
         }
-        this.serverAddresses = resolvedList;
+        this.serversCfg = resolvedList;
         currentIndexOld = -1;
         currentIndexNew = -1;
         lastIndex = currentIndex;
         return reconfigMode;
     }
 
-    public synchronized InetSocketAddress getServerAtIndex(int i) {
-    	if (i < 0 || i >= serverAddresses.size()) return null;
-    	return serverAddresses.get(i);
+    public synchronized ServerCfg getServerAtIndex(int i) {
+    	if (i < 0 || i >= serversCfg.size()) return null;
+    	return serversCfg.get(i);
     }
     
-    public synchronized InetSocketAddress getServerAtCurrentIndex() {
+    public synchronized ServerCfg getServerAtCurrentIndex() {
     	return getServerAtIndex(currentIndex);
     }
 
     public synchronized int size() {
-        return serverAddresses.size();
+        return serversCfg.size();
     }
 
     /**
@@ -278,7 +294,7 @@ public final class StaticHostProvider implements HostProvider {
      *
      * When called, this should be protected by synchronized(this)
      */
-    private InetSocketAddress nextHostInReconfigMode() {
+    private ServerCfg nextHostInReconfigMode() {
         boolean takeNew = (sourceOfRandomness.nextFloat() <= pNew);
 
         // take one of the new servers if it is possible (there are still such
@@ -301,26 +317,27 @@ public final class StaticHostProvider implements HostProvider {
         return null;
     }
 
-    public InetSocketAddress next(long spinDelay) {
+    @Override
+    public ServerCfg next(long spinDelay) {
         boolean needToSleep = false;
-        InetSocketAddress addr;
+        ServerCfg serverCfg;
 
         synchronized(this) {
             if (reconfigMode) {
-                addr = nextHostInReconfigMode();
-                if (addr != null) {
-                	currentIndex = serverAddresses.indexOf(addr);
-                	return addr;                
+                serverCfg = nextHostInReconfigMode();
+                if (serverCfg != null) {
+                	currentIndex = serversCfg.indexOf(serverCfg);
+                	return serverCfg;
                 }
                 //tried all servers and couldn't connect
                 reconfigMode = false;
                 needToSleep = (spinDelay > 0);
             }        
             ++currentIndex;
-            if (currentIndex == serverAddresses.size()) {
+            if (currentIndex == serversCfg.size()) {
                 currentIndex = 0;
             }            
-            addr = serverAddresses.get(currentIndex);
+            serverCfg = serversCfg.get(currentIndex);
             needToSleep = needToSleep || (currentIndex == lastIndex && spinDelay > 0);
             if (lastIndex == -1) { 
                 // We don't want to sleep on the first ever connect attempt.
@@ -335,7 +352,7 @@ public final class StaticHostProvider implements HostProvider {
             }
         }
 
-        return addr;
+        return serverCfg;
     }
 
     public synchronized void onConnected() {

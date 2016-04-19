@@ -18,25 +18,25 @@
 
 package org.apache.zookeeper.server;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.util.Collections;
-import java.util.Set;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import org.apache.zookeeper.Environment;
+import org.apache.zookeeper.Login;
+import org.apache.zookeeper.jmx.MBeanRegistry;
+import org.apache.zookeeper.server.auth.SaslServerCallbackHandler;
+import org.apache.zookeeper.server.quorum.QuorumPeer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.management.JMException;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginException;
-
-import org.apache.zookeeper.Environment;
-import org.apache.zookeeper.Login;
-import org.apache.zookeeper.jmx.MBeanRegistry;
-import org.apache.zookeeper.server.auth.SaslServerCallbackHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 public abstract class ServerCnxnFactory {
@@ -47,6 +47,7 @@ public abstract class ServerCnxnFactory {
 
     // Tells whether SSL is enabled on this ServerCnxnFactory
     protected boolean secure;
+    protected QuorumPeer quorumPeer;
 
     /**
      * The buffer will cause the connection to be close when we do a send.
@@ -77,6 +78,10 @@ public abstract class ServerCnxnFactory {
 
     public abstract void configure(InetSocketAddress addr, int maxcc, boolean secure)
             throws IOException;
+
+    public void setQuorumPeer(QuorumPeer quorumPeer) {
+        this.quorumPeer = quorumPeer;
+    }
 
     public abstract void reconfigure(InetSocketAddress addr);
 

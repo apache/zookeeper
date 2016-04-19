@@ -17,6 +17,26 @@
  */
 package org.apache.zookeeper.server.quorum;
 
+import org.apache.jute.BinaryInputArchive;
+import org.apache.jute.BinaryOutputArchive;
+import org.apache.jute.InputArchive;
+import org.apache.jute.OutputArchive;
+import org.apache.jute.Record;
+import org.apache.zookeeper.ServerCfg;
+import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.common.X509Exception;
+import org.apache.zookeeper.server.Request;
+import org.apache.zookeeper.server.ServerCnxn;
+import org.apache.zookeeper.server.ZooTrace;
+import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
+import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
+import org.apache.zookeeper.server.util.SerializeUtils;
+import org.apache.zookeeper.server.util.ZxidUtils;
+import org.apache.zookeeper.txn.SetDataTxn;
+import org.apache.zookeeper.txn.TxnHeader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
@@ -32,24 +52,6 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-
-import org.apache.jute.BinaryInputArchive;
-import org.apache.jute.BinaryOutputArchive;
-import org.apache.jute.InputArchive;
-import org.apache.jute.OutputArchive;
-import org.apache.jute.Record;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.apache.zookeeper.ZooDefs.OpCode;
-import org.apache.zookeeper.server.Request;
-import org.apache.zookeeper.server.ServerCnxn;
-import org.apache.zookeeper.server.ZooTrace;
-import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
-import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
-import org.apache.zookeeper.server.util.SerializeUtils;
-import org.apache.zookeeper.server.util.ZxidUtils;
-import org.apache.zookeeper.txn.SetDataTxn;
-import org.apache.zookeeper.txn.TxnHeader;
 
 /**
  * This class is the superclass of two of the three main actors in a ZK
@@ -193,21 +195,22 @@ public class Learner {
     /**
      * Returns the address of the node we think is the leader.
      */
-    protected InetSocketAddress findLeader() {
-        InetSocketAddress addr = null;
+    protected ServerCfg findLeader() {
+        ServerCfg serverCfg = null;
         // Find the leader by id
         Vote current = self.getCurrentVote();
         for (QuorumServer s : self.getView().values()) {
             if (s.id == current.getId()) {
-                addr = s.addr;
+                serverCfg = new ServerCfg(s.addr.getHostString(), s.addr,
+                        s.getSslCertCfg());
                 break;
             }
         }
-        if (addr == null) {
+        if (serverCfg == null) {
             LOG.warn("Couldn't find the leader with id = "
                     + current.getId());
         }
-        return addr;
+        return serverCfg;
     }
    
     /**
@@ -230,14 +233,15 @@ public class Learner {
     /**
      * Establish a connection with the Leader found by findLeader. Retries
      * until either initLimit time has elapsed or 5 tries have happened. 
-     * @param addr - the address of the Leader to connect to.
+     * @param serverCfg - the address of the Leader to connect to with SSL cfg.
      * @throws IOException - if the socket connection fails on the 5th attempt
      * @throws ConnectException
      * @throws InterruptedException
      */
-    protected void connectToLeader(InetSocketAddress addr) 
-    throws IOException, ConnectException, InterruptedException {
-        sock = new Socket();        
+    protected void connectToLeader(final ServerCfg serverCfg)
+    throws IOException, ConnectException, InterruptedException, X509Exception {
+        sock = this.self.socketFactory.buildForClient(
+                serverCfg.getInetAddress(), serverCfg.getSslCertCfg());
         sock.setSoTimeout(self.tickTime * self.initLimit);
 
         int initLimitTime = self.tickTime * self.initLimit;
@@ -253,7 +257,9 @@ public class Learner {
                     throw new IOException("initLimit exceeded on retries.");
                 }
 
-                sockConnect(sock, addr, Math.min(self.tickTime * self.syncLimit, remainingInitLimitTime));
+                sockConnect(sock, serverCfg.getInetAddress(),
+                        Math.min(self.tickTime * self.syncLimit,
+                        remainingInitLimitTime));
                 sock.setTcpNoDelay(nodelay);
                 break;
             } catch (IOException e) {
@@ -262,18 +268,22 @@ public class Learner {
                 if (remainingInitLimitTime <= 1000) {
                     LOG.error("Unexpected exception, initLimit exceeded. tries=" + tries +
                              ", remaining init limit=" + remainingInitLimitTime +
-                             ", connecting to " + addr,e);
+                             ", connecting to " +
+                            serverCfg.getInetAddress(), e);
                     throw e;
                 } else if (tries >= 4) {
                     LOG.error("Unexpected exception, retries exceeded. tries=" + tries +
                              ", remaining init limit=" + remainingInitLimitTime +
-                             ", connecting to " + addr,e);
+                             ", connecting to " +
+                            serverCfg.getInetAddress(), e);
                     throw e;
                 } else {
                     LOG.warn("Unexpected exception, tries=" + tries +
                             ", remaining init limit=" + remainingInitLimitTime +
-                            ", connecting to " + addr,e);
-                    sock = new Socket();
+                            ", connecting to " + serverCfg.getInetAddress(), e);
+                    sock = this.self.socketFactory.buildForClient(
+                            serverCfg.getInetAddress(),
+                            serverCfg.getSslCertCfg());
                     sock.setSoTimeout(self.tickTime * self.initLimit);
                 }
             }
@@ -283,7 +293,7 @@ public class Learner {
                 sock.getInputStream()));
         bufferedOutput = new BufferedOutputStream(sock.getOutputStream());
         leaderOs = BinaryOutputArchive.getArchive(bufferedOutput);
-    }   
+    }
     
     /**
      * Once connected to the leader, perform the handshake protocol to

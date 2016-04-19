@@ -55,6 +55,8 @@
       <artifact name="netty" type="jar" conf="default"/>
     </dependency>
 
+    <dependency org="commons-validator" name="commons-validator" rev="1.5.1"/>
+
     <dependency org="org.vafer" name="jdeb" rev="0.8" conf="package->master"/>
 
     <dependency org="junit" name="junit" rev="4.12" conf="test->default"/>

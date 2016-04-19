@@ -18,11 +18,8 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-
 import org.apache.jute.Record;
+import org.apache.zookeeper.ServerCfg;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.server.Request;
@@ -31,6 +28,9 @@ import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnHeader;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
 /**
  * This class has the control logic for the Follower.
  */
@@ -69,9 +69,9 @@ public class Follower extends Learner{
         self.end_fle = 0;
         fzk.registerJMX(new FollowerBean(this, zk), self.jmxLocalPeerBean);
         try {
-            InetSocketAddress addr = findLeader();            
+            final ServerCfg serverCfg = findLeader();
             try {
-                connectToLeader(addr);
+                connectToLeader(serverCfg);
                 long newEpochZxid = registerWithLeader(Leader.FOLLOWERINFO);
                 if (self.isReconfigStateChange())
                    throw new Exception("learned about role change");

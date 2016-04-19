@@ -18,22 +18,17 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-
 import org.apache.jute.Record;
-import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.ServerCfg;
 import org.apache.zookeeper.server.ObserverBean;
 import org.apache.zookeeper.server.Request;
-import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
-import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
-import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnHeader;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * Observers are peers that do not take part in the atomic broadcast protocol.
@@ -68,10 +63,10 @@ public class Observer extends Learner{
         zk.registerJMX(new ObserverBean(this, zk), self.jmxLocalPeerBean);
 
         try {
-            InetSocketAddress addr = findLeader();
-            LOG.info("Observing " + addr);
+            final ServerCfg serverCfg = findLeader();
+            LOG.info("Observing " + serverCfg.getInetAddress());
             try {
-                connectToLeader(addr);
+                connectToLeader(serverCfg);
                 long newLeaderZxid = registerWithLeader(Leader.OBSERVERINFO);
                 if (self.isReconfigStateChange())
                    throw new Exception("learned about role change");

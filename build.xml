@@ -732,6 +732,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
           <exclude name="**/ivy*.jar" />
         </fileset>
         <fileset dir="${ivy.lib}"/>
+        <fileset dir="${ivy.test.lib}"/>
       </copy>
 
       <subant target="package">
