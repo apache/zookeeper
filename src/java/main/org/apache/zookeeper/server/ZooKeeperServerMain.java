@@ -118,7 +118,7 @@ public class ZooKeeperServerMain {
             // run() in this thread.
             // create a file logger url from the command line args
             txnLog = new FileTxnSnapLog(config.dataLogDir, config.dataDir);
-            ZooKeeperServer zkServer = new ZooKeeperServer( txnLog,
+            final ZooKeeperServer zkServer = new ZooKeeperServer(txnLog,
                     config.tickTime, config.minSessionTimeout, config.maxSessionTimeout, null);
 
             // Start Admin server
@@ -146,14 +146,26 @@ public class ZooKeeperServerMain {
             );
             containerManager.start();
 
+            // Watch status of ZooKeeper server. If there is an internal error
+            // then will do a graceful shutdown.
+            while (zkServer.isRunning()) {
+                try {
+                    Thread.sleep(1000); // watch interval
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    LOG.info("Thread interrupted");
+                }
+            }
+
+            shutdown();
+
             if (cnxnFactory != null) {
                 cnxnFactory.join();
             }
             if (secureCnxnFactory != null) {
                 secureCnxnFactory.join();
             }
-
-            if (zkServer.isRunning()) {
+            if (zkServer.needsShutdown()) {
                 zkServer.shutdown();
             }
         } catch (InterruptedException e) {
@@ -180,9 +192,16 @@ public class ZooKeeperServerMain {
             secureCnxnFactory.shutdown();
         }
         try {
-            adminServer.shutdown();
+            if (adminServer != null) {
+                adminServer.shutdown();
+            }
         } catch (AdminServerException e) {
             LOG.warn("Problem stopping AdminServer", e);
         }
+    }
+
+    // VisibleForTesting
+    ServerCnxnFactory getCnxnFactory() {
+        return cnxnFactory;
     }
 }

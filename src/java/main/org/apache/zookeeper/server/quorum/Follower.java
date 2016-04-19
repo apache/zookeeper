@@ -85,7 +85,7 @@ public class Follower extends Learner{
                 }
                 syncWithLeader(newEpochZxid);                
                 QuorumPacket qp = new QuorumPacket();
-                while (self.isRunning()) {
+                while (this.isRunning()) {
                     readPacket(qp);
                     processPacket(qp);
                 }

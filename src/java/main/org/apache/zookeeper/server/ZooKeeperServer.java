@@ -103,7 +103,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected volatile State state = State.INITIAL;
 
     enum State {
-        INITIAL, RUNNING, SHUTDOWN;
+        INITIAL, RUNNING, SHUTDOWN, ERROR;
     }
 
     /**
@@ -122,7 +122,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected ServerCnxnFactory secureServerCnxnFactory;
 
     private final ServerStats serverStats;
-    private final ZooKeeperServerListener listener = new ZooKeeperServerListenerImpl();
+    private final ZooKeeperServerListener listener;
+
     void removeCnxn(ServerCnxn cnxn) {
         zkDb.removeCnxn(cnxn);
     }
@@ -136,6 +137,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      */
     public ZooKeeperServer() {
         serverStats = new ServerStats(this);
+        listener = new ZooKeeperServerListenerImpl(this);
     }
 
     /**
@@ -152,7 +154,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         this.tickTime = tickTime;
         setMinSessionTimeout(minSessionTimeout);
         setMaxSessionTimeout(maxSessionTimeout);
-
+        listener = new ZooKeeperServerListenerImpl(this);
         LOG.info("Created server with tickTime " + tickTime
                 + " minSessionTimeout " + getMinSessionTimeout()
                 + " maxSessionTimeout " + getMaxSessionTimeout()
@@ -446,7 +448,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         registerJMX();
 
-        state = State.RUNNING;
+        setState(State.RUNNING);
         notifyAll();
     }
 
@@ -463,20 +465,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return listener;
     }
 
-    /**
-     * Default listener implementation, which will do a graceful shutdown on
-     * notification
-     */
-    private class ZooKeeperServerListenerImpl implements
-            ZooKeeperServerListener {
-
-        @Override
-        public void notifyStopping(String threadName, int exitCode) {
-            LOG.info("Thread {} exits, error code {}", threadName, exitCode);
-            shutdown();
-        }
-    }
-
     protected void createSessionTracker() {
         sessionTracker = new SessionTrackerImpl(this, zkDb.getSessionWithTimeOuts(),
                 tickTime, 1, getZooKeeperServerListener());
@@ -486,19 +474,27 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         ((SessionTrackerImpl)sessionTracker).start();
     }
 
+    void setState(State state) {
+        this.state = state;
+    }
+
+    protected boolean needsShutdown() {
+        return state == State.RUNNING || state == State.ERROR;
+    }
+
     public boolean isRunning() {
         return state == State.RUNNING;
     }
 
     public synchronized void shutdown() {
-        if (!isRunning()) {
+        if (!needsShutdown()) {
             LOG.debug("ZooKeeper server is not running, so not proceeding to shutdown!");
             return;
         }
         LOG.info("shutting down");
 
         // new RuntimeException("Calling shutdown").printStackTrace();
-        state = State.SHUTDOWN;
+        setState(State.SHUTDOWN);
         // Since sessionTracker and syncThreads poll we just have to
         // set running to false and they will detect it during the poll
         // interval.
@@ -1141,5 +1137,4 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public Map<Long, Set<Long>> getSessionExpiryMap() {
         return sessionTracker.getSessionExpiryMap();
     }
-
 }
