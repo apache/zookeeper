@@ -36,13 +36,18 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 public class ZKClientConfigTest {
     private static final File testData = new File(System.getProperty("test.data.dir", "build/test/data"));
+    @Rule
+    public Timeout timeout = new Timeout(10, TimeUnit.SECONDS);
 
     @BeforeClass
     public static void init() {

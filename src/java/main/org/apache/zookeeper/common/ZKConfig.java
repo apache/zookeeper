@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
  * It supports reading client configuration from both system properties and
  * configuration file. A user can override any system property by calling
  * {@link #setProperty(String, String)}.
+ * @since 3.5.2
  */
 public class ZKConfig {
 
@@ -177,25 +178,21 @@ public class ZKConfig {
      *            Configuration file.
      */
     public void addConfiguration(File configFile) throws ConfigException {
-        {
-
-            LOG.info("Reading configuration from: {}", configFile.getAbsolutePath());
+        LOG.info("Reading configuration from: {}", configFile.getAbsolutePath());
+        try {
+            configFile = (new VerifyingFileFactory.Builder(LOG).warnForRelativePath().failForNonExistingPath().build())
+                    .validate(configFile);
+            Properties cfg = new Properties();
+            FileInputStream in = new FileInputStream(configFile);
             try {
-                configFile = (new VerifyingFileFactory.Builder(LOG).warnForRelativePath().failForNonExistingPath()
-                        .build()).validate(configFile);
-                Properties cfg = new Properties();
-                FileInputStream in = new FileInputStream(configFile);
-                try {
-                    cfg.load(in);
-                } finally {
-                    in.close();
-                }
-                parseProperties(cfg);
-            } catch (IOException | IllegalArgumentException e) {
-                LOG.error("Error while configuration from: {}", configFile.getAbsolutePath(), e);
-                throw new ConfigException("Error while processing " + configFile.getAbsolutePath(), e);
+                cfg.load(in);
+            } finally {
+                in.close();
             }
-
+            parseProperties(cfg);
+        } catch (IOException | IllegalArgumentException e) {
+            LOG.error("Error while configuration from: {}", configFile.getAbsolutePath(), e);
+            throw new ConfigException("Error while processing " + configFile.getAbsolutePath(), e);
         }
     }
 

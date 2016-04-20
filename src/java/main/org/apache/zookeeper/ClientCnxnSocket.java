@@ -66,8 +66,7 @@ abstract class ClientCnxnSocket {
     protected ClientCnxn.SendThread sendThread;
     protected LinkedBlockingDeque<Packet> outgoingQueue;
     protected ZKClientConfig clientConfig;
-    private static int CLIENT_MAX_PACKET_LENTH_DEFAULT = 4096 * 1024; /* 4 MB */
-    private int packetLen = CLIENT_MAX_PACKET_LENTH_DEFAULT;
+    private int packetLen = ZKClientConfig.CLIENT_MAX_PACKET_LENGTH_DEFAULT;
 
     /**
      * The sessionId is only available here for Log and Exception messages.
@@ -232,7 +231,7 @@ abstract class ClientCnxnSocket {
     protected void initProperties() {
         packetLen = Integer.getInteger(
                 clientConfig.getProperty(ZKConfig.JUTE_MAXBUFFER),
-                CLIENT_MAX_PACKET_LENTH_DEFAULT);
+                ZKClientConfig.CLIENT_MAX_PACKET_LENGTH_DEFAULT);
         if (LOG.isDebugEnabled()) {
             LOG.debug("{} is {}", ZKConfig.JUTE_MAXBUFFER, packetLen);
         }

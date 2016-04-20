@@ -713,7 +713,7 @@ public class ZooKeeper {
      *            a watcher object which will be notified of state changes, may
      *            also be notified for node events
      * @param conf
-     *            passing this conf object gives each client the flexibility of
+     *            (added in 3.5.2) passing this conf object gives each client the flexibility of
      *            configuring properties differently compared to other instances
      * @throws IOException
      *             in cases of network failure
@@ -842,7 +842,7 @@ public class ZooKeeper {
      * @param aHostProvider
      *            use this as HostProvider to enable custom behaviour.
      * @param clientConfig
-     *            passing this conf object gives each client the flexibility of
+     *            (added in 3.5.2) passing this conf object gives each client the flexibility of
      *            configuring properties differently compared to other instances
      * @throws IOException
      *             in cases of network failure
@@ -976,7 +976,7 @@ public class ZooKeeper {
      *            allowed while write requests are not. It continues seeking for
      *            majority in the background.
      * @param conf
-     *            passing this conf object gives each client the flexibility of
+     *            (added in 3.5.2) passing this conf object gives each client the flexibility of
      *            configuring properties differently compared to other instances
      * @throws IOException
      *             in cases of network failure

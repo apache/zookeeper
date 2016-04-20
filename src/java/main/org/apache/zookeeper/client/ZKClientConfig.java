@@ -26,6 +26,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 
 /**
  * Handles client specific properties
+ * @since 3.5.2
  */
 public class ZKClientConfig extends ZKConfig {
     public static final String ZK_SASL_CLIENT_USERNAME = "zookeeper.sasl.client.username";
@@ -52,6 +53,7 @@ public class ZKClientConfig extends ZKConfig {
      */
     @SuppressWarnings("deprecation")
     public static final String SECURE_CLIENT = ZooKeeper.SECURE_CLIENT;
+    public static int CLIENT_MAX_PACKET_LENGTH_DEFAULT = 4096 * 1024; /* 4 MB */
 
     public ZKClientConfig() {
         super();

@@ -94,7 +94,7 @@ public class ZooKeeperSaslClient {
     public static boolean isEnabled() {
         return Boolean.valueOf(System.getProperty(
                 ZKClientConfig.ENABLE_CLIENT_SASL_KEY,
-                ZKClientConfig.ENABLE_CLIENT_SASL_KEY));
+                ZKClientConfig.ENABLE_CLIENT_SASL_DEFAULT));
     }
 
     private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperSaslClient.class);
