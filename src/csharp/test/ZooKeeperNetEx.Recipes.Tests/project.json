@@ -9,13 +9,18 @@
     "ZooKeeperNetEx.Recipes": "3.4.8.1"
   },
   "frameworks": {
-    "netstandardapp1.5": {
-      "imports": [
-        "dnxcore50",
-        "portable-net451+win8"
-      ]
+    "netcoreapp1.0": {
+      "dependencies": {
+        "Microsoft.NETCore.App": {
+          "version": "1.0.0-*",
+          "type": "platform"
+        }},
+        "imports": [
+          "dnxcore50",
+          "portable-net451+win8"
+        ]
+      },
+      "net451": { }
     },
-    "net451": { }
-  },
   "testRunner": "xunit"
 }
