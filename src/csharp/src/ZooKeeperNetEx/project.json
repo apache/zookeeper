@@ -23,7 +23,8 @@
   "compilationOptions": {
     "keyFile": "../../ZooKeeperNetEx.snk",
     "warningsAsErrors": true,
-    "xmlDoc": true
+    "xmlDoc": true,
+    "debugType": "portable"
   },
   "repository": {
     "type": "git",
