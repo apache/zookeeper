@@ -6,7 +6,7 @@
   },
   "dependencies": {
     "ZooKeeperNetEx.Tests": "1.0.0.0",
-    "ZooKeeperNetEx.Recipes": "3.4.8.1"
+    "ZooKeeperNetEx.Recipes": "3.4.8.2"
   },
   "frameworks": {
     "netcoreapp1.0": {
