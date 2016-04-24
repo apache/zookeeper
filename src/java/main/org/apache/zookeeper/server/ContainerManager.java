@@ -100,6 +100,7 @@ public class ContainerManager {
         if (timerTask != null) {
             timerTask.cancel();
         }
+        timer.cancel();
     }
 
     /**

@@ -145,7 +145,10 @@ BUGFIXES:
   ZOOKEEPER-2364: "ant docs" fails on branch-3.5 due to missing releasenotes.xml.
   (phunt via cnauroth)
   
-  ZOOKEEPER-2141 ACL cache in DataTree never removes entries (Adam Milne-Smith via camille)
+  ZOOKEEPER-2141: ACL cache in DataTree never removes entries (Adam Milne-Smith via camille)
+
+  ZOOKEEPER-2413: ContainerManager doesn't close the Timer it
+  creates when stop() is called (Jordan via fpj) 
 
 IMPROVEMENTS:
 
