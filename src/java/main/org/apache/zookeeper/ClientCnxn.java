@@ -1076,7 +1076,7 @@ public class ClientCnxn {
             setName(getName().replaceAll("\\(.*\\)", "(" + hostPort + ")"));
             if (clientConfig.isSaslClientEnabled()) {
                 try {
-                    if (null != zooKeeperSaslClient) {
+                    if (zooKeeperSaslClient != null) {
                         zooKeeperSaslClient.shutdown();
                     }
                     zooKeeperSaslClient = new ZooKeeperSaslClient(getServerPrincipal(addr), clientConfig);
@@ -1439,7 +1439,7 @@ public class ClientCnxn {
 
         sendThread.close();
         eventThread.queueEventOfDeath();
-        if (null != zooKeeperSaslClient) {
+        if (zooKeeperSaslClient != null) {
             zooKeeperSaslClient.shutdown();
         }
     }
