@@ -209,7 +209,7 @@ public abstract class Op {
 
             boolean aclEquals = true;
             Iterator<ACL> i = op.acl.iterator();
-            for (ACL acl : op.acl) {
+            for (ACL acl : this.acl) {
                 boolean hasMoreData = i.hasNext();
                 if (!hasMoreData) {
                     aclEquals = false;
