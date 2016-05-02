@@ -27,6 +27,8 @@ import java.util.concurrent.LinkedBlockingDeque;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.zookeeper.ClientCnxn.Packet;
+import org.apache.zookeeper.client.ZKClientConfig;
+import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.proto.ConnectResponse;
 import org.apache.zookeeper.server.ByteBufferInputStream;
@@ -63,6 +65,8 @@ abstract class ClientCnxnSocket {
     protected long now;
     protected ClientCnxn.SendThread sendThread;
     protected LinkedBlockingDeque<Packet> outgoingQueue;
+    protected ZKClientConfig clientConfig;
+    private int packetLen = ZKClientConfig.CLIENT_MAX_PACKET_LENGTH_DEFAULT;
 
     /**
      * The sessionId is only available here for Log and Exception messages.
@@ -112,7 +116,7 @@ abstract class ClientCnxnSocket {
 
     protected void readLength() throws IOException {
         int len = incomingBuffer.getInt();
-        if (len < 0 || len >= ClientCnxn.packetLen) {
+        if (len < 0 || len >= packetLen) {
             throw new IOException("Packet len" + len + " is out of range!");
         }
         incomingBuffer = ByteBuffer.allocate(len);
@@ -223,4 +227,15 @@ abstract class ClientCnxnSocket {
      * finally unblock it when finished.
      */
     abstract void sendPacket(Packet p) throws IOException;
+
+    protected void initProperties() {
+        packetLen = Integer.getInteger(
+                clientConfig.getProperty(ZKConfig.JUTE_MAXBUFFER),
+                ZKClientConfig.CLIENT_MAX_PACKET_LENGTH_DEFAULT);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("{} is {}", ZKConfig.JUTE_MAXBUFFER, packetLen);
+        }
+    }
+
+
 }

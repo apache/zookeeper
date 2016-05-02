@@ -37,6 +37,10 @@ public final class VerifyingFileFactory {
 
     public File create(String path) {
         File file = new File(path);
+        return validate(file);
+    }
+
+    public File validate(File file) {
         if(warnForRelativePath) doWarnForRelativePath(file);
         if(failForNonExistingPath) doFailForNonExistingPath(file);
         return file;

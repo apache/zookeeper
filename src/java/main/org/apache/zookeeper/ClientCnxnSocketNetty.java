@@ -20,6 +20,7 @@ package org.apache.zookeeper;
 
 import org.apache.zookeeper.ClientCnxn.EndOfStreamException;
 import org.apache.zookeeper.ClientCnxn.Packet;
+import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.X509Util;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -43,6 +44,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -75,6 +77,11 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
     AtomicBoolean disconnected = new AtomicBoolean();
     AtomicBoolean needSasl = new AtomicBoolean();
     Semaphore waitSasl = new Semaphore(0);
+
+    ClientCnxnSocketNetty(ZKClientConfig clientConfig) {
+        this.clientConfig = clientConfig;
+        initProperties();
+    }
 
     /**
      * lifecycles diagram:
@@ -344,7 +351,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         @Override
         public ChannelPipeline getPipeline() throws Exception {
             ChannelPipeline pipeline = Channels.pipeline();
-            if (Boolean.getBoolean(ZooKeeper.SECURE_CLIENT)) {
+            if (clientConfig.getBoolean(ZKClientConfig.SECURE_CLIENT)) {
                 initSSL(pipeline);
             }
             pipeline.addLast("handler", new ZKClientHandler());
@@ -355,7 +362,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         // Basically we only need to create it once.
         private synchronized void initSSL(ChannelPipeline pipeline) throws SSLContextException {
             if (sslContext == null || sslEngine == null) {
-                sslContext = X509Util.createSSLContext();
+                sslContext = X509Util.createSSLContext(clientConfig);
                 sslEngine = sslContext.createSSLEngine();
                 sslEngine.setUseClientMode(true);
             }
