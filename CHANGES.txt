@@ -411,6 +411,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-2240 Make the three-node minimum more explicit in 
   documentation and on website (Shawn Heisey and Arshad Mohammad via phunt)
+ 
+  ZOOKEEPER-2139: Support multiple ZooKeeper client with different configurations
+  in a single JVM (Arshad Mohammad via fpj)
 
 Release 3.5.0 - 8/4/2014
 

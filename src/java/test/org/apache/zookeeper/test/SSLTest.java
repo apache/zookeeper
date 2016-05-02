@@ -30,7 +30,8 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.common.X509Util;
+import org.apache.zookeeper.client.ZKClientConfig;
+import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.junit.After;
@@ -44,23 +45,23 @@ public class SSLTest extends QuorumPeerTestBase {
     public void setup() {
         String testDataPath = System.getProperty("test.data.dir", "build/test/data");
         System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
-        System.setProperty(ZooKeeper.ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
-        System.setProperty(ZooKeeper.SECURE_CLIENT, "true");
-        System.setProperty(X509Util.SSL_KEYSTORE_LOCATION, testDataPath + "/ssl/testKeyStore.jks");
-        System.setProperty(X509Util.SSL_KEYSTORE_PASSWD, "testpass");
-        System.setProperty(X509Util.SSL_TRUSTSTORE_LOCATION, testDataPath + "/ssl/testTrustStore.jks");
-        System.setProperty(X509Util.SSL_TRUSTSTORE_PASSWD, "testpass");
+        System.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
+        System.setProperty(ZKClientConfig.SECURE_CLIENT, "true");
+        System.setProperty(ZKConfig.SSL_KEYSTORE_LOCATION, testDataPath + "/ssl/testKeyStore.jks");
+        System.setProperty(ZKConfig.SSL_KEYSTORE_PASSWD, "testpass");
+        System.setProperty(ZKConfig.SSL_TRUSTSTORE_LOCATION, testDataPath + "/ssl/testTrustStore.jks");
+        System.setProperty(ZKConfig.SSL_TRUSTSTORE_PASSWD, "testpass");
     }
 
     @After
     public void teardown() throws Exception {
         System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
-        System.clearProperty(ZooKeeper.ZOOKEEPER_CLIENT_CNXN_SOCKET);
-        System.clearProperty(ZooKeeper.SECURE_CLIENT);
-        System.clearProperty(X509Util.SSL_KEYSTORE_LOCATION);
-        System.clearProperty(X509Util.SSL_KEYSTORE_PASSWD);
-        System.clearProperty(X509Util.SSL_TRUSTSTORE_LOCATION);
-        System.clearProperty(X509Util.SSL_TRUSTSTORE_PASSWD);
+        System.clearProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET);
+        System.clearProperty(ZKClientConfig.SECURE_CLIENT);
+        System.clearProperty(ZKConfig.SSL_KEYSTORE_LOCATION);
+        System.clearProperty(ZKConfig.SSL_KEYSTORE_PASSWD);
+        System.clearProperty(ZKConfig.SSL_TRUSTSTORE_LOCATION);
+        System.clearProperty(ZKConfig.SSL_TRUSTSTORE_PASSWD);
     }
 
     /**
