@@ -38,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -62,6 +63,7 @@ import org.apache.zookeeper.cli.SetCommand;
 import org.apache.zookeeper.cli.SetQuotaCommand;
 import org.apache.zookeeper.cli.StatCommand;
 import org.apache.zookeeper.cli.SyncCommand;
+import org.apache.zookeeper.client.ZKClientConfig;
 
 /**
  * The command line client to ZooKeeper.
@@ -273,7 +275,7 @@ public class ZooKeeperMain {
         host = newHost;
         boolean readOnly = cl.getOption("readonly") != null;
         if (cl.getOption("secure") != null) {
-            System.setProperty(ZooKeeper.SECURE_CLIENT, "true");
+            System.setProperty(ZKClientConfig.SECURE_CLIENT, "true");
             System.out.println("Secure connection is enabled");
         }
         zk = new ZooKeeper(host,

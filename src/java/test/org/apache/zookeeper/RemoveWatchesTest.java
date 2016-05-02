@@ -36,6 +36,7 @@ import org.apache.zookeeper.KeeperException.NoWatcherException;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.WatcherType;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.Assert;
@@ -1111,6 +1112,10 @@ public class RemoveWatchesTest extends ClientBase {
      * before/after calling removeWatches */
     private class MyZooKeeper extends ZooKeeper {
         class MyWatchManager extends ZKWatchManager {
+            public MyWatchManager(boolean disableAutoWatchReset) {
+                super(disableAutoWatchReset);
+            }
+
             public int lastrc;
 
             /* Pretend that any watcher exists */
@@ -1136,7 +1141,7 @@ public class RemoveWatchesTest extends ClientBase {
         private MyWatchManager myWatchManager;
 
         protected ZKWatchManager defaultWatchManager() {
-            myWatchManager = new MyWatchManager();
+            myWatchManager = new MyWatchManager(getClientConfig().getBoolean(ZKClientConfig.DISABLE_AUTO_WATCH_RESET));
             return myWatchManager;
         }
 
@@ -1150,7 +1155,7 @@ public class RemoveWatchesTest extends ClientBase {
         private String eventPath;
         private CountDownLatch latch;
         private List<EventType> eventsAfterWatchRemoval = new ArrayList<EventType>();
-        public MyWatcher(String path, int count) {
+        MyWatcher(String path, int count) {
             this.path = path;
             latch = new CountDownLatch(count);
         }
