@@ -21,15 +21,12 @@ package org.apache.zookeeper.test;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
-import org.apache.zookeeper.client.ZooKeeperSaslClient;
+import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.client.ZKClientConfig;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -38,7 +35,8 @@ public class SaslAuthMissingClientConfigTest extends ClientBase {
         System.setProperty("zookeeper.authProvider.1","org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
         // This configuration section 'MyZookeeperClient', is missing from the JAAS configuration.
         // As a result, SASL authentication should fail, which is tested by this test (testAuth()).
-        System.setProperty(ZooKeeperSaslClient.LOGIN_CONTEXT_NAME_KEY, "MyZookeeperClient");
+        System.setProperty(ZKClientConfig.LOGIN_CONTEXT_NAME_KEY,
+                "MyZookeeperClient");
 
         try {
             File tmpDir = createTmpDir();
@@ -63,20 +61,6 @@ public class SaslAuthMissingClientConfigTest extends ClientBase {
         }
         catch (IOException e) {
             // could not create tmp directory to hold JAAS conf file : test will fail now.
-        }
-    }
-
-    private AtomicInteger authFailed = new AtomicInteger(0);
-
-    private class MyWatcher extends CountdownWatcher {
-        @Override
-        public synchronized void process(WatchedEvent event) {
-            if (event.getState() == KeeperState.AuthFailed) {
-                authFailed.incrementAndGet();
-            }
-            else {
-                super.process(event);
-            }
         }
     }
 

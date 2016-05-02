@@ -32,7 +32,9 @@ import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
 import javax.security.auth.callback.CallbackHandler;
 
-import org.apache.zookeeper.client.ZooKeeperSaslClient;
+import org.apache.zookeeper.client.ZKClientConfig;
+import org.apache.zookeeper.common.ZKConfig;
+import org.apache.zookeeper.server.ZooKeeperSaslServer;
 import org.apache.zookeeper.common.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +47,7 @@ import java.util.Random;
 import java.util.Set;
 
 public class Login {
+    private static final String KINIT_COMMAND_DEFAULT = "/usr/bin/kinit";
     private static final Logger LOG = LoggerFactory.getLogger(Login.class);
     public CallbackHandler callbackHandler;
 
@@ -77,21 +80,27 @@ public class Login {
 
     // Initialize 'lastLogin' to do a login at first time
     private long lastLogin = Time.currentElapsedTime() - MIN_TIME_BEFORE_RELOGIN;
+    private final ZKConfig zkConfig;
 
     /**
-     * LoginThread constructor. The constructor starts the thread used
-     * to periodically re-login to the Kerberos Ticket Granting Server.
+     * LoginThread constructor. The constructor starts the thread used to
+     * periodically re-login to the Kerberos Ticket Granting Server.
+     * 
      * @param loginContextName
-     *               name of section in JAAS file that will be use to login.
-     *               Passed as first param to javax.security.auth.login.LoginContext().
+     *            name of section in JAAS file that will be use to login. Passed
+     *            as first param to javax.security.auth.login.LoginContext().
      *
      * @param callbackHandler
-     *               Passed as second param to javax.security.auth.login.LoginContext().
+     *            Passed as second param to
+     *            javax.security.auth.login.LoginContext().
+     * @param zkConfig
+     *            client or server configurations
      * @throws javax.security.auth.login.LoginException
-     *               Thrown if authentication fails.
+     *             Thrown if authentication fails.
      */
-    public Login(final String loginContextName, CallbackHandler callbackHandler)
+    public Login(final String loginContextName, CallbackHandler callbackHandler, final ZKConfig zkConfig)
             throws LoginException {
+        this.zkConfig=zkConfig;
         this.callbackHandler = callbackHandler;
         login = login(loginContextName);
         this.loginContextName = loginContextName;
@@ -197,10 +206,7 @@ public class Login {
                         break;
                     }
                     if (isUsingTicketCache) {
-                        String cmd = "/usr/bin/kinit";
-                        if (System.getProperty("zookeeper.kinit") != null) {
-                            cmd = System.getProperty("zookeeper.kinit");
-                        }
+                        String cmd = zkConfig.getProperty(ZKConfig.KINIT_COMMAND, KINIT_COMMAND_DEFAULT);
                         String kinitArgs = "-R";
                         int retry = 1;
                         while (retry >= 0) {
@@ -289,13 +295,22 @@ public class Login {
             throw new LoginException("loginContext name (JAAS file section header) was null. " +
                     "Please check your java.security.login.auth.config (=" +
                     System.getProperty("java.security.login.auth.config") +
-                    ") and your " + ZooKeeperSaslClient.LOGIN_CONTEXT_NAME_KEY + "(=" + 
-                    System.getProperty(ZooKeeperSaslClient.LOGIN_CONTEXT_NAME_KEY, "Client") + ")");
+                    ") and your " + getLoginContextMessage());
         }
         LoginContext loginContext = new LoginContext(loginContextName,callbackHandler);
         loginContext.login();
         LOG.info("successfully logged in.");
         return loginContext;
+    }
+
+    private String getLoginContextMessage() {
+        if (zkConfig instanceof ZKClientConfig) {
+            return ZKClientConfig.LOGIN_CONTEXT_NAME_KEY + "(=" + zkConfig.getProperty(
+                    ZKClientConfig.LOGIN_CONTEXT_NAME_KEY, ZKClientConfig.LOGIN_CONTEXT_NAME_KEY_DEFAULT) + ")";
+        } else {
+            return ZooKeeperSaslServer.LOGIN_CONTEXT_NAME_KEY + "(=" + System.getProperty(
+                    ZooKeeperSaslServer.LOGIN_CONTEXT_NAME_KEY, ZooKeeperSaslServer.DEFAULT_LOGIN_CONTEXT_NAME) + ")";
+        }
     }
 
     // c.f. org.apache.hadoop.security.UserGroupInformation.

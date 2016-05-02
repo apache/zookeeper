@@ -33,6 +33,7 @@ import javax.security.auth.login.LoginException;
 
 import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.Login;
+import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.auth.SaslServerCallbackHandler;
 import org.slf4j.Logger;
@@ -234,7 +235,7 @@ public abstract class ServerCnxnFactory {
         // jaas.conf entry available
         try {
             saslServerCallbackHandler = new SaslServerCallbackHandler(Configuration.getConfiguration());
-            login = new Login(serverSection, saslServerCallbackHandler);
+            login = new Login(serverSection, saslServerCallbackHandler, new ZKConfig() );
             login.startThreadIfNeeded();
         } catch (LoginException e) {
             throw new IOException("Could not configure server because SASL configuration did not allow the "
