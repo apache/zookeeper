@@ -302,6 +302,9 @@ BUGFIXES:
   ZOOKEEPER-2413: ContainerManager doesn't close the Timer it 
   creates when stop() is called (Jordan via fpj)
 
+  ZOOKEEPER-2423: Upgrade Netty version due to security vulnerability
+  (CVE-2014-3488) (Michael Han via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
