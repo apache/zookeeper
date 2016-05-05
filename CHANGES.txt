@@ -27,7 +27,11 @@ BUGFIXES:
   ZOOKEEPER-2195 fsync.warningthresholdms in zoo.cfg not working
   (Biju Nair via phunt)
   
-  ZOOKEEPER-2141 ACL cache in DataTree never removes entries (Adam Milne-Smith via camille)
+  ZOOKEEPER-2141 ACL cache in DataTree never removes entries
+  (Adam Milne-Smith via camille)
+
+  ZOOKEEPER-2423: Upgrade Netty version due to security vulnerability
+  (CVE-2014-3488) (Michael Han via phunt)
 
 IMPROVEMENTS:
 
