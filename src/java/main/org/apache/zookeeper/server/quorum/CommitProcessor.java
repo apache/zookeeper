@@ -18,8 +18,10 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.slf4j.Logger;
@@ -35,7 +37,8 @@ import org.apache.zookeeper.server.ZooKeeperServerListener;
  * This RequestProcessor matches the incoming committed requests with the
  * locally submitted requests. The trick is that locally submitted requests that
  * change the state of the system will come back as incoming committed requests,
- * so we need to match them up.
+ * so we need to match them up. Instead of just waiting for the committed requests, 
+ * we process the uncommitted requests that belong to other sessions.
  *
  * The CommitProcessor is multi-threaded. Communication between threads is
  * handled via queues, atomics, and wait/notifyAll synchronized on the
@@ -76,9 +79,9 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
         "zookeeper.commitProcessor.shutdownTimeout";
 
     /**
-     * Requests that we are holding until the commit comes in.
+     * Incoming requests.
      */
-    protected final LinkedBlockingQueue<Request> queuedRequests =
+    protected LinkedBlockingQueue<Request> queuedRequests =
         new LinkedBlockingQueue<Request>();
 
     /**
@@ -87,26 +90,31 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
     protected final LinkedBlockingQueue<Request> committedRequests =
         new LinkedBlockingQueue<Request>();
 
-    /** Request for which we are currently awaiting a commit */
-    protected final AtomicReference<Request> nextPending =
-        new AtomicReference<Request>();
-    /** Request currently being committed (ie, sent off to next processor) */
-    private final AtomicReference<Request> currentlyCommitting =
-        new AtomicReference<Request>();
+    /**
+     * Requests that we are holding until commit comes in. Keys represent
+     * session ids, each value is a linked list of the session's requests.
+     */
+    protected final HashMap<Long, LinkedList<Request>> pendingRequests =
+            new HashMap<Long, LinkedList<Request>>(10000);
 
     /** The number of requests currently being processed */
-    protected AtomicInteger numRequestsProcessing = new AtomicInteger(0);
+    protected final AtomicInteger numRequestsProcessing = new AtomicInteger(0);
 
     RequestProcessor nextProcessor;
 
+    /** For testing purposes, we use a separated stopping condition for the
+     * outer loop.*/
+    protected volatile boolean stoppedMainLoop = true; 
     protected volatile boolean stopped = true;
     private long workerShutdownTimeoutMS;
     protected WorkerService workerPool;
+    private Object emptyPoolSync = new Object();
 
     /**
-     * This flag indicates whether we need to wait for a response to come back from the
-     * leader or we just let the sync operation flow through like a read. The flag will
-     * be true if the CommitProcessor is in a Leader pipeline.
+     * This flag indicates whether we need to wait for a response to come back
+     * from the leader or we just let the sync operation flow through like a
+     * read. The flag will be true if the CommitProcessor is in a Leader
+     * pipeline.
      */
     boolean matchSyncs;
 
@@ -119,14 +127,6 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
 
     private boolean isProcessingRequest() {
         return numRequestsProcessing.get() != 0;
-    }
-
-    private boolean isWaitingForCommit() {
-        return nextPending.get() != null;
-    }
-
-    private boolean isProcessingCommit() {
-        return currentlyCommitting.get() != null;
     }
 
     protected boolean needCommit(Request request) {
@@ -153,94 +153,158 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
 
     @Override
     public void run() {
-        Request request;
         try {
-            while (!stopped) {
-                synchronized(this) {
-                    while (
-                        !stopped &&
-                        ((queuedRequests.isEmpty() || isWaitingForCommit() || isProcessingCommit()) &&
-                         (committedRequests.isEmpty() || isProcessingRequest()))) {
-                        wait();
+            /*
+             * In each iteration of the following loop we process at most
+             * requestsToProcess requests of queuedRequests. We have to limit
+             * the number of request we poll from queuedRequests, since it is
+             * possible to endlessly poll read requests from queuedRequests, and
+             * that will lead to a starvation of non-local committed requests.
+             */
+            int requestsToProcess = 0;
+            boolean commitIsWaiting = false;
+			do {
+                /*
+                 * Since requests are placed in the queue before being sent to
+                 * the leader, if commitIsWaiting = true, the commit belongs to
+                 * the first update operation in the queuedRequests or to a
+                 * request from a client on another server (i.e., the order of
+                 * the following two lines is important!).
+                 */
+                commitIsWaiting = !committedRequests.isEmpty();
+                requestsToProcess =  queuedRequests.size();
+                // Avoid sync if we have something to do
+                if (requestsToProcess == 0 && !commitIsWaiting){
+                    // Waiting for requests to process
+                    synchronized (this) {
+                        while (!stopped && requestsToProcess == 0
+                                && !commitIsWaiting) {
+                            wait();
+                            commitIsWaiting = !committedRequests.isEmpty();
+                            requestsToProcess = queuedRequests.size();
+                        }
                     }
                 }
-
                 /*
-                 * Processing queuedRequests: Process the next requests until we
-                 * find one for which we need to wait for a commit. We cannot
-                 * process a read request while we are processing write request.
+                 * Processing up to requestsToProcess requests from the incoming
+                 * queue (queuedRequests), possibly less if a committed request
+                 * is present along with a pending local write. After the loop,
+                 * we process one committed request if commitIsWaiting.
                  */
-                while (!stopped && !isWaitingForCommit() &&
-                       !isProcessingCommit() &&
-                       (request = queuedRequests.poll()) != null) {
-                    if (needCommit(request)) {
-                        nextPending.set(request);
-                    } else {
+                Request request = null;
+                while (!stopped && requestsToProcess > 0
+                        && (request = queuedRequests.poll()) != null) {
+                    requestsToProcess--;
+                    if (needCommit(request)
+                            || pendingRequests.containsKey(request.sessionId)) {
+                        // Add request to pending
+                        LinkedList<Request> requests = pendingRequests
+                                .get(request.sessionId);
+                        if (requests == null) {
+                            requests = new LinkedList<Request>();
+                            pendingRequests.put(request.sessionId, requests);
+                        }
+                        requests.addLast(request);
+                    }
+                    else {
                         sendToNextProcessor(request);
                     }
+                    /*
+                     * Stop feeding the pool if there is a local pending update
+                     * and a committed request that is ready. Once we have a
+                     * pending request with a waiting committed request, we know
+                     * we can process the committed one. This is because commits
+                     * for local requests arrive in the order they appeared in
+                     * the queue, so if we have a pending request and a
+                     * committed request, the committed request must be for that
+                     * pending write or for a write originating at a different
+                     * server.
+                     */
+                    if (!pendingRequests.isEmpty() && !committedRequests.isEmpty()){
+                        /*
+                         * We set commitIsWaiting so that we won't check
+                         * committedRequests again.
+                         */
+                        commitIsWaiting = true;
+                        break;
+                    }
                 }
 
-                /*
-                 * Processing committedRequests: check and see if the commit
-                 * came in for the pending request. We can only commit a
-                 * request when there is no other request being processed.
-                 */
-                processCommitted();
-            }
+                // Handle a single committed request
+                if (commitIsWaiting && !stopped){
+                    waitForEmptyPool();
+
+                    if (stopped){
+                        return;
+                    }
+
+                    // Process committed head
+                    if ((request = committedRequests.poll()) == null) {
+                        throw new IOException("Error: committed head is null");
+                    }
+
+                    /*
+                     * Check if request is pending, if so, update it with the
+                     * committed info
+                     */
+                    LinkedList<Request> sessionQueue = pendingRequests
+                            .get(request.sessionId);
+                    if (sessionQueue != null) {
+                        // If session queue != null, then it is also not empty.
+                        Request topPending = sessionQueue.poll();
+                        if (request.cxid != topPending.cxid) {
+                            LOG.error(
+                                    "Got cxid 0x"
+                                            + Long.toHexString(request.cxid)
+                                            + " expected 0x" + Long.toHexString(
+                                                    topPending.cxid)
+                                    + " for client session id "
+                                    + Long.toHexString(request.sessionId));
+                            throw new IOException("Error: unexpected cxid for"
+                                    + "client session");
+                        }
+                        /*
+                         * We want to send our version of the request. the
+                         * pointer to the connection in the request
+                         */
+                        topPending.setHdr(request.getHdr());
+                        topPending.setTxn(request.getTxn());
+                        topPending.zxid = request.zxid;
+                        request = topPending;
+                    }
+
+                    sendToNextProcessor(request);
+
+                    waitForEmptyPool();
+
+                    /*
+                     * Process following reads if any, remove session queue if
+                     * empty.
+                     */
+                    if (sessionQueue != null) {
+                        while (!stopped && !sessionQueue.isEmpty()
+                                && !needCommit(sessionQueue.peek())) {
+                            sendToNextProcessor(sessionQueue.poll());
+                        }
+                        // Remove empty queues
+                        if (sessionQueue.isEmpty()) {
+                            pendingRequests.remove(request.sessionId);
+                        }
+                    }
+                }
+            } while (!stoppedMainLoop);
         } catch (Throwable e) {
             handleException(this.getName(), e);
         }
         LOG.info("CommitProcessor exited loop!");
     }
 
-    /*
-     * Separated this method from the main run loop
-     * for test purposes (ZOOKEEPER-1863)
-     */
-    protected void processCommitted() {
-        Request request;
-
-        if (!stopped && !isProcessingRequest() &&
-                (committedRequests.peek() != null)) {
-
-            /*
-             * ZOOKEEPER-1863: continue only if there is no new request
-             * waiting in queuedRequests or it is waiting for a
-             * commit. 
-             */
-            if ( !isWaitingForCommit() && !queuedRequests.isEmpty()) {
-                return;
+    private void waitForEmptyPool() throws InterruptedException {
+        synchronized(emptyPoolSync) {
+            while ((!stopped) && isProcessingRequest()) {
+                emptyPoolSync.wait();
             }
-            request = committedRequests.poll();
-
-            /*
-             * We match with nextPending so that we can move to the
-             * next request when it is committed. We also want to
-             * use nextPending because it has the cnxn member set
-             * properly.
-             */
-            Request pending = nextPending.get();
-            if (pending != null &&
-                pending.sessionId == request.sessionId &&
-                pending.cxid == request.cxid) {
-                // we want to send our version of the request.
-                // the pointer to the connection in the request
-                pending.setHdr(request.getHdr());
-                pending.setTxn(request.getTxn());
-                pending.zxid = request.zxid;
-                // Set currentlyCommitting so we will block until this
-                // completes. Cleared by CommitWorkRequest after
-                // nextProcessor returns.
-                currentlyCommitting.set(pending);
-                nextPending.set(null);
-                sendToNextProcessor(pending);
-            } else {
-                // this request came from someone else so just
-                // send the commit packet
-                currentlyCommitting.set(request);
-                sendToNextProcessor(request);
-            }
-        }      
+        }
     }
 
     @Override
@@ -259,6 +323,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
                 "CommitProcWork", numWorkerThreads, true);
         }
         stopped = false;
+        stoppedMainLoop = false;
         super.start();
     }
 
@@ -295,21 +360,8 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
             try {
                 nextProcessor.processRequest(request);
             } finally {
-                // If this request is the commit request that was blocking
-                // the processor, clear.
-                currentlyCommitting.compareAndSet(request, null);
-
-                /*
-                 * Decrement outstanding request count. The processor may be
-                 * blocked at the moment because it is waiting for the pipeline
-                 * to drain. In that case, wake it up if there are pending
-                 * requests.
-                 */
-                if (numRequestsProcessing.decrementAndGet() == 0) {
-                    if (!queuedRequests.isEmpty() ||
-                        !committedRequests.isEmpty()) {
-                        wakeup();
-                    }
+                if (numRequestsProcessing.decrementAndGet() == 0){
+                    wakeupOnEmpty();
                 }
             }
         }
@@ -319,6 +371,12 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
         notifyAll();
     }
 
+    private void wakeupOnEmpty() {
+        synchronized(emptyPoolSync){
+            emptyPoolSync.notifyAll();
+        }
+    }
+    
     public void commit(Request request) {
         if (stopped || request == null) {
             return;
@@ -327,9 +385,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
             LOG.debug("Committing request:: " + request);
         }
         committedRequests.add(request);
-        if (!isProcessingCommit()) {
-            wakeup();
-        }
+        wakeup();
     }
 
     public void processRequest(Request request) {
@@ -340,13 +396,13 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
             LOG.debug("Processing request:: " + request);
         }
         queuedRequests.add(request);
-        if (!isWaitingForCommit()) {
-            wakeup();
-        }
+        wakeup();
     }
 
     private void halt() {
+        stoppedMainLoop = true;
         stopped = true;
+        wakeupOnEmpty();
         wakeup();
         queuedRequests.clear();
         if (workerPool != null) {
