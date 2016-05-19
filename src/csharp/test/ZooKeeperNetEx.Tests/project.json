@@ -1,11 +1,11 @@
 {
   "version": "1.0.0.0",
-  "compilationOptions": {
+  "buildOptions": {
     "keyFile": "../../ZooKeeperNetEx.snk",
     "warningsAsErrors": true
   },
   "dependencies": {
-    "ZooKeeperNetEx": "3.4.8.2",
+    "ZooKeeperNetEx": "3.4.8.3",
     "Microsoft.NETCore.Platforms": "1.0.1-*",
     "Newtonsoft.Json": "8.0.2",
     "xunit": "2.1.0"
@@ -17,8 +17,7 @@
           "version": "1.0.0-*",
           "type": "platform"
         },
-        "dotnet-test-xunit": "1.0.0-*",
-        "System.Diagnostics.Process": "4.1.0-*"
+        "dotnet-test-xunit": "1.0.0-*"
       },
       "imports": [
         "dnxcore50",

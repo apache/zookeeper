@@ -1,26 +1,27 @@
 ﻿{
-  "userSecretsId": "dotnet-ZooKeeperNetEx-120316",
   "title": "Apache ZooKeeper .NET async Recipes",
-  "version": "3.4.8.2",
-  "description": ".NET async Distributed recipes for ZooKeeper: Queue, Lock and Leader.",
+  "version": "3.4.8.3",
+  "description": ".NET async Distributed recipes for ZooKeeper: Queue, Lock and Leader Election.",
   "authors": [ "Shay Hazor" ],
-  "owners": [ "Shay Hazor" ],
-  "summary": ".NET async Recipes for ZooKeeper",
-  "releaseNotes": "published multi platform pdb\nThis project is actively maintained at: https://github.com/shayhatsor/zookeeper \nPlease feel free to open an issue or ask a question there.",
-  "tags": [ "Apache", "ZooKeeper", ".NET", "Recipes", "Async", "ZK", "C#", "Distributed", "Lock", "Leader", "Election", "Queue" ],
-  "projectUrl": "https://github.com/shayhatsor/zookeeper",
-  "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
-  "iconUrl": "https://ccdce73789835b39c0952535276de3b7772f802f.googledrive.com/host/0B_hNtILvKRsifnpVRnp4NVRKcHltY05FSGM2bzg5ZGNaVHRqcW9GVFJnWjczSFUtNk40OTA/zookeeper.bmp",
+  "packOptions": {
+    "owners": [ "Shay Hazor" ],
+    "summary": ".NET async Recipes for ZooKeeper",
+    "releaseNotes": ".NET Core RC2\nThis project is actively maintained at: https://github.com/shayhatsor/zookeeper \nPlease feel free to open an issue or ask a question there.",
+    "tags": [ "ZooKeeper", "Recipes", ".NET", "Lock", "Leader Election", "Queue" ],
+    "projectUrl": "https://github.com/shayhatsor/zookeeper",
+    "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
+    "iconUrl": "https://ccdce73789835b39c0952535276de3b7772f802f.googledrive.com/host/0B_hNtILvKRsifnpVRnp4NVRKcHltY05FSGM2bzg5ZGNaVHRqcW9GVFJnWjczSFUtNk40OTA/zookeeper.bmp",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/shayhatsor/zookeeper"
+    }
+  },
   "copyright": "Shay Hazor - Copyright 2016",
-  "compilationOptions": {
+  "buildOptions": {
     "keyFile": "../../ZooKeeperNetEx.snk",
     "warningsAsErrors": true,
     "xmlDoc": true,
     "debugType": "portable"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/shayhatsor/zookeeper"
   },
   "frameworks": {
     "netstandard13": { },
@@ -32,6 +33,6 @@
     }
   },
   "dependencies": {
-    "ZooKeeperNetEx": "3.4.8.2"
+    "ZooKeeperNetEx": "3.4.8.3"
   }
 }

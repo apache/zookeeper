@@ -1,34 +1,37 @@
 ﻿{
-  "exclude": [
-    "Generated/server/**/*.*",
-    "Generated/txn/**/*.*",
-    "Generated/data/StatPersisted*.*",
-    "Generated/proto/*SASL*.*",
-    "Generated/proto/GetChildrenR*.*",
-    "Generated/proto/GetMaxChildren*.*"
-  ],
-  "userSecretsId": "dotnet-ZooKeeperNetEx-120316",
   "title": "Apache ZooKeeper .NET async Client",
-  "version": "3.4.8.2",
+  "version": "3.4.8.3",
   "description": "A .NET async Client fully compliant with ZooKeeper, supporting all features. Fully Task-based Asynchronous (async/await). A great measure has been taken to follow the logic of the official Java client, including all relevant unit tests. In fact, the code is almost identical. Thus allowing easy evolution alongside the Java version.",
   "authors": [ "Shay Hazor" ],
-  "owners": [ "Shay Hazor" ],
-  "summary": "A .NET async Client for ZooKeeper",
-  "releaseNotes": "published multi platform pdb\nThis project is actively maintained at: https://github.com/shayhatsor/zookeeper \nPlease feel free to open an issue or ask a question there.\n\nKnown limitations:\nNo SASL support",
-  "tags": [ "Apache", "ZooKeeper", ".NET", "Client", "Async", "ZK", "C#" ],
-  "projectUrl": "https://github.com/shayhatsor/zookeeper",
-  "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
-  "iconUrl": "https://ccdce73789835b39c0952535276de3b7772f802f.googledrive.com/host/0B_hNtILvKRsifnpVRnp4NVRKcHltY05FSGM2bzg5ZGNaVHRqcW9GVFJnWjczSFUtNk40OTA/zookeeper.bmp",
+  "packOptions": {
+    "owners": [ "Shay Hazor" ],
+    "summary": "A .NET async Client for ZooKeeper",
+    "releaseNotes": ".NET Core RC2\nThis project is actively maintained at: https://github.com/shayhatsor/zookeeper \nPlease feel free to open an issue or ask a question there.\n\nKnown limitations:\nNo SASL support",
+    "tags": [ "ZooKeeper", ".NET", "Client", "Async"],
+    "projectUrl": "https://github.com/shayhatsor/zookeeper",
+    "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
+    "iconUrl": "https://ccdce73789835b39c0952535276de3b7772f802f.googledrive.com/host/0B_hNtILvKRsifnpVRnp4NVRKcHltY05FSGM2bzg5ZGNaVHRqcW9GVFJnWjczSFUtNk40OTA/zookeeper.bmp",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/shayhatsor/zookeeper"
+    }
+  },
   "copyright": "Shay Hazor - Copyright 2016",
-  "compilationOptions": {
+  "buildOptions": {
     "keyFile": "../../ZooKeeperNetEx.snk",
     "warningsAsErrors": true,
     "xmlDoc": true,
-    "debugType": "portable"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/shayhatsor/zookeeper"
+    "debugType": "portable",
+    "compile": {
+      "exclude": [
+        "Generated/server/**/*.*",
+        "Generated/txn/**/*.*",
+        "Generated/data/StatPersisted*.*",
+        "Generated/proto/*SASL*.*",
+        "Generated/proto/GetChildrenR*.*",
+        "Generated/proto/GetMaxChildren*.*"
+      ]
+    }
   },
   "frameworks": {
     "netstandard13": {
