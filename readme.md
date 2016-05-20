@@ -8,3 +8,15 @@ Apache ZooKeeper .NET async Client
 * NuGets
   * Client [ZooKeeperNetEx](https://www.nuget.org/packages/ZooKeeperNetEx)
   * Recipes [ZooKeeperNetEx.Recipes](https://www.nuget.org/packages/ZooKeeperNetEx.Recipes)
+
+-
+####Build From Source
+#####Prerequisites
+1. [Apache Ant](http://ant.apache.org/manual/install.html).
+2. [Visual Studio 2015](https://www.visualstudio.com/en-us/downloads/download-visual-studio-vs.aspx) with [Update 2](http://go.microsoft.com/fwlink/?LinkId=691129).
+3. [Microsoft .NET Core 1.0.0 RC2 - VS 2015 Tooling Preview 1](https://go.microsoft.com/fwlink/?LinkId=798481).
+
+#####Build Steps
+1. Run `ant` on the repository's root folder.
+3. Run Visual Studio and open `ZooKeeperNetEx.sln` from `src\csharp`.
+4. Build.
