@@ -101,7 +101,7 @@ public class FLELostMessageTest extends ZKTestCase {
          * Create an instance of the connection manager
          */
         QuorumPeer peer = new QuorumPeer(peers, tmpdir[0], tmpdir[0], port[0], 3, 0, 1000, 2, 2);
-        cnxManager = new QuorumCnxManager(peer);
+        cnxManager = peer.createCnxnManager();
         QuorumCnxManager.Listener listener = cnxManager.listener;
         listener.start();
 

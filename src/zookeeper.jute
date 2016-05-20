@@ -220,6 +220,11 @@ module org.apache.zookeeper.server.quorum {
         buffer data; // Only significant when type is request
         vector<org.apache.zookeeper.data.Id> authinfo;
     }
+    class QuorumAuthPacket {
+        long magic;
+        int status;
+        buffer token;
+    }
 }
 
 module org.apache.zookeeper.server.persistence {

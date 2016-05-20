@@ -69,8 +69,8 @@ public class LearnerTest extends ZKTestCase {
 	}
 	class SimpleLearner extends Learner {
 		SimpleLearner(FileTxnSnapLog ftsl) throws IOException {
-			self = new QuorumPeer();
-			zk = new SimpleLearnerZooKeeperServer(ftsl, self);
+            self = QuorumPeer.testingQuorumPeer();
+            zk = new SimpleLearnerZooKeeperServer(ftsl, self);
 			((SimpleLearnerZooKeeperServer)zk).learner = this;
 		}
 	}

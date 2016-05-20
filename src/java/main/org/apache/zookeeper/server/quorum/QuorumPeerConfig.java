@@ -38,6 +38,7 @@ import org.slf4j.MDC;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
+import org.apache.zookeeper.server.quorum.auth.QuorumAuth;
 import org.apache.zookeeper.server.quorum.flexible.QuorumHierarchical;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
@@ -75,7 +76,15 @@ public class QuorumPeerConfig {
     protected boolean syncEnabled = true;
 
     protected LearnerType peerType = LearnerType.PARTICIPANT;
-    
+
+    /** Configurations for the quorumpeer-to-quorumpeer authentication */
+    protected boolean quorumServerRequireSasl = false;
+    protected boolean quorumClientEnableSasl = false;
+    protected String quorumServicePrincipal = QuorumAuth.QUORUM_KERBEROS_SERVICE_PRINCIPAL_DEFAULT_VALUE;
+    protected String quorumClientLoginContext = QuorumAuth.QUORUM_CLIENT_LOGIN_CONTEXT_DFAULT_VALUE;
+    protected String quorumServerLoginContext = QuorumAuth.QUORUM_SERVER_LOGIN_CONTEXT_DFAULT_VALUE;
+    protected int quorumCnxnThreadsSize;
+
     /**
      * Minimum snapshot retain count.
      * @see org.apache.zookeeper.server.PurgeTxnLog#purge(File, File, int)
@@ -225,11 +234,28 @@ public class QuorumPeerConfig {
                 int dot = key.indexOf('.');
                 long sid = Long.parseLong(key.substring(dot + 1));
                 serverWeight.put(sid, Long.parseLong(value));
+            } else if (key.equals(QuorumAuth.QUORUM_CLIENT_AUTH_ENABLED)) {
+                quorumClientEnableSasl = Boolean.parseBoolean(value);
+            } else if (key.equals(QuorumAuth.QUORUM_SERVER_AUTH_REQUIRED)) {
+                quorumServerRequireSasl = Boolean.parseBoolean(value);
+            } else if (key.equals(QuorumAuth.QUORUM_CLIENT_LOGIN_CONTEXT)) {
+                quorumClientLoginContext = value;
+            } else if (key.equals(QuorumAuth.QUORUM_SERVER_LOGIN_CONTEXT)) {
+                quorumServerLoginContext = value;
+            } else if (key.equals(QuorumAuth.QUORUM_KERBEROS_SERVICE_PRINCIPAL)) {
+                quorumServicePrincipal = value;
+            } else if (key.equals("quorumcnxn.threads.size")) {
+                quorumCnxnThreadsSize = Integer.parseInt(value);
             } else {
                 System.setProperty("zookeeper." + key, value);
             }
         }
-        
+        if (!quorumClientEnableSasl && quorumServerRequireSasl) {
+            throw new IllegalArgumentException(
+                    QuorumAuth.QUORUM_CLIENT_AUTH_ENABLED
+                    + " is disabled, so cannot enable "
+                    + QuorumAuth.QUORUM_SERVER_AUTH_REQUIRED);
+        }
         // Reset to MIN_SNAP_RETAIN_COUNT if invalid (less than 3)
         // PurgeTxnLog.purge(File, File, int) will not allow to purge less
         // than 3.
