@@ -50,7 +50,7 @@
     <dependency org="log4j" name="log4j" rev="1.2.17" transitive="false"/>
     <dependency org="jline" name="jline" rev="2.11" transitive="false" conf="optional->default"/>
 
-    <dependency org="io.netty" name="netty" conf="default" rev="3.7.1.Final">
+    <dependency org="io.netty" name="netty" conf="default" rev="3.10.5.Final">
       <artifact name="netty" type="jar" conf="default"/>
     </dependency>
 

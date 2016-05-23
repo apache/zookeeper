@@ -299,7 +299,15 @@ BUGFIXES:
   ZOOKEEPER-2364: "ant docs" fails on branch-3.5 due to missing releasenotes.xml.
   (phunt via cnauroth)
 
+  ZOOKEEPER-2413: ContainerManager doesn't close the Timer it 
+  creates when stop() is called (Jordan via fpj)
+
+  ZOOKEEPER-2423: Upgrade Netty version due to security vulnerability
+  (CVE-2014-3488) (Michael Han via phunt)
+
 IMPROVEMENTS:
+  ZOOKEEPER-2024 Major throughput improvement with mixed workloads (Kfir Lev-Ari via shralex)
+
   ZOOKEEPER-1660 Documentation for Dynamic Reconfiguration (Reed Wanderman-Milne via shralex)  
 
   ZOOKEEPER-2017 New tests for reconfig failure cases (Alexander Shraer and
@@ -408,6 +416,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-2240 Make the three-node minimum more explicit in 
   documentation and on website (Shawn Heisey and Arshad Mohammad via phunt)
+ 
+  ZOOKEEPER-2139: Support multiple ZooKeeper client with different configurations
+  in a single JVM (Arshad Mohammad via fpj)
 
 Release 3.5.0 - 8/4/2014
 
