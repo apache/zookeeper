@@ -1238,20 +1238,6 @@ server.3=zoo3:2888:3888</programlisting>
               will be used for secure authentication.</para>
             </listitem>
           </varlistentry>
-
-          <varlistentry>
-            <term>zookeeper.client.secure</term>
-            <listitem>
-              <para>(Java system property only: <emphasis
-              role="bold">zookeeper.client.secure</emphasis>)</para>
-              <para>If you want to connect to server's secure client port, you need to
-                set this property to <emphasis role="bold">true</emphasis> on client.
-                This will connect to server using SSL with specified credentials. Note that
-                you also need to plug-in Netty client.
-              </para>
-            </listitem>
-          </varlistentry>
-
         </variablelist>
       </section>
 
