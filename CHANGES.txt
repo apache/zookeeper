@@ -420,6 +420,8 @@ IMPROVEMENTS:
   ZOOKEEPER-2139: Support multiple ZooKeeper client with different configurations
   in a single JVM (Arshad Mohammad via fpj)
 
+  ZOOKEEPER-2402: Document client side properties (Arshad Mohammad via fpj)
+
 Release 3.5.0 - 8/4/2014
 
 NEW FEATURES:
