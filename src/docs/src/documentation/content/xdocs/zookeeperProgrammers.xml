@@ -1373,6 +1373,114 @@ authProvider.2=com.f.MyAuth2
       (SESSION_EXPIRED and AUTH_FAILED), the ZooKeeper object becomes invalid.
       On a close, the two threads shut down and any further access on zookeeper
       handle is undefined behavior and should be avoided. </para>
+      <section id="sc_java_client_configuration">
+        <title><emphasis role="bold">Client Configuration Parameters</emphasis></title>
+        <para>
+            The following list contains configuration properties for the Java client. You can set any
+            of these properties using Java system properties. For server properties, please check the
+            following reference
+            <ulink url="zookeeperAdmin.html#sc_configuration">Server configuration section.</ulink>
+        </para>
+        <variablelist>
+            <varlistentry>
+                <term>zookeeper.sasl.client</term>
+                <listitem>
+                    <para>Set the value to <emphasis role="bold">false</emphasis> to disable
+                    SASL authentication. Default is <emphasis role="bold">true</emphasis>.</para>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>zookeeper.sasl.clientconfig</term>
+                <listitem>
+                    <para>Specifies the context key in the JAAS login file. Default is "Client".</para>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>zookeeper.sasl.client.username</term>
+                <listitem>
+                    <para>Traditionally, a principal is divided into three parts: the primary, the instance, and the realm.
+                        The format of a typical Kerberos V5 principal is primary/instance@REALM.
+                        zookeeper.sasl.client.username specifies the primary part of the server principal. Default
+                        is "zookeeper". Instance part is derived from the server IP. Finally server's principal is
+                        username/IP@realm, where username is the value of zookeeper.sasl.client.username, IP is
+                        the server IP, and realm is the value of zookeeper.server.realm.</para>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>zookeeper.server.realm</term>
+                <listitem>
+                    <para>Realm part of the server principal. By default it is the client principal realm.</para>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>zookeeper.disableAutoWatchReset</term>
+                <listitem>
+                    <para>This switch controls whether automatic watch resetting is enabled. Clients automatically
+                        reset watches during session reconnect by default, this option allows the client to turn off
+                        this behavior by setting zookeeper.disableAutoWatchReset to <emphasis role="bold">true</emphasis>. 
+                    </para>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>zookeeper.client.secure</term>
+                <listitem>
+                    <para>
+                        If you want to connect to the server secure client port, you need to set this property to
+                        <emphasis role="bold">true</emphasis>
+                        on the client. This will connect to server using SSL with specified credentials. Note that
+                        it requires the Netty client.
+                    </para>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>zookeeper.clientCnxnSocket</term>
+                <listitem>
+                    <para>
+                        Specifies which ClientCnxnSocket to be used. Possible values are
+                        <emphasis role="bold">org.apache.zookeeper.ClientCnxnSocketNIO</emphasis>
+                        and
+                        <emphasis role="bold">org.apache.zookeeper.ClientCnxnSocketNetty</emphasis>
+                        . Default is
+                        <emphasis role="bold">org.apache.zookeeper.ClientCnxnSocketNIO</emphasis>
+                        . If you want to connect to server's secure client port, you need to set this property to
+                        <emphasis role="bold">org.apache.zookeeper.ClientCnxnSocketNetty</emphasis>
+                        on client.
+                    </para>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>zookeeper.ssl.keyStore.location and zookeeper.ssl.keyStore.password</term>
+                <listitem>
+                    <para>Specifies the file path to a JKS containing the local credentials to be used for SSL connections,
+                        and the password to unlock the file.
+                    </para>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>zookeeper.ssl.trustStore.location and zookeeper.ssl.trustStore.password</term>
+                <listitem>
+                    <para>Specifies the file path to a JKS containing the remote credentials to be used for SSL connections,
+                        and the password to unlock the file.
+                    </para>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>jute.maxbuffer</term>
+                <listitem>
+                    <para>It specifies the maximum size of the incoming data from the server. The default value is 4194304
+                        Bytes , or just 4 MB. This is really a sanity check. The ZooKeeper server is designed to store and send
+                        data on the order of kilobytes. If incoming data length is more than this value, an IOException
+                        is raised.</para>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>zookeeper.kinit</term>
+                <listitem>
+                    <para>Specifies path to kinit binary. Default is "/usr/bin/kinit".</para>
+                </listitem>
+            </varlistentry>
+        </variablelist>
+    </section>
     </section>
 
     <section>
