@@ -33,6 +33,9 @@ BUGFIXES:
   ZOOKEEPER-2423: Upgrade Netty version due to security vulnerability
   (CVE-2014-3488) (Michael Han via phunt)
 
+  ZOOKEEPER-2405: getTGT() in Login.java mishandles confidential
+  information (Michael Han via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-2240 Make the three-node minimum more explicit in 
