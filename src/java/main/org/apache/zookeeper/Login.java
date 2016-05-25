@@ -335,7 +335,8 @@ public class Login {
         for(KerberosTicket ticket: tickets) {
             KerberosPrincipal server = ticket.getServer();
             if (server.getName().equals("krbtgt/" + server.getRealm() + "@" + server.getRealm())) {
-                LOG.debug("Found tgt {}.", ticket);
+                LOG.debug("Client principal is \"" + ticket.getClient().getName() + "\".");
+                LOG.debug("Server principal is \"" + ticket.getServer().getName() + "\".");
                 return ticket;
             }
         }
