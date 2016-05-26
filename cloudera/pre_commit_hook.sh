@@ -1,3 +1,5 @@
 #!/bin/bash -e
 
-echo "Pass!"
+echo "Running pre-commit unit tests..."
+
+ant clean test-core-java
