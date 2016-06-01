@@ -410,7 +410,7 @@ public class Leader {
     void lead() throws IOException, InterruptedException {
         self.end_fle = Time.currentElapsedTime();
         LOG.info("LEADING - LEADER ELECTION TOOK - " +
-              (self.end_fle - self.start_fle));
+              (self.end_fle - self.start_fle) + " " + QuorumPeer.FLE_TIME_UNIT);
         self.start_fle = 0;
         self.end_fle = 0;
 

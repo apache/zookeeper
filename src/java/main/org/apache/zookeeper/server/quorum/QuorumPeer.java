@@ -395,7 +395,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     /*
      * Record leader election time
      */
-    public long start_fle, end_fle;
+    public long start_fle, end_fle; // fle = fast leader election
+    public static final String FLE_TIME_UNIT = "MS";
 
     /*
      * Default value of peer is participant

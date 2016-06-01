@@ -425,6 +425,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-2402: Document client side properties (Arshad Mohammad via fpj)
 
+  ZOOKEEPER-2410: add time unit to 'ELECTION TOOK' log.info message
+  (Christine Poerschke via phunt)
+
 Release 3.5.0 - 8/4/2014
 
 NEW FEATURES:
