@@ -64,7 +64,7 @@ public class Follower extends Learner{
     void followLeader() throws InterruptedException {
         self.end_fle = Time.currentElapsedTime();
         LOG.info("FOLLOWING - LEADER ELECTION TOOK - " +
-              (self.end_fle - self.start_fle));
+              (self.end_fle - self.start_fle) + " " + QuorumPeer.FLE_TIME_UNIT);
         self.start_fle = 0;
         self.end_fle = 0;
         fzk.registerJMX(new FollowerBean(this, zk), self.jmxLocalPeerBean);
