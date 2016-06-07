@@ -1045,7 +1045,7 @@ static void log_env(zhandle_t *zh) {
 #endif
 
 #ifdef HAVE_GETLOGIN
-  LOG_INFO(LOGCALLBACK(zh), "Client environment:user.name=%s", getlogin());
+  LOG_INFO(LOGCALLBACK(zh), "Client environment:user.name=%s", (getlogin() != NULL) ? getlogin() : "<unavailable>");
 #else
   LOG_INFO(LOGCALLBACK(zh), "Client environment:user.name=<not implemented>");
 #endif
