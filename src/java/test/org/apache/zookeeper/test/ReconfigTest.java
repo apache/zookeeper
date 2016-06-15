@@ -98,10 +98,17 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
     public static String testServerHasConfig(ZooKeeper zk,
             List<String> joiningServers, List<String> leavingServers)
             throws KeeperException, InterruptedException {
+        boolean testNodeExists = false;
         byte[] config = null;
         for (int j = 0; j < 30; j++) {
             try {
-                zk.sync("/", null, null);
+                if (!testNodeExists) {
+                    createZNode(zk, "/dummy", "dummy");
+                    testNodeExists = true;
+                }
+                // Use setData instead of sync API to force a view update.
+                // Check ZOOKEEPER-2137 for details.
+                zk.setData("/dummy", "dummy".getBytes(), -1);
                 config = zk.getConfig(false, new Stat());
                 break;
             } catch (KeeperException.ConnectionLossException e) {
@@ -113,8 +120,8 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
                     Assert.fail("client could not connect to reestablished quorum: giving up after 30+ seconds.");
                 }
             }
-
         }
+
         String configStr = new String(config);
         if (joiningServers != null) {
             for (String joiner : joiningServers) {
@@ -128,24 +135,29 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
 
         return configStr;
     }
-    
+
     public static void testNormalOperation(ZooKeeper writer, ZooKeeper reader)
             throws KeeperException, InterruptedException {
-        boolean testNodeExists = false;
-       
-       for (int j = 0; j < 30; j++) {
+        boolean testReaderNodeExists = false;
+        boolean testWriterNodeExists = false;
+
+        for (int j = 0; j < 30; j++) {
             try {
-               if (!testNodeExists) {
-                   try{ 
-                       writer.create("/test", "test".getBytes(),
-                           ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-                   } catch (KeeperException.NodeExistsException e) {                       
-                   }
-                   testNodeExists = true;
-               }
+                if (!testWriterNodeExists) {
+                    createZNode(writer, "/test", "test");
+                    testWriterNodeExists = true;
+                }
+
+                if (!testReaderNodeExists) {
+                    createZNode(reader, "/dummy", "dummy");
+                    testReaderNodeExists = true;
+                }
+
                 String data = "test" + j;
                 writer.setData("/test", data.getBytes(), -1);
-                reader.sync("/", null, null);
+                // Use setData instead of sync API to force a view update.
+                // Check ZOOKEEPER-2137 for details.
+                reader.setData("/dummy", "dummy".getBytes(), -1);
                 byte[] res = reader.getData("/test", null, new Stat());
                 Assert.assertEquals(data, new String(res));
                 break;
@@ -158,10 +170,17 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
                     Assert.fail("client could not connect to reestablished quorum: giving up after 30+ seconds.");
                 }
             }
-
         }
+    }
 
-    }    
+    private static void createZNode(ZooKeeper zk, String path, String data)
+            throws KeeperException, InterruptedException {
+        try{
+            zk.create(path, data.getBytes(),
+                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        } catch (KeeperException.NodeExistsException e) {
+        }
+    }
     
     private int getLeaderId(QuorumUtil qu) {
         int leaderId = 1;
