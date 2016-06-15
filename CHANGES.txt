@@ -193,6 +193,9 @@ IMPROVEMENTS:
   ZOOKEEPER-2410: add time unit to 'ELECTION TOOK' log.info message
   (Christine Poerschke via phunt)
 
+  ZOOKEEPER-2433: ZooKeeperSaslServer: allow user principals in
+  subject (Andy B via phunt)
+
 Release 3.5.1 - 07/27/2015
 
 NEW FEATURES:
