@@ -121,7 +121,7 @@ public class DataTree {
             .substring(procZookeeper.length() + 1);
     
     /**
-     * the path trie that keeps track fo the quota nodes in this datatree
+     * the path trie that keeps track of the quota nodes in this datatree
      */
     private final PathTrie pTrie = new PathTrie();
 
