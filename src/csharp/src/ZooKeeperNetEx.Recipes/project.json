@@ -1,6 +1,6 @@
 ﻿{
   "title": "Apache ZooKeeper .NET async Recipes",
-  "version": "3.4.8.3",
+  "version": "3.4.8.4",
   "description": ".NET async Distributed recipes for ZooKeeper: Queue, Lock and Leader Election.",
   "authors": [ "Shay Hazor" ],
   "packOptions": {
@@ -33,6 +33,6 @@
     }
   },
   "dependencies": {
-    "ZooKeeperNetEx": "3.4.8.3"
+    "ZooKeeperNetEx": "3.4.8.4"
   }
 }
