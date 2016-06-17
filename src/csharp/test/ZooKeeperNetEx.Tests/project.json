@@ -7,7 +7,7 @@
   "dependencies": {
     "ZooKeeperNetEx": "3.4.8.3",
     "Microsoft.NETCore.Platforms": "1.0.1-*",
-    "Newtonsoft.Json": "8.0.2",
+    "Newtonsoft.Json": "*",
     "xunit": "2.1.0"
   },
   "frameworks": {
