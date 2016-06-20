@@ -17,23 +17,21 @@
  */
 package org.apache.zookeeper.server.quorum;
 
-import org.apache.zookeeper.common.X509Exception;
+import java.io.IOException;
+
+import javax.management.JMException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.jmx.ManagedUtil;
-import org.apache.zookeeper.server.DatadirCleanupManager;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZKDatabase;
+import org.apache.zookeeper.server.DatadirCleanupManager;
 import org.apache.zookeeper.server.ZooKeeperServerMain;
 import org.apache.zookeeper.server.admin.AdminServer.AdminServerException;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog.DatadirException;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
-import org.apache.zookeeper.server.quorum.util.QuorumSocketFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.management.JMException;
-import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 
 /**
  *
@@ -119,13 +117,7 @@ public class QuorumPeerMain {
         purgeMgr.start();
 
         if (args.length == 1 && config.isDistributed()) {
-            try {
-                runFromConfig(config);
-            } catch (NoSuchAlgorithmException
-                    | X509Exception.KeyManagerException
-                    | X509Exception.TrustManagerException exp) {
-                throw new ConfigException("SSL init error", exp);
-            }
+            runFromConfig(config);
         } else {
             LOG.warn("Either no config or no quorum defined in config, running "
                     + " in standalone mode");
@@ -134,10 +126,7 @@ public class QuorumPeerMain {
         }
     }
 
-    public void runFromConfig(QuorumPeerConfig config) throws IOException,
-            AdminServerException, NoSuchAlgorithmException,
-            X509Exception.KeyManagerException,
-            X509Exception.TrustManagerException {
+    public void runFromConfig(QuorumPeerConfig config) throws IOException, AdminServerException {
       try {
           ManagedUtil.registerLog4jMBeans();
       } catch (JMException e) {
@@ -163,9 +152,6 @@ public class QuorumPeerMain {
                       true);
           }
 
-          QuorumSocketFactory socketFactory =
-                  QuorumSocketFactory.createDefault();
-
           quorumPeer = new QuorumPeer();
           quorumPeer.setTxnFactory(new FileTxnSnapLog(
                       config.getDataLogDir(),
@@ -190,7 +176,6 @@ public class QuorumPeerMain {
           quorumPeer.initConfigInZKDatabase();
           quorumPeer.setCnxnFactory(cnxnFactory);
           quorumPeer.setSecureCnxnFactory(secureCnxnFactory);
-          quorumPeer.setSocketFactory(socketFactory);
           quorumPeer.setLearnerType(config.getPeerType());
           quorumPeer.setSyncEnabled(config.getSyncEnabled());
           quorumPeer.setQuorumListenOnAllIPs(config.getQuorumListenOnAllIPs());

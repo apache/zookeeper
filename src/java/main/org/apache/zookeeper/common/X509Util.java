@@ -18,10 +18,6 @@
 package org.apache.zookeeper.common;
 
 
-import org.apache.zookeeper.server.quorum.util.ZKX509TrustManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -33,8 +29,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.cert.X509Certificate;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.apache.zookeeper.common.X509Exception.KeyManagerException;
 import static org.apache.zookeeper.common.X509Exception.SSLContextException;
@@ -46,15 +43,11 @@ import static org.apache.zookeeper.common.X509Exception.TrustManagerException;
 public class X509Util {
     private static final Logger LOG = LoggerFactory.getLogger(X509Util.class);
 
-    public static final String SSL_VERSION_DEFAULT = "TLSv1";
-    public static final String SSL_VERSION = "zookeeper.ssl.version";
     public static final String SSL_KEYSTORE_LOCATION = "zookeeper.ssl.keyStore.location";
     public static final String SSL_KEYSTORE_PASSWD = "zookeeper.ssl.keyStore.password";
     public static final String SSL_TRUSTSTORE_LOCATION = "zookeeper.ssl.trustStore.location";
     public static final String SSL_TRUSTSTORE_PASSWD = "zookeeper.ssl.trustStore.password";
     public static final String SSL_AUTHPROVIDER = "zookeeper.ssl.authProvider";
-    public static final String SSL_TRUSTSTORE_CA_ALIAS =
-            "zookeeper.ssl.trustStore.rootCA.alias";
 
     public static SSLContext createSSLContext() throws SSLContextException {
         KeyManager[] keyManagers = null;
@@ -103,13 +96,9 @@ public class X509Util {
             }
         }
 
-        String sslVersion = System.getProperty(SSL_VERSION);
-        if (sslVersion == null) {
-            sslVersion = SSL_VERSION_DEFAULT;
-        }
         SSLContext sslContext = null;
         try {
-            sslContext = SSLContext.getInstance(sslVersion);
+            sslContext = SSLContext.getInstance("TLSv1");
             sslContext.init(keyManagers, trustManagers, null);
         } catch (Exception e) {
             throw new SSLContextException(e);
@@ -159,25 +148,6 @@ public class X509Util {
             TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
             tmf.init(ts);
 
-            // XXX: Lets create Root CA base verification if root CA alias is
-            // present
-            String trustStoreCAAlias = System.getProperty(
-                    SSL_TRUSTSTORE_CA_ALIAS);
-            if (trustStoreCAAlias != null) {
-                X509Certificate rootCA =
-                        getCertWithAlias(ts, trustStoreCAAlias);
-                if (rootCA == null) {
-                    final String str = "failed to find root CA from: " +
-                            trustStoreLocation + " with alias: " +
-                            trustStoreCAAlias;
-                    LOG.error(str);
-                    throw new TrustManagerException(str);
-                }
-
-                return createTrustManager(rootCA);
-            }
-
-            LOG.info("No root CA using standard TrustManager");
             for (TrustManager tm : tmf.getTrustManagers()) {
                 if (tm instanceof X509TrustManager) {
                     return (X509TrustManager) tm;
@@ -193,24 +163,5 @@ public class X509Util {
                 } catch (IOException e) {}
             }
         }
-    }
-
-    private static X509TrustManager createTrustManager(
-            final X509Certificate rootCA) {
-        return new ZKX509TrustManager(rootCA);
-    }
-
-    private static X509Certificate getCertWithAlias(
-            final KeyStore trustStore, final String alias)
-            throws KeyStoreException {
-        X509Certificate cert;
-        try {
-            cert = (X509Certificate) trustStore.getCertificate(alias);
-        } catch (KeyStoreException exp) {
-            LOG.error("failed to load CA cert, exp: " + exp);
-            throw exp;
-        }
-
-        return cert;
     }
 }

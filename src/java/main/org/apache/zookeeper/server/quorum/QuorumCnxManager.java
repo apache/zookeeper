@@ -18,12 +18,6 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import org.apache.zookeeper.common.X509Exception;
-import org.apache.zookeeper.server.ZooKeeperThread;
-import org.apache.zookeeper.server.quorum.util.QuorumSocketFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -36,11 +30,15 @@ import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.UnresolvedAddressException;
 import java.util.Enumeration;
-import java.util.NoSuchElementException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.apache.zookeeper.server.ZooKeeperThread;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class implements a connection manager for leader election using TCP. It
@@ -229,7 +227,7 @@ public class QuorumCnxManager {
         this.self = self;
 
         // Starts listener thread that waits for connection requests 
-        listener = new Listener(this.self.socketFactory);
+        listener = new Listener();
         listener.setName("QuorumPeerListener");
     }
 
@@ -242,7 +240,7 @@ public class QuorumCnxManager {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Opening channel to server " + sid);
         }
-        Socket sock = this.self.socketFactory.buildForClient();
+        Socket sock = new Socket();
         setSockOpts(sock);
         sock.connect(self.getVotingView().get(sid).electionAddr, cnxTO);
         initiateConnection(sock, sid);
@@ -441,7 +439,7 @@ public class QuorumCnxManager {
              if (LOG.isDebugEnabled()) {
                  LOG.debug("Opening channel to server " + sid);
              }
-             Socket sock = this.self.socketFactory.buildForClient();
+             Socket sock = new Socket();
              setSockOpts(sock);
              sock.connect(electionAddr, cnxTO);
              if (LOG.isDebugEnabled()) {
@@ -457,7 +455,7 @@ public class QuorumCnxManager {
              LOG.warn("Cannot open channel to " + sid
                      + " at election address " + electionAddr, e);
              throw e;
-         } catch (IOException | X509Exception e) {
+         } catch (IOException e) {
              LOG.warn("Cannot open channel to " + sid
                      + " at election address " + electionAddr,
                      e);
@@ -601,14 +599,12 @@ public class QuorumCnxManager {
      */
     public class Listener extends ZooKeeperThread {
 
-        private final QuorumSocketFactory socketFactory;
         volatile ServerSocket ss = null;
 
-        public Listener(final QuorumSocketFactory socketFactory) {
+        public Listener() {
             // During startup of thread, thread name will be overridden to
             // specific election address
             super("ListenerThread");
-            this.socketFactory = socketFactory;
         }
 
         /**
@@ -621,6 +617,8 @@ public class QuorumCnxManager {
 
             while((!shutdown) && (numRetries < 3)){
                 try {
+                    ss = new ServerSocket();
+                    ss.setReuseAddress(true);
                     if (self.getQuorumListenOnAllIPs()) {
                         int port = self.getElectionAddress().getPort();
                         addr = new InetSocketAddress(port);
@@ -632,9 +630,7 @@ public class QuorumCnxManager {
                     }
                     LOG.info("My election bind port: " + addr.toString());
                     setName(addr.toString());
-                    ss = this.socketFactory.buildForServer(
-                            addr.getPort(), addr.getAddress());
-                    ss.setReuseAddress(true);
+                    ss.bind(addr);
                     while (!shutdown) {
                         Socket client = ss.accept();
                         setSockOpts(client);
@@ -643,7 +639,7 @@ public class QuorumCnxManager {
                         receiveConnection(client);
                         numRetries = 0;
                     }
-                } catch (IOException | X509Exception e) {
+                } catch (IOException e) {
                     if (shutdown) {
                         break;
                     }

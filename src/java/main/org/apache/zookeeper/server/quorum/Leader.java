@@ -41,7 +41,6 @@ import java.util.concurrent.ConcurrentMap;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.Time;
-import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
@@ -221,21 +220,21 @@ public class Leader {
         this.self = self;
         try {
             if (self.getQuorumListenOnAllIPs()) {
-                ss = this.self.socketFactory.buildForServer(
-                        self.getQuorumAddress().getPort());
+                ss = new ServerSocket(self.getQuorumAddress().getPort());
             } else {
-                ss = this.self.socketFactory.buildForServer(
-                        self.getQuorumAddress().getPort(),
-                        self.getQuorumAddress().getAddress());
+                ss = new ServerSocket();
             }
             ss.setReuseAddress(true);
-        } catch (IOException | X509Exception e) {
+            if (!self.getQuorumListenOnAllIPs()) {
+                ss.bind(self.getQuorumAddress());
+            }
+        } catch (BindException e) {
             if (self.getQuorumListenOnAllIPs()) {
                 LOG.error("Couldn't bind to port " + self.getQuorumAddress().getPort(), e);
             } else {
                 LOG.error("Couldn't bind to " + self.getQuorumAddress(), e);
             }
-            throw new IOException(e);
+            throw e;
         }
         this.zk = zk;
     }
