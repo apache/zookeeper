@@ -43,6 +43,7 @@ public class SSLAuthTest extends ClientBase {
         System.setProperty(ZKConfig.SSL_TRUSTSTORE_LOCATION, testDataPath + "/ssl/testTrustStore.jks");
         System.setProperty(ZKConfig.SSL_TRUSTSTORE_PASSWD, "testpass");
         System.setProperty("javax.net.debug", "ssl");
+        System.setProperty("zookeeper.authProvider.x509", "org.apache.zookeeper.server.auth.X509AuthenticationProvider");
 
         String host = "localhost";
         int port = PortAssignment.unique();
@@ -65,6 +66,7 @@ public class SSLAuthTest extends ClientBase {
         System.clearProperty(ZKConfig.SSL_TRUSTSTORE_LOCATION);
         System.clearProperty(ZKConfig.SSL_TRUSTSTORE_PASSWD);
         System.clearProperty("javax.net.debug");
+        System.clearProperty("zookeeper.authProvider.x509");
     }
 
     @Test

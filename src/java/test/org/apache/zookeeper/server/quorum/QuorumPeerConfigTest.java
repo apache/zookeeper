@@ -19,12 +19,14 @@
 package org.apache.zookeeper.server.quorum;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
 
+import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.junit.Test;
 
@@ -64,6 +66,40 @@ public class QuorumPeerConfigTest {
         } catch (IllegalArgumentException e) {
             String expectedMessage = "clientPortAddress is set but clientPort is not set";
             assertEquals(expectedMessage, e.getMessage());
+        }
+    }
+
+    /**
+     * https://issues.apache.org/jira/browse/ZOOKEEPER-2297
+     */
+    @Test
+    public void testConfigureSSLAuthGetsConfiguredIfSecurePortConfigured()
+            throws IOException, ConfigException {
+        String sslAuthProp = "zookeeper.authProvider.x509";
+        QuorumPeerConfig quorumPeerConfig = new QuorumPeerConfig();
+        Properties zkProp = getDefaultZKProperties();
+        zkProp.setProperty("secureClientPort", "12345");
+        quorumPeerConfig.parseProperties(zkProp);
+        String expected = "org.apache.zookeeper.server.auth.X509AuthenticationProvider";
+        String result = System.getProperty(sslAuthProp);
+        assertEquals(expected, result); 
+    }
+
+    /**
+     * https://issues.apache.org/jira/browse/ZOOKEEPER-2297
+     */
+    @Test
+    public void testCustomSSLAuth()
+            throws IOException{
+        System.setProperty(ZKConfig.SSL_AUTHPROVIDER, "y509");
+        QuorumPeerConfig quorumPeerConfig = new QuorumPeerConfig();
+        try {
+            Properties zkProp = getDefaultZKProperties();
+            zkProp.setProperty("secureClientPort", "12345");
+            quorumPeerConfig.parseProperties(zkProp);
+            fail("ConfigException is expected");
+        } catch (ConfigException e) {
+            assertNotNull(e.getMessage());
         }
     }
 
