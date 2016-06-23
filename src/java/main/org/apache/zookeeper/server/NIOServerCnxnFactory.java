@@ -688,31 +688,42 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         ss.configureBlocking(false);
         acceptThread = new AcceptThread(ss, addr, selectorThreads);
     }
-   
-    @Override
-    public void reconfigure(InetSocketAddress addr){
-        ServerSocketChannel oldSS = ss;        
+
+    private void tryClose(ServerSocketChannel s) {
         try {
-           this.ss = ServerSocketChannel.open();
-           ss.socket().setReuseAddress(true);
-           LOG.info("binding to port " + addr);
-           ss.socket().bind(addr);
-           ss.configureBlocking(false);
-           acceptThread.setReconfiguring();
-           oldSS.close();           
-           acceptThread.wakeupSelector();
-           try {
-			  acceptThread.join();
-		   } catch (InterruptedException e) {
-			   LOG.error("Error joining old acceptThread when reconfiguring client port " + e.getMessage());
-		   }
-           acceptThread = new AcceptThread(ss, addr, selectorThreads);
-           acceptThread.start();
-        } catch(IOException e) {
-           LOG.error("Error reconfiguring client port to " + addr + " " + e.getMessage());
+            s.close();
+        } catch (IOException sse) {
+            LOG.error("Error while closing server socket.", sse);
         }
     }
-    
+
+    @Override
+    public void reconfigure(InetSocketAddress addr) {
+        ServerSocketChannel oldSS = ss;        
+        try {
+            this.ss = ServerSocketChannel.open();
+            ss.socket().setReuseAddress(true);
+            LOG.info("binding to port " + addr);
+            ss.socket().bind(addr);
+            ss.configureBlocking(false);
+            acceptThread.setReconfiguring();
+            tryClose(oldSS);
+            acceptThread.wakeupSelector();
+            try {
+                acceptThread.join();
+            } catch (InterruptedException e) {
+                LOG.error("Error joining old acceptThread when reconfiguring client port {}",
+                            e.getMessage());
+                Thread.currentThread().interrupt();
+            }
+            acceptThread = new AcceptThread(ss, addr, selectorThreads);
+            acceptThread.start();
+        } catch(IOException e) {
+            LOG.error("Error reconfiguring client port to {} {}", addr, e.getMessage());
+            tryClose(oldSS);
+        }
+    }
+
     /** {@inheritDoc} */
     public int getMaxClientCnxnsPerHost() {
         return maxClientCnxns;

@@ -710,7 +710,7 @@ public class Leader {
        // that different operations wait for different sets of acks, and we still want to enforce
        // that they are committed in order. Currently we only permit one outstanding reconfiguration
        // such that the reconfiguration and subsequent outstanding ops proposed while the reconfig is
-       // pending all wait for a quorum of old and new config, so its not possible to get enough acks
+       // pending all wait for a quorum of old and new config, so it's not possible to get enough acks
        // for an operation without getting enough acks for preceding ops. But in the future if multiple
        // concurrent reconfigs are allowed, this can happen.
        if (outstandingProposals.containsKey(zxid - 1)) return false;
@@ -751,7 +751,7 @@ public class Leader {
             QuorumVerifier newQV = p.qvAcksetPairs.get(p.qvAcksetPairs.size()-1).getQuorumVerifier();
        
             self.processReconfig(newQV, designatedLeader, zk.getZxid(), true);
-       
+
             if (designatedLeader != self.getId()) {
                 allowedToCommit = false;
             }
@@ -1261,7 +1261,7 @@ public class Leader {
         QuorumVerifier newQV = self.getLastSeenQuorumVerifier();
         
         Long designatedLeader = getDesignatedLeader(newLeaderProposal, zk.getZxid());                                         
-        
+
         self.processReconfig(newQV, designatedLeader, zk.getZxid(), true);
         if (designatedLeader != self.getId()) {
             allowedToCommit = false;
