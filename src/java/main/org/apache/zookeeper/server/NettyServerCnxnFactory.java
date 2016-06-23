@@ -488,13 +488,17 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         parentChannel = bootstrap.bind(localAddress);
     }
     
-    public void reconfigure(InetSocketAddress addr) 
-    {  
+    public void reconfigure(InetSocketAddress addr) {
        Channel oldChannel = parentChannel;
-       LOG.info("binding to port " + addr);
-        parentChannel = bootstrap.bind(addr);
-        localAddress = addr;  
-        oldChannel.close();
+       try {
+           LOG.info("binding to port {}", addr);
+           parentChannel = bootstrap.bind(addr);
+           localAddress = addr;
+       } catch (Exception e) {
+           LOG.error("Error while reconfiguring", e);
+       } finally {
+           oldChannel.close();
+       }
     }
     
     @Override
