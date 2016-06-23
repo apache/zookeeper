@@ -44,7 +44,7 @@ public class NonRecoverableErrorTest extends QuorumPeerTestBase {
     /**
      * Test case for https://issues.apache.org/jira/browse/ZOOKEEPER-2247.
      * Test to verify that even after non recoverable error (error while
-     * writing transaction log) on ZooKeeper service will be available.
+     * writing transaction log), ZooKeeper is still available.
      */
     @Test(timeout = 30000)
     public void testZooKeeperServiceAvailableOnLeader() throws Exception {
@@ -107,9 +107,9 @@ public class NonRecoverableErrorTest extends QuorumPeerTestBase {
 
         try {
             // do create operation, so that injected IOException is thrown
-            zk.create(uniqueNode(), data.getBytes(), Ids.OPEN_ACL_UNSAFE,
+            zk.create(uniqueZnode(), data.getBytes(), Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT);
-            fail("IOException is expected as error is injected in transaction log commit funtionality");
+            fail("IOException is expected due to error injected to transaction log commit");
         } catch (Exception e) {
             // do nothing
         }
@@ -128,11 +128,10 @@ public class NonRecoverableErrorTest extends QuorumPeerTestBase {
         leader.getActiveServer().setZKDatabase(originalZKDatabase);
 
         // verify that now ZooKeeper service is up and running
-        QuorumPeer currentleader = getLeaderQuorumPeer(mt);
-        assertNotNull("New leader must have been elected by now",
-                currentleader);
+        leader = getLeaderQuorumPeer(mt);
+        assertNotNull("New leader must have been elected by now", leader);
 
-        String uniqueNode = uniqueNode();
+        String uniqueNode = uniqueZnode();
         String createNode = zk.create(uniqueNode, data.getBytes(),
                 Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         // if node is created successfully then it means that ZooKeeper service
@@ -170,7 +169,7 @@ public class NonRecoverableErrorTest extends QuorumPeerTestBase {
         return null;
     }
 
-    private String uniqueNode() {
+    private String uniqueZnode() {
         UUID randomUUID = UUID.randomUUID();
         String node = NODE_PATH + "/" + randomUUID.toString();
         return node;

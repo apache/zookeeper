@@ -17,29 +17,28 @@
  */
 package org.apache.zookeeper.server;
 
+import java.util.concurrent.CountDownLatch;
+
 import org.apache.zookeeper.server.ZooKeeperServer.State;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * Default listener implementation, which will be used to notify internal
- * errors. For example, if some critical thread has stopped due to fatal errors
- * then it will get notifications and will change the state of ZooKeeper server
- * to ERROR representing an error status.
+ * Observer which will be used to get server state change notifications.
  */
-class ZooKeeperServerListenerImpl implements ZooKeeperServerListener {
-    private static final Logger LOG = LoggerFactory
-            .getLogger(ZooKeeperServerListenerImpl.class);
+class ZooKeeperServerStateListener {
+    private final CountDownLatch healthMonitorLatch;
 
-    private final ZooKeeperServer zooKeeperServer;
-
-    ZooKeeperServerListenerImpl(ZooKeeperServer zooKeeperServer) {
-        this.zooKeeperServer = zooKeeperServer;
+    ZooKeeperServerStateListener(CountDownLatch healthMonitorLatch) {
+        this.healthMonitorLatch = healthMonitorLatch;
     }
 
-    @Override
-    public void notifyStopping(String threadName, int exitCode) {
-        LOG.info("Thread {} exits, error code {}", threadName, exitCode);
-        zooKeeperServer.setState(State.ERROR);
+    /**
+     * This will be invoked when the server transition to a new server state.
+     *
+     * @param state new server state
+     */
+    void stateChanged(State state) {
+        if (state != State.RUNNING) {
+            healthMonitorLatch.countDown();
+        }
     }
 }

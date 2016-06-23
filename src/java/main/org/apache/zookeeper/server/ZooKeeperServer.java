@@ -123,6 +123,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     private final ServerStats serverStats;
     private final ZooKeeperServerListener listener;
+    private ZooKeeperServerStateListener zksStateListener;
 
     void removeCnxn(ServerCnxn cnxn) {
         zkDb.removeCnxn(cnxn);
@@ -474,14 +475,44 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         ((SessionTrackerImpl)sessionTracker).start();
     }
 
+    /**
+     * Sets the state of ZooKeeper server. After changing the state, this will
+     * also notify server state changes to the registered listener, if any.
+     * 
+     * Following are the state transitions:
+     * <li>During startup the server state will be INITIAL.</li>
+     * <li>After the successful server startup the state will set to RUNNING.
+     * </li>
+     * <li>Server will enter into ERROR state if it hits an internal error.
+     * {@link ZooKeeperServerListenerImpl} will notify critical resource error
+     * events.</li>
+     * <li>During shutdown the server will set the state to SHUTDOWN, which
+     * represents that the server is not running.</li>
+     *
+     * @param state new server state.
+     */
     void setState(State state) {
         this.state = state;
+        // Notify server state changes to the registered listener, if any.
+        if (zksStateListener != null) {
+            zksStateListener.stateChanged(state);
+        }
     }
 
+    /**
+     * This can be used while shutting down the server to see whether the server
+     * is already shutdown or not.
+     *
+     * @return true if the server is running or server hits an error, false
+     *         otherwise.
+     */
     protected boolean needsShutdown() {
         return state == State.RUNNING || state == State.ERROR;
     }
 
+    /**
+     * @return true if the server is running, false otherwise.
+     */
     public boolean isRunning() {
         return state == State.RUNNING;
     }
@@ -1136,5 +1167,16 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     public Map<Long, Set<Long>> getSessionExpiryMap() {
         return sessionTracker.getSessionExpiryMap();
+    }
+
+    /**
+     * This method can be used to register the ZooKeeperServerStateListener to
+     * get server state change notifications. ZooKeeperServerStateListener will
+     * get notified for every server state changes {@link #setState(State)}.
+     *
+     * @param zksStateListener state change listener
+     */
+    void registerServerStateListener(ZooKeeperServerStateListener zksStateListener) {
+        this.zksStateListener = zksStateListener;
     }
 }

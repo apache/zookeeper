@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server;
 
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import javax.management.JMException;
@@ -121,6 +122,10 @@ public class ZooKeeperServerMain {
             final ZooKeeperServer zkServer = new ZooKeeperServer(txnLog,
                     config.tickTime, config.minSessionTimeout, config.maxSessionTimeout, null);
 
+            // Register listener which will be used for monitoring the server state.
+            final CountDownLatch healthMonitorLatch = new CountDownLatch(1);
+            zkServer.registerServerStateListener(new ZooKeeperServerStateListener(healthMonitorLatch));
+
             // Start Admin server
             adminServer = AdminServerFactory.createAdminServer();
             adminServer.setZooKeeperServer(zkServer);
@@ -146,16 +151,9 @@ public class ZooKeeperServerMain {
             );
             containerManager.start();
 
-            // Watch status of ZooKeeper server. If there is an internal error
-            // then will do a graceful shutdown.
-            while (zkServer.isRunning()) {
-                try {
-                    Thread.sleep(1000); // watch interval
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                    LOG.info("Thread interrupted");
-                }
-            }
+            // Watch status of ZooKeeper server. It will do a graceful shutdown
+            // if the server is not running or hits an internal error.
+            healthMonitorLatch.await();
 
             shutdown();
 
