@@ -1642,7 +1642,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     public void setZKDatabase(ZKDatabase database) {
         this.zkDb = database;
     }
-    
+
+    protected ZKDatabase getZkDb() {
+        return zkDb;
+    }
+
     public synchronized void initConfigInZKDatabase() {   
         if (zkDb != null) zkDb.initConfigInZKDatabase(getQuorumVerifier());
     }

@@ -549,6 +549,8 @@ public class Leader {
             // We ping twice a tick, so we only update the tick every other
             // iteration
             boolean tickSkip = true;
+            // If not null then shutdown this leader
+            String shutdownMessage = null;
 
             while (true) {
                 synchronized (this) {
@@ -586,18 +588,20 @@ public class Leader {
 
                     if (!tickSkip && !syncedAckSet.hasAllQuorums()) {
                         // Lost quorum of last committed and/or last proposed
-                        // config, shutdown
-                        shutdown("Not sufficient followers synced, only synced with sids: [ "
-                                + syncedAckSet.ackSetsToString() + " ]");
-                        // make sure the order is the same!
-                        // the leader goes to looking
-                        return;
+                        // config, set shutdown flag
+                        shutdownMessage = "Not sufficient followers synced, only synced with sids: [ "
+                                + syncedAckSet.ackSetsToString() + " ]";
+                        break;
                     }
                     tickSkip = !tickSkip;
                 }
                 for (LearnerHandler f : getLearners()) {
                     f.ping();
                 }
+            }
+            if (shutdownMessage != null) {
+                shutdown(shutdownMessage);
+                // leader goes in looking state
             }
         } finally {
             zk.unregisterJMX(this);
