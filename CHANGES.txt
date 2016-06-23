@@ -1,4 +1,4 @@
-Backward compatible changes:
+Release 3.5.2 - 06/23/2016
 
 BUGFIXES:
 
