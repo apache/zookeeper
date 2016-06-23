@@ -165,6 +165,9 @@ BUGFIXES:
   ZOOKEEPER-2380: Deadlock between leader shutdown and forwarding ACK to the
   leader (Arshad Mohammad via cnauroth)
 
+  ZOOKEEPER-2366: Reconfiguration of client port causes a socket leak.
+  (fpj via cnauroth)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-2270: Allow MBeanRegistry to be overridden for better unit tests
