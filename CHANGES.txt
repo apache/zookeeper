@@ -1,4 +1,4 @@
-Release 3.5.2 - 06/23/2016
+Release 3.5.2 - 06/29/2016
 
 BUGFIXES:
 
