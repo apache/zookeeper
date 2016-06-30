@@ -323,6 +323,9 @@ BUGFIXES:
   ZOOKEEPER-2366: Reconfiguration of client port causes a socket leak.
   (fpj via cnauroth)
 
+  ZOOKEEPER-2458: Remove license file for servlet-api dependency
+  (fpj via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-2024 Major throughput improvement with mixed workloads (Kfir Lev-Ari via shralex)
 
