@@ -410,7 +410,7 @@ public class Leader {
     void lead() throws IOException, InterruptedException {
         self.end_fle = Time.currentElapsedTime();
         LOG.info("LEADING - LEADER ELECTION TOOK - " +
-              (self.end_fle - self.start_fle));
+              (self.end_fle - self.start_fle) + " " + QuorumPeer.FLE_TIME_UNIT);
         self.start_fle = 0;
         self.end_fle = 0;
 
@@ -549,6 +549,8 @@ public class Leader {
             // We ping twice a tick, so we only update the tick every other
             // iteration
             boolean tickSkip = true;
+            // If not null then shutdown this leader
+            String shutdownMessage = null;
 
             while (true) {
                 synchronized (this) {
@@ -586,18 +588,20 @@ public class Leader {
 
                     if (!tickSkip && !syncedAckSet.hasAllQuorums()) {
                         // Lost quorum of last committed and/or last proposed
-                        // config, shutdown
-                        shutdown("Not sufficient followers synced, only synced with sids: [ "
-                                + syncedAckSet.ackSetsToString() + " ]");
-                        // make sure the order is the same!
-                        // the leader goes to looking
-                        return;
+                        // config, set shutdown flag
+                        shutdownMessage = "Not sufficient followers synced, only synced with sids: [ "
+                                + syncedAckSet.ackSetsToString() + " ]";
+                        break;
                     }
                     tickSkip = !tickSkip;
                 }
                 for (LearnerHandler f : getLearners()) {
                     f.ping();
                 }
+            }
+            if (shutdownMessage != null) {
+                shutdown(shutdownMessage);
+                // leader goes in looking state
             }
         } finally {
             zk.unregisterJMX(this);
@@ -706,7 +710,7 @@ public class Leader {
        // that different operations wait for different sets of acks, and we still want to enforce
        // that they are committed in order. Currently we only permit one outstanding reconfiguration
        // such that the reconfiguration and subsequent outstanding ops proposed while the reconfig is
-       // pending all wait for a quorum of old and new config, so its not possible to get enough acks
+       // pending all wait for a quorum of old and new config, so it's not possible to get enough acks
        // for an operation without getting enough acks for preceding ops. But in the future if multiple
        // concurrent reconfigs are allowed, this can happen.
        if (outstandingProposals.containsKey(zxid - 1)) return false;
@@ -747,7 +751,7 @@ public class Leader {
             QuorumVerifier newQV = p.qvAcksetPairs.get(p.qvAcksetPairs.size()-1).getQuorumVerifier();
        
             self.processReconfig(newQV, designatedLeader, zk.getZxid(), true);
-       
+
             if (designatedLeader != self.getId()) {
                 allowedToCommit = false;
             }
@@ -1257,7 +1261,7 @@ public class Leader {
         QuorumVerifier newQV = self.getLastSeenQuorumVerifier();
         
         Long designatedLeader = getDesignatedLeader(newLeaderProposal, zk.getZxid());                                         
-        
+
         self.processReconfig(newQV, designatedLeader, zk.getZxid(), true);
         if (designatedLeader != self.getId()) {
             allowedToCommit = false;

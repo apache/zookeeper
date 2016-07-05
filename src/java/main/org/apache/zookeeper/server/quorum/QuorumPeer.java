@@ -395,7 +395,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     /*
      * Record leader election time
      */
-    public long start_fle, end_fle;
+    public long start_fle, end_fle; // fle = fast leader election
+    public static final String FLE_TIME_UNIT = "MS";
 
     /*
      * Default value of peer is participant
@@ -1641,7 +1642,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     public void setZKDatabase(ZKDatabase database) {
         this.zkDb = database;
     }
-    
+
+    protected ZKDatabase getZkDb() {
+        return zkDb;
+    }
+
     public synchronized void initConfigInZKDatabase() {   
         if (zkDb != null) zkDb.initConfigInZKDatabase(getQuorumVerifier());
     }
@@ -1723,7 +1728,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         writeLongToFile(ACCEPTED_EPOCH_FILENAME, e);
     }
    
-    public boolean processReconfig(QuorumVerifier qv, Long suggestedLeaderId, Long zxid, boolean restartLE){
+    public boolean processReconfig(QuorumVerifier qv, Long suggestedLeaderId, Long zxid, boolean restartLE) {
        InetSocketAddress oldClientAddr = getClientAddress();
 
        // update last committed quorum verifier, write the new config to disk
@@ -1751,8 +1756,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                cnxnFactory.reconfigure(myNewQS.clientAddr);
                updateThreadName();
            }
-           
-            boolean roleChange = updateLearnerType(qv);
+
+           boolean roleChange = updateLearnerType(qv);
            boolean leaderChange = false;
            if (suggestedLeaderId != null) {
                // zxid should be non-null too
@@ -1870,7 +1875,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     private void updateThreadName() {
-        String plain = cnxnFactory != null ? cnxnFactory.getLocalAddress().toString() : "disabled";
+        String plain = cnxnFactory != null ?
+                cnxnFactory.getLocalAddress() != null ?
+                        cnxnFactory.getLocalAddress().toString() : "disabled" : "disabled";
         String secure = secureCnxnFactory != null ? secureCnxnFactory.getLocalAddress().toString() : "disabled";
         setName(String.format("QuorumPeer[myid=%d](plain=%s)(secure=%s)", getId(), plain, secure));
     }

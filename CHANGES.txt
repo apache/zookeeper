@@ -308,6 +308,27 @@ BUGFIXES:
   ZOOKEEPER-2405: getTGT() in Login.java mishandles confidential
   information (Michael Han via phunt)
 
+  ZOOKEEPER-2442: Socket leak in QuorumCnxManager connectOne
+  (Michael Han via rgs)
+
+  ZOOKEEPER-2137: Make testPortChange() less flaky
+  (Michael Han via phunt)
+
+  ZOOKEEPER-2297: NPE is thrown while creating "key manager" and "trust manager"
+  (Arshad Mohammad via fpj)
+
+  ZOOKEEPER-2380: Deadlock between leader shutdown and forwarding ACK to the
+  leader (Arshad Mohammad via cnauroth)
+
+  ZOOKEEPER-2366: Reconfiguration of client port causes a socket leak.
+  (fpj via cnauroth)
+
+  ZOOKEEPER-2458: Remove license file for servlet-api dependency
+  (fpj via phunt)
+
+  ZOOKEEPER-2459: Update NOTICE file with Netty notice
+  (fpj via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-2024 Major throughput improvement with mixed workloads (Kfir Lev-Ari via shralex)
 
@@ -424,6 +445,12 @@ IMPROVEMENTS:
   in a single JVM (Arshad Mohammad via fpj)
 
   ZOOKEEPER-2402: Document client side properties (Arshad Mohammad via fpj)
+
+  ZOOKEEPER-2410: add time unit to 'ELECTION TOOK' log.info message
+  (Christine Poerschke via phunt)
+
+  ZOOKEEPER-2433: ZooKeeperSaslServer: allow user principals in
+  subject (Andy B via phunt)
 
 Release 3.5.0 - 8/4/2014
 

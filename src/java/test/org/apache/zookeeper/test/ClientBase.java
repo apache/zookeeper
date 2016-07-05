@@ -290,8 +290,11 @@ public abstract class ClientBase extends ZKTestCase {
         return false;
     }
 
+    /**
+     * Return true if any of the states is achieved
+     */
     public static boolean waitForServerState(QuorumPeer qp, int timeout,
-            String serverState) {
+            String... serverStates) {
         long start = Time.currentElapsedTime();
         while (true) {
             try {
@@ -299,8 +302,11 @@ public abstract class ClientBase extends ZKTestCase {
             } catch (InterruptedException e) {
                 // ignore
             }
-            if (qp.getServerState().equals(serverState))
-                return true;
+            for (String state : serverStates) {
+                if (qp.getServerState().equals(state)) {
+                    return true;
+                }
+            }
             if (Time.currentElapsedTime() > start + timeout) {
                 return false;
             }

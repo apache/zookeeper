@@ -63,16 +63,23 @@ public class ZooKeeperSaslServer {
 
                         int indexOf = servicePrincipalNameAndHostname.indexOf("/");
 
-                        // e.g. servicePrincipalName := "zookeeper"
-                        final String servicePrincipalName = servicePrincipalNameAndHostname.substring(0, indexOf);
-
                         // e.g. serviceHostnameAndKerbDomain := "myhost.foo.com@FOO.COM"
                         final String serviceHostnameAndKerbDomain = servicePrincipalNameAndHostname.substring(indexOf+1,servicePrincipalNameAndHostname.length());
 
-                        indexOf = serviceHostnameAndKerbDomain.indexOf("@");
-                        // e.g. serviceHostname := "myhost.foo.com"
-                        final String serviceHostname = serviceHostnameAndKerbDomain.substring(0,indexOf);
+                        int indexOfAt = serviceHostnameAndKerbDomain.indexOf("@");
 
+                        // Handle Kerberos Service as well as User Principal Names
+                        final String servicePrincipalName, serviceHostname;
+                        if (indexOf > 0){
+                            // e.g. servicePrincipalName := "zookeeper"
+                            servicePrincipalName = servicePrincipalNameAndHostname.substring(0, indexOf);
+                            // e.g. serviceHostname := "myhost.foo.com"
+                            serviceHostname = serviceHostnameAndKerbDomain.substring(0, indexOfAt);
+                        } else {
+                            servicePrincipalName = servicePrincipalNameAndHostname.substring(0, indexOfAt);
+                            serviceHostname = null;
+                        }
+                        
                         final String mech = "GSSAPI";   // TODO: should depend on zoo.cfg specified mechs, but if subject is non-null, it can be assumed to be GSSAPI.
 
                         LOG.debug("serviceHostname is '"+ serviceHostname + "'");

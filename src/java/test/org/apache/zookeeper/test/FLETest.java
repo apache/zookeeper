@@ -528,4 +528,9 @@ public class FLETest extends ZKTestCase {
             }
         }
     }
+
+    @Test
+    public void testElectionTimeUnit() throws Exception {
+        Assert.assertEquals("MS", QuorumPeer.FLE_TIME_UNIT);
+    }
 }
