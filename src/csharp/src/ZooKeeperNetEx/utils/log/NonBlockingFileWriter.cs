@@ -106,7 +106,7 @@ namespace org.apache.utils
                 if (!isDisposed.Value)
                 {
                     isDisposed.Value = true;
-                    streamWriter.Dispose();
+                    streamWriter?.Dispose();
                 }
             }
 
