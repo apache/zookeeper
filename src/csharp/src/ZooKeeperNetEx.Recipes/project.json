@@ -1,12 +1,12 @@
 ﻿{
   "title": "Apache ZooKeeper .NET async Recipes",
-  "version": "3.4.8.4",
+  "version": "3.4.8.5",
   "description": ".NET async Distributed recipes for ZooKeeper: Queue, Lock and Leader Election.",
   "authors": [ "Shay Hazor" ],
   "packOptions": {
     "owners": [ "Shay Hazor" ],
     "summary": ".NET async Recipes for ZooKeeper",
-    "releaseNotes": ".NET Core RC2\nThis project is actively maintained at: https://github.com/shayhatsor/zookeeper \nPlease feel free to open an issue or ask a question there.",
+    "releaseNotes": ".NET Core 1.0 RTM\nThis project is actively maintained at: https://github.com/shayhatsor/zookeeper \nPlease feel free to open an issue or ask a question there.",
     "tags": [ "ZooKeeper", "Recipes", ".NET", "Lock", "Leader Election", "Queue" ],
     "projectUrl": "https://github.com/shayhatsor/zookeeper",
     "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
@@ -33,6 +33,6 @@
     }
   },
   "dependencies": {
-    "ZooKeeperNetEx": "3.4.8.4"
+    "ZooKeeperNetEx": "3.4.8.5"
   }
 }

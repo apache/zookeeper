@@ -5,8 +5,8 @@
     "warningsAsErrors": true
   },
   "dependencies": {
-    "ZooKeeperNetEx.Tests": "1.0.0.0",
-    "ZooKeeperNetEx.Recipes": "3.4.8.4"
+    "ZooKeeperNetEx.Tests": "*",
+    "ZooKeeperNetEx.Recipes": "3.4.8.5"
   },
   "frameworks": {
     "netcoreapp1.0": {

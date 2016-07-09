@@ -5,10 +5,11 @@
     "warningsAsErrors": true
   },
   "dependencies": {
-    "ZooKeeperNetEx": "3.4.8.4",
     "Microsoft.NETCore.Platforms": "1.0.1-*",
+    "ZooKeeperNetEx": "3.4.8.5",
     "Newtonsoft.Json": "*",
-    "xunit": "2.1.0"
+    "xunit": "2.1.0",
+    "dotnet-test-xunit": "1.0.0-*"
   },
   "frameworks": {
      "netcoreapp1.0": {
@@ -16,8 +17,7 @@
         "Microsoft.NETCore.App": {
           "version": "1.0.0-*",
           "type": "platform"
-        },
-        "dotnet-test-xunit": "1.0.0-*"
+        }
       },
       "imports": [
         "dnxcore50",
@@ -28,9 +28,6 @@
       "frameworkAssemblies": {
         "System.Runtime": "",
         "System.Threading.Tasks": ""
-      },
-      "dependencies": {
-        "xunit.runner.console": "2.1.0"
       }
     }
   },
