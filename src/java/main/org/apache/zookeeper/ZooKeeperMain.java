@@ -34,6 +34,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 
+import org.apache.zookeeper.cli.CliException;
+import org.apache.zookeeper.cli.CommandNotFoundException;
+import org.apache.zookeeper.cli.MalformedCommandException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.ZooDefs.Ids;
@@ -42,7 +45,6 @@ import org.apache.zookeeper.data.Stat;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.cli.ParseException;
 import org.apache.zookeeper.cli.AddAuthCommand;
 import org.apache.zookeeper.cli.CliCommand;
 import org.apache.zookeeper.cli.CloseCommand;
@@ -79,6 +81,7 @@ public class ZooKeeperMain {
     protected HashMap<Integer,String> history = new HashMap<Integer,String>( );
     protected int commandCount = 0;
     protected boolean printWatches = true;
+    protected int exitCode = 0;
 
     protected ZooKeeper zk;
     protected String host = "";
@@ -283,8 +286,7 @@ public class ZooKeeperMain {
                  new MyWatcher(), readOnly);
     }
     
-    public static void main(String args[])
-        throws KeeperException, IOException, InterruptedException
+    public static void main(String args[]) throws CliException, IOException, InterruptedException
     {
         ZooKeeperMain main = new ZooKeeperMain(args);
         main.run();
@@ -302,7 +304,7 @@ public class ZooKeeperMain {
       this.zk = zk;
     }
 
-    void run() throws KeeperException, IOException, InterruptedException {
+    void run() throws CliException, IOException, InterruptedException {
         if (cl.getCommand() == null) {
             System.out.println("Welcome to ZooKeeper!");
 
@@ -360,10 +362,10 @@ public class ZooKeeperMain {
             // Command line args non-null.  Run what was passed.
             processCmd(cl);
         }
+        System.exit(exitCode);
     }
 
-    public void executeLine(String line)
-    throws InterruptedException, IOException, KeeperException {
+    public void executeLine(String line) throws CliException, InterruptedException, IOException {
       if (!line.equals("")) {
         cl.parseCommand(line);
         addToHistory(commandCount,line);
@@ -580,80 +582,51 @@ public class ZooKeeperMain {
         return true;
     }
 
-    protected boolean processCmd(MyCommandOptions co)
-        throws KeeperException, IOException, InterruptedException
-    {
+    protected boolean processCmd(MyCommandOptions co) throws CliException, IOException, InterruptedException {
+        boolean watch = false;
         try {
-            return processZKCmd(co);
-        } catch (IllegalArgumentException e) {
-            System.err.println("Command failed: " + e);
-        } catch (KeeperException.NoNodeException e) {
-            System.err.println("Node does not exist: " + e.getPath());
-        } catch (KeeperException.NoChildrenForEphemeralsException e) {
-            System.err.println("Ephemerals cannot have children: "
-                    + e.getPath());
-        } catch (KeeperException.NodeExistsException e) {
-            System.err.println("Node already exists: " + e.getPath());
-        } catch (KeeperException.NotEmptyException e) {
-            System.err.println("Node not empty: " + e.getPath());
-        } catch (KeeperException.NotReadOnlyException e) {
-            System.err.println("Not a read-only call: " + e.getPath());
-        }catch (KeeperException.InvalidACLException  e) {
-            System.err.println("Acl is not valid : "+e.getPath());
-        }catch (KeeperException.NoAuthException  e) {
-            System.err.println("Authentication is not valid : "+e.getPath());
-        }catch (KeeperException.BadArgumentsException   e) {
-            System.err.println("Arguments are not valid : "+e.getPath());
-        }catch (KeeperException.BadVersionException e) {
-            System.err.println("version No is not valid : "+e.getPath());
-        }catch (KeeperException.ReconfigInProgress e) {
-            System.err.println("Another reconfiguration is in progress -- concurrent " +
-                   "reconfigs not supported (yet)");
-        }catch (KeeperException.NewConfigNoQuorum e) {
-            System.err.println("No quorum of new config is connected and " +
-                   "up-to-date with the leader of last commmitted config - try invoking reconfiguration after " +
-                   "new servers are connected and synced");
+            watch = processZKCmd(co);
+            exitCode = 0;
+        } catch (CliException ex) {
+            exitCode = ex.getExitCode();
+            System.err.println(ex.getMessage());
         }
-        return false;
+        return watch;
     }
 
-    protected boolean processZKCmd(MyCommandOptions co)
-        throws KeeperException, IOException, InterruptedException
-    {
+    protected boolean processZKCmd(MyCommandOptions co) throws CliException, IOException, InterruptedException {
         String[] args = co.getArgArray();
         String cmd = co.getCommand();
         if (args.length < 1) {
             usage();
-            return false;
+            throw new MalformedCommandException("No command entered");
         }
 
         if (!commandMap.containsKey(cmd)) {
             usage();
-            return false;
+            throw new CommandNotFoundException("Command not found " + cmd);
         }
         
         boolean watch = false;
         LOG.debug("Processing " + cmd);
-        
-        try {
+
+
         if (cmd.equals("quit")) {
             zk.close();
-            System.exit(0);
+            System.exit(exitCode);
         } else if (cmd.equals("redo") && args.length >= 2) {
             Integer i = Integer.decode(args[1]);
-            if (commandCount <= i){ // don't allow redoing this redo
-                System.out.println("Command index out of range");
-                return false;
+            if (commandCount <= i) { // don't allow redoing this redo
+                throw new MalformedCommandException("Command index out of range");
             }
             cl.parseCommand(history.get(i));
-            if (cl.getCommand().equals( "redo" )){
-                System.out.println("No redoing redos");
-                return false;
+            if (cl.getCommand().equals("redo")) {
+                throw new MalformedCommandException("No redoing redos");
             }
             history.put(commandCount, history.get(i));
-            processCmd( cl);
+            processCmd(cl);
         } else if (cmd.equals("history")) {
-            for (int i=commandCount - 10;i<=commandCount;++i) {
+            for (int i = commandCount - 10; i <= commandCount; ++i) {
                 if (i < 0) continue;
                 System.out.println(i + " - " + history.get(i));
             }
@@ -664,12 +637,12 @@ public class ZooKeeperMain {
                 printWatches = args[1].equals("on");
             }
         } else if (cmd.equals("connect")) {
-            if (args.length >=2) {
+            if (args.length >= 2) {
                 connectToZK(args[1]);
             } else {
-                connectToZK(host);                
+                connectToZK(host);
             }
-        } 
+        }
         
         // Below commands all need a live connection
         if (zk == null || !zk.getState().isAlive()) {
@@ -684,12 +657,6 @@ public class ZooKeeperMain {
             watch = cliCmd.parse(args).exec();
         } else if (!commandMap.containsKey(cmd)) {
              usage();
-        }
-
-        } catch (ParseException ex) {
-            System.err.println(ex.getMessage());
-            usage();
-            return false;
         }
         return watch;
     }

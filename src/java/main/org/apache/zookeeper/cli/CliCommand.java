@@ -17,11 +17,8 @@
  */
 package org.apache.zookeeper.cli;
 
-import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Map;
-import org.apache.commons.cli.ParseException;
-import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
 
 /**
@@ -108,17 +105,14 @@ abstract public class CliCommand {
      * parse the command arguments
      * @param cmdArgs
      * @return this CliCommand
-     * @throws ParseException 
+     * @throws CliParseException
      */
-    abstract public CliCommand parse(String cmdArgs[]) throws ParseException;
+    abstract public CliCommand parse(String cmdArgs[]) throws CliParseException;
     
     /**
      * 
      * @return
-     * @throws KeeperException
-     * @throws IOException
-     * @throws InterruptedException 
+     * @throws CliException
      */
-    abstract public boolean exec() throws KeeperException,
-            IOException, InterruptedException;
+    abstract public boolean exec() throws CliException;
 }

@@ -17,30 +17,14 @@
  */
 package org.apache.zookeeper.cli;
 
-/**
- * close command for cli
- */
-public class CloseCommand extends CliCommand {
+import org.apache.commons.cli.ParseException;
 
-    public CloseCommand() {
-        super("close", "");
-    }
-    
-    
-    @Override
-    public CliCommand parse(String[] cmdArgs) throws CliParseException {
-        return this;
+public class CliParseException extends CliException {
+    public CliParseException(ParseException parseException) {
+        super(parseException);
     }
 
-    @Override
-    public boolean exec() throws CliException {
-        try {
-            zk.close();
-        } catch (Exception ex) {
-            throw new CliWrapperException(ex);
-        }
-        
-        return false;
+    public CliParseException(String message) {
+        super(message);
     }
-    
 }

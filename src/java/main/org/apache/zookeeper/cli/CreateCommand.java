@@ -45,26 +45,29 @@ public class CreateCommand extends CliCommand {
 
 
     @Override
-    public CliCommand parse(String[] cmdArgs) throws ParseException {
+    public CliCommand parse(String[] cmdArgs) throws CliParseException {
         Parser parser = new PosixParser();
-        cl = parser.parse(options, cmdArgs);
+        try {
+            cl = parser.parse(options, cmdArgs);
+        } catch (ParseException ex) {
+            throw new CliParseException(ex);
+        }
         args = cl.getArgs();
         if(args.length < 2) {
-            throw new ParseException(getUsageStr());
+            throw new CliParseException(getUsageStr());
         }
         return this;
     }
 
 
     @Override
-    public boolean exec() throws KeeperException, InterruptedException {
+    public boolean exec() throws CliException {
         CreateMode flags = CreateMode.PERSISTENT;
         boolean hasE = cl.hasOption("e");
         boolean hasS = cl.hasOption("s");
         boolean hasC = cl.hasOption("c");
         if (hasC && (hasE || hasS)) {
-            err.println("-c cannot be combined with -s or -e. Containers cannot be ephemeral or sequential.");
-            return false;
+            throw new MalformedCommandException("-c cannot be combined with -s or -e. Containers cannot be ephemeral or sequential.");
         }
 
         if(hasE && hasS) {
@@ -90,10 +93,12 @@ public class CreateCommand extends CliCommand {
             err.println("Created " + newPath);
         } catch(KeeperException.EphemeralOnLocalSessionException e) {
             err.println("Unable to create ephemeral node on a local session");
-            return false;
+            throw new CliWrapperException(e);
         } catch (KeeperException.InvalidACLException ex) {
             err.println(ex.getMessage());
-            return false;
+            throw new CliWrapperException(ex);
+        } catch (KeeperException|InterruptedException ex) {
+            throw new CliWrapperException(ex);
         }
         return true;
     }

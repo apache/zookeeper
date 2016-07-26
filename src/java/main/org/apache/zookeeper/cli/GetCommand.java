@@ -40,13 +40,17 @@ public class GetCommand extends CliCommand {
     }
 
     @Override
-    public CliCommand parse(String[] cmdArgs) throws ParseException {
+    public CliCommand parse(String[] cmdArgs) throws CliParseException {
 
         Parser parser = new PosixParser();
-        cl = parser.parse(options, cmdArgs);
+        try {
+            cl = parser.parse(options, cmdArgs);
+        } catch (ParseException ex) {
+            throw new CliParseException(ex);
+        }
         args = cl.getArgs();
         if (args.length < 2) {
-            throw new ParseException(getUsageStr());
+            throw new CliParseException(getUsageStr());
         }
 
         retainCompatibility(cmdArgs);
@@ -54,7 +58,7 @@ public class GetCommand extends CliCommand {
         return this;
     }
 
-    private void retainCompatibility(String[] cmdArgs) throws ParseException {
+    private void retainCompatibility(String[] cmdArgs) throws CliParseException {
         // get path [watch]
         if (args.length > 2) {
             // rewrite to option
@@ -62,17 +66,26 @@ public class GetCommand extends CliCommand {
             err.println("'get path [watch]' has been deprecated. "
                     + "Please use 'get [-s] [-w] path' instead.");
             Parser parser = new PosixParser();
-            cl = parser.parse(options, cmdArgs);
+            try {
+                cl = parser.parse(options, cmdArgs);
+            } catch (ParseException ex) {
+                throw new CliParseException(ex);
+            }
             args = cl.getArgs();
         }
     }
 
     @Override
-    public boolean exec() throws KeeperException, InterruptedException {
+    public boolean exec() throws CliException {
         boolean watch = cl.hasOption("w");
         String path = args[1];
         Stat stat = new Stat();
-        byte data[] = zk.getData(path, watch, stat);
+        byte data[];
+        try {
+            data = zk.getData(path, watch, stat);
+        } catch (KeeperException|InterruptedException ex) {
+            throw new CliException(ex);
+        }
         data = (data == null) ? "null".getBytes() : data;
         out.println(new String(data));
         if (cl.hasOption("s")) {

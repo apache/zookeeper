@@ -47,18 +47,22 @@ public class RemoveWatchesCommand extends CliCommand {
     }
 
     @Override
-    public CliCommand parse(String[] cmdArgs) throws ParseException {
+    public CliCommand parse(String[] cmdArgs) throws CliParseException {
         Parser parser = new PosixParser();
-        cl = parser.parse(options, cmdArgs);
+        try {
+            cl = parser.parse(options, cmdArgs);
+        } catch (ParseException ex) {
+            throw new CliParseException(ex);
+        }
         args = cl.getArgs();
         if (args.length < 2) {
-            throw new ParseException(getUsageStr());
+            throw new CliParseException(getUsageStr());
         }
         return this;
     }
 
     @Override
-    public boolean exec() throws KeeperException, InterruptedException {
+    public boolean exec() throws CliWrapperException {
         String path = args[1];
         WatcherType wtype = WatcherType.Any;
         // if no matching option -c or -d or -a is specified, we remove
@@ -75,9 +79,8 @@ public class RemoveWatchesCommand extends CliCommand {
 
         try {
             zk.removeAllWatches(path, wtype, local);
-        } catch (KeeperException.NoWatcherException ex) {
-            err.println(ex.getMessage());
-            return false;
+        } catch (KeeperException|InterruptedException ex) {
+            throw new CliWrapperException(ex);
         }
         return true;
     }
