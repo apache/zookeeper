@@ -45,22 +45,32 @@ public class GetAclCommand extends CliCommand {
     }
 
     @Override
-    public CliCommand parse(String[] cmdArgs) throws ParseException {
+    public CliCommand parse(String[] cmdArgs) throws CliParseException {
         Parser parser = new PosixParser();
-        cl = parser.parse(options, cmdArgs);
+        try {
+            cl = parser.parse(options, cmdArgs);
+        } catch (ParseException ex) {
+            throw new CliParseException(ex);
+        }
         args = cl.getArgs();
         if (args.length < 2) {
-            throw new ParseException(getUsageStr());
+            throw new CliParseException(getUsageStr());
         }
 
         return this;
     }
 
     @Override
-    public boolean exec() throws KeeperException, InterruptedException {
+    public boolean exec() throws CliException {
         String path = args[1];
         Stat stat = new Stat();
-        List<ACL> acl = zk.getACL(path, stat);
+        List<ACL> acl;
+        try {
+           acl = zk.getACL(path, stat);
+        } catch (KeeperException|InterruptedException ex) {
+            throw new CliWrapperException(ex);
+        }
+
         for (ACL a : acl) {
             out.println(a.getId() + ": "
                         + getPermString(a.getPerms()));
