@@ -554,7 +554,7 @@ $comment"
     echo ""
     echo ""
     ### Update Jira with a comment
-    export USER=hudson
+    export USER=jenkins
     $JIRACLI -s https://issues.apache.org/jira -a addcomment -u hadoopqa -p $JIRA_PASSWD --comment "$comment" --issue $defect
     $JIRACLI -s https://issues.apache.org/jira -a logout -u hadoopqa -p $JIRA_PASSWD
   fi
