@@ -40,12 +40,16 @@ public class StatCommand extends CliCommand {
 
     
     @Override
-    public CliCommand parse(String[] cmdArgs) throws ParseException {
+    public CliCommand parse(String[] cmdArgs) throws CliParseException {
         Parser parser = new PosixParser();
-        cl = parser.parse(options, cmdArgs);
+        try {
+            cl = parser.parse(options, cmdArgs);
+        } catch (ParseException ex) {
+            throw new CliParseException(ex);
+        }
         args = cl.getArgs();
         if(args.length < 2) {
-            throw new ParseException(getUsageStr());
+            throw new CliParseException(getUsageStr());
         }    
         
         retainCompatibility(cmdArgs);
@@ -53,7 +57,7 @@ public class StatCommand extends CliCommand {
         return this;
     }
 
-    private void retainCompatibility(String[] cmdArgs) throws ParseException {
+    private void retainCompatibility(String[] cmdArgs) throws CliParseException {
         // stat path [watch]
         if (args.length > 2) {
             // rewrite to option
@@ -61,19 +65,27 @@ public class StatCommand extends CliCommand {
             err.println("'stat path [watch]' has been deprecated. "
                     + "Please use 'stat [-w] path' instead.");
             Parser parser = new PosixParser();
-            cl = parser.parse(options, cmdArgs);
+            try {
+                cl = parser.parse(options, cmdArgs);
+            } catch (ParseException ex) {
+                throw new CliParseException(ex);
+            }
             args = cl.getArgs();
         }
     }
     
     @Override
-    public boolean exec() throws KeeperException,
-            InterruptedException {
+    public boolean exec() throws CliException {
         String path = args[1];
         boolean watch = cl.hasOption("w");
-        Stat stat = zk.exists(path, watch);
+        Stat stat;
+        try {
+            stat = zk.exists(path, watch);
+        } catch (KeeperException|InterruptedException ex) {
+            throw new CliWrapperException(ex);
+        }
         if (stat == null) {
-            throw new KeeperException.NoNodeException(path);
+            throw new CliWrapperException(new KeeperException.NoNodeException(path));
         }
         new StatPrinter(out).print(stat);
         return watch;

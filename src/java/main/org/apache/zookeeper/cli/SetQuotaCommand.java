@@ -46,33 +46,44 @@ public class SetQuotaCommand extends CliCommand {
    }
 
     @Override
-    public CliCommand parse(String[] cmdArgs) throws ParseException {
+    public CliCommand parse(String[] cmdArgs) throws CliParseException {
         Parser parser = new PosixParser();
-        cl = parser.parse(options, cmdArgs);
+        try {
+            cl = parser.parse(options, cmdArgs);
+        } catch (ParseException ex) {
+            throw new CliParseException(ex);
+        }
         args = cl.getArgs();
         if (args.length < 2) {
-            throw new ParseException(getUsageStr());
+            throw new CliParseException(getUsageStr());
         }
 
         return this;
     }
 
     @Override
-    public boolean exec() throws KeeperException, IOException,
-            InterruptedException {
+    public boolean exec() throws CliException {
         // get the args
         String path = args[1];
 
         if (cl.hasOption("b")) {
             // we are setting the bytes quota
             long bytes = Long.parseLong(cl.getOptionValue("b"));
-            createQuota(zk, path, bytes, -1);
+            try {
+                createQuota(zk, path, bytes, -1);
+            } catch (KeeperException|IOException|InterruptedException ex) {
+                throw new CliWrapperException(ex);
+            }
         } else if (cl.hasOption("n")) {
             // we are setting the num quota
             int numNodes = Integer.parseInt(cl.getOptionValue("n"));
-            createQuota(zk, path, -1L, numNodes);
+            try {
+                createQuota(zk, path, -1L, numNodes);
+            } catch (KeeperException|IOException|InterruptedException ex) {
+                throw new CliWrapperException(ex);
+            }
         } else {
-            err.println(getUsageStr());
+            throw new MalformedCommandException(getUsageStr());
         }
 
         return false;
