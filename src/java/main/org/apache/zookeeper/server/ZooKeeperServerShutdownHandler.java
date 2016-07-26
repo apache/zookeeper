@@ -22,13 +22,15 @@ import java.util.concurrent.CountDownLatch;
 import org.apache.zookeeper.server.ZooKeeperServer.State;
 
 /**
- * Observer which will be used to get server state change notifications.
+ * ZooKeeper server shutdown handler which will be used to handle ERROR or
+ * SHUTDOWN server state changes, which in turn notifies the associated shutdown
+ * latch.
  */
-class ZooKeeperServerStateListener {
-    private final CountDownLatch healthMonitorLatch;
+class ZooKeeperServerShutdownHandler {
+    private final CountDownLatch shutdownLatch;
 
-    ZooKeeperServerStateListener(CountDownLatch healthMonitorLatch) {
-        this.healthMonitorLatch = healthMonitorLatch;
+    ZooKeeperServerShutdownHandler(CountDownLatch shutdownLatch) {
+        this.shutdownLatch = shutdownLatch;
     }
 
     /**
@@ -36,9 +38,9 @@ class ZooKeeperServerStateListener {
      *
      * @param state new server state
      */
-    void stateChanged(State state) {
-        if (state != State.RUNNING) {
-            healthMonitorLatch.countDown();
+    void handle(State state) {
+        if ((state == State.ERROR) || (state == State.SHUTDOWN)) {
+            shutdownLatch.countDown();
         }
     }
 }

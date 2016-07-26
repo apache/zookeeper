@@ -31,15 +31,15 @@ class ZooKeeperServerListenerImpl implements ZooKeeperServerListener {
     private static final Logger LOG = LoggerFactory
             .getLogger(ZooKeeperServerListenerImpl.class);
 
-    private final ZooKeeperServer zooKeeperServer;
+    private final ZooKeeperServer zkServer;
 
     ZooKeeperServerListenerImpl(ZooKeeperServer zooKeeperServer) {
-        this.zooKeeperServer = zooKeeperServer;
+        this.zkServer = zooKeeperServer;
     }
 
     @Override
     public void notifyStopping(String threadName, int exitCode) {
         LOG.info("Thread {} exits, error code {}", threadName, exitCode);
-        zooKeeperServer.setState(State.ERROR);
+        zkServer.setState(State.ERROR);
     }
 }

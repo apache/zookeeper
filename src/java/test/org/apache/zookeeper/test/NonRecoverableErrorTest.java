@@ -38,6 +38,9 @@ import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.Assert;
 import org.junit.Test;
 
+/**
+ * This class tests the non-recoverable error behavior of quorum server.
+ */
 public class NonRecoverableErrorTest extends QuorumPeerTestBase {
     private static final String NODE_PATH = "/noLeaderIssue";
 
@@ -76,10 +79,10 @@ public class NonRecoverableErrorTest extends QuorumPeerTestBase {
                             CONNECTION_TIMEOUT));
         }
 
-        CountdownWatcher watch = new CountdownWatcher();
+        CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zk = new ZooKeeper("127.0.0.1:" + clientPorts[0],
-                ClientBase.CONNECTION_TIMEOUT, watch);
-        watch.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
+                ClientBase.CONNECTION_TIMEOUT, watcher);
+        watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
 
         String data = "originalData";
         zk.create(NODE_PATH, data.getBytes(), Ids.OPEN_ACL_UNSAFE,
@@ -114,6 +117,10 @@ public class NonRecoverableErrorTest extends QuorumPeerTestBase {
             // do nothing
         }
 
+        // resetting watcher so that this watcher can be again used to ensure
+        // that the zkClient is able to re-establish connection with the
+        // newly elected zookeeper quorum.
+        watcher.reset();
         waitForNewLeaderElection(leader, leaderCurrentEpoch);
 
         // ensure server started, give enough time, so that new leader election
@@ -132,6 +139,7 @@ public class NonRecoverableErrorTest extends QuorumPeerTestBase {
         assertNotNull("New leader must have been elected by now", leader);
 
         String uniqueNode = uniqueZnode();
+        watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
         String createNode = zk.create(uniqueNode, data.getBytes(),
                 Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         // if node is created successfully then it means that ZooKeeper service

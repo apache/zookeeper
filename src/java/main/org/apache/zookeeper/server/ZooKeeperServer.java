@@ -123,7 +123,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     private final ServerStats serverStats;
     private final ZooKeeperServerListener listener;
-    private ZooKeeperServerStateListener zksStateListener;
+    private ZooKeeperServerShutdownHandler zkShutdownHandler;
 
     void removeCnxn(ServerCnxn cnxn) {
         zkDb.removeCnxn(cnxn);
@@ -477,12 +477,12 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     /**
      * Sets the state of ZooKeeper server. After changing the state, this will
-     * also notify server state changes to the registered listener, if any.
-     * 
-     * Following are the state transitions:
-     * <li>During startup the server state will be INITIAL.</li>
-     * <li>After the successful server startup the state will set to RUNNING.
-     * </li>
+     * notify the server state changes to registered shutdown handler, if any.
+     * <p>
+     * Following are the server state transitions:
+     * <li>During startup the server will be in INITIAL state.</li>
+     * <li>After the successful startup the server will set the state to
+     * RUNNING.</li>
      * <li>Server will enter into ERROR state if it hits an internal error.
      * {@link ZooKeeperServerListenerImpl} will notify critical resource error
      * events.</li>
@@ -493,9 +493,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      */
     void setState(State state) {
         this.state = state;
-        // Notify server state changes to the registered listener, if any.
-        if (zksStateListener != null) {
-            zksStateListener.stateChanged(state);
+        // Notify server state changes to the registered shutdown handler, if any.
+        if (zkShutdownHandler != null) {
+            zkShutdownHandler.handle(state);
         }
     }
 
@@ -506,7 +506,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * @return true if the server is running or server hits an error, false
      *         otherwise.
      */
-    protected boolean needsShutdown() {
+    protected boolean canShutdown() {
         return state == State.RUNNING || state == State.ERROR;
     }
 
@@ -518,7 +518,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public synchronized void shutdown() {
-        if (!needsShutdown()) {
+        if (!canShutdown()) {
             LOG.debug("ZooKeeper server is not running, so not proceeding to shutdown!");
             return;
         }
@@ -1170,13 +1170,14 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     /**
-     * This method can be used to register the ZooKeeperServerStateListener to
-     * get server state change notifications. ZooKeeperServerStateListener will
-     * get notified for every server state changes {@link #setState(State)}.
+     * This method is used to register the ZooKeeperServerShutdownHandler to get
+     * server's error or shutdown state change notifications.
+     * {@link ZooKeeperServerShutdownHandler#handle(State)} will be called for
+     * every server state changes {@link #setState(State)}.
      *
-     * @param zksStateListener state change listener
+     * @param zkShutdownHandler shutdown handler
      */
-    void registerServerStateListener(ZooKeeperServerStateListener zksStateListener) {
-        this.zksStateListener = zksStateListener;
+    void registerServerShutdownHandler(ZooKeeperServerShutdownHandler zkShutdownHandler) {
+        this.zkShutdownHandler = zkShutdownHandler;
     }
 }

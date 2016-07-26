@@ -122,9 +122,11 @@ public class ZooKeeperServerMain {
             final ZooKeeperServer zkServer = new ZooKeeperServer(txnLog,
                     config.tickTime, config.minSessionTimeout, config.maxSessionTimeout, null);
 
-            // Register listener which will be used for monitoring the server state.
-            final CountDownLatch healthMonitorLatch = new CountDownLatch(1);
-            zkServer.registerServerStateListener(new ZooKeeperServerStateListener(healthMonitorLatch));
+            // Registers shutdown handler which will be used to know the
+            // server error or shutdown state changes.
+            final CountDownLatch shutdownLatch = new CountDownLatch(1);
+            zkServer.registerServerShutdownHandler(
+                    new ZooKeeperServerShutdownHandler(shutdownLatch));
 
             // Start Admin server
             adminServer = AdminServerFactory.createAdminServer();
@@ -153,7 +155,7 @@ public class ZooKeeperServerMain {
 
             // Watch status of ZooKeeper server. It will do a graceful shutdown
             // if the server is not running or hits an internal error.
-            healthMonitorLatch.await();
+            shutdownLatch.await();
 
             shutdown();
 
@@ -163,7 +165,7 @@ public class ZooKeeperServerMain {
             if (secureCnxnFactory != null) {
                 secureCnxnFactory.join();
             }
-            if (zkServer.needsShutdown()) {
+            if (zkServer.canShutdown()) {
                 zkServer.shutdown();
             }
         } catch (InterruptedException e) {
