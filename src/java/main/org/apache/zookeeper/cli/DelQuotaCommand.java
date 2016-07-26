@@ -45,31 +45,38 @@ public class DelQuotaCommand extends CliCommand {
     }
 
     @Override
-    public CliCommand parse(String[] cmdArgs) throws ParseException {
+    public CliCommand parse(String[] cmdArgs) throws CliParseException {
         Parser parser = new PosixParser();
-        cl = parser.parse(options, cmdArgs);
+        try {
+            cl = parser.parse(options, cmdArgs);
+        } catch (ParseException ex) {
+            throw new CliParseException(ex);
+        }
         args = cl.getArgs();
         if (args.length < 2) {
-            throw new ParseException(getUsageStr());
+            throw new CliParseException(getUsageStr());
         }
 
         return this;
     }
 
     @Override
-    public boolean exec() throws KeeperException, IOException, 
-                                 InterruptedException {
+    public boolean exec() throws CliException {
         //if neither option -n or -b is specified, we delete
         // the quota node for thsi node.
         String path = args[1];
-        if (cl.hasOption("b")) {
-            delQuota(zk, path, true, false);
-        } else if (cl.hasOption("n")) {
-            delQuota(zk, path, false, true);
-        } else if (args.length == 2) {
-            // we dont have an option specified.
-            // just delete whole quota node
-            delQuota(zk, path, true, true);
+        try {
+            if (cl.hasOption("b")) {
+                delQuota(zk, path, true, false);
+            } else if (cl.hasOption("n")) {
+                delQuota(zk, path, false, true);
+            } else if (args.length == 2) {
+                // we dont have an option specified.
+                // just delete whole quota node
+                delQuota(zk, path, true, true);
+            }
+        } catch (KeeperException|InterruptedException|IOException ex) {
+            throw new CliWrapperException(ex);
         }
         return false;
     }

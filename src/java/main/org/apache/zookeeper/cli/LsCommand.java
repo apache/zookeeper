@@ -47,16 +47,17 @@ public class LsCommand extends CliCommand {
     }
 
     @Override
-    public CliCommand parse(String[] cmdArgs) throws ParseException {
+    public CliCommand parse(String[] cmdArgs) throws CliParseException {
         Parser parser = new PosixParser();
-        cl = parser.parse(options, cmdArgs);
+        try {
+            cl = parser.parse(options, cmdArgs);
+        } catch (ParseException ex) {
+            throw new CliParseException(ex);
+        }
+
         args = cl.getArgs();
         if (cl.hasOption("?")) {
             printHelp();
-        }
-
-        if (args.length < 2) {
-            throw new ParseException(getUsageStr());
         }
 
         retainCompatibility(cmdArgs);
@@ -64,7 +65,7 @@ public class LsCommand extends CliCommand {
         return this;
     }
 
-    private void retainCompatibility(String[] cmdArgs) throws ParseException {
+    private void retainCompatibility(String[] cmdArgs) throws CliParseException {
         // get path [watch]
         if (args.length > 2) {
             // rewrite to option
@@ -72,13 +73,21 @@ public class LsCommand extends CliCommand {
             err.println("'ls path [watch]' has been deprecated. "
                     + "Please use 'ls [-w] path' instead.");
             Parser parser = new PosixParser();
-            cl = parser.parse(options, cmdArgs);
+            try {
+                cl = parser.parse(options, cmdArgs);
+            } catch (ParseException ex) {
+                throw new CliParseException(ex);
+            }
             args = cl.getArgs();
         }
     }
 
     @Override
-    public boolean exec() throws KeeperException, InterruptedException {
+    public boolean exec() throws CliException {
+        if (args.length < 2) {
+            throw new MalformedCommandException(getUsageStr());
+        }
+
         String path = args[1];
         boolean watch = cl.hasOption("w");
         boolean withStat = cl.hasOption("s");
@@ -96,9 +105,8 @@ public class LsCommand extends CliCommand {
             if (withStat) {
                 new StatPrinter(out).print(stat);
             }
-        } catch (KeeperException.NoAuthException ex) {
-            err.println(ex.getMessage());
-            watch = false;
+        } catch (KeeperException|InterruptedException ex) {
+            throw new CliWrapperException(ex);
         }
         return watch;
     }

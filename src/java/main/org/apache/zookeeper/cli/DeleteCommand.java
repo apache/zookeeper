@@ -38,12 +38,16 @@ public class DeleteCommand extends CliCommand {
     }
 
     @Override
-    public CliCommand parse(String[] cmdArgs) throws ParseException {
+    public CliCommand parse(String[] cmdArgs) throws CliParseException {
         Parser parser = new PosixParser();
-        cl = parser.parse(options, cmdArgs);
+        try {
+            cl = parser.parse(options, cmdArgs);
+        } catch (ParseException ex) {
+            throw new CliParseException(ex);
+        }
         args = cl.getArgs();
         if (args.length < 2) {
-            throw new ParseException(getUsageStr());
+            throw new CliParseException(getUsageStr());
         }
         
         retainCompatibility(cmdArgs);
@@ -51,7 +55,7 @@ public class DeleteCommand extends CliCommand {
         return this;
     }
 
-    private void retainCompatibility(String[] cmdArgs) throws ParseException {
+    private void retainCompatibility(String[] cmdArgs) throws CliParseException {
         // delete path [version]
         if (args.length > 2) {
             // rewrite to option
@@ -63,13 +67,17 @@ public class DeleteCommand extends CliCommand {
             err.println("'delete path [version]' has been deprecated. "
                     + "Please use 'delete [-v version] path' instead.");
             Parser parser = new PosixParser();
-            cl = parser.parse(options, newCmd);
+            try {
+                cl = parser.parse(options, cmdArgs);
+            } catch (ParseException ex) {
+                throw new CliParseException(ex);
+            }
             args = cl.getArgs();
         }
     }
 
     @Override
-    public boolean exec() throws KeeperException, InterruptedException {
+    public boolean exec() throws CliException {
         String path = args[1];
         int version;
         if (cl.hasOption("v")) {
@@ -80,8 +88,8 @@ public class DeleteCommand extends CliCommand {
         
         try {
         zk.delete(path, version);
-        } catch(KeeperException.BadVersionException ex) {
-            err.println(ex.getMessage());
+        } catch(KeeperException|InterruptedException ex) {
+            throw new CliWrapperException(ex);
         }
         return false;
     }

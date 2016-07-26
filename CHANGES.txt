@@ -1,3 +1,13 @@
+Unreleased
+
+BUGFIXES:
+
+  ZOOKEEPER-1898: ZooKeeper Java cli shell always returns "0" as exit code
+  (Abraham Fine via phunt)
+
+IMPROVEMENTS:
+
+
 Release 3.5.2 - 06/29/2016
 
 BUGFIXES:

@@ -40,19 +40,23 @@ public class SetCommand extends CliCommand {
     }
 
     @Override
-    public CliCommand parse(String[] cmdArgs) throws ParseException {
+    public CliCommand parse(String[] cmdArgs) throws CliParseException {
         Parser parser = new PosixParser();
-        cl = parser.parse(options, cmdArgs);
+        try {
+            cl = parser.parse(options, cmdArgs);
+        } catch (ParseException ex) {
+            throw new CliParseException(ex);
+        }
         args = cl.getArgs();
         if (args.length < 3) {
-            throw new ParseException(getUsageStr());
+            throw new CliParseException(getUsageStr());
         }
 
         return this;
     }
 
     @Override
-    public boolean exec() throws KeeperException, InterruptedException {
+    public boolean exec() throws CliException {
         String path = args[1];
         byte[] data = args[2].getBytes();
         int version;
@@ -67,8 +71,8 @@ public class SetCommand extends CliCommand {
             if (cl.hasOption("s")) {
                 new StatPrinter(out).print(stat);
             }
-        } catch (KeeperException.BadVersionException ex) {
-            err.println(ex.getMessage());
+        } catch (KeeperException|InterruptedException ex) {
+            throw new CliWrapperException(ex);
         }
         return false;
     }
