@@ -301,34 +301,10 @@ server.3=zoo3:2888:3888</programlisting>
         <listitem>
           <para>Test your deployment by connecting to the hosts:</para>
 
-          <itemizedlist>
-            <listitem>
-              <para>In Java, you can run the following command to execute
-              simple operations:</para>
+          <para>In Java, you can run the following command to execute
+          simple operations:</para>
 
-              <para><computeroutput>$ java -cp zookeeper.jar:lib/slf4j-api-1.6.1.jar:lib/slf4j-log4j12-1.6.1.jar:lib/log4j-1.2.15.jar:conf:src/java/lib/jline-0.9.94.jar \
-      org.apache.zookeeper.ZooKeeperMain -server 127.0.0.1:2181</computeroutput></para>
-            </listitem>
-
-            <listitem>
-              <para>In C, you can compile either the single threaded client or
-              the multithreaded client: or n the c subdirectory in the
-              ZooKeeper sources. This compiles the single threaded
-              client:</para>
-
-              <para><computeroutput>$ make cli_st</computeroutput></para>
-
-              <para>And this compiles the mulithreaded client:</para>
-
-              <para><computeroutput>$ make cli_mt</computeroutput></para>
-            </listitem>
-          </itemizedlist>
-
-          <para>Running either program gives you a shell in which to execute
-          simple file-system-like operations. To connect to ZooKeeper with the
-          multithreaded client, for example, you would run:</para>
-
-          <para><computeroutput>$ cli_mt 127.0.0.1:2181</computeroutput></para>
+          <para><computeroutput>$ bin/zkCli.sh -server 127.0.0.1:2181</computeroutput></para>
         </listitem>
       </orderedlist>
     </section>
