@@ -60,8 +60,12 @@ public class ClientPortBindTest extends ZKTestCase implements Watcher {
             NetworkInterface i = intfs.nextElement();
             if (i.isLoopback()) {
                 Enumeration<InetAddress> addrs = i.getInetAddresses();
-                if (addrs.hasMoreElements()) {
-                    bindAddress = addrs.nextElement().getHostAddress();
+                while (addrs.hasMoreElements()) {
+                    InetAddress a = addrs.nextElement();
+                    if(a.isLoopbackAddress()) {
+                        bindAddress = a.getHostAddress();
+                        break;
+                    }
                 }
             }
         }
