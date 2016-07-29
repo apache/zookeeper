@@ -335,54 +335,8 @@ clientPort=2181
       more details.</p>
 <a name="sc_ConnectingToZooKeeper"></a>
 <h3 class="h4">Connecting to ZooKeeper</h3>
-<p>Once ZooKeeper is running, you have several options for connection
-      to it:</p>
-<ul>
-        
-<li>
-          
-<p>
-<strong>Java</strong>: Use</p>
-
-          
-<pre class="code">bin/zkCli.sh -server 127.0.0.1:2181</pre>
-
-          
+<pre class="code">$ bin/zkCli.sh -server 127.0.0.1:2181</pre>
 <p>This lets you perform simple, file-like operations.</p>
-        
-</li>
-
-        
-<li>
-          
-<p>
-<strong>C</strong>: compile cli_mt
-          (multi-threaded) or cli_st (single-threaded) by running
-          <span class="codefrag command">make cli_mt</span> or <span class="codefrag command">make
-          cli_st</span> in
-          the <strong>src/c</strong> subdirectory in
-          the ZooKeeper sources. See the README contained within
-          <strong>src/c</strong> for full details.</p>
-
-          
-<p>You can run the program
-          from <strong>src/c</strong> using:</p>
-
-          
-<pre class="code">LD_LIBRARY_PATH=. cli_mt 127.0.0.1:2181</pre>
-
-          
-<p>or</p>
-
-          
-<pre class="code">LD_LIBRARY_PATH=. cli_st 127.0.0.1:2181</pre>
-          
-<p>This will give you a simple shell to execute file
-          system like operations on ZooKeeper.</p>
-        
-</li>
-      
-</ul>
 <p>Once you have connected, you should see something like:
         </p>
 <pre class="code">

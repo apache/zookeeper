@@ -1021,7 +1021,7 @@
       <note><para>This is a very simple example which is intended to show
         how to interact with ZooKeeper ACLs
         specifically. See <filename>.../trunk/src/c/src/cli.c</filename>
-        for an example of a proper C client implementation</para>
+        for an example of a C client implementation</para>
       </note>
 
       <programlisting>
@@ -1593,33 +1593,9 @@ authProvider.2=com.f.MyAuth2
       </section>
 
       <section>
-        <title>Using the C Client</title>
+        <title>Building Your Own C Client</title>
 
-        <para>You can test your client by running a ZooKeeper server (see
-        instructions on the project wiki page on how to run it) and connecting
-        to it using one of the cli applications that were built as part of the
-        installation procedure. cli_mt (multithreaded, built against
-        zookeeper_mt library) is shown in this example, but you could also use
-        cli_st (singlethreaded, built against zookeeper_st library):</para>
-
-        <para><command>$ cli_mt zookeeper_host:9876</command></para>
-
-        <para>This is a client application that gives you a shell for
-        executing simple ZooKeeper commands. Once successfully started
-        and connected to the server it displays a shell prompt. You
-        can now enter ZooKeeper commands. For example, to create a
-        node:</para>
-
-        <para><command>&gt; create /my_new_node</command></para>
-
-        <para>To verify that the node's been created:</para>
-
-        <para><command>&gt; ls /</command></para>
-
-        <para>You should see a list of node who are children of the root node
-        "/".</para>
-
-        <para>In order to be able to use the ZooKeeper API in your application
+        <para>In order to be able to use the ZooKeeper C API in your application
         you have to remember to</para>
 
         <orderedlist>
@@ -1639,10 +1615,9 @@ authProvider.2=com.f.MyAuth2
           </listitem>
         </orderedlist>
 
-        <para>Refer to <xref linkend="ch_programStructureWithExample"/>
-          for examples of usage in Java and C.
-          <emphasis>[tbd]</emphasis>
-        </para>
+        <note><para>See <filename>.../trunk/src/c/src/cli.c</filename>
+          for an example of a C client implementation</para>
+        </note>
       </section>
     </section>
   </section>
