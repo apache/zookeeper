@@ -92,7 +92,7 @@ enum ZOO_ERRORS {
   ZUNIMPLEMENTED = -6, /*!< Operation is unimplemented */
   ZOPERATIONTIMEOUT = -7, /*!< Operation timeout */
   ZBADARGUMENTS = -8, /*!< Invalid arguments */
-  ZINVALIDSTATE = -9, /*!< Invliad zhandle state */
+  ZINVALIDSTATE = -9, /*!< Invalid zhandle state */
   ZNEWCONFIGNOQUORUM = -13, /*!< No quorum of new config is connected and
                                  up-to-date with the leader of last commmitted
                                  config - try invoking reconfiguration after new
