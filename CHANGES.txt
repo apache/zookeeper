@@ -11,6 +11,9 @@ BUGFIXES:
   ZOOKEEPER-1256: ClientPortBindTest is failing on Mac OS X
   (Camille via phunt)
 
+  ZOOKEEPER-2498: Potential resource leak in C client when processing
+  unexpected / out of order response (Michael Han via rgs)
+
 IMPROVEMENTS:
 
 
