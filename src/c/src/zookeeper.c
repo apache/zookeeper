@@ -2936,9 +2936,10 @@ int zookeeper_process(zhandle_t *zh, int events)
                 // put the completion back on the queue (so it gets properly
                 // signaled and deallocated) and disconnect from the server
                 queue_completion(&zh->sent_requests,cptr,1);
-                return handle_socket_error_msg(zh, __LINE__,ZRUNTIMEINCONSISTENCY,
-                        "unexpected server response: expected %#x, but received %#x",
-                        hdr.xid,cptr->xid);
+                return api_epilog(zh,
+                                  handle_socket_error_msg(zh, __LINE__,ZRUNTIMEINCONSISTENCY,
+                                  "unexpected server response: expected %#x, but received %#x",
+                                  hdr.xid,cptr->xid));
             }
 
             if (hdr.zxid > 0) {
