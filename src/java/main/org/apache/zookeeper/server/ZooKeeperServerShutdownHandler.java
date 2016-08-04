@@ -39,7 +39,7 @@ class ZooKeeperServerShutdownHandler {
      * @param state new server state
      */
     void handle(State state) {
-        if ((state == State.ERROR) || (state == State.SHUTDOWN)) {
+        if (state == State.ERROR || state == State.SHUTDOWN) {
             shutdownLatch.countDown();
         }
     }

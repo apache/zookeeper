@@ -102,7 +102,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected RequestProcessor firstProcessor;
     protected volatile State state = State.INITIAL;
 
-    enum State {
+    protected enum State {
         INITIAL, RUNNING, SHUTDOWN, ERROR;
     }
 
@@ -491,11 +491,14 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      *
      * @param state new server state.
      */
-    void setState(State state) {
+    protected void setState(State state) {
         this.state = state;
         // Notify server state changes to the registered shutdown handler, if any.
         if (zkShutdownHandler != null) {
             zkShutdownHandler.handle(state);
+        } else {
+            LOG.error("ZKShutdownHandler is not registered, so ZooKeeper server "
+                    + "won't take any action on ERROR or SHUTDOWN server state changes");
         }
     }
 
