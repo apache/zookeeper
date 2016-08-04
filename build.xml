@@ -366,6 +366,8 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <target name="ivy-retrieve" depends="init,ivy-init">
       <ivy:retrieve settingsRef="${ant.project.name}" conf="default"
                     pattern="${ivy.lib}/[artifact]-[revision].[ext]"/>
+      <ivy:retrieve settingsRef="${ant.project.name}" conf="javacc"
+                    pattern="${ivy.lib}/[artifact]-[revision].[ext]"/>
     </target>
 
     <target name="ivy-retrieve-test" depends="init,ivy-init">
