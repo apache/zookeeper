@@ -755,7 +755,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
                    pomfile="${dist.maven.dir}/${final.name}.pom"
                    templatefile="${basedir}/src/pom.template" conf="default,test" >
         <mapping conf="default" scope="compile"/>
-        <mapping conf="test" scope="test"/>        
+        <mapping conf="test" scope="test"/>
       </ivy:makepom>
       <checksum file="${dist.maven.dir}/${final.name}.pom" algorithm="md5"/>
       <checksum file="${dist.maven.dir}/${final.name}.pom" algorithm="sha1"/>
