@@ -341,6 +341,9 @@ BUGFIXES:
   ZOOKEEPER-2498: Potential resource leak in C client when processing
   unexpected / out of order response (Michael Han via rgs)
 
+  ZOOKEEPER-2500: Fix compilation warnings for CliException classes
+  (Abraham Fine via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-2024 Major throughput improvement with mixed workloads (Kfir Lev-Ari via shralex)
 

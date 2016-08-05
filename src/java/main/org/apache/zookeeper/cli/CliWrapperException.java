@@ -19,6 +19,7 @@ package org.apache.zookeeper.cli;
 
 import org.apache.zookeeper.KeeperException;
 
+@SuppressWarnings("serial")
 public class CliWrapperException extends CliException {
     public CliWrapperException(Throwable cause) {
         super(getMessage(cause), cause);
