@@ -17,6 +17,7 @@
  */
 package org.apache.zookeeper.cli;
 
+@SuppressWarnings("serial")
 public class CliException extends Exception {
 
     protected int exitCode;
