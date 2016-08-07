@@ -32,11 +32,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 
+import javax.security.sasl.SaslException;
+
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.common.IOUtils;
 import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ZooKeeperThread;
@@ -153,15 +156,32 @@ public class LearnerHandler extends ZooKeeperThread {
 
     private BinaryOutputArchive oa;
 
+    private final BufferedInputStream bufferedInput;
     private BufferedOutputStream bufferedOutput;
+    private boolean authSuccess = false;
 
-    LearnerHandler(Socket sock, Leader leader) throws IOException {
+    LearnerHandler(Socket sock, BufferedInputStream bufferedInput,
+                   Leader leader) throws IOException {
         super("LearnerHandler-" + sock.getRemoteSocketAddress());
         this.sock = sock;
         this.leader = leader;
-        leader.addLearnerHandler(this);
+        this.bufferedInput = bufferedInput;
+        try {
+            authSuccess = leader.self.authServer.authenticate(sock,
+                    new DataInputStream(bufferedInput));
+        } catch (SaslException e) {
+            LOG.warn("Server failed to authenticate client, addr: {}",
+                    sock.getRemoteSocketAddress());
+           LOG.warn("Closing server connection due to SASL authentication failure", e);
+           IOUtils.closeStream(sock);
+           return;
+        }
     }
-    
+
+    boolean isAuthSuccess() {
+        return authSuccess;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -296,11 +316,11 @@ public class LearnerHandler extends ZooKeeperThread {
     @Override
     public void run() {
         try {
+            leader.addLearnerHandler(this);
             tickOfNextAckDeadline = leader.self.tick
                     + leader.self.initLimit + leader.self.syncLimit;
 
-            ia = BinaryInputArchive.getArchive(new BufferedInputStream(sock
-                    .getInputStream()));
+            ia = BinaryInputArchive.getArchive(bufferedInput);
             bufferedOutput = new BufferedOutputStream(sock.getOutputStream());
             oa = BinaryOutputArchive.getArchive(bufferedOutput);
 

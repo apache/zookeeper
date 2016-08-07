@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.quorum;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -367,7 +368,9 @@ public class Zab1_0Test {
                 Thread.sleep(20);
             }
             
-            LearnerHandler lh = new LearnerHandler(leaderSocket, leader);
+            LearnerHandler lh = new LearnerHandler(leaderSocket,
+                    new BufferedInputStream(leaderSocket.getInputStream()),
+                    leader);
             lh.start();
             leaderSocket.setSoTimeout(4000);
 
@@ -435,8 +438,10 @@ public class Zab1_0Test {
             while(leader.cnxAcceptor == null || !leader.cnxAcceptor.isAlive()) {
                 Thread.sleep(20);
             }
-            
-            LearnerHandler lh = new LearnerHandler(leaderSocket, leader);
+
+            LearnerHandler lh = new LearnerHandler(leaderSocket,
+                    new BufferedInputStream(leaderSocket.getInputStream()),
+                    leader);
             lh.start();
             leaderSocket.setSoTimeout(4000);
 
@@ -1389,7 +1394,7 @@ public class Zab1_0Test {
     
     private QuorumPeer createQuorumPeer(File tmpDir) throws IOException,
             FileNotFoundException {
-        QuorumPeer peer = new QuorumPeer();
+        QuorumPeer peer = QuorumPeer.testingQuorumPeer();
         peer.syncLimit = SYNC_LIMIT;
         peer.initLimit = 2;
         peer.tickTime = 2000;
@@ -1435,7 +1440,7 @@ public class Zab1_0Test {
             logFactory.append(req);
             logFactory.commit();
             ZKDatabase zkDb = new ZKDatabase(logFactory);
-            QuorumPeer peer = new QuorumPeer();
+            QuorumPeer peer = QuorumPeer.testingQuorumPeer();
             peer.setZKDatabase(zkDb);
             peer.setTxnFactory(logFactory);
             peer.getLastLoggedZxid();

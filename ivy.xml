@@ -74,6 +74,57 @@
                 rev="2.4" conf="releaseaudit->default"/>
     <dependency org="commons-collections" name="commons-collections" 
                 rev="3.2.2" conf="releaseaudit->default"/>
+
+
+    <dependency org="org.apache.directory.server" name="apacheds-core-constants" rev="2.0.0-M15"
+                conf="test->default"/>
+    <dependency org="org.apache.directory.server" name="apacheds-core" rev="2.0.0-M15"
+                conf="test->default"/>
+    <dependency org="org.apache.directory.server" name="apacheds-core-api" rev="2.0.0-M15"
+                conf="test->default"/>
+    <dependency org="org.apache.directory.api" name="api-ldap-model" rev="1.0.0-M20"
+                conf="test->default"/>
+    <dependency org="org.apache.directory.server" name="apacheds-ldif-partition" rev="2.0.0-M15"
+                conf="test->default"/>
+
+    <dependency org="org.apache.directory.server" name="apacheds-interceptor-kerberos" rev="2.0.0-M15"
+                conf="test->default"/>
+    <dependency org="org.apache.directory.server" name="apacheds-protocol-kerberos" rev="2.0.0-M15"
+                conf="test->default"/>
+    <dependency org="org.apache.directory.server" name="apacheds-kerberos-codec" rev="2.0.0-M15"
+                conf="test->default"/>
+    <dependency org="org.apache.directory.server" name="apacheds-protocol-shared" rev="2.0.0-M15"
+                conf="test->default"/>
+
+    <dependency org="org.apache.directory.server" name="apacheds-jdbm-partition" rev="2.0.0-M15"
+                conf="test->default"/>
+    <dependency org="org.apache.directory.server" name="apacheds-xdbm-partition" rev="2.0.0-M15"
+                conf="test->default"/>
+    <dependency org="commons-lang" name="commons-lang" rev="2.6"
+                conf="test->default"/>
+    <dependency org="commons-io" name="commons-io" rev="2.4"
+                conf="test->default"/>
+    <dependency org="org.apache.mina" name="mina-core" rev="2.0.0-M5"
+                conf="test->default"/>
+    <dependency org="org.apache.directory.server" name="apacheds-interceptors-changelog" rev="2.0.0-M15"
+                conf="test->default"/>
+    <dependency org="org.apache.directory.server" name="apacheds-interceptors-journal" rev="2.0.0-M15"
+                conf="test->default"/>
+    <dependency org="org.apache.directory.server" name="apacheds-interceptors-normalization" rev="2.0.0-M15"
+                conf="test->default"/>
+    <dependency org="org.apache.directory.server" name="apacheds-interceptors-operational" rev="2.0.0-M15"
+                conf="test->default"/>
+    <dependency org="org.apache.directory.server" name="apacheds-interceptors-referral" rev="2.0.0-M15"
+                conf="test->default"/>
+    <dependency org="org.apache.directory.server" name="apacheds-interceptors-schema" rev="2.0.0-M15"
+                conf="test->default"/>
+    <dependency org="org.apache.directory.server" name="apacheds-interceptors-subtree" rev="2.0.0-M15"
+                conf="test->default"/>
+    <dependency org="org.apache.directory.server" name="apacheds-interceptors-trigger" rev="2.0.0-M15"
+                conf="test->default"/>
+    <dependency org="org.apache.directory.server" name="apacheds-all" rev="2.0.0-M15"
+                conf="test->default"/>
+
   </dependencies>
 
 </ivy-module>

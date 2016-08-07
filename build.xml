@@ -1242,6 +1242,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
         <delete dir="${test.data.upgrade.dir}" />
         <delete dir="${test.data.invalid.dir}" />
         <delete dir="${test.data.buffersize.dir}" />
+        <delete dir="${test.data.kerberos.dir}" />
         <delete dir="${test.data.dir}" />
         <mkdir dir="${test.log.dir}" />
         <mkdir dir="${test.tmp.dir}" />
@@ -1258,7 +1259,10 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
         <copy todir="${test.data.buffersize.dir}">
             <fileset dir="${basedir}/src/java/test/data/buffersize"/>
         </copy>
-       
+        <mkdir dir="${test.data.kerberos.dir}" />
+        <copy todir="${test.data.kerberos.dir}">
+            <fileset dir="${basedir}/src/java/test/data/kerberos"/>
+        </copy>
     </target>
 
     <condition property="quicktest">
