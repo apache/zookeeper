@@ -33,10 +33,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.net.InetAddress;
+import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -97,20 +101,21 @@ public class NettyServerCnxnTest extends ClientBase {
     }
 
     @Test(timeout = 40000)
-    public void testMaxClientConnections() throws Exception {
+    public void testMaxClientConnectionsReached() throws Exception {
         final int maxClientCnxns = 2;
-        final int numClients = 3;
-        testConns(numClients, maxClientCnxns, maxClientCnxns);
+        final int numClients = 10;
+        createConnections(numClients, maxClientCnxns, maxClientCnxns);
     }
 
     @Test(timeout = 40000)
-    public void testClientConnections() throws Exception {
+    public void testMaxClientConnectionsDisabled() throws Exception {
         final int maxClientCnxns = -1; // disabled cnxns limit
-        final int numClients = 3;
-        testConns(numClients, maxClientCnxns, numClients);
+        final int numClients = 10;
+        createConnections(numClients, maxClientCnxns, numClients);
     }
 
-    public void testConns(int numClients, int maxClientCnxns, int cnxnsAccepted) throws Exception {
+    //TODO: refactor as class
+    private void createConnections(int numClients, int maxClientCnxns, int cnxnsAccepted) throws Exception {
 
         File tmpDir = ClientBase.createTmpDir();
         final int CLIENT_PORT = PortAssignment.unique();
@@ -120,8 +125,10 @@ public class NettyServerCnxnTest extends ClientBase {
         scf.startup(zks);
 
         try {
-            assertTrue("waiting for server being up", ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, CONNECTION_TIMEOUT));
-            assertTrue("Didn't instantiate ServerCnxnFactory with NettyServerCnxnFactory!", scf instanceof NettyServerCnxnFactory);
+            assertTrue("waiting for server being up",
+                    ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, CONNECTION_TIMEOUT));
+            assertTrue("Didn't instantiate ServerCnxnFactory with NettyServerCnxnFactory!",
+                    scf instanceof NettyServerCnxnFactory);
 
             assertEquals(0, scf.getNumAliveConnections());
 
@@ -150,6 +157,22 @@ public class NettyServerCnxnTest extends ClientBase {
             }
 
             assertEquals(cnxnsAccepted, connected);
+
+            ConcurrentMap<InetAddress, Set<NettyServerCnxn>> ipMap = ((NettyServerCnxnFactory) scf).ipMap;
+            assertEquals(1, ipMap.size());
+            Set<NettyServerCnxn> set = ipMap.get(ipMap.keySet().toArray()[0]);
+            assertEquals(cnxnsAccepted, set.size());
+
+            clients[0].close();
+            clients[1].close();
+            assertEquals(cnxnsAccepted - 2, set.size());
+
+//            for (int i = 0; i < numClients; i++) {
+//                if (!clients[i].getState().isConnected()) clients[i].close();
+//            }
+//
+//            Thread.sleep(1000);
+//            assertEquals(0, set.size());
 
         } finally {
             scf.shutdown();

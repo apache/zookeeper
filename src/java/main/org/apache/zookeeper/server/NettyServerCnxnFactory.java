@@ -25,10 +25,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
@@ -69,6 +66,7 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.nio.ch.Net;
 
 public class NettyServerCnxnFactory extends ServerCnxnFactory {
     private static final Logger LOG = LoggerFactory.getLogger(NettyServerCnxnFactory.class);
@@ -183,7 +181,13 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
 
         private final int getClientCnxnCount(InetAddress ia) {
             Set<NettyServerCnxn> s = ipMap.get(ia);
-            return (s == null) ? 0 : s.size();
+            if (s != null) {
+                synchronized (s)
+                {
+                    return s.size();
+                }
+            }
+            return 0;
         }
 
         private void processMessage(MessageEvent e, NettyServerCnxn cnxn) {
@@ -541,7 +545,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         cnxns.add(cnxn);
 
         InetAddress addr = ((InetSocketAddress)cnxn.channel.getRemoteAddress()).getAddress();
-        Set<NettyServerCnxn> newSet = new HashSet<>();
+        Set<NettyServerCnxn> newSet = Collections.synchronizedSet(new HashSet<NettyServerCnxn>());
         Set<NettyServerCnxn> s = ipMap.putIfAbsent(addr, newSet);
         if (s == null) {
           s = newSet;
