@@ -17,6 +17,9 @@ BUGFIXES:
   ZOOKEEPER-2500: Fix compilation warnings for CliException classes
   (Abraham Fine via phunt)
 
+  ZOOKEEPER-2074: Incorrect exit codes for "./zkCli.sh cmd arg"
+  (Abraham Fine via phunt)
+
 IMPROVEMENTS:
 
 
