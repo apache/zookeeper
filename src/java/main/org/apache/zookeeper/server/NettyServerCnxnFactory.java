@@ -25,10 +25,9 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 
 import javax.net.ssl.SSLContext;
@@ -67,6 +66,7 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.nio.ch.Net;
 
 public class NettyServerCnxnFactory extends ServerCnxnFactory {
     private static final Logger LOG = LoggerFactory.getLogger(NettyServerCnxnFactory.class);
@@ -74,8 +74,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     ServerBootstrap bootstrap;
     Channel parentChannel;
     ChannelGroup allChannels = new DefaultChannelGroup("zkServerCnxns");
-    HashMap<InetAddress, Set<NettyServerCnxn>> ipMap =
-        new HashMap<InetAddress, Set<NettyServerCnxn>>( );
+    ConcurrentMap<InetAddress, Set<NettyServerCnxn>> ipMap = new ConcurrentHashMap<>();
     InetSocketAddress localAddress;
     int maxClientCnxns = 60;
 
@@ -108,6 +107,15 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             NettyServerCnxn cnxn = new NettyServerCnxn(ctx.getChannel(),
                     zkServer, NettyServerCnxnFactory.this);
             ctx.setAttachment(cnxn);
+
+            InetAddress addr = ((InetSocketAddress)cnxn.channel.getRemoteAddress()).getAddress();
+            int cnxncount = getClientCnxnCount(addr);
+            if (maxClientCnxns > 0 && cnxncount >= maxClientCnxns) {
+                LOG.error("Too many connections from {} - max is {}", addr, maxClientCnxns);
+                cnxn.close();
+                ctx.getChannel().close().awaitUninterruptibly();
+                return;
+            }
 
             if (secure) {
                 SslHandler sslHandler = ctx.getPipeline().get(SslHandler.class);
@@ -169,6 +177,17 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                 LOG.error("Unexpected exception in receive", ex);
                 throw ex;
             }
+        }
+
+        private final int getClientCnxnCount(InetAddress ia) {
+            Set<NettyServerCnxn> s = ipMap.get(ia);
+            if (s != null) {
+                synchronized (s)
+                {
+                    return s.size();
+                }
+            }
+            return 0;
         }
 
         private void processMessage(MessageEvent e, NettyServerCnxn cnxn) {
@@ -524,17 +543,14 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
 
     private void addCnxn(NettyServerCnxn cnxn) {
         cnxns.add(cnxn);
-        synchronized (ipMap){
-            InetAddress addr =
-                ((InetSocketAddress)cnxn.channel.getRemoteAddress())
-                    .getAddress();
-            Set<NettyServerCnxn> s = ipMap.get(addr);
-            if (s == null) {
-                s = new HashSet<NettyServerCnxn>();
-            }
-            s.add(cnxn);
-            ipMap.put(addr,s);
+
+        InetAddress addr = ((InetSocketAddress)cnxn.channel.getRemoteAddress()).getAddress();
+        Set<NettyServerCnxn> newSet = Collections.synchronizedSet(new HashSet<NettyServerCnxn>());
+        Set<NettyServerCnxn> s = ipMap.putIfAbsent(addr, newSet);
+        if (s == null) {
+          s = newSet;
         }
+        s.add(cnxn);
     }
 
     @Override
