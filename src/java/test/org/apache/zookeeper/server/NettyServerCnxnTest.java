@@ -37,7 +37,6 @@ import java.net.InetAddress;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
@@ -104,18 +103,17 @@ public class NettyServerCnxnTest extends ClientBase {
     public void testMaxClientConnectionsReached() throws Exception {
         final int maxClientCnxns = 2;
         final int numClients = 10;
-        createConnections(numClients, maxClientCnxns, maxClientCnxns);
+        createAndTestConnections(numClients, maxClientCnxns, maxClientCnxns);
     }
 
     @Test(timeout = 40000)
     public void testMaxClientConnectionsDisabled() throws Exception {
         final int maxClientCnxns = -1; // disabled cnxns limit
         final int numClients = 10;
-        createConnections(numClients, maxClientCnxns, numClients);
+        createAndTestConnections(numClients, maxClientCnxns, numClients);
     }
 
-    //TODO: refactor as class
-    private void createConnections(int numClients, int maxClientCnxns, int cnxnsAccepted) throws Exception {
+    private void createAndTestConnections(int numClients, int maxClientCnxns, int cnxnsAccepted) throws Exception {
 
         File tmpDir = ClientBase.createTmpDir();
         final int CLIENT_PORT = PortAssignment.unique();
@@ -151,28 +149,22 @@ public class NettyServerCnxnTest extends ClientBase {
 
             assertEquals(cnxnsAccepted, scf.getNumAliveConnections());
 
-            int connected = 0;
-            for (int i = 0; i < numClients; i++) {
-                if (clients[i].getState().isConnected()) connected++;
-            }
-
-            assertEquals(cnxnsAccepted, connected);
-
             ConcurrentMap<InetAddress, Set<NettyServerCnxn>> ipMap = ((NettyServerCnxnFactory) scf).ipMap;
             assertEquals(1, ipMap.size());
             Set<NettyServerCnxn> set = ipMap.get(ipMap.keySet().toArray()[0]);
             assertEquals(cnxnsAccepted, set.size());
 
-            clients[0].close();
-            clients[1].close();
-            assertEquals(cnxnsAccepted - 2, set.size());
 
-//            for (int i = 0; i < numClients; i++) {
-//                if (!clients[i].getState().isConnected()) clients[i].close();
-//            }
-//
-//            Thread.sleep(1000);
-//            assertEquals(0, set.size());
+            int connected = 0;
+            for (int i = 0; i < numClients; i++) {
+                if (clients[i].getState().isConnected()) connected++;
+            }
+            assertEquals(connected, set.size());
+
+            for (int i = 0; i < numClients; i++) {
+                if (clients[i].getState().isConnected()) clients[i].close();
+            }
+            assertEquals(0, set.size());
 
         } finally {
             scf.shutdown();
