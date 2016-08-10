@@ -347,6 +347,8 @@ BUGFIXES:
   ZOOKEEPER-2074: Incorrect exit codes for "./zkCli.sh cmd arg"
   (Abraham Fine via phunt)
 
+  Fix command handling in the C client shell (phunt via fpj)
+
 IMPROVEMENTS:
   ZOOKEEPER-2024 Major throughput improvement with mixed workloads (Kfir Lev-Ari via shralex)
 
