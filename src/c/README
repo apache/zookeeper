@@ -72,7 +72,12 @@ tar downloaded from Apache please skip to step 2.
    other document formats please use "./configure --help"
 
 
-USING THE CLIENT
+EXAMPLE/SAMPLE C CLIENT SHELL
+
+NOTE: the ZooKeeper C client shell (cli_st and cli_mt) is meant as a
+example/sample of ZooKeeper C client API usage. It is not a full
+fledged client and not meant for production usage - see the Java
+client shell for a fully featured shell.
 
 You can test your client by running a zookeeper server (see
 instructions on the project wiki page on how to run it) and connecting

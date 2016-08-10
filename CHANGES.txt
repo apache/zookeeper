@@ -45,6 +45,8 @@ BUGFIXES:
   ZOOKEEPER-2498: Potential resource leak in C client when processing
   unexpected / out of order response (Michael Han via rgs)
 
+  Fix command handling in the C client shell (phunt via fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-2240 Make the three-node minimum more explicit in 
