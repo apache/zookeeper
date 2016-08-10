@@ -16,6 +16,14 @@
  * limitations under the License.
  */
 
+/**
+ * cli.c is a example/sample C client shell for ZooKeeper. It contains
+ * basic shell functionality which exercises some of the features of
+ * the ZooKeeper C client API. It is not a full fledged client and is
+ * not meant for production usage - see the Java client shell for a
+ * fully featured shell.
+ */
+
 #include <zookeeper.h>
 #include <proto.h>
 #include <stdlib.h>
@@ -679,7 +687,15 @@ int main(int argc, char **argv) {
     }
     if (argc > 2) {
       if(strncmp("cmd:",argv[2],4)==0){
-        strcpy(cmd,argv[2]+4);
+        size_t cmdlen = strlen(argv[2]);
+        if (cmdlen > sizeof(cmd)) {
+          fprintf(stderr,
+                  "Command length %zu exceeds max length of %zu\n",
+                  cmdlen,
+                  sizeof(cmd));
+          return 2;
+        }
+        strncpy(cmd, argv[2]+4, sizeof(cmd));
         batchMode=1;
         fprintf(stderr,"Batch mode: %s\n",cmd);
       }else{
