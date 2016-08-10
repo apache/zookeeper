@@ -22,8 +22,10 @@ public class CliException extends Exception {
 
     protected int exitCode;
 
+    protected static final int DEFAULT_EXCEPTION_EXIT_CODE = 1;
+
     public CliException(String message) {
-        this(message, 1);
+        this(message, DEFAULT_EXCEPTION_EXIT_CODE);
     }
 
     public CliException(String message, int exitCode) {
@@ -32,7 +34,7 @@ public class CliException extends Exception {
     }
 
     public CliException(Throwable cause) {
-        this(cause, 1);
+        this(cause, DEFAULT_EXCEPTION_EXIT_CODE);
     }
 
     public CliException(Throwable cause, int exitCode) {
@@ -41,7 +43,7 @@ public class CliException extends Exception {
     }
 
     public CliException(String message, Throwable cause) {
-        super(message, cause);
+        this(message, cause, DEFAULT_EXCEPTION_EXIT_CODE);
     }
 
     public CliException(String message, Throwable cause, int exitCode) {
