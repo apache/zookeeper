@@ -336,6 +336,11 @@ public class ZooKeeperTest extends ClientBase {
     }
 
     @Test
+    public void testDeleteNonexistantNode() throws Exception {
+        testInvalidCommand("delete /blahblahblah", 1);
+    }
+
+    @Test
     public void testStatCommand() throws Exception {
         final ZooKeeper zk = createClient();
         ZooKeeperMain zkMain = new ZooKeeperMain(zk);
