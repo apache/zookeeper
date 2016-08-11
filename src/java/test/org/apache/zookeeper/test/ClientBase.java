@@ -71,7 +71,9 @@ public abstract class ClientBase extends ZKTestCase {
     static final File BASETEST =
         new File(System.getProperty("build.test.dir", "build"));
 
-    protected String hostPort = "127.0.0.1:" + PortAssignment.unique();
+    protected int port = PortAssignment.unique();
+    protected String hostPort = "127.0.0.1:" + port;
+    protected String ipv6HostPort = "[0:0:0:0:0:0:0:1]:" + port;
     protected int maxCnxns = 0;
     protected ServerCnxnFactory serverFactory = null;
     protected File tmpDir = null;

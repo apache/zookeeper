@@ -47,6 +47,9 @@ BUGFIXES:
 
   Fix command handling in the C client shell (phunt via fpj)
 
+  ZOOKEEPER-2452: Back-port ZOOKEEPER-1460 to 3.4 for IPv6 literal
+  address support. (Abraham Fine via cnauroth)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-2240 Make the three-node minimum more explicit in 

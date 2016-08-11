@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper;
 
+import org.junit.Assume;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.junit.Rule;
@@ -25,6 +26,10 @@ import org.junit.rules.MethodRule;
 import org.junit.rules.TestWatchman;
 import org.junit.runner.RunWith;
 import org.junit.runners.model.FrameworkMethod;
+
+import java.io.IOException;
+import java.net.Inet6Address;
+import java.net.InetAddress;
 
 /**
  * Base class for a non-parameterized ZK test.
@@ -66,5 +71,14 @@ public class ZKTestCase {
         }
 
     };
+
+    protected void assumeIPv6Available() {
+        try {
+            InetAddress address = Inet6Address.getByName("0:0:0:0:0:0:0:1");
+            Assume.assumeTrue(address.isReachable(1000));
+        } catch (IOException exception) {
+            Assume.assumeTrue(false);
+        }
+    }
 
 }
