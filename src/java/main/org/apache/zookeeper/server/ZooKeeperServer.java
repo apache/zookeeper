@@ -102,8 +102,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected RequestProcessor firstProcessor;
     protected volatile State state = State.INITIAL;
 
-    enum State {
-        INITIAL, RUNNING, SHUTDOWN;
+    protected enum State {
+        INITIAL, RUNNING, SHUTDOWN, ERROR;
     }
 
     /**
@@ -122,7 +122,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected ServerCnxnFactory secureServerCnxnFactory;
 
     private final ServerStats serverStats;
-    private final ZooKeeperServerListener listener = new ZooKeeperServerListenerImpl();
+    private final ZooKeeperServerListener listener;
+    private ZooKeeperServerShutdownHandler zkShutdownHandler;
+
     void removeCnxn(ServerCnxn cnxn) {
         zkDb.removeCnxn(cnxn);
     }
@@ -136,6 +138,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      */
     public ZooKeeperServer() {
         serverStats = new ServerStats(this);
+        listener = new ZooKeeperServerListenerImpl(this);
     }
 
     /**
@@ -152,7 +155,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         this.tickTime = tickTime;
         setMinSessionTimeout(minSessionTimeout);
         setMaxSessionTimeout(maxSessionTimeout);
-
+        listener = new ZooKeeperServerListenerImpl(this);
         LOG.info("Created server with tickTime " + tickTime
                 + " minSessionTimeout " + getMinSessionTimeout()
                 + " maxSessionTimeout " + getMaxSessionTimeout()
@@ -446,7 +449,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         registerJMX();
 
-        state = State.RUNNING;
+        setState(State.RUNNING);
         notifyAll();
     }
 
@@ -463,20 +466,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return listener;
     }
 
-    /**
-     * Default listener implementation, which will do a graceful shutdown on
-     * notification
-     */
-    private class ZooKeeperServerListenerImpl implements
-            ZooKeeperServerListener {
-
-        @Override
-        public void notifyStopping(String threadName, int exitCode) {
-            LOG.info("Thread {} exits, error code {}", threadName, exitCode);
-            shutdown();
-        }
-    }
-
     protected void createSessionTracker() {
         sessionTracker = new SessionTrackerImpl(this, zkDb.getSessionWithTimeOuts(),
                 tickTime, 1, getZooKeeperServerListener());
@@ -486,19 +475,61 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         ((SessionTrackerImpl)sessionTracker).start();
     }
 
+    /**
+     * Sets the state of ZooKeeper server. After changing the state, it notifies
+     * the server state change to a registered shutdown handler, if any.
+     * <p>
+     * The following are the server state transitions:
+     * <li>During startup the server will be in the INITIAL state.</li>
+     * <li>After successfully starting, the server sets the state to RUNNING.
+     * </li>
+     * <li>The server transitions to the ERROR state if it hits an internal
+     * error. {@link ZooKeeperServerListenerImpl} notifies any critical resource
+     * error events, e.g., SyncRequestProcessor not being able to write a txn to
+     * disk.</li>
+     * <li>During shutdown the server sets the state to SHUTDOWN, which
+     * corresponds to the server not running.</li>
+     *
+     * @param state new server state.
+     */
+    protected void setState(State state) {
+        this.state = state;
+        // Notify server state changes to the registered shutdown handler, if any.
+        if (zkShutdownHandler != null) {
+            zkShutdownHandler.handle(state);
+        } else {
+            LOG.error("ZKShutdownHandler is not registered, so ZooKeeper server "
+                    + "won't take any action on ERROR or SHUTDOWN server state changes");
+        }
+    }
+
+    /**
+     * This can be used while shutting down the server to see whether the server
+     * is already shutdown or not.
+     *
+     * @return true if the server is running or server hits an error, false
+     *         otherwise.
+     */
+    protected boolean canShutdown() {
+        return state == State.RUNNING || state == State.ERROR;
+    }
+
+    /**
+     * @return true if the server is running, false otherwise.
+     */
     public boolean isRunning() {
         return state == State.RUNNING;
     }
 
     public synchronized void shutdown() {
-        if (!isRunning()) {
+        if (!canShutdown()) {
             LOG.debug("ZooKeeper server is not running, so not proceeding to shutdown!");
             return;
         }
         LOG.info("shutting down");
 
         // new RuntimeException("Calling shutdown").printStackTrace();
-        state = State.SHUTDOWN;
+        setState(State.SHUTDOWN);
         // Since sessionTracker and syncThreads poll we just have to
         // set running to false and they will detect it during the poll
         // interval.
@@ -1142,4 +1173,15 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return sessionTracker.getSessionExpiryMap();
     }
 
+    /**
+     * This method is used to register the ZooKeeperServerShutdownHandler to get
+     * server's error or shutdown state change notifications.
+     * {@link ZooKeeperServerShutdownHandler#handle(State)} will be called for
+     * every server state changes {@link #setState(State)}.
+     *
+     * @param zkShutdownHandler shutdown handler
+     */
+    void registerServerShutdownHandler(ZooKeeperServerShutdownHandler zkShutdownHandler) {
+        this.zkShutdownHandler = zkShutdownHandler;
+    }
 }
