@@ -586,6 +586,12 @@ public class Leader {
                         }
                     }
 
+                    // check leader running status
+                    if (!this.isRunning()) {
+                        shutdown("Unexpected internal error");
+                        return;
+                    }
+
                     if (!tickSkip && !syncedAckSet.hasAllQuorums()) {
                         // Lost quorum of last committed and/or last proposed
                         // config, set shutdown flag
@@ -1379,5 +1385,9 @@ public class Leader {
         default:
             return "UNKNOWN";
         }
+    }
+
+    private boolean isRunning() {
+        return self.isRunning() && zk.isRunning();
     }
 }
