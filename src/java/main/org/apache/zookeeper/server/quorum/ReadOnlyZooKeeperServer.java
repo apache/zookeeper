@@ -91,6 +91,11 @@ public class ReadOnlyZooKeeperServer extends QuorumZooKeeperServer {
     }
 
     @Override
+    protected void setState(State state) {
+        this.state = state;
+    }
+
+    @Override
     protected void unregisterJMX() {
         // unregister from JMX
         try {
@@ -131,7 +136,7 @@ public class ReadOnlyZooKeeperServer extends QuorumZooKeeperServer {
 
     @Override
     public synchronized void shutdown() {
-        if (!isRunning()) {
+        if (!canShutdown()) {
             LOG.debug("ZooKeeper server is not running, so not proceeding to shutdown!");
             return;
         }
