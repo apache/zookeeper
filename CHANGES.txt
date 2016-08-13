@@ -21,6 +21,9 @@ BUGFIXES:
   (Abraham Fine via phunt)
 
   Fix command handling in the C client shell (phunt via fpj)
+
+  ZOOKEEPER-2247: Zookeeper service becomes unavailable when leader
+  fails to write transaction log (Rakesh via fpj)
   
 IMPROVEMENTS:
 
