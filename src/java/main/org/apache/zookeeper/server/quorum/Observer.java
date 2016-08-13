@@ -18,11 +18,9 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
-import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.server.ObserverBean;
 import org.apache.zookeeper.server.Request;
@@ -68,10 +66,10 @@ public class Observer extends Learner{
             try {
                 connectToLeader(addr);
                 long newLeaderZxid = registerWithLeader(Leader.OBSERVERINFO);
-                
+
                 syncWithLeader(newLeaderZxid);
                 QuorumPacket qp = new QuorumPacket();
-                while (self.isRunning()) {
+                while (this.isRunning()) {
                     readPacket(qp);
                     processPacket(qp);                   
                 }

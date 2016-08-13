@@ -57,4 +57,9 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
         pwriter.print("peerType=");
         pwriter.println(self.getLearnerType().ordinal());
     }
+
+    @Override
+    protected void setState(State state) {
+        this.state = state;
+    }
 }
