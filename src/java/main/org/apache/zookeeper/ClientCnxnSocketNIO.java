@@ -279,12 +279,12 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
     }
     
     @Override
-    void connect(InetSocketAddress addr) throws IOException {
+    void connect(final ServerCfg serverCfg) throws IOException {
         SocketChannel sock = createSock();
         try {
-           registerAndConnect(sock, addr);
+           registerAndConnect(sock, serverCfg.getInetAddress());
       } catch (IOException e) {
-            LOG.error("Unable to open socket to " + addr);
+            LOG.error("Unable to open socket to " + serverCfg.getInetAddress());
             sock.close();
             throw e;
         }

@@ -25,12 +25,12 @@ import static org.mockito.Mockito.verify;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.EOFException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -45,9 +45,11 @@ import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.ServerCfg;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
+import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.ByteBufferInputStream;
@@ -68,12 +70,13 @@ import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.ErrorTxn;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnHeader;
-import org.apache.zookeeper.ZKTestCase;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.junit.Assert.assertEquals;
 
 public class Zab1_0Test extends ZKTestCase {
     private static final int SYNC_LIMIT = 2;
@@ -1275,10 +1278,10 @@ public class Zab1_0Test extends ZKTestCase {
         public void setLeaderSocketAddress(InetSocketAddress addr) {
             leaderAddr = addr;
         }
-        
+
         @Override
-        protected InetSocketAddress findLeader() {
-            return leaderAddr;
+        protected ServerCfg findLeader() {
+            return new ServerCfg("given", leaderAddr);
         }
     }
     private ConversableFollower createFollower(File tmpDir, QuorumPeer peer)
@@ -1303,8 +1306,8 @@ public class Zab1_0Test extends ZKTestCase {
         }
 
         @Override
-        protected InetSocketAddress findLeader() {
-            return leaderAddr;
+        protected ServerCfg findLeader() {
+            return new ServerCfg("given", leaderAddr);
         }
     }
 

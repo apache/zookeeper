@@ -30,6 +30,7 @@ import java.util.ArrayList;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
+import org.apache.zookeeper.ServerCfg;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
@@ -107,10 +108,10 @@ public class LearnerTest extends ZKTestCase {
         learner.self.setSyncLimit(2);
 
         // this addr won't even be used since we fake the Socket.connect
-        InetSocketAddress addr = new InetSocketAddress(1111);
+        ServerCfg serverCfg = new ServerCfg("any", new InetSocketAddress(1111));
 
         // we expect this to throw an IOException since we're faking socket connect errors every time
-        learner.connectToLeader(addr);
+        learner.connectToLeader(serverCfg);
     }
     @Test
     public void connectionInitLimitTimeoutTest() throws Exception {
@@ -121,7 +122,7 @@ public class LearnerTest extends ZKTestCase {
         learner.self.setSyncLimit(2);
 
         // this addr won't even be used since we fake the Socket.connect
-        InetSocketAddress addr = new InetSocketAddress(1111);
+        ServerCfg serverCfg = new ServerCfg("any", new InetSocketAddress(1111));
         
         // pretend each connect attempt takes 4000 milliseconds
         learner.setTimeMultiplier((long)4000 * 1000000);
@@ -130,7 +131,7 @@ public class LearnerTest extends ZKTestCase {
 
         // we expect this to throw an IOException since we're faking socket connect errors every time
         try {
-            learner.connectToLeader(addr);
+            learner.connectToLeader(serverCfg);
             Assert.fail("should have thrown IOException!");
         } catch (IOException e) {
             //good, wanted to see that, let's make sure we ran out of time

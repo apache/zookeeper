@@ -787,7 +787,7 @@ public class ClientCnxn {
             super(msg);
         }
     }
-    
+
     /**
      * This class services the outgoing request queue and generates the heart
      * beats. It also spawns the ReadThread.
@@ -1041,7 +1041,7 @@ public class ClientCnxn {
             queuePacket(h, null, null, null, null, null, null, null, null);
         }
 
-        private InetSocketAddress rwServerAddress = null;
+        private ServerCfg rwServerCfg = null;
 
         private final static int minPingRwTimeout = 100;
 
@@ -1063,15 +1063,16 @@ public class ClientCnxn {
             }
             state = States.CONNECTING;
 
-            InetSocketAddress addr;
-            if (rwServerAddress != null) {
-                addr = rwServerAddress;
-                rwServerAddress = null;
+            ServerCfg serverCfg;
+            if (rwServerCfg != null) {
+                serverCfg = rwServerCfg;
+                rwServerCfg = null;
             } else {
-                addr = hostProvider.next(1000);
+                serverCfg = hostProvider.next(1000);
             }
 
-            String hostPort = addr.getHostString() + ":" + addr.getPort();
+            String hostPort = serverCfg.getInetAddress().getHostString() + ":" +
+            serverCfg.getInetAddress().getPort();
             MDC.put("myid", hostPort);
             setName(getName().replaceAll("\\(.*\\)", "(" + hostPort + ")"));
             if (clientConfig.isSaslClientEnabled()) {
@@ -1079,7 +1080,7 @@ public class ClientCnxn {
                     if (zooKeeperSaslClient != null) {
                         zooKeeperSaslClient.shutdown();
                     }
-                    zooKeeperSaslClient = new ZooKeeperSaslClient(getServerPrincipal(addr), clientConfig);
+                    zooKeeperSaslClient = new ZooKeeperSaslClient(getServerPrincipal(serverCfg.getInetAddress()), clientConfig);
                 } catch (LoginException e) {
                     // An authentication error occurred when the SASL client tried to initialize:
                     // for Kerberos this means that the client failed to authenticate with the KDC.
@@ -1093,9 +1094,9 @@ public class ClientCnxn {
                     saslLoginFailed = true;
                 }
             }
-            logStartConnect(addr);
+            logStartConnect(serverCfg.getInetAddress());
 
-            clientCnxnSocket.connect(addr);
+            clientCnxnSocket.connect(serverCfg);
         }
 
         private String getServerPrincipal(InetSocketAddress addr) {
@@ -1271,14 +1272,15 @@ public class ClientCnxn {
 
         private void pingRwServer() throws RWServerFoundException {
             String result = null;
-            InetSocketAddress addr = hostProvider.next(0);
-            LOG.info("Checking server " + addr + " for being r/w." +
-                    " Timeout " + pingRwTimeout);
+            final ServerCfg serverCfg = hostProvider.next(0);
+            LOG.info("Checking server " + serverCfg.getInetAddress() +
+                    " for being r/w." + " Timeout " + pingRwTimeout);
 
             Socket sock = null;
             BufferedReader br = null;
             try {
-                sock = new Socket(addr.getHostString(), addr.getPort());
+                sock = new Socket(serverCfg.getInetAddress().getHostString(),
+                        serverCfg.getInetAddress().getPort());
                 sock.setSoLinger(false, -1);
                 sock.setSoTimeout(1000);
                 sock.setTcpNoDelay(true);
@@ -1315,9 +1317,10 @@ public class ClientCnxn {
                 pingRwTimeout = minPingRwTimeout;
                 // save the found address so that it's used during the next
                 // connection attempt
-                rwServerAddress = addr;
+                rwServerCfg = serverCfg;
                 throw new RWServerFoundException("Majority server found at "
-                        + addr.getHostString() + ":" + addr.getPort());
+                        + serverCfg.getInetAddress().getHostString() + ":" +
+                        serverCfg.getInetAddress().getPort());
             }
         }
 

@@ -26,10 +26,11 @@ import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
 
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.common.ZKConfig;
+import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.common.X509Exception.KeyManagerException;
 import org.apache.zookeeper.common.X509Exception.TrustManagerException;
 import org.apache.zookeeper.common.X509Util;
+import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.slf4j.Logger;
@@ -85,10 +86,11 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
                 ZKConfig.SSL_TRUSTSTORE_PASSWD);
 
         try {
-            tm = X509Util.createTrustManager(
+            tm = X509Util.createTrustManager(new ZKConfig(),
                     trustStoreLocationProp, trustStorePasswordProp);
-        } catch (TrustManagerException e) {
+        } catch (TrustManagerException | X509Exception.SSLContextException e) {
             LOG.error("Failed to create trust manager", e);
+            throw new IllegalAccessError("Failed to create trust manager");
         }
 
         this.keyManager = km;

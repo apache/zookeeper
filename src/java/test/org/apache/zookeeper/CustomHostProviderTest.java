@@ -37,15 +37,16 @@ public class CustomHostProviderTest extends ZKTestCase implements Watcher {
             return 1;
         }
         @Override
-        public InetSocketAddress next(long spinDelay) {
-            return new InetSocketAddress("127.0.0.1", 2181);
+        public ServerCfg next(long spinDelay) {
+            return new ServerCfg("127.0.0.1:2181",
+                    new InetSocketAddress("127.0.0 .1", 2181));
         }
         @Override
         public void onConnected() {
         }
         @Override
-        public boolean updateServerList(Collection<InetSocketAddress>
-                serverAddresses, InetSocketAddress currentHost) {
+        public boolean updateServerList(final Collection<ServerCfg> serversCfg,
+                                        final InetSocketAddress currentHost) {
             counter.decrementAndGet();
             return false;
         }

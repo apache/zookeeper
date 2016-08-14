@@ -32,6 +32,10 @@ import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -44,9 +48,11 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.zookeeper.KeeperException.BadArgumentsException;
+import org.apache.zookeeper.SSLCertCfg;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
 import org.apache.zookeeper.server.ServerCnxnFactory;
@@ -60,6 +66,7 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
+import org.apache.zookeeper.server.quorum.util.QuorumSocketFactory;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -109,6 +116,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      */
     private ZKDatabase zkDb;
 
+
+
     public static class QuorumServer {
         public InetSocketAddress addr = null;
 
@@ -117,8 +126,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         public InetSocketAddress clientAddr = null;
         
         public long id;
-        
+
         public LearnerType type = LearnerType.PARTICIPANT;
+
+        private SSLCertCfg sslCertCfg;
         
         private List<InetSocketAddress> myAddrs;
 
@@ -166,6 +177,19 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             this.electionAddr = new InetSocketAddress(address, port);
         }
 
+        private void setType(final HashMap<String, Integer> propKvMap)
+            throws ConfigException {
+            if (propKvMap.containsKey("participant") &&
+                    propKvMap.containsKey("observer")) {
+                throw new ConfigException("Contains both participant and " +
+                        "observer type");
+            } else if (propKvMap.containsKey("participant")) {
+                type = LearnerType.PARTICIPANT;
+            } else if (propKvMap.containsKey("observer")) {
+                type = LearnerType.OBSERVER;
+            }
+        }
+
         private void setType(String s) throws ConfigException {
             if (s.toLowerCase().equals("observer")) {
                type = LearnerType.OBSERVER;
@@ -174,6 +198,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             } else {
                throw new ConfigException("Unrecognised peertype: " + s);
             }
+        }
+
+        public SSLCertCfg getSslCertCfg() {
+            return sslCertCfg;
         }
 
         private static String[] splitWithLeadingHostname(String s)
@@ -206,7 +234,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             String serverClientParts[] = addressStr.split(";");
             String serverParts[] = splitWithLeadingHostname(serverClientParts[0]);
             if ((serverClientParts.length > 2) || (serverParts.length < 3)
-                    || (serverParts.length > 4)) {
+                    || (serverParts.length > 6)) {
                 throw new ConfigException(addressStr + wrongFormat);
             }
 
@@ -242,8 +270,23 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 throw new ConfigException("Address unresolved: " + serverParts[0] + ":" + serverParts[2]);
             }
 
+            // Now we can expect the following
+            // participant:cert:<sha256 cert fp>:cacert:<sha256 ca cert fp>
+            this.sslCertCfg = new SSLCertCfg();
             if (serverParts.length == 4) {
+                // backward compatibility first.
                 setType(serverParts[3]);
+            } else if (serverParts.length >= 4) {
+                // Parse this: cert:SHA-256-XXXX or cacert:SHA-256-XXX
+                // cert is self signed, cacert's fingerprint is optional.
+                final HashMap<String, Integer> propKvMap = new HashMap<>();
+                for (int i = 3; i < serverParts.length; i++) {
+                    propKvMap.put(serverParts[i].trim().toLowerCase(), i);
+                }
+
+                setType(propKvMap);
+                this.sslCertCfg =
+                        SSLCertCfg.parseCertCfgStr(serverClientParts[0]);
             }
 
             setMyAddrs();
@@ -296,7 +339,16 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 sw.append(String.valueOf(electionAddr.getPort()));
             }           
             if (type == LearnerType.OBSERVER) sw.append(":observer");
-            else if (type == LearnerType.PARTICIPANT) sw.append(":participant");            
+            else if (type == LearnerType.PARTICIPANT) sw.append(":participant");
+            if (isSelfSigned()) {
+                sw.append(":cert:");
+                sw.append(sslCertCfg.getCertFingerPrintStr());
+            } else if (isCASigned()) {
+                sw.append(":cacert:");
+                if (sslCertCfg.getCertFingerPrintStr() != null) {
+                    sw.append(sslCertCfg.getCertFingerPrintStr());
+                }
+            }
             if (clientAddr!=null){
                 sw.append(";");
                 sw.append(delimitedHostString(clientAddr));
@@ -304,6 +356,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 sw.append(String.valueOf(clientAddr.getPort()));
             }
             return sw.toString();       
+        }
+
+        public boolean isSelfSigned() {
+            return sslCertCfg != null && sslCertCfg.isSelfSigned();
+        }
+
+        public boolean isCASigned() {
+            return sslCertCfg != null && sslCertCfg.isCASigned();
         }
 
         public int hashCode() {
@@ -711,6 +771,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     ServerCnxnFactory cnxnFactory;
     ServerCnxnFactory secureCnxnFactory;
+    QuorumSocketFactory socketFactory;
 
     private FileTxnSnapLog logFactory = null;
 
@@ -733,9 +794,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File dataDir,
             File dataLogDir, int electionType,
             long myid, int tickTime, int initLimit, int syncLimit,
-            ServerCnxnFactory cnxnFactory) throws IOException {
+            ServerCnxnFactory cnxnFactory,
+                      QuorumSocketFactory socketFactory) throws IOException {
         this(quorumPeers, dataDir, dataLogDir, electionType, myid, tickTime,
-                initLimit, syncLimit, false, cnxnFactory,
+                initLimit, syncLimit, false, cnxnFactory, socketFactory,
                 new QuorumMaj(quorumPeers));
     }
 
@@ -744,9 +806,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             long myid, int tickTime, int initLimit, int syncLimit,
             boolean quorumListenOnAllIPs,
             ServerCnxnFactory cnxnFactory,
+                      QuorumSocketFactory socketFactory,
             QuorumVerifier quorumConfig) throws IOException {
         this();
         this.cnxnFactory = cnxnFactory;
+        this.socketFactory = socketFactory;
         this.electionType = electionType;
         this.myid = myid;
         this.tickTime = tickTime;
@@ -883,6 +947,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     {
         this(quorumPeers, snapDir, logDir, electionAlg, myid, tickTime, initLimit, syncLimit, false,
                 ServerCnxnFactory.createFactory(getClientAddress(quorumPeers, myid, clientPort), -1),
+                QuorumSocketFactory.createWithoutSSL(),
                 new QuorumMaj(quorumPeers));
     }
 
@@ -899,6 +964,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         this(quorumPeers, snapDir, logDir, electionAlg,
                 myid,tickTime, initLimit,syncLimit, false,
                 ServerCnxnFactory.createFactory(getClientAddress(quorumPeers, myid, clientPort), -1),
+                QuorumSocketFactory.createWithoutSSL(),
                 quorumConfig);
     }
 
@@ -1526,6 +1592,91 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         }
     }
 
+    public String getQuorumServerFingerPrintByElectionAddress(
+            final InetAddress serverElectionAddr) {
+        synchronized(this) {
+            String serverFp =
+                    getQuorumServerFingerPrintByElectionAddress(getView(),
+                            serverElectionAddr);
+
+            if (serverFp == null && getLastSeenQuorumVerifier() != null) {
+                serverFp =
+                        getQuorumServerFingerPrintByElectionAddress(
+                                getLastSeenQuorumVerifier().getAllMembers(),
+                                serverElectionAddr);
+
+            }
+
+            return serverFp;
+        }
+    }
+
+    public String getQuorumServerFingerPrintByCert(
+            final X509Certificate cert) throws CertificateEncodingException,
+            NoSuchAlgorithmException {
+        synchronized(this) {
+            String serverFp = getQuorumServerFingerPrintByCert(getView(), cert);
+
+            if (serverFp == null && getLastSeenQuorumVerifier() != null) {
+                serverFp = getQuorumServerFingerPrintByCert(
+                        getLastSeenQuorumVerifier().getAllMembers(), cert);
+
+            }
+
+            return serverFp;
+        }
+    }
+    /**
+     * Iterate through the map and return the fingerprint for the matching
+     * election address. Return null if could not find it.
+     * @param quorumServerMap
+     * @return String Fingerprint , null if could not find.
+     */
+    private String getQuorumServerFingerPrintByElectionAddress(
+            final Map<Long,QuorumPeer.QuorumServer> quorumServerMap,
+            final InetAddress serverElectionAddr) {
+        for (QuorumServer quorumServer : quorumServerMap.values()) {
+            if (quorumServer.electionAddr.getAddress()
+                    .equals(serverElectionAddr)) {
+                return quorumServer.getSslCertCfg().getCertFingerPrintStr();
+            }
+        }
+
+        return null;
+    }
+
+    private String getQuorumServerFingerPrintByCert(
+            final Map<Long,QuorumPeer.QuorumServer> quorumServerMap,
+            final X509Certificate incomingPeerCert)
+            throws CertificateEncodingException, NoSuchAlgorithmException {
+        for (QuorumServer quorumServer : quorumServerMap.values()) {
+            final String peerFp =
+                    quorumServer.getSslCertCfg().getCertFingerPrintStr();
+            final MessageDigest peerFpSupportedMd =
+                    X509Util.getSupportedMessageDigestForFpStr(peerFp);
+            if (peerFpSupportedMd == null) {
+                final String errStr =
+                        "QuorumServer: "  + quorumServer +
+                                " un-supported finger print in dynamic cfg: " +
+                                peerFp;
+                LOG.error(errStr);
+                throw new IllegalAccessError(errStr);
+            }
+
+            LOG.info("quorumServer: " + quorumServer + " cert:" + peerFp
+                    + " , given cert:" +
+            SSLCertCfg.getDigestToCertFp(
+                    X509Util.getMessageDigestFromCert(incomingPeerCert,
+                            peerFpSupportedMd.getAlgorithm())));
+            if (X509Util.validateCert(peerFpSupportedMd, peerFp,
+                    incomingPeerCert)) {
+                return peerFp;
+            }
+        }
+
+        return null;
+    }
+
     private String makeDynamicConfigFilename(long version) {
         return configFilename + ".dynamic." + Long.toHexString(version);
     }
@@ -1613,6 +1764,13 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     public void setSecureCnxnFactory(ServerCnxnFactory secureCnxnFactory) {
         this.secureCnxnFactory = secureCnxnFactory;
+        if (secureCnxnFactory != null) {
+            secureCnxnFactory.setQuorumPeer(this);
+        }
+    }
+
+    public void setSocketFactory(QuorumSocketFactory socketFactory) {
+        this.socketFactory = socketFactory;
     }
 
     private void startServerCnxnFactory() {

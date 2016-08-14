@@ -20,7 +20,6 @@ package org.apache.zookeeper.server.quorum;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
@@ -33,14 +32,15 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
@@ -50,7 +50,6 @@ import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 /**
  * This class has the control logic for the Leader.
@@ -220,21 +219,21 @@ public class Leader {
         this.self = self;
         try {
             if (self.getQuorumListenOnAllIPs()) {
-                ss = new ServerSocket(self.getQuorumAddress().getPort());
+                ss = this.self.socketFactory.buildForServer(self,
+                        self.getQuorumAddress().getPort());
             } else {
-                ss = new ServerSocket();
+                ss = this.self.socketFactory.buildForServer(self,
+                        self.getQuorumAddress().getPort(),
+                        self.getQuorumAddress().getAddress());
             }
             ss.setReuseAddress(true);
-            if (!self.getQuorumListenOnAllIPs()) {
-                ss.bind(self.getQuorumAddress());
-            }
-        } catch (BindException e) {
+        } catch (IOException | X509Exception e) {
             if (self.getQuorumListenOnAllIPs()) {
                 LOG.error("Couldn't bind to port " + self.getQuorumAddress().getPort(), e);
             } else {
                 LOG.error("Couldn't bind to " + self.getQuorumAddress(), e);
             }
-            throw e;
+            throw new IOException(e);
         }
         this.zk = zk;
     }

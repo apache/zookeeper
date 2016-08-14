@@ -54,13 +54,15 @@
       <artifact name="netty" type="jar" conf="default"/>
     </dependency>
 
+    <dependency org="commons-validator" name="commons-validator" rev="1.5.1"/>
+
     <dependency org="junit" name="junit" rev="4.12" conf="test->default"/>
 	<dependency org="org.mockito" name="mockito-all" rev="1.8.2"
                conf="test->default"/>
     <dependency org="com.puppycrawl.tools" name="checkstyle" rev="6.13"
                 conf="test->default"/>
     <!-- force the tests to pull the latest commons-collections jar -->
-    <dependency org="commons-collections" name="commons-collections" 
+    <dependency org="commons-collections" name="commons-collections"
                 rev="3.2.2" conf="test->default"/>
 
     <dependency org="jdiff" name="jdiff" rev="1.0.9"
