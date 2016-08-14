@@ -18,8 +18,6 @@
 
 package org.apache.zookeeper.server;
 
-import static org.jboss.netty.buffer.ChannelBuffers.dynamicBuffer;
-
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -39,12 +37,11 @@ import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.common.X509Exception;
-import org.apache.zookeeper.common.X509Exception.SSLContextException;
-import org.apache.zookeeper.common.X509Util;
+import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.auth.X509AuthenticationProvider;
+import org.apache.zookeeper.server.util.ServerX509Util;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -68,6 +65,8 @@ import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.jboss.netty.buffer.ChannelBuffers.dynamicBuffer;
+
 public class NettyServerCnxnFactory extends ServerCnxnFactory {
     private static final Logger LOG = LoggerFactory.getLogger(NettyServerCnxnFactory.class);
 
@@ -78,7 +77,8 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         new HashMap<InetAddress, Set<NettyServerCnxn>>( );
     InetSocketAddress localAddress;
     int maxClientCnxns = 60;
-
+    final ZookeeperServerConfig zookeeperServerConfig = new
+            ZookeeperServerConfig();
     /**
      * This is an inner class since we need to extend SimpleChannelHandler, but
      * NettyServerCnxnFactory already extends ServerCnxnFactory. By making it inner
@@ -291,18 +291,8 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                     SSLSession session = eng.getSession();
                     cnxn.setClientCertificateChain(session.getPeerCertificates());
 
-                    String authProviderProp
-                            = System.getProperty(ZKConfig.SSL_AUTHPROVIDER, "x509");
-
                     X509AuthenticationProvider authProvider =
-                            (X509AuthenticationProvider)
-                                    ProviderRegistry.getProvider(authProviderProp);
-
-                    if (authProvider == null) {
-                        LOG.error("Auth provider not found: {}", authProviderProp);
-                        cnxn.close();
-                        return;
-                    }
+                            new X509AuthenticationProvider(zookeeperServerConfig);
 
                     if (KeeperException.Code.OK !=
                             authProvider.handleAuthentication(cnxn, null)) {
@@ -352,21 +342,21 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
 
     private synchronized void initSSL(ChannelPipeline p)
             throws X509Exception, KeyManagementException, NoSuchAlgorithmException {
-        String authProviderProp = System.getProperty(ZKConfig.SSL_AUTHPROVIDER);
+        String authProviderProp = zookeeperServerConfig.getProperty(
+                ZKConfig.SSL_AUTHPROVIDER);
         SSLContext sslContext;
         if (authProviderProp == null) {
-            sslContext = X509Util.createSSLContext();
+            sslContext = ServerX509Util.createSSLContext();
         } else {
             sslContext = SSLContext.getInstance("TLSv1");
             X509AuthenticationProvider authProvider =
-                    (X509AuthenticationProvider)ProviderRegistry.getProvider(
-                            System.getProperty(ZKConfig.SSL_AUTHPROVIDER,
-                                    "x509"));
+                    (X509AuthenticationProvider) ProviderRegistry.getProvider(
+                            authProviderProp);
 
             if (authProvider == null)
             {
                 LOG.error("Auth provider not found: {}", authProviderProp);
-                throw new SSLContextException(
+                throw new X509Exception.SSLContextException(
                         "Could not create SSLContext with specified auth provider: " +
                         authProviderProp);
             }

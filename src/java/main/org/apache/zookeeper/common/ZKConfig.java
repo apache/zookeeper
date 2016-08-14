@@ -39,34 +39,28 @@ import org.slf4j.LoggerFactory;
  * {@link #setProperty(String, String)}.
  * @since 3.5.2
  */
-public class ZKConfig {
-
+public abstract class ZKConfig {
     private static final Logger LOG = LoggerFactory.getLogger(ZKConfig.class);
-    @SuppressWarnings("deprecation")
-    public static final String SSL_KEYSTORE_LOCATION = X509Util.SSL_KEYSTORE_LOCATION;
-    @SuppressWarnings("deprecation")
-    public static final String SSL_KEYSTORE_PASSWD = X509Util.SSL_KEYSTORE_PASSWD;
-    @SuppressWarnings("deprecation")
-    public static final String SSL_TRUSTSTORE_LOCATION = X509Util.SSL_TRUSTSTORE_LOCATION;
-    @SuppressWarnings("deprecation")
-    public static final String SSL_TRUSTSTORE_PASSWD = X509Util.SSL_TRUSTSTORE_PASSWD;
-    @SuppressWarnings("deprecation")
-    public static final String SSL_AUTHPROVIDER = X509Util.SSL_AUTHPROVIDER;
-    public static final String JUTE_MAXBUFFER = "jute.maxbuffer";
-    /**
-     * Path to a kinit binary: {@value}. Defaults to
-     * <code>"/usr/bin/kinit"</code>
-     */
-    public static final String KINIT_COMMAND = "zookeeper.kinit";
-    public static final String JGSS_NATIVE = "sun.security.jgss.native";
 
-    private final Map<String, String> properties = new HashMap<String, String>();
+    public static final String SSL_VERSION_DEFAULT = "TLSv1";
+    public static final String SSL_VERSION = "ssl.version";
+    public static final String SSL_KEYSTORE_LOCATION = "ssl.keyStore.location";
+    public static final String SSL_KEYSTORE_PASSWD = "ssl.keyStore.password";
+    public static final String SSL_TRUSTSTORE_LOCATION =
+            "ssl.trustStore.location";
+    public static final String SSL_TRUSTSTORE_PASSWD =
+            "ssl.trustStore.password";
+    public static final String SSL_AUTHPROVIDER = "ssl.authProvider";
+
+    protected final Map<String, String> properties = new HashMap<String, String>();
+    private final SslConfig sslConfig;
 
     /**
      * properties, which are common to both client and server, are initialized
      * from system properties
      */
-    public ZKConfig() {
+    public ZKConfig(final SslConfig sslConfig) {
+        this.sslConfig = sslConfig;
         init();
     }
 
@@ -77,8 +71,9 @@ public class ZKConfig {
      *             if failed to load configuration properties
      */
 
-    public ZKConfig(String configPath) throws ConfigException {
-        this(new File(configPath));
+    public ZKConfig(final String configPath, final SslConfig sslConfig)
+            throws ConfigException {
+        this(new File(configPath), sslConfig);
     }
 
     /**
@@ -88,8 +83,9 @@ public class ZKConfig {
      * @throws ConfigException
      *             if failed to load configuration properties
      */
-    public ZKConfig(File configFile) throws ConfigException {
-        this();
+    public ZKConfig(final File configFile, final SslConfig sslConfig)
+            throws ConfigException {
+        this(sslConfig);
         addConfiguration(configFile);
     }
 
@@ -107,14 +103,30 @@ public class ZKConfig {
      * this configuration.
      */
     protected void handleBackwardCompatibility() {
-        properties.put(SSL_KEYSTORE_LOCATION, System.getProperty(SSL_KEYSTORE_LOCATION));
-        properties.put(SSL_KEYSTORE_PASSWD, System.getProperty(SSL_KEYSTORE_PASSWD));
-        properties.put(SSL_TRUSTSTORE_LOCATION, System.getProperty(SSL_TRUSTSTORE_LOCATION));
-        properties.put(SSL_TRUSTSTORE_PASSWD, System.getProperty(SSL_TRUSTSTORE_PASSWD));
-        properties.put(SSL_AUTHPROVIDER, System.getProperty(SSL_AUTHPROVIDER));
-        properties.put(JUTE_MAXBUFFER, System.getProperty(JUTE_MAXBUFFER));
-        properties.put(KINIT_COMMAND, System.getProperty(KINIT_COMMAND));
-        properties.put(JGSS_NATIVE, System.getProperty(JGSS_NATIVE));
+        properties.put(SSL_VERSION, systemPropDefault(
+                getSslConfig().getSslVersion(),
+                getSslConfig().getSslVersionDefault()));
+        LOG.info("registering: " + getSslConfig().getSslKeyStoreLocation());
+        properties.put(SSL_KEYSTORE_LOCATION,
+                System.getProperty(getSslConfig().getSslKeyStoreLocation()));
+        properties.put(SSL_KEYSTORE_PASSWD,
+                System.getProperty(getSslConfig().getSslKeyStorePassword()));
+        properties.put(SSL_TRUSTSTORE_LOCATION,
+                System.getProperty(getSslConfig().getSslTrustStoreLocation()));
+        properties.put(SSL_TRUSTSTORE_PASSWD,
+                System.getProperty(getSslConfig().getSslTrustStorePassword()));
+        properties.put(SSL_AUTHPROVIDER,
+                System.getProperty(getSslConfig().getSslAuthProvider()));
+    }
+
+    private SslConfig getSslConfig() {
+        return sslConfig;
+    }
+
+    protected static String systemPropDefault(final String key,
+                                              final String defaultValue) {
+        return System.getProperty(key) != null ? System.getProperty(key) :
+                defaultValue;
     }
 
     /**

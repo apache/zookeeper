@@ -206,7 +206,7 @@ public class Login {
                         break;
                     }
                     if (isUsingTicketCache) {
-                        String cmd = zkConfig.getProperty(ZKConfig.KINIT_COMMAND, KINIT_COMMAND_DEFAULT);
+                        String cmd = zkConfig.getProperty(ZKClientConfig.KINIT_COMMAND, KINIT_COMMAND_DEFAULT);
                         String kinitArgs = "-R";
                         int retry = 1;
                         while (retry >= 0) {

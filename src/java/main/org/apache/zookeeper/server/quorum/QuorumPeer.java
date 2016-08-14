@@ -60,6 +60,7 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
+import org.apache.zookeeper.server.quorum.util.QuorumSocketFactory;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -117,7 +118,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         public InetSocketAddress clientAddr = null;
         
         public long id;
-        
+
         public LearnerType type = LearnerType.PARTICIPANT;
         
         private List<InetSocketAddress> myAddrs;
@@ -296,7 +297,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 sw.append(String.valueOf(electionAddr.getPort()));
             }           
             if (type == LearnerType.OBSERVER) sw.append(":observer");
-            else if (type == LearnerType.PARTICIPANT) sw.append(":participant");            
+            else if (type == LearnerType.PARTICIPANT) sw.append(":participant");
             if (clientAddr!=null){
                 sw.append(";");
                 sw.append(delimitedHostString(clientAddr));
@@ -711,6 +712,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     ServerCnxnFactory cnxnFactory;
     ServerCnxnFactory secureCnxnFactory;
+    QuorumSocketFactory socketFactory;
+    private QuorumPeerConfig quorumPeerConfig;
 
     private FileTxnSnapLog logFactory = null;
 
@@ -733,9 +736,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File dataDir,
             File dataLogDir, int electionType,
             long myid, int tickTime, int initLimit, int syncLimit,
-            ServerCnxnFactory cnxnFactory) throws IOException {
+            ServerCnxnFactory cnxnFactory, QuorumSocketFactory socketFactory)
+            throws IOException {
         this(quorumPeers, dataDir, dataLogDir, electionType, myid, tickTime,
-                initLimit, syncLimit, false, cnxnFactory,
+                initLimit, syncLimit, false, cnxnFactory, socketFactory,
                 new QuorumMaj(quorumPeers));
     }
 
@@ -743,10 +747,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             File dataLogDir, int electionType,
             long myid, int tickTime, int initLimit, int syncLimit,
             boolean quorumListenOnAllIPs,
-            ServerCnxnFactory cnxnFactory,
+            ServerCnxnFactory cnxnFactory, QuorumSocketFactory socketFactory,
             QuorumVerifier quorumConfig) throws IOException {
         this();
         this.cnxnFactory = cnxnFactory;
+        this.socketFactory = socketFactory;
         this.electionType = electionType;
         this.myid = myid;
         this.tickTime = tickTime;
@@ -883,6 +888,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     {
         this(quorumPeers, snapDir, logDir, electionAlg, myid, tickTime, initLimit, syncLimit, false,
                 ServerCnxnFactory.createFactory(getClientAddress(quorumPeers, myid, clientPort), -1),
+                QuorumSocketFactory.createWithoutSSL(),
                 new QuorumMaj(quorumPeers));
     }
 
@@ -899,6 +905,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         this(quorumPeers, snapDir, logDir, electionAlg,
                 myid,tickTime, initLimit,syncLimit, false,
                 ServerCnxnFactory.createFactory(getClientAddress(quorumPeers, myid, clientPort), -1),
+                QuorumSocketFactory.createWithoutSSL(),
                 quorumConfig);
     }
 
@@ -1613,6 +1620,21 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     public void setSecureCnxnFactory(ServerCnxnFactory secureCnxnFactory) {
         this.secureCnxnFactory = secureCnxnFactory;
+        if (secureCnxnFactory != null) {
+            secureCnxnFactory.setQuorumPeer(this);
+        }
+    }
+
+    public void setSocketFactory(final QuorumSocketFactory socketFactory) {
+        this.socketFactory = socketFactory;
+    }
+
+    public void setQuorumPeerConfig(final QuorumPeerConfig quorumPeerConfig) {
+        this.quorumPeerConfig = quorumPeerConfig;
+    }
+
+    public QuorumPeerConfig getQuorumPeerConfig() {
+        return this.quorumPeerConfig;
     }
 
     private void startServerCnxnFactory() {

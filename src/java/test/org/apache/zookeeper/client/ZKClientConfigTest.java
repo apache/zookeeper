@@ -25,6 +25,7 @@ import static org.apache.zookeeper.client.ZKClientConfig.SECURE_CLIENT;
 import static org.apache.zookeeper.client.ZKClientConfig.ZK_SASL_CLIENT_USERNAME;
 import static org.apache.zookeeper.client.ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET;
 import static org.apache.zookeeper.client.ZKClientConfig.ZOOKEEPER_SERVER_REALM;
+import static org.apache.zookeeper.server.ZookeeperServerConfig.JUTE_MAXBUFFER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -39,7 +40,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -165,9 +165,9 @@ public class ZKClientConfigTest {
 
         // property is set but can not be parsed to int, we should get the
         // NumberFormatException
-        conf.setProperty(ZKConfig.JUTE_MAXBUFFER, "InvlaidIntValue123");
+        conf.setProperty(JUTE_MAXBUFFER, "InvlaidIntValue123");
         try {
-            result = conf.getInt(ZKConfig.JUTE_MAXBUFFER, defaultValue);
+            result = conf.getInt(JUTE_MAXBUFFER, defaultValue);
             fail("NumberFormatException is expected");
         } catch (NumberFormatException exception) {
             // do nothing
@@ -176,15 +176,15 @@ public class ZKClientConfigTest {
 
         // property is set to an valid int, we should get the set value
         int value = ZKClientConfig.CLIENT_MAX_PACKET_LENGTH_DEFAULT;
-        conf.setProperty(ZKConfig.JUTE_MAXBUFFER, Integer.toString(value));
-        result = conf.getInt(ZKConfig.JUTE_MAXBUFFER, defaultValue);
+        conf.setProperty(JUTE_MAXBUFFER, Integer.toString(value));
+        result = conf.getInt(JUTE_MAXBUFFER, defaultValue);
         assertEquals(value, result);
 
         // property is set but with white spaces
         value = 12345;
-        conf.setProperty(ZKConfig.JUTE_MAXBUFFER,
+        conf.setProperty(JUTE_MAXBUFFER,
                 " " + Integer.toString(value) + " ");
-        result = conf.getInt(ZKConfig.JUTE_MAXBUFFER, defaultValue);
+        result = conf.getInt(JUTE_MAXBUFFER, defaultValue);
         assertEquals(value, result);
     }
 

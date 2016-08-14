@@ -787,7 +787,7 @@ public class ClientCnxn {
             super(msg);
         }
     }
-    
+
     /**
      * This class services the outgoing request queue and generates the heart
      * beats. It also spawns the ReadThread.

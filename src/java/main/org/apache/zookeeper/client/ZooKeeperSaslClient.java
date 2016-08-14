@@ -43,7 +43,6 @@ import org.apache.zookeeper.ClientCnxn;
 import org.apache.zookeeper.Login;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.GetSASLRequest;
 import org.apache.zookeeper.proto.SetSASLResponse;
@@ -280,7 +279,7 @@ public class ZooKeeperSaslClient {
                 return saslClient;
             }
             else { // GSSAPI.
-                boolean usingNativeJgss = clientConfig.getBoolean(ZKConfig.JGSS_NATIVE);
+                boolean usingNativeJgss = clientConfig.getBoolean(ZKClientConfig.JGSS_NATIVE);
             	if (usingNativeJgss) {
             		// http://docs.oracle.com/javase/6/docs/technotes/guides/security/jgss/jgss-features.html
             		// """

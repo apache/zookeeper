@@ -41,6 +41,7 @@ import org.apache.jute.Record;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ZooTrace;
@@ -235,9 +236,10 @@ public class Learner {
      * @throws ConnectException
      * @throws InterruptedException
      */
-    protected void connectToLeader(InetSocketAddress addr) 
-    throws IOException, ConnectException, InterruptedException {
-        sock = new Socket();        
+    protected void connectToLeader(InetSocketAddress addr)
+    throws IOException, ConnectException, InterruptedException, X509Exception {
+        sock = this.self.socketFactory.buildForClient(
+                this.self.getQuorumPeerConfig());
         sock.setSoTimeout(self.tickTime * self.initLimit);
 
         int initLimitTime = self.tickTime * self.initLimit;
@@ -272,8 +274,9 @@ public class Learner {
                 } else {
                     LOG.warn("Unexpected exception, tries=" + tries +
                             ", remaining init limit=" + remainingInitLimitTime +
-                            ", connecting to " + addr,e);
-                    sock = new Socket();
+                            ", connecting to " + addr, e);
+                    sock = this.self.socketFactory.buildForClient(
+                            this.self.getQuorumPeerConfig());
                     sock.setSoTimeout(self.tickTime * self.initLimit);
                 }
             }
@@ -283,7 +286,7 @@ public class Learner {
                 sock.getInputStream()));
         bufferedOutput = new BufferedOutputStream(sock.getOutputStream());
         leaderOs = BinaryOutputArchive.getArchive(bufferedOutput);
-    }   
+    }
     
     /**
      * Once connected to the leader, perform the handshake protocol to

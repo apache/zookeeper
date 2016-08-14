@@ -32,7 +32,6 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
-import org.apache.zookeeper.common.X509Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,7 +87,8 @@ public class FourLetterWordMain {
             new InetSocketAddress(InetAddress.getByName(null), port);
         if (secure) {
             LOG.info("using secure socket");
-            SSLContext sslContext = X509Util.createSSLContext();
+            SSLContext sslContext = ClientX509Util.createSSLContext(
+                    new ZKClientConfig());
             SSLSocketFactory socketFactory = sslContext.getSocketFactory();
             SSLSocket sslSock = (SSLSocket) socketFactory.createSocket();
             sslSock.connect(hostaddress, timeout);

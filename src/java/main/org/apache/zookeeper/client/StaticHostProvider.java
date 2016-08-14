@@ -106,7 +106,7 @@ public final class StaticHostProvider implements HostProvider {
     }
 
     private List<InetSocketAddress> resolveAndShuffle(Collection<InetSocketAddress> serverAddresses) {
-        List<InetSocketAddress> tmpList = new ArrayList<InetSocketAddress>(serverAddresses.size());       
+        List<InetSocketAddress> tmpList = new ArrayList<InetSocketAddress>(serverAddresses.size());
         for (InetSocketAddress address : serverAddresses) {
             try {
                 InetAddress ia = address.getAddress();
@@ -122,7 +122,7 @@ public final class StaticHostProvider implements HostProvider {
         }
         Collections.shuffle(tmpList, sourceOfRandomness);
         return tmpList;
-    } 
+    }
 
 
     /**
@@ -310,7 +310,7 @@ public final class StaticHostProvider implements HostProvider {
                 addr = nextHostInReconfigMode();
                 if (addr != null) {
                 	currentIndex = serverAddresses.indexOf(addr);
-                	return addr;                
+                	return addr;
                 }
                 //tried all servers and couldn't connect
                 reconfigMode = false;

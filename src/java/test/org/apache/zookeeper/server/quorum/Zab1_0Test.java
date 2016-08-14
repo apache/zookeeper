@@ -1275,7 +1275,7 @@ public class Zab1_0Test extends ZKTestCase {
         public void setLeaderSocketAddress(InetSocketAddress addr) {
             leaderAddr = addr;
         }
-        
+
         @Override
         protected InetSocketAddress findLeader() {
             return leaderAddr;
