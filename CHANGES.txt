@@ -58,6 +58,8 @@ IMPROVEMENTS:
   ZOOKEEPER-2240 Make the three-node minimum more explicit in 
   documentation and on website (Shawn Heisey and Arshad Mohammad via phunt)
 
+  ZOOKEEPER-2514: Simplify releasenotes creation for 3.4 branch -
+  consistent with newer branches. (phunt via cnauroth)
 
 Release 3.4.8 - 2016-02-05
 
