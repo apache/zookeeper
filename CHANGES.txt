@@ -1,3 +1,5 @@
+Release 3.4.9 - 2016-08-18
+
 Backward compatible changes:
 
 BUGFIXES:
