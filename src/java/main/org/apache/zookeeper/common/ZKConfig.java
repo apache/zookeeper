@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 public class ZKConfig {
 
     private static final Logger LOG = LoggerFactory.getLogger(ZKConfig.class);
+	public static final String CLIENT_SSL_CONTEXT = "zookeeper.client.ssl.context";
     @SuppressWarnings("deprecation")
     public static final String SSL_KEYSTORE_LOCATION = X509Util.SSL_KEYSTORE_LOCATION;
     @SuppressWarnings("deprecation")
@@ -138,6 +139,16 @@ public class ZKConfig {
     public String getProperty(String key, String defaultValue) {
         String value = properties.get(key);
         return (value == null) ? defaultValue : value;
+    }
+    
+    /**
+     * Check if a given property is in this config class
+     * 
+     * @param key Property key
+     * @return True if exists, otherwise false.
+     */
+    public boolean containsProperty(String key) {
+    	return properties.containsKey(key);
     }
 
     /**

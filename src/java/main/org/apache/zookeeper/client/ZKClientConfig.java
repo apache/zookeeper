@@ -78,6 +78,7 @@ public class ZKClientConfig extends ZKConfig {
         /**
          * backward compatibility for client specific properties
          */
+        setProperty(CLIENT_SSL_CONTEXT, System.getProperty(CLIENT_SSL_CONTEXT));
         setProperty(ZK_SASL_CLIENT_USERNAME, System.getProperty(ZK_SASL_CLIENT_USERNAME));
         setProperty(LOGIN_CONTEXT_NAME_KEY, System.getProperty(LOGIN_CONTEXT_NAME_KEY));
         setProperty(ENABLE_CLIENT_SASL_KEY, System.getProperty(ENABLE_CLIENT_SASL_KEY));
