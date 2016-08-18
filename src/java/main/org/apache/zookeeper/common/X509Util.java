@@ -63,9 +63,16 @@ public class X509Util {
     private static final Logger LOG = LoggerFactory.getLogger(X509Util.class);
 
     /**
-     * TODO: XXX: Move to ZKClient
+     * @deprecated Use {@link ZKConfig#SSL_VERSION_DEFAULT}
+     *             instead.
      */
+    @Deprecated
     public static final String SSL_VERSION_DEFAULT = "TLSv1";
+    /**
+     * @deprecated Use {@link ZKConfig#SSL_VERSION}
+     *             instead.
+     */
+    @Deprecated
     public static final String SSL_VERSION = "zookeeper.ssl.version";
     /**
      * @deprecated Use {@link ZKConfig#SSL_KEYSTORE_LOCATION}
@@ -99,11 +106,23 @@ public class X509Util {
     public static final String SSL_AUTHPROVIDER = "zookeeper.ssl.authProvider";
 
     /**
-     * TODO: XXX: Move to ZKClient
+     * @deprecated Use {@link ZKConfig#SSL_TRUSTSTORE_CA_ALIAS}
+     *             instead.
      */
+    @Deprecated
     public static final String SSL_TRUSTSTORE_CA_ALIAS =
             "zookeeper.ssl.trustStore.rootCA.alias";
+    /**
+     * @deprecated Use {@link ZKConfig#SSL_DIGEST_DEFAULT_ALGO}
+     *             instead.
+     */
+    @Deprecated
     public static final String SSL_DIGEST_DEFAULT_ALGO ="SHA-256";
+    /**
+     * @deprecated Use {@link ZKConfig#SSL_DIGEST_ALGOS}
+     *             instead.
+     */
+    @Deprecated
     public static final String SSL_DIGEST_ALGOS = "quorum.ssl.digest.algos";
 
     /**
@@ -157,9 +176,9 @@ public class X509Util {
     private static KeyManager[] createKeyManagers(final ZKConfig config) throws
             SSLContextException {
         final String keyStoreLocationProp =
-                config.getProperty(SSL_KEYSTORE_LOCATION);
+                config.getProperty(ZKConfig.SSL_KEYSTORE_LOCATION);
         final String keyStorePasswordProp =
-                config.getProperty(SSL_KEYSTORE_PASSWD);
+                config.getProperty(ZKConfig.SSL_KEYSTORE_PASSWD);
 
         if (keyStoreLocationProp == null && keyStorePasswordProp == null) {
             LOG.warn("keystore not specified for client connection");
@@ -194,9 +213,9 @@ public class X509Util {
             final ZKConfig config,
             final QuorumPeer quorumPeer) throws SSLContextException {
         String trustStoreLocationProp =
-                config.getProperty(SSL_TRUSTSTORE_LOCATION);
+                config.getProperty(ZKConfig.SSL_TRUSTSTORE_LOCATION);
         String trustStorePasswordProp =
-                config.getProperty(SSL_TRUSTSTORE_PASSWD);
+                config.getProperty(ZKConfig.SSL_TRUSTSTORE_PASSWD);
 
         if (trustStoreLocationProp == null && trustStorePasswordProp == null) {
             if (quorumPeer == null) {
@@ -241,9 +260,9 @@ public class X509Util {
             final KeyManager[] keyManagers,
             final TrustManager[] trustManagers)
             throws SSLContextException {
-        String sslVersion = config.getProperty(SSL_VERSION);
+        String sslVersion = config.getProperty(ZKConfig.SSL_VERSION);
         if (sslVersion == null) {
-            sslVersion = SSL_VERSION_DEFAULT;
+            sslVersion = ZKConfig.SSL_VERSION_DEFAULT;
         }
         SSLContext sslContext;
         try {
@@ -304,7 +323,7 @@ public class X509Util {
             final String trustStoreLocation, final String trustStorePassword)
             throws TrustManagerException, SSLContextException {
         String trustStoreCAAlias =
-                config.getProperty(SSL_TRUSTSTORE_CA_ALIAS);
+                config.getProperty(ZKConfig.SSL_TRUSTSTORE_CA_ALIAS);
         if (trustStoreCAAlias == null) {
             final String errStr = "No CA Alias provided, need one to work in " +
                     "CA mode.";
@@ -366,12 +385,13 @@ public class X509Util {
     /**
      * Parse parsed system property and find a valid algo that matches
      * the finger print passed. Will return null if it couldn't
-     * @param fingerPrint
+     * @param config ZKConfig
+     * @param fingerPrint Digest of cert
      * @return MessageDigest object, null on error.
      */
     public static MessageDigest getSupportedMessageDigestForFpStr(
-            final String fingerPrint) {
-        final String[] algos = getConfigureDigestAlgos();
+            final ZKConfig config, final String fingerPrint) {
+        final String[] algos = getConfigureDigestAlgos(config);
         String validAlgo = null;
 
         for (int i = 0; i < algos.length; i++) {
@@ -389,7 +409,7 @@ public class X509Util {
             return null;
         }
 
-        MessageDigest md = getMessageDigestByAlgo(validAlgo);
+        MessageDigest md = getMessageDigestByAlgo(config, validAlgo);
         if (md == null) {
             return null;
         }
@@ -413,24 +433,24 @@ public class X509Util {
         return md;
     }
 
-    private static String[] getConfigureDigestAlgos() {
-        String digest_algos = System.getProperty(SSL_DIGEST_ALGOS);
+    private static String[] getConfigureDigestAlgos(final ZKConfig config) {
+        String digest_algos = config.getProperty(ZKConfig.SSL_DIGEST_ALGOS);
         if (digest_algos == null) {
-            digest_algos = SSL_DIGEST_DEFAULT_ALGO;
+            digest_algos = ZKConfig.SSL_DIGEST_DEFAULT_ALGO;
         }
 
         return digest_algos.trim().toLowerCase().split(",");
     }
 
     private static MessageDigest getMessageDigestByAlgo(
-            final String validAlgo) {
+            final ZKConfig config, final String validAlgo) {
         MessageDigest md = null;
         try {
             LOG.info("Valid algo: " + validAlgo);
             md = MessageDigest.getInstance(validAlgo.toUpperCase());
         } catch (NoSuchAlgorithmException e) {
             LOG.error("Invalid algo: " + validAlgo + " support algos: " +
-                    getConfigureDigestAlgos());
+                    String.join(",", getConfigureDigestAlgos(config)));
         }
 
         return md;
@@ -444,11 +464,12 @@ public class X509Util {
      * @return True on success
      * @throws CertificateEncodingException
      */
-    public static boolean validateCert(final String fingerPrint,
+    public static boolean validateCert(final ZKConfig config,
+                                       final String fingerPrint,
                                        final X509Certificate cert)
             throws CertificateEncodingException, NoSuchAlgorithmException {
         final MessageDigest fpMsgDigest =
-                getSupportedMessageDigestForFpStr(fingerPrint);
+                getSupportedMessageDigestForFpStr(config, fingerPrint);
         if (fpMsgDigest == null) {
             return false;
         }

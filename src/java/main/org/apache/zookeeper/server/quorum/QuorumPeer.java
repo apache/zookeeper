@@ -53,6 +53,7 @@ import org.apache.zookeeper.common.AtomicFileWritingIdiom;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.common.X509Util;
+import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
 import org.apache.zookeeper.server.ServerCnxnFactory;
@@ -1653,7 +1654,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             final String peerFp =
                     quorumServer.getSslCertCfg().getCertFingerPrintStr();
             final MessageDigest peerFpSupportedMd =
-                    X509Util.getSupportedMessageDigestForFpStr(peerFp);
+                    X509Util.getSupportedMessageDigestForFpStr(
+                            new ZKConfig(), peerFp);
             if (peerFpSupportedMd == null) {
                 final String errStr =
                         "QuorumServer: "  + quorumServer +

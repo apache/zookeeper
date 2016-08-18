@@ -43,6 +43,10 @@ public class ZKConfig {
 
     private static final Logger LOG = LoggerFactory.getLogger(ZKConfig.class);
     @SuppressWarnings("deprecation")
+    public static final String SSL_VERSION_DEFAULT = X509Util.SSL_VERSION_DEFAULT;
+    @SuppressWarnings("deprecation")
+    public static final String SSL_VERSION = X509Util.SSL_VERSION;
+    @SuppressWarnings("deprecation")
     public static final String SSL_KEYSTORE_LOCATION = X509Util.SSL_KEYSTORE_LOCATION;
     @SuppressWarnings("deprecation")
     public static final String SSL_KEYSTORE_PASSWD = X509Util.SSL_KEYSTORE_PASSWD;
@@ -52,6 +56,12 @@ public class ZKConfig {
     public static final String SSL_TRUSTSTORE_PASSWD = X509Util.SSL_TRUSTSTORE_PASSWD;
     @SuppressWarnings("deprecation")
     public static final String SSL_AUTHPROVIDER = X509Util.SSL_AUTHPROVIDER;
+    @SuppressWarnings("deprecation")
+    public static final String SSL_TRUSTSTORE_CA_ALIAS = X509Util.SSL_TRUSTSTORE_CA_ALIAS;
+    @SuppressWarnings("deprecation")
+    public static final String SSL_DIGEST_DEFAULT_ALGO = X509Util.SSL_DIGEST_DEFAULT_ALGO;
+    @SuppressWarnings("deprecation")
+    public static final String SSL_DIGEST_ALGOS = X509Util.SSL_DIGEST_ALGOS;
     public static final String JUTE_MAXBUFFER = "jute.maxbuffer";
     /**
      * Path to a kinit binary: {@value}. Defaults to
@@ -107,11 +117,14 @@ public class ZKConfig {
      * this configuration.
      */
     protected void handleBackwardCompatibility() {
+        properties.put(SSL_VERSION, System.getProperty(SSL_VERSION));
         properties.put(SSL_KEYSTORE_LOCATION, System.getProperty(SSL_KEYSTORE_LOCATION));
         properties.put(SSL_KEYSTORE_PASSWD, System.getProperty(SSL_KEYSTORE_PASSWD));
         properties.put(SSL_TRUSTSTORE_LOCATION, System.getProperty(SSL_TRUSTSTORE_LOCATION));
         properties.put(SSL_TRUSTSTORE_PASSWD, System.getProperty(SSL_TRUSTSTORE_PASSWD));
         properties.put(SSL_AUTHPROVIDER, System.getProperty(SSL_AUTHPROVIDER));
+        properties.put(SSL_TRUSTSTORE_CA_ALIAS, System.getProperty(SSL_TRUSTSTORE_CA_ALIAS));
+        properties.put(SSL_DIGEST_ALGOS, System.getProperty(SSL_DIGEST_ALGOS));
         properties.put(JUTE_MAXBUFFER, System.getProperty(JUTE_MAXBUFFER));
         properties.put(KINIT_COMMAND, System.getProperty(KINIT_COMMAND));
         properties.put(JGSS_NATIVE, System.getProperty(JGSS_NATIVE));

@@ -25,6 +25,7 @@ import java.security.cert.X509Certificate;
 import javax.net.ssl.X509TrustManager;
 
 import org.apache.zookeeper.common.X509Util;
+import org.apache.zookeeper.common.ZKConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,7 +72,7 @@ public class ZKPeerX509TrustManager implements X509TrustManager {
         X509Util.verifySelfSigned(cert);
 
         try {
-            X509Util.validateCert(peerCertFingerPrintStr, cert);
+            X509Util.validateCert(new ZKConfig(), peerCertFingerPrintStr, cert);
         } catch (NoSuchAlgorithmException exp) {
             throw new CertificateException(exp);
         }

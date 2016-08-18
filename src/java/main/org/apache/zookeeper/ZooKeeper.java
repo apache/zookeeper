@@ -154,10 +154,6 @@ public class ZooKeeper implements AutoCloseable {
     @Deprecated
     public static final String SECURE_CLIENT = "zookeeper.client.secure";
 
-    // TODO: XXX: Move to ZKConfig
-    public static final String PEER_HOST_CERT_FINGERPRINT
-            = "zookeeper.client.peer.cert.fingerprint";
-
     protected final ClientCnxn cnxn;
     private static final Logger LOG;
     static {
@@ -670,6 +666,9 @@ public class ZooKeeper implements AutoCloseable {
      *            would be relative to this root - ie getting/setting/etc...
      *            "/foo/bar" would result in operations being run on
      *            "/app/a/foo/bar" (from the server perspective).
+     *            With SSL support the string might look like this:
+     *            "127.0.0.1:3000:SHA-256-XXXXX,127.0.0.1:3001:SHA-256-XXXXX,
+     *            127.0.0.1:3002:SHA-256-XXXXX".
      * @param sessionTimeout
      *            session timeout in milliseconds
      * @param watcher
@@ -719,6 +718,9 @@ public class ZooKeeper implements AutoCloseable {
      *            would be relative to this root - ie getting/setting/etc...
      *            "/foo/bar" would result in operations being run on
      *            "/app/a/foo/bar" (from the server perspective).
+     *            With SSL support the string might look like this:
+     *            "127.0.0.1:3000:SHA-256-XXXXX,127.0.0.1:3001:SHA-256-XXXXX,
+     *            127.0.0.1:3002:SHA-256-XXXXX".
      * @param sessionTimeout
      *            session timeout in milliseconds
      * @param watcher
@@ -773,6 +775,9 @@ public class ZooKeeper implements AutoCloseable {
      *            would be relative to this root - ie getting/setting/etc...
      *            "/foo/bar" would result in operations being run on
      *            "/app/a/foo/bar" (from the server perspective).
+     *            With SSL support the string might look like this:
+     *            "127.0.0.1:3000:SHA-256-XXXXX,127.0.0.1:3001:SHA-256-XXXXX,
+     *            127.0.0.1:3002:SHA-256-XXXXX".
      * @param sessionTimeout
      *            session timeout in milliseconds
      * @param watcher
@@ -838,6 +843,9 @@ public class ZooKeeper implements AutoCloseable {
      *            would be relative to this root - ie getting/setting/etc...
      *            "/foo/bar" would result in operations being run on
      *            "/app/a/foo/bar" (from the server perspective).
+     *            With SSL support the string might look like this:
+     *            "127.0.0.1:3000:SHA-256-XXXXX,127.0.0.1:3001:SHA-256-XXXXX,
+     *            127.0.0.1:3002:SHA-256-XXXXX".
      * @param sessionTimeout
      *            session timeout in milliseconds
      * @param watcher
@@ -916,6 +924,9 @@ public class ZooKeeper implements AutoCloseable {
      *            would be relative to this root - ie getting/setting/etc...
      *            "/foo/bar" would result in operations being run on
      *            "/app/a/foo/bar" (from the server perspective).
+     *            With SSL support the string might look like this:
+     *            "127.0.0.1:3000:SHA-256-XXXXX,127.0.0.1:3001:SHA-256-XXXXX,
+     *            127.0.0.1:3002:SHA-256-XXXXX".
      * @param sessionTimeout
      *            session timeout in milliseconds
      * @param watcher
@@ -974,6 +985,9 @@ public class ZooKeeper implements AutoCloseable {
      *            would be relative to this root - ie getting/setting/etc...
      *            "/foo/bar" would result in operations being run on
      *            "/app/a/foo/bar" (from the server perspective).
+     *            With SSL support the string might look like this:
+     *            "127.0.0.1:3000:SHA-256-XXXXX,127.0.0.1:3001:SHA-256-XXXXX,
+     *            127.0.0.1:3002:SHA-256-XXXXX".
      * @param sessionTimeout
      *            session timeout in milliseconds
      * @param watcher
@@ -1039,6 +1053,9 @@ public class ZooKeeper implements AutoCloseable {
      *            would be relative to this root - ie getting/setting/etc...
      *            "/foo/bar" would result in operations being run on
      *            "/app/a/foo/bar" (from the server perspective).
+     *            With SSL support the string might look like this:
+     *            "127.0.0.1:3000:SHA-256-XXXXX,127.0.0.1:3001:SHA-256-XXXXX,
+     *            127.0.0.1:3002:SHA-256-XXXXX".
      * @param sessionTimeout
      *            session timeout in milliseconds
      * @param watcher
@@ -1102,6 +1119,9 @@ public class ZooKeeper implements AutoCloseable {
      *            would be relative to this root - ie getting/setting/etc...
      *            "/foo/bar" would result in operations being run on
      *            "/app/a/foo/bar" (from the server perspective).
+     *            With SSL support the string might look like this:
+     *            "127.0.0.1:3000:SHA-256-XXXXX,127.0.0.1:3001:SHA-256-XXXXX,
+     *            127.0.0.1:3002:SHA-256-XXXXX".
      * @param sessionTimeout
      *            session timeout in milliseconds
      * @param watcher
@@ -1192,7 +1212,7 @@ public class ZooKeeper implements AutoCloseable {
      *            "/app/a/foo/bar" (from the server perspective).
      *            With SSL support the string might look like this:
      *            "127.0.0.1:3000:SHA-256-XXXXX,127.0.0.1:3001:SHA-256-XXXXX,
-     *            127.0.0.1:3002:SHA-256-XXXXX"
+     *            127.0.0.1:3002:SHA-256-XXXXX".
      * @param sessionTimeout
      *            session timeout in milliseconds
      * @param watcher
