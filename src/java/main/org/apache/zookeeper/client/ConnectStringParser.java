@@ -28,6 +28,8 @@ import org.apache.zookeeper.SSLCertCfg;
 import org.apache.zookeeper.ServerCfg;
 import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.apache.zookeeper.common.StringUtils.split;
 
@@ -42,6 +44,8 @@ import static org.apache.zookeeper.common.StringUtils.split;
  * @see org.apache.zookeeper.ZooKeeper
  */
 public final class ConnectStringParser {
+    private static final Logger LOG = LoggerFactory
+            .getLogger(ConnectStringParser.class);
     private static final int DEFAULT_PORT = 2181;
 
     private final String chrootPath;
@@ -87,16 +91,17 @@ public final class ConnectStringParser {
 
             try {
                 if (hostStrParts.length > 2 || noPort) {
+
                     serverCfgList.add(
                             new ServerCfg(hostStrParts[0],
-                                    InetSocketAddress.createUnresolved(host,
-                                            port),
+                                    InetSocketAddress.createUnresolved(
+                                            hostStrParts[0], port),
                                     SSLCertCfg.parseCertCfgStr(host)));
                 } else {
                     serverCfgList.add(
                             new ServerCfg(hostStrParts[0],
-                                    InetSocketAddress.createUnresolved(host,
-                                            port)));
+                                    InetSocketAddress.createUnresolved(
+                                            hostStrParts[0], port)));
                 }
             } catch (QuorumPeerConfig.ConfigException exp) {
                 throw new IllegalArgumentException(exp);
