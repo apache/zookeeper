@@ -364,7 +364,7 @@ public class X509Util {
         return new ZKX509TrustManager(rootCA);
     }
 
-    private static X509TrustManager createTrustManager(
+    public static X509TrustManager createTrustManager(
             final QuorumPeer quorumPeer) {
         return new ZKDynamicX509TrustManager(quorumPeer);
     }

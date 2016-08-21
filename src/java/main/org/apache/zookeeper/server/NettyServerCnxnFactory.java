@@ -38,7 +38,6 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.common.ZKConfig;
-import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.auth.X509AuthenticationProvider;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -106,8 +105,14 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                     zkServer, NettyServerCnxnFactory.this);
             ctx.setAttachment(cnxn);
 
-            allChannels.add(ctx.getChannel());
-            addCnxn(cnxn);
+            if (secure) {
+                SslHandler sslHandler = ctx.getPipeline().get(SslHandler.class);
+                ChannelFuture handshakeFuture = sslHandler.handshake();
+                handshakeFuture.addListener(new CertificateVerifier(sslHandler, cnxn));
+            } else {
+                allChannels.add(ctx.getChannel());
+                addCnxn(cnxn);
+            }
         }
 
         @Override
@@ -282,18 +287,8 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                     SSLSession session = eng.getSession();
                     cnxn.setClientCertificateChain(session.getPeerCertificates());
 
-                    String authProviderProp
-                            = System.getProperty(ZKConfig.SSL_AUTHPROVIDER, "x509");
-
                     X509AuthenticationProvider authProvider =
-                            (X509AuthenticationProvider)
-                                    ProviderRegistry.getProvider(authProviderProp);
-
-                    if (authProvider == null) {
-                        LOG.error("Auth provider not found: {}", authProviderProp);
-                        cnxn.close();
-                        return;
-                    }
+                            new X509AuthenticationProvider(quorumPeer);
 
                     if (KeeperException.Code.OK !=
                             authProvider.handleAuthentication(cnxn, null)) {

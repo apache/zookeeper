@@ -33,6 +33,7 @@ import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.ServerCnxn;
+import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +66,7 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
      * <br/><code>zookeeper.ssl.keyStore.password</code>
      * <br/><code>zookeeper.ssl.trustStore.password</code>
      */
-    public X509AuthenticationProvider() {
+    public X509AuthenticationProvider(final QuorumPeer quorumPeer) {
         String keyStoreLocationProp = System.getProperty(
                 ZKConfig.SSL_KEYSTORE_LOCATION);
         String keyStorePasswordProp = System.getProperty(
@@ -86,8 +87,12 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
                 ZKConfig.SSL_TRUSTSTORE_PASSWD);
 
         try {
-            tm = X509Util.createTrustManager(new ZKConfig(),
-                    trustStoreLocationProp, trustStorePasswordProp);
+            if (quorumPeer != null) {
+                tm = X509Util.createTrustManager(quorumPeer);
+            } else {
+                tm = X509Util.createTrustManager(new ZKConfig(),
+                        trustStoreLocationProp, trustStorePasswordProp);
+            }
         } catch (TrustManagerException | X509Exception.SSLContextException e) {
             LOG.error("Failed to create trust manager", e);
             throw new IllegalAccessError("Failed to create trust manager");

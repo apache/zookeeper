@@ -47,13 +47,13 @@ public class ZKDynamicX509TrustManager extends X509ExtendedTrustManager {
     @Override
     public void checkClientTrusted(X509Certificate[] x509Certificates, String s)
             throws CertificateException {
-
+        validateSingleAndSelfSigned(x509Certificates);
     }
 
     @Override
     public void checkServerTrusted(X509Certificate[] x509Certificates, String s)
             throws CertificateException {
-
+        validateSingleAndSelfSigned(x509Certificates);
     }
 
     public X509Certificate[] getAcceptedIssuers() {
@@ -78,14 +78,14 @@ public class ZKDynamicX509TrustManager extends X509ExtendedTrustManager {
     public void checkClientTrusted(X509Certificate[] x509Certificates, String s,
                                    SSLEngine sslEngine)
             throws CertificateException {
-
+        validateSingleAndSelfSigned(x509Certificates);
     }
 
     @Override
     public void checkServerTrusted(X509Certificate[] x509Certificates, String s,
                                    SSLEngine sslEngine)
             throws CertificateException {
-
+        validateSingleAndSelfSigned(x509Certificates);
     }
 
     private void validateSingleAndSelfSigned(final X509Certificate[] certs)
