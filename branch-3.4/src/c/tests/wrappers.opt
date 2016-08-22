@@ -1,7 +1,0 @@
--Wl,--wrap -Wl,calloc
--Wl,--wrap -Wl,free
--Wl,--wrap -Wl,flush_send_queue
--Wl,--wrap -Wl,get_xid
--Wl,--wrap -Wl,deliverWatchers
--Wl,--wrap -Wl,activateWatcher
--Wl,--wrap -Wl,realloc

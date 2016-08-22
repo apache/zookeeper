@@ -1,8 +1,0 @@
-
-In order to generate .jks (java keystore files) you need to use keytool.
-
-The password for the existing .jks is "123456" (without quotes).
-
-Some tutorials:
- - http://www.mobilefish.com/tutorials/java/java_quickguide_keytool.html
-
