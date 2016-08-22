@@ -1,0 +1,637 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2002-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<!DOCTYPE article PUBLIC "-//OASIS//DTD Simplified DocBook XML V1.0//EN"
+"http://www.oasis-open.org/docbook/xml/simple/1.0/sdocbook.dtd">
+<article id="ar_Recipes">
+  <title>ZooKeeper Recipes and Solutions</title>
+
+  <articleinfo>
+    <legalnotice>
+      <para>Licensed under the Apache License, Version 2.0 (the "License");
+      you may not use this file except in compliance with the License. You may
+      obtain a copy of the License at <ulink
+      url="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</ulink>.</para>
+
+      <para>Unless required by applicable law or agreed to in writing,
+      software distributed under the License is distributed on an "AS IS"
+      BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied. See the License for the specific language governing permissions
+      and limitations under the License.</para>
+    </legalnotice>
+
+    <abstract>
+      <para>This guide contains pseudocode and guidelines for using Zookeeper to
+      solve common problems in Distributed Application Coordination. It
+      discusses such problems as event handlers, queues, and locks..</para>
+
+      <para>$Revision: 1.6 $ $Date: 2008/09/19 03:46:18 $</para>
+    </abstract>
+  </articleinfo>
+
+  <section id="ch_recipes">
+    <title>A Guide to Creating Higher-level Constructs with ZooKeeper</title>
+
+    <para>In this article, you'll find guidelines for using
+    ZooKeeper to implement higher order functions. All of them are conventions
+    implemented at the client and do not require special support from
+    ZooKeeper. Hopfully the community will capture these conventions in client-side libraries 
+    to ease their use and to encourage standardization.</para>
+
+    <para>One of the most interesting things about ZooKeeper is that even
+    though ZooKeeper uses <emphasis>asynchronous</emphasis> notifications, you
+    can use it to build <emphasis>synchronous</emphasis> consistency
+    primitives, such as queues and locks. As you will see, this is possible
+    because ZooKeeper imposes an overall order on updates, and has mechanisms
+    to expose this ordering.</para>
+
+    <para>Note that the recipes below attempt to employ best practices. In
+    particular, they avoid polling, timers or anything else that would result
+    in a "herd effect", causing bursts of traffic and limiting
+    scalability.</para>
+
+    <para>There are many useful functions that can be imagined that aren't
+    included here - revocable read-write priority locks, as just one example.
+    And some of the constructs mentioned here - locks, in particular -
+    illustrate certain points, even though you may find other constructs, such
+    as event handles or queues, a more practical means of performing the same
+    function. In general, the examples in this section are designed to
+    stimulate thought.</para>
+
+
+  <section id="sc_outOfTheBox">
+    <title>Out of the Box Applications: Name Service, Configuration, Group
+    Membership</title>
+
+    <para>Name service and configuration are two of the primary applications
+    of ZooKeeper. These two functions are provided directly by the ZooKeeper
+    API.</para>
+
+    <para>Another function directly provided by ZooKeeper is <emphasis>group
+    membership</emphasis>. The group is represented by a node. Members of the
+    group create ephemeral nodes under the group node. Nodes of the members
+    that fail abnormally will be removed automatically when ZooKeeper detects
+    the failure.</para>
+  </section>
+
+  <section id="sc_recipes_eventHandles">
+    <title>Barriers</title>
+
+    <para>Distributed systems use <emphasis>barriers</emphasis>
+      to block processing of a set of nodes until a condition is met
+      at which time all the nodes are allowed to proceed. Barriers are
+      implemented in ZooKeeper by designating a barrier node. The
+      barrier is in place if the barrier node exists. Here's the
+      pseudo code:</para>
+
+    <orderedlist>
+      <listitem>
+        <para>Client calls the ZooKeeper API's <emphasis
+        role="bold">exists()</emphasis> function on the barrier node, with
+        <emphasis>watch</emphasis> set to true.</para>
+      </listitem>
+
+      <listitem>
+        <para>If <emphasis role="bold">exists()</emphasis> returns false, the
+        barrier is gone and the client proceeds</para>
+      </listitem>
+
+      <listitem>
+        <para>Else, if <emphasis role="bold">exists()</emphasis> returns true,
+        the clients wait for a watch event from ZooKeeper for the barrier
+        node.</para>
+      </listitem>
+
+      <listitem>
+        <para>When the watch event is triggered, the client reissues the
+        <emphasis role="bold">exists( )</emphasis> call, again waiting until
+        the barrier node is removed.</para>
+      </listitem>
+    </orderedlist>
+
+    <section id="sc_doubleBarriers">
+      <title>Double Barriers</title>
+
+      <para>Double barriers enable clients to synchronize the beginning and
+      the end of a computation. When enough processes have joined the barrier,
+      processes start their computation and leave the barrier once they have
+      finished. This recipe shows how to use a ZooKeeper node as a
+      barrier.</para>
+
+      <para>The pseudo code in this recipe represents the barrier node as
+      <emphasis>b</emphasis>. Every client process <emphasis>p</emphasis>
+      registers with the barrier node on entry and unregisters when it is
+      ready to leave. A node registers with the barrier node via the <emphasis
+      role="bold">Enter</emphasis> procedure below, it waits until
+      <emphasis>x</emphasis> client process register before proceeding with
+      the computation. (The <emphasis>x</emphasis> here is up to you to
+      determine for your system.)</para>
+
+      <informaltable colsep="0" frame="none" rowsep="0">
+        <tgroup cols="2">
+          <tbody>
+            <row>
+              <entry align="center"><emphasis
+                                       role="bold">Enter</emphasis></entry>
+
+              <entry align="center"><emphasis
+                                       role="bold">Leave</emphasis></entry>
+            </row>
+
+            <row>
+              <entry align="left"><orderedlist>
+                  <listitem>
+                    <para>Create a name <emphasis><emphasis>n</emphasis> =
+                        <emphasis>b</emphasis>+“/”+<emphasis>p</emphasis></emphasis></para>
+                  </listitem>
+
+                  <listitem>
+                    <para>Set watch: <emphasis
+                                        role="bold">exists(<emphasis>b</emphasis> + ‘‘/ready’’,
+                        true)</emphasis></para>
+                  </listitem>
+
+                  <listitem>
+                    <para>Create child: <emphasis role="bold">create(
+                        <emphasis>n</emphasis>, EPHEMERAL)</emphasis></para>
+                  </listitem>
+
+                  <listitem>
+                    <para><emphasis role="bold">L = getChildren(b,
+                        false)</emphasis></para>
+                  </listitem>
+
+                  <listitem>
+                    <para>if fewer children in L than<emphasis>
+                        x</emphasis>, wait for watch event</para>
+                  </listitem>
+
+                  <listitem>
+                    <para>else <emphasis role="bold">create(b + ‘‘/ready’’,
+                        REGULAR)</emphasis></para>
+                  </listitem>
+                </orderedlist></entry>
+
+              <entry><orderedlist>
+                  <listitem>
+                    <para><emphasis role="bold">L = getChildren(b,
+                        false)</emphasis></para>
+                  </listitem>
+
+                  <listitem>
+                    <para>if no children, exit</para>
+                  </listitem>
+
+                  <listitem>
+                    <para>if <emphasis>p</emphasis> is only process node in
+                      L, delete(n) and exit</para>
+                  </listitem>
+
+                  <listitem>
+                    <para>if <emphasis>p</emphasis> is the lowest process
+                      node in L, wait on highest process node in L</para>
+                  </listitem>
+
+                  <listitem>
+                    <para>else <emphasis
+                                  role="bold">delete(<emphasis>n</emphasis>) </emphasis>if
+                      still exists and wait on lowest process node in L</para>
+                  </listitem>
+
+                  <listitem>
+                    <para>goto 1</para>
+                  </listitem>
+                </orderedlist></entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+      <para>On entering, all processes watch on a ready node and
+        create an ephemeral node as a child of the barrier node. Each process
+        but the last enters the barrier and waits for the ready node to appear
+        at line 5. The process that creates the xth node, the last process, will
+        see x nodes in the list of children and create the ready node, waking up
+        the other processes. Note that waiting processes wake up only when it is
+        time to exit, so waiting is efficient.
+      </para>
+
+      <para>On exit, you can't use a flag such as <emphasis>ready</emphasis>
+      because you are watching for process nodes to go away. By using
+      ephemeral nodes, processes that fail after the barrier has been entered
+      do not prevent correct processes from finishing. When processes are
+      ready to leave, they need to delete their process nodes and wait for all
+      other processes to do the same.</para>
+
+      <para>Processes exit when there are no process nodes left as children of
+      <emphasis>b</emphasis>. However, as an efficiency, you can use the
+      lowest process node as the ready flag. All other processes that are
+      ready to exit watch for the lowest existing process node to go away, and
+      the owner of the lowest process watches for any other process node
+      (picking the highest for simplicity) to go away. This means that only a
+      single process wakes up on each node deletion except for the last node,
+      which wakes up everyone when it is removed.</para>
+    </section>
+  </section>
+
+  <section id="sc_recipes_Queues">
+    <title>Queues</title>
+
+    <para>Distributed queues are a common data structure. To implement a
+    distributed queue in ZooKeeper, first designate a znode to hold the queue,
+    the queue node. The distributed clients put something into the queue by
+    calling create() with a pathname ending in "queue-", with the
+    <emphasis>sequence</emphasis> and <emphasis>ephemeral</emphasis> flags in
+    the create() call set to true. Because the <emphasis>sequence</emphasis>
+    flag is set, the new pathnames will have the form
+    _path-to-queue-node_/queue-X, where X is a monotonic increasing number. A
+    client that wants to be removed from the queue calls ZooKeeper's <emphasis
+    role="bold">getChildren( )</emphasis> function, with
+    <emphasis>watch</emphasis> set to true on the queue node, and begins
+    processing nodes with the lowest number. The client does not need to issue
+    another <emphasis role="bold">getChildren( )</emphasis> until it exhausts
+    the list obtained from the first <emphasis role="bold">getChildren(
+    )</emphasis> call. If there are are no children in the queue node, the
+    reader waits for a watch notification to check the queue again.</para>
+
+    <note>
+      <para>There now exists a Queue implementation in ZooKeeper
+      recipes directory. This is distributed with the release --
+      src/recipes/queue directory of the release artifact.
+      </para>
+    </note>
+
+    <section id="sc_recipes_priorityQueues">
+      <title>Priority Queues</title>
+
+      <para>To implement a priority queue, you need only make two simple
+      changes to the generic <ulink url="#sc_recipes_Queues">queue
+      recipe</ulink> . First, to add to a queue, the pathname ends with
+      "queue-YY" where YY is the priority of the element with lower numbers
+      representing higher priority (just like UNIX). Second, when removing
+      from the queue, a client uses an up-to-date children list meaning that
+      the client will invalidate previously obtained children lists if a watch
+      notification triggers for the queue node.</para>
+    </section>
+  </section>
+
+  <section id="sc_recipes_Locks">
+    <title>Locks</title>
+
+    <para>Fully distributed locks that are globally synchronous, meaning at
+    any snapshot in time no two clients think they hold the same lock. These
+    can be implemented using ZooKeeeper. As with priority queues, first define
+    a lock node.</para>
+
+    <note>
+      <para>There now exists a Lock implementation in ZooKeeper
+      recipes directory. This is distributed with the release --
+      src/recipes/lock directory of the release artifact.
+      </para>
+    </note>
+
+    <para>Clients wishing to obtain a lock do the following:</para>
+
+    <orderedlist>
+      <listitem>
+        <para>Call <emphasis role="bold">create( )</emphasis> with a pathname
+        of "_locknode_/lock-" and the <emphasis>sequence</emphasis> and
+        <emphasis>ephemeral</emphasis> flags set.</para>
+      </listitem>
+
+      <listitem>
+        <para>Call <emphasis role="bold">getChildren( )</emphasis> on the lock
+        node <emphasis>without</emphasis> setting the watch flag (this is
+        important to avoid the herd effect).</para>
+      </listitem>
+
+      <listitem>
+        <para>If the pathname created in step <emphasis
+        role="bold">1</emphasis> has the lowest sequence number suffix, the
+        client has the lock and the client exits the protocol.</para>
+      </listitem>
+
+      <listitem>
+        <para>The client calls <emphasis role="bold">exists( )</emphasis> with
+        the watch flag set on the path in the lock directory with the next
+        lowest sequence number.</para>
+      </listitem>
+
+      <listitem>
+        <para>if <emphasis role="bold">exists( )</emphasis> returns false, go
+        to step <emphasis role="bold">2</emphasis>. Otherwise, wait for a
+        notification for the pathname from the previous step before going to
+        step <emphasis role="bold">2</emphasis>.</para>
+      </listitem>
+    </orderedlist>
+
+    <para>The unlock protocol is very simple: clients wishing to release a
+    lock simply delete the node they created in step 1.</para>
+
+    <para>Here are a few things to notice:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>The removal of a node will only cause one client to wake up
+        since each node is watched by exactly one client. In this way, you
+        avoid the herd effect.</para>
+      </listitem>
+    </itemizedlist>
+
+    <itemizedlist>
+      <listitem>
+        <para>There is no polling or timeouts.</para>
+      </listitem>
+    </itemizedlist>
+
+    <itemizedlist>
+      <listitem>
+        <para>Because of the way you implement locking, it is easy to see the
+        amount of lock contention, break locks, debug locking problems,
+        etc.</para>
+      </listitem>
+    </itemizedlist>
+
+    <section>
+      <title>Shared Locks</title>
+
+      <para>You can implement shared locks by with a few changes to the lock
+      protocol:</para>
+
+      <informaltable colsep="0" frame="none" rowsep="0">
+        <tgroup cols="2">
+          <tbody>
+            <row>
+              <entry align="center"><emphasis role="bold">Obtaining a read
+              lock:</emphasis></entry>
+
+              <entry align="center"><emphasis role="bold">Obtaining a write
+              lock:</emphasis></entry>
+            </row>
+
+            <row>
+              <entry align="left"><orderedlist>
+                  <listitem>
+                    <para>Call <emphasis role="bold">create( )</emphasis> to
+                    create a node with pathname
+                    "<filename>_locknode_/read-</filename>". This is the
+                    lock node use later in the protocol. Make sure to set both
+                    the <emphasis>sequence</emphasis> and
+                    <emphasis>ephemeral</emphasis> flags.</para>
+                  </listitem>
+
+                  <listitem>
+                    <para>Call <emphasis role="bold">getChildren( )</emphasis>
+                    on the lock node <emphasis>without</emphasis> setting the
+                    <emphasis>watch</emphasis> flag - this is important, as it
+                    avoids the herd effect.</para>
+                  </listitem>
+
+                  <listitem>
+                    <para>If there are no children with a pathname starting
+                    with "<filename>write-</filename>" and having a lower
+                    sequence number than the node created in step <emphasis
+                    role="bold">1</emphasis>, the client has the lock and can
+                    exit the protocol. </para>
+                  </listitem>
+
+                  <listitem>
+                    <para>Otherwise, call <emphasis role="bold">exists(
+                    )</emphasis>, with <emphasis>watch</emphasis> flag, set on
+                    the node in lock directory with pathname staring with
+                    "<filename>write-</filename>" having the next lowest
+                    sequence number.</para>
+                  </listitem>
+
+                  <listitem>
+                    <para>If <emphasis role="bold">exists( )</emphasis>
+                    returns <emphasis>false</emphasis>, goto step <emphasis
+                    role="bold">2</emphasis>.</para>
+                  </listitem>
+
+                  <listitem>
+                    <para>Otherwise, wait for a notification for the pathname
+                    from the previous step before going to step <emphasis
+                    role="bold">2</emphasis></para>
+                  </listitem>
+                </orderedlist></entry>
+
+              <entry><orderedlist>
+                  <listitem>
+                    <para>Call <emphasis role="bold">create( )</emphasis> to
+                    create a node with pathname
+                    "<filename>_locknode_/write-</filename>". This is the
+                    lock node spoken of later in the protocol. Make sure to
+                    set both <emphasis>sequence</emphasis> and
+                    <emphasis>ephemeral</emphasis> flags.</para>
+                  </listitem>
+
+                  <listitem>
+                    <para>Call <emphasis role="bold">getChildren( )
+                    </emphasis> on the lock node <emphasis>without</emphasis>
+                    setting the <emphasis>watch</emphasis> flag - this is
+                    important, as it avoids the herd effect.</para>
+                  </listitem>
+
+                  <listitem>
+                    <para>If there are no children with a lower sequence
+                    number than the node created in step <emphasis
+                    role="bold">1</emphasis>, the client has the lock and the
+                    client exits the protocol.</para>
+                  </listitem>
+
+                  <listitem>
+                    <para>Call <emphasis role="bold">exists( ),</emphasis>
+                    with <emphasis>watch</emphasis> flag set, on the node with
+                    the pathname that has the next lowest sequence
+                    number.</para>
+                  </listitem>
+
+                  <listitem>
+                    <para>If <emphasis role="bold">exists( )</emphasis>
+                    returns <emphasis>false</emphasis>, goto step <emphasis
+                    role="bold">2</emphasis>. Otherwise, wait for a
+                    notification for the pathname from the previous step
+                    before going to step <emphasis
+                    role="bold">2</emphasis>.</para>
+                  </listitem>
+                </orderedlist></entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+
+      <note>
+        <para>It might appear that this recipe creates a herd effect:
+          when there is a large group of clients waiting for a read
+          lock, and all getting notified more or less simultaneously
+          when the "<filename>write-</filename>" node with the lowest
+          sequence number is deleted. In fact. that's valid behavior:
+          as all those waiting reader clients should be released since
+          they have the lock. The herd effect refers to releasing a
+          "herd" when in fact only a single or a small number of
+          machines can proceed.
+        </para>
+      </note>
+    </section>
+
+    <section id="sc_recoverableSharedLocks">
+      <title>Recoverable Shared Locks</title>
+
+      <para>With minor modifications to the Shared Lock protocol, you make
+      shared locks revocable by modifying the shared lock protocol:</para>
+
+      <para>In step <emphasis role="bold">1</emphasis>, of both obtain reader
+      and writer lock protocols, call <emphasis role="bold">getData(
+      )</emphasis> with <emphasis>watch</emphasis> set, immediately after the
+      call to <emphasis role="bold">create( )</emphasis>. If the client
+      subsequently receives notification for the node it created in step
+      <emphasis role="bold">1</emphasis>, it does another <emphasis
+      role="bold">getData( )</emphasis> on that node, with
+      <emphasis>watch</emphasis> set and looks for the string "unlock", which
+      signals to the client that it must release the lock. This is because,
+      according to this shared lock protocol, you can request the client with
+      the lock give up the lock by calling <emphasis role="bold">setData()
+      </emphasis> on the lock node, writing "unlock" to that node.</para>
+
+      <para>Note that this protocol requires the lock holder to consent to
+      releasing the lock. Such consent is important, especially if the lock
+      holder needs to do some processing before releasing the lock. Of course
+      you can always implement <emphasis>Revocable Shared Locks with Freaking
+      Laser Beams</emphasis> by stipulating in your protocol that the revoker
+      is allowed to delete the lock node if after some length of time the lock
+      isn't deleted by the lock holder.</para>
+    </section>
+  </section>
+
+  <section id="sc_recipes_twoPhasedCommit">
+    <title>Two-phased Commit</title>
+
+    <para>A two-phase commit protocol is an algorithm that lets all clients in
+    a distributed system agree either to commit a transaction or abort.</para>
+
+    <para>In ZooKeeper, you can implement a two-phased commit by having a
+    coordinator create a transaction node, say "/app/Tx", and one child node
+    per participating site, say "/app/Tx/s_i". When coordinator creates the
+    child node, it leaves the content undefined. Once each site involved in
+    the transaction receives the transaction from the coordinator, the site
+    reads each child node and sets a watch. Each site then processes the query
+    and votes "commit" or "abort" by writing to its respective node. Once the
+    write completes, the other sites are notified, and as soon as all sites
+    have all votes, they can decide either "abort" or "commit". Note that a
+    node can decide "abort" earlier if some site votes for "abort".</para>
+
+    <para>An interesting aspect of this implementation is that the only role
+    of the coordinator is to decide upon the group of sites, to create the
+    ZooKeeper nodes, and to propagate the transaction to the corresponding
+    sites. In fact, even propagating the transaction can be done through
+    ZooKeeper by writing it in the transaction node.</para>
+
+    <para>There are two important drawbacks of the approach described above.
+    One is the message complexity, which is O(n²). The second is the
+    impossibility of detecting failures of sites through ephemeral nodes. To
+    detect the failure of a site using ephemeral nodes, it is necessary that
+    the site create the node.</para>
+
+    <para>To solve the first problem, you can have only the coordinator
+    notified of changes to the transaction nodes, and then notify the sites
+    once coordinator reaches a decision. Note that this approach is scalable,
+    but it's is slower too, as it requires all communication to go through the
+    coordinator.</para>
+
+    <para>To address the second problem, you can have the coordinator
+    propagate the transaction to the sites, and have each site creating its
+    own ephemeral node.</para>
+  </section>
+
+  <section id="sc_leaderElection">
+    <title>Leader Election</title>
+
+    <para>A simple way of doing leader election with ZooKeeper is to use the
+    <emphasis role="bold">SEQUENCE|EPHEMERAL</emphasis> flags when creating
+    znodes that represent "proposals" of clients. The idea is to have a znode,
+    say "/election", such that each znode creates a child znode "/election/n_"
+    with both flags SEQUENCE|EPHEMERAL. With the sequence flag, ZooKeeper
+    automatically appends a sequence number that is greater that any one
+    previously appended to a child of "/election". The process that created
+    the znode with the smallest appended sequence number is the leader.
+    </para>
+
+    <para>That's not all, though. It is important to watch for failures of the
+    leader, so that a new client arises as the new leader in the case the
+    current leader fails. A trivial solution is to have all application
+    processes watching upon the current smallest znode, and checking if they
+    are the new leader when the smallest znode goes away (note that the
+    smallest znode will go away if the leader fails because the node is
+    ephemeral). But this causes a herd effect: upon of failure of the current
+    leader, all other processes receive a notification, and execute
+    getChildren on "/election" to obtain the current list of children of
+    "/election". If the number of clients is large, it causes a spike on the
+    number of operations that ZooKeeper servers have to process. To avoid the
+    herd effect, it is sufficient to watch for the next znode down on the
+    sequence of znodes. If a client receives a notification that the znode it
+    is watching is gone, then it becomes the new leader in the case that there
+    is no smaller znode. Note that this avoids the herd effect by not having
+    all clients watching the same znode. </para>
+
+    <para>Here's the pseudo code:</para>
+
+    <para>Let ELECTION be a path of choice of the application. To volunteer to
+    be a leader: </para>
+
+    <orderedlist>
+      <listitem>
+        <para>Create znode z with path "ELECTION/n_" with both SEQUENCE and
+        EPHEMERAL flags;</para>
+      </listitem>
+
+      <listitem>
+        <para>Let C be the children of "ELECTION", and i be the sequence
+        number of z;</para>
+      </listitem>
+
+      <listitem>
+        <para>Watch for changes on "ELECTION/n_j", where j is the largest
+        sequence number such that j &lt; i and n_j is a znode in C;</para>
+      </listitem>
+    </orderedlist>
+
+    <para>Upon receiving a notification of znode deletion: </para>
+
+    <orderedlist>
+      <listitem>
+        <para>Let C be the new set of children of ELECTION; </para>
+      </listitem>
+
+      <listitem>
+        <para>If z is the smallest node in C, then execute leader
+        procedure;</para>
+      </listitem>
+
+      <listitem>
+        <para>Otherwise, watch for changes on "ELECTION/n_j", where j is the
+        largest sequence number such that j &lt; i and n_j is a znode in C;
+        </para>
+      </listitem>
+    </orderedlist>
+
+    <para>Note that the znode having no preceding znode on the list of
+    children does not imply that the creator of this znode is aware that it is
+    the current leader. Applications may consider creating a separate znode
+    to acknowledge that the leader has executed the leader procedure. </para>
+  </section>
+  </section>
+</article>

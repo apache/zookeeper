@@ -1,0 +1,56 @@
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+Recipes for ZooKeeper monitoring using Cacti
+--------------------------------------------
+
+Cacti install guide: https://help.ubuntu.com/community/Cacti
+
+Cacti Manual: http://www.cacti.net/downloads/docs/html/
+PDF version: http://www.cacti.net/downloads/docs/pdf/manual.pdf 
+
+Check Chapter 16: Simplest Method of Going from Script to Graph
+    http://www.cacti.net/downloads/docs/html/how_to.html#SCRIPT_TO_GRAPH
+
+WARNING: I have wrote these instructions while installing and configuring the plugin on my desktop computer running Ubuntu 9.10. I've installed Cacti using apt-get.
+
+WARNING: I'm going to make the assumption that you know how to work with Cacti and how to setup Data Input Methods for custom scripts. I'm also going to assume that you have already installed Cacti and everything works as expected.
+
+You can extend the Cacti's data gathering functionality through external scripts. Cacti comes with a number of scripts out of the box wich are localted in the scripts/ directory. 
+
+
+The check_zookeeper.py script can be used a  custom data input method for Cacti.
+
+Single value (check cluster status by sending queries to the leader):
+---------------------------------------------------------------------
+
+python <path_cacti>scripts/check_zookeeper.py -s "localhost:2181,localhost:2182,localhost:2183,localhost:2184,localhost:2185" -k <key> -o cacti --leader
+
+When you will call the script this way it will about a single value representing the value attached to this <key>.
+
+
+Multiple values (one for each cluster node):
+--------------------------------------------
+
+python <path_cacti>scripts/check_zookeeper.py -s "localhost:2181,localhost:2182,localhost:2183,localhost:2184,localhost:2185" -k <key> -o cacti
+
+Output:
+localhost_2182:0  localhost_2183:0  localhost_2181:0  localhost_2184:0  localhost_2185:0
+
+
+TBD: Step by step guide
+
+

@@ -1,0 +1,198 @@
+<?xml version="1.0"?>
+
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<project name="zkpython" default="install">
+  <import file="../build-contrib.xml"/>
+  <property name="python.src.dir" value="src/python"/>
+  <property name="test.build.dir" value="build/test/" />
+  <property name="test.src.dir" value="src/test"/>
+  <property name="test.log.dir" value="${build.test}/logs" />
+  <property name="test.output" value="no" />
+  <property name="test.timeout" value="900000" />
+  <property name="package.buildroot" value="/tmp/zkpython_build_${user.name}"/>
+  <property name="package.build.dir" value="/tmp/zkpython_build_${user.name}/BUILD"/>
+  <property name="package.release" value="1"/>
+  <property name="package.prefix" value="/usr"/>
+
+  <target name="test"
+          depends="compile,test-init,test-category,test-start,python-test,test-stop" />
+	
+    <target name="test-init" depends="checkMainCompiled">
+        <delete dir="${test.log.dir}" />
+        <mkdir dir="${test.log.dir}" />
+    </target>
+
+    <target name="test-start">
+      <exec executable="${test.src.dir}/zkServer.sh" failonerror="true">
+        <arg value="startClean"/>
+      </exec>
+    </target>
+
+    <target name="test-stop">
+      <exec executable="${test.src.dir}/zkServer.sh" failonerror="true">
+        <arg value="stop"/>
+      </exec>
+    </target>
+
+    <target name="test-category">
+         <property name="test.category" value=""/>
+    </target>
+
+    <target name="python-test">
+      <exec executable="${test.src.dir}/run_tests.sh" failonerror="true">
+        <arg value="${test.src.dir}"/>
+        <arg value="${test.log.dir}"/>
+      </exec>
+    </target>
+
+    <target name="compile" depends="ivy-retrieve">
+      <exec executable="python" failonerror="true">
+        <arg value="${python.src.dir}/setup.py"/>
+        <arg value="build"/>
+        <arg value="--build-base=${build.dir}"/>
+      </exec>
+    </target>
+
+    <target name="install" depends="compile">
+      <exec executable="python" failonerror="true">
+        <arg value="${python.src.dir}/setup.py"/>
+        <arg value="build"/>
+        <arg value="--build-base=${build.dir}"/>
+        <arg value="install"/>
+      </exec>
+    </target>
+
+    <target name="package" unless="skip.contrib">
+      <echo message="contrib: ${name}"/>
+
+      <mkdir dir="${build.dir}"/>
+      <copy todir="${build.dir}">
+        <fileset dir="${basedir}">
+          <exclude name="**/VERSION"/>
+        </fileset>
+      </copy>
+      <exec executable="echo" output="${build.dir}/VERSION">
+        <arg line="${version}" />
+      </exec>
+
+      <mkdir dir="${dist.dir}/contrib/${name}"/>
+      <copy todir="${dist.dir}/contrib/${name}">
+        <fileset dir="${build.dir}">
+          <exclude name="**/temp*"/>
+        </fileset>
+      </copy>
+    </target>
+
+    <target name="bin-package" depends="compile, package" unless="skip.contrib">
+    </target>
+
+    <target name="tar-bin" depends="init, compile, bin-package" unless="skip.contrib">
+      <exec executable="python" failonerror="true" dir="${build.dir}">
+        <arg value="${python.src.dir}/setup.py"/>
+        <arg value="build"/>
+        <arg value="--build-base=${build.dir}"/>
+        <arg value="bdist_dumb"/>
+      </exec>
+    </target>
+
+    <target name="rpm" depends="tar-bin" unless="skip.contrib">
+      <mkdir dir="${package.buildroot}/BUILD" />
+      <mkdir dir="${package.buildroot}/RPMS" />
+      <mkdir dir="${package.buildroot}/SRPMS" />
+      <mkdir dir="${package.buildroot}/SOURCES" />
+      <mkdir dir="${package.buildroot}/SPECS" />
+      <copy todir="${package.buildroot}/SOURCES">
+        <fileset dir="${build.dir}/dist">
+          <include name="*.tar.gz" />
+        </fileset>
+      </copy>
+      <path id="python.lib">
+        <fileset dir="${package.buildroot}/SOURCES">
+          <include name="*.tar.gz" />
+        </fileset>
+      </path>
+      <property name="python.lib" refid="python.lib" />
+      <copy file="${src.dir}/../packages/rpm/spec/${name}.spec" todir="${package.buildroot}/SPECS">
+        <filterchain>
+          <replacetokens>
+            <token key="final.name" value="${name}" />
+            <token key="version" value="${rpm.version}" />
+            <token key="package.release" value="${package.release}" />
+            <token key="package.build.dir" value="${package.build.dir}" />
+            <token key="package.prefix" value="${package.prefix}" />
+            <token key="python.lib" value="${python.lib}" />
+          </replacetokens>
+        </filterchain>
+      </copy>
+
+      <rpm specFile="${name}.spec" command="-ba --buildroot=${package.buildroot}/BUILD" topDir="${package.buildroot}" cleanBuildDir="true" failOnError="true" />
+      <copy todir="${build.dir}/" flatten="true">
+        <fileset dir="${package.buildroot}/RPMS">
+          <include name="**/*.rpm" />
+        </fileset>
+      </copy>
+      <delete dir="${package.buildroot}" quiet="true" verbose="false" />
+    </target>
+
+    <target name="deb" depends="tar-bin" unless="skip.contrib">
+      <mkdir dir="${package.buildroot}" />
+      <mkdir dir="${package.buildroot}/BUILD" />
+      <mkdir dir="${package.buildroot}/SPECS" />
+      <copy todir="${package.buildroot}/SOURCES">
+        <fileset dir="${build.dir}/dist">
+          <include name="*.tar.gz" />
+        </fileset>
+      </copy>
+      <path id="python.lib">
+        <fileset dir="${package.buildroot}/SOURCES">
+          <include name="*.tar.gz" />
+        </fileset>
+      </path>
+      <property name="python.lib" refid="python.lib" />
+      <copy todir="${package.build.dir}/zkpython.control">
+        <fileset dir="${src.dir}/../packages/deb/zkpython.control">
+          <exclude name="control" />
+        </fileset>
+      </copy>
+      <copy file="${src.dir}/../packages/deb/zkpython.control/control" todir="${package.build.dir}/zkpython.control">
+        <filterchain>
+          <replacetokens>
+            <token key="final.name" value="${name}" />
+            <token key="version" value="${version}" />
+            <token key="package.release" value="${package.release}" />
+            <token key="package.build.dir" value="${package.build.dir}" />
+            <token key="package.prefix" value="${package.prefix}" />
+          </replacetokens>
+        </filterchain>
+      </copy>
+      <taskdef name="deb" classname="org.vafer.jdeb.ant.DebAntTask">
+        <classpath refid="classpath"/>
+      </taskdef>
+      <deb destfile="${package.buildroot}/${name}_${version}-${package.release}_${os.arch}.deb" control="${package.build.dir}/zkpython.control">
+        <data src="${python.lib}" />
+      </deb>
+      <copy todir="${build.dir}/" flatten="true">
+        <fileset dir="${package.buildroot}">
+          <include name="**/${name}_*.deb" />
+        </fileset>
+      </copy>
+      <delete dir="${package.buildroot}" quiet="true" verbose="false"/>
+    </target>
+</project>
+

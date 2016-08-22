@@ -1,0 +1,183 @@
+<?xml version="1.0"?>
+
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<project name="rest" default="jar">
+  <import file="../build-contrib.xml"/>
+
+	<property name="test.build.dir" value="${build.test}" />
+    <property name="test.src.dir" value="src/test"/>
+    <property name="test.log.dir" value="${test.build.dir}/logs" />
+    <property name="test.data.dir" value="${test.build.dir}/data" />
+    <property name="test.data.upgrade.dir" value="${test.data.dir}/upgrade" />
+    <property name="test.tmp.dir" value="${test.build.dir}/tmp" />
+    <property name="test.output" value="no" />
+    <property name="test.timeout" value="900000" />
+    <property name="test.junit.output.format" value="plain" />
+    <property name="test.junit.fork.mode" value="perTest" />
+    <property name="test.junit.printsummary" value="yes" />
+    <property name="test.junit.haltonfailure" value="no" />
+    <property name="test.junit.maxmem" value="512m" />
+
+    <!-- ====================================================== -->
+    <!-- Macro definitions                                      -->
+    <!-- ====================================================== -->
+    <macrodef name="macro_tar" description="Worker Macro for tar">
+      <attribute name="param.destfile"/>
+      <element name="param.listofitems"/>
+      <sequential>
+        <tar compression="gzip" longfile="gnu"
+             destfile="@{param.destfile}">
+          <param.listofitems/>
+        </tar>
+      </sequential>
+    </macrodef>
+
+  <target name="package" depends="jar" unless="skip.contrib">
+    <echo message="contrib: ${name}"/>
+    <mkdir dir="${dist.dir}${package.share}/contrib/${name}"/>
+    <copy todir="${dist.dir}${package.share}/contrib/${name}">
+      <fileset dir="${build.dir}">
+        <include name="zookeeper-${version}-${name}.jar" />
+      </fileset>
+    </copy>
+    <copy todir="${dist.dir}${package.share}/contrib/${name}/lib">
+      <fileset dir="${build.dir}/lib" />
+    </copy>
+    <copy todir="${dist.dir}${package.share}/contrib/${name}/conf">
+      <fileset dir="conf" />
+    </copy>
+  </target>
+
+  <target name="setjarname">
+    <property name="jarname"
+              value="${build.dir}/zookeeper-${version}-${name}.jar"/>
+  </target>
+
+  <target name="compile" depends="ivy-retrieve,zookeeperbuildcontrib.compile"/>
+
+  <target name="test"
+          depends="compile-test,test-init,test-category,test-start,junit.run,test-stop" />
+
+	<target name="compile-test" depends="ivy-retrieve-test,compile">
+  		<property name="target.jdk" value="${ant.java.version}" />	
+		<property name="src.test.local" location="${basedir}/src/test" />
+		<mkdir dir="${build.test}"/>
+		<javac srcdir="${src.test.local}" 
+			destdir="${build.test}" 
+			target="${target.jdk}" 
+			debug="on" >
+			<classpath refid="classpath" />
+		</javac>
+	</target>
+	
+    <target name="test-init" depends="jar,compile-test">
+        <delete dir="${test.log.dir}" />
+        <delete dir="${test.tmp.dir}" />
+        <delete dir="${test.data.dir}" />
+        <mkdir dir="${test.log.dir}" />
+        <mkdir dir="${test.tmp.dir}" />
+        <mkdir dir="${test.data.dir}" />
+    </target>
+
+    <target name="test-start">
+      <exec executable="${test.src.dir}/zkServer.sh">
+        <arg value="startClean"/>
+      </exec>
+    </target>
+
+    <target name="test-stop">
+      <exec executable="${test.src.dir}/zkServer.sh">
+        <arg value="stop"/>
+      </exec>
+    </target>
+
+	<target name="test-category">
+         <property name="test.category" value=""/>
+    </target>
+
+	<target name="junit.run">
+		<echo message="${test.src.dir}" />
+        <junit showoutput="${test.output}"
+               printsummary="${test.junit.printsummary}"
+               haltonfailure="${test.junit.haltonfailure}"
+               fork="yes"
+               forkmode="${test.junit.fork.mode}"
+               maxmemory="${test.junit.maxmem}"
+               dir="${basedir}" timeout="${test.timeout}"
+               errorProperty="tests.failed" failureProperty="tests.failed">
+          <sysproperty key="build.test.dir" value="${test.tmp.dir}" />
+          <sysproperty key="test.data.dir" value="${test.data.dir}" />
+          <sysproperty key="log4j.configuration"
+                    value="file:${basedir}/conf/log4j.properties" />
+          <classpath refid="classpath"/>
+          <classpath>
+             <pathelement path="${build.test}" />
+          </classpath>
+          <formatter type="${test.junit.output.format}" />
+          <batchtest todir="${test.log.dir}" unless="testcase">
+              <fileset dir="${test.src.dir}"
+                     includes="**/*${test.category}Test.java"/>
+          </batchtest>
+          <batchtest todir="${test.log.dir}" if="testcase">
+              <fileset dir="${test.src.dir}" includes="**/${testcase}.java"/>
+          </batchtest>
+       </junit>
+       <fail if="tests.failed">Tests failed!</fail>
+    </target>
+
+  <target name="jar" depends="checkMainCompiled, setjarname, compile">
+    <echo message="contrib: ${name}"/>
+    <jar jarfile="${jarname}">
+      <fileset file="${zk.root}/LICENSE.txt" />
+      <fileset dir="${build.classes}"/>
+      <fileset dir="${build.test}"/>
+    </jar>
+  </target>
+
+  <target name="run" depends="jar">
+    <echo message="contrib: ${name}"/>
+    <java classname="org.apache.zookeeper.server.jersey.RestMain" fork="true">
+      <classpath>
+        <pathelement path="${jarname}" />
+        <fileset dir="${build.dir}/lib" includes="*.jar"/>
+        <fileset dir="${zk.root}/build" includes="zookeeper-*.jar"/>
+        <pathelement path="${zk.root}/src/contrib/${name}/conf" />
+        <fileset dir="${zk.root}/src/java/lib">
+          <include name="**/*.jar" />
+        </fileset>
+      </classpath>
+    </java>
+  </target>
+
+  <target name="tar" depends="clean, jar">
+    <echo message="building tar.gz: ${name}" />
+    <macro_tar param.destfile="${build.dir}/zookeeper-${version}-${name}.tar.gz">
+      <param.listofitems>
+        <tarfileset dir="${build.dir}/lib" prefix="lib" includes="**/*.jar" />
+        <tarfileset file="${build.dir}/zookeeper-*-rest.jar" />
+        <tarfileset dir="${zk.root}/build" includes="zookeeper-*.jar" prefix="lib" />
+        <tarfileset dir="${zk.root}/src/contrib/${name}/conf" prefix="conf" />
+        <tarfileset dir="${zk.root}/src/java/lib" prefix="lib" includes="**/*.jar" />
+        <tarfileset file="${zk.root}/src/contrib/${name}/rest.sh" />
+      </param.listofitems>
+    </macro_tar>
+  </target>
+
+</project>
+
