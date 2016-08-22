@@ -1,4 +1,4 @@
-Release 3.4.9 - 2016-08-18
+Release 3.4.9 - 2016-08-23
 
 Backward compatible changes:
 
