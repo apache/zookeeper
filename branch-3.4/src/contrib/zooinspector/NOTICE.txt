@@ -1,0 +1,3 @@
+This contrib module includes icons available under the Eclipse Public Licence Version 1.0
+. from the Eclipse Java Devlopment Platform. 
+The lib sub-directory includes a binary only jar library developed at http://sourceforge.net/projects/jtoaster/

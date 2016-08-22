@@ -1,0 +1,10 @@
+::Client Commands
+client:org.apache.zookeeper.ZooKeeperMain:Client shell to ZooKeeper
+::Server Commands
+server:org.apache.zookeeper.server.quorum.QuorumPeerMain:Start ZooKeeper server
+::Test Commands
+generateLoad:org.apache.zookeeper.test.system.GenerateLoad:A distributed load generator for testing
+quorumBench:org.apache.zookeeper.server.QuorumBenchmark:A benchmark of just the quorum protocol
+abBench:org.apache.zookeeper.server.quorum.AtomicBroadcastBenchmark:A benchmark of just the atomic broadcast
+ic:org.apache.zookeeper.test.system.InstanceContainer:A container that will instantiate classes as directed by an instance manager
+systest:org.apache.zookeeper.test.system.BaseSysTest:Start system test

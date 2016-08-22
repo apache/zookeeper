@@ -1,0 +1,48 @@
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+Recipes for ZooKeeper monitoring using Ganglia
+----------------------------------------------
+
+Ganglia Install guide: http://sourceforge.net/apps/trac/ganglia/wiki/Ganglia%203.1.x%20Installation%20and%20Configuration 
+
+Gmond configuration: http://sourceforge.net/apps/trac/ganglia/wiki/Gmond%203.1.x%20General%20Configuration 
+
+WARNING: I have wrote these instructions while installing and configuring the plugin on my desktop computer running Ubuntu 9.10. I've installed Ganglia using apt-get.
+
+WARNING: I'm going to make the assumption that you know how to work with Ganglia. I'm also going to assume that you have already installed Gangli and everything works as expected.
+
+You can monitoring ZooKeeper using Ganglia in two ways:
+
+1. Using a python module:
+
+    WARNING! The python module only works with Ganglia 3.1.x 
+
+    a. enable python modules: you can find instructions in modpython.confg
+    b. copy zookeeper.pyconf in /etc/ganglia/conf.d/
+    c. copy zookeeper_ganglia.py in /usr/lib/ganglia/python_plugins
+    d. restart the ganglia-monitor
+
+    This is the recommended way!
+
+2. OR Using check_zookeeper.py and gmetric:
+
+    Monitoring ZooKeeper using Ganglia is a simple as calling:
+
+    ./check_zookeeper.py -o ganglia -s localhost:2181 
+
+    on each of the ZooKeeper cluster nodes. I'm making the assumption that you have already configured gmond and installed gmetric on each node.
+
