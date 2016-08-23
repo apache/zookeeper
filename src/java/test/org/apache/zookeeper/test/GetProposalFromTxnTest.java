@@ -24,11 +24,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 import org.apache.jute.Record;
-import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooDefs.OpCode;
@@ -48,9 +45,7 @@ import org.junit.Test;
  * Test loading committed proposal from txnlog. Learner uses these proposals to
  * catch-up with leader
  */
-public class GetProposalFromTxnTest extends ZKTestCase implements Watcher {
-    private static final Logger LOG = Logger
-            .getLogger(GetProposalFromTxnTest.class);
+public class GetProposalFromTxnTest extends ZKTestCase{
     private static String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
     private static final int CONNECTION_TIMEOUT = 3000;
 
@@ -73,7 +68,7 @@ public class GetProposalFromTxnTest extends ZKTestCase implements Watcher {
         f.startup(zks);
         Assert.assertTrue("waiting for server being up ",
                 ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
-        ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
+        ZooKeeper zk = ClientBase.createZKClient(HOSTPORT);
 
         // Generate transaction so we will have some txnlog
         Long[] zxids = new Long[MSG_COUNT];
@@ -139,9 +134,4 @@ public class GetProposalFromTxnTest extends ZKTestCase implements Watcher {
         f.shutdown();
         zks.shutdown();
     }
-
-    public void process(WatchedEvent event) {
-        // do nothing
-    }
-
 }

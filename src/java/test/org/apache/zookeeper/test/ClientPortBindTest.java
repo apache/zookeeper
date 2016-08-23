@@ -25,27 +25,20 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.util.Enumeration;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class ClientPortBindTest extends ZKTestCase implements Watcher {
+public class ClientPortBindTest extends ZKTestCase{
     protected static final Logger LOG = 
         LoggerFactory.getLogger(ClientPortBindTest.class);
-
-    private volatile CountDownLatch startSignal;
 
     /**
      * Verify that the server binds to the specified address
@@ -93,13 +86,8 @@ public class ClientPortBindTest extends ZKTestCase implements Watcher {
         Assert.assertTrue("waiting for server up",
                    ClientBase.waitForServerUp(HOSTPORT,
                                    CONNECTION_TIMEOUT));
-
-        startSignal = new CountDownLatch(1);
-        ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
+        ZooKeeper zk = ClientBase.createZKClient(HOSTPORT);
         try {
-            startSignal.await(CONNECTION_TIMEOUT,
-                    TimeUnit.MILLISECONDS);
-            Assert.assertTrue("count == 0", startSignal.getCount() == 0);
             zk.close();
         } finally {
             f.shutdown();
@@ -108,15 +96,6 @@ public class ClientPortBindTest extends ZKTestCase implements Watcher {
             Assert.assertTrue("waiting for server down",
                        ClientBase.waitForServerDown(HOSTPORT,
                                                     CONNECTION_TIMEOUT));
-        }
-    }
-
-    public void process(WatchedEvent event) {
-        LOG.info("Event:" + event.getState() + " " + event.getType() + " " + event.getPath());
-        if (event.getState() == KeeperState.SyncConnected
-                && startSignal != null && startSignal.getCount() > 0)
-        {
-            startSignal.countDown();
         }
     }
 }

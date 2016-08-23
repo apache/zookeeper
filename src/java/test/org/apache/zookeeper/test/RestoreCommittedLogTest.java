@@ -23,8 +23,6 @@ import java.util.List;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
@@ -40,7 +38,7 @@ import org.slf4j.LoggerFactory;
 /** After a replica starts, it should load commits in its committedLog list.
  *  This test checks if committedLog != 0 after replica restarted.
  */
-public class RestoreCommittedLogTest extends ZKTestCase implements  Watcher {
+public class RestoreCommittedLogTest extends ZKTestCase{
     private static final Logger LOG = LoggerFactory.getLogger(RestoreCommittedLogTest.class);
     private static final String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
     private static final int CONNECTION_TIMEOUT = 3000;
@@ -59,7 +57,7 @@ public class RestoreCommittedLogTest extends ZKTestCase implements  Watcher {
         f.startup(zks);
         Assert.assertTrue("waiting for server being up ",
                 ClientBase.waitForServerUp(HOSTPORT,CONNECTION_TIMEOUT));
-        ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
+        ZooKeeper zk = ClientBase.createZKClient(HOSTPORT);
         try {
             for (int i = 0; i< 2000; i++) {
                 zk.create("/invalidsnap-" + i, new byte[0], Ids.OPEN_ACL_UNSAFE,
@@ -82,9 +80,4 @@ public class RestoreCommittedLogTest extends ZKTestCase implements  Watcher {
         Assert.assertTrue("log size != 0", (logsize != 0));
         zks.shutdown();
     }
-
-    public void process(WatchedEvent event) {
-        // do nothing
-    }
-
 }

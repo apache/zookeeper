@@ -163,8 +163,7 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
             Assert.assertTrue("waiting for server " + i + " being up",
                     ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i],
                             CONNECTION_TIMEOUT));
-            zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i],
-                    ClientBase.CONNECTION_TIMEOUT, this);
+            zk[i] = ClientBase.createZKClient("127.0.0.1:" + clientPorts[i]);
 
             Properties cfg = ReconfigLegacyTest.readPropertiesFromFile(mt[i].confFile);
             String filename = cfg.getProperty("dynamicConfigFile", "");
@@ -200,8 +199,7 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
             Assert.assertTrue("waiting for server " + i + " being up",
                     ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i],
                             CONNECTION_TIMEOUT));
-            zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i],
-                    ClientBase.CONNECTION_TIMEOUT, this);
+            zk[i] = ClientBase.createZKClient("127.0.0.1:" + clientPorts[i]);
         }
 
         // test that all servers have:
@@ -312,9 +310,7 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
             Assert.assertTrue("waiting for server " + i + " being up",
                     ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i],
                             CONNECTION_TIMEOUT));
-
-            ZooKeeper zk = new ZooKeeper("127.0.0.1:" + clientPorts[i],
-                    ClientBase.CONNECTION_TIMEOUT, this);
+            ZooKeeper zk = ClientBase.createZKClient("127.0.0.1:" + clientPorts[i]);
 
             // we should see that now all servers have the same config of 5 servers
             // including the lag-off server.

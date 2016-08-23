@@ -210,9 +210,11 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
                 ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
                         CONNECTION_TIMEOUT));
 
-
+        clientConnected = new CountDownLatch(1);
         ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT,
                 ClientBase.CONNECTION_TIMEOUT, this);
+        Assert.assertTrue("Failed to establish zkclient connection!",
+                clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
 
         zk.create("/foo", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE,
                 CreateMode.PERSISTENT);
@@ -272,9 +274,11 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         Assert.assertTrue("waiting for server being up",
                 ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
                         CONNECTION_TIMEOUT));
-
+        clientConnected = new CountDownLatch(1);
         ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT,
                 ClientBase.CONNECTION_TIMEOUT, this);
+        Assert.assertTrue("Failed to establish zkclient connection!",
+                clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
 
         zk.create("/foo", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE,
                 CreateMode.PERSISTENT);

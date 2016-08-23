@@ -25,6 +25,10 @@ BUGFIXES:
   ZOOKEEPER-2247: Zookeeper service becomes unavailable when leader
   fails to write transaction log (Rakesh via fpj)
   
+  ZOOKEEPER-2508: Many ZooKeeper tests are flaky because they proceed
+  with zk operation without connecting to ZooKeeper server.
+  (Arshad Mohammad via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-2505: Use shared library instead of static library in C
