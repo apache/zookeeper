@@ -27,6 +27,9 @@ BUGFIXES:
   
 IMPROVEMENTS:
 
+  ZOOKEEPER-2505: Use shared library instead of static library in C
+  client unit test (Michael Han via phunt)
+
 
 Release 3.5.2 - 06/29/2016
 
