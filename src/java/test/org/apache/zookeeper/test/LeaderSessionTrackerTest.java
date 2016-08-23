@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.test;
 
-import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
@@ -26,8 +25,6 @@ import java.util.ArrayList;
 
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooDefs.OpCode;
@@ -49,7 +46,7 @@ import org.slf4j.LoggerFactory;
  * expired session. We need to make sure that we never allow ephmeral node
  * to be created in those case, but we do allow normal node to be created.
  */
-public class LeaderSessionTrackerTest extends ZKTestCase implements Watcher {
+public class LeaderSessionTrackerTest extends ZKTestCase {
 
     protected static final Logger LOG = LoggerFactory
             .getLogger(LeaderSessionTrackerTest.class);
@@ -91,8 +88,7 @@ public class LeaderSessionTrackerTest extends ZKTestCase implements Watcher {
         qu.startAll();
         QuorumPeer leader = qu.getLeaderQuorumPeer();
 
-        ZooKeeper zk = new ZooKeeper(qu.getConnectString(leader),
-                CONNECTION_TIMEOUT, this);
+        ZooKeeper zk = ClientBase.createZKClient(qu.getConnectString(leader));
 
         CreateRequest createRequest = new CreateRequest("/impossible",
                 new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL.toFlag());
@@ -134,8 +130,7 @@ public class LeaderSessionTrackerTest extends ZKTestCase implements Watcher {
 
         QuorumPeer leader = qu.getLeaderQuorumPeer();
 
-        ZooKeeper zk = new ZooKeeper(qu.getConnectString(leader),
-                CONNECTION_TIMEOUT, this);
+        ZooKeeper zk = ClientBase.createZKClient(qu.getConnectString(leader));
 
         CreateRequest createRequest = new CreateRequest("/success",
                 new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT.toFlag());
@@ -165,9 +160,4 @@ public class LeaderSessionTrackerTest extends ZKTestCase implements Watcher {
         Assert.assertTrue("Request from local sesson failed", stat != null);
 
     }
-
-    @Override
-    public void process(WatchedEvent event) {
-    }
-
 }

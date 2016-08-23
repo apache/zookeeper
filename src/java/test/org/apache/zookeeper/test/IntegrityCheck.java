@@ -31,7 +31,6 @@ package org.apache.zookeeper.test;
  * a value that we have previously read or set. (Each time we set a value, the
  * value will be one more than the previous set.)
  */
-import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -39,16 +38,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.AsyncCallback.StatCallback;
-import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.data.Stat;
 
-public class IntegrityCheck implements Watcher, StatCallback, DataCallback {
+public class IntegrityCheck implements StatCallback, DataCallback {
     private static final Logger LOG = LoggerFactory.getLogger(IntegrityCheck.class);
 
     ZooKeeper zk;
@@ -81,8 +77,8 @@ public class IntegrityCheck implements Watcher, StatCallback, DataCallback {
     }
 
     IntegrityCheck(String hostPort, String path, int count) throws
-            IOException {
-        zk = new ZooKeeper(hostPort, 30000, this);
+            Exception {
+        zk = ClientBase.createZKClient(hostPort);
         this.path = path;
         this.count = count;
     }
@@ -144,15 +140,6 @@ public class IntegrityCheck implements Watcher, StatCallback, DataCallback {
             String cpath = path + "/" + i;
             zk.setData(cpath, v, -1, this, v);
             incOutstanding();
-        }
-    }
-
-    // watcher callback
-    public void process(WatchedEvent event) {
-        if(event.getState()==KeeperState.SyncConnected){
-            synchronized(this){
-                notifyAll();
-            }
         }
     }
 
