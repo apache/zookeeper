@@ -18,32 +18,25 @@
 
 package org.apache.zookeeper.test;
 
-import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 
-import java.io.IOException;
 import java.util.LinkedList;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
-import org.apache.zookeeper.Watcher.Event.KeeperState;
+import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AsyncTest extends ZKTestCase
     implements StringCallback, VoidCallback, DataCallback
@@ -63,37 +56,20 @@ public class AsyncTest extends ZKTestCase
         qb.tearDown();
     }
 
-    private static class CountdownWatcher implements Watcher {
-        volatile CountDownLatch clientConnected = new CountDownLatch(1);
-
-        public void process(WatchedEvent event) {
-            if (event.getState() == KeeperState.SyncConnected) {
-                clientConnected.countDown();
-            }
-        }
-    }
-
-    private ZooKeeper createClient() throws IOException,InterruptedException {
+    private ZooKeeper createClient() throws Exception,InterruptedException {
         return createClient(qb.hostPort);
     }
 
     private ZooKeeper createClient(String hp)
-        throws IOException, InterruptedException
+        throws Exception, InterruptedException
     {
-        CountdownWatcher watcher = new CountdownWatcher();
-        ZooKeeper zk = new ZooKeeper(hp, CONNECTION_TIMEOUT, watcher);
-        if(!watcher.clientConnected.await(CONNECTION_TIMEOUT,
-                TimeUnit.MILLISECONDS))
-        {
-            Assert.fail("Unable to connect to server");
-        }
+        ZooKeeper zk = ClientBase.createZKClient(hp);
         return zk;
     }
 
     LinkedList<Integer> results = new LinkedList<Integer>();
     @Test
-    public void testAsync()
-        throws IOException, InterruptedException, KeeperException
+    public void testAsync() throws Exception
     {
         ZooKeeper zk = null;
         zk = createClient();

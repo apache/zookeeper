@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.test;
 
-import java.io.IOException;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooKeeper;
@@ -36,9 +35,8 @@ public class TestHammer implements VoidCallback {
             long startTime = Time.currentElapsedTime();
             ZooKeeper zk = null;
             try {
-                zk = new ZooKeeper(args[0], 10000, null);
-            } catch (IOException e1) {
-                // TODO Auto-generated catch block
+                zk = ClientBase.createZKClient(args[0], 10000);
+            } catch (Exception e1) {
                 e1.printStackTrace();
                 throw new RuntimeException(e1);
             }

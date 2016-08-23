@@ -32,7 +32,6 @@ import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.test.ClientBase;
-import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.apache.zookeeper.test.ReconfigTest;
 import org.junit.Assert;
 import org.junit.Before;
@@ -87,8 +86,7 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
             Assert.assertTrue("waiting for server " + i + " being up",
                     ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i],
                             CONNECTION_TIMEOUT));
-            zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i],
-                    ClientBase.CONNECTION_TIMEOUT, this);
+            zk[i] = ClientBase.createZKClient("127.0.0.1:" + clientPorts[i]);
             File[] dynamicFiles = mt[i].getDynamicFiles();
 
             Assert.assertTrue( dynamicFiles.length== 1 );
@@ -125,8 +123,7 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
             Assert.assertTrue("waiting for server " + i + " being up",
                     ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i],
                             CONNECTION_TIMEOUT));
-            zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i],
-                    ClientBase.CONNECTION_TIMEOUT, this);
+            zk[i] = ClientBase.createZKClient("127.0.0.1:" + clientPorts[i]);
             ReconfigTest.testServerHasConfig(zk[i], allServers, null);
         }
         ReconfigTest.testNormalOperation(zk[0], zk[1]);
@@ -190,8 +187,7 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
             Assert.assertTrue("waiting for server " + i + " being up",
                     ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i],
                             CONNECTION_TIMEOUT));
-            zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i],
-                    ClientBase.CONNECTION_TIMEOUT, this);
+            zk[i] = ClientBase.createZKClient("127.0.0.1:" + clientPorts[i]);
 
             ReconfigTest.testServerHasConfig(zk[i], allServers, null);
             Properties cfg = readPropertiesFromFile(mt[i].confFile);
@@ -272,10 +268,7 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
                             CONNECTION_TIMEOUT));
         }
 
-        CountdownWatcher watch1 = new CountdownWatcher();        
-        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + clientPorts[0],
-                ClientBase.CONNECTION_TIMEOUT, watch1);
-        watch1.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
+        ZooKeeper zk = ClientBase.createZKClient("127.0.0.1:" + clientPorts[0]);
 
         String zNodePath="/serverRestartTest";
         String data = "originalData";
@@ -296,10 +289,7 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
                     ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i],
                             CONNECTION_TIMEOUT));
         }
-        CountdownWatcher watch2 = new CountdownWatcher();
-        zk = new ZooKeeper("127.0.0.1:" + clientPorts[0],
-                ClientBase.CONNECTION_TIMEOUT, watch2);
-        watch2.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
+        zk = ClientBase.createZKClient("127.0.0.1:" + clientPorts[0]);
 
         byte[] dataBytes = zk.getData(zNodePath, null, null);
         String receivedData = new String(dataBytes);
