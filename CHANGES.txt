@@ -475,6 +475,9 @@ IMPROVEMENTS:
   ZOOKEEPER-2433: ZooKeeperSaslServer: allow user principals in
   subject (Andy B via phunt)
 
+  ZOOKEEPER-2505: Use shared library instead of static library in C
+  client unit test (Michael Han via phunt)
+
 Release 3.5.0 - 8/4/2014
 
 NEW FEATURES:
