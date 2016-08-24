@@ -356,6 +356,9 @@ BUGFIXES:
   with zk operation without connecting to ZooKeeper server.
   (Arshad Mohammad via phunt)
 
+  ZOOKEEPER-2152: Intermittent failure in TestReconfig.cc
+  (Michael Han via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-2024 Major throughput improvement with mixed workloads (Kfir Lev-Ari via shralex)
 
