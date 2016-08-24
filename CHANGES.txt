@@ -29,6 +29,9 @@ BUGFIXES:
   with zk operation without connecting to ZooKeeper server.
   (Arshad Mohammad via phunt)
 
+  ZOOKEEPER-2152: Intermittent failure in TestReconfig.cc
+  (Michael Han via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-2505: Use shared library instead of static library in C

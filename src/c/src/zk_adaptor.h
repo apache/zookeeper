@@ -202,6 +202,11 @@ struct _zhandle {
     int reconfig;                       // Are we in the process of reconfiguring cluster's ensemble
     double pOld, pNew;                  // Probability for selecting between 'addrs_old' and 'addrs_new'
     int delay;
+    int disable_reconnection_attempt;   // When set, client will not try reconnect to a different server in
+                                        // server list. This makes a sticky server for client, and is useful
+                                        // for testing if a sticky server is required, or if client wants to
+                                        // explicitly shuffle server by calling zoo_cycle_next_server.
+                                        // The default value is 0.
 
     watcher_fn watcher;                 // the registered watcher
 

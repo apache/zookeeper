@@ -55,6 +55,11 @@ public:
         zh = zookeeper_init(hosts.c_str(),0,1000,0,0,0);
         CPPUNIT_ASSERT(zh);
 
+        // Set the flag to disable ZK from reconnecting to a different server.
+        // Our reconfig test case will do explicit server shuffling through
+        // zoo_cycle_next_server, and the reconnection attempts would interfere
+        // with the server states the tests cases assume.
+        zh->disable_reconnection_attempt = 1;
         reSeed();
 
         cycleNextServer();
