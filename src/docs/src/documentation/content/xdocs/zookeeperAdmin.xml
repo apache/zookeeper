@@ -1531,6 +1531,19 @@ server.3=zoo3:2888:3888</programlisting>
             </listitem>
           </varlistentry>
 
+            <varlistentry>
+                <term>admin.idleTimeout</term>
+
+                <listitem>
+                    <para>(Java system property: <emphasis
+                            role="bold">zookeeper.admin.idleTimeout</emphasis>)</para>
+
+                    <para>Set the maximum idle time in milliseconds that a connection can wait 
+                          before sending or receiving data. Defaults to 30000 ms.</para>
+                </listitem>
+            </varlistentry>
+
+
           <varlistentry>
             <term>admin.commandURL</term>
 

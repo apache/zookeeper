@@ -31,10 +31,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.zookeeper.server.ZooKeeperServer;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.nio.SelectChannelConnector;
-import org.mortbay.jetty.servlet.Context;
-import org.mortbay.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,36 +56,42 @@ public class JettyAdminServer implements AdminServer {
     static final Logger LOG = LoggerFactory.getLogger(JettyAdminServer.class);
 
     public static final int DEFAULT_PORT = 8080;
-    private static final String DEFAULT_ADDRESS = "0.0.0.0";
+    public static final int DEFAULT_IDLE_TIMEOUT = 30000;
     public static final String DEFAULT_COMMAND_URL = "/commands";
+    private static final String DEFAULT_ADDRESS = "0.0.0.0";
 
     private final Server server;
-    private ZooKeeperServer zkServer;
+    private final String address;
     private final int port;
-    private String address;
+    private final int idleTimeout;
     private final String commandUrl;
+    private ZooKeeperServer zkServer;
 
     public JettyAdminServer() throws AdminServerException {
-        this(System.getProperty("zookeeper.admin.serverAddress",
-                DEFAULT_ADDRESS), Integer.getInteger(
-                "zookeeper.admin.serverPort", DEFAULT_PORT), System
-                .getProperty("zookeeper.admin.commandURL", DEFAULT_COMMAND_URL));
+        this(System.getProperty("zookeeper.admin.serverAddress", DEFAULT_ADDRESS),
+             Integer.getInteger("zookeeper.admin.serverPort", DEFAULT_PORT),
+             Integer.getInteger("zookeeper.admin.idleTimeout", DEFAULT_IDLE_TIMEOUT),
+             System.getProperty("zookeeper.admin.commandURL", DEFAULT_COMMAND_URL));
     }
 
-    public JettyAdminServer(String address, int port, String commandUrl) {
+    public JettyAdminServer(String address, int port, int timeout, String commandUrl) {
         this.port = port;
+        this.idleTimeout = timeout;
         this.commandUrl = commandUrl;
         this.address = address;
 
         server = new Server();
-        SelectChannelConnector connector = new SelectChannelConnector();
+        ServerConnector connector = new ServerConnector(server);
         connector.setHost(address);
         connector.setPort(port);
+        connector.setIdleTimeout(idleTimeout);
         server.addConnector(connector);
-        Context context = new Context(server, "/");
+
+        ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+        context.setContextPath("/*");
         server.setHandler(context);
-        context.addServlet(new ServletHolder(new CommandServlet()), commandUrl
-                + "/*");
+
+        context.addServlet(new ServletHolder(new CommandServlet()), commandUrl + "/*");
     }
 
     /**
@@ -149,7 +156,7 @@ public class JettyAdminServer implements AdminServer {
                 // No command specified, print links to all commands instead
                 for (String link : commandLinks()) {
                     response.getWriter().println(link);
-                    response.getWriter().println("<br />");
+                    response.getWriter().println("<br/>");
                 }
                 return;
             }
