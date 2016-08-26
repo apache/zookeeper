@@ -339,13 +339,17 @@ public class QuorumPeerConfig {
             throw new IllegalArgumentException("tickTime is not set");
         }
 
+        if (tickTime < 0) {
+            throw new IllegalArgumentException("tickTime should not be negative value");
+        }
+
         minSessionTimeout = minSessionTimeout == -1 ? tickTime * 2 : minSessionTimeout;
         maxSessionTimeout = maxSessionTimeout == -1 ? tickTime * 20 : maxSessionTimeout;
 
         if (minSessionTimeout > maxSessionTimeout) {
             throw new IllegalArgumentException(
                     "minSessionTimeout must not be larger than maxSessionTimeout");
-        }          
+        }
 
         // backward compatibility - dynamic configuration in the same file as
         // static configuration params see writeDynamicConfig()
