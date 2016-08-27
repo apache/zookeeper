@@ -29,36 +29,30 @@ import java.io.RandomAccessFile;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
 import java.util.zip.Adler32;
 import java.util.zip.CheckedInputStream;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.InputArchive;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.persistence.FileSnap;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class CRCTest extends ZKTestCase implements Watcher {
+public class CRCTest extends ZKTestCase{
     private static final Logger LOG = LoggerFactory.getLogger(CRCTest.class);
 
     private static final String HOSTPORT =
         "127.0.0.1:" + PortAssignment.unique();
-    private volatile CountDownLatch startSignal;
-
     /**
      * corrupt a file by writing m at 500 b
      * offset
@@ -121,7 +115,7 @@ public class CRCTest extends ZKTestCase implements Watcher {
         LOG.info("starting up the zookeeper server .. waiting");
         Assert.assertTrue("waiting for server being up",
                 ClientBase.waitForServerUp(HOSTPORT,CONNECTION_TIMEOUT));
-        ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
+        ZooKeeper zk = ClientBase.createZKClient(HOSTPORT);
         try {
             for (int i =0; i < 2000; i++) {
                 zk.create("/crctest- " + i , ("/crctest- " + i).getBytes(),
@@ -178,13 +172,4 @@ public class CRCTest extends ZKTestCase implements Watcher {
         }
         Assert.assertTrue(cfile);
    }
-
-    public void process(WatchedEvent event) {
-        LOG.info("Event:" + event.getState() + " " + event.getType() + " " + event.getPath());
-        if (event.getState() == KeeperState.SyncConnected
-                && startSignal != null && startSignal.getCount() > 0)
-        {
-            startSignal.countDown();
-        }
-    }
 }

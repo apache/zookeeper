@@ -22,18 +22,14 @@ import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.concurrent.CountDownLatch;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.ACL;
@@ -44,11 +40,10 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class ACLCountTest extends ZKTestCase implements Watcher {
-    private static final Logger LOG = LoggerFactory.getLogger(ACLTest.class);
+public class ACLCountTest extends ZKTestCase{
+    private static final Logger LOG = LoggerFactory.getLogger(ACLCountTest.class);
     private static final String HOSTPORT =
         "127.0.0.1:" + PortAssignment.unique();
-    private volatile CountDownLatch startSignal;
 
     /**
      *
@@ -86,7 +81,7 @@ public class ACLCountTest extends ZKTestCase implements Watcher {
             LOG.info("starting up the zookeeper server .. waiting");
             Assert.assertTrue("waiting for server being up",
                     ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
-            zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
+            zk = ClientBase.createZKClient(HOSTPORT);
 
             zk.addAuthInfo("digest", "pat:test".getBytes());
             zk.setACL("/", Ids.CREATOR_ALL_ACL, -1);
@@ -113,24 +108,4 @@ public class ACLCountTest extends ZKTestCase implements Watcher {
         f.shutdown();
         zks.shutdown();
     }
-
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.zookeeper.Watcher#process(org.apache.zookeeper.WatcherEvent)
-     */
-    public void process(WatchedEvent event) {
-        LOG.info("Event:" + event.getState() + " " + event.getType() + " "
-                 + event.getPath());
-        if (event.getState() == KeeperState.SyncConnected) {
-            if (startSignal != null && startSignal.getCount() > 0) {
-                LOG.info("startsignal.countDown()");
-                startSignal.countDown();
-            } else {
-                LOG.warn("startsignal " + startSignal);
-            }
-        }
-    }
-
 }

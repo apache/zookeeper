@@ -21,13 +21,9 @@
  */
 package org.apache.zookeeper.test;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.client.ZKClientConfig;
@@ -100,20 +96,7 @@ public class SSLTest extends QuorumPeerTestBase {
             Assert.assertTrue("waiting for server " + i + " being up",
                     ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], TIMEOUT));
 
-            final CountDownLatch latch = new CountDownLatch(1);
-            ZooKeeper zk = new ZooKeeper("127.0.0.1:" + secureClientPorts[i], TIMEOUT,
-                    new Watcher() {
-                        @Override
-                        public void process(WatchedEvent event) {
-                            if (event.getState() != Event.KeeperState.SyncConnected) {
-                                Assert.fail("failed to connect to ZK server secure client port");
-                            }
-                            latch.countDown();
-                        }
-                    });
-            if (!latch.await(TIMEOUT, TimeUnit.MILLISECONDS)) {
-                Assert.fail("Timeout connecting to ZK server secure port");
-            }
+            ZooKeeper zk = ClientBase.createZKClient("127.0.0.1:" + secureClientPorts[i], TIMEOUT);
             // Do a simple operation to make sure the connection is fine.
             zk.create("/test", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             zk.delete("/test", -1);
@@ -138,20 +121,7 @@ public class SSLTest extends QuorumPeerTestBase {
         MainThread mt = new MainThread(MainThread.UNSET_MYID, "", secureClientPort, false);
         mt.start();
 
-        final CountDownLatch latch = new CountDownLatch(1);
-        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + secureClientPort, TIMEOUT,
-                new Watcher() {
-                    @Override
-                    public void process(WatchedEvent event) {
-                        if (event.getState() != Event.KeeperState.SyncConnected) {
-                            Assert.fail("failed to connect to ZK server secure client port");
-                        }
-                        latch.countDown();
-                    }
-                });
-        if (!latch.await(TIMEOUT, TimeUnit.MILLISECONDS)) {
-            Assert.fail("Timeout connecting to ZK server secure port");
-        }
+        ZooKeeper zk = ClientBase.createZKClient("127.0.0.1:" + secureClientPort, TIMEOUT);
         zk.create("/test", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.delete("/test", -1);
         zk.close();

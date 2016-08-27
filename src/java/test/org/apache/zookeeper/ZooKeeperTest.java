@@ -27,6 +27,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.cli.CliException;
+import org.apache.zookeeper.cli.CliWrapperException;
+import org.apache.zookeeper.cli.MalformedCommandException;
 import org.apache.zookeeper.cli.LsCommand;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.test.ClientBase;
@@ -41,8 +44,7 @@ import org.junit.Test;
 public class ZooKeeperTest extends ClientBase {
 
     @Test
-    public void testDeleteRecursive() throws IOException, InterruptedException,
-            KeeperException {
+    public void testDeleteRecursive() throws IOException, InterruptedException, CliException, KeeperException {
         final ZooKeeper zk = createClient();
         // making sure setdata works on /
         zk.setData("/", "some".getBytes(), -1);
@@ -140,7 +142,7 @@ public class ZooKeeperTest extends ClientBase {
     
     @Test
     public void testStatWhenPathDoesNotExist() throws IOException,
-    		InterruptedException {
+    		InterruptedException, MalformedCommandException {
     	final ZooKeeper zk = createClient();
     	ZooKeeperMain main = new ZooKeeperMain(zk);
     	String cmdstring = "stat /invalidPath";
@@ -148,8 +150,8 @@ public class ZooKeeperTest extends ClientBase {
     	try {
     		main.processZKCmd(main.cl);
     		Assert.fail("As Node does not exist, command should fail by throwing No Node Exception.");
-    	} catch (KeeperException e) {
-    		Assert.assertEquals("KeeperErrorCode = NoNode for /invalidPath", e.getMessage());
+    	} catch (CliException e) {
+    		Assert.assertEquals("Node does not exist: /invalidPath", e.getMessage());
     	}
     }
 
@@ -220,38 +222,47 @@ public class ZooKeeperTest extends ClientBase {
     }
 
     @Test
-    public void testInvalidCommand() throws Exception {
-        final ZooKeeper zk = createClient();
-        ZooKeeperMain zkMain = new ZooKeeperMain(zk);
-        String cmdstring = "cret -s /node1";
-        zkMain.cl.parseCommand(cmdstring);
-        Assert.assertFalse("Doesn't validate the command", zkMain
-                .processZKCmd(zkMain.cl));
+    public void testNonexistantCommand() throws Exception {
+      testInvalidCommand("cret -s /node1", 127);
     }
 
     @Test
     public void testCreateCommandWithoutPath() throws Exception {
+        testInvalidCommand("create", 1);
+    }
+
+    @Test
+    public void testCreateEphemeralCommandWithoutPath() throws Exception {
+        testInvalidCommand("create -e ", 1);
+    }
+
+    @Test
+    public void testCreateSequentialCommandWithoutPath() throws Exception {
+        testInvalidCommand("create -s ", 1);
+    }
+
+    @Test
+    public void testCreateEphemeralSequentialCommandWithoutPath() throws Exception {
+        testInvalidCommand("create -s -e ", 1);
+    }
+
+    private void testInvalidCommand(String cmdString, int exitCode) throws Exception {
         final ZooKeeper zk = createClient();
         ZooKeeperMain zkMain = new ZooKeeperMain(zk);
-        String cmdstring = "create ";
-        zkMain.cl.parseCommand(cmdstring);
-        Assert.assertFalse("Path is not validated.", zkMain
-                .processZKCmd(zkMain.cl));
-        // create ephemeral
-        cmdstring = "create -e ";
-        zkMain.cl.parseCommand(cmdstring);
-        Assert.assertFalse("Path is not validated.", zkMain
-                .processZKCmd(zkMain.cl));
-        // create sequential
-        cmdstring = "create -s ";
-        zkMain.cl.parseCommand(cmdstring);
-        Assert.assertFalse("Path is not validated.", zkMain
-                .processZKCmd(zkMain.cl));
-        // create ephemeral sequential
-        cmdstring = "create -s -e ";
-        zkMain.cl.parseCommand(cmdstring);
-        Assert.assertFalse("Path is not validated.", zkMain
-                .processZKCmd(zkMain.cl));
+        zkMain.cl.parseCommand(cmdString);
+
+        // Verify that the exit code is set properly
+        zkMain.processCmd(zkMain.cl);
+        Assert.assertEquals(exitCode, zkMain.exitCode);
+
+        // Verify that the correct exception is thrown
+        try {
+          zkMain.processZKCmd(zkMain.cl);
+          Assert.fail();
+        } catch (CliException e) {
+          return;
+        }
+        Assert.fail("invalid command should throw CliException");
     }
 
     @Test
@@ -325,6 +336,11 @@ public class ZooKeeperTest extends ClientBase {
     }
 
     @Test
+    public void testDeleteNonexistantNode() throws Exception {
+        testInvalidCommand("delete /blahblahblah", 1);
+    }
+
+    @Test
     public void testStatCommand() throws Exception {
         final ZooKeeper zk = createClient();
         ZooKeeperMain zkMain = new ZooKeeperMain(zk);
@@ -349,8 +365,8 @@ public class ZooKeeperTest extends ClientBase {
         try {
             Assert.assertFalse(zkMain.processZKCmd(zkMain.cl));
             Assert.fail("Path doesn't exists so, command should fail.");
-        } catch (KeeperException e) {
-            Assert.assertEquals(KeeperException.Code.NONODE, e.code());
+        } catch (CliWrapperException e) {
+            Assert.assertEquals(KeeperException.Code.NONODE, ((KeeperException)e.getCause()).code());
         }
     }
 
@@ -380,11 +396,9 @@ public class ZooKeeperTest extends ClientBase {
          final ZooKeeper zk = createClient();
             ZooKeeperMain zkMain = new ZooKeeperMain(zk);
             String cmdstring = "create -s -e /node data ip:scheme:gggsd"; //invalid acl's
-            try{
-                 zkMain.executeLine(cmdstring);
-            }catch(KeeperException.InvalidACLException e){
-                fail("For Invalid ACls should not throw exception");
-            }
+
+            // For Invalid ACls should not throw exception
+            zkMain.executeLine(cmdstring);
     }
 
     @Test
@@ -394,12 +408,9 @@ public class ZooKeeperTest extends ClientBase {
             String cmdstring = "create -s -e /node1 data "; 
             String cmdstring1 = "delete /node1 2";//invalid dataversion no
                  zkMain.executeLine(cmdstring);
-           try{
-               zkMain.executeLine(cmdstring1);
-                     
-            }catch(KeeperException.BadVersionException e){
-                fail("For Invalid dataversion number should not throw exception");
-            }
+
+            // For Invalid dataversion number should not throw exception
+            zkMain.executeLine(cmdstring1);
     }
 
     @Test

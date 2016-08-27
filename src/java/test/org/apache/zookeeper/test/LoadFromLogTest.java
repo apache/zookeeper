@@ -33,8 +33,6 @@ import org.apache.jute.Record;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.PortAssignment;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooDefs.OpCode;
@@ -61,7 +59,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class LoadFromLogTest extends ZKTestCase implements  Watcher {
+public class LoadFromLogTest extends ZKTestCase {
     private static String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
     private static final int CONNECTION_TIMEOUT = 3000;
     private static final int NUM_MESSAGES = 300;
@@ -70,7 +68,6 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
     // setting up the quorum has a transaction overhead for creating and closing the session
     private static final int TRANSACTION_OVERHEAD = 2;
     private static final int TOTAL_TRANSACTIONS = NUM_MESSAGES + TRANSACTION_OVERHEAD;
-    private volatile boolean connected;
 
     /**
      * test that all transactions from the Log are loaded, and only once
@@ -88,7 +85,7 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
         f.startup(zks);
         Assert.assertTrue("waiting for server being up ",
                 ClientBase.waitForServerUp(HOSTPORT,CONNECTION_TIMEOUT));
-        ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
+        ZooKeeper zk = ClientBase.createZKClient(HOSTPORT);
 
         // generate some transactions that will get logged
         try {
@@ -149,7 +146,7 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
         f.startup(zks);
         Assert.assertTrue("waiting for server being up ",
                 ClientBase.waitForServerUp(HOSTPORT,CONNECTION_TIMEOUT));
-        ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
+        ZooKeeper zk = ClientBase.createZKClient(HOSTPORT);
 
         // generate some transactions that will get logged
         try {
@@ -203,25 +200,6 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
         itr = txnLog.read(nextZxid, false);
         Assert.assertEquals(secondStartZxid, itr.getHeader().getZxid());
 
-    }
-
-    public void process(WatchedEvent event) {
-    	switch (event.getType()) {
-    	case None:
-    		switch (event.getState()) {
-    		case SyncConnected:
-    			connected = true;
-    			break;
-    		case Disconnected:
-    			connected = false;
-    			break;
-    		default:
-    			break;
-    		}
-        	break;
-    	default:
-    		break;
-    	}
     }
 
     /**
@@ -296,7 +274,7 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
             txnHeader = new TxnHeader(0xabcd, 0x123, prevPzxid + 1,
                     Time.currentElapsedTime(), OpCode.create);
             txn = new CreateTxn(path, new byte[0], null, false, cversion);
-            ArrayList txnList = new ArrayList();
+            List<Txn> txnList = new ArrayList<Txn>();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
             txn.serialize(boa, "request") ;
@@ -397,7 +375,6 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
 		f.startup(zks);
 		Assert.assertTrue("waiting for server being up ", ClientBase
 				.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
-		connected = false;
 		long fZxid = zks.getZKDatabase().getDataTreeLastProcessedZxid();
 
 		// Verify lastProcessedZxid is set correctly
@@ -566,22 +543,8 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
         f.shutdown();
     }
 
-    private ZooKeeper getConnectedZkClient() throws IOException {
-        ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
-
-        long start = Time.currentElapsedTime();
-        while (!connected) {
-            long end = Time.currentElapsedTime();
-            if (end - start > 5000) {
-                Assert.assertTrue("Could not connect with server in 5 seconds",
-                        false);
-            }
-            try {
-                Thread.sleep(200);
-            } catch (Exception e) {
-                LOG.warn("Interrupted");
-            }
-        }
+    private ZooKeeper getConnectedZkClient() throws Exception {
+        ZooKeeper zk = ClientBase.createZKClient(HOSTPORT);
         return zk;
     }
 }

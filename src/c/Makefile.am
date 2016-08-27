@@ -115,7 +115,7 @@ TESTS_ENVIRONMENT = ZKROOT=${srcdir}/../.. \
 nodist_zktest_st_SOURCES = $(TEST_SOURCES)
 zktest_st_LDADD = libzkst.la libhashtable.la $(CPPUNIT_LIBS)
 zktest_st_CXXFLAGS = -DUSE_STATIC_LIB $(CPPUNIT_CFLAGS) $(USEIPV6) $(SOLARIS_CPPFLAGS)
-zktest_st_LDFLAGS = -static-libtool-libs $(SYMBOL_WRAPPERS) $(SOLARIS_LIB_LDFLAGS)
+zktest_st_LDFLAGS = -shared $(SYMBOL_WRAPPERS) $(SOLARIS_LIB_LDFLAGS)
 
 if WANT_SYNCAPI
   check_PROGRAMS += zktest-mt
@@ -128,7 +128,7 @@ if SOLARIS
 else
   SYMBOL_WRAPPERS_MT=$(SYMBOL_WRAPPERS) $(shell cat ${srcdir}/tests/wrappers-mt.opt)
 endif
-  zktest_mt_LDFLAGS = -static-libtool-libs $(SYMBOL_WRAPPERS_MT) $(SOLARIS_LIB_LDFLAGS)
+  zktest_mt_LDFLAGS = -shared $(SYMBOL_WRAPPERS_MT) $(SOLARIS_LIB_LDFLAGS)
 endif
 
 TESTS = $(check_PROGRAMS)

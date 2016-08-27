@@ -77,8 +77,10 @@
 
     <dependency org="net.java.dev.javacc" name="javacc" rev="5.0" />
 
-    <dependency org="org.mortbay.jetty" name="jetty" rev="6.1.26"
+    <dependency org="org.eclipse.jetty" name="jetty-server" rev="9.2.18.v20160721"
                 conf="optional->default"/>
+      <dependency org="org.eclipse.jetty" name="jetty-servlet" rev="9.2.18.v20160721"
+                  conf="optional->default"/>
     <dependency org="org.codehaus.jackson" name="jackson-mapper-asl" rev="1.9.11"
                 conf="optional->default"/>
   </dependencies>

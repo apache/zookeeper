@@ -17,30 +17,9 @@
  */
 package org.apache.zookeeper.cli;
 
-/**
- * close command for cli
- */
-public class CloseCommand extends CliCommand {
-
-    public CloseCommand() {
-        super("close", "");
+@SuppressWarnings("serial")
+public class MalformedCommandException extends CliException {
+    public MalformedCommandException(String message) {
+        super(message);
     }
-    
-    
-    @Override
-    public CliCommand parse(String[] cmdArgs) throws CliParseException {
-        return this;
-    }
-
-    @Override
-    public boolean exec() throws CliException {
-        try {
-            zk.close();
-        } catch (Exception ex) {
-            throw new CliWrapperException(ex);
-        }
-        
-        return false;
-    }
-    
 }

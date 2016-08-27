@@ -15,32 +15,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.zookeeper.cli;
+package org.apache.zookeeper.server;
+
+import java.util.concurrent.CountDownLatch;
+
+import org.apache.zookeeper.server.ZooKeeperServer.State;
 
 /**
- * close command for cli
+ * ZooKeeper server shutdown handler which will be used to handle ERROR or
+ * SHUTDOWN server state transitions, which in turn releases the associated
+ * shutdown latch.
  */
-public class CloseCommand extends CliCommand {
+class ZooKeeperServerShutdownHandler {
+    private final CountDownLatch shutdownLatch;
 
-    public CloseCommand() {
-        super("close", "");
-    }
-    
-    
-    @Override
-    public CliCommand parse(String[] cmdArgs) throws CliParseException {
-        return this;
+    ZooKeeperServerShutdownHandler(CountDownLatch shutdownLatch) {
+        this.shutdownLatch = shutdownLatch;
     }
 
-    @Override
-    public boolean exec() throws CliException {
-        try {
-            zk.close();
-        } catch (Exception ex) {
-            throw new CliWrapperException(ex);
+    /**
+     * This will be invoked when the server transition to a new server state.
+     *
+     * @param state new server state
+     */
+    void handle(State state) {
+        if (state == State.ERROR || state == State.SHUTDOWN) {
+            shutdownLatch.countDown();
         }
-        
-        return false;
     }
-    
 }

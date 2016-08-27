@@ -36,8 +36,8 @@
   
     <!-- transitive false turns off dependency checking, log4j deps seem borked -->
     <dependency org="log4j" name="log4j" rev="1.2.17" transitive="false"/>
-    <dependency org="org.eclipse.jetty" name="jetty-server" rev="7.0.1.v20091125" />
-    <dependency org="org.eclipse.jetty" name="jetty-servlet" rev="7.0.1.v20091125" />
+    <dependency org="org.eclipse.jetty" name="jetty-server" rev="9.2.18.v20160721" />
+    <dependency org="org.eclipse.jetty" name="jetty-servlet" rev="9.2.18.v20160721" />
     <dependency org="com.googlecode.json-simple" name="json-simple" rev="1.1" />
   </dependencies>
 

@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server;
 
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import javax.management.JMException;
@@ -118,8 +119,14 @@ public class ZooKeeperServerMain {
             // run() in this thread.
             // create a file logger url from the command line args
             txnLog = new FileTxnSnapLog(config.dataLogDir, config.dataDir);
-            ZooKeeperServer zkServer = new ZooKeeperServer( txnLog,
+            final ZooKeeperServer zkServer = new ZooKeeperServer(txnLog,
                     config.tickTime, config.minSessionTimeout, config.maxSessionTimeout, null);
+
+            // Registers shutdown handler which will be used to know the
+            // server error or shutdown state changes.
+            final CountDownLatch shutdownLatch = new CountDownLatch(1);
+            zkServer.registerServerShutdownHandler(
+                    new ZooKeeperServerShutdownHandler(shutdownLatch));
 
             // Start Admin server
             adminServer = AdminServerFactory.createAdminServer();
@@ -146,14 +153,19 @@ public class ZooKeeperServerMain {
             );
             containerManager.start();
 
+            // Watch status of ZooKeeper server. It will do a graceful shutdown
+            // if the server is not running or hits an internal error.
+            shutdownLatch.await();
+
+            shutdown();
+
             if (cnxnFactory != null) {
                 cnxnFactory.join();
             }
             if (secureCnxnFactory != null) {
                 secureCnxnFactory.join();
             }
-
-            if (zkServer.isRunning()) {
+            if (zkServer.canShutdown()) {
                 zkServer.shutdown();
             }
         } catch (InterruptedException e) {
@@ -180,9 +192,16 @@ public class ZooKeeperServerMain {
             secureCnxnFactory.shutdown();
         }
         try {
-            adminServer.shutdown();
+            if (adminServer != null) {
+                adminServer.shutdown();
+            }
         } catch (AdminServerException e) {
             LOG.warn("Problem stopping AdminServer", e);
         }
+    }
+
+    // VisibleForTesting
+    ServerCnxnFactory getCnxnFactory() {
+        return cnxnFactory;
     }
 }

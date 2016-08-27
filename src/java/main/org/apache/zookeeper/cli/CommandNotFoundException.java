@@ -17,30 +17,10 @@
  */
 package org.apache.zookeeper.cli;
 
-/**
- * close command for cli
- */
-public class CloseCommand extends CliCommand {
+@SuppressWarnings("serial")
+public class CommandNotFoundException extends CliException {
 
-    public CloseCommand() {
-        super("close", "");
+    public CommandNotFoundException(String command) {
+        super("Command not found: " + command, 127);
     }
-    
-    
-    @Override
-    public CliCommand parse(String[] cmdArgs) throws CliParseException {
-        return this;
-    }
-
-    @Override
-    public boolean exec() throws CliException {
-        try {
-            zk.close();
-        } catch (Exception ex) {
-            throw new CliWrapperException(ex);
-        }
-        
-        return false;
-    }
-    
 }

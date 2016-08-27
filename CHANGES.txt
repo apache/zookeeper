@@ -329,6 +329,36 @@ BUGFIXES:
   ZOOKEEPER-2459: Update NOTICE file with Netty notice
   (fpj via phunt)
 
+  ZOOKEEPER-1898: ZooKeeper Java cli shell always returns "0" as exit code
+  (Abraham Fine via phunt)
+
+  ZOOKEEPER-2477: documentation should refer to Java cli shell and not
+  C cli shell (Abraham Fine via phunt)
+
+  ZOOKEEPER-1256: ClientPortBindTest is failing on Mac OS X
+  (Camille via phunt)
+
+  ZOOKEEPER-2498: Potential resource leak in C client when processing
+  unexpected / out of order response (Michael Han via rgs)
+
+  ZOOKEEPER-2500: Fix compilation warnings for CliException classes
+  (Abraham Fine via phunt)
+
+  ZOOKEEPER-2074: Incorrect exit codes for "./zkCli.sh cmd arg"
+  (Abraham Fine via phunt)
+
+  Fix command handling in the C client shell (phunt via fpj)
+
+  ZOOKEEPER-2247: Zookeeper service becomes unavailable when leader
+  fails to write transaction log (Rakesh via fpj)
+
+  ZOOKEEPER-2508: Many ZooKeeper tests are flaky because they proceed
+  with zk operation without connecting to ZooKeeper server.
+  (Arshad Mohammad via phunt)
+
+  ZOOKEEPER-2152: Intermittent failure in TestReconfig.cc
+  (Michael Han via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-2024 Major throughput improvement with mixed workloads (Kfir Lev-Ari via shralex)
 
@@ -451,6 +481,12 @@ IMPROVEMENTS:
 
   ZOOKEEPER-2433: ZooKeeperSaslServer: allow user principals in
   subject (Andy B via phunt)
+
+  ZOOKEEPER-2505: Use shared library instead of static library in C
+  client unit test (Michael Han via phunt)
+
+  ZOOKEEPER-2489: Upgrade Jetty dependency to a recent stable release
+  version. (Edward Ribeiro via phunt)
 
 Release 3.5.0 - 8/4/2014
 

@@ -1177,6 +1177,7 @@ static zhandle_t *zookeeper_init_internal(const char *host, watcher_fn watcher,
     zh->active_node_watchers=create_zk_hashtable();
     zh->active_exist_watchers=create_zk_hashtable();
     zh->active_child_watchers=create_zk_hashtable();
+    zh->disable_reconnection_attempt = 0;
 
     if (adaptor_init(zh) == -1) {
         goto abort;
@@ -2194,8 +2195,10 @@ int zookeeper_interest(zhandle_t *zh, socket_t *fd, int *interest,
          *
          * We always clear the delay setting. If we fail again, we'll set delay
          * again and on the next iteration we'll do the same.
+         *
+         * We will also delay if the disable_reconnection_attempt is set.
          */
-        if (zh->delay == 1) {
+        if (zh->delay == 1 || zh->disable_reconnection_attempt == 1) {
             *tv = get_timeval(zh->recv_timeout/60);
             zh->delay = 0;
 
@@ -2936,9 +2939,10 @@ int zookeeper_process(zhandle_t *zh, int events)
                 // put the completion back on the queue (so it gets properly
                 // signaled and deallocated) and disconnect from the server
                 queue_completion(&zh->sent_requests,cptr,1);
-                return handle_socket_error_msg(zh, __LINE__,ZRUNTIMEINCONSISTENCY,
-                        "unexpected server response: expected %#x, but received %#x",
-                        hdr.xid,cptr->xid);
+                return api_epilog(zh,
+                                  handle_socket_error_msg(zh, __LINE__,ZRUNTIMEINCONSISTENCY,
+                                  "unexpected server response: expected %#x, but received %#x",
+                                  hdr.xid,cptr->xid));
             }
 
             if (hdr.zxid > 0) {
