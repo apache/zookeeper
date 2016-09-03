@@ -18,9 +18,14 @@
 
 package org.apache.zookeeper.server;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.io.IOException;
+
+import org.apache.jute.Record;
+import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.server.NIOServerCnxnFactory.SelectorThread;
 
 public class MockNIOServerCnxn extends NIOServerCnxn {
@@ -40,6 +45,41 @@ public class MockNIOServerCnxn extends NIOServerCnxn {
 
     @Override
     protected boolean isSocketOpen() {
+        // trying to reuse this class for different tests.
+        // problem with Java, that I can not create a class that inherits from some other - like <T extends ServerCnxn>
+        if (System.getProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN) != null) {
+            return super.isSocketOpen();
+        }
         return true;
     }
+
+    @Override
+    public void sendResponse(ReplyHeader h, Record r, String tag) throws IOException {
+        String exceptionType = System.getProperty("exception.type", "NoException");
+        switch(exceptionType) {
+            case "IOException":
+                throw new IOException("test IOException");
+            case "NoException":
+                super.sendResponse(h,r,tag);
+                break;
+            case "RunTimeException":
+                try {
+                    Field zkServerField = NIOServerCnxn.class.getDeclaredField("zkServer");
+                    zkServerField.setAccessible(true);
+                    Field modifiersField = Field.class.getDeclaredField("modifiers");
+                    modifiersField.setAccessible(true);
+                    modifiersField.setInt(zkServerField, zkServerField.getModifiers() & ~Modifier.FINAL);
+                    zkServerField.set((NIOServerCnxn)this, null);
+                    super.sendResponse(h,r,tag);
+                } catch (NoSuchFieldException e) {
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
 }

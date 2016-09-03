@@ -21,6 +21,8 @@ package org.apache.zookeeper.server;
 import static org.jboss.netty.buffer.ChannelBuffers.dynamicBuffer;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.security.KeyManagementException;
@@ -79,6 +81,14 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     InetSocketAddress localAddress;
     int maxClientCnxns = 60;
 
+  /**
+   * serverCnxnClassCtr is introduced to improve testability of NettyServerCnxn
+   * as creation of NettyServerCnxn instance is buried deep in the factory code.
+   * It will come into play only if ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN property is set
+   * otherwise default behavior will be preserved
+   */
+  private Constructor<? extends NettyServerCnxn> serverCnxnClassCtr = null;
+
     /**
      * This is an inner class since we need to extend SimpleChannelHandler, but
      * NettyServerCnxnFactory already extends ServerCnxnFactory. By making it inner
@@ -105,8 +115,26 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                 LOG.trace("Channel connected " + e);
             }
 
-            NettyServerCnxn cnxn = new NettyServerCnxn(ctx.getChannel(),
-                    zkServer, NettyServerCnxnFactory.this);
+            NettyServerCnxn cnxn = null;
+            if (serverCnxnClassCtr != null) {
+                try {
+                    cnxn = serverCnxnClassCtr.newInstance(ctx.getChannel(),
+                      zkServer, NettyServerCnxnFactory.this);
+                } catch (InstantiationException e1) {
+                    LOG.debug("Can not instantiate class for " + serverCnxnClassCtr.getName() + ". Using NettyServerCnxn");
+                } catch (IllegalAccessException e1) {
+                    LOG.debug("IllegalAccessException for " + serverCnxnClassCtr.getName() + ". Using NettyServerCnxn");
+                } catch (InvocationTargetException e1) {
+                    LOG.debug("InvocationTargetException for " + serverCnxnClassCtr.getName() + ". Using NettyServerCnxn");
+                } catch (Throwable t) {
+                    LOG.debug("Unknown Exception while dealing with: {} . Using NettyServerCnxn", serverCnxnClassCtr.getName());
+                }
+            }
+            if (cnxn == null) {
+                cnxn = new NettyServerCnxn(ctx.getChannel(),
+                  zkServer, NettyServerCnxnFactory.this);
+            }
+
             ctx.setAttachment(cnxn);
 
             if (secure) {
@@ -326,6 +354,21 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     CnxnChannelHandler channelHandler = new CnxnChannelHandler();
 
     NettyServerCnxnFactory() {
+        String serverCnxnClassName = System.getProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN);
+        if ( serverCnxnClassName != null ) {
+            try {
+                Class<? extends NettyServerCnxn> serverCnxnClass = Class.forName(serverCnxnClassName).asSubclass(NettyServerCnxn.class);
+                serverCnxnClassCtr =
+                  serverCnxnClass.getConstructor(Channel.class, ZooKeeperServer.class, NettyServerCnxnFactory.class);
+            } catch (ClassNotFoundException e) {
+                LOG.debug("Can not find class for {} . Using NettyServerCnxn", serverCnxnClassName);
+            } catch (NoSuchMethodException e) {
+                LOG.debug("Can not find constructor for {} . Using NettyServerCnxn", serverCnxnClassName);
+            } catch (Throwable t) {
+                LOG.debug("Unexpected Exception for dealing with {} ", serverCnxnClassName);
+            }
+        }
+
         bootstrap = new ServerBootstrap(
                 new NioServerSocketChannelFactory(
                         Executors.newCachedThreadPool(),

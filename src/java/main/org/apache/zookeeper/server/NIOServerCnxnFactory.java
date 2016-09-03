@@ -20,6 +20,8 @@ package org.apache.zookeeper.server;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
@@ -112,6 +114,14 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         directBufferBytes = Integer.getInteger(
             ZOOKEEPER_NIO_DIRECT_BUFFER_BYTES, 64 * 1024);
     }
+
+    /**
+     * serverCnxnClassCtr is introduced to improve testability of NIOServerCnxn
+     * as creation of NIOServerCnxn instance is buried deep in the factory code.
+     * It will come into play only if ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN property is set
+     * otherwise default behavior will be preserved
+     */
+    private Constructor<? extends NIOServerCnxn> serverCnxnClassCtr = null;
 
     /**
      * AbstractSelectThread is an abstract base class containing a few bits
@@ -630,6 +640,22 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
      * limits of the operating system). startup(zks) must be called subsequently.
      */
     public NIOServerCnxnFactory() {
+        String serverCnxnClassName = System.getProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN);
+        if ( serverCnxnClassName != null ) {
+            try {
+                Class<? extends NIOServerCnxn> serverCnxnClass = Class.forName(serverCnxnClassName).asSubclass(NIOServerCnxn.class);
+                serverCnxnClassCtr =
+                  serverCnxnClass.getConstructor(ZooKeeperServer.class, SocketChannel.class,
+                    SelectionKey.class, NIOServerCnxnFactory.class,
+                    SelectorThread.class);
+            } catch (ClassNotFoundException e) {
+                LOG.debug("Can not find class for {} . Using NIOServerCnxn", serverCnxnClassName);
+            } catch (NoSuchMethodException e) {
+                LOG.debug("Can not find constructor for {} . Using NIOServerCnxn", serverCnxnClassName);
+            } catch (Throwable t) {
+                LOG.debug("Unexpected Exception for dealing with {} ", serverCnxnClassName);
+            }
+        }
     }
 
     private volatile boolean stopped = true;
@@ -842,7 +868,26 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
 
     protected NIOServerCnxn createConnection(SocketChannel sock,
             SelectionKey sk, SelectorThread selectorThread) throws IOException {
-        return new NIOServerCnxn(zkServer, sock, sk, this, selectorThread);
+
+        NIOServerCnxn cnxn = null;
+
+        if (serverCnxnClassCtr != null) {
+            try {
+                cnxn = serverCnxnClassCtr.newInstance(zkServer, sock, sk, this, selectorThread);
+            } catch (InstantiationException e1) {
+                LOG.debug("Can not instantiate class for " + serverCnxnClassCtr.getName() + ". Using NIOServerCnxn");
+            } catch (IllegalAccessException e1) {
+                LOG.debug("IllegalAccessException for " + serverCnxnClassCtr.getName() + ". Using NIOServerCnxn");
+            } catch (InvocationTargetException e1) {
+                LOG.debug("InvocationTargetException for " + serverCnxnClassCtr.getName() + ". Using NIOServerCnxn");
+            } catch (Throwable t) {
+                LOG.debug("Unknown Exception while dealing with: {} . Using NIOServerCnxn", serverCnxnClassCtr.getName());
+            }
+        }
+        if (cnxn == null) {
+            cnxn = new NIOServerCnxn(zkServer, sock, sk, this, selectorThread);
+        }
+        return cnxn;
     }
 
     private int getClientCnxnCount(InetAddress cl) {

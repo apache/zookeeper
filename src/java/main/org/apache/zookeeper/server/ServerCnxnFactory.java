@@ -43,7 +43,12 @@ import org.slf4j.LoggerFactory;
 public abstract class ServerCnxnFactory {
 
     public static final String ZOOKEEPER_SERVER_CNXN_FACTORY = "zookeeper.serverCnxnFactory";
-    
+    /**
+     *  property to be able to overwrite NIO/NettyServerCnxn with it's subclass if needed.
+     *  Used for unit testing
+     */
+    public static final String ZOOKEEPER_SERVER_CNXN = "zookeeper.serverCnxn";
+
     private static final Logger LOG = LoggerFactory.getLogger(ServerCnxnFactory.class);
 
     // Tells whether SSL is enabled on this ServerCnxnFactory

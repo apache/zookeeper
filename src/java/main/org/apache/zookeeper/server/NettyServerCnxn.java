@@ -139,9 +139,7 @@ public class NettyServerCnxn extends ServerCnxn {
         try {
             sendResponse(h, e, "notification");
         } catch (IOException e1) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Problem sending to " + getRemoteSocketAddress(), e1);
-            }
+            LOG.debug("Problem sending to " + getRemoteSocketAddress(), e1);
             close();
         }
     }
@@ -165,31 +163,35 @@ public class NettyServerCnxn extends ServerCnxn {
     @Override
     public void sendResponse(ReplyHeader h, Record r, String tag)
             throws IOException {
-        if (!channel.isOpen()) {
-            return;
-        }
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        // Make space for length
-        BinaryOutputArchive bos = BinaryOutputArchive.getArchive(baos);
         try {
-            baos.write(fourBytes);
-            bos.writeRecord(h, "header");
-            if (r != null) {
-                bos.writeRecord(r, tag);
+            if (!channel.isOpen()) {
+                return;
             }
-            baos.close();
-        } catch (IOException e) {
-            LOG.error("Error serializing response");
-        }
-        byte b[] = baos.toByteArray();
-        ByteBuffer bb = ByteBuffer.wrap(b);
-        bb.putInt(b.length - 4).rewind();
-        sendBuffer(bb);
-        if (h.getXid() > 0) {
-            // zks cannot be null otherwise we would not have gotten here!
-            if (!zkServer.shouldThrottle(outstandingCount.decrementAndGet())) {
-                enableRecv();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            // Make space for length
+            BinaryOutputArchive bos = BinaryOutputArchive.getArchive(baos);
+            try {
+                baos.write(fourBytes);
+                bos.writeRecord(h, "header");
+                if (r != null) {
+                    bos.writeRecord(r, tag);
+                }
+                baos.close();
+            } catch (IOException e) {
+                LOG.error("Error serializing response");
             }
+            byte b[] = baos.toByteArray();
+            ByteBuffer bb = ByteBuffer.wrap(b);
+            bb.putInt(b.length - 4).rewind();
+            sendBuffer(bb);
+            if (h.getXid() > 0) {
+                // zks cannot be null otherwise we would not have gotten here!
+                if (!zkServer.shouldThrottle(outstandingCount.decrementAndGet())) {
+                    enableRecv();
+                }
+            }
+        } catch (Exception e) {
+            throw new IOException(e);
         }
     }
 
