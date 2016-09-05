@@ -18,10 +18,25 @@
 
 package org.apache.zookeeper;
 
+import java.io.IOException;
+import java.net.SocketAddress;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+
 import org.apache.zookeeper.ClientCnxn.EndOfStreamException;
 import org.apache.zookeeper.ClientCnxn.Packet;
+import org.apache.zookeeper.client.ClientX509Util;
 import org.apache.zookeeper.client.ZKClientConfig;
-import org.apache.zookeeper.common.X509Util;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -41,21 +56,6 @@ import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
-
-import java.io.IOException;
-import java.net.SocketAddress;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import static org.apache.zookeeper.common.X509Exception.SSLContextException;
 
@@ -366,8 +366,9 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         // Basically we only need to create it once.
         private synchronized void initSSL(ChannelPipeline pipeline) throws SSLContextException {
             if (sslContext == null || sslEngine == null) {
-                sslContext = X509Util.createSSLContext(clientConfig,
-                        serverCfg.getInetAddress(), serverCfg.getSslCertCfg());
+                sslContext = ClientX509Util.createSSLContext(clientConfig,
+                        serverCfg.getInetAddress(),
+                        serverCfg.getSslCertCfg().getCertFingerPrintStr());
                 sslEngine = sslContext.createSSLEngine();
                 sslEngine.setUseClientMode(true);
             }

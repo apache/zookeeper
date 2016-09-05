@@ -28,8 +28,6 @@ import javax.net.ssl.SSLServerSocket;
 
 import org.apache.zookeeper.SSLCertCfg;
 import org.apache.zookeeper.common.X509Exception;
-import org.apache.zookeeper.common.X509Util;
-import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,9 +99,8 @@ public class QuorumSocketFactory {
     }
 
     public Socket buildForClient(final InetSocketAddress peerAddr,
-                                 final SSLCertCfg sslCertCfg) throws
-            X509Exception,
-            IOException {
+                                 final SSLCertCfg sslCertCfg)
+            throws X509Exception, IOException {
         if (this.sslEnabled) {
             return newSslSocket(peerAddr, sslCertCfg);
         } else {
@@ -120,8 +117,8 @@ public class QuorumSocketFactory {
             throws X509Exception, IOException {
         Socket clientSocket = null;
         try {
-            clientSocket = X509Util.createSSLContext(
-                    new ZKConfig(), peerAddr, sslCertCfg)
+            clientSocket = QuorumX509Util.createSSLContext(peerAddr,
+                    sslCertCfg.getCertFingerPrintStr())
                     .getSocketFactory()
                     .createSocket();
         } catch (X509Exception.SSLContextException exp) {
@@ -153,15 +150,15 @@ public class QuorumSocketFactory {
         try {
             if (listenAddr != null) {
                 serverSocket =
-                        (SSLServerSocket)X509Util.createSSLContext(
-                                new ZKConfig(), quorumPeer)
+                        (SSLServerSocket)QuorumX509Util.createSSLContext
+                                (quorumPeer)
                                 .getServerSocketFactory()
                                 .createServerSocket(port, backlog, listenAddr);
             } else {
                 // bind to any address
                 serverSocket =
-                        (SSLServerSocket)X509Util.createSSLContext(
-                                new ZKConfig(), quorumPeer)
+                        (SSLServerSocket)QuorumX509Util.createSSLContext
+                                (quorumPeer)
                                 .getServerSocketFactory()
                                 .createServerSocket(port, backlog);
             }

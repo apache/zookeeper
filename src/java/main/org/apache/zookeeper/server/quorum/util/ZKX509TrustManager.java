@@ -17,46 +17,113 @@
  */
 package org.apache.zookeeper.server.quorum.util;
 
-import java.security.InvalidKeyException;
+import java.io.IOException;
+import java.net.Socket;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.SignatureException;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.net.ssl.X509TrustManager;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509ExtendedTrustManager;
 
+import org.apache.zookeeper.common.X509Exception;
+import org.apache.zookeeper.common.X509Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ZKX509TrustManager implements X509TrustManager {
+/**
+ * Given a TrustStore load all the certificate chains in it and verify
+ * the given certificate chain. This will be used by all modules if a
+ * TrustStore is indeed available.
+ * If a TrustStore is unavailable or no certificates are avaiable in
+ * TrustStore then verificate will fail.
+ */
+public class ZKX509TrustManager extends X509ExtendedTrustManager {
     private static final Logger LOG
             = LoggerFactory.getLogger(ZKX509TrustManager.class);
-    private final X509Certificate rootCACert;
+    private final Collection<X509Certificate> trustedCertList;
 
-    public ZKX509TrustManager(final X509Certificate rootCACert) {
-        this.rootCACert = rootCACert;
+    public ZKX509TrustManager(final String trustStoreLocation,
+                              final String trustStorePassword)
+            throws X509Exception.TrustManagerException{
+        this.trustedCertList = loadTrustAnchors(trustStoreLocation,
+                trustStorePassword);
     }
 
+    @Override
     public X509Certificate[] getAcceptedIssuers() {
-        return new X509Certificate[] { this.rootCACert };
+        return new X509Certificate[0];
     }
 
-    public void checkClientTrusted(X509Certificate[] certs,
-                                   String authType) throws CertificateException {
+    @Override
+    public void checkClientTrusted(final X509Certificate[] x509Certificates,
+                                   final String s) throws CertificateException {
         try {
-            validateCertChain(certs);
+            validateCertChain(x509Certificates);
         } catch (CertificateVerificationException exp) {
             throw new CertificateException(exp);
         }
     }
 
-    public void checkServerTrusted(X509Certificate[] certs,
-                                   String authType) throws CertificateException {
+    @Override
+    public void checkServerTrusted(final X509Certificate[] x509Certificates,
+                                   final String s) throws
+            CertificateException {
         try {
-            validateCertChain(certs);
+            validateCertChain(x509Certificates);
+        } catch (CertificateVerificationException exp) {
+            throw new CertificateException(exp);
+        }
+    }
+
+    @Override
+    public void checkClientTrusted(final X509Certificate[] x509Certificates,
+                                   final String s, final Socket socket)
+            throws CertificateException {
+        try {
+            validateCertChain(x509Certificates);
+        } catch (CertificateVerificationException exp) {
+            throw new CertificateException(exp);
+        }
+    }
+
+    @Override
+    public void checkServerTrusted(final X509Certificate[] x509Certificates,
+                                   final String s, final Socket socket)
+            throws CertificateException {
+        try {
+            validateCertChain(x509Certificates);
+        } catch (CertificateVerificationException exp) {
+            throw new CertificateException(exp);
+        }
+    }
+
+    @Override
+    public void checkClientTrusted(final X509Certificate[] x509Certificates,
+                                   final String s, final SSLEngine sslEngine)
+            throws CertificateException {
+        try {
+            validateCertChain(x509Certificates);
+        } catch (CertificateVerificationException exp) {
+            throw new CertificateException(exp);
+        }
+    }
+
+    @Override
+    public void checkServerTrusted(final X509Certificate[] x509Certificates,
+                                   final String s, final SSLEngine sslEngine)
+            throws CertificateException {
+        try {
+            validateCertChain(x509Certificates);
         } catch (CertificateVerificationException exp) {
             throw new CertificateException(exp);
         }
@@ -64,6 +131,14 @@ public class ZKX509TrustManager implements X509TrustManager {
 
     private void validateCertChain(X509Certificate[] certs)
             throws CertificateVerificationException {
+        if (trustedCertList == null) {
+            throw new CertificateVerificationException("Failed to verify " +
+                    "certificate due to lack of truststore.");
+        }
+        if (trustedCertList.size() == 0) {
+            throw new CertificateVerificationException("Failed to verify " +
+                    "no trusted certificates provided.");
+        }
         X509Certificate clientCert = null;
         Set<X509Certificate> restOfCerts = new HashSet<>();
         for (final X509Certificate cert: certs) {
@@ -81,21 +156,43 @@ public class ZKX509TrustManager implements X509TrustManager {
             }
         }
 
-        restOfCerts.add(rootCACert);
+        restOfCerts.addAll(trustedCertList);
         CertificateVerifier.verifyCertificate(clientCert, restOfCerts);
     }
 
-    private void checkAllCerts(X509Certificate[] certs)
-            throws CertificateException {
-        for (X509Certificate cert : certs) {
-            try {
-                cert.verify(rootCACert.getPublicKey());
-            } catch (NoSuchAlgorithmException
-                    | InvalidKeyException | NoSuchProviderException
-                    | SignatureException exp) {
-                LOG.error("cert validation failed, exp: " + exp);
-                throw new CertificateException(exp);
-            }
+    private Collection<X509Certificate> loadTrustAnchors(
+            final String storeLocation, final String storePassword)
+            throws X509Exception.TrustManagerException {
+        if (storeLocation == null) {
+            return null;
         }
+
+        if (storePassword == null) {
+            final String errStr = "Truststore password is required for the " +
+                    "given truststore location: " + storeLocation;
+            LOG.error(errStr);
+            throw new X509Exception.TrustManagerException(errStr);
+        }
+
+        final Collection<X509Certificate> trustedCertList = new ArrayList<>();
+        try {
+            final KeyStore ts = X509Util.loadKeyStore(storeLocation,
+                    storePassword);
+            final TrustManagerFactory tmf =
+                    TrustManagerFactory.getInstance("SunX509");
+            tmf.init(ts);
+            for (Enumeration<String> e = ts.aliases(); e.hasMoreElements();) {
+                final String alias = e.nextElement();
+                for (final Certificate cert : ts.getCertificateChain(alias)) {
+                    trustedCertList.add((X509Certificate)cert);
+                }
+            }
+        } catch (IOException | KeyStoreException | NoSuchAlgorithmException
+                | CertificateException e) {
+            final String errStr = "Could not load truststore: " + storeLocation;
+            LOG.error("{}", errStr, e);
+            throw new X509Exception.TrustManagerException(errStr, e);
+        }
+        return trustedCertList;
     }
 }

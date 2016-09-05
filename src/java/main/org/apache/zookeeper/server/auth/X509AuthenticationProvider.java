@@ -26,14 +26,15 @@ import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
 
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.common.X509Exception.KeyManagerException;
 import org.apache.zookeeper.common.X509Exception.TrustManagerException;
 import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.ServerCnxn;
+import org.apache.zookeeper.server.ZookeeperServerConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
+import org.apache.zookeeper.server.util.ServerX509Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,8 +56,8 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
             = "zookeeper.X509AuthenticationProvider.superUser";
     private static final Logger LOG
             = LoggerFactory.getLogger(X509AuthenticationProvider.class);
-    private final X509TrustManager trustManager;
     private final X509KeyManager keyManager;
+    private final X509TrustManager trustManager;
 
     /**
      * Initialize the X509AuthenticationProvider with a JKS KeyStore and JKS
@@ -67,39 +68,25 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
      * <br/><code>zookeeper.ssl.trustStore.password</code>
      */
     public X509AuthenticationProvider(final QuorumPeer quorumPeer) {
-        String keyStoreLocationProp = System.getProperty(
-                ZKConfig.SSL_KEYSTORE_LOCATION);
-        String keyStorePasswordProp = System.getProperty(
-                ZKConfig.SSL_KEYSTORE_PASSWD);
-
-        X509KeyManager km = null;
-        X509TrustManager tm = null;
         try {
-            km = X509Util.createKeyManager(
-                    keyStoreLocationProp, keyStorePasswordProp);
+            keyManager = X509Util.createKeyManager(
+                    new ZookeeperServerConfig().getProperty(
+                            ZKConfig.SSL_KEYSTORE_LOCATION),
+                    new ZookeeperServerConfig().getProperty(
+                            ZKConfig.SSL_KEYSTORE_PASSWD));
         } catch (KeyManagerException e) {
-            LOG.error("Failed to create key manager", e);
+            final String errStr = "Failed to create key manager";
+            LOG.error("{}", errStr, e);
+            throw new IllegalAccessError(errStr + " error: " + e.getMessage());
         }
 
-        String trustStoreLocationProp = System.getProperty(
-                ZKConfig.SSL_TRUSTSTORE_LOCATION);
-        String trustStorePasswordProp = System.getProperty(
-                ZKConfig.SSL_TRUSTSTORE_PASSWD);
-
         try {
-            if (quorumPeer != null) {
-                tm = X509Util.createTrustManager(quorumPeer);
-            } else {
-                tm = X509Util.createTrustManager(new ZKConfig(),
-                        trustStoreLocationProp, trustStorePasswordProp);
-            }
-        } catch (TrustManagerException | X509Exception.SSLContextException e) {
+            trustManager = ServerX509Util.getTrustManager(
+                    new ZookeeperServerConfig(), quorumPeer);
+        } catch (TrustManagerException e) {
             LOG.error("Failed to create trust manager", e);
             throw new IllegalAccessError("Failed to create trust manager");
         }
-
-        this.keyManager = km;
-        this.trustManager = tm;
     }
 
     /**

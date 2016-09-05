@@ -39,6 +39,7 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509ExtendedTrustManager;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 import javax.xml.bind.DatatypeConverter;
@@ -60,120 +61,19 @@ import static org.apache.zookeeper.common.X509Exception.TrustManagerException;
  * Utility code for X509 handling
  */
 public class X509Util {
-    private static final Logger LOG = LoggerFactory.getLogger(X509Util.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(X509Util.class);
 
-    /**
-     * @deprecated Use {@link ZKConfig#SSL_VERSION_DEFAULT}
-     *             instead.
-     */
-    @Deprecated
-    public static final String SSL_VERSION_DEFAULT = "TLSv1";
-    /**
-     * @deprecated Use {@link ZKConfig#SSL_VERSION}
-     *             instead.
-     */
-    @Deprecated
-    public static final String SSL_VERSION = "zookeeper.ssl.version";
-    /**
-     * @deprecated Use {@link ZKConfig#SSL_KEYSTORE_LOCATION}
-     *             instead.
-     */
-    @Deprecated
-    public static final String SSL_KEYSTORE_LOCATION = "zookeeper.ssl.keyStore.location";
-    /**
-     * @deprecated Use {@link ZKConfig#SSL_KEYSTORE_PASSWD}
-     *             instead.
-     */
-    @Deprecated
-    public static final String SSL_KEYSTORE_PASSWD = "zookeeper.ssl.keyStore.password";
-    /**
-     * @deprecated Use {@link ZKConfig#SSL_TRUSTSTORE_LOCATION}
-     *             instead.
-     */
-    @Deprecated
-    public static final String SSL_TRUSTSTORE_LOCATION = "zookeeper.ssl.trustStore.location";
-    /**
-     * @deprecated Use {@link ZKConfig#SSL_TRUSTSTORE_PASSWD}
-     *             instead.
-     */
-    @Deprecated
-    public static final String SSL_TRUSTSTORE_PASSWD = "zookeeper.ssl.trustStore.password";
-    /**
-     * @deprecated Use {@link ZKConfig#SSL_AUTHPROVIDER}
-     *             instead.
-     */
-    @Deprecated
-    public static final String SSL_AUTHPROVIDER = "zookeeper.ssl.authProvider";
-
-    /**
-     * @deprecated Use {@link ZKConfig#SSL_TRUSTSTORE_CA_ALIAS}
-     *             instead.
-     */
-    @Deprecated
-    public static final String SSL_TRUSTSTORE_CA_ALIAS =
-            "zookeeper.ssl.trustStore.rootCA.alias";
-    /**
-     * @deprecated Use {@link ZKConfig#SSL_DIGEST_DEFAULT_ALGO}
-     *             instead.
-     */
-    @Deprecated
-    public static final String SSL_DIGEST_DEFAULT_ALGO ="SHA-256";
-    /**
-     * @deprecated Use {@link ZKConfig#SSL_DIGEST_ALGOS}
-     *             instead.
-     */
-    @Deprecated
-    public static final String SSL_DIGEST_ALGOS = "quorum.ssl.digest.algos";
-
-    /**
-     * API to create SSL context for clients. Supports both self-signed and
-     * CA signed.
-     * @param peerAddr host that client is trying to connect to
-     * @param peerCertCfg host's self-signed cert of CA signed cert.
-     * @return SSLContext with right verification based on self-signed or CA
-     * signed.
-     * @throws SSLContextException
-     */
     public static SSLContext createSSLContext(
             final ZKConfig config,
-            final InetSocketAddress peerAddr,
-            final SSLCertCfg peerCertCfg)
-            throws SSLContextException {
+            final X509ExtendedTrustManager trustManager)
+        throws SSLContextException {
         final KeyManager[] keyManagers = createKeyManagers(config);
-        TrustManager[] trustManagers;
-        if (peerCertCfg.isSelfSigned()) {
-            trustManagers = createTrustManagers(config, peerAddr,
-                    peerCertCfg.getCertFingerPrintStr());
-        } else if (peerCertCfg.isCASigned()) {
-            // Lets load the CA for truststore.
-            trustManagers = createTrustManagers(config, null);
-        } else {
-            throw new IllegalArgumentException("Invalid argument, no SSL cfg " +
-                    "provided");
-        }
-
-        return createSSLContext(config, keyManagers, trustManagers);
+        return createSSLContext(config, keyManagers,
+                new TrustManager[]{trustManager});
     }
 
-    /**
-     * SSL context which can be used by both client and server side which
-     * depend on dynamic config for authentication. Hence we need quorumPeer.
-     * @param quorumPeer Used for getting QuorumVerifier and certs from
-     *                   QuorumPeerConfig. Both commited and last verified.
-     * @return SSLContext which can perform authentication based on dynamic cfg.
-     * @throws SSLContextException
-     */
-    public static SSLContext createSSLContext(final ZKConfig config,
-                                              final QuorumPeer quorumPeer)
-            throws SSLContextException {
-        final KeyManager[] keyManagers = createKeyManagers(config);
-        final TrustManager[] trustManagers =
-                createTrustManagers(config, quorumPeer);
-
-        return createSSLContext(config, keyManagers, trustManagers);
-    }
-
-    private static KeyManager[] createKeyManagers(final ZKConfig config) throws
+    protected static KeyManager[] createKeyManagers(final ZKConfig config)
+            throws
             SSLContextException {
         final String keyStoreLocationProp =
                 config.getProperty(ZKConfig.SSL_KEYSTORE_LOCATION);
@@ -202,60 +102,8 @@ public class X509Util {
         }
     }
 
-    /**
-     * If QuorumPeer is not provided and this is called it means we are CA
-     * mode and need both truststore location and password.
-     * @param quorumPeer
-     * @return
-     * @throws SSLContextException
-     */
-    private static TrustManager[] createTrustManagers(
-            final ZKConfig config,
-            final QuorumPeer quorumPeer) throws SSLContextException {
-        String trustStoreLocationProp =
-                config.getProperty(ZKConfig.SSL_TRUSTSTORE_LOCATION);
-        String trustStorePasswordProp =
-                config.getProperty(ZKConfig.SSL_TRUSTSTORE_PASSWD);
 
-        if (trustStoreLocationProp == null && trustStorePasswordProp == null) {
-            if (quorumPeer == null) {
-                final String errStr = "truststore not specified";
-                LOG.error(errStr);
-                throw new SSLContextException(errStr);
-            }
-
-            // Create self-signed verification using QuorumPeer.
-            return new TrustManager[] {createTrustManager(quorumPeer)};
-        } else {
-            if (trustStoreLocationProp == null) {
-                throw new SSLContextException("truststore location not " +
-                        "specified for client connection");
-            }
-            if (trustStorePasswordProp == null) {
-                throw new SSLContextException("truststore password not " +
-                        "specified for client connection");
-            }
-            try {
-                return new TrustManager[] {
-                        createTrustManager(config, trustStoreLocationProp,
-                                trustStorePasswordProp)};
-            } catch (TrustManagerException e) {
-                throw new SSLContextException(
-                        "Failed to create TrustManager", e);
-            }
-        }
-    }
-
-    private static TrustManager[] createTrustManagers(
-            final ZKConfig config,
-            final InetSocketAddress peerAddr,
-            final String peerCertFingerPrintStr) {
-        return new TrustManager[]{
-                    createTrustManager(config, peerAddr,
-                            peerCertFingerPrintStr)};
-    }
-
-    private static SSLContext createSSLContext(
+    protected static SSLContext createSSLContext(
             final ZKConfig config,
             final KeyManager[] keyManagers,
             final TrustManager[] trustManagers)
@@ -297,13 +145,13 @@ public class X509Util {
         }
     }
 
-    private static KeyStore loadKeyStore(final String keyStoreLocation,
-                                  final String keyStorePassword)
-    throws KeyStoreException, NoSuchAlgorithmException,
+    public static KeyStore loadKeyStore(final String keyStoreLocation,
+                                        final String keyStorePassword)
+            throws KeyStoreException, NoSuchAlgorithmException,
             CertificateException, IOException {
-        char[] keyStorePasswordChars = keyStorePassword.toCharArray();
-        File keyStoreFile = new File(keyStoreLocation);
-        KeyStore ks = KeyStore.getInstance("JKS");
+        final char[] keyStorePasswordChars = keyStorePassword.toCharArray();
+        final File keyStoreFile = new File(keyStoreLocation);
+        final KeyStore ks = KeyStore.getInstance("JKS");
         try (final FileInputStream inputStream = new FileInputStream
                 (keyStoreFile)) {
             ks.load(inputStream, keyStorePasswordChars);
@@ -311,63 +159,6 @@ public class X509Util {
         return ks;
     }
 
-    private static X509TrustManager createTrustManager(
-            final ZKConfig config,
-            final InetSocketAddress peerAddr,
-            final String peerCertFingerPrintStr) {
-        return new ZKPeerX509TrustManager(peerAddr, peerCertFingerPrintStr);
-    }
-
-    public static X509TrustManager createTrustManager(
-            final ZKConfig config,
-            final String trustStoreLocation, final String trustStorePassword)
-            throws TrustManagerException, SSLContextException {
-        String trustStoreCAAlias =
-                config.getProperty(ZKConfig.SSL_TRUSTSTORE_CA_ALIAS);
-        if (trustStoreCAAlias == null) {
-            final String errStr = "No CA Alias provided, need one to work in " +
-                    "CA mode.";
-            LOG.error(errStr);
-            throw new TrustManagerException(errStr);
-        }
-        try(final FileInputStream inputStream =
-                    new FileInputStream(new File(trustStoreLocation))) {
-                char[] trustStorePasswordChars =
-                        trustStorePassword.toCharArray();
-                KeyStore ts = KeyStore.getInstance("JKS");
-                ts.load(inputStream, trustStorePasswordChars);
-                TrustManagerFactory tmf =
-                        TrustManagerFactory.getInstance("SunX509");
-                tmf.init(ts);
-                X509Certificate rootCA =
-                        getCertWithAlias(ts, trustStoreCAAlias);
-                if (rootCA == null) {
-                    final String str = "failed to find root CA from: " +
-                            trustStoreLocation + " with alias: " +
-                            trustStoreCAAlias;
-                    LOG.error(str);
-                    throw new TrustManagerException(str);
-                }
-
-                return createTrustManager(rootCA);
-        } catch (IOException | KeyStoreException | NoSuchAlgorithmException
-                | CertificateException e) {
-            final String errStr = "Could not load truststore: "
-                    + trustStoreLocation;
-            LOG.error("{}", errStr, e);
-            throw new TrustManagerException(errStr, e);
-        }
-    }
-
-    private static X509TrustManager createTrustManager(
-            final X509Certificate rootCA) {
-        return new ZKX509TrustManager(rootCA);
-    }
-
-    public static X509TrustManager createTrustManager(
-            final QuorumPeer quorumPeer) {
-        return new ZKDynamicX509TrustManager(quorumPeer);
-    }
     private static X509Certificate getCertWithAlias(
             final KeyStore trustStore, final String alias)
             throws KeyStoreException {

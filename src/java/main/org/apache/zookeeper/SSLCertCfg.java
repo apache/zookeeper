@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.zookeeper.common.X509Util;
-import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -119,7 +118,7 @@ public class SSLCertCfg {
         // Check for supported algos for the given fingerprint if cannot
         // validate throw exception.
         MessageDigest md = X509Util.getSupportedMessageDigestForFpStr(
-                new ZKConfig(), fp);
+                new QuorumPeerConfig(), fp);
         if (md == null) {
             final String errStr = "Algo in fingerprint: " + fp +
                     " not supported, bailing out";

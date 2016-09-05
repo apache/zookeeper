@@ -1655,7 +1655,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                     quorumServer.getSslCertCfg().getCertFingerPrintStr();
             final MessageDigest peerFpSupportedMd =
                     X509Util.getSupportedMessageDigestForFpStr(
-                            new ZKConfig(), peerFp);
+                            new QuorumPeerConfig(), peerFp);
             if (peerFpSupportedMd == null) {
                 final String errStr =
                         "QuorumServer: "  + quorumServer +

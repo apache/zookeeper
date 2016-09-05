@@ -32,8 +32,6 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
-import org.apache.zookeeper.common.X509Util;
-import org.apache.zookeeper.common.ZKConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,8 +89,8 @@ public class FourLetterWordMain {
             LOG.info("using secure socket");
             // TODO: 4 letter main cannot be secure!, not supported yet.
             // Which means this has to be local only.
-            SSLContext sslContext = X509Util.createSSLContext(
-                    new ZKConfig(), null);
+            SSLContext sslContext = ClientX509Util.createSSLContext(
+                    new ZKClientConfig(), hostaddress, "invalid-digest");
             SSLSocketFactory socketFactory = sslContext.getSocketFactory();
             SSLSocket sslSock = (SSLSocket) socketFactory.createSocket();
             sslSock.connect(hostaddress, timeout);

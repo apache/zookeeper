@@ -29,7 +29,6 @@ import org.apache.jute.BinaryInputArchive;
 import org.apache.zookeeper.ClientCnxn.Packet;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.Time;
-import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.proto.ConnectResponse;
 import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.slf4j.Logger;
@@ -230,15 +229,15 @@ abstract class ClientCnxnSocket {
 
     protected void initProperties() throws IOException {
         try {
-            packetLen = clientConfig.getInt(ZKConfig.JUTE_MAXBUFFER,
+            packetLen = clientConfig.getInt(ZKClientConfig.JUTE_MAXBUFFER,
                     ZKClientConfig.CLIENT_MAX_PACKET_LENGTH_DEFAULT);
-            LOG.info("{} value is {} Bytes", ZKConfig.JUTE_MAXBUFFER,
+            LOG.info("{} value is {} Bytes", ZKClientConfig.JUTE_MAXBUFFER,
                     packetLen);
         } catch (NumberFormatException e) {
             String msg = MessageFormat.format(
                     "Configured value {0} for property {1} can not be parsed to int",
-                    clientConfig.getProperty(ZKConfig.JUTE_MAXBUFFER),
-                    ZKConfig.JUTE_MAXBUFFER);
+                    clientConfig.getProperty(ZKClientConfig.JUTE_MAXBUFFER),
+                    ZKClientConfig.JUTE_MAXBUFFER);
             LOG.error(msg);
             throw new IOException(msg);
         }

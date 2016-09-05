@@ -33,12 +33,15 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
+import javax.net.ssl.X509KeyManager;
+import javax.net.ssl.X509TrustManager;
 
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.common.X509Exception;
-import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.common.ZKConfig;
+import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.auth.X509AuthenticationProvider;
+import org.apache.zookeeper.server.util.ServerX509Util;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -338,24 +341,23 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
 
     private synchronized void initSSL(ChannelPipeline p)
             throws X509Exception, KeyManagementException, NoSuchAlgorithmException {
-        String authProviderProp = System.getProperty(ZKConfig.SSL_AUTHPROVIDER);
+        final ZKConfig zkConfig = new ZookeeperServerConfig();
+        String authProviderProp = zkConfig.getProperty(ZKConfig.SSL_AUTHPROVIDER);
         SSLContext sslContext;
         if (authProviderProp == null) {
-            sslContext = X509Util.createSSLContext(new ZKConfig(), quorumPeer);
+            sslContext = ServerX509Util.createSSLContext(quorumPeer);
         } else {
-            throw new IllegalAccessError("No support for auth provider: " +
-                    authProviderProp);
-            /*
             sslContext = SSLContext.getInstance("TLSv1");
             X509AuthenticationProvider authProvider =
-                    (X509AuthenticationProvider)ProviderRegistry.getProvider(
-                            System.getProperty(ZKConfig.SSL_AUTHPROVIDER,
+                    (X509AuthenticationProvider) ProviderRegistry.getProvider(
+                            System.getProperty(
+                                    new ZookeeperServerSslConfig().getSslAuthProvider(),
                                     "x509"));
 
             if (authProvider == null)
             {
                 LOG.error("Auth provider not found: {}", authProviderProp);
-                throw new SSLContextException(
+                throw new X509Exception.SSLContextException(
                         "Could not create SSLContext with specified auth provider: " +
                         authProviderProp);
             }
@@ -363,7 +365,6 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             sslContext.init(new X509KeyManager[] { authProvider.getKeyManager() },
                             new X509TrustManager[] { authProvider.getTrustManager() },
                             null);
-            */
         }
 
         SSLEngine sslEngine = sslContext.createSSLEngine();

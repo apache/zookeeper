@@ -241,7 +241,7 @@ public abstract class ServerCnxnFactory {
         // jaas.conf entry available
         try {
             saslServerCallbackHandler = new SaslServerCallbackHandler(Configuration.getConfiguration());
-            login = new Login(serverSection, saslServerCallbackHandler, new ZKConfig() );
+            login = new Login(serverSection, saslServerCallbackHandler, new ZookeeperServerConfig());
             login.startThreadIfNeeded();
         } catch (LoginException e) {
             throw new IOException("Could not configure server because SASL configuration did not allow the "

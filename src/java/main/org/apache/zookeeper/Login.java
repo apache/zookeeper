@@ -25,26 +25,25 @@ package org.apache.zookeeper;
  * See ZooKeeperSaslClient for client-side usage.
  */
 
+import java.util.Date;
+import java.util.Random;
+import java.util.Set;
+
+import javax.security.auth.Subject;
+import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.kerberos.KerberosPrincipal;
+import javax.security.auth.kerberos.KerberosTicket;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
-import javax.security.auth.callback.CallbackHandler;
 
 import org.apache.zookeeper.client.ZKClientConfig;
+import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.server.ZooKeeperSaslServer;
-import org.apache.zookeeper.common.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.security.auth.kerberos.KerberosTicket;
-import javax.security.auth.Subject;
-
-import java.util.Date;
-import java.util.Random;
-import java.util.Set;
 
 public class Login {
     private static final String KINIT_COMMAND_DEFAULT = "/usr/bin/kinit";
@@ -206,7 +205,7 @@ public class Login {
                         break;
                     }
                     if (isUsingTicketCache) {
-                        String cmd = zkConfig.getProperty(ZKConfig.KINIT_COMMAND, KINIT_COMMAND_DEFAULT);
+                        String cmd = zkConfig.getProperty(ZKClientConfig.KINIT_COMMAND, KINIT_COMMAND_DEFAULT);
                         String kinitArgs = "-R";
                         int retry = 1;
                         while (retry >= 0) {
