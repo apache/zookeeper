@@ -288,7 +288,7 @@ public class CnxManagerTest extends ZKTestCase {
      */
     @Test
     public void testCnxFromFutureVersion() throws Exception {               
-        QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[1], peerTmpdir[1], peerClientPort[1], 3, 1, 1000, 2, 2);
+        QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[1], peerTmpdir[1], peerClientPort[1], 3, 1, 1000, 2, 20);
         TestCnxManager cnxManager = new TestCnxManager(peer);
         QuorumCnxManager.Listener listener = cnxManager.listener;
         if(listener != null){
