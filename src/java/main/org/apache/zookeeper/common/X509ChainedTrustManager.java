@@ -81,7 +81,14 @@ public class X509ChainedTrustManager extends X509ExtendedTrustManager {
                             .checkClientTrusted(x509Certificates, s);
                     return;  // means success, i.e no exception raised.
                 } catch(CertificateException exp) {
-                    // Ignore each exception.
+                    // Ignore each exception except the one that is fatal!
+                    if (exp instanceof  FatalCertificateException) {
+                        final String errStr =
+                                "Could not verify certificate chain: " +
+                                String.join(" ", expErrMsgList);
+                        LOG.error("{}", errStr, exp);
+                        throw new CertificateException(errStr, exp);
+                    }
                     expErrMsgList.add(exp.getMessage());
                 }
             }
@@ -104,7 +111,14 @@ public class X509ChainedTrustManager extends X509ExtendedTrustManager {
                             .checkServerTrusted(x509Certificates, s);
                     return;  // means success, i.e no exception raised.
                 } catch(CertificateException exp) {
-                    // Ignore each exception.
+                    // Ignore each exception except the one that is fatal!
+                    if (exp instanceof  FatalCertificateException) {
+                        final String errStr =
+                                "Could not verify certificate chain: " +
+                                        String.join(" ", expErrMsgList);
+                        LOG.error("{}", errStr, exp);
+                        throw new CertificateException(errStr, exp);
+                    }
                     expErrMsgList.add(exp.getMessage());
                 }
             }
@@ -133,7 +147,14 @@ public class X509ChainedTrustManager extends X509ExtendedTrustManager {
                             .checkClientTrusted(x509Certificates, s, socket);
                     return;  // means success, i.e no exception raised.
                 } catch(CertificateException exp) {
-                    // Ignore each exception.
+                    // Ignore each exception except the one that is fatal!
+                    if (exp instanceof  FatalCertificateException) {
+                        final String errStr =
+                                "Could not verify certificate chain: " +
+                                        String.join(" ", expErrMsgList);
+                        LOG.error("{}", errStr, exp);
+                        throw new CertificateException(errStr, exp);
+                    }
                     expErrMsgList.add(exp.getMessage());
                 }
             }
@@ -157,7 +178,14 @@ public class X509ChainedTrustManager extends X509ExtendedTrustManager {
                             .checkServerTrusted(x509Certificates, s, socket);
                     return;  // means success, i.e no exception raised.
                 } catch(CertificateException exp) {
-                    // Ignore each exception.
+                    // Ignore each exception except the one that is fatal!
+                    if (exp instanceof  FatalCertificateException) {
+                        final String errStr =
+                                "Could not verify certificate chain: " +
+                                        String.join(" ", expErrMsgList);
+                        LOG.error("{}", errStr, exp);
+                        throw new CertificateException(errStr, exp);
+                    }
                     expErrMsgList.add(exp.getMessage());
                 }
             }
@@ -181,7 +209,14 @@ public class X509ChainedTrustManager extends X509ExtendedTrustManager {
                             .checkClientTrusted(x509Certificates, s, sslEngine);
                     return;  // means success, i.e no exception raised.
                 } catch(CertificateException exp) {
-                    // Ignore each exception.
+                    // Ignore each exception except the one that is fatal!
+                    if (exp instanceof  FatalCertificateException) {
+                        final String errStr =
+                                "Could not verify certificate chain: " +
+                                        String.join(" ", expErrMsgList);
+                        LOG.error("{}", errStr, exp);
+                        throw new CertificateException(errStr, exp);
+                    }
                     expErrMsgList.add(exp.getMessage());
                 }
             }
@@ -205,7 +240,14 @@ public class X509ChainedTrustManager extends X509ExtendedTrustManager {
                             .checkServerTrusted(x509Certificates, s, sslEngine);
                     return;  // means success, i.e no exception raised.
                 } catch(CertificateException exp) {
-                    // Ignore each exception.
+                    // Ignore each exception except the one that is fatal!
+                    if (exp instanceof  FatalCertificateException) {
+                        final String errStr =
+                                "Could not verify certificate chain: " +
+                                        String.join(" ", expErrMsgList);
+                        LOG.error("{}", errStr, exp);
+                        throw new CertificateException(errStr, exp);
+                    }
                     expErrMsgList.add(exp.getMessage());
                 }
             }

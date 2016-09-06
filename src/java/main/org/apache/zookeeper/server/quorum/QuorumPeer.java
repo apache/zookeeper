@@ -37,6 +37,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -125,6 +126,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         public InetSocketAddress electionAddr = null;
         
         public InetSocketAddress clientAddr = null;
+        public InetSocketAddress secureClientAddr = null;
         
         public long id;
 
@@ -239,22 +241,21 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 throw new ConfigException(addressStr + wrongFormat);
             }
 
-            if (serverClientParts.length == 2) {
-                //LOG.warn("ClientParts: " + serverClientParts[1]);
-                String clientParts[] = splitWithLeadingHostname(serverClientParts[1]);
-                if (clientParts.length > 2) {
-                    throw new ConfigException(addressStr + wrongFormat);
+            // Compatible part is host:port or just port which is used for non
+            // secure socket
+            // Support for both sockets or either of them is as follows
+            // plain:host:port;secure:host:port and similar config for ipv6
+            if (serverClientParts.length > 1) {
+                parseHostString(serverClientParts[1], addressStr);
+                if (serverClientParts.length > 2) {
+                    parseHostString(serverClientParts[2], addressStr);
                 }
+            }
 
-                // is client_config a host:port or just a port
-                String hostname = (clientParts.length == 2) ? clientParts[0] : "0.0.0.0";
-                try {
-                    clientAddr = new InetSocketAddress(hostname,
-                            Integer.parseInt(clientParts[clientParts.length - 1]));
-                    //LOG.warn("Set clientAddr to " + clientAddr);
-                } catch (NumberFormatException e) {
-                    throw new ConfigException("Address unresolved: " + hostname + ":" + clientParts[clientParts.length - 1]);
-                }
+            if (serverClientParts.length > 3) {
+                throw new ConfigException("Invalid server string, more than " +
+                        "two sections parsed after ; for given string: " +
+                        addressStr);
             }
 
             // server_config should be either host:port:port or host:port:port:type
@@ -272,14 +273,13 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             }
 
             // Now we can expect the following
-            // participant:cert:<sha256 cert fp>:cacert:<sha256 ca cert fp>
+            // participant:cert:<sha256 cert fp>
             this.sslCertCfg = new SSLCertCfg();
             if (serverParts.length == 4) {
                 // backward compatibility first.
                 setType(serverParts[3]);
             } else if (serverParts.length >= 4) {
-                // Parse this: cert:SHA-256-XXXX or cacert:SHA-256-XXX
-                // cert is self signed, cacert's fingerprint is optional.
+                // Parse this: cert:SHA-256-XXXX
                 final HashMap<String, Integer> propKvMap = new HashMap<>();
                 for (int i = 3; i < serverParts.length; i++) {
                     propKvMap.put(serverParts[i].trim().toLowerCase(), i);
@@ -317,6 +317,50 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             this.myAddrs = excludedSpecialAddresses(this.myAddrs);
         }
 
+        private static InetSocketAddress parseCompatibleHostString(
+                final String hostStr, final String serverStr)
+                throws ConfigException  {
+            //LOG.warn("ClientParts: " + serverClientParts[1]);
+            final String clientParts[] = splitWithLeadingHostname(hostStr);
+            if (clientParts.length > 2) {
+                throw new ConfigException(serverStr + wrongFormat);
+            }
+
+            // is client_config a host:port or just a port
+            final String hostname = (clientParts.length == 2) ?
+                    clientParts[0] : "0.0.0.0";
+            try {
+                return new InetSocketAddress(hostname,
+                        Integer.parseInt(clientParts[clientParts.length - 1]));
+                //LOG.warn("Set clientAddr to " + clientAddr);
+            } catch (NumberFormatException e) {
+                throw new ConfigException("Address unresolved: " + hostname +
+                        ":" + clientParts[clientParts.length - 1]);
+            }
+        }
+
+        private void parseHostString(final String hostStr,
+                                     final String serverStr)
+                throws ConfigException {
+            final String[] parts = hostStr.split(":");
+            if (parts[0].toLowerCase().equals("plain")) {
+                clientAddr = parseCompatibleHostString(
+                        removeLeadingItem(parts), serverStr);
+            } else if (parts[0].toLowerCase().equals("secure")) {
+                secureClientAddr = parseCompatibleHostString(
+                        removeLeadingItem(parts), serverStr);
+            } else {
+                clientAddr  = parseCompatibleHostString(hostStr, serverStr);
+            }
+        }
+
+        private String removeLeadingItem(final String[] parts) {
+            final List<String> partsList =
+                    new ArrayList<>(Arrays.asList(parts));
+            partsList.remove(0);
+            return String.join(":", partsList);
+        }
+
         private static String delimitedHostString(InetSocketAddress addr)
         {
             String host = addr.getHostString();
@@ -341,30 +385,28 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             }           
             if (type == LearnerType.OBSERVER) sw.append(":observer");
             else if (type == LearnerType.PARTICIPANT) sw.append(":participant");
-            if (isSelfSigned()) {
+            if (hasCertFp()) {
                 sw.append(":cert:");
                 sw.append(sslCertCfg.getCertFingerPrintStr());
-            } else if (isCASigned()) {
-                sw.append(":cacert:");
-                if (sslCertCfg.getCertFingerPrintStr() != null) {
-                    sw.append(sslCertCfg.getCertFingerPrintStr());
-                }
             }
             if (clientAddr!=null){
-                sw.append(";");
+                sw.append(";plain:");
                 sw.append(delimitedHostString(clientAddr));
                 sw.append(":");
                 sw.append(String.valueOf(clientAddr.getPort()));
             }
+            if (secureClientAddr != null) {
+                sw.append(";secure:");
+                sw.append(delimitedHostString(secureClientAddr));
+                sw.append(":");
+                sw.append(String.valueOf(secureClientAddr.getPort()));
+            }
             return sw.toString();       
         }
 
-        public boolean isSelfSigned() {
-            return sslCertCfg != null && sslCertCfg.isSelfSigned();
-        }
-
-        public boolean isCASigned() {
-            return sslCertCfg != null && sslCertCfg.isCASigned();
+        public boolean hasCertFp() {
+            return sslCertCfg != null && sslCertCfg.getCertFingerPrintStr()
+                    != null;
         }
 
         public int hashCode() {

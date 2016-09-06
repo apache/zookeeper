@@ -35,6 +35,7 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509ExtendedTrustManager;
 
+import org.apache.zookeeper.common.FatalCertificateException;
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.common.X509Util;
 import org.slf4j.Logger;
@@ -44,8 +45,11 @@ import org.slf4j.LoggerFactory;
  * Given a TrustStore load all the certificate chains in it and verify
  * the given certificate chain. This will be used by all modules if a
  * TrustStore is indeed available.
- * If a TrustStore is unavailable or no certificates are avaiable in
- * TrustStore then verificate will fail.
+ * If a TrustStore is unavailable or no certificates are available in
+ * TrustStore then verification will fail but this failure can be considered as
+ * not fatal.
+ * If a TrustStore has at-least one cert and verification fails then it is
+ * considered a fatal failure.
  */
 public class ZKX509TrustManager extends X509ExtendedTrustManager {
     private static final Logger LOG
@@ -67,76 +71,52 @@ public class ZKX509TrustManager extends X509ExtendedTrustManager {
     @Override
     public void checkClientTrusted(final X509Certificate[] x509Certificates,
                                    final String s) throws CertificateException {
-        try {
-            validateCertChain(x509Certificates);
-        } catch (CertificateVerificationException exp) {
-            throw new CertificateException(exp);
-        }
+        validateCertChain(x509Certificates);
     }
 
     @Override
     public void checkServerTrusted(final X509Certificate[] x509Certificates,
                                    final String s) throws
             CertificateException {
-        try {
-            validateCertChain(x509Certificates);
-        } catch (CertificateVerificationException exp) {
-            throw new CertificateException(exp);
-        }
+        validateCertChain(x509Certificates);
     }
 
     @Override
     public void checkClientTrusted(final X509Certificate[] x509Certificates,
                                    final String s, final Socket socket)
             throws CertificateException {
-        try {
-            validateCertChain(x509Certificates);
-        } catch (CertificateVerificationException exp) {
-            throw new CertificateException(exp);
-        }
+        validateCertChain(x509Certificates);
     }
 
     @Override
     public void checkServerTrusted(final X509Certificate[] x509Certificates,
                                    final String s, final Socket socket)
             throws CertificateException {
-        try {
-            validateCertChain(x509Certificates);
-        } catch (CertificateVerificationException exp) {
-            throw new CertificateException(exp);
-        }
+        validateCertChain(x509Certificates);
     }
 
     @Override
     public void checkClientTrusted(final X509Certificate[] x509Certificates,
                                    final String s, final SSLEngine sslEngine)
             throws CertificateException {
-        try {
-            validateCertChain(x509Certificates);
-        } catch (CertificateVerificationException exp) {
-            throw new CertificateException(exp);
-        }
+        validateCertChain(x509Certificates);
     }
 
     @Override
     public void checkServerTrusted(final X509Certificate[] x509Certificates,
                                    final String s, final SSLEngine sslEngine)
             throws CertificateException {
-        try {
-            validateCertChain(x509Certificates);
-        } catch (CertificateVerificationException exp) {
-            throw new CertificateException(exp);
-        }
+        validateCertChain(x509Certificates);
     }
 
     private void validateCertChain(X509Certificate[] certs)
-            throws CertificateVerificationException {
+            throws CertificateException {
         if (trustedCertList == null) {
-            throw new CertificateVerificationException("Failed to verify " +
+            throw new CertificateException("Failed to verify " +
                     "certificate due to lack of truststore.");
         }
         if (trustedCertList.size() == 0) {
-            throw new CertificateVerificationException("Failed to verify " +
+            throw new CertificateException("Failed to verify " +
                     "no trusted certificates provided.");
         }
         X509Certificate clientCert = null;
@@ -157,7 +137,14 @@ public class ZKX509TrustManager extends X509ExtendedTrustManager {
         }
 
         restOfCerts.addAll(trustedCertList);
-        CertificateVerifier.verifyCertificate(clientCert, restOfCerts);
+        try {
+            CertificateVerifier.verifyCertificate(clientCert, restOfCerts);
+        } catch (CertificateVerificationException exp) {
+            final String errStr = "verification with few trust anchors failed" +
+                    ". Error: " + exp.getMessage();
+            LOG.error("{}", errStr, exp);
+            throw new FatalCertificateException(errStr, exp);
+        }
     }
 
     private Collection<X509Certificate> loadTrustAnchors(

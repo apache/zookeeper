@@ -31,29 +31,14 @@ import static javax.xml.bind.DatatypeConverter.printHexBinary;
 
 public class SSLCertCfg {
     private static final Logger LOG = LoggerFactory.getLogger(SSLCertCfg.class);
-    private final CertType certType;
     private final String certFingerPrintStr;
-    public enum CertType {
-        NONE, SELF, CA;
-    }
 
     public SSLCertCfg() {
-        certType = CertType.NONE;
         certFingerPrintStr = null;
     }
 
-    public SSLCertCfg(final CertType certType,
-                      final String certFingerPrintStr) {
-        this.certType = certType;
+    public SSLCertCfg(final String certFingerPrintStr) {
         this.certFingerPrintStr = certFingerPrintStr;
-    }
-
-    public boolean isSelfSigned() {
-        return certType == CertType.SELF;
-    }
-
-    public boolean isCASigned() {
-        return certType == CertType.CA;
     }
 
     public String getCertFingerPrintStr() {
@@ -62,43 +47,36 @@ public class SSLCertCfg {
 
     public static SSLCertCfg parseCertCfgStr(final String certCfgStr)
             throws QuorumPeerConfig.ConfigException {
-        SSLCertCfg.CertType certType = SSLCertCfg.CertType.NONE;
         int fpIndex = Integer.MAX_VALUE;
         final String[] parts = certCfgStr.split(":");
         final Map<String, Integer> propKvMap =
                 getKeyAndIndexMap(certCfgStr);
-        if (propKvMap.containsKey("cert") &&
-                propKvMap.containsKey("cacert")) {
+        if (propKvMap.containsKey("cert")) {
             final String errStr = "Server string has both self signed " +
                     "cert and ca cert: " + certCfgStr;
             throw new QuorumPeerConfig.ConfigException(errStr);
         } else if (propKvMap.containsKey("cert")) {
-            certType = SSLCertCfg.CertType.SELF;
             fpIndex = propKvMap.get("cert") + 1;
             if (parts.length < fpIndex) {
                 final String errStr = "No fingerprint provided for self " +
                         "signed, server cfg string: " + certCfgStr;
                 throw new QuorumPeerConfig.ConfigException(errStr);
             }
-        } else if (propKvMap.containsKey("cacert")) {
-            certType = SSLCertCfg.CertType.SELF;
-            fpIndex = propKvMap.get("cacert") + 1;
         }
 
         if (fpIndex != Integer.MAX_VALUE &&
                 parts.length > fpIndex) {
-            LOG.debug("certCfgStr: " + certCfgStr + ", cert type:" + certType +
+            LOG.debug("certCfgStr: " + certCfgStr +
                     ", fp:" + parts[fpIndex]);
             if (getMessageDigest(parts[fpIndex]) != null) {
-                return new SSLCertCfg(certType, parts[fpIndex]);
+                return new SSLCertCfg(parts[fpIndex]);
             }
         }
 
         return new SSLCertCfg();
     }
 
-    private static Map<String, Integer> getKeyAndIndexMap(
-            final String cfgStr) {
+    private static Map<String, Integer> getKeyAndIndexMap(final String cfgStr) {
         final Map<String, Integer> propKvMap = new HashMap<>();
         final String[] parts = cfgStr.split(":");
         for (int i = 0; i < parts.length; i++) {
