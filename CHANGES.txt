@@ -1,3 +1,14 @@
+Release 3.4.10 - Unreleased
+
+Backward compatible changes:
+
+BUGFIXES:
+
+  ZOOKEEPER-2502: Flaky Test:
+  org.apache.zookeeper.server.quorum.CnxManagerTest.testCnxFromFutureVersion
+  (Michael Han via phunt)
+
+
 Release 3.4.9 - 2016-08-23
 
 Backward compatible changes:
