@@ -119,21 +119,22 @@ public class ZKX509TrustManager extends X509ExtendedTrustManager {
             throw new CertificateException("Failed to verify " +
                     "no trusted certificates provided.");
         }
-        X509Certificate clientCert = null;
-        Set<X509Certificate> restOfCerts = new HashSet<>();
+
+        final X509Certificate clientCert = certs[0];
+        if (CertificateVerifier.isSelfSigned(clientCert)) {
+            throw new CertificateException("Not going to verify self-signed " +
+                    "certs for now using truststore.");
+        }
+
+        final Set<X509Certificate> restOfCerts = new HashSet<>();
         for (final X509Certificate cert: certs) {
             // skip self signed cert
-            if (CertificateVerifier.isSelfSigned(cert)) {
+            if (CertificateVerifier.isSelfSigned(cert) ||
+                    clientCert.equals(cert)) {
                 continue;
             }
 
-            // first non self signed cert will be client cert?
-            // TODO: how do we get the first cert?.
-            if (clientCert == null) {
-                clientCert = cert;
-            } else {
-                restOfCerts.add(cert);
-            }
+            restOfCerts.add(cert);
         }
 
         restOfCerts.addAll(trustedCertList);

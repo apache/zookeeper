@@ -19,7 +19,6 @@ package org.apache.zookeeper.server;
 
 import java.io.File;
 
-import org.apache.zookeeper.common.SslConfig;
 import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 
@@ -35,17 +34,17 @@ public class ZookeeperServerConfig extends ZKConfig {
             new ZookeeperServerSslConfig();
 
     public ZookeeperServerConfig() {
-        super();
+        super(new ZookeeperServerSslConfig());
     }
 
     public ZookeeperServerConfig(File configFile)
             throws QuorumPeerConfig.ConfigException {
-        super(configFile);
+        super(configFile, new ZookeeperServerSslConfig());
     }
 
     public ZookeeperServerConfig(String configPath)
             throws QuorumPeerConfig.ConfigException {
-        super(configPath);
+        super(configPath, new ZookeeperServerSslConfig());
     }
 
     /**
@@ -60,10 +59,5 @@ public class ZookeeperServerConfig extends ZKConfig {
         properties.put(JUTE_MAXBUFFER, System.getProperty(JUTE_MAXBUFFER));
         properties.put(KINIT_COMMAND, System.getProperty(KINIT_COMMAND));
         properties.put(JGSS_NATIVE, System.getProperty(JGSS_NATIVE));
-    }
-
-    @Override
-    protected SslConfig getSslConfig() {
-        return sslConfig;
     }
 }

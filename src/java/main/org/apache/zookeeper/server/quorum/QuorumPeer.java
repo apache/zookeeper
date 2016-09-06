@@ -390,7 +390,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 sw.append(sslCertCfg.getCertFingerPrintStr());
             }
             if (clientAddr!=null){
-                sw.append(";plain:");
+                sw.append(";");
+                if (secureClientAddr != null) {
+                    sw.append("plain:");
+                }
                 sw.append(delimitedHostString(clientAddr));
                 sw.append(":");
                 sw.append(String.valueOf(clientAddr.getPort()));

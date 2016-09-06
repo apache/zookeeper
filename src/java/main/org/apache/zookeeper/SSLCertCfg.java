@@ -52,10 +52,6 @@ public class SSLCertCfg {
         final Map<String, Integer> propKvMap =
                 getKeyAndIndexMap(certCfgStr);
         if (propKvMap.containsKey("cert")) {
-            final String errStr = "Server string has both self signed " +
-                    "cert and ca cert: " + certCfgStr;
-            throw new QuorumPeerConfig.ConfigException(errStr);
-        } else if (propKvMap.containsKey("cert")) {
             fpIndex = propKvMap.get("cert") + 1;
             if (parts.length < fpIndex) {
                 final String errStr = "No fingerprint provided for self " +

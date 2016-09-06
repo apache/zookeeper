@@ -45,7 +45,7 @@ public abstract class ZKConfig {
 
     public static final String SSL_VERSION_DEFAULT = "TLSv1";
     public static final String SSL_VERSION = "ssl.version";
-    public static final String SSL_KEYSTORE_LOCATION = "ssl.keyStore";
+    public static final String SSL_KEYSTORE_LOCATION = "ssl.keyStore.location";
     public static final String SSL_KEYSTORE_PASSWD = "ssl.keyStore.password";
     public static final String SSL_TRUSTSTORE_LOCATION =
             "ssl.trustStore.location";
@@ -56,12 +56,14 @@ public abstract class ZKConfig {
     public static final String SSL_DIGEST_ALGOS = "ssl.digest.algos";
 
     protected final Map<String, String> properties = new HashMap<String, String>();
+    private final SslConfig sslConfig;
 
     /**
      * properties, which are common to both client and server, are initialized
      * from system properties
      */
-    public ZKConfig() {
+    public ZKConfig(final SslConfig sslConfig) {
+        this.sslConfig = sslConfig;
         init();
     }
 
@@ -72,8 +74,9 @@ public abstract class ZKConfig {
      *             if failed to load configuration properties
      */
 
-    public ZKConfig(String configPath) throws ConfigException {
-        this(new File(configPath));
+    public ZKConfig(final String configPath, final SslConfig sslConfig)
+            throws ConfigException {
+        this(new File(configPath), sslConfig);
     }
 
     /**
@@ -83,8 +86,9 @@ public abstract class ZKConfig {
      * @throws ConfigException
      *             if failed to load configuration properties
      */
-    public ZKConfig(File configFile) throws ConfigException {
-        this();
+    public ZKConfig(final File configFile, final SslConfig sslConfig)
+            throws ConfigException {
+        this(sslConfig);
         addConfiguration(configFile);
     }
 
@@ -105,6 +109,7 @@ public abstract class ZKConfig {
         properties.put(SSL_VERSION, systemPropDefault(
                 getSslConfig().getSslVersion(),
                 getSslConfig().getSslVersionDefault()));
+        LOG.info("registering: " + getSslConfig().getSslKeyStoreLocation());
         properties.put(SSL_KEYSTORE_LOCATION,
                 System.getProperty(getSslConfig().getSslKeyStoreLocation()));
         properties.put(SSL_KEYSTORE_PASSWD,
@@ -114,13 +119,15 @@ public abstract class ZKConfig {
         properties.put(SSL_TRUSTSTORE_PASSWD,
                 System.getProperty(getSslConfig().getSslTrustStorePassword()));
         properties.put(SSL_AUTHPROVIDER,
-                getSslConfig().getSslAuthProvider());
+                System.getProperty(getSslConfig().getSslAuthProvider()));
         properties.put(SSL_DIGEST_ALGOS, systemPropDefault(
                 getSslConfig().getSslDigestAlgos(),
                 getSslConfig().getSslDefaultDigestAlgo()));
     }
 
-    protected abstract SslConfig getSslConfig();
+    private SslConfig getSslConfig() {
+        return sslConfig;
+    }
 
     protected static String systemPropDefault(final String key,
                                               final String defaultValue) {

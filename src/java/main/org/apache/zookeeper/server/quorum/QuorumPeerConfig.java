@@ -40,7 +40,6 @@ import org.apache.zookeeper.common.AtomicFileWritingIdiom;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.OutputStreamStatement;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
 import org.apache.zookeeper.common.PathUtils;
-import org.apache.zookeeper.common.SslConfig;
 import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.server.ZooKeeperServer;
@@ -61,7 +60,6 @@ public class QuorumPeerConfig extends ZKConfig {
     private static final int UNSET_SERVERID = -1;
     public static final String nextDynamicConfigFileSuffix = ".dynamic.next";
 
-    private final QuorumSslConfig sslConfig = new QuorumSslConfig();
     private static boolean standaloneEnabled = true;
     private static boolean reconfigEnabled = false;
 
@@ -112,22 +110,17 @@ public class QuorumPeerConfig extends ZKConfig {
     }
 
     public QuorumPeerConfig() {
-        super();
+        super(new QuorumSslConfig());
     }
 
     public QuorumPeerConfig(File configFile)
             throws QuorumPeerConfig.ConfigException {
-        super(configFile);
+        super(configFile, new QuorumSslConfig());
     }
 
     public QuorumPeerConfig(String configPath)
             throws QuorumPeerConfig.ConfigException {
-        super(configPath);
-    }
-
-    @Override
-    protected SslConfig getSslConfig() {
-        return sslConfig;
+        super(configPath, new QuorumSslConfig());
     }
 
     /**

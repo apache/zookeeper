@@ -20,7 +20,6 @@ package org.apache.zookeeper.common;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.security.InvalidKeyException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -38,24 +37,17 @@ import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509ExtendedTrustManager;
 import javax.net.ssl.X509KeyManager;
-import javax.net.ssl.X509TrustManager;
 import javax.xml.bind.DatatypeConverter;
 
 import org.apache.zookeeper.SSLCertCfg;
-import org.apache.zookeeper.server.quorum.QuorumPeer;
-import org.apache.zookeeper.server.quorum.util.ZKDynamicX509TrustManager;
-import org.apache.zookeeper.server.quorum.util.ZKPeerX509TrustManager;
-import org.apache.zookeeper.server.quorum.util.ZKX509TrustManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static javax.xml.bind.DatatypeConverter.printHexBinary;
 import static org.apache.zookeeper.common.X509Exception.KeyManagerException;
 import static org.apache.zookeeper.common.X509Exception.SSLContextException;
-import static org.apache.zookeeper.common.X509Exception.TrustManagerException;
 
 /**
  * Utility code for X509 handling
@@ -73,8 +65,10 @@ public class X509Util {
     }
 
     protected static KeyManager[] createKeyManagers(final ZKConfig config)
-            throws
-            SSLContextException {
+            throws SSLContextException {
+        LOG.info("keystore key: " + ZKConfig.SSL_KEYSTORE_LOCATION);
+        LOG.info("keystore pwd: " + ZKConfig.SSL_KEYSTORE_PASSWD);
+
         final String keyStoreLocationProp =
                 config.getProperty(ZKConfig.SSL_KEYSTORE_LOCATION);
         final String keyStorePasswordProp =
