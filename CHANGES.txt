@@ -35,6 +35,9 @@ BUGFIXES:
   ZOOKEEPER-2548: zooInspector does not start on Windows
   (Arshad Mohammad via phunt)
 
+  ZOOKEEPER-2558: Potential memory leak in recordio.c
+  (Michael Han via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-2505: Use shared library instead of static library in C
