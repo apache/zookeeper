@@ -11,6 +11,11 @@ BUGFIXES:
   ZOOKEEPER-2558: Potential memory leak in recordio.c
   (Michael Han via phunt)
 
+IMPROVEMENTS:
+
+  ZOOKEEPER-2507: C unit test improvement: line break between
+  'ZooKeeper server started' and 'Running' (Michael Han via phunt)
+
 
 Release 3.4.9 - 2016-08-23
 
