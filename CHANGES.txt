@@ -42,6 +42,11 @@ BUGFIXES:
   from zoo.cfg on Solaris 10 (grep issue, manifests as FAILED TO WRITE PID)
   (Chris Nauroth via rgs)
 
+  ZOOKEEPER-2536: When provide path for 'dataDir' with trailing space,
+  it is taking correct path (by trucating space) for snapshot but
+  creating temporary file with some junk folder name for
+  zookeeper_server.pid (Rakesh Kumar Singh via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-2505: Use shared library instead of static library in C
