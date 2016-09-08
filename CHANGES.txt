@@ -59,6 +59,9 @@ BUGFIXES:
   ZOOKEEPER-2172: Cluster crashes when reconfig a new node as a participant
   (Arshad Mohammad via phunt)
 
+  ZOOKEEPER-2484: Flaky Test: org.apache.zookeeper.test.LoadFromLogTest.testLoadFailure
+  (Michael Han via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-2505: Use shared library instead of static library in C
