@@ -431,19 +431,19 @@ public class Learner {
                     break;
                 case Leader.COMMIT:
                 case Leader.COMMITANDACTIVATE:
+                    pif = packetsNotCommitted.peekFirst();
+                    if (pif.hdr.getZxid() == qp.getZxid() && qp.getType() == Leader.COMMITANDACTIVATE) {
+                        QuorumVerifier qv = self.configFromString(new String(((SetDataTxn) pif.rec).getData()));
+                        boolean majorChange = self.processReconfig(qv, ByteBuffer.wrap(qp.getData()).getLong(),
+                                qp.getZxid(), true);
+                        if (majorChange) {
+                            throw new Exception("changes proposed in reconfig");
+                        }
+                    }
                     if (!snapshotTaken) {
-                        pif = packetsNotCommitted.peekFirst();
                         if (pif.hdr.getZxid() != qp.getZxid()) {
                             LOG.warn("Committing " + qp.getZxid() + ", but next proposal is " + pif.hdr.getZxid());
                         } else {
-                           if (qp.getType() == Leader.COMMITANDACTIVATE) {
-                               QuorumVerifier qv = self.configFromString(new String(((SetDataTxn)pif.rec).getData()));
-                               boolean majorChange =
-                                       self.processReconfig(qv, ByteBuffer.wrap(qp.getData()).getLong(), qp.getZxid(), true);
-                                if (majorChange) {
-                                   throw new Exception("changes proposed in reconfig");
-                                }
-                           }
                             zk.processTxn(pif.hdr, pif.rec);
                             packetsNotCommitted.remove();
                         }
