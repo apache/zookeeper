@@ -1,5 +1,10 @@
 Unreleased
 
+NEW FEATURES:
+
+  ZOOKEEPER-1962: Add a CLI command to recursively list a znode and
+  children (Gautam Gopalakrishnan, Hongchao Deng, Enis Soztutar via phunt)
+
 BUGFIXES:
 
   ZOOKEEPER-1898: ZooKeeper Java cli shell always returns "0" as exit code

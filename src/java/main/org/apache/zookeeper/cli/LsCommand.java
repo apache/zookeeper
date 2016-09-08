@@ -19,7 +19,9 @@ package org.apache.zookeeper.cli;
 import java.util.Collections;
 import java.util.List;
 import org.apache.commons.cli.*;
+import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.ZKUtil;
 import org.apache.zookeeper.data.Stat;
 
 /**
@@ -35,10 +37,11 @@ public class LsCommand extends CliCommand {
         options.addOption("?", false, "help");
         options.addOption("s", false, "stat");
         options.addOption("w", false, "watch");
+        options.addOption("R", false, "recurse");
     }
 
     public LsCommand() {
-        super("ls", "[-s] [-w] path");
+        super("ls", "[-s] [-w] [-R] path");
     }
 
     private void printHelp() {
@@ -61,7 +64,7 @@ public class LsCommand extends CliCommand {
         }
 
         retainCompatibility(cmdArgs);
-        
+
         return this;
     }
 
@@ -91,19 +94,19 @@ public class LsCommand extends CliCommand {
         String path = args[1];
         boolean watch = cl.hasOption("w");
         boolean withStat = cl.hasOption("s");
+        boolean recursive = cl.hasOption("R");
         try {
-            Stat stat = new Stat();
-            List<String> children;
-            if (withStat) {
-                // with stat
-                children = zk.getChildren(path, watch, stat);
+            if (recursive) {
+                ZKUtil.visitSubTreeDFS(zk, path, watch, new StringCallback() {
+                    @Override
+                    public void processResult(int rc, String path, Object ctx, String name) {
+                        out.println(path);
+                    }
+                });
             } else {
-                // without stat
-                children = zk.getChildren(path, watch);
-            }
-            out.println(printChildren(children));
-            if (withStat) {
-                new StatPrinter(out).print(stat);
+                Stat stat = withStat ? new Stat() : null;
+                List<String> children = zk.getChildren(path, watch, stat);
+                printChildren(children, stat);
             }
         } catch (KeeperException|InterruptedException ex) {
             throw new CliWrapperException(ex);
@@ -111,20 +114,22 @@ public class LsCommand extends CliCommand {
         return watch;
     }
 
-    private String printChildren(List<String> children) {
+    private void printChildren(List<String> children, Stat stat) {
         Collections.sort(children);
-        StringBuilder sb = new StringBuilder();
-        sb.append("[");
+        out.append("[");
         boolean first = true;
         for (String child : children) {
             if (!first) {
-                sb.append(", ");
+                out.append(", ");
             } else {
                 first = false;
             }
-            sb.append(child);
+            out.append(child);
         }
-        sb.append("]");
-        return sb.toString();
+        out.append("]");
+        if (stat != null) {
+            new StatPrinter(out).print(stat);
+        }
+        out.append("\n");
     }
 }
