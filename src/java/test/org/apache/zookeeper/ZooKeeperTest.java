@@ -22,23 +22,22 @@ import static org.junit.Assert.*;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
 import org.apache.zookeeper.ZooDefs.Ids;
-import org.apache.zookeeper.cli.CliException;
-import org.apache.zookeeper.cli.CliWrapperException;
-import org.apache.zookeeper.cli.MalformedCommandException;
-import org.apache.zookeeper.cli.LsCommand;
+import org.apache.zookeeper.cli.*;
+import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * 
- * Testing Zookeeper public methods
+ *
+ * Testing ZooKeeper public methods
  *
  */
 public class ZooKeeperTest extends ClientBase {
@@ -139,7 +138,7 @@ public class ZooKeeperTest extends ClientBase {
         }
         Assert.assertEquals(4, ((AtomicInteger) ctx).get());
     }
-    
+
     @Test
     public void testStatWhenPathDoesNotExist() throws IOException,
     		InterruptedException, MalformedCommandException {
@@ -405,7 +404,7 @@ public class ZooKeeperTest extends ClientBase {
     public void testDeleteWithInvalidVersionNo() throws Exception {
          final ZooKeeper zk = createClient();
             ZooKeeperMain zkMain = new ZooKeeperMain(zk);
-            String cmdstring = "create -s -e /node1 data "; 
+            String cmdstring = "create -s -e /node1 data ";
             String cmdstring1 = "delete /node1 2";//invalid dataversion no
                  zkMain.executeLine(cmdstring);
 
@@ -434,6 +433,19 @@ public class ZooKeeperTest extends ClientBase {
         }
     }
 
+    private static void runCommandExpect(CliCommand command, List<String> expectedResults)
+            throws Exception {
+        // call command and put result in byteStream
+        ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+        PrintStream out = new PrintStream(byteStream);
+        command.setOut(out);
+        command.exec();
+
+        String result = byteStream.toString();
+        assertTrue(result, result.contains(
+                StringUtils.joinStrings(expectedResults, "\n")));
+    }
+
     @Test
     public void testSortedLs() throws Exception {
         final ZooKeeper zk = createClient();
@@ -445,17 +457,89 @@ public class ZooKeeperTest extends ClientBase {
         zkMain.executeLine("create /test1");
         zkMain.executeLine("create /zk1");
 
-        // call ls and put result in byteStream
-        ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-        PrintStream out = new PrintStream(byteStream);
-        String lsCmd = "ls /";
-        LsCommand entity = new LsCommand();
-        entity.setZk(zk);
-        entity.setOut(out);
-        entity.parse(lsCmd.split(" ")).exec();
-
-        String result = byteStream.toString();
-        assertTrue(result, result.contains("[aa1, aa2, aa3, test1, zk1, zookeeper]"));
+        LsCommand cmd = new LsCommand();
+        cmd.setZk(zk);
+        cmd.parse("ls /".split(" "));
+        List<String> expected = new ArrayList<String>();
+        expected.add("[aa1, aa2, aa3, test1, zk1, zookeeper]\n");
+        runCommandExpect(cmd, expected);
     }
 
+    @Test
+    public void testLsrCommand() throws Exception {
+        final ZooKeeper zk = createClient();
+        ZooKeeperMain zkMain = new ZooKeeperMain(zk);
+
+        zkMain.executeLine("create /a");
+        zkMain.executeLine("create /a/b");
+        zkMain.executeLine("create /a/c");
+        zkMain.executeLine("create /a/b/d");
+        zkMain.executeLine("create /a/c/e");
+        zkMain.executeLine("create /a/f");
+
+        LsCommand cmd = new LsCommand();
+        cmd.setZk(zk);
+        cmd.parse("ls -R /a".split(" "));
+
+        List<String> expected = new ArrayList<String>();
+        expected.add("/a");
+        expected.add("/a/b");
+        expected.add("/a/c");
+        expected.add("/a/f");
+        expected.add("/a/b/d");
+        expected.add("/a/c/e");
+        runCommandExpect(cmd, expected);
+    }
+
+    @Test
+    public void testLsrRootCommand() throws Exception {
+        final ZooKeeper zk = createClient();
+        ZooKeeperMain zkMain = new ZooKeeperMain(zk);
+
+        LsCommand cmd = new LsCommand();
+        cmd.setZk(zk);
+        cmd.parse("ls -R /".split(" "));
+
+        List<String> expected = new ArrayList<String>();
+        expected.add("/");
+        expected.add("/zookeeper");
+        runCommandExpect(cmd, expected);
+    }
+
+    @Test
+    public void testLsrLeafCommand() throws Exception {
+        final ZooKeeper zk = createClient();
+        ZooKeeperMain zkMain = new ZooKeeperMain(zk);
+
+        zkMain.executeLine("create /b");
+        zkMain.executeLine("create /b/c");
+
+        LsCommand cmd = new LsCommand();
+        cmd.setZk(zk);
+        cmd.parse("ls -R /b/c".split(" "));
+
+        List<String> expected = new ArrayList<String>();
+        expected.add("/b/c");
+        runCommandExpect(cmd, expected);
+    }
+
+    @Test
+    public void testLsrNonexistantZnodeCommand() throws Exception {
+        final ZooKeeper zk = createClient();
+        ZooKeeperMain zkMain = new ZooKeeperMain(zk);
+
+        zkMain.executeLine("create /b");
+        zkMain.executeLine("create /b/c");
+
+        LsCommand cmd = new LsCommand();
+        cmd.setZk(zk);
+        cmd.parse("ls -R /b/c/d".split(" "));
+
+        try {
+            runCommandExpect(cmd, new ArrayList<String>());
+            Assert.fail("Path doesn't exists so, command should fail.");
+        } catch (CliWrapperException e) {
+            Assert.assertEquals(KeeperException.Code.NONODE, ((KeeperException)e.getCause()).code());
+        }
+    }
 }

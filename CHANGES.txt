@@ -12,6 +12,9 @@ NEW FEATURES:
 
   ZOOKEEPER-2163: Introduce new ZNode type: container (Jordan Zimmerman via rgs)
 
+  ZOOKEEPER-1962: Add a CLI command to recursively list a znode and
+  children (Gautam Gopalakrishnan, Hongchao Deng, Enis Soztutar via phunt)
+
 BUGFIXES:
   ZOOKEEPER-1784 wrong check for COMMITANDACTIVATE in observer code, Learner.java (rgs via shralex).
 
