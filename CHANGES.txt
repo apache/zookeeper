@@ -8,6 +8,9 @@ BUGFIXES:
   org.apache.zookeeper.server.quorum.CnxManagerTest.testCnxFromFutureVersion
   (Michael Han via phunt)
 
+  ZOOKEEPER-2558: Potential memory leak in recordio.c
+  (Michael Han via phunt)
+
 
 Release 3.4.9 - 2016-08-23
 
