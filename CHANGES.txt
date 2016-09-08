@@ -370,6 +370,9 @@ BUGFIXES:
   creating temporary file with some junk folder name for
   zookeeper_server.pid (Rakesh Kumar Singh via phunt)
 
+  ZOOKEEPER-2539: Throwing nullpointerException when run the command
+  "config -c" when client port is mentioned as separate and not like
+  new style (Rakesh Kumar Singh via phunt)
 
 IMPROVEMENTS:
   ZOOKEEPER-2024 Major throughput improvement with mixed workloads (Kfir Lev-Ari via shralex)
