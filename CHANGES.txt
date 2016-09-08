@@ -59,6 +59,9 @@ IMPROVEMENTS:
   ZOOKEEPER-2489: Upgrade Jetty dependency to a recent stable release
   version. (Edward Ribeiro via phunt)
 
+  ZOOKEEPER-2507: C unit test improvement: line break between
+  'ZooKeeper server started' and 'Running' (Michael Han via phunt)
+
 
 Release 3.5.2 - 06/29/2016
 
