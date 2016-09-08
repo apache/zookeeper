@@ -144,7 +144,7 @@ int main( int argc, char* argv[] ) {
    runner.addTest( CPPUNIT_NS::TestFactoryRegistry::getRegistry().makeTest() );
  
    try {
-     CPPUNIT_NS::stdCOut() << "Running " << endl;
+     CPPUNIT_NS::stdCOut() << endl << "Running " << endl;
 
      zoo_set_debug_level(ZOO_LOG_LEVEL_INFO);
      //zoo_set_debug_level(ZOO_LOG_LEVEL_DEBUG);
