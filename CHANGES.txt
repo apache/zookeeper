@@ -377,6 +377,9 @@ BUGFIXES:
   "config -c" when client port is mentioned as separate and not like
   new style (Rakesh Kumar Singh via phunt)
 
+  ZOOKEEPER-2172: Cluster crashes when reconfig a new node as a participant
+  (Arshad Mohammad via phunt)
+
 IMPROVEMENTS:
   ZOOKEEPER-2024 Major throughput improvement with mixed workloads (Kfir Lev-Ari via shralex)
 
