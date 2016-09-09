@@ -58,6 +58,10 @@ public class FileTxnSnapLog {
     
     private static final Logger LOG = LoggerFactory.getLogger(FileTxnSnapLog.class);
     
+    public static final String ZOOKEEPER_DATADIR_AUTOCREATE =
+            "zookeeper.datadir.autocreate";
+
+    public static final String ZOOKEEPER_DATADIR_AUTOCREATE_DEFAULT = "true";
     /**
      * This listener helps
      * the external apis calling
@@ -80,15 +84,38 @@ public class FileTxnSnapLog {
 
         this.dataDir = new File(dataDir, version + VERSION);
         this.snapDir = new File(snapDir, version + VERSION);
+        // by default create snap/log dirs, but otherwise complain instead
+        // See ZOOKEEPER-1161 for more details
+        boolean enableAutocreate = Boolean.valueOf(
+                System.getProperty(ZOOKEEPER_DATADIR_AUTOCREATE,
+                        ZOOKEEPER_DATADIR_AUTOCREATE_DEFAULT));
         if (!this.dataDir.exists()) {
-            if (!this.dataDir.mkdirs()) {
-                throw new IOException("Unable to create data directory "
+            if (!enableAutocreate) {
+                throw new DatadirException("Missing data directory "
+                        + this.dataDir
+                        + ", automatic data directory creation is disabled ("
+                        + ZOOKEEPER_DATADIR_AUTOCREATE
+                        + " is false). Please create this directory manually.");
+            }
+
+            if (!this.dataDir.mkdirs() && !this.dataDir.exists()) {
+                throw new DatadirException("Unable to create data directory "
                         + this.dataDir);
             }
         }
         if (!this.snapDir.exists()) {
-            if (!this.snapDir.mkdirs()) {
-                throw new IOException("Unable to create snap directory "
+            // by default create this directory, but otherwise complain instead
+            // See ZOOKEEPER-1161 for more details
+            if (!enableAutocreate) {
+                throw new DatadirException("Missing snap directory "
+                        + this.snapDir
+                        + ", automatic data directory creation is disabled ("
+                        + ZOOKEEPER_DATADIR_AUTOCREATE
+                        + " is false). Please create this directory manually.");
+            }
+
+            if (!this.snapDir.mkdirs() && !this.snapDir.exists()) {
+                throw new DatadirException("Unable to create snap directory "
                         + this.snapDir);
             }
         }
@@ -164,6 +191,33 @@ public class FileTxnSnapLog {
             }
         }
         return highestZxid;
+    }
+
+    /**
+     * Get TxnIterator for iterating through txnlog starting at a given zxid
+     *
+     * @param zxid starting zxid
+     * @return TxnIterator
+     * @throws IOException
+     */
+    public TxnIterator readTxnLog(long zxid) throws IOException {
+        return readTxnLog(zxid, true);
+    }
+
+    /**
+     * Get TxnIterator for iterating through txnlog starting at a given zxid
+     *
+     * @param zxid starting zxid
+     * @param fastForward true if the iterator should be fast forwarded to point
+     *        to the txn of a given zxid, else the iterator will point to the
+     *        starting txn of a txnlog that may contain txn of a given zxid
+     * @return TxnIterator
+     * @throws IOException
+     */
+    public TxnIterator readTxnLog(long zxid, boolean fastForward)
+            throws IOException {
+        FileTxnLog txnLog = new FileTxnLog(dataDir);
+        return txnLog.read(zxid, fastForward);
     }
     
     /**
@@ -337,5 +391,15 @@ public class FileTxnSnapLog {
     public void close() throws IOException {
         txnLog.close();
         snapLog.close();
+    }
+
+    @SuppressWarnings("serial")
+    public static class DatadirException extends IOException {
+        public DatadirException(String msg) {
+            super(msg);
+        }
+        public DatadirException(String msg, Exception e) {
+            super(msg, e);
+        }
     }
 }
