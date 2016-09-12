@@ -15,7 +15,7 @@
 #set -x
 
 ### Setup some variables.  
-### SVN_REVISION and BUILD_URL are set by Hudson if it is run by patch process
+### GIT_COMMIT and BUILD_URL are set by Hudson if it is run by patch process
 ### Read variables from properties file
 . `dirname $0`/test-patch.properties
 
@@ -26,14 +26,14 @@ parseArgs() {
       ### Set HUDSON to true to indicate that this script is being run by Hudson
       HUDSON=true
       if [[ $# != 15 ]] ; then
-        echo "ERROR: usage $0 HUDSON <PATCH_DIR> <PS_CMD> <WGET_CMD> <JIRACLI> <SVN_CMD> <GREP_CMD> <PATCH_CMD> <FINDBUGS_HOME> <FORREST_HOME> <WORKSPACE_BASEDIR> <JIRA_PASSWD> <JAVA5_HOME> <CURL_CMD> <DEFECT> "
+        echo "ERROR: usage $0 HUDSON <PATCH_DIR> <PS_CMD> <WGET_CMD> <JIRACLI> <GIT_CMD> <GREP_CMD> <PATCH_CMD> <FINDBUGS_HOME> <FORREST_HOME> <WORKSPACE_BASEDIR> <JIRA_PASSWD> <JAVA5_HOME> <CURL_CMD> <DEFECT> "
         cleanupAndExit 0
       fi
       PATCH_DIR=$2
       PS=$3
       WGET=$4
       JIRACLI=$5
-      SVN=$6
+      GIT=$6
       GREP=$7
       PATCH=$8
       FINDBUGS_HOME=$9
@@ -59,7 +59,7 @@ parseArgs() {
       ### Set HUDSON to false to indicate that this script is being run by a developer
       HUDSON=false
       if [[ $# != 10 ]] ; then
-        echo "ERROR: usage $0 DEVELOPER <PATCH_FILE> <SCRATCH_DIR> <SVN_CMD> <GREP_CMD> <PATCH_CMD> <FINDBUGS_HOME> <FORREST_HOME> <WORKSPACE_BASEDIR> <JAVA5_HOME>"
+        echo "ERROR: usage $0 DEVELOPER <PATCH_FILE> <SCRATCH_DIR> <GIT_CMD> <GREP_CMD> <PATCH_CMD> <FINDBUGS_HOME> <FORREST_HOME> <WORKSPACE_BASEDIR> <JAVA5_HOME>"
         cleanupAndExit 0
       fi
       ### PATCH_FILE contains the location of the patchfile
@@ -79,7 +79,7 @@ parseArgs() {
 	  cleanupAndExit 0
 	fi
       fi
-      SVN=$4
+      GIT=$4
       GREP=$5
       PATCH=$6
       FINDBUGS_HOME=$7
@@ -108,19 +108,31 @@ checkout () {
   echo ""
   echo ""
   ### When run by a developer, if the workspace contains modifications, do not continue
-  status=`$SVN stat --ignore-externals | sed -e '/^X[ ]*/D'`
+  # Ref http://stackoverflow.com/a/2659808 for details on checking dirty status
+  ${GIT} diff-index --quiet HEAD
+  if [[ $? -ne 0 ]] ; then
+    uncommitted=`${GIT} diff --name-only HEAD`
+    uncommitted="You have the following files with uncommitted changes:${NEWLINE}${uncommitted}"
+  fi
+  untracked="$(${GIT} ls-files --exclude-standard --others)" && test -z "${untracked}"
+  if [[ $? -ne 0 ]] ; then
+    untracked="You have untracked and unignored files:${NEWLINE}${untracked}"
+  fi
+
   if [[ $HUDSON == "false" ]] ; then
-    if [[ "$status" != "" ]] ; then
+    if [[ $uncommitted || $untracked ]] ; then
       echo "ERROR: can't run in a workspace that contains the following modifications"
-      echo "$status"
+      echo ""
+      echo "${uncommitted}"
+      echo ""
+      echo "${untracked}"
       cleanupAndExit 1
     fi
   else   
-    cd $BASEDIR
-    $SVN revert -R .
-    rm -rf `$SVN status --no-ignore`
-    $SVN upgrade
-    $SVN update
+    # I don't believe we need to do anything here - the jenkins job will
+    # cleanup the environment for us ("cleanup before checkout" action)
+    # on the precommit jenkins job
+    echo
   fi
   return $?
 }
@@ -142,7 +154,7 @@ setup () {
     $WGET -q -O $PATCH_DIR/patch $patchURL
     JIRA_COMMENT="Here are the results of testing the latest attachment 
   $patchURL
-  against trunk revision ${SVN_REVISION}."
+  against trunk revision ${GIT_COMMIT}."
 
   ### Copy the patch file to $PATCH_DIR
   else
