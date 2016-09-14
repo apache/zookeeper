@@ -229,14 +229,15 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         }
 
         private static final String wrongFormat = " does not have the form server_config or server_config;client_config"+
-        " where server_config is host:port:port or host:port:port:type and client_config is port or host:port";
+        " where server_config is host:port:port or host:port:port:type and " +
+                "client_config is port or host:port or plain:host:port;secure:host:port";
 
         public QuorumServer(long sid, String addressStr) throws ConfigException {
             // LOG.warn("sid = " + sid + " addressStr = " + addressStr);
             this.id = sid;
             String serverClientParts[] = addressStr.split(";");
             String serverParts[] = splitWithLeadingHostname(serverClientParts[0]);
-            if ((serverClientParts.length > 2) || (serverParts.length < 3)
+            if ((serverClientParts.length > 3) || (serverParts.length < 3)
                     || (serverParts.length > 6)) {
                 throw new ConfigException(addressStr + wrongFormat);
             }
