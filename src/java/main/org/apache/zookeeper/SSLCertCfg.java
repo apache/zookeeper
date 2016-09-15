@@ -47,21 +47,16 @@ public class SSLCertCfg {
 
     public static SSLCertCfg parseCertCfgStr(final String certCfgStr)
             throws QuorumPeerConfig.ConfigException {
-        int fpIndex = Integer.MAX_VALUE;
         final String[] parts = certCfgStr.split(":");
         final Map<String, Integer> propKvMap =
                 getKeyAndIndexMap(certCfgStr);
         if (propKvMap.containsKey("cert")) {
-            fpIndex = propKvMap.get("cert") + 1;
-            if (parts.length < fpIndex) {
+            int fpIndex = propKvMap.get("cert") + 1;
+            if (parts.length <= fpIndex) {
                 final String errStr = "No fingerprint provided for self " +
                         "signed, server cfg string: " + certCfgStr;
                 throw new QuorumPeerConfig.ConfigException(errStr);
             }
-        }
-
-        if (fpIndex != Integer.MAX_VALUE &&
-                parts.length > fpIndex) {
             LOG.debug("certCfgStr: " + certCfgStr +
                     ", fp:" + parts[fpIndex]);
             if (getMessageDigest(parts[fpIndex]) != null) {

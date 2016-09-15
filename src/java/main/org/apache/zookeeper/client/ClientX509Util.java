@@ -42,6 +42,12 @@ public class ClientX509Util extends X509Util {
             final ZKConfig zkConfig, final InetSocketAddress peerAddr,
             final String peerCertFingerPrintStr)
             throws X509Exception.SSLContextException {
+        if (peerCertFingerPrintStr == null) {
+            final String errStr = "Peer's: " + peerAddr +
+                    " certificate fingerprint cannot be null";
+            LOG.error(errStr);
+            throw new IllegalAccessError(errStr);
+        }
         try {
             return createSSLContext(zkConfig, new X509ChainedTrustManager(
                     new ZKX509TrustManager(zkConfig.getProperty(
