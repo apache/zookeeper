@@ -168,12 +168,9 @@ public interface Watcher {
 
         public static WatcherType fromInt(int intValue) {
             switch (intValue) {
-            case 1:
-                return WatcherType.Children;
-            case 2:
-                return WatcherType.Data;
-            case 3:
-                return WatcherType.Any;
+            case 1: return WatcherType.Children;
+            case 2: return WatcherType.Data;
+            case 3: return WatcherType.Any;
 
             default:
                 throw new RuntimeException(
