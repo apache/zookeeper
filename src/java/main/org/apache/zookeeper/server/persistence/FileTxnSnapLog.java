@@ -111,6 +111,10 @@ public class FileTxnSnapLog {
                         + this.dataDir);
             }
         }
+        if (!this.dataDir.canWrite()) {
+            throw new IOException("Cannot write to data directory " + this.dataDir);
+        }
+
         if (!this.snapDir.exists()) {
             // by default create this directory, but otherwise complain instead
             // See ZOOKEEPER-1161 for more details
@@ -127,6 +131,10 @@ public class FileTxnSnapLog {
                         + this.snapDir);
             }
         }
+        if (!this.snapDir.canWrite()) {
+            throw new IOException("Cannot write to snap directory " + this.snapDir);
+        }
+
         txnLog = new FileTxnLog(this.dataDir);
         snapLog = new FileSnap(this.snapDir);
     }
