@@ -11,6 +11,9 @@ BUGFIXES:
   ZOOKEEPER-2558: Potential memory leak in recordio.c
   (Michael Han via phunt)
 
+  ZOOKEEPER-2579: ZooKeeper server should verify that dataDir and
+  snapDir are writeable before starting (Abraham Fine via phunt)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-2507: C unit test improvement: line break between
