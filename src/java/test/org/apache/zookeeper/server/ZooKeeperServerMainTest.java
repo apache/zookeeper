@@ -59,11 +59,18 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         final File confFile;
         final TestZKSMain main;
         final File tmpDir;
+        final File dataDir;
+        final File logDir;
 
         public MainThread(int clientPort, boolean preCreateDirs, String configs)
                 throws IOException {
+            this(clientPort, preCreateDirs, ClientBase.createTmpDir(), configs);
+        }
+
+        public MainThread(int clientPort, boolean preCreateDirs, File tmpDir, String configs)
+                throws IOException {
             super("Standalone server with clientPort:" + clientPort);
-            tmpDir = ClientBase.createTmpDir();
+            this.tmpDir = tmpDir;
             confFile = new File(tmpDir, "zoo.cfg");
 
             FileWriter fwriter = new FileWriter(confFile);
@@ -74,20 +81,21 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
                 fwriter.write(configs);
             }
 
-            File dataDir = new File(tmpDir, "data");
-            String dir = dataDir.toString();
-            String dirLog = dataDir.toString() + "_txnlog";
+            dataDir = new File(this.tmpDir, "data");
+            logDir = new File(dataDir.toString() + "_txnlog");
             if (preCreateDirs) {
                 if (!dataDir.mkdir()) {
                     throw new IOException("unable to mkdir " + dataDir);
                 }
-                dirLog = dataDir.toString();
+                if (!logDir.mkdir()) {
+                    throw new IOException("unable to mkdir " + logDir);
+                }
             }
             
-            dir = PathUtils.normalizeFileSystemPath(dir);
-            dirLog = PathUtils.normalizeFileSystemPath(dirLog);
-            fwriter.write("dataDir=" + dir + "\n");
-            fwriter.write("dataLogDir=" + dirLog + "\n");
+            String normalizedDataDir = PathUtils.normalizeFileSystemPath(dataDir.toString());
+            String normalizedLogDir = PathUtils.normalizeFileSystemPath(logDir.toString());
+            fwriter.write("dataDir=" + normalizedDataDir + "\n");
+            fwriter.write("dataLogDir=" + normalizedLogDir + "\n");
             fwriter.write("clientPort=" + clientPort + "\n");
             fwriter.flush();
             fwriter.close();
@@ -191,6 +199,74 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
                         ClientBase.CONNECTION_TIMEOUT));
         fileTxnSnapLogWithError.close();
         main.shutdown();
+        main.deleteDirs();
+    }
+
+    @Test(timeout = 30000)
+    public void testReadOnlySnapshotDir() throws Exception {
+        ClientBase.setupTestEnv();
+        final int CLIENT_PORT = PortAssignment.unique();
+
+        // Start up the ZK server to automatically create the necessary directories
+        // and capture the directory where data is stored
+        MainThread main = new MainThread(CLIENT_PORT, true, null);
+        File tmpDir = main.tmpDir;
+        main.start();
+        Assert.assertTrue("waiting for server being up", ClientBase
+                .waitForServerUp("127.0.0.1:" + CLIENT_PORT,
+                        CONNECTION_TIMEOUT / 2));
+        main.shutdown();
+
+        // Make the snapshot directory read only
+        File snapDir = new File(main.dataDir, FileTxnSnapLog.version + FileTxnSnapLog.VERSION);
+        snapDir.setWritable(false);
+
+        // Restart ZK and observe a failure
+        main = new MainThread(CLIENT_PORT, false, tmpDir, null);
+        main.start();
+
+        Assert.assertFalse("waiting for server being up", ClientBase
+                .waitForServerUp("127.0.0.1:" + CLIENT_PORT,
+                        CONNECTION_TIMEOUT / 2));
+
+        main.shutdown();
+
+        snapDir.setWritable(true);
+
+        main.deleteDirs();
+    }
+
+    @Test(timeout = 30000)
+    public void testReadOnlyTxnLogDir() throws Exception {
+        ClientBase.setupTestEnv();
+        final int CLIENT_PORT = PortAssignment.unique();
+
+        // Start up the ZK server to automatically create the necessary directories
+        // and capture the directory where data is stored
+        MainThread main = new MainThread(CLIENT_PORT, true, null);
+        File tmpDir = main.tmpDir;
+        main.start();
+        Assert.assertTrue("waiting for server being up", ClientBase
+                .waitForServerUp("127.0.0.1:" + CLIENT_PORT,
+                        CONNECTION_TIMEOUT / 2));
+        main.shutdown();
+
+        // Make the transaction log directory read only
+        File logDir = new File(main.logDir, FileTxnSnapLog.version + FileTxnSnapLog.VERSION);
+        logDir.setWritable(false);
+
+        // Restart ZK and observe a failure
+        main = new MainThread(CLIENT_PORT, false, tmpDir, null);
+        main.start();
+
+        Assert.assertFalse("waiting for server being up", ClientBase
+                .waitForServerUp("127.0.0.1:" + CLIENT_PORT,
+                        CONNECTION_TIMEOUT / 2));
+
+        main.shutdown();
+
+        logDir.setWritable(true);
+
         main.deleteDirs();
     }
 
