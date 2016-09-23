@@ -52,19 +52,21 @@ public final class StaticHostProvider implements HostProvider {
      * 
      * @param serverAddresses
      *            possibly unresolved ZooKeeper server addresses
-     * @throws UnknownHostException
      * @throws IllegalArgumentException
      *             if serverAddresses is empty or resolves to an empty list
      */
-    public StaticHostProvider(Collection<InetSocketAddress> serverAddresses)
-            throws UnknownHostException {
+    public StaticHostProvider(Collection<InetSocketAddress> serverAddresses) {
         for (InetSocketAddress address : serverAddresses) {
-            InetAddress ia = address.getAddress();
-            InetAddress resolvedAddresses[] = InetAddress.getAllByName((ia!=null) ? ia.getHostAddress():
-                address.getHostName());
-            for (InetAddress resolvedAddress : resolvedAddresses) {
-                this.serverAddresses.add(new InetSocketAddress(resolvedAddress
-                        .getHostAddress(), address.getPort()));
+            try {
+                InetAddress ia = address.getAddress();
+                InetAddress resolvedAddresses[] = InetAddress.getAllByName((ia != null) ? ia.getHostAddress() :
+                        address.getHostName());
+                for (InetAddress resolvedAddress : resolvedAddresses) {
+                    this.serverAddresses.add(new InetSocketAddress(resolvedAddress
+                            .getHostAddress(), address.getPort()));
+                }
+            } catch (UnknownHostException e) {
+                LOG.error("Unable to connect to server: {}", address, e);
             }
         }
 

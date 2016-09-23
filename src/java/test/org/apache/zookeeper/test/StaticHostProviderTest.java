@@ -35,12 +35,13 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collection;
 
 public class StaticHostProviderTest extends ZKTestCase {
     private static final Logger LOG = LoggerFactory.getLogger(StaticHostProviderTest.class);
 
     @Test
-    public void testNextGoesRound() throws UnknownHostException {
+    public void testNextGoesRound() {
         HostProvider hostProvider = getHostProvider((byte) 2);
         InetSocketAddress first = hostProvider.next(0);
         assertTrue(first instanceof InetSocketAddress);
@@ -49,7 +50,7 @@ public class StaticHostProviderTest extends ZKTestCase {
     }
 
     @Test
-    public void testNextGoesRoundAndSleeps() throws UnknownHostException {
+    public void testNextGoesRoundAndSleeps() {
         byte size = 2;
         HostProvider hostProvider = getHostProvider(size);
         while (size > 0) {
@@ -63,7 +64,7 @@ public class StaticHostProviderTest extends ZKTestCase {
     }
 
     @Test
-    public void testNextDoesNotSleepForZero() throws UnknownHostException {
+    public void testNextDoesNotSleepForZero() {
         byte size = 2;
         HostProvider hostProvider = getHostProvider(size);
         while (size > 0) {
@@ -92,8 +93,36 @@ public class StaticHostProviderTest extends ZKTestCase {
         assertNotSame(first, second);
     }
 
-    private StaticHostProvider getHostProvider(byte size)
-            throws UnknownHostException {
+    @Test(expected = IllegalArgumentException.class)
+    public void testTwoInvalidHostAddresses() {
+        ArrayList<InetSocketAddress> list = new ArrayList<InetSocketAddress>();
+        list.add(new InetSocketAddress("a", 2181));
+        list.add(new InetSocketAddress("b", 2181));
+        new StaticHostProvider(list);
+    }
+
+    @Test
+    public void testOneInvalidHostAddresses() {
+        Collection<InetSocketAddress> addr = getUnresolvedServerAddresses((byte) 1);
+        addr.add(new InetSocketAddress("a", 2181));
+
+        StaticHostProvider sp = new StaticHostProvider(addr);
+        InetSocketAddress n1 = sp.next(0);
+        InetSocketAddress n2 = sp.next(0);
+
+        assertEquals(n2, n1);
+    }
+
+    private Collection<InetSocketAddress> getUnresolvedServerAddresses(byte size) {
+        ArrayList<InetSocketAddress> list = new ArrayList<InetSocketAddress>(size);
+        while (size > 0) {
+            list.add(InetSocketAddress.createUnresolved("10.10.10." + size, 1234 + size));
+            --size;
+        }
+        return list;
+    }
+
+    private StaticHostProvider getHostProvider(byte size) {
         ArrayList<InetSocketAddress> list = new ArrayList<InetSocketAddress>(
                 size);
         while (size > 0) {
