@@ -219,6 +219,9 @@ document.write("Last Published: " + document.lastModified);
 <li>
 <a href="#Container+Nodes">Container Nodes</a>
 </li>
+<li>
+<a href="#TTL+Nodes">TTL Nodes</a>
+</li>
 </ul>
 </li>
 <li>
@@ -575,15 +578,24 @@ document.write("Last Published: " + document.lastModified);
 <p>
 <strong>Added in 3.6.0</strong>
 </p>
-<p>ZooKeeper has the notion of container nodes. Container nodes are
-          special purpose nodes useful for recipes such as leader, lock, etc.
+<p>ZooKeeper has the notion of container znodes. Container znodes are
+          special purpose znodes useful for recipes such as leader, lock, etc.
           When the last child of a container is deleted, the container becomes
           a candidate to be deleted by the server at some point in the future.</p>
 <p>Given this property, you should be prepared to get
           KeeperException.NoNodeException when creating children inside of
-          container nodes. i.e. when creating child nodes inside of container nodes
+          container znodes. i.e. when creating child znodes inside of container znodes
           always check for KeeperException.NoNodeException and recreate the container
-          node when it occurs.</p>
+          znode when it occurs.</p>
+<a name="TTL+Nodes"></a>
+<h4>TTL Nodes</h4>
+<p>
+<strong>Added in 3.6.0</strong>
+</p>
+<p>When creating PERSISTENT or PERSISTENT_SEQUENTIAL znodes,
+          you can optionally set a TTL in milliseconds for the znode. If the znode
+          is not modified within the TTL and has no children it will become a candidate
+          to be deleted by the server at some point in the future.</p>
 <a name="sc_timeInZk"></a>
 <h3 class="h4">Time in ZooKeeper</h3>
 <p>ZooKeeper tracks time multiple ways:</p>

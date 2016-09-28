@@ -159,8 +159,11 @@ public class DataNode implements Record {
     }
 
     private static long getClientEphemeralOwner(StatPersisted stat) {
-        return (stat.getEphemeralOwner() == DataTree.CONTAINER_EPHEMERAL_OWNER)
-                ? 0 : stat.getEphemeralOwner();
+        EphemeralType ephemeralType = EphemeralType.get(stat.getEphemeralOwner());
+        if (ephemeralType != EphemeralType.NORMAL) {
+            return 0;
+        }
+        return stat.getEphemeralOwner();
     }
 
     synchronized public void deserialize(InputArchive archive, String tag)

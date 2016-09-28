@@ -41,6 +41,7 @@ import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.txn.CheckVersionTxn;
 import org.apache.zookeeper.txn.CreateContainerTxn;
+import org.apache.zookeeper.txn.CreateTTLTxn;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.DeleteTxn;
 import org.apache.zookeeper.txn.ErrorTxn;
@@ -77,8 +78,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class DataTree {
     private static final Logger LOG = LoggerFactory.getLogger(DataTree.class);
-
-    public static final long CONTAINER_EPHEMERAL_OWNER = Long.MIN_VALUE;
 
     /**
      * This hashtable provides a fast lookup to the datanodes. The tree is the
@@ -137,6 +136,12 @@ public class DataTree {
     private final Set<String> containers =
             Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 
+    /**
+     * This set contains the paths of all ttl nodes
+     */
+    private final Set<String> ttls =
+            Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+
     private final ReferenceCountedACLCache aclCache = new ReferenceCountedACLCache();
 
     @SuppressWarnings("unchecked")
@@ -154,6 +159,10 @@ public class DataTree {
 
     public Set<String> getContainers() {
         return new HashSet<String>(containers);
+    }
+
+    public Set<String> getTtls() {
+        return new HashSet<String>(ttls);
     }
 
     public Collection<Long> getSessions() {
@@ -455,8 +464,11 @@ public class DataTree {
             DataNode child = new DataNode(data, longval, stat);
             parent.addChild(childName);
             nodes.put(path, child);
-            if (ephemeralOwner == CONTAINER_EPHEMERAL_OWNER) {
+            EphemeralType ephemeralType = EphemeralType.get(ephemeralOwner);
+            if (ephemeralType == EphemeralType.CONTAINER) {
                 containers.add(path);
+            } else if (ephemeralType == EphemeralType.TTL) {
+                ttls.add(path);
             } else if (ephemeralOwner != 0) {
                 HashSet<String> list = ephemerals.get(ephemeralOwner);
                 if (list == null) {
@@ -526,8 +538,11 @@ public class DataTree {
             parent.removeChild(childName);
             parent.stat.setPzxid(zxid);
             long eowner = node.stat.getEphemeralOwner();
-            if (eowner == CONTAINER_EPHEMERAL_OWNER) {
+            EphemeralType ephemeralType = EphemeralType.get(eowner);
+            if (ephemeralType == EphemeralType.CONTAINER) {
                 containers.remove(path);
+            } else if (ephemeralType == EphemeralType.TTL) {
+                ttls.remove(path);
             } else if (eowner != 0) {
                 HashSet<String> nodes = ephemerals.get(eowner);
                 if (nodes != null) {
@@ -790,6 +805,19 @@ public class DataTree {
                             header.getZxid(), header.getTime(), stat);
                     rc.stat = stat;
                     break;
+                case OpCode.createTTL:
+                    CreateTTLTxn createTtlTxn = (CreateTTLTxn) txn;
+                    rc.path = createTtlTxn.getPath();
+                    stat = new Stat();
+                    createNode(
+                            createTtlTxn.getPath(),
+                            createTtlTxn.getData(),
+                            createTtlTxn.getAcl(),
+                            EphemeralType.ttlToEphemeralOwner(createTtlTxn.getTtl()),
+                            createTtlTxn.getParentCVersion(),
+                            header.getZxid(), header.getTime(), stat);
+                    rc.stat = stat;
+                    break;
                 case OpCode.createContainer:
                     CreateContainerTxn createContainerTxn = (CreateContainerTxn) txn;
                     rc.path = createContainerTxn.getPath();
@@ -798,7 +826,7 @@ public class DataTree {
                             createContainerTxn.getPath(),
                             createContainerTxn.getData(),
                             createContainerTxn.getAcl(),
-                            CONTAINER_EPHEMERAL_OWNER,
+                            EphemeralType.CONTAINER_EPHEMERAL_OWNER,
                             createContainerTxn.getParentCVersion(),
                             header.getZxid(), header.getTime(), stat);
                     rc.stat = stat;
@@ -853,6 +881,9 @@ public class DataTree {
                         switch (subtxn.getType()) {
                             case OpCode.create:
                                 record = new CreateTxn();
+                                break;
+                            case OpCode.createTTL:
+                                record = new CreateTTLTxn();
                                 break;
                             case OpCode.createContainer:
                                 record = new CreateContainerTxn();
@@ -1184,8 +1215,11 @@ public class DataTree {
                 }
                 parent.addChild(path.substring(lastSlash + 1));
                 long eowner = node.stat.getEphemeralOwner();
-                if (eowner == CONTAINER_EPHEMERAL_OWNER) {
+                EphemeralType ephemeralType = EphemeralType.get(eowner);
+                if (ephemeralType == EphemeralType.CONTAINER) {
                     containers.add(path);
+                } else if (ephemeralType == EphemeralType.TTL) {
+                    ttls.add(path);
                 } else if (eowner != 0) {
                     HashSet<String> list = ephemerals.get(eowner);
                     if (list == null) {
