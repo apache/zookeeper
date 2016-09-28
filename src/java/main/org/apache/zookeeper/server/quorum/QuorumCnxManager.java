@@ -561,6 +561,7 @@ public class QuorumCnxManager {
      */
     private void setSockOpts(Socket sock) throws SocketException {
         sock.setTcpNoDelay(true);
+        sock.setKeepAlive(true);
         sock.setSoTimeout(self.tickTime * self.syncLimit);
     }
 
