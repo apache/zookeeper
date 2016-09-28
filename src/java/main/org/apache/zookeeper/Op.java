@@ -22,8 +22,10 @@ import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.proto.CheckVersionRequest;
 import org.apache.zookeeper.proto.CreateRequest;
+import org.apache.zookeeper.proto.CreateTTLRequest;
 import org.apache.zookeeper.proto.DeleteRequest;
 import org.apache.zookeeper.proto.SetDataRequest;
+import org.apache.zookeeper.server.EphemeralType;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -71,6 +73,32 @@ public abstract class Op {
     }
 
     /**
+     * Constructs a create operation.  Arguments are as for the ZooKeeper method of the same name
+     * but adding an optional ttl
+     * @see ZooKeeper#create(String, byte[], java.util.List, CreateMode)
+     * @see CreateMode#fromFlag(int)
+     *
+     * @param path
+     *                the path for the node
+     * @param data
+     *                the initial data for the node
+     * @param acl
+     *                the acl for the node
+     * @param flags
+     *                specifying whether the node to be created is ephemeral
+     *                and/or sequential but using the integer encoding.
+     * @param ttl
+     *                optional ttl or 0 (flags must imply a TTL creation mode)
+     */
+    public static Op create(String path, byte[] data, List<ACL> acl, int flags, long ttl) {
+        CreateMode createMode = CreateMode.fromFlag(flags, CreateMode.PERSISTENT);
+        if (createMode.isTTL()) {
+            return new CreateTTL(path, data, acl, createMode, ttl);
+        }
+        return new Create(path, data, acl, flags);
+    }
+
+    /**
      * Constructs a create operation.  Arguments are as for the ZooKeeper method of the same name.
      * @see ZooKeeper#create(String, byte[], java.util.List, CreateMode)
      *
@@ -85,6 +113,30 @@ public abstract class Op {
      *                and/or sequential
      */
     public static Op create(String path, byte[] data, List<ACL> acl, CreateMode createMode) {
+        return new Create(path, data, acl, createMode);
+    }
+
+    /**
+     * Constructs a create operation.  Arguments are as for the ZooKeeper method of the same name
+     * but adding an optional ttl
+     * @see ZooKeeper#create(String, byte[], java.util.List, CreateMode)
+     *
+     * @param path
+     *                the path for the node
+     * @param data
+     *                the initial data for the node
+     * @param acl
+     *                the acl for the node
+     * @param createMode
+     *                specifying whether the node to be created is ephemeral
+     *                and/or sequential
+     * @param ttl
+     *                optional ttl or 0 (createMode must imply a TTL)
+     */
+    public static Op create(String path, byte[] data, List<ACL> acl, CreateMode createMode, long ttl) {
+        if (createMode.isTTL()) {
+            return new CreateTTL(path, data, acl, createMode, ttl);
+        }
         return new Create(path, data, acl, createMode);
     }
 
@@ -178,9 +230,9 @@ public abstract class Op {
     // these internal classes are public, but should not generally be referenced.
     //
     public static class Create extends Op {
-        private byte[] data;
-        private List<ACL> acl;
-        private int flags;
+        protected byte[] data;
+        protected List<ACL> acl;
+        protected int flags;
 
         private Create(String path, byte[] data, List<ACL> acl, int flags) {
             super(getOpcode(CreateMode.fromFlag(flags, CreateMode.PERSISTENT)), path);
@@ -190,6 +242,9 @@ public abstract class Op {
         }
 
         private static int getOpcode(CreateMode createMode) {
+            if (createMode.isTTL()) {
+                return ZooDefs.OpCode.createTTL;
+            }
             return createMode.isContainer() ? ZooDefs.OpCode.createContainer : ZooDefs.OpCode.create;
         }
 
@@ -243,6 +298,48 @@ public abstract class Op {
         void validate() throws KeeperException {
             CreateMode createMode = CreateMode.fromFlag(flags);
             PathUtils.validatePath(getPath(), createMode.isSequential());
+            EphemeralType.validateTTL(createMode, -1);
+        }
+    }
+
+    public static class CreateTTL extends Create {
+        private final long ttl;
+
+        private CreateTTL(String path, byte[] data, List<ACL> acl, int flags, long ttl) {
+            super(path, data, acl, flags);
+            this.ttl = ttl;
+        }
+
+        private CreateTTL(String path, byte[] data, List<ACL> acl, CreateMode createMode, long ttl) {
+            super(path, data, acl, createMode);
+            this.ttl = ttl;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return super.equals(o) && (o instanceof CreateTTL) && (ttl == ((CreateTTL)o).ttl);
+        }
+
+        @Override
+        public int hashCode() {
+            return super.hashCode() + (int)(ttl ^ (ttl >>> 32));
+        }
+
+        @Override
+        public Record toRequestRecord() {
+            return new CreateTTLRequest(getPath(), data, acl, flags, ttl);
+        }
+
+        @Override
+        Op withChroot(String path) {
+            return new CreateTTL(path, data, acl, flags, ttl);
+        }
+
+        @Override
+        void validate() throws KeeperException {
+            CreateMode createMode = CreateMode.fromFlag(flags);
+            PathUtils.validatePath(getPath(), createMode.isSequential());
+            EphemeralType.validateTTL(createMode, ttl);
         }
     }
 

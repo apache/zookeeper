@@ -133,6 +133,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
         switch (request.type) {
             case OpCode.create:
             case OpCode.create2:
+            case OpCode.createTTL:
             case OpCode.createContainer:
             case OpCode.delete:
             case OpCode.deleteContainer:

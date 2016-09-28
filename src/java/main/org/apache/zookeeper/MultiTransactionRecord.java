@@ -68,6 +68,7 @@ public class MultiTransactionRecord implements Record, Iterable<Op> {
             switch (op.getType()) {
                 case ZooDefs.OpCode.create:
                 case ZooDefs.OpCode.create2:
+                case ZooDefs.OpCode.createTTL:
                 case ZooDefs.OpCode.createContainer:
                 case ZooDefs.OpCode.delete:
                 case ZooDefs.OpCode.setData:
@@ -96,6 +97,11 @@ public class MultiTransactionRecord implements Record, Iterable<Op> {
                     CreateRequest cr = new CreateRequest();
                     cr.deserialize(archive, tag);
                     add(Op.create(cr.getPath(), cr.getData(), cr.getAcl(), cr.getFlags()));
+                    break;
+                case ZooDefs.OpCode.createTTL:
+                    CreateTTLRequest crTtl = new CreateTTLRequest();
+                    crTtl.deserialize(archive, tag);
+                    add(Op.create(crTtl.getPath(), crTtl.getData(), crTtl.getAcl(), crTtl.getFlags(), crTtl.getTtl()));
                     break;
                 case ZooDefs.OpCode.delete:
                     DeleteRequest dr = new DeleteRequest();
