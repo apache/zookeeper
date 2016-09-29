@@ -297,6 +297,9 @@ document.write("Last Published: " + document.lastModified);
 <a href="#Unsafe+Options">Unsafe Options</a>
 </li>
 <li>
+<a href="#Disabling+data+directory+autocreation">Disabling data directory autocreation</a>
+</li>
+<li>
 <a href="#Communication+using+the+Netty+framework">Communication using the Netty framework</a>
 </li>
 </ul>
@@ -1353,6 +1356,36 @@ server.3=zoo3:2888:3888</pre>
 </div>
 </div>
 </dd>
+
+          
+<dt>
+<term>4lw.commands.whitelist</term>
+</dt>
+<dd>
+<p>(Java system property: <strong>zookeeper.4lw.commands.whitelist</strong>)</p>
+<p>
+<strong>New in 3.4.10:</strong>
+                This property contains a list of comma separated
+                <a href="#sc_4lw">Four Letter Words</a> commands. It is introduced
+                to provide fine grained control over the set of commands ZooKeeper can execute,
+                so users can turn off certain commands if necessary.
+                By default it contains all supported four letter word commands except "wchp" and "wchc",
+                if the property is not specified. If the property is specified, then only commands listed
+                in the whitelist are enabled.
+              </p>
+<p>Here's an example of the configuration that enables stat, ruok, conf, and isro
+                command while disabling the rest of Four Letter Words command:</p>
+<pre class="code">
+                4lw.commands.whitelist=stat, ruok, conf, isro
+              </pre>
+<p>Users can also use asterisk option so they don't have to include every command one by one in the list.
+                As an example, this will enable all four letter word commands:
+              </p>
+<pre class="code">
+                4lw.commands.whitelist=*
+              </pre>
+</dd>
+
         
 </dl>
 <p></p>
@@ -1460,6 +1493,54 @@ server.3=zoo3:2888:3888</pre>
 </dd>
         
 </dl>
+<a name="Disabling+data+directory+autocreation"></a>
+<h4>Disabling data directory autocreation</h4>
+<p>
+<strong>New in 3.5:</strong> The default
+        behavior of a ZooKeeper server is to automatically create the
+        data directory (specified in the configuration file) when
+        started if that directory does not already exist. This can be
+        inconvenient and even dangerous in some cases. Take the case
+        where a configuration change is made to a running server,
+        wherein the <strong>dataDir</strong> parameter
+        is accidentally changed. When the ZooKeeper server is
+        restarted it will create this non-existent directory and begin
+        serving - with an empty znode namespace. This scenario can
+        result in an effective "split brain" situation (i.e. data in
+        both the new invalid directory and the original valid data
+        store). As such is would be good to have an option to turn off
+        this autocreate behavior. In general for production
+        environments this should be done, unfortunately however the
+        default legacy behavior cannot be changed at this point and
+        therefore this must be done on a case by case basis. This is
+        left to users and to packagers of ZooKeeper distributions.
+        </p>
+<p>When running <strong>zkServer.sh</strong> autocreate can be disabled
+        by setting the environment variable <strong>ZOO_DATADIR_AUTOCREATE_DISABLE</strong> to 1.
+        When running ZooKeeper servers directly from class files this
+        can be accomplished by setting <strong>zookeeper.datadir.autocreate=false</strong> on
+        the java command line, i.e. <strong>-Dzookeeper.datadir.autocreate=false</strong>
+        
+</p>
+<p>When this feature is disabled, and the ZooKeeper server
+        determines that the required directories do not exist it will
+        generate an error and refuse to start.
+        </p>
+<p>A new script <strong>zkServer-initialize.sh</strong> is provided to
+        support this new feature. If autocreate is disabled it is
+        necessary for the user to first install ZooKeeper, then create
+        the data directory (and potentially txnlog directory), and
+        then start the server. Otherwise as mentioned in the previous
+        paragraph the server will not start. Running <strong>zkServer-initialize.sh</strong> will create the
+        required directories, and optionally setup the myid file
+        (optional command line parameter). This script can be used
+        even if the autocreate feature itself is not used, and will
+        likely be of use to users as this (setup, including creation
+        of the myid file) has been an issue for users in the past.
+        Note that this script ensures the data directories exist only,
+        it does not create a config file, but rather requires a config
+        file to be available in order to execute.
+        </p>
 <a name="Communication+using+the+Netty+framework"></a>
 <h4>Communication using the Netty framework</h4>
 <p>
@@ -1806,6 +1887,17 @@ imok
             recommend practice for estimating the heap size your system needs
             is to run load tests, and then make sure you are well below the
             usage limit that would cause the system to swap.</p>
+</dd>
+
+        
+<dt>
+<term>Publicly accessible deployment</term>
+</dt>
+<dd>
+<p>
+              A ZooKeeper ensemble is expected to operate in a trusted computing environment.
+              It is thus recommended to deploy ZooKeeper behind a firewall.
+            </p>
 </dd>
       
 </dl>

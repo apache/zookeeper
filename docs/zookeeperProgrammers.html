@@ -279,6 +279,11 @@ document.write("Last Published: " + document.lastModified);
 <ul class="minitoc">
 <li>
 <a href="#Java+Binding">Java Binding</a>
+<ul class="minitoc">
+<li>
+<a href="#sc_java_client_configuration">Client Configuration Parameters</a>
+</li>
+</ul>
 </li>
 <li>
 <a href="#C+Binding">C Binding</a>
@@ -1778,6 +1783,79 @@ authProvider.2=com.f.MyAuth2
       (SESSION_EXPIRED and AUTH_FAILED), the ZooKeeper object becomes invalid.
       On a close, the two threads shut down and any further access on zookeeper
       handle is undefined behavior and should be avoided. </p>
+<a name="sc_java_client_configuration"></a>
+<h4>Client Configuration Parameters</h4>
+<p>
+          The following list contains configuration properties for the Java client. You can set any
+          of these properties using Java system properties. For server properties, please check the
+          following reference
+          <a href="zookeeperAdmin.html#sc_configuration">Server configuration section.</a>
+        
+</p>
+<dl>
+          
+<dt>
+<term>zookeeper.sasl.client</term>
+</dt>
+<dd>
+<p>Set the value to <strong>false</strong> to disable
+                SASL authentication. Default is <strong>true</strong>.</p>
+</dd>
+          
+<dt>
+<term>zookeeper.sasl.clientconfig</term>
+</dt>
+<dd>
+<p>Specifies the context key in the JAAS login file. Default is "Client".</p>
+</dd>
+          
+<dt>
+<term>zookeeper.sasl.client.username</term>
+</dt>
+<dd>
+<p>Traditionally, a principal is divided into three parts: the primary, the instance, and the realm.
+                The format of a typical Kerberos V5 principal is primary/instance@REALM.
+                zookeeper.sasl.client.username specifies the primary part of the server principal. Default
+                is "zookeeper". Instance part is derived from the server IP. Finally server's principal is
+                username/IP@realm, where username is the value of zookeeper.sasl.client.username, IP is
+                the server IP, and realm is the value of zookeeper.server.realm.</p>
+</dd>
+          
+<dt>
+<term>zookeeper.server.realm</term>
+</dt>
+<dd>
+<p>Realm part of the server principal. By default it is the client principal realm.</p>
+</dd>
+          
+<dt>
+<term>zookeeper.disableAutoWatchReset</term>
+</dt>
+<dd>
+<p>This switch controls whether automatic watch resetting is enabled. Clients automatically
+                reset watches during session reconnect by default, this option allows the client to turn off
+                this behavior by setting zookeeper.disableAutoWatchReset to <strong>true</strong>.
+              </p>
+</dd>
+          
+<dt>
+<term>jute.maxbuffer</term>
+</dt>
+<dd>
+<p>It specifies the maximum size of the incoming data from the server. The default value is 4194304
+                Bytes , or just 4 MB. This is really a sanity check. The ZooKeeper server is designed to store and send
+                data on the order of kilobytes. If incoming data length is more than this value, an IOException
+                is raised.</p>
+</dd>
+          
+<dt>
+<term>zookeeper.kinit</term>
+</dt>
+<dd>
+<p>Specifies path to kinit binary. Default is "/usr/bin/kinit".</p>
+</dd>
+        
+</dl>
 <a name="C+Binding"></a>
 <h3 class="h4">C Binding</h3>
 <p>The C binding has a single-threaded and multi-threaded library.
