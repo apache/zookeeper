@@ -245,6 +245,9 @@ document.write("Last Published: " + document.lastModified);
 <a href="#ch_zkWatches">ZooKeeper Watches</a>
 <ul class="minitoc">
 <li>
+<a href="#sc_WatchSemantics">Semantics of Watches</a>
+</li>
+<li>
 <a href="#sc_WatchGuarantees">What ZooKeeper Guarantees about Watches</a>
 </li>
 <li>
@@ -287,7 +290,7 @@ document.write("Last Published: " + document.lastModified);
 <a href="#Installation">Installation</a>
 </li>
 <li>
-<a href="#Using+the+C+Client">Using the C Client</a>
+<a href="#Building+Your+Own+C+Client">Building Your Own C Client</a>
 </li>
 </ul>
 </li>
@@ -467,8 +470,7 @@ document.write("Last Published: " + document.lastModified);
 <li>
         
 <p>The following characters are not allowed: \ud800 -uF8FFF,
-        \uFFF0-uFFFF, \uXFFFE - \uXFFFF (where X is a digit 1 - E), \uF0000 -
-        \uFFFFF.</p>
+        \uFFF0 - uFFFF.</p>
       
 </li>
 
@@ -520,7 +522,7 @@ document.write("Last Published: " + document.lastModified);
       
 </div>
 </div>
-<p>Znodes are the main enitity that a programmer access. They have
+<p> A znode is the main abstraction a programmer needs to be aware of. Znodes have
       several characteristics that are worth mentioning here.</p>
 <a name="sc_zkDataMode_watches"></a>
 <h4>Watches</h4>
@@ -665,6 +667,18 @@ document.write("Last Published: " + document.lastModified);
 
           
 <p>The zxid of the change that last modified this znode.</p>
+        
+</li>
+
+        
+<li>
+          
+<p>
+<strong>pzxid</strong>
+</p>
+
+          
+<p>The zxid of the change that last modified children of this znode.</p>
         
 </li>
 
@@ -1038,6 +1052,58 @@ document.write("Last Published: " + document.lastModified);
     general this all occurs transparently. There is one case where a watch
     may be missed: a watch for the existence of a znode not yet created will
     be missed if the znode is created and deleted while disconnected.</p>
+<a name="sc_WatchSemantics"></a>
+<h3 class="h4">Semantics of Watches</h3>
+<p> We can set watches with the three calls that read the state of 
+	  ZooKeeper: exists, getData, and getChildren. The following list details
+	  the events that a watch can trigger and the calls that enable them:
+	  </p>
+<ul>
+        
+<li>
+          
+<p>
+<strong>Created event:</strong>
+</p>
+          
+<p>Enabled with a call to exists.</p>
+        
+</li>
+        
+        
+<li>
+          
+<p>
+<strong>Deleted event:</strong>
+</p>
+          
+<p>Enabled with a call to exists, getData, and getChildren.</p>
+        
+</li>
+        
+        
+<li>
+          
+<p>
+<strong>Changed event:</strong>
+</p>
+          
+<p>Enabled with a call to exists and getData.</p>
+        
+</li>
+        
+        
+<li>
+          
+<p>
+<strong>Child event:</strong>
+</p>
+          
+<p>Enabled with a call to getChildren.</p>
+        
+</li>
+      
+</ul>
 <a name="sc_WatchGuarantees"></a>
 <h3 class="h4">What ZooKeeper Guarantees about Watches</h3>
 <p>With regard to watches, ZooKeeper maintains these
@@ -1424,7 +1490,7 @@ document.write("Last Published: " + document.lastModified);
 <p>This is a very simple example which is intended to show
         how to interact with ZooKeeper ACLs
         specifically. See <span class="codefrag filename">.../trunk/src/c/src/cli.c</span>
-        for an example of a proper C client implementation</p>
+        for an example of a C client implementation</p>
       
 </div>
 </div>
@@ -1926,31 +1992,8 @@ authProvider.2=com.f.MyAuth2
 </li>
         
 </ol>
-<a name="Using+the+C+Client"></a>
-<h4>Using the C Client</h4>
-<p>You can test your client by running a ZooKeeper server (see
-        instructions on the project wiki page on how to run it) and connecting
-        to it using one of the cli applications that were built as part of the
-        installation procedure. cli_mt (multithreaded, built against
-        zookeeper_mt library) is shown in this example, but you could also use
-        cli_st (singlethreaded, built against zookeeper_st library):</p>
-<p>
-<span class="codefrag command">$ cli_mt zookeeper_host:9876</span>
-</p>
-<p>This is a client application that gives you a shell for
-        executing simple ZooKeeper commands. Once successfully started
-        and connected to the server it displays a shell prompt. You
-        can now enter ZooKeeper commands. For example, to create a
-        node:</p>
-<p>
-<span class="codefrag command">&gt; create /my_new_node</span>
-</p>
-<p>To verify that the node's been created:</p>
-<p>
-<span class="codefrag command">&gt; ls /</span>
-</p>
-<p>You should see a list of node who are children of the root node
-        "/".</p>
+<a name="Building+Your+Own+C+Client"></a>
+<h4>Building Your Own C Client</h4>
 <p>In order to be able to use the ZooKeeper API in your application
         you have to remember to</p>
 <ol>
@@ -1976,11 +2019,15 @@ authProvider.2=com.f.MyAuth2
 </li>
         
 </ol>
-<p>Refer to <a href="#ch_programStructureWithExample">Program Structure, with Simple Example</a>
-          for examples of usage in Java and C.
-          <em>[tbd]</em>
+<div class="note">
+<div class="label">Note</div>
+<div class="content">
+<p>
+          See <span class="codefrag filename">.../trunk/src/c/src/cli.c</span>
+            for an example of a C client implementation</p>
         
-</p>
+</div>
+</div>
 </div>
 
    

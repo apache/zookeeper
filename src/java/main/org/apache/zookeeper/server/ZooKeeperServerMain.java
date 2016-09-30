@@ -20,6 +20,7 @@ package org.apache.zookeeper.server;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
 
 import javax.management.JMException;
 
@@ -99,7 +100,12 @@ public class ZooKeeperServerMain {
             // so rather than spawning another thread, we will just call
             // run() in this thread.
             // create a file logger url from the command line args
-            ZooKeeperServer zkServer = new ZooKeeperServer();
+            final ZooKeeperServer zkServer = new ZooKeeperServer();
+            // Registers shutdown handler which will be used to know the
+            // server error or shutdown state changes.
+            final CountDownLatch shutdownLatch = new CountDownLatch(1);
+            zkServer.registerServerShutdownHandler(
+                    new ZooKeeperServerShutdownHandler(shutdownLatch));
 
             txnLog = new FileTxnSnapLog(new File(config.dataLogDir), new File(
                     config.dataDir));
@@ -111,8 +117,13 @@ public class ZooKeeperServerMain {
             cnxnFactory.configure(config.getClientPortAddress(),
                     config.getMaxClientCnxns());
             cnxnFactory.startup(zkServer);
+            // Watch status of ZooKeeper server. It will do a graceful shutdown
+            // if the server is not running or hits an internal error.
+            shutdownLatch.await();
+            shutdown();
+
             cnxnFactory.join();
-            if (zkServer.isRunning()) {
+            if (zkServer.canShutdown()) {
                 zkServer.shutdown();
             }
         } catch (InterruptedException e) {
@@ -129,6 +140,13 @@ public class ZooKeeperServerMain {
      * Shutdown the serving instance
      */
     protected void shutdown() {
-        cnxnFactory.shutdown();
+        if (cnxnFactory != null) {
+            cnxnFactory.shutdown();
+        }
+    }
+
+    // VisibleForTesting
+    ServerCnxnFactory getCnxnFactory() {
+        return cnxnFactory;
     }
 }

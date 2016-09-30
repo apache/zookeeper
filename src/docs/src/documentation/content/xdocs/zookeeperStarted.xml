@@ -164,39 +164,10 @@ clientPort=2181
     <section id="sc_ConnectingToZooKeeper">
       <title>Connecting to ZooKeeper</title>
 
-      <para>Once ZooKeeper is running, you have several options for connection
-      to it:</para>
+      <programlisting>$ bin/zkCli.sh -server 127.0.0.1:2181</programlisting>
 
-      <itemizedlist>
-        <listitem>
-          <para><emphasis role="bold">Java</emphasis>: Use</para>
+      <para>This lets you perform simple, file-like operations.</para>
 
-          <programlisting>bin/zkCli.sh -server 127.0.0.1:2181</programlisting>
-
-          <para>This lets you perform simple, file-like operations.</para>
-        </listitem>
-
-        <listitem>
-          <para><emphasis role="bold">C</emphasis>: compile cli_mt
-          (multi-threaded) or cli_st (single-threaded) by running
-          <command>make cli_mt</command> or <command>make
-          cli_st</command> in
-          the <emphasis role="bold">src/c</emphasis> subdirectory in
-          the ZooKeeper sources. See the README contained within
-          <emphasis role="bold">src/c</emphasis> for full details.</para>
-
-          <para>You can run the program
-          from <emphasis role="bold">src/c</emphasis> using:</para>
-
-          <programlisting>LD_LIBRARY_PATH=. cli_mt 127.0.0.1:2181</programlisting>
-
-          <para>or</para>
-
-          <programlisting>LD_LIBRARY_PATH=. cli_st 127.0.0.1:2181</programlisting>
-          <para>This will give you a simple shell to execute file
-          system like operations on ZooKeeper.</para>
-        </listitem>
-      </itemizedlist>
       <para>Once you have connected, you should see something like:
         </para>
       <programlisting>
@@ -341,8 +312,25 @@ numChildren = 0
       ZooKeeper in replicated mode. A replicated group of servers in the same
       application is called a <emphasis>quorum</emphasis>, and in replicated
       mode, all servers in the quorum have copies of the same configuration
-      file. The file is similar to the one used in standalone mode, but with a
-      few differences. Here is an example:</para>
+      file.</para>
+   <note>
+      <para>
+         For replicated mode, a minimum of three servers are required,
+         and it is strongly recommended that you have an odd number of
+         servers. If you only have two servers, then you are in a
+         situation where if one of them fails, there are not enough
+         machines to form a majority quorum. Two servers is inherently
+         <emphasis role="bold">less</emphasis>
+         stable than a single server, because there are two single
+         points of failure.
+      </para>
+   </note>
+   <para>
+      The required
+      <emphasis role="bold">conf/zoo.cfg</emphasis>
+      file for replicated mode is similar to the one used in standalone
+      mode, but with a few differences. Here is an example:
+   </para>
 
 <programlisting>
 tickTime=2000
@@ -395,6 +383,13 @@ server.3=zoo3:2888:3888
         (in the above replicated example, running on a
         single <emphasis>localhost</emphasis>, you would still have
         three config files).</para>
+        <para>Please be aware that setting up multiple servers on a single
+            machine will not create any redundancy. If something were to
+            happen which caused the machine to die, all of the zookeeper
+            servers would be offline. Full redundancy requires that each
+            server have its own machine. It must be a completely separate
+            physical server. Multiple virtual machines on the same physical
+            host are still vulnerable to the complete failure of that host.</para>
       </note>
     </section>
 

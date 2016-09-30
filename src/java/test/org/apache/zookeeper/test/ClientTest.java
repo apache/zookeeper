@@ -93,14 +93,22 @@ public class ClientTest extends ClientBase {
     public void testClientwithoutWatcherObj() throws IOException,
             InterruptedException, KeeperException
     {
-        performClientTest(false);
+        performClientTest(false, hostPort);
     }
 
     @Test
     public void testClientWithWatcherObj() throws IOException,
             InterruptedException, KeeperException
     {
-        performClientTest(true);
+        performClientTest(true, hostPort);
+    }
+
+    @Test
+    public void testClientWithIPv6Address() throws IOException,
+            InterruptedException, KeeperException
+    {
+        assumeIPv6Available();
+        performClientTest(true, ipv6HostPort);
     }
 
     /** Exercise the testable functions, verify tostring, etc... */
@@ -310,7 +318,7 @@ public class ClientTest extends ClientBase {
         }
     }
 
-    private void performClientTest(boolean withWatcherObj)
+    private void performClientTest(boolean withWatcherObj, String hostPort)
         throws IOException, InterruptedException, KeeperException
     {
         ZooKeeper zk = null;

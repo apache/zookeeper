@@ -1713,7 +1713,7 @@ zk_get(zkh, path, ...)
                               old_watch, new_watch);
         }
 
-        if (ret == ZOK) {
+        if (ret == ZOK && buf_len != -1) {
             ST(0) = sv_newmortal();
 #ifdef SV_HAS_TRAILING_NUL
             buf[buf_len] = '\0';

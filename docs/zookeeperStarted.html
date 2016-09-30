@@ -347,54 +347,8 @@ clientPort=2181
       more details.</p>
 <a name="sc_ConnectingToZooKeeper"></a>
 <h3 class="h4">Connecting to ZooKeeper</h3>
-<p>Once ZooKeeper is running, you have several options for connection
-      to it:</p>
-<ul>
-        
-<li>
-          
-<p>
-<strong>Java</strong>: Use</p>
-
-          
-<pre class="code">bin/zkCli.sh -server 127.0.0.1:2181</pre>
-
-          
+<pre class="code">$ bin/zkCli.sh -server 127.0.0.1:2181</pre>
 <p>This lets you perform simple, file-like operations.</p>
-        
-</li>
-
-        
-<li>
-          
-<p>
-<strong>C</strong>: compile cli_mt
-          (multi-threaded) or cli_st (single-threaded) by running
-          <span class="codefrag command">make cli_mt</span> or <span class="codefrag command">make
-          cli_st</span> in
-          the <strong>src/c</strong> subdirectory in
-          the ZooKeeper sources. See the README contained within
-          <strong>src/c</strong> for full details.</p>
-
-          
-<p>You can run the program
-          from <strong>src/c</strong> using:</p>
-
-          
-<pre class="code">LD_LIBRARY_PATH=. cli_mt 127.0.0.1:2181</pre>
-
-          
-<p>or</p>
-
-          
-<pre class="code">LD_LIBRARY_PATH=. cli_st 127.0.0.1:2181</pre>
-          
-<p>This will give you a simple shell to execute file
-          system like operations on ZooKeeper.</p>
-        
-</li>
-      
-</ul>
 <p>Once you have connected, you should see something like:
         </p>
 <pre class="code">
@@ -534,22 +488,29 @@ numChildren = 0
       application is called a <em>quorum</em>, and in replicated
       mode, all servers in the quorum have copies of the same configuration
       file.</p>
-
 <div class="note">
 <div class="label">Note</div>
 <div class="content">
-<p>For replicated mode, a minimum of three servers are required, and it is
-      strongly recommended that you have an odd number of servers.  If you
-      only have two servers, then you are in a situation where if one of
-      them fails, there are not enough machines to form a majority quorum.
-      Two servers is inherently <strong>less</strong> stable than a single
-      server, because there are two single points of failure.</p>
+      
+<p>
+         For replicated mode, a minimum of three servers are required,
+         and it is strongly recommended that you have an odd number of
+         servers. If you only have two servers, then you are in a
+         situation where if one of them fails, there are not enough
+         machines to form a majority quorum. Two servers is inherently
+         <strong>less</strong>
+         stable than a single server, because there are two single
+         points of failure.
+      </p>
+   
 </div>
 </div>
-
-<p>The required <strong>conf/zoo.cfg</strong> file for replicated mode is
-      similar to the one used in standalone mode, but with a few differences.
-      Here is an example:</p>
+<p>
+      The required
+      <strong>conf/zoo.cfg</strong>
+      file for replicated mode is similar to the one used in standalone
+      mode, but with a few differences. Here is an example:
+   </p>
 <pre class="code">
 tickTime=2000
 dataDir=/var/lib/zookeeper
@@ -598,15 +559,15 @@ server.3=zoo3:2888:3888
         (in the above replicated example, running on a
         single <em>localhost</em>, you would still have
         three config files).</p>
-
-<p>Please be aware that setting up multiple servers on a single machine
-        will not create any redundancy.  If something were to happen
-        which caused the machine to die, all of the zookeeper servers
-        would be offline.  Full redundancy requires that each server have
-        its own machine.  It must be a completely separate physical server.
-        Multiple virtual machines on the same physical host are still
-        vulnerable to the complete failure of that host.</p>
-
+        
+<p>Please be aware that setting up multiple servers on a single
+            machine will not create any redundancy. If something were to
+            happen which caused the machine to die, all of the zookeeper
+            servers would be offline. Full redundancy requires that each
+            server have its own machine. It must be a completely separate
+            physical server. Multiple virtual machines on the same physical
+            host are still vulnerable to the complete failure of that host.</p>
+      
 </div>
 </div>
 <a name="Other+Optimizations"></a>

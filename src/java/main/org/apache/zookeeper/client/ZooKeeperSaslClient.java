@@ -64,6 +64,7 @@ public class ZooKeeperSaslClient {
     public static final String LOGIN_CONTEXT_NAME_KEY = "zookeeper.sasl.clientconfig";
     public static final String ENABLE_CLIENT_SASL_KEY = "zookeeper.sasl.client";
     public static final String ENABLE_CLIENT_SASL_DEFAULT = "true";
+    private static volatile boolean initializedLogin = false; 
 
     /**
      * Returns true if the SASL client is enabled. By default, the client
@@ -214,17 +215,22 @@ public class ZooKeeperSaslClient {
         }
     }
 
-    synchronized private SaslClient createSaslClient(final String servicePrincipal,
+    private SaslClient createSaslClient(final String servicePrincipal,
                                                      final String loginContext) throws LoginException {
         try {
-            if (login == null) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("JAAS loginContext is: " + loginContext);
+            if (!initializedLogin) {
+                synchronized (ZooKeeperSaslClient.class) {
+                    if (login == null) {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("JAAS loginContext is: " + loginContext);
+                        }
+                        // note that the login object is static: it's shared amongst all zookeeper-related connections.
+                        // in order to ensure the login is initialized only once, it must be synchronized the code snippet.
+                        login = new Login(loginContext, new ClientCallbackHandler(null));
+                        login.startThreadIfNeeded();
+                        initializedLogin = true;
+                    }
                 }
-                // note that the login object is static: it's shared amongst all zookeeper-related connections.
-                // createSaslClient() must be declared synchronized so that login is initialized only once.
-                login = new Login(loginContext, new ClientCallbackHandler(null));
-                login.startThreadIfNeeded();
             }
             Subject subject = login.getSubject();
             SaslClient saslClient;

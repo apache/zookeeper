@@ -43,8 +43,7 @@
 	ZooKeeper prints <emphasis>WARN</emphasis> messages if users exceed the quota assigned to them. The messages 
 	are printed in the log of the ZooKeeper. 
 	</para>
-	<para><computeroutput>$java -cp zookeeper.jar:src/java/lib/log4j-1.2.15.jar/conf:src/java/lib/jline-0.9.94.jar \
-	 org.apache.zookeeper.ZooKeeperMain -server host:port</computeroutput></para> 
+	<para><computeroutput>$ bin/zkCli.sh -server host:port</computeroutput></para>
 	 <para> The above command gives you a command line option of using quotas.</para>
 	 <section>
 	 <title>Setting Quotas</title>
