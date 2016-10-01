@@ -10,7 +10,7 @@
     "tags": [ "ZooKeeper", "Recipes", ".NET", "Lock", "Leader Election", "Queue" ],
     "projectUrl": "https://github.com/shayhatsor/zookeeper",
     "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
-    "iconUrl": "https://ccdce73789835b39c0952535276de3b7772f802f.googledrive.com/host/0B_hNtILvKRsifnpVRnp4NVRKcHltY05FSGM2bzg5ZGNaVHRqcW9GVFJnWjczSFUtNk40OTA/zookeeper.bmp",
+    "iconUrl": "https://raw.githubusercontent.com/shayhatsor/zookeeper/trunk/zookeeper.bmp",
     "repository": {
       "type": "git",
       "url": "https://github.com/shayhatsor/zookeeper"
