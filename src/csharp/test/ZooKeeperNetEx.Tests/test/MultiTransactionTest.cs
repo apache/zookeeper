@@ -580,7 +580,7 @@ namespace org.apache.zookeeper.test
             foreach (OpResult r in results)
             {
                 OpResult.CreateResult c = (OpResult.CreateResult)r;
-                Assert.assertTrue(c.getPath().StartsWith("/t"));
+                Assert.assertTrue(c.getPath().Contains("/t"));
                 Assert.assertNotNull(c.ToString());
             }
             Assert.assertNotNull(await zk.existsAsync("/t1", false));

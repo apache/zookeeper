@@ -38,7 +38,6 @@ namespace org.apache.zookeeper {
         private readonly string m_currentRoot;
 
         private const string hostPort = "127.0.0.1,localhost";
-        internal const string testsNode = "/tests";
 
         private readonly ConcurrentBag<ZooKeeper> allClients = new ConcurrentBag<ZooKeeper>();
         
@@ -62,7 +61,7 @@ namespace org.apache.zookeeper {
 
         protected ClientBase()
         {
-            m_currentRoot = createNode(testsNode + "/", CreateMode.PERSISTENT_SEQUENTIAL).Result;
+            m_currentRoot = createNode().Result;
         }
 
 
@@ -72,7 +71,7 @@ namespace org.apache.zookeeper {
             Task.WaitAll(allClients.Select(c => c.closeAsync()).ToArray());
         }
 
-        internal static Task deleteNode(string path)
+        private static Task deleteNode(string path)
         {
             return ZooKeeper.Using(hostPort, CONNECTION_TIMEOUT, NullWatcher.Instance, zk =>
             {
@@ -80,12 +79,11 @@ namespace org.apache.zookeeper {
             });
         }
 
-        internal static Task<string> createNode(string path, CreateMode createMode)
+        private static Task<string> createNode()
         {
             return ZooKeeper.Using(hostPort, CONNECTION_TIMEOUT, NullWatcher.Instance, async zk =>
             {
-                string newNode = await zk.createAsync(path, null, ZooDefs.Ids.OPEN_ACL_UNSAFE, createMode);
-                await zk.sync("/");
+                string newNode = await zk.createAsync("/", null, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
                 return newNode;
             });
         }

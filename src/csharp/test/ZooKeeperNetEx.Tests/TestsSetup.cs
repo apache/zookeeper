@@ -22,31 +22,12 @@ using Xunit;
 
 namespace org.apache.zookeeper
 {
-    public class TestsSetup : IDisposable
+    public class TestsSetup
     {
         static TestsSetup()
         {
             ZooKeeper.LogToFile = false;
             ZooKeeper.LogToTrace = false;
-        }
-        public TestsSetup()
-        {
-            Dispose();
-
-            ClientBase.createNode(ClientBase.testsNode, CreateMode.PERSISTENT).ContinueWith(t =>
-            {
-                if (t.Exception != null && !(t.Exception.InnerExceptions[0] is KeeperException.NodeExistsException))
-                    throw t.Exception;
-            }).GetAwaiter().GetResult();
-        }
-
-        public void Dispose()
-        {
-            ClientBase.deleteNode(ClientBase.testsNode).ContinueWith(t =>
-            {
-                if (t.Exception != null && !(t.Exception.InnerExceptions[0] is KeeperException.NoNodeException))
-                    throw t.Exception;
-            }).GetAwaiter().GetResult();
         }
     }
 
