@@ -194,7 +194,19 @@ store pointers to the storage locations in ZooKeeper.
 ZooKeeper also has the notion of ephemeral nodes. These znodes
 exists as long as the session that created the znode is active. When
 the session ends the znode is deleted. Because of this behavior
-ephemeral znodes are not allowed to have children.
+ephemeral znodes are not allowed to have children. The list of ephemerals
+for the session can be retrieved using **getEphemerals()** api.
+
+##### getEphemerals()
+Retrieves the list of ephemeral nodes created by the session for the
+given path. If the path is empty, it will list all the ephemeral nodes
+for the session.
+**Use Case** - A sample use case might be, if the list of ephemeral
+nodes for the session need to be collected for duplicate data entry check
+and the nodes are created in sequential manner so you do not know the name
+for duplicate check. In that case, getEphemerals() api could be used to
+get the list of nodes for the session. This might be a typical use case
+for service discovery.
 
 <a name="Sequence+Nodes+--+Unique+Naming"></a>
 

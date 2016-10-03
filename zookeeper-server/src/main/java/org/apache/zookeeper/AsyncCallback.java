@@ -328,4 +328,18 @@ public interface AsyncCallback {
         public void processResult(int rc, String path, Object ctx,
                 List<OpResult> opResults);
     }
+
+    /**
+     * This callback is used to process the getEphemerals results from
+     * a single getEphemerals call.
+     */
+    interface EphemeralsCallback extends AsyncCallback {
+        /**
+         *
+         * @param rc      The return code or the result of the call.
+         * @param ctx     Whatever context object that we passed to asynchronous calls.
+         * @param paths   The path that we passed to asynchronous calls.
+         */
+        public void processResult(int rc, Object ctx, List<String> paths);
+    }
 }
