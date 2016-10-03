@@ -953,19 +953,20 @@ namespace org.apache.zookeeper {
 
                 RequestHeader h = new RequestHeader();
                 h.set_Type((int) ZooDefs.OpCode.closeSession);
-
-                await (await submitRequest(h, null, null, null).ContinueWith(async closeTask=>
-                {
+                try {
+                    await submitRequest(h, null, null, null).ConfigureAwait(false);
+                }
+                finally {
                     disconnect();
-                    await closeTask.ConfigureAwait(false);
-                }).ConfigureAwait(false)).ConfigureAwait(false);
+                }
+#if DEBUG
                 var closeDelay = TaskEx.Delay(1000);
                 await TaskEx.WhenAny(TaskEx.WhenAll(sendTask, eventTask), closeDelay).ConfigureAwait(false);
                 if (closeDelay.IsCompleted)
                 {
                     throw new TimeoutException("waited more the a second for disconnection");
                 }
-
+#endif
             }
         }
 

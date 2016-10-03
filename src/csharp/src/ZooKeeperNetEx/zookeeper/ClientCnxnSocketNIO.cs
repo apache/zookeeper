@@ -207,7 +207,8 @@ namespace org.apache.zookeeper
             writeEnabled.Value = false;
 			if (socket != null)
 			{
-				try
+                await TaskEx.Delay(100).ConfigureAwait(false);
+                try
 				{
                     if(socket.Connected)
                         socket.Shutdown(SocketShutdown.Receive);
@@ -243,8 +244,6 @@ namespace org.apache.zookeeper
 					}
 				}
 			}
-		    await TaskEx.Delay(100).ConfigureAwait(false);
-            wakeupCnxn();
 			socket = null;
             connectingState.Value = BEFORECONNECTING;
 		}
@@ -423,7 +422,7 @@ namespace org.apache.zookeeper
 	        {
 	            try
 	            {
-                    return writeEnabled.Value && isConnectDone();
+                    return writeEnabled.Value && isConnectDone() && socket.Connected;
 	            }
 	            catch
 	            {
@@ -438,7 +437,7 @@ namespace org.apache.zookeeper
 	        {
 	            try
 	            {
-                    return socket.Available > 0 && readEnabled.Value && isConnectDone();
+	                return readEnabled.Value && isConnectDone() && socket.Available > 0;
 	            }
 	            catch
 	            {

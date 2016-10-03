@@ -72,7 +72,7 @@ namespace org.apache.zookeeper.recipes.@lock
 
 			// lets wait for any previous leaders to die and one of our new
 			// nodes to become the new leader
-            await asyncManualResetEvent.WaitAsync().WithTimeout(30*1000);
+            Assert.assertTrue(await asyncManualResetEvent.WaitAsync().WithTimeout(30*1000));
 
 			WriteLock first = nodes[0];
 			dumpNodes(nodes,count);
@@ -92,7 +92,7 @@ namespace org.apache.zookeeper.recipes.@lock
 			    // now lets kill the leader
 			    asyncManualResetEvent.Reset();
 			    await first.unlock();
-                await asyncManualResetEvent.WaitAsync().WithTimeout(30 * 1000);
+                Assert.assertTrue(await asyncManualResetEvent.WaitAsync().WithTimeout(30 * 1000));
                 WriteLock second = nodes[1];
 			    dumpNodes(nodes, count);
 			    // lets assert that the first election is the leader
