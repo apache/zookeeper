@@ -33,7 +33,7 @@ public class ProviderRegistry {
     private static HashMap<String, AuthenticationProvider> authenticationProviders =
         new HashMap<String, AuthenticationProvider>();
 
-    public static void initialize() {
+    public static void initialize(ZooKeeperServer zks) {
         synchronized (ProviderRegistry.class) {
             if (initialized)
                 return;
@@ -51,6 +51,9 @@ public class ProviderRegistry {
                                 .loadClass(className);
                         AuthenticationProvider ap = (AuthenticationProvider) c
                                 .newInstance();
+                        if (ap instanceof ServerAuthenticationProvider) {
+                            ((ServerAuthenticationProvider)ap).setZooKeeperServer(zks);
+                        }
                         authenticationProviders.put(ap.getScheme(), ap);
                     } catch (Exception e) {
                         LOG.warn("Problems loading " + className,e);
@@ -61,9 +64,9 @@ public class ProviderRegistry {
         }
     }
 
-    public static AuthenticationProvider getProvider(String scheme) {
+    public static AuthenticationProvider getProvider(ZooKeeperServer zks, String scheme) {
         if(!initialized)
-            initialize();
+            initialize(zks);
         return authenticationProviders.get(scheme);
     }
 
