@@ -941,6 +941,8 @@ NEW FEATURES:
 
   ZOOKEEPER-1107. automating log and snapshot cleaning (Laxman via phunt)
 
+  ZOOKEEPER-1917. Apache Zookeeper logs cleartext admin passwords (fpj via michim)
+
 DEPRECATION:
   ZOOKEEPER-1153. Deprecate AuthFLE and LE. (Flavio Junqueira via mahadev)
   
