@@ -43,7 +43,7 @@
 
   <property name="ivy.version" value="2.4.0"/>
   <property name="ivy.url"
-            value="http://repo2.maven.org/maven2/org/apache/ivy/ivy" />
+            value="https://repo1.maven.org/maven2/org/apache/ivy/ivy" />
   <property name="ivy.home" value="${user.home}/.ant" />
   <property name="ivy.lib" value="${build.dir}/lib"/>
   <property name="ivy.test.lib" value="${build.test}/lib"/>

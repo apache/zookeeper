@@ -79,6 +79,9 @@ IMPROVEMENTS:
   ZOOKEEPER-2557: Update gitignore to account for other file extensions.
   (Edward Ribeiro via cnauroth)
 
+  ZOOKEEPER-2594: Use TLS for downloading artifacts during build
+  (Olaf Flebbe via phunt)
+
 Release 3.5.2 - 06/29/2016
 
 BUGFIXES:
