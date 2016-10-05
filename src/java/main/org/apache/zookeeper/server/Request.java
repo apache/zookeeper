@@ -137,6 +137,7 @@ public class Request {
         case OpCode.closeSession:
         case OpCode.create:
         case OpCode.create2:
+        case OpCode.createTTL:
         case OpCode.createContainer:
         case OpCode.createSession:
         case OpCode.delete:
@@ -171,6 +172,7 @@ public class Request {
             return false;
         case OpCode.create:
         case OpCode.create2:
+        case OpCode.createTTL:
         case OpCode.createContainer:
         case OpCode.error:
         case OpCode.delete:
@@ -197,6 +199,8 @@ public class Request {
             return "create";
         case OpCode.create2:
             return "create2";
+        case OpCode.createTTL:
+            return "createTtl";
         case OpCode.createContainer:
             return "createContainer";
         case OpCode.setWatches:

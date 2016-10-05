@@ -215,6 +215,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                             subResult = new CreateResult(subTxnResult.path);
                             break;
                         case OpCode.create2:
+                        case OpCode.createTTL:
                         case OpCode.createContainer:
                             subResult = new CreateResult(subTxnResult.path, subTxnResult.stat);
                             break;
@@ -244,6 +245,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 break;
             }
             case OpCode.create2:
+            case OpCode.createTTL:
             case OpCode.createContainer: {
                 lastOp = "CREA";
                 rsp = new Create2Response(rc.path, rc.stat);
