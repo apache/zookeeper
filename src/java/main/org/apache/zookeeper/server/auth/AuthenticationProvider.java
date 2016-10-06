@@ -58,6 +58,7 @@ public interface AuthenticationProvider {
      * @param aclExpr
      *                the expression to match ids against.
      * @return true if the id can be matched by the expression.
+     * @deprecated newer implementations should use {@link ServerAuthenticationProvider#matchesOp(String, String, String, int)}
      */
     boolean matches(String id, String aclExpr);
 

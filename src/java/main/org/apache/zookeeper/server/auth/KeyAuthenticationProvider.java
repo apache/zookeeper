@@ -26,7 +26,6 @@ import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZKDatabase;
-import org.apache.zookeeper.server.DataNode;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -133,6 +132,11 @@ public class KeyAuthenticationProvider implements ServerAuthenticationProvider {
 
 
     public boolean matches(String id, String aclExpr) {
+        throw new UnsupportedOperationException();  // should never get here
+    }
+
+    @Override
+    public boolean matchesOp(String path, String id, String aclExpr, int perm) {
         return id.equals(aclExpr);
     }
 

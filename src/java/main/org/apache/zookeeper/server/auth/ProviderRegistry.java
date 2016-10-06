@@ -64,17 +64,17 @@ public class ProviderRegistry {
         }
     }
 
-    public static AuthenticationProvider getProvider(ZooKeeperServer zks, String scheme) {
+    public static ServerAuthenticationProvider getProvider(ZooKeeperServer zks, String scheme) {
         if(!initialized)
             initialize(zks);
-        return authenticationProviders.get(scheme);
+        return WrappedAuthenticationProvider.wrap(authenticationProviders.get(scheme));
     }
 
     public static String listProviders() {
         StringBuilder sb = new StringBuilder();
         for(String s: authenticationProviders.keySet()) {
-        sb.append(s + " ");
-}
+            sb.append(s).append(" ");
+        }
         return sb.toString();
     }
 }
