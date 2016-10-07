@@ -19,9 +19,11 @@
 package org.apache.zookeeper.server.auth;
 
 import java.io.UnsupportedEncodingException;
+import java.util.List;
 
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NoNodeException;
+import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
@@ -136,7 +138,7 @@ public class KeyAuthenticationProvider implements ServerAuthenticationProvider {
     }
 
     @Override
-    public boolean matchesOp(String path, String id, String aclExpr, int perm) {
+    public boolean matchesOp(String path, String id, String aclExpr, int perm, List<ACL> setAcls) {
         return id.equals(aclExpr);
     }
 

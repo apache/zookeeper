@@ -19,8 +19,11 @@
 package org.apache.zookeeper.server.auth;
 
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
+
+import java.util.List;
 
 /**
  * Provides backwards compatibility between older {@link AuthenticationProvider}
@@ -49,7 +52,7 @@ class WrappedAuthenticationProvider implements ServerAuthenticationProvider {
      * forwards to older method {@link #matches(String, String)}
      */
     @Override
-    public boolean matchesOp(String path, String id, String aclExpr, int perm) {
+    public boolean matchesOp(String path, String id, String aclExpr, int perm, List<ACL> setAcls) {
         return matches(id, aclExpr);
     }
 

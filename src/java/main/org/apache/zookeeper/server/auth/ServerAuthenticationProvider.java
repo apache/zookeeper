@@ -18,7 +18,10 @@
 
 package org.apache.zookeeper.server.auth;
 
+import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.server.ZooKeeperServer;
+
+import java.util.List;
 
 /**
  * A variation on {@link AuthenticationProvider} that provides a method
@@ -45,7 +48,9 @@ public interface ServerAuthenticationProvider extends AuthenticationProvider {
      *                the expression to match ids against.
      * @param perm
      *                the permission value being authenticated
+     * @param setAcls
+     *                for set ACL operations, the list of ACLs being set. Otherwise null.
      * @return true if the arguments can be matched by the expression.
      */
-    boolean matchesOp(String path, String id, String aclExpr, int perm);
+    boolean matchesOp(String path, String id, String aclExpr, int perm, List<ACL> setAcls);
 }

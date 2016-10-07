@@ -319,7 +319,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 }
                 PrepRequestProcessor.checkACL(zks, zks.getZKDatabase().aclForNode(n),
                         ZooDefs.Perms.READ,
-                        request.authInfo, getDataRequest.getPath());
+                        request.authInfo, getDataRequest.getPath(), null);
                 Stat stat = new Stat();
                 byte b[] = zks.getZKDatabase().getData(getDataRequest.getPath(), stat,
                         getDataRequest.getWatch() ? cnxn : null);
@@ -361,7 +361,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 }
                 PrepRequestProcessor.checkACL(zks, zks.getZKDatabase().aclForNode(n),
                         ZooDefs.Perms.READ,
-                        request.authInfo, getChildrenRequest.getPath());
+                        request.authInfo, getChildrenRequest.getPath(), null);
                 List<String> children = zks.getZKDatabase().getChildren(
                         getChildrenRequest.getPath(), null, getChildrenRequest
                                 .getWatch() ? cnxn : null);
@@ -380,7 +380,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 }
                 PrepRequestProcessor.checkACL(zks, zks.getZKDatabase().aclForNode(n),
                         ZooDefs.Perms.READ,
-                        request.authInfo, getChildren2Request.getPath());
+                        request.authInfo, getChildren2Request.getPath(), null);
                 List<String> children = zks.getZKDatabase().getChildren(
                         getChildren2Request.getPath(), stat, getChildren2Request
                                 .getWatch() ? cnxn : null);
