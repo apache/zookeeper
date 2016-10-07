@@ -18,18 +18,6 @@
 
 package org.apache.zookeeper;
 
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.jute.Record;
 import org.apache.zookeeper.AsyncCallback.ACLCallback;
 import org.apache.zookeeper.AsyncCallback.Children2Callback;
@@ -45,10 +33,10 @@ import org.apache.zookeeper.KeeperException.NoWatcherException;
 import org.apache.zookeeper.OpResult.ErrorResult;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.WatcherType;
-import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.client.ConnectStringParser;
 import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.client.StaticHostProvider;
+import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.common.StringUtils;
@@ -58,6 +46,7 @@ import org.apache.zookeeper.proto.CheckWatchesRequest;
 import org.apache.zookeeper.proto.Create2Response;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.CreateResponse;
+import org.apache.zookeeper.proto.CreateTTLRequest;
 import org.apache.zookeeper.proto.DeleteRequest;
 import org.apache.zookeeper.proto.ExistsRequest;
 import org.apache.zookeeper.proto.GetACLRequest;
@@ -79,8 +68,21 @@ import org.apache.zookeeper.proto.SetDataResponse;
 import org.apache.zookeeper.proto.SyncRequest;
 import org.apache.zookeeper.proto.SyncResponse;
 import org.apache.zookeeper.server.DataTree;
+import org.apache.zookeeper.server.EphemeralType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * This is the main class of ZooKeeper client library. To use a ZooKeeper
@@ -1393,6 +1395,7 @@ public class ZooKeeper {
     {
         final String clientPath = path;
         PathUtils.validatePath(clientPath, createMode.isSequential());
+        EphemeralType.validateTTL(createMode, -1);
 
         final String serverPath = prependChroot(clientPath);
 
@@ -1479,23 +1482,34 @@ public class ZooKeeper {
     public String create(final String path, byte data[], List<ACL> acl,
             CreateMode createMode, Stat stat)
             throws KeeperException, InterruptedException {
+        return create(path, data, acl, createMode, stat, -1);
+    }
+
+    /**
+     * same as {@link #create(String, byte[], List, CreateMode, Stat)} but
+     * allows for specifying a TTL when mode is {@link CreateMode#PERSISTENT_WITH_TTL}
+     * or {@link CreateMode#PERSISTENT_SEQUENTIAL_WITH_TTL}. If the znode has not been modified
+     * within the given TTL, it will be deleted once it has no children. The TTL unit is
+     * milliseconds and must be greater than 0 and less than or equal to
+     * {@link EphemeralType#MAX_TTL}.
+     */
+    public String create(final String path, byte data[], List<ACL> acl,
+            CreateMode createMode, Stat stat, long ttl)
+            throws KeeperException, InterruptedException {
         final String clientPath = path;
         PathUtils.validatePath(clientPath, createMode.isSequential());
+        EphemeralType.validateTTL(createMode, ttl);
 
         final String serverPath = prependChroot(clientPath);
 
         RequestHeader h = new RequestHeader();
-        h.setType(createMode.isContainer() ? ZooDefs.OpCode.createContainer : ZooDefs.OpCode.create2);
-        CreateRequest request = new CreateRequest();
+        setCreateHeader(createMode, h);
         Create2Response response = new Create2Response();
-        request.setData(data);
-        request.setFlags(createMode.toFlag());
-        request.setPath(serverPath);
         if (acl != null && acl.size() == 0) {
             throw new KeeperException.InvalidACLException();
         }
-        request.setAcl(acl);
-        ReplyHeader r = cnxn.submitRequest(h, request, response, null);
+        Record record = makeCreateRecord(createMode, serverPath, data, acl, ttl);
+        ReplyHeader r = cnxn.submitRequest(h, record, response, null);
         if (r.getErr() != 0) {
             throw KeeperException.create(KeeperException.Code.get(r.getErr()),
                     clientPath);
@@ -1510,6 +1524,35 @@ public class ZooKeeper {
         }
     }
 
+    private void setCreateHeader(CreateMode createMode, RequestHeader h) {
+        if (createMode.isTTL()) {
+            h.setType(ZooDefs.OpCode.createTTL);
+        } else {
+            h.setType(createMode.isContainer() ? ZooDefs.OpCode.createContainer : ZooDefs.OpCode.create2);
+        }
+    }
+
+    private Record makeCreateRecord(CreateMode createMode, String serverPath, byte[] data, List<ACL> acl, long ttl) {
+        Record record;
+        if (createMode.isTTL()) {
+            CreateTTLRequest request = new CreateTTLRequest();
+            request.setData(data);
+            request.setFlags(createMode.toFlag());
+            request.setPath(serverPath);
+            request.setAcl(acl);
+            request.setTtl(ttl);
+            record = request;
+        } else {
+            CreateRequest request = new CreateRequest();
+            request.setData(data);
+            request.setFlags(createMode.toFlag());
+            request.setPath(serverPath);
+            request.setAcl(acl);
+            record = request;
+        }
+        return record;
+    }
+
     /**
      * The asynchronous version of create.
      *
@@ -1520,6 +1563,7 @@ public class ZooKeeper {
     {
         final String clientPath = path;
         PathUtils.validatePath(clientPath, createMode.isSequential());
+        EphemeralType.validateTTL(createMode, -1);
 
         final String serverPath = prependChroot(clientPath);
 
@@ -1544,21 +1588,29 @@ public class ZooKeeper {
     public void create(final String path, byte data[], List<ACL> acl,
             CreateMode createMode, Create2Callback cb, Object ctx)
     {
+        create(path, data, acl, createMode, cb, ctx, -1);
+    }
+
+    /**
+     * The asynchronous version of create with ttl.
+     *
+     * @see #create(String, byte[], List, CreateMode, Stat, long)
+     */
+    public void create(final String path, byte data[], List<ACL> acl,
+            CreateMode createMode, Create2Callback cb, Object ctx, long ttl)
+    {
         final String clientPath = path;
         PathUtils.validatePath(clientPath, createMode.isSequential());
+        EphemeralType.validateTTL(createMode, ttl);
 
         final String serverPath = prependChroot(clientPath);
 
         RequestHeader h = new RequestHeader();
-        h.setType(createMode.isContainer() ? ZooDefs.OpCode.createContainer : ZooDefs.OpCode.create2);
-        CreateRequest request = new CreateRequest();
-        Create2Response response = new Create2Response();
+        setCreateHeader(createMode, h);
         ReplyHeader r = new ReplyHeader();
-        request.setData(data);
-        request.setFlags(createMode.toFlag());
-        request.setPath(serverPath);
-        request.setAcl(acl);
-        cnxn.queuePacket(h, r, request, response, cb, clientPath,
+        Create2Response response = new Create2Response();
+        Record record = makeCreateRecord(createMode, serverPath, data, acl, ttl);
+        cnxn.queuePacket(h, r, record, response, cb, clientPath,
                 serverPath, ctx, null);
     }
 

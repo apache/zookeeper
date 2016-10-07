@@ -28,21 +28,21 @@ public enum CreateMode {
     /**
      * The znode will not be automatically deleted upon client's disconnect.
      */
-    PERSISTENT (0, false, false, false),
+    PERSISTENT (0, false, false, false, false),
     /**
     * The znode will not be automatically deleted upon client's disconnect,
     * and its name will be appended with a monotonically increasing number.
     */
-    PERSISTENT_SEQUENTIAL (2, false, true, false),
+    PERSISTENT_SEQUENTIAL (2, false, true, false, false),
     /**
      * The znode will be deleted upon the client's disconnect.
      */
-    EPHEMERAL (1, true, false, false),
+    EPHEMERAL (1, true, false, false, false),
     /**
      * The znode will be deleted upon the client's disconnect, and its name
      * will be appended with a monotonically increasing number.
      */
-    EPHEMERAL_SEQUENTIAL (3, true, true, false),
+    EPHEMERAL_SEQUENTIAL (3, true, true, false, false),
     /**
      * The znode will be a container node. Container
      * nodes are special purpose nodes useful for recipes such as leader, lock,
@@ -52,7 +52,20 @@ public enum CreateMode {
      * {@link org.apache.zookeeper.KeeperException.NoNodeException}
      * when creating children inside of this container node.
      */
-    CONTAINER (4, false, false, true);
+    CONTAINER (4, false, false, true, false),
+    /**
+     * The znode will not be automatically deleted upon client's disconnect.
+     * However if the znode has not been modified within the given TTL, it
+     * will be deleted once it has no children.
+     */
+    PERSISTENT_WITH_TTL(5, false, false, false, true),
+    /**
+     * The znode will not be automatically deleted upon client's disconnect,
+     * and its name will be appended with a monotonically increasing number.
+     * However if the znode has not been modified within the given TTL, it
+     * will be deleted once it has no children.
+     */
+    PERSISTENT_SEQUENTIAL_WITH_TTL(6, false, true, false, true);
 
     private static final Logger LOG = LoggerFactory.getLogger(CreateMode.class);
 
@@ -60,13 +73,15 @@ public enum CreateMode {
     private boolean sequential;
     private final boolean isContainer;
     private int flag;
+    private boolean isTTL;
 
     CreateMode(int flag, boolean ephemeral, boolean sequential,
-               boolean isContainer) {
+               boolean isContainer, boolean isTTL) {
         this.flag = flag;
         this.ephemeral = ephemeral;
         this.sequential = sequential;
         this.isContainer = isContainer;
+        this.isTTL = isTTL;
     }
 
     public boolean isEphemeral() { 
@@ -79,6 +94,10 @@ public enum CreateMode {
 
     public boolean isContainer() {
         return isContainer;
+    }
+
+    public boolean isTTL() {
+        return isTTL;
     }
 
     public int toFlag() {
@@ -99,6 +118,10 @@ public enum CreateMode {
         case 3: return CreateMode.EPHEMERAL_SEQUENTIAL ;
 
         case 4: return CreateMode.CONTAINER;
+
+        case 5: return CreateMode.PERSISTENT_WITH_TTL;
+
+        case 6: return CreateMode.PERSISTENT_SEQUENTIAL_WITH_TTL;
 
         default:
             String errMsg = "Received an invalid flag value: " + flag
@@ -127,6 +150,12 @@ public enum CreateMode {
 
             case 4:
                 return CreateMode.CONTAINER;
+
+            case 5:
+                return CreateMode.PERSISTENT_WITH_TTL;
+
+            case 6:
+                return CreateMode.PERSISTENT_SEQUENTIAL_WITH_TTL;
 
             default:
                 return defaultMode;
