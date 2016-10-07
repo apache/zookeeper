@@ -587,7 +587,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 }
                 
                 nodeRecord = getRecordForPath(ZooDefs.CONFIG_NODE);               
-                checkACL(zks, nodeRecord.acl, ZooDefs.Perms.WRITE, request.authInfo, null, null);
+                checkACL(zks, nodeRecord.acl, ZooDefs.Perms.WRITE, request.authInfo, "/", null);
                 request.setTxn(new SetDataTxn(ZooDefs.CONFIG_NODE, request.qv.toString().getBytes(), -1));    
                 nodeRecord = nodeRecord.duplicate(request.getHdr().getZxid());
                 nodeRecord.stat.setVersion(-1);                
