@@ -252,9 +252,9 @@ namespace org.apache.zookeeper
         /// <summary>
         /// create a socket channel. </summary>
         /// <returns> the created socket channel </returns>
-        private static Socket createSock()
+        private static Socket createSock(AddressFamily addressFamily)
 	    {
-			Socket sock=new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+			Socket sock=new Socket(addressFamily, SocketType.Stream, ProtocolType.Tcp);
 			sock.Blocking = false;
 			sock.LingerState = new LingerOption(false, 0);
 			sock.NoDelay=true;
@@ -279,7 +279,7 @@ namespace org.apache.zookeeper
 
         internal override void connect(IPEndPoint addr)
 		{
-			Socket sock = createSock();
+			Socket sock = createSock(addr.AddressFamily);
             
             connectEventArgs = new SocketAsyncEventArgs();
             connectEventArgs.Completed += ConnectAsyncCompleted;

@@ -55,9 +55,8 @@ namespace org.apache.zookeeper.client
                 try
                 {
                     var allResolvedIPs = await dnsResolvingTask.ConfigureAwait(false);
-                    var resolvedIPv4s = allResolvedIPs.Where(ip => ip.AddressFamily == AddressFamily.InterNetwork);
-                    log.debug($"Resolved Host={host} to {{{resolvedIPv4s.ToCommaDelimited()}}}");
-                    return resolvedIPv4s.Select(ip => new ResolvedEndPoint(ip, hostAndPort));
+                    log.debug($"Resolved Host={host} to {{{allResolvedIPs.ToCommaDelimited()}}}");
+                    return allResolvedIPs.Select(ip => new ResolvedEndPoint(ip, hostAndPort));
                 }
                 catch (Exception e)
                 {
