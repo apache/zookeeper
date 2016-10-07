@@ -182,23 +182,18 @@ namespace org.apache.zookeeper.recipes.queue
 
 		private sealed class LatchChildWatcher : Watcher
 		{
-		    private readonly AsyncManualResetEvent latch;
-
-			public LatchChildWatcher()
-			{
-                latch = new AsyncManualResetEvent();
-			}
-
+		    private readonly TaskCompletionSource<bool> latch = new TaskCompletionSource<bool>();
+            
 			public override Task process(WatchedEvent @event)
 			{
 				LOG.debug("Watcher fired on path: " + @event.getPath() + " state: " + @event.getState() + " type " + @event.get_Type());
-				latch.Set();
+			    latch.TrySetResult(true);
 			    return CompletedTask;
 			}
 
 			public Task getTask()
 			{
-				return latch.WaitAsync();
+				return latch.Task;
 			}
 		}
 

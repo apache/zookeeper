@@ -29,7 +29,7 @@ namespace org.apache.zookeeper.test
             private static readonly ILogProducer LOG = TypeLogger<Watcher>.Instance;
             private readonly string path;
 		    private string eventPath;
-		    private readonly AsyncManualResetEvent asyncManualResetEvent = new AsyncManualResetEvent();
+		    private readonly TaskCompletionSource<bool> taskCompletionSource = new TaskCompletionSource<bool>();
 
 			public MyWatcher(string path)
 			{
@@ -39,14 +39,14 @@ namespace org.apache.zookeeper.test
 			{
                 LOG.debug("latch:" + path + " " + @event.getPath());
 				eventPath = @event.getPath();
-                asyncManualResetEvent.Set();
+                taskCompletionSource.TrySetResult(true);
 			    return CompletedTask;
 			}
 
 
 		    public async Task<bool> matches()
 		    {
-		        if (await asyncManualResetEvent.WaitAsync().WithTimeout(CONNECTION_TIMEOUT) == false)
+		        if (await taskCompletionSource.Task.WithTimeout(CONNECTION_TIMEOUT) == false)
 		        {
 		            Assert.fail("No watch received within timeout period " + path);
 		        }

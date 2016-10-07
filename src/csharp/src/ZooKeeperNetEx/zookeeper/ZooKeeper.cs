@@ -386,11 +386,13 @@ namespace org.apache.zookeeper {
             watchManager.defaultWatcher = new WatcherDelegate(@event =>
             {
                 if (@event.getState() == Watcher.Event.KeeperState.SyncConnected || @event.getState() == Watcher.Event.KeeperState.ConnectedReadOnly) 
-                {
-                    if (!connectedTask.WaitAsync().IsCompleted) 
-                        connectedTask.Set();
+                { 
+                    connectedSignal.Set();
                 }
-                else connectedTask.Reset();
+                else
+                { 
+                    if(connectedSignal.Task.IsCompleted) connectedSignal.Reset();
+                }   
                 return watcher.process(@event);
             });
 
@@ -407,7 +409,7 @@ namespace org.apache.zookeeper {
 
         private readonly int userDefinedSessionTimeout;
 
-        internal readonly AsyncManualResetEvent connectedTask = new AsyncManualResetEvent();
+        internal readonly SignalTask connectedSignal = new SignalTask();
         
         /// <summary>
         /// The session id for this ZooKeeper client instance. The value returned is not valid until the client connects to a 
@@ -1175,7 +1177,7 @@ namespace org.apache.zookeeper {
                 if (timeoutTask == null)
                     timeoutTask = TaskEx.Delay(zk.userDefinedSessionTimeout);
 
-                await TaskEx.WhenAny(zk.connectedTask.WaitAsync(), timeoutTask).ConfigureAwait(false);
+                await TaskEx.WhenAny(zk.connectedSignal.Task, timeoutTask).ConfigureAwait(false);
             } while (!timeoutTask.IsCompleted);
             return await zkMethodTask.ConfigureAwait(false);
         }

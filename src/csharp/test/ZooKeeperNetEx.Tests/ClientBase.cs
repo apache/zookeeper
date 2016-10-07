@@ -51,7 +51,7 @@ namespace org.apache.zookeeper {
             if (watcher == null) watcher = NullWatcher.Instance;
             var zk = new ZooKeeper(hostPort + m_currentRoot + chroot, timeout, watcher);
             allClients.Add(zk);
-            if (!await zk.connectedTask.WaitAsync().WithTimeout(timeout)) {
+            if (!await zk.connectedSignal.Task.WithTimeout(timeout)) {
                 Assert.fail("Unable to connect to server");
             }
 

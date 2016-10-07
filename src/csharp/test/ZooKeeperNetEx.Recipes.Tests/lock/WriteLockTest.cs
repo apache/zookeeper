@@ -35,17 +35,12 @@ namespace org.apache.zookeeper.recipes.@lock
 		}
 
 	    private sealed class LockCallback : LockListener
-		{
-			private readonly AsyncManualResetEvent asyncManualResetEvent;
-
-			public LockCallback(AsyncManualResetEvent asyncManualResetEvent)
-			{
-				this.asyncManualResetEvent = asyncManualResetEvent;
-			}
-
+	    {
+	        public TaskCompletionSource<bool> TaskCompletionSource = new TaskCompletionSource<bool>();
+            
 			public Task lockAcquired()
 			{
-                asyncManualResetEvent.Set();
+                TaskCompletionSource.TrySetResult(true);
 			    return Task.FromResult(0);
 			}
 
@@ -59,12 +54,12 @@ namespace org.apache.zookeeper.recipes.@lock
 	    private async Task runTest(int count)
 		{
 			var nodes = new WriteLock[count];
-	        var asyncManualResetEvent = new AsyncManualResetEvent();
+            var lockCallback=new LockCallback();
 			for (int i = 0; i < count; i++)
 			{
 				ZooKeeper keeper = await createClient();
 				WriteLock leader = new WriteLock(keeper, "/test", null);
-				leader.setLockListener(new LockCallback(asyncManualResetEvent));
+				leader.setLockListener(lockCallback);
 				nodes[i] = leader;
 
 				await leader.Lock();
@@ -72,8 +67,8 @@ namespace org.apache.zookeeper.recipes.@lock
 
 			// lets wait for any previous leaders to die and one of our new
 			// nodes to become the new leader
-            Assert.assertTrue(await asyncManualResetEvent.WaitAsync().WithTimeout(30*1000));
-
+            Assert.assertTrue(await lockCallback.TaskCompletionSource.Task.WithTimeout(30*1000));
+            
 			WriteLock first = nodes[0];
 			dumpNodes(nodes,count);
 
@@ -89,10 +84,10 @@ namespace org.apache.zookeeper.recipes.@lock
 			if (count > 1)
 			{
 			    LOG.debug("Now killing the leader");
-			    // now lets kill the leader
-			    asyncManualResetEvent.Reset();
+                // now lets kill the leader
+			    lockCallback.TaskCompletionSource = new TaskCompletionSource<bool>();
 			    await first.unlock();
-                Assert.assertTrue(await asyncManualResetEvent.WaitAsync().WithTimeout(30 * 1000));
+                Assert.assertTrue(await lockCallback.TaskCompletionSource.Task.WithTimeout(30 * 1000));
                 WriteLock second = nodes[1];
 			    dumpNodes(nodes, count);
 			    // lets assert that the first election is the leader

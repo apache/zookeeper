@@ -201,7 +201,7 @@ namespace org.apache.zookeeper.test
 
             await epheZk.closeAsync();
 
-            await hasBeenDeleted.triggered.WaitAsync();
+            await hasBeenDeleted.triggered.Task;
 
             try
             {
@@ -542,7 +542,7 @@ namespace org.apache.zookeeper.test
                     Op.create("/t", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
                     Op.delete("/t", -1)
             ));
-            Assert.assertTrue(await watcher.triggered.WaitAsync().WithTimeout(CONNECTION_TIMEOUT));
+            Assert.assertTrue(await watcher.triggered.Task.WithTimeout(CONNECTION_TIMEOUT));
         }
 
         [Fact]
@@ -654,24 +654,24 @@ namespace org.apache.zookeeper.test
 
         private class HasTriggeredWatcher : Watcher
         {
-            internal readonly AsyncManualResetEvent triggered = new AsyncManualResetEvent();
+            internal readonly TaskCompletionSource<bool> triggered = new TaskCompletionSource<bool>();
 
             public override Task process(WatchedEvent @event)
             {
-                triggered.Set();
+                triggered.TrySetResult(true);
                 return CompletedTask;
             }
         }
 
         private class HasBeenDeletedWatcher : Watcher
         {
-            internal readonly AsyncManualResetEvent triggered = new AsyncManualResetEvent();
+            internal readonly TaskCompletionSource<bool> triggered = new TaskCompletionSource<bool>();
 
             public override Task process(WatchedEvent @event)
             {
                 if (@event.get_Type() == Watcher.Event.EventType.NodeDeleted)
                 {
-                    triggered.Set();
+                    triggered.TrySetResult(true);
                 }
                 return CompletedTask;
             }

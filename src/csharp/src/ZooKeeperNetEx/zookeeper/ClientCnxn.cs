@@ -177,14 +177,14 @@ namespace org.apache.zookeeper {
 
             internal ByteBuffer bb { get; private set; }
 
-            private readonly AsyncManualResetEvent packetCompletion = new AsyncManualResetEvent();
+            private readonly TaskCompletionSource<bool> packetCompletion = new TaskCompletionSource<bool>();
 
             internal Task PacketTask {
-                get { return packetCompletion.WaitAsync(); }
+                get { return packetCompletion.Task; }
             }
 
             internal void SetFinished() {
-                packetCompletion.Set();
+                packetCompletion.TrySetResult(true);
             }
 
             /** Client's view of the path (may differ due to chroot) **/
@@ -241,7 +241,7 @@ namespace org.apache.zookeeper {
                 StringBuilder sb = new StringBuilder();
                 sb.Append("  clientPath:").Append(clientPath);
                 sb.Append("  serverPath:").Append(serverPath);
-                sb.Append("    finished:").Append(packetCompletion.WaitAsync().IsCompleted);
+                sb.Append("    finished:").Append(packetCompletion.Task.IsCompleted);
                 sb.Append("     header::").Append(requestHeader);
                 sb.Append("replyHeader::").Append(replyHeader);
                 sb.Append("    request::").Append(request);
@@ -313,7 +313,7 @@ namespace org.apache.zookeeper {
             }
         }
 
-      private readonly AsyncManualResetEvent waitingEventsManualResetEvent = new AsyncManualResetEvent();
+      private readonly SignalTask waitingEventsSignal = new SignalTask();
       
       private readonly ConcurrentQueue<WatcherSetEventPair> waitingEvents=new ConcurrentQueue<WatcherSetEventPair>();
 
@@ -340,13 +340,13 @@ namespace org.apache.zookeeper {
                         @event.getPath()), @event);
                 // queue the pair (watch set & event) for later processing
                 waitingEvents.Enqueue(pair);
-                waitingEventsManualResetEvent.Set();
+                waitingEventsSignal.Set();
             }
 
 
             private void queueEventOfDeath() {
                 waitingEvents.Enqueue(eventOfDeath);
-                waitingEventsManualResetEvent.Set();
+                waitingEventsSignal.Set();
             }
 
         private async Task startEventTask() {
@@ -354,8 +354,8 @@ namespace org.apache.zookeeper {
 
             try {
             while (!(wasKilled && waitingEvents.IsEmpty)) {
-                await waitingEventsManualResetEvent.WaitAsync().ConfigureAwait(false);
-                waitingEventsManualResetEvent.Reset();
+                await waitingEventsSignal.Task.ConfigureAwait(false);
+                waitingEventsSignal.Reset();
 
                 WatcherSetEventPair @event;
                 while (waitingEvents.TryDequeue(out @event)) {
@@ -407,7 +407,7 @@ namespace org.apache.zookeeper {
                     p.replyHeader.setErr((int) KeeperException.Code.CONNECTIONLOSS);
                     break;
             }
-            finishPacket(p);
+            //finishPacket(p); <-- moved outside since it should be called outside of a lock
         }
 
         private readonly Fenced<long> lastZxid = new Fenced<long>(0);
@@ -857,17 +857,24 @@ namespace org.apache.zookeeper {
 
             private async Task cleanup() {
                 await clientCnxnSocket.cleanup().ConfigureAwait(false);
+                var connLostPackets = new List<Packet>();
                 lock (pendingQueue) {
                     foreach (Packet p in pendingQueue) {
                         conLossPacket(p);
+                        connLostPackets.Add(p);
                     }
                     pendingQueue.Clear();
                 }
                 lock (outgoingQueue) {
                     foreach (Packet p in outgoingQueue) {
                         conLossPacket(p);
+                        connLostPackets.Add(p);
                     }
                     outgoingQueue.Clear();
+                }
+                foreach (var conLostPacket in connLostPackets)
+                {
+                    finishPacket(conLostPacket);
                 }
             }
 
@@ -1000,12 +1007,14 @@ namespace org.apache.zookeeper {
             // generated later at send-time, by an implementation of
             // ClientCnxnSocket::doIO(),
             // where the packet is actually sent.
+            bool isConnectionLostPacket = false;
             lock (outgoingQueue) {
                 packet = new Packet(h, rep, request, response, watchRegistration);
                 packet.clientPath = clientPath;
                 packet.serverPath = serverPath;
                 if (!getState().isAlive() || closing.Value) {
                     conLossPacket(packet);
+                    isConnectionLostPacket = true;
                 }
                 else {
                     // If the client is asking to close the session then
@@ -1016,6 +1025,7 @@ namespace org.apache.zookeeper {
                     outgoingQueue.AddLast(packet);
                 }
             }
+            if(isConnectionLostPacket) finishPacket(packet);
             clientCnxnSocket.wakeupCnxn();
             return packet;
         }

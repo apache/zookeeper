@@ -53,7 +53,7 @@ namespace org.apache.zookeeper
         private const int CONNECTDONE = 3;
 
         
-        readonly AsyncManualResetEvent somethingIsPending = new AsyncManualResetEvent();
+        private readonly SignalTask somethingIsPending = new SignalTask();
 
 	    private readonly Fenced<bool> readEnabled = new Fenced<bool>(false);
 
@@ -348,7 +348,7 @@ namespace org.apache.zookeeper
 
         internal override async Task doTransport(int waitTimeOut) 
         {
-            await TaskEx.WhenAny(somethingIsPending.WaitAsync(), TaskEx.Delay(waitTimeOut < 0 ? 0 : waitTimeOut)).ConfigureAwait(false);
+            await TaskEx.WhenAny(somethingIsPending.Task, TaskEx.Delay(waitTimeOut < 0 ? 0 : waitTimeOut)).ConfigureAwait(false);
             somethingIsPending.Reset();
 
             // Everything below and until we get back to the select is
