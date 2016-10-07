@@ -20,7 +20,6 @@
 
 using System;
 using System.Diagnostics;
-using System.Reflection;
 using System.Text;
 
 namespace org.apache.utils
@@ -100,42 +99,23 @@ namespace org.apache.utils
             if (exception == null) return string.Empty;
             var sb = new StringBuilder();
             sb.Append(PrintOneException(exception, level, includeStackTrace));
-            var reflectionException = exception as ReflectionTypeLoadException;
-            if (reflectionException != null)
+            
+            var aggregateException = exception as AggregateException;
+            if (aggregateException != null)
             {
-                var loaderExceptions = reflectionException.LoaderExceptions;
-                if (loaderExceptions == null || loaderExceptions.Length == 0)
+                var innerExceptions = aggregateException.InnerExceptions;
+                if (innerExceptions == null) return sb.ToString();
+
+                foreach (var inner in innerExceptions)
                 {
-                    sb.Append("No LoaderExceptions found");
-                }
-                else
-                {
-                    foreach (var inner in loaderExceptions)
-                    {
-                        // call recursively on all loader exceptions. Same level for all.
-                        sb.Append(PrintException_Helper(inner, level + 1, includeStackTrace));
-                    }
+                    // call recursively on all inner exceptions. Same level for all.
+                    sb.Append(PrintException_Helper(inner, level + 1, includeStackTrace));
                 }
             }
-            else
+            else if (exception.InnerException != null)
             {
-                var aggregateException = exception as AggregateException;
-                if (aggregateException != null)
-                {
-                    var innerExceptions = aggregateException.InnerExceptions;
-                    if (innerExceptions == null) return sb.ToString();
-
-                    foreach (var inner in innerExceptions)
-                    {
-                        // call recursively on all inner exceptions. Same level for all.
-                        sb.Append(PrintException_Helper(inner, level + 1, includeStackTrace));
-                    }
-                }
-                else if (exception.InnerException != null)
-                {
-                    // call recursively on a single inner exception.
-                    sb.Append(PrintException_Helper(exception.InnerException, level + 1, includeStackTrace));
-                }
+                // call recursively on a single inner exception.
+                sb.Append(PrintException_Helper(exception.InnerException, level + 1, includeStackTrace));
             }
             return sb.ToString();
         }
