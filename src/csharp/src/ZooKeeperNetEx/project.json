@@ -1,12 +1,12 @@
 ﻿{
   "title": "Apache ZooKeeper .NET async Client",
-  "version": "3.4.8.5",
+  "version": "3.4.9",
   "description": "A .NET async Client fully compliant with ZooKeeper, supporting all features. Fully Task-based Asynchronous (async/await). A great measure has been taken to follow the logic of the official Java client, including all relevant unit tests. In fact, the code is almost identical. Thus allowing easy evolution alongside the Java version.",
   "authors": [ "Shay Hazor" ],
   "packOptions": {
     "owners": [ "Shay Hazor" ],
     "summary": "A .NET async Client for ZooKeeper",
-    "releaseNotes": ".NET Core 1.0 RTM\nThis project is actively maintained at: https://github.com/shayhatsor/zookeeper \nPlease feel free to open an issue or ask a question there.\n\nKnown limitations:\nNo SASL support",
+    "releaseNotes": "Performance improvements and IPv6 support.\nThis project is actively maintained at: https://github.com/shayhatsor/zookeeper \nPlease feel free to open an issue or ask a question there.\n\nKnown limitations:\nNo SASL support",
     "tags": [ "ZooKeeper", ".NET", "Client", "Async"],
     "projectUrl": "https://github.com/shayhatsor/zookeeper",
     "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
