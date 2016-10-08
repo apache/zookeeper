@@ -27,7 +27,7 @@ namespace org.apache.jute
         public const string UNREASONBLE_LENGTH = "Unreasonable length = ";
         private readonly BigEndianBinaryReader reader;
 
-        static public BinaryInputArchive getArchive(BigEndianBinaryReader reader)
+        public static BinaryInputArchive getArchive(BigEndianBinaryReader reader)
         {
             return new BinaryInputArchive(reader);
         }
@@ -51,7 +51,8 @@ namespace org.apache.jute
         }
         
         /** Creates a new instance of BinaryInputArchive */
-        public BinaryInputArchive(BigEndianBinaryReader reader)
+
+        private BinaryInputArchive(BigEndianBinaryReader reader)
         {
             this.reader = reader;
         }

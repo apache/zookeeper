@@ -112,8 +112,10 @@ namespace org.apache.zookeeper
         /// </summary>
         public enum Code
 ﻿        {
-﻿            /** Everything is OK */
-﻿            OK = 0,
+            /// <summary>
+            /// Everything is OK
+            /// </summary>
+            OK = 0,
 
             // System and server-side errors.
             // This is never thrown by the server, it shouldn't be used other than
@@ -122,19 +124,19 @@ namespace org.apache.zookeeper
             //
             //SYSTEMERROR = -1,
 
-            /** A runtime inconsistency was found */
+            /// <summary> A runtime inconsistency was found </summary> 
             RUNTIMEINCONSISTENCY = -2,
-﻿            /** A data inconsistency was found */
+﻿            /// <summary> A data inconsistency was found </summary> 
 ﻿            DATAINCONSISTENCY = -3,
-﻿            /** Connection to the server has been lost */
+﻿            /// <summary> Connection to the server has been lost </summary> 
 ﻿            CONNECTIONLOSS = -4,
-﻿            /** Error while marshalling or unmarshalling data */
+﻿            /// <summary> Error while marshalling or unmarshalling data </summary> 
 ﻿            MARSHALLINGERROR = -5,
-﻿            /** Operation is unimplemented */
+﻿            /// <summary> Operation is unimplemented </summary> 
 ﻿            UNIMPLEMENTED = -6,
-﻿            /** Operation timeout */
+﻿            /// <summary> Operation timeout </summary> 
 ﻿            OPERATIONTIMEOUT = -7,
-﻿            /** Invalid arguments */
+﻿            /// <summary> Invalid arguments </summary> 
 ﻿            BADARGUMENTS = -8,
 
             // API errors.
@@ -145,31 +147,30 @@ namespace org.apache.zookeeper
             //
             //APIERROR = -100,
 
-            /** Node does not exist */
+            /// <summary> Node does not exist </summary> 
             NONODE = -101,
-﻿            /** Not authenticated */
+﻿            /// <summary> Not authenticated </summary> 
 ﻿            NOAUTH = -102,
-﻿            /** Version conflict */
+﻿            /// <summary> Version conflict </summary> 
 ﻿            BADVERSION = -103,
-﻿            /** Ephemeral nodes may not have children */
+﻿            /// <summary> Ephemeral nodes may not have children </summary> 
 ﻿            NOCHILDRENFOREPHEMERALS = -108,
-﻿            /** The node already exists */
+﻿            /// <summary> The node already exists </summary> 
 ﻿            NODEEXISTS = -110,
-﻿            /** The node has children */
+﻿            /// <summary> The node has children </summary> 
 ﻿            NOTEMPTY = -111,
-﻿            /** The session has been expired by the server */
+﻿            /// <summary> The session has been expired by the server </summary> 
 ﻿            SESSIONEXPIRED = -112,
-﻿            /** Invalid callback specified */
+﻿            /// <summary> Invalid callback specified </summary> 
 ﻿            INVALIDCALLBACK = -113,
-﻿            /** Invalid ACL specified */
+﻿            /// <summary> Invalid ACL specified </summary> 
 ﻿            INVALIDACL = -114,
-﻿            /** Client authentication failed */
+﻿            /// <summary> Client authentication failed </summary> 
 ﻿            AUTHFAILED = -115,
-﻿            /** Session moved to another server, so operation is ignored */
+﻿            /// <summary> Session moved to another server, so operation is ignored </summary> 
 ﻿            SESSIONMOVED = -118,
 
-﻿            /// <summary>
-﻿            /// State-changing request is passed to read-only server </summary>
+﻿            /// <summary> State-changing request is passed to read-only server </summary>
 ﻿            NOTREADONLY = -119
 ﻿        }
 

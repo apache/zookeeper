@@ -63,7 +63,7 @@ namespace org.apache.utils
             return ZooKeeperLogger.Instance.LogLevel == TraceLevel.Verbose;
         }
 
-        private void log(TraceLevel traceLevel, object message, Exception e = null)
+        private static void log(TraceLevel traceLevel, object message, Exception e = null)
         {
             ZooKeeperLogger.Instance.Log(traceLevel, className, message.ToString(), e);
         }

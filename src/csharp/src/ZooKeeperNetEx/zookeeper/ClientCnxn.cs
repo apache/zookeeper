@@ -548,13 +548,12 @@ namespace org.apache.zookeeper {
                         List<string> dataWatches = zooKeeper.getDataWatches();
                         List<string> existWatches = zooKeeper.getExistWatches();
                         List<string> childWatches = zooKeeper.getChildWatches();
-                        if (dataWatches.Count > 0 || existWatches.Count > 0 || childWatches.Count > 0) {
-                        var dataWatchesIter = prependChroot(dataWatches).GetEnumerator();
-                        var existWatchesIter = prependChroot(existWatches).GetEnumerator();
-                        var childWatchesIter = prependChroot(childWatches).GetEnumerator();
                         long setWatchesLastZxid = lastZxid.Value;
                         bool done = false;
-
+                        if (dataWatches.Count > 0 || existWatches.Count > 0 || childWatches.Count > 0) {
+                        using(var dataWatchesIter = prependChroot(dataWatches).GetEnumerator())
+                        using(var existWatchesIter = prependChroot(existWatches).GetEnumerator())
+                        using(var childWatchesIter = prependChroot(childWatches).GetEnumerator())
                         while (!done) {
                             var dataWatchesBatch = new List<string>();
                             var existWatchesBatch = new List<string>();

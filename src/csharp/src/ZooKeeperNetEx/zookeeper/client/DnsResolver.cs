@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using org.apache.utils;
@@ -38,6 +37,22 @@ namespace org.apache.zookeeper.client
 #endif
         }
 
+        private static void IgnoreTask(Task task)
+        {
+            if (task.IsCompleted)
+            {
+                var ignored = task.Exception;
+            }
+            else
+            {
+                task.ContinueWith(
+                    t => { var ignored = t.Exception; },
+                    CancellationToken.None,
+                    TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
+                    TaskScheduler.Default);
+            }
+        }
+
         private async Task<IEnumerable<ResolvedEndPoint>> Resolve(HostAndPort hostAndPort)
         {
             string host = hostAndPort.Host;
@@ -47,7 +62,8 @@ namespace org.apache.zookeeper.client
             await TaskEx.WhenAny(dnsResolvingTask, dnsTimeoutTask).ConfigureAwait(false);
             if (dnsTimeoutTask.IsCompleted)
             {
-                dnsResolvingTask.Ignore();
+                
+                IgnoreTask(dnsResolvingTask);
                 log.warn($"Timeout of {DNS_TIMEOUT}ms elapsed when resolving Host={host}");
             }
             else

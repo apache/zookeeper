@@ -31,24 +31,4 @@ namespace System.Threading.Tasks
     }
 
 #endif
-
-
-    internal static class TaskExtensions
-    {
-        public static void Ignore(this Task task)
-        {
-            if (task.IsCompleted)
-            {
-                var ignored = task.Exception;
-            }
-            else
-            {
-                task.ContinueWith(
-                    t => { var ignored = t.Exception; },
-                    CancellationToken.None,
-                    TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
-                    TaskScheduler.Default);
-            }
-        }
-    }
 }

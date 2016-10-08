@@ -32,7 +32,8 @@ namespace org.apache.jute
         }
 
         /** Creates a new instance of BinaryOutputArchive */
-        public BinaryOutputArchive(BigEndianBinaryWriter writer)
+
+        private BinaryOutputArchive(BigEndianBinaryWriter writer)
         {
             this.writer = writer;
         }

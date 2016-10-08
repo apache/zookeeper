@@ -265,7 +265,7 @@ namespace org.apache.zookeeper
 		/// register with the selection and connect </summary>
         /// <param name="sock"> the <seealso cref="Socket"/> </param>
 		/// <param name="addr"> the address of remote host </param>
-        private void registerAndConnect(Socket sock, IPEndPoint addr)
+        private void registerAndConnect(Socket sock, EndPoint addr)
 		{
 		    socket = sock;
 	        connectEventArgs.RemoteEndPoint = addr;

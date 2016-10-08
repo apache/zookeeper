@@ -32,8 +32,7 @@ namespace org.apache.utils
 
         public LogWriter()
         {
-            const string dateFormat = "yyyy-MM-dd-HH.mm.ss.fffZ";
-            FileName = $"ZK.{DateTime.UtcNow.ToString(dateFormat)}.log";
+            FileName = $"ZK.{DateTime.UtcNow:yyyy-MM-dd-HH.mm.ss.fffZ}.log";
             logFileWriter = new NonBlockingFileWriter(FileName);
         }
         
