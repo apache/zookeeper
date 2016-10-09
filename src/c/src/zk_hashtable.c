@@ -371,7 +371,7 @@ static void removeWatcherFromList(watcher_object_list_t *wl, watcher_fn watcher,
     while (e){
         if (e->next &&
             e->next->watcher == watcher &&
-            e->context == watcherCtx) {
+            e->next->context == watcherCtx) {
             watcher_object_t *this = e->next;
             e->next = e->next->next;
             free(this);
