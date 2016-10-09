@@ -20,8 +20,6 @@ package org.apache.zookeeper.server;
 
 import org.apache.zookeeper.CreateMode;
 
-import static org.jboss.netty.handler.codec.rtsp.RtspHeaders.Values.TTL;
-
 public enum EphemeralType {
     /**
      * Not ephemeral
