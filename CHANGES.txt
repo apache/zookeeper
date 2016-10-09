@@ -65,6 +65,9 @@ BUGFIXES:
   ZOOKEEPER-2579: ZooKeeper server should verify that dataDir and
   snapDir are writeable before starting (Abraham Fine via phunt)
 
+  ZOOKEEPER-2611: zoo_remove_watchers - can remove the wrong watch
+  (Eyal Leshmem via rgs)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-2505: Use shared library instead of static library in C
