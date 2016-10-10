@@ -79,10 +79,10 @@ public class CreateCommand extends CliCommand {
             throw new MalformedCommandException("-t argument must be a long value");
         }
 
-        if ( hasT && hasE ) {
+        if (hasT && hasE) {
             throw new MalformedCommandException("TTLs cannot be used with Ephemeral znodes");
         }
-        if ( hasT && hasC ) {
+        if (hasT && hasC) {
             throw new MalformedCommandException("TTLs cannot be used with Container znodes");
         }
 
@@ -98,7 +98,7 @@ public class CreateCommand extends CliCommand {
         } else {
             flags = hasT ? CreateMode.PERSISTENT_WITH_TTL : CreateMode.PERSISTENT;
         }
-        if ( hasT ) {
+        if (hasT) {
             try {
                 EphemeralType.ttlToEphemeralOwner(ttl);
             } catch (IllegalArgumentException e) {
