@@ -18,11 +18,9 @@
 -->
 
   <property name="repo.maven.org"
-    value="http://repo1.maven.org/maven2/" override="false"/>
+    value="https://repo1.maven.org/maven2/" override="false"/>
   <property name="repo.jboss.org"
-    value="http://repository.jboss.org/nexus/content/groups/public/" override="false"/>
-  <property name="repo.sun.org"
-    value="http://download.java.net/maven/2/" override="false"/>
+    value="https://repository.jboss.org/nexus/content/groups/public/" override="false"/>
   <property name="maven2.pattern"
     value="[organisation]/[module]/[revision]/[module]-[revision]"/>
   <property name="maven2.pattern.ext" value="${maven2.pattern}.[ext]"/>
@@ -33,13 +31,10 @@
       pattern="${maven2.pattern.ext}" m2compatible="true"/>
     <ibiblio name="jboss-maven2" root="${repo.jboss.org}"
       pattern="${maven2.pattern.ext}" m2compatible="true"/>
-    <ibiblio name="sun-maven2" root="${repo.sun.org}"
-      pattern="${maven2.pattern.ext}" m2compatible="true"/>
 
     <chain name="default" dual="true">
       <resolver ref="maven2"/>
       <resolver ref="jboss-maven2"/>
-      <resolver ref="sun-maven2"/>
     </chain>
 
   </resolvers>

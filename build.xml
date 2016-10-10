@@ -113,7 +113,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
     <property name="ivy.version" value="2.4.0"/>
     <property name="ivy.url"
-              value="http://repo2.maven.org/maven2/org/apache/ivy/ivy" />
+              value="https://repo1.maven.org/maven2/org/apache/ivy/ivy" />
     <property name="ivy.home" value="${user.home}/.ant" />
     <property name="ivy.lib" value="${build.dir}/lib"/>
     <property name="ivy.package.lib" value="${build.dir}/package/lib"/>
@@ -121,7 +121,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="ivy.jdiff.lib" value="${build.dir}/jdiff/lib"/>
     <property name="ivysettings.xml" value="${basedir}/ivysettings.xml"/>
     
-    <property name="mvnrepo" value="http://repo2.maven.org/maven2"/>
+    <property name="mvnrepo" value="https://repo1.maven.org/maven2"/>
     <property name="tsk.org" value="/org/apache/maven/maven-ant-tasks/"/>
     <property name="ant-task.version" value="2.1.3"/>
     <property name="ant_task_repo_url"

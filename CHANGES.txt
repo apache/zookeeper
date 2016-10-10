@@ -14,6 +14,8 @@ NEW FEATURES:
 
   ZOOKEEPER-1962: Add a CLI command to recursively list a znode and
   children (Gautam Gopalakrishnan, Hongchao Deng, Enis Soztutar via phunt)
+  
+  ZOOKEEPER-2169: Enable creation of nodes with TTLs (Jordan Zimmerman via camille)
 
 BUGFIXES:
   ZOOKEEPER-1784 wrong check for COMMITANDACTIVATE in observer code, Learner.java (rgs via shralex).
@@ -526,6 +528,9 @@ IMPROVEMENTS:
 
   ZOOKEEPER-2557: Update gitignore to account for other file extensions.
   (Edward Ribeiro via cnauroth)
+
+  ZOOKEEPER-2594: Use TLS for downloading artifacts during build
+  (Olaf Flebbe via phunt)
 
 Release 3.5.0 - 8/4/2014
 

@@ -20,6 +20,7 @@ package org.apache.zookeeper.server;
 
 import org.apache.zookeeper.CreateMode;
 
+
 public enum EphemeralType {
     /**
      * Not ephemeral
