@@ -36,66 +36,79 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
+      <version>${cdh.slf4j.version}</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-log4j12</artifactId>
+      <version>${cdh.slf4j.version}</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
+      <version>${cdh.log4j.version}</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>jline</groupId>
       <artifactId>jline</artifactId>
+      <version>${cdh.jline.version}</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.jboss.netty</groupId>
       <artifactId>netty</artifactId>
+      <version>${cdh.netty.version}</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
+      <version>${cdh.junit.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-all</artifactId>
+      <version>${cdh.mockito.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>checkstyle</groupId>
       <artifactId>checkstyle</artifactId>
+      <version>${cdh.checkstyle.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>jdiff</groupId>
       <artifactId>jdiff</artifactId>
+      <version>${cdh.jdiff.version}</version>
       <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>xerces</groupId>
       <artifactId>xerces</artifactId>
+      <version>${cdh.xerces.version}</version>
       <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.apache.rat</groupId>
       <artifactId>apache-rat-tasks</artifactId>
+      <version>${cdh.rat.version}</version>     
       <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>commons-lang</groupId>
       <artifactId>commons-lang</artifactId>
+      <version>${cdh.commons-lang.version}</version>
       <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>commons-collections</groupId>
       <artifactId>commons-collections</artifactId>
+      <version>${cdh.commons-collections.version}</version>
       <optional>true</optional>
     </dependency>
   </dependencies>

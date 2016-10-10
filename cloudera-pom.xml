@@ -163,24 +163,33 @@
   
   <build>
     <plugins>
+
       <plugin>
-        <groupId>com.cloudera.kitchen</groupId>
-        <artifactId>maven-deps-to-props-plugin</artifactId>
-        
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>2.7</version>
         <executions>
           <execution>
-            <id>build.properties</id>
-            <configuration>
-              <templateFile>${basedir}/cloudera/maven-packaging/templates/build.template</templateFile>
-              <targetFile>${basedir}/build.properties</targetFile>
-            </configuration>
-            <goals>
-              <goal>generate</goal>
-            </goals>
+            <id>copy-resources</id>
             <phase>process-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${basedir}</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${basedir}/cloudera/templates</directory>
+                  <includes>
+                    <include>build.properties</include>
+                    </includes>
+                    <filtering>true</filtering>
+                </resource>
+              </resources>
+            </configuration>
           </execution>
         </executions>
       </plugin>
+      
     </plugins>
   </build>
     

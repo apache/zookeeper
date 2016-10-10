@@ -38,6 +38,7 @@
     </and>
     <then>
       <exec  executable="mvn" dir="${basedir}" failonerror="true">
+        <arg value="-X" />
         <arg value="-f" />
         <arg value="cloudera-pom.xml" />
         <arg value="process-resources"/>
@@ -685,7 +686,7 @@
       </copy>
 
       <copy todir="${dist.dir}/" file="cloudera-pom.xml" />
-      <copy todir="${dist.dir}/" file="build.properties" />
+      <copy todir="${dist.dir}/" file="cloudera/build.properties" />
 
       <subant target="package">
         <!--Pass down the version in case its needed again and the target
