@@ -52,7 +52,7 @@ class WrappedAuthenticationProvider implements ServerAuthenticationProvider {
      * forwards to older method {@link #matches(String, String)}
      */
     @Override
-    public boolean matchesOp(String path, String id, String aclExpr, int perm, List<ACL> setAcls) {
+    public boolean matchesOp(ServerCnxn cnxn, String path, String id, String aclExpr, int perm, List<ACL> setAcls) {
         return matches(id, aclExpr);
     }
 

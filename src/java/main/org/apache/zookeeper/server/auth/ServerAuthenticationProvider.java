@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server.auth;
 
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
 
 import java.util.List;
@@ -40,6 +41,8 @@ public interface ServerAuthenticationProvider extends AuthenticationProvider {
      * expression in the ACL. This allows schemes to use application specific
      * wild cards.
      *
+     * @param cnxn
+     *                the active server connection being authenticated
      * @param path
      *                the path of the operation being authenticated
      * @param id
@@ -52,5 +55,5 @@ public interface ServerAuthenticationProvider extends AuthenticationProvider {
      *                for set ACL operations, the list of ACLs being set. Otherwise null.
      * @return true if the arguments can be matched by the expression.
      */
-    boolean matchesOp(String path, String id, String aclExpr, int perm, List<ACL> setAcls);
+    boolean matchesOp(ServerCnxn cnxn, String path, String id, String aclExpr, int perm, List<ACL> setAcls);
 }
