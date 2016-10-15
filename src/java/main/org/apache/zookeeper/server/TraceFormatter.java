@@ -37,6 +37,8 @@ public class TraceFormatter {
             return "create";
         case OpCode.create2:
             return "create2";
+        case OpCode.createTTL:
+            return "createTtl";
         case OpCode.createContainer:
             return "createContainer";
         case OpCode.delete:

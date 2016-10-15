@@ -1331,6 +1331,10 @@ public:
                       &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
       CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
 
+      rc = zoo_create(zk, "/something2", "", 0,
+                      &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+      CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+
       char buf[1024];
       int blen = sizeof(buf);
       rc = zoo_get(zk, "/something", 1, buf, &blen, NULL);
@@ -1381,13 +1385,29 @@ public:
       zk = createClient(&ctx);
 
       /* add a watch, stop the server, and remove it locally */
-      rc = zoo_wget(zk, "/something", watcher_remove_watchers, NULL,
+      void* ctx1=(void*)0x1;
+      void* ctx2=(void*)0x2;
+
+      rc = zoo_wget(zk, "/something", watcher_remove_watchers, ctx1,
                     buf, &blen, NULL);
       CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+
+      rc = zoo_wget(zk, "/something2", watcher_remove_watchers, ctx2,
+                         buf, &blen, NULL);
+      CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+
       stopServer();
       rc = zoo_remove_watchers(zk, "/something", ZWATCHERTYPE_DATA,
-                               watcher_remove_watchers, NULL, 1);
+                               watcher_remove_watchers, ctx1, 1);
       CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+
+      rc = zoo_remove_watchers(zk, "/something", ZWATCHERTYPE_DATA,
+                                    watcher_remove_watchers, ctx1, 1);
+      CPPUNIT_ASSERT_EQUAL((int)ZNOWATCHER, rc);
+
+      rc = zoo_remove_watchers(zk, "/something2", ZWATCHERTYPE_DATA,
+                                          watcher_remove_watchers, ctx2, 1);
+      CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
     }
 };
 
