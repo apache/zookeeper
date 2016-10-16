@@ -14,6 +14,9 @@ BUGFIXES:
   ZOOKEEPER-2579: ZooKeeper server should verify that dataDir and
   snapDir are writeable before starting (Abraham Fine via phunt)
 
+  ZOOKEEPER-2467: NullPointerException when redo Command is passed negative value
+  (Rakesh Kumar Singh via rakeshr)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-2507: C unit test improvement: line break between

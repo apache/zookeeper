@@ -255,4 +255,27 @@ public class ZooKeeperTest extends ClientBase {
         Assert.assertEquals("empty string is not taken as third argument", zkMain.cl.getCmdArgument(2), "");
         Assert.assertEquals("empty string is not taken as fourth argument", zkMain.cl.getCmdArgument(3), "");
     }
+
+    // ZOOKEEPER-2467 : Testing negative number for redo command
+    @Test
+    public void testRedoWithNegativeCmdNumber() throws Exception {
+        final ZooKeeper zk = createClient();
+        ZooKeeperMain zkMain = new ZooKeeperMain(zk);
+        String cmd1 = "redo -1";
+
+        // setup redirect out/err streams to get System.in/err, use this
+        // judiciously!
+        final PrintStream systemOut = System.out; // get current out
+        final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(outContent));
+        try {
+            zkMain.executeLine(cmd1);
+            Assert.assertEquals("Command index out of range", outContent
+                    .toString().trim());
+        } finally {
+            // revert redirect of out/err streams - important step!
+            System.setOut(systemOut);
+        }
+    }
+
 }
