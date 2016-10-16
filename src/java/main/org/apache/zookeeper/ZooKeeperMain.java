@@ -616,7 +616,7 @@ public class ZooKeeperMain {
             System.exit(exitCode);
         } else if (cmd.equals("redo") && args.length >= 2) {
             Integer i = Integer.decode(args[1]);
-            if (commandCount <= i) { // don't allow redoing this redo
+            if (commandCount <= i || i < 0) { // don't allow redoing this redo
                 throw new MalformedCommandException("Command index out of range");
             }
             cl.parseCommand(history.get(i));
