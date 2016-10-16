@@ -92,9 +92,7 @@ public class KeyAuthenticationProvider implements ServerAuthenticationProvider {
             if (keyVal!=0 && ((authVal % keyVal) != 0)) {
               return false;
             }
-        } catch (NumberFormatException nfe) {
-          return false;
-        } catch (UnsupportedEncodingException e) {
+        } catch (NumberFormatException | UnsupportedEncodingException nfe) {
           return false;
         }
         return true;

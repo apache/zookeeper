@@ -21,6 +21,8 @@ package org.apache.zookeeper.server.auth;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.server.ServerCnxn;
 
+import java.util.List;
+
 /**
  * This interface is implemented by authentication providers to add new kinds of
  * authentication schemes to ZooKeeper.
@@ -58,7 +60,7 @@ public interface AuthenticationProvider {
      * @param aclExpr
      *                the expression to match ids against.
      * @return true if the id can be matched by the expression.
-     * @deprecated newer implementations should use {@link ServerAuthenticationProvider#matchesOp(String, String, String, int)}
+     * @deprecated newer implementations should use {@link ServerAuthenticationProvider#matchesOp(ServerCnxn, String, String, String, int, List)}
      */
     boolean matches(String id, String aclExpr);
 

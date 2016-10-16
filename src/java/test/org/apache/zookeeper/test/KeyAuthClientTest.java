@@ -18,32 +18,20 @@
 
 package org.apache.zookeeper.test;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.ZooDefs.Ids;
-import org.apache.zookeeper.ZooDefs.Perms;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
-
 import org.apache.zookeeper.data.ACL;
-import org.apache.zookeeper.data.Id;
-
 import org.junit.Assert;
 import org.junit.Test;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+
 public class KeyAuthClientTest extends ClientBase {
     private static final Logger LOG = LoggerFactory.getLogger(KeyAuthClientTest.class);
-    static final ArrayList<ACL> KeyACLs = new ArrayList<ACL>(
-                Collections.singletonList(new ACL(Perms.ALL, new Id("key","anyone"))));
     static {
         System.setProperty("zookeeper.authProvider.1","org.apache.zookeeper.server.auth.KeyAuthenticationProvider");
     }
@@ -58,7 +46,7 @@ public class KeyAuthClientTest extends ClientBase {
           LOG.debug("  "+acl.toString());
         }
       } catch (Exception e) {
-          LOG.debug("  EXCEPTION THROWN");
+          LOG.debug("  EXCEPTION THROWN", e);
       }
     }
 
@@ -87,12 +75,14 @@ public class KeyAuthClientTest extends ClientBase {
         try {
             zk.getData("/abc", false, null);
             Assert.fail("Should not be able to get data");
-        } catch (KeeperException e) {
+        } catch (KeeperException correct) {
+            // correct
         }
         try {
             zk.setData("/abc", "testData2".getBytes(), -1);
             Assert.fail("Should not be able to set data");
-        } catch (KeeperException e) {
+        } catch (KeeperException correct) {
+            // correct
         } finally {
             zk.close();
         }
