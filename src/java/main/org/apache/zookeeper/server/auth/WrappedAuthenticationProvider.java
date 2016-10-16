@@ -27,7 +27,7 @@ import java.util.List;
 
 /**
  * Provides backwards compatibility between older {@link AuthenticationProvider}
- * implementations and newer {@link AuthenticationProvider} implementations.
+ * implementations and the new {@link ServerAuthenticationProvider} interface.
  */
 class WrappedAuthenticationProvider implements ServerAuthenticationProvider {
     private final AuthenticationProvider implementation;
