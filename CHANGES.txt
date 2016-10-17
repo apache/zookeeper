@@ -28,6 +28,9 @@ IMPROVEMENTS:
   ZOOKEEPER-2594: Use TLS for downloading artifacts during build
   (Olaf Flebbe via phunt)
 
+  ZOOKEEPER-2606: SaslServerCallbackHandler#handleAuthorizeCallback() should
+  log the exception (Ted Yu via fpj)
+
 Release 3.4.9 - 2016-08-23
 
 Backward compatible changes:
