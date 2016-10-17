@@ -139,7 +139,7 @@ public class DatadirCleanupManager {
             try {
                 PurgeTxnLog.purge(new File(logsDir), new File(snapsDir), snapRetainCount);
             } catch (Exception e) {
-                LOG.error("Error occured while purging.", e);
+                LOG.error("Error occurred while purging.", e);
             }
             LOG.info("Purge task completed.");
         }
