@@ -21,7 +21,6 @@ package org.apache.zookeeper.server.auth;
 import java.util.Enumeration;
 import java.util.HashMap;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,10 +33,11 @@ public class ProviderRegistry {
     private static HashMap<String, AuthenticationProvider> authenticationProviders =
         new HashMap<>();
 
-    @VisibleForTesting
+    //VisibleForTesting
     public static void reset() {
         synchronized (ProviderRegistry.class) {
             initialized = false;
+            authenticationProviders.clear();
         }
     }
 
