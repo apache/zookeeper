@@ -27,11 +27,10 @@
 #include "Util.h"
 #include "WatchUtil.h"
 
+#ifdef THREADED
 class Zookeeper_readOnly : public CPPUNIT_NS::TestFixture {
     CPPUNIT_TEST_SUITE(Zookeeper_readOnly);
-#ifdef THREADED
     CPPUNIT_TEST(testReadOnly);
-#endif
     CPPUNIT_TEST_SUITE_END();
 
     static void watcher(zhandle_t* zh, int type, int state,
@@ -108,3 +107,4 @@ public:
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(Zookeeper_readOnly);
+#endif

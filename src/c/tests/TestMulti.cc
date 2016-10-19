@@ -160,12 +160,12 @@ public:
     }
 } watchctx_t;
 
+#ifdef THREADED
 class Zookeeper_multi : public CPPUNIT_NS::TestFixture
 {
     CPPUNIT_TEST_SUITE(Zookeeper_multi);
 //FIXME: None of these tests pass in single-threaded mode. It seems to be a
 //flaw in the test suite setup.
-#ifdef THREADED
     CPPUNIT_TEST(testCreate);
     CPPUNIT_TEST(testCreateDelete);
     CPPUNIT_TEST(testInvalidVersion);
@@ -178,7 +178,6 @@ class Zookeeper_multi : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testCheck);
     CPPUNIT_TEST(testWatch);
     CPPUNIT_TEST(testSequentialNodeCreateInAsyncMulti);
-#endif
     CPPUNIT_TEST_SUITE_END();
 
     static void watcher(zhandle_t *, int type, int state, const char *path,void*v){
@@ -701,3 +700,4 @@ public:
 volatile int Zookeeper_multi::count;
 const char Zookeeper_multi::hostPorts[] = "127.0.0.1:22181";
 CPPUNIT_TEST_SUITE_REGISTRATION(Zookeeper_multi);
+#endif
