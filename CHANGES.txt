@@ -397,6 +397,12 @@ BUGFIXES:
   ZOOKEEPER-2611: zoo_remove_watchers - can remove the wrong watch
   (Eyal Leshmem via rgs)
 
+  ZOOKEEPER-2467: NullPointerException when redo Command is passed negative value
+  (Rakesh Kumar Singh via rakeshr)
+
+  ZOOKEEPER-2606: SaslServerCallbackHandler#handleAuthorizeCallback() should log
+  the exception (Ted Yu via fpj) 
+
 IMPROVEMENTS:
   ZOOKEEPER-2024 Major throughput improvement with mixed workloads (Kfir Lev-Ari via shralex)
 

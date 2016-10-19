@@ -433,6 +433,28 @@ public class ZooKeeperTest extends ClientBase {
         }
     }
 
+    // ZOOKEEPER-2467 : Testing negative number for redo command
+    @Test
+    public void testRedoWithNegativeCmdNumber() throws Exception {
+        final ZooKeeper zk = createClient();
+        ZooKeeperMain zkMain = new ZooKeeperMain(zk);
+        String cmd1 = "redo -1";
+
+        // setup redirect out/err streams to get System.in/err, use this
+        // judiciously!
+        final PrintStream systemErr = System.err; // get current err
+        final ByteArrayOutputStream errContent = new ByteArrayOutputStream();
+        System.setErr(new PrintStream(errContent));
+        try {
+            zkMain.executeLine(cmd1);
+            Assert.assertEquals("Command index out of range", errContent
+                    .toString().trim());
+        } finally {
+            // revert redirect of out/err streams - important step!
+            System.setErr(systemErr);
+        }
+    }
+
     private static void runCommandExpect(CliCommand command, List<String> expectedResults)
             throws Exception {
         // call command and put result in byteStream
