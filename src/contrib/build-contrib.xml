@@ -41,7 +41,7 @@
 
   <property name="build.encoding" value="ISO-8859-1"/>
 
-  <property name="ivy.version" value="2.2.0"/>
+  <property name="ivy.version" value="2.4.0"/>
   <property name="ivy.url"
             value="http://repo2.maven.org/maven2/org/apache/ivy/ivy" />
   <property name="ivy.home" value="${user.home}/.ant" />
