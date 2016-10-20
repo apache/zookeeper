@@ -37,6 +37,7 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.zookeeper.server.ZooKeeperThread;
+import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -306,7 +307,7 @@ public class QuorumCnxManager {
      * connection if it wins. Notice that it checks whether it has a connection
      * to this server already or not. If it does, then it sends the smallest
      * possible long value to lose the challenge.
-     * 
+     *
      */
     public void receiveConnection(Socket sock) {
         Long sid = null, protocolVersion = null;
@@ -468,31 +469,33 @@ public class QuorumCnxManager {
      */
     
     synchronized void connectOne(long sid){
+        connectOne(sid, self.getLastSeenQuorumVerifier());
+    }
+
+    synchronized void connectOne(long sid, QuorumVerifier lastSeenQV){
         if (senderWorkerMap.get(sid) != null) {
-             LOG.debug("There is a connection already for server " + sid);
-             return;
+            LOG.debug("There is a connection already for server " + sid);
+            return;
         }
-        synchronized(self) {
-           boolean knownId = false;
-            // Resolve hostname for the remote server before attempting to
-            // connect in case the underlying ip address has changed.
-            self.recreateSocketAddresses(sid);
-            if (self.getView().containsKey(sid)) {
-               knownId = true;
-                if (connectOne(sid, self.getView().get(sid).electionAddr))
-                   return;
-            } 
-            if (self.getLastSeenQuorumVerifier()!=null && self.getLastSeenQuorumVerifier().getAllMembers().containsKey(sid)
-                   && (!knownId || (self.getLastSeenQuorumVerifier().getAllMembers().get(sid).electionAddr !=
-                   self.getView().get(sid).electionAddr))) {
-               knownId = true;
-                if (connectOne(sid, self.getLastSeenQuorumVerifier().getAllMembers().get(sid).electionAddr))
-                   return;
-            } 
-            if (!knownId) {
-                LOG.warn("Invalid server id: " + sid);
+        boolean knownId = false;
+        // Resolve hostname for the remote server before attempting to
+        // connect in case the underlying ip address has changed.
+        self.recreateSocketAddresses(sid);
+        if (self.getView().containsKey(sid)) {
+            knownId = true;
+            if (connectOne(sid, self.getView().get(sid).electionAddr))
                 return;
-            }
+        }
+        if (lastSeenQV != null && lastSeenQV.getAllMembers().containsKey(sid)
+                && (!knownId || (lastSeenQV.getAllMembers().get(sid).electionAddr !=
+                self.getView().get(sid).electionAddr))) {
+            knownId = true;
+            if (connectOne(sid, lastSeenQV.getAllMembers().get(sid).electionAddr))
+                return;
+        }
+        if (!knownId) {
+            LOG.warn("Invalid server id: " + sid);
+            return;
         }
     }
     
