@@ -22,7 +22,7 @@
 #
 # Usage: ./zk-merge-pr.py (see config env vars below)
 #
-# This utility assumes you already have local a ZooKeeper git folder and that you
+# This utility assumes you already have a local ZooKeeper git folder and that you
 # have added remotes corresponding to both:
 # (i) the github apache ZooKeeper mirror and
 # (ii) the apache ZooKeeper git repo.
@@ -104,7 +104,7 @@ def run_cmd(cmd):
 
 def continue_maybe(prompt):
     result = raw_input("\n%s (y/n): " % prompt)
-    if result.lower() != "y":
+    if result.lower().strip() != "y":
         fail("Okay, exiting")
 
 def clean_up():
@@ -157,7 +157,7 @@ def merge_pr(pr_num, target_ref, title, body, pr_repo_desc):
 
     if len(commits) > 1:
         result = raw_input("List pull request commits in squashed commit message? (y/n): ")
-        if result.lower() == "y":
+        if result.lower().strip() == "y":
           should_list_commits = True
         else:
           should_list_commits = False
@@ -386,11 +386,47 @@ def standardize_jira_ref(text):
 
     return clean_text
 
+def get_remote_repos():
+    repos = run_cmd("git remote -v").split()
+
+    dict = {}
+    for i in range(0, len(repos), 3):
+        dict[repos[i]] = repos[i+1]
+    return dict
+
+
+def check_git_remote():
+    repos = get_remote_repos()
+
+    # check if all remote endpoints' URLs point to project git repo
+    name = PROJECT_NAME + ".git"
+    for url in repos.values():
+        if not url.endswith(name):
+            fail("Error: not a %s git repo or at least one remote is invalid" % PROJECT_NAME)
+
+    if not PR_REMOTE_NAME in repos:
+        fail("Error: PR_REMOTE_NAME (%s) environment variable has not been set!" % PR_REMOTE_NAME)
+
+    if not PUSH_REMOTE_NAME in repos:
+        fail("Error: PUSH_REMOTE_NAME (%s) environment variable has not been set!" % PUSH_REMOTE_NAME)
+
+
+def check_jira_env():
+    if JIRA_IMPORTED:
+       if JIRA_USERNAME.strip() == "" or JIRA_PASSWORD.strip() == "":
+           msg ="JIRA credentials are not set. Want to continue?"
+           continue_maybe(msg)
+
+
 def main():
     global original_head
 
     original_head = get_current_branch()
+    
+    check_jira_env()
 
+    check_git_remote()
+    
     branches = get_json("%s/branches" % GITHUB_API_BASE)
     branch_names = filter(lambda x: x.startswith(RELEASE_BRANCH_PREFIX), [x['name'] for x in branches])
     # Assumes branch names can be sorted lexicographically
@@ -414,7 +450,7 @@ def main():
         print "Original: %s" % commit_title
         print "Modified: %s" % modified_title
         result = raw_input("Would you like to use the modified title? (y/n): ")
-        if result.lower() == "y":
+        if result.lower().strip() == "y":
             commit_title = modified_title
             print "Using modified title:"
         else:
@@ -461,7 +497,7 @@ def main():
     merge_hash = merge_pr(pr_num, target_ref, commit_title, body, pr_repo_desc)
 
     pick_prompt = "Would you like to pick %s into another branch?" % merge_hash
-    while raw_input("\n%s (y/n): " % pick_prompt).lower() == "y":
+    while raw_input("\n%s (y/n): " % pick_prompt).lower().strip() == "y":
         merged_refs = merged_refs + [cherry_pick(pr_num, merge_hash, latest_branch)]
 
     if JIRA_IMPORTED:
