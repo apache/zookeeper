@@ -319,12 +319,12 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                         && id.getId().equals("anyone")) {
                     return;
                 }
-                ServerAuthenticationProvider ap = ProviderRegistry.getProvider(zks, id
+                ServerAuthenticationProvider ap = ProviderRegistry.getServerProvider(id
                         .getScheme());
                 if (ap != null) {
                     for (Id authId : ids) {
                         if (authId.getScheme().equals(id.getScheme())
-                                && ap.matchesOp(cnxn, path, authId.getId(), id.getId(), perm, setAcls)) {
+                                && ap.matches(zks, cnxn, path, authId.getId(), id.getId(), perm, setAcls)) {
                             return;
                         }
                     }
@@ -967,8 +967,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 // authenticated ids of the requestor
                 boolean authIdValid = false;
                 for (Id cid : authInfo) {
-                    AuthenticationProvider ap =
-                        ProviderRegistry.getProvider(zks, cid.getScheme());
+                    ServerAuthenticationProvider ap =
+                        ProviderRegistry.getServerProvider(cid.getScheme());
                     if (ap == null) {
                         LOG.error("Missing AuthenticationProvider for "
                             + cid.getScheme());
@@ -981,7 +981,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                     throw new KeeperException.InvalidACLException(path);
                 }
             } else {
-                AuthenticationProvider ap = ProviderRegistry.getProvider(zks, id.getScheme());
+                ServerAuthenticationProvider ap = ProviderRegistry.getServerProvider(id.getScheme());
                 if (ap == null || !ap.isValid(id.getId())) {
                     throw new KeeperException.InvalidACLException(path);
                 }

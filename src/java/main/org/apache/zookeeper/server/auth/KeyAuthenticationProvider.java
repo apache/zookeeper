@@ -55,21 +55,14 @@ import org.slf4j.LoggerFactory;
  * bootstrapping may occur.
  *
  */
-public class KeyAuthenticationProvider implements ServerAuthenticationProvider {
+public class KeyAuthenticationProvider extends ServerAuthenticationProvider {
     private static final Logger LOG = LoggerFactory.getLogger(KeyAuthenticationProvider.class);
-    private volatile ZooKeeperServer zks;
-
-    @Override
-    public void setZooKeeperServer(ZooKeeperServer zks) {
-        this.zks = zks;
-        LOG.debug("KeyAuthenticationProvider plugin loaded");
-    }
 
     public String getScheme() {
         return "key";
     }
 
-    public byte[] getKey() {
+    public byte[] getKey(ZooKeeperServer zks) {
         ZKDatabase db = zks.getZKDatabase();
         if (db != null) {
             try {
@@ -98,8 +91,9 @@ public class KeyAuthenticationProvider implements ServerAuthenticationProvider {
         return true;
     }
 
-    public KeeperException.Code handleAuthentication(ServerCnxn cnxn, byte[] authData) {
-        byte[] key = getKey();
+    @Override
+    public KeeperException.Code handleAuthentication(ZooKeeperServer zks, ServerCnxn cnxn, byte[] authData) {
+        byte[] key = getKey(zks);
         String authStr = "";
         String keyStr = "";
         try {
@@ -130,13 +124,8 @@ public class KeyAuthenticationProvider implements ServerAuthenticationProvider {
         return KeeperException.Code.OK;
     }
 
-
-    public boolean matches(String id, String aclExpr) {
-        throw new UnsupportedOperationException();  // should never get here
-    }
-
     @Override
-    public boolean matchesOp(ServerCnxn cnxn, String path, String id, String aclExpr, int perm, List<ACL> setAcls) {
+    public boolean matches(ZooKeeperServer zks, ServerCnxn cnxn, String path, String id, String aclExpr, int perm, List<ACL> setAcls) {
         return id.equals(aclExpr);
     }
 

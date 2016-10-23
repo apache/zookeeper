@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.auth;
 
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
@@ -25,22 +26,31 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 import java.util.List;
 
 /**
- * A variation on {@link AuthenticationProvider} that provides a method
- * for the ZooKeeper server to be set
+ * A variation on {@link AuthenticationProvider} that provides additional
+ * parameters for more detailed authentication
  */
-public interface ServerAuthenticationProvider extends AuthenticationProvider {
+public abstract class ServerAuthenticationProvider implements AuthenticationProvider {
     /**
-     * Called shortly after construction by ZooKeeper to set the database for later use
+     * This method is called when a client passes authentication data for this
+     * scheme. The authData is directly from the authentication packet. The
+     * implementor may attach new ids to the authInfo field of cnxn or may use
+     * cnxn to send packets back to the client.
      *
-     * @param zks ZK db
+     * @param cnxn
+     *                the cnxn that received the authentication information.
+     * @param authData
+     *                the authentication data received.
+     * @return indication of success or failure
      */
-    void setZooKeeperServer(ZooKeeperServer zks);
+    public abstract KeeperException.Code handleAuthentication(ZooKeeperServer zks, ServerCnxn cnxn, byte authData[]);
 
     /**
      * This method is called to see if the given id matches the given id
      * expression in the ACL. This allows schemes to use application specific
      * wild cards.
      *
+     * @param zks
+     *                the ZooKeeper server instance
      * @param cnxn
      *                the active server connection being authenticated
      * @param path
@@ -55,5 +65,15 @@ public interface ServerAuthenticationProvider extends AuthenticationProvider {
      *                for set ACL operations, the list of ACLs being set. Otherwise null.
      * @return true if the arguments can be matched by the expression.
      */
-    boolean matchesOp(ServerCnxn cnxn, String path, String id, String aclExpr, int perm, List<ACL> setAcls);
+    public abstract boolean matches(ZooKeeperServer zks, ServerCnxn cnxn, String path, String id, String aclExpr, int perm, List<ACL> setAcls);
+
+    @Override
+    public KeeperException.Code handleAuthentication(ServerCnxn cnxn, byte[] authData) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean matches(String id, String aclExpr) {
+        throw new UnsupportedOperationException();
+    }
 }

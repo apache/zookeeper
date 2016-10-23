@@ -41,7 +41,7 @@ public class ProviderRegistry {
         }
     }
 
-    public static void initialize(ZooKeeperServer zks) {
+    public static void initialize() {
         synchronized (ProviderRegistry.class) {
             if (initialized)
                 return;
@@ -59,9 +59,6 @@ public class ProviderRegistry {
                                 .loadClass(className);
                         AuthenticationProvider ap = (AuthenticationProvider) c
                                 .newInstance();
-                        if (ap instanceof ServerAuthenticationProvider) {
-                            ((ServerAuthenticationProvider)ap).setZooKeeperServer(zks);
-                        }
                         authenticationProviders.put(ap.getScheme(), ap);
                     } catch (Exception e) {
                         LOG.warn("Problems loading " + className,e);
@@ -72,10 +69,14 @@ public class ProviderRegistry {
         }
     }
 
-    public static ServerAuthenticationProvider getProvider(ZooKeeperServer zks, String scheme) {
+    public static ServerAuthenticationProvider getServerProvider(String scheme) {
         if(!initialized)
-            initialize(zks);
+            initialize();
         return WrappedAuthenticationProvider.wrap(authenticationProviders.get(scheme));
+    }
+
+    public static AuthenticationProvider getProvider(String scheme) {
+        return getServerProvider(scheme);
     }
 
     public static String listProviders() {

@@ -296,7 +296,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
 
                     X509AuthenticationProvider authProvider =
                             (X509AuthenticationProvider)
-                                    ProviderRegistry.getProvider(zkServer, authProviderProp);
+                                    ProviderRegistry.getProvider(authProviderProp);
 
                     if (authProvider == null) {
                         LOG.error("Auth provider not found: {}", authProviderProp);
@@ -359,7 +359,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         } else {
             sslContext = SSLContext.getInstance("TLSv1");
             X509AuthenticationProvider authProvider =
-                    (X509AuthenticationProvider)ProviderRegistry.getProvider(zkServer,
+                    (X509AuthenticationProvider)ProviderRegistry.getProvider(
                             System.getProperty(ZKConfig.SSL_AUTHPROVIDER,
                                     "x509"));
 

@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.auth;
 
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.server.ServerCnxn;
+import org.apache.zookeeper.server.ZooKeeperServer;
 
 import java.util.List;
 
@@ -60,7 +61,6 @@ public interface AuthenticationProvider {
      * @param aclExpr
      *                the expression to match ids against.
      * @return true if the id can be matched by the expression.
-     * @deprecated newer implementations should use {@link ServerAuthenticationProvider#matchesOp(ServerCnxn, String, String, String, int, List)}
      */
     boolean matches(String id, String aclExpr);
 
