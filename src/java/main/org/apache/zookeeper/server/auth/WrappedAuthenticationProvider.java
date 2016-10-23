@@ -63,19 +63,6 @@ class WrappedAuthenticationProvider extends ServerAuthenticationProvider {
     }
 
     @Override
-    public KeeperException.Code handleAuthentication(ServerCnxn cnxn, byte[] authData) {
-        return implementation.handleAuthentication(cnxn, authData);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean matches(String id, String aclExpr) {
-        return implementation.matches(id, aclExpr);
-    }
-
-    @Override
     public boolean isAuthenticated() {
         return implementation.isAuthenticated();
     }

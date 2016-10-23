@@ -68,12 +68,12 @@ public abstract class ServerAuthenticationProvider implements AuthenticationProv
     public abstract boolean matches(ZooKeeperServer zks, ServerCnxn cnxn, String path, String id, String aclExpr, int perm, List<ACL> setAcls);
 
     @Override
-    public KeeperException.Code handleAuthentication(ServerCnxn cnxn, byte[] authData) {
+    public final KeeperException.Code handleAuthentication(ServerCnxn cnxn, byte[] authData) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public boolean matches(String id, String aclExpr) {
+    public final boolean matches(String id, String aclExpr) {
         throw new UnsupportedOperationException();
     }
 }
