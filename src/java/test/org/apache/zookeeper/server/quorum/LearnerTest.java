@@ -30,6 +30,7 @@ import java.util.ArrayList;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
@@ -49,7 +50,8 @@ public class LearnerTest extends ZKTestCase {
 
         Learner learner;
 
-        public SimpleLearnerZooKeeperServer(FileTxnSnapLog ftsl, QuorumPeer self) throws IOException {
+        public SimpleLearnerZooKeeperServer(FileTxnSnapLog ftsl, QuorumPeer self)
+                throws IOException, KeeperException.NoNodeException {
             super(ftsl, 2000, 2000, 2000, new ZKDatabase(ftsl), self);
         }
 
@@ -60,7 +62,7 @@ public class LearnerTest extends ZKTestCase {
     }
 
     static class SimpleLearner extends Learner {
-        SimpleLearner(FileTxnSnapLog ftsl) throws IOException {
+        SimpleLearner(FileTxnSnapLog ftsl) throws IOException, KeeperException.NoNodeException {
             self = new QuorumPeer();
             zk = new SimpleLearnerZooKeeperServer(ftsl, self);
             ((SimpleLearnerZooKeeperServer) zk).learner = this;

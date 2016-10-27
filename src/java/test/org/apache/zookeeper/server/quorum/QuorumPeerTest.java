@@ -27,6 +27,7 @@ import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
@@ -44,7 +45,7 @@ public class QuorumPeerTest {
      * Test case for https://issues.apache.org/jira/browse/ZOOKEEPER-2301
      */
     @Test
-    public void testQuorumPeerListendOnSpecifiedClientIP() throws IOException {
+    public void testQuorumPeerListendOnSpecifiedClientIP() throws IOException, KeeperException.NoNodeException {
         long myId = 1;
         File dataDir = ClientBase.createTmpDir();
         int clientPort = PortAssignment.unique();

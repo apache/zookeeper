@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.server.quorum.FastLeaderElection;
 import org.apache.zookeeper.server.quorum.QuorumCnxManager;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
@@ -53,7 +54,7 @@ public class FLEPredicateTest extends ZKTestCase {
     HashMap<Long,QuorumServer> peers;
     
     @Test
-    public void testPredicate() throws IOException {
+    public void testPredicate() throws IOException, KeeperException.NoNodeException {
         
         peers = new HashMap<Long,QuorumServer>(3);
         

@@ -230,7 +230,7 @@ public class DataTree {
     private DataNode configDataNode = new DataNode(new byte[0], -1L, new StatPersisted());
 
     
-    public DataTree() {
+    public DataTree() throws KeeperException.NoNodeException {
         /* Rather than fight it, let root have an alias */
         nodes.put("", root);
         nodes.put(rootZookeeper, root);
@@ -245,15 +245,25 @@ public class DataTree {
         addConfigNode();
     }
 
-     public void addConfigNode() {
-    	 DataNode zookeeperZnode = nodes.get(procZookeeper);
-         if (zookeeperZnode!=null) { // should always be the case
-        	 zookeeperZnode.addChild(configChildZookeeper);
-         } else {
-        	 LOG.error("There's no /zookeeper znode - this should never happen");
-         }
-         nodes.put(configZookeeper, configDataNode);   
-     }
+    public void addConfigNode() throws KeeperException.NoNodeException {
+        DataNode zookeeperZnode = nodes.get(procZookeeper);
+        if (zookeeperZnode!=null) { // should always be the case
+            zookeeperZnode.addChild(configChildZookeeper);
+        } else {
+            LOG.error("There's no /zookeeper znode - this should never happen.");
+        }
+
+        nodes.put(configZookeeper, configDataNode);
+        try {
+            // Reconfig node is access controlled by default (ZOOKEEPER-2014).
+            setACL(configZookeeper, ZooDefs.Ids.READ_ACL_UNSAFE, -1);
+        } catch (KeeperException.NoNodeException e) {
+            LOG.error("Fail to set ACL on " + configZookeeper + " - this should never happen: " + e);
+            // Throw the exception to abort the startup of ZooKeeper server, otherwise we will
+            // end up with a ZK server that's reconfigurable to anyone without access control.
+            throw e;
+        }
+    }
 
     /**
      * is the path one of the special paths owned by zookeeper.

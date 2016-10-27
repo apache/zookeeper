@@ -24,17 +24,20 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
+import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.admin.ZooKeeperAdmin;
+import org.junit.Before;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -44,6 +47,13 @@ import org.junit.Test;
 public class StandaloneTest extends QuorumPeerTestBase implements Watcher{
     protected static final Logger LOG =
         LoggerFactory.getLogger(StandaloneTest.class);
+
+    @Before
+    public void setup() {
+        System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest",
+                "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);
+        QuorumPeerConfig.setReconfigEnabled(true);
+    }
 
     /**
      * This test wouldn't create any dynamic config.
@@ -133,13 +143,15 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher{
 
         CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, watcher);
+        ZooKeeperAdmin zkAdmin = new ZooKeeperAdmin(HOSTPORT, CONNECTION_TIMEOUT, watcher);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
 
         List<String> joiners = new ArrayList<String>();
         joiners.add("server.2=localhost:1234:1235;1236");
         // generate some transactions that will get logged
         try {
-            zk.reconfig(joiners, null, null, -1, new Stat());
+            zkAdmin.addAuthInfo("digest", "super:test".getBytes());
+            zkAdmin.reconfig(joiners, null, null, -1, new Stat());
             Assert.fail("Reconfiguration in standalone should trigger " +
                         "UnimplementedException");
         } catch (KeeperException.UnimplementedException ex) {

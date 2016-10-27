@@ -32,6 +32,7 @@ import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginException;
 
 import org.apache.zookeeper.Environment;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Login;
 import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.jmx.MBeanRegistry;
@@ -94,14 +95,15 @@ public abstract class ServerCnxnFactory {
         return secure;
     }
 
-    public void startup(ZooKeeperServer zkServer) throws IOException, InterruptedException {
+    public void startup(ZooKeeperServer zkServer) throws IOException, InterruptedException,
+            KeeperException.NoNodeException {
         startup(zkServer, true);
     }
 
     // This method is to maintain compatiblity of startup(zks) and enable sharing of zks
     // when we add secureCnxnFactory.
     public abstract void startup(ZooKeeperServer zkServer, boolean startServer)
-            throws IOException, InterruptedException;
+            throws IOException, InterruptedException, KeeperException.NoNodeException;
 
     public abstract void join() throws InterruptedException;
 

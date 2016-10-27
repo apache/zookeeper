@@ -44,6 +44,7 @@ import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.ByteBufferInputStream;
@@ -985,7 +986,7 @@ public class Zab1_0Test extends ZKTestCase {
     }
 
     private void deserializeSnapshot(InputArchive ia)
-            throws IOException {
+            throws IOException, KeeperException.NoNodeException {
         ZKDatabase zkdb = new ZKDatabase(null);
         zkdb.deserializeSnapshot(ia);
         String signature = ia.readString("signature");
@@ -1216,19 +1217,19 @@ public class Zab1_0Test extends ZKTestCase {
     }
     
     private Leader createLeader(File tmpDir, QuorumPeer peer)
-    throws IOException, NoSuchFieldException, IllegalAccessException{
+    throws IOException, NoSuchFieldException, IllegalAccessException, KeeperException.NoNodeException {
         LeaderZooKeeperServer zk = prepareLeader(tmpDir, peer);
         return new Leader(peer, zk);
     }
     
     private Leader createMockLeader(File tmpDir, QuorumPeer peer)
-    throws IOException, NoSuchFieldException, IllegalAccessException{
+    throws IOException, NoSuchFieldException, IllegalAccessException, KeeperException.NoNodeException {
         LeaderZooKeeperServer zk = prepareLeader(tmpDir, peer);
         return new MockLeader(peer, zk);
     }
     
     private LeaderZooKeeperServer prepareLeader(File tmpDir, QuorumPeer peer)
-            throws IOException, NoSuchFieldException, IllegalAccessException {
+            throws IOException, NoSuchFieldException, IllegalAccessException, KeeperException.NoNodeException {
         FileTxnSnapLog logFactory = new FileTxnSnapLog(tmpDir, tmpDir);
         peer.setTxnFactory(logFactory);
         ZKDatabase zkDb = new ZKDatabase(logFactory);
@@ -1253,7 +1254,7 @@ public class Zab1_0Test extends ZKTestCase {
         }
     }
     private ConversableFollower createFollower(File tmpDir, QuorumPeer peer)
-    throws IOException {
+    throws IOException, KeeperException.NoNodeException {
         FileTxnSnapLog logFactory = new FileTxnSnapLog(tmpDir, tmpDir);
         peer.setTxnFactory(logFactory);
         ZKDatabase zkDb = new ZKDatabase(logFactory);
@@ -1280,7 +1281,7 @@ public class Zab1_0Test extends ZKTestCase {
     }
 
     private ConversableObserver createObserver(File tmpDir, QuorumPeer peer)
-            throws IOException {
+            throws IOException, KeeperException.NoNodeException {
         FileTxnSnapLog logFactory = new FileTxnSnapLog(tmpDir, tmpDir);
         peer.setTxnFactory(logFactory);
         ZKDatabase zkDb = new ZKDatabase(logFactory);

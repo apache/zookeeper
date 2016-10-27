@@ -27,6 +27,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.admin.ZooKeeperAdmin;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ReconfigTest;
 import org.junit.Assert;
@@ -37,6 +38,7 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
     private final int NUM_SERVERS = 5;
     private MainThread peers[];
     private ZooKeeper zkHandles[];
+    private ZooKeeperAdmin zkAdminHandles[];
     private int clientPorts[];
     private final int leaderId = 0;
     private final int follower1 = 1;
@@ -75,7 +77,7 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
         reconfigServers.clear();
         reconfigServers.add(Integer.toString(follower2));
         try {
-            ReconfigTest.reconfig(zkHandles[follower1], null, reconfigServers, null, -1);
+            ReconfigTest.reconfig(zkAdminHandles[follower1], null, reconfigServers, null, -1);
             Assert.fail("reconfig completed successfully even though there is no quorum up in new config!");
         } catch (KeeperException.NewConfigNoQuorum e) { }
 
@@ -92,7 +94,7 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
         reconfigServers.clear();
         reconfigServers.add(Integer.toString(follower2));
         try {
-            zkHandles[follower2].reconfig(null, reconfigServers, null, -1, new Stat());
+            zkAdminHandles[follower2].reconfig(null, reconfigServers, null, -1, new Stat());
             Assert.fail("reconfig completed successfully even though there is no quorum up in new config!");
         } catch (KeeperException.BadArgumentsException e) {
             // This is expected.
@@ -118,11 +120,15 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
     private void setUpData() throws Exception {
         ClientBase.setupTestEnv();
         QuorumPeerConfig.setStandaloneEnabled(false);
+        QuorumPeerConfig.setReconfigEnabled(true);
         peers = new MainThread[NUM_SERVERS];
         zkHandles = new ZooKeeper[NUM_SERVERS];
+        zkAdminHandles = new ZooKeeperAdmin[NUM_SERVERS];
         clientPorts = new int[NUM_SERVERS];
         serverStrings = buildServerStrings();
         reconfigServers = new ArrayList<String>();
+        System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest",
+                "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);
     }
 
     /**
@@ -131,6 +137,7 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
     private void shutDownData() throws Exception {
         for (int i = 0; i < NUM_SERVERS; i++) {
             zkHandles[i].close();
+            zkAdminHandles[i].close();
         }
         for (int i = 1; i < NUM_SERVERS; i++) {
             peers[i].shutdown();
@@ -167,6 +174,8 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
         Assert.assertTrue("Error- Server started in Standalone Mode!",
                 peers[id].isQuorumPeerRunning());
         zkHandles[id] = ClientBase.createZKClient("127.0.0.1:" + clientPorts[id]);
+        zkAdminHandles[id] = new ZooKeeperAdmin("127.0.0.1:" + clientPorts[id], CONNECTION_TIMEOUT, this);
+        zkAdminHandles[id].addAuthInfo("digest", "super:test".getBytes());
     }
 
     /**
@@ -221,14 +230,14 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
     private void testReconfig(int id, boolean adding,
                               ArrayList<String> servers) throws Exception {
         if (adding) {
-            ReconfigTest.reconfig(zkHandles[id], servers, null, null, -1);
+            ReconfigTest.reconfig(zkAdminHandles[id], servers, null, null, -1);
             for (String server : servers) {
                 int id2 = Integer.parseInt(server.substring(7, 8)); //server.#
                 ReconfigTest.testNormalOperation(zkHandles[id], zkHandles[id2]);
             }
             ReconfigTest.testServerHasConfig(zkHandles[id], servers, null);
         } else {
-            ReconfigTest.reconfig(zkHandles[id], null, servers, null, -1);
+            ReconfigTest.reconfig(zkAdminHandles[id], null, servers, null, -1);
             ReconfigTest.testServerHasConfig(zkHandles[id], null, servers);
         }
 

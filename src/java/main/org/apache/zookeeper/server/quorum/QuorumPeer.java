@@ -43,6 +43,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.BadArgumentsException;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
@@ -711,7 +712,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File dataDir,
             File dataLogDir, int electionType,
             long myid, int tickTime, int initLimit, int syncLimit,
-            ServerCnxnFactory cnxnFactory) throws IOException {
+            ServerCnxnFactory cnxnFactory) throws IOException, KeeperException.NoNodeException {
         this(quorumPeers, dataDir, dataLogDir, electionType, myid, tickTime,
                 initLimit, syncLimit, false, cnxnFactory,
                 new QuorumMaj(quorumPeers));
@@ -722,7 +723,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             long myid, int tickTime, int initLimit, int syncLimit,
             boolean quorumListenOnAllIPs,
             ServerCnxnFactory cnxnFactory,
-            QuorumVerifier quorumConfig) throws IOException {
+            QuorumVerifier quorumConfig) throws IOException, KeeperException.NoNodeException {
         this();
         this.cnxnFactory = cnxnFactory;
         this.electionType = electionType;
@@ -857,7 +858,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     public QuorumPeer(Map<Long,QuorumServer> quorumPeers, File snapDir,
             File logDir, int clientPort, int electionAlg,
             long myid, int tickTime, int initLimit, int syncLimit)
-        throws IOException
+        throws IOException, KeeperException.NoNodeException
     {
         this(quorumPeers, snapDir, logDir, electionAlg, myid, tickTime, initLimit, syncLimit, false,
                 ServerCnxnFactory.createFactory(getClientAddress(quorumPeers, myid, clientPort), -1),
@@ -872,7 +873,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             File logDir, int clientPort, int electionAlg,
             long myid, int tickTime, int initLimit, int syncLimit,
             QuorumVerifier quorumConfig)
-        throws IOException
+        throws IOException, KeeperException.NoNodeException
     {
         this(quorumPeers, snapDir, logDir, electionAlg,
                 myid,tickTime, initLimit,syncLimit, false,

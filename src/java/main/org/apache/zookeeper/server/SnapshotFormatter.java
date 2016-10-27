@@ -31,6 +31,7 @@ import java.util.zip.CheckedInputStream;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.InputArchive;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.server.persistence.FileSnap;
 
@@ -51,7 +52,7 @@ public class SnapshotFormatter {
         new SnapshotFormatter().run(args[0]);
     }
     
-    public void run(String snapshotFileName) throws IOException {
+    public void run(String snapshotFileName) throws IOException, KeeperException.NoNodeException {
         InputStream is = new CheckedInputStream(
                 new BufferedInputStream(new FileInputStream(snapshotFileName)),
                 new Adler32());

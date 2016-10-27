@@ -39,6 +39,7 @@ import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.server.persistence.FileSnap;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
@@ -71,7 +72,7 @@ public class CRCTest extends ZKTestCase{
     }
 
     /** return if checksum matches for a snapshot **/
-    private boolean getCheckSum(FileSnap snap, File snapFile) throws IOException {
+    private boolean getCheckSum(FileSnap snap, File snapFile) throws IOException, KeeperException.NoNodeException {
         DataTree dt = new DataTree();
         Map<Long, Integer> sessions = new ConcurrentHashMap<Long, Integer>();
         InputStream snapIS = new BufferedInputStream(new FileInputStream(

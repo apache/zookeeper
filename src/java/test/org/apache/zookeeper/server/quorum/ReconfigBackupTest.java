@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.quorum;
 
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.admin.ZooKeeperAdmin;
 import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ReconfigTest;
@@ -61,6 +62,8 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
     @Before
     public void setup() {
         ClientBase.setupTestEnv();
+        System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest",
+                "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);
     }
 
     /**
@@ -80,6 +83,7 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
                     + clientPorts[i];
             sb.append(server + "\n");
         }
+
         String currentQuorumCfgSection = sb.toString();
 
         MainThread mt[] = new MainThread[SERVER_COUNT];
@@ -145,14 +149,16 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
             oldServers.add(servers[i]);
             sb.append(servers[i] + "\n");
         }
+
         String quorumCfgSection = sb.toString();
 
         MainThread mt[] = new MainThread[NEW_SERVER_COUNT];
         ZooKeeper zk[] = new ZooKeeper[NEW_SERVER_COUNT];
+        ZooKeeperAdmin zkAdmin[] = new ZooKeeperAdmin[NEW_SERVER_COUNT];
 
         // start old cluster
         for (int i = 0; i < SERVER_COUNT; i++) {
-            mt[i] = new MainThread(i, clientPorts[i], quorumCfgSection);
+            mt[i] = new MainThread(i, clientPorts[i], quorumCfgSection, "reconfigEnabled=true\n");
             mt[i].start();
         }
 
@@ -164,6 +170,9 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
                     ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i],
                             CONNECTION_TIMEOUT));
             zk[i] = ClientBase.createZKClient("127.0.0.1:" + clientPorts[i]);
+            zkAdmin[i] = new ZooKeeperAdmin("127.0.0.1:" + clientPorts[i],
+                    ClientBase.CONNECTION_TIMEOUT, this);
+            zkAdmin[i].addAuthInfo("digest", "super:test".getBytes());
 
             Properties cfg = ReconfigLegacyTest.readPropertiesFromFile(mt[i].confFile);
             String filename = cfg.getProperty("dynamicConfigFile", "");
@@ -186,7 +195,7 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
             }
         }
 
-        ReconfigTest.reconfig(zk[1], null, null, newServers, -1);
+        ReconfigTest.reconfig(zkAdmin[1], null, null, newServers, -1);
 
         // start additional new servers
         for (int i = SERVER_COUNT; i < NEW_SERVER_COUNT; i++) {
@@ -230,6 +239,7 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
         for (int i = 0; i < SERVER_COUNT; i++) {
             mt[i].shutdown();
             zk[i].close();
+            zkAdmin[i].close();
         }
     }
 

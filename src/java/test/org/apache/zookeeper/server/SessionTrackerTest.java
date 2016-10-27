@@ -116,7 +116,7 @@ public class SessionTrackerTest extends ZKTestCase {
                 + " still exists after removal", actualSession);
     }
 
-    private ZooKeeperServer setupSessionTracker() throws IOException {
+    private ZooKeeperServer setupSessionTracker() throws IOException, KeeperException.NoNodeException {
         File tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);

@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 
+import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
@@ -93,7 +94,7 @@ public class FLELostMessageTest extends ZKTestCase {
         }
     }
 
-    void mockServer() throws InterruptedException, IOException {
+    void mockServer() throws InterruptedException, IOException, KeeperException.NoNodeException {
         QuorumPeer peer = new QuorumPeer(peers, tmpdir[0], tmpdir[0], port[0], 3, 0, 1000, 2, 2);
         cnxManager = new QuorumCnxManager(peer);
         cnxManager.listener.start();

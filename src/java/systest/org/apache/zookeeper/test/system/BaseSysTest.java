@@ -26,6 +26,7 @@ import java.net.UnknownHostException;
 import java.util.HashMap;
 
 
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
@@ -87,7 +88,7 @@ public class BaseSysTest {
         return clientCount;
     }
 
-    public void startServers() throws IOException {
+    public void startServers() throws IOException, KeeperException.NoNodeException {
         for(int i = 0; i < serverCount; i++) {
             startServer(i);
         }
@@ -177,7 +178,7 @@ public class BaseSysTest {
     final static int initLimit = 3;
     final static int syncLimit = 3;
 
-    public void startServer(int index) throws IOException {
+    public void startServer(int index) throws IOException, KeeperException.NoNodeException {
         int port = fakeBasePort+10+index;
         if (fakeMachines) {
             qps[index] = new QuorumPeer(peers, qpsDirs[index], qpsDirs[index], port, 0, index+1, tickTime, initLimit, syncLimit);

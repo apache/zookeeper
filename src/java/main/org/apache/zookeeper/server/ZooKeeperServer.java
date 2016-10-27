@@ -169,7 +169,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * @param tickTime the ticktime for the server
      * @throws IOException
      */
-    public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime) throws IOException {
+    public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime) throws IOException,
+            KeeperException.NoNodeException {
         this(txnLogFactory, tickTime, -1, -1, new ZKDatabase(txnLogFactory));
     }
 
@@ -221,7 +222,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * It defaults to FileLogProvider persistence provider.
      */
     public ZooKeeperServer(File snapDir, File logDir, int tickTime)
-            throws IOException {
+            throws IOException, KeeperException.NoNodeException {
         this( new FileTxnSnapLog(snapDir, logDir),
                 tickTime);
     }
@@ -232,7 +233,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * @throws IOException
      */
     public ZooKeeperServer(FileTxnSnapLog txnLogFactory)
-        throws IOException
+        throws IOException, KeeperException.NoNodeException
     {
         this(txnLogFactory, DEFAULT_TICK_TIME, -1, -1, new ZKDatabase(txnLogFactory));
     }
@@ -430,7 +431,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public void startdata()
-    throws IOException, InterruptedException {
+    throws IOException, InterruptedException, KeeperException.NoNodeException {
         //check to see if zkDb is not null
         if (zkDb == null) {
             zkDb = new ZKDatabase(this.txnLogFactory);
