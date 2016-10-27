@@ -503,7 +503,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     
     @Override
     public void startup(ZooKeeperServer zks, boolean startServer)
-            throws IOException, InterruptedException {
+            throws IOException, InterruptedException, KeeperException.NoNodeException {
         start();
         setZooKeeperServer(zks);
         if (startServer) {

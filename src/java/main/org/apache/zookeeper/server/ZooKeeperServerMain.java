@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.management.JMException;
 
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.jmx.ManagedUtil;
 import org.apache.zookeeper.server.admin.AdminServer;
 import org.apache.zookeeper.server.admin.AdminServer.AdminServerException;
@@ -86,7 +87,7 @@ public class ZooKeeperServerMain {
     }
 
     protected void initializeAndRun(String[] args)
-        throws ConfigException, IOException, AdminServerException
+        throws ConfigException, IOException, AdminServerException, KeeperException.NoNodeException
     {
         try {
             ManagedUtil.registerLog4jMBeans();
@@ -110,7 +111,8 @@ public class ZooKeeperServerMain {
      * @throws IOException
      * @throws AdminServerException
      */
-    public void runFromConfig(ServerConfig config) throws IOException, AdminServerException {
+    public void runFromConfig(ServerConfig config)
+            throws IOException, AdminServerException, KeeperException.NoNodeException {
         LOG.info("Starting server");
         FileTxnSnapLog txnLog = null;
         try {

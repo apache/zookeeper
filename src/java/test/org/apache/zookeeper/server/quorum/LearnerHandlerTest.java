@@ -31,6 +31,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.TxnLogProposalIterator;
 import org.apache.zookeeper.server.ZKDatabase;
@@ -68,7 +69,7 @@ public class LearnerHandlerTest extends ZKTestCase {
         LinkedList<Proposal> committedLog = new LinkedList<Leader.Proposal>();
         LinkedList<Proposal> txnLog = new LinkedList<Leader.Proposal>();
 
-        public MockZKDatabase(FileTxnSnapLog snapLog) {
+        public MockZKDatabase(FileTxnSnapLog snapLog) throws KeeperException.NoNodeException{
             super(snapLog);
         }
 

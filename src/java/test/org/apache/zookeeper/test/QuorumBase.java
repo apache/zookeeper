@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
@@ -285,7 +286,7 @@ public class QuorumBase extends ClientBase {
         return peers;
     }
 
-    public void setupServers() throws IOException {
+    public void setupServers() throws IOException, KeeperException.NoNodeException {
         setupServer(1);
         setupServer(2);
         setupServer(3);
@@ -294,7 +295,7 @@ public class QuorumBase extends ClientBase {
     }
 
     HashMap<Long,QuorumServer> peers = null;
-    public void setupServer(int i) throws IOException {
+    public void setupServer(int i) throws IOException, KeeperException.NoNodeException {
         int tickTime = 2000;
         int initLimit = 3;
         int syncLimit = 3;

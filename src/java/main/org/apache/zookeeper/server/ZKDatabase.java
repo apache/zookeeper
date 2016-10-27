@@ -94,7 +94,7 @@ public class ZKDatabase {
      * between a filetxnsnaplog and zkdatabase.
      * @param snapLog the FileTxnSnapLog mapping this zkdatabase
      */
-    public ZKDatabase(FileTxnSnapLog snapLog) {
+    public ZKDatabase(FileTxnSnapLog snapLog) throws KeeperException.NoNodeException {
         dataTree = new DataTree();
         sessionsWithTimeouts = new ConcurrentHashMap<Long, Integer>();
         this.snapLog = snapLog;
@@ -121,7 +121,11 @@ public class ZKDatabase {
         /* to be safe we just create a new
          * datatree.
          */
-        dataTree = new DataTree();
+        try {
+            dataTree = new DataTree();
+        } catch (KeeperException.NoNodeException e) {
+            // Ignore.
+        }
         sessionsWithTimeouts.clear();
         WriteLock lock = logLock.writeLock();
         try {

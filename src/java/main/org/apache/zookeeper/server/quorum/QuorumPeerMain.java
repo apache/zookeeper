@@ -21,6 +21,7 @@ import java.io.IOException;
 
 import javax.management.JMException;
 
+import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.jmx.ManagedUtil;
@@ -103,7 +104,7 @@ public class QuorumPeerMain {
     }
 
     protected void initializeAndRun(String[] args)
-        throws ConfigException, IOException, AdminServerException
+        throws ConfigException, IOException, AdminServerException, KeeperException.NoNodeException
     {
         QuorumPeerConfig config = new QuorumPeerConfig();
         if (args.length == 1) {
@@ -126,7 +127,8 @@ public class QuorumPeerMain {
         }
     }
 
-    public void runFromConfig(QuorumPeerConfig config) throws IOException, AdminServerException {
+    public void runFromConfig(QuorumPeerConfig config) throws IOException, AdminServerException,
+            KeeperException.NoNodeException {
       try {
           ManagedUtil.registerLog4jMBeans();
       } catch (JMException e) {

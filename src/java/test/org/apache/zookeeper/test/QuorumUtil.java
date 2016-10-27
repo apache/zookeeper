@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.server.quorum.Election;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
@@ -139,7 +140,7 @@ public class QuorumUtil {
         this.localSessionEnabled = localSessionEnabled;
     }
 
-    public void startAll() throws IOException {
+    public void startAll() throws IOException, KeeperException.NoNodeException {
         shutdownAll();
         for (int i = 1; i <= ALL; ++i) {
             start(i);
@@ -187,7 +188,7 @@ public class QuorumUtil {
     /**
      * Start first N+1 peers.
      */
-    public void startQuorum() throws IOException {
+    public void startQuorum() throws IOException, KeeperException.NoNodeException {
         shutdownAll();
         for (int i = 1; i <= N + 1; ++i) {
             start(i);
@@ -198,7 +199,7 @@ public class QuorumUtil {
         }
     }
 
-    public void start(int id) throws IOException {
+    public void start(int id) throws IOException, KeeperException.NoNodeException {
         PeerStruct ps = getPeer(id);
         LOG.info("Creating QuorumPeer " + ps.id + "; public port " + ps.clientPort);
         ps.peer = new QuorumPeer(peersView, ps.dataDir, ps.dataDir, ps.clientPort, electionAlg,
@@ -211,13 +212,13 @@ public class QuorumUtil {
         ps.peer.start();
     }
 
-    public void restart(int id) throws IOException {
+    public void restart(int id) throws IOException, KeeperException.NoNodeException {
         start(id);
         Assert.assertTrue("Waiting for server up", ClientBase.waitForServerUp("127.0.0.1:"
                 + getPeer(id).clientPort, ClientBase.CONNECTION_TIMEOUT));
     }
 
-    public void startThenShutdown(int id) throws IOException {
+    public void startThenShutdown(int id) throws IOException, KeeperException.NoNodeException {
         PeerStruct ps = getPeer(id);
         LOG.info("Creating QuorumPeer " + ps.id + "; public port " + ps.clientPort);
         ps.peer = new QuorumPeer(peersView, ps.dataDir, ps.dataDir, ps.clientPort, electionAlg,

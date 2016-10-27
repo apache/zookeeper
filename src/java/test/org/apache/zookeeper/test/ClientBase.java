@@ -356,7 +356,7 @@ public abstract class ClientBase extends ZKTestCase {
      */
     public static void startServerInstance(File dataDir,
             ServerCnxnFactory factory, String hostPort) throws IOException,
-            InterruptedException {
+            InterruptedException, KeeperException.NoNodeException {
         final int port = getPort(hostPort);
         LOG.info("STARTING server instance 127.0.0.1:{}", port);
         ZooKeeperServer zks = new ZooKeeperServer(dataDir, dataDir, 3000);

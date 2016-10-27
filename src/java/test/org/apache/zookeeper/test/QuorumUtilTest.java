@@ -20,6 +20,7 @@ package org.apache.zookeeper.test;
 import java.io.IOException;
 import java.util.Set;
 
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
@@ -47,7 +48,7 @@ public class QuorumUtilTest extends ZKTestCase {
      * See ZOOKEEPER-1214 for details.
      */
     @Test
-    public void validateAllMXBeanAreUnregistered() throws IOException {
+    public void validateAllMXBeanAreUnregistered() throws IOException, KeeperException.NoNodeException {
         QuorumUtil qU = new QuorumUtil(1);
         LOG.info(">-->> Starting up all servers...");
         qU.startAll();

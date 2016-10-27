@@ -124,7 +124,8 @@ enum ZOO_ERRORS {
   ZNOTREADONLY = -119, /*!< state-changing request is passed to read-only server */
   ZEPHEMERALONLOCALSESSION = -120, /*!< Attempt to create ephemeral node on a local session */
   ZNOWATCHER = -121, /*!< The watcher couldn't be found */
-  ZRWSERVERFOUND = -122 /*!< r/w server found while in r/o mode */
+  ZRWSERVERFOUND = -122, /*!< r/w server found while in r/o mode */
+  ZRECONFIGDISABLED = -123 /*!< Attempts to perform a reconfiguration operation when reconfiguration feature is disabled */
 };
 
 #ifdef __cplusplus

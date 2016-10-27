@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.jute.BinaryOutputArchive;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooDefs.OpCode;
@@ -288,7 +289,7 @@ public class CommitProcessorTest extends ZKTestCase {
 
     private class TestZooKeeperServer extends ZooKeeperServer {
         public TestZooKeeperServer(File snapDir, File logDir, int tickTime)
-                throws IOException {
+                throws IOException, KeeperException.NoNodeException {
             super(snapDir, logDir, tickTime);
         }
 

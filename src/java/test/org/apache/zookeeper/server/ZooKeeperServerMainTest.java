@@ -535,7 +535,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
     }
 
     private ServerCnxnFactory startServer(File tmpDir) throws IOException,
-            InterruptedException {
+            InterruptedException, KeeperException.NoNodeException {
         final int CLIENT_PORT = PortAssignment.unique();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(CLIENT_PORT, -1);

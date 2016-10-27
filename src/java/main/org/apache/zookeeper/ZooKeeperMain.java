@@ -66,6 +66,7 @@ import org.apache.zookeeper.cli.SetQuotaCommand;
 import org.apache.zookeeper.cli.StatCommand;
 import org.apache.zookeeper.cli.SyncCommand;
 import org.apache.zookeeper.client.ZKClientConfig;
+import org.apache.zookeeper.admin.ZooKeeperAdmin;
 
 /**
  * The command line client to ZooKeeper.
@@ -275,15 +276,14 @@ public class ZooKeeperMain {
         if (zk != null && zk.getState().isAlive()) {
             zk.close();
         }
+
         host = newHost;
         boolean readOnly = cl.getOption("readonly") != null;
         if (cl.getOption("secure") != null) {
             System.setProperty(ZKClientConfig.SECURE_CLIENT, "true");
             System.out.println("Secure connection is enabled");
         }
-        zk = new ZooKeeper(host,
-                 Integer.parseInt(cl.getOption("timeout")),
-                 new MyWatcher(), readOnly);
+        zk = new ZooKeeperAdmin(host, Integer.parseInt(cl.getOption("timeout")), new MyWatcher(), readOnly);
     }
     
     public static void main(String args[]) throws CliException, IOException, InterruptedException
@@ -296,8 +296,6 @@ public class ZooKeeperMain {
         cl.parseOptions(args);
         System.out.println("Connecting to " + cl.getOption("server"));
         connectToZK(cl.getOption("server"));
-        //zk = new ZooKeeper(cl.getOption("server"),
-//                Integer.parseInt(cl.getOption("timeout")), new MyWatcher());
     }
 
     public ZooKeeperMain(ZooKeeper zk) {
