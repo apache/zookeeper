@@ -75,12 +75,9 @@ public class ZooTrace {
     static public void logQuorumPacket(Logger log, long mask,
             char direction, QuorumPacket qp)
     {
-        return;
-
-        // if (isTraceEnabled(log, mask)) {
-        // logTraceMessage(LOG, mask, direction + " "
-        // + FollowerHandler.packetToString(qp));
-        // }
+        if (isTraceEnabled(log, mask)) { 
+            logTraceMessage(log, mask, direction + " " + LearnerHandler.packetToString(qp));
+         }
     }
 
     static public void logRequest(Logger log, long mask,
