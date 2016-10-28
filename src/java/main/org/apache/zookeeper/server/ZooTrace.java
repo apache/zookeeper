@@ -77,8 +77,7 @@ public class ZooTrace {
     {
         if (isTraceEnabled(log, mask)) { 
             logTraceMessage(log, mask, direction + 
-                    " " + 
-                    LearnerHandler.packetToString(qp));
+                    " " + LearnerHandler.packetToString(qp));
          }
     }
 
