@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,25 +32,26 @@ import java.util.List;
 
 public class KeyAuthClientTest extends ClientBase {
     private static final Logger LOG = LoggerFactory.getLogger(KeyAuthClientTest.class);
+
     static {
-        System.setProperty("zookeeper.authProvider.1","org.apache.zookeeper.server.auth.KeyAuthenticationProvider");
+        System.setProperty("zookeeper.authProvider.1", "org.apache.zookeeper.server.auth.KeyAuthenticationProvider");
     }
 
     public void createNodePrintAcl(ZooKeeper zk, String path, String testName) {
-      try {
-        LOG.debug("KeyAuthenticationProvider Creating Test Node:"+path+".\n");
-        zk.create(path, null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
-        List<ACL> acls = zk.getACL(path, null);
-        LOG.debug("Node: "+path+" Test:"+testName+" ACLs:");
-        for (ACL acl : acls) {
-          LOG.debug("  "+acl.toString());
+        try {
+            LOG.debug("KeyAuthenticationProvider Creating Test Node:" + path + ".\n");
+            zk.create(path, null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
+            List<ACL> acls = zk.getACL(path, null);
+            LOG.debug("Node: " + path + " Test:" + testName + " ACLs:");
+            for (ACL acl : acls) {
+                LOG.debug("  " + acl.toString());
+            }
+        } catch (Exception e) {
+            LOG.debug("  EXCEPTION THROWN", e);
         }
-      } catch (Exception e) {
-          LOG.debug("  EXCEPTION THROWN", e);
-      }
     }
 
-    public void testPreAuth() throws Exception {
+    public void preAuth() throws Exception {
         ZooKeeper zk = createClient();
         zk.addAuthInfo("key", "25".getBytes());
         try {
@@ -64,13 +65,12 @@ public class KeyAuthClientTest extends ClientBase {
             Thread.sleep(1000);
         } catch (KeeperException e) {
             Assert.fail("test failed :" + e);
-        }
-        finally {
+        } finally {
             zk.close();
         }
     }
 
-    public void testMissingAuth() throws Exception {
+    public void missingAuth() throws Exception {
         ZooKeeper zk = createClient();
         try {
             zk.getData("/abc", false, null);
@@ -88,7 +88,7 @@ public class KeyAuthClientTest extends ClientBase {
         }
     }
 
-    public void testValidAuth() throws Exception {
+    public void validAuth() throws Exception {
         ZooKeeper zk = createClient();
         // any multiple of 5 will do...
         zk.addAuthInfo("key", "25".getBytes());
@@ -103,7 +103,7 @@ public class KeyAuthClientTest extends ClientBase {
         }
     }
 
-    public void testValidAuth2() throws Exception {
+    public void validAuth2() throws Exception {
         ZooKeeper zk = createClient();
         // any multiple of 5 will do...
         zk.addAuthInfo("key", "125".getBytes());
@@ -122,10 +122,10 @@ public class KeyAuthClientTest extends ClientBase {
     public void testAuth() throws Exception {
         // NOTE: the tests need to run in-order, and older versions of
         // junit don't provide any way to order tests
-        testPreAuth();
-        testMissingAuth();
-        testValidAuth();
-        testValidAuth2();
+        preAuth();
+        missingAuth();
+        validAuth();
+        validAuth2();
     }
 
 }
