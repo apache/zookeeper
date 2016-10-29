@@ -1203,7 +1203,7 @@ public abstract class ServerAuthenticationProvider implements AuthenticationProv
     public abstract KeeperException.Code handleAuthentication(ZooKeeperServer zks, ServerCnxn cnxn, byte authData[]);
     public abstract boolean matches(ZooKeeperServer zks, ServerCnxn cnxn, String path, String id, String aclExpr,
         int perm, List&lt;ACL&gt; setAcls);
-    }
+}
     </programlisting>
 
     <para>
