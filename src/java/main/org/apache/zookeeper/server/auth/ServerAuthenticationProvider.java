@@ -65,7 +65,8 @@ public abstract class ServerAuthenticationProvider implements AuthenticationProv
      *                for set ACL operations, the list of ACLs being set. Otherwise null.
      * @return true if the arguments can be matched by the expression.
      */
-    public abstract boolean matches(ZooKeeperServer zks, ServerCnxn cnxn, String path, String id, String aclExpr, int perm, List<ACL> setAcls);
+    public abstract boolean matches(ZooKeeperServer zks, ServerCnxn cnxn, String path, String id,
+                                    String aclExpr, int perm, List<ACL> setAcls);
 
     @Override
     public final KeeperException.Code handleAuthentication(ServerCnxn cnxn, byte[] authData) {
