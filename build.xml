@@ -153,6 +153,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="patch.cmd" value="patch"/>
     <property name="make.cmd" value="make"/>
     <property name="test_patch_sh" value="${test.src.dir}/bin/test-patch.sh"/>
+    <property name="test_pullrequest_sh" value="${test.src.dir}/bin/test-github-pr.sh"/>
 
 	<!-- jdiff.home property set -->
     <property name="jdiff.home" value="${ivy.jdiff.lib}"/>
@@ -1620,6 +1621,26 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     		<arg value="${curl.cmd}"/>
     		<arg value="${defect}"/>
     	</exec>
+     </target>
+
+     <target name="qa-test-pullrequest" depends="findbugs.check,forrest.check">
+        <exec executable="bash" failonerror="true">
+                <arg value="${test_pullrequest_sh}"/>
+                <arg value="QABUILD"/>
+                <arg value="${scratch.dir}"/>
+                <arg value="${ps.cmd}"/>
+                <arg value="${wget.cmd}"/>
+                <arg value="${jiracli.cmd}"/>
+                <arg value="${git.cmd}"/>
+                <arg value="${grep.cmd}"/>
+                <arg value="${patch.cmd}"/>
+                <arg value="${findbugs.home}"/>
+                <arg value="${forrest.home}"/>
+                <arg value="${basedir}"/>
+                <arg value="${jira.passwd}"/>
+                <arg value="${java5.home}"/>
+                <arg value="${curl.cmd}"/>
+        </exec>
      </target>
 
      <!-- this target runs the hudson trunk build -->
