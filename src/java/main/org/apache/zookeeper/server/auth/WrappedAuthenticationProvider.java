@@ -33,6 +33,9 @@ class WrappedAuthenticationProvider extends ServerAuthenticationProvider {
     private final AuthenticationProvider implementation;
 
     static ServerAuthenticationProvider wrap(AuthenticationProvider provider) {
+        if (provider == null) {
+            return null;
+        }
         return (provider instanceof ServerAuthenticationProvider) ? (ServerAuthenticationProvider)provider
                 : new WrappedAuthenticationProvider(provider);
     }
