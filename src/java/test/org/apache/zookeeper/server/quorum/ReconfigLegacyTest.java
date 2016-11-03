@@ -75,7 +75,7 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
         // Start the servers with a static config file, without a dynamic
         // config file.
         for (int i = 0; i < SERVER_COUNT; i++) {
-            mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection, false);
+            mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection, "participant", false);
             // check that a dynamic configuration file doesn't exist
             Assert.assertEquals( mt[i].getDynamicFiles().length, 0 );
             mt[i].start();
@@ -93,10 +93,12 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
             ReconfigTest.testServerHasConfig(zk[i], allServers, null);
             // check that static config file doesn't include membership info
             // and has a pointer to the dynamic configuration file
+            // check that static config file doesn't include peerType info
             Properties cfg = readPropertiesFromFile(mt[i].confFile);
             for (int j = 0; j < SERVER_COUNT; j++) {
-                Assert.assertFalse(cfg.containsKey("server." + j));
+                Assert.assertFalse(cfg.containsKey("server." + j));                
             }
+            Assert.assertFalse(cfg.containsKey("peerType"));
             Assert.assertTrue(cfg.containsKey("dynamicConfigFile"));
             Assert.assertFalse(cfg.containsKey("clientPort"));
 

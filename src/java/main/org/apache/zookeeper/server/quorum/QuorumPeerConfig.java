@@ -480,6 +480,7 @@ public class QuorumPeerConfig {
                         || key.startsWith("group")
                         || key.startsWith("weight")
                         || key.startsWith("dynamicConfigFile")
+                        || key.startsWith("peerType")
                         || (eraseClientPortAddress
                             && (key.startsWith("clientPort")
                                 || key.startsWith("clientPortAddress")))) {
