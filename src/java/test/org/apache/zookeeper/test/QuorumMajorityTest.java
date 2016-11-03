@@ -17,14 +17,16 @@
  */
 
 package org.apache.zookeeper.test;
-import java.util.HashSet;
+import java.util.ArrayList;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.apache.zookeeper.server.quorum.Leader;
+import org.apache.zookeeper.jmx.CommonNames;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
+import org.apache.zookeeper.server.quorum.QuorumPeer;
+import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class QuorumMajorityTest extends QuorumBase {
     protected static final Logger LOG = LoggerFactory.getLogger(QuorumMajorityTest.class);
@@ -36,7 +38,30 @@ public class QuorumMajorityTest extends QuorumBase {
     /***************************************************************/
     @Test
     public void testMajQuorums() throws Throwable {
-       
+        LOG.info("Verify QuorumPeer#electionTimeTaken jmx bean attribute");
+
+        ArrayList<QuorumPeer> peers = getPeerList();
+        for (int i = 1; i <= peers.size(); i++) {
+            QuorumPeer qp = peers.get(i - 1);
+            Long electionTimeTaken = -1L;
+            String bean = "";
+            if (qp.getPeerState() == ServerState.FOLLOWING) {
+                bean = CommonNames.DOMAIN + ":name0=ReplicatedServer_id" + i
+                        + ",name1=replica." + i + ",name2=Follower";
+                electionTimeTaken = (Long) JMXEnv.ensureBeanAttribute(bean,
+                        "ElectionTimeTaken");
+                Assert.assertTrue("Wrong electionTimeTaken value!",
+                        electionTimeTaken >= 0);
+            } else if (qp.getPeerState() == ServerState.LEADING) {
+                bean = CommonNames.DOMAIN + ":name0=ReplicatedServer_id" + i
+                        + ",name1=replica." + i + ",name2=Leader";
+                electionTimeTaken = (Long) JMXEnv.ensureBeanAttribute(bean,
+                        "ElectionTimeTaken");
+                Assert.assertTrue("Wrong electionTimeTaken value!",
+                        electionTimeTaken >= 0);
+            }
+        }
+
        //setup servers 1-5 to be followers
        setUp(false);
         
