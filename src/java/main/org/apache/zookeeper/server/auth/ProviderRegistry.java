@@ -70,13 +70,13 @@ public class ProviderRegistry {
     }
 
     public static ServerAuthenticationProvider getServerProvider(String scheme) {
-        if(!initialized)
-            initialize();
-        return WrappedAuthenticationProvider.wrap(authenticationProviders.get(scheme));
+        return WrappedAuthenticationProvider.wrap(getProvider(scheme));
     }
 
     public static AuthenticationProvider getProvider(String scheme) {
-        return getServerProvider(scheme);
+        if(!initialized)
+            initialize();
+        return authenticationProviders.get(scheme);
     }
 
     public static String listProviders() {
