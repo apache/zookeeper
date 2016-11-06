@@ -60,6 +60,7 @@ public class QuorumPeerConfig {
     public static final String nextDynamicConfigFileSuffix = ".dynamic.next";
 
     private static boolean standaloneEnabled = true;
+    private static boolean reconfigEnabled = false;
 
     protected InetSocketAddress clientPortAddress;
     protected InetSocketAddress secureClientPortAddress;
@@ -279,7 +280,15 @@ public class QuorumPeerConfig {
                 } else if (value.toLowerCase().equals("false")) {
                     setStandaloneEnabled(false);
                 } else {
-                    throw new ConfigException("Invalid option for standalone mode. Choose 'true' or 'false.'");
+                    throw new ConfigException("Invalid option " + value + " for standalone mode. Choose 'true' or 'false.'");
+                }
+            } else if (key.equals("reconfigEnabled")) {
+                if (value.toLowerCase().equals("true")) {
+                    setReconfigEnabled(true);
+                } else if (value.toLowerCase().equals("false")) {
+                    setReconfigEnabled(false);
+                } else {
+                    throw new ConfigException("Invalid option " + value + " for reconfigEnabled flag. Choose 'true' or 'false.'");
                 }
             } else if ((key.startsWith("server.") || key.startsWith("group") || key.startsWith("weight")) && zkProp.containsKey("dynamicConfigFile")) {
                 throw new ConfigException("parameter: " + key + " must be in a separate dynamic config file");
@@ -732,7 +741,13 @@ public class QuorumPeerConfig {
     }
     
     public static void setStandaloneEnabled(boolean enabled) {
-	standaloneEnabled = enabled;
+        standaloneEnabled = enabled;
+    }
+
+    public static boolean isReconfigEnabled() { return reconfigEnabled; }
+
+    public static void setReconfigEnabled(boolean enabled) {
+        reconfigEnabled = enabled;
     }
 
 }

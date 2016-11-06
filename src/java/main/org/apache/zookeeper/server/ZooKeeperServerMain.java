@@ -110,7 +110,8 @@ public class ZooKeeperServerMain {
      * @throws IOException
      * @throws AdminServerException
      */
-    public void runFromConfig(ServerConfig config) throws IOException, AdminServerException {
+    public void runFromConfig(ServerConfig config)
+            throws IOException, AdminServerException {
         LOG.info("Starting server");
         FileTxnSnapLog txnLog = null;
         try {

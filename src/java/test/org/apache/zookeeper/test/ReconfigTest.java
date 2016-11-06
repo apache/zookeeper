@@ -29,25 +29,28 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.zookeeper.AsyncCallback.DataCallback;
-import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.PortAssignment;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.jmx.CommonNames;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.server.quorum.flexible.QuorumHierarchical;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
+import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.admin.ZooKeeperAdmin;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.PortAssignment;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +61,13 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
 
     private QuorumUtil qu;
 
+    @Before
+    public void setup() {
+        System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest",
+                "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);
+        QuorumPeerConfig.setReconfigEnabled(true);
+    }
+
     @After
     public void tearDown() throws Exception {
         if (qu != null) {
@@ -65,13 +75,13 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         }
     }
 
-    public static String reconfig(ZooKeeper zk, List<String> joiningServers,
-            List<String> leavingServers, List<String> newMembers, long fromConfig)
+    public static String reconfig(ZooKeeperAdmin zkAdmin, List<String> joiningServers,
+                                  List<String> leavingServers, List<String> newMembers, long fromConfig)
             throws KeeperException, InterruptedException {
         byte[] config = null;
         for (int j = 0; j < 30; j++) {
             try {
-                config = zk.reconfig(joiningServers, leavingServers,
+                config = zkAdmin.reconfig(joiningServers, leavingServers,
                         newMembers, fromConfig, new Stat());
                 break;
             } catch (KeeperException.ConnectionLossException e) {
@@ -208,19 +218,40 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         return zkArr;
     }
 
-    public static void closeAllHandles(ZooKeeper[] zkArr) throws InterruptedException {
+    public static ZooKeeperAdmin[] createAdminHandles(QuorumUtil qu) throws IOException {
+        // create an extra handle, so we can index the handles from 1 to qu.ALL
+        // using the server id.
+        ZooKeeperAdmin[] zkAdminArr = new ZooKeeperAdmin[qu.ALL + 1];
+        zkAdminArr[0] = null; // not used.
+        for (int i = 1; i <= qu.ALL; i++) {
+            // server ids are 1, 2 and 3
+            zkAdminArr[i] = new ZooKeeperAdmin("127.0.0.1:"
+                    + qu.getPeer(i).peer.getClientPort(),
+                    ClientBase.CONNECTION_TIMEOUT, new Watcher() {
+                public void process(WatchedEvent event) {
+                }});
+            zkAdminArr[i].addAuthInfo("digest", "super:test".getBytes());
+        }
+
+        return zkAdminArr;
+    }
+
+    public static void closeAllHandles(ZooKeeper[] zkArr, ZooKeeperAdmin[] zkAdminArr) throws InterruptedException {
         for (ZooKeeper zk : zkArr)
             if (zk != null)
                 zk.close();
+        for (ZooKeeperAdmin zkAdmin : zkAdminArr)
+            if (zkAdmin != null)
+                zkAdmin.close();
     }
 
- 
     @Test
     public void testRemoveAddOne() throws Exception {
         qu = new QuorumUtil(1); // create 3 servers
         qu.disableJMXTest = true;
         qu.startAll();
         ZooKeeper[] zkArr = createHandles(qu);
+        ZooKeeperAdmin[] zkAdminArr = createAdminHandles(qu);
 
         List<String> leavingServers = new ArrayList<String>();
         List<String> joiningServers = new ArrayList<String>();
@@ -242,6 +273,10 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
                     : zkArr[(leaderIndex % qu.ALL) + 1];
             ZooKeeper zk2 = (leavingIndex == leaderIndex) ? zkArr[(leaderIndex % qu.ALL) + 1]
                     : zkArr[leaderIndex];
+            ZooKeeperAdmin zkAdmin1 = (leavingIndex == leaderIndex) ? zkAdminArr[leaderIndex]
+                    : zkAdminArr[(leaderIndex % qu.ALL) + 1];
+            ZooKeeperAdmin zkAdmin2 = (leavingIndex == leaderIndex) ? zkAdminArr[(leaderIndex % qu.ALL) + 1]
+                    : zkAdminArr[leaderIndex];
 
             leavingServers.add(Integer.toString(leavingIndex));
 
@@ -256,7 +291,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
                             .getPort() + ":participant;localhost:"
                     + qu.getPeer(leavingIndex).peer.getClientPort());
 
-            String configStr = reconfig(zk1, null, leavingServers, null, -1);
+            String configStr = reconfig(zkAdmin1, null, leavingServers, null, -1);
             testServerHasConfig(zk2, null, leavingServers);
             testNormalOperation(zk2, zk1);
 
@@ -265,13 +300,13 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
 
             // checks that conditioning on version works properly
             try {
-                reconfig(zk2, joiningServers, null, null, version + 1);
+                reconfig(zkAdmin2, joiningServers, null, null, version + 1);
                 Assert.fail("reconfig succeeded even though version condition was incorrect!");
             } catch (KeeperException.BadVersionException e) {
 
             }
 
-            reconfig(zk2, joiningServers, null, null, version);
+            reconfig(zkAdmin2, joiningServers, null, null, version);
 
             testNormalOperation(zk1, zk2);
             testServerHasConfig(zk1, joiningServers, null);
@@ -283,7 +318,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
             joiningServers.clear();
         }
 
-        closeAllHandles(zkArr);
+        closeAllHandles(zkArr, zkAdminArr);
     }
 
     /**
@@ -298,6 +333,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         qu.disableJMXTest = true;
         qu.startAll();
         ZooKeeper[] zkArr = createHandles(qu);
+        ZooKeeperAdmin[] zkAdminArr = createAdminHandles(qu);
 
         List<String> leavingServers = new ArrayList<String>();
         List<String> joiningServers = new ArrayList<String>();
@@ -345,7 +381,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         qu.shutdown(leavingIndex2);
 
         // 3 servers still up so this should work
-        reconfig(zkArr[stayingIndex2], null, leavingServers, null, -1);
+        reconfig(zkAdminArr[stayingIndex2], null, leavingServers, null, -1);
         
         qu.shutdown(stayingIndex2);
 
@@ -366,7 +402,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         Thread.sleep(10000);
 
         try {
-            reconfig(zkArr[stayingIndex1], joiningServers, null, null, -1);
+            reconfig(zkAdminArr[stayingIndex1], joiningServers, null, null, -1);
             Assert.fail("reconfig completed successfully even though there is no quorum up in new config!");
         } catch (KeeperException.NewConfigNoQuorum e) {
 
@@ -375,7 +411,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         // now start the third server so that new config has quorum
         qu.restart(stayingIndex2);
 
-        reconfig(zkArr[stayingIndex1], joiningServers, null, null, -1);
+        reconfig(zkAdminArr[stayingIndex1], joiningServers, null, null, -1);
         testNormalOperation(zkArr[stayingIndex2], zkArr[stayingIndex3]);
         testServerHasConfig(zkArr[stayingIndex2], joiningServers, null);
 
@@ -388,7 +424,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         testNormalOperation(zkArr[stayingIndex2], zkArr[leavingIndex2]);
         testServerHasConfig(zkArr[leavingIndex2], joiningServers, null);
 
-        closeAllHandles(zkArr);
+        closeAllHandles(zkArr, zkAdminArr);
     }
 
     @Test
@@ -397,6 +433,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         qu.disableJMXTest = true;
         qu.startAll();
         ZooKeeper[] zkArr = createHandles(qu);
+        ZooKeeperAdmin[] zkAdminArr = createAdminHandles(qu);
 
         // new config will have three of the servers as followers
         // two of the servers as observers, and all ports different
@@ -413,7 +450,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         qu.shutdown(6);
         qu.shutdown(7);
         
-        reconfig(zkArr[1], null, null, newServers, -1);
+        reconfig(zkAdminArr[1], null, null, newServers, -1);
         testNormalOperation(zkArr[1], zkArr[2]);
        
         testServerHasConfig(zkArr[1], newServers, null);
@@ -426,7 +463,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         
         testNormalOperation(zkArr[1], zkArr[2]);
 
-        closeAllHandles(zkArr);
+        closeAllHandles(zkArr, zkAdminArr);
     }
 
     @Test
@@ -435,6 +472,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         qu.disableJMXTest = true;
         qu.startAll();
         ZooKeeper[] zkArr = createHandles(qu);
+        ZooKeeperAdmin[] zkAdminArr = createAdminHandles(qu);
 
         List<String> leavingServers = new ArrayList<String>();
        
@@ -443,7 +481,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
  
         LinkedList<Integer> results = new LinkedList<Integer>();
         
-        zkArr[1].reconfig(null, leavingServers, null, -1, this, results);   
+        zkAdminArr[1].reconfig(null, leavingServers, null, -1, this, results);
         
         synchronized (results) {
             while (results.size() < 1) {
@@ -456,7 +494,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         for (int i=1; i<=5; i++)
             testServerHasConfig(zkArr[i], null, leavingServers);
 
-        closeAllHandles(zkArr);
+        closeAllHandles(zkArr, zkAdminArr);
     }
 
     @SuppressWarnings("unchecked")
@@ -475,6 +513,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         qu.disableJMXTest = true;
         qu.startAll();
         ZooKeeper[] zkArr = createHandles(qu);
+        ZooKeeperAdmin[] zkAdminArr = createAdminHandles(qu);
 
         // changing a server's role / port is done by "adding" it with the same
         // id but different role / port
@@ -501,6 +540,8 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
             // to removed server
             ZooKeeper zk1 = (changingIndex == leaderIndex) ? zkArr[leaderIndex]
                     : zkArr[(leaderIndex % qu.ALL) + 1];
+            ZooKeeperAdmin zkAdmin1 = (changingIndex == leaderIndex) ? zkAdminArr[leaderIndex]
+                    : zkAdminArr[(leaderIndex % qu.ALL) + 1];
 
             // exactly as it is now, except for role change
             joiningServers.add("server."
@@ -513,7 +554,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
                             .getPort() + ":" + newRole + ";localhost:"
                     + qu.getPeer(changingIndex).peer.getClientPort());
 
-            reconfig(zk1, joiningServers, null, null, -1);
+            reconfig(zkAdmin1, joiningServers, null, null, -1);
             testNormalOperation(zkArr[changingIndex], zk1);
 
             if (newRole.equals("observer")) {
@@ -540,7 +581,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
                 changingIndex = leaderIndex;
             }
         }
-        closeAllHandles(zkArr);
+        closeAllHandles(zkArr, zkAdminArr);
     }
 
     @Test
@@ -549,6 +590,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         qu.disableJMXTest = true;
         qu.startAll();
         ZooKeeper[] zkArr = createHandles(qu);
+        ZooKeeperAdmin[] zkAdminArr = createAdminHandles(qu);
 
         List<String> joiningServers = new ArrayList<String>();
 
@@ -568,7 +610,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         // any reconfig is invoked
         testNormalOperation(zkArr[followerIndex], zkArr[leaderIndex]);
 
-        reconfig(zkArr[followerIndex], joiningServers, null, null, -1);
+        reconfig(zkAdminArr[followerIndex], joiningServers, null, null, -1);
 
         try {
           for (int i=0; i < 20; i++) {
@@ -584,6 +626,14 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
                 + oldClientPort,
                 ClientBase.CONNECTION_TIMEOUT, new Watcher() {
                     public void process(WatchedEvent event) {}});
+
+        zkAdminArr[followerIndex].close();
+        zkAdminArr[followerIndex] = new ZooKeeperAdmin("127.0.0.1:"
+                + oldClientPort,
+                ClientBase.CONNECTION_TIMEOUT, new Watcher() {
+            public void process(WatchedEvent event) {}});
+        zkAdminArr[followerIndex].addAuthInfo("digest", "super:test".getBytes());
+
         for (int i = 0; i < 10; i++) {
             try {
                 Thread.sleep(1000);
@@ -598,6 +648,13 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
                 + newClientPort,
                 ClientBase.CONNECTION_TIMEOUT, new Watcher() {
                     public void process(WatchedEvent event) {}});
+
+        zkAdminArr[followerIndex].close();
+        zkAdminArr[followerIndex] = new ZooKeeperAdmin("127.0.0.1:"
+                + newClientPort,
+                ClientBase.CONNECTION_TIMEOUT, new Watcher() {
+            public void process(WatchedEvent event) {}});
+        zkAdminArr[followerIndex].addAuthInfo("digest", "super:test".getBytes());
 
         testNormalOperation(zkArr[followerIndex], zkArr[leaderIndex]);
         testServerHasConfig(zkArr[followerIndex], joiningServers, null);
@@ -615,7 +672,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
                 + ":participant;localhost:"
                 + qu.getPeer(leaderIndex).peer.getClientPort());
 
-        reconfig(zkArr[leaderIndex], joiningServers, null, null, -1);
+        reconfig(zkAdminArr[leaderIndex], joiningServers, null, null, -1);
 
         testNormalOperation(zkArr[followerIndex], zkArr[leaderIndex]);
 
@@ -634,7 +691,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
                     + qu.getPeer(i).peer.getClientPort());
         }
 
-        reconfig(zkArr[1], joiningServers, null, null, -1);
+        reconfig(zkAdminArr[1], joiningServers, null, null, -1);
 
         leaderIndex = getLeaderId(qu);
         int follower1 = leaderIndex == 1 ? 2 : 1;
@@ -650,7 +707,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         testServerHasConfig(zkArr[follower1], joiningServers, null);
         testServerHasConfig(zkArr[follower2], joiningServers, null);
 
-        closeAllHandles(zkArr);
+        closeAllHandles(zkArr, zkAdminArr);
     }
 
     @Test
@@ -667,6 +724,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         qu.disableJMXTest = true;
         qu.startAll();
         ZooKeeper[] zkArr = createHandles(qu);
+        ZooKeeperAdmin[] zkAdminArr = createAdminHandles(qu);
 
         List<String> joiningServers = new ArrayList<String>();
 
@@ -692,7 +750,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
             testNormalOperation(zkArr[followerIndex], zkArr[leaderIndex]);
 
             // Reconfigure
-            reconfig(zkArr[reconfigIndex], joiningServers, null, null, -1);
+            reconfig(zkAdminArr[reconfigIndex], joiningServers, null, null, -1);
             Thread.sleep(1000);
 
             // The follower reconfiguration will have failed
@@ -701,6 +759,12 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
                     + newClientPort,
                     ClientBase.CONNECTION_TIMEOUT, new Watcher() {
                         public void process(WatchedEvent event) {}});
+
+            zkAdminArr[serverIndex].close();
+            zkAdminArr[serverIndex] = new ZooKeeperAdmin("127.0.0.1:"
+                    + newClientPort,
+                    ClientBase.CONNECTION_TIMEOUT, new Watcher() {
+                public void process(WatchedEvent event) {}});
 
             try {
                 Thread.sleep(1000);
@@ -721,7 +785,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
             joiningServers.add("server." + serverIndex + "=localhost:" + quorumPort
                     + ":" + electionPort + ":participant;localhost:" + oldClientPort);
 
-            reconfig(zkArr[reconfigIndex], joiningServers, null, null, -1);
+            reconfig(zkAdminArr[reconfigIndex], joiningServers, null, null, -1);
 
             zkArr[serverIndex].close();
             zkArr[serverIndex] = new ZooKeeper("127.0.0.1:"
@@ -733,7 +797,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
             testServerHasConfig(zkArr[serverIndex], joiningServers, null);
             Assert.assertEquals(oldClientPort, qu.getPeer(serverIndex).peer.getClientPort());
         }
-        closeAllHandles(zkArr);
+        closeAllHandles(zkArr, zkAdminArr);
     }
 
     @Test
@@ -754,6 +818,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         qu.disableJMXTest = true;
         qu.startAll();
         ZooKeeper[] zkArr = createHandles(qu);
+        ZooKeeperAdmin[] zkAdminArr = createAdminHandles(qu);
 
         ArrayList<String> members = new ArrayList<String>();
         members.add("group.1=3:4:5");
@@ -771,7 +836,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
                     + "127.0.0.1:" + qu.getPeer(i).peer.getClientPort());
         }
 
-        reconfig(zkArr[1], null, null, members, -1);
+        reconfig(zkAdminArr[1], null, null, members, -1);
 
         // this should flush the config to servers 2, 3, 4 and 5
         testNormalOperation(zkArr[2], zkArr[3]);
@@ -803,7 +868,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
                     + "127.0.0.1:" + qu.getPeer(i).peer.getClientPort());
         }
 
-        reconfig(zkArr[1], null, null, members, -1);
+        reconfig(zkAdminArr[1], null, null, members, -1);
 
         // flush the config to server 2
         testNormalOperation(zkArr[1], zkArr[2]);
@@ -821,7 +886,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
                         + " doesn't think the quorum system is a majority quorum system!");
         }
 
-        closeAllHandles(zkArr);
+        closeAllHandles(zkArr, zkAdminArr);
     }
     
     @Test
@@ -849,6 +914,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         qu.disableJMXTest = true;
         qu.startAll();
         ZooKeeper[] zkArr = createHandles(qu);
+        ZooKeeperAdmin[] zkAdminArr = createAdminHandles(qu);
 
         List<String> leavingServers = new ArrayList<String>();
         List<String> joiningServers = new ArrayList<String>();
@@ -873,6 +939,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         assertRemotePeerMXBeanAttributes(leavingQS3, remotePeerBean3);
 
         ZooKeeper zk = zkArr[leavingIndex];
+        ZooKeeperAdmin zkAdmin = zkAdminArr[leavingIndex];
 
         leavingServers.add(Integer.toString(leavingIndex));
 
@@ -885,7 +952,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
                 + qu.getPeer(leavingIndex).peer.getClientPort());
 
         // Remove ReplicatedServer_1 from the ensemble
-        reconfig(zk, null, leavingServers, null, -1);
+        reconfig(zkAdmin, null, leavingServers, null, -1);
 
         // localPeerBean.1 of ReplicatedServer_1
         QuorumPeer removedPeer = qu.getPeer(leavingIndex).peer;
@@ -900,7 +967,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         JMXEnv.ensureNone(remotePeerBean3);
 
         // Add ReplicatedServer_1 back to the ensemble
-        reconfig(zk, joiningServers, null, null, -1);
+        reconfig(zkAdmin, joiningServers, null, null, -1);
 
         // localPeerBean.1 of ReplicatedServer_1
         assertLocalPeerMXBeanAttributes(removedPeer, localPeerBean, true);
@@ -913,7 +980,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         leavingQS3 = peer3.getView().get(new Long(leavingIndex));
         assertRemotePeerMXBeanAttributes(leavingQS3, remotePeerBean3);
 
-        closeAllHandles(zkArr);
+        closeAllHandles(zkArr, zkAdminArr);
     }
 
     /**
@@ -926,6 +993,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         qu.disableJMXTest = true;
         qu.startAll();
         ZooKeeper[] zkArr = createHandles(qu);
+        ZooKeeperAdmin[] zkAdminArr = createAdminHandles(qu);
 
         // changing a server's role / port is done by "adding" it with the same
         // id but different role / port
@@ -953,6 +1021,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         String newRole = "observer";
 
         ZooKeeper zk = zkArr[changingIndex];
+        ZooKeeperAdmin zkAdmin = zkAdminArr[changingIndex];
 
         // exactly as it is now, except for role change
         joiningServers.add("server." + changingIndex + "=127.0.0.1:"
@@ -962,7 +1031,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
                 + ":" + newRole + ";127.0.0.1:"
                 + qu.getPeer(changingIndex).peer.getClientPort());
 
-        reconfig(zk, joiningServers, null, null, -1);
+        reconfig(zkAdmin, joiningServers, null, null, -1);
         testNormalOperation(zkArr[changingIndex], zk);
 
         Assert.assertTrue(qu.getPeer(changingIndex).peer.observer != null
@@ -986,7 +1055,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         changingQS3 = peer3.getView().get(new Long(changingIndex));
         assertRemotePeerMXBeanAttributes(changingQS3, remotePeerBean3);
 
-        closeAllHandles(zkArr);
+        closeAllHandles(zkArr, zkAdminArr);
     }
 
     private void assertLocalPeerMXBeanAttributes(QuorumPeer qp,

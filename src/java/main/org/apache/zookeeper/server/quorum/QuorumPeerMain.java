@@ -126,7 +126,9 @@ public class QuorumPeerMain {
         }
     }
 
-    public void runFromConfig(QuorumPeerConfig config) throws IOException, AdminServerException {
+    public void runFromConfig(QuorumPeerConfig config)
+            throws IOException, AdminServerException
+    {
       try {
           ManagedUtil.registerLog4jMBeans();
       } catch (JMException e) {
