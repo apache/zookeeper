@@ -640,21 +640,15 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
      * limits of the operating system). startup(zks) must be called subsequently.
      */
     public NIOServerCnxnFactory() {
-        String serverCnxnClassName = System.getProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN);
-        if ( serverCnxnClassName != null ) {
-            try {
-                Class<? extends NIOServerCnxn> serverCnxnClass = Class.forName(serverCnxnClassName).asSubclass(NIOServerCnxn.class);
-                serverCnxnClassCtr =
-                  serverCnxnClass.getConstructor(ZooKeeperServer.class, SocketChannel.class,
-                    SelectionKey.class, NIOServerCnxnFactory.class,
-                    SelectorThread.class);
-            } catch (ClassNotFoundException e) {
-                LOG.debug("Can not find class for {} . Using NIOServerCnxn", serverCnxnClassName);
-            } catch (NoSuchMethodException e) {
-                LOG.debug("Can not find constructor for {} . Using NIOServerCnxn", serverCnxnClassName);
-            } catch (Throwable t) {
-                LOG.debug("Unexpected Exception for dealing with {} ", serverCnxnClassName);
-            }
+        String serverCnxnClassName = System.getProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN, "org.apache.zookeeper.server.NIOServerCnxn");
+        try {
+            Class<? extends NIOServerCnxn> serverCnxnClass = Class.forName(serverCnxnClassName).asSubclass(NIOServerCnxn.class);
+            serverCnxnClassCtr =
+              serverCnxnClass.getConstructor(ZooKeeperServer.class, SocketChannel.class,
+                SelectionKey.class, NIOServerCnxnFactory.class,
+                SelectorThread.class);
+        } catch (Throwable t) {
+            throw new RuntimeException("Exception when trying to get constructor for " + serverCnxnClassName, t);
         }
     }
 
@@ -869,25 +863,11 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     protected NIOServerCnxn createConnection(SocketChannel sock,
             SelectionKey sk, SelectorThread selectorThread) throws IOException {
 
-        NIOServerCnxn cnxn = null;
-
-        if (serverCnxnClassCtr != null) {
-            try {
-                cnxn = serverCnxnClassCtr.newInstance(zkServer, sock, sk, this, selectorThread);
-            } catch (InstantiationException e1) {
-                LOG.debug("Can not instantiate class for " + serverCnxnClassCtr.getName() + ". Using NIOServerCnxn");
-            } catch (IllegalAccessException e1) {
-                LOG.debug("IllegalAccessException for " + serverCnxnClassCtr.getName() + ". Using NIOServerCnxn");
-            } catch (InvocationTargetException e1) {
-                LOG.debug("InvocationTargetException for " + serverCnxnClassCtr.getName() + ". Using NIOServerCnxn");
-            } catch (Throwable t) {
-                LOG.debug("Unknown Exception while dealing with: {} . Using NIOServerCnxn", serverCnxnClassCtr.getName());
-            }
+        try {
+            return serverCnxnClassCtr.newInstance(zkServer, sock, sk, this, selectorThread);
+        } catch (Throwable t) {
+            throw new IOException("Can not instantiate class for " + serverCnxnClassCtr.getName(), t);
         }
-        if (cnxn == null) {
-            cnxn = new NIOServerCnxn(zkServer, sock, sk, this, selectorThread);
-        }
-        return cnxn;
     }
 
     private int getClientCnxnCount(InetAddress cl) {

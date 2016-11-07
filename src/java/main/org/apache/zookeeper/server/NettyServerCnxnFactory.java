@@ -116,23 +116,11 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             }
 
             NettyServerCnxn cnxn = null;
-            if (serverCnxnClassCtr != null) {
-                try {
-                    cnxn = serverCnxnClassCtr.newInstance(ctx.getChannel(),
-                      zkServer, NettyServerCnxnFactory.this);
-                } catch (InstantiationException e1) {
-                    LOG.debug("Can not instantiate class for " + serverCnxnClassCtr.getName() + ". Using NettyServerCnxn");
-                } catch (IllegalAccessException e1) {
-                    LOG.debug("IllegalAccessException for " + serverCnxnClassCtr.getName() + ". Using NettyServerCnxn");
-                } catch (InvocationTargetException e1) {
-                    LOG.debug("InvocationTargetException for " + serverCnxnClassCtr.getName() + ". Using NettyServerCnxn");
-                } catch (Throwable t) {
-                    LOG.debug("Unknown Exception while dealing with: {} . Using NettyServerCnxn", serverCnxnClassCtr.getName());
-                }
-            }
-            if (cnxn == null) {
-                cnxn = new NettyServerCnxn(ctx.getChannel(),
+            try {
+                cnxn = serverCnxnClassCtr.newInstance(ctx.getChannel(),
                   zkServer, NettyServerCnxnFactory.this);
+            } catch (Throwable t) {
+                throw new IOException("Exception while trying to instantiate " + serverCnxnClassCtr.getName(), t);
             }
 
             ctx.setAttachment(cnxn);
@@ -354,19 +342,13 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     CnxnChannelHandler channelHandler = new CnxnChannelHandler();
 
     NettyServerCnxnFactory() {
-        String serverCnxnClassName = System.getProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN);
-        if ( serverCnxnClassName != null ) {
-            try {
-                Class<? extends NettyServerCnxn> serverCnxnClass = Class.forName(serverCnxnClassName).asSubclass(NettyServerCnxn.class);
-                serverCnxnClassCtr =
-                  serverCnxnClass.getConstructor(Channel.class, ZooKeeperServer.class, NettyServerCnxnFactory.class);
-            } catch (ClassNotFoundException e) {
-                LOG.debug("Can not find class for {} . Using NettyServerCnxn", serverCnxnClassName);
-            } catch (NoSuchMethodException e) {
-                LOG.debug("Can not find constructor for {} . Using NettyServerCnxn", serverCnxnClassName);
-            } catch (Throwable t) {
-                LOG.debug("Unexpected Exception for dealing with {} ", serverCnxnClassName);
-            }
+        String serverCnxnClassName = System.getProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN, "org.apache.zookeeper.server.NettyServerCnxn");
+        try {
+            Class<? extends NettyServerCnxn> serverCnxnClass = Class.forName(serverCnxnClassName).asSubclass(NettyServerCnxn.class);
+            serverCnxnClassCtr =
+              serverCnxnClass.getConstructor(Channel.class, ZooKeeperServer.class, NettyServerCnxnFactory.class);
+        } catch (Throwable t) {
+            throw new RuntimeException("Exception when trying to get constructor for " + serverCnxnClassName, t);
         }
 
         bootstrap = new ServerBootstrap(

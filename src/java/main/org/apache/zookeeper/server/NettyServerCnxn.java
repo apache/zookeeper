@@ -71,7 +71,7 @@ public class NettyServerCnxn extends ServerCnxn {
     NettyServerCnxnFactory factory;
     boolean initialized;
     
-    NettyServerCnxn(Channel channel, ZooKeeperServer zks, NettyServerCnxnFactory factory) {
+    public NettyServerCnxn(Channel channel, ZooKeeperServer zks, NettyServerCnxnFactory factory) {
         this.channel = channel;
         this.zkServer = zks;
         this.factory = factory;
