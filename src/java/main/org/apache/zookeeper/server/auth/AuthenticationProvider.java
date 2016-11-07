@@ -20,9 +20,6 @@ package org.apache.zookeeper.server.auth;
 
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.server.ServerCnxn;
-import org.apache.zookeeper.server.ZooKeeperServer;
-
-import java.util.List;
 
 /**
  * This interface is implemented by authentication providers to add new kinds of

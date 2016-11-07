@@ -62,20 +62,20 @@ public class KeyAuthenticationProvider extends ServerAuthenticationProvider {
         return "key";
     }
 
-    public byte[] getKey(ZooKeeperServer zks) {
+    private byte[] getKey(ZooKeeperServer zks) {
         ZKDatabase db = zks.getZKDatabase();
         if (db != null) {
             try {
                 Stat stat = new Stat();
                 return db.getData("/key", stat, null);
             } catch (NoNodeException e) {
-                // ignore
+                LOG.error("getData failed", e);
             }
         }
         return null;
     }
 
-    public boolean validate(byte[] key, byte[] auth) {
+    private boolean validate(byte[] key, byte[] auth) {
         // perform arbitrary function (auth is a multiple of key)
         try {
             String keyStr = new String(key, "UTF-8");
@@ -86,6 +86,7 @@ public class KeyAuthenticationProvider extends ServerAuthenticationProvider {
               return false;
             }
         } catch (NumberFormatException | UnsupportedEncodingException nfe) {
+            LOG.error("bad formatting", nfe);
           return false;
         }
         return true;
@@ -99,13 +100,14 @@ public class KeyAuthenticationProvider extends ServerAuthenticationProvider {
         try {
           authStr = new String(authData, "UTF-8");
         } catch (Exception e) {
-          // empty authData
+            LOG.error("UTF-8", e);
         }
         if (key != null) {
             if (!validate(key, authData)) {
                 try {
                   keyStr = new String(key, "UTF-8");
                 } catch (Exception e) {
+                    LOG.error("UTF-8", e);
                     // empty key
                     keyStr = authStr;
                 }
@@ -129,10 +131,12 @@ public class KeyAuthenticationProvider extends ServerAuthenticationProvider {
         return id.equals(aclExpr);
     }
 
+    @Override
     public boolean isAuthenticated() {
         return true;
     }
 
+    @Override
     public boolean isValid(String id) {
         return true;
     }
