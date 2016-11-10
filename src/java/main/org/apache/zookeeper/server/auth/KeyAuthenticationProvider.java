@@ -19,13 +19,10 @@
 package org.apache.zookeeper.server.auth;
 
 import java.io.UnsupportedEncodingException;
-import java.util.List;
 
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NoNodeException;
-import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
-import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.data.Stat;
@@ -93,8 +90,8 @@ public class KeyAuthenticationProvider extends ServerAuthenticationProvider {
     }
 
     @Override
-    public KeeperException.Code handleAuthentication(ZooKeeperServer zks, ServerCnxn cnxn, byte[] authData) {
-        byte[] key = getKey(zks);
+    public KeeperException.Code handleAuthentication(ServerObjs serverObjs, byte[] authData) {
+        byte[] key = getKey(serverObjs.getZks());
         String authStr = "";
         String keyStr = "";
         try {
@@ -122,13 +119,13 @@ public class KeyAuthenticationProvider extends ServerAuthenticationProvider {
         //   In that case, replace it with something non-ephemeral (or punt with null).
         //
         // BOTH addAuthInfo and an OK return-code are needed for authentication.
-        cnxn.addAuthInfo(new Id(getScheme(), keyStr));
+        serverObjs.getCnxn().addAuthInfo(new Id(getScheme(), keyStr));
         return KeeperException.Code.OK;
     }
 
     @Override
-    public boolean matches(ZooKeeperServer zks, ServerCnxn cnxn, String path, String id, String aclExpr, int perm, List<ACL> setAcls) {
-        return id.equals(aclExpr);
+    public boolean matches(ServerObjs serverObjs, MatchValues matchValues) {
+        return matchValues.getId().equals(matchValues.getAclExpr());
     }
 
     @Override

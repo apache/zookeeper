@@ -1200,15 +1200,14 @@ authProvider.2=com.f.MyAuth2
 
     <programlisting>
 public abstract class ServerAuthenticationProvider implements AuthenticationProvider {
-    public abstract KeeperException.Code handleAuthentication(ZooKeeperServer zks, ServerCnxn cnxn, byte authData[]);
-    public abstract boolean matches(ZooKeeperServer zks, ServerCnxn cnxn, String path, String id, String aclExpr,
-        int perm, List&lt;ACL&gt; setAcls);
+    public abstract KeeperException.Code handleAuthentication(ServerObjs serverObjs, byte authData[]);
+    public abstract boolean matches(ServerObjs serverObjs, MatchValues matchValues);
 }
     </programlisting>
 
     <para>
     Instead of implementing AuthenticationProvider you extend ServerAuthenticationProvider. Your handleAuthentication()
-    and matches() methods will then receive the additional parameters.
+    and matches() methods will then receive the additional parameters (via ServerObjs and MatchValues).
     </para>
 
     <itemizedlist>

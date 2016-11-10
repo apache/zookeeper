@@ -324,7 +324,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 if (ap != null) {
                     for (Id authId : ids) {
                         if (authId.getScheme().equals(id.getScheme())
-                                && ap.matches(zks, cnxn, path, authId.getId(), id.getId(), perm, setAcls)) {
+                                && ap.matches(new ServerAuthenticationProvider.ServerObjs(zks, cnxn),
+                                new ServerAuthenticationProvider.MatchValues(path, authId.getId(), id.getId(), perm, setAcls))) {
                             return;
                         }
                     }

@@ -19,11 +19,7 @@
 package org.apache.zookeeper.server.auth;
 
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.server.ServerCnxn;
-import org.apache.zookeeper.server.ZooKeeperServer;
-
-import java.util.List;
 
 /**
  * Provides backwards compatibility between older {@link AuthenticationProvider}
@@ -44,9 +40,14 @@ class WrappedAuthenticationProvider extends ServerAuthenticationProvider {
         this.implementation = implementation;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * forwards to older method {@link #handleAuthentication(ServerCnxn, byte[])}
+     */
     @Override
-    public KeeperException.Code handleAuthentication(ZooKeeperServer zks, ServerCnxn cnxn, byte[] authData) {
-        return implementation.handleAuthentication(cnxn, authData);
+    public KeeperException.Code handleAuthentication(ServerObjs serverObjs, byte[] authData) {
+        return implementation.handleAuthentication(serverObjs.getCnxn(), authData);
     }
 
     /**
@@ -54,10 +55,9 @@ class WrappedAuthenticationProvider extends ServerAuthenticationProvider {
      *
      * forwards to older method {@link #matches(String, String)}
      */
-
     @Override
-    public boolean matches(ZooKeeperServer zks, ServerCnxn cnxn, String path, String id, String aclExpr, int perm, List<ACL> setAcls) {
-        return implementation.matches(id, aclExpr);
+    public boolean matches(ServerObjs serverObjs, MatchValues matchValues) {
+        return implementation.matches(matchValues.getId(), matchValues.getAclExpr());
     }
 
     @Override
