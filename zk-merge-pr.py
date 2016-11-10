@@ -33,6 +33,7 @@ import re
 import subprocess
 import sys
 import urllib2
+import getpass
 
 try:
     import jira.client
@@ -412,21 +413,32 @@ def check_git_remote():
 
 
 def check_jira_env():
-    if JIRA_IMPORTED:
-       if JIRA_USERNAME.strip() == "" or JIRA_PASSWORD.strip() == "":
-           msg ="JIRA credentials are not set. Want to continue?"
-           continue_maybe(msg)
 
+    global JIRA_PASSWORD
+
+    if JIRA_IMPORTED:
+
+       if JIRA_USERNAME.strip() != "" and JIRA_PASSWORD.strip() == "":
+           inform_pwd = raw_input("JIRA_USERNAME set but JIRA_PASSWORD is not. Want to inform it? ")
+           if inform_pwd.strip() == "y":
+               JIRA_PASSWORD = getpass.getpass('JIRA PASSWORD: ')
+
+       if JIRA_USERNAME.strip() == "" or JIRA_PASSWORD.strip() == "":
+           msg ="JIRA_USERNAME and/or JIRA_PASSWORD are not set. Want to continue? "
+           continue_maybe(msg)
+    else:
+        msg = "JIRA lib not installed. Want to continue? "
+        continue_maybe(msg)
 
 def main():
     global original_head
 
     original_head = get_current_branch()
-    
+
     check_jira_env()
 
     check_git_remote()
-    
+
     branches = get_json("%s/branches" % GITHUB_API_BASE)
     branch_names = filter(lambda x: x.startswith(RELEASE_BRANCH_PREFIX), [x['name'] for x in branches])
     # Assumes branch names can be sorted lexicographically
