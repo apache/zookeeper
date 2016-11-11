@@ -51,11 +51,15 @@ parseArgs() {
       PULLREQUEST_TITLE="${GIT_PR_TITLE}"
 
       ## Extract jira number from PR title
-      defect=${PULLREQUEST_TITLE%%:*}
+      local prefix=${PULLREQUEST_TITLE%ZOOKEEPER\-[0-9]*}
+      local noprefix=${PULLREQUEST_TITLE#$prefix}
+      local regex='\(ZOOKEEPER-.[0-9]*\)'
+      defect=$(expr "$noprefix" : ${regex})
 
       echo "Pull request id: ${PULLREQUEST_ID}"
       echo "Pull request title: ${PULLREQUEST_TITLE}"
       echo "Defect number: ${defect}"
+
       JIRA_COMMENT="GitHub Pull Request ${PULLREQUEST_NUMBER} Build
       "
       ;;
@@ -156,8 +160,8 @@ setup () {
     cleanupAndExit 1
   fi
   ### get pull request diff
-  curl -L ${GIT_PR_URL}.diff > $PATCH_DIR/patch
-  
+  ${CURL} -L ${GIT_PR_URL}.diff > $PATCH_DIR/patch
+
   echo ""
   echo ""
   echo "======================================================================"
@@ -576,14 +580,14 @@ if [[ $QABUILD == "true" ]] ; then
     exit 100
   fi
 fi
-echo "----- Checked out, going to set up -----"
 setup
 checkAuthor
-RESULT=$?
+(( RESULT = RESULT + $? ))
 
 checkTests
-(( RESULT = RESULT + $? ))
-if [[ $? != 0 ]] ; then
+checkTestsResult=$?
+(( RESULT = RESULT + $checkTestsResult ))
+if [[ $checkTestsResult != 0 ]] ; then
   submitJiraComment 1
   cleanupAndExit 1
 fi
