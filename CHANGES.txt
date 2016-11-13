@@ -541,6 +541,9 @@ IMPROVEMENTS:
   ZOOKEEPER-2594: Use TLS for downloading artifacts during build
   (Olaf Flebbe via phunt)
 
+  ZOOKEEPER-2631: Make issue extraction in the git pull request script
+  more robust (Flavio P. Junqueira via rgs)
+
 Release 3.5.0 - 8/4/2014
 
 NEW FEATURES:
