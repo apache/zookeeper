@@ -51,7 +51,6 @@ import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.client.StaticHostProvider;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.apache.zookeeper.common.PathUtils;
-import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.CheckWatchesRequest;
@@ -68,7 +67,6 @@ import org.apache.zookeeper.proto.GetChildrenRequest;
 import org.apache.zookeeper.proto.GetChildrenResponse;
 import org.apache.zookeeper.proto.GetDataRequest;
 import org.apache.zookeeper.proto.GetDataResponse;
-import org.apache.zookeeper.proto.ReconfigRequest;
 import org.apache.zookeeper.proto.RemoveWatchesRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
@@ -154,7 +152,7 @@ public class ZooKeeper {
         Environment.logEnv("Client environment:", LOG);
     }
 
-    private final HostProvider hostProvider;
+    protected final HostProvider hostProvider;
 
     /**
      * This function allows a client to update the connection string by providing 
@@ -213,7 +211,7 @@ public class ZooKeeper {
         return cnxn.zooKeeperSaslClient;
     }
 
-    private final ZKWatchManager watchManager;
+    protected final ZKWatchManager watchManager;
 
     private final ZKClientConfig clientConfig;
 
@@ -221,19 +219,19 @@ public class ZooKeeper {
         return clientConfig;
     }
 
-    List<String> getDataWatches() {
+    protected List<String> getDataWatches() {
         synchronized(watchManager.dataWatches) {
             List<String> rc = new ArrayList<String>(watchManager.dataWatches.keySet());
             return rc;
         }
     }
-    List<String> getExistWatches() {
+    protected List<String> getExistWatches() {
         synchronized(watchManager.existWatches) {
             List<String> rc =  new ArrayList<String>(watchManager.existWatches.keySet());
             return rc;
         }
     }
-    List<String> getChildWatches() {
+    protected List<String> getChildWatches() {
         synchronized(watchManager.childWatches) {
             List<String> rc = new ArrayList<String>(watchManager.childWatches.keySet());
             return rc;
@@ -260,7 +258,7 @@ public class ZooKeeper {
             this.disableAutoWatchReset = disableAutoWatchReset;
         }
 
-        private volatile Watcher defaultWatcher;
+        protected volatile Watcher defaultWatcher;
 
         final private void addTo(Set<Watcher> from, Set<Watcher> to) {
             if (from != null) {
@@ -527,7 +525,7 @@ public class ZooKeeper {
     /**
      * Register a watcher for a particular path.
      */
-    abstract class WatchRegistration {
+    public abstract class WatchRegistration {
         private Watcher watcher;
         private String clientPath;
         public WatchRegistration(Watcher watcher, String clientPath)
@@ -2124,85 +2122,6 @@ public class ZooKeeper {
      */
     public void getConfig(boolean watch, DataCallback cb, Object ctx) {
         getConfig(watch ? watchManager.defaultWatcher : null, cb, ctx);
-    }
-    
-    /**
-     * Reconfigure - add/remove servers. Return the new configuration.
-     * @param joiningServers
-     *                a comma separated list of servers being added (incremental reconfiguration)
-     * @param leavingServers
-     *                a comma separated list of servers being removed (incremental reconfiguration)
-     * @param newMembers
-     *                a comma separated list of new membership (non-incremental reconfiguration)
-     * @param fromConfig
-     *                version of the current configuration (optional - causes reconfiguration to throw an exception if configuration is no longer current)
-     * @param stat the stat of /zookeeper/config znode will be copied to this
-     *             parameter if not null.
-     * @return new configuration
-     * @throws InterruptedException If the server transaction is interrupted.
-     * @throws KeeperException If the server signals an error with a non-zero error code.     
-     */
-    public byte[] reconfig(String joiningServers, String leavingServers, String newMembers, long fromConfig, Stat stat) throws KeeperException, InterruptedException
-    {
-        RequestHeader h = new RequestHeader();
-        h.setType(ZooDefs.OpCode.reconfig);       
-        ReconfigRequest request = new ReconfigRequest(joiningServers, leavingServers, newMembers, fromConfig);        
-        GetDataResponse response = new GetDataResponse();       
-        ReplyHeader r = cnxn.submitRequest(h, request, response, null);
-        if (r.getErr() != 0) {
-            throw KeeperException.create(KeeperException.Code.get(r.getErr()), "");
-        }
-        if (stat != null) {
-            DataTree.copyStat(response.getStat(), stat);
-        }
-        return response.getData();
-    }
-
-    /**
-     * Convenience wrapper around reconfig that takes Lists of strings instead of comma-separated servers.
-     *
-     * @see #reconfig
-     *
-     */
-    public byte[] reconfig(List<String> joiningServers, List<String> leavingServers, List<String> newMembers, long fromConfig, Stat stat) throws KeeperException, InterruptedException
-    {
-        return reconfig(StringUtils.joinStrings(joiningServers, ","), 
-        		StringUtils.joinStrings(leavingServers, ","), 
-        		StringUtils.joinStrings(newMembers, ","), 
-        		fromConfig, stat);
-    }
-
-    /**
-     * The Asynchronous version of reconfig. 
-     *
-     * @see #reconfig
-     *      
-     **/
-    public void reconfig(String joiningServers, String leavingServers,
-        String newMembers, long fromConfig, DataCallback cb, Object ctx)
-    {
-        RequestHeader h = new RequestHeader();
-        h.setType(ZooDefs.OpCode.reconfig);       
-        ReconfigRequest request = new ReconfigRequest(joiningServers, leavingServers, newMembers, fromConfig);
-        GetDataResponse response = new GetDataResponse();
-        cnxn.queuePacket(h, new ReplyHeader(), request, response, cb,
-               ZooDefs.CONFIG_NODE, ZooDefs.CONFIG_NODE, ctx, null);
-    }
- 
-    /**
-     * Convenience wrapper around asynchronous reconfig that takes Lists of strings instead of comma-separated servers.
-     *
-     * @see #reconfig
-     *
-     */
-    public void reconfig(List<String> joiningServers,
-        List<String> leavingServers, List<String> newMembers, long fromConfig,
-        DataCallback cb, Object ctx)
-    {
-        reconfig(StringUtils.joinStrings(joiningServers, ","), 
-        		StringUtils.joinStrings(leavingServers, ","), 
-        		StringUtils.joinStrings(newMembers, ","), 
-        		fromConfig, cb, ctx);
     }
    
     /**

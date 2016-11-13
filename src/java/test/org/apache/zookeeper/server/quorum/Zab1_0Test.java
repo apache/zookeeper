@@ -1216,13 +1216,13 @@ public class Zab1_0Test extends ZKTestCase {
     }
     
     private Leader createLeader(File tmpDir, QuorumPeer peer)
-    throws IOException, NoSuchFieldException, IllegalAccessException{
+    throws IOException, NoSuchFieldException, IllegalAccessException {
         LeaderZooKeeperServer zk = prepareLeader(tmpDir, peer);
         return new Leader(peer, zk);
     }
     
     private Leader createMockLeader(File tmpDir, QuorumPeer peer)
-    throws IOException, NoSuchFieldException, IllegalAccessException{
+    throws IOException, NoSuchFieldException, IllegalAccessException {
         LeaderZooKeeperServer zk = prepareLeader(tmpDir, peer);
         return new MockLeader(peer, zk);
     }

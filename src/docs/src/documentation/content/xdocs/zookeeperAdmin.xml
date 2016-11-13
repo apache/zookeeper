@@ -931,6 +931,7 @@ server.3=zoo3:2888:3888</programlisting>
               feature. Default is "true"</para>
             </listitem>
           </varlistentry>
+
         </variablelist>
       </section>
 
@@ -1108,6 +1109,42 @@ server.3=zoo3:2888:3888</programlisting>
               </para>
             </listitem>
           </varlistentry>
+
+          <varlistentry>
+            <term>reconfigEnabled</term>
+
+            <listitem>
+              <para>(No Java system property)</para>
+
+              <para><emphasis role="bold">New in 3.5.3:</emphasis>
+                This controls the enabling or disabling of
+                <ulink url="zookeeperReconfig.html">
+                  Dynamic Reconfiguration</ulink> feature. When the feature
+                is enabled, users can perform reconfigure operations through
+                the ZooKeeper client API or through ZooKeeper command line tools
+                assuming users are authorized to perform such operations.
+                When the feature is disabled, no user, including the super user,
+                can perform a reconfiguration. Any attempt to reconfigure will return an error.
+                <emphasis role="bold">"reconfigEnabled"</emphasis> option can be set as
+                <emphasis role="bold">"reconfigEnabled=false"</emphasis> or
+                <emphasis role="bold">"reconfigEnabled=true"</emphasis>
+                to a server's config file, or using QuorumPeerConfig's
+                setReconfigEnabled method. The default value is false.
+
+                If present, the value should be consistent across every server in
+                the entire ensemble. Setting the value as true on some servers and false
+                on other servers will cause inconsistent behavior depending on which server
+                is elected as leader. If the leader has a setting of
+                <emphasis role="bold">"reconfigEnabled=true"</emphasis>, then the ensemble
+                will have reconfig feature enabled. If the leader has a setting of
+                <emphasis role="bold">"reconfigEnabled=false"</emphasis>, then the ensemble
+                will have reconfig feature disabled. It is thus recommended to have a consistent
+                value for <emphasis role="bold">"reconfigEnabled"</emphasis> across servers
+                in the ensemble.
+              </para>
+            </listitem>
+          </varlistentry>
+
         </variablelist>
         <para></para>
       </section>

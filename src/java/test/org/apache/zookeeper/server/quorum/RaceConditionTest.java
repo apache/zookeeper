@@ -151,7 +151,8 @@ public class RaceConditionTest extends QuorumPeerTestBase {
         }
 
         public CustomQuorumPeer(Map<Long, QuorumServer> quorumPeers, File snapDir, File logDir, int clientPort,
-                int electionAlg, long myid, int tickTime, int initLimit, int syncLimit) throws IOException {
+                int electionAlg, long myid, int tickTime, int initLimit, int syncLimit)
+                throws IOException {
             super(quorumPeers, snapDir, logDir, electionAlg, myid, tickTime, initLimit, syncLimit, false,
                     ServerCnxnFactory.createFactory(new InetSocketAddress(clientPort), -1), new QuorumMaj(quorumPeers));
         }
@@ -234,7 +235,8 @@ public class RaceConditionTest extends QuorumPeerTestBase {
 
     private static class MockTestQPMain extends TestQPMain {
         @Override
-        public void runFromConfig(QuorumPeerConfig config) throws IOException, AdminServerException {
+        public void runFromConfig(QuorumPeerConfig config)
+                throws IOException, AdminServerException {
             quorumPeer = new CustomQuorumPeer(config.getQuorumVerifier().getAllMembers(), config.getDataDir(),
                     config.getDataLogDir(), config.getClientPortAddress().getPort(), config.getElectionAlg(),
                     config.getServerId(), config.getTickTime(), config.getInitLimit(), config.getSyncLimit());

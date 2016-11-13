@@ -1523,14 +1523,14 @@ public class ClientCnxn {
         sendThread.sendPacket(p);
     }
 
-    Packet queuePacket(RequestHeader h, ReplyHeader r, Record request,
+    public Packet queuePacket(RequestHeader h, ReplyHeader r, Record request,
             Record response, AsyncCallback cb, String clientPath,
             String serverPath, Object ctx, WatchRegistration watchRegistration) {
         return queuePacket(h, r, request, response, cb, clientPath, serverPath,
                 ctx, watchRegistration, null);
     }
 
-    Packet queuePacket(RequestHeader h, ReplyHeader r, Record request,
+    public Packet queuePacket(RequestHeader h, ReplyHeader r, Record request,
             Record response, AsyncCallback cb, String clientPath,
             String serverPath, Object ctx, WatchRegistration watchRegistration,
             WatchDeregistration watchDeregistration) {

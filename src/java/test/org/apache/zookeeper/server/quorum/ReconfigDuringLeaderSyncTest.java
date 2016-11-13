@@ -30,6 +30,7 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.admin.ZooKeeperAdmin;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.admin.AdminServer.AdminServerException;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -38,6 +39,7 @@ import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +48,13 @@ public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
     protected static final Logger LOG = LoggerFactory.getLogger(ReconfigDuringLeaderSyncTest.class);
     private static int SERVER_COUNT = 3;
     private MainThread[] mt;
+
+    @Before
+    public void setup() {
+        System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest",
+                "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);
+        QuorumPeerConfig.setReconfigEnabled(true);
+    }
 
     /**
      * <pre>
@@ -86,8 +95,9 @@ public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
                     ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i], CONNECTION_TIMEOUT));
         }
         CountdownWatcher watch = new CountdownWatcher();
-        ZooKeeper preReconfigClient = new ZooKeeper("127.0.0.1:" + clientPorts[0], ClientBase.CONNECTION_TIMEOUT,
-                watch);
+        ZooKeeperAdmin preReconfigClient = new ZooKeeperAdmin("127.0.0.1:" + clientPorts[0],
+                ClientBase.CONNECTION_TIMEOUT, watch);
+        preReconfigClient.addAuthInfo("digest", "super:test".getBytes());
         watch.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
 
         // new server joining
@@ -198,7 +208,8 @@ public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
         private boolean newLeaderMessage = false;
 
         public CustomQuorumPeer(Map<Long, QuorumServer> quorumPeers, File snapDir, File logDir, int clientPort,
-                int electionAlg, long myid, int tickTime, int initLimit, int syncLimit) throws IOException {
+                int electionAlg, long myid, int tickTime, int initLimit, int syncLimit)
+                throws IOException {
             super(quorumPeers, snapDir, logDir, electionAlg, myid, tickTime, initLimit, syncLimit, false,
                     ServerCnxnFactory.createFactory(new InetSocketAddress(clientPort), -1), new QuorumMaj(quorumPeers));
         }
@@ -241,7 +252,8 @@ public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
 
     private static class MockTestQPMain extends TestQPMain {
         @Override
-        public void runFromConfig(QuorumPeerConfig config) throws IOException, AdminServerException {
+        public void runFromConfig(QuorumPeerConfig config)
+                throws IOException, AdminServerException {
             quorumPeer = new CustomQuorumPeer(config.getQuorumVerifier().getAllMembers(), config.getDataDir(),
                     config.getDataLogDir(), config.getClientPortAddress().getPort(), config.getElectionAlg(),
                     config.getServerId(), config.getTickTime(), config.getInitLimit(), config.getSyncLimit());

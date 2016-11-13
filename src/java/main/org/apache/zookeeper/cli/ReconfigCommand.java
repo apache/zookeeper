@@ -18,12 +18,11 @@
 package org.apache.zookeeper.cli;
 
 import java.io.FileInputStream;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 
 import org.apache.commons.cli.*;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.admin.ZooKeeperAdmin;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 
@@ -146,7 +145,16 @@ public class ReconfigCommand extends CliCommand {
     public boolean exec() throws CliException {
         try {
             Stat stat = new Stat();
-            byte[] curConfig = zk.reconfig(joining,
+            if (!(zk instanceof ZooKeeperAdmin)) {
+                // This should never happen when executing reconfig command line,
+                // because it is guaranteed that we have a ZooKeeperAdmin instance ready
+                // to use in CliCommand stack.
+                // The only exception would be in test code where clients can directly set
+                // ZooKeeper object to ZooKeeperMain.
+                return false;
+            }
+
+            byte[] curConfig = ((ZooKeeperAdmin)zk).reconfig(joining,
                     leaving, members, version, stat);
             out.println("Committed new configuration:\n" + new String(curConfig));
             
