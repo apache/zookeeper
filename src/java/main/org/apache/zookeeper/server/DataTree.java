@@ -245,15 +245,23 @@ public class DataTree {
         addConfigNode();
     }
 
-     public void addConfigNode() {
-    	 DataNode zookeeperZnode = nodes.get(procZookeeper);
-         if (zookeeperZnode!=null) { // should always be the case
-        	 zookeeperZnode.addChild(configChildZookeeper);
-         } else {
-        	 LOG.error("There's no /zookeeper znode - this should never happen");
-         }
-         nodes.put(configZookeeper, configDataNode);   
-     }
+    public void addConfigNode() {
+        DataNode zookeeperZnode = nodes.get(procZookeeper);
+        if (zookeeperZnode != null) { // should always be the case
+            zookeeperZnode.addChild(configChildZookeeper);
+        } else {
+            assert false : "There's no /zookeeper znode - this should never happen.";
+        }
+
+        nodes.put(configZookeeper, configDataNode);
+        try {
+            // Reconfig node is access controlled by default (ZOOKEEPER-2014).
+            setACL(configZookeeper, ZooDefs.Ids.READ_ACL_UNSAFE, -1);
+        } catch (KeeperException.NoNodeException e) {
+            assert false : "There's no " + configZookeeper +
+                    " znode - this should never happen.";
+        }
+    }
 
     /**
      * is the path one of the special paths owned by zookeeper.

@@ -115,7 +115,8 @@ public class ACLTest extends ZKTestCase implements Watcher {
                 zk.create(path, path.getBytes(), Ids.OPEN_ACL_UNSAFE,
                         CreateMode.PERSISTENT);
             }
-            Assert.assertTrue("size of the acl map ", (1 == zks.getZKDatabase().getAclSize()));
+            int size = zks.getZKDatabase().getAclSize();
+            Assert.assertTrue("size of the acl map ", (2 == zks.getZKDatabase().getAclSize()));
             for (int j = 100; j < 200; j++) {
                 path = "/" + j;
                 ACL acl = new ACL();
@@ -128,7 +129,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
                 list.add(acl);
                 zk.create(path, path.getBytes(), list, CreateMode.PERSISTENT);
             }
-            Assert.assertTrue("size of the acl map ", (101 == zks.getZKDatabase().getAclSize()));
+            Assert.assertTrue("size of the acl map ", (102 == zks.getZKDatabase().getAclSize()));
         } finally {
             // now shutdown the server and restart it
             f.shutdown();
@@ -145,7 +146,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
             Assert.assertTrue("waiting for server up",
                        ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
             zk = ClientBase.createZKClient(HOSTPORT);
-            Assert.assertTrue("acl map ", (101 == zks.getZKDatabase().getAclSize()));
+            Assert.assertTrue("acl map ", (102 == zks.getZKDatabase().getAclSize()));
             for (int j = 200; j < 205; j++) {
                 path = "/" + j;
                 ACL acl = new ACL();
@@ -158,7 +159,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
                 list.add(acl);
                 zk.create(path, path.getBytes(), list, CreateMode.PERSISTENT);
             }
-            Assert.assertTrue("acl map ", (106 == zks.getZKDatabase().getAclSize()));
+            Assert.assertTrue("acl map ", (107 == zks.getZKDatabase().getAclSize()));
     
             zk.close();
         } finally {

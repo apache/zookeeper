@@ -25,7 +25,6 @@ import org.apache.zookeeper.ZooKeeper;
  * base class for all CLI commands
  */
 abstract public class CliCommand {
-
     protected ZooKeeper zk;
     protected PrintStream out;
     protected PrintStream err;
@@ -63,7 +62,7 @@ abstract public class CliCommand {
 
     /**
      * set the zookeper instance
-     * @param zk the zookeper instance
+     * @param zk the ZooKeeper instance.
      */
     public void setZk(ZooKeeper zk) {
         this.zk = zk;

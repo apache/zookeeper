@@ -528,6 +528,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
           <include name="org/apache/zookeeper/WatchedEvent.java"/>
           <include name="org/apache/zookeeper/ZooDefs.java"/>
           <include name="org/apache/zookeeper/ZooKeeper.java"/>
+          <include name="org/apache/zookeeper/admin/ZooKeeperAdmin.java"/>
           <include name="org/apache/zookeeper/server/LogFormatter.java"/>
           <include name="org/apache/zookeeper/server/SnapshotFormatter.java"/>
           <include name="org/apache/zookeeper/server/PurgeTxnLog.java"/>
