@@ -184,7 +184,8 @@ namespace org.apache.zookeeper {
             }
 
             internal void SetFinished() {
-                packetCompletion.TrySetResult(true);
+                Task.Factory.StartNew(s => ((TaskCompletionSource<bool>)s).TrySetResult(true),
+                    packetCompletion, CancellationToken.None, TaskCreationOptions.PreferFairness, TaskScheduler.Default);
             }
 
             /** Client's view of the path (may differ due to chroot) **/

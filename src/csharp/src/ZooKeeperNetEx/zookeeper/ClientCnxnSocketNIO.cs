@@ -365,10 +365,8 @@ namespace org.apache.zookeeper
 	            }
 	            else throw new SocketException((int) connectEventArgs.SocketError);
 	        }
-	        while (Readable || Writable)
-	        {
-                doIO();
-	        }
+
+            doIO();
 
             if (pendingIncomingDataNotifierState.TrySetValue(NOTRUNNING, RUNNING))
             {
