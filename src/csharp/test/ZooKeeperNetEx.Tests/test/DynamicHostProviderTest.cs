@@ -120,9 +120,7 @@ namespace org.apache.zookeeper.test
             log.debug("START - testOnlyOneAvailable");
             var connectionString = Enumerable.Range(0, 9).Select(i => Guid.NewGuid().ToString("N")).ToCommaDelimited() +
                                    ",localhost";
-            var zk = new ZooKeeper(connectionString, CONNECTION_TIMEOUT, NullWatcher.Instance);
-            await zk.existsAsync("/");
-            await zk.closeAsync();
+            await ZooKeeper.Using(connectionString, CONNECTION_TIMEOUT, NullWatcher.Instance, zk => zk.existsAsync("/"));
             log.debug("END - testOnlyOneAvailable");
         }
 
