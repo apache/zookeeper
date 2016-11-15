@@ -19,7 +19,9 @@
 package org.apache.zookeeper.server.command;
 
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This class contains constants for all the four letter commands
@@ -151,8 +153,12 @@ public class FourLetterCommands {
      */
     public final static int telnetCloseCmd = 0xfff4fffd;
 
-    public final static HashMap<Integer, String> cmd2String =
+    final static HashMap<Integer, String> cmd2String =
         new HashMap<Integer, String>();
+
+    public static Map<Integer, String> getCmdMapView() {
+        return Collections.unmodifiableMap(cmd2String);
+    }
 
     // specify all of the commands that are available
     static {
