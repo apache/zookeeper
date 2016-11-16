@@ -31,7 +31,15 @@ public class ProviderRegistry {
 
     private static boolean initialized = false;
     private static HashMap<String, AuthenticationProvider> authenticationProviders =
-        new HashMap<String, AuthenticationProvider>();
+        new HashMap<>();
+
+    //VisibleForTesting
+    public static void reset() {
+        synchronized (ProviderRegistry.class) {
+            initialized = false;
+            authenticationProviders.clear();
+        }
+    }
 
     public static void initialize() {
         synchronized (ProviderRegistry.class) {
@@ -61,6 +69,10 @@ public class ProviderRegistry {
         }
     }
 
+    public static ServerAuthenticationProvider getServerProvider(String scheme) {
+        return WrappedAuthenticationProvider.wrap(getProvider(scheme));
+    }
+
     public static AuthenticationProvider getProvider(String scheme) {
         if(!initialized)
             initialize();
@@ -70,8 +82,8 @@ public class ProviderRegistry {
     public static String listProviders() {
         StringBuilder sb = new StringBuilder();
         for(String s: authenticationProviders.keySet()) {
-        sb.append(s + " ");
-}
+            sb.append(s).append(" ");
+        }
         return sb.toString();
     }
 }

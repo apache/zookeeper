@@ -24,12 +24,8 @@ import java.io.StringWriter;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.security.cert.Certificate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.jute.Record;
@@ -51,7 +47,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
     final public static Object me = new Object();
     private static final Logger LOG = LoggerFactory.getLogger(ServerCnxn.class);
     
-    protected ArrayList<Id> authInfo = new ArrayList<Id>();
+    private Set<Id> authInfo = Collections.newSetFromMap(new ConcurrentHashMap<Id, Boolean>());
 
     /**
      * If the client is of old version, we don't send r-o mode info to it.
@@ -78,13 +74,11 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     /** auth info for the cnxn, returns an unmodifyable list */
     public List<Id> getAuthInfo() {
-        return Collections.unmodifiableList(authInfo);
+        return Collections.unmodifiableList(new ArrayList<>(authInfo));
     }
 
     public void addAuthInfo(Id id) {
-        if (authInfo.contains(id) == false) {
-            authInfo.add(id);
-        }
+        authInfo.add(id);
     }
 
     public boolean removeAuthInfo(Id id) {

@@ -1193,6 +1193,54 @@ authProvider.2=com.f.MyAuth2
     only one will be used. Also all servers must have the same plugins defined, otherwise clients using
     the authentication schemes provided by the plugins will have problems connecting to some servers.
     </para>
+
+    <para> <emphasis role="bold">Added in 3.6.0</emphasis>: An alternate abstraction is available for pluggable
+    authentication. It provides additional arguments.
+    </para>
+
+    <programlisting>
+public abstract class ServerAuthenticationProvider implements AuthenticationProvider {
+    public abstract KeeperException.Code handleAuthentication(ServerObjs serverObjs, byte authData[]);
+    public abstract boolean matches(ServerObjs serverObjs, MatchValues matchValues);
+}
+    </programlisting>
+
+    <para>
+    Instead of implementing AuthenticationProvider you extend ServerAuthenticationProvider. Your handleAuthentication()
+    and matches() methods will then receive the additional parameters (via ServerObjs and MatchValues).
+    </para>
+
+    <itemizedlist>
+      <listitem>
+        <para><emphasis role="bold">ZooKeeperServer</emphasis></para>
+
+        <para>The ZooKeeperServer instance</para>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">ServerCnxn</emphasis></para>
+
+        <para>The current connection</para>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">path</emphasis></para>
+
+        <para>The ZNode path being operated on (or null if not used)</para>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">perm</emphasis></para>
+
+        <para>The operation value or 0</para>
+      </listitem>
+
+      <listitem>
+        <para><emphasis role="bold">setAcls</emphasis></para>
+
+        <para>When the setAcl() method is being operated on, the list of ACLs that are being set</para>
+      </listitem>
+    </itemizedlist>
   </section>
       
   <section id="ch_zkGuarantees">
