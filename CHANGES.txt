@@ -544,6 +544,9 @@ IMPROVEMENTS:
   ZOOKEEPER-2631: Make issue extraction in the git pull request script
   more robust (Flavio P. Junqueira via rgs)
 
+  ZOOKEEPER-2632: Add option to inform JIRA_PASSWORD at CLI prompt
+  (Edward Ribeiro via phunt)
+
 Release 3.5.0 - 8/4/2014
 
 NEW FEATURES:
