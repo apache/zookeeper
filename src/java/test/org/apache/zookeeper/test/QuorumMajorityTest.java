@@ -49,19 +49,15 @@ public class QuorumMajorityTest extends QuorumBase {
                 bean = String.format(
                         "%s:name0=ReplicatedServer_id%d,name1=replica.%d,name2=Follower",
                         CommonNames.DOMAIN, i, i);
-                electionTimeTaken = (Long) JMXEnv.ensureBeanAttribute(bean,
-                        "ElectionTimeTaken");
-                Assert.assertTrue("Wrong electionTimeTaken value!",
-                        electionTimeTaken >= 0);
             } else if (qp.getPeerState() == ServerState.LEADING) {
                 bean = String.format(
                         "%s:name0=ReplicatedServer_id%d,name1=replica.%d,name2=Leader",
                         CommonNames.DOMAIN, i, i);
-                electionTimeTaken = (Long) JMXEnv.ensureBeanAttribute(bean,
-                        "ElectionTimeTaken");
-                Assert.assertTrue("Wrong electionTimeTaken value!",
-                        electionTimeTaken >= 0);
             }
+            electionTimeTaken = (Long) JMXEnv.ensureBeanAttribute(bean,
+                    "ElectionTimeTaken");
+            Assert.assertTrue("Wrong electionTimeTaken value!",
+                    electionTimeTaken >= 0);
         }
 
        //setup servers 1-5 to be followers
