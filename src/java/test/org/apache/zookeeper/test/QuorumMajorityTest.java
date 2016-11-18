@@ -46,15 +46,17 @@ public class QuorumMajorityTest extends QuorumBase {
             Long electionTimeTaken = -1L;
             String bean = "";
             if (qp.getPeerState() == ServerState.FOLLOWING) {
-                bean = CommonNames.DOMAIN + ":name0=ReplicatedServer_id" + i
-                        + ",name1=replica." + i + ",name2=Follower";
+                bean = String.format(
+                        "%s:name0=ReplicatedServer_id%d,name1=replica.%d,name2=Follower",
+                        CommonNames.DOMAIN, i, i);
                 electionTimeTaken = (Long) JMXEnv.ensureBeanAttribute(bean,
                         "ElectionTimeTaken");
                 Assert.assertTrue("Wrong electionTimeTaken value!",
                         electionTimeTaken >= 0);
             } else if (qp.getPeerState() == ServerState.LEADING) {
-                bean = CommonNames.DOMAIN + ":name0=ReplicatedServer_id" + i
-                        + ",name1=replica." + i + ",name2=Leader";
+                bean = String.format(
+                        "%s:name0=ReplicatedServer_id%d,name1=replica.%d,name2=Leader",
+                        CommonNames.DOMAIN, i, i);
                 electionTimeTaken = (Long) JMXEnv.ensureBeanAttribute(bean,
                         "ElectionTimeTaken");
                 Assert.assertTrue("Wrong electionTimeTaken value!",
