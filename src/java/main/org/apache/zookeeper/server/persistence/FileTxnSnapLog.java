@@ -86,12 +86,20 @@ public class FileTxnSnapLog {
                         + this.dataDir);
             }
         }
+        if (!this.dataDir.canWrite()) {
+            throw new IOException("Cannot write to data directory " + this.dataDir);
+        }
+
         if (!this.snapDir.exists()) {
             if (!this.snapDir.mkdirs()) {
                 throw new IOException("Unable to create snap directory "
                         + this.snapDir);
             }
         }
+        if (!this.snapDir.canWrite()) {
+            throw new IOException("Cannot write to snap directory " + this.snapDir);
+        }
+
         txnLog = new FileTxnLog(this.dataDir);
         snapLog = new FileSnap(this.snapDir);
     }

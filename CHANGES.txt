@@ -1,3 +1,38 @@
+Release 3.4.10 - Unreleased
+
+Backward compatible changes:
+
+BUGFIXES:
+
+  ZOOKEEPER-2502: Flaky Test:
+  org.apache.zookeeper.server.quorum.CnxManagerTest.testCnxFromFutureVersion
+  (Michael Han via phunt)
+
+  ZOOKEEPER-2558: Potential memory leak in recordio.c
+  (Michael Han via phunt)
+
+  ZOOKEEPER-2579: ZooKeeper server should verify that dataDir and
+  snapDir are writeable before starting (Abraham Fine via phunt)
+
+  ZOOKEEPER-2467: NullPointerException when redo Command is passed negative value
+  (Rakesh Kumar Singh via rakeshr)
+
+IMPROVEMENTS:
+
+  ZOOKEEPER-2507: C unit test improvement: line break between
+  'ZooKeeper server started' and 'Running' (Michael Han via phunt)
+
+  ZOOKEEPER-2557: Update gitignore to account for other file extensions.
+  (Edward Ribeiro via cnauroth)
+
+  ZOOKEEPER-2594: Use TLS for downloading artifacts during build
+  (Olaf Flebbe via phunt)
+
+  ZOOKEEPER-2606: SaslServerCallbackHandler#handleAuthorizeCallback() should
+  log the exception (Ted Yu via fpj)
+
+Release 3.4.9 - 2016-08-23
+
 Backward compatible changes:
 
 BUGFIXES:
@@ -33,11 +68,33 @@ BUGFIXES:
   ZOOKEEPER-2423: Upgrade Netty version due to security vulnerability
   (CVE-2014-3488) (Michael Han via phunt)
 
+  ZOOKEEPER-2405: getTGT() in Login.java mishandles confidential
+  information (Michael Han via phunt)
+
+  ZOOKEEPER-2477: documentation should refer to Java cli shell and not
+  C cli shell (Abraham Fine via phunt)
+
+  ZOOKEEPER-1256: ClientPortBindTest is failing on Mac OS X
+  (Camille via phunt)
+
+  ZOOKEEPER-2498: Potential resource leak in C client when processing
+  unexpected / out of order response (Michael Han via rgs)
+
+  Fix command handling in the C client shell (phunt via fpj)
+
+  ZOOKEEPER-2452: Back-port ZOOKEEPER-1460 to 3.4 for IPv6 literal
+  address support. (Abraham Fine via cnauroth)
+
+  ZOOKEEPER-2247: Zookeeper service becomes unavailable when leader
+  fails to write transaction log (Rakesh via fpj)
+
 IMPROVEMENTS:
 
   ZOOKEEPER-2240 Make the three-node minimum more explicit in 
   documentation and on website (Shawn Heisey and Arshad Mohammad via phunt)
 
+  ZOOKEEPER-2514: Simplify releasenotes creation for 3.4 branch -
+  consistent with newer branches. (phunt via cnauroth)
 
 Release 3.4.8 - 2016-02-05
 

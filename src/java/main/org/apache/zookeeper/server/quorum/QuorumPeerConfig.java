@@ -92,6 +92,27 @@ public class QuorumPeerConfig {
         }
     }
 
+    private static String[] splitWithLeadingHostname(String s)
+            throws ConfigException
+    {
+        /* Does it start with an IPv6 literal? */
+        if (s.startsWith("[")) {
+            int i = s.indexOf("]:");
+            if (i < 0) {
+                throw new ConfigException(s + " starts with '[' but has no matching ']:'");
+            }
+
+            String[] sa = s.substring(i + 2).split(":");
+            String[] nsa = new String[sa.length + 1];
+            nsa[0] = s.substring(1, i);
+            System.arraycopy(sa, 0, nsa, 1, sa.length);
+
+            return nsa;
+        } else {
+            return s.split(":");
+        }
+    }
+
     /**
      * Parse a ZooKeeper configuration file
      * @param path the patch of the configuration file
@@ -179,7 +200,7 @@ public class QuorumPeerConfig {
             } else if (key.startsWith("server.")) {
                 int dot = key.indexOf('.');
                 long sid = Long.parseLong(key.substring(dot + 1));
-                String parts[] = value.split(":");
+                String parts[] = splitWithLeadingHostname(value);
                 if ((parts.length != 2) && (parts.length != 3) && (parts.length !=4)) {
                     LOG.error(value
                        + " does not have the form host:port or host:port:port " +

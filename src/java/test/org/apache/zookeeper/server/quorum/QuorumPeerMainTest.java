@@ -458,6 +458,135 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         Assert.assertTrue("complains about host", found);
     }
 
+    @Test
+    public void testValidIpv6AddressInQuorum() throws Exception {
+        assumeIPv6Available();
+
+        ClientBase.setupTestEnv();
+
+        // setup the logger to capture all logs
+        Layout layout =
+                Logger.getRootLogger().getAppender("CONSOLE").getLayout();
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        WriterAppender appender = new WriterAppender(layout, os);
+        appender.setImmediateFlush(true);
+        appender.setThreshold(Level.INFO);
+        Logger qlogger = Logger.getLogger("org.apache.zookeeper.server.quorum");
+        qlogger.addAppender(appender);
+
+        try {
+            final int CLIENT_PORT_QP1 = PortAssignment.unique();
+            final int CLIENT_PORT_QP2 = PortAssignment.unique();
+
+            String quorumCfgSection =
+                    "server.1=127.0.0.1:" + PortAssignment.unique()
+                    + ":" + PortAssignment.unique()
+                    + "\nserver.2=[0:0:0:0:0:0:0:1]:" + PortAssignment.unique()
+                    + ":" + PortAssignment.unique();
+
+            MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
+            MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection);
+
+            q1.start();
+            q2.start();
+
+            Assert.assertTrue("waiting for server 1 being up",
+                    ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
+                            ClientBase.CONNECTION_TIMEOUT));
+
+            Assert.assertTrue("waiting for server 2 being up",
+                    ClientBase.waitForServerUp("[0:0:0:0:0:0:0:1]:" + CLIENT_PORT_QP1,
+                            ClientBase.CONNECTION_TIMEOUT));
+
+            q1.shutdown();
+            q2.shutdown();
+
+            Assert.assertTrue("waiting for server 1 down",
+                    ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1,
+                            ClientBase.CONNECTION_TIMEOUT));
+
+            Assert.assertTrue("waiting for server 2 down",
+                    ClientBase.waitForServerDown("[0:0:0:0:0:0:0:1]:" + CLIENT_PORT_QP1,
+                            ClientBase.CONNECTION_TIMEOUT));
+
+        } finally {
+            qlogger.removeAppender(appender);
+        }
+
+        os.close();
+        LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
+        String line;
+        boolean found = false;
+        Pattern p =
+                Pattern.compile(".*Resolved hostname: 0:0:0:0:0:0:0:1.*");
+        while ((line = r.readLine()) != null) {
+            found = p.matcher(line).matches();
+            if (found) {
+                break;
+            }
+        }
+        Assert.assertTrue("IPv6 address resolved", found);
+    }
+
+    @Test
+    public void testInvalidIpv6AddressInQuorum() throws Exception {
+        assumeIPv6Available();
+
+        ClientBase.setupTestEnv();
+
+        // setup the logger to capture all logs
+        Layout layout =
+                Logger.getRootLogger().getAppender("CONSOLE").getLayout();
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        WriterAppender appender = new WriterAppender(layout, os);
+        appender.setImmediateFlush(true);
+        appender.setThreshold(Level.INFO);
+        Logger qlogger = Logger.getLogger("org.apache.zookeeper.server.quorum");
+        qlogger.addAppender(appender);
+
+        try {
+            final int CLIENT_PORT_QP1 = PortAssignment.unique();
+
+            String quorumCfgSection =
+                    "server.1=127.0.0.1:" + PortAssignment.unique()
+                    + ":" + PortAssignment.unique()
+                    + "\nserver.2=[0:0:0:0:0:0:0:1:" + PortAssignment.unique()
+                    + ":" + PortAssignment.unique();
+
+            MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
+            q1.start();
+
+            boolean isup =
+                    ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
+                            30000);
+
+            Assert.assertFalse("Server never came up", isup);
+
+            q1.shutdown();
+
+            Assert.assertTrue("waiting for server 1 down",
+                    ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1,
+                            ClientBase.CONNECTION_TIMEOUT));
+
+        } finally {
+            qlogger.removeAppender(appender);
+        }
+
+        os.close();
+        LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
+        String line;
+        boolean found = false;
+        Pattern p =
+                Pattern.compile(".*QuorumPeerConfig\\$ConfigException.*");
+        while ((line = r.readLine()) != null) {
+            found = p.matcher(line).matches();
+            if (found) {
+                break;
+            }
+        }
+        Assert.assertTrue("complains about configuration", found);
+    }
+
     /**
      * Verify handling of inconsistent peer type
      */

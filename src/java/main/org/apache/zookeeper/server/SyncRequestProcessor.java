@@ -182,7 +182,6 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
         } catch (Throwable t) {
             handleException(this.getName(), t);
             running = false;
-            System.exit(11);
         }
         LOG.info("SyncRequestProcessor exited!");
     }
