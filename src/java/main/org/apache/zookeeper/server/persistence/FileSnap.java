@@ -177,19 +177,21 @@ public class FileSnap implements SnapShot {
     /**
      * find the last n snapshots. this does not have
      * any checks if the snapshot might be valid or not
-     * @param the number of most recent snapshots 
+     * @param the number of most recent snapshots
      * @return the last n snapshots
      * @throws IOException
      */
     public List<File> findNRecentSnapshots(int n) throws IOException {
         List<File> files = Util.sortDataDir(snapDir.listFiles(), "snapshot", false);
-        int i = 0;
+        int count = 0;
         List<File> list = new ArrayList<File>();
         for (File f: files) {
-            if (i==n)
+            if (count == n)
                 break;
-            i++;
-            list.add(f);
+            if (Util.getZxidFromName(f.getName(), "snapshot") != -1) {
+                count++;
+                list.add(f);
+            }
         }
         return list;
     }

@@ -24,10 +24,14 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.Util;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * this class is used to clean up the 
@@ -38,6 +42,7 @@ import org.apache.zookeeper.server.persistence.Util;
  * and the corresponding logs.
  */
 public class PurgeTxnLog {
+    private static final Logger LOG = LoggerFactory.getLogger(PurgeTxnLog.class);
 
     private static final String COUNT_ERR_MSG = "count should be greater than or equal to 3";
 
@@ -72,18 +77,43 @@ public class PurgeTxnLog {
         FileTxnSnapLog txnLog = new FileTxnSnapLog(dataDir, snapDir);
 
         List<File> snaps = txnLog.findNRecentSnapshots(num);
-        retainNRecentSnapshots(txnLog, snaps);
+        int numSnaps = snaps.size();
+        if (numSnaps > 0) {
+            purgeOlderSnapshots(txnLog, snaps.get(numSnaps - 1));
+        }
     }
 
     // VisibleForTesting
-    static void retainNRecentSnapshots(FileTxnSnapLog txnLog, List<File> snaps) {
-        // found any valid recent snapshots?
-        if (snaps.size() == 0)
-            return;
-        File snapShot = snaps.get(snaps.size() -1);
+    static void purgeOlderSnapshots(FileTxnSnapLog txnLog, File snapShot) {
         final long leastZxidToBeRetain = Util.getZxidFromName(
                 snapShot.getName(), PREFIX_SNAPSHOT);
 
+        /**
+         * We delete all files with a zxid in their name that is less than leastZxidToBeRetain.
+         * This rule applies to both snapshot files as well as log files, with the following
+         * exception for log files.
+         *
+         * A log file with zxid less than X may contain transactions with zxid larger than X.  More
+         * precisely, a log file named log.(X-a) may contain transactions newer than snapshot.X if
+         * there are no other log files with starting zxid in the interval (X-a, X].  Assuming the
+         * latter condition is true, log.(X-a) must be retained to ensure that snapshot.X is
+         * recoverable.  In fact, this log file may very well extend beyond snapshot.X to newer
+         * snapshot files if these newer snapshots were not accompanied by log rollover (possible in
+         * the learner state machine at the time of this writing).  We can make more precise
+         * determination of whether log.(leastZxidToBeRetain-a) for the smallest 'a' is actually
+         * needed or not (e.g. not needed if there's a log file named log.(leastZxidToBeRetain+1)),
+         * but the complexity quickly adds up with gains only in uncommon scenarios.  It's safe and
+         * simple to just preserve log.(leastZxidToBeRetain-a) for the smallest 'a' to ensure
+         * recoverability of all snapshots being retained.  We determine that log file here by
+         * calling txnLog.getSnapshotLogs().
+         */
+        final Set<File> retainedTxnLogs = new HashSet<File>();
+        retainedTxnLogs.addAll(Arrays.asList(txnLog.getSnapshotLogs(leastZxidToBeRetain)));
+
+        /**
+         * Finds all candidates for deletion, which are files with a zxid in their name that is less
+         * than leastZxidToBeRetain.  There's an exception to this rule, as noted above.
+         */
         class MyFileFilter implements FileFilter{
             private final String prefix;
             MyFileFilter(String prefix){
@@ -92,6 +122,9 @@ public class PurgeTxnLog {
             public boolean accept(File f){
                 if(!f.getName().startsWith(prefix + "."))
                     return false;
+                if (retainedTxnLogs.contains(f)) {
+                    return false;
+                }
                 long fZxid = Util.getZxidFromName(f.getName(), prefix);
                 if (fZxid >= leastZxidToBeRetain) {
                     return false;
@@ -108,9 +141,11 @@ public class PurgeTxnLog {
         // remove the old files
         for(File f: files)
         {
-            System.out.println("Removing file: "+
+            final String msg = "Removing file: "+
                 DateFormat.getDateTimeInstance().format(f.lastModified())+
-                "\t"+f.getPath());
+                "\t"+f.getPath();
+            LOG.info(msg);
+            System.out.println(msg);
             if(!f.delete()){
                 System.err.println("Failed to remove "+f.getPath());
             }
