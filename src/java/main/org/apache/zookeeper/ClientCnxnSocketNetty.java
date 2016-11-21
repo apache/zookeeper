@@ -78,7 +78,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
     AtomicBoolean needSasl = new AtomicBoolean();
     Semaphore waitSasl = new Semaphore(0);
 
-    ClientCnxnSocketNetty(ZKClientConfig clientConfig) {
+    ClientCnxnSocketNetty(ZKClientConfig clientConfig) throws IOException {
         this.clientConfig = clientConfig;
         initProperties();
     }
