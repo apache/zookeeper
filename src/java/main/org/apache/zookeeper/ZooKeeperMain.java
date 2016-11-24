@@ -74,8 +74,8 @@ import org.apache.zookeeper.admin.ZooKeeperAdmin;
  */
 public class ZooKeeperMain {
     private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperMain.class);
-    protected static final Map<String,String> commandMap = new HashMap<String,String>( );
-    protected static final Map<String,CliCommand> commandMapCli = 
+    static final Map<String,String> commandMap = new HashMap<String,String>( );
+    static final Map<String,CliCommand> commandMapCli =
             new HashMap<String,CliCommand>( );
 
     protected MyCommandOptions cl = new MyCommandOptions();

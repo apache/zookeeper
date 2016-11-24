@@ -333,8 +333,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     private long getDirSize(File file) {
         long size = 0L;
         if (file.isDirectory()) {
-            for (File f: file.listFiles()) {
-                size += getDirSize(f);
+            File[] files = file.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    size += getDirSize(f);
+                }
             }
         } else {
             size = file.length();

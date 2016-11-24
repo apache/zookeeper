@@ -102,16 +102,16 @@ public class QuorumHierarchical implements QuorumVerifier {
            QuorumServer qso = qm.getAllMembers().get(qs.id);
            if (qso == null || !qs.equals(qso)) return false;
        }
-       for (Long sid: serverWeight.keySet()){
-           if (!serverWeight.get(sid).equals(qm.serverWeight.get(sid)))
+       for (Entry<Long, Long> entry : serverWeight.entrySet()) {
+           if (!entry.getValue().equals(qm.serverWeight.get(entry.getKey())))
                return false;
        }
-       for (Long sid: groupWeight.keySet()){
-           if (!groupWeight.get(sid).equals(qm.groupWeight.get(sid)))
+       for (Entry<Long, Long> entry : groupWeight.entrySet()) {
+           if (!entry.getValue().equals(qm.groupWeight.get(entry.getKey())))
                return false;
        }
-       for (Long sid: serverGroup.keySet()){
-           if (!serverGroup.get(sid).equals(qm.serverGroup.get(sid)))
+       for (Entry<Long, Long> entry : serverGroup.entrySet()) {
+           if (!entry.getValue().equals(qm.serverGroup.get(entry.getKey())))
                return false;
        }
        return true;
@@ -295,15 +295,16 @@ public class QuorumHierarchical implements QuorumVerifier {
      * different places, so we have a separate method.
      */
     private void computeGroupWeight(){
-        for(long sid : serverGroup.keySet()){
-            Long gid = serverGroup.get(sid);
+        for (Entry<Long, Long> entry : serverGroup.entrySet()) {
+            Long sid = entry.getKey();
+            Long gid = entry.getValue();
             if(!groupWeight.containsKey(gid))
                 groupWeight.put(gid, serverWeight.get(sid));
             else {
                 long totalWeight = serverWeight.get(sid) + groupWeight.get(gid);
                 groupWeight.put(gid, totalWeight);
-            } 
-        }    
+            }
+        }
         
         /*
          * Do not consider groups with weight zero
@@ -344,27 +345,27 @@ public class QuorumHierarchical implements QuorumVerifier {
          * Check if all groups have majority
          */
         int majGroupCounter = 0;
-        for(long gid : expansion.keySet()) {
-            LOG.debug("Group info: " + expansion.get(gid) + ", " + gid + ", " + groupWeight.get(gid));
-            if(expansion.get(gid) > (groupWeight.get(gid) / 2) )
+        for (Entry<Long, Long> entry : expansion.entrySet()) {
+            Long gid = entry.getKey();
+            LOG.debug("Group info: {}, {}, {}", entry.getValue(), gid, groupWeight.get(gid));
+            if (entry.getValue() > (groupWeight.get(gid) / 2))
                 majGroupCounter++;
         }
-        
-        LOG.debug("Majority group counter: " + majGroupCounter + ", " + numGroups); 
-        if((majGroupCounter > (numGroups / 2))){
-            LOG.debug("Positive set size: " + set.size());
+
+        LOG.debug("Majority group counter: {}, {}", majGroupCounter, numGroups);
+        if ((majGroupCounter > (numGroups / 2))){
+            LOG.debug("Positive set size: {}", set.size());
             return true;
-        }
-        else {
-            LOG.debug("Negative set size: " + set.size());
+        } else {
+            LOG.debug("Negative set size: {}", set.size());
             return false;
         }
-    }  
-    public Map<Long, QuorumServer> getVotingMembers() {        
+    }
+    public Map<Long, QuorumServer> getVotingMembers() {
        return participatingMembers;
    }
 
-   public Map<Long, QuorumServer> getObservingMembers() {      
+   public Map<Long, QuorumServer> getObservingMembers() {
        return observingMembers;
    }
 
