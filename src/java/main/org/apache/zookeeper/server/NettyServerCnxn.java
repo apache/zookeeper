@@ -267,7 +267,7 @@ public class NettyServerCnxn extends ServerCnxn {
     {
         // We take advantage of the limited size of the length to look
         // for cmds. They are all 4-bytes which fits inside of an int
-        String cmd = FourLetterCommands.cmd2String.get(len);
+        String cmd = FourLetterCommands.getCmdMapView().get(len);
         if (cmd == null) {
             return false;
         }
