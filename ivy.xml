@@ -32,6 +32,7 @@
     <conf name="mvn-ant-task" visibility="private"/>
     <conf name="optional"/> <!-- optional in generated pom -->
     <conf name="jdiff" visibility="private"/>
+    <conf name="javacc" visibility="private"/>
     <conf name="releaseaudit" visibility="private" description="Artifacts required for releaseaudit target"/>
   </configurations>
 
@@ -75,7 +76,8 @@
     <dependency org="commons-collections" name="commons-collections" 
                 rev="3.2.2" conf="releaseaudit->default"/>
 
-    <dependency org="net.java.dev.javacc" name="javacc" rev="5.0" />
+    <dependency org="net.java.dev.javacc" name="javacc" rev="5.0"
+                conf="javacc->default" />
 
     <dependency org="org.eclipse.jetty" name="jetty-server" rev="9.2.18.v20160721"
                 conf="optional->default"/>
