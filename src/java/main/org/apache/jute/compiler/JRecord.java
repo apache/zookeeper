@@ -141,116 +141,109 @@ public class JRecord extends JCompType {
 
     static HashMap<String, String> vectorStructs = new HashMap<String, String>();
     public void genCCode(FileWriter h, FileWriter c) throws IOException {
-        try {
-            for (JField f : mFields) {
-                if (f.getType() instanceof JVector) {
-                    JVector jv = (JVector) f.getType();
-                    JType jvType = jv.getElementType();
-                    String struct_name = JVector.extractVectorName(jvType);
-                    if (vectorStructs.get(struct_name) == null) {
-                        vectorStructs.put(struct_name, struct_name);
-                        h.write("struct " + struct_name + " {\n    int32_t count;\n" + jv.getElementType().genCDecl("*data") + "\n};\n");
-                        h.write("int serialize_" + struct_name + "(struct oarchive *out, const char *tag, struct " + struct_name + " *v);\n");
-                        h.write("int deserialize_" + struct_name + "(struct iarchive *in, const char *tag, struct " + struct_name + " *v);\n");
-                        h.write("int allocate_" + struct_name + "(struct " + struct_name + " *v, int32_t len);\n");
-                        h.write("int deallocate_" + struct_name + "(struct " + struct_name + " *v);\n");
-                        c.write("int allocate_" + struct_name + "(struct " + struct_name + " *v, int32_t len) {\n");
-                        c.write("    if (!len) {\n");
-                        c.write("        v->count = 0;\n");
-                        c.write("        v->data = 0;\n");
-                        c.write("    } else {\n");
-                        c.write("        v->count = len;\n");
-                        c.write("        v->data = calloc(sizeof(*v->data), len);\n");
-                        c.write("    }\n");
-                        c.write("    return 0;\n");
-                        c.write("}\n");
-                        c.write("int deallocate_" + struct_name + "(struct " + struct_name + " *v) {\n");
-                        c.write("    if (v->data) {\n");
-                        c.write("        int32_t i;\n");
-                        c.write("        for(i=0;i<v->count; i++) {\n");
-                        c.write("            deallocate_" + JRecord.extractMethodSuffix(jvType) + "(&v->data[i]);\n");
-                        c.write("        }\n");
-                        c.write("        free(v->data);\n");
-                        c.write("        v->data = 0;\n");
-                        c.write("    }\n");
-                        c.write("    return 0;\n");
-                        c.write("}\n");
-                        c.write("int serialize_" + struct_name + "(struct oarchive *out, const char *tag, struct " + struct_name + " *v)\n");
-                        c.write("{\n");
-                        c.write("    int32_t count = v->count;\n");
-                        c.write("    int rc = 0;\n");
-                        c.write("    int32_t i;\n");
-                        c.write("    rc = out->start_vector(out, tag, &count);\n");
-                        c.write("    for(i=0;i<v->count;i++) {\n");
-                        genSerialize(c, jvType, "data", "data[i]");
-                        c.write("    }\n");
-                        c.write("    rc = rc ? rc : out->end_vector(out, tag);\n");
-                        c.write("    return rc;\n");
-                        c.write("}\n");
-                        c.write("int deserialize_" + struct_name + "(struct iarchive *in, const char *tag, struct " + struct_name + " *v)\n");
-                        c.write("{\n");
-                        c.write("    int rc = 0;\n");
-                        c.write("    int32_t i;\n");
-                        c.write("    rc = in->start_vector(in, tag, &v->count);\n");
-                        c.write("    v->data = calloc(v->count, sizeof(*v->data));\n");
-                        c.write("    for(i=0;i<v->count;i++) {\n");
-                        genDeserialize(c, jvType, "value", "data[i]");
-                        c.write("    }\n");
-                        c.write("    rc = in->end_vector(in, tag);\n");
-                        c.write("    return rc;\n");
-                        c.write("}\n");
+        for (JField f : mFields) {
+            if (f.getType() instanceof JVector) {
+                JVector jv = (JVector) f.getType();
+                JType jvType = jv.getElementType();
+                String struct_name = JVector.extractVectorName(jvType);
+                if (vectorStructs.get(struct_name) == null) {
+                    vectorStructs.put(struct_name, struct_name);
+                    h.write("struct " + struct_name + " {\n    int32_t count;\n" + jv.getElementType().genCDecl("*data") + "\n};\n");
+                    h.write("int serialize_" + struct_name + "(struct oarchive *out, const char *tag, struct " + struct_name + " *v);\n");
+                    h.write("int deserialize_" + struct_name + "(struct iarchive *in, const char *tag, struct " + struct_name + " *v);\n");
+                    h.write("int allocate_" + struct_name + "(struct " + struct_name + " *v, int32_t len);\n");
+                    h.write("int deallocate_" + struct_name + "(struct " + struct_name + " *v);\n");
+                    c.write("int allocate_" + struct_name + "(struct " + struct_name + " *v, int32_t len) {\n");
+                    c.write("    if (!len) {\n");
+                    c.write("        v->count = 0;\n");
+                    c.write("        v->data = 0;\n");
+                    c.write("    } else {\n");
+                    c.write("        v->count = len;\n");
+                    c.write("        v->data = calloc(sizeof(*v->data), len);\n");
+                    c.write("    }\n");
+                    c.write("    return 0;\n");
+                    c.write("}\n");
+                    c.write("int deallocate_" + struct_name + "(struct " + struct_name + " *v) {\n");
+                    c.write("    if (v->data) {\n");
+                    c.write("        int32_t i;\n");
+                    c.write("        for(i=0;i<v->count; i++) {\n");
+                    c.write("            deallocate_" + JRecord.extractMethodSuffix(jvType) + "(&v->data[i]);\n");
+                    c.write("        }\n");
+                    c.write("        free(v->data);\n");
+                    c.write("        v->data = 0;\n");
+                    c.write("    }\n");
+                    c.write("    return 0;\n");
+                    c.write("}\n");
+                    c.write("int serialize_" + struct_name + "(struct oarchive *out, const char *tag, struct " + struct_name + " *v)\n");
+                    c.write("{\n");
+                    c.write("    int32_t count = v->count;\n");
+                    c.write("    int rc = 0;\n");
+                    c.write("    int32_t i;\n");
+                    c.write("    rc = out->start_vector(out, tag, &count);\n");
+                    c.write("    for(i=0;i<v->count;i++) {\n");
+                    genSerialize(c, jvType, "data", "data[i]");
+                    c.write("    }\n");
+                    c.write("    rc = rc ? rc : out->end_vector(out, tag);\n");
+                    c.write("    return rc;\n");
+                    c.write("}\n");
+                    c.write("int deserialize_" + struct_name + "(struct iarchive *in, const char *tag, struct " + struct_name + " *v)\n");
+                    c.write("{\n");
+                    c.write("    int rc = 0;\n");
+                    c.write("    int32_t i;\n");
+                    c.write("    rc = in->start_vector(in, tag, &v->count);\n");
+                    c.write("    v->data = calloc(v->count, sizeof(*v->data));\n");
+                    c.write("    for(i=0;i<v->count;i++) {\n");
+                    genDeserialize(c, jvType, "value", "data[i]");
+                    c.write("    }\n");
+                    c.write("    rc = in->end_vector(in, tag);\n");
+                    c.write("    return rc;\n");
+                    c.write("}\n");
 
-                    }
                 }
             }
-            String rec_name = getName();
-            h.write("struct " + rec_name + " {\n");
-            for (JField f : mFields) {
-                h.write(f.genCDecl());
-            }
-            h.write("};\n");
-            h.write("int serialize_" + rec_name + "(struct oarchive *out, const char *tag, struct " + rec_name + " *v);\n");
-            h.write("int deserialize_" + rec_name + "(struct iarchive *in, const char *tag, struct " + rec_name + "*v);\n");
-            h.write("void deallocate_" + rec_name + "(struct " + rec_name + "*);\n");
-            c.write("int serialize_" + rec_name + "(struct oarchive *out, const char *tag, struct " + rec_name + " *v)");
-            c.write("{\n");
-            c.write("    int rc;\n");
-            c.write("    rc = out->start_record(out, tag);\n");
-            for (JField f : mFields) {
-                genSerialize(c, f.getType(), f.getTag(), f.getName());
-            }
-            c.write("    rc = rc ? rc : out->end_record(out, tag);\n");
-            c.write("    return rc;\n");
-            c.write("}\n");
-            c.write("int deserialize_" + rec_name + "(struct iarchive *in, const char *tag, struct " + rec_name + "*v)");
-            c.write("{\n");
-            c.write("    int rc;\n");
-            c.write("    rc = in->start_record(in, tag);\n");
-            for (JField f : mFields) {
-                genDeserialize(c, f.getType(), f.getTag(), f.getName());
-            }
-            c.write("    rc = rc ? rc : in->end_record(in, tag);\n");
-            c.write("    return rc;\n");
-            c.write("}\n");
-            c.write("void deallocate_" + rec_name + "(struct " + rec_name + "*v)");
-            c.write("{\n");
-            for (JField f : mFields) {
-                if (f.getType() instanceof JRecord) {
-                    c.write("    deallocate_" + extractStructName(f.getType()) + "(&v->" + f.getName() + ");\n");
-                } else if (f.getType() instanceof JVector) {
-                    JVector vt = (JVector) f.getType();
-                    c.write("    deallocate_" + JVector.extractVectorName(vt.getElementType()) + "(&v->" + f.getName() + ");\n");
-                } else if (f.getType() instanceof JCompType) {
-                    c.write("    deallocate_" + extractMethodSuffix(f.getType()) + "(&v->" + f.getName() + ");\n");
-                }
-            }
-            c.write("}\n");
-        } catch (IOException e) {
-            throw e;
-        } finally {
-            h.close();
-            c.close();
         }
+        String rec_name = getName();
+        h.write("struct " + rec_name + " {\n");
+        for (JField f : mFields) {
+            h.write(f.genCDecl());
+        }
+        h.write("};\n");
+        h.write("int serialize_" + rec_name + "(struct oarchive *out, const char *tag, struct " + rec_name + " *v);\n");
+        h.write("int deserialize_" + rec_name + "(struct iarchive *in, const char *tag, struct " + rec_name + "*v);\n");
+        h.write("void deallocate_" + rec_name + "(struct " + rec_name + "*);\n");
+        c.write("int serialize_" + rec_name + "(struct oarchive *out, const char *tag, struct " + rec_name + " *v)");
+        c.write("{\n");
+        c.write("    int rc;\n");
+        c.write("    rc = out->start_record(out, tag);\n");
+        for (JField f : mFields) {
+            genSerialize(c, f.getType(), f.getTag(), f.getName());
+        }
+        c.write("    rc = rc ? rc : out->end_record(out, tag);\n");
+        c.write("    return rc;\n");
+        c.write("}\n");
+        c.write("int deserialize_" + rec_name + "(struct iarchive *in, const char *tag, struct " + rec_name + "*v)");
+        c.write("{\n");
+        c.write("    int rc;\n");
+        c.write("    rc = in->start_record(in, tag);\n");
+        for (JField f : mFields) {
+            genDeserialize(c, f.getType(), f.getTag(), f.getName());
+        }
+        c.write("    rc = rc ? rc : in->end_record(in, tag);\n");
+        c.write("    return rc;\n");
+        c.write("}\n");
+        c.write("void deallocate_" + rec_name + "(struct " + rec_name + "*v)");
+        c.write("{\n");
+        for (JField f : mFields) {
+            if (f.getType() instanceof JRecord) {
+                c.write("    deallocate_" + extractStructName(f.getType()) + "(&v->" + f.getName() + ");\n");
+            } else if (f.getType() instanceof JVector) {
+                JVector vt = (JVector) f.getType();
+                c.write("    deallocate_" + JVector.extractVectorName(vt.getElementType()) + "(&v->" + f.getName() + ");\n");
+            } else if (f.getType() instanceof JCompType) {
+                c.write("    deallocate_" + extractMethodSuffix(f.getType()) + "(&v->" + f.getName() + ");\n");
+            }
+        }
+        c.write("}\n");
     }
 
     private void genSerialize(FileWriter c, JType type, String tag, String name) throws IOException {
