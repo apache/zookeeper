@@ -43,7 +43,7 @@ public class AtomicFileOutputStreamTest extends ZKTestCase {
 
     @Before
     public void setupTestDir() throws IOException {
-        testDir = ClientBase.createTmpDir();
+        testDir = ClientBase.createEmptyTestDir();
         dstFile = new File(testDir, "test.txt");
     }
     @After
