@@ -17,7 +17,6 @@
 // </summary>
 
 using System.Threading.Tasks;
-using org.apache.utils;
 using Xunit;
 
 namespace org.apache.zookeeper.test

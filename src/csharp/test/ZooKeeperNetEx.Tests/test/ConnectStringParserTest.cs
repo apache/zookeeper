@@ -22,7 +22,7 @@ using Xunit;
 namespace org.apache.zookeeper.test
 {
 
-    public class ConnectStringParserTest : ClientBase
+    public class ConnectStringParserTest
 	{
         [Fact]
 		public void testSingleServerChrootPath()

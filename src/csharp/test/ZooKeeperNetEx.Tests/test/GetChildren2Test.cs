@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using org.apache.zookeeper.data;
-using org.apache.utils;
 using Xunit;
 
 // <summary>

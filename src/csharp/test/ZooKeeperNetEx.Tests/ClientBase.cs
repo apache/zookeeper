@@ -21,7 +21,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using org.apache.utils;
 using Xunit;
 
 namespace org.apache.zookeeper {
@@ -34,7 +33,7 @@ namespace org.apache.zookeeper {
             }
         }
 
-        protected const int CONNECTION_TIMEOUT = 4000;
+        public const int CONNECTION_TIMEOUT = 4000;
         private readonly string m_currentRoot;
 
         private const string hostPort = "127.0.0.1,localhost";
@@ -93,7 +92,7 @@ namespace org.apache.zookeeper {
         ///     want to ignore results (for whatever reason) in your test. Don't
         ///     use empty watchers in real code!
         /// </summary>
-        protected class NullWatcher : Watcher
+        public class NullWatcher : Watcher
         {
             public static readonly NullWatcher Instance = new NullWatcher();
             private NullWatcher() { }

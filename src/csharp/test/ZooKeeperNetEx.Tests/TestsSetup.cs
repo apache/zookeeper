@@ -17,7 +17,7 @@
  * All rights reserved.
  * 
  */
-using System;
+
 using Xunit;
 
 namespace org.apache.zookeeper

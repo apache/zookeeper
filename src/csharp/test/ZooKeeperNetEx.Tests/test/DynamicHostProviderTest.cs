@@ -29,7 +29,7 @@ using Xunit;
 
 namespace org.apache.zookeeper.test
 {
-    public sealed class DynamicHostProviderTest : ClientBase
+    public sealed class DynamicHostProviderTest
     {
         [Fact]
         public async Task testNextGoesRound()
@@ -120,7 +120,7 @@ namespace org.apache.zookeeper.test
             log.debug("START - testOnlyOneAvailable");
             var connectionString = Enumerable.Range(0, 9).Select(i => Guid.NewGuid().ToString("N")).ToCommaDelimited() +
                                    ",localhost";
-            await ZooKeeper.Using(connectionString, CONNECTION_TIMEOUT, NullWatcher.Instance, zk => zk.existsAsync("/"));
+            await ZooKeeper.Using(connectionString, ClientBase.CONNECTION_TIMEOUT, ClientBase.NullWatcher.Instance, zk => zk.existsAsync("/"));
             log.debug("END - testOnlyOneAvailable");
         }
 
@@ -129,7 +129,7 @@ namespace org.apache.zookeeper.test
         {
             log.debug("START - testNoOneAvailable");
             var connectionString = Enumerable.Range(0, 9).Select(i => Guid.NewGuid().ToString("N")).ToCommaDelimited();
-            var zk = new ZooKeeper(connectionString, CONNECTION_TIMEOUT, NullWatcher.Instance);
+            var zk = new ZooKeeper(connectionString, ClientBase.CONNECTION_TIMEOUT, ClientBase.NullWatcher.Instance);
             try
             {
                 await zk.existsAsync("/");

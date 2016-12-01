@@ -15,10 +15,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // </summary>
-
 using System.Threading.Tasks;
-using org.apache.zookeeper.data;
-using org.apache.utils;
 using Xunit;
 
 namespace org.apache.zookeeper.test
