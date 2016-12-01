@@ -91,8 +91,7 @@ public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements  Watcher 
         for (File file: snapshots) {
             if (leaveEmptyFile) {
                 new PrintWriter(file).close ();
-            }
-            else {
+            } else {
                 file.delete();
             }
         }

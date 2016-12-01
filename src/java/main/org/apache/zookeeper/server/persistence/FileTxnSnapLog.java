@@ -169,7 +169,7 @@ public class FileTxnSnapLog {
         FileTxnLog txnLog = new FileTxnLog(dataDir);
         if (-1L == deserializeResult) {
             /* this means that we couldn't find any snapshot, so we need to
-             * initialize an empty database */
+             * initialize an empty database (reported in ZOOKEEPER-2325) */
             if (txnLog.getLastLoggedZxid() != -1) {
                 throw new IOException(
                         "No snapshot found, but there are log entries. " +
