@@ -194,6 +194,7 @@ struct _zhandle {
     // Hostlist and list of addresses
     char *hostname;                     // hostname contains list of zookeeper servers to connect to
     struct sockaddr_storage addr_cur;   // address of server we're currently connecting/connected to 
+    struct sockaddr_storage addr_rw_server; // address of last known read/write server found.
 
     addrvec_t addrs;                    // current list of addresses we're connected to
     addrvec_t addrs_old;                // old list of addresses that we are no longer connected to
