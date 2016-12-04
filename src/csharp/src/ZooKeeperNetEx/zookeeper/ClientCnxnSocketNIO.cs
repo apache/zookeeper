@@ -78,7 +78,7 @@ namespace org.apache.zookeeper
         void ReceiveCompleted()
         {
             pendingIncomingDataNotifierState.SetValue(RUNNING, NOTRUNNING);
-            wakeupCnxn();
+            if(isConnectDone()) wakeupCnxn();
         }
 
 
