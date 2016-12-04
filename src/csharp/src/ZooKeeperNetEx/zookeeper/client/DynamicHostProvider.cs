@@ -140,24 +140,19 @@ namespace org.apache.zookeeper.client
 	            await TaskEx.Delay(spinDelay).ConfigureAwait(false);
 	        }
 	        m_Log.debug($"Trying to resolve at least one IP from hosts:{{{unresolvedForLog}}}");
-            var resolved = await m_DnsResolver.Resolve(unresolvedEndPoints).ConfigureAwait(false);
+            var resolved = await ResolveAndShuffle(unresolvedEndPoints).ConfigureAwait(false);
             if (!resolved.Any())
             {
                 m_Log.debug($"Failed to resolve any IP from hosts:{{{unresolvedForLog}}}");
                 throw new SocketException((int) SocketError.HostUnreachable);
             }
-            return Shuffle(resolved).ToList();
+            return resolved;
         }
 
 	    private async Task<List<ResolvedEndPoint>> ResolveAndShuffle(IEnumerable<HostAndPort> unresolvedEndPoints)
         {
             var resolvedEndPoints = await m_DnsResolver.Resolve(unresolvedEndPoints).ConfigureAwait(false);
-            return Shuffle(resolvedEndPoints).ToList();
-        }
-
-        private static IEnumerable<ResolvedEndPoint> Shuffle(IEnumerable<ResolvedEndPoint> list)
-        {
-            return list.OrderBy(i => Guid.NewGuid());
+            return resolvedEndPoints.OrderBy(i => Guid.NewGuid()).ToList();
         }
     }
 }
