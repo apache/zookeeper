@@ -170,16 +170,12 @@ public class NettyServerCnxn extends ServerCnxn {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             // Make space for length
             BinaryOutputArchive bos = BinaryOutputArchive.getArchive(baos);
-            try {
-                baos.write(fourBytes);
-                bos.writeRecord(h, "header");
-                if (r != null) {
-                    bos.writeRecord(r, tag);
-                }
-                baos.close();
-            } catch (IOException e) {
-                LOG.error("Error serializing response");
+            baos.write(fourBytes);
+            bos.writeRecord(h, "header");
+            if (r != null) {
+                bos.writeRecord(r, tag);
             }
+            baos.close();
             byte b[] = baos.toByteArray();
             ByteBuffer bb = ByteBuffer.wrap(b);
             bb.putInt(b.length - 4).rewind();
