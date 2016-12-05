@@ -49,7 +49,7 @@ struct buff_struct_2 {
 
 // TODO(br33d): the vast majority of this test is not usable with single threaded.
 //              it needs a overhaul to work properly with both threaded and single
-//              threaded
+//              threaded (ZOOKEEPER-2640)
 #ifdef THREADED
 // For testing LogMessage Callback functionality
 list<string> logMessages;
