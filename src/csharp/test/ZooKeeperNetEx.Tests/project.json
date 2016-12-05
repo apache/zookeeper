@@ -6,8 +6,7 @@
     "debugType": "portable"
   },
   "dependencies": {
-    "Microsoft.NETCore.Platforms": "1.1.0",
-    "ZooKeeperNetEx": "3.4.9.1",
+    "ZooKeeperNetEx": "3.4.9.2",
     "Newtonsoft.Json": "*",
     "xunit": "2.2.0-beta4-build3444",
     "dotnet-test-xunit": "2.2.0-preview2-build1029",
