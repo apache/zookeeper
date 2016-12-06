@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.quorum;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -381,8 +382,10 @@ public class Zab1_0Test extends ZKTestCase {
             while(leader.cnxAcceptor == null || !leader.cnxAcceptor.isAlive()) {
                 Thread.sleep(20);
             }
-            
-            LearnerHandler lh = new LearnerHandler(leaderSocket, leader);
+
+            LearnerHandler lh = new LearnerHandler(leaderSocket,
+                    new BufferedInputStream(leaderSocket.getInputStream()),
+                    leader);
             lh.start();
             leaderSocket.setSoTimeout(4000);
 
@@ -450,8 +453,10 @@ public class Zab1_0Test extends ZKTestCase {
             while(leader.cnxAcceptor == null || !leader.cnxAcceptor.isAlive()) {
                 Thread.sleep(20);
             }
-            
-            LearnerHandler lh = new LearnerHandler(leaderSocket, leader);
+
+            LearnerHandler lh = new LearnerHandler(leaderSocket,
+                    new BufferedInputStream(leaderSocket.getInputStream()),
+                    leader);
             lh.start();
             leaderSocket.setSoTimeout(4000);
 
@@ -488,7 +493,9 @@ public class Zab1_0Test extends ZKTestCase {
             
             ServerSocket ss =
                 new ServerSocket(0, 50, InetAddress.getByName("127.0.0.1"));
-            follower.setLeaderSocketAddress((InetSocketAddress)ss.getLocalSocketAddress());
+            QuorumServer leaderQS = new QuorumServer(1,
+                    (InetSocketAddress) ss.getLocalSocketAddress());
+            follower.setLeaderQuorumServer(leaderQS);
             final Follower followerForThread = follower;
             
             followerThread = new Thread() {
@@ -541,7 +548,9 @@ public class Zab1_0Test extends ZKTestCase {
 
             ServerSocket ss =
                 new ServerSocket(0, 50, InetAddress.getByName("127.0.0.1"));
-            observer.setLeaderSocketAddress((InetSocketAddress)ss.getLocalSocketAddress());
+            QuorumServer leaderQS = new QuorumServer(1,
+                    (InetSocketAddress) ss.getLocalSocketAddress());
+            observer.setLeaderQuorumServer(leaderQS);
             final Observer observerForThread = observer;
 
             observerThread = new Thread() {
@@ -1244,14 +1253,14 @@ public class Zab1_0Test extends ZKTestCase {
             super(self, zk);
         }
 
-        InetSocketAddress leaderAddr;
-        public void setLeaderSocketAddress(InetSocketAddress addr) {
-            leaderAddr = addr;
+        QuorumServer leaderQuorumServer;
+        public void setLeaderQuorumServer(QuorumServer quorumServer) {
+            leaderQuorumServer = quorumServer;
         }
-        
+
         @Override
-        protected InetSocketAddress findLeader() {
-            return leaderAddr;
+        protected QuorumServer findLeader() {
+            return leaderQuorumServer;
         }
     }
     private ConversableFollower createFollower(File tmpDir, QuorumPeer peer)
@@ -1270,14 +1279,14 @@ public class Zab1_0Test extends ZKTestCase {
             super(self, zk);
         }
 
-        InetSocketAddress leaderAddr;
-        public void setLeaderSocketAddress(InetSocketAddress addr) {
-            leaderAddr = addr;
+        QuorumServer leaderQuorumServer;
+        public void setLeaderQuorumServer(QuorumServer quorumServer) {
+            leaderQuorumServer = quorumServer;
         }
 
         @Override
-        protected InetSocketAddress findLeader() {
-            return leaderAddr;
+        protected QuorumServer findLeader() {
+            return leaderQuorumServer;
         }
     }
 
@@ -1293,7 +1302,7 @@ public class Zab1_0Test extends ZKTestCase {
 
     private QuorumPeer createQuorumPeer(File tmpDir) throws IOException, FileNotFoundException {
         HashMap<Long, QuorumServer> peers = new HashMap<Long, QuorumServer>();
-        QuorumPeer peer = new QuorumPeer();
+        QuorumPeer peer = QuorumPeer.testingQuorumPeer();
         peer.syncLimit = SYNC_LIMIT;
         peer.initLimit = 2;
         peer.tickTime = 2000;
@@ -1345,7 +1354,7 @@ public class Zab1_0Test extends ZKTestCase {
                     new ErrorTxn(1), zxid));
             logFactory.commit();
             ZKDatabase zkDb = new ZKDatabase(logFactory);
-            QuorumPeer peer = new QuorumPeer();
+            QuorumPeer peer = QuorumPeer.testingQuorumPeer();
             peer.setZKDatabase(zkDb);
             peer.setTxnFactory(logFactory);
             peer.getLastLoggedZxid();

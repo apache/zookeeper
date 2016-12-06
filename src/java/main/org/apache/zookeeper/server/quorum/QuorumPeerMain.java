@@ -181,7 +181,20 @@ public class QuorumPeerMain {
           quorumPeer.setLearnerType(config.getPeerType());
           quorumPeer.setSyncEnabled(config.getSyncEnabled());
           quorumPeer.setQuorumListenOnAllIPs(config.getQuorumListenOnAllIPs());
-          
+
+          // sets quorum sasl authentication configurations
+          quorumPeer.setQuorumSaslEnabled(config.quorumEnableSasl);
+          if(quorumPeer.isQuorumSaslAuthEnabled()){
+              quorumPeer.setQuorumServerSaslRequired(config.quorumServerRequireSasl);
+              quorumPeer.setQuorumLearnerSaslRequired(config.quorumLearnerRequireSasl);
+              quorumPeer.setQuorumServicePrincipal(config.quorumServicePrincipal);
+              quorumPeer.setQuorumServerLoginContext(config.quorumServerLoginContext);
+              quorumPeer.setQuorumLearnerLoginContext(config.quorumLearnerLoginContext);
+          }
+
+          quorumPeer.setQuorumCnxnThreadsSize(config.quorumCnxnThreadsSize);
+          quorumPeer.initialize();
+
           quorumPeer.start();
           quorumPeer.join();
       } catch (InterruptedException e) {
