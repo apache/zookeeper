@@ -721,6 +721,10 @@ public class FastLeaderElection implements Election {
         } catch (Exception e) {
             LOG.warn("Failed to register with JMX", e);
             self.jmxLeaderElectionBean = null;
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Number of connection processing threads: {}",
+                        manager.getConnectionThreadCount());
+            }
         }
         if (self.start_fle == 0) {
            self.start_fle = System.currentTimeMillis();

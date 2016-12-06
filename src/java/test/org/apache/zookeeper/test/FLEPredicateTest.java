@@ -41,7 +41,7 @@ public class FLEPredicateTest extends ZKTestCase {
     
     class MockFLE extends FastLeaderElection {
         MockFLE(QuorumPeer peer){
-            super(peer, new QuorumCnxManager(peer));
+            super(peer, peer.createCnxnManager());
         }
         
         boolean predicate(long newId, long newZxid, long newEpoch, long curId, long curZxid, long curEpoch){
@@ -60,11 +60,10 @@ public class FLEPredicateTest extends ZKTestCase {
         /*
          * Creates list of peers.
          */
-        for(int i = 0; i < 3; i++) {
+        for (int i = 0; i < 3; i++) {
             peers.put(Long.valueOf(i),
-                    new QuorumServer(i,
-                            new InetSocketAddress(PortAssignment.unique()),
-                    new InetSocketAddress(PortAssignment.unique())));
+                    new QuorumServer(i, "0.0.0.0", PortAssignment.unique(),
+                            PortAssignment.unique(), null));
         }
 
         /*

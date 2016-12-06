@@ -123,29 +123,24 @@ public class QuorumBase extends ClientBase {
         int initLimit = 3;
         int syncLimit = 3;
         HashMap<Long,QuorumServer> peers = new HashMap<Long,QuorumServer>();
-        peers.put(Long.valueOf(1), new QuorumServer(1, 
-                new InetSocketAddress("127.0.0.1", port1 + 1000),
-                new InetSocketAddress("127.0.0.1", portLE1 + 1000),
+        peers.put(Long.valueOf(1), new QuorumServer(1, "127.0.0.1", port1 + 1000,
+                portLE1 + 1000,
                 LearnerType.PARTICIPANT));
-        peers.put(Long.valueOf(2), new QuorumServer(2, 
-                new InetSocketAddress("127.0.0.1", port2 + 1000),
-                new InetSocketAddress("127.0.0.1", portLE2 + 1000),
+        peers.put(Long.valueOf(2), new QuorumServer(2, "127.0.0.1", port2 + 1000,
+                portLE2 + 1000,
                 LearnerType.PARTICIPANT));
-        peers.put(Long.valueOf(3), new QuorumServer(3, 
-                new InetSocketAddress("127.0.0.1", port3 + 1000),
-                new InetSocketAddress("127.0.0.1", portLE3 + 1000),
+        peers.put(Long.valueOf(3), new QuorumServer(3, "127.0.0.1", port3 + 1000,
+                portLE3 + 1000,
                 LearnerType.PARTICIPANT));
-        peers.put(Long.valueOf(4), new QuorumServer(4, 
-                new InetSocketAddress("127.0.0.1", port4 + 1000),
-                new InetSocketAddress("127.0.0.1", portLE4 + 1000),
+        peers.put(Long.valueOf(4), new QuorumServer(4, "127.0.0.1", port4 + 1000,
+                portLE4 + 1000,
                 LearnerType.PARTICIPANT));
-        peers.put(Long.valueOf(5), new QuorumServer(5, 
-                new InetSocketAddress("127.0.0.1", port5 + 1000),
-                new InetSocketAddress("127.0.0.1", portLE5 + 1000),
+        peers.put(Long.valueOf(5), new QuorumServer(5, "127.0.0.1", port5 + 1000,
+                portLE5 + 1000,
                 LearnerType.PARTICIPANT));
-        
+
         if (withObservers) {
-            peers.get(Long.valueOf(4)).type = LearnerType.OBSERVER;        
+            peers.get(Long.valueOf(4)).type = LearnerType.OBSERVER;
             peers.get(Long.valueOf(5)).type = LearnerType.OBSERVER;
         }
 
@@ -164,18 +159,18 @@ public class QuorumBase extends ClientBase {
         LOG.info("creating QuorumPeer 5 port " + port5);
         s5 = new QuorumPeer(peers, s5dir, s5dir, port5, 3, 5, tickTime, initLimit, syncLimit);
         Assert.assertEquals(port5, s5.getClientPort());
-        
+
         if (withObservers) {
             s4.setLearnerType(LearnerType.OBSERVER);
             s5.setLearnerType(LearnerType.OBSERVER);
         }
-        
+
         LOG.info("QuorumPeer 1 voting view: " + s1.getVotingView());
         LOG.info("QuorumPeer 2 voting view: " + s2.getVotingView());
         LOG.info("QuorumPeer 3 voting view: " + s3.getVotingView());
         LOG.info("QuorumPeer 4 voting view: " + s4.getVotingView());
-        LOG.info("QuorumPeer 5 voting view: " + s5.getVotingView());       
-        
+        LOG.info("QuorumPeer 5 voting view: " + s5.getVotingView());
+
         LOG.info("start QuorumPeer 1");
         s1.start();
         LOG.info("start QuorumPeer 2");
@@ -191,8 +186,8 @@ public class QuorumBase extends ClientBase {
         LOG.info ("Checking ports " + hostPort);
         for (String hp : hostPort.split(",")) {
             Assert.assertTrue("waiting for server up",
-                       ClientBase.waitForServerUp(hp,
-                                    CONNECTION_TIMEOUT));
+                    ClientBase.waitForServerUp(hp,
+                            CONNECTION_TIMEOUT));
             LOG.info(hp + " is accepting client connections");
         }
 
@@ -205,12 +200,12 @@ public class QuorumBase extends ClientBase {
         }
         for (int i = 1; i <= 5; i++) {
             ensureNames.add("name0=ReplicatedServer_id" + i
-                 + ",name1=replica." + i + ",name2=");
+                    + ",name1=replica." + i + ",name2=");
         }
         for (int i = 1; i <= 5; i++) {
             for (int j = 1; j <= 5; j++) {
                 ensureNames.add("name0=ReplicatedServer_id" + i
-                     + ",name1=replica." + j);
+                        + ",name1=replica." + j);
             }
         }
         for (int i = 1; i <= 5; i++) {
@@ -237,26 +232,21 @@ public class QuorumBase extends ClientBase {
         if(peers == null){
             peers = new HashMap<Long,QuorumServer>();
 
-            peers.put(Long.valueOf(1), new QuorumServer(1, 
-                new InetSocketAddress("127.0.0.1", port1 + 1000),
-                new InetSocketAddress("127.0.0.1", portLE1 + 1000),
-                LearnerType.PARTICIPANT));
-            peers.put(Long.valueOf(2), new QuorumServer(2, 
-                new InetSocketAddress("127.0.0.1", port2 + 1000),
-                new InetSocketAddress("127.0.0.1", portLE2 + 1000),
-                LearnerType.PARTICIPANT));
-            peers.put(Long.valueOf(3), new QuorumServer(3, 
-                new InetSocketAddress("127.0.0.1", port3 + 1000),
-                new InetSocketAddress("127.0.0.1", portLE3 + 1000),
-                LearnerType.PARTICIPANT));
-            peers.put(Long.valueOf(4), new QuorumServer(4, 
-                new InetSocketAddress("127.0.0.1", port4 + 1000),
-                new InetSocketAddress("127.0.0.1", portLE4 + 1000),
-                LearnerType.PARTICIPANT));
-            peers.put(Long.valueOf(5), new QuorumServer(5, 
-                new InetSocketAddress("127.0.0.1", port5 + 1000),
-                new InetSocketAddress("127.0.0.1", portLE5 + 1000),
-                LearnerType.PARTICIPANT));
+            peers.put(Long.valueOf(1), new QuorumServer(1, "127.0.0.1", port1 + 1000,
+                    portLE1 + 1000,
+                    LearnerType.PARTICIPANT));
+            peers.put(Long.valueOf(2), new QuorumServer(2, "127.0.0.1", port2 + 1000,
+                    portLE2 + 1000,
+                    LearnerType.PARTICIPANT));
+            peers.put(Long.valueOf(3), new QuorumServer(3, "127.0.0.1", port3 + 1000,
+                    portLE3 + 1000,
+                    LearnerType.PARTICIPANT));
+            peers.put(Long.valueOf(4), new QuorumServer(4, "127.0.0.1", port4 + 1000,
+                    portLE4 + 1000,
+                    LearnerType.PARTICIPANT));
+            peers.put(Long.valueOf(5), new QuorumServer(5, "127.0.0.1", port5 + 1000,
+                    portLE5 + 1000,
+                    LearnerType.PARTICIPANT));
         }
         
         switch(i){
