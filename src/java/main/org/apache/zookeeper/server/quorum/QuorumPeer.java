@@ -29,7 +29,6 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -809,28 +808,16 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         responder.interrupt();
     }
     synchronized public void startLeaderElection() {
-       try {
-           if (getPeerState() == ServerState.LOOKING) {
-               currentVote = new Vote(myid, getLastLoggedZxid(), getCurrentEpoch());
-           }
-       } catch(IOException e) {
-           RuntimeException re = new RuntimeException(e.getMessage());
-           re.setStackTrace(e.getStackTrace());
-           throw re;
-       }
-
-       // if (!getView().containsKey(myid)) {
-      //      throw new RuntimeException("My id " + myid + " not in the peer list");
-        //}
-        if (electionType == 0) {
-            try {
-                udpSocket = new DatagramSocket(myQuorumAddr.getPort());
-                responder = new ResponderThread();
-                responder.start();
-            } catch (SocketException e) {
-                throw new RuntimeException(e);
+        try {
+            if (getPeerState() == ServerState.LOOKING) {
+                currentVote = new Vote(myid, getLastLoggedZxid(), getCurrentEpoch());
             }
+        } catch(IOException e) {
+            RuntimeException re = new RuntimeException(e.getMessage());
+            re.setStackTrace(e.getStackTrace());
+            throw re;
         }
+
         this.electionAlg = createElectionAlgorithm(electionType);
     }
 
@@ -930,29 +917,26 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
         //TODO: use a factory rather than a switch
         switch (electionAlgorithm) {
-        case 0:
-            le = new LeaderElection(this);
-            break;
-        case 1:
-            le = new AuthFastLeaderElection(this);
-            break;
-        case 2:
-            le = new AuthFastLeaderElection(this, true);
-            break;
-        case 3:
-            qcm = new QuorumCnxManager(this);
-            QuorumCnxManager.Listener listener = qcm.listener;
-            if(listener != null){
-                listener.start();
-                FastLeaderElection fle = new FastLeaderElection(this, qcm);
-                fle.start();
-                le = fle;
-            } else {
-                LOG.error("Null listener when initializing cnx manager");
-            }
-            break;
-        default:
-            assert false;
+            case 1:
+                le = new AuthFastLeaderElection(this);
+                break;
+            case 2:
+                le = new AuthFastLeaderElection(this, true);
+                break;
+            case 3:
+                qcm = new QuorumCnxManager(this);
+                QuorumCnxManager.Listener listener = qcm.listener;
+                if(listener != null){
+                    listener.start();
+                    FastLeaderElection fle = new FastLeaderElection(this, qcm);
+                    fle.start();
+                    le = fle;
+                } else {
+                    LOG.error("Null listener when initializing cnx manager");
+                }
+                break;
+            default:
+                assert false;
         }
         return le;
     }
@@ -960,9 +944,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     @SuppressWarnings("deprecation")
     protected Election makeLEStrategy(){
         LOG.debug("Initializing leader election protocol...");
-        if (getElectionType() == 0) {
-            electionAlg = new LeaderElection(this);
-        }
         return electionAlg;
     }
 
