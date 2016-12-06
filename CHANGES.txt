@@ -31,6 +31,12 @@ IMPROVEMENTS:
   ZOOKEEPER-2606: SaslServerCallbackHandler#handleAuthorizeCallback() should
   log the exception (Ted Yu via fpj)
 
+NEW FEATURE:
+
+  ZOOKEEPER-1045: Support Quorum Peer mutual authentication via SASL
+  (rakeshr via phunt)
+
+
 Release 3.4.9 - 2016-08-23
 
 Backward compatible changes:

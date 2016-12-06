@@ -41,7 +41,7 @@ public class FLEPredicateTest extends ZKTestCase {
     
     class MockFLE extends FastLeaderElection {
         MockFLE(QuorumPeer peer){
-            super(peer, new QuorumCnxManager(peer));
+            super(peer, peer.createCnxnManager());
         }
         
         boolean predicate(long newId, long newZxid, long newEpoch, long curId, long curZxid, long curEpoch){

@@ -19,22 +19,13 @@
 package org.apache.zookeeper.client;
 
 import java.io.IOException;
-import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 
 import javax.security.auth.Subject;
-import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.CallbackHandler;
-import javax.security.auth.callback.NameCallback;
-import javax.security.auth.callback.PasswordCallback;
-import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginException;
-import javax.security.sasl.AuthorizeCallback;
-import javax.security.sasl.RealmCallback;
-import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
@@ -42,17 +33,13 @@ import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.ClientCnxn;
 import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.Login;
+import org.apache.zookeeper.SaslClientCallbackHandler;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.GetSASLRequest;
 import org.apache.zookeeper.proto.SetSASLResponse;
-import org.apache.zookeeper.server.auth.KerberosName;
-import org.ietf.jgss.GSSContext;
-import org.ietf.jgss.GSSCredential;
-import org.ietf.jgss.GSSException;
-import org.ietf.jgss.GSSManager;
-import org.ietf.jgss.Oid;
+import org.apache.zookeeper.util.SecurityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -226,83 +213,14 @@ public class ZooKeeperSaslClient {
                         }
                         // note that the login object is static: it's shared amongst all zookeeper-related connections.
                         // in order to ensure the login is initialized only once, it must be synchronized the code snippet.
-                        login = new Login(loginContext, new ClientCallbackHandler(null));
+                        login = new Login(loginContext, new SaslClientCallbackHandler(null, "Client"));
                         login.startThreadIfNeeded();
                         initializedLogin = true;
                     }
                 }
             }
-            Subject subject = login.getSubject();
-            SaslClient saslClient;
-            // Use subject.getPrincipals().isEmpty() as an indication of which SASL mechanism to use:
-            // if empty, use DIGEST-MD5; otherwise, use GSSAPI.
-            if (subject.getPrincipals().isEmpty()) {
-                // no principals: must not be GSSAPI: use DIGEST-MD5 mechanism instead.
-                LOG.info("Client will use DIGEST-MD5 as SASL mechanism.");
-                String[] mechs = {"DIGEST-MD5"};
-                String username = (String)(subject.getPublicCredentials().toArray()[0]);
-                String password = (String)(subject.getPrivateCredentials().toArray()[0]);
-                // "zk-sasl-md5" is a hard-wired 'domain' parameter shared with zookeeper server code (see ServerCnxnFactory.java)
-                saslClient = Sasl.createSaslClient(mechs, username, "zookeeper", "zk-sasl-md5", null, new ClientCallbackHandler(password));
-                return saslClient;
-            }
-            else { // GSSAPI.
-            	boolean usingNativeJgss =
-            			Boolean.getBoolean("sun.security.jgss.native");
-            	if (usingNativeJgss) {
-            		// http://docs.oracle.com/javase/6/docs/technotes/guides/security/jgss/jgss-features.html
-            		// """
-            		// In addition, when performing operations as a particular
-            		// Subject, e.g. Subject.doAs(...) or Subject.doAsPrivileged(...),
-            		// the to-be-used GSSCredential should be added to Subject's
-            		// private credential set. Otherwise, the GSS operations will
-            		// fail since no credential is found.
-            		// """
-            		try {
-            			GSSManager manager = GSSManager.getInstance();
-            			Oid krb5Mechanism = new Oid("1.2.840.113554.1.2.2");
-            			GSSCredential cred = manager.createCredential(null,
-            					GSSContext.DEFAULT_LIFETIME,
-            					krb5Mechanism,
-            					GSSCredential.INITIATE_ONLY);
-            			subject.getPrivateCredentials().add(cred);
-            			if (LOG.isDebugEnabled()) {
-            				LOG.debug("Added private credential to subject: " + cred);
-            			}
-            		} catch (GSSException ex) {
-            			LOG.warn("Cannot add private credential to subject; " +
-            					"authentication at the server may fail", ex);
-            		}
-            	}
-                final Object[] principals = subject.getPrincipals().toArray();
-                // determine client principal from subject.
-                final Principal clientPrincipal = (Principal)principals[0];
-                final KerberosName clientKerberosName = new KerberosName(clientPrincipal.getName());
-                // assume that server and client are in the same realm (by default; unless the system property
-                // "zookeeper.server.realm" is set).
-                String serverRealm = System.getProperty("zookeeper.server.realm",clientKerberosName.getRealm());
-                KerberosName serviceKerberosName = new KerberosName(servicePrincipal+"@"+serverRealm);
-                final String serviceName = serviceKerberosName.getServiceName();
-                final String serviceHostname = serviceKerberosName.getHostName();
-                final String clientPrincipalName = clientKerberosName.toString();
-                try {
-                    saslClient = Subject.doAs(subject,new PrivilegedExceptionAction<SaslClient>() {
-                        public SaslClient run() throws SaslException {
-                            LOG.info("Client will use GSSAPI as SASL mechanism.");
-                            String[] mechs = {"GSSAPI"};
-                            LOG.debug("creating sasl client: client="+clientPrincipalName+";service="+serviceName+";serviceHostname="+serviceHostname);
-                            SaslClient saslClient = Sasl.createSaslClient(mechs,clientPrincipalName,serviceName,serviceHostname,null,new ClientCallbackHandler(null));
-                            return saslClient;
-                        }
-                    });
-                    return saslClient;
-                }
-                catch (Exception e) {
-                	LOG.error("Exception while trying to create SASL client", e);
-                    e.printStackTrace();
-                    return null;
-                }
-            }
+            return SecurityUtils.createSaslClient(login.getSubject(),
+                    servicePrincipal, "zookeeper", "zk-sasl-md5", LOG, "Client");
         } catch (LoginException e) {
             // We throw LoginExceptions...
             throw e;
@@ -468,75 +386,6 @@ public class ZooKeeperSaslClient {
                 sendSaslPacket(emptyToken, cnxn);
             }
             saslState = SaslState.INTERMEDIATE;
-        }
-    }
-
-    // The CallbackHandler interface here refers to
-    // javax.security.auth.callback.CallbackHandler.
-    // It should not be confused with Zookeeper packet callbacks like
-    //  org.apache.zookeeper.server.auth.SaslServerCallbackHandler.
-    public static class ClientCallbackHandler implements CallbackHandler {
-        private String password = null;
-
-        public ClientCallbackHandler(String password) {
-            this.password = password;
-        }
-
-        public void handle(Callback[] callbacks) throws
-          UnsupportedCallbackException {
-            for (Callback callback : callbacks) {
-                if (callback instanceof NameCallback) {
-                    NameCallback nc = (NameCallback) callback;
-                    nc.setName(nc.getDefaultName());
-                }
-                else {
-                    if (callback instanceof PasswordCallback) {
-                        PasswordCallback pc = (PasswordCallback)callback;
-                        if (password != null) {
-                            pc.setPassword(this.password.toCharArray());
-                        } else {
-                            LOG.warn("Could not login: the client is being asked for a password, but the Zookeeper" +
-                              " client code does not currently support obtaining a password from the user." +
-                              " Make sure that the client is configured to use a ticket cache (using" +
-                              " the JAAS configuration setting 'useTicketCache=true)' and restart the client. If" +
-                              " you still get this message after that, the TGT in the ticket cache has expired and must" +
-                              " be manually refreshed. To do so, first determine if you are using a password or a" +
-                              " keytab. If the former, run kinit in a Unix shell in the environment of the user who" +
-                              " is running this Zookeeper client using the command" +
-                              " 'kinit <princ>' (where <princ> is the name of the client's Kerberos principal)." +
-                              " If the latter, do" +
-                              " 'kinit -k -t <keytab> <princ>' (where <princ> is the name of the Kerberos principal, and" +
-                              " <keytab> is the location of the keytab file). After manually refreshing your cache," +
-                              " restart this client. If you continue to see this message after manually refreshing" +
-                              " your cache, ensure that your KDC host's clock is in sync with this host's clock.");
-                        }
-                    }
-                    else {
-                        if (callback instanceof RealmCallback) {
-                            RealmCallback rc = (RealmCallback) callback;
-                            rc.setText(rc.getDefaultText());
-                        }
-                        else {
-                            if (callback instanceof AuthorizeCallback) {
-                                AuthorizeCallback ac = (AuthorizeCallback) callback;
-                                String authid = ac.getAuthenticationID();
-                                String authzid = ac.getAuthorizationID();
-                                if (authid.equals(authzid)) {
-                                    ac.setAuthorized(true);
-                                } else {
-                                    ac.setAuthorized(false);
-                                }
-                                if (ac.isAuthorized()) {
-                                    ac.setAuthorizedID(authzid);
-                                }
-                            }
-                            else {
-                                throw new UnsupportedCallbackException(callback,"Unrecognized SASL ClientCallback");
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 

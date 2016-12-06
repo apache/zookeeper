@@ -74,6 +74,34 @@
                 rev="2.4" conf="releaseaudit->default"/>
     <dependency org="commons-collections" name="commons-collections" 
                 rev="3.2.2" conf="releaseaudit->default"/>
+
+    <dependency org="commons-io" name="commons-io" rev="2.4"
+                conf="test->default"/>
+
+    <dependency org="org.apache.kerby" name="kerb-simplekdc" rev="1.0.0-RC2"
+                conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerby-config" rev="1.0.0-RC2"
+                conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerb-core" rev="1.0.0-RC2"
+                conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerb-server" rev="1.0.0-RC2"
+                conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerb-common" rev="1.0.0-RC2"
+                conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerb-admin" rev="1.0.0-RC2"
+                conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerb-identity" rev="1.0.0-RC2"
+                conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerb-client" rev="1.0.0-RC2"
+                conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerb-util" rev="1.0.0-RC2"
+                conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerb-crypto" rev="1.0.0-RC2"
+                conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerby-util" rev="1.0.0-RC2"
+                conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerby-asn1" rev="1.0.0-RC2"
+                conf="test->default"/>
   </dependencies>
 
 </ivy-module>

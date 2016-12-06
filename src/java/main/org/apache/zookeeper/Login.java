@@ -32,8 +32,9 @@ import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
 import javax.security.auth.callback.CallbackHandler;
 
-import org.apache.log4j.Logger;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import javax.security.auth.kerberos.KerberosTicket;
 import javax.security.auth.Subject;
 import java.util.Date;
@@ -41,7 +42,7 @@ import java.util.Random;
 import java.util.Set;
 
 public class Login {
-    Logger LOG = Logger.getLogger(Login.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Login.class);
     public CallbackHandler callbackHandler;
 
     // LoginThread will sleep until 80% of time from last refresh to
@@ -291,7 +292,7 @@ public class Login {
         }
         LoginContext loginContext = new LoginContext(loginContextName,callbackHandler);
         loginContext.login();
-        LOG.info("successfully logged in.");
+        LOG.info("{} successfully logged in.", loginContextName);
         return loginContext;
     }
 

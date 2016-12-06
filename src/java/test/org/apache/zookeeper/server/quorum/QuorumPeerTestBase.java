@@ -24,6 +24,10 @@ package org.apache.zookeeper.server.quorum;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
 import org.apache.zookeeper.WatchedEvent;
@@ -41,6 +45,8 @@ import org.slf4j.LoggerFactory;
 public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
     protected static final Logger LOG = LoggerFactory
             .getLogger(QuorumPeerTestBase.class);
+
+    public static final int TIMEOUT = 5000;
 
     public void process(WatchedEvent event) {
         // ignore for this test
@@ -60,20 +66,29 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         volatile TestQPMain main;
         final File dataDir;
         CountDownLatch mainFailed;
+        File baseDir;
+        private final int myid;
+        private final int clientPort;
+        private final String quorumCfgSection;
+        private final Map<String, String> otherConfigs;
 
-        public MainThread(int myid, int clientPort, String quorumCfgSection)
-                throws IOException {
-            File tmpDir = ClientBase.createTmpDir();
-            LOG.info("id = " + myid + " tmpDir = " + tmpDir + " clientPort = "
+        public MainThread(int myid, int clientPort, String quorumCfgSection,
+                Map<String, String> otherConfigs) throws IOException {
+            baseDir = ClientBase.createTmpDir();
+            this.myid = myid;
+            this.clientPort = clientPort;
+            this.quorumCfgSection = quorumCfgSection;
+            this.otherConfigs = otherConfigs;
+            LOG.info("id = " + myid + " tmpDir = " + baseDir + " clientPort = "
                     + clientPort);
-            confFile = new File(tmpDir, "zoo.cfg");
+            confFile = new File(baseDir, "zoo.cfg");
 
             FileWriter fwriter = new FileWriter(confFile);
             fwriter.write("tickTime=4000\n");
             fwriter.write("initLimit=10\n");
             fwriter.write("syncLimit=5\n");
 
-            dataDir = new File(tmpDir, "data");
+            dataDir = new File(baseDir, "data");
             if (!dataDir.mkdir()) {
                 throw new IOException("Unable to mkdir " + dataDir);
             }
@@ -87,6 +102,13 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             fwriter.write("dataDir=" + dir + "\n");
 
             fwriter.write("clientPort=" + clientPort + "\n");
+
+            // write extra configurations
+            Set<Entry<String, String>> entrySet = otherConfigs.entrySet();
+            for (Entry<String, String> entry : entrySet) {
+                fwriter.write(entry.getKey() + "=" + entry.getValue() + "\n");
+            }
+
             fwriter.write(quorumCfgSection + "\n");
             fwriter.flush();
             fwriter.close();
@@ -96,6 +118,12 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             fwriter.write(Integer.toString(myid));
             fwriter.flush();
             fwriter.close();
+        }
+
+        public MainThread(int myid, int clientPort, String quorumCfgSection)
+                throws IOException {
+            this(myid, clientPort, quorumCfgSection,
+                    new HashMap<String, String>());
         }
 
         Thread currentThread;
@@ -151,5 +179,28 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             return main.quorumPeer;
         }
 
+        public void deleteBaseDir() {
+            ClientBase.recursiveDelete(baseDir);
+        }
+
+        public int getMyid() {
+            return myid;
+        }
+
+        public int getClientPort() {
+            return clientPort;
+        }
+
+        public String getQuorumCfgSection() {
+            return quorumCfgSection;
+        }
+
+        public Map<String, String> getOtherConfigs() {
+            return otherConfigs;
+        }
+
+        public File getConfFile() {
+            return confFile;
+        }
     }
 }

@@ -288,7 +288,7 @@ public class FLECompatibilityTest extends ZKTestCase {
         
         QuorumPeer peer = new QuorumPeer(peers, tmpdir[0], tmpdir[0], port[0], 3, 0, 1000, 2, 2);
         peer.setPeerState(ServerState.LOOKING);
-        QuorumCnxManager mng = new QuorumCnxManager(peer);
+        QuorumCnxManager mng = peer.createCnxnManager();
         
         /*
          * Check that it generates an internal notification correctly
@@ -325,7 +325,7 @@ public class FLECompatibilityTest extends ZKTestCase {
 
         QuorumPeer peer = new QuorumPeer(peers, tmpdir[0], tmpdir[0], port[0], 3, 0, 1000, 2, 2);
         peer.setPeerState(ServerState.LOOKING);
-        QuorumCnxManager mng = new QuorumCnxManager(peer);
+        QuorumCnxManager mng = peer.createCnxnManager();
         
         /*
          * Check that it generates an internal notification correctly

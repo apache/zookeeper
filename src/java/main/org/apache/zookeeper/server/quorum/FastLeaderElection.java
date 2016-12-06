@@ -997,6 +997,8 @@ public class FastLeaderElection implements Election {
                 LOG.warn("Failed to unregister with JMX", e);
             }
             self.jmxLeaderElectionBean = null;
+            LOG.debug("Number of connection processing threads: {}",
+                    manager.getConnectionThreadCount());
         }
     }
 }

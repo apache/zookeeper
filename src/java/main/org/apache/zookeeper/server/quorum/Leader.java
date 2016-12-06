@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.ByteArrayOutputStream;
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.BindException;
 import java.net.ServerSocket;
@@ -32,10 +33,12 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
+
+import javax.security.sasl.SaslException;
 
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.server.FinalRequestProcessor;
@@ -318,7 +321,10 @@ public class Leader {
                         // in LearnerHandler switch to the syncLimit
                         s.setSoTimeout(self.tickTime * self.initLimit);
                         s.setTcpNoDelay(nodelay);
-                        LearnerHandler fh = new LearnerHandler(s, Leader.this);
+
+                        BufferedInputStream is = new BufferedInputStream(
+                                s.getInputStream());
+                        LearnerHandler fh = new LearnerHandler(s, is, Leader.this);
                         fh.start();
                     } catch (SocketException e) {
                         if (stop) {
@@ -332,6 +338,8 @@ public class Leader {
                         } else {
                             throw e;
                         }
+                    } catch (SaslException e){
+                        LOG.error("Exception while connecting to quorum learner", e);
                     }
                 }
             } catch (Exception e) {
