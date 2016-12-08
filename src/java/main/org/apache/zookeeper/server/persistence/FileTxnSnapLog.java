@@ -179,7 +179,7 @@ public class FileTxnSnapLog {
         File initFile = new File(dataDir.getParent(), "initialize");
         if (initFile.exists()) {
             if (!initFile.delete()) {
-                LOG.warn("Unable to delete initialization file " + initFile.toString());
+                throw new IOException("Unable to delete initialization file " + initFile.toString());
             }
             suspectEmptyDB = false;
         } else {
