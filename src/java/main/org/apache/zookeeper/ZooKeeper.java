@@ -39,32 +39,10 @@ import org.apache.zookeeper.client.StaticHostProvider;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.apache.zookeeper.common.PathUtils;
+import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.proto.CheckWatchesRequest;
-import org.apache.zookeeper.proto.Create2Response;
-import org.apache.zookeeper.proto.CreateRequest;
-import org.apache.zookeeper.proto.CreateResponse;
-import org.apache.zookeeper.proto.CreateTTLRequest;
-import org.apache.zookeeper.proto.DeleteRequest;
-import org.apache.zookeeper.proto.ExistsRequest;
-import org.apache.zookeeper.proto.GetACLRequest;
-import org.apache.zookeeper.proto.GetACLResponse;
-import org.apache.zookeeper.proto.GetChildren2Request;
-import org.apache.zookeeper.proto.GetChildren2Response;
-import org.apache.zookeeper.proto.GetChildrenRequest;
-import org.apache.zookeeper.proto.GetChildrenResponse;
-import org.apache.zookeeper.proto.GetDataRequest;
-import org.apache.zookeeper.proto.GetDataResponse;
-import org.apache.zookeeper.proto.RemoveWatchesRequest;
-import org.apache.zookeeper.proto.ReplyHeader;
-import org.apache.zookeeper.proto.RequestHeader;
-import org.apache.zookeeper.proto.SetACLRequest;
-import org.apache.zookeeper.proto.SetACLResponse;
-import org.apache.zookeeper.proto.SetDataRequest;
-import org.apache.zookeeper.proto.SetDataResponse;
-import org.apache.zookeeper.proto.SyncRequest;
-import org.apache.zookeeper.proto.SyncResponse;
+import org.apache.zookeeper.proto.*;
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.EphemeralType;
 import org.slf4j.Logger;
@@ -2175,7 +2153,38 @@ public class ZooKeeper {
     public void getConfig(boolean watch, DataCallback cb, Object ctx) {
         getConfig(watch ? watchManager.defaultWatcher : null, cb, ctx);
     }
-   
+
+    /**
+     * @deprecated use {@link org.apache.zookeeper.admin.ZooKeeperAdmin#reconfigure(String, String, String, long, Stat)}
+     */
+    public byte[] reconfig(String joiningServers, String leavingServers, String newMembers, long fromConfig, Stat stat) throws KeeperException, InterruptedException {
+        return internalReconfig(joiningServers, leavingServers, newMembers, fromConfig, stat);
+    }
+
+    /**
+     * @deprecated use {@link org.apache.zookeeper.admin.ZooKeeperAdmin#reconfigure(List, List, List, long, Stat)}
+     */
+    public byte[] reconfig(List<String> joiningServers, List<String> leavingServers, List<String> newMembers, long fromConfig, Stat stat) throws KeeperException, InterruptedException {
+        return internalReconfig(joiningServers, leavingServers, newMembers, fromConfig, stat);
+    }
+
+    /**
+     * @deprecated use {@link org.apache.zookeeper.admin.ZooKeeperAdmin#reconfigure(String, String, String, long, DataCallback, Object)}
+     */
+    public void reconfig(String joiningServers, String leavingServers,
+                         String newMembers, long fromConfig, DataCallback cb, Object ctx) {
+        internalReconfig(joiningServers, leavingServers, newMembers, fromConfig, cb, ctx);
+    }
+
+    /**
+     * @deprecated use {@link org.apache.zookeeper.admin.ZooKeeperAdmin#reconfigure(List, List, List, long, DataCallback, Object)}
+     */
+    public void reconfig(List<String> joiningServers,
+                         List<String> leavingServers, List<String> newMembers, long fromConfig,
+                         DataCallback cb, Object ctx) {
+        internalReconfig(joiningServers, leavingServers, newMembers, fromConfig, cb, ctx);
+    }
+
     /**
      * Set the data for the node of the given path if such a node exists and the
      * given version matches the version of the node (if the given version is
@@ -2909,5 +2918,50 @@ public class ZooKeeper {
             ioe.initCause(e);
             throw ioe;
         }
+    }
+
+    protected byte[] internalReconfig(String joiningServers, String leavingServers, String newMembers, long fromConfig, Stat stat) throws KeeperException, InterruptedException
+    {
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.reconfig);
+        ReconfigRequest request = new ReconfigRequest(joiningServers, leavingServers, newMembers, fromConfig);
+        GetDataResponse response = new GetDataResponse();
+        ReplyHeader r = cnxn.submitRequest(h, request, response, null);
+        if (r.getErr() != 0) {
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()), "");
+        }
+        if (stat != null) {
+            DataTree.copyStat(response.getStat(), stat);
+        }
+        return response.getData();
+    }
+
+    protected byte[] internalReconfig(List<String> joiningServers, List<String> leavingServers, List<String> newMembers, long fromConfig, Stat stat) throws KeeperException, InterruptedException
+    {
+        return internalReconfig(StringUtils.joinStrings(joiningServers, ","),
+                StringUtils.joinStrings(leavingServers, ","),
+                StringUtils.joinStrings(newMembers, ","),
+                fromConfig, stat);
+    }
+
+    protected void internalReconfig(String joiningServers, String leavingServers,
+                         String newMembers, long fromConfig, DataCallback cb, Object ctx)
+    {
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.reconfig);
+        ReconfigRequest request = new ReconfigRequest(joiningServers, leavingServers, newMembers, fromConfig);
+        GetDataResponse response = new GetDataResponse();
+        cnxn.queuePacket(h, new ReplyHeader(), request, response, cb,
+                ZooDefs.CONFIG_NODE, ZooDefs.CONFIG_NODE, ctx, null);
+    }
+
+    protected void internalReconfig(List<String> joiningServers,
+                         List<String> leavingServers, List<String> newMembers, long fromConfig,
+                         DataCallback cb, Object ctx)
+    {
+        internalReconfig(StringUtils.joinStrings(joiningServers, ","),
+                StringUtils.joinStrings(leavingServers, ","),
+                StringUtils.joinStrings(newMembers, ","),
+                fromConfig, cb, ctx);
     }
 }
