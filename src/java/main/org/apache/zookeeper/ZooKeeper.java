@@ -2155,7 +2155,7 @@ public class ZooKeeper {
     }
 
     /**
-     * @deprecated use {@link org.apache.zookeeper.admin.ZooKeeperAdmin#reconfigure(String, String, String, long, Stat)}
+     * @deprecated instead use the reconfigure() methods instead in {@link org.apache.zookeeper.admin.ZooKeeperAdmin}
      */
     @Deprecated
     public byte[] reconfig(String joiningServers, String leavingServers, String newMembers, long fromConfig, Stat stat) throws KeeperException, InterruptedException {
@@ -2163,7 +2163,7 @@ public class ZooKeeper {
     }
 
     /**
-     * @deprecated use {@link org.apache.zookeeper.admin.ZooKeeperAdmin#reconfigure(List, List, List, long, Stat)}
+     * @deprecated instead use the reconfigure() methods instead in {@link org.apache.zookeeper.admin.ZooKeeperAdmin}
      */
     @Deprecated
     public byte[] reconfig(List<String> joiningServers, List<String> leavingServers, List<String> newMembers, long fromConfig, Stat stat) throws KeeperException, InterruptedException {
@@ -2171,7 +2171,7 @@ public class ZooKeeper {
     }
 
     /**
-     * @deprecated use {@link org.apache.zookeeper.admin.ZooKeeperAdmin#reconfigure(String, String, String, long, DataCallback, Object)}
+     * @deprecated instead use the reconfigure() methods instead in {@link org.apache.zookeeper.admin.ZooKeeperAdmin}
      */
     @Deprecated
     public void reconfig(String joiningServers, String leavingServers,
@@ -2180,7 +2180,7 @@ public class ZooKeeper {
     }
 
     /**
-     * @deprecated use {@link org.apache.zookeeper.admin.ZooKeeperAdmin#reconfigure(List, List, List, long, DataCallback, Object)}
+     * @deprecated instead use the reconfigure() methods instead in {@link org.apache.zookeeper.admin.ZooKeeperAdmin}
      */
     @Deprecated
     public void reconfig(List<String> joiningServers,
