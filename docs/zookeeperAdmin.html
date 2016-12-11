@@ -67,7 +67,7 @@
 <a class="unselected" href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/">Wiki</a>
 </li>
 <li class="current">
-<a class="selected" href="index.html">ZooKeeper 3.4 Documentation</a>
+<a class="selected" href="index.html">ZooKeeper 3.6 Documentation</a>
 </li>
 </ul>
 <!--+
@@ -1317,6 +1317,7 @@ server.3=zoo3:2888:3888</pre>
               of the observers on restart. Set to "false" to disable this
               feature. Default is "true"</p>
 </dd>
+
         
 </dl>
 <a name="sc_clusterOptions"></a>
@@ -1488,6 +1489,42 @@ server.3=zoo3:2888:3888</pre>
               to a server's config file.
               </p>
 </dd>
+
+          
+<dt>
+<term>reconfigEnabled</term>
+</dt>
+<dd>
+<p>(No Java system property)</p>
+<p>
+<strong>New in 3.5.3:</strong>
+                This controls the enabling or disabling of
+                <a href="zookeeperReconfig.html">
+                  Dynamic Reconfiguration</a> feature. When the feature
+                is enabled, users can perform reconfigure operations through
+                the ZooKeeper client API or through ZooKeeper command line tools
+                assuming users are authorized to perform such operations.
+                When the feature is disabled, no user, including the super user,
+                can perform a reconfiguration. Any attempt to reconfigure will return an error.
+                <strong>"reconfigEnabled"</strong> option can be set as
+                <strong>"reconfigEnabled=false"</strong> or
+                <strong>"reconfigEnabled=true"</strong>
+                to a server's config file, or using QuorumPeerConfig's
+                setReconfigEnabled method. The default value is false.
+
+                If present, the value should be consistent across every server in
+                the entire ensemble. Setting the value as true on some servers and false
+                on other servers will cause inconsistent behavior depending on which server
+                is elected as leader. If the leader has a setting of
+                <strong>"reconfigEnabled=true"</strong>, then the ensemble
+                will have reconfig feature enabled. If the leader has a setting of
+                <strong>"reconfigEnabled=false"</strong>, then the ensemble
+                will have reconfig feature disabled. It is thus recommended to have a consistent
+                value for <strong>"reconfigEnabled"</strong> across servers
+                in the ensemble.
+              </p>
+</dd>
+
         
 </dl>
 <p></p>

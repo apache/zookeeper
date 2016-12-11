@@ -67,7 +67,7 @@
 <a class="unselected" href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/">Wiki</a>
 </li>
 <li class="current">
-<a class="selected" href="index.html">ZooKeeper 3.4 Documentation</a>
+<a class="selected" href="index.html">ZooKeeper 3.6 Documentation</a>
 </li>
 </ul>
 <!--+
@@ -207,6 +207,9 @@ document.write("Last Published: " + document.lastModified);
 <a href="#sc_reconfig_standaloneEnabled">The standaloneEnabled flag</a>
 </li>
 <li>
+<a href="#sc_reconfig_reconfigEnabled">The reconfigEnabled flag</a>
+</li>
+<li>
 <a href="#sc_reconfig_file">Dynamic configuration file</a>
 </li>
 <li>
@@ -220,6 +223,12 @@ document.write("Last Published: " + document.lastModified);
 <li>
 <a href="#ch_reconfig_dyn">Dynamic Reconfiguration of the ZooKeeper Ensemble</a>
 <ul class="minitoc">
+<li>
+<a href="#ch_reconfig_api">API</a>
+</li>
+<li>
+<a href="#sc_reconfig_access_control">Security</a>
+</li>
 <li>
 <a href="#sc_reconfig_retrieving">Retrieving the current dynamic configuration</a>
 </li>
@@ -299,6 +308,12 @@ document.write("Last Published: " + document.lastModified);
 </dd>
     
 </dl>
+<p>
+<strong>Note:</strong> Starting with 3.5.3, the dynamic reconfiguration
+      feature is disabled by default, and has to be explicitly turned on via
+      <a href="zookeeperAdmin.html#sc_advancedConfiguration">
+        reconfigEnabled </a> configuration option.
+    </p>
 </div>
   
 <a name="ch_reconfig_format"></a>
@@ -388,6 +403,26 @@ document.write("Last Published: " + document.lastModified);
 <p>Since running the Distributed mode allows more flexibility, we
         recommend setting the flag to <em>false</em>. We expect that
         the legacy Standalone mode will be deprecated in the future.</p>
+<a name="sc_reconfig_reconfigEnabled"></a>
+<h3 class="h4">The reconfigEnabled flag</h3>
+<p>Starting with 3.5.0 and prior to 3.5.3, there is no way to disable
+        dynamic reconfiguration feature. We would like to offer the option of
+        disabling reconfiguration feature because with reconfiguration enabled,
+        we have a security concern that a malicious actor can make arbitrary changes
+        to the configuration of a ZooKeeper ensemble, including adding a compromised
+        server to the ensemble. We prefer to leave to the discretion of the user to
+        decide whether to enable it or not and make sure that the appropriate security
+        measure are in place. So in 3.5.3 the <a href="zookeeperAdmin.html#sc_advancedConfiguration">
+          reconfigEnabled </a> configuration option is introduced
+        such that the reconfiguration feature can be completely disabled and any attempts
+        to reconfigure a cluster through reconfig API with or without authentication
+        will fail by default, unless <strong>reconfigEnabled</strong> is set to
+        <strong>true</strong>.
+      </p>
+<p>To set the option to true, the configuration file (zoo.cfg) should contain:</p>
+<p>
+<span class="codefrag computeroutput">reconfigEnabled=true</span>
+</p>
 <a name="sc_reconfig_file"></a>
 <h3 class="h4">Dynamic configuration file</h3>
 <p>Starting with 3.5.0 we're distinguishing between dynamic
@@ -526,6 +561,7 @@ server.3=125.23.63.25:2782:2785:participant</pre>
       clientPort/clientPortAddress statements (although if you specify client
       ports in the new format, these statements are now redundant).</p>
 </div>
+
   
 <a name="ch_reconfig_dyn"></a>
 <h2 class="h3">Dynamic Reconfiguration of the ZooKeeper Ensemble</h2>
@@ -536,6 +572,114 @@ server.3=125.23.63.25:2782:2785:participant</pre>
       here using the Java CLI, but note that you can similarly use the C CLI or
       invoke the commands directly from a program just like any other ZooKeeper
       command.</p>
+<a name="ch_reconfig_api"></a>
+<h3 class="h4">API</h3>
+<p>There are two sets of APIs for both Java and C client.
+      </p>
+<dl>
+        
+<dt>
+<term>
+<strong>Reconfiguration API</strong>
+</term>
+</dt>
+<dd>
+<p>Reconfiguration API is used to reconfigure the ZooKeeper cluster.
+              Starting with 3.5.3, reconfiguration Java APIs are moved into ZooKeeperAdmin class
+              from ZooKeeper class, and use of this API requires ACL setup and user
+              authentication (see <a href="#sc_reconfig_access_control">Security</a> for more information.).
+            </p>
+</dd>
+
+        
+<dt>
+<term>
+<strong>Get Configuration API</strong>
+</term>
+</dt>
+<dd>
+<p>Get configuration APIs are used to retrieve ZooKeeper cluster configuration information
+              stored in /zookeeper/config znode. Use of this API does not require specific setup or authentication,
+            because /zookeeper/config is readable to any users.</p>
+</dd>
+      
+</dl>
+<a name="sc_reconfig_access_control"></a>
+<h3 class="h4">Security</h3>
+<p>Prior to <strong>3.5.3</strong>, there is no enforced security mechanism
+        over reconfig so any ZooKeeper clients that can connect to ZooKeeper server ensemble
+        will have the ability to change the state of a ZooKeeper cluster via reconfig.
+        It is thus possible for a malicious client to add compromised server to an ensemble,
+        e.g., add a compromised server, or remove legitimate servers.
+        Cases like these could be security vulnerabilities on a case by case basis.
+      </p>
+<p>To address this security concern, we introduced access control over reconfig
+        starting from <strong>3.5.3</strong> such that only a specific set of users
+        can use reconfig commands or APIs, and these users need be configured explicitly. In addition,
+        the setup of ZooKeeper cluster must enable authentication so ZooKeeper clients can be authenticated.
+      </p>
+<p>
+        We also provides an escape hatch for users who operate and interact with a ZooKeeper ensemble in a secured
+        environment (i.e. behind company firewall). For those users who want to use reconfiguration feature but
+        don't want the overhead of configuring an explicit list of authorized user for reconfig access checks,
+        they can set <a href="zookeeperAdmin.html#sc_authOptions">"skipACL"</a> to "yes" which will
+        skip ACL check and allow any user to reconfigure cluster.
+      </p>
+<p>
+        Overall, ZooKeeper provides flexible configuration options for the reconfigure feature
+        that allow a user to choose based on user's security requirement.
+        We leave to the discretion of the user to decide appropriate security measure are in place.
+      </p>
+<dl>
+        
+<dt>
+<term>
+<strong>Access Control</strong>
+</term>
+</dt>
+<dd>
+<p>The dynamic configuration is stored in a special znode
+              ZooDefs.CONFIG_NODE = /zookeeper/config. This node by default is read only
+              for all users, except super user and users that's explicitly configured for write
+              access.
+            </p>
+<p>Clients that need to use reconfig commands or reconfig API should be configured as users
+              that have write access to CONFIG_NODE. By default, only the super user has full control including
+              write access to CONFIG_NODE. Additional users can be granted write access through superuser
+              by setting an ACL that has write permission associated with specified user.
+            </p>
+<p>A few examples of how to setup ACLs and use reconfiguration API with authentication can be found in
+              ReconfigExceptionTest.java and TestReconfigServer.cc.</p>
+</dd>
+
+        
+<dt>
+<term>
+<strong>Authentication</strong>
+</term>
+</dt>
+<dd>
+<p>Authentication of users is orthogonal to the access control and is delegated to
+              existing authentication mechanism supported by ZooKeeper's pluggable authentication schemes.
+              See <a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/Zookeeper+and+SASL">ZooKeeper and SASL</a> for more details on this topic.
+            </p>
+</dd>
+
+        
+<dt>
+<term>
+<strong>Disable ACL check</strong>
+</term>
+</dt>
+<dd>
+<p>
+              ZooKeeper supports <a href="zookeeperAdmin.html#sc_authOptions">"skipACL"</a> option such that ACL
+              check will be completely skipped, if skipACL is set to "yes". In such cases any unauthenticated
+              users can use reconfig API.
+            </p>
+</dd>
+      
+</dl>
 <a name="sc_reconfig_retrieving"></a>
 <h3 class="h4">Retrieving the current dynamic configuration</h3>
 <p>The dynamic configuration is stored in a special znode

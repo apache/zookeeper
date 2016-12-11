@@ -67,7 +67,7 @@
 <a class="unselected" href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/">Wiki</a>
 </li>
 <li class="current">
-<a class="selected" href="index.html">ZooKeeper 3.4 Documentation</a>
+<a class="selected" href="index.html">ZooKeeper 3.6 Documentation</a>
 </li>
 </ul>
 <!--+
@@ -1742,6 +1742,82 @@ authProvider.2=com.f.MyAuth2
     only one will be used. Also all servers must have the same plugins defined, otherwise clients using
     the authentication schemes provided by the plugins will have problems connecting to some servers.
     </p>
+<p> 
+<strong>Added in 3.6.0</strong>: An alternate abstraction is available for pluggable
+    authentication. It provides additional arguments.
+    </p>
+<pre class="code">
+public abstract class ServerAuthenticationProvider implements AuthenticationProvider {
+    public abstract KeeperException.Code handleAuthentication(ServerObjs serverObjs, byte authData[]);
+    public abstract boolean matches(ServerObjs serverObjs, MatchValues matchValues);
+}
+    </pre>
+<p>
+    Instead of implementing AuthenticationProvider you extend ServerAuthenticationProvider. Your handleAuthentication()
+    and matches() methods will then receive the additional parameters (via ServerObjs and MatchValues).
+    </p>
+<ul>
+      
+<li>
+        
+<p>
+<strong>ZooKeeperServer</strong>
+</p>
+
+        
+<p>The ZooKeeperServer instance</p>
+      
+</li>
+
+      
+<li>
+        
+<p>
+<strong>ServerCnxn</strong>
+</p>
+
+        
+<p>The current connection</p>
+      
+</li>
+
+      
+<li>
+        
+<p>
+<strong>path</strong>
+</p>
+
+        
+<p>The ZNode path being operated on (or null if not used)</p>
+      
+</li>
+
+      
+<li>
+        
+<p>
+<strong>perm</strong>
+</p>
+
+        
+<p>The operation value or 0</p>
+      
+</li>
+
+      
+<li>
+        
+<p>
+<strong>setAcls</strong>
+</p>
+
+        
+<p>When the setAcl() method is being operated on, the list of ACLs that are being set</p>
+      
+</li>
+    
+</ul>
 </div>
       
   
