@@ -62,6 +62,9 @@
     <copy todir="${dist.dir}${package.share}/contrib/${name}/conf">
       <fileset dir="conf" />
     </copy>
+    <copy todir="${dist.dir}${package.share}/contrib/${name}">
+      <fileset file="${zk.root}/src/contrib/${name}/rest.sh" />
+    </copy>
   </target>
 
   <target name="setjarname">

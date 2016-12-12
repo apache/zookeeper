@@ -29,6 +29,9 @@ else
   ZKREST="$0"
 fi
 ZKREST_HOME=`dirname "$ZKREST"`
+ZKREST_HOME="$(cd "${ZKREST_HOME}"; pwd)"
+
+ZK_HOME="$(cd "${ZKREST_HOME}/../.."; pwd)"
 
 if $cygwin
 then
@@ -54,7 +57,12 @@ do
     CLASSPATH="$i:$CLASSPATH"
 done
 
-for i in "$ZKREST_HOME"/zookeeper-*.jar
+for i in "$ZKREST_HOME"/zookeeper-*-rest.jar
+do
+    CLASSPATH="$i:$CLASSPATH"
+done
+
+for i in ${ZK_HOME}/zookeeper-*.jar
 do
     CLASSPATH="$i:$CLASSPATH"
 done
