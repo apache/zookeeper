@@ -29,6 +29,7 @@ out/
 *.ipr
 *.iws
 *.iml
+*.eml
 
 # NetBeans
 *~.nib
