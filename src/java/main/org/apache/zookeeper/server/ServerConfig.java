@@ -47,20 +47,19 @@ public class ServerConfig {
 
     /**
      * Parse arguments for server configuration
-     * @param args clientPort dataDir and optional tickTime
+     * @param args clientPort dataDir and optional tickTime and maxClientCnxns
      * @return ServerConfig configured wrt arguments
      * @throws IllegalArgumentException on invalid usage
      */
     public void parse(String[] args) {
         if (args.length < 2 || args.length > 4) {
-            throw new IllegalArgumentException("Invalid args:"
-                    + Arrays.toString(args));
+            throw new IllegalArgumentException("Invalid number of arguments:" + Arrays.toString(args));
         }
 
         clientPortAddress = new InetSocketAddress(Integer.parseInt(args[0]));
         dataDir = args[1];
         dataLogDir = dataDir;
-        if (args.length == 3) {
+        if (args.length >= 3) {
             tickTime = Integer.parseInt(args[2]);
         }
         if (args.length == 4) {
