@@ -42,7 +42,31 @@ import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.proto.*;
+import org.apache.zookeeper.proto.CheckWatchesRequest;
+import org.apache.zookeeper.proto.Create2Response;
+import org.apache.zookeeper.proto.CreateRequest;
+import org.apache.zookeeper.proto.CreateResponse;
+import org.apache.zookeeper.proto.CreateTTLRequest;
+import org.apache.zookeeper.proto.DeleteRequest;
+import org.apache.zookeeper.proto.ExistsRequest;
+import org.apache.zookeeper.proto.GetACLRequest;
+import org.apache.zookeeper.proto.GetACLResponse;
+import org.apache.zookeeper.proto.GetChildren2Request;
+import org.apache.zookeeper.proto.GetChildren2Response;
+import org.apache.zookeeper.proto.GetChildrenRequest;
+import org.apache.zookeeper.proto.GetChildrenResponse;
+import org.apache.zookeeper.proto.GetDataRequest;
+import org.apache.zookeeper.proto.GetDataResponse;
+import org.apache.zookeeper.proto.ReconfigRequest;
+import org.apache.zookeeper.proto.RemoveWatchesRequest;
+import org.apache.zookeeper.proto.ReplyHeader;
+import org.apache.zookeeper.proto.RequestHeader;
+import org.apache.zookeeper.proto.SetACLRequest;
+import org.apache.zookeeper.proto.SetACLResponse;
+import org.apache.zookeeper.proto.SetDataRequest;
+import org.apache.zookeeper.proto.SetDataResponse;
+import org.apache.zookeeper.proto.SyncRequest;
+import org.apache.zookeeper.proto.SyncResponse;
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.EphemeralType;
 import org.slf4j.Logger;
@@ -2924,8 +2948,7 @@ public class ZooKeeper {
         }
     }
 
-    protected byte[] internalReconfig(String joiningServers, String leavingServers, String newMembers, long fromConfig, Stat stat) throws KeeperException, InterruptedException
-    {
+    protected byte[] internalReconfig(String joiningServers, String leavingServers, String newMembers, long fromConfig, Stat stat) throws KeeperException, InterruptedException {
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.reconfig);
         ReconfigRequest request = new ReconfigRequest(joiningServers, leavingServers, newMembers, fromConfig);
@@ -2940,8 +2963,7 @@ public class ZooKeeper {
         return response.getData();
     }
 
-    protected byte[] internalReconfig(List<String> joiningServers, List<String> leavingServers, List<String> newMembers, long fromConfig, Stat stat) throws KeeperException, InterruptedException
-    {
+    protected byte[] internalReconfig(List<String> joiningServers, List<String> leavingServers, List<String> newMembers, long fromConfig, Stat stat) throws KeeperException, InterruptedException {
         return internalReconfig(StringUtils.joinStrings(joiningServers, ","),
                 StringUtils.joinStrings(leavingServers, ","),
                 StringUtils.joinStrings(newMembers, ","),
@@ -2949,8 +2971,7 @@ public class ZooKeeper {
     }
 
     protected void internalReconfig(String joiningServers, String leavingServers,
-                         String newMembers, long fromConfig, DataCallback cb, Object ctx)
-    {
+                         String newMembers, long fromConfig, DataCallback cb, Object ctx) {
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.reconfig);
         ReconfigRequest request = new ReconfigRequest(joiningServers, leavingServers, newMembers, fromConfig);
@@ -2961,8 +2982,7 @@ public class ZooKeeper {
 
     protected void internalReconfig(List<String> joiningServers,
                          List<String> leavingServers, List<String> newMembers, long fromConfig,
-                         DataCallback cb, Object ctx)
-    {
+                         DataCallback cb, Object ctx) {
         internalReconfig(StringUtils.joinStrings(joiningServers, ","),
                 StringUtils.joinStrings(leavingServers, ","),
                 StringUtils.joinStrings(newMembers, ","),
