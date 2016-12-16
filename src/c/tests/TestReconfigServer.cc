@@ -28,7 +28,6 @@
 #ifdef THREADED
 class TestReconfigServer : public CPPUNIT_NS::TestFixture {
     CPPUNIT_TEST_SUITE(TestReconfigServer);
-#ifdef THREADED
     CPPUNIT_TEST(testNonIncremental);
     CPPUNIT_TEST(testRemoveConnectedFollower);
     CPPUNIT_TEST(testRemoveFollower);
