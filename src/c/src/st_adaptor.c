@@ -48,24 +48,6 @@ int unlock_completion_list(completion_head_t *l)
 {
     return 0;
 }
-struct sync_completion *alloc_sync_completion(void)
-{
-    return (struct sync_completion*)calloc(1, sizeof(struct sync_completion));
-}
-int wait_sync_completion(struct sync_completion *sc)
-{
-    return 0;
-}
-
-void free_sync_completion(struct sync_completion *sc)
-{
-    free(sc);
-}
-
-void notify_sync_completion(struct sync_completion *sc)
-{
-}
-
 int process_async(int outstanding_sync)
 {
     return outstanding_sync == 0;

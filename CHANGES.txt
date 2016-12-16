@@ -94,6 +94,9 @@ IMPROVEMENTS:
   ZOOKEEPER-2594: Use TLS for downloading artifacts during build
   (Olaf Flebbe via phunt)
 
+  ZOOKEEPER-761: Remove *synchronous* calls from the *single-threaded* C client API
+  (breed via fpj)
+
 Release 3.5.2 - 06/29/2016
 
 BUGFIXES:

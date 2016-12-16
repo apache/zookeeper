@@ -504,13 +504,8 @@ void processline(char *line) {
         }
         *ptr = '\0';
         ptr++;
-        if (async) {
-            rc = zoo_aset(zh, line, ptr, strlen(ptr), -1, my_stat_completion,
-                    strdup(line));
-        } else {
-            struct Stat stat;
-            rc = zoo_set2(zh, line, ptr, strlen(ptr), -1, &stat);
-        }
+        rc = zoo_aset(zh, line, ptr, strlen(ptr), -1, my_stat_completion,
+                strdup(line));
         if (rc) {
             fprintf(stderr, "Error %d for %s\n", rc, line);
         }
@@ -579,11 +574,7 @@ void processline(char *line) {
             fprintf(stderr, "Path must start with /, found: %s\n", line);
             return;
         }
-        if (async) {
-            rc = zoo_adelete(zh, line, -1, my_void_completion, strdup(line));
-        } else {
-            rc = zoo_delete(zh, line, -1);
-        }
+        rc = zoo_adelete(zh, line, -1, my_void_completion, strdup(line));
         if (rc) {
             fprintf(stderr, "Error %d for %s\n", rc, line);
         }
