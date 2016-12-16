@@ -47,6 +47,10 @@ struct buff_struct_2 {
     char *buffer;
 };
 
+// TODO(br33d): the vast majority of this test is not usable with single threaded.
+//              it needs a overhaul to work properly with both threaded and single
+//              threaded (ZOOKEEPER-2640)
+#ifdef THREADED
 // For testing LogMessage Callback functionality
 list<string> logMessages;
 void logMessageHandler(const char* message) {
@@ -1415,3 +1419,4 @@ volatile int Zookeeper_simpleSystem::count;
 zhandle_t *Zookeeper_simpleSystem::async_zk;
 const char Zookeeper_simpleSystem::hostPorts[] = "127.0.0.1:22181";
 CPPUNIT_TEST_SUITE_REGISTRATION(Zookeeper_simpleSystem);
+#endif
