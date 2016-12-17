@@ -20,9 +20,10 @@ package org.apache.zookeeper.test;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
@@ -30,8 +31,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.TestableZooKeeper;
+import org.apache.zookeeper.jmx.CommonNames;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
+import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
+import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.server.quorum.flexible.QuorumHierarchical;
 import org.junit.Assert;
 import org.junit.Test;
@@ -139,23 +143,28 @@ public class HierarchicalQuorumTest extends ClientBase {
                         : QuorumPeer.LearnerType.PARTICIPANT));
 
         LOG.info("creating QuorumPeer 1 port " + port1);
+        List <QuorumPeer> qps = new ArrayList<>();
         QuorumHierarchical hq1 = new QuorumHierarchical(qp); 
         s1 = new QuorumPeer(peers, s1dir, s1dir, port1, 3, 1, tickTime, initLimit, syncLimit, hq1);
+        qps.add(s1);
         Assert.assertEquals(port1, s1.getClientPort());
         
         LOG.info("creating QuorumPeer 2 port " + port2);
         QuorumHierarchical hq2 = new QuorumHierarchical(qp); 
         s2 = new QuorumPeer(peers, s2dir, s2dir, port2, 3, 2, tickTime, initLimit, syncLimit, hq2);
+        qps.add(s2);
         Assert.assertEquals(port2, s2.getClientPort());
         
         LOG.info("creating QuorumPeer 3 port " + port3);
         QuorumHierarchical hq3 = new QuorumHierarchical(qp); 
         s3 = new QuorumPeer(peers, s3dir, s3dir, port3, 3, 3, tickTime, initLimit, syncLimit, hq3);
+        qps.add(s3);
         Assert.assertEquals(port3, s3.getClientPort());
         
         LOG.info("creating QuorumPeer 4 port " + port4);
         QuorumHierarchical hq4 = new QuorumHierarchical(qp); 
         s4 = new QuorumPeer(peers, s4dir, s4dir, port4, 3, 4, tickTime, initLimit, syncLimit, hq4);
+        qps.add(s4);
         if (withObservers) {
             s4.setLearnerType(QuorumPeer.LearnerType.OBSERVER);
         }
@@ -164,6 +173,7 @@ public class HierarchicalQuorumTest extends ClientBase {
         LOG.info("creating QuorumPeer 5 port " + port5);
         QuorumHierarchical hq5 = new QuorumHierarchical(qp); 
         s5 = new QuorumPeer(peers, s5dir, s5dir, port5, 3, 5, tickTime, initLimit, syncLimit, hq5);
+        qps.add(s5);
         if (withObservers) {
             s5.setLearnerType(QuorumPeer.LearnerType.OBSERVER);
         }
@@ -219,6 +229,7 @@ public class HierarchicalQuorumTest extends ClientBase {
             ensureNames.add("name0=ReplicatedServer_id" + i);
         }
         JMXEnv.ensureAll(ensureNames.toArray(new String[ensureNames.size()]));
+        verifyElectionTimeTakenJMXAttribute(qps);
     }
 
     @Override
@@ -262,6 +273,33 @@ public class HierarchicalQuorumTest extends ClientBase {
     {
         CountdownWatcher watcher = new CountdownWatcher();
         return createClient(watcher, hp);
+    }
+
+    private void verifyElectionTimeTakenJMXAttribute(List<QuorumPeer> peers)
+            throws Exception {
+        LOG.info("Verify QuorumPeer#electionTimeTaken jmx bean attribute");
+
+        for (int i = 1; i <= peers.size(); i++) {
+            QuorumPeer qp = peers.get(i - 1);
+            if (qp.getLearnerType() == LearnerType.OBSERVER) {
+                continue; // Observer don't have electionTimeTaken attribute.
+            }
+            Long electionTimeTaken = -1L;
+            String bean = "";
+            if (qp.getPeerState() == ServerState.FOLLOWING) {
+                bean = String.format(
+                        "%s:name0=ReplicatedServer_id%d,name1=replica.%d,name2=Follower",
+                        CommonNames.DOMAIN, i, i);
+            } else if (qp.getPeerState() == ServerState.LEADING) {
+                bean = String.format(
+                        "%s:name0=ReplicatedServer_id%d,name1=replica.%d,name2=Leader",
+                        CommonNames.DOMAIN, i, i);
+            }
+            electionTimeTaken = (Long) JMXEnv.ensureBeanAttribute(bean,
+                    "ElectionTimeTaken");
+            Assert.assertTrue("Wrong electionTimeTaken value!",
+                    electionTimeTaken >= 0);
+        }
     }
 
     @Test

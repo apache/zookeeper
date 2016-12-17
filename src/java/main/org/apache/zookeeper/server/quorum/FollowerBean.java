@@ -22,7 +22,7 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooKeeperServerBean;
 
 /**
- * Follower MBean inteface implementation
+ * Follower MBean interface implementation.
  */
 public class FollowerBean extends ZooKeeperServerBean implements FollowerMXBean {
     private final Follower follower;
@@ -46,5 +46,10 @@ public class FollowerBean extends ZooKeeperServerBean implements FollowerMXBean 
     
     public int getPendingRevalidationCount() {
         return follower.getPendingRevalidationsCount();
+    }
+
+    @Override
+    public long getElectionTimeTaken() {
+        return follower.self.getElectionTimeTaken();
     }
 }

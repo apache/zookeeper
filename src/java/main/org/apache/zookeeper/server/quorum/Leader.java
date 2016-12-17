@@ -366,8 +366,9 @@ public class Leader {
      */
     void lead() throws IOException, InterruptedException {
         self.end_fle = System.currentTimeMillis();
-        LOG.info("LEADING - LEADER ELECTION TOOK - " +
-              (self.end_fle - self.start_fle));
+        long electionTimeTaken = self.end_fle - self.start_fle;
+        self.setElectionTimeTaken(electionTimeTaken);
+        LOG.info("LEADING - LEADER ELECTION TOOK - {}", electionTimeTaken);
         self.start_fle = 0;
         self.end_fle = 0;
 
