@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- All loggers are Async if -DLog4jContextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector 
+  if is set -->
+<Configuration status="warn" strict="true">
+  <Properties>
+    <Property name="zookeeper.console.threshold">TRACE</Property>
+    <Property name="layoutPattern">%5p [%t] (%F:%L) - %m%n</Property>
+  </Properties>
+  <Appenders>
+    <Console name="STDOUT" target="SYSTEM_OUT">
+      <PatternLayout pattern="${sys:layoutPattern}" />
+      <ThresholdFilter level="${sys:zookeeper.console.threshold}"
+        onMatch="ACCEPT" onMismatch="DENY" />
+    </Console>
+  </Appenders>
+  <Loggers>
+    <Root level="TRACE">
+      <AppenderRef ref="STDOUT" />
+    </Root>
+
+    <Logger name="org.apache.zookeeper.graph.LogSkipList" additivity="false" level="OFF">
+      <AppenderRef ref="STDOUT" />
+    </Logger>
+
+    <Logger name="org.apache.zookeeper.graph.RandomAccessFileReader" additivity="false" level="OFF">
+      <AppenderRef ref="STDOUT" />
+    </Logger>
+
+  </Loggers>
+
+</Configuration>
+

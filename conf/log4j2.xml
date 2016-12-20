@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- All loggers are Async if
+    -DLog4jContextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector if is set -->
+<Configuration status="warn" strict="true">
+  <Properties>
+    <Property name="consoleLayoutPattern">%d{ISO8601} [myid:%X{myid}] - %-5p [%t:%C{1}@%L] - %m%n</Property>
+    <Property name="zookeeper.console.threshold">INFO</Property>
+    <Property name="zookeeper.log.dir">.</Property>
+    <Property name="zookeeper.log.file">zookeeper.log</Property>
+    <Property name="zookeeper.log.threshold">INFO</Property>
+    <Property name="zookeeper.log.maxfilesize">256MB</Property>
+    <Property name="zookeeper.log.maxbackupindex">20</Property>
+    <Property name="filePattern">%i.gz</Property>
+    <Property name="zookeeper.tracelog.dir">${zookeeper.log.dir}</Property>
+    <Property name="zookeeper.tracelog.file">zookeeper_trace.log</Property>
+    <Property name="zookeeper.tracelog.threshold">TRACE</Property>
+    <Property name="logLayoutPattern">${consoleLayoutPattern}</Property>
+    <Property name="traceLogLayoutPattern">%d{ISO8601} [myid:%X{myid}] - %-5p [%t:%C{1}@%L][%x] - %m%n</Property>
+  </Properties>
+  <Appenders>
+    <Console name="STDOUT" target="SYSTEM_OUT">
+      <PatternLayout pattern="${sys:consoleLayoutPattern}"/>
+      <ThresholdFilter level="${sys:zookeeper.console.threshold}" onMatch="ACCEPT" onMismatch="DENY" /> 
+    </Console>
+    
+    <RollingFile
+        name="LogFile"
+        fileName="${zookeeper.log.dir}/${zookeeper.log.file}"
+        filePattern="${zookeeper.log.dir}/${sys:zookeeper.log.file}.-${sys:filePattern}">
+      <PatternLayout pattern="${sys:logLayoutPattern}"/>
+      <ThresholdFilter level="${sys:zookeeper.log.threshold}" onMatch="ACCEPT" onMismatch="DENY" />
+      <Policies>
+        <SizeBasedTriggeringPolicy size="{sys:zookeeper.log.maxfilesize}"/>
+      </Policies>
+      <DefaultRolloverStrategy max="${sys:zookeeper.log.maxbackupindex}" />        
+    </RollingFile>
+
+    <!-- Add TraceFile to the Root logger to get log file output. Change Root Logger's log level to TRACE -->
+    <File name="TraceFile"
+        fileName="${sys:zookeeper.log.dir}/${sys:zookeeper.tracelog.file}" >
+      <PatternLayout pattern="${sys:traceLogLayoutPattern}"/>
+      <ThresholdFilter level="${sys:zookeeper.tracelog.threshold}" onMatch="ACCEPT" onMismatch="DENY" />
+    </File>    
+
+  </Appenders>
+
+
+  <Loggers>
+    <Root level="INFO">
+      <AppenderRef ref="STDOUT"/>
+      <AppenderRef ref="LogFile"/>
+    </Root>
+  </Loggers>
+
+</Configuration>
+
