@@ -42,7 +42,8 @@
       <fileset dir="${build.classes}"/>
       <fileset dir="${build.test}"/>
       <fileset file="${zk.root}/LICENSE.txt" />
-      <fileset file="${zk.root}/conf/log4j.properties" />
+      <!-- fileset file="${zk.root}/conf/log4j.properties" / -->
+    	<fileset file="${zk.root}/conf/log4j2.xml" />
       <fileset dir="${zk.root}/build/classes" excludes="**/.generated"/>
       <fileset dir="${zk.root}/build/test/classes"/>
       <zipgroupfileset dir="${zk.root}/build/lib" includes="*.jar" />

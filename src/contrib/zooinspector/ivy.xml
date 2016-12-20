@@ -35,9 +35,13 @@
     <dependency org="com.google.guava" name="guava" rev="18.0" />
 
     <dependency org="org.slf4j" name="slf4j-api" rev="1.7.5"/>
-    <dependency org="org.slf4j" name="slf4j-log4j12" rev="1.7.5" transitive="false"/>
+    <!--  dependency org="org.slf4j" name="slf4j-log4j12" rev="1.7.5" transitive="false"/ -->
+    
+    <dependency org="org.apache.logging.log4j" name="log4j-api" rev="2.7" transitive="false"/>
+    <dependency org="org.apache.logging.log4j" name="log4j-core" rev="2.7" transitive="false"/>
+    <dependency org="org.apache.logging.log4j" name="log4j-slf4j-impl" rev="2.7" transitive="false"/>
             
-    <dependency org="log4j" name="log4j" rev="1.2.17" transitive="false"/>
+    <!--  dependency org="log4j" name="log4j" rev="1.2.17" transitive="false"/ -->
     <dependency org="junit" name="junit" rev="4.12" conf="test->default"/>
     <dependency org="org.apache.rat" name="apache-rat-tasks" 
                 rev="0.6" conf="releaseaudit->default"/>

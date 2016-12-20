@@ -90,8 +90,10 @@
                errorProperty="tests.failed" failureProperty="tests.failed">
           <sysproperty key="build.test.dir" value="${test.tmp.dir}" />
           <sysproperty key="test.data.dir" value="${test.data.dir}" />
-          <sysproperty key="log4j.configuration"
-                    value="file:${basedir}/conf/log4j.properties" />
+          <!-- sysproperty key="log4j.configuration"
+                    value="file:${basedir}/conf/log4j.properties" / -->
+          <sysproperty key="log4j2.configuration"
+                    value="file:${basedir}/conf/log4j2.xml" />
           <classpath refid="classpath"/>
           <classpath>
              <pathelement path="${build.test}" />

@@ -20,16 +20,16 @@ package org.apache.zookeeper.test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.LineNumberReader;
+import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-
-import org.apache.log4j.Layout;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.WriterAppender;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.Layout;
+import org.apache.logging.log4j.core.StringLayout;
+import org.apache.logging.log4j.core.appender.WriterAppender;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NotReadOnlyException;
@@ -47,6 +47,8 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ReadOnlyModeTest extends ZKTestCase {
     private static int CONNECTION_TIMEOUT = QuorumBase.CONNECTION_TIMEOUT;
@@ -251,14 +253,18 @@ public class ReadOnlyModeTest extends ZKTestCase {
     @Test(timeout = 90000)
     public void testSeekForRwServer() throws Exception {
         // setup the logger to capture all logs
-        Layout layout = Logger.getRootLogger().getAppender("CONSOLE")
-                .getLayout();
+    	Layout layout =
+                ((org.apache.logging.log4j.core.Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)).getAppenders().get("CONSOLE").getLayout(); 
+                		 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        WriterAppender appender = new WriterAppender(layout, os);
-        appender.setImmediateFlush(true);
-        appender.setThreshold(Level.INFO);
-        Logger zlogger = Logger.getLogger("org.apache.zookeeper");
+        WriterAppender appender = WriterAppender.newBuilder().setLayout((StringLayout) layout).setTarget(new OutputStreamWriter(os)).build();
+        org.apache.logging.log4j.core.Logger zlogger = (org.apache.logging.log4j.core.Logger) LoggerFactory.getLogger("org.apache.zookeeper");
+        zlogger.setLevel(Level.INFO);
         zlogger.addAppender(appender);
+    	
+        //TODO log4j equivalent?
+        //appender.setImmediateFlush(true);
+        
 
         try {
             qu.shutdown(2);

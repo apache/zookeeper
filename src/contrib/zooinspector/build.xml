@@ -37,7 +37,8 @@
 			<fileset dir="${basedir}/config" />
 		</copy>
 		<copy todir="${build.dir}/lib">
-			<fileset file="${basedir}/lib/log4j.properties" />
+			<!-- fileset file="${basedir}/lib/log4j.properties" / -->
+				<fileset file="${basedir}/lib/log4j2.xml" />
 		</copy>
 		<copy todir="${build.dir}/lib">
 			<fileset file="../../../build/zookeeper-${version}.jar" />
@@ -102,7 +103,8 @@
 		<junit showoutput="${test.output}" printsummary="${test.junit.printsummary}" haltonfailure="${test.junit.haltonfailure}" fork="yes" forkmode="${test.junit.fork.mode}" maxmemory="${test.junit.maxmem}" dir="${basedir}" timeout="${test.timeout}" errorProperty="tests.failed" failureProperty="tests.failed">
 			<sysproperty key="build.test.dir" value="${test.tmp.dir}" />
 			<sysproperty key="test.data.dir" value="${test.data.dir}" />
-			<sysproperty key="log4j.configuration" value="file:${basedir}/conf/log4j.properties" />
+			<!-- sysproperty key="log4j.configuration" value="file:${basedir}/conf/log4j.properties" / -->
+      <sysproperty key="log4j.configuration" value="file:${basedir}/conf/log4j2.xml" />
 			<classpath refid="classpath" />
 			<classpath>
 				<pathelement path="${build.test}" />
