@@ -50,4 +50,8 @@ public class LeaderBean extends ZooKeeperServerBean implements LeaderMXBean {
         return sb.toString();
     }
 
+    @Override
+    public long getElectionTimeTaken() {
+        return leader.self.getElectionTimeTaken();
+    }
 }
