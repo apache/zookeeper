@@ -396,6 +396,12 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     protected int quorumCnxnThreadsSize = QUORUM_CNXN_THREADS_SIZE_DEFAULT_VALUE;
 
     /**
+     * Keeps time taken for leader election in milliseconds. Sets the value to
+     * this variable only after the completion of leader election.
+     */
+    private long electionTimeTaken = -1;
+
+    /**
      * @deprecated As of release 3.4.0, this class has been deprecated, since
      * it is used with one of the udp-based versions of leader election, which
      * we are also deprecating. 
@@ -1458,5 +1464,22 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                                     this.getQuorumListenOnAllIPs(),
                                     this.quorumCnxnThreadsSize,
                                     this.isQuorumSaslAuthEnabled());
+    }
+
+    /**
+     * Sets the time taken for leader election in milliseconds.
+     *
+     * @param electionTimeTaken
+     *            time taken for leader election
+     */
+    void setElectionTimeTaken(long electionTimeTaken) {
+        this.electionTimeTaken = electionTimeTaken;
+    }
+
+    /**
+     * @return the time taken for leader election in milliseconds.
+     */
+    long getElectionTimeTaken() {
+        return electionTimeTaken;
     }
 }

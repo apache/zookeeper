@@ -38,4 +38,9 @@ public interface FollowerMXBean extends ZooKeeperServerMXBean {
      * @return count of pending revalidations
      */
     public int getPendingRevalidationCount();
+
+    /**
+     * @return time taken for leader election in milliseconds.
+     */
+    public long getElectionTimeTaken();
 }
