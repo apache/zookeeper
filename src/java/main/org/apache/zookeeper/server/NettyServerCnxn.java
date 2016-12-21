@@ -332,7 +332,7 @@ public class NettyServerCnxn extends ServerCnxn {
                         bb.flip();
 
                         ZooKeeperServer zks = this.zkServer;
-                        if (zks == null) {
+                        if (zks == null || !zks.isRunning()) {
                             throw new IOException("ZK down");
                         }
                         if (initialized) {
