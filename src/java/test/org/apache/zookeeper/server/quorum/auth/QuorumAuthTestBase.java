@@ -68,7 +68,7 @@ public class QuorumAuthTestBase extends ZKTestCase {
     protected String startQuorum(final int serverCount,
             Map<String, String> authConfigs, int authServerCount) throws IOException {
         StringBuilder connectStr = new StringBuilder();
-        final int[] clientPorts = startQuorum(serverCount, connectStr,
+        final int[] clientPorts = startQuorum(serverCount, 0, connectStr,
                 authConfigs, authServerCount);
         for (int i = 0; i < serverCount; i++) {
             Assert.assertTrue("waiting for server " + i + " being up",
@@ -78,15 +78,73 @@ public class QuorumAuthTestBase extends ZKTestCase {
         return connectStr.toString();
     }
 
-    protected int[] startQuorum(final int serverCount, StringBuilder connectStr,
-            Map<String, String> authConfigs, int authServerCount) throws IOException {
+    /**
+     * Starts the given number of quorum servers and will wait for the quorum
+     * formation.
+     *
+     * @param serverCount
+     *            total server count includes participants + observers
+     * @param ObserverCount
+     *            number of observers
+     * @param authConfigs
+     *            configuration parameters for authentication
+     * @param authServerCount
+     *            number of auth enabled servers
+     * @return client port for the respective servers
+     * @throws IOException
+     */
+    protected String startQuorum(final int serverCount, int ObserverCount,
+            Map<String, String> authConfigs, int authServerCount)
+                    throws IOException {
+        StringBuilder connectStr = new StringBuilder();
+        final int[] clientPorts = startQuorum(serverCount, 0, connectStr,
+                authConfigs, authServerCount);
+        for (int i = 0; i < serverCount; i++) {
+            Assert.assertTrue("waiting for server " + i + " being up",
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i],
+                            ClientBase.CONNECTION_TIMEOUT));
+        }
+        return connectStr.toString();
+    }
+
+    /**
+     * Starts the given number of quorum servers and won't wait for the quorum
+     * formation.
+     *
+     * @param serverCount
+     *            total server count includes participants + observers
+     * @param ObserverCount
+     *            number of observers
+     * @param connectStr
+     *            connection string where clients can used for connection
+     *            establishment
+     * @param authConfigs
+     *            configuration parameters for authentication
+     * @param authServerCount
+     *            number of auth enabled servers
+     * @return client port for the respective servers
+     * @throws IOException
+     */
+    protected int[] startQuorum(final int serverCount, int ObserverCount,
+            StringBuilder connectStr, Map<String, String> authConfigs,
+            int authServerCount) throws IOException {
         final int clientPorts[] = new int[serverCount];
         StringBuilder sb = new StringBuilder();
+
+        // If there are any Observers then the Observer server details will be
+        // placed first in the configuration section.
         for (int i = 0; i < serverCount; i++) {
             clientPorts[i] = PortAssignment.unique();
-            String server = String.format(
-                    "server.%d=localhost:%d:%d:participant", i,
-                    PortAssignment.unique(), PortAssignment.unique());
+            String server = "";
+            if (ObserverCount > 0 && i < ObserverCount) {
+                // add observer learner type
+                server = String.format("server.%d=localhost:%d:%d:observer",
+                        i, PortAssignment.unique(), PortAssignment.unique());
+            } else {
+                // add participant learner type
+                server = String.format("server.%d=localhost:%d:%d:participant",
+                        i, PortAssignment.unique(), PortAssignment.unique());
+            }
             sb.append(server + "\n");
             connectStr.append("127.0.0.1:" + clientPorts[i]);
             if (i < serverCount - 1) {
@@ -97,10 +155,18 @@ public class QuorumAuthTestBase extends ZKTestCase {
         // servers with authentication interfaces configured
         int i = 0;
         for (; i < authServerCount; i++) {
+            if (ObserverCount > 0 && i < ObserverCount) {
+                String obsCfgSection = quorumCfg + "\npeerType=observer";
+                quorumCfg = obsCfgSection;
+            }
             startServer(authConfigs, clientPorts, quorumCfg, i);
         }
         // servers without any authentication configured
         for (int j = 0; j < serverCount - authServerCount; j++, i++) {
+            if (ObserverCount > 0 && i < ObserverCount) {
+                String obsCfgSection = quorumCfg + "\npeerType=observer";
+                quorumCfg = obsCfgSection;
+            }
             MainThread mthread = new MainThread(i, clientPorts[i], quorumCfg);
             mt.add(mthread);
             mthread.start();

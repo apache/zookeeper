@@ -456,6 +456,7 @@ public class QuorumCnxManager {
         }
 
         // do authenticating learner
+        LOG.debug("Authenticating learner server.id: {}", sid);
         authServer.authenticate(sock, din);
 
         //If wins the challenge, then close the new connection.
