@@ -64,6 +64,10 @@ public abstract class AbstractFourLetterCommand {
         this.zkServer = zkServer;
     }
 
+    boolean isZKServerRunning() {
+        return zkServer == null || !zkServer.isRunning();
+    }
+
     public void setFactory(ServerCnxnFactory factory) {
         this.factory = factory;
     }
