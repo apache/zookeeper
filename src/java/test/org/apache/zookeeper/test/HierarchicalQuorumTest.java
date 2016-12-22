@@ -143,7 +143,7 @@ public class HierarchicalQuorumTest extends ClientBase {
                         : QuorumPeer.LearnerType.PARTICIPANT));
 
         LOG.info("creating QuorumPeer 1 port " + port1);
-        List <QuorumPeer> qps = new ArrayList<>();
+        List <QuorumPeer> qps = new ArrayList<QuorumPeer>();
         QuorumHierarchical hq1 = new QuorumHierarchical(qp); 
         s1 = new QuorumPeer(peers, s1dir, s1dir, port1, 3, 1, tickTime, initLimit, syncLimit, hq1);
         qps.add(s1);
