@@ -30,7 +30,7 @@ public class DumpCommand extends AbstractFourLetterCommand {
 
     @Override
     public void commandRun() {
-        if (isZKServerRunning()) {
+        if (!isZKServerRunning()) {
             pw.println(ZK_NOT_SERVING);
         } else {
             pw.println("SessionTracker dump:");
