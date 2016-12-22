@@ -261,9 +261,8 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
 
         // Starting auth enabled 3-node cluster.
         int totalServerCount = 3;
-        int observerCount = 0;
-        String connectStr = startQuorum(totalServerCount, observerCount,
-                authConfigs, totalServerCount);
+        String connectStr = startQuorum(totalServerCount, authConfigs,
+                totalServerCount);
 
         CountdownWatcher watcher = new CountdownWatcher();
         zk = new ZooKeeper(connectStr.toString(), ClientBase.CONNECTION_TIMEOUT,
@@ -319,15 +318,21 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
                 CreateMode.PERSISTENT_SEQUENTIAL);
         watcher.reset();
 
-        LOG.info("Shutdown Leader to trigger Leader Election");
         // Shutdown Leader to trigger re-election
         QuorumPeer leaderQP = getLeaderQuorumPeer(mt);
-        assertNotNull("New leader must have been elected by now", leaderQP);
-        leaderQP.shutdown();
-        Assert.assertEquals(
-                "After shutdown, Leader should change its state to LOOKING",
-                ServerState.LOOKING, leaderQP.getPeerState());
+        LOG.info("Shutdown Leader sid:{} to trigger quorum leader-election",
+                leaderQP.getId());
+        shutdownQP(leaderQP);
 
+        // Wait for quorum formation
+        QuorumPeer newLeaderQP = waitForLeader();
+        assertNotNull("New leader must have been elected by now", newLeaderQP);
+        watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
+        zk.create("/myTestRoot", new byte[0], Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT_SEQUENTIAL);
+    }
+
+    private QuorumPeer waitForLeader() throws InterruptedException {
         int retryCnt = 0;
         QuorumPeer newLeaderQP = null;
         while (retryCnt < 30) {
@@ -340,10 +345,26 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
             retryCnt--;
             Thread.sleep(500);
         }
-        assertNotNull("New leader must have been elected by now", newLeaderQP);
-        watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
-        zk.create("/myTestRoot", new byte[0], Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT_SEQUENTIAL);
+        return newLeaderQP;
+    }
+
+    private void shutdownQP(QuorumPeer qp) throws InterruptedException {
+        assertNotNull("QuorumPeer doesn't exist!", qp);
+        qp.shutdown();
+
+        int retryCnt = 30;
+        while (retryCnt > 0) {
+            if (qp.getPeerState() == ServerState.LOOKING) {
+                LOG.info("Number of retries:{} to change the server state to {}",
+                        retryCnt, ServerState.LOOKING);
+                break;
+            }
+            Thread.sleep(500);
+            retryCnt--;
+        }
+        Assert.assertEquals(
+                "After shutdown, QuorumPeer should change its state to LOOKING",
+                ServerState.LOOKING, qp.getPeerState());
     }
 
     private QuorumPeer getLeaderQuorumPeer(List<MainThread> mtList) {

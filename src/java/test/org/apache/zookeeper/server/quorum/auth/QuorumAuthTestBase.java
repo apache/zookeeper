@@ -84,7 +84,7 @@ public class QuorumAuthTestBase extends ZKTestCase {
      *
      * @param serverCount
      *            total server count includes participants + observers
-     * @param ObserverCount
+     * @param observerCount
      *            number of observers
      * @param authConfigs
      *            configuration parameters for authentication
@@ -93,12 +93,12 @@ public class QuorumAuthTestBase extends ZKTestCase {
      * @return client port for the respective servers
      * @throws IOException
      */
-    protected String startQuorum(final int serverCount, int ObserverCount,
+    protected String startQuorum(final int serverCount, int observerCount,
             Map<String, String> authConfigs, int authServerCount)
                     throws IOException {
         StringBuilder connectStr = new StringBuilder();
-        final int[] clientPorts = startQuorum(serverCount, 0, connectStr,
-                authConfigs, authServerCount);
+        final int[] clientPorts = startQuorum(serverCount, observerCount,
+                connectStr, authConfigs, authServerCount);
         for (int i = 0; i < serverCount; i++) {
             Assert.assertTrue("waiting for server " + i + " being up",
                     ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i],
@@ -113,7 +113,7 @@ public class QuorumAuthTestBase extends ZKTestCase {
      *
      * @param serverCount
      *            total server count includes participants + observers
-     * @param ObserverCount
+     * @param observerCount
      *            number of observers
      * @param connectStr
      *            connection string where clients can used for connection
@@ -125,7 +125,7 @@ public class QuorumAuthTestBase extends ZKTestCase {
      * @return client port for the respective servers
      * @throws IOException
      */
-    protected int[] startQuorum(final int serverCount, int ObserverCount,
+    protected int[] startQuorum(final int serverCount, int observerCount,
             StringBuilder connectStr, Map<String, String> authConfigs,
             int authServerCount) throws IOException {
         final int clientPorts[] = new int[serverCount];
@@ -136,7 +136,7 @@ public class QuorumAuthTestBase extends ZKTestCase {
         for (int i = 0; i < serverCount; i++) {
             clientPorts[i] = PortAssignment.unique();
             String server = "";
-            if (ObserverCount > 0 && i < ObserverCount) {
+            if (observerCount > 0 && i < observerCount) {
                 // add observer learner type
                 server = String.format("server.%d=localhost:%d:%d:observer",
                         i, PortAssignment.unique(), PortAssignment.unique());
@@ -155,7 +155,7 @@ public class QuorumAuthTestBase extends ZKTestCase {
         // servers with authentication interfaces configured
         int i = 0;
         for (; i < authServerCount; i++) {
-            if (ObserverCount > 0 && i < ObserverCount) {
+            if (observerCount > 0 && i < observerCount) {
                 String obsCfgSection = quorumCfg + "\npeerType=observer";
                 quorumCfg = obsCfgSection;
             }
@@ -163,7 +163,7 @@ public class QuorumAuthTestBase extends ZKTestCase {
         }
         // servers without any authentication configured
         for (int j = 0; j < serverCount - authServerCount; j++, i++) {
-            if (ObserverCount > 0 && i < ObserverCount) {
+            if (observerCount > 0 && i < observerCount) {
                 String obsCfgSection = quorumCfg + "\npeerType=observer";
                 quorumCfg = obsCfgSection;
             }
