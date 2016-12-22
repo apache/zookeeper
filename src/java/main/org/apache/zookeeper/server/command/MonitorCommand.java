@@ -36,7 +36,7 @@ public class MonitorCommand extends AbstractFourLetterCommand {
 
     @Override
     public void commandRun() {
-        if (isZKServerRunning()) {
+        if (!isZKServerRunning()) {
             pw.println(ZK_NOT_SERVING);
             return;
         }
