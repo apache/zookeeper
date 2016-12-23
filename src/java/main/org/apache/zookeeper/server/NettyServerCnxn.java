@@ -382,7 +382,7 @@ public class NettyServerCnxn extends ServerCnxn {
             
         @Override
         public void commandRun() {
-            if (zkServer == null) {
+            if (!isZKServerRunning()) {
                 pw.println(ZK_NOT_SERVING);
             } else {
                 zkServer.dumpConf(pw);
@@ -397,7 +397,7 @@ public class NettyServerCnxn extends ServerCnxn {
         
         @Override
         public void commandRun() {
-            if (zkServer == null) {
+            if (!isZKServerRunning()) {
                 pw.println(ZK_NOT_SERVING);
             }
             else { 
@@ -414,7 +414,7 @@ public class NettyServerCnxn extends ServerCnxn {
         
         @Override
         public void commandRun() {
-            if (zkServer == null) {
+            if (!isZKServerRunning()) {
                 pw.println(ZK_NOT_SERVING);
             } else {
                 synchronized(factory.cnxns){
@@ -434,7 +434,7 @@ public class NettyServerCnxn extends ServerCnxn {
         
         @Override
         public void commandRun() {
-            if (zkServer == null) {
+            if (!isZKServerRunning()) {
                 pw.println(ZK_NOT_SERVING);
             }
             else {
@@ -455,7 +455,7 @@ public class NettyServerCnxn extends ServerCnxn {
         
         @Override
         public void commandRun() {
-            if (zkServer == null) {
+            if (!isZKServerRunning()) {
                 pw.println(ZK_NOT_SERVING);
             }
             else {   
@@ -495,7 +495,7 @@ public class NettyServerCnxn extends ServerCnxn {
         
         @Override
         public void commandRun() {
-            if (zkServer == null) {
+            if (!isZKServerRunning()) {
                 pw.println(ZK_NOT_SERVING);
             } else {
                 // clone should be faster than iteration
@@ -522,7 +522,7 @@ public class NettyServerCnxn extends ServerCnxn {
 
         @Override
         public void commandRun() {
-            if (zkServer == null) {
+            if (!isZKServerRunning()) {
                 pw.println(ZK_NOT_SERVING);
             } else {
                 DataTree dt = zkServer.getZKDatabase().getDataTree();
@@ -546,7 +546,7 @@ public class NettyServerCnxn extends ServerCnxn {
 
         @Override
         public void commandRun() {
-            if(zkServer == null) {
+            if(!isZKServerRunning()) {
                 pw.println(ZK_NOT_SERVING);
                 return;
             }
@@ -608,7 +608,7 @@ public class NettyServerCnxn extends ServerCnxn {
 
         @Override
         public void commandRun() {
-            if (zkServer == null) {
+            if (!isZKServerRunning()) {
                 pw.print("null");
             } else if (zkServer instanceof ReadOnlyZooKeeperServer) {
                 pw.print("ro");
@@ -735,7 +735,7 @@ public class NettyServerCnxn extends ServerCnxn {
                         bb.flip();
 
                         ZooKeeperServer zks = this.zkServer;
-                        if (zks == null) {
+                        if (zks == null || !zks.isRunning()) {
                             throw new IOException("ZK down");
                         }
                         if (initialized) {
@@ -846,10 +846,16 @@ public class NettyServerCnxn extends ServerCnxn {
 
     @Override
     protected ServerStats serverStats() {
-        if (zkServer == null) {
+        if (!isZKServerRunning()) {
             return null;
         }
         return zkServer.serverStats();
     }
 
+    /**
+     * @return true if the server is running, false otherwise.
+     */
+    boolean isZKServerRunning() {
+        return zkServer != null && zkServer.isRunning();
+    }
 }
