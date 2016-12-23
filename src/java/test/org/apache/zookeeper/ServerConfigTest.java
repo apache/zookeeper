@@ -24,6 +24,8 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.File;
+
 public class ServerConfigTest {
 
     private ServerConfig serverConfig;
@@ -45,7 +47,7 @@ public class ServerConfigTest {
         serverConfig.parse(args);
 
         assertEquals(2181, serverConfig.getClientPortAddress().getPort());
-        assertEquals("/data/dir", serverConfig.getDataDir());
+        assertEquals(new File("/data/dir"), serverConfig.getDataDir());
         assertEquals(60000, serverConfig.getTickTime());
         assertEquals(10000, serverConfig.getMaxClientCnxns());
     }
