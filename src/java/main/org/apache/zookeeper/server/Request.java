@@ -156,6 +156,7 @@ public class Request {
         case OpCode.sync:
         case OpCode.checkWatches:
         case OpCode.removeWatches:
+        case OpCode.addPersistentWatch:
             return true;
         default:
             return false;
@@ -243,6 +244,8 @@ public class Request {
             return "checkWatches";
         case OpCode.removeWatches:
             return "removeWatches";
+        case OpCode.addPersistentWatch:
+            return "addPersistentWatch";
         default:
             return "unknown " + op;
         }

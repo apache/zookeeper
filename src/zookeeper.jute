@@ -177,6 +177,10 @@ module org.apache.zookeeper.proto {
     class SetACLResponse {
         org.apache.zookeeper.data.Stat stat;
     }
+    class AddPersistentWatcherRequest {
+        ustring path;
+        int type;   // watcher type
+    }
     class WatcherEvent {
         int type;  // event type
         int state; // state of the Keeper client runtime

@@ -614,4 +614,8 @@ public class ZKDatabase {
     public boolean removeWatch(String path, WatcherType type, Watcher watcher) {
         return dataTree.removeWatch(path, type, watcher);
     }
+
+    public void addPersistentWatch(String basePath, Watcher watcher, WatcherType type) {
+        dataTree.addPersistentWatch(basePath, watcher, type);
+    }
 }

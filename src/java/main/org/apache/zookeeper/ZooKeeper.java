@@ -41,12 +41,14 @@ import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.proto.AddPersistentWatcherRequest;
 import org.apache.zookeeper.proto.CheckWatchesRequest;
 import org.apache.zookeeper.proto.Create2Response;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.CreateResponse;
 import org.apache.zookeeper.proto.CreateTTLRequest;
 import org.apache.zookeeper.proto.DeleteRequest;
+import org.apache.zookeeper.proto.ErrorResponse;
 import org.apache.zookeeper.proto.ExistsRequest;
 import org.apache.zookeeper.proto.GetACLRequest;
 import org.apache.zookeeper.proto.GetACLResponse;
@@ -67,6 +69,7 @@ import org.apache.zookeeper.proto.SyncRequest;
 import org.apache.zookeeper.proto.SyncResponse;
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.EphemeralType;
+import org.apache.zookeeper.server.PathIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -254,6 +257,8 @@ public class ZooKeeper {
             new HashMap<String, Set<Watcher>>();
         private final Map<String, Set<Watcher>> childWatches =
             new HashMap<String, Set<Watcher>>();
+        private final Map<String, Set<Watcher>> persistentWatches =
+            new HashMap<String, Set<Watcher>>();
         private boolean disableAutoWatchReset;
 
         ZKWatchManager(boolean disableAutoWatchReset) {
@@ -366,6 +371,12 @@ public class ZooKeeper {
                 synchronized (childWatches) {
                     containsWatcher = contains(path, watcher, childWatches);
                 }
+
+                synchronized (persistentWatches) {
+                    boolean contains_temp = contains(path, watcher,
+                            persistentWatches);
+                    containsWatcher |= contains_temp;
+                }
                 break;
             }
             case Data: {
@@ -376,6 +387,12 @@ public class ZooKeeper {
                 synchronized (existWatches) {
                     boolean contains_temp = contains(path, watcher,
                             existWatches);
+                    containsWatcher |= contains_temp;
+                }
+
+                synchronized (persistentWatches) {
+                    boolean contains_temp = contains(path, watcher,
+                            persistentWatches);
                     containsWatcher |= contains_temp;
                 }
                 break;
@@ -392,6 +409,11 @@ public class ZooKeeper {
                 synchronized (existWatches) {
                     boolean contains_temp = contains(path, watcher,
                             existWatches);
+                    containsWatcher |= contains_temp;
+                }
+                synchronized (persistentWatches) {
+                    boolean contains_temp = contains(path, watcher,
+                            persistentWatches);
                     containsWatcher |= contains_temp;
                 }
             }
@@ -482,6 +504,12 @@ public class ZooKeeper {
                     }
                 }
 
+                synchronized(persistentWatches) {
+                    for(Set<Watcher> ws: persistentWatches.values()) {
+                        result.addAll(ws);
+                    }
+                }
+
                 return result;
             case NodeDataChanged:
             case NodeCreated:
@@ -491,11 +519,13 @@ public class ZooKeeper {
                 synchronized (existWatches) {
                     addTo(existWatches.remove(clientPath), result);
                 }
+                addPersistentWatches(clientPath, result);
                 break;
             case NodeChildrenChanged:
                 synchronized (childWatches) {
                     addTo(childWatches.remove(clientPath), result);
                 }
+                addPersistentWatches(clientPath, result);
                 break;
             case NodeDeleted:
                 synchronized (dataWatches) {
@@ -512,6 +542,7 @@ public class ZooKeeper {
                 synchronized (childWatches) {
                     addTo(childWatches.remove(clientPath), result);
                 }
+                addPersistentWatches(clientPath, result);
                 break;
             default:
                 String msg = "Unhandled watch event type " + type
@@ -521,6 +552,15 @@ public class ZooKeeper {
             }
 
             return result;
+        }
+
+        private void addPersistentWatches(String clientPath, Set<Watcher> result) {
+            synchronized (persistentWatches) {
+                PathIterator pathIterator = new PathIterator(clientPath);
+                while (pathIterator.hasNext()) {
+                    addTo(persistentWatches.get(pathIterator.next()), result);
+                }
+            }
         }
     }
 
@@ -605,6 +645,22 @@ public class ZooKeeper {
         @Override
         protected Map<String, Set<Watcher>> getWatches(int rc) {
             return watchManager.childWatches;
+        }
+    }
+
+    class PersistentWatchRegistration extends WatchRegistration {
+        public PersistentWatchRegistration(Watcher watcher, String clientPath) {
+            super(watcher, clientPath);
+        }
+
+        @Override
+        protected Map<String, Set<Watcher>> getWatches(int rc) {
+            return watchManager.persistentWatches;
+        }
+
+        @Override
+        protected boolean shouldAddWatch(int rc) {
+            return rc == 0 || rc == KeeperException.Code.NONODE.intValue();
         }
     }
 
@@ -2647,6 +2703,54 @@ public class ZooKeeper {
         request.setPath(serverPath);
         cnxn.queuePacket(h, new ReplyHeader(), request, response, cb,
                 clientPath, serverPath, ctx, null);
+    }
+
+    /**
+     * Set a watcher on the given path that: a) does not get removed when triggered (i.e. it stays active
+     * until it is removed); b) applies not only to the registered path but all child paths recursively
+     * @param basePath the top path that the watcher applies to
+     * @param watcher the watcher
+     * @param watcherType registration type: data, children or both
+     * @throws InterruptedException If the server transaction is interrupted.
+     * @throws KeeperException If the server signals an error with a non-zero
+     *  error code.
+     */
+    public void addPersistentWatch(String basePath, Watcher watcher, WatcherType watcherType)
+            throws KeeperException, InterruptedException {
+        PathUtils.validatePath(basePath);
+        String serverPath = prependChroot(basePath);
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.addPersistentWatch);
+        AddPersistentWatcherRequest request = new AddPersistentWatcherRequest(serverPath, watcherType.getIntValue());
+        ReplyHeader r = cnxn.submitRequest(h, request, new ErrorResponse(),
+                new PersistentWatchRegistration(watcher, basePath));
+        if (r.getErr() != 0) {
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()),
+                    basePath);
+        }
+    }
+
+    /**
+     * Async version of {@link #addPersistentWatch(String, Watcher, WatcherType)} (see it for details)
+     *
+     * @param basePath the top path that the watcher applies to
+     * @param watcher the watcher
+     * @param watcherType registration type: data, children or both
+     * @param cb a handler for the callback
+     * @param ctx context to be provided to the callback
+     * @throws IllegalArgumentException if an invalid path is specified
+     */
+    public void addPersistentWatch(String basePath, Watcher watcher, WatcherType watcherType,
+            VoidCallback cb, Object ctx) {
+        PathUtils.validatePath(basePath);
+        String serverPath = prependChroot(basePath);
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.addPersistentWatch);
+        AddPersistentWatcherRequest request = new AddPersistentWatcherRequest(serverPath, watcherType.getIntValue());
+        cnxn.queuePacket(h, new ReplyHeader(), request, new ErrorResponse(), cb,
+                basePath, serverPath, ctx, new PersistentWatchRegistration(watcher, basePath));
     }
 
     /**
