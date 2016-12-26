@@ -212,7 +212,10 @@ class WatchManager {
             String localPath = pathIterator.next();
             Map<Watcher, Type> watchers = watchTable.get(localPath);
             Type watcherType = (watchers != null) ? watchers.get(watcher) : null;
-            if ((watcherType == Type.PERSISTENT) || (pathIterator.atParentPath() && (watcherType == Type.STANDARD))) {
+            if ((watcherType == Type.STANDARD) && !pathIterator.atParentPath()) {
+                return true;
+            }
+            if (watcherType == Type.PERSISTENT) {
                 return true;
             }
         }
