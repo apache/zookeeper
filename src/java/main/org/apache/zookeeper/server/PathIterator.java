@@ -61,8 +61,7 @@ public class PathIterator implements Iterator<String> {
      *
      * @return true/false
      */
-    public boolean atParentPath()
-    {
+    public boolean atParentPath() {
         return level > 0;
     }
 
