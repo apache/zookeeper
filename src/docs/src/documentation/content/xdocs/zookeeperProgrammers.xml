@@ -192,6 +192,11 @@
         sends the client a notification. More information about watches can be
         found in the section 
 	    <ulink url="#ch_zkWatches">ZooKeeper Watches</ulink>.</para>
+
+        <para><emphasis role="bold">New in 3.6.0: </emphasis>Clients can also set
+        permanent, recursive watches on a znode that are not removed when triggered
+        and that trigger for changes on the registered znode as well as any children
+        znodes recursively.</para>
       </section>
 
       <section>
@@ -712,6 +717,20 @@
       </itemizedlist>
 	</section>
 
+    <section id="sc_PersistentWatches">
+      <title>Persistent Recursive Watches</title>
+      <para><emphasis role="bold">New in 3.6.0: </emphasis> There is now a variation on the standard
+      watch described above whereby you can set a watch that does not get removed when triggered.
+      Additionally, these watches trigger all event types (created, deleted, changed, child)
+      recursively for all znodes starting at the znode that the watch is registered for.</para>
+
+      <para>Persistent recursive watches are set using the method <emphasis
+      role="bold">addPersistentWatch()</emphasis>. The triggering semantics and guarantees
+      (other then one-time triggering) are the same as standard watches. Persistent recursive
+      watches are removed using <emphasis role="bold">removeWatches()</emphasis> with watcher type
+      <emphasis role="bold">WatcherType.Any</emphasis>.</para>
+    </section>
+
     <section id="sc_WatchRemoval">
       <title>Remove Watches</title>
       <para>We can remove the watches registered on a znode with a call to 
@@ -767,7 +786,7 @@
 
       <itemizedlist>
         <listitem>
-          <para>Watches are one time triggers; if you get a watch event and
+          <para>Standard watches are one time triggers; if you get a watch event and
           you want to get notified of future changes, you must set another
           watch.</para>
         </listitem>
@@ -775,7 +794,7 @@
 
       <itemizedlist>
         <listitem>
-          <para>Because watches are one time triggers and there is latency
+          <para>Because standard watches are one time triggers and there is latency
           between getting the event and sending a new request to get a watch
           you cannot reliably see every change that happens to a node in
           ZooKeeper. Be prepared to handle the case where the znode changes
