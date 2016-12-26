@@ -74,7 +74,7 @@ public class PathIterator implements Iterator<String> {
                 path = "";
             } else {
                 path = path.substring(0, path.lastIndexOf('/'));
-                if ( path.length() == 0 ) {
+                if (path.length() == 0) {
                     path = "/";
                 }
             }
