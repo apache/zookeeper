@@ -2722,7 +2722,7 @@ public class ZooKeeper {
      * Set a watcher on the given path that: a) does not get removed when triggered (i.e. it stays active
      * until it is removed); b) applies not only to the registered path but all child paths recursively. This watcher
      * is triggered for both data and child events. To remove the watcher, use
-     * {@link #removeWatches(String, Watcher, WatcherType, boolean)} with {@link WatcherType#Any}
+     * <tt>removeWatches()</tt> with <tt>WatcherType.Any</tt>
      * @param basePath the top path that the watcher applies to
      * @param watcher the watcher
      * @throws InterruptedException If the server transaction is interrupted.
