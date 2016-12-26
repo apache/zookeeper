@@ -141,6 +141,25 @@ public class PersistentWatcherTest extends ClientBase {
         }
     }
 
+    @Test
+    public void testDisconnect() throws Exception {
+        ZooKeeper zk = null;
+        try {
+            zk = createClient(new CountdownWatcher(), hostPort);
+
+            zk.addPersistentWatch("/a/b", persistentWatcher);
+            stopServer();
+            assertEvent(events, Watcher.Event.EventType.None, null);
+            startServer();
+            assertEvent(events, Watcher.Event.EventType.None, null);
+            internalTestBasic(zk);
+        } finally {
+            if (zk != null) {
+                zk.close();
+            }
+        }
+    }
+
     private void assertEvent(BlockingQueue<WatchedEvent> events, Watcher.Event.EventType eventType, String path)
             throws InterruptedException {
         WatchedEvent event = events.poll(5, TimeUnit.SECONDS);

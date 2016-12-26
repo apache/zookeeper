@@ -55,6 +55,7 @@ import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.SetACLResponse;
 import org.apache.zookeeper.proto.SetDataResponse;
 import org.apache.zookeeper.proto.SetWatches;
+import org.apache.zookeeper.proto.SetWatches2;
 import org.apache.zookeeper.proto.SyncRequest;
 import org.apache.zookeeper.proto.SyncResponse;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
@@ -341,6 +342,20 @@ public class FinalRequestProcessor implements RequestProcessor {
                         setWatches.getDataWatches(),
                         setWatches.getExistWatches(),
                         setWatches.getChildWatches(), cnxn);
+                break;
+            }
+            case OpCode.setWatches2: {
+                lastOp = "STW2";
+                SetWatches2 setWatches = new SetWatches2();
+                // XXX We really should NOT need this!!!!
+                request.request.rewind();
+                ByteBufferInputStream.byteBuffer2Record(request.request, setWatches);
+                long relativeZxid = setWatches.getRelativeZxid();
+                zks.getZKDatabase().setWatches(relativeZxid,
+                        setWatches.getDataWatches(),
+                        setWatches.getExistWatches(),
+                        setWatches.getChildWatches(),
+                        setWatches.getPersistentWatches(), cnxn);
                 break;
             }
             case OpCode.addPersistentWatch: {

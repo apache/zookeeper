@@ -73,6 +73,13 @@ module org.apache.zookeeper.proto {
         vector<ustring>existWatches;
         vector<ustring>childWatches;
     }        
+    class SetWatches2 {
+        long relativeZxid;
+        vector<ustring>dataWatches;
+        vector<ustring>existWatches;
+        vector<ustring>childWatches;
+        vector<ustring>persistentWatches;
+    }
     class RequestHeader {
         int xid;
         int type;

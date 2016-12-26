@@ -153,6 +153,7 @@ public class Request {
         case OpCode.setACL:
         case OpCode.setData:
         case OpCode.setWatches:
+        case OpCode.setWatches2:
         case OpCode.sync:
         case OpCode.checkWatches:
         case OpCode.removeWatches:
@@ -206,6 +207,8 @@ public class Request {
             return "createContainer";
         case OpCode.setWatches:
             return "setWatches";
+        case OpCode.setWatches2:
+            return "setWatches2";
         case OpCode.delete:
             return "delete";
         case OpCode.deleteContainer:
@@ -266,6 +269,7 @@ public class Request {
         String path = "n/a";
         if (type != OpCode.createSession
                 && type != OpCode.setWatches
+                && type != OpCode.setWatches2
                 && type != OpCode.closeSession
                 && request != null
                 && request.remaining() >= 4)

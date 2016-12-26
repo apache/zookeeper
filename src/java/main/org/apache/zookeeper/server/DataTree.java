@@ -1345,6 +1345,13 @@ public class DataTree {
     public void setWatches(long relativeZxid, List<String> dataWatches,
             List<String> existWatches, List<String> childWatches,
             Watcher watcher) {
+        setWatches(relativeZxid, dataWatches, existWatches, childWatches,
+                Collections.<String>emptyList(), watcher);
+    }
+
+    public void setWatches(long relativeZxid, List<String> dataWatches,
+            List<String> existWatches, List<String> childWatches, List<String> persistentWatches,
+            Watcher watcher) {
         for (String path : dataWatches) {
             DataNode node = getNode(path);
             WatchedEvent e = null;
@@ -1378,8 +1385,12 @@ public class DataTree {
             } else {
                 this.childWatches.addWatch(path, watcher, false);
             }    
-        }    
-    }    
+        }
+        for (String path : persistentWatches) {
+            this.childWatches.addWatch(path, watcher, true);
+            this.dataWatches.addWatch(path, watcher, true);
+        }
+    }
 
      /**
       * This method sets the Cversion and Pzxid for the specified node to the

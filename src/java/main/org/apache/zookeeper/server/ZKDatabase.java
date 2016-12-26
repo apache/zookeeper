@@ -451,6 +451,20 @@ public class ZKDatabase {
     }
 
     /**
+     * set watches on the datatree
+     * @param relativeZxid the relative zxid that client has seen
+     * @param dataWatches the data watches the client wants to reset
+     * @param existWatches the exists watches the client wants to reset
+     * @param childWatches the child watches the client wants to reset
+     * @param persistentWatches the persistent watches the client wants to reset
+     * @param watcher the watcher function
+     */
+    public void setWatches(long relativeZxid, List<String> dataWatches,
+            List<String> existWatches, List<String> childWatches, List<String> persistentWatches, Watcher watcher) {
+        dataTree.setWatches(relativeZxid, dataWatches, existWatches, childWatches, persistentWatches, watcher);
+    }
+
+    /**
      * get acl for a path
      * @param path the path to query for acl
      * @param stat the stat for the node
