@@ -23,11 +23,12 @@ public class PathIterator {
     private int level = -1;
 
     public PathIterator(String path) {
+        // NOTE: asserts that the path has already been validated
         this.path = path;
     }
 
     public boolean hasNext() {
-        return path.length() > 0;
+        return !path.isEmpty();
     }
 
     public boolean atParentPath()
@@ -37,9 +38,9 @@ public class PathIterator {
 
     public String next() {
         String localPath = path;
-        if ( hasNext() ) {
+        if (hasNext()) {
             ++level;
-            if ( path.equals("/") ) {
+            if (path.equals("/")) {
                 path = "";
             } else {
                 path = path.substring(0, path.lastIndexOf('/'));
