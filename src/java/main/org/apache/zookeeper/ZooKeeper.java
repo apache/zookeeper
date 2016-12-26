@@ -569,9 +569,8 @@ public class ZooKeeper {
 
         private void addPersistentWatches(String clientPath, Set<Watcher> result) {
             synchronized (persistentWatches) {
-                PathIterator pathIterator = new PathIterator(clientPath);
-                while (pathIterator.hasNext()) {
-                    addTo(persistentWatches.get(pathIterator.next()), result);
+                for (String path : new PathIterator(clientPath).asIterable()) {
+                    addTo(persistentWatches.get(path), result);
                 }
             }
         }

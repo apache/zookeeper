@@ -105,8 +105,7 @@ class WatchManager {
         Set<Watcher> watchers = new HashSet<>();
         PathIterator pathIterator = new PathIterator(path);
         synchronized (this) {
-            while (pathIterator.hasNext()) {
-                String localPath = pathIterator.next();
+            for (String localPath : pathIterator.asIterable()) {
                 Map<Watcher, Type> thisWatchers = watchTable.get(localPath);
                 if (thisWatchers == null || thisWatchers.isEmpty()) {
                     continue;
@@ -207,8 +206,7 @@ class WatchManager {
      */
     synchronized boolean containsWatcher(String path, Watcher watcher) {
         PathIterator pathIterator = new PathIterator(path);
-        while (pathIterator.hasNext()) {
-            String localPath = pathIterator.next();
+        for (String localPath : pathIterator.asIterable()) {
             Map<Watcher, Type> watchers = watchTable.get(localPath);
             Type watcherType = (watchers != null) ? watchers.get(watcher) : null;
             if ((watcherType == Type.STANDARD) && !pathIterator.atParentPath()) {

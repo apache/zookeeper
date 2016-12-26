@@ -18,24 +18,55 @@
 
 package org.apache.zookeeper.server;
 
-public class PathIterator {
+import java.util.Iterator;
+
+/**
+ * Iterates over a ZooKeeper path. Each iteration goes up one parent path. Thus, the
+ * effect of the iterator is to iterate over the initial path and then all of its parents.
+ */
+public class PathIterator implements Iterator<String> {
     private String path;
     private int level = -1;
 
+    /**
+     * @param path initial path
+     */
     public PathIterator(String path) {
         // NOTE: asserts that the path has already been validated
         this.path = path;
     }
 
+    /**
+     * Return an Iterable view so that this Iterator can be used in for each
+     * statements. IMPORTANT: the returned Iterable is single use only
+     * @return Iterable
+     */
+    public Iterable<String> asIterable() {
+        return new Iterable<String>() {
+            @Override
+            public Iterator<String> iterator() {
+                return PathIterator.this;
+            }
+        };
+    }
+
+    @Override
     public boolean hasNext() {
         return !path.isEmpty();
     }
 
+    /**
+     * Returns true if this iterator is currently at a parent path as opposed
+     * to the initial path given to the constructor
+     *
+     * @return true/false
+     */
     public boolean atParentPath()
     {
         return level > 0;
     }
 
+    @Override
     public String next() {
         String localPath = path;
         if (hasNext()) {
@@ -50,5 +81,10 @@ public class PathIterator {
             }
         }
         return localPath;
+    }
+
+    @Override
+    public void remove() {
+        throw new UnsupportedOperationException();
     }
 }
