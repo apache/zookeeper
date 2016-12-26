@@ -636,13 +636,9 @@ public class DataTree {
         }
     }
 
-    public void addPersistentWatch(String basePath, Watcher watcher, WatcherType type) {
-        if ( (type == WatcherType.Any) || (type == WatcherType.Data) ) {
-            dataWatches.addWatch(basePath, watcher, true);
-        }
-        if ( (type == WatcherType.Any) || (type == WatcherType.Children) ) {
-            childWatches.addWatch(basePath, watcher, true);
-        }
+    public void addPersistentWatch(String basePath, Watcher watcher) {
+        dataWatches.addWatch(basePath, watcher, true);
+        childWatches.addWatch(basePath, watcher, true);
     }
 
     public byte[] getData(String path, Stat stat, Watcher watcher)

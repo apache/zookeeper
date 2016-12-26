@@ -348,8 +348,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 AddPersistentWatcherRequest addPersistentWatcherRequest = new AddPersistentWatcherRequest();
                 ByteBufferInputStream.byteBuffer2Record(request.request,
                         addPersistentWatcherRequest);
-                WatcherType type = WatcherType.fromInt(addPersistentWatcherRequest.getType());
-                zks.getZKDatabase().addPersistentWatch(addPersistentWatcherRequest.getPath(), cnxn, type);
+                zks.getZKDatabase().addPersistentWatch(addPersistentWatcherRequest.getPath(), cnxn);
                 rsp = new ErrorResponse(0);
                 break;
             }

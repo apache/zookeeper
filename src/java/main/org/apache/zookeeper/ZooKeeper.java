@@ -286,6 +286,8 @@ public class ZooKeeper {
                     .put(EventType.ChildWatchRemoved, childWatchersToRem);
             HashSet<Watcher> dataWatchersToRem = new HashSet<Watcher>();
             removedWatchers.put(EventType.DataWatchRemoved, dataWatchersToRem);
+            HashSet<Watcher> persistentWatchersToRem = new HashSet<Watcher>();
+            removedWatchers.put(EventType.PersistentWatchRemoved, persistentWatchersToRem);
             boolean removedWatcher = false;
             switch (watcherType) {
             case Children: {
@@ -323,6 +325,11 @@ public class ZooKeeper {
                     boolean removedDataWatcher = removeWatches(existWatches,
                             watcher, clientPath, local, rc, dataWatchersToRem);
                     removedWatcher |= removedDataWatcher;
+                }
+                synchronized (persistentWatches) {
+                    boolean removedPersistenWatcher = removeWatches(persistentWatches,
+                            watcher, clientPath, local, rc, persistentWatchersToRem);
+                    removedWatcher |= removedPersistenWatcher;
                 }
             }
             }
@@ -2710,19 +2717,18 @@ public class ZooKeeper {
      * until it is removed); b) applies not only to the registered path but all child paths recursively
      * @param basePath the top path that the watcher applies to
      * @param watcher the watcher
-     * @param watcherType registration type: data, children or both
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws KeeperException If the server signals an error with a non-zero
      *  error code.
      */
-    public void addPersistentWatch(String basePath, Watcher watcher, WatcherType watcherType)
+    public void addPersistentWatch(String basePath, Watcher watcher)
             throws KeeperException, InterruptedException {
         PathUtils.validatePath(basePath);
         String serverPath = prependChroot(basePath);
 
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.addPersistentWatch);
-        AddPersistentWatcherRequest request = new AddPersistentWatcherRequest(serverPath, watcherType.getIntValue());
+        AddPersistentWatcherRequest request = new AddPersistentWatcherRequest(serverPath);
         ReplyHeader r = cnxn.submitRequest(h, request, new ErrorResponse(),
                 new PersistentWatchRegistration(watcher, basePath));
         if (r.getErr() != 0) {
@@ -2732,23 +2738,22 @@ public class ZooKeeper {
     }
 
     /**
-     * Async version of {@link #addPersistentWatch(String, Watcher, WatcherType)} (see it for details)
+     * Async version of {@link #addPersistentWatch(String, Watcher)} (see it for details)
      *
      * @param basePath the top path that the watcher applies to
      * @param watcher the watcher
-     * @param watcherType registration type: data, children or both
      * @param cb a handler for the callback
      * @param ctx context to be provided to the callback
      * @throws IllegalArgumentException if an invalid path is specified
      */
-    public void addPersistentWatch(String basePath, Watcher watcher, WatcherType watcherType,
+    public void addPersistentWatch(String basePath, Watcher watcher,
             VoidCallback cb, Object ctx) {
         PathUtils.validatePath(basePath);
         String serverPath = prependChroot(basePath);
 
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.addPersistentWatch);
-        AddPersistentWatcherRequest request = new AddPersistentWatcherRequest(serverPath, watcherType.getIntValue());
+        AddPersistentWatcherRequest request = new AddPersistentWatcherRequest(serverPath);
         cnxn.queuePacket(h, new ReplyHeader(), request, new ErrorResponse(), cb,
                 basePath, serverPath, ctx, new PersistentWatchRegistration(watcher, basePath));
     }

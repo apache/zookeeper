@@ -179,7 +179,6 @@ module org.apache.zookeeper.proto {
     }
     class AddPersistentWatcherRequest {
         ustring path;
-        int type;   // watcher type
     }
     class WatcherEvent {
         int type;  // event type
