@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * Iterates over a ZooKeeper path. Each iteration goes up one parent path. Thus, the
@@ -67,16 +68,18 @@ public class PathIterator implements Iterator<String> {
 
     @Override
     public String next() {
+        if (!hasNext()) {
+            throw new NoSuchElementException();
+        }
+
         String localPath = path;
-        if (hasNext()) {
-            ++level;
-            if (path.equals("/")) {
-                path = "";
-            } else {
-                path = path.substring(0, path.lastIndexOf('/'));
-                if (path.length() == 0) {
-                    path = "/";
-                }
+        ++level;
+        if (path.equals("/")) {
+            path = "";
+        } else {
+            path = path.substring(0, path.lastIndexOf('/'));
+            if (path.length() == 0) {
+                path = "/";
             }
         }
         return localPath;
