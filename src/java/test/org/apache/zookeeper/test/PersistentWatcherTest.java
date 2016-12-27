@@ -32,9 +32,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 
 public class PersistentWatcherTest extends ClientBase {
@@ -110,16 +112,11 @@ public class PersistentWatcherTest extends ClientBase {
 
         assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a/b");
         assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a/b/c");
-        assertEvent(events, Watcher.Event.EventType.NodeChildrenChanged, "/a/b");
         assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a/b/c/d");
-        assertEvent(events, Watcher.Event.EventType.NodeChildrenChanged, "/a/b/c");
         assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a/b/c/d/e");
-        assertEvent(events, Watcher.Event.EventType.NodeChildrenChanged, "/a/b/c/d");
         assertEvent(events, Watcher.Event.EventType.NodeDataChanged, "/a/b/c/d/e");
         assertEvent(events, Watcher.Event.EventType.NodeDeleted, "/a/b/c/d/e");
-        assertEvent(events, Watcher.Event.EventType.NodeChildrenChanged, "/a/b/c/d");
         assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a/b/c/d/e");
-        assertEvent(events, Watcher.Event.EventType.NodeChildrenChanged, "/a/b/c/d");
     }
 
     @Test
@@ -135,7 +132,6 @@ public class PersistentWatcherTest extends ClientBase {
             zk.create("/a/b/c", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a/b");
             assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a/b/c");
-            assertEvent(events, Watcher.Event.EventType.NodeChildrenChanged, "/a/b");
 
             zk.removeWatches("/a/b", persistentWatcher, Watcher.WatcherType.Any, false);
             zk.create("/a/b/c/d", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -162,6 +158,41 @@ public class PersistentWatcherTest extends ClientBase {
         } finally {
             if (zk != null) {
                 zk.close();
+            }
+        }
+    }
+
+    @Test
+    public void testMultiClient()
+            throws IOException, InterruptedException, KeeperException {
+        ZooKeeper zk1 = null;
+        ZooKeeper zk2 = null;
+        try {
+            zk1 = createClient(new CountdownWatcher(), hostPort);
+            zk2 = createClient(new CountdownWatcher(), hostPort);
+
+            zk1.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk1.create("/a/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk1.create("/a/b/c", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+            zk1.addPersistentWatch("/a/b", persistentWatcher);
+            zk1.setData("/a/b/c", "one".getBytes(), -1);
+            Thread.sleep(1000); // give some time for the event to arrive
+
+            zk2.setData("/a/b/c", "two".getBytes(), -1);
+            zk2.setData("/a/b/c", "three".getBytes(), -1);
+            zk2.setData("/a/b/c", "four".getBytes(), -1);
+
+            assertEvent(events, Watcher.Event.EventType.NodeDataChanged, "/a/b/c");
+            assertEvent(events, Watcher.Event.EventType.NodeDataChanged, "/a/b/c");
+            assertEvent(events, Watcher.Event.EventType.NodeDataChanged, "/a/b/c");
+            assertEvent(events, Watcher.Event.EventType.NodeDataChanged, "/a/b/c");
+        } finally {
+            if (zk1 != null) {
+                zk1.close();
+            }
+            if (zk2 != null) {
+                zk2.close();
             }
         }
     }

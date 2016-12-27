@@ -116,7 +116,9 @@ class WatchManager {
                     Type entryType = entry.getValue();
                     Watcher watcher = entry.getKey();
                     if (entryType == Type.PERSISTENT) {
-                        watchers.add(watcher);
+                        if ( type != EventType.NodeChildrenChanged ) {
+                            watchers.add(watcher);
+                        }
                     } else if (!pathIterator.atParentPath()) {
                         watchers.add(watcher);
                         iterator.remove();
