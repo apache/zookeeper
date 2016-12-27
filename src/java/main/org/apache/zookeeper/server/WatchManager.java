@@ -88,7 +88,7 @@ class WatchManager {
             Map<Watcher, Type> list = watchTable.get(p);
             if (list != null) {
                 list.remove(watcher);
-                if (list.size() == 0) {
+                if (list.isEmpty()) {
                     watchTable.remove(p);
                 }
             }
@@ -127,12 +127,12 @@ class WatchManager {
                         }
                     }
                 }
-                if (thisWatchers.size() == 0) {
+                if (thisWatchers.isEmpty()) {
                     watchTable.remove(localPath);
                 }
             }
         }
-        if (watchers.size() == 0) {
+        if (watchers.isEmpty()) {
             if (LOG.isTraceEnabled()) {
                 ZooTrace.logTraceMessage(LOG,
                         ZooTrace.EVENT_DELIVERY_TRACE_MASK,
@@ -239,7 +239,7 @@ class WatchManager {
             return false;
         }
 
-        if (list.size() == 0) {
+        if (list.isEmpty()) {
             watchTable.remove(path);
         }
 

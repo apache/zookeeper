@@ -83,7 +83,7 @@ public class PersistentWatcherTest extends ClientBase {
             AsyncCallback.VoidCallback cb = new AsyncCallback.VoidCallback() {
                 @Override
                 public void processResult(int rc, String path, Object ctx) {
-                    if ( rc == 0 ) {
+                    if (rc == 0) {
                         latch.countDown();
                     }
                 }
