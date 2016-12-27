@@ -117,8 +117,7 @@ class WatchManager {
                     Watcher watcher = entry.getKey();
                     if (entryType == Type.PERSISTENT) {
                         watchers.add(watcher);
-                    }
-                    else if (!pathIterator.atParentPath()) {
+                    } else if (!pathIterator.atParentPath()) {
                         watchers.add(watcher);
                         iterator.remove();
                         Set<String> paths = watch2Paths.get(watcher);

@@ -105,6 +105,8 @@ public class PersistentWatcherTest extends ClientBase {
         zk.create("/a/b/c/d", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.create("/a/b/c/d/e", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.setData("/a/b/c/d/e", new byte[0], -1);
+        zk.delete("/a/b/c/d/e", -1);
+        zk.create("/a/b/c/d/e", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a/b");
         assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a/b/c");
@@ -114,6 +116,10 @@ public class PersistentWatcherTest extends ClientBase {
         assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a/b/c/d/e");
         assertEvent(events, Watcher.Event.EventType.NodeChildrenChanged, "/a/b/c/d");
         assertEvent(events, Watcher.Event.EventType.NodeDataChanged, "/a/b/c/d/e");
+        assertEvent(events, Watcher.Event.EventType.NodeDeleted, "/a/b/c/d/e");
+        assertEvent(events, Watcher.Event.EventType.NodeChildrenChanged, "/a/b/c/d");
+        assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a/b/c/d/e");
+        assertEvent(events, Watcher.Event.EventType.NodeChildrenChanged, "/a/b/c/d");
     }
 
     @Test
