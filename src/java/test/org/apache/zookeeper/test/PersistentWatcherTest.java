@@ -32,11 +32,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 
 public class PersistentWatcherTest extends ClientBase {
@@ -193,6 +191,29 @@ public class PersistentWatcherTest extends ClientBase {
             }
             if (zk2 != null) {
                 zk2.close();
+            }
+        }
+    }
+
+    @Test
+    public void testRootWatcher()
+            throws IOException, InterruptedException, KeeperException {
+        ZooKeeper zk = null;
+        try {
+            zk = createClient(new CountdownWatcher(), hostPort);
+
+            zk.addPersistentWatch("/", persistentWatcher);
+            zk.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk.create("/a/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk.create("/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk.create("/b/c", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a");
+            assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a/b");
+            assertEvent(events, Watcher.Event.EventType.NodeCreated, "/b");
+            assertEvent(events, Watcher.Event.EventType.NodeCreated, "/b/c");
+        } finally {
+            if (zk != null) {
+                zk.close();
             }
         }
     }
