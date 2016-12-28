@@ -72,7 +72,7 @@ public class VerGenTest extends ZKTestCase {
     public void testGenFile() throws Exception {
         VerGen.Version v = VerGen.parseVersionString(input);
         File outputDir = ClientBase.createTmpDir();
-        VerGen.generateFile(outputDir, v, 1, "Nov1");
+        VerGen.generateFile(outputDir, v, "1", "Nov1");
         ClientBase.recursiveDelete(outputDir);
     }
 }

@@ -20,7 +20,7 @@ package org.apache.zookeeper;
 
 public class Version implements org.apache.zookeeper.version.Info {
 
-    public static int getRevision() {
+    public static String getRevision() {
         return REVISION;
     }
 
