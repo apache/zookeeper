@@ -722,11 +722,10 @@
       <para><emphasis role="bold">New in 3.6.0: </emphasis> There is now a variation on the standard
       watch described above whereby you can set a watch that does not get removed when triggered.
       Additionally, these watches trigger the event types <emphasis role="bold">NodeCreated</emphasis>,
-      <emphasis role="bold">NodeDeleted</emphasis>, <emphasis role="bold">NodeDataChanged</emphasis>,
-      and <emphasis role="bold">PersistentWatchRemoved</emphasis> recursively for all znodes starting at the
-      znode that the watch is registered for. Note that <emphasis role="bold">NodeChildrenChanged</emphasis>
-      are not triggered for persistent recursive watches as it is redundant.
-      </para>
+      <emphasis role="bold">NodeDeleted</emphasis>, and <emphasis role="bold">NodeDataChanged</emphasis>
+      recursively for all znodes starting at the znode that the watch is registered for. Note that
+      <emphasis role="bold">NodeChildrenChanged</emphasis> are not triggered for persistent recursive watches as
+      it is redundant.</para>
 
       <para>Persistent recursive watches are set using the method <emphasis
       role="bold">addPersistentWatch()</emphasis>. The triggering semantics and guarantees
