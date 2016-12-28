@@ -752,6 +752,11 @@
           <para><emphasis role="bold">Data Remove event:</emphasis></para>
           <para>Watcher which was added with a call to exists or getData.</para>
         </listitem>
+
+        <listitem>
+          <para><emphasis role="bold">Persistent Remove event:</emphasis></para>
+          <para>Watcher which was added with a call to add a persistent watch.</para>
+        </listitem>
       </itemizedlist>
    </section>
 
