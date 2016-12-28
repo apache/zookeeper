@@ -729,8 +729,9 @@
 
       <para>Persistent recursive watches are set using the method <emphasis
       role="bold">addPersistentWatch()</emphasis>. The triggering semantics and guarantees
-      (other than one-time triggering) are the same as standard watches. Persistent recursive
-      watches are removed using <emphasis role="bold">removeWatches()</emphasis> with watcher type
+      (other than one-time triggering) are the same as standard watches. The only exception regarding events is that
+      persistent watchers never throw child changed events as they are redundant.
+      Persistent recursive watches are removed using <emphasis role="bold">removeWatches()</emphasis> with watcher type
       <emphasis role="bold">WatcherType.Any</emphasis>.</para>
     </section>
 
