@@ -16,8 +16,7 @@ rem See the License for the specific language governing permissions and
 rem limitations under the License.
 
 rem Find the current revision, store it in a file, for DOS
-svn info | findstr Revision > %1
 
-For /F "tokens=1,2 delims= " %%a In (%1) Do (
-	echo lastRevision=%%b> %1
+for /f "delims=" %%i in ('git rev-parse HEAD') do set rev=%%i
+       echo lastRevision=%rev% > %1
 )
