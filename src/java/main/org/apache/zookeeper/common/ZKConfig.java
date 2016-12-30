@@ -223,4 +223,25 @@ public class ZKConfig {
         return Boolean.parseBoolean(getProperty(key));
     }
 
+    /**
+     * Get the value of the <code>key</code> property as an <code>int</code>. If
+     * property is not set, the provided <code>defaultValue</code> is returned
+     * 
+     * @param key
+     *            property key.
+     * @param defaultValue
+     *            default value.
+     * @throws NumberFormatException
+     *             when the value is invalid
+     * @return return property value as an <code>int</code>, or
+     *         <code>defaultValue</code>
+     */
+    public int getInt(String key, int defaultValue) {
+        String value = getProperty(key);
+        if (value != null) {
+            return Integer.parseInt(value.trim());
+        }
+        return defaultValue;
+    }
+
 }

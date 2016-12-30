@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingDeque;
 
@@ -228,14 +229,20 @@ abstract class ClientCnxnSocket {
      */
     abstract void sendPacket(Packet p) throws IOException;
 
-    protected void initProperties() {
-        packetLen = Integer.getInteger(
-                clientConfig.getProperty(ZKConfig.JUTE_MAXBUFFER),
-                ZKClientConfig.CLIENT_MAX_PACKET_LENGTH_DEFAULT);
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("{} is {}", ZKConfig.JUTE_MAXBUFFER, packetLen);
+    protected void initProperties() throws IOException {
+        try {
+            packetLen = clientConfig.getInt(ZKConfig.JUTE_MAXBUFFER,
+                    ZKClientConfig.CLIENT_MAX_PACKET_LENGTH_DEFAULT);
+            LOG.info("{} value is {} Bytes", ZKConfig.JUTE_MAXBUFFER,
+                    packetLen);
+        } catch (NumberFormatException e) {
+            String msg = MessageFormat.format(
+                    "Configured value {0} for property {1} can not be parsed to int",
+                    clientConfig.getProperty(ZKConfig.JUTE_MAXBUFFER),
+                    ZKConfig.JUTE_MAXBUFFER);
+            LOG.error(msg);
+            throw new IOException(msg);
         }
     }
-
 
 }
