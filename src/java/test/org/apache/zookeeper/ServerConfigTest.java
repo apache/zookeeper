@@ -23,8 +23,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.io.IOException;
 
 public class ServerConfigTest {
 
@@ -47,7 +49,7 @@ public class ServerConfigTest {
         serverConfig.parse(args);
 
         assertEquals(2181, serverConfig.getClientPortAddress().getPort());
-        assertEquals(new File("/data/dir"), serverConfig.getDataDir());
+        assertTrue(checkEquality("/data/dir", serverConfig.getDataDir()));
         assertEquals(60000, serverConfig.getTickTime());
         assertEquals(10000, serverConfig.getMaxClientCnxns());
     }
@@ -56,5 +58,17 @@ public class ServerConfigTest {
     public void testTooManyArguments() {
         String[] args = {"2181", "/data/dir", "60000", "10000", "9999"};
         serverConfig.parse(args);
+    }
+
+    boolean checkEquality(String a, String b) {
+        return a != null && a.equals(b);
+    }
+
+    boolean checkEquality(String a, File b) {
+        try {
+            return a != null && b != null && new File(a).getCanonicalPath().equals(b.getCanonicalPath());
+        } catch (IOException e) {
+        }
+        return false;
     }
 }
