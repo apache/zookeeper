@@ -65,10 +65,6 @@ public class ServerConfigTest {
     }
 
     boolean checkEquality(String a, File b) {
-        try {
-            return a != null && b != null && new File(a).getCanonicalPath().equals(b.getCanonicalPath());
-        } catch (IOException e) {
-        }
-        return false;
+        return a != null && b != null && new File(a).equals(b);
     }
 }
