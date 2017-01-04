@@ -281,7 +281,7 @@ server.3=zoo3:2888:3888</programlisting>
           <para>If your configuration file is set up, you can start a
           ZooKeeper server:</para>
 
-          <para><computeroutput>$ java -cp zookeeper.jar:lib/slf4j-api-1.7.5.jar:lib/slf4j-log4j12-1.7.5.jar:lib/log4j-1.2.17.jar:conf \
+          <para><computeroutput>$ java -cp zookeeper.jar:lib/slf4j-api-1.7.5.jar:lib/log4j-api-2.7.jar:lib/log4j-core-2.7.jar:lib/log4j-slf4j-2.7.jar:conf \
               org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.cfg
           </computeroutput></para>
           
@@ -540,7 +540,7 @@ server.3=zoo3:2888:3888</programlisting>
         can be run as a cron job on the ZooKeeper server machines to
         clean up the logs daily.</para>
 
-        <programlisting> java -cp zookeeper.jar:lib/slf4j-api-1.7.5.jar:lib/slf4j-log4j12-1.7.5.jar:lib/log4j-1.2.17.jar:conf org.apache.zookeeper.server.PurgeTxnLog &lt;dataDir&gt; &lt;snapDir&gt; -n &lt;count&gt;</programlisting>
+        <programlisting> java -cp zookeeper.jar:lib/slf4j-api-1.7.5.jar::lib/log4j-api-2.7.jar:lib/log4j-core-2.7.jar:lib/log4j-slf4j-2.7.jar:conf org.apache.zookeeper.server.PurgeTxnLog &lt;dataDir&gt; &lt;snapDir&gt; -n &lt;count&gt;</programlisting>
 
         <para>Automatic purging of the snapshots and corresponding
         transaction logs was introduced in version 3.4.0 and can be
@@ -552,13 +552,13 @@ server.3=zoo3:2888:3888</programlisting>
       </section>
 
       <section>
-        <title>Debug Log Cleanup (log4j)</title>
+        <title>Debug Log Cleanup (log4j2)</title>
 
         <para>See the section on <ulink
         url="#sc_logging">logging</ulink> in this document. It is
         expected that you will setup a rolling file appender using the
         in-built log4j feature. The sample configuration file in the
-        release tar's conf/log4j.properties provides an example of
+        release tar's conf/log4j2.xml provides an example of
         this.
         </para>
       </section>
@@ -618,23 +618,23 @@ server.3=zoo3:2888:3888</programlisting>
     <para>
         ZooKeeper uses <emphasis role="bold"><ulink url="http://www.slf4j.org">SLF4J</ulink></emphasis>
         version 1.7.5 as its logging infrastructure. For backward compatibility it is bound to
-        <emphasis role="bold">LOG4J</emphasis> but you can use
-        <emphasis role="bold"><ulink url="http://logback.qos.ch/">LOGBack</ulink></emphasis>
+        <emphasis role="bold">LOG4J2</emphasis> but you can use
+        <emphasis role="bold"><ulink url="http://logback.qos.ch/">LOGBack</ulink></emphasis> or 
         or any other supported logging framework of your choice.
     </para>
     <para>
-        The ZooKeeper default <filename>log4j.properties</filename>
-        file resides in the <filename>conf</filename> directory. Log4j requires that
-        <filename>log4j.properties</filename> either be in the working directory
+        The ZooKeeper default <filename>log4j2.xml</filename>
+        file resides in the <filename>conf</filename> directory. Log4j2 requires that
+        <filename>log4j2.xml</filename> either be in the working directory
         (the directory from which ZooKeeper is run) or be accessible from the classpath.
     </para>
 
     <para>For more information about SLF4J, see
       <ulink url="http://www.slf4j.org/manual.html">its manual</ulink>.</para>
 
-    <para>For more information about LOG4J, see
-      <ulink url="http://logging.apache.org/log4j/1.2/manual.html#defaultInit">Log4j Default Initialization Procedure</ulink> 
-      of the log4j manual.</para>
+    <para>For more information about LOG4J2, see
+      <ulink url="https://logging.apache.org/log4j/2.x/manual/configuration.html#AutomaticConfiguration">Automatic Configuration</ulink> 
+      of the log4j2 manual.</para>
       
     </section>
 
@@ -1812,7 +1812,7 @@ server.3=zoo3:2888:3888</programlisting>
             <listitem>
               <para>Sets the current trace mask.  The trace mask is 64 bits,
               where each bit enables or disables a specific category of trace
-              logging on the server.  Log4J must be configured to enable
+              logging on the server.  Log4J2 must be configured to enable
               <command>TRACE</command> level first in order to see trace logging
               messages.  The bits of the trace mask correspond to the following
               trace logging categories.</para>

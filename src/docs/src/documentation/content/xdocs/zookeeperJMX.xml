@@ -100,7 +100,7 @@
       started the server you will be able to monitor and manage various
       service related features.</para>
 
-    <para>Also note that ZooKeeper will register log4j MBeans as
+    <!--  <para>Also note that ZooKeeper will register log4j MBeans as
     well. In the same section along the left hand side you will see
     "log4j". Expand that to manage log4j through JMX. Of particular
     interest is the ability to dynamically change the logging levels
@@ -108,7 +108,7 @@
     registration can be disabled by passing
     <emphasis>-Dzookeeper.jmx.log4j.disable=true</emphasis> to the JVM
     when starting ZooKeeper.
-    </para>
+    </para> -->
 
   </section>
 

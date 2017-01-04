@@ -137,12 +137,12 @@ clientPort=2181
 
       <programlisting>bin/zkServer.sh start</programlisting>
 
-      <para>ZooKeeper logs messages using log4j -- more detail
+      <para>ZooKeeper logs messages using log4j2 -- more detail
       available in the
       <ulink url="zookeeperProgrammers.html#Logging">Logging</ulink>
       section of the Programmer's Guide. You will see log messages
       coming to the console (default) and/or a log file depending on
-      the log4j configuration.</para>
+      the log4j2 configuration.</para>
 
       <para>The steps outlined here run ZooKeeper in standalone mode. There is
       no replication, so if ZooKeeper process fails, the service will go down.

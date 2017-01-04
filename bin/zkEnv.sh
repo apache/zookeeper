@@ -70,11 +70,6 @@ then
     ZOO_LOG_DIR="$ZOOKEEPER_PREFIX/logs"
 fi
 
-if [ "x${ZOO_LOG4J_PROP}" = "x" ]
-then
-    ZOO_LOG4J_PROP="INFO,CONSOLE"
-fi
-
 if [[ -n "$JAVA_HOME" ]] && [[ -x "$JAVA_HOME/bin/java" ]];  then
     JAVA="$JAVA_HOME/bin/java"
 elif type -p java; then
