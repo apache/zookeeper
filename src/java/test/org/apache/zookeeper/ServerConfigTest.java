@@ -23,6 +23,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -60,10 +61,14 @@ public class ServerConfigTest {
     }
 
     boolean checkEquality(String a, String b) {
-        return a != null && a.equals(b);
+        assertNotNull(a);
+        assertNotNull(b);
+        return a.equals(b);
     }
 
     boolean checkEquality(String a, File b) {
-        return a != null && b != null && new File(a).equals(b);
+        assertNotNull(a);
+        assertNotNull(b);
+        return new File(a).equals(b);
     }
 }
