@@ -108,7 +108,10 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
                             learnerLogin);
                     // we're done; don't expect to send another BIND
                     if (responseToken != null) {
-                        throw new SaslException("Protocol error: attempting to send response after completion");
+                        throw new SaslException(
+                                "Protocol error: attempting to send response after completion"
+                                        + ". Server addr: "
+                                        + sock.getRemoteSocketAddress());
                     }
                     break;
                 case IN_PROGRESS:

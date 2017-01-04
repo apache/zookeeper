@@ -78,8 +78,10 @@ public class SaslQuorumAuthServer implements QuorumAuthServer {
         try {
             if (!QuorumAuth.nextPacketIsAuth(din)) {
                 if (quorumRequireSasl) {
-                    throw new SaslException("Learner not trying to authenticate"
-                                            + " and authentication is required");
+                    throw new SaslException(
+                            "Learner " + sock.getRemoteSocketAddress()
+                                    + " not trying to authenticate"
+                                    + " and authentication is required");
                 } else {
                     // let it through, we don't require auth
                     return;
