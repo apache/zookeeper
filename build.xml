@@ -1150,7 +1150,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <property name="test.data.dir" value="${test.data.dir}" />
       <!-- property name="log4j.configuration"
                 value="file:${basedir}/conf/log4j.properties" / -->
-      <property name="log4j.configuration"
+      <property name="log4j.configurationFile"
                 value="file:${basedir}/conf/log4j2.xml" />
       <!-- superDigest is used by the tests/main code. If this is not set
            as part of starting the jvm there is no guarantee that the static
@@ -1161,7 +1161,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <propertyset id="junit.sys.properties">
         <propertyref name="build.test.dir" />
         <propertyref name="test.data.dir" />
-        <propertyref name="log4j.configuration" />
+        <propertyref name="log4j.configurationFile" />
         <propertyref name="zookeeper.DigestAuthenticationProvider.superDigest" />
         <propertyref name="test.method" />
       </propertyset>
@@ -1447,7 +1447,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
             <sysproperty key="test.data.dir" value="${test.data.dir}" />
             <!-- sysproperty key="log4j.configuration"
                          value="file:${basedir}/conf/log4j.properties" / -->
-            <sysproperty key="log4j.configuration"
+            <sysproperty key="log4j.configurationFile"
                          value="file:${basedir}/conf/log4j2.xml" />
             <classpath>
                 <pathelement path="${build.dir}/cobertura" />
