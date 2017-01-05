@@ -1151,7 +1151,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <!-- property name="log4j.configuration"
                 value="file:${basedir}/conf/log4j.properties" / -->
       <property name="log4j.configurationFile"
-                value="file:${basedir}/conf/log4j2.xml" />
+                value="file://${basedir}/conf/log4j2.xml" />
       <!-- superDigest is used by the tests/main code. If this is not set
            as part of starting the jvm there is no guarantee that the static
            initializers in the java code will see this (esp when running
@@ -1448,7 +1448,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
             <!-- sysproperty key="log4j.configuration"
                          value="file:${basedir}/conf/log4j.properties" / -->
             <sysproperty key="log4j.configurationFile"
-                         value="file:${basedir}/conf/log4j2.xml" />
+                         value="file://${basedir}/conf/log4j2.xml" />
             <classpath>
                 <pathelement path="${build.dir}/cobertura" />
                 <pathelement path="${lib.dir}/cobertura/cobertura.jar" />
