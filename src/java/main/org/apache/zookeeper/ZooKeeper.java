@@ -129,7 +129,15 @@ import java.util.Set;
  * EventNone and state sKeeperStateDisconnected.
  *
  */
-public class ZooKeeper {
+/*
+ * We suppress the "try" warning here because the close() method's signature
+ * allows it to throw InterruptedException which is strongly advised against
+ * by AutoCloseable (see: http://docs.oracle.com/javase/7/docs/api/java/lang/AutoCloseable.html#close()).
+ * close() will never throw an InterruptedException but the exception remains in the
+ * signature for backwards compatibility purposes.
+*/
+@SuppressWarnings("try")
+public class ZooKeeper implements AutoCloseable {
 
     /**
      * @deprecated Use {@link ZKClientConfig#ZOOKEEPER_CLIENT_CNXN_SOCKET}
@@ -1287,6 +1295,9 @@ public class ZooKeeper {
      * invalid. All the ephemeral nodes in the ZooKeeper server associated with
      * the session will be removed. The watches left on those nodes (and on
      * their parents) will be triggered.
+     * <p>
+     * Added in 3.5.3: <a href="https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html">try-with-resources</a>
+     * may be used instead of calling close directly.
      *
      * @throws InterruptedException
      */
