@@ -303,7 +303,7 @@ server.3=125.23.63.25:2782:2785:participant</programlisting>
 
             <para>Note: for temporary backward compatibility, the reconfig() APIs will remain in ZooKeeper.java
               where they were for a few alpha versions of 3.5.x. However, these APIs are deprecated and users
-              should move to the reconfig() APIs in ZooKeeperAdmin.java.
+              should move to the reconfigure() APIs in ZooKeeperAdmin.java.
             </para>
           </listitem>
         </varlistentry>
