@@ -18,8 +18,10 @@
 
 package org.apache.zookeeper.server.persistence;
 
+import org.apache.jute.Record;
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.test.ClientBase;
+import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -119,7 +121,12 @@ public class FileTxnSnapLogTest {
         FileTxnSnapLog fileTxnSnapLog = new FileTxnSnapLog(dataDir, snapDir);
 
         try {
-            long zxid = fileTxnSnapLog.restore(new DataTree(), sessions, (hdr, rec) -> { });
+            long zxid = fileTxnSnapLog.restore(new DataTree(), sessions, new FileTxnSnapLog.PlayBackListener() {
+                @Override
+                public void onTxnLoaded(TxnHeader hdr, Record rec) {
+                    // empty by default
+                }
+            });
             Assert.assertEquals("unexpected zxid", expectedValue, zxid);
         } finally {
             if (priorAutocreateDbValue == null) {
