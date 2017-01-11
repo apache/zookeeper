@@ -31,6 +31,6 @@
 
   <tab label="Project" href="http://zookeeper.apache.org/" />
   <tab label="Wiki" href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/" />
-  <tab label="ZooKeeper 3.4 Documentation" dir="" />
+  <tab label="ZooKeeper 3.6 Documentation" dir="" />
   
 </tabs>

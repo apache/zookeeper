@@ -786,6 +786,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
       <copy todir="${dist.dir}/src" includeEmptyDirs="true">
         <fileset dir="src" excludes="**/*.template **/docs/build/**/* **/ivy*.jar"/>
+        <fileset file="src/pom.template"/>
       </copy>
   	  
       <chmod perm="ugo+x" type="file" parallel="false">
@@ -902,6 +903,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
       <copy todir="${dist.dir}/src" includeEmptyDirs="true">
         <fileset dir="src" excludes="**/*.template **/docs/build/**/* **/ivy*.jar"/>
+        <fileset file="src/pom.template"/>
       </copy>
   	  
       <chmod perm="ugo+x" type="file" parallel="false">

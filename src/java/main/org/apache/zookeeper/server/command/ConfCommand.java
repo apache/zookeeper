@@ -29,7 +29,7 @@ public class ConfCommand extends AbstractFourLetterCommand {
 
     @Override
     public void commandRun() {
-        if (zkServer == null) {
+        if (!isZKServerRunning()) {
             pw.println(ZK_NOT_SERVING);
         } else {
             zkServer.dumpConf(pw);

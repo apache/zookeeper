@@ -520,6 +520,12 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     protected boolean quorumListenOnAllIPs = false;
 
     /**
+     * Keeps time taken for leader election in milliseconds. Sets the value to
+     * this variable only after the completion of leader election.
+     */
+    private long electionTimeTaken = -1;
+
+    /**
      * @deprecated As of release 3.4.0, this class has been deprecated, since
      * it is used with one of the udp-based versions of leader election, which
      * we are also deprecating.
@@ -1880,5 +1886,21 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                         cnxnFactory.getLocalAddress().toString() : "disabled" : "disabled";
         String secure = secureCnxnFactory != null ? secureCnxnFactory.getLocalAddress().toString() : "disabled";
         setName(String.format("QuorumPeer[myid=%d](plain=%s)(secure=%s)", getId(), plain, secure));
+    }
+
+    /**
+     * Sets the time taken for leader election in milliseconds.
+     *
+     * @param electionTimeTaken time taken for leader election
+     */
+    void setElectionTimeTaken(long electionTimeTaken) {
+        this.electionTimeTaken = electionTimeTaken;
+    }
+
+    /**
+     * @return the time taken for leader election in milliseconds.
+     */
+    long getElectionTimeTaken() {
+        return electionTimeTaken;
     }
 }

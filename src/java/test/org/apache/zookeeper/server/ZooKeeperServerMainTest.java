@@ -202,6 +202,12 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         main.deleteDirs();
     }
 
+    /**
+     * Tests that the ZooKeeper server will fail to start if the
+     * snapshot directory is read only.
+     *
+     * This test will fail if it is executed as root user.
+     */
     @Test(timeout = 30000)
     public void testReadOnlySnapshotDir() throws Exception {
         ClientBase.setupTestEnv();
@@ -236,6 +242,12 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         main.deleteDirs();
     }
 
+    /**
+     * Tests that the ZooKeeper server will fail to start if the
+     * transaction log directory is read only.
+     *
+     * This test will fail if it is executed as root user.
+     */
     @Test(timeout = 30000)
     public void testReadOnlyTxnLogDir() throws Exception {
         ClientBase.setupTestEnv();

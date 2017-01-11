@@ -25,15 +25,14 @@
 #include "Util.h"
 #include "ZooKeeperQuorumServer.h"
 
+#ifdef THREADED
 class TestReconfigServer : public CPPUNIT_NS::TestFixture {
     CPPUNIT_TEST_SUITE(TestReconfigServer);
-#ifdef THREADED
     CPPUNIT_TEST(testNonIncremental);
     CPPUNIT_TEST(testRemoveConnectedFollower);
     CPPUNIT_TEST(testRemoveFollower);
     CPPUNIT_TEST(testReconfigFailureWithoutAuth);
     CPPUNIT_TEST(testReconfigFailureWithoutServerSuperuserPasswordConfigured);
-#endif
     CPPUNIT_TEST_SUITE_END();
 
   public:
@@ -418,3 +417,4 @@ testReconfigFailureWithoutServerSuperuserPasswordConfigured() {
 }
 
 CPPUNIT_TEST_SUITE_REGISTRATION(TestReconfigServer);
+#endif

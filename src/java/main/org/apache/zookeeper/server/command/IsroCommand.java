@@ -31,7 +31,7 @@ public class IsroCommand extends AbstractFourLetterCommand {
 
     @Override
     public void commandRun() {
-        if (zkServer == null) {
+        if (!isZKServerRunning()) {
             pw.print("null");
         } else if (zkServer instanceof ReadOnlyZooKeeperServer) {
             pw.print("ro");

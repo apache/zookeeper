@@ -29,7 +29,7 @@ public class CnxnStatResetCommand extends AbstractFourLetterCommand {
 
     @Override
     public void commandRun() {
-        if (zkServer == null) {
+        if (!isZKServerRunning()) {
             pw.println(ZK_NOT_SERVING);
         } else {
             factory.resetAllConnectionStats();
