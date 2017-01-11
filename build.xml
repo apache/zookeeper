@@ -763,6 +763,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
 
       <copy todir="${dist.dir}/src" includeEmptyDirs="true">
         <fileset dir="src" excludes="**/*.template **/docs/build/**/* **/ivy*.jar"/>
+        <fileset file="src/pom.template"/>
       </copy>
   	  
       <chmod perm="ugo+x" type="file" parallel="false">
@@ -881,6 +882,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
 
       <copy todir="${dist.dir}/src" includeEmptyDirs="true">
         <fileset dir="src" excludes="**/*.template **/docs/build/**/* **/ivy*.jar"/>
+        <fileset file="src/pom.template"/>
       </copy>
 
       <copy todir="${dist.dir}/${package.share.dir}/templates/conf">
