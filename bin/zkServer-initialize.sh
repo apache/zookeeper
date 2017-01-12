@@ -114,7 +114,7 @@ initialize() {
         echo "No myid provided, be sure to specify it in $ZOO_DATADIR/myid if using non-standalone"
     fi
 
-    date > "$ZOO_DATADIR/initialize"
+    touch "$ZOO_DATADIR/initialize"
 }
 
 eval set -- "${OPTS}"

@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.persistence;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -175,15 +176,13 @@ public class FileTxnSnapLog {
             PlayBackListener listener) throws IOException {
         long deserializeResult = snapLog.deserialize(dt, sessions);
         FileTxnLog txnLog = new FileTxnLog(dataDir);
-        boolean suspectEmptyDB;
+        boolean trustEmptyDB;
         File initFile = new File(dataDir.getParent(), "initialize");
-        if (initFile.exists()) {
-            if (!initFile.delete()) {
-                throw new IOException("Unable to delete initialization file " + initFile.toString());
-            }
-            suspectEmptyDB = false;
+        if (Files.deleteIfExists(initFile.toPath())) {
+            LOG.info("Initialize file found, an empty database will not block voting participation");
+            trustEmptyDB = true;
         } else {
-            suspectEmptyDB = !autoCreateDB;
+            trustEmptyDB = autoCreateDB;
         }
         if (-1L == deserializeResult) {
             /* this means that we couldn't find any snapshot, so we need to
@@ -194,18 +193,18 @@ public class FileTxnSnapLog {
                         "Something is broken!");
             }
 
-            if (suspectEmptyDB) {
-                /* return a zxid of -1, since we are possibly missing data */
-                LOG.warn("Unexpected empty data tree, setting zxid to -1");
-                dt.lastProcessedZxid = -1L;
-                return -1L;
-            } else {
+            if (trustEmptyDB) {
                 /* TODO: (br33d) we should either put a ConcurrentHashMap on restore()
                  *       or use Map on save() */
                 save(dt, (ConcurrentHashMap<Long, Integer>)sessions);
 
                 /* return a zxid of 0, since we know the database is empty */
                 return 0L;
+            } else {
+                /* return a zxid of -1, since we are possibly missing data */
+                LOG.warn("Unexpected empty data tree, setting zxid to -1");
+                dt.lastProcessedZxid = -1L;
+                return -1L;
             }
         }
         TxnIterator itr = txnLog.read(dt.lastProcessedZxid+1);
