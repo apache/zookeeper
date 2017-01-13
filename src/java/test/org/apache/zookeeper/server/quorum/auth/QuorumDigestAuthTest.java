@@ -26,6 +26,7 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.server.admin.AdminServer;
 import org.apache.zookeeper.server.quorum.QuorumPeerMain;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
@@ -158,7 +159,7 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
             new QuorumPeerMain() {
                 @Override
                 protected void initializeAndRun(String[] args)
-                        throws ConfigException, IOException {
+                        throws ConfigException, IOException, AdminServer.AdminServerException {
                     super.initializeAndRun(args);
                 }
             }.initializeAndRun(args);
@@ -193,7 +194,7 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
             new QuorumPeerMain() {
                 @Override
                 protected void initializeAndRun(String[] args)
-                        throws ConfigException, IOException {
+                        throws ConfigException, IOException, AdminServer.AdminServerException {
                     super.initializeAndRun(args);
                 }
             }.initializeAndRun(args);
@@ -209,7 +210,7 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
             new QuorumPeerMain() {
                 @Override
                 protected void initializeAndRun(String[] args)
-                        throws ConfigException, IOException {
+                        throws ConfigException, IOException, AdminServer.AdminServerException {
                     super.initializeAndRun(args);
                 }
             }.initializeAndRun(args);

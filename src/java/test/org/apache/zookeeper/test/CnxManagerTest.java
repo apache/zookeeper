@@ -200,7 +200,7 @@ public class CnxManagerTest extends ZKTestCase {
         peerTmpdir[2] = ClientBase.createTmpDir();
 
         QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[1], peerTmpdir[1], peerClientPort[1], 3, 1, 1000, 2, 2);
-        QuorumCnxManager cnxManager = new QuorumCnxManager(peer);
+        QuorumCnxManager cnxManager = peer.createCnxnManager();
         QuorumCnxManager.Listener listener = cnxManager.listener;
         if(listener != null){
             listener.start();
