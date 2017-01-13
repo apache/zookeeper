@@ -19,6 +19,7 @@
 package org.apache.zookeeper.test;
 
 import java.io.File;
+import java.io.IOException;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
@@ -75,10 +76,10 @@ public class QuorumZxidSyncTest extends ZKTestCase {
         zk.create("/2", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.close();
         qb.shutdownServers();
-        deleteFiles(qb.s1dir);
-        deleteFiles(qb.s2dir);
-        deleteFiles(qb.s3dir);
-        deleteFiles(qb.s4dir);
+        cleanAndInitializeDataDir(qb.s1dir);
+        cleanAndInitializeDataDir(qb.s2dir);
+        cleanAndInitializeDataDir(qb.s3dir);
+        cleanAndInitializeDataDir(qb.s4dir);
         qb.setupServers();
         qb.s1.start();
         qb.s2.start();
@@ -91,11 +92,12 @@ public class QuorumZxidSyncTest extends ZKTestCase {
                 ClientBase.waitForServerUp(hostPort, 10000));
     }
 
-    private void deleteFiles(File f) {
+    private void cleanAndInitializeDataDir(File f) throws IOException {
         File v = new File(f, "version-2");
         for(File c: v.listFiles()) {
             c.delete();
         }
+        ClientBase.createInitializeFile(f);
     }
 
     /**

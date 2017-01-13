@@ -278,6 +278,16 @@ server.3=zoo3:2888:3888</programlisting>
         </listitem>
 
         <listitem>
+          <para>Create an initialization marker file <filename>initialize</filename>
+            in the same directory as <filename>myid</filename>. This file indicates
+            that an empty data directory is expected. When present, an empty data base
+            is created and the marker file deleted. When not present, an empty data
+            directory will mean this peer will not have voting rights and it will not
+            populate the data directory until it communicates with an active leader.
+            Intended use is to only create this file when bringing up a new
+            ensemble. </para>
+        </listitem>
+        <listitem>
           <para>If your configuration file is set up, you can start a
           ZooKeeper server:</para>
 
@@ -1408,6 +1418,35 @@ server.3=zoo3:2888:3888</programlisting>
         </para>
       </section>
 
+      <section id="sc_db_existence_validation">
+        <title>Enabling db existence validation</title>
+
+        <para><emphasis role="bold">New in 3.6.0:</emphasis> The default
+          behavior of a ZooKeeper server on startup when no data tree
+          is found is to set zxid to zero and join the quorum as a
+          voting member. This can be dangerous if some event (e.g. a
+          rogue 'rm -rf') has removed the data directory while the
+          server was down since this server may help elect a leader
+          that is missing transactions. Enabling db existence validation
+          will change the behavior on startup when no data tree is
+          found: the server joins the ensemble as a non-voting participant
+          until it is able to sync with the leader and acquire an up-to-date
+          version of the ensemble data. To indicate an empty data tree is
+          expected (ensemble creation), the user should place a file
+          'initialize' in the same directory as 'myid'. This file will
+          be detected and deleted by the server on startup.
+        </para>
+
+        <para> Initialization validation can be enabled when running
+          ZooKeeper servers directly from class files by setting
+          <emphasis role="bold">zookeeper.db.autocreate=false</emphasis>
+          on the java command line, i.e.
+          <emphasis role="bold">-Dzookeeper.db.autocreate=false</emphasis>.
+          Running <emphasis role="bold">zkServer-initialize.sh</emphasis>
+          will create the required initialization file.
+        </para>
+      </section>
+
       <section id="sc_performance_options">
         <title>Performance Tuning Options</title>
 
@@ -1943,12 +1982,17 @@ server.3=zoo3:2888:3888</programlisting>
       <section>
         <title>The Data Directory</title>
 
-        <para>This directory has two files in it:</para>
+        <para>This directory has two or three files in it:</para>
 
         <itemizedlist>
           <listitem>
             <para><filename>myid</filename> - contains a single integer in
             human readable ASCII text that represents the server id.</para>
+          </listitem>
+
+          <listitem>
+            <para><filename>initialize</filename> - presence indicates lack of
+              data tree is expected. Cleaned up once data tree is created.</para>
           </listitem>
 
           <listitem>

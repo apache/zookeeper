@@ -59,6 +59,7 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.util.ZxidUtils;
+import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.TestUtils;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.CreateTxn;
@@ -1315,6 +1316,7 @@ public class Zab1_0Test extends ZKTestCase {
         peer.setCnxnFactory(new NullServerCnxnFactory());
         File version2 = new File(tmpDir, "version-2");
         version2.mkdir();
+        ClientBase.createInitializeFile(tmpDir);
         FileOutputStream fos;
         fos = new FileOutputStream(new File(version2, "currentEpoch"));
         fos.write("0\n".getBytes());

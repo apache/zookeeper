@@ -1211,7 +1211,9 @@ public class Leader {
                                                     + leaderStateSummary.getLastZxid()
                                                     + " (last zxid)");
                 }
-                electingFollowers.add(id);
+                if (ss.getLastZxid() != -1) {
+                    electingFollowers.add(id);
+                }
             }
             QuorumVerifier verifier = self.getQuorumVerifier();
             if (electingFollowers.contains(self.getId()) && verifier.containsQuorum(electingFollowers)) {

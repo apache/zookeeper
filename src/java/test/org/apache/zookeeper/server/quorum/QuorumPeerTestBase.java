@@ -186,6 +186,8 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             fwriter.write(Integer.toString(myid));
             fwriter.flush();
             fwriter.close();
+
+            ClientBase.createInitializeFile(dataDir);
         }
 
         private String createDynamicFile(String quorumCfgSection, String version)
@@ -280,9 +282,10 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             return t != null && t.isAlive();
         }
 
-        public void clean() {
-            ClientBase.recursiveDelete(main.quorumPeer.getTxnFactory()
-                    .getDataDir());
+        public void reinitialize() throws IOException {
+            File dataDir = main.quorumPeer.getTxnFactory().getDataDir();
+            ClientBase.recursiveDelete(dataDir);
+            ClientBase.createInitializeFile(dataDir.getParentFile());
         }
 
         public boolean isQuorumPeerRunning() {
