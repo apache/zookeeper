@@ -42,11 +42,12 @@
   <dependencies>
     <dependency org="org.slf4j" name="slf4j-api" rev="1.7.5"/>
     
-    <!--  dependency org="org.slf4j" name="slf4j-log4j12" rev="1.7.5" transitive="false"/ -->
-    
     <dependency org="org.apache.logging.log4j" name="log4j-api" rev="2.7" transitive="false"/>
     <dependency org="org.apache.logging.log4j" name="log4j-core" rev="2.7" transitive="false"/>
     <dependency org="org.apache.logging.log4j" name="log4j-slf4j-impl" rev="2.7" transitive="false"/>
+
+    <!-- disruptor for Async loggers -->    
+    <dependency org="com.lmax" name="disruptor" rev="3.3.0" transitive="false"/>
     
     <dependency org="commons-cli" name="commons-cli" rev="1.2" />
   
