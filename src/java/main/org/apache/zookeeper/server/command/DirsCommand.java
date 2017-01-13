@@ -31,7 +31,7 @@ public class DirsCommand extends AbstractFourLetterCommand {
 
     @Override
     public void commandRun() throws IOException {
-        if (zkServer == null) {
+        if (!isZKServerRunning()) {
             pw.println(ZK_NOT_SERVING);
             return;
         }

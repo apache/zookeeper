@@ -86,7 +86,7 @@ public class Commands {
         if (!commands.containsKey(cmdName)) {
             return new CommandResponse(cmdName, "Unknown command: " + cmdName);
         }
-        if (zkServer == null) {
+        if (zkServer == null || !zkServer.isRunning()) {
             return new CommandResponse(cmdName, "This ZooKeeper instance is not currently serving requests");
         }
         return commands.get(cmdName).run(zkServer, kwargs);

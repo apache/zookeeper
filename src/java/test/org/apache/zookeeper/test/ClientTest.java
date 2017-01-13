@@ -844,4 +844,15 @@ public class ClientTest extends ClientBase {
         Assert.assertEquals(r.getErr(), Code.UNIMPLEMENTED.intValue());
         zk.testableWaitForShutdown(CONNECTION_TIMEOUT);
     }
+
+    @Test
+    public void testTryWithResources() throws Exception {
+        ZooKeeper zooKeeper;
+        try (ZooKeeper zk = createClient()) {
+            zooKeeper = zk;
+            Assert.assertTrue(zooKeeper.getState().isAlive());
+        }
+
+        Assert.assertFalse(zooKeeper.getState().isAlive());
+    }
 }
