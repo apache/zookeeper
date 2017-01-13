@@ -61,7 +61,7 @@ public class SaslQuorumAuthServer implements QuorumAuthServer {
             }
             SaslQuorumServerCallbackHandler saslServerCallbackHandler = new SaslQuorumServerCallbackHandler(
                     Configuration.getConfiguration(), loginContext, authzHosts);
-            serverLogin = new Login(loginContext, saslServerCallbackHandler);
+            serverLogin = new Login(loginContext, saslServerCallbackHandler, null);
             serverLogin.startThreadIfNeeded();
         } catch (Throwable e) {
             throw new SaslException(
