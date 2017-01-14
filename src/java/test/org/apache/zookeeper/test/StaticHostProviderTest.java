@@ -102,9 +102,10 @@ public class StaticHostProviderTest extends ZKTestCase {
             InetSocketAddress next = hostProvider.next(0);
             assertTrue(next instanceof InetSocketAddress);
             assertTrue(!next.isUnresolved());
-            assertTrue("Did not match "+ next.toString(), !next.toString().startsWith("/"));
+            assertTrue("InetSocketAddress must not have hostname part" +
+                       next.toString(), next.toString().startsWith("/"));
             // Do NOT trigger the reverse name service lookup.
-            String hostname = next.getHostName();
+            String hostname = next.getHostString();
             // In this case, the hostname equals literal IP address.
             hostname.equals(next.getAddress().getHostAddress());
         }
@@ -118,7 +119,7 @@ public class StaticHostProviderTest extends ZKTestCase {
     private Collection<InetSocketAddress> getUnresolvedServerAddresses(byte size) {
         ArrayList<InetSocketAddress> list = new ArrayList<InetSocketAddress>(size);
         while (size > 0) {
-            list.add(InetSocketAddress.createUnresolved("10.10.10." + size, 1234 + size));
+            list.add(InetSocketAddress.createUnresolved("192.0.2." + size, 1234 + size));
             --size;
         }
         return list;
@@ -130,7 +131,7 @@ public class StaticHostProviderTest extends ZKTestCase {
                 size);
         while (size > 0) {
             try {
-                list.add(new InetSocketAddress(InetAddress.getByAddress(new byte[]{10, 10, 10, size}), 1234 + size));
+                list.add(new InetSocketAddress(InetAddress.getByAddress(new byte[]{-64, 0, 2, size}), 1234 + size));
             } catch (UnknownHostException e) {
                 LOG.error("Exception while resolving address", e);
                 fail("Failed to resolve address");
