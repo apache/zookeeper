@@ -29,7 +29,6 @@ import junit.framework.Assert;
 
 import org.apache.log4j.Layout;
 import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 import org.apache.log4j.WriterAppender;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -43,15 +42,19 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.client.StaticHostProviderTest;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 public class ReadOnlyModeTest extends ZKTestCase {
-    private static final org.slf4j.Logger LOG = LoggerFactory
-            .getLogger(ReadOnlyModeTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ReadOnlyModeTest.class);
     private static int CONNECTION_TIMEOUT = QuorumBase.CONNECTION_TIMEOUT;
     private QuorumUtil qu = new QuorumUtil(1);
 
@@ -198,6 +201,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
         qu.shutdown(2);
 
         CountdownWatcher watcher = new CountdownWatcher();
+        LOG.debug("Connection string: {}", qu.getConnString());
         ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT,
                 watcher, true);
         watcher.waitForConnected(CONNECTION_TIMEOUT);
@@ -239,13 +243,13 @@ public class ReadOnlyModeTest extends ZKTestCase {
     public void testSeekForRwServer() throws Exception {
 
         // setup the logger to capture all logs
-        Layout layout = Logger.getRootLogger().getAppender("CONSOLE")
+        Layout layout = org.apache.log4j.Logger.getRootLogger().getAppender("CONSOLE")
                 .getLayout();
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         WriterAppender appender = new WriterAppender(layout, os);
         appender.setImmediateFlush(true);
         appender.setThreshold(Level.INFO);
-        Logger zlogger = Logger.getLogger("org.apache.zookeeper");
+        org.apache.log4j.Logger zlogger = org.apache.log4j.Logger.getLogger("org.apache.zookeeper");
         zlogger.addAppender(appender);
 
         try {

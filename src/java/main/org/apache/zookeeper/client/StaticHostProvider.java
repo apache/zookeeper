@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import org.apache.yetus.audience.InterfaceAudience;
 import org.slf4j.Logger;
@@ -47,6 +49,9 @@ public final class StaticHostProvider implements HostProvider {
 
     private int currentIndex = -1;
 
+    // Don't re-resolve on first next() call
+    private boolean connectedSinceNext = true;
+
     /**
      * Constructs a SimpleHostSet.
      * 
@@ -57,29 +62,12 @@ public final class StaticHostProvider implements HostProvider {
      */
     public StaticHostProvider(Collection<InetSocketAddress> serverAddresses) {
         for (InetSocketAddress address : serverAddresses) {
-            try {
-                InetAddress ia = address.getAddress();
-                InetAddress resolvedAddresses[] = InetAddress.getAllByName((ia != null) ? ia.getHostAddress() :
-                        address.getHostName());
-                for (InetAddress resolvedAddress : resolvedAddresses) {
-                    // If hostName is null but the address is not, we can tell that
-                    // the hostName is an literal IP address. Then we can set the host string as the hostname
-                    // safely to avoid reverse DNS lookup.
-                    // As far as i know, the only way to check if the hostName is null is use toString().
-                    // Both the two implementations of InetAddress are final class, so we can trust the return value of
-                    // the toString() method.
-                    if (resolvedAddress.toString().startsWith("/")
-                            && resolvedAddress.getAddress() != null) {
-                        this.serverAddresses.add(
-                                new InetSocketAddress(InetAddress.getByAddress(
-                                        address.getHostName(),
-                                        resolvedAddress.getAddress()),
-                                        address.getPort()));
-                    } else {
-                        this.serverAddresses.add(new InetSocketAddress(resolvedAddress.getHostAddress(), address.getPort()));
-                    }
-                }
-            } catch (UnknownHostException e) {
+			try {
+            	InetAddress resolvedAddresses[] =  InetAddress.getAllByName(getHostString(address));
+            	for (InetAddress resolvedAddress : resolvedAddresses) {
+                	this.serverAddresses.add(new InetSocketAddress(resolvedAddress, address.getPort()));
+            	}
+			} catch (UnknownHostException e) {
                 LOG.error("Unable to connect to server: {}", address, e);
             }
         }
@@ -91,15 +79,106 @@ public final class StaticHostProvider implements HostProvider {
         Collections.shuffle(this.serverAddresses);
     }
 
+    /**
+     * Evaluate to a hostname if one is available and otherwise it returns the
+     * string representation of the IP address.
+     *
+     * In Java 7, we have a method getHostString, but earlier versions do not support it.
+     * This method is to provide a replacement for InetSocketAddress.getHostString().
+     *
+     * @param addr
+     * @return Hostname string of address parameter
+     */
+    private String getHostString(InetSocketAddress addr) {
+        String hostString = "";
+
+        if (addr == null) {
+            return hostString;
+        }
+        if (!addr.isUnresolved()) {
+            InetAddress ia = addr.getAddress();
+
+            // If the string starts with '/', then it has no hostname
+            // and we want to avoid the reverse lookup, so we return
+            // the string representation of the address.
+            if (ia.toString().startsWith("/")) {
+                hostString = ia.getHostAddress();
+            } else {
+                hostString = addr.getHostName();
+            }
+        } else {
+            // According to the Java 6 documentation, if the hostname is
+            // unresolved, then the string before the colon is the hostname.
+            String addrString = addr.toString();
+            hostString = addrString.substring(0, addrString.lastIndexOf(':'));
+        }
+
+        return hostString;
+    }
+
     public int size() {
         return serverAddresses.size();
     }
 
+    // Counts the number of addresses added and removed during
+    // the last call to next. Used mainly for test purposes.
+    // See StasticHostProviderTest.
+    private int nextAdded = 0;
+    private int nextRemoved = 0;
+
+    int getNextAdded() {
+        return nextAdded;
+    }
+
+    int getNextRemoved() {
+        return nextRemoved;
+    }
+
     public InetSocketAddress next(long spinDelay) {
-        ++currentIndex;
-        if (currentIndex == serverAddresses.size()) {
-            currentIndex = 0;
+        // Handle possible connection error by re-resolving hostname if possible
+        if (!connectedSinceNext) {
+            InetSocketAddress curAddr = serverAddresses.get(currentIndex);
+            String curHostString = getHostString(curAddr);
+            if (!curHostString.equals(curAddr.getAddress().getHostAddress())) {
+                LOG.info("Resolving again hostname: {}", getHostString(curAddr));
+                try {
+                    int thePort = curAddr.getPort();
+                    InetAddress resolvedAddresses[] = InetAddress.getAllByName(curHostString);
+                    nextAdded = 0;
+                    nextRemoved = 0;
+                    if (resolvedAddresses.length == 1) {
+                        serverAddresses.set(currentIndex, new InetSocketAddress(resolvedAddresses[0], thePort));
+                        nextAdded = nextRemoved = 1;
+                        LOG.debug("Newly resolved address: {}", resolvedAddresses[0]);
+                    } else {
+                        int i = 0;
+                        while (i < serverAddresses.size()) {
+                            if (getHostString(serverAddresses.get(i)).equals(curHostString) &&
+                                    serverAddresses.get(i).getPort() == curAddr.getPort()) {
+                                LOG.debug("Removing address: {}", serverAddresses.get(i));
+                                serverAddresses.remove(i);
+                                nextRemoved++;
+                            } else {
+                                i++;
+                            }
+                        }
+
+                        for (InetAddress resolvedAddress : resolvedAddresses) {
+                            InetSocketAddress newAddr = new InetSocketAddress(resolvedAddress, thePort);
+                            if (!serverAddresses.contains(newAddr)) {
+                                LOG.debug("Adding address: {}", newAddr);
+                                serverAddresses.add(newAddr);
+                                nextAdded++;
+                            }
+                        }
+                    }
+                } catch (UnknownHostException e) {
+                    LOG.warn("Cannot re-resolve server: {}", curAddr, e);
+                }
+            }
         }
+        connectedSinceNext = false;
+        currentIndex = ++currentIndex % serverAddresses.size();
         if (currentIndex == lastIndex && spinDelay > 0) {
             try {
                 Thread.sleep(spinDelay);
@@ -116,5 +195,6 @@ public final class StaticHostProvider implements HostProvider {
 
     public void onConnected() {
         lastIndex = currentIndex;
+        connectedSinceNext = true;
     }
 }
