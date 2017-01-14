@@ -32,14 +32,13 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Layout;
+import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.StringLayout;
 import org.apache.logging.log4j.core.appender.WriterAppender;
-/*import org.apache.log4j.Layout;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.WriterAppender;*/
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
@@ -53,8 +52,6 @@ import org.apache.zookeeper.test.ClientBase;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Test stand-alone server.
@@ -421,15 +418,18 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         ClientBase.setupTestEnv();
 
         // setup the logger to capture all logs
-        Layout layout =
-        ((org.apache.logging.log4j.core.Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)).getAppenders().get("CONSOLE").getLayout(); 
-        		 
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        WriterAppender appender = WriterAppender.newBuilder().setLayout((StringLayout) layout).setTarget(new OutputStreamWriter(os)).build();
-        org.apache.logging.log4j.core.Logger qlogger = (org.apache.logging.log4j.core.Logger) LoggerFactory.getLogger("org.apache.zookeeper.server.quorum");
-        qlogger.setLevel(Level.WARN);
-        qlogger.addAppender(appender);
+        LoggerContext loggerContext =  (LoggerContext) LogManager.getContext(false);
+        Configuration logConfig = loggerContext.getConfiguration();
         
+        Layout layout =
+        		logConfig.getRootLogger().getAppenders().get("STDOUT").getLayout();
+        String appenderName = "quorumAppender";
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        WriterAppender appender = WriterAppender.createAppender((StringLayout)layout, null, new OutputStreamWriter(os), appenderName, false, true);
+        appender.start();
+        LoggerConfig qloggerConfig =  logConfig.getLoggerConfig("org.apache.zookeeper.server.quorum");
+        qloggerConfig.addAppender(appender, Level.WARN, null);
+        logConfig.getRootLogger().addAppender(appender, null, null);
 
         try {
             final int CLIENT_PORT_QP1 = PortAssignment.unique();
@@ -457,7 +457,8 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                             ClientBase.CONNECTION_TIMEOUT));
 
         } finally {
-            qlogger.removeAppender(appender);
+        	qloggerConfig.removeAppender(appenderName);
+        	logConfig.getRootLogger().removeAppender(appenderName);
         }
 
         LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
@@ -480,17 +481,20 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     @Test
     public void testInconsistentPeerType() throws Exception {
         ClientBase.setupTestEnv();
-
-        // setup the logger to capture all logs
+        
+        LoggerContext loggerContext =  (LoggerContext) LogManager.getContext(false);
+        Configuration logConfig = loggerContext.getConfiguration();
+        
         Layout layout =
-                ((org.apache.logging.log4j.core.Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)).getAppenders().get("CONSOLE").getLayout();
+        		logConfig.getRootLogger().getAppenders().get("STDOUT").getLayout();
+        String appenderName = "quorumAppender";
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        WriterAppender appender = WriterAppender.newBuilder().setLayout((StringLayout) layout).setTarget(new OutputStreamWriter(os)).build();
-        //appender.setThreshold(Level.WARN);
-        org.apache.logging.log4j.core.Logger qlogger = (org.apache.logging.log4j.core.Logger) LoggerFactory.getLogger("org.apache.zookeeper.server.quorum");
-        qlogger.setLevel(Level.INFO);
-        qlogger.addAppender(appender);
-
+        WriterAppender appender = WriterAppender.createAppender((StringLayout)layout, null, new OutputStreamWriter(os), appenderName, false, true);
+        appender.start();
+        LoggerConfig qloggerConfig =  logConfig.getLoggerConfig("org.apache.zookeeper.server.quorum");
+        qloggerConfig.addAppender(appender, Level.INFO, null);
+        logConfig.getRootLogger().addAppender(appender, null, null);
+        
         // test the most likely situation only: server is stated as observer in
         // servers list, but there's no "peerType=observer" token in config
         try {
@@ -538,7 +542,8 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                             ClientBase.CONNECTION_TIMEOUT));
 
         } finally {
-            qlogger.removeAppender(appender);
+            qloggerConfig.removeAppender(appenderName);
+            logConfig.getRootLogger().removeAppender(appenderName);
         }
 
         LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
@@ -626,18 +631,18 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         ClientBase.setupTestEnv();
 
         // setup the logger to capture all logs
-        Layout layout =
-                ((org.apache.logging.log4j.core.Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)).getAppenders().get("CONSOLE").getLayout(); 
-                		 
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        WriterAppender appender = WriterAppender.newBuilder().setLayout((StringLayout) layout).setTarget(new OutputStreamWriter(os)).build();
-        org.apache.logging.log4j.core.Logger zlogger = (org.apache.logging.log4j.core.Logger) LoggerFactory.getLogger("org.apache.zookeeper");
-        zlogger.setLevel(Level.INFO);
-        zlogger.addAppender(appender);
+        LoggerContext loggerContext =  (LoggerContext) LogManager.getContext(false);
+        Configuration logConfig = loggerContext.getConfiguration();
         
-        //TODO log4j2 equivalent?
-        //appender.setImmediateFlush(true);
-
+        Layout layout =
+        		logConfig.getRootLogger().getAppenders().get("STDOUT").getLayout();
+        String appenderName = "quorumAppender";
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        WriterAppender appender = WriterAppender.createAppender((StringLayout)layout, null, new OutputStreamWriter(os), appenderName, false, true);
+        appender.start();
+        LoggerConfig zloggerConfig =  logConfig.getLoggerConfig("org.apache.zookeeper.server.quorum");
+        zloggerConfig.addAppender(appender, Level.INFO, null);
+        logConfig.getRootLogger().addAppender(appender, null, null);
 
         try {
             final int CLIENT_PORT_QP1 = PortAssignment.unique();
@@ -672,7 +677,8 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                             ClientBase.CONNECTION_TIMEOUT));
 
         } finally {
-            zlogger.removeAppender(appender);
+            zloggerConfig.removeAppender(appenderName);
+            logConfig.getRootLogger().removeAppender(appenderName);
         }
         os.close();
         LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
@@ -686,6 +692,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                 break;
             }
         }
+        
         Assert.assertTrue("fastleaderelection used", found);
     }
 

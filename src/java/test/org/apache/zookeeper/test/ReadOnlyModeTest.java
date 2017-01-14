@@ -27,9 +27,13 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Layout;
+import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.StringLayout;
 import org.apache.logging.log4j.core.appender.WriterAppender;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NotReadOnlyException;
@@ -253,18 +257,19 @@ public class ReadOnlyModeTest extends ZKTestCase {
     @Test(timeout = 90000)
     public void testSeekForRwServer() throws Exception {
         // setup the logger to capture all logs
-    	Layout layout =
-                ((org.apache.logging.log4j.core.Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)).getAppenders().get("CONSOLE").getLayout(); 
-                		 
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        WriterAppender appender = WriterAppender.newBuilder().setLayout((StringLayout) layout).setTarget(new OutputStreamWriter(os)).build();
-        org.apache.logging.log4j.core.Logger zlogger = (org.apache.logging.log4j.core.Logger) LoggerFactory.getLogger("org.apache.zookeeper");
-        zlogger.setLevel(Level.INFO);
-        zlogger.addAppender(appender);
-    	
-        //TODO log4j equivalent?
-        //appender.setImmediateFlush(true);
+        LoggerContext loggerContext =  (LoggerContext) LogManager.getContext(false);
+        Configuration logConfig = loggerContext.getConfiguration();
         
+        Layout layout =
+        		logConfig.getRootLogger().getAppenders().get("STDOUT").getLayout();
+        String appenderName = "zkAppender";
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        WriterAppender appender = WriterAppender.createAppender((StringLayout)layout, null, new OutputStreamWriter(os), appenderName, false, true);
+        appender.start();
+        LoggerConfig zloggerConfig =  logConfig.getLoggerConfig("org.apache.zookeeper");
+        zloggerConfig.addAppender(appender, Level.INFO, null);
+        logConfig.getRootLogger().addAppender(appender, null, null);
+    	
 
         try {
             qu.shutdown(2);
@@ -289,7 +294,8 @@ public class ReadOnlyModeTest extends ZKTestCase {
             // resume poor fellow
             qu.getPeer(1).peer.resume();
         } finally {
-            zlogger.removeAppender(appender);
+            zloggerConfig.removeAppender(appenderName);
+            logConfig.getRootLogger().removeAppender(appenderName);
         }
 
         os.close();

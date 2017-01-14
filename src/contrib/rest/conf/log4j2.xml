@@ -8,7 +8,7 @@
     <Property name="zookeeper.log.dir">.</Property>
     <Property name="zookeeper.log.file">zookeeper.log</Property>
     <Property name="zookeeper.log.threshold">INFO</Property>
-    <Property name="zookeeper.log.maxfilesize">256MB</Property>
+    <!--  Property name="zookeeper.log.maxfilesize">256 MB</Property -->
     <Property name="zookeeper.log.maxbackupindex">20</Property>
     <Property name="log:ayoutPattern">%d{ISO8601} - %-5p - [%t:%C{1}@%L] - %m%n</Property>
     <Property name="filePattern">%i.gz</Property>
@@ -30,7 +30,7 @@
       <PatternLayout pattern="${sys:logLayoutPattern}"/>
       <ThresholdFilter level="${sys:zookeeper.log.threshold}" onMatch="ACCEPT" onMismatch="DENY" />
       <Policies>
-        <SizeBasedTriggeringPolicy size="{sys:zookeeper.log.maxfilesize}"/>
+        <SizeBasedTriggeringPolicy size="${sys:zookeeper.log.maxfilesize}"/>
       </Policies>
       <DefaultRolloverStrategy max="${sys:zookeeper.log.maxbackupindex}" />        
     </RollingFile>
