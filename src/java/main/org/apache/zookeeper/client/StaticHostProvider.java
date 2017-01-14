@@ -87,7 +87,7 @@ public final class StaticHostProvider implements HostProvider {
         String hostString;
         InetAddress ia = addr.getAddress();
 
-        if ( ia != null ) {
+        if (ia != null) {
             // If the string starts with '/', then it has no hostname
             // and we want to avoid the reverse lookup, so we return
             // the string representation of the address.
@@ -100,7 +100,7 @@ public final class StaticHostProvider implements HostProvider {
             // According to the Java 6 documentation, if the hostname is
             // unresolved, then the string before the colon is the hostname.
             String addrString = addr.toString();
-            hostString = addrString.substring(0, addrString.indexOf( ':' ));
+            hostString = addrString.substring(0, addrString.lastIndexOf(':'));
         }
 
         return hostString;
