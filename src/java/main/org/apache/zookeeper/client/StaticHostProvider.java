@@ -81,7 +81,7 @@ public final class StaticHostProvider implements HostProvider {
      * string representation of the IP address.
      *
      * @param addr
-     * @return
+     * @return Hostname string of address parameter
      */
     private String getHostString(InetSocketAddress addr) {
         String hostString;
@@ -134,11 +134,8 @@ public final class StaticHostProvider implements HostProvider {
                 }
             }
         }
-        ++currentIndex;
         connectedSinceNext = false;
-        if (currentIndex == serverAddresses.size()) {
-            currentIndex = 0;
-        }
+        currentIndex = ++currentIndex % serverAddresses.size();
         if (currentIndex == lastIndex && spinDelay > 0) {
             try {
                 Thread.sleep(spinDelay);
