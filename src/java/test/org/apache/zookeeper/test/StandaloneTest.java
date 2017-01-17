@@ -151,7 +151,7 @@ public class StandaloneTest extends QuorumPeerTestBase implements Watcher{
         // generate some transactions that will get logged
         try {
             zkAdmin.addAuthInfo("digest", "super:test".getBytes());
-            zkAdmin.reconfig(joiners, null, null, -1, new Stat());
+            zkAdmin.reconfigure(joiners, null, null, -1, new Stat());
             Assert.fail("Reconfiguration in standalone should trigger " +
                         "UnimplementedException");
         } catch (KeeperException.UnimplementedException ex) {
