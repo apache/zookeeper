@@ -16,6 +16,6 @@
 
 # Find the current revision, store it in a file
 FILE=$1
-LASTREV=`git rev-parse HEAD | cut -c1-8`
+LASTREV=`git rev-parse HEAD`
 
 echo "lastRevision=${LASTREV}" > $FILE

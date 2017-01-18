@@ -20,5 +20,5 @@ git rev-parse HEAD > %1
 
 For /F "tokens=* delims= " %%a In (%1) Do (
        set rev=%%f
-       echo lastRevision=%rev:~0,8% > %1
+       echo lastRevision=%rev% > %1
 )
