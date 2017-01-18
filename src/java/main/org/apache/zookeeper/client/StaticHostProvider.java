@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +62,18 @@ public final class StaticHostProvider implements HostProvider {
     public StaticHostProvider(Collection<InetSocketAddress> serverAddresses)
             throws UnknownHostException {
         for (InetSocketAddress address : serverAddresses) {
-            InetAddress resolvedAddresses[]  = InetAddress.getAllByName(getHostString(address));
+            InetAddress resolvedAddresses[];
+            try {
+                Method m = InetSocketAddress.class.getDeclaredMethod("getHostString");
+                m.setAccessible(true);
+                resolvedAddresses = InetAddress.getAllByName((String) m.invoke(address));
+            } catch (IllegalAccessException e) {
+                resolvedAddresses = InetAddress.getAllByName(getHostString(address));
+            } catch (NoSuchMethodException e) {
+                resolvedAddresses = InetAddress.getAllByName(getHostString(address));
+            } catch (InvocationTargetException e) {
+                resolvedAddresses = InetAddress.getAllByName(getHostString(address));
+            }
             for (InetAddress resolvedAddress : resolvedAddresses) {
                 this.serverAddresses.add(new InetSocketAddress(resolvedAddress, address.getPort()));
             }
@@ -130,7 +143,7 @@ public final class StaticHostProvider implements HostProvider {
                         }
                     }
                 } catch (UnknownHostException e) {
-                    LOG.warn("Cannot re-resolve server: " + curAddr + " UnknownHostException: " + e);
+                    LOG.warn("Cannot re-resolve server: {}", curAddr, e);
                 }
             }
         }
