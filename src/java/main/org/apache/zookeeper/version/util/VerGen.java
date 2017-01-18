@@ -76,18 +76,18 @@ public class VerGen {
             w.write("\n");
             w.write("package " + PACKAGE_NAME + ";\n\n");
             w.write("public interface " + TYPE_NAME + " {\n");
-            w.write("    public static final int MAJOR=" + version.maj + ";\n");
-            w.write("    public static final int MINOR=" + version.min + ";\n");
-            w.write("    public static final int MICRO=" + version.micro + ";\n");
-            w.write("    public static final String QUALIFIER="
+            w.write("    int MAJOR=" + version.maj + ";\n");
+            w.write("    int MINOR=" + version.min + ";\n");
+            w.write("    int MICRO=" + version.micro + ";\n");
+            w.write("    String QUALIFIER="
                     + (version.qualifier == null ? null :
                         "\"" + version.qualifier + "\"")
                     + ";\n");
             if (rev.equals("-1")) {
                 System.out.println("Unknown REVISION number, using " + rev);
             }
-            w.write("    public static final String REVISION=\"" + rev + "\";\n");
-            w.write("    public static final String BUILD_DATE=\"" + buildDate
+            w.write("    String REVISION=\"" + rev + "\";\n");
+            w.write("    String BUILD_DATE=\"" + buildDate
                     + "\";\n");
             w.write("}\n");
         } catch (IOException e) {
