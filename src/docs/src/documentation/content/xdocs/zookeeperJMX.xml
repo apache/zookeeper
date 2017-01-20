@@ -100,15 +100,9 @@
       started the server you will be able to monitor and manage various
       service related features.</para>
 
-    <!--  <para>Also note that ZooKeeper will register log4j MBeans as
-    well. In the same section along the left hand side you will see
-    "log4j". Expand that to manage log4j through JMX. Of particular
-    interest is the ability to dynamically change the logging levels
-    used by editing the appender and root thresholds. Log4j MBean
-    registration can be disabled by passing
-    <emphasis>-Dzookeeper.jmx.log4j.disable=true</emphasis> to the JVM
-    when starting ZooKeeper.
-    </para> -->
+    <para>Also note that ZooKeeper will use log4j 2 built support for JMX. 
+    For more information read <ulink url="https://logging.apache.org/log4j/2.x/manual/jmx.html">logj4j 2 JMX</ulink>
+    </para>
 
   </section>
 

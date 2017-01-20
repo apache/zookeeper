@@ -41,7 +41,7 @@
     <dependency org="org.apache.logging.log4j" name="log4j-slf4j-impl" rev="2.7" transitive="false"/>
     
     <!-- disruptor for Async loggers -->    
-    <dependency org="com.lmax" name="disruptor" rev="3.3.0" transitive="false"/>
+    <dependency org="com.lmax" name="disruptor" rev="3.3.6" transitive="false"/>
             
     <!--  dependency org="log4j" name="log4j" rev="1.2.17" transitive="false"/ -->
     <dependency org="junit" name="junit" rev="4.12" conf="test->default"/>

@@ -399,7 +399,7 @@ hierarchy of groups.
 <para>
 Zookeeper uses 
 <ulink url="http://www.slf4j.org/index.html">slf4j</ulink> as an abstraction layer for logging. 
-<ulink url="http://logging.apache.org/log4j/2.x/">log4j2</ulink> in version 2 is chosen as the final logging implementation for now.
+<ulink url="https://logging.apache.org/log4j/2.x/">log4j2</ulink> in version 2 is chosen as the final logging implementation for now.
 For better embedding support, it is planned in the future to leave the decision of choosing the final logging implementation to the end user.
 Therefore, always use the slf4j api to write log statements in the code, but configure log4j2 for how to log at runtime.
 Note that slf4j has no FATAL level, former messages at FATAL level have been moved to ERROR level. 

@@ -425,7 +425,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         		logConfig.getRootLogger().getAppenders().get("STDOUT").getLayout();
         String appenderName = "quorumAppender";
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        WriterAppender appender = WriterAppender.createAppender((StringLayout)layout, null, new OutputStreamWriter(os), appenderName, false, true);
+        WriterAppender appender = WriterAppender.newBuilder().setLayout((StringLayout)layout).setTarget(new OutputStreamWriter(os)).setName(appenderName).build();
         appender.start();
         LoggerConfig qloggerConfig =  logConfig.getLoggerConfig("org.apache.zookeeper.server.quorum");
         qloggerConfig.addAppender(appender, Level.WARN, null);
@@ -489,7 +489,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         		logConfig.getRootLogger().getAppenders().get("STDOUT").getLayout();
         String appenderName = "quorumAppender";
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        WriterAppender appender = WriterAppender.createAppender((StringLayout)layout, null, new OutputStreamWriter(os), appenderName, false, true);
+        WriterAppender appender = WriterAppender.newBuilder().setLayout((StringLayout)layout).setTarget(new OutputStreamWriter(os)).setName(appenderName).build();
         appender.start();
         LoggerConfig qloggerConfig =  logConfig.getLoggerConfig("org.apache.zookeeper.server.quorum");
         qloggerConfig.addAppender(appender, Level.INFO, null);
@@ -638,7 +638,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         		logConfig.getRootLogger().getAppenders().get("STDOUT").getLayout();
         String appenderName = "quorumAppender";
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        WriterAppender appender = WriterAppender.createAppender((StringLayout)layout, null, new OutputStreamWriter(os), appenderName, false, true);
+        WriterAppender appender = WriterAppender.newBuilder().setLayout((StringLayout)layout).setTarget(new OutputStreamWriter(os)).setName(appenderName).build();
         appender.start();
         LoggerConfig zloggerConfig =  logConfig.getLoggerConfig("org.apache.zookeeper.server.quorum");
         zloggerConfig.addAppender(appender, Level.INFO, null);

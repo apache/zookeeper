@@ -23,7 +23,6 @@ import javax.management.JMException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.apache.zookeeper.jmx.ManagedUtil;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.DatadirCleanupManager;
@@ -129,12 +128,6 @@ public class QuorumPeerMain {
     public void runFromConfig(QuorumPeerConfig config)
             throws IOException, AdminServerException
     {
-      try {
-          ManagedUtil.registerLog4jMBeans();
-      } catch (JMException e) {
-          LOG.warn("Unable to register log4j JMX control", e);
-      }
-
       LOG.info("Starting quorum peer");
       try {
           ServerCnxnFactory cnxnFactory = null;

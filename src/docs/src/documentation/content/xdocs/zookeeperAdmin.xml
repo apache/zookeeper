@@ -617,8 +617,8 @@ server.3=zoo3:2888:3888</programlisting>
 
     <para>
         ZooKeeper uses <emphasis role="bold"><ulink url="http://www.slf4j.org">SLF4J</ulink></emphasis>
-        version 1.7.5 as its logging infrastructure. For backward compatibility it is bound to
-        <emphasis role="bold">LOG4J2</emphasis> but you can use
+        version 1.7.5 as its logging infrastructure. It is bound to
+        <emphasis role="bold">LOG4J 2</emphasis> but you can use
         <emphasis role="bold"><ulink url="http://logback.qos.ch/">LOGBack</ulink></emphasis> or 
         or any other supported logging framework of your choice.
     </para>

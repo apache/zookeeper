@@ -264,7 +264,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
         		logConfig.getRootLogger().getAppenders().get("STDOUT").getLayout();
         String appenderName = "zkAppender";
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        WriterAppender appender = WriterAppender.createAppender((StringLayout)layout, null, new OutputStreamWriter(os), appenderName, false, true);
+        WriterAppender appender = WriterAppender.newBuilder().setLayout((StringLayout)layout).setTarget(new OutputStreamWriter(os)).setName(appenderName).build();
         appender.start();
         LoggerConfig zloggerConfig =  logConfig.getLoggerConfig("org.apache.zookeeper");
         zloggerConfig.addAppender(appender, Level.INFO, null);

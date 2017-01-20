@@ -24,7 +24,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.management.JMException;
 
-import org.apache.zookeeper.jmx.ManagedUtil;
 import org.apache.zookeeper.server.admin.AdminServer;
 import org.apache.zookeeper.server.admin.AdminServer.AdminServerException;
 import org.apache.zookeeper.server.admin.AdminServerFactory;
@@ -88,12 +87,6 @@ public class ZooKeeperServerMain {
     protected void initializeAndRun(String[] args)
         throws ConfigException, IOException, AdminServerException
     {
-        try {
-            ManagedUtil.registerLog4jMBeans();
-        } catch (JMException e) {
-            LOG.warn("Unable to register log4j JMX control", e);
-        }
-
         ServerConfig config = new ServerConfig();
         if (args.length == 1) {
             config.parse(args[0]);

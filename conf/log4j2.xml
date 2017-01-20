@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!-- All loggers are Async if
     -DLog4jContextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector if is set -->
-<Configuration status="warn" strict="true">
+<Configuration status="warn">
   <Properties>
     <Property name="consoleLayoutPattern">%d{ISO8601} [myid:%X{myid}] - %-5p [%t:%C{1}@%L] - %m%n</Property>
     <Property name="zookeeper.console.threshold">INFO</Property>

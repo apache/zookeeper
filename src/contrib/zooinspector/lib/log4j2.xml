@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!-- All loggers are Async if -DLog4jContextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector 
   if is set -->
-<Configuration status="warn" strict="true">
+<Configuration status="warn">
   <Properties>
     <Property name="zookeeper.console.threshold">TRACE</Property>
     <Property name="layoutPattern">%5p [%t] (%F:%L) - %m%n</Property>
