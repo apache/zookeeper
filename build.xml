@@ -366,28 +366,28 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
     <target name="ivy-retrieve" depends="init,ivy-init">
       <ivy:retrieve settingsRef="${ant.project.name}" conf="default"
-                    pattern="${ivy.lib}/[artifact](-[classifier])-[revision].[ext]"/>
+                    pattern="${ivy.lib}/[artifact]-[revision](-[classifier]).[ext]"/>
     </target>
 
     <target name="ivy-retrieve-test" depends="init,ivy-init">
       <ivy:retrieve settingsRef="${ant.project.name}" conf="test"
-                    pattern="${ivy.test.lib}/[artifact](-[classifier])-[revision].[ext]"/>
+                    pattern="${ivy.test.lib}/[artifact]-[revision](-[classifier]).[ext]"/>
     </target>
 
     <target name="ivy-retrieve-package" depends="init,ivy-init">
       <ivy:retrieve settingsRef="${ant.project.name}" conf="package"
-                    pattern="${ivy.package.lib}/[artifact](-[classifier])-[revision].[ext]"/>
+                    pattern="${ivy.package.lib}/[artifact]-[revision](-[classifier]).[ext]"/>
     </target>
 
     <target name="ivy-retrieve-jdiff" depends="init,ivy-init">
       <mkdir dir="${ivy.jdiff.lib}"/>
       <ivy:retrieve settingsRef="${ant.project.name}" conf="jdiff"
-                    pattern="${ivy.jdiff.lib}/[artifact](-[classifier])-[revision].[ext]"/>
+                    pattern="${ivy.jdiff.lib}/[artifact]-[revision](-[classifier]).[ext]"/>
     </target>
 
     <target name="ivy-retrieve-releaseaudit" depends="init,ivy-init">
       <ivy:retrieve settingsRef="${ant.project.name}" conf="releaseaudit"
-                    pattern="${ivy.lib}/[artifact]-(-[classifier])[revision].[ext]"/>
+                    pattern="${ivy.lib}/[artifact]-[revision](-[classifier]).[ext]"/>
       <ivy:cachepath pathid="releaseaudit-classpath" conf="releaseaudit"/>
     </target>
 
