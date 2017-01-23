@@ -664,4 +664,32 @@ public abstract class ClientBase extends ZKTestCase {
         }
         return sb.toString();
     }
+
+    public static ZooKeeper createZKClient(String cxnString) throws Exception {
+        return createZKClient(cxnString, CONNECTION_TIMEOUT);
+    }
+
+    /**
+     * Returns ZooKeeper client after connecting to ZooKeeper Server. Session
+     * timeout is {@link #CONNECTION_TIMEOUT}
+     *
+     * @param cxnString
+     *            connection string in the form of host:port
+     * @param sessionTimeout
+     * @throws IOException
+     *             in cases of network failure
+     */
+    public static ZooKeeper createZKClient(String cxnString, int sessionTimeout) throws IOException {
+        CountdownWatcher watcher = new CountdownWatcher();
+        ZooKeeper zk = new ZooKeeper(cxnString, sessionTimeout, watcher);
+        try {
+            watcher.waitForConnected(CONNECTION_TIMEOUT);
+        } catch (InterruptedException e) {
+            Assert.fail("ZooKeeper client can not connect to " + cxnString);
+        }
+        catch (TimeoutException e) {
+            Assert.fail("ZooKeeper client can not connect to " + cxnString);
+        }
+        return zk;
+    }
 }
