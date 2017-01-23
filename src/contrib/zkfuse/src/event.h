@@ -213,7 +213,7 @@ class GenericEvent {
         /**
          * The event represented as abstract wrapper.
          */
-        shared_ptr<AbstractEventWrapper> m_eventWrapper;
+        boost::shared_ptr<AbstractEventWrapper> m_eventWrapper;
         
 };
     
