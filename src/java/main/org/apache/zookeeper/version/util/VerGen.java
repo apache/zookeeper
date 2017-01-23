@@ -165,6 +165,9 @@ public class VerGen {
             if (rev == null || rev.trim().isEmpty()) {
                 rev = "-1";
             }
+            else {
+                rev = rev.trim();
+            }
             generateFile(new File("."), version, rev, args[2]);
         } catch (NumberFormatException e) {
             System.err.println(
