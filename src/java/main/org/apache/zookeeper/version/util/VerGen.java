@@ -164,8 +164,7 @@ public class VerGen {
             String rev = args[1];
             if (rev == null || rev.trim().isEmpty()) {
                 rev = "-1";
-            }
-            else {
+            } else {
                 rev = rev.trim();
             }
             generateFile(new File("."), version, rev, args[2]);
