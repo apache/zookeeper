@@ -31,7 +31,7 @@ public class Version implements org.apache.zookeeper.version.Info {
         return REVISION;
     }
 
-    public static String getHashRevision() {
+    public static String getRevisionHash() {
         return REVISION_HASH;
     }
 
@@ -45,7 +45,7 @@ public class Version implements org.apache.zookeeper.version.Info {
     }
 
     public static String getVersionRevision() {
-        return getVersion() + "-" + getHashRevision();
+        return getVersion() + "-" + getRevisionHash();
     }
 
     public static String getFullVersion() {
