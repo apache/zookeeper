@@ -30,6 +30,7 @@ import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.UnresolvedAddressException;
 import java.util.Enumeration;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -477,25 +478,28 @@ public class QuorumCnxManager {
             LOG.debug("There is a connection already for server " + sid);
             return;
         }
-        boolean knownId = false;
-        // Resolve hostname for the remote server before attempting to
-        // connect in case the underlying ip address has changed.
-        self.recreateSocketAddresses(sid);
-        if (self.getView().containsKey(sid)) {
-            knownId = true;
-            if (connectOne(sid, self.getView().get(sid).electionAddr))
+        synchronized (self.QV_LOCK) {
+            boolean knownId = false;
+            // Resolve hostname for the remote server before attempting to
+            // connect in case the underlying ip address has changed.
+            self.recreateSocketAddresses(sid);
+            Map<Long, QuorumPeer.QuorumServer> lastCommittedView = self.getView();
+            if (lastCommittedView.containsKey(sid)) {
+                knownId = true;
+                if (connectOne(sid, lastCommittedView.get(sid).electionAddr))
+                    return;
+            }
+            if (lastSeenQV != null && lastSeenQV.getAllMembers().containsKey(sid)
+                    && (!knownId || (lastSeenQV.getAllMembers().get(sid).electionAddr !=
+                    lastCommittedView.get(sid).electionAddr))) {
+                knownId = true;
+                if (connectOne(sid, lastSeenQV.getAllMembers().get(sid).electionAddr))
+                    return;
+            }
+            if (!knownId) {
+                LOG.warn("Invalid server id: " + sid);
                 return;
-        }
-        if (lastSeenQV != null && lastSeenQV.getAllMembers().containsKey(sid)
-                && (!knownId || (lastSeenQV.getAllMembers().get(sid).electionAddr !=
-                self.getView().get(sid).electionAddr))) {
-            knownId = true;
-            if (connectOne(sid, lastSeenQV.getAllMembers().get(sid).electionAddr))
-                return;
-        }
-        if (!knownId) {
-            LOG.warn("Invalid server id: " + sid);
-            return;
+            }
         }
     }
     

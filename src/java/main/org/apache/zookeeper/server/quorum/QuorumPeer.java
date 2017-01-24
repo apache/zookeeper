@@ -435,7 +435,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     public QuorumVerifier lastSeenQuorumVerifier = null;
 
     // Lock object that guard access to quorumVerifier and lastSeenQuorumVerifier.
-    private byte[] qvLock = new byte[0];
+    final Object QV_LOCK = new Object();
 
 
     /**
@@ -670,37 +670,37 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     public InetSocketAddress getQuorumAddress(){
-        synchronized (qvLock) {
+        synchronized (QV_LOCK) {
             return myQuorumAddr;
         }
     }
     
     public void setQuorumAddress(InetSocketAddress addr){
-        synchronized (qvLock) {
+        synchronized (QV_LOCK) {
             myQuorumAddr = addr;
         }
     }
 
     public InetSocketAddress getElectionAddress(){
-        synchronized (qvLock) {
+        synchronized (QV_LOCK) {
             return myElectionAddr;
         }
     }
 
     public void setElectionAddress(InetSocketAddress addr){
-        synchronized (qvLock) {
+        synchronized (QV_LOCK) {
             myElectionAddr = addr;
         }
     }
     
     public InetSocketAddress getClientAddress(){
-        synchronized (qvLock) {
+        synchronized (QV_LOCK) {
             return myClientAddr;
         }
     }
     
     public void setClientAddress(InetSocketAddress addr){
-        synchronized (qvLock) {
+        synchronized (QV_LOCK) {
             myClientAddr = addr;
         }
     }
@@ -1415,7 +1415,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * Return QuorumVerifier object for the last committed configuration.
      */
     public QuorumVerifier getQuorumVerifier(){
-        synchronized (qvLock) {
+        synchronized (QV_LOCK) {
             return quorumVerifier;
         }
     }
@@ -1424,13 +1424,13 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * Return QuorumVerifier object for the last proposed configuration.
      */
     public QuorumVerifier getLastSeenQuorumVerifier(){
-        synchronized (qvLock) {
+        synchronized (QV_LOCK) {
             return lastSeenQuorumVerifier;
         }
     }
     
     private void connectNewPeers(){
-        synchronized (qvLock) {
+        synchronized (QV_LOCK) {
             if (qcm != null && quorumVerifier != null && lastSeenQuorumVerifier != null) {
                 Map<Long, QuorumServer> committedView = quorumVerifier.getAllMembers();
                 for (Entry<Long, QuorumServer> e : lastSeenQuorumVerifier.getAllMembers().entrySet()) {
@@ -1455,7 +1455,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
     
     public void setLastSeenQuorumVerifier(QuorumVerifier qv, boolean writeToDisk){
-        synchronized (qvLock) {
+        synchronized (QV_LOCK) {
             if (lastSeenQuorumVerifier != null && lastSeenQuorumVerifier.getVersion() > qv.getVersion()) {
                 LOG.error("setLastSeenQuorumVerifier called with stale config " + qv.getVersion() +
                         ". Current version: " + quorumVerifier.getVersion());
@@ -1481,7 +1481,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      }       
     
     public QuorumVerifier setQuorumVerifier(QuorumVerifier qv, boolean writeToDisk){
-        synchronized (qvLock) {
+        synchronized (QV_LOCK) {
             if ((quorumVerifier != null) && (quorumVerifier.getVersion() >= qv.getVersion())) {
                 // this is normal. For example - server found out about new config through FastLeaderElection gossiping
                 // and then got the same config in UPTODATE message so its already known
