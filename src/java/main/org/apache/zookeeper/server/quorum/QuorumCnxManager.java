@@ -480,16 +480,17 @@ public class QuorumCnxManager {
             self.recreateSocketAddresses(sid);
             Map<Long, QuorumPeer.QuorumServer> lastCommittedView = self.getView();
             QuorumVerifier lastSeenQV = self.getLastSeenQuorumVerifier();
+            Map<Long, QuorumPeer.QuorumServer> lastProposedView = lastSeenQV.getAllMembers();
             if (lastCommittedView.containsKey(sid)) {
                 knownId = true;
                 if (connectOne(sid, lastCommittedView.get(sid).electionAddr))
                     return;
             }
-            if (lastSeenQV != null && lastSeenQV.getAllMembers().containsKey(sid)
-                    && (!knownId || (lastSeenQV.getAllMembers().get(sid).electionAddr !=
+            if (lastSeenQV != null && lastProposedView.containsKey(sid)
+                    && (!knownId || (lastProposedView.get(sid).electionAddr !=
                     lastCommittedView.get(sid).electionAddr))) {
                 knownId = true;
-                if (connectOne(sid, lastSeenQV.getAllMembers().get(sid).electionAddr))
+                if (connectOne(sid, lastProposedView.get(sid).electionAddr))
                     return;
             }
             if (!knownId) {
