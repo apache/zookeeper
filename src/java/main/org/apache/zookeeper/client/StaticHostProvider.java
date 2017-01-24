@@ -62,18 +62,7 @@ public final class StaticHostProvider implements HostProvider {
     public StaticHostProvider(Collection<InetSocketAddress> serverAddresses)
             throws UnknownHostException {
         for (InetSocketAddress address : serverAddresses) {
-            InetAddress resolvedAddresses[];
-            try {
-                Method m = InetSocketAddress.class.getDeclaredMethod("getHostString");
-                m.setAccessible(true);
-                resolvedAddresses = InetAddress.getAllByName((String) m.invoke(address));
-            } catch (IllegalAccessException e) {
-                resolvedAddresses = InetAddress.getAllByName(getHostString(address));
-            } catch (NoSuchMethodException e) {
-                resolvedAddresses = InetAddress.getAllByName(getHostString(address));
-            } catch (InvocationTargetException e) {
-                resolvedAddresses = InetAddress.getAllByName(getHostString(address));
-            }
+            InetAddress resolvedAddresses[] =  InetAddress.getAllByName(getHostString(address));
             for (InetAddress resolvedAddress : resolvedAddresses) {
                 this.serverAddresses.add(new InetSocketAddress(resolvedAddress, address.getPort()));
             }
@@ -87,20 +76,24 @@ public final class StaticHostProvider implements HostProvider {
     }
 
     /**
+     * Evaluate to a hostname if one is available and otherwise it returns the
+     * string representation of the IP address.
+     *
      * In Java 7, we have a method getHostString, but earlier versions do not support it.
      * This method is to provide a replacement for InetSocketAddress.getHostString().
-     *
-     * It evaluates to a hostname if one is available and otherwise it returns the
-     * string representation of the IP address.
      *
      * @param addr
      * @return Hostname string of address parameter
      */
     private String getHostString(InetSocketAddress addr) {
-        String hostString;
-        InetAddress ia = addr.getAddress();
+        String hostString = "";
 
-        if (ia != null) {
+        if(addr == null) {
+            return hostString;
+        }
+        if (!addr.isUnresolved()) {
+            InetAddress ia = addr.getAddress();
+
             // If the string starts with '/', then it has no hostname
             // and we want to avoid the reverse lookup, so we return
             // the string representation of the address.
@@ -127,14 +120,22 @@ public final class StaticHostProvider implements HostProvider {
         // Handle possible connection error by re-resolving hostname if possible
         if (!connectedSinceNext) {
             InetSocketAddress curAddr = serverAddresses.get(currentIndex);
-            if (!curAddr.getHostString().equals(curAddr.getAddress().getHostAddress())) {
+            if (!getHostString(curAddr).equals(curAddr.getAddress().getHostAddress())) {
                 try {
                     int thePort = curAddr.getPort();
                     InetAddress resolvedAddresses[] = InetAddress.getAllByName(getHostString(curAddr));
                     if (resolvedAddresses.length == 1) {
                         serverAddresses.set(currentIndex, new InetSocketAddress(resolvedAddresses[0], thePort));
                     } else {
-                        serverAddresses.remove(currentIndex);
+                        int i = 0;
+                        while(i < serverAddresses.size()) {
+                            if(getHostString(serverAddresses.get(i)) == getHostString(curAddr)) {
+                                serverAddresses.remove(i);
+                            } else {
+                                i++;
+                            }
+                        }
+
                         for (InetAddress resolvedAddress : resolvedAddresses) {
                             InetSocketAddress newAddr = new InetSocketAddress(resolvedAddress, thePort);
                             if (!serverAddresses.contains(newAddr)) {

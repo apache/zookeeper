@@ -102,10 +102,10 @@ public class StaticHostProviderTest extends ZKTestCase {
             InetSocketAddress next = hostProvider.next(0);
             assertTrue(next instanceof InetSocketAddress);
             assertTrue(!next.isUnresolved());
-            assertTrue("InetSocketAddress must not have hostname part" +
+            assertTrue("InetSocketAddress must not have hostname part " +
                        next.toString(), next.toString().startsWith("/"));
             // Do NOT trigger the reverse name service lookup.
-            String hostname = next.getHostString();
+            String hostname = next.getHostName();
             // In this case, the hostname equals literal IP address.
             hostname.equals(next.getAddress().getHostAddress());
         }
