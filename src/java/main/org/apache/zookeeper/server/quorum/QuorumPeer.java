@@ -1435,7 +1435,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 Map<Long, QuorumServer> committedView = quorumVerifier.getAllMembers();
                 for (Entry<Long, QuorumServer> e : lastSeenQuorumVerifier.getAllMembers().entrySet()) {
                     if (e.getKey() != getId() && !committedView.containsKey(e.getKey()))
-                        qcm.connectOne(e.getKey(), lastSeenQuorumVerifier);
+                        qcm.connectOne(e.getKey());
                 }
             }
         }

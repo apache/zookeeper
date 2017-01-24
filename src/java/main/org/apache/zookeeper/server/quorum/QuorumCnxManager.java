@@ -468,12 +468,7 @@ public class QuorumCnxManager {
      * 
      *  @param sid  server id
      */
-    
     synchronized void connectOne(long sid){
-        connectOne(sid, self.getLastSeenQuorumVerifier());
-    }
-
-    synchronized void connectOne(long sid, QuorumVerifier lastSeenQV){
         if (senderWorkerMap.get(sid) != null) {
             LOG.debug("There is a connection already for server " + sid);
             return;
@@ -484,6 +479,7 @@ public class QuorumCnxManager {
             // connect in case the underlying ip address has changed.
             self.recreateSocketAddresses(sid);
             Map<Long, QuorumPeer.QuorumServer> lastCommittedView = self.getView();
+            QuorumVerifier lastSeenQV = self.getLastSeenQuorumVerifier();
             if (lastCommittedView.containsKey(sid)) {
                 knownId = true;
                 if (connectOne(sid, lastCommittedView.get(sid).electionAddr))
