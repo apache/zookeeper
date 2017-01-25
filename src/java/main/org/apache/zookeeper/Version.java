@@ -20,8 +20,19 @@ package org.apache.zookeeper;
 
 public class Version implements org.apache.zookeeper.version.Info {
 
+    /*
+     * Since the SVN to Git port this field doesn't return the revision anymore
+     * TODO: remove this method and associated field declaration in VerGen
+     * @see {@link #getHashRevision()}
+     * @return the default value -1
+     */
+    @Deprecated
     public static int getRevision() {
         return REVISION;
+    }
+
+    public static String getRevisionHash() {
+        return REVISION_HASH;
     }
 
     public static String getBuildDate() {
@@ -34,7 +45,7 @@ public class Version implements org.apache.zookeeper.version.Info {
     }
 
     public static String getVersionRevision() {
-        return getVersion() + "-" + getRevision();
+        return getVersion() + "-" + getRevisionHash();
     }
 
     public static String getFullVersion() {
