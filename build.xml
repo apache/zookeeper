@@ -313,7 +313,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
             includes="org/apache/zookeeper/version/util/**" debug="on" encoding="${build.encoding}" />
     </target>
     
-    <target name="svn-revision" unless="lastRevision">
+    <target name="git-revision" unless="lastRevision">
         <mkdir dir="${revision.dir}" />
         <condition property="shell.name" value="cmd" else="sh">
       	    <os family="windows"/>
@@ -328,7 +328,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <property file="${revision.dir}/${revision.properties}" />
     </target>
     
-    <target name="version-info" depends="ver-gen,svn-revision">
+    <target name="version-info" depends="ver-gen,git-revision">
         <mkdir dir="${src_generated.dir}" />
         <java classname="org.apache.zookeeper.version.util.VerGen" fork="true" 
                 dir="${src_generated.dir}">
