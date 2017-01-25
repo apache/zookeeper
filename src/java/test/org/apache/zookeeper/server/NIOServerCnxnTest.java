@@ -18,6 +18,12 @@
 package org.apache.zookeeper.server;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.CancelledKeyException;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 
 import junit.framework.Assert;
 
@@ -64,6 +70,40 @@ public class NIOServerCnxnTest extends ClientBase {
                             + "getting connection details!");
                 }
             }
+        } finally {
+            zk.close();
+        }
+    }
+
+    /**
+     * Mock extension of NIOServerCnxn to test for
+     * CancelledKeyException (ZOOKEEPER-2044).
+     */
+    class MockNIOServerCnxn extends NIOServerCnxn {
+        public MockNIOServerCnxn( NIOServerCnxn cnxn )
+                throws IOException {
+            super( cnxn.zkServer, cnxn.sock, cnxn.sk, cnxn.factory );
+        }
+
+        public void mockSendBuffer(ByteBuffer bb) throws Exception {
+            super.internalSendBuffer( bb );
+        }
+    }
+
+    @Test(timeout = 30000)
+    public void testValidSelectionKey() throws Exception {
+        final ZooKeeper zk = createClient();
+        try {
+            Iterable<ServerCnxn> connections = serverFactory.getConnections();
+            for (ServerCnxn serverCnxn : connections) {
+                MockNIOServerCnxn mock = new MockNIOServerCnxn((NIOServerCnxn) serverCnxn);
+                // Cancel key
+                ((NIOServerCnxn) serverCnxn).sock.keyFor(((NIOServerCnxnFactory) serverFactory).selector).cancel();;
+                mock.mockSendBuffer( ByteBuffer.allocate(8) );
+            }
+        } catch (CancelledKeyException e) {
+            e.printStackTrace();
+            Assert.fail(e.toString());
         } finally {
             zk.close();
         }
