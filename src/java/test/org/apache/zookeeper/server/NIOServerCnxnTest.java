@@ -20,18 +20,13 @@ package org.apache.zookeeper.server;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.CancelledKeyException;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
-
-import junit.framework.Assert;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.test.ClientBase;
+import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,14 +74,14 @@ public class NIOServerCnxnTest extends ClientBase {
      * Mock extension of NIOServerCnxn to test for
      * CancelledKeyException (ZOOKEEPER-2044).
      */
-    class MockNIOServerCnxn extends NIOServerCnxn {
-        public MockNIOServerCnxn( NIOServerCnxn cnxn )
+    private static class MockNIOServerCnxn extends NIOServerCnxn {
+        public MockNIOServerCnxn(NIOServerCnxn cnxn)
                 throws IOException {
-            super( cnxn.zkServer, cnxn.sock, cnxn.sk, cnxn.factory );
+            super(cnxn.zkServer, cnxn.sock, cnxn.sk, cnxn.factory);
         }
 
         public void mockSendBuffer(ByteBuffer bb) throws Exception {
-            super.internalSendBuffer( bb );
+            super.internalSendBuffer(bb);
         }
     }
 
@@ -99,10 +94,10 @@ public class NIOServerCnxnTest extends ClientBase {
                 MockNIOServerCnxn mock = new MockNIOServerCnxn((NIOServerCnxn) serverCnxn);
                 // Cancel key
                 ((NIOServerCnxn) serverCnxn).sock.keyFor(((NIOServerCnxnFactory) serverFactory).selector).cancel();;
-                mock.mockSendBuffer( ByteBuffer.allocate(8) );
+                mock.mockSendBuffer(ByteBuffer.allocate(8));
             }
         } catch (CancelledKeyException e) {
-            e.printStackTrace();
+            LOG.error("Exception while sending bytes!", e);
             Assert.fail(e.toString());
         } finally {
             zk.close();
