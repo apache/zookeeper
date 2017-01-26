@@ -111,6 +111,29 @@ public class StaticHostProviderTest extends ZKTestCase {
         }
     }
 
+    @Test
+    public void testReResolving() throws UnknownHostException {
+        byte size = 1;
+        ArrayList<InetSocketAddress> list = new ArrayList<InetSocketAddress>(size);
+
+        // Test a hostname that resolves to multiple addresses
+        list.add(InetSocketAddress.createUnresolved("www.apache.org", 1234));
+        StaticHostProvider hostProvider = new StaticHostProvider(list);
+        InetSocketAddress next = hostProvider.next(0);
+        next = hostProvider.next(0);
+        assertTrue("No address was removed", hostProvider.getNextRemoved() > 0);
+        assertTrue("No address was added", hostProvider.getNextAdded() > 0);
+
+        // Test a hostname that resolves to a single address
+        list.clear();
+        list.add(InetSocketAddress.createUnresolved("issues.apache.org", 1234));
+        hostProvider = new StaticHostProvider(list);
+        next = hostProvider.next(0);
+        next = hostProvider.next(0);
+        assertTrue("No address was removed", hostProvider.getNextRemoved() > 0);
+        assertTrue("No address was added", hostProvider.getNextAdded() > 0);
+    }
+
     private StaticHostProvider getHostProviderUnresolved(byte size)
             throws UnknownHostException {
         return new StaticHostProvider(getUnresolvedServerAddresses(size));

@@ -116,21 +116,42 @@ public final class StaticHostProvider implements HostProvider {
         return serverAddresses.size();
     }
 
+    // Counts the number of addresses added and removed during
+    // the last call to next. Used mainly for test purposes.
+    // See StasticHostProviderTest.
+    private int nextAdded = 0;
+    private int nextRemoved = 0;
+
+    public int getNextAdded() {
+        return nextAdded;
+    }
+
+    public int getNextRemoved() {
+        return nextRemoved;
+    }
+
     public InetSocketAddress next(long spinDelay) {
         // Handle possible connection error by re-resolving hostname if possible
         if (!connectedSinceNext) {
             InetSocketAddress curAddr = serverAddresses.get(currentIndex);
             if (!getHostString(curAddr).equals(curAddr.getAddress().getHostAddress())) {
+                LOG.info("Resolving again hostname: {}", getHostString(curAddr));
                 try {
                     int thePort = curAddr.getPort();
                     InetAddress resolvedAddresses[] = InetAddress.getAllByName(getHostString(curAddr));
+                    nextAdded = 0;
+                    nextRemoved = 0;
                     if (resolvedAddresses.length == 1) {
                         serverAddresses.set(currentIndex, new InetSocketAddress(resolvedAddresses[0], thePort));
+                        nextAdded = nextRemoved = 1;
+                        LOG.debug("Newly resolved address: {}", resolvedAddresses[0]);
                     } else {
                         int i = 0;
                         while(i < serverAddresses.size()) {
                             if(getHostString(serverAddresses.get(i)) == getHostString(curAddr)) {
+                                LOG.debug("Removing address: {}", serverAddresses.get(i));
                                 serverAddresses.remove(i);
+                                nextRemoved++;
                             } else {
                                 i++;
                             }
@@ -139,7 +160,9 @@ public final class StaticHostProvider implements HostProvider {
                         for (InetAddress resolvedAddress : resolvedAddresses) {
                             InetSocketAddress newAddr = new InetSocketAddress(resolvedAddress, thePort);
                             if (!serverAddresses.contains(newAddr)) {
+                                LOG.debug("Adding address: {}", newAddr);
                                 serverAddresses.add(newAddr);
+                                nextAdded++;
                             }
                         }
                     }
