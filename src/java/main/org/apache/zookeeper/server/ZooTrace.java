@@ -20,7 +20,7 @@ package org.apache.zookeeper.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.apache.zookeeper.server.quorum.LearnerHandler;
 import org.apache.zookeeper.server.quorum.QuorumPacket;
 
 /**
@@ -75,12 +75,10 @@ public class ZooTrace {
     static public void logQuorumPacket(Logger log, long mask,
             char direction, QuorumPacket qp)
     {
-        return;
-
-        // if (isTraceEnabled(log, mask)) {
-        // logTraceMessage(LOG, mask, direction + " "
-        // + FollowerHandler.packetToString(qp));
-        // }
+        if (isTraceEnabled(log, mask)) { 
+            logTraceMessage(log, mask, direction +
+                    " " + LearnerHandler.packetToString(qp));
+         }
     }
 
     static public void logRequest(Logger log, long mask,
