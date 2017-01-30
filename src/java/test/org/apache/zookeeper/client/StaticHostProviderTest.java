@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.test;
+package org.apache.zookeeper.client;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;

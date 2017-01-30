@@ -122,11 +122,11 @@ public final class StaticHostProvider implements HostProvider {
     private int nextAdded = 0;
     private int nextRemoved = 0;
 
-    public int getNextAdded() {
+    int getNextAdded() {
         return nextAdded;
     }
 
-    public int getNextRemoved() {
+    int getNextRemoved() {
         return nextRemoved;
     }
 
@@ -134,6 +134,7 @@ public final class StaticHostProvider implements HostProvider {
         // Handle possible connection error by re-resolving hostname if possible
         if (!connectedSinceNext) {
             InetSocketAddress curAddr = serverAddresses.get(currentIndex);
+            String curHostString = getHostString(curAddr);
             if (!getHostString(curAddr).equals(curAddr.getAddress().getHostAddress())) {
                 LOG.info("Resolving again hostname: {}", getHostString(curAddr));
                 try {
@@ -147,8 +148,9 @@ public final class StaticHostProvider implements HostProvider {
                         LOG.debug("Newly resolved address: {}", resolvedAddresses[0]);
                     } else {
                         int i = 0;
-                        while(i < serverAddresses.size()) {
-                            if(getHostString(serverAddresses.get(i)) == getHostString(curAddr)) {
+                        while (i < serverAddresses.size()) {
+                            if (getHostString(serverAddresses.get(i)).equals(curHostString) &&
+                                    serverAddresses.get(i).getPort() == curAddr.getPort()) {
                                 LOG.debug("Removing address: {}", serverAddresses.get(i));
                                 serverAddresses.remove(i);
                                 nextRemoved++;
