@@ -850,8 +850,14 @@ public class Zab1_0Test {
                     
                     // Make sure the data was recorded in the filesystem ok
                     ZKDatabase zkDb2 = new ZKDatabase(new FileTxnSnapLog(logDir, snapDir));
+                    start = System.currentTimeMillis();
                     zkDb2.loadDataBase();
+                    while (zkDb2.getSessionWithTimeOuts().isEmpty() && (System.currentTimeMillis() - start) < 50) {
+                        Thread.sleep(1);
+                        zkDb2.loadDataBase();
+                    }
                     LOG.info("zkdb2 sessions:" + zkDb2.getSessions());
+                    LOG.info("zkdb2 with timeouts:" + zkDb2.getSessionWithTimeOuts());
                     Assert.assertNotNull(zkDb2.getSessionWithTimeOuts().get(4L));
                 } finally {
                     recursiveDelete(tmpDir);
