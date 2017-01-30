@@ -839,12 +839,12 @@ public class Zab1_0Test {
                     Assert.assertEquals(1, f.self.getAcceptedEpoch());
                     Assert.assertEquals(1, f.self.getCurrentEpoch());
                     
-                    //Wait for the edits to be written out
+                    //Wait for the transactions to be written out. The thread that writes them out
+                    // does not send anything back when it is done.
                     long start = System.currentTimeMillis();
                     while (createSessionZxid != f.fzk.getLastProcessedZxid() && (System.currentTimeMillis() - start) < 50) {
                         Thread.sleep(1);
                     }
-                    LOG.info("Took < {}ms to sync all edits", System.currentTimeMillis() - start);
                     
                     Assert.assertEquals(createSessionZxid, f.fzk.getLastProcessedZxid());
                     

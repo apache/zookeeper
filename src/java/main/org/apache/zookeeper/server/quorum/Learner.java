@@ -321,7 +321,7 @@ public class Learner {
         QuorumPacket ack = new QuorumPacket(Leader.ACK, 0, null, null);
         QuorumPacket qp = new QuorumPacket();
         long newEpoch = ZxidUtils.getEpochFromZxid(newLeaderZxid);
-        //In the DIFF case we don't need to do a snapshot because the edits will sync on top of any existing snapshot
+        //In the DIFF case we don't need to do a snapshot because the transactions will sync on top of any existing snapshot
         // For SNAP and TRUNC the snapshot is needed to save that history
         boolean snapshotNeeded = true;
         readPacket(qp);
@@ -368,11 +368,12 @@ public class Learner {
             long lastQueued = 0;
 
             // in Zab V1.0 (ZK 3.4+) we might take a snapshot when we get the NEWLEADER message, but in pre V1.0
-            // we take the snapshot at the UPDATE, since V1.0 also gets the UPDATE (after the NEWLEADER)
+            // we take the snapshot on the UPDATE message, since Zab V1.0 also gets the UPDATE (after the NEWLEADER)
             // we need to make sure that we don't take the snapshot twice.
             boolean isPreZAB1_0 = true;
-            //If we are not going to take the snapshot be sure the edits are not applied in memory
-            boolean writeToEditLog = !snapshotNeeded;
+            //If we are not going to take the snapshot be sure the transactions are not applied in memory
+            // but written out to the transaction log
+            boolean writeToTxnLog = !snapshotNeeded;
             // we are now going to start getting transactions to apply followed by an UPTODATE
             outerLoop:
             while (self.isRunning()) {
@@ -392,7 +393,7 @@ public class Learner {
                     packetsNotCommitted.add(pif);
                     break;
                 case Leader.COMMIT:
-                    if (!writeToEditLog) {
+                    if (!writeToTxnLog) {
                         pif = packetsNotCommitted.peekFirst();
                         if (pif.hdr.getZxid() != qp.getZxid()) {
                             LOG.warn("Committing " + qp.getZxid() + ", but next proposal is " + pif.hdr.getZxid());
@@ -420,7 +421,7 @@ public class Learner {
                                 + Long.toHexString(lastQueued + 1));
                     }
                     lastQueued = packet.hdr.getZxid();
-                    if (!writeToEditLog) {
+                    if (!writeToTxnLog) {
                         // Apply to db directly if we haven't taken the snapshot
                         zk.processTxn(packet.hdr, packet.rec);
                     } else {
@@ -455,7 +456,7 @@ public class Learner {
                         throw new IOException("Failed to delete " +
                                               updating.toString());
                     }
-                    writeToEditLog = true; //Anything after this needs to go to the edit log, not applied directly in memory
+                    writeToTxnLog = true; //Anything after this needs to go to the transaction log, not applied directly in memory
                     isPreZAB1_0 = false;
                     writePacket(new QuorumPacket(Leader.ACK, newLeaderZxid, null, null), true);
                     break;
