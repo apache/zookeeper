@@ -62,7 +62,7 @@ public class NIOServerCnxn extends ServerCnxn {
 
     final SocketChannel sock;
 
-    private final SelectionKey sk;
+    protected final SelectionKey sk;
 
     boolean initialized;
 
@@ -74,7 +74,7 @@ public class NIOServerCnxn extends ServerCnxn {
 
     int sessionTimeout;
 
-    private final ZooKeeperServer zkServer;
+    protected final ZooKeeperServer zkServer;
 
     /**
      * The number of requests that have been submitted but not yet responded to.
@@ -144,38 +144,49 @@ public class NIOServerCnxn extends ServerCnxn {
     
     public void sendBuffer(ByteBuffer bb) {
         try {
-            if (bb != ServerCnxnFactory.closeConn) {
-                // We check if write interest here because if it is NOT set,
-                // nothing is queued, so we can try to send the buffer right
-                // away without waking up the selector
-                if ((sk.interestOps() & SelectionKey.OP_WRITE) == 0) {
-                    try {
-                        sock.write(bb);
-                    } catch (IOException e) {
-                        // we are just doing best effort right now
-                    }
-                }
-                // if there is nothing left to send, we are done
-                if (bb.remaining() == 0) {
-                    packetSent();
-                    return;
-                }
-            }
-
-            synchronized(this.factory){
-                sk.selector().wakeup();
-                if (LOG.isTraceEnabled()) {
-                    LOG.trace("Add a buffer to outgoingBuffers, sk " + sk
-                            + " is valid: " + sk.isValid());
-                }
-                outgoingBuffers.add(bb);
-                if (sk.isValid()) {
-                    sk.interestOps(sk.interestOps() | SelectionKey.OP_WRITE);
-                }
-            }
-            
+            internalSendBuffer(bb);
         } catch(Exception e) {
             LOG.error("Unexpected Exception: ", e);
+        }
+    }
+
+    /**
+     * This method implements the internals of sendBuffer. We
+     * have separated it from send buffer to be able to catch
+     * exceptions when testing.
+     *
+     * @param bb Buffer to send.
+     */
+    protected void internalSendBuffer(ByteBuffer bb) {
+        if (bb != ServerCnxnFactory.closeConn) {
+            // We check if write interest here because if it is NOT set,
+            // nothing is queued, so we can try to send the buffer right
+            // away without waking up the selector
+            if(sk.isValid() &&
+                    ((sk.interestOps() & SelectionKey.OP_WRITE) == 0)) {
+                try {
+                    sock.write(bb);
+                } catch (IOException e) {
+                    // we are just doing best effort right now
+                }
+            }
+            // if there is nothing left to send, we are done
+            if (bb.remaining() == 0) {
+                packetSent();
+                return;
+            }
+        }
+
+        synchronized(this.factory){
+            sk.selector().wakeup();
+            if (LOG.isTraceEnabled()) {
+                LOG.trace("Add a buffer to outgoingBuffers, sk " + sk
+                        + " is valid: " + sk.isValid());
+            }
+            outgoingBuffers.add(bb);
+            if (sk.isValid()) {
+                sk.interestOps(sk.interestOps() | SelectionKey.OP_WRITE);
+            }
         }
     }
 
