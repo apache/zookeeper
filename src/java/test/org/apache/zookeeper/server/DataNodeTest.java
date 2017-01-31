@@ -51,4 +51,16 @@ public class DataNodeTest {
         }
     }
 
+    @Test
+    public void testGetChildrenRetrunsImmutableEmptySet() {
+        // Returned empty set must not be modifiable
+        DataNode dataNode = new DataNode();
+        Set<String> children = dataNode.getChildren();
+        try {
+            children.add("new child");
+            fail("UnsupportedOperationException is expected");
+        } catch (UnsupportedOperationException e) {
+            // do nothing
+        }
+    }
 }
