@@ -52,8 +52,7 @@ public class DataNodeTest {
     }
 
     @Test
-    public void testGetChildrenRetrunsImmutableEmptySet() {
-        // Returned empty set must not be modifiable
+    public void testGetChildrenReturnsImmutableEmptySet() {
         DataNode dataNode = new DataNode();
         Set<String> children = dataNode.getChildren();
         try {
