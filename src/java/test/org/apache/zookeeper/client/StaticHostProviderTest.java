@@ -134,6 +134,22 @@ public class StaticHostProviderTest extends ZKTestCase {
         assertTrue("No address was added", hostProvider.getNextAdded() > 0);
     }
 
+    @Test
+    public void testReResolvingLocalhost() throws UnknownHostException {
+        byte size = 2;
+        ArrayList<InetSocketAddress> list = new ArrayList<InetSocketAddress>(size);
+
+        // Test a hostname that resolves to multiple addresses
+        list.add(InetSocketAddress.createUnresolved("localhost", 1234));
+        list.add(InetSocketAddress.createUnresolved("localhost", 1235));
+        StaticHostProvider hostProvider = new StaticHostProvider(list);
+        int sizeBefore = hostProvider.size();
+        InetSocketAddress next = hostProvider.next(0);
+        next = hostProvider.next(0);
+        assertTrue("Different number of addresses in the list: " + hostProvider.size() +
+                " (after), " + sizeBefore + " (before)", hostProvider.size() == sizeBefore);
+    }
+
     private StaticHostProvider getHostProviderUnresolved(byte size)
             throws UnknownHostException {
         return new StaticHostProvider(getUnresolvedServerAddresses(size));

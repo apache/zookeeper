@@ -88,7 +88,7 @@ public final class StaticHostProvider implements HostProvider {
     private String getHostString(InetSocketAddress addr) {
         String hostString = "";
 
-        if(addr == null) {
+        if (addr == null) {
             return hostString;
         }
         if (!addr.isUnresolved()) {
@@ -135,11 +135,11 @@ public final class StaticHostProvider implements HostProvider {
         if (!connectedSinceNext) {
             InetSocketAddress curAddr = serverAddresses.get(currentIndex);
             String curHostString = getHostString(curAddr);
-            if (!getHostString(curAddr).equals(curAddr.getAddress().getHostAddress())) {
+            if (!curHostString.equals(curAddr.getAddress().getHostAddress())) {
                 LOG.info("Resolving again hostname: {}", getHostString(curAddr));
                 try {
                     int thePort = curAddr.getPort();
-                    InetAddress resolvedAddresses[] = InetAddress.getAllByName(getHostString(curAddr));
+                    InetAddress resolvedAddresses[] = InetAddress.getAllByName(curHostString);
                     nextAdded = 0;
                     nextRemoved = 0;
                     if (resolvedAddresses.length == 1) {
