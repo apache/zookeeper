@@ -358,7 +358,7 @@ public class Learner {
         
         QuorumVerifier newLeaderQV = null;
         
-        //In the DIFF case we don't need to do a snapshot because the transactions will sync on top of any existing snapshot
+        // In the DIFF case we don't need to do a snapshot because the transactions will sync on top of any existing snapshot
         // For SNAP and TRUNC the snapshot is needed to save that history
         boolean snapshotNeeded = true;
         readPacket(qp);
