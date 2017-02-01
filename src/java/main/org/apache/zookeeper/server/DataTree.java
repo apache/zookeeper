@@ -458,7 +458,7 @@ public class DataTree {
         }
         synchronized (parent) {
             Set<String> children = parent.getChildren();
-            if (children != null && children.contains(childName)) {
+            if (children.contains(childName)) {
                 throw new KeeperException.NodeExistsException();
             }
 
@@ -677,14 +677,7 @@ public class DataTree {
             if (stat != null) {
                 n.copyStat(stat);
             }
-            ArrayList<String> children;
-            Set<String> childs = n.getChildren();
-            if (childs == null) {
-                children = new ArrayList<String>(0);
-            } else {
-                children = new ArrayList<String>(childs);
-            }
-
+            List<String> children=new ArrayList<String>(n.getChildren());
             if (watcher != null) {
                 childWatches.addWatch(path, watcher);
             }
@@ -1052,19 +1045,16 @@ public class DataTree {
         if (node == null) {
             return;
         }
-        String[] children = null;
+        Set<String> children = null;
         int len = 0;
         synchronized (node) {
-            Set<String> childs = node.getChildren();
-            if (childs != null) {
-                children = childs.toArray(new String[childs.size()]);
-            }
+            children = node.getChildren();
             len = (node.data == null ? 0 : node.data.length);
         }
         // add itself
         counts.count += 1;
         counts.bytes += len;
-        if (children == null || children.length == 0) {
+        if (children.isEmpty()) {
             return;
         }
         for (String child : children) {
@@ -1103,14 +1093,11 @@ public class DataTree {
      */
     private void traverseNode(String path) {
         DataNode node = getNode(path);
-        String children[] = null;
+        Set<String> children = null;
         synchronized (node) {
-            Set<String> childs = node.getChildren();
-            if (childs != null) {
-                children = childs.toArray(new String[childs.size()]);
-            }
+            children = node.getChildren();
         }
-        if (children == null || children.length == 0) {
+        if (children.isEmpty()) {
             // this node does not have a child
             // is the leaf node
             // check if its the leaf node
@@ -1160,7 +1147,7 @@ public class DataTree {
         if (node == null) {
             return;
         }
-        String children[] = null;
+        Set<String> children = null;
         DataNode nodeCopy;
         synchronized (node) {
             StatPersisted statCopy = new StatPersisted();
@@ -1168,24 +1155,19 @@ public class DataTree {
             //we do not need to make a copy of node.data because the contents
             //are never changed
             nodeCopy = new DataNode(node.data, node.acl, statCopy);
-            Set<String> childs = node.getChildren();
-            if (childs != null) {
-                children = childs.toArray(new String[childs.size()]);
-            }
+            children = node.getChildren();
         }
         oa.writeString(pathString, "path");
         oa.writeRecord(nodeCopy, "node");
         path.append('/');
         int off = path.length();
-        if (children != null) {
-            for (String child : children) {
-                // since this is single buffer being resused
-                // we need
-                // to truncate the previous bytes of string.
-                path.delete(off, Integer.MAX_VALUE);
-                path.append(child);
-                serializeNode(oa, path);
-            }
+        for (String child : children) {
+            // since this is single buffer being resused
+            // we need
+            // to truncate the previous bytes of string.
+            path.delete(off, Integer.MAX_VALUE);
+            path.append(child);
+            serializeNode(oa, path);
         }
     }
 

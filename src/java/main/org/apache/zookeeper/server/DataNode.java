@@ -124,7 +124,8 @@ public class DataNode implements Record {
     /**
      * convenience methods to get the children
      * 
-     * @return the children of this datanode
+     * @return the children of this datanode. If the datanode has no children, empty
+     *         set is returned
      */
     public synchronized Set<String> getChildren() {
         if (children == null) {
