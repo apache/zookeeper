@@ -678,6 +678,7 @@ public class DataTree {
                 n.copyStat(stat);
             }
             List<String> children=new ArrayList<String>(n.getChildren());
+
             if (watcher != null) {
                 childWatches.addWatch(path, watcher);
             }
@@ -1045,18 +1046,16 @@ public class DataTree {
         if (node == null) {
             return;
         }
-        Set<String> children = null;
+        String[] children = null;
         int len = 0;
         synchronized (node) {
-            children = node.getChildren();
+            Set<String> childs = node.getChildren();
+            children = childs.toArray(new String[childs.size()]);
             len = (node.data == null ? 0 : node.data.length);
         }
         // add itself
         counts.count += 1;
         counts.bytes += len;
-        if (children.isEmpty()) {
-            return;
-        }
         for (String child : children) {
             getCounts(path + "/" + child, counts);
         }
@@ -1093,11 +1092,12 @@ public class DataTree {
      */
     private void traverseNode(String path) {
         DataNode node = getNode(path);
-        Set<String> children = null;
+        String children[] = null;
         synchronized (node) {
-            children = node.getChildren();
+            Set<String> childs = node.getChildren();
+            children = childs.toArray(new String[childs.size()]);
         }
-        if (children.isEmpty()) {
+        if (children.length == 0) {
             // this node does not have a child
             // is the leaf node
             // check if its the leaf node
@@ -1147,7 +1147,7 @@ public class DataTree {
         if (node == null) {
             return;
         }
-        Set<String> children = null;
+        String children[] = null;
         DataNode nodeCopy;
         synchronized (node) {
             StatPersisted statCopy = new StatPersisted();
@@ -1155,7 +1155,8 @@ public class DataTree {
             //we do not need to make a copy of node.data because the contents
             //are never changed
             nodeCopy = new DataNode(node.data, node.acl, statCopy);
-            children = node.getChildren();
+            Set<String> childs = node.getChildren();
+            children = childs.toArray(new String[childs.size()]);
         }
         oa.writeString(pathString, "path");
         oa.writeRecord(nodeCopy, "node");
