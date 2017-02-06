@@ -89,6 +89,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="test.junit.threads" value="1" />
     <property name="test.junit.printsummary" value="yes" />
     <property name="test.junit.haltonfailure" value="no" />
+    <property name="test.junit.failbuild.ontestfailure" value="true" />
     <property name="config.dir" value="${src.dir}/java/test/config" />
     <property name="test.junit.maxmem" value="512m" />
     <property name="test.quick" value="no" />
@@ -1208,6 +1209,10 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
             <fileset refid="testcase.files" />
           </batchtest>
         </junit>
+        <antcall target="fail.build.on.test.failure"/>
+    </target>
+
+    <target name="fail.build.on.test.failure" if="${test.junit.failbuild.ontestfailure}" >
         <fail if="tests.failed">Tests failed!</fail>
     </target>
 
@@ -1234,7 +1239,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
             <fileset refid="testcase.files" />
           </batchtest>
         </junit>
-        <fail if="tests.failed">Tests failed!</fail>
+        <antcall target="fail.build.on.test.failure"/>
     </target>
 
     <target name="check-cppunit-configure" depends="init" >
@@ -1477,7 +1482,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
                 <fileset dir="${test.src.dir}" includes="**/${testcase}.java"/>
             </batchtest>
         </junit>
-        <fail if="tests.failed">Tests failed!</fail>
+        <antcall target="fail.build.on.test.failure"/>
     </target>
 
     <target name="cobertura-report" depends="cobertura-test">
