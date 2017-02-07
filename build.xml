@@ -84,6 +84,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
     <property name="test.junit.fork.mode" value="perTest" />
     <property name="test.junit.printsummary" value="yes" />
     <property name="test.junit.haltonfailure" value="no" />
+    <property name="test.junit.failbuild.ontestfailure" value="true" />
     <property name="config.dir" value="${src.dir}/java/test/config" />
     <property name="test.junit.maxmem" value="512m" />
     <property name="test.quick" value="no" />
@@ -1324,6 +1325,9 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
             <fileset dir="${test.src.dir}" includes="**/${testcase}.java"/>
           </batchtest>
         </junit>
+        <antcall target="fail.build.on.test.failure"/>
+    </target>
+    <target name="fail.build.on.test.failure" if="${test.junit.failbuild.ontestfailure}" >
         <fail if="tests.failed">Tests failed!</fail>
     </target>
 
@@ -1567,7 +1571,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
                 <fileset dir="${test.src.dir}" includes="**/${testcase}.java"/>
             </batchtest>
         </junit>
-        <fail if="tests.failed">Tests failed!</fail>
+        <antcall target="fail.build.on.test.failure"/>
     </target>
 
     <target name="cobertura-report" depends="cobertura-test">
