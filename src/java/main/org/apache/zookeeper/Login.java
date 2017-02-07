@@ -206,7 +206,14 @@ public class Login {
                         break;
                     }
                     if (isUsingTicketCache) {
-                        String cmd = zkConfig.getProperty(ZKConfig.KINIT_COMMAND, KINIT_COMMAND_DEFAULT);
+                        String cmd = "/usr/bin/kinit";
+                        if (zkConfig != null) {
+                            cmd = zkConfig.getProperty(ZKConfig.KINIT_COMMAND, KINIT_COMMAND_DEFAULT);
+                        } else {
+                            if (System.getProperty("zookeeper.kinit") != null) {
+                                cmd = System.getProperty("zookeeper.kinit");
+                            }
+                        }
                         String kinitArgs = "-R";
                         int retry = 1;
                         while (retry >= 0) {
@@ -299,7 +306,7 @@ public class Login {
         }
         LoginContext loginContext = new LoginContext(loginContextName,callbackHandler);
         loginContext.login();
-        LOG.info("successfully logged in.");
+        LOG.info("{} successfully logged in.", loginContextName);
         return loginContext;
     }
 

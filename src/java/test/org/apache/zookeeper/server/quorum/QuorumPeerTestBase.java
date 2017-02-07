@@ -26,6 +26,10 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.Properties;
 
 import org.slf4j.Logger;
@@ -61,7 +65,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             }
         }
     }
-    
+
     public static class MainThread implements Runnable {
         final File confFile;
         final File tmpDir;
@@ -71,6 +75,60 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         public static final int UNSET_MYID = -1;
 
         volatile TestQPMain main;
+
+        File baseDir;
+        private int myid;
+        private int clientPort;
+        private String quorumCfgSection;
+        private Map<String, String> otherConfigs;
+
+        public MainThread(int myid, int clientPort, String quorumCfgSection,
+                          Map<String, String> otherConfigs) throws IOException {
+            baseDir = ClientBase.createTmpDir();
+            this.myid = myid;
+            this.clientPort = clientPort;
+            this.quorumCfgSection = quorumCfgSection;
+            this.otherConfigs = otherConfigs;
+            LOG.info("id = " + myid + " tmpDir = " + baseDir + " clientPort = "
+                    + clientPort);
+            confFile = new File(baseDir, "zoo.cfg");
+
+            FileWriter fwriter = new FileWriter(confFile);
+            fwriter.write("tickTime=4000\n");
+            fwriter.write("initLimit=10\n");
+            fwriter.write("syncLimit=5\n");
+
+            tmpDir = new File(baseDir, "data");
+            if (!tmpDir.mkdir()) {
+                throw new IOException("Unable to mkdir " + tmpDir);
+            }
+
+            // Convert windows path to UNIX to avoid problems with "\"
+            String dir = tmpDir.toString();
+            String osname = java.lang.System.getProperty("os.name");
+            if (osname.toLowerCase().contains("windows")) {
+                dir = dir.replace('\\', '/');
+            }
+            fwriter.write("dataDir=" + dir + "\n");
+
+            fwriter.write("clientPort=" + clientPort + "\n");
+
+            // write extra configurations
+            Set<Entry<String, String>> entrySet = otherConfigs.entrySet();
+            for (Entry<String, String> entry : entrySet) {
+                fwriter.write(entry.getKey() + "=" + entry.getValue() + "\n");
+            }
+
+            fwriter.write(quorumCfgSection + "\n");
+            fwriter.flush();
+            fwriter.close();
+
+            File myidFile = new File(tmpDir, "myid");
+            fwriter = new FileWriter(myidFile);
+            fwriter.write(Integer.toString(myid));
+            fwriter.flush();
+            fwriter.close();
+        }
 
         public MainThread(int myid, String quorumCfgSection) throws IOException {
             this(myid, quorumCfgSection, true);
@@ -300,6 +358,30 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
 
         public QuorumPeer getQuorumPeer() {
             return main.quorumPeer;
+        }
+
+        public void deleteBaseDir() {
+            ClientBase.recursiveDelete(baseDir);
+        }
+
+        public int getMyid() {
+            return myid;
+        }
+
+        public int getClientPort() {
+            return clientPort;
+        }
+
+        public String getQuorumCfgSection() {
+            return quorumCfgSection;
+        }
+
+        public Map<String, String> getOtherConfigs() {
+            return otherConfigs;
+        }
+
+        public File getConfFile() {
+            return confFile;
         }
     }
 }

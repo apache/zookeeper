@@ -32,6 +32,7 @@ import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
+import javax.security.sasl.SaslException;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
@@ -155,6 +156,8 @@ public class LearnerHandler extends ZooKeeperThread {
 
     private BinaryOutputArchive oa;
 
+    private final BufferedInputStream bufferedInput;
+
     private BufferedOutputStream bufferedOutput;
     
     /**
@@ -179,11 +182,25 @@ public class LearnerHandler extends ZooKeeperThread {
      */
     private long leaderLastZxid;
 
-    LearnerHandler(Socket sock, Leader leader) throws IOException {
+    LearnerHandler(Socket sock, BufferedInputStream bufferedInput,
+                   Leader leader) throws IOException {
         super("LearnerHandler-" + sock.getRemoteSocketAddress());
         this.sock = sock;
         this.leader = leader;
-        leader.addLearnerHandler(this);
+        this.bufferedInput = bufferedInput;
+        try {
+            leader.self.authServer.authenticate(sock,
+                    new DataInputStream(bufferedInput));
+        } catch (IOException e) {
+            LOG.error("Server failed to authenticate quorum learner, addr: {}, closing connection",
+                    sock.getRemoteSocketAddress(), e);
+            try {
+                sock.close();
+            } catch (IOException ie) {
+                LOG.error("Exception while closing socket", ie);
+            }
+            throw new SaslException("Authentication failure: " + e.getMessage());
+        }
     }
 
     @Override
@@ -343,11 +360,11 @@ public class LearnerHandler extends ZooKeeperThread {
     @Override
     public void run() {
         try {
+            leader.addLearnerHandler(this);
             tickOfNextAckDeadline = leader.self.tick.get()
                     + leader.self.initLimit + leader.self.syncLimit;
 
-            ia = BinaryInputArchive.getArchive(new BufferedInputStream(sock
-                    .getInputStream()));
+            ia = BinaryInputArchive.getArchive(bufferedInput);
             bufferedOutput = new BufferedOutputStream(sock.getOutputStream());
             oa = BinaryOutputArchive.getArchive(bufferedOutput);
 
