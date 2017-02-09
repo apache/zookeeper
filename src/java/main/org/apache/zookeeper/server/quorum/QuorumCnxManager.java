@@ -30,6 +30,7 @@ import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.UnresolvedAddressException;
 import java.util.Enumeration;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -37,6 +38,7 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.zookeeper.server.ZooKeeperThread;
+import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -306,7 +308,7 @@ public class QuorumCnxManager {
      * connection if it wins. Notice that it checks whether it has a connection
      * to this server already or not. If it does, then it sends the smallest
      * possible long value to lose the challenge.
-     * 
+     *
      */
     public void receiveConnection(Socket sock) {
         Long sid = null, protocolVersion = null;
@@ -466,29 +468,31 @@ public class QuorumCnxManager {
      * 
      *  @param sid  server id
      */
-    
     synchronized void connectOne(long sid){
         if (senderWorkerMap.get(sid) != null) {
-             LOG.debug("There is a connection already for server " + sid);
-             return;
+            LOG.debug("There is a connection already for server " + sid);
+            return;
         }
-        synchronized(self) {
-           boolean knownId = false;
+        synchronized (self.QV_LOCK) {
+            boolean knownId = false;
             // Resolve hostname for the remote server before attempting to
             // connect in case the underlying ip address has changed.
             self.recreateSocketAddresses(sid);
-            if (self.getView().containsKey(sid)) {
-               knownId = true;
-                if (connectOne(sid, self.getView().get(sid).electionAddr))
-                   return;
-            } 
-            if (self.getLastSeenQuorumVerifier()!=null && self.getLastSeenQuorumVerifier().getAllMembers().containsKey(sid)
-                   && (!knownId || (self.getLastSeenQuorumVerifier().getAllMembers().get(sid).electionAddr !=
-                   self.getView().get(sid).electionAddr))) {
-               knownId = true;
-                if (connectOne(sid, self.getLastSeenQuorumVerifier().getAllMembers().get(sid).electionAddr))
-                   return;
-            } 
+            Map<Long, QuorumPeer.QuorumServer> lastCommittedView = self.getView();
+            QuorumVerifier lastSeenQV = self.getLastSeenQuorumVerifier();
+            Map<Long, QuorumPeer.QuorumServer> lastProposedView = lastSeenQV.getAllMembers();
+            if (lastCommittedView.containsKey(sid)) {
+                knownId = true;
+                if (connectOne(sid, lastCommittedView.get(sid).electionAddr))
+                    return;
+            }
+            if (lastSeenQV != null && lastProposedView.containsKey(sid)
+                    && (!knownId || (lastProposedView.get(sid).electionAddr !=
+                    lastCommittedView.get(sid).electionAddr))) {
+                knownId = true;
+                if (connectOne(sid, lastProposedView.get(sid).electionAddr))
+                    return;
+            }
             if (!knownId) {
                 LOG.warn("Invalid server id: " + sid);
                 return;
