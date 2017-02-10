@@ -102,11 +102,9 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
 
                 public void shutdown() {
                 }
-            }, "0", false, new ZooKeeperServerListener() {
-
-                @Override
-                public void notifyStopping(String threadName, int errorCode) {
-                }
+            }, "0", false,
+                (String errMsg, int exitCode) -> {
+                    Assert.fail("Commit processor crashed " + exitCode);
             });
         }
 
@@ -373,5 +371,53 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
             Assert.assertTrue("Processed additional committed request",
                     !processedRequests.contains(r));
         }
+    }
+
+    /**
+     * In the following test, we verify that we can handle the case that we got a commit 
+     * of a request we never seen since the session that we just established. This can happen
+     * when a session is just established and there is request waiting to be commited in the 
+     * in the session queue but it sees a commit for a request in the previous connection
+     */
+    @Test(timeout = 1000)
+    public void noCrashOnCommittedRequestsOfUnSeenRequestTest() throws Exception {
+        final String path = "/noCrash/OnCommittedRequests/OfUnSeenRequestTest";
+        final int iteration = 10;
+        final int sessionid = 0x123456;
+        final int firstCXid = 0x100;
+        int readReqId = firstCXid;
+        processor.stoppedMainLoop = true;
+        HashSet<Request> localRequests = new HashSet<Request>();
+        // queue the blocking commit
+        Request firstCommittedReq = newRequest(
+            new CreateRequest(path, new byte[0], Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
+            OpCode.create, sessionid, readReqId++);
+        processor.queuedRequests.add(firstCommittedReq);
+        localRequests.add(firstCommittedReq);
+        // queue read linkedRequest to queuedRequests
+        for (; readReqId <= iteration+firstCXid; ++readReqId) {
+            Request readReq = newRequest(new GetDataRequest(path, false),
+                OpCode.getData, sessionid, readReqId);
+            processor.queuedRequests.add(readReq);
+            localRequests.add(readReq);
+        }
+        //run once
+        Assert.assertTrue(processor.queuedRequests.containsAll(localRequests));
+        processor.initThreads(iteration* 2);
+        processor.run();
+        Assert.assertTrue(processedRequests.isEmpty());
+        // now we get a commit originated from another host that handles this same session
+        // just before
+        Request preSessionCommittedReq = newRequest(
+            new CreateRequest(path, new byte[0], Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
+            OpCode.create, sessionid, firstCXid - 2);
+        processor.committedRequests.add(preSessionCommittedReq);
+        processor.committedRequests.add(firstCommittedReq);
+        processor.run();
+        Assert.assertTrue(processedRequests.peek() == preSessionCommittedReq);
+        processor.run();
+        Assert.assertTrue(processedRequests.containsAll(localRequests));
     }
 }
