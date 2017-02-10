@@ -94,10 +94,8 @@ public class SnapshotFormatter {
             }
             children = n.getChildren();
         }
-        if (children != null) {
-            for (String child : children) {
-                printZnode(dataTree, name + (name.equals("/") ? "" : "/") + child);
-            }
+        for (String child : children) {
+            printZnode(dataTree, name + (name.equals("/") ? "" : "/") + child);
         }
     }
 
