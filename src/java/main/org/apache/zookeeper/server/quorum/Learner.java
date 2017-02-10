@@ -513,10 +513,6 @@ public class Learner {
                     break outerLoop;
                 case Leader.NEWLEADER: // Getting NEWLEADER here instead of in discovery 
                     // means this is Zab 1.0
-                    // Create updatingEpoch file and remove it after current
-                    // epoch is set. QuorumPeer.loadDataBase() uses this file to
-                    // detect the case where the server was terminated after
-                    // taking a snapshot but before setting the current epoch.
                    LOG.info("Learner received NEWLEADER message");
                    if (qp.getData()!=null && qp.getData().length > 1) {
                        try {                       
