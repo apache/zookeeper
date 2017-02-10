@@ -18,8 +18,8 @@
 
 package org.apache.zookeeper.server.quorum.auth;
 
-import org.apache.kerby.kerberos.kerb.keytab.Keytab;
-import org.apache.kerby.kerberos.kerb.type.base.PrincipalName;
+import org.apache.directory.server.kerberos.shared.keytab.Keytab;
+import org.apache.directory.server.kerberos.shared.keytab.KeytabEntry;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -60,16 +60,17 @@ public class MiniKdcTest extends KerberosSecurityTestcase {
         File workDir = getWorkDir();
 
         kdc.createPrincipal(new File(workDir, "keytab"), "foo/bar", "bar/foo");
-        List<PrincipalName> principalNameList =
-                Keytab.loadKeytab(new File(workDir, "keytab")).getPrincipals();
+        Keytab kt = Keytab.read(new File(workDir, "keytab"));
 
         Set<String> principals = new HashSet<String>();
-        for (PrincipalName principalName : principalNameList) {
-          principals.add(principalName.getName());
+        for (KeytabEntry entry : kt.getEntries()) {
+            principals.add(entry.getPrincipalName());
         }
-
+        //here principals use \ instead of /
+        //because org.apache.directory.server.kerberos.shared.keytab.KeytabDecoder
+        // .getPrincipalName(IoBuffer buffer) use \\ when generates principal
         Assert.assertEquals(new HashSet<String>(Arrays.asList(
-                "foo/bar@" + kdc.getRealm(), "bar/foo@" + kdc.getRealm())),
+                "foo\\bar@" + kdc.getRealm(), "bar\\foo@" + kdc.getRealm())),
                 principals);
       }
 
