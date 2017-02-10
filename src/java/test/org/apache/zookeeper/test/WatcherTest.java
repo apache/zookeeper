@@ -44,6 +44,8 @@ import org.junit.Test;
 public class WatcherTest extends ClientBase {
     protected static final Logger LOG = LoggerFactory.getLogger(WatcherTest.class);
 
+    private long timeOfLastWatcherInvocation;
+
     private final static class MyStatCallback implements StatCallback {
         int rc;
         public void processResult(int rc, String path, Object ctx, Stat stat) {
@@ -59,6 +61,7 @@ public class WatcherTest extends ClientBase {
         public void process(WatchedEvent event) {
             super.process(event);
             if (event.getType() != Event.EventType.None) {
+                timeOfLastWatcherInvocation = System.currentTimeMillis();
                 try {
                     events.put(event);
                 } catch (InterruptedException e) {
@@ -172,7 +175,6 @@ public class WatcherTest extends ClientBase {
     }
 
     final static int COUNT = 100;
-    boolean hasSeenDelete = true;
     /**
      * This test checks that watches for pending requests do not get triggered,
      * but watches set by previous requests do.
@@ -206,7 +208,7 @@ public class WatcherTest extends ClientBase {
        startServer();
        watches[COUNT/2-1].waitForConnected(60000);
        Assert.assertEquals(null, zk.exists("/test", false));
-       Thread.sleep(10);
+       waitForAllWatchers();
        for(int i = 0; i < COUNT/2; i++) {
            Assert.assertEquals("For " + i, 1, watches[i].events.size());
        }
@@ -219,6 +221,18 @@ public class WatcherTest extends ClientBase {
        }
        Assert.assertEquals(COUNT, count[0]);
        zk.close();
+    }
+
+    /**
+     * Wait until no watcher has been fired in the last second to ensure that all watches
+     * that are waiting to be fired have been fired
+     * @throws Exception
+     */
+    private void waitForAllWatchers() throws Exception {
+      timeOfLastWatcherInvocation = System.currentTimeMillis();
+      while (System.currentTimeMillis() - timeOfLastWatcherInvocation < 1000) {
+        Thread.sleep(1000);
+      }
     }
 
     final int TIMEOUT = 5000;
