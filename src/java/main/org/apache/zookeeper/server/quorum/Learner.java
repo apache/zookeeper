@@ -358,12 +358,16 @@ public class Learner {
         
         QuorumVerifier newLeaderQV = null;
         
-        readPacket(qp);   
+        // In the DIFF case we don't need to do a snapshot because the transactions will sync on top of any existing snapshot
+        // For SNAP and TRUNC the snapshot is needed to save that history
+        boolean snapshotNeeded = true;
+        readPacket(qp);
         LinkedList<Long> packetsCommitted = new LinkedList<Long>();
         LinkedList<PacketInFlight> packetsNotCommitted = new LinkedList<PacketInFlight>();
         synchronized (zk) {
             if (qp.getType() == Leader.DIFF) {
-                LOG.info("Getting a diff from the leader 0x" + Long.toHexString(qp.getZxid()));                
+                LOG.info("Getting a diff from the leader 0x{}", Long.toHexString(qp.getZxid()));
+                snapshotNeeded = false;
             }
             else if (qp.getType() == Leader.SNAP) {
                 LOG.info("Getting a snapshot from leader");
@@ -400,10 +404,13 @@ public class Learner {
             
             long lastQueued = 0;
 
-            // in V1.0 we take a snapshot when we get the NEWLEADER message, but in pre V1.0
-            // we take the snapshot at the UPDATE, since V1.0 also gets the UPDATE (after the NEWLEADER)
+            // in Zab V1.0 (ZK 3.4+) we might take a snapshot when we get the NEWLEADER message, but in pre V1.0
+            // we take the snapshot on the UPDATE message, since Zab V1.0 also gets the UPDATE (after the NEWLEADER)
             // we need to make sure that we don't take the snapshot twice.
-            boolean snapshotTaken = false;
+            boolean isPreZAB1_0 = true;
+            //If we are not going to take the snapshot be sure the transactions are not applied in memory
+            // but written out to the transaction log
+            boolean writeToTxnLog = !snapshotNeeded;
             // we are now going to start getting transactions to apply followed by an UPTODATE
             outerLoop:
             while (self.isRunning()) {
@@ -440,7 +447,7 @@ public class Learner {
                             throw new Exception("changes proposed in reconfig");
                         }
                     }
-                    if (!snapshotTaken) {
+                    if (!writeToTxnLog) {
                         if (pif.hdr.getZxid() != qp.getZxid()) {
                             LOG.warn("Committing " + qp.getZxid() + ", but next proposal is " + pif.hdr.getZxid());
                         } else {
@@ -479,8 +486,7 @@ public class Learner {
                         }
                         lastQueued = packet.hdr.getZxid();
                     }
-
-                    if (!snapshotTaken) {
+                    if (!writeToTxnLog) {
                         // Apply to db directly if we haven't taken the snapshot
                         zk.processTxn(packet.hdr, packet.rec);
                     } else {
@@ -498,14 +504,15 @@ public class Learner {
                            throw new Exception("changes proposed in reconfig");
                        }
                     }
-                    if (!snapshotTaken) { // true for the pre v1.0 case
-                       zk.takeSnapshot();
+                    if (isPreZAB1_0) {
+                        zk.takeSnapshot();
                         self.setCurrentEpoch(newEpoch);
                     }
                     self.setZooKeeperServer(zk);
                     self.adminServer.setZooKeeperServer(zk);
                     break outerLoop;
-                case Leader.NEWLEADER: // it will be NEWLEADER in v1.0        
+                case Leader.NEWLEADER: // Getting NEWLEADER here instead of in discovery 
+                    // means this is Zab 1.0
                    LOG.info("Learner received NEWLEADER message");
                    if (qp.getData()!=null && qp.getData().length > 1) {
                        try {                       
@@ -516,10 +523,14 @@ public class Learner {
                            e.printStackTrace();
                        }
                    }
+
+                   if (snapshotNeeded) {
+                       zk.takeSnapshot();
+                   }
                    
-                    zk.takeSnapshot();
                     self.setCurrentEpoch(newEpoch);
-                    snapshotTaken = true;
+                    writeToTxnLog = true; //Anything after this needs to go to the transaction log, not applied directly in memory
+                    isPreZAB1_0 = false;
                     writePacket(new QuorumPacket(Leader.ACK, newLeaderZxid, null, null), true);
                     break;
                 }
