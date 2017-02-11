@@ -94,7 +94,7 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
         reconfigServers.clear();
         reconfigServers.add(Integer.toString(follower2));
         try {
-            zkAdminHandles[follower2].reconfig(null, reconfigServers, null, -1, new Stat());
+            zkAdminHandles[follower2].reconfigure(null, reconfigServers, null, -1, new Stat());
             Assert.fail("reconfig completed successfully even though there is no quorum up in new config!");
         } catch (KeeperException.BadArgumentsException e) {
             // This is expected.

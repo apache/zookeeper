@@ -22,18 +22,11 @@ import java.io.IOException;
 import java.util.List;
 
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.client.ZKClientConfig;
-import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.proto.GetDataResponse;
-import org.apache.zookeeper.proto.ReconfigRequest;
-import org.apache.zookeeper.proto.ReplyHeader;
-import org.apache.zookeeper.proto.RequestHeader;
-import org.apache.zookeeper.server.DataTree;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -172,66 +165,44 @@ public class ZooKeeperAdmin extends ZooKeeper {
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws KeeperException If the server signals an error with a non-zero error code.
      */
-    public byte[] reconfig(String joiningServers, String leavingServers,
-                           String newMembers, long fromConfig, Stat stat) throws KeeperException, InterruptedException {
-        RequestHeader h = new RequestHeader();
-        h.setType(ZooDefs.OpCode.reconfig);
-        ReconfigRequest request = new ReconfigRequest(joiningServers, leavingServers, newMembers, fromConfig);
-        GetDataResponse response = new GetDataResponse();
-        ReplyHeader r = cnxn.submitRequest(h, request, response, null);
-        if (r.getErr() != 0) {
-            throw KeeperException.create(KeeperException.Code.get(r.getErr()), "");
-        }
-        if (stat != null) {
-            DataTree.copyStat(response.getStat(), stat);
-        }
-        return response.getData();
+    public byte[] reconfigure(String joiningServers, String leavingServers,
+                              String newMembers, long fromConfig, Stat stat) throws KeeperException, InterruptedException {
+        return internalReconfig(joiningServers, leavingServers, newMembers, fromConfig, stat);
     }
 
     /**
      * Convenience wrapper around reconfig that takes Lists of strings instead of comma-separated servers.
      *
-     * @see #reconfig
+     * @see #reconfigure
      *
      */
-    public byte[] reconfig(List<String> joiningServers, List<String> leavingServers,
-                           List<String> newMembers, long fromConfig,
-                           Stat stat) throws KeeperException, InterruptedException {
-        return reconfig(StringUtils.joinStrings(joiningServers, ","),
-                        StringUtils.joinStrings(leavingServers, ","),
-                        StringUtils.joinStrings(newMembers, ","),
-                        fromConfig, stat);
+    public byte[] reconfigure(List<String> joiningServers, List<String> leavingServers,
+                              List<String> newMembers, long fromConfig,
+                              Stat stat) throws KeeperException, InterruptedException {
+        return internalReconfig(joiningServers, leavingServers, newMembers, fromConfig, stat);
     }
 
     /**
      * The Asynchronous version of reconfig.
      *
-     * @see #reconfig
+     * @see #reconfigure
      *
      **/
-    public void reconfig(String joiningServers, String leavingServers,
-        String newMembers, long fromConfig, DataCallback cb, Object ctx) {
-        RequestHeader h = new RequestHeader();
-        h.setType(ZooDefs.OpCode.reconfig);
-        ReconfigRequest request = new ReconfigRequest(joiningServers, leavingServers, newMembers, fromConfig);
-        GetDataResponse response = new GetDataResponse();
-        cnxn.queuePacket(h, new ReplyHeader(), request, response, cb,
-               ZooDefs.CONFIG_NODE, ZooDefs.CONFIG_NODE, ctx, null);
+    public void reconfigure(String joiningServers, String leavingServers,
+                            String newMembers, long fromConfig, DataCallback cb, Object ctx) {
+        internalReconfig(joiningServers, leavingServers, newMembers, fromConfig, cb, ctx);
     }
 
     /**
      * Convenience wrapper around asynchronous reconfig that takes Lists of strings instead of comma-separated servers.
      *
-     * @see #reconfig
+     * @see #reconfigure
      *
      */
-    public void reconfig(List<String> joiningServers,
-        List<String> leavingServers, List<String> newMembers, long fromConfig,
-        DataCallback cb, Object ctx) {
-        reconfig(StringUtils.joinStrings(joiningServers, ","),
-                 StringUtils.joinStrings(leavingServers, ","),
-                 StringUtils.joinStrings(newMembers, ","),
-                 fromConfig, cb, ctx);
+    public void reconfigure(List<String> joiningServers,
+                            List<String> leavingServers, List<String> newMembers, long fromConfig,
+                            DataCallback cb, Object ctx) {
+        internalReconfig(joiningServers, leavingServers, newMembers, fromConfig, cb, ctx);
     }
 
     /**

@@ -214,7 +214,7 @@ public class ReconfigExceptionTest extends ZKTestCase {
                 + qu.getPeer(followerId).peer.getQuorumAddress().getPort() /*quorum port*/
                 + ":" + qu.getPeer(followerId).peer.getElectionAddress().getPort() /*election port*/
                 + ":participant;localhost:" + PortAssignment.unique()/* new client port */);
-        zkAdmin.reconfig(joiningServers, null, null, -1, new Stat());
+        zkAdmin.reconfigure(joiningServers, null, null, -1, new Stat());
         return true;
     }
 }
