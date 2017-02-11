@@ -149,7 +149,7 @@ public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
         // Leader.NEWLEADER
         while (true) {
             if (qp.isNewLeaderMessage()) {
-                preReconfigClient.reconfig(serverConfig[joinerId], null, null, -1, null, null);
+                preReconfigClient.reconfigure(serverConfig[joinerId], null, null, -1, null, null);
                 break;
             } else {
                 // sleep for 10 millisecond and then again check
