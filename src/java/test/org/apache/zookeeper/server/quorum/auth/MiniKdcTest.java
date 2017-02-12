@@ -30,7 +30,6 @@ import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import java.io.File;
 import java.security.Principal;
-import java.util.List;
 import java.util.Set;
 import java.util.Map;
 import java.util.HashSet;
