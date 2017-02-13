@@ -159,7 +159,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         public void recreateSocketAddresses() {
             InetAddress address = null;
             try {
-                address = InetAddress.getByName(this.hostname);
+                address = getReachableAddress(this.hostname, 2000);
                 LOG.info("Resolved hostname: {} to address: {}", this.hostname, address);
                 this.addr = new InetSocketAddress(address, this.port);
                 if (this.electionPort > 0){
@@ -179,6 +179,33 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                                                                            this.electionPort);
                 }
             }
+        }
+
+        /**
+         * Resolve the hostname to IP addresses, and find one reachable address.
+         *
+         * @param hostname the name of the host
+         * @param timeout the time, in millseconds, before {@link InetAddress#isReachable}
+         *                aborts
+         * @return a reachable IP address. If no such IP address can be found,
+         *         just return the first IP address of the hostname.
+         *
+         * @exception UnknownHostException
+         */
+        public InetAddress getReachableAddress(String hostname, int timeout) 
+                throws UnknownHostException {
+            InetAddress[] addresses = InetAddress.getAllByName(hostname);
+            for (InetAddress a : addresses) {
+                try {
+                    if (a.isReachable(timeout)) {
+                        return a;
+                    } 
+                } catch (IOException e) {
+                    LOG.warn("IP address {} is unreachable", a);
+                }
+            }
+            // All the IP address is unreachable, just return the first one.
+            return addresses[0];
         }
 
         public InetSocketAddress addr;
