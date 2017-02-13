@@ -347,7 +347,7 @@ namespace zktreeutil
         std::cerr << "[zktreeutil] connected to ZK serverfor reading"
             << std::endl;
 
-        // Check the existance of the path to znode
+        // Check the existence of the path to znode
         if (!zkHandle->nodeExists (path))
         {
             string errMsg = string("[zktreeutil] path does not exists : ") + path;

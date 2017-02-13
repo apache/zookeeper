@@ -445,7 +445,7 @@ namespace zktreeutil
             if (rc == ZNONODE)
                 return false;
             // Some error
-            std::cerr << "[zktreeutil] Error in checking existance of " << path << std::endl;
+            std::cerr << "[zktreeutil] Error in checking existence of " << path << std::endl;
             throw ZooKeeperException( string("Unable to check existence of node ") + path, rc );
         } else {
             return true;        

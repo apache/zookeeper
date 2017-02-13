@@ -276,7 +276,7 @@ const char pyzk_add_auth_doc[] =
 "BADARGUMENTS - invalid input parameters\n"
 "INVALIDSTATE - zhandle state is either SESSION_EXPIRED_STATE or AUTH_FAILED_STATE\n"
 "MARSHALLINGERROR - failed to marshall a request; possibly, out of memory\n"
-  "SYSTEMERROR - a system error occured\n";
+  "SYSTEMERROR - a system error occurred\n";
 
 const char pyzk_is_unrecoverable_doc[] = 
 " checks if the current zookeeper connection state can't be recovered.\n"
@@ -513,8 +513,8 @@ static const char pyzk_close_doc[] =
 "BADARGUMENTS - invalid input parameters\n"
 "MARSHALLINGERROR - failed to marshall a request; possibly, out of memory\n"
 "OPERATIONTIMEOUT - failed to flush the buffers within the specified timeout.\n"
-"CONNECTIONLOSS - a network error occured while attempting to send request to server\n"
-  "SYSTEMERROR -- a system (OS) error occured; it's worth checking errno to get details\n";
+"CONNECTIONLOSS - a network error occurred while attempting to send request to server\n"
+  "SYSTEMERROR -- a system (OS) error occurred; it's worth checking errno to get details\n";
 
 static const char pyzk_set2_doc[] = 
 "\n"

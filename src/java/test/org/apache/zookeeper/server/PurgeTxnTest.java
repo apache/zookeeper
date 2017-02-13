@@ -570,7 +570,7 @@ public class PurgeTxnTest extends ZKTestCase {
                             zk.create(mynode, new byte[0], Ids.OPEN_ACL_UNSAFE,
                                     CreateMode.PERSISTENT);
                         } catch (Exception e) {
-                            LOG.error("Unexpected exception occured!", e);
+                            LOG.error("Unexpected exception occurred!", e);
                         }
                         if (i == 200) {
                             doPurge.countDown();
@@ -589,8 +589,8 @@ public class PurgeTxnTest extends ZKTestCase {
             Assert.assertTrue("ZkClient ops is not finished!",
                     finished.await(OP_TIMEOUT_IN_MILLIS, TimeUnit.MILLISECONDS));
         } catch (InterruptedException ie) {
-            LOG.error("Unexpected exception occured!", ie);
-            Assert.fail("Unexpected exception occured!");
+            LOG.error("Unexpected exception occurred!", ie);
+            Assert.fail("Unexpected exception occurred!");
         }
         return znodes;
     }
