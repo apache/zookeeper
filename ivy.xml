@@ -78,30 +78,38 @@
     <dependency org="commons-io" name="commons-io" rev="2.4"
                 conf="test->default"/>
 
-    <dependency org="org.apache.kerby" name="kerb-simplekdc" rev="1.0.0-RC2"
-                conf="test->default"/>
-    <dependency org="org.apache.kerby" name="kerby-config" rev="1.0.0-RC2"
-                conf="test->default"/>
-    <dependency org="org.apache.kerby" name="kerb-core" rev="1.0.0-RC2"
-                conf="test->default"/>
-    <dependency org="org.apache.kerby" name="kerb-server" rev="1.0.0-RC2"
-                conf="test->default"/>
-    <dependency org="org.apache.kerby" name="kerb-common" rev="1.0.0-RC2"
-                conf="test->default"/>
-    <dependency org="org.apache.kerby" name="kerb-admin" rev="1.0.0-RC2"
-                conf="test->default"/>
-    <dependency org="org.apache.kerby" name="kerb-identity" rev="1.0.0-RC2"
-                conf="test->default"/>
-    <dependency org="org.apache.kerby" name="kerb-client" rev="1.0.0-RC2"
-                conf="test->default"/>
-    <dependency org="org.apache.kerby" name="kerb-util" rev="1.0.0-RC2"
-                conf="test->default"/>
-    <dependency org="org.apache.kerby" name="kerb-crypto" rev="1.0.0-RC2"
-                conf="test->default"/>
-    <dependency org="org.apache.kerby" name="kerby-util" rev="1.0.0-RC2"
-                conf="test->default"/>
-    <dependency org="org.apache.kerby" name="kerby-asn1" rev="1.0.0-RC2"
-                conf="test->default"/>
+
+    <!-- Apache directory server project, org.apache.directory.* packages for miniKdc tests -->
+    <dependency org="org.apache.directory.server" name="apacheds-core-api" rev="2.0.0-M15" conf="test->default">
+        <exclude org="org.apache.directory.api" name="api-ldap-schema-data"/>
+    </dependency>
+    <dependency org="org.apache.directory.server" name="apacheds-interceptor-kerberos" rev="2.0.0-M15" conf="test->default">
+        <exclude org="org.apache.directory.api" name="api-ldap-schema-data"/>
+    </dependency>
+    <dependency org="org.apache.directory.server" name="apacheds-protocol-shared" rev="2.0.0-M15" conf="test->default">
+        <exclude org="org.apache.directory.api" name="api-ldap-schema-data"/>
+    </dependency>
+    <dependency org="org.apache.directory.server" name="apacheds-protocol-kerberos" rev="2.0.0-M15" conf="test->default">
+        <exclude org="org.apache.directory.api" name="api-ldap-schema-data"/>
+    </dependency>
+    <dependency org="org.apache.directory.server" name="apacheds-ldif-partition" rev="2.0.0-M15" conf="test->default">
+        <exclude org="org.apache.directory.api" name="api-ldap-schema-data"/>
+    </dependency>
+    <dependency org="org.apache.directory.server" name="apacheds-mavibot-partition" rev="2.0.0-M15" conf="test->default">
+        <exclude org="org.apache.directory.api" name="api-ldap-schema-data"/>
+    </dependency>
+    <dependency org="org.apache.directory.api" name="api-all" rev="1.0.0-M20" conf="test->default">
+        <exclude org="xml-apis" name="xml-apis"/>
+        <exclude org="xpp3" name="xpp3"/>
+        <exclude org="dom4j" name="dom4j"/>
+    </dependency>
+    <dependency org="org.apache.directory.server" name="apacheds-jdbm-partition" rev="2.0.0-M15" conf="test->default">
+        <exclude org="org.apache.directory.api" name="api-ldap-schema-data"/>
+    </dependency>
+    <dependency org="org.apache.directory.server" name="apacheds-protocol-ldap" rev="2.0.0-M15" conf="test->default">
+        <exclude org="org.apache.directory.api" name="api-ldap-schema-data"/>
+    </dependency>
+
   </dependencies>
 
 </ivy-module>
