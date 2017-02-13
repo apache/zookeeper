@@ -154,7 +154,7 @@ public class QuorumPeerMain {
                       true);
           }
 
-          quorumPeer = new QuorumPeer();
+          quorumPeer = getQuorumPeer();
           quorumPeer.setTxnFactory(new FileTxnSnapLog(
                       config.getDataLogDir(),
                       config.getDataDir()));
@@ -188,5 +188,10 @@ public class QuorumPeerMain {
           // warn, but generally this is ok
           LOG.warn("Quorum Peer interrupted", e);
       }
+    }
+
+    // @VisibleForTesting
+    protected QuorumPeer getQuorumPeer() {
+        return new QuorumPeer();
     }
 }
