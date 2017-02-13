@@ -468,8 +468,8 @@ ZOOAPI zhandle_t *zookeeper_init(const char *host, watcher_fn fn,
  * ZBADARGUMENTS - invalid input parameters
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
  * ZOPERATIONTIMEOUT - failed to flush the buffers within the specified timeout.
- * ZCONNECTIONLOSS - a network error occured while attempting to send request to server
- * ZSYSTEMERROR -- a system (OS) error occured; it's worth checking errno to get details
+ * ZCONNECTIONLOSS - a network error occurred while attempting to send request to server
+ * ZSYSTEMERROR -- a system (OS) error occurred; it's worth checking errno to get details
  */
 ZOOAPI int zookeeper_close(zhandle_t *zh);
 
@@ -523,12 +523,12 @@ ZOOAPI struct sockaddr* zookeeper_get_connected_host(zhandle_t *zh,
  * ZOK - success
  * ZBADARGUMENTS - invalid input parameters
  * ZINVALIDSTATE - zhandle state is either ZOO_SESSION_EXPIRED_STATE or ZOO_AUTH_FAILED_STATE
- * ZCONNECTIONLOSS - a network error occured while attempting to establish 
+ * ZCONNECTIONLOSS - a network error occurred while attempting to establish 
  * a connection to the server
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
  * ZOPERATIONTIMEOUT - hasn't received anything from the server for 2/3 of the
  * timeout value specified in zookeeper_init()
- * ZSYSTEMERROR -- a system (OS) error occured; it's worth checking errno to get details
+ * ZSYSTEMERROR -- a system (OS) error occurred; it's worth checking errno to get details
  */
 #ifdef WIN32
 ZOOAPI int zookeeper_interest(zhandle_t *zh, SOCKET *fd, int *interest, 
@@ -547,11 +547,11 @@ ZOOAPI int zookeeper_interest(zhandle_t *zh, int *fd, int *interest,
  * ZOK - success
  * ZBADARGUMENTS - invalid input parameters
  * ZINVALIDSTATE - zhandle state is either ZOO_SESSION_EXPIRED_STATE or ZOO_AUTH_FAILED_STATE
- * ZCONNECTIONLOSS - a network error occured while attempting to send request to server
+ * ZCONNECTIONLOSS - a network error occurred while attempting to send request to server
  * ZSESSIONEXPIRED - connection attempt failed -- the session's expired
  * ZAUTHFAILED - authentication request failed, e.i. invalid credentials
  * ZRUNTIMEINCONSISTENCY - a server response came out of order
- * ZSYSTEMERROR -- a system (OS) error occured; it's worth checking errno to get details
+ * ZSYSTEMERROR -- a system (OS) error occurred; it's worth checking errno to get details
  * ZNOTHING -- not an error; simply indicates that there no more data from the server 
  *              to be processed (when called with ZOOKEEPER_READ flag).
  */
@@ -1166,7 +1166,7 @@ ZOOAPI const char* zerror(int c);
  * ZBADARGUMENTS - invalid input parameters
  * ZINVALIDSTATE - zhandle state is either ZOO_SESSION_EXPIRED_STATE or ZOO_AUTH_FAILED_STATE
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
- * ZSYSTEMERROR - a system error occured
+ * ZSYSTEMERROR - a system error occurred
  */
 ZOOAPI int zoo_add_auth(zhandle_t *zh,const char* scheme,const char* cert, 
 	int certLen, void_completion_t completion, const void *data);

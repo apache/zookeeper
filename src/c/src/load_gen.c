@@ -256,7 +256,7 @@ int main(int argc, char **argv) {
         deletedCounter=0;
         rc=recursiveDelete(argv[2]);
         if(rc==ZOK){
-            LOG_INFO(("Succesfully deleted a subtree starting at %s (%d nodes)",
+            LOG_INFO(("Successfully deleted a subtree starting at %s (%d nodes)",
                     argv[2],deletedCounter));
             exit(0);
         }

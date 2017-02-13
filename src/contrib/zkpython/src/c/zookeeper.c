@@ -721,7 +721,7 @@ PyObject *pyzoo_adelete(PyObject *self, PyObject *args)
   return Py_BuildValue("i", err);
 }
 
-/* Asynchronous node existance check, returns integer error code */
+/* Asynchronous node existence check, returns integer error code */
 PyObject *pyzoo_aexists(PyObject *self, PyObject *args)
 {
   int zkhid; char *path; 
@@ -1059,7 +1059,7 @@ static PyObject *pyzoo_delete(PyObject *self, PyObject *args)
   return Py_BuildValue("i", err);
 }
 
-/* Synchronous node existance check, returns stat if exists, None if
+/* Synchronous node existence check, returns stat if exists, None if
    absent */
 static PyObject *pyzoo_exists(PyObject *self, PyObject *args)
 {
