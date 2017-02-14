@@ -612,7 +612,7 @@ public class ZooInspectorManagerImpl implements ZooInspectorManager {
                                 zooKeeper));
                     } catch (Exception e) {
                         LoggerFactory.getLogger().error(
-                                "Error occured adding node watcher for node: "
+                                "Error occurred adding node watcher for node: "
                                         + node, e);
                     }
                 }
@@ -687,7 +687,7 @@ public class ZooInspectorManagerImpl implements ZooInspectorManager {
                     }
                 } catch (Exception e) {
                     LoggerFactory.getLogger().error(
-                            "Error occured re-adding node watcherfor node "
+                            "Error occurred re-adding node watcherfor node "
                                     + nodePath, e);
                 }
                 nodeListener.processEvent(event.getPath(), event.getType()
