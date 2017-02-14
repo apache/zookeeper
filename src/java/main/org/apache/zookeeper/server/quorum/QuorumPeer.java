@@ -113,6 +113,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             this.id = id;
             this.addr = addr;
             this.electionAddr = electionAddr;
+            String checkIPReachableValue = System.getProperty("zookeeper.checkIPTimeout");
+            if(checkIPReachableValue != null){
+                this.checkIPReachableTO = Integer.parseInt(checkIPReachableValue);
+            }    
         }
 
         // VisibleForTesting
@@ -120,6 +124,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             this.id = id;
             this.addr = addr;
             this.electionAddr = null;
+            String checkIPReachableValue = System.getProperty("zookeeper.checkIPTimeout");
+            if(checkIPReachableValue != null){
+                this.checkIPReachableTO = Integer.parseInt(checkIPReachableValue);
+            }    
         }
         
         private QuorumServer(long id, InetSocketAddress addr,
@@ -128,24 +136,32 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             this.addr = addr;
             this.electionAddr = electionAddr;
             this.type = type;
+            String checkIPReachableValue = System.getProperty("zookeeper.checkIPTimeout");
+            if(checkIPReachableValue != null){
+                this.checkIPReachableTO = Integer.parseInt(checkIPReachableValue);
+            }    
         }
         
         public QuorumServer(long id, String hostname,
                             Integer port, Integer electionPort,
                             LearnerType type) {
-	        this.id = id;
-	        this.hostname=hostname;
-	        if (port!=null){
+	    this.id = id;
+	    this.hostname=hostname;
+	    if (port!=null){
                 this.port=port;
-	        }
-	        if (electionPort!=null){
-                this.electionPort=electionPort;
-	        }
-	        if (type!=null){
-                this.type = type;
-	        }
-	        this.recreateSocketAddresses();
 	    }
+	    if (electionPort!=null){
+                this.electionPort=electionPort;
+	    }
+	    if (type!=null){
+                this.type = type;
+	    }
+            String checkIPReachableValue = System.getProperty("zookeeper.checkIPTimeout");
+            if(checkIPReachableValue != null){
+                this.checkIPReachableTO = Integer.parseInt(checkIPReachableValue);
+            }    
+	    this.recreateSocketAddresses();
+	}
 
         /**
          * Performs a DNS lookup of hostname and (re)creates the this.addr and
@@ -159,7 +175,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         public void recreateSocketAddresses() {
             InetAddress address = null;
             try {
-                address = getReachableAddress(this.hostname, 2000);
+                address = getReachableAddress(this.hostname, checkIPReachableTO);
                 LOG.info("Resolved hostname: {} to address: {}", this.hostname, address);
                 this.addr = new InetSocketAddress(address, this.port);
                 if (this.electionPort > 0){
@@ -221,6 +237,12 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         public long id;
         
         public LearnerType type = LearnerType.PARTICIPANT;
+
+        /**
+         * the time, in millseconds, before {@link InetAddress#isReachable} aborts
+         * in {@link #getReachableAddress}.
+         */
+        private int checkIPReachableTO = 2000;
     }
 
     public enum ServerState {
