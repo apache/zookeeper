@@ -590,8 +590,9 @@ public class Leader {
 
                     // check leader running status
                     if (!this.isRunning()) {
-                        shutdown("Unexpected internal error");
-                        return;
+                        // set shutdown flag
+                        shutdownMessage = "Unexpected internal error";
+                        break;
                     }
 
                     if (!tickSkip && !syncedAckSet.hasAllQuorums()) {
