@@ -473,7 +473,8 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
         processor.committedRequests.add(orphanCommittedReq);
         processor.run();
         //We verify that the commit processor processed the old commit prior to the newer messages
-        Assert.assertTrue(processedRequests.peek() == otherSessionCommittedReq);
+        Assert.assertTrue(processedRequests.size() == 1);
+        Assert.assertTrue(processedRequests.contains(otherSessionCommittedReq));
         processor.run();
         //We verify that the commit processor handle all messages.
         Assert.assertTrue(processedRequests.containsAll(localRequests));
