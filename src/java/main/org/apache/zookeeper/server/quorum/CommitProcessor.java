@@ -254,24 +254,23 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
                         // If session queue != null, then it is also not empty.
                         Request topPending = sessionQueue.poll();
                         if (request.cxid != topPending.cxid) {
-                            LOG.error(
-                                    "Got cxid 0x"
-                                            + Long.toHexString(request.cxid)
-                                            + " expected 0x" + Long.toHexString(
-                                                    topPending.cxid)
-                                    + " for client session id "
-                                    + Long.toHexString(request.sessionId));
-                            throw new IOException("Error: unexpected cxid for"
-                                    + "client session");
+                            // we can get commit requests that is not at the queue head when 
+                            // session moves (see ZOOKEEPER-2684). We will just pass the 
+                            // commit to the next processor and put the pending back with
+                            // a warning, we should not see this often
+                            LOG.warn("Got request " + request
+                                + " but we are expecting request " + topPending);
+                            sessionQueue.addFirst(topPending);
+                        } else {                            
+                            /*
+                             * We want to send our version of the request. the
+                             * pointer to the connection in the request
+                             */
+                            topPending.setHdr(request.getHdr());
+                            topPending.setTxn(request.getTxn());
+                            topPending.zxid = request.zxid;
+                            request = topPending;
                         }
-                        /*
-                         * We want to send our version of the request. the
-                         * pointer to the connection in the request
-                         */
-                        topPending.setHdr(request.getHdr());
-                        topPending.setTxn(request.getTxn());
-                        topPending.zxid = request.zxid;
-                        request = topPending;
                     }
 
                     sendToNextProcessor(request);
