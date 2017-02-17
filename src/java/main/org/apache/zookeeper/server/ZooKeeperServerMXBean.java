@@ -125,4 +125,16 @@ public interface ZooKeeperServerMXBean {
      * @return secure client address
      */
     public String getSecureClientAddress();
+
+    /**
+     * Force to generate snapshot
+     *
+     * @return the snapshot is generating
+     */
+    public boolean takeSnapshot();
+
+    /**
+     * @return the last snapshot zxid
+     */
+    public long getLastSnapshotZxid();
 }

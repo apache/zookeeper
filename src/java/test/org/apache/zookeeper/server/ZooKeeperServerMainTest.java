@@ -200,6 +200,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
                         ClientBase.CONNECTION_TIMEOUT));
         fileTxnSnapLogWithError.close();
         main.shutdown();
+        main.join();
         main.deleteDirs();
     }
 
@@ -237,9 +238,8 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
                         CONNECTION_TIMEOUT / 2));
 
         main.shutdown();
-
         snapDir.setWritable(true);
-
+        main.join();
         main.deleteDirs();
     }
 
@@ -279,7 +279,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         main.shutdown();
 
         logDir.setWritable(true);
-
+        main.join();
         main.deleteDirs();
     }
 
@@ -344,6 +344,10 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         } catch (ConfigException iae) {
             // expected
         }
+
+        main.shutdown();
+        main.join();
+        main.deleteDirs();
     }
 
     /**
@@ -376,6 +380,8 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         main.shutdown();
         Assert.assertTrue("waiting for server down", ClientBase
                 .waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT));
+        main.join();
+        main.deleteDirs();
     }
 
     /**
@@ -410,6 +416,8 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
 
         Assert.assertTrue("waiting for server down", ClientBase
                 .waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT));
+        main.join();
+        main.deleteDirs();
     }
 
     private void verifySessionTimeOut(int sessionTimeout,
@@ -468,6 +476,43 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
                         originalServerCnxnFactory);
             }
         }
+    }
+
+    @Test
+    public void testMaybeTakeSnapshot() throws Exception {
+        File tmpDir = ClientBase.createTmpDir();
+        File dataDir = new File(tmpDir, "data/version-2");
+
+        ClientBase.setupTestEnv();
+
+        final int CLIENT_PORT = PortAssignment.unique();
+
+        MainThread main = new MainThread(CLIENT_PORT, true, tmpDir, null);
+        main.start();
+
+        Assert.assertTrue("waiting for server being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT, CONNECTION_TIMEOUT));
+
+        ZooKeeperServer zkServer = main.main.getCnxnFactory().getZooKeeperServer();
+
+        Assert.assertFalse(zkServer.maybeTakeSnapshot());
+
+        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT,
+                ClientBase.CONNECTION_TIMEOUT, this);
+
+        zk.create("/foo1", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        zk.close();
+
+        Assert.assertTrue(zkServer.maybeTakeSnapshot());
+        Thread.sleep(250);
+        Assert.assertTrue(new File(dataDir, "snapshot.3").isFile());
+
+        Assert.assertFalse(zkServer.maybeTakeSnapshot());
+
+        main.shutdown();
+        main.join();
+        main.deleteDirs();
     }
 
     private void deleteFile(File f) throws IOException {

@@ -98,8 +98,6 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
     @Override
     public void run() {
         try {
-            int logCount = 0;
-
             // we do this in an attempt to ensure that not all of the servers
             // in the ensemble take a snapshot at the same time
             int randRoll = r.nextInt(snapCount/2);
@@ -120,8 +118,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
                 if (si != null) {
                     // track the number of records written to the log
                     if (zks.getZKDatabase().append(si)) {
-                        logCount++;
-                        if (logCount > (snapCount / 2 + randRoll)) {
+                        if ((zks.getLastProcessedZxid()-zks.getLastSnapshotZxid()) > (snapCount / 2 + randRoll)) {
                             randRoll = r.nextInt(snapCount/2);
                             // roll the log
                             zks.getZKDatabase().rollLog();
@@ -140,7 +137,6 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
                                     };
                                 snapInProcess.start();
                             }
-                            logCount = 0;
                         }
                     } else if (toFlush.isEmpty()) {
                         // optimization for read heavy workloads

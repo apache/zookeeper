@@ -162,4 +162,14 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
         }
         return "";
     }
+
+    @Override
+    public boolean takeSnapshot() {
+        return zks.maybeTakeSnapshot();
+    }
+
+    @Override
+    public long getLastSnapshotZxid() {
+        return zks.getLastSnapshotZxid();
+    }
 }

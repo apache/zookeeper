@@ -31,9 +31,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.security.sasl.SaslException;
 
@@ -61,7 +64,6 @@ import org.apache.zookeeper.server.RequestProcessor.RequestProcessorException;
 import org.apache.zookeeper.server.ServerCnxn.CloseRequestException;
 import org.apache.zookeeper.server.SessionTracker.Session;
 import org.apache.zookeeper.server.SessionTracker.SessionExpirer;
-import org.apache.zookeeper.server.auth.AuthenticationProvider;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.auth.ServerAuthenticationProvider;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -125,6 +127,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     private final ServerStats serverStats;
     private final ZooKeeperServerListener listener;
     private ZooKeeperServerShutdownHandler zkShutdownHandler;
+
+    private volatile long lastSnapshotZxid;
+    private final Lock generatingSnapshot = new ReentrantLock();
 
     void removeCnxn(ServerCnxn cnxn) {
         zkDb.removeCnxn(cnxn);
@@ -301,15 +306,67 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         takeSnapshot();
     }
 
+    /**
+     * Force to take snapshot
+     */
     public void takeSnapshot(){
+        generatingSnapshot.lock();
+
         try {
+            lastSnapshotZxid = zkDb.getDataTreeLastProcessedZxid();
+
             txnLogFactory.save(zkDb.getDataTree(), zkDb.getSessionWithTimeOuts());
         } catch (IOException e) {
             LOG.error("Severe unrecoverable error, exiting", e);
             // This is a severe error that we cannot recover from,
             // so we need to exit
             System.exit(10);
+        } finally {
+            generatingSnapshot.unlock();
         }
+    }
+
+    /**
+     * Try to take snapshot
+     *
+     * It maybe fail when another background task is generating snapshot,
+     * or there are no changes since last snapshot was taken.
+     */
+    public boolean maybeTakeSnapshot() {
+        if (!generatingSnapshot.tryLock())
+            return false;
+
+        try {
+            if (zkDb.getDataTreeLastProcessedZxid() <= lastSnapshotZxid)
+                return false;
+
+            final CountDownLatch ongoing = new CountDownLatch(1);
+
+            Thread snapInProcess = new ZooKeeperThread("Snapshot Thread") {
+                public void run() {
+                    try {
+                        ongoing.countDown();
+
+                        takeSnapshot();
+                    } catch (Exception e) {
+                        LOG.warn("Unexpected exception", e);
+                    }
+                }
+            };
+            snapInProcess.start();
+
+            ongoing.await();
+        } catch (InterruptedException e) {
+            // release the lock
+        } finally {
+            generatingSnapshot.unlock();
+        }
+
+        return true;
+    }
+
+    public long getLastSnapshotZxid() {
+        return lastSnapshotZxid;
     }
 
     @Override

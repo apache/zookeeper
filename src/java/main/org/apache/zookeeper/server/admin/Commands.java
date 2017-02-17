@@ -125,6 +125,7 @@ public class Commands {
         registerCommand(new WatchCommand());
         registerCommand(new WatchesByPathCommand());
         registerCommand(new WatchSummaryCommand());
+        registerCommand(new TakeSnapshotCommand());
     }
 
     /**
@@ -504,6 +505,23 @@ public class Commands {
             DataTree dt = zkServer.getZKDatabase().getDataTree();
             CommandResponse response = initializeResponse();
             response.putAll(dt.getWatchesSummary().toMap());
+            return response;
+        }
+    }
+
+    /**
+     * Force to take snapshot
+     * @see ZooKeeperServer#takeSnapshot()
+     */
+    public static class TakeSnapshotCommand extends CommandBase {
+        public TakeSnapshotCommand() { super(Arrays.asList("take_snapshot", "snap")); }
+
+        @Override
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+            boolean generating = zkServer.maybeTakeSnapshot();
+            CommandResponse response = initializeResponse();
+            response.put("last_zxid", zkServer.getZKDatabase().getDataTreeLastProcessedZxid());
+            response.put("generating", generating);
             return response;
         }
     }
