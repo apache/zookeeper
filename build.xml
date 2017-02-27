@@ -1797,7 +1797,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
              description="Create eclipse project files">
        <ivy:resolve useOrigin="true" conf="test"/>
        <ivy:cachepath pathid="default.path.id" conf="default" />
-       <ivy:cachepath pathid="junit.path.id" conf="test" transitive="false"/>
+       <ivy:cachepath pathid="junit.path.id" conf="test" />
        <taskdef name="eclipse"
                 classname="prantl.ant.eclipse.EclipseTask"
                 classpathref="java.classpath" />
