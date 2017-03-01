@@ -113,6 +113,7 @@ public class FourLetterWordsTest extends ClientBase {
         verify("stat", "Connections");
         verify("srvr", "Connections");
         verify("dirs", "size");
+        verify("shed", "Shedding clients (all)");
     }
 
     private String sendRequest(String cmd) throws IOException, SSLContextException {

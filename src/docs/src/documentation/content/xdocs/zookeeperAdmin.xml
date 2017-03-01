@@ -1974,6 +1974,31 @@ server.3=zoo3:2888:3888</programlisting>
               </programlisting>
             </listitem>
           </varlistentry>
+
+          <varlistentry>
+            <term>shed</term>
+
+            <listitem>
+              <para>Closes all client connections, forcing them to move to a different server.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>sh50</term>
+
+            <listitem>
+              <para>Probabilistically closes half of the client connections (i.e. each connection is closed with a probability of 1/2), forcing them to move to a different server.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>sh50</term>
+
+            <listitem>
+              <para>Probabilistically closes a quarter of the client connection (i.e. each connection is closed with a probability of 1/4), forcing them to move to a different server.</para>
+            </listitem>
+          </varlistentry>
+
         </variablelist>
 
         <para>Here's an example of the <emphasis role="bold">ruok</emphasis>

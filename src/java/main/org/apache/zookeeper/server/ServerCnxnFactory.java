@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 
 import javax.management.JMException;
 import javax.security.auth.login.AppConfigurationEntry;
@@ -122,6 +123,48 @@ public abstract class ServerCnxnFactory {
     }
 
     public abstract void closeAll();
+
+    /**
+     * Probabilistically close some percent of the active connections.
+     * Ignore the ones provided in filter.
+     */
+    public void closeSome(Set<ServerCnxn> filter, double shedProbability) {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("close " + shedProbability + "%");
+        }
+
+        int closedCount = 0;
+        int totalCount = 0;
+
+        for (ServerCnxn cnxn : cnxns) {
+            ++totalCount;
+
+            final boolean shed;
+
+            if (filter.contains(cnxn)) {
+                // Never shed connections explicitly blacklisted via filter
+                shed = false;
+            } else if (shedProbability == 1.0) {
+                // Shedding all connections, no need to throw a die
+                shed = true;
+            } else {
+                // Throw a die to decide wether to shed
+                shed = ThreadLocalRandom.current().nextDouble() < shedProbability;
+            }
+
+            if (shed) {
+                try {
+                    cnxn.close();
+                } catch (Exception e) {
+                    LOG.warn("Ignoring exception closing cnxn sessionid 0x"
+                            + Long.toHexString(cnxn.getSessionId()), e);
+                }
+                closedCount++;
+            }
+        }
+
+        LOG.info("Shed {} out of {} connections", closedCount, totalCount);
+    }
     
     static public ServerCnxnFactory createFactory() throws IOException {
         String serverCnxnFactoryName =

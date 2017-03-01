@@ -74,6 +74,12 @@ public class CommandExecutor {
             command = new MonitorCommand(pwriter, serverCnxn);
         } else if (commandCode == FourLetterCommands.isroCmd) {
             command = new IsroCommand(pwriter, serverCnxn);
+        } else if (commandCode == FourLetterCommands.shedAllCmd) {
+            command = new ShedCommand(pwriter, serverCnxn);
+        } else if (commandCode == FourLetterCommands.shed25Cmd) {
+            command = new ShedCommand(pwriter, serverCnxn, 0.25);
+        } else if (commandCode == FourLetterCommands.shed50Cmd) {
+            command = new ShedCommand(pwriter, serverCnxn, 0.5);
         }
         return command;
     }

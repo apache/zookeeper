@@ -37,6 +37,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 
@@ -319,6 +320,11 @@ public class Zab1_0Test extends ZKTestCase {
         }
         public void closeAll() {
         }
+
+        @Override
+        public void closeSome(Set<ServerCnxn> filter, double shedProbability) {
+        }
+
         @Override
         public int getNumAliveConnections() {
             return 0;
