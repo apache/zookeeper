@@ -41,6 +41,7 @@ import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.WatcherEvent;
 import org.apache.zookeeper.server.command.CommandExecutor;
 import org.apache.zookeeper.server.command.FourLetterCommands;
+import org.apache.zookeeper.server.command.NopCommand;
 import org.apache.zookeeper.server.command.SetTraceMaskCommand;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
@@ -267,17 +268,30 @@ public class NettyServerCnxn extends ServerCnxn {
     {
         // We take advantage of the limited size of the length to look
         // for cmds. They are all 4-bytes which fits inside of an int
-        String cmd = FourLetterCommands.getCmdMapView().get(len);
-        if (cmd == null) {
+        if (!FourLetterCommands.isKnown(len)) {
             return false;
         }
+
+        String cmd = FourLetterCommands.getCommandString(len);
+
         channel.setInterestOps(0).awaitUninterruptibly();
-        LOG.info("Processing " + cmd + " command from "
-                + channel.getRemoteAddress());
         packetReceived();
 
         final PrintWriter pwriter = new PrintWriter(
                 new BufferedWriter(new SendBufferWriter()));
+
+        // ZOOKEEPER-2693: don't execute 4lw if it's not enabled.
+        if (!FourLetterCommands.isEnabled(cmd)) {
+            LOG.debug("Command {} is not executed because it is not in the whitelist.", cmd);
+            NopCommand nopCmd = new NopCommand(pwriter, this, cmd +
+                    " is not executed because it is not in the whitelist.");
+            nopCmd.start();
+            return true;
+        }
+
+        LOG.info("Processing " + cmd + " command from "
+                + channel.getRemoteAddress());
+
        if (len == FourLetterCommands.setTraceMaskCmd) {
             ByteBuffer mask = ByteBuffer.allocate(8);
             message.readBytes(mask);

@@ -51,6 +51,12 @@ public class ZKTestCase {
             // accidentally attempting to start multiple admin servers on the
             // same port.
             System.setProperty("zookeeper.admin.enableServer", "false");
+            // ZOOKEEPER-2693 disables all 4lw by default.
+            // Here we enable the 4lw which ZooKeeper tests depends.
+            System.setProperty("zookeeper.4lw.commands.whitelist",
+                    "ruok, envi, conf, stat, srvr, cons, dump," +
+                            "wchs, wchp, wchc, srst, crst, " +
+                            "dirs, mntr, gtmk, isro, stmk");
             testName = method.getName();
             LOG.info("STARTING " + testName);
         }
