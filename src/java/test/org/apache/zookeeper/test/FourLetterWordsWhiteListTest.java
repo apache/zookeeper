@@ -124,7 +124,23 @@ public class FourLetterWordsWhiteListTest extends ClientBase {
         FourLetterCommands.resetWhiteList();
         System.setProperty("zookeeper.4lw.commands.whitelist", "*");
         startServer();
+        verifyAllCommandsSuccess();
+    }
 
+    @Test(timeout=30000)
+    public void testFourLetterWordsEnableAllCommandsThroughExplicitList() throws Exception {
+        stopServer();
+        FourLetterCommands.resetWhiteList();
+        System.setProperty("zookeeper.4lw.commands.whitelist",
+                "ruok, envi, conf, stat, srvr, cons, dump," +
+                        "wchs, wchp, wchc, srst, crst, " +
+                        "dirs, mntr, gtmk, isro, stmk");
+        startServer();
+        verifyAllCommandsSuccess();
+    }
+
+
+    private void verifyAllCommandsSuccess() throws Exception {
         verifyExactMatch("ruok", "imok");
         verifyFuzzyMatch("envi", "java.version");
         verifyFuzzyMatch("conf", "clientPort");
