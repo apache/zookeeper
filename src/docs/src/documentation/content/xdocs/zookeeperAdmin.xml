@@ -1145,6 +1145,40 @@ server.3=zoo3:2888:3888</programlisting>
             </listitem>
           </varlistentry>
 
+          <varlistentry>
+            <term>4lw.commands.whitelist</term>
+
+            <listitem>
+              <para>(Java system property: <emphasis
+                      role="bold">zookeeper.4lw.commands.whitelist</emphasis>)</para>
+
+              <para><emphasis role="bold">New in 3.5.3:</emphasis>
+                A list of comma separated <ulink url="#sc_4lw">Four Letter Words</ulink>
+                commands that user wants to use. A valid Four Letter Words
+                command must be put in this list else ZooKeeper server will
+                not enable the command.
+                By default the whitelist only contains "srvr" command
+                which zkServer.sh uses. The rest of four letter word commands are disabled
+                by default.
+              </para>
+
+              <para>Here's an example of the configuration that enables stat, ruok, conf, and isro
+              command while disabling the rest of Four Letter Words command:</para>
+              <programlisting>
+                4lw.commands.whitelist=stat, ruok, conf, isro
+              </programlisting>
+
+              <para>If you really need enable all four letter word commands by default, you can use
+                the asterisk option so you don't have to include every command one by one in the list.
+                As an example, this will enable all four letter word commands:
+              </para>
+              <programlisting>
+                4lw.commands.whitelist=*
+              </programlisting>
+
+            </listitem>
+          </varlistentry>
+
         </variablelist>
         <para></para>
       </section>
@@ -1600,7 +1634,7 @@ server.3=zoo3:2888:3888</programlisting>
     <section id="sc_zkCommands">
       <title>ZooKeeper Commands</title>
 
-      <section>
+      <section id="sc_4lw">
         <title>The Four Letter Words</title>
         <para>ZooKeeper responds to a small set of commands. Each command is
         composed of four letters. You issue the commands to ZooKeeper via telnet
@@ -1611,7 +1645,16 @@ server.3=zoo3:2888:3888</programlisting>
         while "srvr" and "cons" give extended details on server and
         connections respectively.</para>
 
-        <variablelist>
+        <para><emphasis role="bold">New in 3.5.3:</emphasis>
+          Four Letter Words need to be explicitly white listed before using.
+          Please refer <emphasis role="bold">4lw.commands.whitelist</emphasis>
+           described in <ulink url="#sc_clusterOptions">
+            cluster configuration section</ulink> for details.
+          Moving forward, Four Letter Words will be deprecated, please use
+          <ulink url="#sc_adminserver">AdminServer</ulink> instead.
+        </para>
+
+      <variablelist>
           <varlistentry>
             <term>conf</term>
 
@@ -2079,6 +2122,16 @@ server.3=zoo3:2888:3888</programlisting>
             recommend practice for estimating the heap size your system needs
             is to run load tests, and then make sure you are well below the
             usage limit that would cause the system to swap.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Publicly accessible deployment</term>
+          <listitem>
+            <para>
+              A ZooKeeper ensemble is expected to operate in a trusted computing environment.
+              It is thus recommended to deploy ZooKeeper behind a firewall.
+            </para>
           </listitem>
         </varlistentry>
       </variablelist>
