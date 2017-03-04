@@ -18,10 +18,15 @@
 
 package org.apache.zookeeper.server.command;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.ByteBuffer;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Arrays;
 
 /**
  * This class contains constants for all the four letter commands
@@ -153,11 +158,82 @@ public class FourLetterCommands {
      */
     public final static int telnetCloseCmd = 0xfff4fffd;
 
-    final static HashMap<Integer, String> cmd2String =
-        new HashMap<Integer, String>();
+    private static final String ZOOKEEPER_4LW_COMMANDS_WHITELIST = "zookeeper.4lw.commands.whitelist";
 
-    public static Map<Integer, String> getCmdMapView() {
-        return Collections.unmodifiableMap(cmd2String);
+    private static final Logger LOG = LoggerFactory.getLogger(FourLetterCommands.class);
+
+    private static final Map<Integer, String> cmd2String = new HashMap<Integer, String>();
+
+    private static final Set<String> whiteListedCommands = new HashSet<String>();
+
+    private static boolean whiteListInitialized = false;
+
+    // @VisibleForTesting
+    public static void resetWhiteList() {
+        whiteListInitialized = false;
+        whiteListedCommands.clear();
+    }
+
+    /**
+     * Return the string representation of the specified command code.
+     */
+    public static String getCommandString(int command) {
+        return cmd2String.get(command);
+    }
+
+    /**
+     * Check if the specified command code is from a known command.
+     *
+     * @param command The integer code of command.
+     * @return true if the specified command is known, false otherwise.
+     */
+    public static boolean isKnown(int command) {
+        return cmd2String.containsKey(command);
+    }
+
+    /**
+     * Check if the specified command is enabled.
+     *
+     * In ZOOKEEPER-2693 we introduce a configuration option to only
+     * allow a specific set of white listed commands to execute.
+     * A command will only be executed if it is also configured
+     * in the white list.
+     *
+     * @param command The command string.
+     * @return true if the specified command is enabled
+     */
+    public static boolean isEnabled(String command) {
+        if (whiteListInitialized) {
+            return whiteListedCommands.contains(command);
+        }
+
+        String commands = System.getProperty(ZOOKEEPER_4LW_COMMANDS_WHITELIST);
+        if (commands != null) {
+            String[] list = commands.split(",");
+            for (String cmd : list) {
+                if (cmd.trim().equals("*")) {
+                    for (Map.Entry<Integer, String> entry : cmd2String.entrySet()) {
+                        whiteListedCommands.add(entry.getValue());
+                    }
+                    break;
+                }
+                if (!cmd.trim().isEmpty()) {
+                    whiteListedCommands.add(cmd.trim());
+                }
+            }
+        }
+
+        // It is sad that isro and srvr are used by ZooKeeper itself. Need fix this
+        // before deprecating 4lw.
+        if (System.getProperty("readonlymode.enabled", "false").equals("true")) {
+            whiteListedCommands.add("isro");
+        }
+        // zkServer.sh depends on "srvr".
+        whiteListedCommands.add("srvr");
+        whiteListInitialized = true;
+        LOG.info("The list of known four letter word commands is : {}", Arrays.asList(cmd2String));
+        LOG.info("The list of enabled four letter word commands is : {}", Arrays.asList(whiteListedCommands));
+        return whiteListedCommands.contains(command);
     }
 
     // specify all of the commands that are available
