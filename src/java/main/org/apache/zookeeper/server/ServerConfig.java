@@ -46,6 +46,7 @@ public class ServerConfig {
     protected int minSessionTimeout = -1;
     /** defaults to -1 if not set explicitly */
     protected int maxSessionTimeout = -1;
+    protected boolean sslQuorum;
 
     /**
      * Parse arguments for server configuration
@@ -97,6 +98,7 @@ public class ServerConfig {
         maxClientCnxns = config.getMaxClientCnxns();
         minSessionTimeout = config.getMinSessionTimeout();
         maxSessionTimeout = config.getMaxSessionTimeout();
+        sslQuorum = config.isSslQuorum();
     }
 
     public InetSocketAddress getClientPortAddress() {

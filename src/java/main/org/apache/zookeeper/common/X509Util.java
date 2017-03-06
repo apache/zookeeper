@@ -21,6 +21,8 @@ package org.apache.zookeeper.common;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLSocket;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509KeyManager;
@@ -28,8 +30,12 @@ import javax.net.ssl.X509TrustManager;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.Socket;
 import java.security.KeyStore;
 
+import org.apache.zookeeper.server.quorum.BufferedSocket;
+import org.jboss.netty.buffer.ChannelBuffers;
+import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -198,5 +204,45 @@ public class X509Util {
                 } catch (IOException e) {}
             }
         }
+    }
+
+    public static SSLSocket createSSLSocket() throws X509Exception, IOException {
+        SSLSocket sslSocket = (SSLSocket) createSSLContext().getSocketFactory().createSocket();
+        sslSocket.setNeedClientAuth(true);
+        return sslSocket;
+    }
+
+
+    public static SSLServerSocket createSSLServerSocket() throws X509Exception, IOException {
+        SSLServerSocket sslServerSocket = (SSLServerSocket) createSSLContext().getServerSocketFactory().createServerSocket();
+        sslServerSocket.setNeedClientAuth(true);
+        return sslServerSocket;
+    }
+
+    public static SSLServerSocket createSSLServerSocket(int port) throws X509Exception, IOException {
+        SSLServerSocket sslServerSocket = (SSLServerSocket) createSSLContext().getServerSocketFactory().createServerSocket(port);
+        sslServerSocket.setNeedClientAuth(true);
+        return sslServerSocket;
+    }
+
+    public static Socket createUnifiedSocket(BufferedSocket socket) throws X509Exception, IOException {
+        socket.getInputStream().mark(6);
+
+        byte[] litmus = new byte[5];
+        socket.getInputStream().read(litmus, 0, 5);
+
+        socket.getInputStream().reset();
+
+        boolean isSsl = SslHandler.isEncrypted(ChannelBuffers.wrappedBuffer(litmus));
+        if (isSsl) {
+            LOG.info(socket.getInetAddress() + " attempting to connect over ssl");
+            SSLSocket sslSocket = (SSLSocket) createSSLContext().getSocketFactory().createSocket(socket, null, socket.getPort(), false);
+            sslSocket.setUseClientMode(false);
+            return sslSocket;
+        } else {
+            LOG.info(socket.getInetAddress() + " attempting to connect without ssl");
+            return socket;
+        }
+
     }
 }

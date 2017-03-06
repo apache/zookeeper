@@ -49,6 +49,7 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.apache.zookeeper.server.ByteBufferOutputStream;
@@ -112,7 +113,7 @@ public class Zab1_0Test extends ZKTestCase {
    private static final class MockLeader extends Leader {
        
        MockLeader(QuorumPeer qp, LeaderZooKeeperServer zk)
-       throws IOException {
+       throws IOException, X509Exception {
            super(qp, zk);
        }
        
@@ -1245,13 +1246,13 @@ public class Zab1_0Test extends ZKTestCase {
     }
     
     private Leader createLeader(File tmpDir, QuorumPeer peer)
-    throws IOException, NoSuchFieldException, IllegalAccessException {
+    throws IOException, NoSuchFieldException, IllegalAccessException, X509Exception {
         LeaderZooKeeperServer zk = prepareLeader(tmpDir, peer);
         return new Leader(peer, zk);
     }
     
     private Leader createMockLeader(File tmpDir, QuorumPeer peer)
-    throws IOException, NoSuchFieldException, IllegalAccessException {
+    throws IOException, NoSuchFieldException, IllegalAccessException, X509Exception {
         LeaderZooKeeperServer zk = prepareLeader(tmpDir, peer);
         return new MockLeader(peer, zk);
     }

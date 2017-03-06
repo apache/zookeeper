@@ -64,6 +64,8 @@ public class QuorumPeerConfig {
 
     protected InetSocketAddress clientPortAddress;
     protected InetSocketAddress secureClientPortAddress;
+    protected boolean sslQuorum = false;
+    protected boolean shouldUsePortUnification = false;
     protected File dataDir;
     protected File dataLogDir;
     protected String dynamicConfigFileStr = null;
@@ -290,6 +292,10 @@ public class QuorumPeerConfig {
                 } else {
                     throw new ConfigException("Invalid option " + value + " for reconfigEnabled flag. Choose 'true' or 'false.'");
                 }
+            } else if (key.equals("sslQuorum")){
+                sslQuorum = Boolean.parseBoolean(value);
+            } else if (key.equals("portUnification")){
+                shouldUsePortUnification = Boolean.parseBoolean(value);
             } else if ((key.startsWith("server.") || key.startsWith("group") || key.startsWith("weight")) && zkProp.containsKey("dynamicConfigFile")) {
                 throw new ConfigException("parameter: " + key + " must be in a separate dynamic config file");
             } else {
@@ -685,6 +691,13 @@ public class QuorumPeerConfig {
     public boolean areLocalSessionsEnabled() { return localSessionsEnabled; }
     public boolean isLocalSessionsUpgradingEnabled() {
         return localSessionsUpgradingEnabled;
+    }
+    public boolean isSslQuorum() {
+        return sslQuorum;
+    }
+
+    public boolean shouldUsePortUnification() {
+        return shouldUsePortUnification;
     }
 
     public int getInitLimit() { return initLimit; }

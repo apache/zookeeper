@@ -37,10 +37,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.zookeeper.common.X509Exception;
+import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.server.ZooKeeperThread;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.net.ssl.SSLSocket;
 
 /**
  * This class implements a connection manager for leader election using TCP. It
@@ -438,9 +442,18 @@ public class QuorumCnxManager {
         Socket sock = null;
         try {
              LOG.debug("Opening channel to server " + sid);
-             sock = new Socket();
-             setSockOpts(sock);
-             sock.connect(electionAddr, cnxTO);
+             if (self.isSslQuorum()) {
+                 SSLSocket sslSock = (SSLSocket) X509Util.createSSLContext().getSocketFactory().createSocket();
+                 setSockOpts(sslSock);
+                 sslSock.connect(electionAddr, cnxTO);
+                 sslSock.startHandshake();
+                 sock = sslSock;
+             } else {
+                 sock = new Socket();
+                 setSockOpts(sock);
+                 sock.connect(electionAddr, cnxTO);
+             }
+
              LOG.debug("Connected to server " + sid);
              initiateConnection(sock, sid);
              return true;
@@ -453,6 +466,11 @@ public class QuorumCnxManager {
                      + " at election address " + electionAddr, e);
              closeSocket(sock);
              throw e;
+        } catch (X509Exception e) {
+            LOG.warn("Cannot open secure channel to " + sid
+              + " at election address " + electionAddr, e);
+            closeSocket(sock);
+            return false;
          } catch (IOException e) {
              LOG.warn("Cannot open channel to " + sid
                      + " at election address " + electionAddr,
@@ -622,8 +640,16 @@ public class QuorumCnxManager {
             Socket client = null;
             while((!shutdown) && (numRetries < 3)){
                 try {
-                    ss = new ServerSocket();
+                    if (self.shouldUsePortUnification()) {
+                        ss = new BufferedServerSocket();
+                    } else if (self.isSslQuorum()) {
+                        ss = X509Util.createSSLServerSocket();
+                    } else {
+                        ss = new ServerSocket();
+                    }
+
                     ss.setReuseAddress(true);
+
                     if (self.getQuorumListenOnAllIPs()) {
                         int port = self.getElectionAddress().getPort();
                         addr = new InetSocketAddress(port);
@@ -638,13 +664,18 @@ public class QuorumCnxManager {
                     ss.bind(addr);
                     while (!shutdown) {
                         client = ss.accept();
+
+                        if (self.shouldUsePortUnification()) {
+                            client = X509Util.createUnifiedSocket((BufferedSocket) client);
+                        }
+
                         setSockOpts(client);
                         LOG.info("Received connection request "
                                 + client.getRemoteSocketAddress());
                         receiveConnection(client);
                         numRetries = 0;
                     }
-                } catch (IOException e) {
+                } catch (IOException|X509Exception e) {
                     if (shutdown) {
                         break;
                     }
