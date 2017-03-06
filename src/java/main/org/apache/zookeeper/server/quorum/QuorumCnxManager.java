@@ -46,12 +46,17 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.zookeeper.common.QuorumX509Util;
+import org.apache.zookeeper.common.X509Exception;
+import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.server.ZooKeeperThread;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthLearner;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.net.ssl.SSLSocket;
 
 /**
  * This class implements a connection manager for leader election using TCP. It
@@ -166,6 +171,8 @@ public class QuorumCnxManager {
     private final boolean tcpKeepAlive = Boolean.getBoolean("zookeeper.tcpKeepAlive");
 
 
+    private X509Util x509Util;
+
     static public class Message {
         Message(ByteBuffer buffer, long sid) {
             this.buffer = buffer;
@@ -260,7 +267,7 @@ public class QuorumCnxManager {
         if(cnxToValue != null){
             this.cnxTO = Integer.parseInt(cnxToValue);
         }
-        
+
         this.self = self;
 
         this.mySid = mySid;
@@ -271,9 +278,11 @@ public class QuorumCnxManager {
         initializeAuth(mySid, authServer, authLearner, quorumCnxnThreadsSize,
                 quorumSaslAuthEnabled);
 
-        // Starts listener thread that waits for connection requests
+        // Starts listener thread that waits for connection requests 
         listener = new Listener();
         listener.setName("QuorumPeerListener");
+
+        x509Util = new QuorumX509Util();
     }
 
     private void initializeAuth(final long mySid,
@@ -399,7 +408,6 @@ public class QuorumCnxManager {
             dout = new DataOutputStream(buf);
 
             // Sending id and challenge
-
             // represents protocol version (in other words - message type)
             dout.writeLong(PROTOCOL_VERSION);
             dout.writeLong(self.getId());
@@ -427,7 +435,7 @@ public class QuorumCnxManager {
         // If lost the challenge, then drop the new connection
         if (sid > self.getId()) {
             LOG.info("Have smaller server identifier, so dropping the " +
-                     "connection: (" + sid + ", " + self.getId() + ")");
+                    "connection: (" + sid + ", " + self.getId() + ")");
             closeSocket(sock);
             // Otherwise proceed with the connection
         } else {
@@ -436,24 +444,23 @@ public class QuorumCnxManager {
             sw.setRecv(rw);
 
             SendWorker vsw = senderWorkerMap.get(sid);
-            
+
             if(vsw != null)
                 vsw.finish();
-            
+
             senderWorkerMap.put(sid, sw);
             queueSendMap.putIfAbsent(sid, new ArrayBlockingQueue<ByteBuffer>(
-                        SEND_CAPACITY));
-            
+                    SEND_CAPACITY));
+
             sw.start();
             rw.start();
-            
-            return true;    
-            
+
+            return true;
+
         }
         return false;
     }
-    
-    
+
     /**
      * If this server receives a connection request, then it gives up on the new
      * connection if it wins. Notice that it checks whether it has a connection
@@ -575,7 +582,7 @@ public class QuorumCnxManager {
             sw.setRecv(rw);
 
             SendWorker vsw = senderWorkerMap.get(sid);
-            
+
             if (vsw != null) {
                 vsw.finish();
             }
@@ -584,7 +591,7 @@ public class QuorumCnxManager {
 
             queueSendMap.putIfAbsent(sid,
                     new ArrayBlockingQueue<ByteBuffer>(SEND_CAPACITY));
-            
+
             sw.start();
             rw.start();
         }
@@ -635,11 +642,19 @@ public class QuorumCnxManager {
 
         Socket sock = null;
         try {
-             LOG.debug("Opening channel to server " + sid);
-             sock = new Socket();
-             setSockOpts(sock);
-             sock.connect(electionAddr, cnxTO);
-             LOG.debug("Connected to server " + sid);
+            LOG.debug("Opening channel to server " + sid);
+            if (self.isSslQuorum()) {
+                 SSLSocket sslSock = x509Util.createSSLSocket();
+                 setSockOpts(sslSock);
+                 sslSock.connect(electionAddr, cnxTO);
+                 sslSock.startHandshake();
+                 sock = sslSock;
+             } else {
+              sock = new Socket();
+              setSockOpts(sock);
+              sock.connect(electionAddr, cnxTO);
+            }
+            LOG.debug("Connected to server " + sid);
             // Sends connection request asynchronously if the quorum
             // sasl authentication is enabled. This is required because
             // sasl server authentication process may take few seconds to
@@ -649,24 +664,27 @@ public class QuorumCnxManager {
             } else {
                 initiateConnection(sock, sid);
             }
-             return true;
-         } catch (UnresolvedAddressException e) {
-             // Sun doesn't include the address that causes this
-             // exception to be thrown, also UAE cannot be wrapped cleanly
-             // so we log the exception in order to capture this critical
-             // detail.
-             LOG.warn("Cannot open channel to " + sid
-                     + " at election address " + electionAddr, e);
-             closeSocket(sock);
-             throw e;
-         } catch (IOException e) {
-             LOG.warn("Cannot open channel to " + sid
-                     + " at election address " + electionAddr,
-                     e);
-             closeSocket(sock);
-             return false;
-         }
-   
+            return true;
+        } catch (UnresolvedAddressException e) {
+            // Sun doesn't include the address that causes this
+            // exception to be thrown, also UAE cannot be wrapped cleanly
+            // so we log the exception in order to capture this critical
+            // detail.
+            LOG.warn("Cannot open channel to " + sid
+                    + " at election address " + electionAddr, e);
+            closeSocket(sock);
+            throw e;} catch (X509Exception e) {
+            LOG.warn("Cannot open secure channel to " + sid
+              + " at election address " + electionAddr, e);
+            closeSocket(sock);
+            return false;
+        } catch (IOException e) {
+            LOG.warn("Cannot open channel to " + sid
+                            + " at election address " + electionAddr,
+                    e);
+            closeSocket(sock);
+            return false;
+        }
     }
     
     /**
@@ -844,7 +862,14 @@ public class QuorumCnxManager {
             Socket client = null;
             while((!shutdown) && (numRetries < 3)){
                 try {
-                    ss = new ServerSocket();
+                    if (self.shouldUsePortUnification()) {
+                        ss = new UnifiedServerSocket(x509Util);
+                    } else if (self.isSslQuorum()) {
+                        ss = x509Util.createSSLServerSocket();
+                    } else {
+                        ss = new ServerSocket();
+                    }
+
                     ss.setReuseAddress(true);
                     if (self.getQuorumListenOnAllIPs()) {
                         int port = self.getElectionAddress().getPort();
@@ -881,7 +906,7 @@ public class QuorumCnxManager {
                                      + "see ZOOKEEPER-2836");
                         }
                     }
-                } catch (IOException e) {
+                } catch (IOException|X509Exception e) {
                     if (shutdown) {
                         break;
                     }

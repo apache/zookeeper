@@ -210,10 +210,14 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
     <property name="netty.version" value="3.10.5.Final"/>
 
+    <property name="httpcomponents.version" value="4.5.3"/>
+
     <property name="junit.version" value="4.12"/>
     <property name="mockito.version" value="1.8.2"/>
     <property name="checkstyle.version" value="6.13"/>
     <property name="commons-collections.version" value="3.2.2"/>
+
+    <property name="bouncycastle.version" value="1.56"/>
 
     <property name="jdiff.version" value="1.0.9"/>
     <property name="xerces.version" value="1.4.4"/>

@@ -27,7 +27,7 @@ import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.client.ZKClientConfig;
-import org.apache.zookeeper.common.ZKConfig;
+import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.junit.After;
@@ -35,7 +35,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class SSLTest extends QuorumPeerTestBase {
+public class ClientSSLTest extends QuorumPeerTestBase {
+
+    private ClientX509Util clientX509Util = new ClientX509Util();
 
     @Before
     public void setup() {
@@ -43,10 +45,10 @@ public class SSLTest extends QuorumPeerTestBase {
         System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
         System.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
         System.setProperty(ZKClientConfig.SECURE_CLIENT, "true");
-        System.setProperty(ZKConfig.SSL_KEYSTORE_LOCATION, testDataPath + "/ssl/testKeyStore.jks");
-        System.setProperty(ZKConfig.SSL_KEYSTORE_PASSWD, "testpass");
-        System.setProperty(ZKConfig.SSL_TRUSTSTORE_LOCATION, testDataPath + "/ssl/testTrustStore.jks");
-        System.setProperty(ZKConfig.SSL_TRUSTSTORE_PASSWD, "testpass");
+        System.setProperty(clientX509Util.getSslKeystoreLocationProperty(), testDataPath + "/ssl/testKeyStore.jks");
+        System.setProperty(clientX509Util.getSslKeystorePasswdProperty(), "testpass");
+        System.setProperty(clientX509Util.getSslTruststoreLocationProperty(), testDataPath + "/ssl/testTrustStore.jks");
+        System.setProperty(clientX509Util.getSslTruststorePasswdProperty(), "testpass");
     }
 
     @After
@@ -54,14 +56,14 @@ public class SSLTest extends QuorumPeerTestBase {
         System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
         System.clearProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET);
         System.clearProperty(ZKClientConfig.SECURE_CLIENT);
-        System.clearProperty(ZKConfig.SSL_KEYSTORE_LOCATION);
-        System.clearProperty(ZKConfig.SSL_KEYSTORE_PASSWD);
-        System.clearProperty(ZKConfig.SSL_TRUSTSTORE_LOCATION);
-        System.clearProperty(ZKConfig.SSL_TRUSTSTORE_PASSWD);
+        System.clearProperty(clientX509Util.getSslKeystoreLocationProperty());
+        System.clearProperty(clientX509Util.getSslKeystorePasswdProperty());
+        System.clearProperty(clientX509Util.getSslTruststoreLocationProperty());
+        System.clearProperty(clientX509Util.getSslTruststorePasswdProperty());
     }
 
     /**
-     * This test checks that SSL works in cluster setup of ZK servers, which includes:
+     * This test checks that client <-> server SSL works in cluster setup of ZK servers, which includes:
      * 1. setting "secureClientPort" in "zoo.cfg" file.
      * 2. setting jvm flags for serverCnxn, keystore, truststore.
      * Finally, a zookeeper client should be able to connect to the secure port and
@@ -70,7 +72,7 @@ public class SSLTest extends QuorumPeerTestBase {
      * Note that in this test a ZK server has two ports -- clientPort and secureClientPort.
      */
     @Test
-    public void testSecureQuorumServer() throws Exception {
+    public void testClientServerSSL() throws Exception {
         final int SERVER_COUNT = 3;
         final int clientPorts[] = new int[SERVER_COUNT];
         final Integer secureClientPorts[] = new Integer[SERVER_COUNT];

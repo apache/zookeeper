@@ -42,17 +42,9 @@ import org.slf4j.LoggerFactory;
 public class ZKConfig {
 
     private static final Logger LOG = LoggerFactory.getLogger(ZKConfig.class);
-    @SuppressWarnings("deprecation")
-    public static final String SSL_KEYSTORE_LOCATION = X509Util.SSL_KEYSTORE_LOCATION;
-    @SuppressWarnings("deprecation")
-    public static final String SSL_KEYSTORE_PASSWD = X509Util.SSL_KEYSTORE_PASSWD;
-    @SuppressWarnings("deprecation")
-    public static final String SSL_TRUSTSTORE_LOCATION = X509Util.SSL_TRUSTSTORE_LOCATION;
-    @SuppressWarnings("deprecation")
-    public static final String SSL_TRUSTSTORE_PASSWD = X509Util.SSL_TRUSTSTORE_PASSWD;
-    @SuppressWarnings("deprecation")
-    public static final String SSL_AUTHPROVIDER = X509Util.SSL_AUTHPROVIDER;
+
     public static final String JUTE_MAXBUFFER = "jute.maxbuffer";
+
     /**
      * Path to a kinit binary: {@value}. Defaults to
      * <code>"/usr/bin/kinit"</code>
@@ -107,14 +99,33 @@ public class ZKConfig {
      * this configuration.
      */
     protected void handleBackwardCompatibility() {
-        properties.put(SSL_KEYSTORE_LOCATION, System.getProperty(SSL_KEYSTORE_LOCATION));
-        properties.put(SSL_KEYSTORE_PASSWD, System.getProperty(SSL_KEYSTORE_PASSWD));
-        properties.put(SSL_TRUSTSTORE_LOCATION, System.getProperty(SSL_TRUSTSTORE_LOCATION));
-        properties.put(SSL_TRUSTSTORE_PASSWD, System.getProperty(SSL_TRUSTSTORE_PASSWD));
-        properties.put(SSL_AUTHPROVIDER, System.getProperty(SSL_AUTHPROVIDER));
         properties.put(JUTE_MAXBUFFER, System.getProperty(JUTE_MAXBUFFER));
         properties.put(KINIT_COMMAND, System.getProperty(KINIT_COMMAND));
         properties.put(JGSS_NATIVE, System.getProperty(JGSS_NATIVE));
+
+        ClientX509Util clientX509Util = new ClientX509Util();
+        putSSLProperties(clientX509Util);
+        properties.put(clientX509Util.getSslAuthProviderProperty(),
+                System.getProperty(clientX509Util.getSslAuthProviderProperty()));
+
+        putSSLProperties(new QuorumX509Util());
+    }
+    
+    private void putSSLProperties(X509Util x509Util) {
+        properties.put(x509Util.getSslKeystoreLocationProperty(),
+                System.getProperty(x509Util.getSslKeystoreLocationProperty()));
+        properties.put(x509Util.getSslKeystorePasswdProperty(),
+                System.getProperty(x509Util.getSslKeystorePasswdProperty()));
+        properties.put(x509Util.getSslTruststoreLocationProperty(),
+                System.getProperty(x509Util.getSslTruststoreLocationProperty()));
+        properties.put(x509Util.getSslTruststorePasswdProperty(),
+                System.getProperty(x509Util.getSslTruststorePasswdProperty()));
+        properties.put(x509Util.getSslHostnameVerificationEnabledProperty(),
+                System.getProperty(x509Util.getSslHostnameVerificationEnabledProperty()));
+        properties.put(x509Util.getSslCrlEnabledProperty(),
+                System.getProperty(x509Util.getSslCrlEnabledProperty()));
+        properties.put(x509Util.getSslOcspEnabledProperty(),
+                System.getProperty(x509Util.getSslOcspEnabledProperty()));
     }
 
     /**
@@ -220,7 +231,29 @@ public class ZKConfig {
      * exists and is equal to the string {@code "true"}.
      */
     public boolean getBoolean(String key) {
-        return Boolean.parseBoolean(getProperty(key));
+        return getBoolean(key, false);
+    }
+
+    /**
+     * Get the value of the <code>key</code> property as a <code>boolean</code>. Returns
+     * {@code true} if and only if the property named by the argument exists and is equal
+     * to the string {@code "true"}. If the property is not set, the provided
+     * <code>defaultValue</code> is returned.
+     *
+     * @param key
+     *            property key.
+     * @param defaultValue
+     *            default value.
+     * @return return property value as an <code>boolean</code>, or
+     *         <code>defaultValue</code>
+     */
+    public boolean getBoolean(String key, boolean defaultValue) {
+        String propertyValue = getProperty(key);
+        if (propertyValue == null) {
+            return defaultValue;
+        } else {
+            return Boolean.parseBoolean(propertyValue);
+        }
     }
 
     /**
