@@ -1042,6 +1042,40 @@ server.3=zoo3:2888:3888</programlisting>
               </note>
             </listitem>
           </varlistentry>
+
+          <varlistentry>
+            <term>4lw.commands.whitelist</term>
+
+            <listitem>
+              <para>(Java system property: <emphasis
+                      role="bold">zookeeper.4lw.commands.whitelist</emphasis>)</para>
+
+              <para><emphasis role="bold">New in 3.4.10:</emphasis>
+                This property contains a list of comma separated
+                <ulink url="#sc_4lw">Four Letter Words</ulink> commands. It is introduced
+                to provide fine grained control over the set of commands ZooKeeper can execute,
+                so users can turn off certain commands if necessary.
+                By default it contains all supported four letter word commands except "wchp" and "wchc",
+                if the property is not specified. If the property is specified, then only commands listed
+                in the whitelist are enabled.
+              </para>
+
+              <para>Here's an example of the configuration that enables stat, ruok, conf, and isro
+                command while disabling the rest of Four Letter Words command:</para>
+              <programlisting>
+                4lw.commands.whitelist=stat, ruok, conf, isro
+              </programlisting>
+
+              <para>Users can also use asterisk option so they don't have to include every command one by one in the list.
+                As an example, this will enable all four letter word commands:
+              </para>
+              <programlisting>
+                4lw.commands.whitelist=*
+              </programlisting>
+
+            </listitem>
+          </varlistentry>
+
         </variablelist>
         <para></para>
       </section>
@@ -1665,6 +1699,16 @@ imok
             recommend practice for estimating the heap size your system needs
             is to run load tests, and then make sure you are well below the
             usage limit that would cause the system to swap.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Publicly accessible deployment</term>
+          <listitem>
+            <para>
+              A ZooKeeper ensemble is expected to operate in a trusted computing environment.
+              It is thus recommended to deploy ZooKeeper behind a firewall.
+            </para>
           </listitem>
         </varlistentry>
       </variablelist>
