@@ -1052,7 +1052,7 @@ server.3=zoo3:2888:3888</programlisting>
 
               <para><emphasis role="bold">New in 3.4.10:</emphasis>
                 This property contains a list of comma separated
-                <ulink url="#sc_4lw">Four Letter Words</ulink> commands. It is introduced
+                <ulink url="#sc_zkCommands">Four Letter Words</ulink> commands. It is introduced
                 to provide fine grained control over the set of commands ZooKeeper can execute,
                 so users can turn off certain commands if necessary.
                 By default it contains all supported four letter word commands except "wchp" and "wchc",
