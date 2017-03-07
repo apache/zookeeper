@@ -17,14 +17,14 @@
  */
 package org.apache.zookeeper;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import java.io.IOException;
 
 import org.apache.zookeeper.client.ZKClientConfig;
-import org.apache.zookeeper.common.ZKConfig;
 import org.junit.Test;
+
+import static org.apache.zookeeper.server.ZookeeperServerConfig.JUTE_MAXBUFFER;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class ClientCnxnSocketTest {
 
@@ -32,7 +32,7 @@ public class ClientCnxnSocketTest {
     public void testWhenInvalidJuteMaxBufferIsConfiguredIOExceptionIsThrown() {
         ZKClientConfig clientConfig = new ZKClientConfig();
         String value = "SomeInvalidInt";
-        clientConfig.setProperty(ZKConfig.JUTE_MAXBUFFER, value);
+        clientConfig.setProperty(JUTE_MAXBUFFER, value);
         // verify ClientCnxnSocketNIO creation
         try {
             new ClientCnxnSocketNIO(clientConfig);
