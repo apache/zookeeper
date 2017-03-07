@@ -162,7 +162,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                             + " from " + ctx.getChannel());
                 }
                 NettyServerCnxn cnxn = (NettyServerCnxn)ctx.getAttachment();
-                synchronized(cnxn) {
+                synchronized(cnxn.getRpcLock()) {
                     processMessage(e, cnxn);
                 }
             } catch(Exception ex) {

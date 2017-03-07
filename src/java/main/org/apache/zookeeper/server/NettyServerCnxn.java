@@ -71,6 +71,8 @@ public class NettyServerCnxn extends ServerCnxn {
 
     NettyServerCnxnFactory factory;
     boolean initialized;
+
+    private final Object RPC_LOCK = new Object();
     
     NettyServerCnxn(Channel channel, ZooKeeperServer zks, NettyServerCnxnFactory factory) {
         this.channel = channel;
@@ -485,5 +487,13 @@ public class NettyServerCnxn extends ServerCnxn {
         } else {
             clientChain = Arrays.copyOf(chain, chain.length);
         }
+    }
+
+    /**
+     * @return An {@code Object} suitable to be locked on to ensure only one RPC is executed
+     *    on {@code this} at one time.
+     */
+    protected Object getRpcLock() {
+        return RPC_LOCK;
     }
 }
