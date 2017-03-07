@@ -841,9 +841,9 @@
     itself, ZooKeeper associates all the ids that correspond to a
     client with the clients connection. These ids are checked against
     the ACLs of znodes when a clients tries to access a node. ACLs are
-    made up of pairs of <emphasis>(scheme:expression,
+    made up of pairs of <emphasis>(scheme:id,
     perms)</emphasis>. The format of
-    the <emphasis>expression</emphasis> is specific to the scheme. For
+    the <emphasis>id</emphasis> is specific to the scheme. For
     example, the pair <emphasis>(ip:19.22.0.0/16, READ)</emphasis>
     gives the <emphasis>READ</emphasis> permission to any clients with
     an IP address that starts with 19.22.</para>
@@ -899,9 +899,16 @@
         single id, <emphasis>anyone</emphasis>, that represents
         anyone.</para></listitem>
 
-        <listitem><para><emphasis role="bold">auth</emphasis> doesn't
-        use any id, represents any authenticated
-        user.</para></listitem>
+        <listitem><para><emphasis role="bold">auth</emphasis> is a special
+        scheme which ignores any provided ID and instead uses the current user,
+        credentials, and scheme. Any ID (whether, 'user' like with SASL
+        authentication or 'user:password' like with DIGEST authentication) provided is ignored
+        by the ZooKeeper server when persisting the ACL. However, the ID must be
+        provided in the ACL because the ACL must match the form 'scheme:id:perms'.
+        This scheme is provided as a convenience as it is a common use-case for
+        a client to create a znode and then restrict access to that znode to only that client.
+        If there is no authenticated user, setting an ACL with the auth scheme will fail.
+        </para></listitem>
 
         <listitem><para><emphasis role="bold">digest</emphasis> uses
         a <emphasis>username:password</emphasis> string to generate
