@@ -1701,6 +1701,16 @@ imok
             usage limit that would cause the system to swap.</para>
           </listitem>
         </varlistentry>
+
+        <varlistentry>
+          <term>Publicly accessible deployment</term>
+          <listitem>
+            <para>
+              A ZooKeeper ensemble is expected to operate in a trusted computing environment.
+              It is thus recommended to deploy ZooKeeper behind a firewall.
+            </para>
+          </listitem>
+        </varlistentry>
       </variablelist>
     </section>
 
