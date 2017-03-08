@@ -203,6 +203,111 @@ document.write("Last Published: " + document.lastModified);
         PDF</a>
 </div>
 
+        Release Notes - ZooKeeper - Version 3.4.10
+    
+<h2>        Sub-task
+</h2>
+<ul>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2692'>ZOOKEEPER-2692</a>] -         Fix race condition in testWatchAutoResetWithPending
+</li>
+</ul>
+                            
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2044'>ZOOKEEPER-2044</a>] -         CancelledKeyException in zookeeper branch-3.4
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2383'>ZOOKEEPER-2383</a>] -         Startup race in ZooKeeperServer
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2465'>ZOOKEEPER-2465</a>] -         Documentation copyright notice is out of date.
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2467'>ZOOKEEPER-2467</a>] -         NullPointerException when redo Command is passed negative value
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2470'>ZOOKEEPER-2470</a>] -         ServerConfig#parse(String[])  ignores tickTime
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2542'>ZOOKEEPER-2542</a>] -         Update NOTICE file with Netty notice in 3.4
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2552'>ZOOKEEPER-2552</a>] -         Revisit release note doc and remove the items which are not related to the released version
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2558'>ZOOKEEPER-2558</a>] -         Potential memory leak in recordio.c
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2573'>ZOOKEEPER-2573</a>] -         Modify Info.REVISION to adapt git repo
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2574'>ZOOKEEPER-2574</a>] -         PurgeTxnLog can inadvertently delete required txn log files
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2579'>ZOOKEEPER-2579</a>] -         ZooKeeper server should verify that dataDir and snapDir are writeable before starting
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2606'>ZOOKEEPER-2606</a>] -         SaslServerCallbackHandler#handleAuthorizeCallback() should log the exception
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2617'>ZOOKEEPER-2617</a>] -         correct a few spelling typos
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2622'>ZOOKEEPER-2622</a>] -         ZooTrace.logQuorumPacket does nothing
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2633'>ZOOKEEPER-2633</a>] -         Build failure in contrib/zkfuse with gcc 6.x
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2646'>ZOOKEEPER-2646</a>] -         Java target in branch 3.4 doesn&#39;t match documentation 
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2651'>ZOOKEEPER-2651</a>] -         Missing src/pom.template in release
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2652'>ZOOKEEPER-2652</a>] -         Fix HierarchicalQuorumTest.java
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2671'>ZOOKEEPER-2671</a>] -         Fix compilation error in branch-3.4
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2678'>ZOOKEEPER-2678</a>] -         Large databases take a long time to regain a quorum
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2680'>ZOOKEEPER-2680</a>] -         Correct DataNode.getChildren() inconsistent behaviour.
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2689'>ZOOKEEPER-2689</a>] -         Fix Kerberos Authentication related test cases
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2693'>ZOOKEEPER-2693</a>] -         DOS attack on wchp/wchc four letter words (4lw)
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2696'>ZOOKEEPER-2696</a>] -         Eclipse ant task no longer determines correct classpath for tests after ZOOKEEPER-2689
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2710'>ZOOKEEPER-2710</a>] -         Regenerate documentation for branch-3.4 release
+</li>
+</ul>
+                    
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2479'>ZOOKEEPER-2479</a>] -         Add &#39;electionTimeTaken&#39; value in LeaderMXBean and FollowerMXBean
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2507'>ZOOKEEPER-2507</a>] -         C unit test improvement: line break between &#39;ZooKeeper server started&#39; and &#39;Running&#39;
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2557'>ZOOKEEPER-2557</a>] -         Update gitignore to account for other file extensions
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2594'>ZOOKEEPER-2594</a>] -         Use TLS for downloading artifacts during build
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2620'>ZOOKEEPER-2620</a>] -         Add comments to testReadOnlySnapshotDir and testReadOnlyTxnLogDir indicating that the tests will fail when run as root
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2672'>ZOOKEEPER-2672</a>] -         Remove CHANGE.txt
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2682'>ZOOKEEPER-2682</a>] -         Make it optional to fail build on test failure
+</li>
+</ul>
+                
+<h2>        New Feature
+</h2>
+<ul>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-1045'>ZOOKEEPER-1045</a>] -         Support Quorum Peer mutual authentication via SASL
+</li>
+</ul>
+                                                                
+<h2>        Test
+</h2>
+<ul>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2502'>ZOOKEEPER-2502</a>] -         Flaky Test: org.apache.zookeeper.server.quorum.CnxManagerTest.testCnxFromFutureVersion
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2650'>ZOOKEEPER-2650</a>] -         Test Improvement by adding more QuorumPeer Auth related test cases
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2656'>ZOOKEEPER-2656</a>] -         Fix ServerConfigTest#testValidArguments test case failures
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2664'>ZOOKEEPER-2664</a>] -         ClientPortBindTest#testBindByAddress may fail due to &quot;No such device&quot; exception
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2665'>ZOOKEEPER-2665</a>] -         Port QA github pull request build to branch 3.4 and 3.5
+</li>
+</ul>
+
         Release Notes - ZooKeeper - Version 3.4.9
     
 <h2>        Sub-task

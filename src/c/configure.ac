@@ -3,7 +3,7 @@
 
 AC_PREREQ(2.59)
 
-AC_INIT([zookeeper C client],3.4.9,[user@zookeeper.apache.org],[zookeeper])
+AC_INIT([zookeeper C client],3.4.10,[user@zookeeper.apache.org],[zookeeper])
 AC_CONFIG_SRCDIR([src/zookeeper.c])
 
 # Save initial CFLAGS and CXXFLAGS values before AC_PROG_CC and AC_PROG_CXX
