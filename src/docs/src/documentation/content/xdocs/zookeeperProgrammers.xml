@@ -820,11 +820,14 @@
     recursive.</para>
 
     <para>ZooKeeper supports pluggable authentication schemes. Ids are
-    specified using the form <emphasis>scheme:id</emphasis>,
-    where <emphasis>scheme</emphasis> is a the authentication scheme
-    that the id corresponds to. For
-    example, <emphasis>ip:172.16.16.1</emphasis> is an id for a
-    host with the address <emphasis>172.16.16.1</emphasis>.</para>
+    specified using the form <emphasis>scheme:expression</emphasis>,
+    where <emphasis>scheme</emphasis> is the authentication scheme
+    that the id corresponds to. The set of valid expressions are defined
+    by the scheme. For example, <emphasis>ip:172.16.16.1</emphasis> is
+    an id for a host with the address <emphasis>172.16.16.1</emphasis>
+    using the <emphasis>ip</emphasis> scheme, whereas <emphasis>digest:bob:password</emphasis>
+    is an id for the user with the name of <emphasis>bob</emphasis> using
+    the <emphasis>digest</emphasis> scheme.</para>
 
     <para>When a client connects to ZooKeeper and authenticates
     itself, ZooKeeper associates all the ids that correspond to a
@@ -888,9 +891,16 @@
         single id, <emphasis>anyone</emphasis>, that represents
         anyone.</para></listitem>
 
-        <listitem><para><emphasis role="bold">auth</emphasis> doesn't
-        use any id, represents any authenticated
-        user.</para></listitem>
+        <listitem><para><emphasis role="bold">auth</emphasis> is a special
+        scheme which ignores any provided expression and instead uses the current user,
+        credentials, and scheme. Any expression (whether <emphasis>user</emphasis> like with SASL
+        authentication or <emphasis>user:password</emphasis> like with DIGEST authentication) provided is ignored
+        by the ZooKeeper server when persisting the ACL. However, the expression must still be
+        provided in the ACL because the ACL must match the form <emphasis>scheme:expression:perms</emphasis>.
+        This scheme is provided as a convenience as it is a common use-case for
+        a user to create a znode and then restrict access to that znode to only that user.
+        If there is no authenticated user, setting an ACL with the auth scheme will fail.
+        </para></listitem>
 
         <listitem><para><emphasis role="bold">digest</emphasis> uses
         a <emphasis>username:password</emphasis> string to generate
