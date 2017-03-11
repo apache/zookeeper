@@ -48,7 +48,7 @@ import org.slf4j.LoggerFactory;
  * root CA certificates and all other certificates in the set are intermediate
  * certificates.
  *
- * @author Svetlin Nakov
+ * author Svetlin Nakov
  */
 public class CertificateVerifier {
     private static final Logger LOG
@@ -146,7 +146,7 @@ public class CertificateVerifier {
      *      (e.g. certification path cannot be built or some certificate in the
      *      chain is expired)
      */
-    private static PKIXCertPathBuilderResult verifyCertificate(
+    public static PKIXCertPathBuilderResult verifyCertificate(
             X509Certificate cert, Set<X509Certificate> trustedRootCerts,
             Set<X509Certificate> intermediateCerts)
             throws GeneralSecurityException {

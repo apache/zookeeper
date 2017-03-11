@@ -19,6 +19,7 @@ package org.apache.zookeeper.server.quorum.util;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -122,8 +123,17 @@ public class ZKX509TrustManager extends X509ExtendedTrustManager {
 
         final X509Certificate clientCert = certs[0];
         if (CertificateVerifier.isSelfSigned(clientCert)) {
-            throw new CertificateException("Not going to verify self-signed " +
-                    "certs for now using truststore.");
+            try {
+                CertificateVerifier.verifyCertificate(clientCert,
+                        new HashSet<>(trustedCertList),
+                        new HashSet<X509Certificate>());
+            } catch (GeneralSecurityException exp) {
+                final String errStr = "verification with few trust anchors failed" +
+                        ". Error: " + exp.getMessage();
+                LOG.error("{}", errStr, exp);
+                throw new FatalCertificateException(errStr, exp);
+            }
+            return;
         }
 
         final Set<X509Certificate> restOfCerts = new HashSet<>();
@@ -171,8 +181,16 @@ public class ZKX509TrustManager extends X509ExtendedTrustManager {
             tmf.init(ts);
             for (Enumeration<String> e = ts.aliases(); e.hasMoreElements();) {
                 final String alias = e.nextElement();
-                for (final Certificate cert : ts.getCertificateChain(alias)) {
-                    trustedCertList.add((X509Certificate)cert);
+                final Certificate[] certs = ts.getCertificateChain(alias);
+                if (certs == null) {
+                    final Certificate cert = ts.getCertificate(alias);
+                    if (cert != null) {
+                        trustedCertList.add((X509Certificate) cert);
+                    }
+                } else {
+                    for (final Certificate cert : certs) {
+                        trustedCertList.add((X509Certificate) cert);
+                    }
                 }
             }
         } catch (IOException | KeyStoreException | NoSuchAlgorithmException

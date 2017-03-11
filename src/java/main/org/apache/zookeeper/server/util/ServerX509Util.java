@@ -32,19 +32,9 @@ public class ServerX509Util extends X509Util {
             throws X509Exception.SSLContextException {
         final ZKConfig zkConfig = new ZookeeperServerConfig();
         try {
-            return createSSLContext(zkConfig,
-                    getTrustManager(zkConfig));
+            return createSSLContext(zkConfig, getTrustManager(zkConfig));
         } catch (X509Exception.TrustManagerException exp) {
             throw new X509Exception.SSLContextException(exp);
         }
-    }
-
-    public static X509ExtendedTrustManager getTrustManager(
-            final ZKConfig zkConfig)
-    throws X509Exception.TrustManagerException {
-        return new ZKX509TrustManager(zkConfig.getProperty(
-                        ZKConfig.SSL_TRUSTSTORE_LOCATION),
-                        zkConfig.getProperty(
-                                ZKConfig.SSL_TRUSTSTORE_PASSWD));
     }
 }

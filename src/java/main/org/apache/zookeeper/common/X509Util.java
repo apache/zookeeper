@@ -33,6 +33,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509ExtendedTrustManager;
 import javax.net.ssl.X509KeyManager;
 
+import org.apache.zookeeper.server.quorum.util.ZKX509TrustManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,7 +86,6 @@ public class X509Util {
             }
         }
     }
-
 
     protected static SSLContext createSSLContext(
             final ZKConfig config,
@@ -141,5 +141,14 @@ public class X509Util {
             ks.load(inputStream, keyStorePasswordChars);
         }
         return ks;
+    }
+
+    public static X509ExtendedTrustManager getTrustManager(
+            final ZKConfig zkConfig)
+            throws X509Exception.TrustManagerException {
+        return new ZKX509TrustManager(zkConfig.getProperty(
+                ZKConfig.SSL_TRUSTSTORE_LOCATION),
+                zkConfig.getProperty(
+                        ZKConfig.SSL_TRUSTSTORE_PASSWD));
     }
 }

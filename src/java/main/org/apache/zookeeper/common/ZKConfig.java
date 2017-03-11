@@ -119,7 +119,7 @@ public abstract class ZKConfig {
                 System.getProperty(getSslConfig().getSslAuthProvider()));
     }
 
-    private SslConfig getSslConfig() {
+    public SslConfig getSslConfig() {
         return sslConfig;
     }
 

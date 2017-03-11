@@ -167,8 +167,7 @@ public class QuorumPeerMain {
           QuorumSocketFactory socketFactory =
                   QuorumSocketFactory.createDefault();
 
-          quorumPeer = new QuorumPeer();
-
+          quorumPeer = getQuorumPeer();
           quorumPeer.setTxnFactory(new FileTxnSnapLog(
                       config.getDataLogDir(),
                       config.getDataDir()));

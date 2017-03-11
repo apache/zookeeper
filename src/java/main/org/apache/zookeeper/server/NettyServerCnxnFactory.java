@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.server;
 
+import static org.jboss.netty.buffer.ChannelBuffers.dynamicBuffer;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -64,8 +66,6 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static org.jboss.netty.buffer.ChannelBuffers.dynamicBuffer;
 
 public class NettyServerCnxnFactory extends ServerCnxnFactory {
     private static final Logger LOG = LoggerFactory.getLogger(NettyServerCnxnFactory.class);
@@ -292,7 +292,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                     cnxn.setClientCertificateChain(session.getPeerCertificates());
 
                     X509AuthenticationProvider authProvider =
-                            new X509AuthenticationProvider(zookeeperServerConfig);
+                            new X509AuthenticationProvider();
 
                     if (KeeperException.Code.OK !=
                             authProvider.handleAuthentication(cnxn, null)) {

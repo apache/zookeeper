@@ -30,19 +30,6 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
  * of certification verification for both ZAB and FLE
  */
 public class QuorumX509Util extends X509Util {
-    public static SSLContext createSSLContext(final ZKConfig zkConfig)
-            throws X509Exception.SSLContextException {
-        try {
-            return createSSLContext(zkConfig,
-                    new ZKX509TrustManager(zkConfig.getProperty(
-                            ZKConfig.SSL_TRUSTSTORE_LOCATION),
-                            zkConfig.getProperty(
-                                    ZKConfig.SSL_TRUSTSTORE_PASSWD)));
-        } catch (X509Exception.TrustManagerException exp) {
-            throw new X509Exception.SSLContextException(exp);
-        }
-    }
-
     public static SSLContext createSSLContext(
             final QuorumPeerConfig quorumPeerConfig)
             throws X509Exception.SSLContextException {

@@ -726,6 +726,13 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         quorumStats = new QuorumStats(this);
         jmxRemotePeerBean = new HashMap<Long, RemotePeerBean>();
         adminServer = AdminServerFactory.createAdminServer();
+        try {
+            socketFactory = QuorumSocketFactory.createDefault();
+        } catch (Exception exp) {
+            throw new IllegalAccessError("Should not fail for tests.");
+        }
+
+        quorumPeerConfig = new QuorumPeerConfig();
     }
 
 

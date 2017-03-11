@@ -29,6 +29,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.server.ServerCnxnFactory;
+import org.apache.zookeeper.server.ZookeeperServerConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
 import org.junit.After;
 import org.junit.Assert;
@@ -36,17 +37,19 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class SSLTest extends QuorumPeerTestBase {
+    private ZookeeperServerConfig zkConfig;
 
     @Before
     public void setup() {
+        zkConfig = new ZookeeperServerConfig();
         String testDataPath = System.getProperty("test.data.dir", "build/test/data");
         System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
         System.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
         System.setProperty(ZKClientConfig.SECURE_CLIENT, "true");
-        System.setProperty(ZKConfig.SSL_KEYSTORE_LOCATION, testDataPath + "/ssl/testKeyStore.jks");
-        System.setProperty(ZKConfig.SSL_KEYSTORE_PASSWD, "testpass");
-        System.setProperty(ZKConfig.SSL_TRUSTSTORE_LOCATION, testDataPath + "/ssl/testTrustStore.jks");
-        System.setProperty(ZKConfig.SSL_TRUSTSTORE_PASSWD, "testpass");
+        System.setProperty(zkConfig.getSslConfig().getSslKeyStoreLocation(), testDataPath + "/ssl/testKeyStore.jks");
+        System.setProperty(zkConfig.getSslConfig().getSslKeyStorePassword(), "testpass");
+        System.setProperty(zkConfig.getSslConfig().getSslTrustStoreLocation(), testDataPath + "/ssl/testTrustStore.jks");
+        System.setProperty(zkConfig.getSslConfig().getSslTrustStorePassword(), "testpass");
     }
 
     @After
@@ -54,10 +57,10 @@ public class SSLTest extends QuorumPeerTestBase {
         System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
         System.clearProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET);
         System.clearProperty(ZKClientConfig.SECURE_CLIENT);
-        System.clearProperty(ZKConfig.SSL_KEYSTORE_LOCATION);
-        System.clearProperty(ZKConfig.SSL_KEYSTORE_PASSWD);
-        System.clearProperty(ZKConfig.SSL_TRUSTSTORE_LOCATION);
-        System.clearProperty(ZKConfig.SSL_TRUSTSTORE_PASSWD);
+        System.clearProperty(zkConfig.getSslConfig().getSslKeyStoreLocation());
+        System.clearProperty(zkConfig.getSslConfig().getSslKeyStorePassword());
+        System.clearProperty(zkConfig.getSslConfig().getSslTrustStoreLocation());
+        System.clearProperty(zkConfig.getSslConfig().getSslTrustStorePassword());
     }
 
     /**

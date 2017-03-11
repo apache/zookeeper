@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
  *
  * @since 3.5.3
  */
+@SuppressWarnings("try")
 public class ZooKeeperAdmin extends ZooKeeper {
     private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperAdmin.class);
 

@@ -66,8 +66,9 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
      * <br/><code>zookeeper.ssl.keyStore.password</code>
      * <br/><code>zookeeper.ssl.trustStore.password</code>
      */
-    public X509AuthenticationProvider(
-            final ZookeeperServerConfig zookeeperServerConfig) {
+    public X509AuthenticationProvider() {
+        final ZookeeperServerConfig zookeeperServerConfig =
+                new ZookeeperServerConfig();
         X509KeyManager km = null;
         X509TrustManager tm = null;
         try {
