@@ -162,6 +162,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                             + " from " + ctx.getChannel());
                 }
                 NettyServerCnxn cnxn = (NettyServerCnxn)ctx.getAttachment();
+                // Meant to mitigate ZOOKEEPER-2711
                 synchronized(cnxn.getRpcLock()) {
                     processMessage(e, cnxn);
                 }
@@ -171,7 +172,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             }
         }
 
-        private void processMessage(MessageEvent e, NettyServerCnxn cnxn) {
+        void processMessage(MessageEvent e, NettyServerCnxn cnxn) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug(Long.toHexString(cnxn.sessionId) + " queuedBuffer: "
                         + cnxn.queuedBuffer);

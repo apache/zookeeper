@@ -72,6 +72,7 @@ public class NettyServerCnxn extends ServerCnxn {
     NettyServerCnxnFactory factory;
     boolean initialized;
 
+    // Meant to mitigate ZOOKEEPER-2711
     private final Object RPC_LOCK = new Object();
     
     NettyServerCnxn(Channel channel, ZooKeeperServer zks, NettyServerCnxnFactory factory) {
