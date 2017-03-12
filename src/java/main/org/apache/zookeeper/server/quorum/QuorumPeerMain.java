@@ -108,7 +108,7 @@ public class QuorumPeerMain {
     protected void initializeAndRun(String[] args)
         throws ConfigException, IOException, AdminServerException
     {
-        QuorumPeerConfig config = new QuorumPeerConfig();
+        QuorumPeerConfig config = getQuorumPeerConfig();
         if (args.length == 1) {
             config.parse(args[0]);
         }
@@ -208,5 +208,10 @@ public class QuorumPeerMain {
     // @VisibleForTesting
     protected QuorumPeer getQuorumPeer() {
         return new QuorumPeer();
+    }
+
+    // @VisibleForTesting
+    protected QuorumPeerConfig getQuorumPeerConfig() {
+        return new QuorumPeerConfig();
     }
 }

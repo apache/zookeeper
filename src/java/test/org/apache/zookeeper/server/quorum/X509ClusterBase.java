@@ -33,6 +33,7 @@ import java.security.Security;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
@@ -71,17 +72,17 @@ public abstract class X509ClusterBase {
     protected static final String TRUST_STORE_NAME = "truststore";
     private static Random rndGen = new Random();
 
-    private final String clusterName;
+    protected final String clusterName;
     protected final Path basePath;
     protected final int clusterSize;
     protected final List<Path> keyStoreList;
     protected final List<String> keyStorePasswordList;
     protected final List<Path> badKeyStoreList;
     protected final List<String> badKeyStorePasswordList;
-    protected Path trustStore;
-    protected String trustStorePassword;
-    protected Path badTrustStore;
-    protected String badTrustStorePassword;
+    protected List<Path> trustStoreList;
+    protected List<String> trustStorePasswordList;
+    protected List<Path> badTrustStoreList;
+    protected List<String> badTrustStorePasswordList;
     private boolean initDone;
 
     public X509ClusterBase(final String clusterName,
@@ -94,6 +95,10 @@ public abstract class X509ClusterBase {
         keyStorePasswordList = new ArrayList<>();
         badKeyStoreList = new ArrayList<>();
         badKeyStorePasswordList = new ArrayList<>();
+        trustStoreList = new ArrayList<>();
+        trustStorePasswordList = new ArrayList<>();
+        badTrustStoreList = new ArrayList<>();
+        badTrustStorePasswordList = new ArrayList<>();
         initDone = false;
     }
 
@@ -117,33 +122,35 @@ public abstract class X509ClusterBase {
         return badKeyStorePasswordList;
     }
 
-    public Path getTrustStore() {
+    public List<Path> getTrustStoreList() {
         initOnce();
-        return trustStore;
+        return trustStoreList;
     }
 
-    public String getTrustStorePassword() {
+    public List<String> getTrustStorePasswordList() {
         initOnce();
-        return trustStorePassword;
+        return trustStorePasswordList;
     }
 
-    public Path getBadTrustStore() {
+    public List<Path> getBadTrustStoreList() {
         initOnce();
-        return badTrustStore;
+        return badTrustStoreList;
     }
 
-    public String getBadTrustStorePassword() {
+    public List<String> getBadTrustStorePasswordList() {
         initOnce();
-        return badTrustStorePassword;
+        return badTrustStorePasswordList;
     }
 
     protected abstract void initCerts();
 
     private void initOnce() {
-        if (!initDone) {
-            Security.addProvider(new BouncyCastleProvider());
-            initCerts();
-            initDone = true;
+        synchronized (this) {
+            if (!initDone) {
+                Security.addProvider(new BouncyCastleProvider());
+                initCerts();
+                initDone = true;
+            }
         }
     }
 
@@ -218,7 +225,7 @@ public abstract class X509ClusterBase {
                 BigInteger.valueOf(1),
                 new Date(System.currentTimeMillis()),
                 new Date(System.currentTimeMillis() + VALIDITY_PERIOD),
-                new X500Name("CN=Test Root Certificate"),
+                new X500Name("CN=" + subjectName + " Test Root Certificate"),
                 keyPair.getPublic());
         ContentSigner signer = new JcaContentSignerBuilder(signatureAlgorithm)
                 .setProvider("BC").build(keyPair.getPrivate());
@@ -231,42 +238,52 @@ public abstract class X509ClusterBase {
             throws CertificateException, NoSuchAlgorithmException,
             KeyStoreException, IOException {
         return Pair.of(buildKeyStore(basePath, prefix+"_"+NODE_PREFIX + index,
-                prefix+"_"+NODE_PREFIX + index, KEY_STORE_PASS, keyPair, cert),
+                Collections.singletonList(prefix+"_"+NODE_PREFIX + index),
+                KEY_STORE_PASS, Collections.singletonList(keyPair),
+                Collections.singletonList(cert)),
                 KEY_STORE_PASS);
     }
 
     public Pair<Path, String> buildTrustStore(final String prefix,
-            final KeyPair keyPair, final X509Certificate cert)
-            throws CertificateException, NoSuchAlgorithmException,
-            KeyStoreException, IOException {
+            final List<String> aliases, final List<KeyPair> keyPair,
+            final List<X509Certificate> cert) throws CertificateException,
+            NoSuchAlgorithmException, KeyStoreException, IOException {
+        final List<String> aliasList = new ArrayList<>();
+        for (final String p : aliases) {
+            aliasList.add(p+"_"+TRUST_STORE_NAME);
+        }
         return Pair.of(buildKeyStore(basePath, prefix+"_"+TRUST_STORE_NAME,
-                prefix+"_"+TRUST_STORE_NAME, KEY_STORE_PASS, keyPair, cert),
-                KEY_STORE_PASS);
+                aliasList, KEY_STORE_PASS, keyPair, cert), KEY_STORE_PASS);
     }
 
     public static Path buildKeyStore(
             final Path basePath, final String name,
-            final String alias, final String password,
-            final KeyPair keyPair, final X509Certificate cert)
+            final List<String> alias, final String password,
+            final List<KeyPair> keyPair, final List<X509Certificate> cert)
             throws KeyStoreException, CertificateException,
             NoSuchAlgorithmException, IOException {
         final KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
         final char[] pass = password.toCharArray();
         ks.load(null, pass);
 
-        KeyStore.PrivateKeyEntry entry = new KeyStore.PrivateKeyEntry(
-                keyPair.getPrivate(),
-                new java.security.cert.Certificate[]{cert});
-        ks.setEntry(alias, entry ,new KeyStore.PasswordProtection(pass));
+        for (int i = 0; i < alias.size(); i++) {
+            KeyStore.PrivateKeyEntry entry = new KeyStore.PrivateKeyEntry(
+                    keyPair.get(i).getPrivate(),
+                    new java.security.cert.Certificate[]{cert.get(i)});
+            ks.setEntry(alias.get(i), entry,
+                    new KeyStore.PasswordProtection(pass));
+        }
 
         final Path retPath = Paths.get(DIR_PREFIX).resolve(
                 name + KEY_STORE_SUFFIX);
         final Path keyStorePath = basePath.resolve(retPath);
         if (!keyStorePath.getParent().toFile().exists()) {
             if (!keyStorePath.getParent().toFile().mkdirs()) {
-                final String errStr = "Could not create dirs: " + keyStorePath;
-                LOG.error(errStr);
-                throw new IllegalAccessError(errStr);
+                if (!keyStorePath.getParent().toFile().exists()) {
+                    final String errStr = "Could not create dirs: " + keyStorePath;
+                    LOG.error(errStr);
+                    throw new IllegalAccessError(errStr);
+                }
             }
         }
 

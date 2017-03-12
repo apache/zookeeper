@@ -33,6 +33,8 @@ import java.util.concurrent.FutureTask;
 
 import javax.net.ssl.SSLHandshakeException;
 
+import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.ZKParameterized;
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.util.QuorumSocketFactory;
@@ -43,6 +45,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,31 +58,50 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 
+@RunWith(Parameterized.class)
+@Parameterized.UseParametersRunnerFactory(ZKParameterized.RunnerFactory.class)
 public class QuorumSocketFactoryTest {
     private static final Logger LOG
             = LoggerFactory.getLogger(QuorumSocketFactory.class);
     private final QuorumServer listenServer
-            = new QuorumServer(1, new InetSocketAddress("localhost", 38888));
+            = new QuorumServer(1, new InetSocketAddress("localhost", PortAssignment.unique()));
     private final QuorumServer client1
-            = new QuorumServer(2, new InetSocketAddress("localhost", 45555));
+            = new QuorumServer(2, new InetSocketAddress("localhost", PortAssignment.unique()));
     private final QuorumServer client2
-            = new QuorumServer(3, new InetSocketAddress("localhost", 46666));
+            = new QuorumServer(3, new InetSocketAddress("localhost", PortAssignment.unique()));
 
-    private boolean sslEnabled;
-    private X509ClusterCASigned x509ClusterCASigned;
+    private final boolean sslEnabled;
+    private final boolean isSelfSigned;
+    private X509ClusterBase x509ClusterBase;
     private List<QuorumPeerConfig> quorumPeerConfigs;
     private ServerSocket serverSocket = null;
     private Socket clientSocket1 = null;
     private Socket clientSocket2 = null;
 
+    public QuorumSocketFactoryTest(final boolean sslEnabled,
+                                   final boolean isSelfSigned) {
+        this.sslEnabled = sslEnabled;
+        this.isSelfSigned = isSelfSigned;
+    }
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                {false, false}, {true, false}, {true, true}});
+    }
+
     @Rule
-    public TemporaryFolder tmpFolder= new TemporaryFolder();
+    public TemporaryFolder tmpFolder = new TemporaryFolder();
 
     @Before
     public void setup() throws IOException {
-        this.sslEnabled = true;
-        this.x509ClusterCASigned = new X509ClusterCASigned("x509ca",
-                this.tmpFolder.newFolder("ssl").toPath(), 3);
+        if (!isSelfSigned) {
+            this.x509ClusterBase = new X509ClusterCASigned("x509ca",
+                    this.tmpFolder.newFolder("ssl").toPath(), 3);
+        } else {
+            this.x509ClusterBase = new X509ClusterSelfSigned("x509ca",
+                    this.tmpFolder.newFolder("ssl").toPath(), 3);
+        }
         quorumPeerConfigs = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             quorumPeerConfigs.add(new QuorumPeerConfig());
@@ -127,9 +150,13 @@ public class QuorumSocketFactoryTest {
     @Test(expected=SSLHandshakeException.class)
     public void testBadClient() throws X509Exception, InterruptedException,
             ExecutionException, IOException, NoSuchAlgorithmException {
-
         readWriteTestHelper(connectOneBadClientToServerTest(
                 client1, listenServer, 0, 1), "HelloWorld!");
+        if (!sslEnabled) {
+            // need to throw to make test case pass.
+            throw new SSLHandshakeException(
+                    "ssl disabled, so test should pass");
+        }
     }
 
     @Test
@@ -139,7 +166,7 @@ public class QuorumSocketFactoryTest {
                 client1, listenServer, 0, 1), "HelloWorld!");
     }
 
-    private void readWriteTestHelper(Collection<Socket> sockets,
+    private void readWriteTestHelper(final Collection<Socket> sockets,
                                      final String testStr)
             throws InterruptedException, ExecutionException, IOException {
         Iterator<Socket> it = sockets.iterator();
@@ -154,7 +181,7 @@ public class QuorumSocketFactoryTest {
             Thread.sleep(2);
         }
 
-        String str = null;
+        String str;
         try {
             str = readFuture.get();
         } catch (ExecutionException exp) {
@@ -200,8 +227,8 @@ public class QuorumSocketFactoryTest {
                 to, serverIndex);
     }
 
-    private Collection<Socket> connectOneClientToServerTest(final Socket client,
-                                                            final QuorumServer to, int serverIndex)
+    private Collection<Socket> connectOneClientToServerTest(
+            final Socket client, final QuorumServer to, int serverIndex)
             throws X509Exception, IOException, InterruptedException,
             ExecutionException, NoSuchAlgorithmException {
         serverSocket = newServerAndBindTest(to, serverIndex);
@@ -283,25 +310,38 @@ public class QuorumSocketFactoryTest {
 
     private void setQuorumPeerSslConfig(final QuorumPeerConfig zkConfig,
                                         final int index) {
+        setQuorumPeerSslConfig(x509ClusterBase, zkConfig, index);
+    }
+
+    public static void setQuorumPeerSslConfig(
+            final X509ClusterBase x509ClusterBase,
+            final QuorumPeerConfig zkConfig, final int index) {
         zkConfig.setProperty(SSL_KEYSTORE_LOCATION,
-                x509ClusterCASigned.getKeyStoreList().get(index).toString());
+                x509ClusterBase.getKeyStoreList().get(index).toString());
         zkConfig.setProperty(SSL_KEYSTORE_PASSWD,
-                x509ClusterCASigned.getKeyStorePasswordList().get(index));
+                x509ClusterBase.getKeyStorePasswordList().get(index));
         zkConfig.setProperty(SSL_TRUSTSTORE_LOCATION,
-                x509ClusterCASigned.getTrustStore().toString());
+                x509ClusterBase.getTrustStoreList().get(index).toString());
         zkConfig.setProperty(SSL_TRUSTSTORE_PASSWD,
-                x509ClusterCASigned.getTrustStorePassword());
+                x509ClusterBase.getTrustStorePasswordList().get(index));
     }
 
     private void setBadQuorumPeerSslConfig(final QuorumPeerConfig zkConfig,
                                            final int index) {
+        setBadQuorumPeerSslConfig(x509ClusterBase, zkConfig, index);
+    }
+
+    public void setBadQuorumPeerSslConfig(
+            final X509ClusterBase x509ClusterBase,
+            final QuorumPeerConfig zkConfig, final int index) {
         zkConfig.setProperty(SSL_KEYSTORE_LOCATION,
-                x509ClusterCASigned.getBadKeyStoreList().get(index).toString());
+                x509ClusterBase.getBadKeyStoreList().get(index).toString());
         zkConfig.setProperty(SSL_KEYSTORE_PASSWD,
-                x509ClusterCASigned.getBadKeyStorePasswordList().get(index));
+                x509ClusterBase.getBadKeyStorePasswordList().get(index));
         zkConfig.setProperty(SSL_TRUSTSTORE_LOCATION,
-                x509ClusterCASigned.getBadTrustStore().toString());
+                x509ClusterBase.getBadTrustStoreList().get(index).
+                        toString());
         zkConfig.setProperty(SSL_TRUSTSTORE_PASSWD,
-                x509ClusterCASigned.getBadTrustStorePassword());
+                x509ClusterBase.getBadTrustStorePasswordList().get(index));
     }
 }

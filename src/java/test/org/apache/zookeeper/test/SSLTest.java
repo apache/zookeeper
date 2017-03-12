@@ -22,25 +22,63 @@
 package org.apache.zookeeper.test;
 
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.ZKParameterized;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZookeeperServerConfig;
+import org.apache.zookeeper.server.quorum.QuorumPeer;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
+import org.apache.zookeeper.server.quorum.QuorumSocketFactoryTest;
+import org.apache.zookeeper.server.quorum.X509ClusterBase;
+import org.apache.zookeeper.server.quorum.X509ClusterCASigned;
+import org.apache.zookeeper.server.quorum.X509ClusterSelfSigned;
+import org.apache.zookeeper.server.quorum.util.QuorumSocketFactory;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+@RunWith(Parameterized.class)
+@Parameterized.UseParametersRunnerFactory(ZKParameterized.RunnerFactory.class)
 public class SSLTest extends QuorumPeerTestBase {
+    private static final int SERVER_COUNT = 3;
     private ZookeeperServerConfig zkConfig;
+    private final boolean sslEnabled;
+    private final boolean isSelfSigned;
+    private X509ClusterBase x509ClusterBase;
+
+    public SSLTest(final boolean sslEnabled,
+                   final boolean isSelfSigned) {
+        this.sslEnabled = sslEnabled;
+        this.isSelfSigned = isSelfSigned;
+    }
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                {false, false}, {true, false}, {true, true}});
+    }
+
+    @Rule
+    public TemporaryFolder tmpFolder = new TemporaryFolder();
 
     @Before
-    public void setup() {
+    public void setup() throws IOException {
         zkConfig = new ZookeeperServerConfig();
         String testDataPath = System.getProperty("test.data.dir", "build/test/data");
         System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
@@ -50,6 +88,18 @@ public class SSLTest extends QuorumPeerTestBase {
         System.setProperty(zkConfig.getSslConfig().getSslKeyStorePassword(), "testpass");
         System.setProperty(zkConfig.getSslConfig().getSslTrustStoreLocation(), testDataPath + "/ssl/testTrustStore.jks");
         System.setProperty(zkConfig.getSslConfig().getSslTrustStorePassword(), "testpass");
+
+        if (sslEnabled) {
+            System.setProperty(QuorumSocketFactory.SSL_ENABLED_PROP, "true");
+        }
+
+        if (!isSelfSigned) {
+            this.x509ClusterBase = new X509ClusterCASigned("x509ca",
+                    this.tmpFolder.newFolder("ssl").toPath(), SERVER_COUNT);
+        } else {
+            this.x509ClusterBase = new X509ClusterSelfSigned("x509ca",
+                    this.tmpFolder.newFolder("ssl").toPath(), SERVER_COUNT);
+        }
     }
 
     @After
@@ -61,6 +111,7 @@ public class SSLTest extends QuorumPeerTestBase {
         System.clearProperty(zkConfig.getSslConfig().getSslKeyStorePassword());
         System.clearProperty(zkConfig.getSslConfig().getSslTrustStoreLocation());
         System.clearProperty(zkConfig.getSslConfig().getSslTrustStorePassword());
+        System.clearProperty(QuorumSocketFactory.SSL_ENABLED_PROP);
     }
 
     /**
@@ -74,7 +125,6 @@ public class SSLTest extends QuorumPeerTestBase {
      */
     @Test
     public void testSecureQuorumServer() throws Exception {
-        final int SERVER_COUNT = 3;
         final int clientPorts[] = new int[SERVER_COUNT];
         final Integer secureClientPorts[] = new Integer[SERVER_COUNT];
         StringBuilder sb = new StringBuilder();
@@ -90,7 +140,13 @@ public class SSLTest extends QuorumPeerTestBase {
 
         MainThread[] mt = new MainThread[SERVER_COUNT];
         for (int i = 0; i < SERVER_COUNT; i++) {
-            mt[i] = new MainThread(i, quorumCfg, secureClientPorts[i], true);
+            final int index = i;
+            mt[i] = new MainThread(i, quorumCfg, secureClientPorts[i], true) {
+                @Override
+                public TestQPMain getTestQPMain() {
+                    return new SSLTestQPMain(x509ClusterBase, index);
+                }
+            };
             mt[i].start();
         }
 
@@ -129,5 +185,22 @@ public class SSLTest extends QuorumPeerTestBase {
         zk.delete("/test", -1);
         zk.close();
         mt.shutdown();
+    }
+
+    private static class SSLTestQPMain extends TestQPMain {
+        final X509ClusterBase x509ClusterBase;
+        final int index;
+        public SSLTestQPMain(final X509ClusterBase x509ClusterBase,
+                             final int index) {
+            this.x509ClusterBase = x509ClusterBase;
+            this.index = index;
+        }
+        @Override
+        protected QuorumPeerConfig getQuorumPeerConfig() {
+            final QuorumPeerConfig quorumPeerConfg = new QuorumPeerConfig();
+            QuorumSocketFactoryTest.setQuorumPeerSslConfig(x509ClusterBase,
+                    quorumPeerConfg, index);
+            return quorumPeerConfg;
+        }
     }
 }

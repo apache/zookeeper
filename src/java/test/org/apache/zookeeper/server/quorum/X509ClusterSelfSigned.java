@@ -25,14 +25,14 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.bouncycastle.operator.OperatorCreationException;
 
-public class X509ClusterCASigned extends X509ClusterBase {
-
-    public X509ClusterCASigned(final String clusterName,
+public class X509ClusterSelfSigned extends X509ClusterBase {
+    public X509ClusterSelfSigned(final String clusterName,
                                final Path basePath,
                                final int clusterSize) {
         super(clusterName, basePath, clusterSize);
@@ -54,16 +54,16 @@ public class X509ClusterCASigned extends X509ClusterBase {
             throws NoSuchAlgorithmException,
             CertificateException, OperatorCreationException, IOException,
             KeyStoreException {
-        final KeyPair caKeyPair = createRSAKeyPair();
-        final X509Certificate caCert = buildRootCert(caKeyPair);
 
+        final List<Pair<Integer, Pair<KeyPair, X509Certificate>>>
+                peerKeyCertList = new ArrayList<>();
         for (int i = 0; i < clusterSize; i++) {
-            final KeyPair nodeKeyPair = createRSAKeyPair();
-            final X509Certificate nodeCert = buildEndEntityCert(
-                    prefix+"_"+NODE_PREFIX + (i+1), caCert,
-                    caKeyPair.getPrivate(), nodeKeyPair);
-            final Pair<Path, String> p = buildKeyStore(prefix, i+1, nodeKeyPair,
-                    nodeCert);
+            final KeyPair keyPair = createRSAKeyPair();
+            final X509Certificate selfSignedCert = buildRootCert(
+                    clusterName +"_"+NODE_PREFIX+i, keyPair);
+            final Pair<Path, String> p = buildKeyStore(prefix, i + 1,
+                    keyPair, selfSignedCert);
+            peerKeyCertList.add(Pair.of(i, Pair.of(keyPair, selfSignedCert)));
             if (isGood) {
                 keyStoreList.add(p.getLeft());
                 keyStorePasswordList.add(p.getRight());
@@ -73,12 +73,21 @@ public class X509ClusterCASigned extends X509ClusterBase {
             }
         }
 
-        final Pair<Path, String> p = buildTrustStore(
-                prefix,
-                Collections.singletonList(prefix),
-                Collections.singletonList(caKeyPair),
-                Collections.singletonList(caCert));
-        for (int i = 0; i < clusterSize; i++) {
+        for (int i = 0; i < peerKeyCertList.size(); i++) {
+            final List<String> prefixList = new ArrayList<>();
+            final List<KeyPair> keyPairList = new ArrayList<>();
+            final List<X509Certificate> certList = new ArrayList<>();
+            for (int j = 0; j < peerKeyCertList.size(); j++) {
+                //if (j != i) {
+                    prefixList.add(prefix + "_" + j + "_");
+                    keyPairList.add(
+                            peerKeyCertList.get(j).getRight().getLeft());
+                    certList.add(peerKeyCertList.get(j).getRight().getRight());
+                //}
+            }
+
+            final Pair<Path, String> p = buildTrustStore(prefix + "_" + i,
+                    prefixList, keyPairList, certList);
             if (isGood) {
                 trustStoreList.add(p.getLeft());
                 trustStorePasswordList.add(p.getRight());
