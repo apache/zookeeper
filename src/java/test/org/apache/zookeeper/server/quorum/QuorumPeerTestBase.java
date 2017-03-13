@@ -47,7 +47,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
     protected static final Logger LOG = LoggerFactory
             .getLogger(QuorumPeerTestBase.class);
 
-    public static final int TIMEOUT = 10000;
+    public static final int TIMEOUT = 15000;
 
     public void process(WatchedEvent event) {
         // ignore for this test

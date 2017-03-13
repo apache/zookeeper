@@ -291,8 +291,19 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                     SSLSession session = eng.getSession();
                     cnxn.setClientCertificateChain(session.getPeerCertificates());
 
+                    String authProviderProp
+                            = System.getProperty(zookeeperServerConfig.getSslConfig().getSslAuthProvider(),
+                                    "x509");
+
                     X509AuthenticationProvider authProvider =
-                            new X509AuthenticationProvider();
+                            (X509AuthenticationProvider)
+                                    ProviderRegistry.getProvider(authProviderProp);
+
+                    if (authProvider == null) {
+                        LOG.error("Auth provider not found: {}", authProviderProp);
+                        cnxn.close();
+                        return;
+                    }
 
                     if (KeeperException.Code.OK !=
                             authProvider.handleAuthentication(cnxn, null)) {
@@ -342,8 +353,9 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
 
     private synchronized void initSSL(ChannelPipeline p)
             throws X509Exception, KeyManagementException, NoSuchAlgorithmException {
-        String authProviderProp = zookeeperServerConfig.getProperty(
-                ZKConfig.SSL_AUTHPROVIDER);
+        String authProviderProp = System.getProperty(
+                zookeeperServerConfig.getSslConfig().getSslAuthProvider(),
+                "x509");
         SSLContext sslContext;
         if (authProviderProp == null) {
             sslContext = ServerX509Util.createSSLContext();

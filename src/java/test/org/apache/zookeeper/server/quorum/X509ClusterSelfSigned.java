@@ -55,15 +55,19 @@ public class X509ClusterSelfSigned extends X509ClusterBase {
             CertificateException, OperatorCreationException, IOException,
             KeyStoreException {
 
-        final List<Pair<Integer, Pair<KeyPair, X509Certificate>>>
-                peerKeyCertList = new ArrayList<>();
+        final List<String> prefixList = new ArrayList<>();
+        final List<KeyPair> keyPairList = new ArrayList<>();
+        final List<X509Certificate> certList = new ArrayList<>();
         for (int i = 0; i < clusterSize; i++) {
             final KeyPair keyPair = createRSAKeyPair();
             final X509Certificate selfSignedCert = buildRootCert(
                     clusterName +"_"+NODE_PREFIX+i, keyPair);
             final Pair<Path, String> p = buildKeyStore(prefix, i + 1,
                     keyPair, selfSignedCert);
-            peerKeyCertList.add(Pair.of(i, Pair.of(keyPair, selfSignedCert)));
+
+            prefixList.add(prefix + "_" + i + "_");
+            keyPairList.add(keyPair);
+            certList.add(selfSignedCert);
             if (isGood) {
                 keyStoreList.add(p.getLeft());
                 keyStorePasswordList.add(p.getRight());
@@ -73,19 +77,7 @@ public class X509ClusterSelfSigned extends X509ClusterBase {
             }
         }
 
-        for (int i = 0; i < peerKeyCertList.size(); i++) {
-            final List<String> prefixList = new ArrayList<>();
-            final List<KeyPair> keyPairList = new ArrayList<>();
-            final List<X509Certificate> certList = new ArrayList<>();
-            for (int j = 0; j < peerKeyCertList.size(); j++) {
-                //if (j != i) {
-                    prefixList.add(prefix + "_" + j + "_");
-                    keyPairList.add(
-                            peerKeyCertList.get(j).getRight().getLeft());
-                    certList.add(peerKeyCertList.get(j).getRight().getRight());
-                //}
-            }
-
+        for (int i = 0; i < prefixList.size(); i++) {
             final Pair<Path, String> p = buildTrustStore(prefix + "_" + i,
                     prefixList, keyPairList, certList);
             if (isGood) {
