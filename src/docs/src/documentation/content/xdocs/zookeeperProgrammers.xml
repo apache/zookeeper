@@ -1714,7 +1714,7 @@ public abstract class ServerAuthenticationProvider implements AuthenticationProv
     <section id="sc_connectingToZk">
       <title>Connecting to ZooKeeper</title>
 
-      <para>Before we begin, you will have to set up a running Zookeeper server so that we can start developing the client. For C client bindings, we will be using the multithreaded library(zookeeper_mt) with a simple example written in C++. To establish a connection with Zookeeper server, we make use of C API - <emphasis>zookeeper_init</emphasis> with the following signature:</para>
+      <para>Before we begin, you will have to set up a running Zookeeper server so that we can start developing the client. For C client bindings, we will be using the multithreaded library(zookeeper_mt) with a simple example written in C. To establish a connection with Zookeeper server, we make use of C API - <emphasis>zookeeper_init</emphasis> with the following signature:</para>
 
       <programlisting><emphasis>int</emphasis> <emphasis>zookeeper_init</emphasis>(<emphasis>const</emphasis> <emphasis>char</emphasis> *host, watcher_fn fn, <emphasis>int</emphasis> recv_timeout, <emphasis>const</emphasis> clientid_t *clientid, <emphasis>void</emphasis> *context, <emphasis>int</emphasis> flags);</programlisting>
 
@@ -1762,10 +1762,11 @@ public abstract class ServerAuthenticationProvider implements AuthenticationProv
         </varlistentry>
       </variablelist>
 
-      <para>We will demonstrate client that outputs "Connected to Zookeeper" after successful connection or an error message otherwise. Let's call the following code <emphasis>zkClient.cpp</emphasis> :</para>
+      <para>We will demonstrate client that outputs "Connected to Zookeeper" after successful connection or an error message otherwise. Let's call the following code <emphasis>zkClient.cc</emphasis> :</para>
       <programlisting>
-#include &lt;iostream>
+#include &lt;stdio.h>
 #include &lt;zookeeper/zookeeper.h>
+#include &lt;errno.h>
 using namespace std;
 
 // Keeping track of the connection state
@@ -1800,10 +1801,11 @@ int main(){
 
     // zookeeper_init returns the handler upon a successful connection, null otherwise
     zkHandler = zookeeper_init("localhost:2181", watcher, 10000, 0, 0, 0);
+    
     if (!zkHandler) {
-       return errno;
+        return errno;
     }else{
-        cout &lt;&lt; "Connected to Zookeeper" &lt;&lt; endl;
+        printf("Connection established with Zookeeper. \n");
     }
 
     // Close Zookeeper connection
