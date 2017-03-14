@@ -247,7 +247,7 @@
       <section>
         <title>Container Nodes</title>
 
-        <para><emphasis role="bold">Added in 3.6.0</emphasis></para>
+        <para><emphasis role="bold">Added in 3.5.3</emphasis></para>
 
         <para>ZooKeeper has the notion of container znodes. Container znodes are
           special purpose znodes useful for recipes such as leader, lock, etc.
@@ -264,7 +264,7 @@
       <section>
         <title>TTL Nodes</title>
 
-        <para><emphasis role="bold">Added in 3.6.0</emphasis></para>
+        <para><emphasis role="bold">Added in 3.5.3</emphasis></para>
 
         <para>When creating PERSISTENT or PERSISTENT_SEQUENTIAL znodes,
           you can optionally set a TTL in milliseconds for the znode. If the znode
