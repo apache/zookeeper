@@ -18,6 +18,7 @@
 package org.apache.zookeeper.common;
 
 
+import javax.net.ssl.CertPathTrustManagerParameters;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -33,6 +34,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.security.KeyStore;
+import java.security.Security;
+import java.security.cert.PKIXBuilderParameters;
+import java.security.cert.X509CertSelector;
 
 import org.apache.zookeeper.server.quorum.BufferedSocket;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
@@ -133,7 +137,7 @@ public class X509Util {
             }
             try {
                 trustManagers = new TrustManager[]{
-                        createTrustManager(trustStoreLocationProp, trustStorePasswordProp)};
+                        createTrustManager(trustStoreLocationProp, trustStorePasswordProp, config.getBoolean(ZKConfig.SSL_CRL_ENABLED), config.getBoolean(ZKConfig.SSL_OCSP_ENABLED))};
             } catch (TrustManagerException e) {
                 throw new SSLContextException("Failed to create KeyManager", e);
             }
@@ -179,7 +183,7 @@ public class X509Util {
         }
     }
 
-    public static X509TrustManager createTrustManager(String trustStoreLocation, String trustStorePassword)
+    public static X509TrustManager createTrustManager(String trustStoreLocation, String trustStorePassword, boolean crlEnabled, boolean ocspEnabled)
             throws TrustManagerException {
         FileInputStream inputStream = null;
         try {
@@ -188,8 +192,22 @@ public class X509Util {
             KeyStore ts = KeyStore.getInstance("JKS");
             inputStream = new FileInputStream(trustStoreFile);
             ts.load(inputStream, trustStorePasswordChars);
-            TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
-            tmf.init(ts);
+
+            PKIXBuilderParameters pbParams = new PKIXBuilderParameters(ts, new X509CertSelector());
+            if (crlEnabled || ocspEnabled) {
+                pbParams.setRevocationEnabled(true);
+                System.setProperty("com.sun.net.ssl.checkRevocation", "true");
+                System.setProperty("com.sun.security.enableCRLDP", "true");
+                if (ocspEnabled) {
+                    Security.setProperty("ocsp.enable", "true");
+                }
+
+            } else {
+                pbParams.setRevocationEnabled(false);
+            }
+
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance("PKIX");
+            tmf.init(new CertPathTrustManagerParameters(pbParams));
 
             for (TrustManager tm : tmf.getTrustManagers()) {
                 if (tm instanceof X509TrustManager) {

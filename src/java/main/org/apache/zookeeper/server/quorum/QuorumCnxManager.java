@@ -344,13 +344,21 @@ public class QuorumCnxManager {
                 
                 sid = observerCounter--;
                 LOG.info("Setting arbitrary identifier to observer: {}", sid);
+            } else {
+                if (sock instanceof SSLSocket) {
+                    X509Util.performHostnameVerification((SSLSocket) sock, self.getView().get(sid));
+                }
             }
         } catch (IOException e) {
             closeSocket(sock);
             LOG.warn("Exception reading or writing challenge: {}", e.toString());
             return;
+        } catch (X509Exception.SSLContextException e) {
+            closeSocket(sock);
+            LOG.warn("Hostname verification failed", e);
+            return;
         }
-        
+
         //If wins the challenge, then close the new connection.
         if (sid < self.getId()) {
             /*

@@ -70,6 +70,11 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
         String keyStorePasswordProp = System.getProperty(
                 ZKConfig.SSL_KEYSTORE_PASSWD);
 
+        String ocspEnabledProperty = System.getProperty(
+                ZKConfig.SSL_OCSP_ENABLED);
+        String crlEnabledProperty = System.getProperty(
+                ZKConfig.SSL_CRL_ENABLED);
+
         X509KeyManager km = null;
         X509TrustManager tm = null;
         try {
@@ -86,7 +91,7 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
 
         try {
             tm = X509Util.createTrustManager(
-                    trustStoreLocationProp, trustStorePasswordProp);
+                    trustStoreLocationProp, trustStorePasswordProp, Boolean.parseBoolean(crlEnabledProperty), Boolean.parseBoolean(ocspEnabledProperty));
         } catch (TrustManagerException e) {
             LOG.error("Failed to create trust manager", e);
         }
