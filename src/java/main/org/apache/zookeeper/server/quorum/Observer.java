@@ -63,10 +63,10 @@ public class Observer extends Learner{
         zk.registerJMX(new ObserverBean(this, zk), self.jmxLocalPeerBean);
 
         try {
-            InetSocketAddress addr = findLeader();
-            LOG.info("Observing " + addr);
+            QuorumPeer.QuorumServer leader = findLeader();
+            LOG.info("Observing " + leader.addr);
             try {
-                connectToLeader(addr);
+                connectToLeader(leader);
                 long newLeaderZxid = registerWithLeader(Leader.OBSERVERINFO);
                 if (self.isReconfigStateChange())
                    throw new Exception("learned about role change");

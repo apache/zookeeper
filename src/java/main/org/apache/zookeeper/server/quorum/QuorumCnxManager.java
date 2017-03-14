@@ -446,7 +446,7 @@ public class QuorumCnxManager {
                  SSLSocket sslSock = (SSLSocket) X509Util.createSSLContext().getSocketFactory().createSocket();
                  setSockOpts(sslSock);
                  sslSock.connect(electionAddr, cnxTO);
-                 sslSock.startHandshake();
+                 X509Util.performHandshakeAndHostnameVerification(sslSock, self.getView().get(sid));
                  sock = sslSock;
              } else {
                  sock = new Socket();

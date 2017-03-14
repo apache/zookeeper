@@ -18,6 +18,7 @@
 package org.apache.zookeeper.common;
 
 
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -34,6 +35,7 @@ import java.net.Socket;
 import java.security.KeyStore;
 
 import org.apache.zookeeper.server.quorum.BufferedSocket;
+import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
@@ -244,5 +246,34 @@ public class X509Util {
             return socket;
         }
 
+    }
+
+    private static HostnameVerifier getHostnameVerifier(ZKConfig config) throws SSLContextException {
+        String verifier = config.getProperty(ZKConfig.SSL_HOSTNAME_VERIFIER);
+        if (verifier == null || verifier.equals("ALLOW_ALL")) {
+            return ZKHostnameVerifier.ALLOW_ALL;
+        } else if (verifier.equals("DEFAULT")) {
+            return ZKHostnameVerifier.DEFAULT;
+        } else if (verifier.equals("DEFAULT_AND_LOCALHOST")) {
+            return ZKHostnameVerifier.DEFAULT_AND_LOCALHOST;
+        } else if (verifier.equals("STRICT")) {
+            return ZKHostnameVerifier.STRICT;
+        } else if (verifier.equals("STRICT_IE6")) {
+            return ZKHostnameVerifier.STRICT_IE6;
+        } else {
+            throw new SSLContextException("Invalid hostname verifier: " + verifier);
+        }
+    }
+
+    public static void performHandshakeAndHostnameVerification(SSLSocket socket, QuorumPeer.QuorumServer server) throws IOException, SSLContextException {
+        socket.startHandshake();
+        performHostnameVerification(socket, server);
+    }
+
+    public static void performHostnameVerification(SSLSocket socket, QuorumPeer.QuorumServer server) throws IOException, SSLContextException {
+        HostnameVerifier hostnameVerifier = getHostnameVerifier(new ZKConfig());
+        if (!hostnameVerifier.verify(server.hostname, socket.getSession())) {
+            throw new IOException("Hostname verification failure: verifier: " + hostnameVerifier + " hostname from configuration: " + server.hostname);
+        }
     }
 }

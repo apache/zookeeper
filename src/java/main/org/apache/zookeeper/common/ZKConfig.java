@@ -53,6 +53,7 @@ public class ZKConfig {
     @SuppressWarnings("deprecation")
     public static final String SSL_AUTHPROVIDER = X509Util.SSL_AUTHPROVIDER;
     public static final String JUTE_MAXBUFFER = "jute.maxbuffer";
+    public static final String SSL_HOSTNAME_VERIFIER = "zookeeper.ssl.hostnameVerifier";
     /**
      * Path to a kinit binary: {@value}. Defaults to
      * <code>"/usr/bin/kinit"</code>
@@ -115,6 +116,7 @@ public class ZKConfig {
         properties.put(JUTE_MAXBUFFER, System.getProperty(JUTE_MAXBUFFER));
         properties.put(KINIT_COMMAND, System.getProperty(KINIT_COMMAND));
         properties.put(JGSS_NATIVE, System.getProperty(JGSS_NATIVE));
+        properties.put(SSL_HOSTNAME_VERIFIER, System.getProperty(SSL_HOSTNAME_VERIFIER));
     }
 
     /**

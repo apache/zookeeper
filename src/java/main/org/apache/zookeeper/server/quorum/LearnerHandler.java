@@ -38,6 +38,8 @@ import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.common.X509Exception;
+import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.TxnLogProposalIterator;
 import org.apache.zookeeper.server.ZKDatabase;
@@ -50,6 +52,8 @@ import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.net.ssl.SSLSocket;
 
 /**
  * There will be an instance of this class created by the Leader for each
@@ -381,8 +385,12 @@ public class LearnerHandler extends ZooKeeperThread {
             if (leader.self.getView().containsKey(this.sid)) {
                 LOG.info("Follower sid: " + this.sid + " : info : "
                         + leader.self.getView().get(this.sid).toString());
+                if (sock instanceof SSLSocket) {
+                    X509Util.performHostnameVerification((SSLSocket) sock, leader.self.getView().get(this.sid));
+                }
             } else {
                 LOG.info("Follower sid: " + this.sid + " not in the current config " + Long.toHexString(leader.self.getQuorumVerifier().getVersion()));
+                //TODO: Hostname verification possible
             }
                         
             if (qp.getType() == Leader.OBSERVERINFO) {
@@ -615,6 +623,8 @@ public class LearnerHandler extends ZooKeeperThread {
             LOG.error("Unexpected exception causing shutdown", e);
         } catch (SnapshotThrottleException e) {
             LOG.error("too many concurrent snapshots: " + e);
+        } catch (X509Exception.SSLContextException e) {
+            LOG.error("Learner failed hostname verification", e);
         } finally {
             LOG.warn("******* GOODBYE "
                     + (sock != null ? sock.getRemoteSocketAddress() : "<null>")

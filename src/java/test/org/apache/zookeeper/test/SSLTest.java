@@ -61,7 +61,7 @@ public class SSLTest extends QuorumPeerTestBase {
     }
 
     /**
-     * This test checks that SSL works in cluster setup of ZK servers, which includes:
+     * This test checks that client <-> server SSL works in cluster setup of ZK servers, which includes:
      * 1. setting "secureClientPort" in "zoo.cfg" file.
      * 2. setting jvm flags for serverCnxn, keystore, truststore.
      * Finally, a zookeeper client should be able to connect to the secure port and
@@ -70,7 +70,7 @@ public class SSLTest extends QuorumPeerTestBase {
      * Note that in this test a ZK server has two ports -- clientPort and secureClientPort.
      */
     @Test
-    public void testSecureQuorumServer() throws Exception {
+    public void testClientServerSSL() throws Exception {
         final int SERVER_COUNT = 3;
         final int clientPorts[] = new int[SERVER_COUNT];
         final Integer secureClientPorts[] = new Integer[SERVER_COUNT];
