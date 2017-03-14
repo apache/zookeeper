@@ -90,6 +90,9 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
         LOG.info("Configuration after removing leader and follower 1:\n"
                 + new String(zkHandles[follower2].getConfig(this, new Stat())));
 
+        // Kill server 1 to avoid it interferences with FLE of the quorum {2, 3, 4}.
+        shutDownServer(follower1);
+
         // Try to remove follower2, which is the only remaining server. This should fail.
         reconfigServers.clear();
         reconfigServers.add(Integer.toString(follower2));
