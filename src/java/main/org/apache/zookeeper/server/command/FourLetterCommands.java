@@ -169,7 +169,7 @@ public class FourLetterCommands {
     private static boolean whiteListInitialized = false;
 
     // @VisibleForTesting
-    public static void resetWhiteList() {
+    public synchronized static void resetWhiteList() {
         whiteListInitialized = false;
         whiteListedCommands.clear();
     }
@@ -202,7 +202,7 @@ public class FourLetterCommands {
      * @param command The command string.
      * @return true if the specified command is enabled
      */
-    public static boolean isEnabled(String command) {
+    public synchronized static boolean isEnabled(String command) {
         if (whiteListInitialized) {
             return whiteListedCommands.contains(command);
         }
