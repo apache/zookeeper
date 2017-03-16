@@ -245,7 +245,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
     private static boolean whiteListInitialized = false;
 
     // @VisibleForTesting
-    public static void resetWhiteList() {
+    public synchronized static void resetWhiteList() {
         whiteListInitialized = false;
         whiteListedCommands.clear();
     }
@@ -278,7 +278,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
      * @param command The command string.
      * @return true if the specified command is enabled.
      */
-    public static boolean isEnabled(String command) {
+    public synchronized static boolean isEnabled(String command) {
         if (whiteListInitialized) {
             return whiteListedCommands.contains(command);
         }
