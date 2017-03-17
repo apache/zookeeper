@@ -69,6 +69,8 @@ public class ZooDefs {
 
         public final int deleteContainer = 20;
 
+        public final int createTTL = 21;
+
         public final int auth = 100;
 
         public final int setWatches = 101;

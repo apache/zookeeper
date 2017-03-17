@@ -127,6 +127,13 @@ module org.apache.zookeeper.proto {
         vector<org.apache.zookeeper.data.ACL> acl;
         int flags;
     }
+    class CreateTTLRequest {
+        ustring path;
+        buffer data;
+        vector<org.apache.zookeeper.data.ACL> acl;
+        int flags;
+        long ttl;
+    }
     class DeleteRequest {
         ustring path;
         int version;
@@ -259,6 +266,13 @@ module org.apache.zookeeper.txn {
         vector<org.apache.zookeeper.data.ACL> acl;
         boolean ephemeral;
         int parentCVersion;
+    }
+    class CreateTTLTxn {
+        ustring path;
+        buffer data;
+        vector<org.apache.zookeeper.data.ACL> acl;
+        int parentCVersion;
+        long ttl;
     }
     class CreateContainerTxn {
         ustring path;
