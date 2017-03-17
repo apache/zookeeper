@@ -33,6 +33,7 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.net.Socket;
 
+import org.apache.zookeeper.ServerCfg;
 import org.apache.zookeeper.common.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,12 +73,12 @@ public class CnxManagerTest extends ZKTestCase {
             peerClientPort[i] = PortAssignment.unique();
             peers.put(Long.valueOf(i),
                 new QuorumServer(i,
-                    new InetSocketAddress(
-                        "127.0.0.1", peerQuorumPort[i]),
-                    new InetSocketAddress(
-                        "127.0.0.1", PortAssignment.unique()),
-                    new InetSocketAddress(
-                        "127.0.0.1", peerClientPort[i])));
+                    new ServerCfg("127.0.0.1", new InetSocketAddress(
+                        "127.0.0.1", peerQuorumPort[i])),
+                        new ServerCfg("127.0.0.1", new InetSocketAddress(
+                        "127.0.0.1", PortAssignment.unique())),
+                        new ServerCfg("127.0.0.1", new InetSocketAddress(
+                        "127.0.0.1", peerClientPort[i]))));
             peerTmpdir[i] = ClientBase.createTmpDir();
         }
     }
@@ -194,9 +195,9 @@ public class CnxManagerTest extends ZKTestCase {
 
         peers.put(Long.valueOf(2),
                 new QuorumServer(2,
-                        new InetSocketAddress(deadAddress, deadPort),
-                        new InetSocketAddress(deadAddress, PortAssignment.unique()),
-                        new InetSocketAddress(deadAddress, PortAssignment.unique())));
+                        new ServerCfg(deadAddress, new InetSocketAddress(deadAddress, deadPort)),
+                        new ServerCfg(deadAddress, new InetSocketAddress(deadAddress, PortAssignment.unique())),
+                        new ServerCfg(deadAddress, new InetSocketAddress(deadAddress, PortAssignment.unique()))));
         peerTmpdir[2] = ClientBase.createTmpDir();
 
         QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[1], peerTmpdir[1], peerClientPort[1], 3, 1, 1000, 2, 2);
@@ -236,15 +237,15 @@ public class CnxManagerTest extends ZKTestCase {
             LOG.error("Null listener when initializing cnx manager");
         }
 
-        int port = peers.get(peer.getId()).electionAddr.getPort();
+        int port = peers.get(peer.getId()).getElectionAddr().getPort();
         LOG.info("Election port: " + port);
 
         Thread.sleep(1000);
 
         SocketChannel sc = SocketChannel.open();
-        sc.socket().connect(peers.get(1L).electionAddr, 5000);
+        sc.socket().connect(peers.get(1L).getElectionAddr(), 5000);
 
-        InetSocketAddress otherAddr = peers.get(new Long(2)).electionAddr;
+        InetSocketAddress otherAddr = peers.get(new Long(2)).getElectionAddr();
         DataOutputStream dout = new DataOutputStream(sc.socket().getOutputStream());
         dout.writeLong(QuorumCnxManager.PROTOCOL_VERSION);
         dout.writeLong(new Long(2));
@@ -300,13 +301,13 @@ public class CnxManagerTest extends ZKTestCase {
         } else {
             LOG.error("Null listener when initializing cnx manager");
         }
-        int port = peers.get(peer.getId()).electionAddr.getPort();
+        int port = peers.get(peer.getId()).getElectionAddr().getPort();
         LOG.info("Election port: " + port);
 
         Thread.sleep(1000);
 
         SocketChannel sc = SocketChannel.open();
-        sc.socket().connect(peers.get(1L).electionAddr, 5000);
+        sc.socket().connect(peers.get(1L).getElectionAddr(), 5000);
 
         /*
          * Write id (3.4.6 protocol). This previously caused a NPE in
@@ -347,12 +348,12 @@ public class CnxManagerTest extends ZKTestCase {
         } else {
             LOG.error("Null listener when initializing cnx manager");
         }
-        int port = peers.get(peer.getId()).electionAddr.getPort();
+        int port = peers.get(peer.getId()).getElectionAddr().getPort();
         LOG.info("Election port: " + port);
         Thread.sleep(1000);
 
         Socket sock = new Socket();
-        sock.connect(peers.get(1L).electionAddr, 5000);
+        sock.connect(peers.get(1L).getElectionAddr(), 5000);
         long begin = Time.currentElapsedTime();
         // Read without sending data. Verify timeout.
         cnxManager.receiveConnection(sock);

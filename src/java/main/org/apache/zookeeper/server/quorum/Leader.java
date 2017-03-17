@@ -677,7 +677,7 @@ public class Leader {
        //check if I'm in the new configuration with the same quorum address - 
        // if so, I'll remain the leader    
        if (newQVAcksetPair.getQuorumVerifier().getVotingMembers().containsKey(self.getId()) && 
-               newQVAcksetPair.getQuorumVerifier().getVotingMembers().get(self.getId()).addr.equals(self.getQuorumAddress())){  
+               newQVAcksetPair.getQuorumVerifier().getVotingMembers().get(self.getId()).getAddr().equals(self.getQuorumAddress())){
            return self.getId();
        }
        // start with an initial set of candidates that are voters from new config that 

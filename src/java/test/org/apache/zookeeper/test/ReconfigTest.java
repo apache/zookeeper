@@ -807,8 +807,8 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
     	}
     	String server = "server.0=localhost:" + ports[0] + ":" + ports[1] + ";" + ports[2];
     	QuorumServer qs = new QuorumServer(0, server);
-    	Assert.assertEquals(qs.clientAddr.getHostString(), "0.0.0.0");
-    	Assert.assertEquals(qs.clientAddr.getPort(), ports[2]);
+    	Assert.assertEquals(qs.getClientAddr().getHostString(), "0.0.0.0");
+    	Assert.assertEquals(qs.getClientAddr().getPort(), ports[2]);
     }
     
     @Test
@@ -1100,13 +1100,13 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         Assert.assertEquals("Mismatches LearnerType!", qs.type.name(),
                 JMXEnv.ensureBeanAttribute(beanName, "LearnerType"));
         Assert.assertEquals("Mismatches ClientAddress!",
-                getNumericalAddrPort(qs.clientAddr.getHostString() + ":" + qs.clientAddr.getPort()),
+                getNumericalAddrPort(qs.getClientAddr().getHostString() + ":" + qs.getClientAddr().getPort()),
                 getAddrPortFromBean(beanName, "ClientAddress") );
         Assert.assertEquals("Mismatches ElectionAddress!",
-                getNumericalAddrPort(qs.electionAddr.getHostString() + ":" + qs.electionAddr.getPort()),
+                getNumericalAddrPort(qs.getElectionAddr().getHostString() + ":" + qs.getElectionAddr().getPort()),
                 getAddrPortFromBean(beanName, "ElectionAddress") );
         Assert.assertEquals("Mismatches QuorumAddress!",
-                getNumericalAddrPort(qs.addr.getHostString() + ":" + qs.addr.getPort()),
+                getNumericalAddrPort(qs.getAddr().getHostString() + ":" + qs.getAddr().getPort()),
                 getAddrPortFromBean(beanName, "QuorumAddress") );
     }
 }

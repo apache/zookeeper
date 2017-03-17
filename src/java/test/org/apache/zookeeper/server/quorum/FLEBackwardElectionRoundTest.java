@@ -23,6 +23,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 
+import org.apache.zookeeper.ServerCfg;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
@@ -93,8 +94,8 @@ public class FLEBackwardElectionRoundTest extends ZKTestCase {
             int clientport = PortAssignment.unique();
             peers.put(Long.valueOf(i),
                     new QuorumServer(i,
-                            new InetSocketAddress(clientport),
-                            new InetSocketAddress(PortAssignment.unique())));
+                            new ServerCfg("0.0.0.0", new InetSocketAddress(clientport)),
+                            new ServerCfg("0.0.0.0", new InetSocketAddress(PortAssignment.unique()))));
             tmpdir[i] = ClientBase.createTmpDir();
             port[i] = clientport;
         }

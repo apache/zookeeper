@@ -34,7 +34,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.zookeeper.jmx.MBeanRegistry;
-import org.apache.zookeeper.server.quorum.Vote;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
@@ -182,16 +181,16 @@ public class LeaderElection implements Election  {
                 requestPacket.setLength(4);
                 HashSet<Long> heardFrom = new HashSet<Long>();
                 for (QuorumServer server : self.getVotingView().values()) {
-                    LOG.info("Server address: " + server.addr);
+                    LOG.info("Server address: " + server.getAddr());
                     try {
-                        requestPacket.setSocketAddress(server.addr);
+                        requestPacket.setSocketAddress(server.getAddr());
                     } catch (IllegalArgumentException e) {
                         // Sun doesn't include the address that causes this
                         // exception to be thrown, so we wrap the exception
                         // in order to capture this critical detail.
                         throw new IllegalArgumentException(
                                 "Unable to set socket address on packet, msg:"
-                                + e.getMessage() + " with addr:" + server.addr,
+                                + e.getMessage() + " with addr:" + server.getAddr(),
                                 e);
                     }
 

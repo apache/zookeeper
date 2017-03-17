@@ -599,7 +599,7 @@ public class QuorumPeerConfig {
              */            
            if (eAlg != 0) {
                for (QuorumServer s : qv.getVotingMembers().values()) {
-                   if (s.electionAddr == null)
+                   if (s.getElectionAddr() == null)
                        throw new IllegalArgumentException(
                                "Missing election port for server: " + s.id);
                }
@@ -635,16 +635,16 @@ public class QuorumPeerConfig {
             return;
         }
         QuorumServer qs = quorumVerifier.getAllMembers().get(serverId);
-        if (clientPortAddress != null && qs != null && qs.clientAddr != null) {
+        if (clientPortAddress != null && qs != null && qs.getClientAddr() != null) {
             if ((!clientPortAddress.getAddress().isAnyLocalAddress()
-                    && !clientPortAddress.equals(qs.clientAddr)) ||
+                    && !clientPortAddress.equals(qs.getClientAddr())) ||
                     (clientPortAddress.getAddress().isAnyLocalAddress()
-                            && clientPortAddress.getPort() != qs.clientAddr.getPort()))
+                            && clientPortAddress.getPort() != qs.getClientAddr().getPort()))
                 throw new ConfigException("client address for this server (id = " + serverId +
                         ") in static config file is " + clientPortAddress +
-                        " is different from client address found in dynamic file: " + qs.clientAddr);
+                        " is different from client address found in dynamic file: " + qs.getClientAddr());
         }
-        if (qs != null && qs.clientAddr != null) clientPortAddress = qs.clientAddr;
+        if (qs != null && qs.getClientAddr() != null) clientPortAddress = qs.getClientAddr();
     }
 
     private void setupPeerType() {

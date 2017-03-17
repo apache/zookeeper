@@ -26,6 +26,7 @@ import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.ArrayList;
@@ -1039,7 +1040,7 @@ public class ClientCnxn {
             queuePacket(h, null, null, null, null, null, null, null, null);
         }
 
-        private InetSocketAddress rwServerAddress = null;
+        private ServerCfg rwServerCfg = null;
 
         private final static int minPingRwTimeout = 100;
 
@@ -1063,15 +1064,15 @@ public class ClientCnxn {
             }
             state = States.CONNECTING;
 
-            InetSocketAddress addr;
-            if (rwServerAddress != null) {
-                addr = rwServerAddress;
-                rwServerAddress = null;
+            ServerCfg serverCfg;
+            if (rwServerCfg != null) {
+                serverCfg = rwServerCfg;
+                rwServerCfg = null;
             } else {
-                addr = hostProvider.next(1000);
+                serverCfg = hostProvider.next(1000);
             }
 
-            String hostPort = addr.getHostString() + ":" + addr.getPort();
+            String hostPort = serverCfg.getHostStr() + ":" + serverCfg.getPort();
             MDC.put("myid", hostPort);
             setName(getName().replaceAll("\\(.*\\)", "(" + hostPort + ")"));
             if (clientConfig.isSaslClientEnabled()) {
@@ -1079,7 +1080,7 @@ public class ClientCnxn {
                     if (zooKeeperSaslClient != null) {
                         zooKeeperSaslClient.shutdown();
                     }
-                    zooKeeperSaslClient = new ZooKeeperSaslClient(getServerPrincipal(addr), clientConfig);
+                    zooKeeperSaslClient = new ZooKeeperSaslClient(getServerPrincipal(serverCfg.getInetAddress()), clientConfig);
                 } catch (LoginException e) {
                     // An authentication error occurred when the SASL client tried to initialize:
                     // for Kerberos this means that the client failed to authenticate with the KDC.
@@ -1093,9 +1094,9 @@ public class ClientCnxn {
                     saslLoginFailed = true;
                 }
             }
-            logStartConnect(addr);
+            logStartConnect(serverCfg.getInetAddress());
 
-            clientCnxnSocket.connect(addr);
+            clientCnxnSocket.connect(serverCfg);
         }
 
         private String getServerPrincipal(InetSocketAddress addr) {
@@ -1269,16 +1270,16 @@ public class ClientCnxn {
                            + Long.toHexString(getSessionId()));
         }
 
-        private void pingRwServer() throws RWServerFoundException {
+        private void pingRwServer() throws RWServerFoundException, UnknownHostException {
             String result = null;
-            InetSocketAddress addr = hostProvider.next(0);
-            LOG.info("Checking server " + addr + " for being r/w." +
-                    " Timeout " + pingRwTimeout);
+            final ServerCfg serverCfg = hostProvider.next(0);
+            LOG.info("Checking server " + serverCfg.getInetAddress() +
+                    " for being r/w." + " Timeout " + pingRwTimeout);
 
             Socket sock = null;
             BufferedReader br = null;
             try {
-                sock = new Socket(addr.getHostString(), addr.getPort());
+                sock = new Socket(serverCfg.getHostString(), serverCfg.getPort());
                 sock.setSoLinger(false, -1);
                 sock.setSoTimeout(1000);
                 sock.setTcpNoDelay(true);
@@ -1315,9 +1316,8 @@ public class ClientCnxn {
                 pingRwTimeout = minPingRwTimeout;
                 // save the found address so that it's used during the next
                 // connection attempt
-                rwServerAddress = addr;
-                throw new RWServerFoundException("Majority server found at "
-                        + addr.getHostString() + ":" + addr.getPort());
+                rwServerCfg = serverCfg;
+                throw new RWServerFoundException("Majority server found at " + serverCfg.getHostString() + ":" + serverCfg.getPort());
             }
         }
 

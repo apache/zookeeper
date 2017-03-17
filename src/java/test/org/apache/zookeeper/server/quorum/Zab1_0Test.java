@@ -45,6 +45,7 @@ import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.ServerCfg;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
@@ -1277,8 +1278,8 @@ public class Zab1_0Test extends ZKTestCase {
         }
         
         @Override
-        protected InetSocketAddress findLeader() {
-            return leaderAddr;
+        protected ServerCfg findLeader() {
+            return new ServerCfg(leaderAddr.getHostName(), leaderAddr);
         }
     }
     private ConversableFollower createFollower(File tmpDir, QuorumPeer peer)
@@ -1303,8 +1304,8 @@ public class Zab1_0Test extends ZKTestCase {
         }
 
         @Override
-        protected InetSocketAddress findLeader() {
-            return leaderAddr;
+        protected ServerCfg findLeader() {
+            return new ServerCfg(leaderAddr.getHostName(), leaderAddr);
         }
     }
 
@@ -1325,18 +1326,27 @@ public class Zab1_0Test extends ZKTestCase {
         peer.initLimit = 2;
         peer.tickTime = 2000;
         
-        peers.put(0L, new QuorumServer(
-            0, new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-               new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-               new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
-        peers.put(1L, new QuorumServer(
-            1, new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-               new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-               new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
-        peers.put(2L, new QuorumServer(
-            2, new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-               new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-               new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
+        peers.put(0L, new QuorumServer(0,
+                new ServerCfg("127.0.0.1",
+                        new InetSocketAddress("127.0.0.1", PortAssignment.unique())),
+                new ServerCfg("127.0.0.1",
+                        new InetSocketAddress("127.0.0.1", PortAssignment.unique())),
+                new ServerCfg("127.0.0.1",
+                        new InetSocketAddress("127.0.0.1", PortAssignment.unique()))));
+        peers.put(1L, new QuorumServer(1,
+                new ServerCfg("127.0.0.1",
+                        new InetSocketAddress("127.0.0.1", PortAssignment.unique())),
+                new ServerCfg("127.0.0.1",
+                        new InetSocketAddress("127.0.0.1", PortAssignment.unique())),
+                new ServerCfg("127.0.0.1",
+                        new InetSocketAddress("127.0.0.1", PortAssignment.unique()))));
+        peers.put(2L, new QuorumServer(2,
+                new ServerCfg("127.0.0.1",
+                        new InetSocketAddress("127.0.0.1", PortAssignment.unique())),
+                new ServerCfg("127.0.0.1",
+                        new InetSocketAddress("127.0.0.1", PortAssignment.unique())),
+                new ServerCfg("127.0.0.1",
+                        new InetSocketAddress("127.0.0.1", PortAssignment.unique()))));
         
         peer.setQuorumVerifier(new QuorumMaj(peers), false);
         peer.setCnxnFactory(new NullServerCnxnFactory());

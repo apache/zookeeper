@@ -27,6 +27,7 @@ import org.apache.jute.Record;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.ServerCfg;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
@@ -191,17 +192,26 @@ public class TruncateTest extends ZKTestCase {
         // Start up two of the quorum and add 10 txns
         HashMap<Long,QuorumServer> peers = new HashMap<Long,QuorumServer>();
         peers.put(Long.valueOf(1), new QuorumServer(1,
-                       new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-                       new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-                       new InetSocketAddress("127.0.0.1", port1)));
+                new ServerCfg("127.0.0.1", new InetSocketAddress("127.0.0.1",
+                        PortAssignment.unique())),
+                new ServerCfg("127.0.0.1", new InetSocketAddress("127.0.0.1",
+                        PortAssignment.unique())),
+                new ServerCfg("127.0.0.1", new InetSocketAddress("127.0.0.1",
+                        port1))));
         peers.put(Long.valueOf(2), new QuorumServer(2,
-                       new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-                       new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-                       new InetSocketAddress("127.0.0.1", port2)));
+                new ServerCfg("127.0.0.1", new InetSocketAddress("127.0.0.1",
+                        PortAssignment.unique())),
+                new ServerCfg("127.0.0.1", new InetSocketAddress("127.0.0.1",
+                        PortAssignment.unique())),
+                new ServerCfg("127.0.0.1", new InetSocketAddress("127.0.0.1",
+                        port2))));
         peers.put(Long.valueOf(3), new QuorumServer(3,
-                       new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-                       new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-                       new InetSocketAddress("127.0.0.1", port3)));
+                new ServerCfg("127.0.0.1", new InetSocketAddress("127.0.0.1",
+                        PortAssignment.unique())),
+                new ServerCfg("127.0.0.1", new InetSocketAddress("127.0.0.1",
+                        PortAssignment.unique())),
+                new ServerCfg("127.0.0.1", new InetSocketAddress("127.0.0.1",
+                        port3))));
 
         QuorumPeer s2 = new QuorumPeer(peers, dataDir2, dataDir2, port2, 0, 2, tickTime, initLimit, syncLimit);
         s2.start();

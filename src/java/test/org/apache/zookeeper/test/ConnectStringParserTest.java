@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.test;
 
+import org.apache.zookeeper.ServerCfg;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.client.ConnectStringParser;
 import org.junit.Assert;
@@ -46,8 +47,10 @@ public class ConnectStringParserTest extends ZKTestCase{
         String servers = "10.10.10.1,10.10.10.2";
         ConnectStringParser parser = new ConnectStringParser(servers);
 
-        Assert.assertEquals("10.10.10.1", parser.getServerAddresses().get(0).getHostString());
-        Assert.assertEquals("10.10.10.2", parser.getServerAddresses().get(1).getHostString());
+        ServerCfg[] serverCfgs =  parser.getServersCfg()
+                .toArray(new ServerCfg[parser.getServersCfg().size()]);
+        Assert.assertEquals("10.10.10.1", serverCfgs[0].getHostString());
+        Assert.assertEquals("10.10.10.2", serverCfgs[1].getHostString());
     }
 
     @Test
@@ -55,11 +58,13 @@ public class ConnectStringParserTest extends ZKTestCase{
         String servers = "10.10.10.1:112,10.10.10.2:110";
         ConnectStringParser parser = new ConnectStringParser(servers);
 
-        Assert.assertEquals("10.10.10.1", parser.getServerAddresses().get(0).getHostString());
-        Assert.assertEquals("10.10.10.2", parser.getServerAddresses().get(1).getHostString());
+        ServerCfg[] serverCfgs =  parser.getServersCfg()
+                .toArray(new ServerCfg[parser.getServersCfg().size()]);
+        Assert.assertEquals("10.10.10.1", serverCfgs[0].getHostString());
+        Assert.assertEquals("10.10.10.2", serverCfgs[1].getHostString());
 
-        Assert.assertEquals(112, parser.getServerAddresses().get(0).getPort());
-        Assert.assertEquals(110, parser.getServerAddresses().get(1).getPort());
+        Assert.assertEquals(112, serverCfgs[0].getPort());
+        Assert.assertEquals(110, serverCfgs[1].getPort());
     }
 
     private void assertChrootPath(String expected, ConnectStringParser parser){

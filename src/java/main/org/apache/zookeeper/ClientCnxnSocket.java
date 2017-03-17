@@ -33,6 +33,7 @@ import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.proto.ConnectResponse;
 import org.apache.zookeeper.server.ByteBufferInputStream;
+import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,6 +69,7 @@ abstract class ClientCnxnSocket {
     protected LinkedBlockingDeque<Packet> outgoingQueue;
     protected ZKClientConfig clientConfig;
     private int packetLen = ZKClientConfig.CLIENT_MAX_PACKET_LENGTH_DEFAULT;
+    private ServerCfg serverCfg = null;
 
     /**
      * The sessionId is only available here for Log and Exception messages.
@@ -155,12 +157,18 @@ abstract class ClientCnxnSocket {
 
     abstract boolean isConnected();
 
-    abstract void connect(InetSocketAddress addr) throws IOException;
+    void connect(final ServerCfg serverCfg) throws IOException {
+        this.serverCfg = serverCfg;
+    }
 
     /**
      * Returns the address to which the socket is connected.
      */
     abstract SocketAddress getRemoteSocketAddress();
+
+    ServerCfg getRemoteServerCfg() {
+        return isConnected() ? this.serverCfg : null;
+    }
 
     /**
      * Returns the address to which the socket is bound.

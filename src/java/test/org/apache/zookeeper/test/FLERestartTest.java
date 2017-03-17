@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.Semaphore;
 
+import org.apache.zookeeper.ServerCfg;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
@@ -160,10 +161,10 @@ public class FLERestartTest extends ZKTestCase {
         for(int i = 0; i < count; i++) {
             peers.put(Long.valueOf(i),
                 new QuorumServer(i,
-                    new InetSocketAddress(
-                        "127.0.0.1", PortAssignment.unique()),
-                    new InetSocketAddress(
-                        "127.0.0.1", PortAssignment.unique())));
+                    new ServerCfg("127.0.0.1", new InetSocketAddress(
+                        "127.0.0.1", PortAssignment.unique())),
+                    new ServerCfg("127.0.0.1", new InetSocketAddress(
+                        "127.0.0.1", PortAssignment.unique()))));
             tmpdir[i] = ClientBase.createTmpDir();
             port[i] = PortAssignment.unique();
         }

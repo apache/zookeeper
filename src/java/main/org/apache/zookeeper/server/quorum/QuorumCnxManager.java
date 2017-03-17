@@ -243,7 +243,7 @@ public class QuorumCnxManager {
         LOG.debug("Opening channel to server " + sid);
         Socket sock = new Socket();
         setSockOpts(sock);
-        sock.connect(self.getVotingView().get(sid).electionAddr, cnxTO);
+        sock.connect(self.getVotingView().get(sid).getElectionAddr(), cnxTO);
         initiateConnection(sock, sid);
     }
     
@@ -478,20 +478,19 @@ public class QuorumCnxManager {
             boolean knownId = false;
             // Resolve hostname for the remote server before attempting to
             // connect in case the underlying ip address has changed.
-            self.recreateSocketAddresses(sid);
             Map<Long, QuorumPeer.QuorumServer> lastCommittedView = self.getView();
             QuorumVerifier lastSeenQV = self.getLastSeenQuorumVerifier();
             Map<Long, QuorumPeer.QuorumServer> lastProposedView = lastSeenQV.getAllMembers();
             if (lastCommittedView.containsKey(sid)) {
                 knownId = true;
-                if (connectOne(sid, lastCommittedView.get(sid).electionAddr))
+                if (connectOne(sid, lastCommittedView.get(sid).getElectionAddr()))
                     return;
             }
             if (lastSeenQV != null && lastProposedView.containsKey(sid)
-                    && (!knownId || (lastProposedView.get(sid).electionAddr !=
-                    lastCommittedView.get(sid).electionAddr))) {
+                    && (!knownId || (lastProposedView.get(sid).getElectionAddr() !=
+                    lastCommittedView.get(sid).getElectionAddr()))) {
                 knownId = true;
-                if (connectOne(sid, lastProposedView.get(sid).electionAddr))
+                if (connectOne(sid, lastProposedView.get(sid).getElectionAddr()))
                     return;
             }
             if (!knownId) {
@@ -632,7 +631,6 @@ public class QuorumCnxManager {
                     } else {
                         // Resolve hostname for this server in case the
                         // underlying ip address has changed.
-                        self.recreateSocketAddresses(self.getId());
                         addr = self.getElectionAddress();
                     }
                     LOG.info("My election bind port: " + addr.toString());

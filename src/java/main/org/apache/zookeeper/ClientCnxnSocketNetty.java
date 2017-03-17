@@ -107,16 +107,17 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
     }
 
     @Override
-    void connect(InetSocketAddress addr) throws IOException {
+    void connect(final ServerCfg serverCfg) throws IOException {
+        super.connect(serverCfg);
         firstConnect = new CountDownLatch(1);
 
         ClientBootstrap bootstrap = new ClientBootstrap(channelFactory);
 
-        bootstrap.setPipelineFactory(new ZKClientPipelineFactory());
+        bootstrap.setPipelineFactory(new ZKClientPipelineFactory(serverCfg));
         bootstrap.setOption("soLinger", -1);
         bootstrap.setOption("tcpNoDelay", true);
 
-        connectFuture = bootstrap.connect(addr);
+        connectFuture = bootstrap.connect(serverCfg.getInetAddress());
         connectFuture.addListener(new ChannelFutureListener() {
             @Override
             public void operationComplete(ChannelFuture channelFuture) throws Exception {
@@ -345,8 +346,13 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
      * connection implementation.
      */
     private class ZKClientPipelineFactory implements ChannelPipelineFactory {
+        private final ServerCfg serverCfg;
         private SSLContext sslContext = null;
         private SSLEngine sslEngine = null;
+
+        public ZKClientPipelineFactory(final ServerCfg serverCfg) {
+            this.serverCfg = serverCfg;
+        }
 
         @Override
         public ChannelPipeline getPipeline() throws Exception {

@@ -43,19 +43,19 @@ public class RemotePeerBean implements RemotePeerMXBean,ZKMBeanInfo {
     }
 
     public String getQuorumAddress() {
-        return peer.addr.getHostString()+":"+peer.addr.getPort();
+        return peer.getAddr().getHostString()+":"+ peer.getAddr().getPort();
     }
 
     public String getElectionAddress() {
-        return peer.electionAddr.getHostString() + ":" + peer.electionAddr.getPort();
+        return peer.getElectionAddr().getHostString() + ":" + peer.getElectionAddr().getPort();
     }
 
     public String getClientAddress() {
-        if (null == peer.clientAddr) {
+        if (null == peer.getClientAddr()) {
             return "";
         }
-        return peer.clientAddr.getHostString() + ":"
-                + peer.clientAddr.getPort();
+        return peer.getClientAddr().getHostString() + ":"
+                + peer.getClientAddr().getPort();
     }
 
     public String getLearnerType() {

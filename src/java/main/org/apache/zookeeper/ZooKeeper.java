@@ -206,13 +206,13 @@ public class ZooKeeper implements AutoCloseable {
      * @throws IOException in cases of network failure     
      */
     public void updateServerList(String connectString) throws IOException {
-        ConnectStringParser connectStringParser = new ConnectStringParser(connectString);
-        Collection<InetSocketAddress> serverAddresses = connectStringParser.getServerAddresses();
+        final ConnectStringParser connectStringParser = new ConnectStringParser(connectString);
+        final Collection<ServerCfg> serversCfg = connectStringParser.getServersCfg();
 
         ClientCnxnSocket clientCnxnSocket = cnxn.sendThread.getClientCnxnSocket();
-        InetSocketAddress currentHost = (InetSocketAddress) clientCnxnSocket.getRemoteSocketAddress();
+        final ServerCfg currentHost = clientCnxnSocket.getRemoteServerCfg();
 
-        boolean reconfigMode = hostProvider.updateServerList(serverAddresses, currentHost);
+        boolean reconfigMode = hostProvider.updateServerList(serversCfg, currentHost);
 
         // cause disconnection - this will cause next to be called
         // which will in turn call nextReconfigMode
@@ -1218,7 +1218,7 @@ public class ZooKeeper implements AutoCloseable {
     // default hostprovider
     private static HostProvider createDefaultHostProvider(String connectString) {
         return new StaticHostProvider(
-                new ConnectStringParser(connectString).getServerAddresses());
+                new ConnectStringParser(connectString).getServersCfg());
     }
 
     // VisibleForTesting

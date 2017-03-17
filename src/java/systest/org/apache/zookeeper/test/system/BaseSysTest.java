@@ -25,6 +25,7 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 
+import org.apache.zookeeper.ServerCfg;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
@@ -153,8 +154,9 @@ public class BaseSysTest {
                     fakeBasePort + i);
             InetSocketAddress electionAddr = new InetSocketAddress("127.0.0.1",
                     serverCount + fakeBasePort + i);
-            peers.put(Long.valueOf(i), new QuorumServer(i, peerAddress,
-                    electionAddr));
+            peers.put(Long.valueOf(i), new QuorumServer(i,
+                    new ServerCfg(peerAddress.getHostName(), peerAddress),
+                    new ServerCfg(electionAddr.getHostName(), electionAddr)));
         }
         StringBuilder sb = new StringBuilder();
         for(int i = 0; i < count; i++) {

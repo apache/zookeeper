@@ -23,6 +23,8 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Properties;
+
+import org.apache.zookeeper.ServerCfg;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
@@ -142,9 +144,12 @@ public class FLEZeroWeightTest extends ZKTestCase {
     public void testZeroWeightQuorum() throws Exception {
         LOG.info("TestZeroWeightQuorum: " + getTestName()+ ", " + count);
         for(int i = 0; i < count; i++) {
-            InetSocketAddress addr1 = new InetSocketAddress("127.0.0.1",PortAssignment.unique());
-            InetSocketAddress addr2 = new InetSocketAddress("127.0.0.1",PortAssignment.unique());
-            InetSocketAddress addr3 = new InetSocketAddress("127.0.0.1",PortAssignment.unique());
+            ServerCfg addr1 = new ServerCfg("127.0.0.1",
+                    new InetSocketAddress("127.0.0.1",PortAssignment.unique()));
+            ServerCfg addr2 = new ServerCfg("127.0.0.1",
+                    new InetSocketAddress("127.0.0.1",PortAssignment.unique()));
+            ServerCfg addr3 = new ServerCfg("127.0.0.1",
+                    new InetSocketAddress("127.0.0.1",PortAssignment.unique()));
             port[i] = addr3.getPort();
             qp.setProperty("server."+i, "127.0.0.1:"+addr1.getPort()+":"+addr2.getPort()+";"+port[i]);
             peers.put(Long.valueOf(i), new QuorumServer(i, addr1, addr2, addr3));

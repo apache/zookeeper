@@ -40,6 +40,7 @@ import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.zookeeper.ServerCfg;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerCnxn;
@@ -193,21 +194,21 @@ public class Learner {
     /**
      * Returns the address of the node we think is the leader.
      */
-    protected InetSocketAddress findLeader() {
-        InetSocketAddress addr = null;
+    protected ServerCfg findLeader() {
+        ServerCfg serverCfg = null;
         // Find the leader by id
         Vote current = self.getCurrentVote();
         for (QuorumServer s : self.getView().values()) {
             if (s.id == current.getId()) {
-                addr = s.addr;
+                serverCfg = new ServerCfg(s.getAddr().getHostString(), s.getAddr());
                 break;
             }
         }
-        if (addr == null) {
+        if (serverCfg == null) {
             LOG.warn("Couldn't find the leader with id = "
                     + current.getId());
         }
-        return addr;
+        return serverCfg;
     }
    
     /**
@@ -230,12 +231,12 @@ public class Learner {
     /**
      * Establish a connection with the Leader found by findLeader. Retries
      * until either initLimit time has elapsed or 5 tries have happened. 
-     * @param addr - the address of the Leader to connect to.
+     * @param serverCfg - the address of the Leader to connect to.
      * @throws IOException - if the socket connection fails on the 5th attempt
      * @throws ConnectException
      * @throws InterruptedException
      */
-    protected void connectToLeader(InetSocketAddress addr) 
+    protected void connectToLeader(final ServerCfg serverCfg)
     throws IOException, ConnectException, InterruptedException {
         sock = new Socket();        
         sock.setSoTimeout(self.tickTime * self.initLimit);
@@ -253,7 +254,7 @@ public class Learner {
                     throw new IOException("initLimit exceeded on retries.");
                 }
 
-                sockConnect(sock, addr, Math.min(self.tickTime * self.syncLimit, remainingInitLimitTime));
+                sockConnect(sock, serverCfg.getInetAddress(), Math.min(self.tickTime * self.syncLimit, remainingInitLimitTime));
                 sock.setTcpNoDelay(nodelay);
                 break;
             } catch (IOException e) {
@@ -262,17 +263,17 @@ public class Learner {
                 if (remainingInitLimitTime <= 1000) {
                     LOG.error("Unexpected exception, initLimit exceeded. tries=" + tries +
                              ", remaining init limit=" + remainingInitLimitTime +
-                             ", connecting to " + addr,e);
+                             ", connecting to " + serverCfg.getInetAddress(),e);
                     throw e;
                 } else if (tries >= 4) {
                     LOG.error("Unexpected exception, retries exceeded. tries=" + tries +
                              ", remaining init limit=" + remainingInitLimitTime +
-                             ", connecting to " + addr,e);
+                             ", connecting to " + serverCfg.getInetAddress(),e);
                     throw e;
                 } else {
                     LOG.warn("Unexpected exception, tries=" + tries +
                             ", remaining init limit=" + remainingInitLimitTime +
-                            ", connecting to " + addr,e);
+                            ", connecting to " + serverCfg.getInetAddress(),e);
                     sock = new Socket();
                     sock.setSoTimeout(self.tickTime * self.initLimit);
                 }

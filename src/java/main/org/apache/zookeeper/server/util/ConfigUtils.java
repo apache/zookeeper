@@ -53,9 +53,9 @@ public class ConfigUtils {
              }
              if (!first) sb.append(",");
              else first = false;
-             if (null != qs.clientAddr) {
-                 sb.append(qs.clientAddr.getHostString()
-                         + ":" + qs.clientAddr.getPort());
+             if (null != qs.getClientAddr()) {
+                 sb.append(qs.getClientAddr().getHostString()
+                         + ":" + qs.getClientAddr().getPort());
              }
         }
         return version + " " + sb.toString();

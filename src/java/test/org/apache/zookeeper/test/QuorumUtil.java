@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.ServerCfg;
 import org.apache.zookeeper.server.quorum.Election;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
@@ -105,9 +106,12 @@ public class QuorumUtil {
                 peers.put(i, ps);
 
                 peersView.put(Long.valueOf(i), new QuorumServer(i, 
-                               new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-                               new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
-                               new InetSocketAddress("127.0.0.1", ps.clientPort), 
+                        new ServerCfg("127.0.0.1",
+                                new InetSocketAddress("127.0.0.1", PortAssignment.unique())),
+                        new ServerCfg("127.0.0.1",
+                                new InetSocketAddress("127.0.0.1", PortAssignment.unique())),
+                        new ServerCfg("127.0.0.1",
+                                new InetSocketAddress("127.0.0.1", ps.clientPort)),
                                LearnerType.PARTICIPANT));
                 hostPort += "127.0.0.1:" + ps.clientPort + ((i == ALL) ? "" : ",");
             }

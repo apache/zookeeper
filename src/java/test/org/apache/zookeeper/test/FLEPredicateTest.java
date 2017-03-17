@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 
+import org.apache.zookeeper.ServerCfg;
 import org.apache.zookeeper.server.quorum.FastLeaderElection;
 import org.apache.zookeeper.server.quorum.QuorumCnxManager;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
@@ -63,10 +64,10 @@ public class FLEPredicateTest extends ZKTestCase {
         for(int i = 0; i < 3; i++) {
             peers.put(Long.valueOf(i),
                 new QuorumServer(i,
-                    new InetSocketAddress(
-                        "127.0.0.1", PortAssignment.unique()),
-                    new InetSocketAddress(
-                        "127.0.0.1", PortAssignment.unique())));
+                        new ServerCfg("127.0.0.1",
+                                new InetSocketAddress("127.0.0.1", PortAssignment.unique())),
+                        new ServerCfg("127.0.0.1",
+                                new InetSocketAddress("127.0.0.1", PortAssignment.unique()))));
         }
 
         /*

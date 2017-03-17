@@ -28,6 +28,7 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.Properties;
 
+import org.apache.zookeeper.ServerCfg;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException;
@@ -175,11 +176,14 @@ class QuorumPeerInstance implements Instance {
                 String subparts[] = ((parts[i].split(";"))[0]).split(":");
                 String clientPort = (parts[i].split(";"))[1];
                 peers.put(Long.valueOf(i),
-                          new QuorumServer(
-                                i,
-                                new InetSocketAddress(subparts[0], Integer.parseInt(subparts[1])),
-                                new InetSocketAddress(subparts[0], Integer.parseInt(subparts[2])),
-                                new InetSocketAddress(subparts[0], Integer.parseInt(clientPort))));
+                          new QuorumServer(i,
+                                  new ServerCfg(subparts[0],
+                                        new InetSocketAddress(subparts[0],
+                                                Integer.parseInt(subparts[1]))),
+                                  new ServerCfg(subparts[0], new InetSocketAddress(subparts[0],
+                                          Integer.parseInt(subparts[2]))),
+                                  new ServerCfg(subparts[0], new InetSocketAddress(subparts[0],
+                                          Integer.parseInt(clientPort)))));
             }
             try {
                 if (LOG.isDebugEnabled()) {

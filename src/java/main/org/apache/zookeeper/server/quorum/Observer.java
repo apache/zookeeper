@@ -19,10 +19,10 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 
 import org.apache.jute.Record;
+import org.apache.zookeeper.ServerCfg;
 import org.apache.zookeeper.server.ObserverBean;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
@@ -63,10 +63,10 @@ public class Observer extends Learner{
         zk.registerJMX(new ObserverBean(this, zk), self.jmxLocalPeerBean);
 
         try {
-            InetSocketAddress addr = findLeader();
-            LOG.info("Observing " + addr);
+            final ServerCfg serverCfg = findLeader();
+            LOG.info("Observing " + serverCfg.getInetAddress());
             try {
-                connectToLeader(addr);
+                connectToLeader(serverCfg);
                 long newLeaderZxid = registerWithLeader(Leader.OBSERVERINFO);
                 if (self.isReconfigStateChange())
                    throw new Exception("learned about role change");

@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.zookeeper.ServerCfg;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
@@ -99,16 +100,16 @@ public class LENonTerminateTest extends ZKTestCase {
                 for (QuorumServer server :
                     self.getVotingView().values())
                 {
-                    LOG.info("Server address: " + server.addr);
+                    LOG.info("Server address: " + server.getAddr());
                     try {
-                        requestPacket.setSocketAddress(server.addr);
+                        requestPacket.setSocketAddress(server.getAddr());
                     } catch (IllegalArgumentException e) {
                         // Sun doesn't include the address that causes this
                         // exception to be thrown, so we wrap the exception
                         // in order to capture this critical detail.
                         throw new IllegalArgumentException(
                                 "Unable to set socket address on packet, msg:"
-                                + e.getMessage() + " with addr:" + server.addr,
+                                + e.getMessage() + " with addr:" + server.getAddr(),
                                 e);
                     }
 
@@ -300,8 +301,12 @@ public class LENonTerminateTest extends ZKTestCase {
             int clientport = PortAssignment.unique();
             peers.put(Long.valueOf(i),
                     new QuorumServer(i,
-                            new InetSocketAddress("127.0.0.1", clientport),
-                            new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
+                            new ServerCfg("127.0.0.1",
+                                    new InetSocketAddress("127.0.0.1",
+                                            clientport)),
+                            new ServerCfg("127.0.0.1",
+                                    new InetSocketAddress("127.0.0.1",
+                                            PortAssignment.unique()))));
             tmpdir[i] = ClientBase.createTmpDir();
             port[i] = clientport;
         }
@@ -356,7 +361,7 @@ public class LENonTerminateTest extends ZKTestCase {
         ByteBuffer responseBuffer = ByteBuffer.wrap(b);
         DatagramPacket packet = new DatagramPacket(b, b.length);
         QuorumServer server = peers.get(Long.valueOf(2));
-        DatagramSocket udpSocket = new DatagramSocket(server.addr.getPort());
+        DatagramSocket udpSocket = new DatagramSocket(server.getAddr().getPort());
         LOG.info("In MockServer");
         mockLatch.countDown();
         Vote current = new Vote(2, 1);

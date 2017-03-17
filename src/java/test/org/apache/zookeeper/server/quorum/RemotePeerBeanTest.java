@@ -23,6 +23,7 @@ import static org.junit.Assert.assertNotNull;
 
 import java.net.InetSocketAddress;
 
+import org.apache.zookeeper.ServerCfg;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.junit.Test;
 
@@ -33,7 +34,7 @@ public class RemotePeerBeanTest {
      */
     @Test
     public void testGetClientAddressShouldReturnEmptyStringWhenClientAddressIsNull() {
-        InetSocketAddress peerCommunicationAddress = null;
+        ServerCfg peerCommunicationAddress = null;
         // Here peerCommunicationAddress is null, also clientAddr is null
         QuorumServer peer = new QuorumServer(1, peerCommunicationAddress);
         RemotePeerBean remotePeerBean = new RemotePeerBean(peer);

@@ -510,7 +510,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                                // extract server id x from first part of joiner: server.x
                                Long sid = Long.parseLong(parts[0].substring(parts[0].lastIndexOf('.') + 1));
                                QuorumServer qs = new QuorumServer(sid, parts[1]);
-                               if (qs.clientAddr == null || qs.electionAddr == null || qs.addr == null) {
+                               if (qs.getClientAddr() == null || qs.getElectionAddr() == null || qs.getAddr() == null) {
                                    throw new KeeperException.BadArgumentsException("Wrong format of server string - each server should have 3 ports specified"); 	   
                                }
 

@@ -26,6 +26,7 @@ import java.util.LinkedHashSet;
 import java.util.Properties;
 import java.util.Set;
 
+import org.apache.zookeeper.ServerCfg;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
@@ -146,28 +147,28 @@ public class HierarchicalQuorumTest extends ClientBase {
         int initLimit = 3;
         int syncLimit = 3;
         HashMap<Long,QuorumServer> peers = new HashMap<Long,QuorumServer>();
-        peers.put(Long.valueOf(1), new QuorumServer(1, 
-                new InetSocketAddress("127.0.0.1", port1),
-                new InetSocketAddress("127.0.0.1", leport1),
-                new InetSocketAddress("127.0.0.1", clientport1)));        
-        peers.put(Long.valueOf(2), new QuorumServer(2, 
-                new InetSocketAddress("127.0.0.1", port2),
-                new InetSocketAddress("127.0.0.1", leport2),
-                new InetSocketAddress("127.0.0.1", clientport2)));
-        peers.put(Long.valueOf(3), new QuorumServer(3, 
-                new InetSocketAddress("127.0.0.1", port3),
-                new InetSocketAddress("127.0.0.1", leport3),
-                new InetSocketAddress("127.0.0.1", clientport3)));
+        peers.put(Long.valueOf(1), new QuorumServer(1,
+                new ServerCfg("127.0.0.1", new InetSocketAddress("127.0.0.1", port1)),
+                new ServerCfg("127.0.0.1", new InetSocketAddress("127.0.0.1", leport1)),
+                new ServerCfg("127.0.0.1", new InetSocketAddress("127.0.0.1", clientport1))));
+        peers.put(Long.valueOf(2), new QuorumServer(2,
+                new ServerCfg("127.0.0.1", new InetSocketAddress("127.0.0.1", port2)),
+                new ServerCfg("127.0.0.1", new InetSocketAddress("127.0.0.1", leport2)),
+                new ServerCfg("127.0.0.1", new InetSocketAddress("127.0.0.1", clientport2))));
+        peers.put(Long.valueOf(3), new QuorumServer(3,
+                new ServerCfg("127.0.0.1", new InetSocketAddress("127.0.0.1", port3)),
+                new ServerCfg("127.0.0.1", new InetSocketAddress("127.0.0.1", leport3)),
+                new ServerCfg("127.0.0.1", new InetSocketAddress("127.0.0.1", clientport3))));
         peers.put(Long.valueOf(4), new QuorumServer(4,
-                new InetSocketAddress("127.0.0.1", port4),
-                new InetSocketAddress("127.0.0.1", leport4),
-                new InetSocketAddress("127.0.0.1", clientport4),
+                new ServerCfg("127.0.0.1", new InetSocketAddress("127.0.0.1", port4)),
+                new ServerCfg("127.0.0.1", new InetSocketAddress("127.0.0.1", leport4)),
+                new ServerCfg("127.0.0.1", new InetSocketAddress("127.0.0.1", clientport4)),
                 withObservers ? QuorumPeer.LearnerType.OBSERVER
                         : QuorumPeer.LearnerType.PARTICIPANT));
         peers.put(Long.valueOf(5), new QuorumServer(5,
-                new InetSocketAddress("127.0.0.1", port5),
-                new InetSocketAddress("127.0.0.1", leport5),
-                new InetSocketAddress("127.0.0.1", clientport5),
+                new ServerCfg("127.0.0.1", new InetSocketAddress("127.0.0.1", port5)),
+                new ServerCfg("127.0.0.1", new InetSocketAddress("127.0.0.1", leport5)),
+                new ServerCfg("127.0.0.1", new InetSocketAddress("127.0.0.1", clientport5)),
                 withObservers ? QuorumPeer.LearnerType.OBSERVER
                         : QuorumPeer.LearnerType.PARTICIPANT));
 

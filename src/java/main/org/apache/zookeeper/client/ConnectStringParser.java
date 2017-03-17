@@ -19,9 +19,12 @@
 package org.apache.zookeeper.client;
 
 import org.apache.zookeeper.common.PathUtils;
+import org.apache.zookeeper.ServerCfg;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static org.apache.zookeeper.common.StringUtils.split;
@@ -41,7 +44,7 @@ public final class ConnectStringParser {
 
     private final String chrootPath;
 
-    private final ArrayList<InetSocketAddress> serverAddresses = new ArrayList<InetSocketAddress>();
+    private final ArrayList<ServerCfg> serverCfgList = new ArrayList<>();
 
     /**
      * 
@@ -76,7 +79,10 @@ public final class ConnectStringParser {
                 }
                 host = host.substring(0, pidx);
             }
-            serverAddresses.add(InetSocketAddress.createUnresolved(host, port));
+            serverCfgList.add(
+                    new ServerCfg(host,
+                            InetSocketAddress.createUnresolved(
+                                    host, port)));
         }
     }
 
@@ -84,7 +90,7 @@ public final class ConnectStringParser {
         return chrootPath;
     }
 
-    public ArrayList<InetSocketAddress> getServerAddresses() {
-        return serverAddresses;
+    public Collection<ServerCfg> getServersCfg() {
+        return Collections.unmodifiableCollection(serverCfgList);
     }
 }

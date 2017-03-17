@@ -30,7 +30,6 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,6 +43,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.zookeeper.KeeperException.BadArgumentsException;
+import org.apache.zookeeper.ServerCfg;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
 import org.apache.zookeeper.common.Time;
@@ -110,11 +110,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     private ZKDatabase zkDb;
 
     public static class QuorumServer {
-        public InetSocketAddress addr = null;
+        private ServerCfg serverCfg = null;
 
-        public InetSocketAddress electionAddr = null;
+        private ServerCfg electionCfg = null;
         
-        public InetSocketAddress clientAddr = null;
+        private ServerCfg clientCfg = null;
         
         public long id;
         
@@ -122,48 +122,18 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         
         private List<InetSocketAddress> myAddrs;
 
-        public QuorumServer(long id, InetSocketAddress addr,
-                InetSocketAddress electionAddr, InetSocketAddress clientAddr) {
-            this(id, addr, electionAddr, clientAddr, LearnerType.PARTICIPANT);
+        public QuorumServer(long id, ServerCfg serverCfg,
+                            ServerCfg electionCfg, ServerCfg clientCfg) {
+            this(id, serverCfg, electionCfg, clientCfg, LearnerType.PARTICIPANT);
         }
 
-        public QuorumServer(long id, InetSocketAddress addr,
-                InetSocketAddress electionAddr) {
-            this(id, addr, electionAddr, (InetSocketAddress)null, LearnerType.PARTICIPANT);
+        public QuorumServer(long id, ServerCfg serverCfg,
+                ServerCfg electionCfg) {
+            this(id, serverCfg, electionCfg, null, LearnerType.PARTICIPANT);
         }
 
-        public QuorumServer(long id, InetSocketAddress addr) {
-            this(id, addr, (InetSocketAddress)null, (InetSocketAddress)null, LearnerType.PARTICIPANT);
-        }
-
-        /**
-         * Performs a DNS lookup for server address and election address.
-         *
-         * If the DNS lookup fails, this.addr and electionAddr remain
-         * unmodified.
-         */
-        public void recreateSocketAddresses() {
-            if (this.addr == null) {
-                LOG.warn("Server address has not been initialized");
-                return;
-            }
-            if (this.electionAddr == null) {
-                LOG.warn("Election address has not been initialized");
-                return;
-            }
-            String host = this.addr.getHostString();
-            InetAddress address = null;
-            try {
-                address = InetAddress.getByName(host);
-            } catch (UnknownHostException ex) {
-                LOG.warn("Failed to resolve address: {}", host, ex);
-                return;
-            }
-            LOG.debug("Resolved address for {}: {}", host, address);
-            int port = this.addr.getPort();
-            this.addr = new InetSocketAddress(address, port);
-            port = this.electionAddr.getPort();
-            this.electionAddr = new InetSocketAddress(address, port);
+        public QuorumServer(long id, ServerCfg serverCfg) {
+            this(id, serverCfg, null, null, LearnerType.PARTICIPANT);
         }
 
         private void setType(String s) throws ConfigException {
@@ -220,8 +190,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 // is client_config a host:port or just a port
                 String hostname = (clientParts.length == 2) ? clientParts[0] : "0.0.0.0";
                 try {
-                    clientAddr = new InetSocketAddress(hostname,
-                            Integer.parseInt(clientParts[clientParts.length - 1]));
+                    setClientCfg(new ServerCfg(hostname,
+                            new InetSocketAddress(hostname,
+                                    Integer.parseInt(clientParts[clientParts.length - 1]))));
                     //LOG.warn("Set clientAddr to " + clientAddr);
                 } catch (NumberFormatException e) {
                     throw new ConfigException("Address unresolved: " + hostname + ":" + clientParts[clientParts.length - 1]);
@@ -230,14 +201,16 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
             // server_config should be either host:port:port or host:port:port:type
             try {
-                addr = new InetSocketAddress(serverParts[0],
-                        Integer.parseInt(serverParts[1]));
+                setServerCfg(new ServerCfg(serverParts[0],
+                        new InetSocketAddress(serverParts[0],
+                        Integer.parseInt(serverParts[1]))));
             } catch (NumberFormatException e) {
                 throw new ConfigException("Address unresolved: " + serverParts[0] + ":" + serverParts[1]);
             }
             try {
-                electionAddr = new InetSocketAddress(serverParts[0], 
-                        Integer.parseInt(serverParts[2]));
+                setElectionCfg(new ServerCfg(serverParts[0],
+                        new InetSocketAddress(serverParts[0],
+                        Integer.parseInt(serverParts[2]))));
             } catch (NumberFormatException e) {
                 throw new ConfigException("Address unresolved: " + serverParts[0] + ":" + serverParts[2]);
             }
@@ -249,28 +222,28 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             setMyAddrs();
         }
 
-        public QuorumServer(long id, InetSocketAddress addr,
-                    InetSocketAddress electionAddr, LearnerType type) {
-            this(id, addr, electionAddr, (InetSocketAddress)null, type);
+        public QuorumServer(long id, ServerCfg serverCfg,
+                    ServerCfg electionCfg, LearnerType type) {
+            this(id, serverCfg, electionCfg, null, type);
         }
 
-        public QuorumServer(long id, InetSocketAddress addr,
-                InetSocketAddress electionAddr, InetSocketAddress clientAddr, LearnerType type) {
+        public QuorumServer(long id, ServerCfg serverCfg,
+                ServerCfg electionCfg, ServerCfg clientCfg, LearnerType type) {
             this.id = id;
-            this.addr = addr;
-            this.electionAddr = electionAddr;
+            this.setServerCfg(serverCfg);
+            this.setElectionCfg(electionCfg);
             this.type = type;
-            this.clientAddr = clientAddr;
+            this.setClientCfg(clientCfg);
 
             setMyAddrs();
         }
 
         private void setMyAddrs() {
-            this.myAddrs = new ArrayList<InetSocketAddress>();
-            this.myAddrs.add(this.addr);
-            this.myAddrs.add(this.clientAddr);
-            this.myAddrs.add(this.electionAddr);
-            this.myAddrs = excludedSpecialAddresses(this.myAddrs);
+            this.setMyAddrs(new ArrayList<InetSocketAddress>());
+            this.getMyAddrs().add(this.getAddr());
+            this.getMyAddrs().add(this.getClientAddr());
+            this.getMyAddrs().add(this.getElectionAddr());
+            this.setMyAddrs(excludedSpecialAddresses(this.getMyAddrs()));
         }
 
         private static String delimitedHostString(InetSocketAddress addr)
@@ -286,22 +259,22 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         public String toString(){
             StringWriter sw = new StringWriter();
             //addr should never be null, but just to make sure
-            if (addr !=null) {
-                sw.append(delimitedHostString(addr));
+            if (getAddr() !=null) {
+                sw.append(delimitedHostString(getAddr()));
                 sw.append(":");
-                sw.append(String.valueOf(addr.getPort()));
+                sw.append(String.valueOf(getAddr().getPort()));
             }
-            if (electionAddr!=null){
+            if (getElectionAddr() !=null){
                 sw.append(":");
-                sw.append(String.valueOf(electionAddr.getPort()));
+                sw.append(String.valueOf(getElectionAddr().getPort()));
             }           
             if (type == LearnerType.OBSERVER) sw.append(":observer");
             else if (type == LearnerType.PARTICIPANT) sw.append(":participant");            
-            if (clientAddr!=null){
+            if (getClientAddr() !=null){
                 sw.append(";");
-                sw.append(delimitedHostString(clientAddr));
+                sw.append(delimitedHostString(getClientAddr()));
                 sw.append(":");
-                sw.append(String.valueOf(clientAddr.getPort()));
+                sw.append(String.valueOf(getClientAddr().getPort()));
             }
             return sw.toString();       
         }
@@ -322,20 +295,20 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             if (!(o instanceof QuorumServer)) return false;
             QuorumServer qs = (QuorumServer)o;          
             if ((qs.id != id) || (qs.type != type)) return false;   
-            if (!checkAddressesEqual(addr, qs.addr)) return false;
-            if (!checkAddressesEqual(electionAddr, qs.electionAddr)) return false;
-            if (!checkAddressesEqual(clientAddr, qs.clientAddr)) return false;                    
+            if (!checkAddressesEqual(getAddr(), qs.getAddr())) return false;
+            if (!checkAddressesEqual(getElectionAddr(), qs.getElectionAddr())) return false;
+            if (!checkAddressesEqual(getClientAddr(), qs.getClientAddr())) return false;
             return true;
         }
 
         public void checkAddressDuplicate(QuorumServer s) throws BadArgumentsException {
             List<InetSocketAddress> otherAddrs = new ArrayList<InetSocketAddress>();
-            otherAddrs.add(s.addr);
-            otherAddrs.add(s.clientAddr);
-            otherAddrs.add(s.electionAddr);
+            otherAddrs.add(s.getAddr());
+            otherAddrs.add(s.getClientAddr());
+            otherAddrs.add(s.getElectionAddr());
             otherAddrs = excludedSpecialAddresses(otherAddrs);
 
-            for (InetSocketAddress my: this.myAddrs) {
+            for (InetSocketAddress my: this.getMyAddrs()) {
 
                 for (InetSocketAddress other: otherAddrs) {
                     if (my.equals(other)) {
@@ -364,6 +337,50 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 included.add(addr);
             }
             return included;
+        }
+
+        public InetSocketAddress getAddr() {
+            return serverCfg != null ? serverCfg.getInetAddress() : null;
+        }
+
+        public void setServerCfg(ServerCfg serverCfg) {
+            this.serverCfg = serverCfg;
+        }
+
+        public ServerCfg getServerCfg() {
+            return serverCfg;
+        }
+
+        public InetSocketAddress getElectionAddr() {
+            return electionCfg != null ? electionCfg.getInetAddress() : null;
+        }
+
+        public void setElectionCfg(ServerCfg electionCfg) {
+            this.electionCfg = electionCfg;
+        }
+
+        public ServerCfg getElectionCfg() {
+            return electionCfg;
+        }
+
+        public InetSocketAddress getClientAddr() {
+            return clientCfg != null ? clientCfg.getInetAddress() : null;
+        }
+
+        public void setClientCfg(ServerCfg clientCfg) {
+            this.clientCfg = clientCfg;
+        }
+
+        public ServerCfg getClientCfg() {
+            return clientCfg;
+        }
+
+        public List<InetSocketAddress> getMyAddrs() {
+            return myAddrs;
+        }
+
+        public void setMyAddrs(List<InetSocketAddress> myAddrs) {
+            this.myAddrs = myAddrs;
         }
     }
 
@@ -637,71 +654,43 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     DatagramSocket udpSocket;
 
-    private InetSocketAddress myQuorumAddr;
-    private InetSocketAddress myElectionAddr = null;
-    private InetSocketAddress myClientAddr = null;
-
-    /**
-     * Resolves hostname for a given server ID.
-     *
-     * This method resolves hostname for a given server ID in both quorumVerifer
-     * and lastSeenQuorumVerifier. If the server ID matches the local server ID,
-     * it also updates myQuorumAddr and myElectionAddr.
-     */
-    public void recreateSocketAddresses(long id) {
-        QuorumVerifier qv = getQuorumVerifier();
-        if (qv != null) {
-            QuorumServer qs = qv.getAllMembers().get(id);
-            if (qs != null) {
-                qs.recreateSocketAddresses();
-                if (id == getId()) {
-                    setQuorumAddress(qs.addr);
-                    setElectionAddress(qs.electionAddr);
-                }
-            }
-        }
-        qv = getLastSeenQuorumVerifier();
-        if (qv != null) {
-            QuorumServer qs = qv.getAllMembers().get(id);
-            if (qs != null) {
-                qs.recreateSocketAddresses();
-            }
-        }
-    }
+    private ServerCfg myQuorumCfg;
+    private ServerCfg myElectionCfg = null;
+    private ServerCfg myClientCfg = null;
 
     public InetSocketAddress getQuorumAddress(){
         synchronized (QV_LOCK) {
-            return myQuorumAddr;
+            return myQuorumCfg != null ? myQuorumCfg.getInetAddress() : null;
         }
     }
     
-    public void setQuorumAddress(InetSocketAddress addr){
+    public void setQuorumCfg(ServerCfg myQuorumCfg){
         synchronized (QV_LOCK) {
-            myQuorumAddr = addr;
+            this.myQuorumCfg = myQuorumCfg;
         }
     }
 
     public InetSocketAddress getElectionAddress(){
         synchronized (QV_LOCK) {
-            return myElectionAddr;
+            return myElectionCfg != null ? myElectionCfg.getInetAddress() : null;
         }
     }
 
-    public void setElectionAddress(InetSocketAddress addr){
+    public void setElectionCfg(ServerCfg myElectionCfg){
         synchronized (QV_LOCK) {
-            myElectionAddr = addr;
+            this.myElectionCfg = myElectionCfg;
         }
     }
     
     public InetSocketAddress getClientAddress(){
         synchronized (QV_LOCK) {
-            return myClientAddr;
+            return myClientCfg != null ? myClientCfg.getInetAddress() : null;
         }
     }
     
-    public void setClientAddress(InetSocketAddress addr){
+    public void setClientCfg(ServerCfg myClientCfg){
         synchronized (QV_LOCK) {
-            myClientAddr = addr;
+            this.myClientCfg = myClientCfg;
         }
     }
     
@@ -846,7 +835,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         //}
         if (electionType == 0) {
             try {
-                udpSocket = new DatagramSocket(myQuorumAddr.getPort());
+                udpSocket = new DatagramSocket(myQuorumCfg.getPort());
                 responder = new ResponderThread();
                 responder.start();
             } catch (SocketException e) {
@@ -908,14 +897,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         if (null == quorumServer) {
             throw new IOException("No QuorumServer correspoding to myid " + myid);
         }
-        if (null == quorumServer.clientAddr) {
+        if (null == quorumServer.getClientAddr()) {
             return new InetSocketAddress(clientPort);
         }
-        if (quorumServer.clientAddr.getPort() != clientPort) {
-            throw new IOException("QuorumServer port " + quorumServer.clientAddr.getPort()
+        if (quorumServer.getClientAddr().getPort() != clientPort) {
+            throw new IOException("QuorumServer port " + quorumServer.getClientAddr().getPort()
                     + " does not match with given port " + clientPort);
         }
-        return quorumServer.clientAddr;
+        return quorumServer.getClientAddr();
     }
 
     /**
@@ -1518,9 +1507,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             }
             QuorumServer qs = qv.getAllMembers().get(getId());
             if (qs != null) {
-                setQuorumAddress(qs.addr);
-                setElectionAddress(qs.electionAddr);
-                setClientAddress(qs.clientAddr);
+                setQuorumCfg(qs.getServerCfg());
+                setElectionCfg(qs.getElectionCfg());
+                setClientCfg(qs.getClientCfg());
             }
             return prevQV;
         }
@@ -1532,7 +1521,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     private boolean needEraseClientInfoFromStaticConfig() {
         QuorumServer server = quorumVerifier.getAllMembers().get(getId());
-        return (server != null && server.clientAddr != null);
+        return (server != null && server.getClientAddr() != null);
     }
 
     /**
@@ -1783,9 +1772,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
            if (restartLE) restartLeaderElection(prevQV, qv);
 
            QuorumServer myNewQS = newMembers.get(getId());
-           if (myNewQS != null && myNewQS.clientAddr != null
-                   && !myNewQS.clientAddr.equals(oldClientAddr)) {
-               cnxnFactory.reconfigure(myNewQS.clientAddr);
+           if (myNewQS != null && myNewQS.getClientAddr() != null
+                   && !myNewQS.getClientAddr().equals(oldClientAddr)) {
+               cnxnFactory.reconfigure(myNewQS.getClientAddr());
                updateThreadName();
            }
 
@@ -1798,8 +1787,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                long currentLeaderId = getCurrentVote().getId();
                QuorumServer myleaderInCurQV = prevQV.getVotingMembers().get(currentLeaderId);
                QuorumServer myleaderInNewQV = qv.getVotingMembers().get(currentLeaderId);
-               leaderChange = (myleaderInCurQV == null || myleaderInCurQV.addr == null || 
-                               myleaderInNewQV == null || !myleaderInCurQV.addr.equals(myleaderInNewQV.addr));
+               leaderChange = (myleaderInCurQV == null || myleaderInCurQV.getAddr() == null ||
+                               myleaderInNewQV == null || !myleaderInCurQV.getAddr().equals(myleaderInNewQV.getAddr()));
                // we don't have a designated leader - need to go into leader
                // election
                reconfigFlagClear();

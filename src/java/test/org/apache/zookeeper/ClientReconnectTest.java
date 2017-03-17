@@ -59,8 +59,9 @@ public class ClientReconnectTest extends ZKTestCase {
     public void testClientReconnect() throws IOException, InterruptedException {
         HostProvider hostProvider = mock(HostProvider.class);
         when(hostProvider.size()).thenReturn(1);
-        InetSocketAddress inaddr = new InetSocketAddress("127.0.0.1", 1111);
-        when(hostProvider.next(anyLong())).thenReturn(inaddr);
+        final ServerCfg serverCfg = new ServerCfg("127.0.0.1:1111",
+                new InetSocketAddress("127.0.0.1", 1111));
+        when(hostProvider.next(anyLong())).thenReturn(serverCfg);
         ZooKeeper zk = mock(ZooKeeper.class);
         when(zk.getClientConfig()).thenReturn(new ZKClientConfig());
         sc =  SocketChannel.open();

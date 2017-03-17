@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.ServerCfg;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.test.ClientBase;
@@ -52,9 +53,11 @@ public class QuorumPeerTest {
         InetAddress clientIP = InetAddress.getLoopbackAddress();
 
         peersView.put(Long.valueOf(myId),
-                new QuorumServer(myId, new InetSocketAddress(clientIP, PortAssignment.unique()),
-                        new InetSocketAddress(clientIP, PortAssignment.unique()),
-                        new InetSocketAddress(clientIP, clientPort), LearnerType.PARTICIPANT));
+                new QuorumServer(myId,
+                        new ServerCfg(clientIP.getHostName(), new InetSocketAddress(clientIP, PortAssignment.unique())),
+                        new ServerCfg(clientIP.getHostName(), new InetSocketAddress(clientIP, PortAssignment.unique())),
+                        new ServerCfg(clientIP.getHostName(), new InetSocketAddress(clientIP, clientPort)),
+                        LearnerType.PARTICIPANT));
 
         /**
          * QuorumPeer constructor without QuorumVerifier
@@ -73,9 +76,11 @@ public class QuorumPeerTest {
         peersView.clear();
         clientPort = PortAssignment.unique();
         peersView.put(Long.valueOf(myId),
-                new QuorumServer(myId, new InetSocketAddress(clientIP, PortAssignment.unique()),
-                        new InetSocketAddress(clientIP, PortAssignment.unique()),
-                        new InetSocketAddress(clientIP, clientPort), LearnerType.PARTICIPANT));
+                new QuorumServer(myId,
+                        new ServerCfg(clientIP.getHostName(), new InetSocketAddress(clientIP, PortAssignment.unique())),
+                        new ServerCfg(clientIP.getHostName(), new InetSocketAddress(clientIP, PortAssignment.unique())),
+                        new ServerCfg(clientIP.getHostName(), new InetSocketAddress(clientIP, clientPort)),
+                        LearnerType.PARTICIPANT));
         QuorumPeer peer2 = new QuorumPeer(peersView, dataDir, dataDir, clientPort, electionAlg, myId, tickTime,
                 initLimit, syncLimit);
         String hostString2 = peer2.cnxnFactory.getLocalAddress().getHostString();
