@@ -224,7 +224,7 @@ public class MiniKdc {
         DEFAULT_CONFIG.setProperty(TRANSPORT, "TCP");
         DEFAULT_CONFIG.setProperty(MAX_TICKET_LIFETIME, "86400000");
         DEFAULT_CONFIG.setProperty(MAX_RENEWABLE_LIFETIME, "604800000");
-        DEFAULT_CONFIG.setProperty(DEBUG, "false");
+        DEFAULT_CONFIG.setProperty(DEBUG, "true");
     }
 
     /**

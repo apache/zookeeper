@@ -66,10 +66,11 @@ public class QuorumAuthTestBase extends ZKTestCase {
     }
 
     protected String startQuorum(final int serverCount,
-            Map<String, String> authConfigs, int authServerCount) throws IOException {
+            Map<String, String> authConfigs, int authServerCount,
+            boolean delayedServerStartup) throws IOException {
         StringBuilder connectStr = new StringBuilder();
         final int[] clientPorts = startQuorum(serverCount, 0, connectStr,
-                authConfigs, authServerCount);
+                authConfigs, authServerCount, delayedServerStartup);
         for (int i = 0; i < serverCount; i++) {
             Assert.assertTrue("waiting for server " + i + " being up",
                     ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i],
@@ -98,7 +99,7 @@ public class QuorumAuthTestBase extends ZKTestCase {
                     throws IOException {
         StringBuilder connectStr = new StringBuilder();
         final int[] clientPorts = startQuorum(serverCount, observerCount,
-                connectStr, authConfigs, authServerCount);
+                connectStr, authConfigs, authServerCount, false);
         for (int i = 0; i < serverCount; i++) {
             Assert.assertTrue("waiting for server " + i + " being up",
                     ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i],
@@ -122,12 +123,15 @@ public class QuorumAuthTestBase extends ZKTestCase {
      *            configuration parameters for authentication
      * @param authServerCount
      *            number of auth enabled servers
+     * @param delayedServerStartup
+     *            true flag value to add delay between server's startup, false otherwise.
      * @return client port for the respective servers
      * @throws IOException
      */
     protected int[] startQuorum(final int serverCount, int observerCount,
             StringBuilder connectStr, Map<String, String> authConfigs,
-            int authServerCount) throws IOException {
+            int authServerCount, boolean delayedServerStartup)
+                    throws IOException {
         final int clientPorts[] = new int[serverCount];
         StringBuilder sb = new StringBuilder();
 
@@ -159,7 +163,7 @@ public class QuorumAuthTestBase extends ZKTestCase {
                 String obsCfgSection = quorumCfg + "\npeerType=observer";
                 quorumCfg = obsCfgSection;
             }
-            startServer(authConfigs, clientPorts, quorumCfg, i);
+            startServer(authConfigs, clientPorts[i], quorumCfg, i, delayedServerStartup);
         }
         // servers without any authentication configured
         for (int j = 0; j < serverCount - authServerCount; j++, i++) {
@@ -167,20 +171,52 @@ public class QuorumAuthTestBase extends ZKTestCase {
                 String obsCfgSection = quorumCfg + "\npeerType=observer";
                 quorumCfg = obsCfgSection;
             }
-            MainThread mthread = new MainThread(i, clientPorts[i], quorumCfg);
-            mt.add(mthread);
-            mthread.start();
+            startServer(null, clientPorts[i], quorumCfg, i, delayedServerStartup);
         }
         return clientPorts;
     }
 
     private void startServer(Map<String, String> authConfigs,
-            final int[] clientPorts, String quorumCfg, int i)
-                    throws IOException {
-        MainThread mthread = new MainThread(i, clientPorts[i], quorumCfg,
-                authConfigs);
+            final int clientPort, String quorumCfg, int i,
+            boolean delayedServerStartup) throws IOException {
+        MainThread mthread;
+        if (authConfigs != null) {
+            mthread = new MainThread(i, clientPort, quorumCfg, authConfigs);
+        } else {
+            mthread = new MainThread(i, clientPort, quorumCfg);
+        }
         mt.add(mthread);
         mthread.start();
+
+        if (delayedServerStartup) {
+            addDelayBeforeStartingNextServer(mthread);
+        }
+    }
+
+    private void addDelayBeforeStartingNextServer(MainThread mThread) {
+        // Refer https://issues.apache.org/jira/browse/ZOOKEEPER-2712
+        LOG.info("Waiting to finish login context init(Krb login), "
+                + "as there are potential concurrency issues in ApacheDS "
+                + "if multiple servers starts together!");
+        int retries = 60; // 15secs delay
+        while (retries > 0) {
+            if (mThread.getQuorumPeer() != null
+                    && mThread.getQuorumPeer().hasAuthInitialized()) {
+                try {
+                    Thread.sleep(1000); // adding 1sec grace period.
+                } catch (InterruptedException e) {
+                    LOG.info("Ignore InterruptedException");
+                }
+                break;
+            }
+            // moving to next retry cycle
+            retries--;
+            try {
+                Thread.sleep(250);
+            } catch (InterruptedException e) {
+                LOG.info("Ignore InterruptedException");
+            }
+        }
     }
 
     protected void startServer(MainThread restartPeer,
