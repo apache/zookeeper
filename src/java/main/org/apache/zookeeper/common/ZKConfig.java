@@ -53,7 +53,7 @@ public class ZKConfig {
     @SuppressWarnings("deprecation")
     public static final String SSL_AUTHPROVIDER = X509Util.SSL_AUTHPROVIDER;
     public static final String JUTE_MAXBUFFER = "jute.maxbuffer";
-    public static final String SSL_HOSTNAME_VERIFIER = "zookeeper.ssl.hostnameVerifier";
+//    public static final String SSL_HOSTNAME_VERIFIER = "zookeeper.ssl.hostnameVerification";
     public static final String SSL_CRL_ENABLED = "zookeeper.ssl.crl";
     public static final String SSL_OCSP_ENABLED = "zookeeper.ssl.ocsp";
     /**
@@ -118,7 +118,7 @@ public class ZKConfig {
         properties.put(JUTE_MAXBUFFER, System.getProperty(JUTE_MAXBUFFER));
         properties.put(KINIT_COMMAND, System.getProperty(KINIT_COMMAND));
         properties.put(JGSS_NATIVE, System.getProperty(JGSS_NATIVE));
-        properties.put(SSL_HOSTNAME_VERIFIER, System.getProperty(SSL_HOSTNAME_VERIFIER));
+//        properties.put(SSL_HOSTNAME_VERIFIER, System.getProperty(SSL_HOSTNAME_VERIFIER));
         properties.put(SSL_CRL_ENABLED, System.getProperty(SSL_CRL_ENABLED));
         properties.put(SSL_OCSP_ENABLED, System.getProperty(SSL_OCSP_ENABLED));
     }

@@ -385,9 +385,6 @@ public class LearnerHandler extends ZooKeeperThread {
             if (leader.self.getView().containsKey(this.sid)) {
                 LOG.info("Follower sid: " + this.sid + " : info : "
                         + leader.self.getView().get(this.sid).toString());
-                if (sock instanceof SSLSocket) {
-                    X509Util.performHostnameVerification((SSLSocket) sock, leader.self.getView().get(this.sid));
-                }
             } else {
                 LOG.info("Follower sid: " + this.sid + " not in the current config " + Long.toHexString(leader.self.getQuorumVerifier().getVersion()));
                 //TODO: Hostname verification possible
@@ -623,8 +620,6 @@ public class LearnerHandler extends ZooKeeperThread {
             LOG.error("Unexpected exception causing shutdown", e);
         } catch (SnapshotThrottleException e) {
             LOG.error("too many concurrent snapshots: " + e);
-        } catch (X509Exception.SSLContextException e) {
-            LOG.error("Learner failed hostname verification", e);
         } finally {
             LOG.warn("******* GOODBYE "
                     + (sock != null ? sock.getRemoteSocketAddress() : "<null>")

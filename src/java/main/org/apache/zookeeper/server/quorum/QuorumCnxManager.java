@@ -344,18 +344,10 @@ public class QuorumCnxManager {
                 
                 sid = observerCounter--;
                 LOG.info("Setting arbitrary identifier to observer: {}", sid);
-            } else {
-                if (sock instanceof SSLSocket) {
-                    X509Util.performHostnameVerification((SSLSocket) sock, self.getView().get(sid));
-                }
             }
         } catch (IOException e) {
             closeSocket(sock);
             LOG.warn("Exception reading or writing challenge: {}", e.toString());
-            return;
-        } catch (X509Exception.SSLContextException e) {
-            closeSocket(sock);
-            LOG.warn("Hostname verification failed", e);
             return;
         }
 
@@ -451,10 +443,10 @@ public class QuorumCnxManager {
         try {
              LOG.debug("Opening channel to server " + sid);
              if (self.isSslQuorum()) {
-                 SSLSocket sslSock = (SSLSocket) X509Util.createSSLContext().getSocketFactory().createSocket();
+                 SSLSocket sslSock = X509Util.createSSLSocket();
                  setSockOpts(sslSock);
                  sslSock.connect(electionAddr, cnxTO);
-                 X509Util.performHandshakeAndHostnameVerification(sslSock, self.getView().get(sid));
+                 sslSock.startHandshake();
                  sock = sslSock;
              } else {
                  sock = new Socket();

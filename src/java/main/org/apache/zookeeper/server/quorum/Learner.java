@@ -255,7 +255,7 @@ public class Learner {
 
                 sockConnect(sock, leader.addr, Math.min(self.tickTime * self.syncLimit, remainingInitLimitTime));
                 if (self.isSslQuorum())  {
-                    X509Util.performHandshakeAndHostnameVerification((SSLSocket) sock, leader);
+                    ((SSLSocket) sock).startHandshake();
                 }
                 sock.setTcpNoDelay(nodelay);
                 break;
