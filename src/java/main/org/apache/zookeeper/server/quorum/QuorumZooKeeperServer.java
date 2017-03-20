@@ -81,6 +81,7 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
                     CreateMode createMode = CreateMode.fromFlag(createRequest.getFlags());
                     if (createMode.isEphemeral()) {
                         containsEphemeralCreate = true;
+                        break;
                     }
                 }
             }
