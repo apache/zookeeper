@@ -23,16 +23,19 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.security.util.HostnameChecker;
 
 import javax.net.ssl.CertPathTrustManagerParameters;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509ExtendedTrustManager;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 import java.io.File;
@@ -41,8 +44,10 @@ import java.io.IOException;
 import java.net.Socket;
 import java.security.KeyStore;
 import java.security.Security;
+import java.security.cert.CertificateException;
 import java.security.cert.PKIXBuilderParameters;
 import java.security.cert.X509CertSelector;
+import java.security.cert.X509Certificate;
 
 import static org.apache.zookeeper.common.X509Exception.KeyManagerException;
 import static org.apache.zookeeper.common.X509Exception.SSLContextException;
@@ -208,9 +213,48 @@ public class X509Util {
             TrustManagerFactory tmf = TrustManagerFactory.getInstance("PKIX");
             tmf.init(new CertPathTrustManagerParameters(pbParams));
 
-            for (TrustManager tm : tmf.getTrustManagers()) {
+            for (final TrustManager tm : tmf.getTrustManagers()) {
                 if (tm instanceof X509TrustManager) {
-                    return (X509TrustManager) tm;
+                    return new X509ExtendedTrustManager() {
+                        HostnameChecker hostnameChecker = HostnameChecker.getInstance(HostnameChecker.TYPE_TLS);
+
+                        @Override
+                        public X509Certificate[] getAcceptedIssuers() {
+                            return ((X509ExtendedTrustManager) tm).getAcceptedIssuers();
+                        }
+
+                        @Override
+                        public void checkClientTrusted(X509Certificate[] x509Certificates, String s, Socket socket) throws CertificateException {
+                            hostnameChecker.match(socket.getInetAddress().getHostName(), x509Certificates[0]);
+                            ((X509ExtendedTrustManager) tm).checkClientTrusted(x509Certificates, s, socket);
+                        }
+
+                        @Override
+                        public void checkServerTrusted(X509Certificate[] x509Certificates, String s, Socket socket) throws CertificateException {
+                            hostnameChecker.match(((SSLSocket) socket).getHandshakeSession().getPeerHost(), x509Certificates[0]);
+                            ((X509ExtendedTrustManager) tm).checkServerTrusted(x509Certificates, s, socket);
+                        }
+
+                        @Override
+                        public void checkClientTrusted(X509Certificate[] x509Certificates, String s, SSLEngine sslEngine) throws CertificateException {
+                            throw new RuntimeException("sslengine should not be in use");
+                        }
+
+                        @Override
+                        public void checkServerTrusted(X509Certificate[] x509Certificates, String s, SSLEngine sslEngine) throws CertificateException {
+                            throw new RuntimeException("sslengine should not be in use");
+                        }
+
+                        @Override
+                        public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+                            throw new RuntimeException("expecting a socket");
+                        }
+
+                        @Override
+                        public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+                            throw new RuntimeException("expecting a socket");
+                        }
+                    };
                 }
             }
             throw new TrustManagerException("Couldn't find X509TrustManager");
@@ -229,7 +273,6 @@ public class X509Util {
         SSLSocket sslSocket = (SSLSocket) createSSLContext().getSocketFactory().createSocket();
         SSLParameters sslParameters = sslSocket.getSSLParameters();
         sslParameters.setNeedClientAuth(true);
-        sslParameters.setEndpointIdentificationAlgorithm("https");
 
         sslSocket.setSSLParameters(sslParameters);
 
@@ -241,10 +284,6 @@ public class X509Util {
         SSLServerSocket sslServerSocket = (SSLServerSocket) createSSLContext().getServerSocketFactory().createServerSocket();
         SSLParameters sslParameters = sslServerSocket.getSSLParameters();
         sslParameters.setNeedClientAuth(true);
-
-
-        sslParameters.setEndpointIdentificationAlgorithm("https");
-
         sslServerSocket.setSSLParameters(sslParameters);
         return sslServerSocket;
     }
@@ -253,7 +292,6 @@ public class X509Util {
         SSLServerSocket sslServerSocket = (SSLServerSocket) createSSLContext().getServerSocketFactory().createServerSocket(port);
         SSLParameters sslParameters = sslServerSocket.getSSLParameters();
         sslParameters.setNeedClientAuth(true);
-        sslParameters.setEndpointIdentificationAlgorithm("https");
 
         sslServerSocket.setSSLParameters(sslParameters);
 
