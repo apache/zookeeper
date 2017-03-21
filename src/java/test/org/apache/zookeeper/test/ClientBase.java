@@ -116,6 +116,7 @@ public abstract class ClientBase extends ZKTestCase {
                 syncConnected = true;
             } else if (state == KeeperState.ConnectedReadOnly) {
                 connected = true;
+                syncConnected = false;
             } else {
                 connected = false;
                 syncConnected = false;
