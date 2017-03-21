@@ -589,6 +589,10 @@ server.3=125.23.63.25:2782:2785:participant</pre>
               from ZooKeeper class, and use of this API requires ACL setup and user
               authentication (see <a href="#sc_reconfig_access_control">Security</a> for more information.).
             </p>
+<p>Note: for temporary backward compatibility, the reconfig() APIs will remain in ZooKeeper.java
+              where they were for a few alpha versions of 3.5.x. However, these APIs are deprecated and users
+              should move to the reconfigure() APIs in ZooKeeperAdmin.java.
+            </p>
 </dd>
 
         
@@ -1232,7 +1236,7 @@ document.write("Last Published: " + document.lastModified);
 </div>
 <div class="copyright">
         Copyright &copy;
-         2008-2013 <a href="http://www.apache.org/licenses/">The Apache Software Foundation.</a>
+          <a href="http://www.apache.org/licenses/">The Apache Software Foundation.</a>
 </div>
 <!--+
     |end bottomstrip
