@@ -1307,11 +1307,14 @@ document.write("Last Published: " + document.lastModified);
     be able to read <em>/app/status</em>; ACLs are not
     recursive.</p>
 <p>ZooKeeper supports pluggable authentication schemes. Ids are
-    specified using the form <em>scheme:id</em>,
-    where <em>scheme</em> is a the authentication scheme
-    that the id corresponds to. For
-    example, <em>ip:172.16.16.1</em> is an id for a
-    host with the address <em>172.16.16.1</em>.</p>
+    specified using the form <em>scheme:expression</em>,
+    where <em>scheme</em> is the authentication scheme
+    that the id corresponds to. The set of valid expressions are defined
+    by the scheme. For example, <em>ip:172.16.16.1</em> is
+    an id for a host with the address <em>172.16.16.1</em>
+    using the <em>ip</em> scheme, whereas <em>digest:bob:password</em>
+    is an id for the user with the name of <em>bob</em> using
+    the <em>digest</em> scheme.</p>
 <p>When a client connects to ZooKeeper and authenticates
     itself, ZooKeeper associates all the ids that correspond to a
     client with the clients connection. These ids are checked against
@@ -1393,9 +1396,16 @@ document.write("Last Published: " + document.lastModified);
         
 <li>
 <p>
-<strong>auth</strong> doesn't
-        use any id, represents any authenticated
-        user.</p>
+<strong>auth</strong> is a special
+        scheme which ignores any provided expression and instead uses the current user,
+        credentials, and scheme. Any expression (whether <em>user</em> like with SASL
+        authentication or <em>user:password</em> like with DIGEST authentication) provided is ignored
+        by the ZooKeeper server when persisting the ACL. However, the expression must still be
+        provided in the ACL because the ACL must match the form <em>scheme:expression:perms</em>.
+        This scheme is provided as a convenience as it is a common use-case for
+        a user to create a znode and then restrict access to that znode to only that user.
+        If there is no authenticated user, setting an ACL with the auth scheme will fail.
+        </p>
 </li>
 
         
@@ -2386,7 +2396,7 @@ public abstract class ServerAuthenticationProvider implements AuthenticationProv
 <p>If you are using watches, you must look for the connected watch
         event. When a ZooKeeper client disconnects from a server, you will
         not receive notification of changes until reconnected. If you are
-        watching for a znode to come into existance, you will miss the event
+        watching for a znode to come into existence, you will miss the event
         if the znode is created and deleted while you are disconnected.</p>
       
 </li>
@@ -2569,7 +2579,7 @@ document.write("Last Published: " + document.lastModified);
 </div>
 <div class="copyright">
         Copyright &copy;
-         2008-2013 <a href="http://www.apache.org/licenses/">The Apache Software Foundation.</a>
+          <a href="http://www.apache.org/licenses/">The Apache Software Foundation.</a>
 </div>
 <!--+
     |end bottomstrip

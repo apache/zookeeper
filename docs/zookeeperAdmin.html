@@ -288,6 +288,9 @@ document.write("Last Published: " + document.lastModified);
 <a href="#Disabling+data+directory+autocreation">Disabling data directory autocreation</a>
 </li>
 <li>
+<a href="#sc_db_existence_validation">Enabling db existence validation</a>
+</li>
+<li>
 <a href="#sc_performance_options">Performance Tuning Options</a>
 </li>
 <li>
@@ -302,7 +305,7 @@ document.write("Last Published: " + document.lastModified);
 <a href="#sc_zkCommands">ZooKeeper Commands</a>
 <ul class="minitoc">
 <li>
-<a href="#The+Four+Letter+Words">The Four Letter Words</a>
+<a href="#sc_4lw">The Four Letter Words</a>
 </li>
 <li>
 <a href="#sc_adminserver">The AdminServer</a>
@@ -639,6 +642,19 @@ server.3=zoo3:2888:3888</pre>
         
 <li>
           
+<p>Create an initialization marker file <span class="codefrag filename">initialize</span>
+            in the same directory as <span class="codefrag filename">myid</span>. This file indicates
+            that an empty data directory is expected. When present, an empty data base
+            is created and the marker file deleted. When not present, an empty data
+            directory will mean this peer will not have voting rights and it will not
+            populate the data directory until it communicates with an active leader.
+            Intended use is to only create this file when bringing up a new
+            ensemble. </p>
+        
+</li>
+        
+<li>
+          
 <p>If your configuration file is set up, you can start a
           ZooKeeper server:</p>
 
@@ -940,14 +956,10 @@ server.3=zoo3:2888:3888</pre>
           of the znodes stored by a particular serving ensemble. These
           are the snapshot and transactional log files. As changes are
           made to the znodes these changes are appended to a
-          transaction log. Occasionally, when a log grows large, a
+          transaction log, occasionally, when a log grows large, a
           snapshot of the current state of all znodes will be written
-          to the filesystem and a new transaction log file is created
-          for future transactions. During snapshotting, ZooKeeper may
-          continue appending incoming transactions to the old log file.
-          Therefore, some transactions which are newer than a snapshot
-          may be found in the last transaction log preceding the
-          snapshot.
+          to the filesystem. This snapshot supercedes all previous
+          logs.
         </p>
 <p>A ZooKeeper server <strong>will not remove
         old snapshots and log files</strong> when using the default
@@ -1205,10 +1217,8 @@ server.3=zoo3:2888:3888</pre>
 <p>(Java system property: <strong>zookeeper.snapCount</strong>)</p>
 <p>ZooKeeper logs transactions to a transaction
               log. After snapCount transactions are written to a log
-              file a snapshot is started. It also influences rollover
-              of the current transaction log to a new file. However,
-              the creation of a new snapshot and rollover of transaction
-              log proceed independently. The default snapCount is
+              file a snapshot is started and a new transaction log
+              file is created. The default snapCount is
               100,000.</p>
 </dd>
 
@@ -1531,6 +1541,36 @@ server.3=zoo3:2888:3888</pre>
               </p>
 </dd>
 
+          
+<dt>
+<term>4lw.commands.whitelist</term>
+</dt>
+<dd>
+<p>(Java system property: <strong>zookeeper.4lw.commands.whitelist</strong>)</p>
+<p>
+<strong>New in 3.5.3:</strong>
+                A list of comma separated <a href="#sc_4lw">Four Letter Words</a>
+                commands that user wants to use. A valid Four Letter Words
+                command must be put in this list else ZooKeeper server will
+                not enable the command.
+                By default the whitelist only contains "srvr" command
+                which zkServer.sh uses. The rest of four letter word commands are disabled
+                by default.
+              </p>
+<p>Here's an example of the configuration that enables stat, ruok, conf, and isro
+              command while disabling the rest of Four Letter Words command:</p>
+<pre class="code">
+                4lw.commands.whitelist=stat, ruok, conf, isro
+              </pre>
+<p>If you really need enable all four letter word commands by default, you can use
+                the asterisk option so you don't have to include every command one by one in the list.
+                As an example, this will enable all four letter word commands:
+              </p>
+<pre class="code">
+                4lw.commands.whitelist=*
+              </pre>
+</dd>
+
         
 </dl>
 <p></p>
@@ -1760,6 +1800,32 @@ server.3=zoo3:2888:3888</pre>
         it does not create a config file, but rather requires a config
         file to be available in order to execute.
         </p>
+<a name="sc_db_existence_validation"></a>
+<h4>Enabling db existence validation</h4>
+<p>
+<strong>New in 3.6.0:</strong> The default
+          behavior of a ZooKeeper server on startup when no data tree
+          is found is to set zxid to zero and join the quorum as a
+          voting member. This can be dangerous if some event (e.g. a
+          rogue 'rm -rf') has removed the data directory while the
+          server was down since this server may help elect a leader
+          that is missing transactions. Enabling db existence validation
+          will change the behavior on startup when no data tree is
+          found: the server joins the ensemble as a non-voting participant
+          until it is able to sync with the leader and acquire an up-to-date
+          version of the ensemble data. To indicate an empty data tree is
+          expected (ensemble creation), the user should place a file
+          'initialize' in the same directory as 'myid'. This file will
+          be detected and deleted by the server on startup.
+        </p>
+<p> Initialization validation can be enabled when running
+          ZooKeeper servers directly from class files by setting
+          <strong>zookeeper.db.autocreate=false</strong>
+          on the java command line, i.e.
+          <strong>-Dzookeeper.db.autocreate=false</strong>.
+          Running <strong>zkServer-initialize.sh</strong>
+          will create the required initialization file.
+        </p>
 <a name="sc_performance_options"></a>
 <h4>Performance Tuning Options</h4>
 <p>
@@ -1933,7 +1999,7 @@ server.3=zoo3:2888:3888</pre>
 </dl>
 <a name="sc_zkCommands"></a>
 <h3 class="h4">ZooKeeper Commands</h3>
-<a name="The+Four+Letter+Words"></a>
+<a name="sc_4lw"></a>
 <h4>The Four Letter Words</h4>
 <p>ZooKeeper responds to a small set of commands. Each command is
         composed of four letters. You issue the commands to ZooKeeper via telnet
@@ -1942,6 +2008,15 @@ server.3=zoo3:2888:3888</pre>
         general information about the server and connected clients,
         while "srvr" and "cons" give extended details on server and
         connections respectively.</p>
+<p>
+<strong>New in 3.5.3:</strong>
+          Four Letter Words need to be explicitly white listed before using.
+          Please refer <strong>4lw.commands.whitelist</strong>
+           described in <a href="#sc_clusterOptions">
+            cluster configuration section</a> for details.
+          Moving forward, Four Letter Words will be deprecated, please use
+          <a href="#sc_adminserver">AdminServer</a> instead.
+        </p>
 <dl>
           
 <dt>
@@ -2301,7 +2376,7 @@ server.3=zoo3:2888:3888</pre>
       on a dedicated log devices.</p>
 <a name="The+Data+Directory"></a>
 <h4>The Data Directory</h4>
-<p>This directory has two files in it:</p>
+<p>This directory has two or three files in it:</p>
 <ul>
           
 <li>
@@ -2309,6 +2384,15 @@ server.3=zoo3:2888:3888</pre>
 <p>
 <span class="codefrag filename">myid</span> - contains a single integer in
             human readable ASCII text that represents the server id.</p>
+          
+</li>
+
+          
+<li>
+            
+<p>
+<span class="codefrag filename">initialize</span> - presence indicates lack of
+              data tree is expected. Cleaned up once data tree is created.</p>
           
 </li>
 
@@ -2350,11 +2434,8 @@ server.3=zoo3:2888:3888</pre>
 <p>The Log Directory contains the ZooKeeper transaction logs.
         Before any update takes place, ZooKeeper ensures that the transaction
         that represents the update is written to non-volatile storage. A new
-        log file is started when the number of transactions written to the
-		current log file reaches a (variable) threshold. The threshold is
-		computed using the same parameter which influences the frequency of
-		snapshotting (see snapCount above). The log file's suffix is the first
-		zxid written to that log.</p>
+        log file is started each time a snapshot is begun. The log file's
+        suffix is the first zxid written to that log.</p>
 <a name="sc_filemanagement"></a>
 <h4>File Management</h4>
 <p>The format of snapshot and log files does not change between
@@ -2369,12 +2450,8 @@ server.3=zoo3:2888:3888</pre>
 <p>The ZooKeeper server creates snapshot and log files, but
         never deletes them. The retention policy of the data and log
         files is implemented outside of the ZooKeeper server. The
-        server itself only needs the latest complete fuzzy snapshot, all log
-		files following it, and the last log file preceding it.  The latter
-		requirement is necessary to include updates which happened after this
-		snapshot was started but went into the existing log file at that time.
-		This is possible because snapshotting and rolling over of logs
-		proceed somewhat independently in Zookeeper. See the
+        server itself only needs the latest complete fuzzy snapshot
+        and the log files from the start of that snapshot. See the
         <a href="#sc_maintenance">maintenance</a> section in
         this document for more details on setting a retention policy
         and maintenance of ZooKeeper storage.
@@ -2443,6 +2520,17 @@ server.3=zoo3:2888:3888</pre>
             is to run load tests, and then make sure you are well below the
             usage limit that would cause the system to swap.</p>
 </dd>
+
+        
+<dt>
+<term>Publicly accessible deployment</term>
+</dt>
+<dd>
+<p>
+              A ZooKeeper ensemble is expected to operate in a trusted computing environment.
+              It is thus recommended to deploy ZooKeeper behind a firewall.
+            </p>
+</dd>
       
 </dl>
 <a name="sc_bestPractices"></a>
@@ -2475,7 +2563,7 @@ document.write("Last Published: " + document.lastModified);
 </div>
 <div class="copyright">
         Copyright &copy;
-         2008-2013 <a href="http://www.apache.org/licenses/">The Apache Software Foundation.</a>
+          <a href="http://www.apache.org/licenses/">The Apache Software Foundation.</a>
 </div>
 <!--+
     |end bottomstrip
