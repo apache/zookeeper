@@ -58,7 +58,7 @@
     <dependency org="junit" name="junit" rev="4.8.1" conf="test->default"/>
      <dependency org="org.mockito" name="mockito-all" rev="1.8.2"
                conf="test->default"/>
-    <dependency org="com.puppycrawl.tools" name="checkstyle" rev="6.13"
+    <dependency org="com.puppycrawl.tools" name="checkstyle" rev="6.1.1"
                 conf="test->default"/>
     <dependency org="commons-collections" name="commons-collections" 
                 rev="3.2.2" conf="test->default"/>

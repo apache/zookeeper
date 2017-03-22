@@ -21,7 +21,7 @@
 xmlns:ivy="antlib:org.apache.ivy.ant"
 xmlns:artifact="antlib:org.apache.maven.artifact.ant"
 xmlns:maven="antlib:org.apache.maven.artifact.ant"
-xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
+xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
 
     <!-- read build.properties from the basedir if any -->
     <property file="${basedir}/build.properties" />
@@ -1588,7 +1588,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     </target>
 
     <target name="checkstyle" depends="ivy-retrieve-test" description="Run Checkstyle coding standard checks">
-      <taskdef resource="com/puppycrawl/tools/checkstyle/ant/checkstyle-ant-task.properties" uri="antlib:com.puppycrawl.tools.checkstyle.ant">
+      <taskdef resource="checkstyletask.properties" uri="antlib:com.puppycrawl.tools.checkstyle">
         <classpath>
           <fileset dir="${ivy.test.lib}" includes="*.jar" />
         </classpath>
