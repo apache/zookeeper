@@ -87,7 +87,7 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
         authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "true");
         authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
 
-        String connectStr = startQuorum(3, authConfigs, 3);
+        String connectStr = startQuorum(3, authConfigs, 3, false);
         CountdownWatcher watcher = new CountdownWatcher();
         zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
         watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
@@ -108,7 +108,7 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
         authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_LOGIN_CONTEXT, "QuorumLearnerInvalid");
         authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "false");
         authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "false");
-        String connectStr = startQuorum(3, authConfigs, 3);
+        String connectStr = startQuorum(3, authConfigs, 3, false);
         CountdownWatcher watcher = new CountdownWatcher();
         zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
         watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
@@ -132,7 +132,7 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
         authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
         int serverCount = 2;
         final int[] clientPorts = startQuorum(serverCount, 0,
-                new StringBuilder(), authConfigs, serverCount);
+                new StringBuilder(), authConfigs, serverCount, false);
         for (int i = 0; i < serverCount; i++) {
             boolean waitForServerUp = ClientBase.waitForServerUp(
                     "127.0.0.1:" + clientPorts[i], QuorumPeerTestBase.TIMEOUT);
@@ -262,7 +262,7 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
         // Starting auth enabled 3-node cluster.
         int totalServerCount = 3;
         String connectStr = startQuorum(totalServerCount, authConfigs,
-                totalServerCount);
+                totalServerCount, false);
 
         CountdownWatcher watcher = new CountdownWatcher();
         zk = new ZooKeeper(connectStr.toString(), ClientBase.CONNECTION_TIMEOUT,
@@ -310,7 +310,7 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
         authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "true");
         authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
 
-        String connectStr = startQuorum(3, authConfigs, 3);
+        String connectStr = startQuorum(3, authConfigs, 3, false);
         CountdownWatcher watcher = new CountdownWatcher();
         zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
         watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
