@@ -292,7 +292,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                     cnxn.setClientCertificateChain(session.getPeerCertificates());
 
                     String authProviderProp
-                            = System.getProperty(ZKConfig.SSL_AUTHPROVIDER, "x509");
+                            = System.getProperty(X509Util.CLIENT_X509UTIL.getSslAuthProviderProperty(), "x509");
 
                     X509AuthenticationProvider authProvider =
                             (X509AuthenticationProvider)
@@ -352,15 +352,15 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
 
     private synchronized void initSSL(ChannelPipeline p)
             throws X509Exception, KeyManagementException, NoSuchAlgorithmException {
-        String authProviderProp = System.getProperty(ZKConfig.SSL_AUTHPROVIDER);
+        String authProviderProp = System.getProperty(X509Util.CLIENT_X509UTIL.getSslAuthProviderProperty());
         SSLContext sslContext;
         if (authProviderProp == null) {
-            sslContext = X509Util.createSSLContext();
+            sslContext = X509Util.CLIENT_X509UTIL.getDefaultSSLContext();
         } else {
             sslContext = SSLContext.getInstance("TLSv1");
             X509AuthenticationProvider authProvider =
                     (X509AuthenticationProvider)ProviderRegistry.getProvider(
-                            System.getProperty(ZKConfig.SSL_AUTHPROVIDER,
+                            System.getProperty(X509Util.CLIENT_X509UTIL.getSslAuthProviderProperty(),
                                     "x509"));
 
             if (authProvider == null)

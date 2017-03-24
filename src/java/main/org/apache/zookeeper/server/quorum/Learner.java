@@ -289,7 +289,7 @@ public class Learner {
 
     private void createSocket() throws X509Exception, IOException {
         if (self.isSslQuorum()) {
-            sock = X509Util.createSSLSocket();
+            sock = X509Util.QUORUM_X509UTIL.createSSLSocket();
         } else {
             sock = new Socket();
         }

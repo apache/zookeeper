@@ -443,7 +443,7 @@ public class QuorumCnxManager {
         try {
              LOG.debug("Opening channel to server " + sid);
              if (self.isSslQuorum()) {
-                 SSLSocket sslSock = X509Util.createSSLSocket();
+                 SSLSocket sslSock = X509Util.QUORUM_X509UTIL.createSSLSocket();
                  setSockOpts(sslSock);
                  sslSock.connect(electionAddr, cnxTO);
                  sslSock.startHandshake();
@@ -641,9 +641,9 @@ public class QuorumCnxManager {
             while((!shutdown) && (numRetries < 3)){
                 try {
                     if (self.shouldUsePortUnification()) {
-                        ss = new BufferedServerSocket();
+                        ss = new UnifiedServerSocket();
                     } else if (self.isSslQuorum()) {
-                        ss = X509Util.createSSLServerSocket();
+                        ss = X509Util.QUORUM_X509UTIL.createSSLServerSocket();
                     } else {
                         ss = new ServerSocket();
                     }
@@ -664,10 +664,6 @@ public class QuorumCnxManager {
                     ss.bind(addr);
                     while (!shutdown) {
                         client = ss.accept();
-
-                        if (self.shouldUsePortUnification()) {
-                            client = X509Util.createUnifiedSocket((BufferedSocket) client);
-                        }
 
                         setSockOpts(client);
                         LOG.info("Received connection request "

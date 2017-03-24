@@ -223,15 +223,15 @@ public class Leader {
         try {
             if (self.shouldUsePortUnification()) {
                 if (self.getQuorumListenOnAllIPs()) {
-                    ss = new BufferedServerSocket(self.getQuorumAddress().getPort());
+                    ss = new UnifiedServerSocket(self.getQuorumAddress().getPort());
                 } else {
-                    ss = new BufferedServerSocket();
+                    ss = new UnifiedServerSocket();
                 }
             } else if (self.isSslQuorum()) {
                 if (self.getQuorumListenOnAllIPs()) {
-                    ss = X509Util.createSSLServerSocket(self.getQuorumAddress().getPort());
+                    ss = X509Util.QUORUM_X509UTIL.createSSLServerSocket(self.getQuorumAddress().getPort());
                 } else {
-                    ss = X509Util.createSSLServerSocket();
+                    ss = X509Util.QUORUM_X509UTIL.createSSLServerSocket();
                 }
             } else {
                 if (self.getQuorumListenOnAllIPs()) {
@@ -381,10 +381,6 @@ public class Leader {
                 while (!stop) {
                     try{
                         Socket s = ss.accept();
-
-                        if (self.shouldUsePortUnification()) {
-                            s = X509Util.createUnifiedSocket((BufferedSocket) s);
-                        }
 
                         // start with the initLimit, once the ack is processed
                         // in LearnerHandler switch to the syncLimit

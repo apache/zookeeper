@@ -42,20 +42,9 @@ import org.slf4j.LoggerFactory;
 public class ZKConfig {
 
     private static final Logger LOG = LoggerFactory.getLogger(ZKConfig.class);
-    @SuppressWarnings("deprecation")
-    public static final String SSL_KEYSTORE_LOCATION = X509Util.SSL_KEYSTORE_LOCATION;
-    @SuppressWarnings("deprecation")
-    public static final String SSL_KEYSTORE_PASSWD = X509Util.SSL_KEYSTORE_PASSWD;
-    @SuppressWarnings("deprecation")
-    public static final String SSL_TRUSTSTORE_LOCATION = X509Util.SSL_TRUSTSTORE_LOCATION;
-    @SuppressWarnings("deprecation")
-    public static final String SSL_TRUSTSTORE_PASSWD = X509Util.SSL_TRUSTSTORE_PASSWD;
-    @SuppressWarnings("deprecation")
-    public static final String SSL_AUTHPROVIDER = X509Util.SSL_AUTHPROVIDER;
+
     public static final String JUTE_MAXBUFFER = "jute.maxbuffer";
-//    public static final String SSL_HOSTNAME_VERIFIER = "zookeeper.ssl.hostnameVerification";
-    public static final String SSL_CRL_ENABLED = "zookeeper.ssl.crl";
-    public static final String SSL_OCSP_ENABLED = "zookeeper.ssl.ocsp";
+
     /**
      * Path to a kinit binary: {@value}. Defaults to
      * <code>"/usr/bin/kinit"</code>
@@ -110,17 +99,32 @@ public class ZKConfig {
      * this configuration.
      */
     protected void handleBackwardCompatibility() {
-        properties.put(SSL_KEYSTORE_LOCATION, System.getProperty(SSL_KEYSTORE_LOCATION));
-        properties.put(SSL_KEYSTORE_PASSWD, System.getProperty(SSL_KEYSTORE_PASSWD));
-        properties.put(SSL_TRUSTSTORE_LOCATION, System.getProperty(SSL_TRUSTSTORE_LOCATION));
-        properties.put(SSL_TRUSTSTORE_PASSWD, System.getProperty(SSL_TRUSTSTORE_PASSWD));
-        properties.put(SSL_AUTHPROVIDER, System.getProperty(SSL_AUTHPROVIDER));
         properties.put(JUTE_MAXBUFFER, System.getProperty(JUTE_MAXBUFFER));
         properties.put(KINIT_COMMAND, System.getProperty(KINIT_COMMAND));
         properties.put(JGSS_NATIVE, System.getProperty(JGSS_NATIVE));
-//        properties.put(SSL_HOSTNAME_VERIFIER, System.getProperty(SSL_HOSTNAME_VERIFIER));
-        properties.put(SSL_CRL_ENABLED, System.getProperty(SSL_CRL_ENABLED));
-        properties.put(SSL_OCSP_ENABLED, System.getProperty(SSL_OCSP_ENABLED));
+
+        putSSLProperties(X509Util.CLIENT_X509UTIL);
+        properties.put(X509Util.CLIENT_X509UTIL.getSslAuthProviderProperty(),
+                System.getProperty(X509Util.CLIENT_X509UTIL.getSslAuthProviderProperty()));
+
+        putSSLProperties(X509Util.QUORUM_X509UTIL);
+    }
+    
+    private void putSSLProperties(X509Util x509Util) {
+        properties.put(x509Util.getSslKeystoreLocationProperty(),
+                System.getProperty(x509Util.getSslKeystoreLocationProperty()));
+        properties.put(x509Util.getSslKeystorePasswdProperty(),
+                System.getProperty(x509Util.getSslKeystorePasswdProperty()));
+        properties.put(x509Util.getSslTruststoreLocationProperty(),
+                System.getProperty(x509Util.getSslTruststoreLocationProperty()));
+        properties.put(x509Util.getSslTruststorePasswdProperty(),
+                System.getProperty(x509Util.getSslTruststorePasswdProperty()));
+        properties.put(x509Util.getSslHostnameVerificationEnabledProperty(),
+                System.getProperty(x509Util.getSslHostnameVerificationEnabledProperty()));
+        properties.put(x509Util.getSslCrlEnabledProperty(),
+                System.getProperty(x509Util.getSslCrlEnabledProperty()));
+        properties.put(x509Util.getSslOcspEnabledProperty(),
+                System.getProperty(x509Util.getSslOcspEnabledProperty()));
     }
 
     /**

@@ -18,14 +18,12 @@
 package org.apache.zookeeper.common;
 
 
-import org.apache.zookeeper.server.quorum.BufferedSocket;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.handler.ssl.SslHandler;
+import org.apache.http.conn.ssl.DefaultHostnameVerifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.security.util.HostnameChecker;
 
 import javax.net.ssl.CertPathTrustManagerParameters;
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -49,48 +47,65 @@ import java.security.cert.PKIXBuilderParameters;
 import java.security.cert.X509CertSelector;
 import java.security.cert.X509Certificate;
 
-import static org.apache.zookeeper.common.X509Exception.KeyManagerException;
-import static org.apache.zookeeper.common.X509Exception.SSLContextException;
-import static org.apache.zookeeper.common.X509Exception.TrustManagerException;
+import static org.apache.zookeeper.common.X509Exception.*;
 
 /**
  * Utility code for X509 handling
  */
-public class X509Util {
+public abstract class X509Util {
     private static final Logger LOG = LoggerFactory.getLogger(X509Util.class);
 
-    /**
-     * @deprecated Use {@link ZKConfig#SSL_KEYSTORE_LOCATION}
-     *             instead.
-     */
-    @Deprecated
-    public static final String SSL_KEYSTORE_LOCATION = "zookeeper.ssl.keyStore.location";
-    /**
-     * @deprecated Use {@link ZKConfig#SSL_KEYSTORE_PASSWD}
-     *             instead.
-     */
-    @Deprecated
-    public static final String SSL_KEYSTORE_PASSWD = "zookeeper.ssl.keyStore.password";
-    /**
-     * @deprecated Use {@link ZKConfig#SSL_TRUSTSTORE_LOCATION}
-     *             instead.
-     */
-    @Deprecated
-    public static final String SSL_TRUSTSTORE_LOCATION = "zookeeper.ssl.trustStore.location";
-    /**
-     * @deprecated Use {@link ZKConfig#SSL_TRUSTSTORE_PASSWD}
-     *             instead.
-     */
-    @Deprecated
-    public static final String SSL_TRUSTSTORE_PASSWD = "zookeeper.ssl.trustStore.password";
-    /**
-     * @deprecated Use {@link ZKConfig#SSL_AUTHPROVIDER}
-     *             instead.
-     */
-    @Deprecated
-    public static final String SSL_AUTHPROVIDER = "zookeeper.ssl.authProvider";
+    private String sslKeystoreLocationProperty = getConfigPrefix() + "keyStore.location";
+    private String sslKeystorePasswdProperty = getConfigPrefix() + "keyStore.password";
+    private String sslTruststoreLocationProperty = getConfigPrefix() + "trustStore.location";
+    private String sslTruststorePasswdProperty = getConfigPrefix() + "trustStore.password";
+    private String sslHostnameVerificationEnabledProperty = getConfigPrefix() + "hostnameVerification";
+    private String sslCrlEnabledProperty = getConfigPrefix() + "ssl.crl";
+    private String sslOcspEnabledProperty = getConfigPrefix() + "ssl.ocsp";
 
-    public static SSLContext createSSLContext() throws SSLContextException {
+    public static final QuorumX509Util QUORUM_X509UTIL = new QuorumX509Util();
+    public static final ClientX509Util CLIENT_X509UTIL = new ClientX509Util();
+
+    private volatile SSLContext defaultSSLContext;
+
+    protected abstract String getConfigPrefix();
+    protected abstract boolean shouldVerifyClientHostname();
+
+    public String getSslKeystoreLocationProperty() {
+        return sslKeystoreLocationProperty;
+    }
+
+    public String getSslKeystorePasswdProperty() {
+        return sslKeystorePasswdProperty;
+    }
+
+    public String getSslTruststoreLocationProperty() {
+        return sslTruststoreLocationProperty;
+    }
+
+    public String getSslTruststorePasswdProperty() {
+        return sslTruststorePasswdProperty;
+    }
+
+    public String getSslHostnameVerificationEnabledProperty() {
+        return sslHostnameVerificationEnabledProperty;
+    }
+    public String getSslCrlEnabledProperty() {
+        return sslCrlEnabledProperty;
+    }
+
+    public String getSslOcspEnabledProperty() {
+        return sslOcspEnabledProperty;
+    }
+
+    public synchronized SSLContext getDefaultSSLContext() throws SSLContextException {
+        if (defaultSSLContext == null) {
+            defaultSSLContext = createSSLContext();
+        }
+        return defaultSSLContext;
+    }
+
+    public SSLContext createSSLContext() throws SSLContextException {
         /**
          * Since Configuration initializes the key store and trust store related
          * configuration from system property. Reading property from
@@ -100,12 +115,12 @@ public class X509Util {
         return createSSLContext(config);
     }
 
-    public static SSLContext createSSLContext(ZKConfig config) throws SSLContextException {
+    public SSLContext createSSLContext(ZKConfig config) throws SSLContextException {
         KeyManager[] keyManagers = null;
         TrustManager[] trustManagers = null;
 
-        String keyStoreLocationProp = config.getProperty(ZKConfig.SSL_KEYSTORE_LOCATION);
-        String keyStorePasswordProp = config.getProperty(ZKConfig.SSL_KEYSTORE_PASSWD);
+        String keyStoreLocationProp = config.getProperty(sslKeystoreLocationProperty);
+        String keyStorePasswordProp = config.getProperty(sslKeystorePasswdProperty);
 
         // There are legal states in some use cases for null KeyManager or TrustManager.
         // But if a user wanna specify one, location and password are required.
@@ -127,8 +142,12 @@ public class X509Util {
             }
         }
 
-        String trustStoreLocationProp = config.getProperty(ZKConfig.SSL_TRUSTSTORE_LOCATION);
-        String trustStorePasswordProp = config.getProperty(ZKConfig.SSL_TRUSTSTORE_PASSWD);
+        String trustStoreLocationProp = config.getProperty(sslTruststoreLocationProperty);
+        String trustStorePasswordProp = config.getProperty(sslTruststorePasswdProperty);
+
+        boolean sslCrlEnabled = config.getBoolean(this.sslCrlEnabledProperty);
+        boolean sslOcspEnabled = config.getBoolean(this.sslOcspEnabledProperty);
+        boolean sslServerHostnameVerificationEnabled = config.getBoolean(this.getSslHostnameVerificationEnabledProperty());
 
         if (trustStoreLocationProp == null && trustStorePasswordProp == null) {
             LOG.warn("keystore not specified for client connection");
@@ -140,8 +159,9 @@ public class X509Util {
                 throw new SSLContextException("keystore password not specified for client connection");
             }
             try {
+
                 trustManagers = new TrustManager[]{
-                        createTrustManager(trustStoreLocationProp, trustStorePasswordProp, config.getBoolean(ZKConfig.SSL_CRL_ENABLED), config.getBoolean(ZKConfig.SSL_OCSP_ENABLED))};
+                        createTrustManager(trustStoreLocationProp, trustStorePasswordProp, sslCrlEnabled, sslOcspEnabled, sslServerHostnameVerificationEnabled, shouldVerifyClientHostname())};
             } catch (TrustManagerException e) {
                 throw new SSLContextException("Failed to create KeyManager", e);
             }
@@ -187,7 +207,10 @@ public class X509Util {
         }
     }
 
-    public static X509TrustManager createTrustManager(String trustStoreLocation, String trustStorePassword, boolean crlEnabled, boolean ocspEnabled)
+    public static X509TrustManager createTrustManager(String trustStoreLocation, String trustStorePassword,
+                                                      boolean crlEnabled, boolean ocspEnabled,
+                                                      final boolean hostnameVerificationEnabled,
+                                                      final boolean shouldVerifyClientHostname)
             throws TrustManagerException {
         FileInputStream inputStream = null;
         try {
@@ -214,45 +237,56 @@ public class X509Util {
             tmf.init(new CertPathTrustManagerParameters(pbParams));
 
             for (final TrustManager tm : tmf.getTrustManagers()) {
-                if (tm instanceof X509TrustManager) {
+                if (tm instanceof X509ExtendedTrustManager) {
                     return new X509ExtendedTrustManager() {
-                        HostnameChecker hostnameChecker = HostnameChecker.getInstance(HostnameChecker.TYPE_TLS);
+                        X509ExtendedTrustManager x509ExtendedTrustManager = (X509ExtendedTrustManager) tm;
+                        HostnameVerifier hostnameVerifier = new DefaultHostnameVerifier();
 
                         @Override
                         public X509Certificate[] getAcceptedIssuers() {
-                            return ((X509ExtendedTrustManager) tm).getAcceptedIssuers();
+                            return x509ExtendedTrustManager.getAcceptedIssuers();
                         }
 
                         @Override
-                        public void checkClientTrusted(X509Certificate[] x509Certificates, String s, Socket socket) throws CertificateException {
-                            hostnameChecker.match(socket.getInetAddress().getHostName(), x509Certificates[0]);
-                            ((X509ExtendedTrustManager) tm).checkClientTrusted(x509Certificates, s, socket);
+                        public void checkClientTrusted(X509Certificate[] chain, String authType, Socket socket) throws CertificateException {
+                            if (hostnameVerificationEnabled && shouldVerifyClientHostname) {
+                                hostnameVerifier.verify(socket.getInetAddress().getHostName(), ((SSLSocket) socket).getSession());
+                            }
+                            x509ExtendedTrustManager.checkClientTrusted(chain, authType, socket);
                         }
 
                         @Override
-                        public void checkServerTrusted(X509Certificate[] x509Certificates, String s, Socket socket) throws CertificateException {
-                            hostnameChecker.match(((SSLSocket) socket).getHandshakeSession().getPeerHost(), x509Certificates[0]);
-                            ((X509ExtendedTrustManager) tm).checkServerTrusted(x509Certificates, s, socket);
+                        public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket) throws CertificateException {
+                            if (hostnameVerificationEnabled) {
+                                hostnameVerifier.verify(socket.getInetAddress().getHostName(), ((SSLSocket) socket).getSession());
+                            }
+                            x509ExtendedTrustManager.checkServerTrusted(chain, authType, socket);
                         }
 
                         @Override
-                        public void checkClientTrusted(X509Certificate[] x509Certificates, String s, SSLEngine sslEngine) throws CertificateException {
-                            throw new RuntimeException("sslengine should not be in use");
+                        public void checkClientTrusted(X509Certificate[] chain, String authType, SSLEngine engine) throws CertificateException {
+                            if (hostnameVerificationEnabled && shouldVerifyClientHostname) {
+                                hostnameVerifier.verify(engine.getPeerHost(), engine.getSession());
+                            }
+                            x509ExtendedTrustManager.checkServerTrusted(chain, authType, engine);
                         }
 
                         @Override
-                        public void checkServerTrusted(X509Certificate[] x509Certificates, String s, SSLEngine sslEngine) throws CertificateException {
-                            throw new RuntimeException("sslengine should not be in use");
+                        public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine engine) throws CertificateException {
+                            if (hostnameVerificationEnabled) {
+                                hostnameVerifier.verify(engine.getPeerHost(), engine.getSession());
+                            }
+                            x509ExtendedTrustManager.checkServerTrusted(chain, authType, engine);
                         }
 
                         @Override
-                        public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
-                            throw new RuntimeException("expecting a socket");
+                        public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+                            x509ExtendedTrustManager.checkClientTrusted(chain, authType);
                         }
 
                         @Override
-                        public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
-                            throw new RuntimeException("expecting a socket");
+                        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+                            x509ExtendedTrustManager.checkServerTrusted(chain, authType);
                         }
                     };
                 }
@@ -269,8 +303,8 @@ public class X509Util {
         }
     }
 
-    public static SSLSocket createSSLSocket() throws X509Exception, IOException {
-        SSLSocket sslSocket = (SSLSocket) createSSLContext().getSocketFactory().createSocket();
+    public SSLSocket createSSLSocket() throws X509Exception, IOException {
+        SSLSocket sslSocket = (SSLSocket) getDefaultSSLContext().getSocketFactory().createSocket();
         SSLParameters sslParameters = sslSocket.getSSLParameters();
         sslParameters.setNeedClientAuth(true);
 
@@ -280,42 +314,21 @@ public class X509Util {
     }
 
 
-    public static SSLServerSocket createSSLServerSocket() throws X509Exception, IOException {
-        SSLServerSocket sslServerSocket = (SSLServerSocket) createSSLContext().getServerSocketFactory().createServerSocket();
+    public SSLServerSocket createSSLServerSocket() throws X509Exception, IOException {
+        SSLServerSocket sslServerSocket = (SSLServerSocket) getDefaultSSLContext().getServerSocketFactory().createServerSocket();
         SSLParameters sslParameters = sslServerSocket.getSSLParameters();
         sslParameters.setNeedClientAuth(true);
         sslServerSocket.setSSLParameters(sslParameters);
         return sslServerSocket;
     }
 
-    public static SSLServerSocket createSSLServerSocket(int port) throws X509Exception, IOException {
-        SSLServerSocket sslServerSocket = (SSLServerSocket) createSSLContext().getServerSocketFactory().createServerSocket(port);
+    public SSLServerSocket createSSLServerSocket(int port) throws X509Exception, IOException {
+        SSLServerSocket sslServerSocket = (SSLServerSocket) getDefaultSSLContext().getServerSocketFactory().createServerSocket(port);
         SSLParameters sslParameters = sslServerSocket.getSSLParameters();
         sslParameters.setNeedClientAuth(true);
 
         sslServerSocket.setSSLParameters(sslParameters);
 
         return sslServerSocket;
-    }
-
-    public static Socket createUnifiedSocket(BufferedSocket socket) throws X509Exception, IOException {
-        socket.getInputStream().mark(6);
-
-        byte[] litmus = new byte[5];
-        socket.getInputStream().read(litmus, 0, 5);
-
-        socket.getInputStream().reset();
-
-        boolean isSsl = SslHandler.isEncrypted(ChannelBuffers.wrappedBuffer(litmus));
-        if (isSsl) {
-            LOG.info(socket.getInetAddress() + " attempting to connect over ssl");
-            SSLSocket sslSocket = (SSLSocket) createSSLContext().getSocketFactory().createSocket(socket, null, socket.getPort(), false);
-            sslSocket.setUseClientMode(false);
-            return sslSocket;
-        } else {
-            LOG.info(socket.getInetAddress() + " attempting to connect without ssl");
-            return socket;
-        }
-
     }
 }

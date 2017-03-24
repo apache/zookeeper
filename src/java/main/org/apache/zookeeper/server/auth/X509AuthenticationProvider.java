@@ -65,33 +65,34 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
      * <br/><code>zookeeper.ssl.trustStore.password</code>
      */
     public X509AuthenticationProvider() {
-        String keyStoreLocationProp = System.getProperty(
-                ZKConfig.SSL_KEYSTORE_LOCATION);
-        String keyStorePasswordProp = System.getProperty(
-                ZKConfig.SSL_KEYSTORE_PASSWD);
+        ZKConfig config = new ZKConfig();
+        X509Util x509Util = X509Util.CLIENT_X509UTIL;
 
-        String ocspEnabledProperty = System.getProperty(
-                ZKConfig.SSL_OCSP_ENABLED);
-        String crlEnabledProperty = System.getProperty(
-                ZKConfig.SSL_CRL_ENABLED);
+        String keyStoreLocation = config.getProperty(x509Util.getSslKeystoreLocationProperty());
+        String keyStorePassword = System.getProperty(x509Util.getSslKeystorePasswdProperty());
+
+        boolean crlEnabled = Boolean.parseBoolean(System.getProperty(x509Util.getSslCrlEnabledProperty()));
+        boolean ocspEnabled = Boolean.parseBoolean(System.getProperty(x509Util.getSslOcspEnabledProperty()));
+        boolean hostnameVerificationEnabled = Boolean.parseBoolean(System.getProperty(x509Util.getSslHostnameVerificationEnabledProperty()));
+
 
         X509KeyManager km = null;
         X509TrustManager tm = null;
         try {
-            km = X509Util.createKeyManager(
-                    keyStoreLocationProp, keyStorePasswordProp);
+            km = X509Util.createKeyManager(keyStoreLocation, keyStorePassword);
         } catch (KeyManagerException e) {
             LOG.error("Failed to create key manager", e);
         }
 
         String trustStoreLocationProp = System.getProperty(
-                ZKConfig.SSL_TRUSTSTORE_LOCATION);
+                x509Util.getSslTruststoreLocationProperty());
         String trustStorePasswordProp = System.getProperty(
-                ZKConfig.SSL_TRUSTSTORE_PASSWD);
+                x509Util.getSslTruststorePasswdProperty());
+
+
 
         try {
-            tm = X509Util.createTrustManager(
-                    trustStoreLocationProp, trustStorePasswordProp, Boolean.parseBoolean(crlEnabledProperty), Boolean.parseBoolean(ocspEnabledProperty));
+            tm = X509Util.createTrustManager(trustStoreLocationProp, trustStorePasswordProp, crlEnabled, ocspEnabled, hostnameVerificationEnabled, false);
         } catch (TrustManagerException e) {
             LOG.error("Failed to create trust manager", e);
         }

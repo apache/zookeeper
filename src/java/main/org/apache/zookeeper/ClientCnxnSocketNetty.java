@@ -362,7 +362,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         // Basically we only need to create it once.
         private synchronized void initSSL(ChannelPipeline pipeline) throws SSLContextException {
             if (sslContext == null || sslEngine == null) {
-                sslContext = X509Util.createSSLContext(clientConfig);
+                sslContext = X509Util.CLIENT_X509UTIL.createSSLContext(clientConfig);
                 sslEngine = sslContext.createSSLEngine();
                 sslEngine.setUseClientMode(true);
             }

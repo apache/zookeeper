@@ -55,6 +55,10 @@
       <artifact name="netty" type="jar" conf="default"/>
     </dependency>
 
+    <dependency org="org.apache.httpcomponents" name="httpclient" rev="4.5.3">
+      <artifact name="httpclient" type="jar" conf="default" />
+    </dependency>
+
     <dependency org="junit" name="junit" rev="4.12" conf="test->default"/>
 	<dependency org="org.mockito" name="mockito-all" rev="1.8.2"
                conf="test->default"/>

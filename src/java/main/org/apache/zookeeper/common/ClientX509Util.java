@@ -16,33 +16,23 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.server.quorum;
+package org.apache.zookeeper.common;
 
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketException;
+public class ClientX509Util extends X509Util {
 
-public class BufferedServerSocket extends ServerSocket {
+    private String sslAuthProviderProperty = getConfigPrefix() + "authProvider";
 
-  public BufferedServerSocket() throws IOException {
-    super();
-  }
-
-  public BufferedServerSocket(int port) throws IOException {
-    super(port);
-  }
-
-  @Override
-  public Socket accept() throws IOException {
-    if (isClosed()) {
-      throw new SocketException("Socket is closed");
+    @Override
+    protected String getConfigPrefix() {
+        return "zookeeper.ssl.";
     }
-    if (!isBound()) {
-      throw new SocketException("Socket is not bound yet");
+
+    @Override
+    protected boolean shouldVerifyClientHostname() {
+        return false;
     }
-    final Socket bufferedSocket = new BufferedSocket(null);
-    implAccept(bufferedSocket);
-    return bufferedSocket;
-  }
+
+    public String getSslAuthProviderProperty() {
+        return sslAuthProviderProperty;
+    }
 }

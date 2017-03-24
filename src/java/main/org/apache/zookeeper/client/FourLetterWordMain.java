@@ -88,7 +88,7 @@ public class FourLetterWordMain {
             new InetSocketAddress(InetAddress.getByName(null), port);
         if (secure) {
             LOG.info("using secure socket");
-            SSLContext sslContext = X509Util.createSSLContext();
+            SSLContext sslContext = X509Util.CLIENT_X509UTIL.getDefaultSSLContext();
             SSLSocketFactory socketFactory = sslContext.getSocketFactory();
             SSLSocket sslSock = (SSLSocket) socketFactory.createSocket();
             sslSock.connect(hostaddress, timeout);
