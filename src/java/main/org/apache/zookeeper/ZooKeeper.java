@@ -2465,7 +2465,9 @@ public class ZooKeeper implements AutoCloseable {
      * @param maxReturned
      *            - the maximum number of children returned
      * @param minCzxId
-     *            - only return children whose creation zkid is greater than {@code minCzxId}
+     *            - only return children whose creation zkid is equal or greater than {@code minCzxId}
+     * @param czxIdOffset
+     *            - how many children with zkid == minCzxId to skip server-side, as they were returned in previous pages
      * @return
      *            an ordered list of children nodes, up to {@code maxReturned}, ordered by czxid
      * @throws KeeperException
@@ -2482,7 +2484,7 @@ public class ZooKeeper implements AutoCloseable {
      *
      * @since 3.5.2
      */
-    public List<PathWithStat> getChildren(final String path, Watcher watcher, final int maxReturned, final long minCzxId)
+    public List<PathWithStat> getChildren(final String path, Watcher watcher, final int maxReturned, final long minCzxId, final int czxIdOffset)
             throws KeeperException, InterruptedException {
         final String clientPath = path;
         PathUtils.validatePath(clientPath);
@@ -2506,6 +2508,7 @@ public class ZooKeeper implements AutoCloseable {
         request.setWatch(watcher != null);
         request.setMaxReturned(maxReturned);
         request.setMinCzxId(minCzxId);
+        request.setCzxIdOffset(czxIdOffset);
         GetChildrenPaginatedResponse response = new GetChildrenPaginatedResponse();
         ReplyHeader r = cnxn.submitRequest(h, request, response, wcb);
         if (r.getErr() != 0) {
@@ -2529,7 +2532,7 @@ public class ZooKeeper implements AutoCloseable {
      * @param batchSize
      *            - the maximum number of children returned by each background call to the server
      * @param minCzxId
-     *            - only return children whose creation zkid is greater than {@code minCzxId}
+     *            - only return children whose creation zkid is equal or greater than {@code minCzxId}
      *
      * @return
      *            an iterator on children node, ordered by czxid
@@ -2546,7 +2549,7 @@ public class ZooKeeper implements AutoCloseable {
      *
      * @since 3.5.2
      */
-    public RemoteIterator<PathWithStat> getChildrenIterator(String path, Watcher watcher, int batchSize, int minCzxId)
+    public RemoteIterator<PathWithStat> getChildrenIterator(String path, Watcher watcher, int batchSize, long minCzxId)
             throws KeeperException, InterruptedException {
         return new ChildrenBatchIterator(this, path, watcher, batchSize, minCzxId);
     }

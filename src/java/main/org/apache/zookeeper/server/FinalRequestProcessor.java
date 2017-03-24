@@ -432,27 +432,17 @@ public class FinalRequestProcessor implements RequestProcessor {
                 if (n == null) {
                     throw new KeeperException.NoNodeException();
                 }
-                Long aclG;
-                synchronized(n) {
-                    aclG = n.acl;
-                }
-                PrepRequestProcessor.checkACL(zks, zks.getZKDatabase().convertLong(aclG),
+                PrepRequestProcessor.checkACL(zks, request.cnxn, zks.getZKDatabase().aclForNode(n),
                         ZooDefs.Perms.READ,
-                        request.authInfo);
+                        request.authInfo, getChildrenPaginatedRequest.getPath(), null);
                 final int maxReturned = getChildrenPaginatedRequest.getMaxReturned();
                 List<PathWithStat> list = zks.getZKDatabase().getPaginatedChildren(
                         getChildrenPaginatedRequest.getPath(), stat,
                         getChildrenPaginatedRequest.getWatch() ? cnxn : null,
                         maxReturned,
-                        getChildrenPaginatedRequest.getMinCzxId());
-                //  If the returned size is maxReturned+1, more children are available
-                boolean watching = false;
-                if (list.size() > maxReturned) {
-                    watching = true;
-                    // Drop the extra children
-                    list = list.subList(0, maxReturned);
-                }
-                rsp = new GetChildrenPaginatedResponse(list, watching, stat);
+                        getChildrenPaginatedRequest.getMinCzxId(),
+                        getChildrenPaginatedRequest.getCzxIdOffset());
+                rsp = new GetChildrenPaginatedResponse(list, stat);
                 break;
             }
             }

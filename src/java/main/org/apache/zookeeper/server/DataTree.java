@@ -691,7 +691,7 @@ public class DataTree {
     }
 
     /**
-     * Comparator used to sort children by creation time
+     * Comparator used to sort children by creation time (older to newer) compare lexicographically to break ties
      */
     private static class NodeCreationComparator implements Comparator<PathWithStat> {
         @Override
@@ -699,12 +699,13 @@ public class DataTree {
             final long leftCzxId = left.getStat().getCzxid();
             final long rightCzxId = right.getStat().getCzxid();
 
-            if (leftCzxId > rightCzxId) {
+            if (leftCzxId < rightCzxId) {
                 return -1;
-            } else if (rightCzxId > leftCzxId) {
+            } else if (leftCzxId > rightCzxId) {
                 return 1;
             } else {
-                return 0;
+                // For nodes with the same creation time (created with multi()), use name to order
+                return left.getPath().compareTo(right.getPath());
             }
         }
     }
@@ -720,12 +721,13 @@ public class DataTree {
      * @param stat stat of the node to list
      * @param watcher an optional watcher to attach to the node. The watcher is added only once when reaching the end of pagination
      * @param maxReturned maximum number of children to return. Return one more than this number to indicate truncation
-     * @param minCzxId only return children whose creation zxid greater than minCzxId
+     * @param minCzxId only return children whose creation zxid equal or greater than minCzxId
+     * @param czxIdOffset how many children with zxid == minCzxId to skip (as returned in previous pages)
      * @return A list of path with stats
      * @throws NoNodeException if the path does not exist
      */
     public List<PathWithStat> getPaginatedChildren(String path, Stat stat, Watcher watcher, int maxReturned,
-                                                   long minCzxId)
+                                                   long minCzxId, long czxIdOffset)
             throws NoNodeException {
         DataNode n = nodes.get(path);
         if (n == null) {
@@ -741,32 +743,47 @@ public class DataTree {
                 childrenQueue = new PriorityQueue<PathWithStat>(1);
             } else {
                 childrenQueue = new PriorityQueue<PathWithStat>(maxReturned + 1, staticNodeCreationComparator);
-                for (String child: actualChildren) {
+                for (String child : actualChildren) {
                     DataNode childNode = nodes.get(path + "/" + child);
                     if (null != childNode) {
                         final long czxId = childNode.stat.getCzxid();
-                        if (czxId <= minCzxId) continue; // Filter out the nodes that are below minCzxId
+
+                        if (czxId < minCzxId) {
+                            // Filter out nodes that are below minCzxId
+                            continue;
+                        }
+
                         Stat childStat = new Stat();
                         childNode.copyStat(childStat);
+
+                        // Cannot discard before having sorted and removed offset
                         childrenQueue.add(new PathWithStat(child, childStat));
-                        // Do we have more than we want (maxReturned + 1), if so discard right away the extra one
-                        if (childrenQueue.size() > maxReturned + 1) {
-                            // Drop the node with highest CzxId in the queue.
-                            childrenQueue.poll();
-                        }
                     }
                 }
             }
-            // This is the last page, set the watch
-            if (childrenQueue.size() <= maxReturned) {
-                if (watcher != null) {
-                    childWatches.addWatch(path, watcher);
+
+            // Go over the ordered list of children and skip the first czxIdOffset that have czxid equal to minCzxId, if any
+            int skipped = 0;
+            while (!childrenQueue.isEmpty() && skipped < czxIdOffset) {
+                PathWithStat head = childrenQueue.peek();
+                if (head.getStat().getCzxid() > minCzxId) {
+                    // We moved past the minCzxId, no point in looking further
+                    break;
+                } else {
+                    childrenQueue.poll();
+                    ++skipped;
                 }
             }
+
             // Return as list preserving newer-to-older order
             LinkedList<PathWithStat> result = new LinkedList<PathWithStat>();
-            while (!childrenQueue.isEmpty()) {
-                result.addFirst(childrenQueue.poll());
+            while (!childrenQueue.isEmpty() && result.size() < maxReturned) {
+                result.addLast(childrenQueue.poll());
+            }
+
+            // This is the last page, set the watch
+            if (childrenQueue.isEmpty()) {
+                childWatches.addWatch(path, watcher);
             }
             return result;
         }

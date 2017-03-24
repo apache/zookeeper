@@ -482,11 +482,12 @@ public class ZKDatabase {
      * @param watcher an optional watcher for this node children
      * @param maxReturned the maximum number of nodes to be returned
      * @param minCzxId only return children whose creation zxid greater than minCzxId
+     * @param czxIdOffset how many children with zxid == minCzxId to skip (as returned in previous pages)
      * @return  A list of PathWithStat for the children. Size is bound to maxReturned (maxReturned+1 indicates truncation)
      * @throws NoNodeException if the given path does not exist
      */
-    public List<PathWithStat> getPaginatedChildren(String path, Stat stat, Watcher watcher, int maxReturned, long minCzxId) throws NoNodeException {
-        return dataTree.getPaginatedChildren(path, stat, watcher, maxReturned, minCzxId);
+    public List<PathWithStat> getPaginatedChildren(String path, Stat stat, Watcher watcher, int maxReturned, long minCzxId, long czxIdOffset) throws NoNodeException {
+        return dataTree.getPaginatedChildren(path, stat, watcher, maxReturned, minCzxId, czxIdOffset);
     }
 
     /**

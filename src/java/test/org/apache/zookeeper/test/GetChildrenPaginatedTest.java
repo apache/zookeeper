@@ -76,24 +76,20 @@ public class GetChildrenPaginatedTest extends ClientBase {
         Map<String, Stat> readChildrenMetadata = new HashMap<String, Stat>();
         final int pageSize = 3;
 
-        while (true) {
-            final List<PathWithStat> page = zk.getChildren(basePath, null, pageSize, minCzxId);
+        RemoteIterator<PathWithStat> it = zk.getChildrenIterator(basePath, null, pageSize, minCzxId);
 
-            if(page.isEmpty()) {
-                break;
-            }
+        while (it.hasNext()) {
+            PathWithStat pathWithStat = it.next();
 
-            for (PathWithStat pathWithStat : page) {
+            final String nodePath = pathWithStat.getPath();
+            final Stat nodeStat = pathWithStat.getStat();
 
-                final String nodePath = pathWithStat.getPath();
-                final Stat nodeStat = pathWithStat.getStat();
+            LOG.info("Read: " + nodePath + " czxid: " + nodeStat.getCzxid());
+            readChildrenMetadata.put(nodePath, nodeStat);
 
-                LOG.info("Read: " + nodePath + " czxid: " + nodeStat.getCzxid());
-                readChildrenMetadata.put(nodePath, nodeStat);
+            Assert.assertTrue(nodeStat.getCzxid() > minCzxId);
+            minCzxId = nodeStat.getCzxid();
 
-                Assert.assertTrue(nodeStat.getCzxid() > minCzxId);
-                minCzxId = nodeStat.getCzxid();
-            }
         }
 
         Assert.assertEquals(createdChildrenMetadata.keySet(), readChildrenMetadata.keySet());
@@ -229,43 +225,38 @@ public class GetChildrenPaginatedTest extends ClientBase {
 
         long minCzxId = -1;
         final int pageSize = 3;
-        int pageCount = 0;
 
         FireOnlyOnceWatcher fireOnlyOnceWatcher = new FireOnlyOnceWatcher();
 
-        while (true) {
+        RemoteIterator<PathWithStat> it = zk.getChildrenIterator(basePath, fireOnlyOnceWatcher, pageSize, minCzxId);
 
-            final List<PathWithStat> page = zk.getChildren(basePath, fireOnlyOnceWatcher, pageSize, minCzxId);
+        int childrenIndex = 0;
 
-            if(page.isEmpty()) {
-                break;
-            }
+        while (it.hasNext()) {
 
-            // Create another children before pagination is completed -- should NOT trigger watch
-            if(pageCount < 3) {
-                String childPath = basePath + "/" + "before-pagination-" + pageCount;
+            ++childrenIndex;
+
+            PathWithStat pathWithStat = it.next();
+
+            final String nodePath = pathWithStat.getPath();
+            LOG.info("Read: " + nodePath);
+
+            final Stat nodeStat = pathWithStat.getStat();
+
+            Assert.assertTrue(nodeStat.getCzxid() > minCzxId);
+            minCzxId = nodeStat.getCzxid();
+
+            // Create more children before pagination is completed -- should NOT trigger watch
+            if(childrenIndex < 6) {
+                String childPath = basePath + "/" + "before-pagination-" + childrenIndex;
                 zk.create(childPath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
 
-
             // Modify the first child of each page.
             // This should not trigger additional watches or create duplicates in the set of children returned
-            if(pageCount == 1) {
-                zk.setData(basePath + "/" + page.get(0).getPath(), new byte[3], -1);
+            if(childrenIndex % pageSize == 0) {
+                zk.setData(basePath + "/" + pathWithStat.getPath(), new byte[3], -1);
             }
-
-            for (PathWithStat pathWithStat : page) {
-
-                final String nodePath = pathWithStat.getPath();
-                LOG.info("Read: " + nodePath);
-
-                final Stat nodeStat = pathWithStat.getStat();
-
-                Assert.assertTrue(nodeStat.getCzxid() > minCzxId);
-                minCzxId = nodeStat.getCzxid();
-            }
-
-            pageCount += 1;
 
             synchronized (fireOnlyOnceWatcher) {
                 Assert.assertEquals("Watch should not have fired yet", 0, fireOnlyOnceWatcher.watchFiredCount);
@@ -332,5 +323,56 @@ public class GetChildrenPaginatedTest extends ClientBase {
             LOG.info("Created: " + childPath + " czxid: " + stat.getCzxid());
         }
         return createdChildrenMetadata;
+    }
+
+    @Test(timeout = 60000)
+    public void testPaginationWithMulti() throws Exception {
+
+        final String testId = UUID.randomUUID().toString();
+        final String basePath = "/testPagination-" + testId;
+
+        final int numChildren = 10;
+        final int batchSize = 3;
+
+        zk.create(basePath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        Transaction transaction = zk.transaction();
+        for (int i = 0; i < numChildren; i++) {
+            String childPath = basePath + "/" + i;
+            transaction.create(childPath, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        }
+
+        List<OpResult> transactionOpResults = transaction.commit();
+
+        Assert.assertEquals(numChildren, transactionOpResults.size());
+
+        Map<String, Stat> createdChildrenMetadata = new HashMap<>();
+
+        for (int i = 0; i < numChildren; i++) {
+            String childPath = basePath + "/" + i;
+            final Stat stat = zk.exists(childPath, null);
+            createdChildrenMetadata.put(String.valueOf(i), stat);
+            LOG.info("Created: " + childPath + " zkId: " + stat.getCzxid());
+        }
+
+        Map<String, Stat> readChildrenMetadata = new HashMap<String, Stat>();
+
+        RemoteIterator<PathWithStat> childrenIterator = zk.getChildrenIterator(basePath, null, batchSize, -1);
+
+        while (childrenIterator.hasNext()) {
+
+            PathWithStat children = childrenIterator.next();
+
+            LOG.info("Read: " + children.getPath() + " zkId: " + children.getStat().getCzxid());
+            readChildrenMetadata.put(children.getPath(), children.getStat());
+        }
+
+        Assert.assertEquals(numChildren, readChildrenMetadata.size());
+
+        Assert.assertEquals(createdChildrenMetadata.keySet(), readChildrenMetadata.keySet());
+
+        for (String child : createdChildrenMetadata.keySet()) {
+            Assert.assertEquals(createdChildrenMetadata.get(child), readChildrenMetadata.get(child));
+        }
     }
 }
