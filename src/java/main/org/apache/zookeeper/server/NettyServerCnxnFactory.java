@@ -25,10 +25,12 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.Collections;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 
 import javax.net.ssl.SSLContext;
@@ -74,8 +76,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     ServerBootstrap bootstrap;
     Channel parentChannel;
     ChannelGroup allChannels = new DefaultChannelGroup("zkServerCnxns");
-    HashMap<InetAddress, Set<NettyServerCnxn>> ipMap =
-        new HashMap<InetAddress, Set<NettyServerCnxn>>( );
+    ConcurrentMap<InetAddress, Set<NettyServerCnxn>> ipMap = new ConcurrentHashMap<>();
     InetSocketAddress localAddress;
     int maxClientCnxns = 60;
 
@@ -109,6 +110,20 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                     zkServer, NettyServerCnxnFactory.this);
             ctx.setAttachment(cnxn);
 
+            InetAddress addr = ((InetSocketAddress)cnxn.channel.getRemoteAddress()).getAddress();
+            Set<NettyServerCnxn> s = ipMap.get(addr);
+            if (s != null) {
+                synchronized (s) {
+                    int cnxncount = s.size();
+                    if (maxClientCnxns > 0 && cnxncount >= maxClientCnxns) {
+                        LOG.warn("Closed new connection from address {} ({} connections established) - max is {}",
+                                addr, cnxncount, maxClientCnxns);
+                        cnxn.close();
+                        ctx.getChannel().close().awaitUninterruptibly();
+                        return;
+                    }
+                }
+            }
             if (secure) {
                 SslHandler sslHandler = ctx.getPipeline().get(SslHandler.class);
                 ChannelFuture handshakeFuture = sslHandler.handshake();
@@ -170,7 +185,6 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                 throw ex;
             }
         }
-
         private void processMessage(MessageEvent e, NettyServerCnxn cnxn) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug(Long.toHexString(cnxn.sessionId) + " queuedBuffer: "
@@ -524,17 +538,14 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
 
     private void addCnxn(NettyServerCnxn cnxn) {
         cnxns.add(cnxn);
-        synchronized (ipMap){
-            InetAddress addr =
-                ((InetSocketAddress)cnxn.channel.getRemoteAddress())
-                    .getAddress();
-            Set<NettyServerCnxn> s = ipMap.get(addr);
-            if (s == null) {
-                s = new HashSet<NettyServerCnxn>();
-            }
-            s.add(cnxn);
-            ipMap.put(addr,s);
+
+        InetAddress addr = ((InetSocketAddress)cnxn.channel.getRemoteAddress()).getAddress();
+        Set<NettyServerCnxn> newSet = Collections.synchronizedSet(new HashSet<NettyServerCnxn>());
+        Set<NettyServerCnxn> s = ipMap.putIfAbsent(addr, newSet);
+        if (s == null) {
+          s = newSet;
         }
+        s.add(cnxn);
     }
 
     @Override

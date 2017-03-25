@@ -25,6 +25,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
@@ -100,11 +101,15 @@ public class NettyServerCnxn extends ServerCnxn {
                         + Long.toHexString(sessionId));
             }
 
-            synchronized (factory.ipMap) {
-                Set<NettyServerCnxn> s =
-                    factory.ipMap.get(((InetSocketAddress)channel
-                            .getRemoteAddress()).getAddress());
-                s.remove(this);
+            InetAddress address = ((InetSocketAddress) channel.getRemoteAddress()).getAddress();
+            Set<NettyServerCnxn> s = factory.ipMap.get(address);
+            if (s != null) {
+                synchronized (s) {
+                    s.remove(this);
+                    if (s.isEmpty()) {
+                        factory.ipMap.remove(address);
+                    }
+                }
             }
         }
 
