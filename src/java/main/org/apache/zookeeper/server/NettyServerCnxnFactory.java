@@ -113,8 +113,8 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             if (cnxn != null) {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Closing " + cnxn);
-                    cnxn.close();
                 }
+                cnxn.close();
             }
         }
 
