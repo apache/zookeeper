@@ -293,8 +293,11 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                                           + " - max is " + maxClientCnxns );
                 }
 
+                InetSocketAddress remoteSocketAddress =
+                    (InetSocketAddress) sc.socket().getRemoteSocketAddress();
+                addRemoteSocketAddress(remoteSocketAddress);
                 LOG.info("Accepted socket connection from "
-                         + sc.socket().getRemoteSocketAddress());
+                         + remoteSocketAddress);
                 sc.configureBlocking(false);
 
                 // Round-robin assign this connection to a selector thread
@@ -608,8 +611,8 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     private final ConcurrentHashMap<Long, NIOServerCnxn> sessionMap =
         new ConcurrentHashMap<Long, NIOServerCnxn>();
     // ipMap is used to limit connections per IP
-    private final ConcurrentHashMap<InetAddress, Set<NIOServerCnxn>> ipMap =
-        new ConcurrentHashMap<InetAddress, Set<NIOServerCnxn>>( );
+    private final ConcurrentHashMap<InetAddress, Set<InetSocketAddress>> ipMap =
+        new ConcurrentHashMap<InetAddress, Set<InetSocketAddress>>( );
 
     protected int maxClientCnxns = 60;
 
@@ -794,9 +797,9 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
 
         InetAddress addr = cnxn.getSocketAddress();
         if (addr != null) {
-            Set<NIOServerCnxn> set = ipMap.get(addr);
+            Set<InetSocketAddress> set = ipMap.get(addr);
             if (set != null) {
-                set.remove(cnxn);
+                set.remove(cnxn.getRemoteSocketAddress());
                 // Note that we make no effort here to remove empty mappings
                 // from ipMap.
             }
@@ -816,28 +819,29 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     }
 
     private void addCnxn(NIOServerCnxn cnxn) {
-        InetAddress addr = cnxn.getSocketAddress();
-        Set<NIOServerCnxn> set = ipMap.get(addr);
+        cnxns.add(cnxn);
+        touchCnxn(cnxn);
+    }
+
+    private void addRemoteSocketAddress(InetSocketAddress remoteSocketAddress) {
+        InetAddress addr = remoteSocketAddress.getAddress();
+        Set<InetSocketAddress> set = ipMap.get(addr);
         if (set == null) {
             // in general we will see 1 connection from each
             // host, setting the initial cap to 2 allows us
             // to minimize mem usage in the common case
-            // of 1 entry --  we need to set the initial cap
+            // of 1 entry -- we need to set the initial cap
             // to 2 to avoid rehash when the first entry is added
             // Construct a ConcurrentHashSet using a ConcurrentHashMap
-            set = Collections.newSetFromMap(
-                new ConcurrentHashMap<NIOServerCnxn, Boolean>(2));
+            set = Collections.newSetFromMap(new ConcurrentHashMap<InetSocketAddress, Boolean>(2));
             // Put the new set in the map, but only if another thread
             // hasn't beaten us to it
-            Set<NIOServerCnxn> existingSet = ipMap.putIfAbsent(addr, set);
+            Set<InetSocketAddress> existingSet = ipMap.putIfAbsent(addr, set);
             if (existingSet != null) {
                 set = existingSet;
             }
         }
-        set.add(cnxn);
-
-        cnxns.add(cnxn);
-        touchCnxn(cnxn);
+        set.add(remoteSocketAddress);
     }
 
     protected NIOServerCnxn createConnection(SocketChannel sock,
@@ -846,7 +850,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     }
 
     private int getClientCnxnCount(InetAddress cl) {
-        Set<NIOServerCnxn> s = ipMap.get(cl);
+        Set<InetSocketAddress> s = ipMap.get(cl);
         if (s == null) return 0;
         return s.size();
     }

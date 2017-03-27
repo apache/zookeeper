@@ -120,15 +120,15 @@ public class MaxCnxnsTest extends ClientBase {
         int numThreads = numCnxns + 5;
         CnxnThread[] threads = new CnxnThread[numThreads];
 
-        for (int i=0;i<numCnxns;++i) {
+    for (int i = 0; i < numThreads; ++i) {
           threads[i] = new CnxnThread(i);
         }
 
-        for (int i=0;i<numCnxns;++i) {
+    for (int i = 0; i < numThreads; ++i) {
             threads[i].start();
         }
 
-        for (int i=0;i<numCnxns;++i) {
+    for (int i = 0; i < numThreads; ++i) {
             threads[i].join();
         }
         Assert.assertSame(numCnxns,numConnected.get());
