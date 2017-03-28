@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.Map.Entry;
 
 import org.apache.zookeeper.common.StringUtils;
@@ -45,6 +46,7 @@ import org.apache.zookeeper.common.AtomicFileWritingIdiom;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.OutputStreamStatement;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
 import org.apache.zookeeper.common.PathUtils;
+import org.apache.zookeeper.common.RateLimiter;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
@@ -56,6 +58,8 @@ import org.apache.zookeeper.server.util.VerifyingFileFactory;
 
 public class QuorumPeerConfig {
     private static final Logger LOG = LoggerFactory.getLogger(QuorumPeerConfig.class);
+    // used to access config from other classes
+    private static final AtomicReference<QuorumPeerConfig> configRef = new AtomicReference<QuorumPeerConfig>(new QuorumPeerConfig());
     private static final int UNSET_SERVERID = -1;
     public static final String nextDynamicConfigFileSuffix = ".dynamic.next";
 
@@ -70,6 +74,8 @@ public class QuorumPeerConfig {
     protected String configFileStr = null;
     protected int tickTime = ZooKeeperServer.DEFAULT_TICK_TIME;
     protected int maxClientCnxns = 60;
+    // class name of the rate limiter implementation to use
+    private String rateLimiterImpl = null;
     /** defaults to -1 if not set explicitly */
     protected int minSessionTimeout = -1;
     /** defaults to -1 if not set explicitly */
@@ -91,6 +97,7 @@ public class QuorumPeerConfig {
     protected boolean syncEnabled = true;
 
     protected LearnerType peerType = LearnerType.PARTICIPANT;
+    protected Properties properties;
 
     /**
      * Minimum snapshot retain count.
@@ -188,6 +195,7 @@ public class QuorumPeerConfig {
                }
            }
         }
+        configRef.set(this);
     }
 
     // This method gets the version from the end of dynamic file name.
@@ -245,6 +253,8 @@ public class QuorumPeerConfig {
                 tickTime = Integer.parseInt(value);
             } else if (key.equals("maxClientCnxns")) {
                 maxClientCnxns = Integer.parseInt(value);
+            } else if (key.equals("rateLimiterImpl")) {
+                setRateLimiterImpl(value.trim());
             } else if (key.equals("minSessionTimeout")) {
                 minSessionTimeout = Integer.parseInt(value);
             } else if (key.equals("maxSessionTimeout")) {
@@ -295,6 +305,7 @@ public class QuorumPeerConfig {
             } else {
                 System.setProperty("zookeeper." + key, value);
             }
+            this.properties = zkProp;
         }
 
         // Reset to MIN_SNAP_RETAIN_COUNT if invalid (less than 3)
@@ -750,4 +761,52 @@ public class QuorumPeerConfig {
         reconfigEnabled = enabled;
     }
 
+    /**
+     * @return the {@code RateLimiter} to use
+     */
+    public String getRateLimiterImpl() {
+        // if it wasn't specified in config, check system property
+        if (rateLimiterImpl == null) {
+            return System.getProperty("zookeeper." + RateLimiter.RATE_LIMITER_IMPL);
+        }
+        return rateLimiterImpl;
+    }
+
+    /**
+     * @param rateLimiterImplClass the {@code RateLimiter} implementation to use
+     */
+    public void setRateLimiterImpl(String rateLimiterImplClass) {
+        this.rateLimiterImpl = rateLimiterImplClass;
+    }
+
+    /**
+     * @return the config properties
+     */
+    public Properties getProperties() {
+        return properties;
+    }
+
+    /**
+     * @param properties The {@code Properties} to use
+     */
+    public void setProperties(Properties properties) {
+        this.properties = properties;
+    }
+
+    /**
+     * If the config file wasn't parsed before this is called, returns a
+     * default (new) QuorumPeerConfig
+     * @return The parsed configuration
+     */
+    public static QuorumPeerConfig getConfig() {
+        QuorumPeerConfig quorumPeerConfig = configRef.get();
+        return quorumPeerConfig;
+    }
+
+    /**
+     * @param config the {@code QuorumPeerConfig} to use
+     */
+    public static void setConfig(QuorumPeerConfig config) {
+        configRef.set(config);
+    }
 }

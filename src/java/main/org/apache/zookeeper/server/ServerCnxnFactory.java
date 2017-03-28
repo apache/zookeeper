@@ -33,6 +33,7 @@ import javax.security.auth.login.LoginException;
 
 import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.Login;
+import org.apache.zookeeper.common.RateLimiter;
 import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.auth.SaslServerCallbackHandler;
@@ -240,6 +241,39 @@ public abstract class ServerCnxnFactory {
         } catch (LoginException e) {
             throw new IOException("Could not configure server because SASL configuration did not allow the "
               + " ZooKeeper server to authenticate itself properly: " + e);
+        }
+    }
+
+    // for each IP, we keep a RateLimiter to limit connection rate,
+    // as well as a set of connections to limit total number of connections
+    protected static class IpCnxns {
+        // in general we will see 1 connection from each
+        // host, setting the initial cap to 2 allows us
+        // to minimize mem usage in the common case
+        // of 1 entry -- we need to set the initial cap
+        // to 2 to avoid rehash when the first entry is added
+        // Construct a ConcurrentHashSet using a ConcurrentHashMap
+        private final Set<NIOServerCnxn> cnxnSet = Collections
+                .newSetFromMap(new ConcurrentHashMap<NIOServerCnxn, Boolean>(2));
+
+        private final RateLimiter rateLimiter;
+
+        protected IpCnxns(RateLimiter rateLimiter) {
+            this.rateLimiter = rateLimiter;
+        }
+
+        /**
+         * @return the {@code RateLimiter}
+         */
+        protected RateLimiter getRateLimiter() {
+            return rateLimiter;
+        }
+
+        /**
+         * @return the set of current connections
+         */
+        protected Set<NIOServerCnxn> getCnxnSet() {
+            return cnxnSet;
         }
     }
 }

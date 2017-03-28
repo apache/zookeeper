@@ -33,8 +33,6 @@ import org.junit.Test;
 public class MaxCnxnsTest extends ClientBase {
     final private static int numCnxns = 30;
     AtomicInteger numConnected = new AtomicInteger(0);
-    String host;
-    int port;
 
     @Override
     public void setUp() throws Exception {
@@ -42,10 +40,16 @@ public class MaxCnxnsTest extends ClientBase {
         super.setUp();
     }
 
-    class CnxnThread extends Thread {
+    static class CnxnThread extends Thread {
+      String host;
+      int port;
+      private AtomicInteger connectionCounter;
 
-        public CnxnThread(int i) {
+        public CnxnThread(int i, String host, int port, AtomicInteger connectionCounter) {
             super("CnxnThread-"+i);
+            this.host = host;
+            this.port = port;
+            this.connectionCounter = connectionCounter;
         }
 
         public void run() {
@@ -89,7 +93,7 @@ public class MaxCnxnsTest extends ClientBase {
                 if (!sChannel.socket().isClosed()){
                     eof = sChannel.socket().getInputStream().read();
                     if (eof != -1) {
-                        numConnected.incrementAndGet();
+                        connectionCounter.incrementAndGet();
                     }
                 }
             }
@@ -115,13 +119,13 @@ public class MaxCnxnsTest extends ClientBase {
     @Test
     public void testMaxCnxns() throws IOException, InterruptedException{
         String split[] = hostPort.split(":");
-        host = split[0];
-        port = Integer.parseInt(split[1]);
+        String host = split[0];
+        int port = Integer.parseInt(split[1]);
         int numThreads = numCnxns + 5;
         CnxnThread[] threads = new CnxnThread[numThreads];
 
         for (int i=0;i<numCnxns;++i) {
-          threads[i] = new CnxnThread(i);
+          threads[i] = new CnxnThread(i, host, port, numConnected);
         }
 
         for (int i=0;i<numCnxns;++i) {

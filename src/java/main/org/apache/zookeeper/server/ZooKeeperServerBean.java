@@ -22,6 +22,7 @@ import java.util.Date;
 
 import org.apache.zookeeper.Version;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 
 /**
  * This class implements the ZooKeeper server MBean interface.
@@ -93,6 +94,16 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
         if (zks.secureServerCnxnFactory != null) {
             zks.secureServerCnxnFactory.setMaxClientCnxnsPerHost(max);
         }
+    }
+
+    @Override
+    public String getRateLimiterImpl() {
+        return QuorumPeerConfig.getConfig().getRateLimiterImpl();
+    }
+
+    @Override
+    public void setRateLimiterImpl(String rateLimiterImplClass) {
+        QuorumPeerConfig.getConfig().setRateLimiterImpl(rateLimiterImplClass);
     }
 
     public int getMinSessionTimeout() {

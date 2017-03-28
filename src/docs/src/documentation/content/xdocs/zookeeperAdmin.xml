@@ -845,6 +845,44 @@ server.3=zoo3:2888:3888</programlisting>
            </varlistentry>
 
            <varlistentry>
+            <term>rateLimiterImpl</term>
+            <listitem>
+            <para>(Java system property: <emphasis
+              role="bold">zookeeper.rateLimiterImpl</emphasis>)</para>
+
+              <para>Specifies an implementation of
+              org.apache.zookeeper.common.RateLimiter to use to limit the rate
+              at which a single client, identified by IP address, can make
+              connections to a single member of the ZooKeeper ensemble.
+              e.g. org.apache.zookeeper.common.TokenBucket (see below for options)</para>
+            </listitem>
+           </varlistentry>
+
+           <varlistentry>
+            <term>tokenBucket.maxClientCnxnRate</term>
+            <listitem>
+               <para>(Java system property: <emphasis
+              role="bold">tokenBucket.maxClientCnxnRate</emphasis>)</para>
+
+              <para>Specifies the maximum average rate, in connections per second,
+              at which a single client, identified by IP address, can make
+              connections to a single member of the ZooKeeper ensemble.</para>
+            </listitem>
+           </varlistentry>
+
+           <varlistentry>
+            <term>tokenBucket.maxClientCnxnBurst</term>
+            <listitem>
+               <para>(Java system property: <emphasis
+              role="bold">tokenBucket.maxClientCnxnBurst</emphasis>)</para>
+
+              <para>Specifies the maximum burst rate for connections - i.e. the
+              maximum number of connections in 1 second that can be made from
+              a single client to a single member of the ZooKeeper ensemble.</para>
+            </listitem>
+           </varlistentry>
+
+           <varlistentry>
              <term>clientPortAddress</term>
 
              <listitem>

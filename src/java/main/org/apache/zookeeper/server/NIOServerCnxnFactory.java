@@ -37,8 +37,11 @@ import java.util.Queue;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.apache.zookeeper.common.RateLimiter;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -286,11 +289,19 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 sc = acceptSocket.accept();
                 accepted = true;
                 InetAddress ia = sc.socket().getInetAddress();
-                int cnxncount = getClientCnxnCount(ia);
-
-                if (maxClientCnxns > 0 && cnxncount >= maxClientCnxns){
-                    throw new IOException("Too many connections from " + ia
-                                          + " - max is " + maxClientCnxns );
+                IpCnxns ipCnxns = ipMap.get(ia);
+                if (ipCnxns != null) {
+                    int cnxncount = ipCnxns.getCnxnSet().size();
+                    if (maxClientCnxns > 0 && cnxncount >= maxClientCnxns) {
+                        throw new IOException(
+                                "Too many connections from " + ia + " - max is " + maxClientCnxns);
+                    }
+                    RateLimiter rateLimiter = ipCnxns.getRateLimiter();
+                    if (!rateLimiter.tryAquire()) {
+                        throw new IOException(String.format(
+                                "Max connection rate exceeded from %s - rateLimiter=%s", ia,
+                                rateLimiter));
+                    }
                 }
 
                 LOG.info("Accepted socket connection from "
@@ -607,9 +618,9 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     // sessionMap is used by closeSession()
     private final ConcurrentHashMap<Long, NIOServerCnxn> sessionMap =
         new ConcurrentHashMap<Long, NIOServerCnxn>();
-    // ipMap is used to limit connections per IP
-    private final ConcurrentHashMap<InetAddress, Set<NIOServerCnxn>> ipMap =
-        new ConcurrentHashMap<InetAddress, Set<NIOServerCnxn>>( );
+    // ipMap is used to limit connections and connection rate per IP
+    private final ConcurrentMap<InetAddress, IpCnxns> ipMap
+        = new ConcurrentHashMap<InetAddress, IpCnxns>();
 
     protected int maxClientCnxns = 60;
 
@@ -639,7 +650,8 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         new HashSet<SelectorThread>();
 
     @Override
-    public void configure(InetSocketAddress addr, int maxcc, boolean secure) throws IOException {
+    public void configure(InetSocketAddress addr, int maxcc, boolean secure)
+            throws IOException {
         if (secure) {
             throw new UnsupportedOperationException("SSL isn't supported in NIOServerCnxn");
         }
@@ -794,8 +806,9 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
 
         InetAddress addr = cnxn.getSocketAddress();
         if (addr != null) {
-            Set<NIOServerCnxn> set = ipMap.get(addr);
-            if (set != null) {
+            IpCnxns ipCnxns = ipMap.get(addr);
+            if (ipCnxns != null) {
+                Set<NIOServerCnxn> set = ipCnxns.getCnxnSet();
                 set.remove(cnxn);
                 // Note that we make no effort here to remove empty mappings
                 // from ipMap.
@@ -817,24 +830,22 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
 
     private void addCnxn(NIOServerCnxn cnxn) {
         InetAddress addr = cnxn.getSocketAddress();
-        Set<NIOServerCnxn> set = ipMap.get(addr);
-        if (set == null) {
-            // in general we will see 1 connection from each
-            // host, setting the initial cap to 2 allows us
-            // to minimize mem usage in the common case
-            // of 1 entry --  we need to set the initial cap
-            // to 2 to avoid rehash when the first entry is added
-            // Construct a ConcurrentHashSet using a ConcurrentHashMap
-            set = Collections.newSetFromMap(
-                new ConcurrentHashMap<NIOServerCnxn, Boolean>(2));
-            // Put the new set in the map, but only if another thread
+        IpCnxns ipCnxns = ipMap.get(addr);
+
+        if (ipCnxns == null) {
+            // create an IpCnxns which is a wrapper that holds a RateLimiter and
+            // a set of connections for each ip
+            RateLimiter rateLimiter = RateLimiter.Factory.create(
+                    QuorumPeerConfig.getConfig().getRateLimiterImpl());
+            ipCnxns = new IpCnxns(rateLimiter);
+            // Put the ip limiter/set in the map, but only if another thread
             // hasn't beaten us to it
-            Set<NIOServerCnxn> existingSet = ipMap.putIfAbsent(addr, set);
-            if (existingSet != null) {
-                set = existingSet;
+            IpCnxns existingIpCnxns = ipMap.putIfAbsent(addr, ipCnxns);
+            if (existingIpCnxns != null) {
+                ipCnxns = existingIpCnxns;
             }
         }
-        set.add(cnxn);
+        ipCnxns.getCnxnSet().add(cnxn);
 
         cnxns.add(cnxn);
         touchCnxn(cnxn);
@@ -843,12 +854,6 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     protected NIOServerCnxn createConnection(SocketChannel sock,
             SelectionKey sk, SelectorThread selectorThread) throws IOException {
         return new NIOServerCnxn(zkServer, sock, sk, this, selectorThread);
-    }
-
-    private int getClientCnxnCount(InetAddress cl) {
-        Set<NIOServerCnxn> s = ipMap.get(cl);
-        if (s == null) return 0;
-        return s.size();
     }
 
     /**

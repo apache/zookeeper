@@ -481,6 +481,10 @@ public abstract class ClientBase extends ZKTestCase {
         LOG.info("STARTING server");
         serverFactory = createNewServerInstance(serverFactory, hostPort,
                 maxCnxns);
+        startServer(serverFactory);
+    }
+
+    protected void startServer(ServerCnxnFactory serverFactory) throws Exception{
         startServerInstance(tmpDir, serverFactory, hostPort);
         // ensure that server and data bean are registered
         Set<ObjectName> children = JMXEnv.ensureParent("InMemoryDataTree",

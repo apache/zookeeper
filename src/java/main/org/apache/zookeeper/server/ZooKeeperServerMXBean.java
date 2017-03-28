@@ -73,6 +73,12 @@ public interface ZooKeeperServerMXBean {
     /** Set maxClientCnxns allowed from a particular host */
     public void setMaxClientCnxnsPerHost(int max);
 
+    /** {@code RateLimiter} implementation to use */
+    public String getRateLimiterImpl();
+
+    /** Set {@code RateLimiter} implementation to use */
+    public void setRateLimiterImpl(String rateLimiter);
+
     /**
      * Current minSessionTimeout of the server in milliseconds
      */
