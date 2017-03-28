@@ -188,6 +188,191 @@ document.write("Last Published: " + document.lastModified);
         PDF</a>
 </div>
 
+        Release Notes - ZooKeeper - Version 3.5.3
+    
+<h2>        Sub-task
+</h2>
+<ul>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2080'>ZOOKEEPER-2080</a>] -         Fix deadlock in dynamic reconfiguration
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2152'>ZOOKEEPER-2152</a>] -         Intermittent failure in TestReconfig.cc
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2692'>ZOOKEEPER-2692</a>] -         Fix race condition in testWatchAutoResetWithPending
+</li>
+</ul>
+                            
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-1256'>ZOOKEEPER-1256</a>] -         ClientPortBindTest is failing on Mac OS X
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-1806'>ZOOKEEPER-1806</a>] -         testCurrentServersAreObserversInNextConfig failing frequently on trunk with non-jdk6
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-1898'>ZOOKEEPER-1898</a>] -         ZooKeeper Java cli shell always returns &quot;0&quot; as exit code
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-1927'>ZOOKEEPER-1927</a>] -         zkServer.sh fails to read dataDir (and others) from zoo.cfg on Solaris 10 (grep issue, manifests as FAILED TO WRITE PID).  
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2014'>ZOOKEEPER-2014</a>] -         Only admin should be allowed to reconfig a cluster
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2074'>ZOOKEEPER-2074</a>] -         Incorrect exit codes for &quot;./zkCli.sh cmd arg&quot;
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2172'>ZOOKEEPER-2172</a>] -         Cluster crashes when reconfig a new node as a participant
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2247'>ZOOKEEPER-2247</a>] -         Zookeeper service becomes unavailable when leader fails to write transaction log
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2383'>ZOOKEEPER-2383</a>] -         Startup race in ZooKeeperServer
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2442'>ZOOKEEPER-2442</a>] -         Socket leak in QuorumCnxManager connectOne
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2460'>ZOOKEEPER-2460</a>] -         Remove javacc dependency from public Maven pom
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2463'>ZOOKEEPER-2463</a>] -         TestMulti is broken in the C client
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2464'>ZOOKEEPER-2464</a>] -         NullPointerException on ContainerManager
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2465'>ZOOKEEPER-2465</a>] -         Documentation copyright notice is out of date.
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2467'>ZOOKEEPER-2467</a>] -         NullPointerException when redo Command is passed negative value
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2470'>ZOOKEEPER-2470</a>] -         ServerConfig#parse(String[])  ignores tickTime
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2477'>ZOOKEEPER-2477</a>] -         documentation should refer to Java cli shell and not C cli shell
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2498'>ZOOKEEPER-2498</a>] -         Potential resource leak in C client when processing unexpected / out of order response
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2500'>ZOOKEEPER-2500</a>] -         Fix compilation warnings for CliException classes
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2517'>ZOOKEEPER-2517</a>] -         jute.maxbuffer is ignored
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2536'>ZOOKEEPER-2536</a>] -         When provide path for &quot;dataDir&quot; with trailing space, it is taking correct path (by trucating space) for snapshot but creating temporary file with some junk folder name for zookeeper_server.pid
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2537'>ZOOKEEPER-2537</a>] -         When provide path for &quot;dataDir&quot; with heading space, it is taking correct path (by trucating space) for snapshot but zookeeper_server.pid is getting created in root (/) folder
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2539'>ZOOKEEPER-2539</a>] -         Throwing nullpointerException when run the command &quot;config -c&quot; when client port is mentioned as separate and not like new style
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2548'>ZOOKEEPER-2548</a>] -         zooInspector does not start on Windows
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2558'>ZOOKEEPER-2558</a>] -         Potential memory leak in recordio.c
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2573'>ZOOKEEPER-2573</a>] -         Modify Info.REVISION to adapt git repo
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2574'>ZOOKEEPER-2574</a>] -         PurgeTxnLog can inadvertently delete required txn log files
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2579'>ZOOKEEPER-2579</a>] -         ZooKeeper server should verify that dataDir and snapDir are writeable before starting
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2606'>ZOOKEEPER-2606</a>] -         SaslServerCallbackHandler#handleAuthorizeCallback() should log the exception
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2611'>ZOOKEEPER-2611</a>] -         zoo_remove_watchers - can remove the wrong watch 
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2617'>ZOOKEEPER-2617</a>] -         correct a few spelling typos
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2622'>ZOOKEEPER-2622</a>] -         ZooTrace.logQuorumPacket does nothing
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2627'>ZOOKEEPER-2627</a>] -         Remove ZRWSERVERFOUND from C client and replace handle_error with something more semantically explicit for r/w server reconnect.
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2628'>ZOOKEEPER-2628</a>] -         Investigate and fix findbug warnings
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2633'>ZOOKEEPER-2633</a>] -         Build failure in contrib/zkfuse with gcc 6.x
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2635'>ZOOKEEPER-2635</a>] -         Regenerate documentation
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2636'>ZOOKEEPER-2636</a>] -         Fix C build break.
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2642'>ZOOKEEPER-2642</a>] -         ZooKeeper reconfig API backward compatibility fix
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2647'>ZOOKEEPER-2647</a>] -         Fix TestReconfigServer.cc
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2651'>ZOOKEEPER-2651</a>] -         Missing src/pom.template in release
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2678'>ZOOKEEPER-2678</a>] -         Large databases take a long time to regain a quorum
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2680'>ZOOKEEPER-2680</a>] -         Correct DataNode.getChildren() inconsistent behaviour.
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2683'>ZOOKEEPER-2683</a>] -         RaceConditionTest is flaky
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2687'>ZOOKEEPER-2687</a>] -         Deadlock while shutting down the Leader server.
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2693'>ZOOKEEPER-2693</a>] -         DOS attack on wchp/wchc four letter words (4lw)
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2726'>ZOOKEEPER-2726</a>] -         Patch for ZOOKEEPER-2693 introduces potential race condition
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2737'>ZOOKEEPER-2737</a>] -         NettyServerCnxFactory leaks connection if exception happens while writing to a channel.
+</li>
+</ul>
+                    
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2479'>ZOOKEEPER-2479</a>] -         Add &#39;electionTimeTaken&#39; value in LeaderMXBean and FollowerMXBean
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2489'>ZOOKEEPER-2489</a>] -         Upgrade Jetty dependency to a recent stable release version.
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2505'>ZOOKEEPER-2505</a>] -         Use shared library instead of static library in C client unit test
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2507'>ZOOKEEPER-2507</a>] -         C unit test improvement: line break between &#39;ZooKeeper server started&#39; and &#39;Running&#39;
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2511'>ZOOKEEPER-2511</a>] -         Implement AutoCloseable in ZooKeeper.java
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2557'>ZOOKEEPER-2557</a>] -         Update gitignore to account for other file extensions
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2594'>ZOOKEEPER-2594</a>] -         Use TLS for downloading artifacts during build
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2620'>ZOOKEEPER-2620</a>] -         Add comments to testReadOnlySnapshotDir and testReadOnlyTxnLogDir indicating that the tests will fail when run as root
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2655'>ZOOKEEPER-2655</a>] -         Improve NIOServerCnxn#isZKServerRunning to reflect the semantics correctly
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2672'>ZOOKEEPER-2672</a>] -         Remove CHANGE.txt
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2682'>ZOOKEEPER-2682</a>] -         Make it optional to fail build on test failure
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2724'>ZOOKEEPER-2724</a>] -         Skip cert files for releaseaudit target.
+</li>
+</ul>
+                
+<h2>        New Feature
+</h2>
+<ul>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-1962'>ZOOKEEPER-1962</a>] -         Add a CLI command to recursively list a znode and children
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2719'>ZOOKEEPER-2719</a>] -         Port ZOOKEEPER-2169 to 3.5 branch
+</li>
+</ul>
+                                                        
+<h2>        Task
+</h2>
+<ul>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2658'>ZOOKEEPER-2658</a>] -         Trunk / branch-3.5 build broken.
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2709'>ZOOKEEPER-2709</a>] -         Clarify documentation around &quot;auth&quot; ACL scheme
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2734'>ZOOKEEPER-2734</a>] -         3.5.3 should be a beta release instead of alpha release.
+</li>
+</ul>
+            
+<h2>        Test
+</h2>
+<ul>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2482'>ZOOKEEPER-2482</a>] -         Flaky Test: org.apache.zookeeper.test.ClientPortBindTest.testBindByAddress
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2483'>ZOOKEEPER-2483</a>] -         Flaky Test: org.apache.zookeeper.test.LETest.testLE
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2484'>ZOOKEEPER-2484</a>] -         Flaky Test: org.apache.zookeeper.test.LoadFromLogTest.testLoadFailure
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2508'>ZOOKEEPER-2508</a>] -         Many ZooKeeper tests are flaky because they proceed with zk operation without connecting to ZooKeeper server.
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2656'>ZOOKEEPER-2656</a>] -         Fix ServerConfigTest#testValidArguments test case failures
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2664'>ZOOKEEPER-2664</a>] -         ClientPortBindTest#testBindByAddress may fail due to &quot;No such device&quot; exception
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2665'>ZOOKEEPER-2665</a>] -         Port QA github pull request build to branch 3.4 and 3.5
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2716'>ZOOKEEPER-2716</a>] -         Flaky Test: org.apache.zookeeper.server.SessionTrackerTest.testAddSessionAfterSessionExpiry
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2718'>ZOOKEEPER-2718</a>] -         org.apache.zookeeper.server.quorum.StandaloneDisabledTest fails intermittently
+</li>
+</ul>
+        
+
         Release Notes - ZooKeeper - Version 3.5.2
     
 <h2>        Sub-task
