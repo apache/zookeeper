@@ -93,7 +93,7 @@ namespace org.apache.zookeeper
 			{
 				throw new IOException("Socket is null!");
 			}
-			if (Readable)
+			if (Readable || isConnectDone() && localSock.Connected == false)
 			{
 			    try
 			    {
