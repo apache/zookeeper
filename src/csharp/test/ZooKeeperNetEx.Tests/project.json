@@ -6,9 +6,9 @@
     "debugType": "portable"
   },
   "dependencies": {
-    "ZooKeeperNetEx": "3.4.9.2",
-    "Newtonsoft.Json": "*",
-    "xunit": "2.2.0-beta4-build3444",
+    "ZooKeeperNetEx": "3.4.9.3",
+    "Newtonsoft.Json": "10.0.1",
+    "xunit": "2.2.0",
     "dotnet-test-xunit": "2.2.0-preview2-build1029",
     "Microsoft.DotNet.InternalAbstractions": "1.0.500-preview2-1-003177"
   },
@@ -16,19 +16,15 @@
     "netcoreapp1.1": {
       "dependencies": {
         "Microsoft.NETCore.App": {
-          "version": "1.1.0",
+          "version": "1.1.1",
           "type": "platform"
         }
-      },
-      "imports": [
-        "dotnet5.4",
-        "portable-net451+win8"
-      ]
+      }
     },
     "net451": {
       "frameworkAssemblies": {
-        "System.Runtime": "",
-        "System.Threading.Tasks": ""
+        "System.Runtime": "4.0.10.0",
+        "System.Threading.Tasks": "4.0.0.0"
       }
     }
   },
