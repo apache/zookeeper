@@ -207,7 +207,7 @@ namespace org.apache.zookeeper
             writeEnabled.Value = false;
 			if (socket != null)
 			{
-                await TaskEx.Delay(100).ConfigureAwait(false);
+                await Task.Delay(100).ConfigureAwait(false);
                 try
 				{
                     if(socket.Connected)
@@ -348,7 +348,7 @@ namespace org.apache.zookeeper
 
         internal override async Task doTransport(int waitTimeOut) 
         {
-            await TaskEx.WhenAny(somethingIsPending.Task, TaskEx.Delay(waitTimeOut < 0 ? 0 : waitTimeOut)).ConfigureAwait(false);
+            await Task.WhenAny(somethingIsPending.Task, Task.Delay(waitTimeOut < 0 ? 0 : waitTimeOut)).ConfigureAwait(false);
             somethingIsPending.Reset();
 
             // Everything below and until we get back to the select is

@@ -18,70 +18,19 @@
  * 
  */
 
-
-#if NET40
-using System.Collections.Generic;
-#endif
-
+ 
 namespace System.Threading.Tasks
 {
     //http://blogs.msdn.com/b/pfxteam/archive/2012/02/12/10266988.aspx
     //http://www.hanselman.com/blog/ComparingTwoTechniquesInNETAsynchronousCoordinationPrimitives.aspx
     internal sealed class AsyncLock
     {
-#if NET40
-        private class AsyncSemaphore
-        {
-            private readonly static Task s_completed = TaskEx.FromResult(true);
-            private readonly Queue<TaskCompletionSource<bool>> m_waiters = new Queue<TaskCompletionSource<bool>>();
-            private int m_currentCount; 
-
-            public AsyncSemaphore(int initialCount)
-            {
-                if (initialCount < 0) throw new ArgumentOutOfRangeException("initialCount");
-                m_currentCount = initialCount;
-            }
-
-            public Task WaitAsync()
-            {
-                lock (m_waiters)
-                {
-                    if (m_currentCount > 0)
-                    {
-                        --m_currentCount;
-                        return s_completed;
-                    }
-                    else
-                    {
-                        var waiter = new TaskCompletionSource<bool>();
-                        m_waiters.Enqueue(waiter);
-                        return waiter.Task;
-                    }
-                }
-            }
-            public void Release()
-            {
-                TaskCompletionSource<bool> toRelease = null;
-                lock (m_waiters)
-                {
-                    if (m_waiters.Count > 0)
-                        toRelease = m_waiters.Dequeue();
-                    else
-                        ++m_currentCount;
-                }
-                if (toRelease != null)
-                    toRelease.SetResult(true);
-            }
-        }
-        private readonly AsyncSemaphore m_semaphore = new AsyncSemaphore(1); 
-#else
         private readonly SemaphoreSlim m_semaphore = new SemaphoreSlim(1, 1);
-#endif
         private readonly Task<IDisposable> m_releaser;
 
         public AsyncLock()
         {
-            m_releaser = TaskEx.FromResult((IDisposable)new Releaser(this));
+            m_releaser = Task.FromResult((IDisposable)new Releaser(this));
         }
 
         public Task<IDisposable> LockAsync()
@@ -89,12 +38,8 @@ namespace System.Threading.Tasks
             var wait = m_semaphore.WaitAsync();
             return wait.IsCompleted ?
                         m_releaser : wait.ContinueWith(
-#if NET40
-                        (_) => m_releaser.Result
-#else
                         (_, state) => (IDisposable)state,
                                m_releaser.Result
-#endif
                         ,CancellationToken.None, 
                         TaskContinuationOptions.ExecuteSynchronously, 
                         TaskScheduler.Default);

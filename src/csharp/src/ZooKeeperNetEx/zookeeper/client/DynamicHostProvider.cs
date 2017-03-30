@@ -112,7 +112,7 @@ namespace org.apache.zookeeper.client
 	                {
 	                    m_ResolvingTask = ResolveAndShuffle(m_UnresolvedEndPoints);
 	                }
-                    await TaskEx.Delay(spinDelay).ConfigureAwait(false);
+                    await Task.Delay(spinDelay).ConfigureAwait(false);
 	            }
 	            else if (LastIP == null)
 	            {
@@ -137,7 +137,7 @@ namespace org.apache.zookeeper.client
 	        else
 	        {
 	            m_Log.debug("Since we couldn't resolve any IPs yet, we sleep for a second before retying");
-	            await TaskEx.Delay(spinDelay).ConfigureAwait(false);
+	            await Task.Delay(spinDelay).ConfigureAwait(false);
 	        }
 	        m_Log.debug($"Trying to resolve at least one IP from hosts:{{{unresolvedForLog}}}");
             var resolved = await ResolveAndShuffle(unresolvedEndPoints).ConfigureAwait(false);

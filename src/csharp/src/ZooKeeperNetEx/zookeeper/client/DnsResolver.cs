@@ -29,12 +29,7 @@ namespace org.apache.zookeeper.client
         /// </summary>
         private Task<IPAddress[]> GetHostAddressesAsync(string host)
         {
-#if NET40
-            return Task.Factory.StartNew(() => Dns.GetHostAddresses(host), System.Threading.CancellationToken.None,
-                TaskCreationOptions.PreferFairness, TaskScheduler.Default);
-#else
             return Dns.GetHostAddressesAsync(host);
-#endif
         }
 
         private static void IgnoreTask(Task task)
@@ -57,9 +52,9 @@ namespace org.apache.zookeeper.client
         {
             string host = hostAndPort.Host;
             log.debug($"Resolving Host={host}");
-            var dnsTimeoutTask = TaskEx.Delay(DNS_TIMEOUT);
+            var dnsTimeoutTask = Task.Delay(DNS_TIMEOUT);
             var dnsResolvingTask = GetHostAddressesAsync(host);
-            await TaskEx.WhenAny(dnsResolvingTask, dnsTimeoutTask).ConfigureAwait(false);
+            await Task.WhenAny(dnsResolvingTask, dnsTimeoutTask).ConfigureAwait(false);
             if (dnsTimeoutTask.IsCompleted)
             {
                 
@@ -100,7 +95,7 @@ namespace org.apache.zookeeper.client
                     resolvingTasks.Add(Resolve(hostAndPort));
                 }
             }
-            var resolvedTasks = (await TaskEx.WhenAll(resolvingTasks).ConfigureAwait(false)).SelectMany(i => i);
+            var resolvedTasks = (await Task.WhenAll(resolvingTasks).ConfigureAwait(false)).SelectMany(i => i);
             resolved.AddRange(resolvedTasks);
             var res = resolved.Distinct();
             log.debug($"Resolved Hosts={{{unresolvedForLog}}} to {{{res.ToCommaDelimited()}}}");

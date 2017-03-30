@@ -669,7 +669,7 @@ namespace org.apache.zookeeper {
                     try {
                         if (!clientCnxnSocket.isConnected()) {
                             if (!isFirstConnect) {
-                                await TaskEx.Delay(r.Next(1000)).ConfigureAwait(false);
+                                await Task.Delay(r.Next(1000)).ConfigureAwait(false);
                             }
                             else
                             {
@@ -967,8 +967,8 @@ namespace org.apache.zookeeper {
                     disconnect();
                 }
 #if DEBUG
-                var closeDelay = TaskEx.Delay(1000);
-                await TaskEx.WhenAny(TaskEx.WhenAll(sendTask, eventTask), closeDelay).ConfigureAwait(false);
+                var closeDelay = Task.Delay(1000);
+                await Task.WhenAny(Task.WhenAll(sendTask, eventTask), closeDelay).ConfigureAwait(false);
                 if (closeDelay.IsCompleted)
                 {
                     throw new TimeoutException("waited more the a second for disconnection");

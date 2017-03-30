@@ -51,11 +51,7 @@ namespace org.apache.utils
         }
         private static void MemoryBarrier()
         {
-#if NET40
-          Thread.MemoryBarrier();
-#else
             Interlocked.MemoryBarrier();
-#endif
         }
     }
 
