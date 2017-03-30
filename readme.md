@@ -9,7 +9,7 @@ Apache ZooKeeper .NET async Client
   * Client [ZooKeeperNetEx](https://www.nuget.org/packages/ZooKeeperNetEx)
   * Recipes [ZooKeeperNetEx.Recipes](https://www.nuget.org/packages/ZooKeeperNetEx.Recipes)
 
--
+
 #### Build From Source
 ##### Prerequisites
 1. [Apache Ant and Java](http://ant.apache.org/manual/install.html).
