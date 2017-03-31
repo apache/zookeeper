@@ -18,31 +18,10 @@
 
 package org.apache.zookeeper.server;
 
-import static org.jboss.netty.buffer.ChannelBuffers.dynamicBuffer;
-
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Executors;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.X509KeyManager;
-import javax.net.ssl.X509TrustManager;
-
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.common.ZKConfig;
+import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
-import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.auth.X509AuthenticationProvider;
 import org.jboss.netty.bootstrap.ServerBootstrap;
@@ -68,6 +47,25 @@ import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.X509KeyManager;
+import javax.net.ssl.X509TrustManager;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Executors;
+
+import static org.jboss.netty.buffer.ChannelBuffers.dynamicBuffer;
+
 public class NettyServerCnxnFactory extends ServerCnxnFactory {
     private static final Logger LOG = LoggerFactory.getLogger(NettyServerCnxnFactory.class);
 
@@ -78,6 +76,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         new HashMap<InetAddress, Set<NettyServerCnxn>>( );
     InetSocketAddress localAddress;
     int maxClientCnxns = 60;
+    ClientX509Util x509Util;
 
     /**
      * This is an inner class since we need to extend SimpleChannelHandler, but
@@ -292,7 +291,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                     cnxn.setClientCertificateChain(session.getPeerCertificates());
 
                     String authProviderProp
-                            = System.getProperty(X509Util.CLIENT_X509UTIL.getSslAuthProviderProperty(), "x509");
+                            = System.getProperty(x509Util.getSslAuthProviderProperty(), "x509");
 
                     X509AuthenticationProvider authProvider =
                             (X509AuthenticationProvider)
@@ -348,20 +347,20 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                 return p;
             }
         });
+        x509Util = new ClientX509Util();
     }
 
     private synchronized void initSSL(ChannelPipeline p)
             throws X509Exception, KeyManagementException, NoSuchAlgorithmException {
-        String authProviderProp = System.getProperty(X509Util.CLIENT_X509UTIL.getSslAuthProviderProperty());
+        String authProviderProp = System.getProperty(x509Util.getSslAuthProviderProperty());
         SSLContext sslContext;
         if (authProviderProp == null) {
-            sslContext = X509Util.CLIENT_X509UTIL.getDefaultSSLContext();
+            sslContext = x509Util.getDefaultSSLContext();
         } else {
             sslContext = SSLContext.getInstance("TLSv1");
             X509AuthenticationProvider authProvider =
                     (X509AuthenticationProvider)ProviderRegistry.getProvider(
-                            System.getProperty(X509Util.CLIENT_X509UTIL.getSslAuthProviderProperty(),
-                                    "x509"));
+                            System.getProperty(x509Util.getSslAuthProviderProperty(), "x509"));
 
             if (authProvider == null)
             {

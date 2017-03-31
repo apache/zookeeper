@@ -26,8 +26,11 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Properties;
 
+import org.apache.zookeeper.common.X509Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.WatchedEvent;
@@ -63,6 +66,10 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
     }
     
     public static class MainThread implements Runnable {
+        public File getConfFile() {
+            return confFile;
+        }
+
         final File confFile;
         final File tmpDir;
 

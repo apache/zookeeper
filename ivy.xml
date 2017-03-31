@@ -68,6 +68,9 @@
     <dependency org="commons-collections" name="commons-collections" 
                 rev="3.2.2" conf="test->default"/>
 
+    <dependency org="org.bouncycastle" name="bcprov-jdk15on" rev="1.56" conf="test->default"/>
+    <dependency org="org.bouncycastle" name="bcpkix-jdk15on" rev="1.56" conf="test->default"/>
+
     <dependency org="jdiff" name="jdiff" rev="1.0.9"
                 conf="jdiff->default"/>
     <dependency org="xerces" name="xerces" rev="1.4.4"

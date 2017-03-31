@@ -103,11 +103,12 @@ public class ZKConfig {
         properties.put(KINIT_COMMAND, System.getProperty(KINIT_COMMAND));
         properties.put(JGSS_NATIVE, System.getProperty(JGSS_NATIVE));
 
-        putSSLProperties(X509Util.CLIENT_X509UTIL);
-        properties.put(X509Util.CLIENT_X509UTIL.getSslAuthProviderProperty(),
-                System.getProperty(X509Util.CLIENT_X509UTIL.getSslAuthProviderProperty()));
+        ClientX509Util clientX509Util = new ClientX509Util();
+        putSSLProperties(clientX509Util);
+        properties.put(clientX509Util.getSslAuthProviderProperty(),
+                System.getProperty(clientX509Util.getSslAuthProviderProperty()));
 
-        putSSLProperties(X509Util.QUORUM_X509UTIL);
+        putSSLProperties(new QuorumX509Util());
     }
     
     private void putSSLProperties(X509Util x509Util) {

@@ -1272,14 +1272,14 @@ public class Zab1_0Test extends ZKTestCase {
             super(self, zk);
         }
 
-        InetSocketAddress leaderAddr;
+        QuorumServer leader;
         public void setLeaderSocketAddress(InetSocketAddress addr) {
-            leaderAddr = addr;
+            leader.addr = addr;
         }
         
         @Override
-        protected InetSocketAddress findLeader() {
-            return leaderAddr;
+        protected QuorumServer findLeader() {
+            return leader;
         }
     }
     private ConversableFollower createFollower(File tmpDir, QuorumPeer peer)
@@ -1298,14 +1298,14 @@ public class Zab1_0Test extends ZKTestCase {
             super(self, zk);
         }
 
-        InetSocketAddress leaderAddr;
+        QuorumServer leader;
         public void setLeaderSocketAddress(InetSocketAddress addr) {
-            leaderAddr = addr;
+            leader.addr = addr;
         }
 
         @Override
-        protected InetSocketAddress findLeader() {
-            return leaderAddr;
+        protected QuorumServer findLeader() {
+            return leader;
         }
     }
 

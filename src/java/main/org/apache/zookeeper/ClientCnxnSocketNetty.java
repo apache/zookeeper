@@ -21,6 +21,7 @@ package org.apache.zookeeper;
 import org.apache.zookeeper.ClientCnxn.EndOfStreamException;
 import org.apache.zookeeper.ClientCnxn.Packet;
 import org.apache.zookeeper.client.ZKClientConfig;
+import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.common.X509Util;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -362,7 +363,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         // Basically we only need to create it once.
         private synchronized void initSSL(ChannelPipeline pipeline) throws SSLContextException {
             if (sslContext == null || sslEngine == null) {
-                sslContext = X509Util.CLIENT_X509UTIL.createSSLContext(clientConfig);
+                sslContext = new ClientX509Util().createSSLContext(clientConfig);
                 sslEngine = sslContext.createSSLEngine();
                 sslEngine.setUseClientMode(true);
             }

@@ -37,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.zookeeper.common.QuorumX509Util;
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.server.ZooKeeperThread;
@@ -143,6 +144,8 @@ public class QuorumCnxManager {
      */
     private AtomicInteger threadCnt = new AtomicInteger(0);
 
+    private X509Util x509Util;
+
     static public class Message {
         Message(ByteBuffer buffer, long sid) {
             this.buffer = buffer;
@@ -235,6 +238,8 @@ public class QuorumCnxManager {
         // Starts listener thread that waits for connection requests 
         listener = new Listener();
         listener.setName("QuorumPeerListener");
+
+        x509Util = new QuorumX509Util();
     }
 
     /**
@@ -443,7 +448,7 @@ public class QuorumCnxManager {
         try {
              LOG.debug("Opening channel to server " + sid);
              if (self.isSslQuorum()) {
-                 SSLSocket sslSock = X509Util.QUORUM_X509UTIL.createSSLSocket();
+                 SSLSocket sslSock = x509Util.createSSLSocket();
                  setSockOpts(sslSock);
                  sslSock.connect(electionAddr, cnxTO);
                  sslSock.startHandshake();
@@ -641,9 +646,9 @@ public class QuorumCnxManager {
             while((!shutdown) && (numRetries < 3)){
                 try {
                     if (self.shouldUsePortUnification()) {
-                        ss = new UnifiedServerSocket();
+                        ss = new UnifiedServerSocket(x509Util);
                     } else if (self.isSslQuorum()) {
-                        ss = X509Util.QUORUM_X509UTIL.createSSLServerSocket();
+                        ss = x509Util.createSSLServerSocket();
                     } else {
                         ss = new ServerSocket();
                     }

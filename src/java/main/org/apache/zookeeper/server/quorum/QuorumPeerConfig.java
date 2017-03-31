@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Map.Entry;
 
+import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.common.ZKConfig;
@@ -382,14 +383,15 @@ public class QuorumPeerConfig {
      *             provider is not configured.
      */
     private void configureSSLAuth() throws ConfigException {
-        String sslAuthProp = "zookeeper.authProvider." + System.getProperty(X509Util.CLIENT_X509UTIL.getSslAuthProviderProperty(), "x509");
+        ClientX509Util clientX509Util = new ClientX509Util();
+        String sslAuthProp = "zookeeper.authProvider." + System.getProperty(clientX509Util.getSslAuthProviderProperty(), "x509");
         if (System.getProperty(sslAuthProp) == null) {
             if ("zookeeper.authProvider.x509".equals(sslAuthProp)) {
                 System.setProperty("zookeeper.authProvider.x509",
                         "org.apache.zookeeper.server.auth.X509AuthenticationProvider");
             } else {
                 throw new ConfigException("No auth provider configured for the SSL authentication scheme '"
-                        + System.getProperty(X509Util.CLIENT_X509UTIL.getSslAuthProviderProperty()) + "'.");
+                        + System.getProperty(clientX509Util.getSslAuthProviderProperty()) + "'.");
             }
         }
     }

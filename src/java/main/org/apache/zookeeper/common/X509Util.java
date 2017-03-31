@@ -28,6 +28,7 @@ import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLSocket;
@@ -62,9 +63,6 @@ public abstract class X509Util {
     private String sslHostnameVerificationEnabledProperty = getConfigPrefix() + "hostnameVerification";
     private String sslCrlEnabledProperty = getConfigPrefix() + "ssl.crl";
     private String sslOcspEnabledProperty = getConfigPrefix() + "ssl.ocsp";
-
-    public static final QuorumX509Util QUORUM_X509UTIL = new QuorumX509Util();
-    public static final ClientX509Util CLIENT_X509UTIL = new ClientX509Util();
 
     private volatile SSLContext defaultSSLContext;
 
@@ -240,7 +238,7 @@ public abstract class X509Util {
                 if (tm instanceof X509ExtendedTrustManager) {
                     return new X509ExtendedTrustManager() {
                         X509ExtendedTrustManager x509ExtendedTrustManager = (X509ExtendedTrustManager) tm;
-                        HostnameVerifier hostnameVerifier = new DefaultHostnameVerifier();
+                        DefaultHostnameVerifier hostnameVerifier = new DefaultHostnameVerifier();
 
                         @Override
                         public X509Certificate[] getAcceptedIssuers() {
@@ -250,7 +248,7 @@ public abstract class X509Util {
                         @Override
                         public void checkClientTrusted(X509Certificate[] chain, String authType, Socket socket) throws CertificateException {
                             if (hostnameVerificationEnabled && shouldVerifyClientHostname) {
-                                hostnameVerifier.verify(socket.getInetAddress().getHostName(), ((SSLSocket) socket).getSession());
+                                performHostnameVerification(socket.getInetAddress().getHostName(), chain[0]);
                             }
                             x509ExtendedTrustManager.checkClientTrusted(chain, authType, socket);
                         }
@@ -258,7 +256,7 @@ public abstract class X509Util {
                         @Override
                         public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket) throws CertificateException {
                             if (hostnameVerificationEnabled) {
-                                hostnameVerifier.verify(socket.getInetAddress().getHostName(), ((SSLSocket) socket).getSession());
+                                performHostnameVerification(socket.getInetAddress().getHostName(), chain[0]);
                             }
                             x509ExtendedTrustManager.checkServerTrusted(chain, authType, socket);
                         }
@@ -266,7 +264,7 @@ public abstract class X509Util {
                         @Override
                         public void checkClientTrusted(X509Certificate[] chain, String authType, SSLEngine engine) throws CertificateException {
                             if (hostnameVerificationEnabled && shouldVerifyClientHostname) {
-                                hostnameVerifier.verify(engine.getPeerHost(), engine.getSession());
+                                performHostnameVerification(engine.getPeerHost(), chain[0]);
                             }
                             x509ExtendedTrustManager.checkServerTrusted(chain, authType, engine);
                         }
@@ -274,7 +272,7 @@ public abstract class X509Util {
                         @Override
                         public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine engine) throws CertificateException {
                             if (hostnameVerificationEnabled) {
-                                hostnameVerifier.verify(engine.getPeerHost(), engine.getSession());
+                                performHostnameVerification(engine.getPeerHost(), chain[0]);
                             }
                             x509ExtendedTrustManager.checkServerTrusted(chain, authType, engine);
                         }
@@ -287,6 +285,14 @@ public abstract class X509Util {
                         @Override
                         public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
                             x509ExtendedTrustManager.checkServerTrusted(chain, authType);
+                        }
+
+                        private void performHostnameVerification(String hostname, X509Certificate certificate) throws CertificateException {
+                            try {
+                                hostnameVerifier.verify(hostname, certificate);
+                            } catch (SSLException e) {
+                                throw new CertificateException("Failed to verify hostname", e);
+                            }
                         }
                     };
                 }

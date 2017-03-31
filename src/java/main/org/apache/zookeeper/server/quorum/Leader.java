@@ -40,6 +40,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.common.QuorumX509Util;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.common.X509Util;
@@ -222,16 +223,17 @@ public class Leader {
         this.self = self;
         try {
             if (self.shouldUsePortUnification()) {
+
                 if (self.getQuorumListenOnAllIPs()) {
-                    ss = new UnifiedServerSocket(self.getQuorumAddress().getPort());
+                    ss = new UnifiedServerSocket(new QuorumX509Util(), self.getQuorumAddress().getPort());
                 } else {
-                    ss = new UnifiedServerSocket();
+                    ss = new UnifiedServerSocket(new QuorumX509Util());
                 }
             } else if (self.isSslQuorum()) {
                 if (self.getQuorumListenOnAllIPs()) {
-                    ss = X509Util.QUORUM_X509UTIL.createSSLServerSocket(self.getQuorumAddress().getPort());
+                    ss = new QuorumX509Util().createSSLServerSocket(self.getQuorumAddress().getPort());
                 } else {
-                    ss = X509Util.QUORUM_X509UTIL.createSSLServerSocket();
+                    ss = new QuorumX509Util().createSSLServerSocket();
                 }
             } else {
                 if (self.getQuorumListenOnAllIPs()) {

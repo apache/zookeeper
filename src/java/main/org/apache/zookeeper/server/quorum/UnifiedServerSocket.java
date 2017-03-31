@@ -34,12 +34,16 @@ import java.net.SocketException;
 public class UnifiedServerSocket extends ServerSocket {
   private static final Logger LOG = LoggerFactory.getLogger(UnifiedServerSocket.class);
 
-  public UnifiedServerSocket() throws IOException {
+  private X509Util x509Util;
+
+  public UnifiedServerSocket(X509Util x509Util) throws IOException {
     super();
+    this.x509Util = x509Util;
   }
 
-  public UnifiedServerSocket(int port) throws IOException {
+  public UnifiedServerSocket(X509Util x509Util, int port) throws IOException {
     super(port);
+    this.x509Util = x509Util;
   }
 
   @Override
@@ -65,7 +69,7 @@ public class UnifiedServerSocket extends ServerSocket {
       LOG.info(getInetAddress() + " attempting to connect over ssl");
       SSLSocket sslSocket;
       try {
-        sslSocket = (SSLSocket) X509Util.QUORUM_X509UTIL.getDefaultSSLContext().getSocketFactory().createSocket(bufferedSocket, null, bufferedSocket.getPort(), false);
+        sslSocket = (SSLSocket) x509Util.getDefaultSSLContext().getSocketFactory().createSocket(bufferedSocket, null, bufferedSocket.getPort(), false);
       } catch (X509Exception.SSLContextException e) {
         throw new IOException("failed to create SSL context", e);
       }
