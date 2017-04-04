@@ -17,14 +17,20 @@
  */
 package org.apache.zookeeper.test;
 
+import com.sun.net.httpserver.Headers;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.QuorumX509Util;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
+import org.bouncycastle.asn1.ocsp.OCSPResponse;
+import org.bouncycastle.asn1.ocsp.OCSPResponseStatus;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.asn1.x500.style.BCStyle;
+import org.bouncycastle.asn1.x509.AuthorityInformationAccess;
 import org.bouncycastle.asn1.x509.BasicConstraints;
 import org.bouncycastle.asn1.x509.CRLDistPoint;
 import org.bouncycastle.asn1.x509.CRLNumber;
@@ -36,6 +42,7 @@ import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.GeneralNames;
 import org.bouncycastle.asn1.x509.KeyUsage;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
+import org.bouncycastle.asn1.x509.X509ObjectIdentifiers;
 import org.bouncycastle.cert.X509CRLHolder;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.X509ExtensionUtils;
@@ -47,22 +54,40 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
 import org.bouncycastle.cert.jcajce.JcaX509v2CRLBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
+import org.bouncycastle.cert.ocsp.BasicOCSPResp;
+import org.bouncycastle.cert.ocsp.BasicOCSPRespBuilder;
+import org.bouncycastle.cert.ocsp.CertificateID;
+import org.bouncycastle.cert.ocsp.CertificateStatus;
+import org.bouncycastle.cert.ocsp.OCSPException;
+import org.bouncycastle.cert.ocsp.OCSPReq;
+import org.bouncycastle.cert.ocsp.OCSPResp;
+import org.bouncycastle.cert.ocsp.OCSPRespBuilder;
+import org.bouncycastle.cert.ocsp.Req;
+import org.bouncycastle.cert.ocsp.UnknownStatus;
+import org.bouncycastle.cert.ocsp.jcajce.JcaBasicOCSPRespBuilder;
+import org.bouncycastle.cert.ocsp.jcajce.JcaCertificateID;
 import org.bouncycastle.crypto.util.PublicKeyFactory;
 import org.bouncycastle.crypto.util.SubjectPublicKeyInfoFactory;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.MiscPEMGenerator;
 import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.DigestCalculator;
+import org.bouncycastle.operator.OperatorException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
 import org.bouncycastle.util.io.pem.PemWriter;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigInteger;
+import java.net.InetSocketAddress;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
@@ -71,6 +96,7 @@ import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.Security;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.Calendar;
 import java.util.Date;
@@ -87,89 +113,137 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
     private static final String PORT_UNIFICATION_ENABLED = "portUnification=true\n";
     private static final String PORT_UNIFICATION_DISABLED = "portUnification=false\n";
 
+    private static final char[] PASSWORD = "testpass".toCharArray();
+    private static final String HOSTNAME = "localhost";
+
     private QuorumX509Util quorumX509Util = new QuorumX509Util();
+
+    private MainThread q1;
+    private MainThread q2;
+    private MainThread q3;
 
     private int clientPortQp1;
     private int clientPortQp2;
     private int clientPortQp3;
 
+    private String tmpDir;
+
     private String quorumConfiguration;
     private String validKeystorePath;
-    private String badhostnameKeystorePath;
-    private String revokedKeystorePath;
     private String truststorePath;
-    private String crlPath;
 
     private KeyPair rootKeyPair;
     private X509Certificate rootCertificate;
+
+    private ContentSigner contentSigner;
 
     @Before
     public void setup() throws Exception {
         ClientBase.setupTestEnv();
 
+        tmpDir = createTmpDir().getAbsolutePath();
+
         clientPortQp1 = PortAssignment.unique();
         clientPortQp2 = PortAssignment.unique();
         clientPortQp3 = PortAssignment.unique();
 
-        File tmpDir = createTmpDir();
-        validKeystorePath = tmpDir.getAbsolutePath() + "/valid.jks";
-        truststorePath = tmpDir.getAbsolutePath() + "/truststore.jks";
-        crlPath = tmpDir.getAbsolutePath() + "/crl.pem";
+        validKeystorePath = tmpDir + "/valid.jks";
+        truststorePath = tmpDir + "/truststore.jks";
 
         quorumConfiguration = generateQuorumConfiguration();
 
-
         Security.addProvider(new BouncyCastleProvider());
 
-        rootKeyPair = createKeyPair("RSA", 4096);
+        rootKeyPair = createKeyPair();
+        contentSigner = new JcaContentSignerBuilder("SHA256WithRSAEncryption").build(rootKeyPair.getPrivate());
         rootCertificate = createSelfSignedCertifcate(rootKeyPair);
 
-        KeyPair entityKeyPair = createKeyPair("RSA", 4096);
-        X509Certificate entityCertificate = buildEndEntityCert(entityKeyPair, rootCertificate, rootKeyPair.getPrivate(), "localhost");
-
-        KeyStore outStore = KeyStore.getInstance(KeyStore.getDefaultType());
-        outStore.load(null, "testpass".toCharArray());
-        outStore.setKeyEntry("mykey", entityKeyPair.getPrivate(), "testpass".toCharArray(), new Certificate[] { entityCertificate });
-        FileOutputStream outputStream = new FileOutputStream(validKeystorePath);
-        outStore.store(outputStream, "testpass".toCharArray());
+        // Write the truststore
+        KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        trustStore.load(null, PASSWORD);
+        trustStore.setCertificateEntry(rootCertificate.getSubjectDN().toString(), rootCertificate);
+        FileOutputStream outputStream = new FileOutputStream(truststorePath);
+        trustStore.store(outputStream, PASSWORD);
         outputStream.flush();
         outputStream.close();
 
+        KeyPair defaultKeyPair = createKeyPair();
+        X509Certificate validCertificate = buildEndEntityCert(defaultKeyPair, rootCertificate, rootKeyPair.getPrivate(), HOSTNAME, null, null);
+        writeKeystore(validCertificate, defaultKeyPair, validKeystorePath);
 
-        badhostnameKeystorePath = tmpDir + "/badhost.jks";
-        X509Certificate badHostCert = buildEndEntityCert(entityKeyPair, rootCertificate, rootKeyPair.getPrivate(), "bleepbloop");
-        outStore = KeyStore.getInstance(KeyStore.getDefaultType());
-        outStore.load(null, "testpass".toCharArray());
-        outStore.setKeyEntry("mykey", entityKeyPair.getPrivate(), "testpass".toCharArray(), new Certificate[] { badHostCert });
-        outputStream = new FileOutputStream(badhostnameKeystorePath);
-        outStore.store(outputStream, "testpass".toCharArray());
+        setSSLSystemProperties();
+    }
+
+    private void writeKeystore(X509Certificate certificate, KeyPair entityKeyPair, String path) throws Exception {
+        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        keyStore.load(null, PASSWORD);
+        keyStore.setKeyEntry("alias", entityKeyPair.getPrivate(), PASSWORD, new Certificate[] { certificate });
+        FileOutputStream outputStream = new FileOutputStream(path);
+        keyStore.store(outputStream, PASSWORD);
         outputStream.flush();
         outputStream.close();
+    }
 
-        revokedKeystorePath = tmpDir + "/revoked.jks";
-        X509Certificate revokedCert = buildEndEntityCert(entityKeyPair, rootCertificate, rootKeyPair.getPrivate(), "localhost");
-        outStore = KeyStore.getInstance(KeyStore.getDefaultType());
-        outStore.load(null, "testpass".toCharArray());
-        outStore.setKeyEntry("mykey", entityKeyPair.getPrivate(), "testpass".toCharArray(), new Certificate[] { revokedCert });
-        outputStream = new FileOutputStream(revokedKeystorePath);
-        outStore.store(outputStream, "testpass".toCharArray());
-        outputStream.flush();
-        outputStream.close();
-        buildCRL(revokedCert);
 
-        outStore = KeyStore.getInstance(KeyStore.getDefaultType());
-        outStore.load(null, "testpass".toCharArray());
-        outStore.setCertificateEntry(rootCertificate.getSubjectDN().toString(), rootCertificate);
-        outputStream = new FileOutputStream(truststorePath);
-        outStore.store(outputStream, "testpass".toCharArray());
-        outputStream.flush();
-        outputStream.close();
+    private class OCSPHandler implements HttpHandler {
 
+        private X509Certificate revokedCert;
+
+        // Builds an OCSPHandler that responds with a good status for all certificates
+        // except revokedCert.
+        public OCSPHandler(X509Certificate revokedCert) {
+            this.revokedCert = revokedCert;
+        }
+
+        @Override
+        public void handle(com.sun.net.httpserver.HttpExchange httpExchange) throws IOException {
+            byte[] responseBytes;
+            try {
+                InputStream request = httpExchange.getRequestBody();
+                byte[] requestBytes = new byte[10000];
+                request.read(requestBytes);
+
+                OCSPReq ocspRequest = new OCSPReq(requestBytes);
+                Req[] requestList = ocspRequest.getRequestList();
+
+                DigestCalculator digestCalculator = new JcaDigestCalculatorProviderBuilder().build().get(CertificateID.HASH_SHA1);
+
+                BasicOCSPRespBuilder responseBuilder = new JcaBasicOCSPRespBuilder(rootKeyPair.getPublic(), digestCalculator);
+                for ( Req req : requestList ) {
+                    CertificateID certId = req.getCertID();
+                    CertificateID revokedCertId = new JcaCertificateID(digestCalculator, rootCertificate, revokedCert.getSerialNumber());
+                    CertificateStatus certificateStatus;
+                    if (revokedCertId.equals(certId)) {
+                        certificateStatus = new UnknownStatus();
+                    } else {
+                        certificateStatus = CertificateStatus.GOOD;
+                    }
+
+                    responseBuilder.addResponse(certId, certificateStatus,null);
+                }
+
+                X509CertificateHolder[] chain = new X509CertificateHolder[] { new JcaX509CertificateHolder(rootCertificate) };
+                ContentSigner signer = new JcaContentSignerBuilder("SHA1withRSA").setProvider("BC").build(rootKeyPair.getPrivate());
+                BasicOCSPResp ocspResponse = responseBuilder.build(signer, chain, Calendar.getInstance().getTime() );
+
+                responseBytes = new OCSPRespBuilder().build(OCSPRespBuilder.SUCCESSFUL, ocspResponse).getEncoded();
+            } catch (OperatorException | CertificateEncodingException | OCSPException exception) {
+                responseBytes = new OCSPResp(new OCSPResponse(new OCSPResponseStatus(OCSPRespBuilder.INTERNAL_ERROR), null)).getEncoded();
+            }
+
+            Headers rh = httpExchange.getResponseHeaders();
+            rh.set("Content-Type", "application/ocsp-response");
+            httpExchange.sendResponseHeaders(200, responseBytes.length);
+
+            OutputStream os = httpExchange.getResponseBody();
+            os.write(responseBytes);
+            os.close();
+        }
     }
 
     private X509Certificate createSelfSignedCertifcate(KeyPair keyPair) throws Exception {
         X500NameBuilder nameBuilder = new X500NameBuilder(BCStyle.INSTANCE);
-        nameBuilder.addRDN(BCStyle.CN, "localhost");
+        nameBuilder.addRDN(BCStyle.CN, HOSTNAME);
         Date notBefore = new Date();              // time from which certificate is valid
         Calendar cal = Calendar.getInstance();
         cal.setTime(notBefore);
@@ -178,20 +252,16 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         BigInteger serialNumber = new BigInteger(128, new Random());
 
         X509v3CertificateBuilder certificateBuilder =
-                new JcaX509v3CertificateBuilder(nameBuilder.build(), serialNumber, notBefore, notAfter, nameBuilder.build(), keyPair.getPublic());
-        certificateBuilder
+                new JcaX509v3CertificateBuilder(nameBuilder.build(), serialNumber, notBefore, notAfter, nameBuilder.build(), keyPair.getPublic())
                 .addExtension(Extension.basicConstraints, true, new BasicConstraints(0))
                 .addExtension(Extension.keyUsage, true, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyCertSign | KeyUsage.cRLSign));
-
-        ContentSigner contentSigner = new JcaContentSignerBuilder("SHA256WithRSAEncryption").build(keyPair.getPrivate());
-
 
         return new JcaX509CertificateConverter().getCertificate(certificateBuilder.build(contentSigner));
     }
 
-    private void buildCRL(X509Certificate x509Certificate) throws Exception {
+    private void buildCRL(X509Certificate x509Certificate, String crlPath) throws Exception {
         X509v2CRLBuilder builder = new JcaX509v2CRLBuilder(x509Certificate.getIssuerX500Principal(), new Date());
-        Date notBefore = new Date();              // time from which certificate is valid
+        Date notBefore = new Date();
         Calendar cal = Calendar.getInstance();
         cal.setTime(notBefore);
         cal.add(Calendar.YEAR, 1);
@@ -201,10 +271,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         builder.addExtension(Extension.authorityKeyIdentifier, false, new JcaX509ExtensionUtils().createAuthorityKeyIdentifier(rootCertificate));
         builder.addExtension(Extension.cRLNumber, false, new CRLNumber(new BigInteger("1000")));
 
-        JcaContentSignerBuilder contentSignerBuilder = new JcaContentSignerBuilder("SHA256WithRSAEncryption");
-
-        X509CRLHolder cRLHolder = builder.build(contentSignerBuilder.build(rootKeyPair.getPrivate()));
-
+        X509CRLHolder cRLHolder = builder.build(contentSigner);
 
         PemWriter pemWriter = new PemWriter(new FileWriter(crlPath));
         pemWriter.writeObject(new MiscPEMGenerator(cRLHolder));
@@ -212,61 +279,46 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         pemWriter.close();
     }
 
-    /**
-     * Build a sample V3 certificate to use as an end entity certificate
-     */
-    public X509Certificate buildEndEntityCert(KeyPair keyPair, X509Certificate caCert, PrivateKey caPrivateKey, String hostname)
-            throws Exception
-    {
+    public X509Certificate buildEndEntityCert(KeyPair keyPair, X509Certificate caCert, PrivateKey caPrivateKey,
+                                              String hostname, String crlPath, Integer ocspPort) throws Exception {
         X509CertificateHolder holder = new JcaX509CertificateHolder(caCert);
         ContentSigner signer =new JcaContentSignerBuilder("SHA256WithRSAEncryption").build(caPrivateKey);
 
 
         SubjectPublicKeyInfo entityKeyInfo =
                 SubjectPublicKeyInfoFactory.createSubjectPublicKeyInfo(PublicKeyFactory.createKey(keyPair.getPublic().getEncoded()));
-        X509v3CertificateBuilder certBldr = new JcaX509v3CertificateBuilder(
-                holder.getSubject(),
-                new BigInteger(128, new Random()),
-                new Date(System.currentTimeMillis()),
-                new Date(System.currentTimeMillis() + 100000),
-                new X500Name("CN=Test End Entity Certificate"),
-                keyPair.getPublic());
-        X509ExtensionUtils extUtils = new BcX509ExtensionUtils();
-        certBldr.addExtension(Extension.authorityKeyIdentifier,
-                false, extUtils.createAuthorityKeyIdentifier(holder))
-                .addExtension(Extension.subjectKeyIdentifier,
-                        false, extUtils.createSubjectKeyIdentifier(entityKeyInfo))
-                .addExtension(Extension.basicConstraints,
-                        true, new BasicConstraints(false))
-                .addExtension(Extension.keyUsage,
-                        true, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyEncipherment))
+        X509ExtensionUtils extensionUtils = new BcX509ExtensionUtils();
+        X509v3CertificateBuilder certificateBuilder = new JcaX509v3CertificateBuilder(holder.getSubject(), new BigInteger(128, new Random()),
+                new Date(System.currentTimeMillis()), new Date(System.currentTimeMillis() + 100000),
+                new X500Name("CN=Test End Entity Certificate"), keyPair.getPublic())
+                .addExtension(Extension.authorityKeyIdentifier, false, extensionUtils.createAuthorityKeyIdentifier(holder))
+                .addExtension(Extension.subjectKeyIdentifier, false, extensionUtils.createSubjectKeyIdentifier(entityKeyInfo))
+                .addExtension(Extension.basicConstraints, true, new BasicConstraints(false))
+                .addExtension(Extension.keyUsage, true, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyEncipherment))
                 .addExtension(Extension.subjectAlternativeName,  true,  new GeneralNames(new GeneralName(GeneralName.dNSName, hostname)));
 
-        DistributionPointName distPointOne = new DistributionPointName(new GeneralNames(
-                new GeneralName(GeneralName.uniformResourceIdentifier,"file://" + crlPath)));
+        if (crlPath != null) {
+            DistributionPointName distPointOne = new DistributionPointName(new GeneralNames(
+                    new GeneralName(GeneralName.uniformResourceIdentifier,"file://" + crlPath)));
 
+            certificateBuilder.addExtension(Extension.cRLDistributionPoints, false,
+                    new CRLDistPoint(new DistributionPoint[] { new DistributionPoint(distPointOne, null, null) }));
+        }
 
-        certBldr.addExtension(Extension.cRLDistributionPoints, false, new CRLDistPoint(new DistributionPoint[] { new DistributionPoint(distPointOne, null, null) }));
-        return new JcaX509CertificateConverter().getCertificate(certBldr.build(signer));
+        if (ocspPort != null) {
+            certificateBuilder.addExtension(Extension.authorityInfoAccess, false, new AuthorityInformationAccess(X509ObjectIdentifiers.ocspAccessMethod,
+                    new GeneralName(GeneralName.uniformResourceIdentifier, "http://" + hostname + ":" + ocspPort)));
+        }
+
+        return new JcaX509CertificateConverter().getCertificate(certificateBuilder.build(signer));
     }
 
 
-        private KeyPair createKeyPair(String encryptionType, int byteCount)
-            throws NoSuchProviderException, NoSuchAlgorithmException
-    {
-        KeyPairGenerator keyPairGenerator = createKeyPairGenerator(encryptionType, byteCount);
+    private KeyPair createKeyPair() throws NoSuchProviderException, NoSuchAlgorithmException {
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA", BouncyCastleProvider.PROVIDER_NAME);
+        keyPairGenerator.initialize(4096);
         KeyPair keyPair = keyPairGenerator.genKeyPair();
         return keyPair;
-    }
-
-
-    private KeyPairGenerator createKeyPairGenerator(String algorithmIdentifier,
-                                                    int bitCount) throws NoSuchProviderException,
-            NoSuchAlgorithmException {
-        KeyPairGenerator kpg = KeyPairGenerator.getInstance(
-                algorithmIdentifier, BouncyCastleProvider.PROVIDER_NAME);
-        kpg.initialize(bitCount);
-        return kpg;
     }
 
     private String generateQuorumConfiguration() {
@@ -297,20 +349,27 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
     }
 
     @After
-    public void clearSSLSystemProperties() {
+    public void cleanUp() throws Exception {
+        clearSSLSystemProperties();
+        q1.shutdown();
+        q2.shutdown();
+        q3.shutdown();
+    }
+
+    private void clearSSLSystemProperties() {
         System.clearProperty(quorumX509Util.getSslKeystoreLocationProperty());
         System.clearProperty(quorumX509Util.getSslKeystorePasswdProperty());
         System.clearProperty(quorumX509Util.getSslTruststoreLocationProperty());
         System.clearProperty(quorumX509Util.getSslTruststorePasswdProperty());
         System.clearProperty(quorumX509Util.getSslHostnameVerificationEnabledProperty());
+        System.clearProperty(quorumX509Util.getSslOcspEnabledProperty());
+        System.clearProperty(quorumX509Util.getSslCrlEnabledProperty());
     }
 
     @Test
     public void testQuorumSSL() throws Exception {
-        setSSLSystemProperties();
-
-        MainThread q1 = new MainThread(1, clientPortQp1, quorumConfiguration, SSL_QUORUM_ENABLED);
-        MainThread q2 = new MainThread(2, clientPortQp2, quorumConfiguration, SSL_QUORUM_ENABLED);
+        q1 = new MainThread(1, clientPortQp1, quorumConfiguration, SSL_QUORUM_ENABLED);
+        q2 = new MainThread(2, clientPortQp2, quorumConfiguration, SSL_QUORUM_ENABLED);
 
 
         q1.start();
@@ -322,21 +381,24 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         clearSSLSystemProperties();
 
         // This server should fail to join the quorum as it is not using ssl.
-        MainThread q3 = new MainThread(3, clientPortQp3, quorumConfiguration);
+        q3 = new MainThread(3, clientPortQp3, quorumConfiguration);
         q3.start();
 
         Assert.assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
     }
 
-
-
     @Test
     public void testRollingUpgrade() throws Exception {
         // Form a quorum without ssl
+        q1 = new MainThread(1, clientPortQp1, quorumConfiguration);
+        q2 = new MainThread(2, clientPortQp2, quorumConfiguration);
+        q3 = new MainThread(3, clientPortQp3, quorumConfiguration);
+
+
         Map<Integer, MainThread> members = new HashMap<>();
-        members.put(clientPortQp1, new MainThread(1, clientPortQp1, quorumConfiguration));
-        members.put(clientPortQp2, new MainThread(2, clientPortQp2, quorumConfiguration));
-        members.put(clientPortQp3, new MainThread(3, clientPortQp3, quorumConfiguration));
+        members.put(clientPortQp1, q1);
+        members.put(clientPortQp2, q2);
+        members.put(clientPortQp3, q3);
 
         for (MainThread member : members.values()) {
             member.start();
@@ -351,7 +413,6 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
 
         stopAppendConfigRestartAll(members, PORT_UNIFICATION_ENABLED);
         stopAppendConfigRestartAll(members, SSL_QUORUM_ENABLED);
-        // TODO: Is appending a new line to config a fair assumption
         stopAppendConfigRestartAll(members, PORT_UNIFICATION_DISABLED);
     }
 
@@ -376,10 +437,8 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
 
     @Test
     public void testHostnameVerification() throws Exception {
-        setSSLSystemProperties();
-
-        MainThread q1 = new MainThread(1, clientPortQp1, quorumConfiguration, SSL_QUORUM_ENABLED);
-        MainThread q2 = new MainThread(2, clientPortQp2, quorumConfiguration, SSL_QUORUM_ENABLED);
+        q1 = new MainThread(1, clientPortQp1, quorumConfiguration, SSL_QUORUM_ENABLED);
+        q2 = new MainThread(2, clientPortQp2, quorumConfiguration, SSL_QUORUM_ENABLED);
 
         q1.start();
         q2.start();
@@ -387,10 +446,15 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         Assert.assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp1, CONNECTION_TIMEOUT));
         Assert.assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp2, CONNECTION_TIMEOUT));
 
+        String badhostnameKeystorePath = tmpDir + "/badhost.jks";
+        KeyPair badHostnameKeyPair = createKeyPair();
+        X509Certificate badHostCert = buildEndEntityCert(badHostnameKeyPair, rootCertificate, rootKeyPair.getPrivate(), "bleepbloop", null, null);
+        writeKeystore(badHostCert, badHostnameKeyPair, badhostnameKeystorePath);
+
         System.setProperty(quorumX509Util.getSslKeystoreLocationProperty(), badhostnameKeystorePath);
 
         // This server should join successfully
-        MainThread q3 = new MainThread(3, clientPortQp3, quorumConfiguration, SSL_QUORUM_ENABLED);
+        q3 = new MainThread(3, clientPortQp3, quorumConfiguration, SSL_QUORUM_ENABLED);
         q3.start();
 
         Assert.assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
@@ -421,14 +485,9 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
 
 
     @Test
-    public void testCertificateRevocabtionList() throws Exception {
-        System.setProperty("javax.net.debug", "all");
-        System.setProperty("java.security.auth.debug", "all");
-        System.setProperty("java.security.debug", "all");
-        setSSLSystemProperties();
-
-        MainThread q1 = new MainThread(1, clientPortQp1, quorumConfiguration, SSL_QUORUM_ENABLED);
-        MainThread q2 = new MainThread(2, clientPortQp2, quorumConfiguration, SSL_QUORUM_ENABLED);
+    public void testCertificateRevocationList() throws Exception {
+        q1 = new MainThread(1, clientPortQp1, quorumConfiguration, SSL_QUORUM_ENABLED);
+        q2 = new MainThread(2, clientPortQp2, quorumConfiguration, SSL_QUORUM_ENABLED);
 
         q1.start();
         q2.start();
@@ -436,10 +495,17 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         Assert.assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp1, CONNECTION_TIMEOUT));
         Assert.assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp2, CONNECTION_TIMEOUT));
 
-        System.setProperty(quorumX509Util.getSslKeystoreLocationProperty(), revokedKeystorePath);
+        String revokedInCRLKeystorePath = tmpDir + "/crl_revoked.jks";
+        String crlPath = tmpDir + "/crl.pem";
+        KeyPair keyPair = createKeyPair();
+        X509Certificate revokedInCRLCert = buildEndEntityCert(keyPair, rootCertificate, rootKeyPair.getPrivate(), HOSTNAME, crlPath, null);
+        writeKeystore(revokedInCRLCert, keyPair, revokedInCRLKeystorePath);
+        buildCRL(revokedInCRLCert, crlPath);
+
+        System.setProperty(quorumX509Util.getSslKeystoreLocationProperty(), revokedInCRLKeystorePath);
 
         // This server should join successfully
-        MainThread q3 = new MainThread(3, clientPortQp3, quorumConfiguration, SSL_QUORUM_ENABLED);
+        q3 = new MainThread(3, clientPortQp3, quorumConfiguration, SSL_QUORUM_ENABLED);
         q3.start();
 
         Assert.assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
@@ -455,8 +521,10 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
 
         setSSLSystemProperties();
         System.setProperty(quorumX509Util.getSslCrlEnabledProperty(), "true");
-        System.setProperty("com.sun.net.ssl.checkRevocation", "true");
-        System.setProperty("com.sun.security.enableCRLDP", "true");
+
+        KeyPair defaultKeyPair = createKeyPair();
+        X509Certificate validCertificate = buildEndEntityCert(defaultKeyPair, rootCertificate, rootKeyPair.getPrivate(), HOSTNAME, crlPath, null);
+        writeKeystore(validCertificate, defaultKeyPair, validKeystorePath);
 
         q1.start();
         q2.start();
@@ -464,15 +532,70 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         Assert.assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp1, CONNECTION_TIMEOUT));
         Assert.assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp2, CONNECTION_TIMEOUT));
 
-        System.setProperty(quorumX509Util.getSslKeystoreLocationProperty(), revokedKeystorePath);
+        System.setProperty(quorumX509Util.getSslKeystoreLocationProperty(), revokedInCRLKeystorePath);
         q3.start();
 
         Assert.assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
-
-
-
     }
 
-    // ocsp
+    @Test
+    public void testOCSP() throws Exception {
+        Integer ocspPort = PortAssignment.unique();
 
+        q1 = new MainThread(1, clientPortQp1, quorumConfiguration, SSL_QUORUM_ENABLED);
+        q2 = new MainThread(2, clientPortQp2, quorumConfiguration, SSL_QUORUM_ENABLED);
+
+        q1.start();
+        q2.start();
+
+        Assert.assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp1, CONNECTION_TIMEOUT));
+        Assert.assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp2, CONNECTION_TIMEOUT));
+
+        String revokedInOCSPKeystorePath = tmpDir + "/ocsp_revoked.jks";
+        KeyPair keyPair = createKeyPair();
+        X509Certificate revokedInOCSPCert = buildEndEntityCert(keyPair, rootCertificate, rootKeyPair.getPrivate(), HOSTNAME, null, ocspPort);
+        writeKeystore(revokedInOCSPCert, keyPair, revokedInOCSPKeystorePath);
+
+        HttpServer ocspServer = HttpServer.create(new InetSocketAddress(ocspPort), 0);
+        try {
+            ocspServer.createContext("/", new OCSPHandler(revokedInOCSPCert));
+            ocspServer.start();
+
+            System.setProperty(quorumX509Util.getSslKeystoreLocationProperty(), revokedInOCSPKeystorePath);
+
+            // This server should join successfully
+            q3 = new MainThread(3, clientPortQp3, quorumConfiguration, SSL_QUORUM_ENABLED);
+            q3.start();
+
+            Assert.assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
+
+            q1.shutdown();
+            q2.shutdown();
+            q3.shutdown();
+
+            Assert.assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + clientPortQp1, CONNECTION_TIMEOUT));
+            Assert.assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + clientPortQp2, CONNECTION_TIMEOUT));
+            Assert.assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
+
+            setSSLSystemProperties();
+            System.setProperty(quorumX509Util.getSslOcspEnabledProperty(), "true");
+
+            KeyPair defaultKeyPair = createKeyPair();
+            X509Certificate validCertificate = buildEndEntityCert(defaultKeyPair, rootCertificate, rootKeyPair.getPrivate(), HOSTNAME, null, ocspPort);
+            writeKeystore(validCertificate, defaultKeyPair, validKeystorePath);
+
+            q1.start();
+            q2.start();
+
+            Assert.assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp1, CONNECTION_TIMEOUT));
+            Assert.assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp2, CONNECTION_TIMEOUT));
+
+            System.setProperty(quorumX509Util.getSslKeystoreLocationProperty(), revokedInOCSPKeystorePath);
+            q3.start();
+
+            Assert.assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
+        } finally {
+            ocspServer.stop(0);
+        }
+    }
 }
