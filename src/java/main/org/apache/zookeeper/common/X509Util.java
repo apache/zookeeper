@@ -23,7 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.CertPathTrustManagerParameters;
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -124,13 +123,13 @@ public abstract class X509Util {
         // But if a user wanna specify one, location and password are required.
 
         if (keyStoreLocationProp == null && keyStorePasswordProp == null) {
-            LOG.warn("keystore not specified for client connection");
+            LOG.warn(getSslKeystoreLocationProperty() + " not specified");
         } else {
             if (keyStoreLocationProp == null) {
-                throw new SSLContextException("keystore location not specified for client connection");
+                throw new SSLContextException(getSslKeystoreLocationProperty() + " not specified");
             }
             if (keyStorePasswordProp == null) {
-                throw new SSLContextException("keystore password not specified for client connection");
+                throw new SSLContextException(getSslKeystorePasswdProperty() + " not specified");
             }
             try {
                 keyManagers = new KeyManager[]{
@@ -147,21 +146,18 @@ public abstract class X509Util {
         boolean sslOcspEnabled = config.getBoolean(this.sslOcspEnabledProperty);
         boolean sslServerHostnameVerificationEnabled = config.getBoolean(this.getSslHostnameVerificationEnabledProperty());
 
-        if (trustStoreLocationProp == null && trustStorePasswordProp == null) {
-            LOG.warn("keystore not specified for client connection");
+        if (trustStoreLocationProp == null) {
+            LOG.warn(getSslTruststoreLocationProperty() + " not specified");
         } else {
             if (trustStoreLocationProp == null) {
-                throw new SSLContextException("keystore location not specified for client connection");
-            }
-            if (trustStorePasswordProp == null) {
-                throw new SSLContextException("keystore password not specified for client connection");
+                throw new SSLContextException(getSslTruststoreLocationProperty() + " not specified for client connection");
             }
             try {
 
                 trustManagers = new TrustManager[]{
                         createTrustManager(trustStoreLocationProp, trustStorePasswordProp, sslCrlEnabled, sslOcspEnabled, sslServerHostnameVerificationEnabled, shouldVerifyClientHostname())};
             } catch (TrustManagerException e) {
-                throw new SSLContextException("Failed to create KeyManager", e);
+                throw new SSLContextException("Failed to create TrustManager", e);
             }
         }
 

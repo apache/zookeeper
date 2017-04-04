@@ -1274,7 +1274,7 @@ public class Zab1_0Test extends ZKTestCase {
 
         QuorumServer leader;
         public void setLeaderSocketAddress(InetSocketAddress addr) {
-            leader.addr = addr;
+            leader = new QuorumServer(0, addr);
         }
         
         @Override
@@ -1300,7 +1300,7 @@ public class Zab1_0Test extends ZKTestCase {
 
         QuorumServer leader;
         public void setLeaderSocketAddress(InetSocketAddress addr) {
-            leader.addr = addr;
+            leader = new QuorumServer(0, addr);
         }
 
         @Override
