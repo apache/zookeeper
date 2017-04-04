@@ -40,7 +40,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.security.KeyManagementException;
 import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.security.cert.CertificateException;
 import java.security.cert.PKIXBuilderParameters;
@@ -55,6 +57,10 @@ import static org.apache.zookeeper.common.X509Exception.*;
 public abstract class X509Util {
     private static final Logger LOG = LoggerFactory.getLogger(X509Util.class);
 
+    public static final String DEFAULT_PROTOCOL = "TLSv1";
+
+    private String sslProtocolProperty = getConfigPrefix() + "protocol";
+    private String cipherSuitesProperty = getConfigPrefix() + "ciphersuites";
     private String sslKeystoreLocationProperty = getConfigPrefix() + "keyStore.location";
     private String sslKeystorePasswdProperty = getConfigPrefix() + "keyStore.password";
     private String sslTruststoreLocationProperty = getConfigPrefix() + "trustStore.location";
@@ -63,10 +69,29 @@ public abstract class X509Util {
     private String sslCrlEnabledProperty = getConfigPrefix() + "ssl.crl";
     private String sslOcspEnabledProperty = getConfigPrefix() + "ssl.ocsp";
 
+    private String[] cipherSuites;
+
     private volatile SSLContext defaultSSLContext;
+
+    public X509Util() {
+        String cipherSuitesInput = System.getProperty(cipherSuitesProperty);
+        if (cipherSuitesInput == null) {
+            cipherSuites = null;
+        } else {
+            cipherSuites = cipherSuitesInput.split(",");
+        }
+    }
 
     protected abstract String getConfigPrefix();
     protected abstract boolean shouldVerifyClientHostname();
+
+    public String getSslProtocolProperty() {
+        return sslProtocolProperty;
+    }
+
+    public String getCipherSuitesProperty() {
+        return cipherSuitesProperty;
+    }
 
     public String getSslKeystoreLocationProperty() {
         return sslKeystoreLocationProperty;
@@ -161,14 +186,14 @@ public abstract class X509Util {
             }
         }
 
-        SSLContext sslContext = null;
+        String protocol = System.getProperty(sslProtocolProperty, DEFAULT_PROTOCOL);
         try {
-            sslContext = SSLContext.getInstance("TLSv1");
+            SSLContext sslContext = SSLContext.getInstance(protocol);
             sslContext.init(keyManagers, trustManagers, null);
-        } catch (Exception e) {
+            return sslContext;
+        } catch (NoSuchAlgorithmException|KeyManagementException e) {
             throw new SSLContextException(e);
         }
-        return sslContext;
     }
 
     public static X509KeyManager createKeyManager(String keyStoreLocation, String keyStorePassword)
@@ -180,7 +205,7 @@ public abstract class X509Util {
             KeyStore ks = KeyStore.getInstance("JKS");
             inputStream = new FileInputStream(keyStoreFile);
             ks.load(inputStream, keyStorePasswordChars);
-            KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+            KeyManagerFactory kmf = KeyManagerFactory.getInstance("PKIX");
             kmf.init(ks, keyStorePasswordChars);
 
             for (KeyManager km : kmf.getKeyManagers()) {
@@ -208,11 +233,15 @@ public abstract class X509Util {
             throws TrustManagerException {
         FileInputStream inputStream = null;
         try {
-            char[] trustStorePasswordChars = trustStorePassword.toCharArray();
             File trustStoreFile = new File(trustStoreLocation);
             KeyStore ts = KeyStore.getInstance("JKS");
             inputStream = new FileInputStream(trustStoreFile);
-            ts.load(inputStream, trustStorePasswordChars);
+            if (trustStorePassword != null) {
+                char[] trustStorePasswordChars = trustStorePassword.toCharArray();
+                ts.load(inputStream, trustStorePasswordChars);
+            } else {
+                ts.load(inputStream, null);
+            }
 
             PKIXBuilderParameters pbParams = new PKIXBuilderParameters(ts, new X509CertSelector());
             if (crlEnabled || ocspEnabled) {
@@ -309,6 +338,9 @@ public abstract class X509Util {
         SSLSocket sslSocket = (SSLSocket) getDefaultSSLContext().getSocketFactory().createSocket();
         SSLParameters sslParameters = sslSocket.getSSLParameters();
         sslParameters.setNeedClientAuth(true);
+        if (cipherSuites != null) {
+            sslParameters.setCipherSuites(cipherSuites);
+        }
 
         sslSocket.setSSLParameters(sslParameters);
 
@@ -320,7 +352,12 @@ public abstract class X509Util {
         SSLServerSocket sslServerSocket = (SSLServerSocket) getDefaultSSLContext().getServerSocketFactory().createServerSocket();
         SSLParameters sslParameters = sslServerSocket.getSSLParameters();
         sslParameters.setNeedClientAuth(true);
+        if (cipherSuites != null) {
+            sslParameters.setCipherSuites(cipherSuites);
+        }
+
         sslServerSocket.setSSLParameters(sslParameters);
+
         return sslServerSocket;
     }
 
@@ -328,6 +365,9 @@ public abstract class X509Util {
         SSLServerSocket sslServerSocket = (SSLServerSocket) getDefaultSSLContext().getServerSocketFactory().createServerSocket(port);
         SSLParameters sslParameters = sslServerSocket.getSSLParameters();
         sslParameters.setNeedClientAuth(true);
+        if (cipherSuites != null) {
+            sslParameters.setCipherSuites(cipherSuites);
+        }
 
         sslServerSocket.setSSLParameters(sslParameters);
 

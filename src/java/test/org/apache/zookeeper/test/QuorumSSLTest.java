@@ -354,6 +354,8 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         q1.shutdown();
         q2.shutdown();
         q3.shutdown();
+
+        Security.removeProvider("BC");
     }
 
     private void clearSSLSystemProperties() {
