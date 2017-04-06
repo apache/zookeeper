@@ -40,6 +40,8 @@ import org.slf4j.LoggerFactory;
  *
  * @since 3.5.3
  */
+// See ZooKeeper.java for an explanation of why we need @SuppressWarnings("try")
+@SuppressWarnings("try")
 public class ZooKeeperAdmin extends ZooKeeper {
     private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperAdmin.class);
 
