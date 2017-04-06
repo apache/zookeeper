@@ -43,7 +43,6 @@ import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.QuorumX509Util;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.common.X509Exception;
-import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
@@ -223,7 +222,6 @@ public class Leader {
         this.self = self;
         try {
             if (self.shouldUsePortUnification()) {
-
                 if (self.getQuorumListenOnAllIPs()) {
                     ss = new UnifiedServerSocket(new QuorumX509Util(), self.getQuorumAddress().getPort());
                 } else {
