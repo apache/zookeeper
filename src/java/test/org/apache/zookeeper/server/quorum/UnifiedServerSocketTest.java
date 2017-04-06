@@ -31,10 +31,14 @@ import javax.net.ssl.HandshakeCompletedEvent;
 import javax.net.ssl.HandshakeCompletedListener;
 import javax.net.ssl.SSLSocket;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
 public class UnifiedServerSocketTest {
+
+    private static final int MAX_RETRIES = 5;
+    private static final int TIMEOUT = 1000;
 
     private X509Util x509Util;
     private int port;
@@ -74,8 +78,21 @@ public class UnifiedServerSocketTest {
         ServerThread serverThread = new ServerThread();
         serverThread.start();
 
-        SSLSocket sslSocket = x509Util.createSSLSocket();
-        sslSocket.connect(new InetSocketAddress(port), 1000);
+        SSLSocket sslSocket = null;
+        int retries = 0;
+        while (retries < MAX_RETRIES) {
+            try {
+                sslSocket = x509Util.createSSLSocket();
+                sslSocket.setSoTimeout(TIMEOUT);
+                sslSocket.connect(new InetSocketAddress(port), TIMEOUT);
+                break;
+            } catch (ConnectException connectException) {
+                connectException.printStackTrace();
+                Thread.sleep(TIMEOUT);
+            }
+            retries++;
+        }
+
         sslSocket.addHandshakeCompletedListener(new HandshakeCompletedListener() {
             @Override
             public void handshakeCompleted(HandshakeCompletedEvent handshakeCompletedEvent) {
@@ -118,8 +135,21 @@ public class UnifiedServerSocketTest {
         ServerThread serverThread = new ServerThread();
         serverThread.start();
 
-        Socket socket = new Socket();
-        socket.connect(new InetSocketAddress(port), 1000);
+        Socket socket = null;
+        int retries = 0;
+        while (retries < MAX_RETRIES) {
+            try {
+                socket = new Socket();
+                socket.setSoTimeout(TIMEOUT);
+                socket.connect(new InetSocketAddress(port), TIMEOUT);
+                break;
+            } catch (ConnectException connectException) {
+                connectException.printStackTrace();
+                Thread.sleep(TIMEOUT);
+            }
+            retries++;
+        }
+
         socket.getOutputStream().write("hello".getBytes());
         socket.getOutputStream().flush();
 
