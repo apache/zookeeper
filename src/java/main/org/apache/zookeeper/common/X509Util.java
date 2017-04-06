@@ -39,7 +39,9 @@ import javax.net.ssl.X509TrustManager;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
@@ -273,7 +275,7 @@ public abstract class X509Util {
                         @Override
                         public void checkClientTrusted(X509Certificate[] chain, String authType, Socket socket) throws CertificateException {
                             if (hostnameVerificationEnabled && shouldVerifyClientHostname) {
-                                performHostnameVerification(socket.getInetAddress().getHostName(), chain[0]);
+                                performHostVerification(socket.getInetAddress(), chain[0]);
                             }
                             x509ExtendedTrustManager.checkClientTrusted(chain, authType, socket);
                         }
@@ -281,7 +283,7 @@ public abstract class X509Util {
                         @Override
                         public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket) throws CertificateException {
                             if (hostnameVerificationEnabled) {
-                                performHostnameVerification(socket.getInetAddress().getHostName(), chain[0]);
+                                performHostVerification(socket.getInetAddress(), chain[0]);
                             }
                             x509ExtendedTrustManager.checkServerTrusted(chain, authType, socket);
                         }
@@ -289,7 +291,11 @@ public abstract class X509Util {
                         @Override
                         public void checkClientTrusted(X509Certificate[] chain, String authType, SSLEngine engine) throws CertificateException {
                             if (hostnameVerificationEnabled && shouldVerifyClientHostname) {
-                                performHostnameVerification(engine.getPeerHost(), chain[0]);
+                                try {
+                                    performHostVerification(InetAddress.getByName(engine.getPeerHost()), chain[0]);
+                                } catch (UnknownHostException e) {
+                                    throw new CertificateException("failed to verify host", e);
+                                }
                             }
                             x509ExtendedTrustManager.checkServerTrusted(chain, authType, engine);
                         }
@@ -297,7 +303,11 @@ public abstract class X509Util {
                         @Override
                         public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine engine) throws CertificateException {
                             if (hostnameVerificationEnabled) {
-                                performHostnameVerification(engine.getPeerHost(), chain[0]);
+                                try {
+                                    performHostVerification(InetAddress.getByName(engine.getPeerHost()), chain[0]);
+                                } catch (UnknownHostException e) {
+                                    throw new CertificateException("failed to verify host", e);
+                                }
                             }
                             x509ExtendedTrustManager.checkServerTrusted(chain, authType, engine);
                         }
@@ -312,11 +322,18 @@ public abstract class X509Util {
                             x509ExtendedTrustManager.checkServerTrusted(chain, authType);
                         }
 
-                        private void performHostnameVerification(String hostname, X509Certificate certificate) throws CertificateException {
+                        private void performHostVerification(InetAddress inetAddress, X509Certificate certificate) throws CertificateException {
                             try {
-                                hostnameVerifier.verify(hostname, certificate);
-                            } catch (SSLException e) {
-                                throw new CertificateException("Failed to verify hostname", e);
+                                hostnameVerifier.verify(inetAddress.getHostAddress(), certificate);
+                            } catch (SSLException addressVerificationException) {
+                                try {
+                                    LOG.debug("Failed to verify host address, attempting to verify host name with reverse dns lookup", addressVerificationException);
+                                    hostnameVerifier.verify(inetAddress.getHostName(), certificate);
+                                } catch (SSLException hostnameVerificationException) {
+                                    LOG.error("Failed to verify host address", addressVerificationException);
+                                    LOG.error("Failed to verify hostname", hostnameVerificationException);
+                                    throw new CertificateException("Failed to verify both host address and host name", hostnameVerificationException);
+                                }
                             }
                         }
                     };
