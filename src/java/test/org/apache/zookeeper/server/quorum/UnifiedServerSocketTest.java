@@ -101,10 +101,10 @@ public class UnifiedServerSocketTest {
         });
         sslSocket.startHandshake();
 
-        serverThread.join(1000);
+        serverThread.join(TIMEOUT);
 
         long start = Time.currentElapsedTime();
-        while (Time.currentElapsedTime() < start + 10000) {
+        while (Time.currentElapsedTime() < start + TIMEOUT) {
             if (handshakeCompleted) {
                 return;
             }
@@ -156,7 +156,7 @@ public class UnifiedServerSocketTest {
         byte[] readBytes = new byte[testData.length];
         socket.getInputStream().read(readBytes, 0, testData.length);
 
-        serverThread.join(1000);
+        serverThread.join(TIMEOUT);
 
         Assert.assertArrayEquals(testData, readBytes);
     }
