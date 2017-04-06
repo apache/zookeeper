@@ -110,7 +110,7 @@ public class LearnerTest extends ZKTestCase {
         InetSocketAddress addr = new InetSocketAddress(1111);
 
         // we expect this to throw an IOException since we're faking socket connect errors every time
-        learner.connectToLeader(new QuorumPeer.QuorumServer(0, addr));
+        learner.connectToLeader(addr);
     }
     @Test
     public void connectionInitLimitTimeoutTest() throws Exception {
@@ -130,7 +130,7 @@ public class LearnerTest extends ZKTestCase {
 
         // we expect this to throw an IOException since we're faking socket connect errors every time
         try {
-            learner.connectToLeader(new QuorumPeer.QuorumServer(0, addr));
+            learner.connectToLeader(addr);
             Assert.fail("should have thrown IOException!");
         } catch (IOException e) {
             //good, wanted to see that, let's make sure we ran out of time

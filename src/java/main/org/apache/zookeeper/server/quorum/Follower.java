@@ -71,9 +71,9 @@ public class Follower extends Learner{
         self.end_fle = 0;
         fzk.registerJMX(new FollowerBean(this, zk), self.jmxLocalPeerBean);
         try {
-            QuorumPeer.QuorumServer leader = findLeader();
+            InetSocketAddress addr = findLeader();
             try {
-                connectToLeader(leader);
+                connectToLeader(addr);
                 long newEpochZxid = registerWithLeader(Leader.FOLLOWERINFO);
                 if (self.isReconfigStateChange())
                    throw new Exception("learned about role change");

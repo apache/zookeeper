@@ -198,18 +198,21 @@ public class Learner {
     /**
      * Returns the address of the node we think is the leader.
      */
-    protected QuorumServer findLeader() {
+    protected InetSocketAddress findLeader() {
         InetSocketAddress addr = null;
         // Find the leader by id
         Vote current = self.getCurrentVote();
         for (QuorumServer s : self.getView().values()) {
             if (s.id == current.getId()) {
-                return s;
+                addr = s.addr;
+                break;
             }
         }
-        LOG.warn("Couldn't find the leader with id = "
+        if (addr == null) {
+            LOG.warn("Couldn't find the leader with id = "
                     + current.getId());
-        return null;
+        }
+        return addr;
     }
    
     /**
@@ -232,12 +235,12 @@ public class Learner {
     /**
      * Establish a connection with the Leader found by findLeader. Retries
      * until either initLimit time has elapsed or 5 tries have happened. 
-     * @param leader - the QuorumServer elected leader
+     * @param addr - the address of the Leader to connect to.
      * @throws IOException - if the socket connection fails on the 5th attempt
      * @throws ConnectException
      * @throws InterruptedException
      */
-    protected void connectToLeader(QuorumServer leader)
+    protected void connectToLeader(InetSocketAddress addr)
     throws IOException, InterruptedException, X509Exception {
         QuorumX509Util quorumX509Util = new QuorumX509Util();
         createSocket(quorumX509Util);
@@ -255,7 +258,7 @@ public class Learner {
                     throw new IOException("initLimit exceeded on retries.");
                 }
 
-                sockConnect(sock, leader.addr, Math.min(self.tickTime * self.syncLimit, remainingInitLimitTime));
+                sockConnect(sock, addr, Math.min(self.tickTime * self.syncLimit, remainingInitLimitTime));
                 if (self.isSslQuorum())  {
                     ((SSLSocket) sock).startHandshake();
                 }
@@ -267,17 +270,17 @@ public class Learner {
                 if (remainingInitLimitTime <= 1000) {
                     LOG.error("Unexpected exception, initLimit exceeded. tries=" + tries +
                              ", remaining init limit=" + remainingInitLimitTime +
-                             ", connecting to " + leader.addr,e);
+                             ", connecting to " + addr,e);
                     throw e;
                 } else if (tries >= 4) {
                     LOG.error("Unexpected exception, retries exceeded. tries=" + tries +
                              ", remaining init limit=" + remainingInitLimitTime +
-                             ", connecting to " + leader.addr,e);
+                             ", connecting to " + addr,e);
                     throw e;
                 } else {
                     LOG.warn("Unexpected exception, tries=" + tries +
                             ", remaining init limit=" + remainingInitLimitTime +
-                            ", connecting to " + leader.addr,e);
+                            ", connecting to " + addr,e);
                     createSocket(quorumX509Util);
                 }
             }

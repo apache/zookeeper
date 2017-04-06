@@ -111,8 +111,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     private ZKDatabase zkDb;
 
     public static class QuorumServer {
-        public String hostname = null;
-
         public InetSocketAddress addr = null;
 
         public InetSocketAddress electionAddr = null;
@@ -221,7 +219,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 }
 
                 // is client_config a host:port or just a port
-                hostname = (clientParts.length == 2) ? clientParts[0] : "0.0.0.0";
+                String hostname = (clientParts.length == 2) ? clientParts[0] : "0.0.0.0";
                 try {
                     clientAddr = new InetSocketAddress(hostname,
                             Integer.parseInt(clientParts[clientParts.length - 1]));
@@ -232,18 +230,17 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             }
 
             // server_config should be either host:port:port or host:port:port:type
-            hostname = serverParts[0];
             try {
-                addr = new InetSocketAddress(hostname,
+                addr = new InetSocketAddress(serverParts[0],
                         Integer.parseInt(serverParts[1]));
             } catch (NumberFormatException e) {
-                throw new ConfigException("Address unresolved: " + hostname + ":" + serverParts[1]);
+                throw new ConfigException("Address unresolved: " + serverParts[0] + ":" + serverParts[1]);
             }
             try {
-                electionAddr = new InetSocketAddress(hostname,
+                electionAddr = new InetSocketAddress(serverParts[0],
                         Integer.parseInt(serverParts[2]));
             } catch (NumberFormatException e) {
-                throw new ConfigException("Address unresolved: " + hostname + ":" + serverParts[2]);
+                throw new ConfigException("Address unresolved: " + serverParts[0] + ":" + serverParts[2]);
             }
 
             if (serverParts.length == 4) {
