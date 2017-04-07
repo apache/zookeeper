@@ -32,52 +32,50 @@ import java.net.Socket;
 import java.net.SocketException;
 
 public class UnifiedServerSocket extends ServerSocket {
-  private static final Logger LOG = LoggerFactory.getLogger(UnifiedServerSocket.class);
+    private static final Logger LOG = LoggerFactory.getLogger(UnifiedServerSocket.class);
 
-  private X509Util x509Util;
+    private X509Util x509Util;
 
-  public UnifiedServerSocket(X509Util x509Util) throws IOException {
-    super();
-    this.x509Util = x509Util;
-  }
-
-  public UnifiedServerSocket(X509Util x509Util, int port) throws IOException {
-    super(port);
-    this.x509Util = x509Util;
-  }
-
-  @Override
-  public Socket accept() throws IOException {
-    if (isClosed()) {
-      throw new SocketException("Socket is closed");
+    public UnifiedServerSocket(X509Util x509Util) throws IOException {
+        super();
+        this.x509Util = x509Util;
     }
-    if (!isBound()) {
-      throw new SocketException("Socket is not bound yet");
+
+    public UnifiedServerSocket(X509Util x509Util, int port) throws IOException {
+        super(port);
+        this.x509Util = x509Util;
     }
-    final Socket bufferedSocket = new BufferedSocket(null);
-    implAccept(bufferedSocket);
 
-    bufferedSocket.getInputStream().mark(6);
+    @Override
+    public Socket accept() throws IOException {
+        if (isClosed()) {
+            throw new SocketException("Socket is closed");
+        }
+        if (!isBound()) {
+            throw new SocketException("Socket is not bound yet");
+        }
+        final Socket bufferedSocket = new BufferedSocket(null);
+        implAccept(bufferedSocket);
 
-    byte[] litmus = new byte[5];
-    bufferedSocket.getInputStream().read(litmus, 0, 5);
+        bufferedSocket.getInputStream().mark(6);
 
-    bufferedSocket.getInputStream().reset();
+        byte[] litmus = new byte[5];
+        int bytesRead = bufferedSocket.getInputStream().read(litmus, 0, 5);
+        bufferedSocket.getInputStream().reset();
 
-    boolean isSsl = SslHandler.isEncrypted(ChannelBuffers.wrappedBuffer(litmus));
-    if (isSsl) {
-      LOG.info(getInetAddress() + " attempting to connect over ssl");
-      SSLSocket sslSocket;
-      try {
-        sslSocket = (SSLSocket) x509Util.getDefaultSSLContext().getSocketFactory().createSocket(bufferedSocket, null, bufferedSocket.getPort(), false);
-      } catch (X509Exception.SSLContextException e) {
-        throw new IOException("failed to create SSL context", e);
-      }
-      sslSocket.setUseClientMode(false);
-      return sslSocket;
-    } else {
-      LOG.info(getInetAddress() + " attempting to connect without ssl");
-      return bufferedSocket;
+        if (bytesRead == 5 && SslHandler.isEncrypted(ChannelBuffers.wrappedBuffer(litmus))) {
+            LOG.info(getInetAddress() + " attempting to connect over ssl");
+            SSLSocket sslSocket;
+            try {
+                sslSocket = (SSLSocket) x509Util.getDefaultSSLContext().getSocketFactory().createSocket(bufferedSocket, null, bufferedSocket.getPort(), false);
+            } catch (X509Exception.SSLContextException e) {
+                throw new IOException("failed to create SSL context", e);
+            }
+            sslSocket.setUseClientMode(false);
+            return sslSocket;
+        } else {
+            LOG.info(getInetAddress() + " attempting to connect without ssl");
+            return bufferedSocket;
+        }
     }
-  }
 }

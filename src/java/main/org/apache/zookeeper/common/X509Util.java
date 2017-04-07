@@ -176,13 +176,10 @@ public abstract class X509Util {
         if (trustStoreLocationProp == null) {
             LOG.warn(getSslTruststoreLocationProperty() + " not specified");
         } else {
-            if (trustStoreLocationProp == null) {
-                throw new SSLContextException(getSslTruststoreLocationProperty() + " not specified for client connection");
-            }
             try {
-
                 trustManagers = new TrustManager[]{
-                        createTrustManager(trustStoreLocationProp, trustStorePasswordProp, sslCrlEnabled, sslOcspEnabled, sslServerHostnameVerificationEnabled, shouldVerifyClientHostname())};
+                        createTrustManager(trustStoreLocationProp, trustStorePasswordProp, sslCrlEnabled, sslOcspEnabled,
+                                sslServerHostnameVerificationEnabled, shouldVerifyClientHostname())};
             } catch (TrustManagerException e) {
                 throw new SSLContextException("Failed to create TrustManager", e);
             }
@@ -346,7 +343,9 @@ public abstract class X509Util {
             if (inputStream != null) {
                 try {
                     inputStream.close();
-                } catch (IOException e) {}
+                } catch (IOException e) {
+                    LOG.info("failed to close TrustStore input stream", e);
+                }
             }
         }
     }
