@@ -384,7 +384,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         System.clearProperty(quorumX509Util.getSslCrlEnabledProperty());
     }
 
-    @Test
+    @Test(timeout = 300000)
     public void testQuorumSSL() throws Exception {
         q1 = new MainThread(1, clientPortQp1, quorumConfiguration, SSL_QUORUM_ENABLED);
         q2 = new MainThread(2, clientPortQp2, quorumConfiguration, SSL_QUORUM_ENABLED);
@@ -405,7 +405,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         Assert.assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
     }
 
-    @Test
+    @Test(timeout = 300000)
     public void testRollingUpgrade() throws Exception {
         // Form a quorum without ssl
         q1 = new MainThread(1, clientPortQp1, quorumConfiguration);
@@ -453,7 +453,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         }
     }
 
-    @Test
+    @Test(timeout = 300000)
     public void testHostnameVerificationWithInvalidHostname() throws Exception {
         String badhostnameKeystorePath = tmpDir + "/badhost.jks";
         X509Certificate badHostCert = buildEndEntityCert(defaultKeyPair, rootCertificate, rootKeyPair.getPrivate(),
@@ -463,7 +463,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         testHostnameVerification(badhostnameKeystorePath, false);
     }
 
-    @Test
+    @Test(timeout = 300000)
     public void testHostnameVerificationWithInvalidIPAddress() throws Exception {
         String badhostnameKeystorePath = tmpDir + "/badhost.jks";
         X509Certificate badHostCert = buildEndEntityCert(defaultKeyPair, rootCertificate, rootKeyPair.getPrivate(),
@@ -473,7 +473,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         testHostnameVerification(badhostnameKeystorePath, false);
     }
 
-    @Test
+    @Test(timeout = 300000)
     public void testHostnameVerificationWithInvalidIpAddressAndInvalidHostname() throws Exception {
         String badhostnameKeystorePath = tmpDir + "/badhost.jks";
         X509Certificate badHostCert = buildEndEntityCert(defaultKeyPair, rootCertificate, rootKeyPair.getPrivate(),
@@ -483,7 +483,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         testHostnameVerification(badhostnameKeystorePath, false);
     }
 
-    @Test
+    @Test(timeout = 300000)
     public void testHostnameVerificationWithInvalidIpAddressAndValidHostname() throws Exception {
         String badhostnameKeystorePath = tmpDir + "/badhost.jks";
         X509Certificate badHostCert = buildEndEntityCert(defaultKeyPair, rootCertificate, rootKeyPair.getPrivate(),
@@ -493,7 +493,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         testHostnameVerification(badhostnameKeystorePath, true);
     }
 
-    @Test
+    @Test(timeout = 300000)
     public void testHostnameVerificationWithValidIpAddressAndInvalidHostname() throws Exception {
         String badhostnameKeystorePath = tmpDir + "/badhost.jks";
         X509Certificate badHostCert = buildEndEntityCert(defaultKeyPair, rootCertificate, rootKeyPair.getPrivate(),
@@ -551,7 +551,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
     }
 
 
-    @Test
+    @Test(timeout = 300000)
     public void testCertificateRevocationList() throws Exception {
         q1 = new MainThread(1, clientPortQp1, quorumConfiguration, SSL_QUORUM_ENABLED);
         q2 = new MainThread(2, clientPortQp2, quorumConfiguration, SSL_QUORUM_ENABLED);
@@ -605,7 +605,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         Assert.assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
     }
 
-    @Test
+    @Test(timeout = 300000)
     public void testOCSP() throws Exception {
         Integer ocspPort = PortAssignment.unique();
 

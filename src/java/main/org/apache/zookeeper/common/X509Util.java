@@ -18,7 +18,6 @@
 package org.apache.zookeeper.common;
 
 
-import org.apache.http.conn.ssl.DefaultHostnameVerifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,8 +25,6 @@ import javax.net.ssl.CertPathTrustManagerParameters;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLSocket;
@@ -39,17 +36,12 @@ import javax.net.ssl.X509TrustManager;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.Socket;
-import java.net.UnknownHostException;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.security.Security;
-import java.security.cert.CertificateException;
 import java.security.cert.PKIXBuilderParameters;
 import java.security.cert.X509CertSelector;
-import java.security.cert.X509Certificate;
 
 import static org.apache.zookeeper.common.X509Exception.*;
 
@@ -260,80 +252,7 @@ public abstract class X509Util {
 
             for (final TrustManager tm : tmf.getTrustManagers()) {
                 if (tm instanceof X509ExtendedTrustManager) {
-                    return new X509ExtendedTrustManager() {
-                        X509ExtendedTrustManager x509ExtendedTrustManager = (X509ExtendedTrustManager) tm;
-                        DefaultHostnameVerifier hostnameVerifier = new DefaultHostnameVerifier();
-
-                        @Override
-                        public X509Certificate[] getAcceptedIssuers() {
-                            return x509ExtendedTrustManager.getAcceptedIssuers();
-                        }
-
-                        @Override
-                        public void checkClientTrusted(X509Certificate[] chain, String authType, Socket socket) throws CertificateException {
-                            if (hostnameVerificationEnabled && shouldVerifyClientHostname) {
-                                performHostVerification(socket.getInetAddress(), chain[0]);
-                            }
-                            x509ExtendedTrustManager.checkClientTrusted(chain, authType, socket);
-                        }
-
-                        @Override
-                        public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket) throws CertificateException {
-                            if (hostnameVerificationEnabled) {
-                                performHostVerification(socket.getInetAddress(), chain[0]);
-                            }
-                            x509ExtendedTrustManager.checkServerTrusted(chain, authType, socket);
-                        }
-
-                        @Override
-                        public void checkClientTrusted(X509Certificate[] chain, String authType, SSLEngine engine) throws CertificateException {
-                            if (hostnameVerificationEnabled && shouldVerifyClientHostname) {
-                                try {
-                                    performHostVerification(InetAddress.getByName(engine.getPeerHost()), chain[0]);
-                                } catch (UnknownHostException e) {
-                                    throw new CertificateException("failed to verify host", e);
-                                }
-                            }
-                            x509ExtendedTrustManager.checkServerTrusted(chain, authType, engine);
-                        }
-
-                        @Override
-                        public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine engine) throws CertificateException {
-                            if (hostnameVerificationEnabled) {
-                                try {
-                                    performHostVerification(InetAddress.getByName(engine.getPeerHost()), chain[0]);
-                                } catch (UnknownHostException e) {
-                                    throw new CertificateException("failed to verify host", e);
-                                }
-                            }
-                            x509ExtendedTrustManager.checkServerTrusted(chain, authType, engine);
-                        }
-
-                        @Override
-                        public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-                            x509ExtendedTrustManager.checkClientTrusted(chain, authType);
-                        }
-
-                        @Override
-                        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-                            x509ExtendedTrustManager.checkServerTrusted(chain, authType);
-                        }
-
-                        private void performHostVerification(InetAddress inetAddress, X509Certificate certificate) throws CertificateException {
-                            try {
-                                hostnameVerifier.verify(inetAddress.getHostAddress(), certificate);
-                            } catch (SSLException addressVerificationException) {
-                                try {
-                                    LOG.debug("Failed to verify host address, attempting to verify host name with reverse dns lookup", addressVerificationException);
-                                    hostnameVerifier.verify(inetAddress.getHostName(), certificate);
-                                } catch (SSLException hostnameVerificationException) {
-                                    LOG.error("Failed to verify host address", addressVerificationException);
-                                    LOG.error("Failed to verify hostname", hostnameVerificationException);
-                                    throw new CertificateException("Failed to verify both host address and host name", hostnameVerificationException);
-                                }
-                            }
-                        }
-                    };
+                    return new ZKTrustManager((X509ExtendedTrustManager) tm, hostnameVerificationEnabled, shouldVerifyClientHostname);
                 }
             }
             throw new TrustManagerException("Couldn't find X509TrustManager");

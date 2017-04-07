@@ -17,6 +17,7 @@
  */
 package org.apache.zookeeper.common;
 
+import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.server.ServerCnxnFactory;
@@ -39,6 +40,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLSocket;
 import java.io.FileOutputStream;
 import java.math.BigInteger;
@@ -64,6 +66,7 @@ public class X509UtilTest extends ZKTestCase {
     private static KeyPair rootKeyPair;
 
     private X509Util x509Util;
+    private String[] customCipherSuites = new String[]{"SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA", "SSL_DH_anon_EXPORT_WITH_DES40_CBC_SHA"};
 
     @BeforeClass
     public static void createKeyPair() throws Exception {
@@ -154,18 +157,19 @@ public class X509UtilTest extends ZKTestCase {
         System.clearProperty(x509Util.getSslHostnameVerificationEnabledProperty());
         System.clearProperty(x509Util.getSslOcspEnabledProperty());
         System.clearProperty(x509Util.getSslCrlEnabledProperty());
+        System.clearProperty(x509Util.getCipherSuitesProperty());
         System.clearProperty("com.sun.net.ssl.checkRevocation");
         System.clearProperty("com.sun.security.enableCRLDP");
         Security.setProperty("com.sun.security.enableCRLDP", "false");
     }
 
-    @Test
+    @Test(timeout = 1000)
     public void testCreateSSLContextWithoutCustomProtocol() throws Exception {
         SSLContext sslContext = x509Util.getDefaultSSLContext();
         Assert.assertEquals(X509Util.DEFAULT_PROTOCOL, sslContext.getProtocol());
     }
 
-    @Test
+    @Test(timeout = 1000)
     public void testCreateSSLContextWithCustomProtocol() throws Exception {
         final String protocol = "TLSv1.1";
         System.setProperty(x509Util.getSslProtocolProperty(), protocol);
@@ -173,37 +177,35 @@ public class X509UtilTest extends ZKTestCase {
         Assert.assertEquals(protocol, sslContext.getProtocol());
     }
 
-    @Test
+    @Test(timeout = 1000)
     public void testCreateSSLContextWithoutTrustStorePassword() throws Exception {
         writeTrustStore(null);
         System.clearProperty(x509Util.getSslTruststorePasswdProperty());
         x509Util.getDefaultSSLContext();
     }
 
-    @Test(expected = X509Exception.SSLContextException.class)
+    @Test(timeout = 1000, expected = X509Exception.SSLContextException.class)
     public void testCreateSSLContextWithoutKeyStoreLocation() throws Exception {
         System.clearProperty(x509Util.getSslKeystoreLocationProperty());
         x509Util.getDefaultSSLContext();
     }
 
-    @Test(expected = X509Exception.SSLContextException.class)
+    @Test(timeout = 1000, expected = X509Exception.SSLContextException.class)
     public void testCreateSSLContextWithoutKeyStorePassword() throws Exception {
         System.clearProperty(x509Util.getSslKeystorePasswdProperty());
         x509Util.getDefaultSSLContext();
     }
 
-    @Test
+    @Test(timeout = 1000)
     public void testCreateSSLContextWithCustomCipherSuites() throws Exception {
-        String[] cipherSuites = {"SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA", "SSL_DH_anon_EXPORT_WITH_DES40_CBC_SHA"};
-        System.setProperty(x509Util.getCipherSuitesProperty(), cipherSuites[0] + "," + cipherSuites[1]);
-        x509Util = new ClientX509Util();
+        setCustomCipherSuites();
         SSLSocket sslSocket = x509Util.createSSLSocket();
-        Assert.assertArrayEquals(cipherSuites, sslSocket.getEnabledCipherSuites());
+        Assert.assertArrayEquals(customCipherSuites, sslSocket.getEnabledCipherSuites());
     }
 
     // It would be great to test the value of PKIXBuilderParameters#setRevocationEnabled but it does not appear to be
     // possible
-    @Test
+    @Test(timeout = 1000)
     public void testCRLEnabled() throws Exception {
         System.setProperty(x509Util.getSslCrlEnabledProperty(), "true");
         x509Util.getDefaultSSLContext();
@@ -212,7 +214,7 @@ public class X509UtilTest extends ZKTestCase {
         Assert.assertFalse(Boolean.valueOf(Security.getProperty("ocsp.enable")));
     }
 
-    @Test
+    @Test(timeout = 1000)
     public void testCRLDisabled() throws Exception {
         x509Util.getDefaultSSLContext();
         Assert.assertFalse(Boolean.valueOf(System.getProperty("com.sun.net.ssl.checkRevocation")));
@@ -220,7 +222,7 @@ public class X509UtilTest extends ZKTestCase {
         Assert.assertFalse(Boolean.valueOf(Security.getProperty("ocsp.enable")));
     }
 
-    @Test
+    @Test(timeout = 1000)
     public void testOCSPEnabled() throws Exception {
         System.setProperty(x509Util.getSslOcspEnabledProperty(), "true");
         x509Util.getDefaultSSLContext();
@@ -228,4 +230,37 @@ public class X509UtilTest extends ZKTestCase {
         Assert.assertTrue(Boolean.valueOf(System.getProperty("com.sun.security.enableCRLDP")));
         Assert.assertTrue(Boolean.valueOf(Security.getProperty("ocsp.enable")));
     }
+
+    @Test(timeout = 1000)
+    public void testCreateSSLSocket() throws Exception {
+        setCustomCipherSuites();
+        SSLSocket sslSocket = x509Util.createSSLSocket();
+        Assert.assertArrayEquals(customCipherSuites, sslSocket.getEnabledCipherSuites());
+        Assert.assertTrue(sslSocket.getNeedClientAuth());
+    }
+
+    @Test(timeout = 1000)
+    public void testCreateSSLServerSocketWithoutPort() throws Exception {
+        setCustomCipherSuites();
+        SSLServerSocket sslServerSocket = x509Util.createSSLServerSocket();
+        Assert.assertArrayEquals(customCipherSuites, sslServerSocket.getEnabledCipherSuites());
+        Assert.assertTrue(sslServerSocket.getNeedClientAuth());
+    }
+
+    @Test(timeout = 1000)
+    public void testCreateSSLServerSocketWithPort() throws Exception {
+        int port = PortAssignment.unique();
+        setCustomCipherSuites();
+        SSLServerSocket sslServerSocket = x509Util.createSSLServerSocket(port);
+        Assert.assertEquals(sslServerSocket.getLocalPort(), port);
+        Assert.assertArrayEquals(customCipherSuites, sslServerSocket.getEnabledCipherSuites());
+        Assert.assertTrue(sslServerSocket.getNeedClientAuth());
+    }
+
+    // Warning: this will reset the x509Util
+    private void setCustomCipherSuites() {
+        System.setProperty(x509Util.getCipherSuitesProperty(), customCipherSuites[0] + "," + customCipherSuites[1]);
+        x509Util = new ClientX509Util();
+    }
+
 }
