@@ -76,11 +76,11 @@ import java.util.*;
  * A client needs an object of a class implementing Watcher interface for
  * processing the events delivered to the client.
  *
- * When a client drops current connection and re-connects to a server, all the
+ * When a client drops the current connection and re-connects to a server, all the
  * existing watches are considered as being triggered but the undelivered events
  * are lost. To emulate this, the client will generate a special event to tell
- * the event handler a connection has been dropped. This special event has type
- * EventNone and state sKeeperStateDisconnected.
+ * the event handler a connection has been dropped. This special event has
+ * EventType None and KeeperState Disconnected.
  *
  */
 public class ZooKeeper {
