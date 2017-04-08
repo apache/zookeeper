@@ -46,7 +46,7 @@ public abstract class ServerCnxnFactory {
         public void processPacket(ByteBuffer packet, ServerCnxn src);
     }
     
-    Logger LOG = LoggerFactory.getLogger(ServerCnxnFactory.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ServerCnxnFactory.class);
 
     /**
      * The buffer will cause the connection to be close when we do a send.
@@ -107,8 +107,9 @@ public abstract class ServerCnxnFactory {
             serverCnxnFactoryName = NIOServerCnxnFactory.class.getName();
         }
         try {
-            return (ServerCnxnFactory) Class.forName(serverCnxnFactoryName)
-                                                .newInstance();
+            ServerCnxnFactory serverCnxnFactory = (ServerCnxnFactory) Class.forName(serverCnxnFactoryName).newInstance();
+            LOG.info("Using {} as server connection factory", serverCnxnFactoryName);
+            return serverCnxnFactory;
         } catch (Exception e) {
             IOException ioe = new IOException("Couldn't instantiate "
                     + serverCnxnFactoryName);
