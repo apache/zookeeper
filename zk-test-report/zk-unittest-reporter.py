@@ -22,9 +22,9 @@
 # Testing environment may not have all dependencies.
 
 """
-This script uses Jenkins REST api to collect test result(s) of given build/builds and generates
-flakyness data about unittests.
-Print help: report-flakies.py -h
+This script uses Jenkins REST api to collect test results of given builds and generate test report.
+It is primarily used to monitor build health and flaky tests across different builds.
+Print help: zk-unittest-reporter.py -h
 """
 
 import argparse
@@ -50,8 +50,16 @@ PATTERN_SUCCEED_TEST = re.compile('(.*)- SUCCEEDED (.*)')
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 
+# Set of timeout/failed tests across all given urls.
+all_timeout_tests = set()
+all_failed_tests = set()
+all_hanging_tests = set()
+# Contains { <url> : { <bad_test> : { 'all': [<build ids>], 'failed': [<build ids>],
+#                                     'timeout': [<build ids>], 'hanging': [<builds ids>] } } }
+url_to_bad_test_results = OrderedDict()
 
-def analyze_build(build_url):
+
+def classify_tests(build_url):
     response = requests.get(build_url)
     if response.status_code != 200:
         print "Error getting consoleText. Response = {} {}".format(
@@ -66,7 +74,7 @@ def analyze_build(build_url):
     for line in response.content.splitlines():
         ans = PATTERN_RUNNING_TEST.match(line)
         if ans:
-            print ans
+
             test_case = ans.group(2)
             if test_case in all_tests_set:
                 print ("ERROR! Multiple tests with same name '{}'. Might get wrong results "
@@ -97,7 +105,7 @@ def generate_report(build_url):
     if response["building"]:
         logger.info("Skipping this build since it is in progress.")
         return {}
-    build_result = analyze_build(build_url + "/consoleText")
+    build_result = classify_tests(build_url + "/consoleText")
     if not build_result:
         logger.info("Ignoring build %s", build_url)
         return
@@ -133,109 +141,94 @@ def parse_cli_args(cli_args):
     return final_expanded_urls
 
 
-# Set of timeout/failed tests across all given urls.
-all_timeout_tests = set()
-all_failed_tests = set()
-all_hanging_tests = set()
-# Contains { <url> : { <bad_test> : { 'all': [<build ids>], 'failed': [<build ids>],
-#                                     'timeout': [<build ids>], 'hanging': [<builds ids>] } } }
-url_to_bad_test_results = OrderedDict()
-
-# Iterates over each url, gets test results and prints flaky tests.
-expanded_urls = parse_cli_args(args)
-for url_max_build in expanded_urls:
-    url = url_max_build["url"]
-    excludes = url_max_build["excludes"]
-    json_response = requests.get(url + "/api/json").json()
-    if json_response.has_key("builds"):
-        builds = json_response["builds"]
-        logger.info("Analyzing job: %s", url)
-    else:
-        builds = [{'number' : json_response["id"], 'url': url}]
-        logger.info("Analyzing build : %s", url)
-    build_id_to_results = {}
-    num_builds = 0
-    build_ids = []
-    build_ids_without_tests_run = []
-    for build in builds:
-        build_id = build["number"]
-        if build_id in excludes:
-            continue
-        result = generate_report(build["url"])
-        if not result:
-            continue
-        if len(result[0]) > 0:
-            build_id_to_results[build_id] = result
+def analyze_build(args):
+    # Iterates over each url, gets test results and prints flaky tests.
+    expanded_urls = parse_cli_args(args)
+    for url_max_build in expanded_urls:
+        url = url_max_build["url"]
+        excludes = url_max_build["excludes"]
+        json_response = requests.get(url + "/api/json").json()
+        if json_response.has_key("builds"):
+            builds = json_response["builds"]
+            logger.info("Analyzing job: %s", url)
         else:
-            build_ids_without_tests_run.append(build_id)
-        num_builds += 1
-        build_ids.append(build_id)
-        if num_builds == url_max_build["max_builds"]:
-            break
+            builds = [{'number' : json_response["id"], 'url': url}]
+            logger.info("Analyzing build : %s", url)
+        build_id_to_results = {}
+        num_builds = 0
+        build_ids = []
+        build_ids_without_tests_run = []
+        for build in builds:
+            build_id = build["number"]
+            if build_id in excludes:
+                continue
+            result = generate_report(build["url"])
+            if not result:
+                continue
+            if len(result[0]) > 0:
+                build_id_to_results[build_id] = result
+            else:
+                build_ids_without_tests_run.append(build_id)
+            num_builds += 1
+            build_ids.append(build_id)
+            if num_builds == url_max_build["max_builds"]:
+                break
 
-    # Collect list of bad tests.
-    bad_tests = set()
-    for build in build_id_to_results:
-        [_, failed_tests, timeout_tests, hanging_tests] = build_id_to_results[build]
-        all_timeout_tests.update(timeout_tests)
-        all_failed_tests.update(failed_tests)
-        # Note that timedout tests are already included in failed tests.
-        bad_tests.update(failed_tests.union(hanging_tests))
+        # Collect list of bad tests.
+        bad_tests = set()
+        for build in build_id_to_results:
+            [all_tests, failed_tests] = build_id_to_results[build]
+            all_failed_tests.update(failed_tests)
+            bad_tests.update(failed_tests)
 
-    # For each bad test, get build ids where it ran, timed out, failed or hanged.
-    test_to_build_ids = {key : {'all' : set(), 'timeout': set(), 'failed': set(),
-                                'hanging' : set(), 'bad_count' : 0}
-                         for key in bad_tests}
-    for build in build_id_to_results:
-        [all_tests, failed_tests, timeout_tests, hanging_tests] = build_id_to_results[build]
+        # For each bad test, get build ids where it ran, timed out, failed or hanged.
+        test_to_build_ids = {key : {'all' : set(), 'timeout': set(), 'failed': set(),
+                                    'hanging' : set(), 'bad_count' : 0}
+                             for key in bad_tests}
+        for build in build_id_to_results:
+            [all_tests, failed_tests] = build_id_to_results[build]
+            for bad_test in test_to_build_ids:
+                is_bad = False
+                if all_tests.issuperset([bad_test]):
+                    test_to_build_ids[bad_test]["all"].add(build)
+                if failed_tests.issuperset([bad_test]):
+                    test_to_build_ids[bad_test]['failed'].add(build)
+                    is_bad = True
+                if is_bad:
+                    test_to_build_ids[bad_test]['bad_count'] += 1
+
+        # Calculate flakyness % and successful builds for each test. Also sort build ids.
         for bad_test in test_to_build_ids:
-            is_bad = False
-            if all_tests.issuperset([bad_test]):
-                test_to_build_ids[bad_test]["all"].add(build)
-            if timeout_tests.issuperset([bad_test]):
-                test_to_build_ids[bad_test]['timeout'].add(build)
-                is_bad = True
-            if failed_tests.issuperset([bad_test]):
-                test_to_build_ids[bad_test]['failed'].add(build)
-                is_bad = True
-            if hanging_tests.issuperset([bad_test]):
-                test_to_build_ids[bad_test]['hanging'].add(build)
-                is_bad = True
-            if is_bad:
-                test_to_build_ids[bad_test]['bad_count'] += 1
+            test_result = test_to_build_ids[bad_test]
+            test_result['flakyness'] = test_result['bad_count'] * 100.0 / len(test_result['all'])
+            test_result['success'] = (test_result['all'].difference(
+                test_result['failed'].union(test_result['hanging'])))
+            for key in ['all', 'timeout', 'failed', 'hanging', 'success']:
+                test_result[key] = sorted(test_result[key])
 
-    # Calculate flakyness % and successful builds for each test. Also sort build ids.
-    for bad_test in test_to_build_ids:
-        test_result = test_to_build_ids[bad_test]
-        test_result['flakyness'] = test_result['bad_count'] * 100.0 / len(test_result['all'])
-        test_result['success'] = (test_result['all'].difference(
-            test_result['failed'].union(test_result['hanging'])))
-        for key in ['all', 'timeout', 'failed', 'hanging', 'success']:
-            test_result[key] = sorted(test_result[key])
+        # Sort tests in descending order by flakyness.
+        sorted_test_to_build_ids = OrderedDict(
+            sorted(test_to_build_ids.iteritems(), key=lambda x: x[1]['flakyness'], reverse=True))
+        url_to_bad_test_results[url] = sorted_test_to_build_ids
 
-    # Sort tests in descending order by flakyness.
-    sorted_test_to_build_ids = OrderedDict(
-        sorted(test_to_build_ids.iteritems(), key=lambda x: x[1]['flakyness'], reverse=True))
-    url_to_bad_test_results[url] = sorted_test_to_build_ids
+        if len(sorted_test_to_build_ids) > 0:
+            print "URL: {}".format(url)
+            print "{:>60}  {:10}  {:25}  {}".format(
+                "Test Name", "Total Runs", "Bad Runs(failed/timeout/hanging)", "Flakyness")
+            for bad_test in sorted_test_to_build_ids:
+                test_status = sorted_test_to_build_ids[bad_test]
+                print "{:>60}  {:10}  {:7} ( {:4} / {:5} / {:5} )  {:2.0f}%".format(
+                    bad_test, len(test_status['all']), test_status['bad_count'],
+                    len(test_status['failed']), len(test_status['timeout']),
+                    len(test_status['hanging']), test_status['flakyness'])
+        else:
+            print "No flaky tests founds."
+            if len(build_ids) == len(build_ids_without_tests_run):
+                print "None of the analyzed builds have test result."
 
-    if len(sorted_test_to_build_ids) > 0:
-        print "URL: {}".format(url)
-        print "{:>60}  {:10}  {:25}  {}".format(
-            "Test Name", "Total Runs", "Bad Runs(failed/timeout/hanging)", "Flakyness")
-        for bad_test in sorted_test_to_build_ids:
-            test_status = sorted_test_to_build_ids[bad_test]
-            print "{:>60}  {:10}  {:7} ( {:4} / {:5} / {:5} )  {:2.0f}%".format(
-                bad_test, len(test_status['all']), test_status['bad_count'],
-                len(test_status['failed']), len(test_status['timeout']),
-                len(test_status['hanging']), test_status['flakyness'])
-    else:
-        print "No flaky tests founds."
-        if len(build_ids) == len(build_ids_without_tests_run):
-            print "None of the analyzed builds have test result."
-
-    print "Builds analyzed: {}".format(build_ids)
-    print "Builds without any test runs: {}".format(build_ids_without_tests_run)
-    print ""
+        print "Builds analyzed: {}".format(build_ids)
+        print "Builds without any test runs: {}".format(build_ids_without_tests_run)
+        print ""
 
 
 def main():
@@ -254,17 +247,18 @@ def main():
     if args.verbose:
         logger.setLevel(logging.INFO)
 
+    analyze_build(args)
+
     all_bad_tests = all_hanging_tests.union(all_failed_tests)
     dev_support_dir = os.path.dirname(os.path.abspath(__file__))
-    with open(os.path.join(dev_support_dir, "flaky-dashboard-template.html"), "r") as f:
+    with open(os.path.join(dev_support_dir, "report_template.html"), "r") as f:
         template = Template(f.read())
 
-    with open("dashboard.html", "w") as f:
+    with open("report.html", "w") as f:
         datetime = time.strftime("%m/%d/%Y %H:%M:%S")
         f.write(template.render(datetime=datetime, bad_tests_count=len(all_bad_tests),
                                 results=url_to_bad_test_results))
 
 if __name__ == "__main__":
     main()
-
 

@@ -1,0 +1,137 @@
+<!--
+ - Licensed to the Apache Software Foundation (ASF) under one
+ - or more contributor license agreements.  See the NOTICE file
+ - distributed with this work for additional information
+ - regarding copyright ownership.  The ASF licenses this file
+ - to you under the Apache License, Version 2.0 (the
+ - "License"); you may not use this file except in compliance
+ - with the License.  You may obtain a copy of the License at
+ -
+ -     http://www.apache.org/licenses/LICENSE-2.0
+ -
+ - Unless required by applicable law or agreed to in writing, software
+ - distributed under the License is distributed on an "AS IS" BASIS,
+ - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ - See the License for the specific language governing permissions and
+ - limitations under the License.
+ -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Apache HBase Flaky Dashboard</title>
+    <style type="text/css">
+        table {
+            table-layout: fixed;
+        }
+        th {
+            font-size: 15px;
+        }
+        td {
+            font-size: 18px;
+            vertical-align: text-top;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .show_hide_button {
+            font-size: 100%;
+            padding: .5em 1em;
+            border: 0 rgba(0,0,0,0);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+<p>
+    <img style="vertical-align:middle; display:inline-block;" height="80px"
+         src="https://hbase.apache.org/images/hbase_logo_with_orca_large.png">
+    &nbsp;&nbsp;&nbsp;&nbsp;
+              <span style="font-size:50px; vertical-align:middle; display:inline-block;">
+                  Apache HBase Flaky Tests Dashboard
+              </span>
+</p>
+<span>Last updated: <b>04/10/2017 15:32:49</b></span><br>
+<span>Count of flaky tests (cumulated from all jobs):
+    <b>1</b></span><br>
+<br><br>
+<span style="font-size:20px;"><b>List of Jobs</b></span><br>
+<br>
+
+
+
+<a href="#job_1">https://builds.apache.org/job/ZooKeeper-trunk-openjdk7/</a>
+<br>
+
+<br>
+<br>
+<span style="font-size:20px;"><b>Results</b></span><br>
+<br>
+
+
+
+
+
+<span id="job_1" style="font-weight:bold;">
+    https://builds.apache.org/job/ZooKeeper-trunk-openjdk7/<br>
+    <a href="https://builds.apache.org/job/ZooKeeper-trunk-openjdk7/">
+        Go to <img height="16px" src="https://jenkins.io/sites/default/files/jenkins_favicon.ico">
+    </a>
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    <a href="#">Go to top</a>
+</span>
+<br/><br/>
+<table>
+    <tr>
+        <th width="400px">Test Name</th>
+        <th width="150px">Flakyness</th>
+        <th width="200px">Failed/Timeout/Hanging</th>
+        <th>Run Ids</th>
+    </tr>
+    
+    
+    
+    
+    
+    
+    <tr>
+        <td>testSessionEstablishment</td>
+        
+        
+        <td align="middle" style="background-color:#FF9999;">
+            
+            100.0% (1 / 1)
+        </td>
+        <td align="middle">
+            1 / 0 / 0
+        </td>
+        <td>
+            
+            <button class="show_hide_button" onclick="toggle('details_testSessionEstablishment_1')">
+                show/hide</button>
+            <br/>
+            <div id="details_testSessionEstablishment_1"
+                 style="display: none; width:500px; white-space: normal">
+                
+                Failed : 
+                <a href="https://builds.apache.org/job/ZooKeeper-trunk-openjdk7//1433">1433</a>&nbsp;
+                <br/>
+                Timed Out : <br/>
+                Hanging : <br/>
+                Succeeded : 
+            </div>
+        </td>
+    </tr>
+    
+</table>
+<br><br><br>
+
+<script type="text/javascript">
+    function toggle(id) {
+        if (document.getElementById(id).style["display"] == "none") {
+            document.getElementById(id).style["display"]  = "block";
+        } else {
+            document.getElementById(id).style["display"] = "none";
+        }
+    }
+</script>
+</body>
+</html>
