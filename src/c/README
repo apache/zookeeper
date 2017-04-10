@@ -71,6 +71,28 @@ tar downloaded from Apache please skip to step 2.
    default only HTML documentation is generated.  For information on
    other document formats please use "./configure --help"
 
+Alternatively you can use the CMake build system. On Windows, this is required.
+Follow steps 1 and 2 above, and then continue here.
+
+1) do a "cmake [OPTIONS]" to generate the makefile or msbuild files (the correct
+   build system will be generated based on your platform). Some options from above
+   are supported:
+   -DCMAKE_BUILD_TYPE  Debug by default, Release enables optimzation etc.
+   -DWANT_SYNCAPI      ON by default, OFF disables the Sync API support
+   -DWANT_CPPUNIT      ON except on Windows, OFF disables the tests
+   -DBUILD_SHARED_LIBS not yet supported, only static libraries are built
+   other CMake options see "cmake --help" for generic options, such as generator
+
+2) do a "cmake --build ." to build the default targets. Alternatively you can
+   invoke "make" or "msbuild" manually. If the tests were enabled, use "ctest -V"
+   to run them.
+
+Current limitations of the CMake build system include lack of Solaris support,
+no shared library option, no explicitly exported symbols (all are exported by
+default), no versions on the libraries, and no documentation generation.
+Features of CMake include a single, easily consumed cross-platform build system
+to generate the ZooKeeper C Client libraries for any project, with little to no
+configuration.
 
 EXAMPLE/SAMPLE C CLIENT SHELL
 

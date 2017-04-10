@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-#ifndef DLL_EXPORT
+#if !defined(DLL_EXPORT) && !defined(USE_STATIC_LIB)
 #  define USE_STATIC_LIB
 #endif
 
@@ -41,18 +41,33 @@
 #include <stdarg.h>
 #include <limits.h>
 
-#ifndef _WIN32
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
+
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#endif
+
+#ifdef HAVE_POLL
 #include <poll.h>
+#endif
+
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#endif
+
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
+
+#ifdef HAVE_NETDB_H
 #include <netdb.h>
+#endif
+
+#ifdef HAVE_UNISTD_H
 #include <unistd.h> // needed for _POSIX_MONOTONIC_CLOCK
-#include "config.h"
-#else
-#include "winstdint.h"
 #endif
 
 #ifdef HAVE_SYS_UTSNAME_H
