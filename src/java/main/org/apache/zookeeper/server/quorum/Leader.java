@@ -724,6 +724,8 @@ public class Leader {
        // concurrent reconfigs are allowed, this can happen.
        if (outstandingProposals.containsKey(zxid - 1)) return false;
        
+       // in order to be committed, a proposal must be accepted by a quorum
+       //
        // getting a quorum from all necessary configurations
         if (!p.hasAllQuorums()) {
            return false;                 
@@ -736,8 +738,6 @@ public class Leader {
             LOG.warn("First is "
                     + (lastCommitted+1));
         }     
-        
-        // in order to be committed, a proposal must be accepted by a quorum              
         
         outstandingProposals.remove(zxid);
         
