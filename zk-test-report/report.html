@@ -18,7 +18,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Apache HBase Flaky Dashboard</title>
+    <title>Apache ZooKeeper Flaky Dashboard</title>
     <style type="text/css">
         table {
             table-layout: fixed;
@@ -43,13 +43,13 @@
 <body>
 <p>
     <img style="vertical-align:middle; display:inline-block;" height="80px"
-         src="https://hbase.apache.org/images/hbase_logo_with_orca_large.png">
+         src="https://zookeeper.apache.org/images/zookeeper_small.gif">
     &nbsp;&nbsp;&nbsp;&nbsp;
               <span style="font-size:50px; vertical-align:middle; display:inline-block;">
-                  Apache HBase Flaky Tests Dashboard
+                  Apache Zookeeper Flaky Tests Dashboard
               </span>
 </p>
-<span>Last updated: <b>04/10/2017 15:32:49</b></span><br>
+<span>Last updated: <b>04/11/2017 12:19:47</b></span><br>
 <span>Count of flaky tests (cumulated from all jobs):
     <b>1</b></span><br>
 <br><br>
@@ -59,6 +59,10 @@
 
 
 <a href="#job_1">https://builds.apache.org/job/ZooKeeper-trunk-openjdk7/</a>
+<br>
+
+
+<a href="#job_2">https://builds.apache.org/job/ZooKeeper_branch35_jdk8/</a>
 <br>
 
 <br>
@@ -96,12 +100,12 @@
         <td>testSessionEstablishment</td>
         
         
-        <td align="middle" style="background-color:#FF9999;">
+        <td align="middle">
             
-            100.0% (1 / 1)
+            66.7% (2 / 3)
         </td>
         <td align="middle">
-            1 / 0 / 0
+            2 / 0 / 0
         </td>
         <td>
             
@@ -112,13 +116,40 @@
                  style="display: none; width:500px; white-space: normal">
                 
                 Failed : 
+                <a href="https://builds.apache.org/job/ZooKeeper-trunk-openjdk7//1431">1431</a>&nbsp;
+                
                 <a href="https://builds.apache.org/job/ZooKeeper-trunk-openjdk7//1433">1433</a>&nbsp;
                 <br/>
                 Timed Out : <br/>
                 Hanging : <br/>
                 Succeeded : 
+                <a href="https://builds.apache.org/job/ZooKeeper-trunk-openjdk7//1432">1432</a>&nbsp;
+                
             </div>
         </td>
+    </tr>
+    
+</table>
+<br><br><br>
+
+
+
+
+<span id="job_2" style="font-weight:bold;">
+    https://builds.apache.org/job/ZooKeeper_branch35_jdk8/<br>
+    <a href="https://builds.apache.org/job/ZooKeeper_branch35_jdk8/">
+        Go to <img height="16px" src="https://jenkins.io/sites/default/files/jenkins_favicon.ico">
+    </a>
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    <a href="#">Go to top</a>
+</span>
+<br/><br/>
+<table>
+    <tr>
+        <th width="400px">Test Name</th>
+        <th width="150px">Flakyness</th>
+        <th width="200px">Failed/Timeout/Hanging</th>
+        <th>Run Ids</th>
     </tr>
     
 </table>

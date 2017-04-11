@@ -34,6 +34,7 @@ import time
 import re
 import requests
 from collections import OrderedDict
+from collections import defaultdict
 from jinja2 import Template
 
 # If any of these strings appear in the console output, it's a build one should probably ignore
@@ -51,11 +52,8 @@ logging.basicConfig()
 logger = logging.getLogger(__name__)
 
 # Set of timeout/failed tests across all given urls.
-all_timeout_tests = set()
-all_failed_tests = set()
-all_hanging_tests = set()
-# Contains { <url> : { <bad_test> : { 'all': [<build ids>], 'failed': [<build ids>],
-#                                     'timeout': [<build ids>], 'hanging': [<builds ids>] } } }
+all_failed_tests = dict()
+# Contains { <url> : { <bad_test> : { 'all': [<build ids>], 'failed': [<build ids>]} } }
 url_to_bad_test_results = OrderedDict()
 
 
@@ -66,33 +64,27 @@ def classify_tests(build_url):
             response.status_code, response.reason)
         return
 
-    all_tests_set = set()
-    failed_tests_set = set()
+    all_tests = defaultdict(int)
+    failed_tests = defaultdict(int)
 
     print len(response.content)
 
     for line in response.content.splitlines():
         ans = PATTERN_RUNNING_TEST.match(line)
         if ans:
-
             test_case = ans.group(2)
-            if test_case in all_tests_set:
-                """print ("ERROR! Multiple tests with same name '{}'. Might get wrong results "
-                       "for this test.".format(test_case))
-                """
-            else:
-                all_tests_set.add(test_case)
+            all_tests[test_case] += 1
         ans = PATTERN_FAILED_TEST.match(line)
         if ans:
             test_case = ans.group(2)
-            failed_tests_set.add(test_case)
+            failed_tests[test_case] += 1
         for bad_string in BAD_RUN_STRINGS:
             if re.match(".*" + bad_string + ".*", line):
                 print "Bad string found in build:\n > {}".format(line)
                 return
     print "Result > total tests: {:4}   failed : {:4}".format(
-        len(all_tests_set), len(failed_tests_set))
-    return [all_tests_set, failed_tests_set]
+        sum(all_tests.values()), sum(failed_tests.values()))
+    return [all_tests, failed_tests]
 
 
 def generate_report(build_url):
@@ -176,34 +168,35 @@ def analyze_build(args):
                 break
 
         # Collect list of bad tests.
-        bad_tests = set()
+        bad_tests = dict()
         for build in build_id_to_results:
-            [all_tests, failed_tests] = build_id_to_results[build]
+            [_, failed_tests] = build_id_to_results[build]
             all_failed_tests.update(failed_tests)
             bad_tests.update(failed_tests)
 
         # For each bad test, get build ids where it ran, timed out, failed or hanged.
-        test_to_build_ids = {key : {'all' : set(), 'timeout': set(), 'failed': set(),
-                                    'hanging' : set(), 'bad_count' : 0}
+        test_to_build_ids = {key: {'all': dict(), 'timeout': dict(), 'failed': dict(),
+                                   'hanging': dict(), 'good': dict(), 'bad_count': 0}
                              for key in bad_tests}
         for build in build_id_to_results:
             [all_tests, failed_tests] = build_id_to_results[build]
             for bad_test in test_to_build_ids:
                 is_bad = False
-                if all_tests.issuperset([bad_test]):
-                    test_to_build_ids[bad_test]["all"].add(build)
-                if failed_tests.issuperset([bad_test]):
-                    test_to_build_ids[bad_test]['failed'].add(build)
+                if bad_test in all_tests:
+                    test_to_build_ids[bad_test]["all"].setdefault(build, 0)
+                if bad_test in failed_tests:
+                    test_to_build_ids[bad_test]['failed'].setdefault(build, 0)
                     is_bad = True
                 if is_bad:
                     test_to_build_ids[bad_test]['bad_count'] += 1
+                else:
+                    test_to_build_ids[bad_test]['good'].setdefault(build, 0)
 
         # Calculate flakyness % and successful builds for each test. Also sort build ids.
         for bad_test in test_to_build_ids:
             test_result = test_to_build_ids[bad_test]
             test_result['flakyness'] = test_result['bad_count'] * 100.0 / len(test_result['all'])
-            test_result['success'] = (test_result['all'].difference(
-                test_result['failed'].union(test_result['hanging'])))
+            test_result['success'] = test_result['good']
             for key in ['all', 'timeout', 'failed', 'hanging', 'success']:
                 test_result[key] = sorted(test_result[key])
 
@@ -250,7 +243,7 @@ def main():
 
     analyze_build(args)
 
-    all_bad_tests = all_hanging_tests.union(all_failed_tests)
+    all_bad_tests = all_failed_tests
     dev_support_dir = os.path.dirname(os.path.abspath(__file__))
     with open(os.path.join(dev_support_dir, "report_template.html"), "r") as f:
         template = Template(f.read())
