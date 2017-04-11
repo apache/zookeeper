@@ -77,8 +77,9 @@ def classify_tests(build_url):
 
             test_case = ans.group(2)
             if test_case in all_tests_set:
-                print ("ERROR! Multiple tests with same name '{}'. Might get wrong results "
+                """print ("ERROR! Multiple tests with same name '{}'. Might get wrong results "
                        "for this test.".format(test_case))
+                """
             else:
                 all_tests_set.add(test_case)
         ans = PATTERN_FAILED_TEST.match(line)
@@ -261,4 +262,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
