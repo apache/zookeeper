@@ -56,6 +56,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -693,7 +694,7 @@ public class DataTree {
     /**
      * Comparator used to sort children by creation time (older to newer) compare lexicographically to break ties
      */
-    private static class NodeCreationComparator implements Comparator<PathWithStat> {
+    private static class NodeCreationComparator implements Comparator<PathWithStat>, Serializable {
         @Override
         public int compare(PathWithStat left, PathWithStat right) {
             final long leftCzxId = left.getStat().getCzxid();
