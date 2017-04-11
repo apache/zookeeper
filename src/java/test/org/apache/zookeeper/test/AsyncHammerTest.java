@@ -103,8 +103,7 @@ public class AsyncHammerTest extends ZKTestCase
             } finally {
                 if (zk != null) {
                     try {
-                        zk.close();
-                        if (!zk.testableWaitForShutdown(CONNECTION_TIMEOUT)) {
+                        if (!zk.close(CONNECTION_TIMEOUT)) {
                             failed = true;
                             LOG.error("Client did not shutdown");
                         }
