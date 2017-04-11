@@ -21,18 +21,6 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="zk-unittest-reporter.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/zk-unittest-reporter.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.6998951">
-              <caret line="23" column="3" selection-start-line="23" selection-start-column="3" selection-end-line="23" selection-end-column="3" />
-              <folding>
-                <element signature="e#1207#1222#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="pydevd.py" pinned="false" current-in-tab="false">
         <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/pydevd.py">
           <provider selected="true" editor-type-id="text-editor">
@@ -43,11 +31,23 @@
           </provider>
         </entry>
       </file>
+      <file leaf-file-name="zk_test_analyzer.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/zk_test_analyzer.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.29591838">
+              <caret line="10" column="48" selection-start-line="10" selection-start-column="48" selection-end-line="10" selection-end-column="48" />
+              <folding>
+                <element signature="e#1040#1088#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
       <file leaf-file-name="report_template.html" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/report_template.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="45.38889">
-              <caret line="43" column="3" selection-start-line="43" selection-start-column="3" selection-end-line="43" selection-end-column="3" />
+            <state vertical-scroll-proportion="-17.722221">
+              <caret line="22" column="15" selection-start-line="22" selection-start-column="15" selection-end-line="22" selection-end-column="15" />
               <folding>
                 <element signature="n#style#0;n#span#2;n#body#0;n#html#0;n#!!top" expanded="true" />
                 <element signature="n#style#0;n#span#3;n#body#0;n#html#0;n#!!top" expanded="true" />
@@ -72,6 +72,7 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/zk-unittest-reporter.py" />
+        <option value="$PROJECT_DIR$/zk_test_analyzer.py" />
       </list>
     </option>
   </component>
@@ -132,7 +133,7 @@
   <component name="PropertiesComponent">
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
     <property name="settings.editor.splitter.proportion" value="0.2" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/zk-unittest-reporter.py" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/zk_test_analyzer.py" />
   </component>
   <component name="PyConsoleOptionsProvider">
     <option name="myPythonConsoleState">
@@ -276,8 +277,8 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <module name="zk-test-report" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/zk-unittest-reporter.py" />
-      <option name="PARAMETERS" value="--urls https://builds.apache.org/job/ZooKeeper-trunk-openjdk7/ --urls=https://builds.apache.org/job/ZooKeeper_branch35_jdk8/ --max-builds 3 --max-builds 3" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/zk_test_analyzer.py" />
+      <option name="PARAMETERS" value="--urls=https://builds.apache.org/job/ZooKeeper-trunk-openjdk7/ --urls=https://builds.apache.org/job/ZooKeeper-trunk-jdk8/ --urls=https://builds.apache.org/job/ZooKeeper_branch35_openjdk7/ --urls=https://builds.apache.org/job/ZooKeeper_branch35_jdk7/ --urls=https://builds.apache.org/job/ZooKeeper_branch35_jdk8/ --urls=https://builds.apache.org/job/ZooKeeper_branch34/ --urls=https://builds.apache.org/job/ZooKeeper_branch34_jdk7/ --urls=https://builds.apache.org/job/ZooKeeper_branch34_jdk8/ --max-builds=1 --max-builds=1 --max-builds=1 --max-builds=1 --max-builds=1 --max-builds=1 --max-builds=1 --max-builds=1" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <method />
     </configuration>
@@ -323,12 +324,6 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="python-line">
-          <url>file://$PROJECT_DIR$/zk-unittest-reporter.py</url>
-          <line>180</line>
-        </line-breakpoint>
-      </breakpoints>
       <option name="time" value="1" />
     </breakpoint-manager>
     <watches-manager />
@@ -342,17 +337,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/report_template.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="45.38889">
-          <caret line="43" column="3" selection-start-line="43" selection-start-column="3" selection-end-line="43" selection-end-column="3" />
-          <folding>
-            <element signature="n#style#0;n#span#2;n#body#0;n#html#0;n#!!top" expanded="true" />
-            <element signature="n#style#0;n#span#3;n#body#0;n#html#0;n#!!top" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/pydevd.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
@@ -361,12 +345,23 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/zk-unittest-reporter.py">
+    <entry file="file://$PROJECT_DIR$/report_template.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.6998951">
-          <caret line="23" column="3" selection-start-line="23" selection-start-column="3" selection-end-line="23" selection-end-column="3" />
+        <state vertical-scroll-proportion="-17.722221">
+          <caret line="22" column="15" selection-start-line="22" selection-start-column="15" selection-end-line="22" selection-end-column="15" />
           <folding>
-            <element signature="e#1207#1222#0" expanded="true" />
+            <element signature="n#style#0;n#span#2;n#body#0;n#html#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#span#3;n#body#0;n#html#0;n#!!top" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/zk_test_analyzer.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.29591838">
+          <caret line="10" column="48" selection-start-line="10" selection-start-column="48" selection-end-line="10" selection-end-column="48" />
+          <folding>
+            <element signature="e#1040#1088#0" expanded="true" />
           </folding>
         </state>
       </provider>

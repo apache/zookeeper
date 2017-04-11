@@ -16,48 +16,48 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# pylint: disable=invalid-name
-# To disable 'invalid constant name' warnings.
-# pylint: disable=import-error
-# Testing environment may not have all dependencies.
-
 """
 This script uses Jenkins REST api to collect test results of given builds and generate test report.
 It is primarily used to monitor build health and flaky tests across different builds.
-Print help: zk-unittest-reporter.py -h
+Print help: zk_test_analyzer.py -h
 """
 
+from collections import OrderedDict, defaultdict
 import argparse
 import logging
 import os
 import time
 import re
 import requests
-from collections import OrderedDict
-from collections import defaultdict
 from jinja2 import Template
 
 # If any of these strings appear in the console output, it's a build one should probably ignore
 # for analyzing failed/hanging tests.
 BAD_RUN_STRINGS = [
     "Slave went offline during the build",  # Machine went down, can't do anything about it.
-    "The forked VM terminated without properly saying goodbye",  # JVM crashed.
+    "Forked Java VM exited abnormally",  # JVM crashed.
 ]
 
 PATTERN_RUNNING_TEST = re.compile('(.*) RUNNING TEST METHOD (.*)')
 PATTERN_FAILED_TEST = re.compile('(.*)- FAILED (.*)')
 PATTERN_SUCCEED_TEST = re.compile('(.*)- SUCCEEDED (.*)')
+MAX_NUM_OF_BUILDS = 10000
 
 logging.basicConfig()
-logger = logging.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
-# Set of timeout/failed tests across all given urls.
-all_failed_tests = dict()
+ALL_FAILED_TESTS = defaultdict(int)
 # Contains { <url> : { <bad_test> : { 'all': [<build ids>], 'failed': [<build ids>]} } }
-url_to_bad_test_results = OrderedDict()
+URL_TO_BAD_TEST_RESULTS = OrderedDict()
 
 
 def classify_tests(build_url):
+    """
+    Given a build url, pick up all test cases and failed test cases by name.
+
+    :param build_url: Jenkins job url.
+    :return: [all_tests, failed_tests]
+    """
     response = requests.get(build_url)
     if response.status_code != 200:
         print "Error getting consoleText. Response = {} {}".format(
@@ -66,8 +66,6 @@ def classify_tests(build_url):
 
     all_tests = defaultdict(int)
     failed_tests = defaultdict(int)
-
-    print len(response.content)
 
     for line in response.content.splitlines():
         ans = PATTERN_RUNNING_TEST.match(line)
@@ -89,23 +87,31 @@ def classify_tests(build_url):
 
 def generate_report(build_url):
     """
-    Given build_url of an executed build, analyzes its console text, and returns
-    [list of all tests, list of failed tests].
-    Returns None if can't get console text or if there is any other error.
+    Given a build url, retrieve the content of the build through
+    Jenkins API and then classify test cases to prepare final
+    test report.
+    :param build_url: Jenkins build url.
+    :return: classified test results.
     """
-    logger.info("Analyzing %s", build_url)
+    LOG.info("Analyzing %s", build_url)
     response = requests.get(build_url + "/api/json").json()
     if response["building"]:
-        logger.info("Skipping this build since it is in progress.")
+        LOG.info("Skipping this build since it is in progress.")
         return {}
     build_result = classify_tests(build_url + "/consoleText")
     if not build_result:
-        logger.info("Ignoring build %s", build_url)
+        LOG.info("Ignoring build %s", build_url)
         return
     return build_result
 
 
 def parse_cli_args(cli_args):
+    """
+    Parse command line arguments.
+
+    :param cli_args: command line arguments.
+    :return: None
+    """
     job_urls = cli_args.urls
     excluded_builds_arg = cli_args.excluded_builds
     max_builds_arg = cli_args.max_builds
@@ -117,25 +123,30 @@ def parse_cli_args(cli_args):
                         "since values are matched.")
     final_expanded_urls = []
     for (i, job_url) in enumerate(job_urls):
-        max_builds = 10000  # Some high number
+        max_builds = MAX_NUM_OF_BUILDS
         if max_builds_arg is not None and max_builds_arg[i] != 0:
             max_builds = int(max_builds_arg[i])
         excluded_builds = []
         if excluded_builds_arg is not None and excluded_builds_arg[i] != "None":
             excluded_builds = [int(x) for x in excluded_builds_arg[i].split(",")]
         response = requests.get(job_url + "/api/json").json()
-        if response.has_key("activeConfigurations"):
+        if "activeConfigurations" in response:
             for config in response["activeConfigurations"]:
-                final_expanded_urls.append({'url':config["url"], 'max_builds': max_builds,
+                final_expanded_urls.append({'url': config["url"], 'max_builds': max_builds,
                                             'excludes': excluded_builds})
         else:
-            final_expanded_urls.append({'url':job_url, 'max_builds': max_builds,
+            final_expanded_urls.append({'url': job_url, 'max_builds': max_builds,
                                         'excludes': excluded_builds})
     return final_expanded_urls
 
 
 def analyze_build(args):
-    # Iterates over each url, gets test results and prints flaky tests.
+    """
+    Given a set of command line arguments, analyze the build and populate
+    various data structures used to generate final test report.
+    :param args: arguments
+    :return: None
+    """
     expanded_urls = parse_cli_args(args)
     for url_max_build in expanded_urls:
         url = url_max_build["url"]
@@ -143,10 +154,10 @@ def analyze_build(args):
         json_response = requests.get(url + "/api/json").json()
         if json_response.has_key("builds"):
             builds = json_response["builds"]
-            logger.info("Analyzing job: %s", url)
+            LOG.info("Analyzing job: %s", url)
         else:
-            builds = [{'number' : json_response["id"], 'url': url}]
-            logger.info("Analyzing build : %s", url)
+            builds = [{'number': json_response["id"], 'url': url}]
+            LOG.info("Analyzing build : %s", url)
         build_id_to_results = {}
         num_builds = 0
         build_ids = []
@@ -167,11 +178,10 @@ def analyze_build(args):
             if num_builds == url_max_build["max_builds"]:
                 break
 
-        # Collect list of bad tests.
         bad_tests = dict()
         for build in build_id_to_results:
             [_, failed_tests] = build_id_to_results[build]
-            all_failed_tests.update(failed_tests)
+            ALL_FAILED_TESTS.update(failed_tests)
             bad_tests.update(failed_tests)
 
         # For each bad test, get build ids where it ran, timed out, failed or hanged.
@@ -203,7 +213,7 @@ def analyze_build(args):
         # Sort tests in descending order by flakyness.
         sorted_test_to_build_ids = OrderedDict(
             sorted(test_to_build_ids.iteritems(), key=lambda x: x[1]['flakyness'], reverse=True))
-        url_to_bad_test_results[url] = sorted_test_to_build_ids
+        URL_TO_BAD_TEST_RESULTS[url] = sorted_test_to_build_ids
 
         if len(sorted_test_to_build_ids) > 0:
             print "URL: {}".format(url)
@@ -226,6 +236,10 @@ def analyze_build(args):
 
 
 def main():
+    """
+    Main entry of the module if used as an executable.
+    :return: None
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument('--urls', metavar='URL', action='append', required=True,
                         help='Urls to analyze')
@@ -234,26 +248,25 @@ def main():
                         'but if specified, number of uses should be same as that of --urls '
                         'since the values are matched.')
     parser.add_argument('--max-builds', metavar='n', action='append', type=int,
-                        help='The maximum number of builds to use (if available on jenkins). Specify '
-                        'should be same as that of --urls since the values are matched.')
+                        help='The maximum number of builds to use (if available on jenkins).'
+                             'Specify should be same as that of --urls since the values '
+                             'are matched.')
     parser.add_argument("-v", "--verbose", help="Prints more logs.", action="store_true")
     args = parser.parse_args()
     if args.verbose:
-        logger.setLevel(logging.INFO)
+        LOG.setLevel(logging.INFO)
 
     analyze_build(args)
 
-    all_bad_tests = all_failed_tests
+    all_bad_tests = ALL_FAILED_TESTS
     dev_support_dir = os.path.dirname(os.path.abspath(__file__))
-    with open(os.path.join(dev_support_dir, "report_template.html"), "r") as f:
-        template = Template(f.read())
+    with open(os.path.join(dev_support_dir, "report_template.html"), "r") as report_template:
+        template = Template(report_template.read())
 
-    with open("report.html", "w") as f:
+    with open("report.html", "w") as report:
         datetime = time.strftime("%m/%d/%Y %H:%M:%S")
-        f.write(template.render(datetime=datetime, bad_tests_count=len(all_bad_tests),
-                                results=url_to_bad_test_results))
+        report.write(template.render(datetime=datetime, bad_tests_count=len(all_bad_tests),
+                                     results=URL_TO_BAD_TEST_RESULTS))
 
 if __name__ == "__main__":
     main()
-
-
