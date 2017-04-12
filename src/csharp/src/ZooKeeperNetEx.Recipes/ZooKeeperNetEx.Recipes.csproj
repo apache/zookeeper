@@ -26,6 +26,7 @@ Please feel free to open an issue or ask a question there.</PackageReleaseNotes>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/shayhatsor/zookeeper</RepositoryUrl>
     <DelaySign>False</DelaySign>
+	<IncludeSymbols>True</IncludeSymbols>
   </PropertyGroup>
 
   <ItemGroup>
