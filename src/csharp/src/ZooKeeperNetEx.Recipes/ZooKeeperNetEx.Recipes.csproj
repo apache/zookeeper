@@ -4,7 +4,7 @@
     <Description>.NET async Distributed recipes for ZooKeeper: Queue, Lock and Leader Election.</Description>
     <Copyright>Shay Hazor - Copyright 2017</Copyright>
     <AssemblyTitle>Apache ZooKeeper .NET async Recipes</AssemblyTitle>
-    <VersionPrefix>3.4.9.3</VersionPrefix>
+    <VersionPrefix>3.4.9.4</VersionPrefix>
     <Authors>Shay Hazor</Authors>
     <TargetFrameworks>netstandard1.3;net45</TargetFrameworks>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -16,10 +16,7 @@
     <PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>
     <PackageId>ZooKeeperNetEx.Recipes</PackageId>
     <PackageTags>ZooKeeper;Recipes;.NET;Lock;Leader Election;Queue</PackageTags>
-    <PackageReleaseNotes>* Fixed a bug that caused an excessive resource consumption on connection loss
-
-* Updated to .NET Core 1.1.2
-
+    <PackageReleaseNotes>* Built with Visual Studio 2017
 
 This project is actively maintained at: https://github.com/shayhatsor/zookeeper 
 Please feel free to open an issue or ask a question there.</PackageReleaseNotes>
