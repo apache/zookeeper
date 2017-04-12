@@ -191,7 +191,7 @@ namespace org.apache.zookeeper.test
             AssertState(dynamicHostProvider, currentIndex: -1, lastIP: null, resolvingInBackground: false,
                 firstDnsTry: false);
             //should have ignored given timeouts, since it was the first dns attempt
-            Assert.assertTrue($"is {sw.ElapsedMilliseconds}", sw.ElapsedMilliseconds <= 15);
+            Assert.assertTrue($"is {sw.ElapsedMilliseconds}", sw.ElapsedMilliseconds <= 25);
 
             sw.Restart();
             //again the dns resolution returns an empty list, we expected to fail
@@ -230,7 +230,7 @@ namespace org.apache.zookeeper.test
             Xunit.Assert.Equal(next, resolvedEndPoint1);
             AssertState(dynamicHostProvider, currentIndex: 0, lastIP: resolvedEndPoint1, resolvingInBackground: false);
             //we ignored the timeout since we have succeeded in resolving an address
-            Assert.assertTrue($"is {sw.ElapsedMilliseconds}", sw.ElapsedMilliseconds <= 15);
+            Assert.assertTrue($"is {sw.ElapsedMilliseconds}", sw.ElapsedMilliseconds <= 25);
 
             sw.Restart();
             //we ask for the next address, but this time we expect the timeout. bcz we looped
@@ -303,7 +303,7 @@ namespace org.apache.zookeeper.test
             next = await dynamicHostProvider.next(1000);
             Xunit.Assert.Equal(next, resolved2);
             AssertState(dynamicHostProvider, currentIndex: 0, lastIP: resolved2, resolvingInBackground: false);
-            Assert.assertTrue($"is {sw.ElapsedMilliseconds}", sw.ElapsedMilliseconds <= 15);
+            Assert.assertTrue($"is {sw.ElapsedMilliseconds}", sw.ElapsedMilliseconds <= 25);
 
             //add back 'resolved1' to the returned list (the list is: 'resolved1','resolved2')
             resolvedEndPoints.Add(resolved1);
@@ -313,7 +313,7 @@ namespace org.apache.zookeeper.test
             next = await dynamicHostProvider.next(1000);
             Xunit.Assert.Equal(next, resolved1);
             AssertState(dynamicHostProvider, currentIndex: 0, lastIP: resolved2, resolvingInBackground: false);
-            Assert.assertTrue($"is {sw.ElapsedMilliseconds}", sw.ElapsedMilliseconds <= 15);
+            Assert.assertTrue($"is {sw.ElapsedMilliseconds}", sw.ElapsedMilliseconds <= 25);
 
             sw.Restart();
             //we expect to get 'resolve2' with the timeout since it's the LastIP
@@ -327,7 +327,7 @@ namespace org.apache.zookeeper.test
             next = await dynamicHostProvider.next(1000);
             Xunit.Assert.Equal(next, resolved1);
             AssertState(dynamicHostProvider, currentIndex: 0, lastIP: resolved2, resolvingInBackground: false);
-            Assert.assertTrue($"is {sw.ElapsedMilliseconds}", sw.ElapsedMilliseconds <= 15);
+            Assert.assertTrue($"is {sw.ElapsedMilliseconds}", sw.ElapsedMilliseconds <= 25);
 
             //notify we have successfully connected with 'resolve1'
             dynamicHostProvider.onConnected();
@@ -337,7 +337,7 @@ namespace org.apache.zookeeper.test
             next = await dynamicHostProvider.next(1000);
             Xunit.Assert.Equal(next, resolved2);
             AssertState(dynamicHostProvider, currentIndex: 1, lastIP: resolved1, resolvingInBackground: false);
-            Assert.assertTrue($"is {sw.ElapsedMilliseconds}", sw.ElapsedMilliseconds <= 15);
+            Assert.assertTrue($"is {sw.ElapsedMilliseconds}", sw.ElapsedMilliseconds <= 25);
         }
 
         private void AssertState(DynamicHostProvider dynamicHostProvider, int currentIndex, ResolvedEndPoint lastIP, bool resolvingInBackground, bool firstDnsTry=false)
