@@ -18,9 +18,12 @@
 
 package org.apache.zookeeper.server;
 
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.Date;
 
 import org.apache.zookeeper.Version;
+import org.apache.zookeeper.common.SocketAddressUtils;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
 
 /**
@@ -156,8 +159,10 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
     @Override
     public String getSecureClientAddress() {
         if (zks.secureServerCnxnFactory != null) {
-            return String.format("%s:%d", zks.secureServerCnxnFactory
-                    .getLocalAddress().getHostString(),
+            SocketAddress socketAddress = zks.secureServerCnxnFactory
+                    .getLocalAddress();
+            String hostString = SocketAddressUtils.getHostString(socketAddress);
+            return String.format("%s:%d", hostString,
                     zks.secureServerCnxnFactory.getLocalPort());
         }
         return "";

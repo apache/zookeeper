@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import org.apache.zookeeper.common.SocketAddressUtils;
+
 
 
 /**
@@ -85,8 +87,9 @@ public class LocalPeerBean extends ServerBean implements LocalPeerMXBean {
 
     public String getClientAddress() {
         if (null != peer.cnxnFactory) {
-            return String.format("%s:%d", peer.cnxnFactory.getLocalAddress()
-                    .getHostString(), peer.getClientPort());
+            String hostString =
+                SocketAddressUtils.getHostString(peer.cnxnFactory.getLocalAddress());
+            return String.format("%s:%d", hostString, peer.getClientPort());
         } else {
             return "";
         }

@@ -25,7 +25,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
-import java.net.InetSocketAddress;
+import java.net.InetAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.security.cert.Certificate;
@@ -37,6 +37,7 @@ import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.common.SocketAddressUtils;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.WatcherEvent;
 import org.apache.zookeeper.server.command.CommandExecutor;
@@ -107,12 +108,13 @@ public class NettyServerCnxn extends ServerCnxn {
             }
 
             synchronized (factory.ipMap) {
-                Set<NettyServerCnxn> s =
-                    factory.ipMap.get(((InetSocketAddress)channel
-                            .getRemoteAddress()).getAddress());
-                s.remove(this);
+                InetAddress remoteAddress =
+                        SocketAddressUtils.getInetAddress(getRemoteSocketAddress());
+                    Set<NettyServerCnxn> s =
+                        factory.ipMap.get(remoteAddress);
+                    s.remove(this);
+                }
             }
-        }
 
         if (channel.isOpen()) {
             channel.close();
@@ -449,8 +451,8 @@ public class NettyServerCnxn extends ServerCnxn {
     }
 
     @Override
-    public InetSocketAddress getRemoteSocketAddress() {
-        return (InetSocketAddress)channel.getRemoteAddress();
+    public SocketAddress getRemoteSocketAddress() {
+        return channel.getRemoteAddress();
     }
 
     /** Send close connection packet to the client.

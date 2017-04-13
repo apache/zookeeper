@@ -68,8 +68,7 @@ import static org.apache.zookeeper.common.X509Exception.SSLContextException;
 public class ClientCnxnSocketNetty extends ClientCnxnSocket {
     private static final Logger LOG = LoggerFactory.getLogger(ClientCnxnSocketNetty.class);
 
-    ChannelFactory channelFactory = new NioClientSocketChannelFactory(
-            Executors.newCachedThreadPool(), Executors.newCachedThreadPool());
+    ChannelFactory channelFactory;
     Channel channel;
     CountDownLatch firstConnect;
     ChannelFuture connectFuture;
@@ -78,9 +77,15 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
     AtomicBoolean needSasl = new AtomicBoolean();
     Semaphore waitSasl = new Semaphore(0);
 
-    ClientCnxnSocketNetty(ZKClientConfig clientConfig) throws IOException {
+    public ClientCnxnSocketNetty(ZKClientConfig clientConfig) throws IOException {
         this.clientConfig = clientConfig;
         initProperties();
+        this.channelFactory = buildChannelFactory();
+    }
+
+    protected ChannelFactory buildChannelFactory() {
+         return new NioClientSocketChannelFactory(
+            Executors.newCachedThreadPool(), Executors.newCachedThreadPool());
     }
 
     /**
@@ -106,6 +111,11 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         return channel != null;
     }
 
+    protected ChannelFuture connect(ClientBootstrap bootstrap, InetSocketAddress addr) {
+        // Allow subclasses to intercept this event
+        return bootstrap.connect(addr);
+    }
+
     @Override
     void connect(InetSocketAddress addr) throws IOException {
         firstConnect = new CountDownLatch(1);
@@ -116,7 +126,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         bootstrap.setOption("soLinger", -1);
         bootstrap.setOption("tcpNoDelay", true);
 
-        connectFuture = bootstrap.connect(addr);
+        connectFuture = connect(bootstrap, addr);
         connectFuture.addListener(new ChannelFutureListener() {
             @Override
             public void operationComplete(ChannelFuture channelFuture) throws Exception {

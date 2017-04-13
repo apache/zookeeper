@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.security.cert.Certificate;
 import java.util.*;
@@ -259,7 +260,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
         return sw.toString();
     }
 
-    public abstract InetSocketAddress getRemoteSocketAddress();
+    public abstract SocketAddress getRemoteSocketAddress();
     public abstract int getInterestOps();
     public abstract boolean isSecure();
     public abstract Certificate[] getClientCertificateChain();
