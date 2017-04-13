@@ -231,7 +231,29 @@ public class ZKConfig {
      * exists and is equal to the string {@code "true"}.
      */
     public boolean getBoolean(String key) {
-        return Boolean.parseBoolean(getProperty(key));
+        return getBoolean(key, false);
+    }
+
+    /**
+     * Get the value of the <code>key</code> property as a <code>boolean</code>. Returns
+     * {@code true} if and only if the property named by the argument exists and is equal
+     * to the string {@code "true"}. If the property is not set, the provided
+     * <code>defaultValue</code> is returned.
+     *
+     * @param key
+     *            property key.
+     * @param defaultValue
+     *            default value.
+     * @return return property value as an <code>boolean</code>, or
+     *         <code>defaultValue</code>
+     */
+    public boolean getBoolean(String key, boolean defaultValue) {
+        String propertyValue = getProperty(key);
+        if (propertyValue == null) {
+            return defaultValue;
+        } else {
+            return Boolean.parseBoolean(propertyValue);
+        }
     }
 
     /**

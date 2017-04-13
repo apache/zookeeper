@@ -36,6 +36,7 @@ import javax.net.ssl.X509TrustManager;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.Socket;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
@@ -163,7 +164,7 @@ public abstract class X509Util {
 
         boolean sslCrlEnabled = config.getBoolean(this.sslCrlEnabledProperty);
         boolean sslOcspEnabled = config.getBoolean(this.sslOcspEnabledProperty);
-        boolean sslServerHostnameVerificationEnabled = config.getBoolean(this.getSslHostnameVerificationEnabledProperty());
+        boolean sslServerHostnameVerificationEnabled = config.getBoolean(this.getSslHostnameVerificationEnabledProperty(), true);
 
         if (trustStoreLocationProp == null) {
             LOG.warn(getSslTruststoreLocationProperty() + " not specified");
@@ -247,6 +248,7 @@ public abstract class X509Util {
                 pbParams.setRevocationEnabled(false);
             }
 
+            // Revocation checking is only supported with the PKIX algorithm
             TrustManagerFactory tmf = TrustManagerFactory.getInstance("PKIX");
             tmf.init(new CertPathTrustManagerParameters(pbParams));
 
@@ -271,6 +273,19 @@ public abstract class X509Util {
 
     public SSLSocket createSSLSocket() throws X509Exception, IOException {
         SSLSocket sslSocket = (SSLSocket) getDefaultSSLContext().getSocketFactory().createSocket();
+        configureSSLSocket(sslSocket);
+
+        return sslSocket;
+    }
+
+    public SSLSocket createSSLSocket(Socket socket) throws X509Exception, IOException {
+        SSLSocket sslSocket = (SSLSocket) getDefaultSSLContext().getSocketFactory().createSocket(socket, null, socket.getPort(), false);
+        configureSSLSocket(sslSocket);
+
+        return sslSocket;
+    }
+
+    private void configureSSLSocket(SSLSocket sslSocket) {
         SSLParameters sslParameters = sslSocket.getSSLParameters();
         sslParameters.setNeedClientAuth(true);
         if (cipherSuites != null) {
@@ -278,26 +293,24 @@ public abstract class X509Util {
         }
 
         sslSocket.setSSLParameters(sslParameters);
-
-        return sslSocket;
     }
 
 
     public SSLServerSocket createSSLServerSocket() throws X509Exception, IOException {
         SSLServerSocket sslServerSocket = (SSLServerSocket) getDefaultSSLContext().getServerSocketFactory().createServerSocket();
-        SSLParameters sslParameters = sslServerSocket.getSSLParameters();
-        sslParameters.setNeedClientAuth(true);
-        if (cipherSuites != null) {
-            sslParameters.setCipherSuites(cipherSuites);
-        }
-
-        sslServerSocket.setSSLParameters(sslParameters);
+        configureSSLServerSocket(sslServerSocket);
 
         return sslServerSocket;
     }
 
     public SSLServerSocket createSSLServerSocket(int port) throws X509Exception, IOException {
         SSLServerSocket sslServerSocket = (SSLServerSocket) getDefaultSSLContext().getServerSocketFactory().createServerSocket(port);
+        configureSSLServerSocket(sslServerSocket);
+
+        return sslServerSocket;
+    }
+
+    private void configureSSLServerSocket(SSLServerSocket sslServerSocket) {
         SSLParameters sslParameters = sslServerSocket.getSSLParameters();
         sslParameters.setNeedClientAuth(true);
         if (cipherSuites != null) {
@@ -305,7 +318,5 @@ public abstract class X509Util {
         }
 
         sslServerSocket.setSSLParameters(sslParameters);
-
-        return sslServerSocket;
     }
 }

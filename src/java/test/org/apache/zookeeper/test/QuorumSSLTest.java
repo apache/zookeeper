@@ -361,7 +361,6 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         System.setProperty(quorumX509Util.getSslKeystorePasswdProperty(), "testpass");
         System.setProperty(quorumX509Util.getSslTruststoreLocationProperty(), truststorePath);
         System.setProperty(quorumX509Util.getSslTruststorePasswdProperty(), "testpass");
-        System.setProperty(quorumX509Util.getSslHostnameVerificationEnabledProperty(), "false");
     }
 
     @After
@@ -382,6 +381,8 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         System.clearProperty(quorumX509Util.getSslHostnameVerificationEnabledProperty());
         System.clearProperty(quorumX509Util.getSslOcspEnabledProperty());
         System.clearProperty(quorumX509Util.getSslCrlEnabledProperty());
+        System.clearProperty(quorumX509Util.getCipherSuitesProperty());
+        System.clearProperty(quorumX509Util.getSslProtocolProperty());
     }
 
     @Test(timeout = 300000)
@@ -509,6 +510,8 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
      * @throws Exception
      */
     private void testHostnameVerification(String keystorePath, boolean expectSuccess) throws Exception {
+        System.setProperty(quorumX509Util.getSslHostnameVerificationEnabledProperty(), "false");
+
         q1 = new MainThread(1, clientPortQp1, quorumConfiguration, SSL_QUORUM_ENABLED);
         q2 = new MainThread(2, clientPortQp2, quorumConfiguration, SSL_QUORUM_ENABLED);
 
@@ -526,7 +529,6 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
 
         Assert.assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
 
-
         q1.shutdown();
         q2.shutdown();
         q3.shutdown();
@@ -536,7 +538,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         Assert.assertTrue(ClientBase.waitForServerDown("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
 
         setSSLSystemProperties();
-        System.setProperty(quorumX509Util.getSslHostnameVerificationEnabledProperty(), "true");
+        System.clearProperty(quorumX509Util.getSslHostnameVerificationEnabledProperty());
 
         q1.start();
         q2.start();
@@ -664,5 +666,51 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         } finally {
             ocspServer.stop(0);
         }
+    }
+
+    @Test(timeout = 300000)
+    public void testCipherSuites() throws Exception {
+        System.setProperty(quorumX509Util.getCipherSuitesProperty(),
+                "SSL_DHE_DSS_WITH_3DES_EDE_CBC_SHA,SSL_RSA_WITH_RC4_128_MD5");
+
+        q1 = new MainThread(1, clientPortQp1, quorumConfiguration, SSL_QUORUM_ENABLED);
+        q2 = new MainThread(2, clientPortQp2, quorumConfiguration, SSL_QUORUM_ENABLED);
+
+        q1.start();
+        q2.start();
+
+        Assert.assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp1, CONNECTION_TIMEOUT));
+        Assert.assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp2, CONNECTION_TIMEOUT));
+
+        System.setProperty(quorumX509Util.getCipherSuitesProperty(), "TLS_RSA_WITH_AES_128_CBC_SHA");
+
+        // This server should fail to join the quorum as it is not using one of the supported suites from the other
+        // quorum members
+        q3 = new MainThread(3, clientPortQp3, quorumConfiguration);
+        q3.start();
+
+        Assert.assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
+    }
+
+    @Test(timeout = 300000)
+    public void testProtocolVersion() throws Exception {
+        System.setProperty(quorumX509Util.getSslProtocolProperty(), "TLSv1.2");
+
+        q1 = new MainThread(1, clientPortQp1, quorumConfiguration, SSL_QUORUM_ENABLED);
+        q2 = new MainThread(2, clientPortQp2, quorumConfiguration, SSL_QUORUM_ENABLED);
+
+        q1.start();
+        q2.start();
+
+        Assert.assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp1, CONNECTION_TIMEOUT));
+        Assert.assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp2, CONNECTION_TIMEOUT));
+
+        System.setProperty(quorumX509Util.getSslProtocolProperty(), "TLSv1.1");
+
+        // This server should fail to join the quorum as it is not using TLSv1.2
+        q3 = new MainThread(3, clientPortQp3, quorumConfiguration);
+        q3.start();
+
+        Assert.assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
     }
 }

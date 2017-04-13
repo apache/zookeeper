@@ -49,18 +49,20 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
     /**
      * Instantiate a new ZKTrustManager.
      *
-     * @param x509ExtendedTrustManager    The trustmanager to use for checkClientTrusted/checkServerTrusted logic
-     * @param hostnameVerificationEnabled If true, this TrustManager should verify hostnames.
-     * @param shouldVerifyClientHostname  If true, and hostnameVerificationEnabled is true, the hostname of a client
-     *                                    connecting to this machine will be verified in addition to the servers that this
-     *                                    instance connects to. If false, and hostnameVerificationEnabled is true, only
-     *                                    the hostnames of servers that this instance connects to will be verified. If
-     *                                    hostnameVerificationEnabled is false, this argument is ignored.
+     * @param x509ExtendedTrustManager The trustmanager to use for checkClientTrusted/checkServerTrusted logic
+     * @param verifySSLServerHostname  If true, this TrustManager should verify hostnames of servers that this
+     *                                 instance connects to.
+     * @param verifySSLClientHostname  If true, and verifySSLServerHostname is true, the hostname of a client
+     *                                 connecting to this machine will be verified in addition to the servers that this
+     *                                 instance connects to. If false, and verifySSLServerHostname is true, only
+     *                                 the hostnames of servers that this instance connects to will be verified. If
+     *                                 verifySSLServerHostname is false, this argument is ignored.
      */
-    public ZKTrustManager(X509ExtendedTrustManager x509ExtendedTrustManager, boolean hostnameVerificationEnabled, boolean shouldVerifyClientHostname) {
+    public ZKTrustManager(X509ExtendedTrustManager x509ExtendedTrustManager, boolean verifySSLServerHostname,
+                          boolean verifySSLClientHostname) {
         this.x509ExtendedTrustManager = x509ExtendedTrustManager;
-        this.hostnameVerificationEnabled = hostnameVerificationEnabled;
-        this.shouldVerifyClientHostname = shouldVerifyClientHostname;
+        this.hostnameVerificationEnabled = verifySSLServerHostname;
+        this.shouldVerifyClientHostname = verifySSLClientHostname;
 
         hostnameVerifier = new DefaultHostnameVerifier();
     }
@@ -121,15 +123,20 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
     }
 
     private void performHostVerification(InetAddress inetAddress, X509Certificate certificate) throws CertificateException {
+        String hostAddress = "";
+        String hostName = "";
         try {
-            hostnameVerifier.verify(inetAddress.getHostAddress(), certificate);
+            hostAddress = inetAddress.getHostAddress();
+            hostnameVerifier.verify(hostAddress, certificate);
         } catch (SSLException addressVerificationException) {
             try {
-                LOG.debug("Failed to verify host address, attempting to verify host name with reverse dns lookup", addressVerificationException);
-                hostnameVerifier.verify(inetAddress.getHostName(), certificate);
+                LOG.debug("Failed to verify host address: " + hostAddress +
+                        ", attempting to verify host name with reverse dns lookup", addressVerificationException);
+                hostName = inetAddress.getHostName();
+                hostnameVerifier.verify(hostName, certificate);
             } catch (SSLException hostnameVerificationException) {
-                LOG.error("Failed to verify host address", addressVerificationException);
-                LOG.error("Failed to verify hostname", hostnameVerificationException);
+                LOG.error("Failed to verify host address: " + hostAddress, addressVerificationException);
+                LOG.error("Failed to verify hostname: " + hostName, hostnameVerificationException);
                 throw new CertificateException("Failed to verify both host address and host name", hostnameVerificationException);
             }
         }

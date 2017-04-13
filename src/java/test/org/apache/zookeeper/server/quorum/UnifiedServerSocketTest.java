@@ -61,6 +61,7 @@ public class UnifiedServerSocketTest {
         System.setProperty(x509Util.getSslKeystorePasswdProperty(), "testpass");
         System.setProperty(x509Util.getSslTruststoreLocationProperty(), testDataPath + "/ssl/testTrustStore.jks");
         System.setProperty(x509Util.getSslTruststorePasswdProperty(), "testpass");
+        System.setProperty(x509Util.getSslHostnameVerificationEnabledProperty(), "false");
     }
 
     @Test

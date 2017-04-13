@@ -67,8 +67,8 @@ public class UnifiedServerSocket extends ServerSocket {
             LOG.info(getInetAddress() + " attempting to connect over ssl");
             SSLSocket sslSocket;
             try {
-                sslSocket = (SSLSocket) x509Util.getDefaultSSLContext().getSocketFactory().createSocket(bufferedSocket, null, bufferedSocket.getPort(), false);
-            } catch (X509Exception.SSLContextException e) {
+                sslSocket = x509Util.createSSLSocket(bufferedSocket);
+            } catch (X509Exception e) {
                 throw new IOException("failed to create SSL context", e);
             }
             sslSocket.setUseClientMode(false);

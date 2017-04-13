@@ -262,5 +262,4 @@ public class X509UtilTest extends ZKTestCase {
         System.setProperty(x509Util.getCipherSuitesProperty(), customCipherSuites[0] + "," + customCipherSuites[1]);
         x509Util = new ClientX509Util();
     }
-
 }
