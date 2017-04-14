@@ -141,6 +141,9 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
 
     private ContentSigner contentSigner;
 
+    private Date certStartTime;
+    private Date certEndTime;
+
     @Before
     public void setup() throws Exception {
         ClientBase.setupTestEnv();
@@ -157,6 +160,12 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         quorumConfiguration = generateQuorumConfiguration();
 
         Security.addProvider(new BouncyCastleProvider());
+
+        certStartTime = new Date();
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(certStartTime);
+        cal.add(Calendar.YEAR, 1);
+        certEndTime = cal.getTime();
 
         rootKeyPair = createKeyPair();
         contentSigner = new JcaContentSignerBuilder("SHA256WithRSAEncryption").build(rootKeyPair.getPrivate());
@@ -188,7 +197,6 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         outputStream.flush();
         outputStream.close();
     }
-
 
     private class OCSPHandler implements HttpHandler {
 
@@ -249,15 +257,10 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
     private X509Certificate createSelfSignedCertifcate(KeyPair keyPair) throws Exception {
         X500NameBuilder nameBuilder = new X500NameBuilder(BCStyle.INSTANCE);
         nameBuilder.addRDN(BCStyle.CN, HOSTNAME);
-        Date notBefore = new Date();              // time from which certificate is valid
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(notBefore);
-        cal.add(Calendar.YEAR, 1);
-        Date notAfter = cal.getTime();
         BigInteger serialNumber = new BigInteger(128, new Random());
 
         X509v3CertificateBuilder certificateBuilder =
-                new JcaX509v3CertificateBuilder(nameBuilder.build(), serialNumber, notBefore, notAfter, nameBuilder.build(), keyPair.getPublic())
+                new JcaX509v3CertificateBuilder(nameBuilder.build(), serialNumber, certStartTime, certEndTime, nameBuilder.build(), keyPair.getPublic())
                 .addExtension(Extension.basicConstraints, true, new BasicConstraints(0))
                 .addExtension(Extension.keyUsage, true, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyCertSign | KeyUsage.cRLSign));
 
@@ -265,14 +268,9 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
     }
 
     private void buildCRL(X509Certificate x509Certificate, String crlPath) throws Exception {
-        X509v2CRLBuilder builder = new JcaX509v2CRLBuilder(x509Certificate.getIssuerX500Principal(), new Date());
-        Date notBefore = new Date();
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(notBefore);
-        cal.add(Calendar.YEAR, 1);
-        Date notAfter = cal.getTime();
-        builder.setNextUpdate(notAfter);
-        builder.addCRLEntry(x509Certificate.getSerialNumber(), new Date(), CRLReason.cACompromise);
+        X509v2CRLBuilder builder = new JcaX509v2CRLBuilder(x509Certificate.getIssuerX500Principal(), certStartTime);
+        builder.addCRLEntry(x509Certificate.getSerialNumber(), certStartTime, CRLReason.cACompromise);
+        builder.setNextUpdate(certEndTime);
         builder.addExtension(Extension.authorityKeyIdentifier, false, new JcaX509ExtensionUtils().createAuthorityKeyIdentifier(rootCertificate));
         builder.addExtension(Extension.cRLNumber, false, new CRLNumber(new BigInteger("1000")));
 
@@ -302,8 +300,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
                 SubjectPublicKeyInfoFactory.createSubjectPublicKeyInfo(PublicKeyFactory.createKey(keyPair.getPublic().getEncoded()));
         X509ExtensionUtils extensionUtils = new BcX509ExtensionUtils();
         X509v3CertificateBuilder certificateBuilder = new JcaX509v3CertificateBuilder(holder.getSubject(), new BigInteger(128, new Random()),
-                new Date(System.currentTimeMillis()), new Date(System.currentTimeMillis() + 100000),
-                new X500Name("CN=Test End Entity Certificate"), keyPair.getPublic())
+                certStartTime, certEndTime, new X500Name("CN=Test End Entity Certificate"), keyPair.getPublic())
                 .addExtension(Extension.authorityKeyIdentifier, false, extensionUtils.createAuthorityKeyIdentifier(holder))
                 .addExtension(Extension.subjectKeyIdentifier, false, extensionUtils.createSubjectKeyIdentifier(entityKeyInfo))
                 .addExtension(Extension.basicConstraints, true, new BasicConstraints(false))

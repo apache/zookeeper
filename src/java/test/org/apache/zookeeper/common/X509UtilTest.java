@@ -131,7 +131,7 @@ public class X509UtilTest extends ZKTestCase {
     private X509Certificate createSelfSignedCertifcate(KeyPair keyPair) throws Exception {
         X500NameBuilder nameBuilder = new X500NameBuilder(BCStyle.INSTANCE);
         nameBuilder.addRDN(BCStyle.CN, "localhost");
-        Date notBefore = new Date();              // time from which certificate is valid
+        Date notBefore = new Date();
         Calendar cal = Calendar.getInstance();
         cal.setTime(notBefore);
         cal.add(Calendar.YEAR, 1);
