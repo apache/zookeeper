@@ -37,14 +37,20 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Security;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.security.cert.PKIXBuilderParameters;
 import java.security.cert.X509CertSelector;
 
-import static org.apache.zookeeper.common.X509Exception.*;
+import org.apache.zookeeper.common.X509Exception.KeyManagerException;
+import org.apache.zookeeper.common.X509Exception.SSLContextException;
+import org.apache.zookeeper.common.X509Exception.TrustManagerException;
 
 /**
  * Utility code for X509 handling
@@ -52,7 +58,7 @@ import static org.apache.zookeeper.common.X509Exception.*;
 public abstract class X509Util {
     private static final Logger LOG = LoggerFactory.getLogger(X509Util.class);
 
-    public static final String DEFAULT_PROTOCOL = "TLSv1";
+    static final String DEFAULT_PROTOCOL = "TLSv1";
 
     private String sslProtocolProperty = getConfigPrefix() + "protocol";
     private String cipherSuitesProperty = getConfigPrefix() + "ciphersuites";
@@ -115,15 +121,15 @@ public abstract class X509Util {
         return sslOcspEnabledProperty;
     }
 
-    public synchronized SSLContext getDefaultSSLContext() throws SSLContextException {
+    public synchronized SSLContext getDefaultSSLContext() throws X509Exception.SSLContextException {
         if (defaultSSLContext == null) {
             defaultSSLContext = createSSLContext();
         }
         return defaultSSLContext;
     }
 
-    public SSLContext createSSLContext() throws SSLContextException {
-        /**
+    private SSLContext createSSLContext() throws SSLContextException {
+        /*
          * Since Configuration initializes the key store and trust store related
          * configuration from system property. Reading property from
          * configuration will be same reading from system property
@@ -154,8 +160,8 @@ public abstract class X509Util {
             try {
                 keyManagers = new KeyManager[]{
                         createKeyManager(keyStoreLocationProp, keyStorePasswordProp)};
-            } catch (KeyManagerException e) {
-                throw new SSLContextException("Failed to create KeyManager", e);
+            } catch (KeyManagerException keyManagerException) {
+                throw new SSLContextException("Failed to create KeyManager", keyManagerException);
             }
         }
 
@@ -173,8 +179,8 @@ public abstract class X509Util {
                 trustManagers = new TrustManager[]{
                         createTrustManager(trustStoreLocationProp, trustStorePasswordProp, sslCrlEnabled, sslOcspEnabled,
                                 sslServerHostnameVerificationEnabled, shouldVerifyClientHostname())};
-            } catch (TrustManagerException e) {
-                throw new SSLContextException("Failed to create TrustManager", e);
+            } catch (TrustManagerException trustManagerException) {
+                throw new SSLContextException("Failed to create TrustManager", trustManagerException);
             }
         }
 
@@ -183,8 +189,8 @@ public abstract class X509Util {
             SSLContext sslContext = SSLContext.getInstance(protocol);
             sslContext.init(keyManagers, trustManagers, null);
             return sslContext;
-        } catch (NoSuchAlgorithmException|KeyManagementException e) {
-            throw new SSLContextException(e);
+        } catch (NoSuchAlgorithmException|KeyManagementException sslContextInitException) {
+            throw new SSLContextException(sslContextInitException);
         }
     }
 
@@ -207,13 +213,16 @@ public abstract class X509Util {
             }
             throw new KeyManagerException("Couldn't find X509KeyManager");
 
-        } catch (Exception e) {
-            throw new KeyManagerException(e);
+        } catch (IOException|CertificateException|UnrecoverableKeyException|NoSuchAlgorithmException|KeyStoreException
+                keyManagerCreationException) {
+            throw new KeyManagerException(keyManagerCreationException);
         } finally {
             if (inputStream != null) {
                 try {
                     inputStream.close();
-                } catch (IOException e) {}
+                } catch (IOException ioException) {
+                    LOG.info("Failed to close key store input stream", ioException);
+                }
             }
         }
     }
@@ -258,14 +267,15 @@ public abstract class X509Util {
                 }
             }
             throw new TrustManagerException("Couldn't find X509TrustManager");
-        } catch (Exception e) {
-            throw new TrustManagerException(e);
+        } catch (IOException|CertificateException|NoSuchAlgorithmException|InvalidAlgorithmParameterException|KeyStoreException
+                 trustManagerCreationException) {
+            throw new TrustManagerException(trustManagerCreationException);
         } finally {
             if (inputStream != null) {
                 try {
                     inputStream.close();
-                } catch (IOException e) {
-                    LOG.info("failed to close TrustStore input stream", e);
+                } catch (IOException ioException) {
+                    LOG.info("failed to close TrustStore input stream", ioException);
                 }
             }
         }
