@@ -1668,7 +1668,7 @@ imok
         </varlistentry>
 
         <varlistentry>
-          <term>incorrect placement of transasction log</term>
+          <term>incorrect placement of transaction log</term>
 
           <listitem>
             <para>The most performance critical part of ZooKeeper is the
