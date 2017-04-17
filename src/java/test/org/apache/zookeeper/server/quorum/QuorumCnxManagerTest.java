@@ -227,6 +227,9 @@ public class QuorumCnxManagerTest extends ZKTestCase {
                                                        "QuorumLearner", true, true);
         peer0.connectOne(1);
         peer1.connectOne(0);
+
+        peer0.halt();
+
         assertEventuallyNotConnected(peer0, 1);
     }
 
