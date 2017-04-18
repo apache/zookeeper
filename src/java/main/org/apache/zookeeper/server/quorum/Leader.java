@@ -40,6 +40,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import javax.security.sasl.SaslException;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.Request;
@@ -364,6 +365,7 @@ public class Leader {
      * @throws IOException
      * @throws InterruptedException
      */
+    @SuppressFBWarnings(value = {"VO_VOLATILE_INCREMENT"}, justification = "lead() will only be executed by one thread")
     void lead() throws IOException, InterruptedException {
         self.end_fle = System.currentTimeMillis();
         long electionTimeTaken = self.end_fle - self.start_fle;

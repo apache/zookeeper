@@ -36,6 +36,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.Random;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +51,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
  * @deprecated This class has been deprecated as of release 3.4.0. 
  */
 @Deprecated
+@SuppressFBWarnings(value = {"VO_VOLATILE_INCREMENT"}, justification = "AuthFastLeaderElection is deprecated")
 public class AuthFastLeaderElection implements Election {
     private static final Logger LOG = LoggerFactory.getLogger(AuthFastLeaderElection.class);
 
