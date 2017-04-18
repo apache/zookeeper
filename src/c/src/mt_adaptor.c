@@ -483,6 +483,9 @@ int32_t inc_ref_counter(zhandle_t* zh,int i)
 int32_t fetch_and_add(volatile int32_t* operand, int incr)
 {
 #ifndef WIN32
+#if defined(__GNUC__)
+    return __sync_fetch_and_add(operand,incr);
+#else
     int32_t result;
     asm __volatile__(
          "lock xaddl %0,%1\n"
@@ -490,6 +493,7 @@ int32_t fetch_and_add(volatile int32_t* operand, int incr)
          : "0"(incr)
          : "memory");
    return result;
+#endif
 #else
     volatile int32_t result;
     _asm
