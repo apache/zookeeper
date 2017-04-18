@@ -363,10 +363,7 @@ public class QuorumCnxManager {
                 vsw.finish();
             
             senderWorkerMap.put(sid, sw);
-            if (!queueSendMap.containsKey(sid)) {
-                queueSendMap.put(sid, new ArrayBlockingQueue<ByteBuffer>(
-                        SEND_CAPACITY));
-            }
+            queueSendMap.putIfAbsent(sid, new ArrayBlockingQueue<ByteBuffer>(SEND_CAPACITY));
             
             sw.start();
             rw.start();
@@ -504,11 +501,7 @@ public class QuorumCnxManager {
                 vsw.finish();
             
             senderWorkerMap.put(sid, sw);
-            
-            if (!queueSendMap.containsKey(sid)) {
-                queueSendMap.put(sid, new ArrayBlockingQueue<ByteBuffer>(
-                        SEND_CAPACITY));
-            }
+            queueSendMap.putIfAbsent(sid, new ArrayBlockingQueue<ByteBuffer>(SEND_CAPACITY));
             
             sw.start();
             rw.start();
@@ -535,19 +528,12 @@ public class QuorumCnxManager {
              /*
               * Start a new connection if doesn't have one already.
               */
-             if (!queueSendMap.containsKey(sid)) {
-                 ArrayBlockingQueue<ByteBuffer> bq = new ArrayBlockingQueue<ByteBuffer>(
-                         SEND_CAPACITY);
-                 queueSendMap.put(sid, bq);
-                 addToSendQueue(bq, b);
-
+             ArrayBlockingQueue<ByteBuffer> bq = new ArrayBlockingQueue<ByteBuffer>(SEND_CAPACITY);
+             ArrayBlockingQueue<ByteBuffer> bqExisting = queueSendMap.putIfAbsent(sid, bq);
+             if (bqExisting != null) {
+                 addToSendQueue(bqExisting, b);
              } else {
-                 ArrayBlockingQueue<ByteBuffer> bq = queueSendMap.get(sid);
-                 if(bq != null){
-                     addToSendQueue(bq, b);
-                 } else {
-                     LOG.error("No queue for server " + sid);
-                 }
+                 addToSendQueue(bq, b);
              }
              connectOne(sid);
                 

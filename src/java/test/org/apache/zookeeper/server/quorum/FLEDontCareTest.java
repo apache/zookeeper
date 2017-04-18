@@ -236,7 +236,7 @@ public class FLEDontCareTest {
          * fle represents the FLE instance of server 3.Here we set
          * its logical clock to 1.
          */
-        fle.logicalclock = 0x1;
+        fle.logicalclock.set(0x1);
 
 
         /*

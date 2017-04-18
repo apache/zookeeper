@@ -38,6 +38,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.security.sasl.SaslException;
 
@@ -347,7 +348,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     /**
      * The current tick
      */
-    protected volatile int tick;
+    protected AtomicInteger tick = new AtomicInteger();
 
     /**
      * Whether or not to listen on all IPs for the two quorum ports
@@ -1165,7 +1166,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * Get the current tick
      */
     public int getTick() {
-        return tick;
+        return tick.get();
     }
     
     /**
