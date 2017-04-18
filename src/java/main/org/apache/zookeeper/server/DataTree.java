@@ -1133,13 +1133,13 @@ public class DataTree {
      * @param pwriter the output to write to
      */
     public void dumpEphemerals(PrintWriter pwriter) {
-        Set<Long> keys = ephemerals.keySet();
+        Set<Map.Entry<Long, HashSet<String>>> entrySet = ephemerals.entrySet();
         pwriter.println("Sessions with Ephemerals ("
-                + keys.size() + "):");
-        for (long k : keys) {
-            pwriter.print("0x" + Long.toHexString(k));
+                + entrySet.size() + "):");
+        for (Map.Entry<Long, HashSet<String>> entry : entrySet) {
+            pwriter.print("0x" + Long.toHexString(entry.getKey()));
             pwriter.println(":");
-            HashSet<String> tmp = ephemerals.get(k);
+            HashSet<String> tmp = entry.getValue();
             if (tmp != null) {
                 synchronized (tmp) {
                     for (String path : tmp) {
