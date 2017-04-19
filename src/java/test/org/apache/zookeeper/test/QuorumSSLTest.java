@@ -79,7 +79,9 @@ import org.bouncycastle.util.io.pem.PemWriter;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 import java.io.FileOutputStream;
 import java.io.FileWriter;
@@ -105,6 +107,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import static org.apache.zookeeper.test.ClientBase.createTmpDir;
@@ -143,6 +146,9 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
 
     private Date certStartTime;
     private Date certEndTime;
+    
+    @Rule
+    public Timeout timeout = Timeout.builder().withTimeout(5, TimeUnit.MINUTES).withLookingForStuckThread(true).build();
 
     @Before
     public void setup() throws Exception {
@@ -382,7 +388,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         System.clearProperty(quorumX509Util.getSslProtocolProperty());
     }
 
-    @Test(timeout = 300000)
+    @Test
     public void testQuorumSSL() throws Exception {
         q1 = new MainThread(1, clientPortQp1, quorumConfiguration, SSL_QUORUM_ENABLED);
         q2 = new MainThread(2, clientPortQp2, quorumConfiguration, SSL_QUORUM_ENABLED);
@@ -403,7 +409,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         Assert.assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
     }
 
-    @Test(timeout = 300000)
+    @Test
     public void testRollingUpgrade() throws Exception {
         // Form a quorum without ssl
         q1 = new MainThread(1, clientPortQp1, quorumConfiguration);
@@ -451,7 +457,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         }
     }
 
-    @Test(timeout = 300000)
+    @Test
     public void testHostnameVerificationWithInvalidHostname() throws Exception {
         String badhostnameKeystorePath = tmpDir + "/badhost.jks";
         X509Certificate badHostCert = buildEndEntityCert(defaultKeyPair, rootCertificate, rootKeyPair.getPrivate(),
@@ -461,7 +467,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         testHostnameVerification(badhostnameKeystorePath, false);
     }
 
-    @Test(timeout = 300000)
+    @Test
     public void testHostnameVerificationWithInvalidIPAddress() throws Exception {
         String badhostnameKeystorePath = tmpDir + "/badhost.jks";
         X509Certificate badHostCert = buildEndEntityCert(defaultKeyPair, rootCertificate, rootKeyPair.getPrivate(),
@@ -471,7 +477,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         testHostnameVerification(badhostnameKeystorePath, false);
     }
 
-    @Test(timeout = 300000)
+    @Test
     public void testHostnameVerificationWithInvalidIpAddressAndInvalidHostname() throws Exception {
         String badhostnameKeystorePath = tmpDir + "/badhost.jks";
         X509Certificate badHostCert = buildEndEntityCert(defaultKeyPair, rootCertificate, rootKeyPair.getPrivate(),
@@ -481,7 +487,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         testHostnameVerification(badhostnameKeystorePath, false);
     }
 
-    @Test(timeout = 300000)
+    @Test
     public void testHostnameVerificationWithInvalidIpAddressAndValidHostname() throws Exception {
         String badhostnameKeystorePath = tmpDir + "/badhost.jks";
         X509Certificate badHostCert = buildEndEntityCert(defaultKeyPair, rootCertificate, rootKeyPair.getPrivate(),
@@ -491,7 +497,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         testHostnameVerification(badhostnameKeystorePath, true);
     }
 
-    @Test(timeout = 300000)
+    @Test
     public void testHostnameVerificationWithValidIpAddressAndInvalidHostname() throws Exception {
         String badhostnameKeystorePath = tmpDir + "/badhost.jks";
         X509Certificate badHostCert = buildEndEntityCert(defaultKeyPair, rootCertificate, rootKeyPair.getPrivate(),
@@ -550,7 +556,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
     }
 
 
-    @Test(timeout = 300000)
+    @Test
     public void testCertificateRevocationList() throws Exception {
         q1 = new MainThread(1, clientPortQp1, quorumConfiguration, SSL_QUORUM_ENABLED);
         q2 = new MainThread(2, clientPortQp2, quorumConfiguration, SSL_QUORUM_ENABLED);
@@ -604,7 +610,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         Assert.assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
     }
 
-    @Test(timeout = 300000)
+    @Test
     public void testOCSP() throws Exception {
         Integer ocspPort = PortAssignment.unique();
 
@@ -665,7 +671,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         }
     }
 
-    @Test(timeout = 300000)
+    @Test
     public void testCipherSuites() throws Exception {
         System.setProperty(quorumX509Util.getCipherSuitesProperty(),
                 "SSL_DHE_DSS_WITH_3DES_EDE_CBC_SHA,SSL_RSA_WITH_RC4_128_MD5");
@@ -689,7 +695,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         Assert.assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
     }
 
-    @Test(timeout = 300000)
+    @Test
     public void testProtocolVersion() throws Exception {
         System.setProperty(quorumX509Util.getSslProtocolProperty(), "TLSv1.2");
 
