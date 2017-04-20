@@ -289,7 +289,7 @@ public abstract class X509Util {
     }
 
     public SSLSocket createSSLSocket(Socket socket) throws X509Exception, IOException {
-        SSLSocket sslSocket = (SSLSocket) getDefaultSSLContext().getSocketFactory().createSocket(socket, null, socket.getPort(), false);
+        SSLSocket sslSocket = (SSLSocket) getDefaultSSLContext().getSocketFactory().createSocket(socket, null, socket.getPort(), true);
         configureSSLSocket(sslSocket);
 
         return sslSocket;

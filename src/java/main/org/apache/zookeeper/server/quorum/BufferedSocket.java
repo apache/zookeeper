@@ -19,7 +19,6 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketImpl;
@@ -27,7 +26,6 @@ import java.net.SocketImpl;
 public class BufferedSocket extends Socket {
 
   private BufferedInputStream bufferedInputStream;
-  private BufferedOutputStream bufferedOutputStream;
 
   public BufferedSocket(SocketImpl base) throws IOException {
     super(base);
@@ -40,15 +38,6 @@ public class BufferedSocket extends Socket {
     }
 
     return bufferedInputStream;
-  }
-
-  @Override
-  public BufferedOutputStream getOutputStream() throws IOException {
-    if (bufferedOutputStream == null) {
-      bufferedOutputStream = new BufferedOutputStream(super.getOutputStream());
-    }
-
-    return bufferedOutputStream;
   }
 
 }
