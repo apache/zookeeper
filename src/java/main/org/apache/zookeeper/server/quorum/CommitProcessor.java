@@ -258,8 +258,8 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
                             // session moves (see ZOOKEEPER-2684). We will just pass the 
                             // commit to the next processor and put the pending back with
                             // a warning, we should not see this often
-                            LOG.warn("Got request " + request
-                                + " but we are expecting request " + topPending);
+                            LOG.warn("Got request " + request + 
+                                " but we are expecting request " + topPending);
                             sessionQueue.addFirst(topPending);
                         } else {                            
                             /*
