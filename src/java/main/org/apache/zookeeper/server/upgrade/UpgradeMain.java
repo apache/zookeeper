@@ -114,15 +114,17 @@ public class UpgradeMain {
      */
     void copyFiles(File srcDir, File dstDir, String filter) throws IOException {
         File[] list = srcDir.listFiles();
-        for (File file: list) {
-            String name = file.getName();
-            if (name.startsWith(filter)) {
-                // we need to copy this file
-                File dest = new File(dstDir, name);
-                LOG.info("Renaming " + file + " to " + dest);
-                if (!file.renameTo(dest)) {
-                    throw new IOException("Unable to rename " 
-                            + file + " to " +  dest);
+        if (list != null) {
+            for (File file: list) {
+                String name = file.getName();
+                if (name.startsWith(filter)) {
+                    // we need to copy this file
+                    File dest = new File(dstDir, name);
+                    LOG.info("Renaming " + file + " to " + dest);
+                    if (!file.renameTo(dest)) {
+                        throw new IOException("Unable to rename "
+                                + file + " to " +  dest);
+                    }
                 }
             }
         }
