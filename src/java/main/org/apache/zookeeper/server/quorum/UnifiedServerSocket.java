@@ -54,20 +54,18 @@ public class UnifiedServerSocket extends ServerSocket {
         if (!isBound()) {
             throw new SocketException("Socket is not bound yet");
         }
-        final Socket bufferedSocket = new BufferedSocket(null);
-        implAccept(bufferedSocket);
-
-        bufferedSocket.getInputStream().mark(6);
+        final PrependableSocket prependableSocket = new PrependableSocket(null);
+        implAccept(prependableSocket);
 
         byte[] litmus = new byte[5];
-        int bytesRead = bufferedSocket.getInputStream().read(litmus, 0, 5);
-        bufferedSocket.getInputStream().reset();
+        int bytesRead = prependableSocket.getInputStream().read(litmus, 0, 5);
+        prependableSocket.prependToInputStream(litmus);
 
         if (bytesRead == 5 && SslHandler.isEncrypted(ChannelBuffers.wrappedBuffer(litmus))) {
             LOG.info(getInetAddress() + " attempting to connect over ssl");
             SSLSocket sslSocket;
             try {
-                sslSocket = x509Util.createSSLSocket(bufferedSocket);
+                sslSocket = x509Util.createSSLSocket(prependableSocket);
             } catch (X509Exception e) {
                 throw new IOException("failed to create SSL context", e);
             }
@@ -75,7 +73,7 @@ public class UnifiedServerSocket extends ServerSocket {
             return sslSocket;
         } else {
             LOG.info(getInetAddress() + " attempting to connect without ssl");
-            return bufferedSocket;
+            return prependableSocket;
         }
     }
 }

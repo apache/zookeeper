@@ -18,26 +18,32 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.SequenceInputStream;
 import java.net.Socket;
 import java.net.SocketImpl;
 
-public class BufferedSocket extends Socket {
+public class PrependableSocket extends Socket {
 
-  private BufferedInputStream bufferedInputStream;
+  private SequenceInputStream sequenceInputStream;
 
-  public BufferedSocket(SocketImpl base) throws IOException {
+  public PrependableSocket(SocketImpl base) throws IOException {
     super(base);
   }
 
   @Override
-  public BufferedInputStream getInputStream() throws IOException {
-    if (bufferedInputStream == null) {
-      bufferedInputStream = new BufferedInputStream(super.getInputStream());
+  public InputStream getInputStream() throws IOException {
+    if (sequenceInputStream == null) {
+      return super.getInputStream();
     }
 
-    return bufferedInputStream;
+    return sequenceInputStream;
+  }
+
+  public void prependToInputStream(byte[] bytes) throws IOException {
+    sequenceInputStream = new SequenceInputStream(new ByteArrayInputStream(bytes), getInputStream());
   }
 
 }
