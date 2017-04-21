@@ -257,7 +257,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
                             // we can get commit requests that is not at the queue head when 
                             // session moves (see ZOOKEEPER-2684). We will just pass the 
                             // commit to the next processor and put the pending back with
-                            // a warning, we should not see this often
+                            // a warning, we should not see this often under normal load
                             LOG.warn("Got request " + request + 
                                 " but we are expecting request " + topPending);
                             sessionQueue.addFirst(topPending);
