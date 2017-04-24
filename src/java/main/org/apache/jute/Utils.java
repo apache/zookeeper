@@ -190,19 +190,32 @@ public class Utils {
     }
     
     /**
+     * convert byte array to a string in hex format
+     * 
+     * @param barr
+     * @return
+     */
+    private static String toHexString(byte barr[]) {
+        if (barr == null || barr.length == 0) {
+            return "";
+        }
+        
+        StringBuilder sb = new StringBuilder(2*barr.length);
+        for(int idx = 0; idx < barr.length; idx++) {
+            byte b = barr[idx];
+            sb.append(hexchars[(b & 0xf0) >> 4]);
+            sb.append(hexchars[b & 0x0f]);
+        }
+        return sb.toString().toLowerCase();
+    }
+    
+    /**
      * 
      * @param s 
      * @return 
      */
     static String toXMLBuffer(byte barr[]) {
-        if (barr == null || barr.length == 0) {
-            return "";
-        }
-        StringBuilder sb = new StringBuilder(2*barr.length);
-        for (int idx = 0; idx < barr.length; idx++) {
-            sb.append(Integer.toHexString(barr[idx]));
-        }
-        return sb.toString();
+        return toHexString(barr);
     }
     
     /**
@@ -232,17 +245,9 @@ public class Utils {
      * @return 
      */
     static String toCSVBuffer(byte barr[]) {
-        if (barr == null || barr.length == 0) {
-            return "";
-        }
-        StringBuilder sb = new StringBuilder(barr.length + 1);
-        sb.append('#');
-        for(int idx = 0; idx < barr.length; idx++) {
-            sb.append(Integer.toHexString(barr[idx]));
-        }
-        return sb.toString();
+        return '#' + toHexString(barr);
     }
-    
+
     /**
      * Converts a CSV-serialized representation of buffer to a new
      * ByteArrayOutputStream.
