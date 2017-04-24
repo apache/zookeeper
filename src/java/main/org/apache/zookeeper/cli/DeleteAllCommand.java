@@ -65,6 +65,8 @@ public class DeleteAllCommand extends CliCommand {
         String path = args[1];
         try {
             ZKUtil.deleteRecursive(zk, path);
+        } catch (IllegalArgumentException ex) {
+            throw new MalformedPathException(ex.getMessage());
         } catch (KeeperException|InterruptedException ex) {
             throw new CliWrapperException(ex);
         }

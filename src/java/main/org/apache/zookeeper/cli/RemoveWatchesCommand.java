@@ -62,7 +62,7 @@ public class RemoveWatchesCommand extends CliCommand {
     }
 
     @Override
-    public boolean exec() throws CliWrapperException {
+    public boolean exec() throws CliWrapperException, MalformedPathException {
         String path = args[1];
         WatcherType wtype = WatcherType.Any;
         // if no matching option -c or -d or -a is specified, we remove
@@ -79,6 +79,8 @@ public class RemoveWatchesCommand extends CliCommand {
 
         try {
             zk.removeAllWatches(path, wtype, local);
+        } catch (IllegalArgumentException ex) {
+            throw new MalformedPathException(ex.getMessage());
         } catch (KeeperException|InterruptedException ex) {
             throw new CliWrapperException(ex);
         }

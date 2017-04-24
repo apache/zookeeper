@@ -118,6 +118,8 @@ public class CreateCommand extends CliCommand {
         try {
             String newPath = hasT ? zk.create(path, data, acl, flags, new Stat(), ttl) : zk.create(path, data, acl, flags);
             err.println("Created " + newPath);
+        } catch(IllegalArgumentException ex) {
+            throw new MalformedPathException(ex.getMessage());
         } catch(KeeperException.EphemeralOnLocalSessionException e) {
             err.println("Unable to create ephemeral node on a local session");
             throw new CliWrapperException(e);

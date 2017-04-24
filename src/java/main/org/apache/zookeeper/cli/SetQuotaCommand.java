@@ -91,11 +91,16 @@ public class SetQuotaCommand extends CliCommand {
 
     public static boolean createQuota(ZooKeeper zk, String path,
             long bytes, int numNodes)
-            throws KeeperException, IOException, InterruptedException {
+            throws KeeperException, IOException, InterruptedException, MalformedPathException {
         // check if the path exists. We cannot create
         // quota for a path that already exists in zookeeper
         // for now.
-        Stat initStat = zk.exists(path, false);
+        Stat initStat;
+        try {
+            initStat = zk.exists(path, false);
+        } catch (IllegalArgumentException ex) {
+            throw new MalformedPathException(ex.getMessage());
+        }
         if (initStat == null) {
             throw new IllegalArgumentException(path + " does not exist.");
         }

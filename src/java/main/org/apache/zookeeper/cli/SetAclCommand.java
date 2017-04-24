@@ -73,6 +73,8 @@ public class SetAclCommand extends CliCommand {
             if (cl.hasOption("s")) {
                 new StatPrinter(out).print(stat);
             }
+        } catch (IllegalArgumentException ex) {
+            throw new MalformedPathException(ex.getMessage());
         } catch (KeeperException|InterruptedException ex) {
             throw new CliWrapperException(ex);
         }

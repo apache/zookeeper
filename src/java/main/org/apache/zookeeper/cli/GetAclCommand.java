@@ -67,6 +67,8 @@ public class GetAclCommand extends CliCommand {
         List<ACL> acl;
         try {
            acl = zk.getACL(path, stat);
+        } catch (IllegalArgumentException ex) {
+            throw new MalformedPathException(ex.getMessage());
         } catch (KeeperException|InterruptedException ex) {
             throw new CliWrapperException(ex);
         }
