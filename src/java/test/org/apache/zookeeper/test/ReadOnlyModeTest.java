@@ -45,8 +45,11 @@ import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.LoggerFactory;
 
 public class ReadOnlyModeTest extends ZKTestCase {
+    private static final org.slf4j.Logger LOG = LoggerFactory
+            .getLogger(ReadOnlyModeTest.class);
     private static int CONNECTION_TIMEOUT = QuorumBase.CONNECTION_TIMEOUT;
     private QuorumUtil qu = new QuorumUtil(1);
 
@@ -156,17 +159,29 @@ public class ReadOnlyModeTest extends ZKTestCase {
         Assert.assertSame("should be in r/o mode", States.CONNECTEDREADONLY, zk
                 .getState());
         long fakeId = zk.getSessionId();
+        LOG.info("Connected as r/o mode with state {} and session id {}",
+                zk.getState(), fakeId);
 
         watcher.reset();
         qu.start(2);
         Assert.assertTrue("waiting for server up", ClientBase.waitForServerUp(
                 "127.0.0.1:" + qu.getPeer(2).clientPort, CONNECTION_TIMEOUT));
-        watcher.waitForConnected(CONNECTION_TIMEOUT);
+        LOG.info("Server 127.0.0.1:{} is up", qu.getPeer(2).clientPort);
+        // ZOOKEEPER-2722: wait until we can connect to a read-write server after the quorum
+        // is formed. Otherwise, it is possible that client first connects to a read-only server,
+        // then drops the connection because of shutting down of the read-only server caused
+        // by leader election / quorum forming between the read-only server and the newly started
+        // server. If we happen to execute the zk.create after the read-only server is shutdown and
+        // before the quorum is formed, we will get a ConnectLossException.
+        watcher.waitForSyncConnected(CONNECTION_TIMEOUT);
+        Assert.assertEquals("Should be in read-write mode", States.CONNECTED,
+                zk.getState());
+        LOG.info("Connected as rw mode with state {} and session id {}",
+                zk.getState(), zk.getSessionId());
         zk.create("/test", "test".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
                 CreateMode.PERSISTENT);
         Assert.assertFalse("fake session and real session have same id", zk
                 .getSessionId() == fakeId);
-
         zk.close();
     }
 

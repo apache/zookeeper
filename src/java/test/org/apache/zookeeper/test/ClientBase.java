@@ -165,6 +165,7 @@ public abstract class ClientBase extends ZKTestCase {
                 throw new TimeoutException("Failed to connect to read-write ZooKeeper server.");
             }
         }
+
         synchronized public void waitForReadOnlyConnected(long timeout)
                 throws InterruptedException, TimeoutException
         {
@@ -178,6 +179,7 @@ public abstract class ClientBase extends ZKTestCase {
                 throw new TimeoutException("Failed to connect in read-only mode to ZooKeeper server.");
             }
         }
+
         synchronized public void waitForDisconnected(long timeout)
             throws InterruptedException, TimeoutException
         {
