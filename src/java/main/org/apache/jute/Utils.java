@@ -20,6 +20,7 @@ package org.apache.jute;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import javax.xml.bind.DatatypeConverter;
 
 /**
  * Various utility functions for Hadoop record I/O runtime.
@@ -215,7 +216,7 @@ public class Utils {
      * @return 
      */
     static String toXMLBuffer(byte barr[]) {
-        return toHexString(barr);
+        return DatatypeConverter.printHexBinary(barr).toLowerCase();
     }
     
     /**
@@ -245,7 +246,7 @@ public class Utils {
      * @return 
      */
     static String toCSVBuffer(byte barr[]) {
-        return '#' + toHexString(barr);
+        return '#' + DatatypeConverter.printHexBinary(barr).toLowerCase();
     }
 
     /**
