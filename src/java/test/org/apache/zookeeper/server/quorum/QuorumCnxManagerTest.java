@@ -66,7 +66,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,6 +73,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -191,9 +191,9 @@ public class QuorumCnxManagerTest extends ZKTestCase {
 
     /**
      * Peer0 has auth configured, Peer1 has no auth configured.
-     * Peer1 connects to peer0, but is disconnected, because peer1's sid is
+     * Peer0 connects to peer1, but is disconnected, because peer1's sid is
      * higher than peer0.
-     * Peer0 connects to peer1, but is disconnected, because peer1 cannot
+     * Peer1 connects to peer0, but is disconnected, because peer1 cannot
      * handle auth.
      */
     @Test(timeout = 30000)
@@ -227,20 +227,31 @@ public class QuorumCnxManagerTest extends ZKTestCase {
      * No auth learner connects to a server that requires auth, when the server
      * has a higher sid.
      * The connection should fail in both directions.
+     *
+     * peer0 should attempt to connect to peer1, but disconnect as its sid is lower
+     * peer1 should attempt to connect to peer0, peer0 will accept and add an entry to
+     * the senderWorkerMap but peer1 will disconnect because peer1 will start speaking SASL
+     * and peer0 will consider this invalid.
+     *
+     * Due to the unique behavior of peer0 creating an entry
+     * in senderWorkerMap for peer1 and then deleting it we use mockito spies to track
+     * this behavior.
      */
     @Test(timeout = 30000)
     public void testNoAuthLearnerConnectToAuthRequiredServerWithHigherSid()
             throws Exception {
         ConcurrentHashMap<Long, QuorumCnxManager.SendWorker> senderWorkerMap0 =
-                Mockito.spy(new ConcurrentHashMap<Long, QuorumCnxManager.SendWorker>());
+                spy(new ConcurrentHashMap<Long, QuorumCnxManager.SendWorker>());
         ConcurrentHashMap<Long, QuorumCnxManager.SendWorker> senderWorkerMap1 =
-                Mockito.spy(new ConcurrentHashMap<Long, QuorumCnxManager.SendWorker>());
+                spy(new ConcurrentHashMap<Long, QuorumCnxManager.SendWorker>());
 
         QuorumCnxManager peer0 = createAndStartManager(0, senderWorkerMap0);
         QuorumCnxManager peer1 = createAndStartManager(1, "QuorumServer", "QuorumLearner",
                 true, true, senderWorkerMap1);
         peer0.connectOne(1);
         peer1.connectOne(0);
+
+        assertEventuallyNotConnected(peer0, 1);
 
         verify(senderWorkerMap0, timeout(10000)).put(eq(1L), any(QuorumCnxManager.SendWorker.class));
         verify(senderWorkerMap0, timeout(10000)).remove(eq(1L), any(QuorumCnxManager.SendWorker.class));
