@@ -103,13 +103,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected RequestProcessor firstProcessor;
     protected volatile State state = State.INITIAL;
 
-    /**
-     * Returns the elapsed sync of time of transaction log in milliseconds.
-     */
-    public long getTxnLogElapsedSyncTime() {
-        return txnLogFactory.getTxnLogElapsedSyncTime();
-    }
-
     protected enum State {
         INITIAL, RUNNING, SHUTDOWN, ERROR;
     }
@@ -949,6 +942,13 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     public FileTxnSnapLog getTxnLogFactory() {
         return this.txnLogFactory;
+    }
+
+    /**
+     * Returns the elapsed sync of time of transaction log in milliseconds.
+     */
+    public long getTxnLogElapsedSyncTime() {
+        return txnLogFactory.getTxnLogElapsedSyncTime();
     }
 
     public String getState() {

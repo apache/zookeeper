@@ -163,9 +163,6 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
         return "";
     }
 
-    /**
-     * Returns the elapsed sync of time of transaction log in milliseconds.
-     */
     @Override
     public long getTxnLogElapsedSyncTime() {
         return zks.getTxnLogElapsedSyncTime();

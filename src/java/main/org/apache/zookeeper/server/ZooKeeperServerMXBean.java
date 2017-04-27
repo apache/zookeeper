@@ -126,5 +126,8 @@ public interface ZooKeeperServerMXBean {
      */
     public String getSecureClientAddress();
 
+    /**
+     * Returns the elapsed sync of time of transaction log in milliseconds.
+     */
     public long getTxnLogElapsedSyncTime();
 }
