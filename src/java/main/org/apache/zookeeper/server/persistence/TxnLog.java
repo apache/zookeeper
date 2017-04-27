@@ -77,11 +77,17 @@ public interface TxnLog {
     long getDbId() throws IOException;
     
     /**
-     * commmit the trasaction and make sure
+     * commmit the transaction and make sure
      * they are persisted
      * @throws IOException
      */
     void commit() throws IOException;
+
+    /**
+     *
+     * @return transaction log's elapsed sync time in miliseconds
+     */
+    long getTxnLogSyncElapsedTime();
    
     /** 
      * close the transactions logs

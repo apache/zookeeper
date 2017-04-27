@@ -405,6 +405,14 @@ public class FileTxnSnapLog {
     }
 
     /**
+     *
+     * @return elapsed sync time of transaction log commit in milliseconds
+     */
+    public long getTxnLogElapsedSyncTime() {
+        return txnLog.getTxnLogSyncElapsedTime();
+    }
+
+    /**
      * roll the transaction logs
      * @throws IOException
      */
