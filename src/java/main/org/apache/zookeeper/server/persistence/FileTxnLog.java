@@ -132,6 +132,8 @@ public class FileTxnLog implements TxnLog {
     long currentSize;
     File logFileWrite = null;
 
+    private volatile long syncElapsedMS = -1L;
+
     /**
      * constructor for FileTxnLog. Take the directory
      * where the txnlogs are stored
@@ -319,7 +321,7 @@ public class FileTxnLog implements TxnLog {
     }
 
     /**
-     * commit the logs. make sure that evertyhing hits the
+     * commit the logs. make sure that everything hits the
      * disk
      */
     public synchronized void commit() throws IOException {
@@ -333,8 +335,7 @@ public class FileTxnLog implements TxnLog {
 
                 log.getChannel().force(false);
 
-                long syncElapsedMS =
-                    TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startSyncNS);
+                syncElapsedMS = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startSyncNS);
                 if (syncElapsedMS > fsyncWarningThresholdMS) {
                     LOG.warn("fsync-ing the write ahead log in "
                             + Thread.currentThread().getName()
@@ -347,6 +348,14 @@ public class FileTxnLog implements TxnLog {
         while (streamsToFlush.size() > 1) {
             streamsToFlush.removeFirst().close();
         }
+    }
+
+    /**
+     *
+     * @return elapsed sync time of transaction log in miliseconds
+     */
+    public long getTxnLogSyncElapsedTime() {
+        return syncElapsedMS;
     }
 
     /**

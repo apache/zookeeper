@@ -125,4 +125,6 @@ public interface ZooKeeperServerMXBean {
      * @return secure client address
      */
     public String getSecureClientAddress();
+
+    public long getTxnLogElapsedSyncTime();
 }
