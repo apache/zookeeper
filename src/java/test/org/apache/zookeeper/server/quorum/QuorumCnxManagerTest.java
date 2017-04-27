@@ -34,6 +34,7 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -65,8 +66,16 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 public class QuorumCnxManagerTest extends ZKTestCase {
     private static final Logger LOG = LoggerFactory.getLogger(QuorumCnxManagerTest.class);
@@ -222,15 +231,21 @@ public class QuorumCnxManagerTest extends ZKTestCase {
     @Test(timeout = 30000)
     public void testNoAuthLearnerConnectToAuthRequiredServerWithHigherSid()
             throws Exception {
-        QuorumCnxManager peer0 = createAndStartManager(0);
-        QuorumCnxManager peer1 = createAndStartManager(1, "QuorumServer",
-                                                       "QuorumLearner", true, true);
+        ConcurrentHashMap<Long, QuorumCnxManager.SendWorker> senderWorkerMap0 =
+                Mockito.spy(new ConcurrentHashMap<Long, QuorumCnxManager.SendWorker>());
+        ConcurrentHashMap<Long, QuorumCnxManager.SendWorker> senderWorkerMap1 =
+                Mockito.spy(new ConcurrentHashMap<Long, QuorumCnxManager.SendWorker>());
+
+        QuorumCnxManager peer0 = createAndStartManager(0, senderWorkerMap0);
+        QuorumCnxManager peer1 = createAndStartManager(1, "QuorumServer", "QuorumLearner",
+                true, true, senderWorkerMap1);
         peer0.connectOne(1);
         peer1.connectOne(0);
 
-        peer0.halt();
+        verify(senderWorkerMap0, timeout(10000)).put(eq(1L), any(QuorumCnxManager.SendWorker.class));
+        verify(senderWorkerMap0, timeout(10000)).remove(eq(1L), any(QuorumCnxManager.SendWorker.class));
 
-        assertEventuallyNotConnected(peer0, 1);
+        verify(senderWorkerMap1, never()).put(anyLong(), any(QuorumCnxManager.SendWorker.class));
     }
 
     /**
@@ -682,9 +697,14 @@ public class QuorumCnxManagerTest extends ZKTestCase {
     }
 
     private QuorumCnxManager createAndStartManager(long sid) {
+        return createAndStartManager(sid, new ConcurrentHashMap<Long, QuorumCnxManager.SendWorker>());
+    }
+
+    private QuorumCnxManager createAndStartManager(long sid, ConcurrentHashMap<Long, QuorumCnxManager.SendWorker> senderWorkerMap) {
         QuorumCnxManager peer = new QuorumCnxManager(sid, peers,
                 new NullQuorumAuthServer(), new NullQuorumAuthLearner(), 10000,
-                false, quorumCnxnThreadsSize, false);
+                false, quorumCnxnThreadsSize, false,
+                senderWorkerMap);
         executor.submit(peer.listener);
         InetSocketAddress electionAddr = peer.view.get(sid).electionAddr;
         waitForElectionAddrBinding(electionAddr, 15);
@@ -695,14 +715,24 @@ public class QuorumCnxManagerTest extends ZKTestCase {
                                                    String serverLoginContext,
                                                    String learnerLoginContext,
                                                    boolean serverRequireSasl,
-                                                   boolean learnerRequireSasl)
+                                                   boolean learnerRequireSasl) throws Exception {
+        return createAndStartManager(sid, serverLoginContext, learnerLoginContext, serverRequireSasl, learnerRequireSasl, new ConcurrentHashMap<Long, QuorumCnxManager.SendWorker>());
+
+    }
+
+    private QuorumCnxManager createAndStartManager(long sid,
+                                                   String serverLoginContext,
+                                                   String learnerLoginContext,
+                                                   boolean serverRequireSasl,
+                                                   boolean learnerRequireSasl,
+                                                   ConcurrentHashMap<Long, QuorumCnxManager.SendWorker> senderWorkerMap)
             throws Exception {
         QuorumAuthLearner authClient = new SaslQuorumAuthLearner(learnerRequireSasl,
                 "NOT_USING_KRB_PRINCIPAL", learnerLoginContext);
         QuorumAuthServer authServer = new SaslQuorumAuthServer(serverRequireSasl,
                 serverLoginContext, authzHosts);
         QuorumCnxManager peer = new QuorumCnxManager(sid, peers,
-                authServer, authClient, 10000, false, quorumCnxnThreadsSize, true);
+                authServer, authClient, 10000, false, quorumCnxnThreadsSize, true, senderWorkerMap);
         executor.submit(peer.listener);
         InetSocketAddress electionAddr = peer.view.get(sid).electionAddr;
         waitForElectionAddrBinding(electionAddr, 15);
