@@ -162,4 +162,9 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
         }
         return "";
     }
+
+    @Override
+    public long getTxnLogElapsedSyncTime() {
+        return zks.getTxnLogElapsedSyncTime();
+    }
 }

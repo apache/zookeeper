@@ -19,8 +19,11 @@
 package org.apache.zookeeper.server.persistence;
 
 import org.apache.jute.Record;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.server.DataTree;
+import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.test.ClientBase;
+import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.Assert;
 import org.junit.Test;
@@ -111,6 +114,26 @@ public class FileTxnSnapLogTest {
 
         Assert.assertTrue("cannot create initialize file", initFile.createNewFile());
         attemptAutoCreateDb(dataDir, snapDir, sessions, priorAutocreateDbValue, "false", 0L);
+    }
+
+    @Test
+    public void testGetTxnLogSyncElapsedTime() throws IOException {
+        File tmpDir = ClientBase.createEmptyTestDir();
+        FileTxnSnapLog fileTxnSnapLog = new FileTxnSnapLog(new File(tmpDir, "data"),
+                new File(tmpDir, "data_txnlog"));
+
+        TxnHeader hdr = new TxnHeader(1, 1, 1, 1, ZooDefs.OpCode.setData);
+        Record txn = new SetDataTxn("/foo", new byte[0], 1);
+        Request req = new Request(0, 0, 0, hdr, txn, 0);
+
+        try {
+            fileTxnSnapLog.append(req);
+            fileTxnSnapLog.commit();
+            long syncElapsedTime = fileTxnSnapLog.getTxnLogElapsedSyncTime();
+            Assert.assertNotEquals("Did not update syncElapsedTime!", -1L, syncElapsedTime);
+        } finally {
+            fileTxnSnapLog.close();
+        }
     }
 
     private void attemptAutoCreateDb(File dataDir, File snapDir, Map<Long, Integer> sessions,
