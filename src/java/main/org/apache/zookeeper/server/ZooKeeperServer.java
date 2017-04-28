@@ -943,6 +943,13 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return this.txnLogFactory;
     }
 
+    /**
+     * Returns the elapsed sync of time of transaction log in milliseconds.
+     */
+    public long getTxnLogElapsedSyncTime() {
+        return txnLogFactory.getTxnLogElapsedSyncTime();
+    }
+
     public String getState() {
         return "standalone";
     }
