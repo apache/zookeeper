@@ -216,7 +216,7 @@ public class Utils {
      * @return 
      */
     static String toXMLBuffer(byte barr[]) {
-        return DatatypeConverter.printHexBinary(barr).toLowerCase();
+        return toHexString(barr).toLowerCase();
     }
     
     /**
@@ -246,7 +246,7 @@ public class Utils {
      * @return 
      */
     static String toCSVBuffer(byte barr[]) {
-        return '#' + DatatypeConverter.printHexBinary(barr).toLowerCase();
+        return '#' + toHexString(barr).toLowerCase();
     }
 
     /**
