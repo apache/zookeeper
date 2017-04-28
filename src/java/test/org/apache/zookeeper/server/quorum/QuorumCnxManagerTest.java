@@ -251,8 +251,6 @@ public class QuorumCnxManagerTest extends ZKTestCase {
         peer0.connectOne(1);
         peer1.connectOne(0);
 
-        assertEventuallyNotConnected(peer0, 1);
-
         verify(senderWorkerMap0, timeout(10000)).put(eq(1L), any(QuorumCnxManager.SendWorker.class));
         verify(senderWorkerMap0, timeout(10000)).remove(eq(1L), any(QuorumCnxManager.SendWorker.class));
 
