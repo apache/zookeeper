@@ -1244,7 +1244,7 @@ server.3=zoo3:2888:3888</programlisting>
                       role="bold">zookeeper.ssl.keyStore.password</emphasis>)</para>
 
               <para>Specifies the file path to a JKS containing the local
-                credentials to be used for SSL connections, and the
+                credentials to be used for client to quorum SSL connections, and the
                 password to unlock the file.</para>
             </listitem>
           </varlistentry>
@@ -1257,8 +1257,73 @@ server.3=zoo3:2888:3888</programlisting>
                       role="bold">zookeeper.ssl.trustStore.password</emphasis>)</para>
 
               <para>Specifies the file path to a JKS containing the remote
-                credentials to be used for SSL connections, and the
+                credentials to be used for client to quorum SSL connections, and the
                 password to unlock the file.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>ssl.protocol</term>
+            <listitem>
+              <para>(Java system properties: <emphasis role="bold">
+                zookeeper.ssl.protocol</emphasis>)</para>
+
+              <para>Specifies the protocol to be used for client to quorum SSL connections.
+                Default value is <emphasis role="bold">TLSv1</emphasis>. You can find
+                the list of possible values here:
+                <ulink url="http://docs.oracle.com/javase/7/docs/technotes/guides/security/StandardNames.html#SSLContext">
+                  Java Cryptography Architecture Standard Algorithm Name Documentation</ulink></para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>ssl.ciphersuites</term>
+            <listitem>
+              <para>(Java system properties: <emphasis role="bold">
+                zookeeper.ssl.ciphersuites</emphasis>)</para>
+
+              <para>Comma separated list of cipher suites to use for client to quorum SSL connections.
+              You can find a list pof possible values here:
+              <ulink url="http://docs.oracle.com/javase/7/docs/technotes/guides/security/StandardNames.html#ciphersuites">
+                Java Cryptography Architecture Standard Algorithm Name Documentation</ulink></para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>ssl.hostnameVerification</term>
+            <listitem>
+              <para>(Java system properties: <emphasis role="bold">
+                zookeeper.ssl.hostnameVerification</emphasis>)</para>
+
+              <para>Specifies whether or not to perform hostname verification for client to quorum SSL connections.
+                ZooKeeper generally follows the behavior specified in
+                <ulink url="https://tools.ietf.org/html/rfc2818">RFC 2818</ulink>.
+                If matching cannot be performed via IP address, we do reverse DNS lookups.
+                Default value is <emphasis role="bold">true</emphasis></para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>ssl.crl</term>
+            <listitem>
+              <para>(Java system properties: <emphasis role="bold">
+                zookeeper.ssl.crl</emphasis>)</para>
+
+              <para>Specifies whether or not certificate revocation lists are checked when new SSL connections are
+                established between the ZooKeeper quorum and a client.
+                Default value is <emphasis role="bold">false</emphasis></para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>ssl.ocsp</term>
+            <listitem>
+              <para>(Java system properties: <emphasis role="bold">
+                zookeeper.ssl.ocsp</emphasis>)</para>
+
+              <para>Specifies whether or not the Online Certificate Status Protocol is used when new SSL connections are
+                established between the ZooKeeper quorum and a client.
+                Default value is <emphasis role="bold">false</emphasis></para>
             </listitem>
           </varlistentry>
 
@@ -1285,6 +1350,101 @@ server.3=zoo3:2888:3888</programlisting>
               will be used for secure authentication.</para>
             </listitem>
           </varlistentry>
+
+          <varlistentry>
+            <term>ssl.quorum.keyStore.location and ssl.keyStore.password</term>
+            <listitem>
+              <para>(Java system properties: <emphasis role="bold">
+                zookeeper.ssl.quorum.keyStore.location</emphasis> and <emphasis
+                      role="bold">zookeeper.ssl.quorum.keyStore.password</emphasis>)</para>
+
+              <para>Specifies the file path to a JKS containing the local
+                credentials to be used for SSL connections within the ZooKeeper quorum, and the
+                password to unlock the file.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>ssl.quorum.trustStore.location and ssl.trustStore.password</term>
+            <listitem>
+              <para>(Java system properties: <emphasis role="bold">
+                zookeeper.ssl.quorum.trustStore.location</emphasis> and <emphasis
+                      role="bold">zookeeper.ssl.quorum.trustStore.password</emphasis>)</para>
+
+              <para>Specifies the file path to a JKS containing the remote
+                credentials to be used for SSL connections within the ZooKeeper quorum, and the
+                password to unlock the file.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>ssl.quorum.protocol</term>
+            <listitem>
+              <para>(Java system properties: <emphasis role="bold">
+                zookeeper.ssl.quorum.protocol</emphasis>)</para>
+
+              <para>Specifies the protocol to be used for SSL connections within the ZooKeeper quorum.
+                Default value is <emphasis role="bold">TLSv1</emphasis>. You can find
+                the list of possible values here:
+                <ulink url="http://docs.oracle.com/javase/7/docs/technotes/guides/security/StandardNames.html#SSLContext">
+                  Java Cryptography Architecture Standard Algorithm Name Documentation</ulink></para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>ssl.quorum.ciphersuites</term>
+            <listitem>
+              <para>(Java system properties: <emphasis role="bold">
+                zookeeper.ssl.quorum.ciphersuites</emphasis>)</para>
+
+              <para>Comma separated list of cipher suites to use for SSL connections within the ZooKeeper quorum.
+                You can find a list pof possible values here:
+                <ulink url="http://docs.oracle.com/javase/7/docs/technotes/guides/security/StandardNames.html#ciphersuites">
+                  Java Cryptography Architecture Standard Algorithm Name Documentation</ulink></para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>ssl.quorum.hostnameVerification</term>
+            <listitem>
+              <para>(Java system properties: <emphasis role="bold">
+                zookeeper.ssl.quorum.hostnameVerification</emphasis>)</para>
+
+              <para>Specifies whether or not to perform hostname verification for SSL connections within the ZooKeeper quorum.
+                ZooKeeper generally follows the behavior specified in
+                <ulink url="https://tools.ietf.org/html/rfc2818">RFC 2818</ulink>.
+                With the exception that hostname verification is performed bidirectionally for the intra-quorum use case.
+                In other words, if server A is connecting to server B, server B verifies the hostname of server A and
+                server A verifies the hostname of server B. If matching cannot be performed via IP address, we do
+                reverse DNS lookups.
+                Default value is <emphasis role="bold">true</emphasis></para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>ssl.quorum.crl</term>
+            <listitem>
+              <para>(Java system properties: <emphasis role="bold">
+                zookeeper.ssl.quorum.crl</emphasis>)</para>
+
+              <para>Specifies whether or not certificate revocation lists are checked when new SSL connections are
+                established within the ZooKeeper quorum.
+                Default value is <emphasis role="bold">false</emphasis></para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>ssl.quorum.ocsp</term>
+            <listitem>
+              <para>(Java system properties: <emphasis role="bold">
+                zookeeper.ssl.quorum.ocsp</emphasis>)</para>
+
+              <para>Specifies whether or not the Online Certificate Status Protocol is used when new SSL connections are
+                established within the ZooKeeper quorum.
+                Default value is <emphasis role="bold">false</emphasis></para>
+            </listitem>
+          </varlistentry>
+
         </variablelist>
       </section>
 
