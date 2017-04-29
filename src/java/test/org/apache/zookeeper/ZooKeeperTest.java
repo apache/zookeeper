@@ -42,6 +42,8 @@ import org.junit.Test;
  */
 public class ZooKeeperTest extends ClientBase {
 
+    private static final String LINE_SEPARATOR = System.getProperty("line.separator", "\n");
+
     @Test
     public void testDeleteRecursive() throws IOException, InterruptedException, CliException, KeeperException {
         final ZooKeeper zk = createClient();
@@ -465,7 +467,7 @@ public class ZooKeeperTest extends ClientBase {
 
         String result = byteStream.toString();
         assertTrue(result, result.contains(
-                StringUtils.joinStrings(expectedResults, "\n")));
+                StringUtils.joinStrings(expectedResults, LINE_SEPARATOR)));
     }
 
     @Test
@@ -483,7 +485,7 @@ public class ZooKeeperTest extends ClientBase {
         cmd.setZk(zk);
         cmd.parse("ls /".split(" "));
         List<String> expected = new ArrayList<String>();
-        expected.add("[aa1, aa2, aa3, test1, zk1, zookeeper]\n");
+        expected.add("[aa1, aa2, aa3, test1, zk1, zookeeper]");
         runCommandExpect(cmd, expected);
     }
 
