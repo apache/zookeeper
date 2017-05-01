@@ -1300,6 +1300,11 @@ public class ZooKeeper implements AutoCloseable {
      * <p>
      * Added in 3.5.3: <a href="https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html">try-with-resources</a>
      * may be used instead of calling close directly.
+     * </p>
+     * <p>
+     * This method does not wait for all internal threads to exit.
+     * Use the {@link #close(int) } method to wait for all resources to be released
+     * </p>
      *
      * @throws InterruptedException
      */
@@ -1324,6 +1329,22 @@ public class ZooKeeper implements AutoCloseable {
         }
 
         LOG.info("Session: 0x" + Long.toHexString(getSessionId()) + " closed");
+    }
+
+    /**
+     * Close this client object as the {@link #close() } method.
+     * This method will wait for internal resources to be released.
+     *
+     * @param waitForShutdownTimeoutMs timeout (in milliseconds) to wait for resources to be released.
+     * Use zero or a negative value to skip the wait
+     * @throws InterruptedException
+     * @return true if waitForShutdownTimeout is greater than zero and all of the resources have been released
+     *
+     * @since 3.5.4
+     */
+    public boolean close(int waitForShutdownTimeoutMs) throws InterruptedException {
+        close();
+        return testableWaitForShutdown(waitForShutdownTimeoutMs);
     }
 
     /**
