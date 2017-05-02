@@ -115,19 +115,19 @@ public class X509Util {
         String trustStorePasswordProp = config.getProperty(ZKConfig.SSL_TRUSTSTORE_PASSWD);
 
         if (trustStoreLocationProp == null && trustStorePasswordProp == null) {
-            LOG.warn("keystore not specified for client connection");
+            LOG.warn("Truststore not specified for client connection");
         } else {
             if (trustStoreLocationProp == null) {
-                throw new SSLContextException("keystore location not specified for client connection");
+                throw new SSLContextException("Truststore location not specified for client connection");
             }
             if (trustStorePasswordProp == null) {
-                throw new SSLContextException("keystore password not specified for client connection");
+                throw new SSLContextException("Truststore password not specified for client connection");
             }
             try {
                 trustManagers = new TrustManager[]{
                         createTrustManager(trustStoreLocationProp, trustStorePasswordProp)};
             } catch (TrustManagerException e) {
-                throw new SSLContextException("Failed to create KeyManager", e);
+                throw new SSLContextException("Failed to create TrustManager", e);
             }
         }
 
