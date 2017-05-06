@@ -682,27 +682,19 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     public InetSocketAddress getElectionAddress(){
-        synchronized (QV_LOCK) {
-            return myElectionAddr;
-        }
+        return myElectionAddr;
     }
 
     public void setElectionAddress(InetSocketAddress addr){
-        synchronized (QV_LOCK) {
-            myElectionAddr = addr;
-        }
+        myElectionAddr = addr;
     }
     
     public InetSocketAddress getClientAddress(){
-        synchronized (QV_LOCK) {
-            return myClientAddr;
-        }
+        return myClientAddr;
     }
     
     public void setClientAddress(InetSocketAddress addr){
-        synchronized (QV_LOCK) {
-            myClientAddr = addr;
-        }
+        myClientAddr = addr;
     }
     
     private int electionType;
