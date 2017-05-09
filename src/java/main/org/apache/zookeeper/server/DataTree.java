@@ -79,6 +79,14 @@ import java.util.concurrent.ConcurrentHashMap;
 public class DataTree {
     private static final Logger LOG = LoggerFactory.getLogger(DataTree.class);
 
+    static boolean skipDefaultACLForReconfig;
+    static {
+        skipDefaultACLForReconfig = System.getProperty("zookeeper.skipDefaultACLForReconfig", "no").equals("yes");
+        if (skipDefaultACLForReconfig) {
+            LOG.info("zookeeper.skipACLForReconfigNode==\"yes\", /zookeeper/reconfig will not get a default ACL");
+        }
+    }
+
     /**
      * This hashtable provides a fast lookup to the datanodes. The tree is the
      * source of truth and is where all the locking occurs
@@ -254,12 +262,14 @@ public class DataTree {
         }
 
         nodes.put(configZookeeper, configDataNode);
-        try {
-            // Reconfig node is access controlled by default (ZOOKEEPER-2014).
-            setACL(configZookeeper, ZooDefs.Ids.READ_ACL_UNSAFE, -1);
-        } catch (KeeperException.NoNodeException e) {
-            assert false : "There's no " + configZookeeper +
-                    " znode - this should never happen.";
+        if ( !skipDefaultACLForReconfig ) {
+            try {
+                // Reconfig node is access controlled by default (ZOOKEEPER-2014).
+                setACL(configZookeeper, ZooDefs.Ids.READ_ACL_UNSAFE, -1);
+            } catch (KeeperException.NoNodeException e) {
+                assert false : "There's no " + configZookeeper +
+                        " znode - this should never happen.";
+            }
         }
     }
 

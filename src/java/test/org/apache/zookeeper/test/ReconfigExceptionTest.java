@@ -41,7 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ReconfigExceptionTest extends ZKTestCase {
-    private static final Logger LOG = LoggerFactory
+    protected static final Logger LOG = LoggerFactory
             .getLogger(ReconfigExceptionTest.class);
     private static String authProvider = "zookeeper.DigestAuthenticationProvider.superDigest";
     // Use DigestAuthenticationProvider.base64Encode or
@@ -204,7 +204,7 @@ public class ReconfigExceptionTest extends ZKTestCase {
         }
     }
 
-    private boolean reconfigPort() throws KeeperException, InterruptedException {
+    protected boolean reconfigPort() throws KeeperException, InterruptedException {
         List<String> joiningServers = new ArrayList<String>();
         int leaderId = 1;
         while (qu.getPeer(leaderId).peer.leader == null)
