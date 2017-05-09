@@ -23,7 +23,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class SkipACLReconfigExceptionTest extends ReconfigExceptionTest {
+public class SkipACLReconfigExceptionTest extends ReconfigExceptionTestCase {
     private static final String skipDefaultACLForReconfig = "zookeeper.skipDefaultACLForReconfig";
 
     @Override
