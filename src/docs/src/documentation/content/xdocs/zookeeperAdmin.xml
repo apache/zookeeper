@@ -1379,6 +1379,19 @@ server.3=zoo3:2888:3888</programlisting>
           </varlistentry>
 
           <varlistentry>
+            <term>skipDefaultACLForReconfig</term>
+
+            <listitem>
+              <para>(Java system property: <emphasis
+              role="bold">zookeeper.skipDefaultACLForReconfig</emphasis>)</para>
+
+              <para>The ZooKeeper reconfig node normally is set with a read only ACL. Setting
+              this property to "yes" bypasses this. The reconfig node will not have any ACL.
+              It is strongly recommended that you set an ACL for it early in your usage.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
             <term>quorumListenOnAllIPs</term>
 
             <listitem>
