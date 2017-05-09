@@ -338,7 +338,10 @@ server.3=125.23.63.25:2782:2785:participant</programlisting>
         environment (i.e. behind company firewall). For those users who want to use reconfiguration feature but
         don't want the overhead of configuring an explicit list of authorized user for reconfig access checks,
         they can set <ulink url="zookeeperAdmin.html#sc_authOptions">"skipACL"</ulink> to "yes" which will
-        skip ACL check and allow any user to reconfigure cluster.
+        skip ACL check and allow any user to reconfigure cluster. A more secure mechanism is also provided.
+        Set <ulink url="zookeeperAdmin.html#sc_authOptions">"skipDefaultACLForReconfig"</ulink> to "yes"
+        and the reconfig node will not be assigned an ACL. You should, however, set an ACL of your choice to this
+        node.
       </para>
       <para>
         Overall, ZooKeeper provides flexible configuration options for the reconfigure feature
