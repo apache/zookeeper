@@ -255,6 +255,9 @@ public class QuorumPeerConfig {
                 syncLimit = Integer.parseInt(value);
             } else if (key.equals("electionAlg")) {
                 electionAlg = Integer.parseInt(value);
+                if (electionAlg != 1 && electionAlg != 2 && electionAlg != 3) {
+                    throw new ConfigException("Invalid electionAlg value. Only 1, 2, 3 are supported.");
+                }
             } else if (key.equals("quorumListenOnAllIPs")) {
                 quorumListenOnAllIPs = Boolean.parseBoolean(value);
             } else if (key.equals("peerType")) {
@@ -594,17 +597,12 @@ public class QuorumPeerConfig {
                     LOG.warn("Non-optimial configuration, consider an odd number of servers.");
                 }
             }
-            /*
-             * If using FLE, then every server requires a separate election
-             * port.
-             */            
-           if (eAlg != 0) {
-               for (QuorumServer s : qv.getVotingMembers().values()) {
-                   if (s.electionAddr == null)
-                       throw new IllegalArgumentException(
-                               "Missing election port for server: " + s.id);
-               }
-           }   
+
+            for (QuorumServer s : qv.getVotingMembers().values()) {
+                if (s.electionAddr == null)
+                    throw new IllegalArgumentException(
+                            "Missing election port for server: " + s.id);
+            }
         }
         return qv;
     }

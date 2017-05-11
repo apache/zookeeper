@@ -32,15 +32,7 @@
     <Bug pattern="REC_CATCH_EXCEPTION" />
   </Match>
 
-   <!-- If we cannot open a socket to elect a leader, then we should
-            simply exit -->
-   <Match>
-     <Class name="org.apache.zookeeper.server.quorum.LeaderElection" />
-       <Method name="lookForLeader" />
-       <Bug pattern="DM_EXIT" />
-   </Match>
-
-   <!-- Committing out of order is an unrecoverable error, so we should
+    <!-- Committing out of order is an unrecoverable error, so we should
               really exit  -->
    <Match>
      <Class name="org.apache.zookeeper.server.quorum.FollowerZooKeeperServer" />

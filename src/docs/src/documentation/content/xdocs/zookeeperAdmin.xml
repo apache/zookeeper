@@ -958,15 +958,14 @@ server.3=zoo3:2888:3888</programlisting>
             <listitem>
               <para>(No Java system property)</para>
 
-              <para>Election implementation to use. A value of "0" corresponds
-              to the original UDP-based version, "1" corresponds to the
+              <para>Election implementation to use. A value of "1" corresponds to the
               non-authenticated UDP-based version of fast leader election, "2"
               corresponds to the authenticated UDP-based version of fast
               leader election, and "3" corresponds to TCP-based version of
-              fast leader election. Currently, algorithm 3 is the default</para>
+              fast leader election. Currently, algorithm 3 is the default.</para>
               
               <note>
-              <para> The implementations of leader election 0, 1, and 2 are now 
+              <para> The implementations of leader election 1, and 2 are now
               <emphasis role="bold"> deprecated </emphasis>. We have the intention
               of removing them in the next release, at which point only the 
               FastLeaderElection will be available. 
@@ -1029,9 +1028,7 @@ server.3=zoo3:2888:3888</programlisting>
 
               <para>There are two port numbers <emphasis role="bold">nnnnn</emphasis>. 
               The first followers use to connect to the leader, and the second is for 
-              leader election. The leader election port is only necessary if electionAlg 
-              is 1, 2, or 3 (default). If electionAlg is 0, then the second port is not 
-              necessary. If you want to test multiple servers on a single machine, then 
+              leader election. If you want to test multiple servers on a single machine, then
               different ports can be used for each server.</para>
             </listitem>
           </varlistentry>
