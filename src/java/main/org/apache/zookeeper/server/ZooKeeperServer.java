@@ -489,7 +489,15 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return state == State.RUNNING;
     }
 
-    public synchronized void shutdown() {
+    public void shutdown() {
+        shutdown(false);
+    }
+
+    /**
+     * Shut down the server instance
+     * @param fullyShutDown true if another server using the same database will not replace this one in the same process
+     */
+    public synchronized void shutdown(boolean fullyShutDown) {
         if (!canShutdown()) {
             LOG.debug("ZooKeeper server is not running, so not proceeding to shutdown!");
             return;
@@ -507,9 +515,15 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         if (firstProcessor != null) {
             firstProcessor.shutdown();
         }
-        if (zkDb != null) {
+
+        if (fullyShutDown && zkDb != null) {
             zkDb.clear();
         }
+        // else there is no need to clear the database
+        //  * When a new quorum is established we can still apply the diff
+        //    on top of the same zkDb data
+        //  * If we fetch a new snapshot from leader, the zkDb will be
+        //    cleared anyway before loading the snapshot
 
         unregisterJMX();
     }

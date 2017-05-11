@@ -43,7 +43,7 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
     private static File keytabFile;
     private static String hostServerPrincipal = KerberosTestUtils.getHostServerPrincipal();
     private static String hostLearnerPrincipal = KerberosTestUtils.getHostLearnerPrincipal();
-    private static String hostNamedLearnerPrincipal = KerberosTestUtils.getHostNamedLearnerPrincipal("myHost");
+    private static String hostNamedLearnerPrincipal = KerberosTestUtils.getHostNamedLearnerPrincipal("myhost");
     static {
         setupJaasConfigEntries(hostServerPrincipal, hostLearnerPrincipal, hostNamedLearnerPrincipal);
     }
@@ -58,7 +58,9 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
                 + "       keyTab=\"" + keytabFilePath + "\"\n"
                 + "       storeKey=true\n"
                 + "       useTicketCache=false\n"
-                + "       debug=false\n"
+                + "       debug=true\n"
+                + "       doNotPrompt=true\n"
+                + "       refreshKrb5Config=true\n"
                 + "       principal=\"" + KerberosTestUtils.replaceHostPattern(hostServerPrincipal) + "\";\n" + "};\n"
                 + "QuorumLearner {\n"
                 + "       com.sun.security.auth.module.Krb5LoginModule required\n"
@@ -66,7 +68,10 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
                 + "       keyTab=\"" + keytabFilePath + "\"\n"
                 + "       storeKey=true\n"
                 + "       useTicketCache=false\n"
-                + "       debug=false\n"
+                + "       debug=true\n"
+                + "       doNotPrompt=true\n"
+                + "       refreshKrb5Config=true\n"
+                + "       isInitiator=true\n"
                 + "       principal=\"" + KerberosTestUtils.replaceHostPattern(hostLearnerPrincipal) + "\";\n" + "};\n"
                 + "QuorumLearnerMyHost {\n"
                 + "       com.sun.security.auth.module.Krb5LoginModule required\n"
@@ -74,7 +79,10 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
                 + "       keyTab=\"" + keytabFilePath + "\"\n"
                 + "       storeKey=true\n"
                 + "       useTicketCache=false\n"
-                + "       debug=false\n"
+                + "       debug=true\n"
+                + "       doNotPrompt=true\n"
+                + "       refreshKrb5Config=true\n"
+                + "       isInitiator=true\n"
                 + "       principal=\"" + hostNamedLearnerPrincipal + "\";\n" + "};\n");
         setupJaasConfig(jaasEntries);
     }
@@ -122,7 +130,7 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
         authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "true");
         authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
         authConfigs.put(QuorumAuth.QUORUM_KERBEROS_SERVICE_PRINCIPAL, serverPrincipal);
-        String connectStr = startQuorum(3, authConfigs, 3);
+        String connectStr = startQuorum(3, authConfigs, 3, true);
         CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
         watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
@@ -143,7 +151,7 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
         authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "true");
         authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
         authConfigs.put(QuorumAuth.QUORUM_KERBEROS_SERVICE_PRINCIPAL, serverPrincipal);
-        String connectStr = startQuorum(3, authConfigs, 3);
+        String connectStr = startQuorum(3, authConfigs, 3, true);
         CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
         watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);

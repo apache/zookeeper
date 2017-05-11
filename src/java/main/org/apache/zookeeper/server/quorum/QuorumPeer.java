@@ -98,6 +98,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     QuorumCnxManager qcm;
     QuorumAuthServer authServer;
     QuorumAuthLearner authLearner;
+    // VisibleForTesting. This flag is used to know whether qLearner's and
+    // qServer's login context has been initialized as ApacheDS has concurrency
+    // issues. Refer https://issues.apache.org/jira/browse/ZOOKEEPER-2712
+    private boolean authInitialized = false;
 
     /* ZKDatabase is a top level member of quorumpeer 
      * which will be used in all the zookeeperservers
@@ -620,6 +624,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                     quorumServerLoginContext, authzHosts);
             authLearner = new SaslQuorumAuthLearner(isQuorumLearnerSaslAuthRequired(),
                     quorumServicePrincipal, quorumLearnerLoginContext);
+            authInitialized = true;
         } else {
             authServer = new NullQuorumAuthServer();
             authLearner = new NullQuorumAuthLearner();
@@ -1502,6 +1507,12 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     private boolean isQuorumLearnerSaslAuthRequired() {
         return quorumLearnerSaslAuthRequired;
+    }
+
+    // VisibleForTesting. Returns true if both the quorumlearner and
+    // quorumserver login has been finished. Otherwse, false.
+    public boolean hasAuthInitialized(){
+        return authInitialized;
     }
 
     public QuorumCnxManager createCnxnManager() {

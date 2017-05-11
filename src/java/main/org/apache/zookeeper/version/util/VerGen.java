@@ -34,7 +34,7 @@ public class VerGen {
         System.exit(1);
     }
 
-    public static void generateFile(File outputDir, Version version, String rev, String buildDate)
+    public static void generateFile(File outputDir, Version version, String rev, String buildDate) throws IOException
     {
         String path = PACKAGE_NAME.replaceAll("\\.", "/");
         File pkgdir = new File(outputDir, path);
@@ -91,10 +91,6 @@ public class VerGen {
             w.write("    String BUILD_DATE=\"" + buildDate
                     + "\";\n");
             w.write("}\n");
-        } catch (IOException e) {
-            System.out.println("Unable to generate version.Info file: "
-                    + e.getMessage());
-            System.exit(1);
         } finally {
             if (w != null) {
                 try {
@@ -172,6 +168,10 @@ public class VerGen {
             System.err.println(
                     "All version-related parameters must be valid integers!");
             throw e;
+        } catch (IOException e) {
+            System.out.println("Unable to generate version.Info file: "
+                    + e.getMessage());
+            System.exit(1);
         }
     }
 

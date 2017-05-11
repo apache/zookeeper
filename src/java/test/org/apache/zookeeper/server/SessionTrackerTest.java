@@ -143,8 +143,8 @@ public class SessionTrackerTest extends ZKTestCase {
         public void processRequest(Request request) {
             // check session close request
             if (request.type == OpCode.closeSession) {
-                latch.countDown();
                 countOfCloseSessionReq++;
+                latch.countDown();
             }
         }
 
