@@ -186,7 +186,7 @@ public class CnxManagerTest extends ZKTestCase {
         long begin = System.currentTimeMillis();
         cnxManager.toSend(new Long(2), createMsg(ServerState.LOOKING.ordinal(), 1, -1, 1));
         long end = System.currentTimeMillis();
-            
+
         if((end - begin) > 6000) Assert.fail("Waited more than necessary");
         
     }       
