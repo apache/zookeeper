@@ -179,7 +179,12 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         public void recreateSocketAddresses() {
             InetAddress address = null;
             try {
-                address = getReachableAddress(this.hostname, ipReachableTimeout);
+                // zookeeper.ipReachableTimeout is not defined
+                if (ipReachableTimeout <= 0) {
+                    address = InetAddress.getByName(this.hostname);
+                } else {
+                    address = getReachableAddress(this.hostname, ipReachableTimeout);
+                }
                 LOG.info("Resolved hostname: {} to address: {}", this.hostname, address);
                 this.addr = new InetSocketAddress(address, this.port);
                 if (this.electionPort > 0){
@@ -205,7 +210,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
          * Resolve the hostname to IP addresses, and find one reachable address.
          *
          * @param hostname the name of the host
-         * @param timeout the time, in millseconds, before {@link InetAddress#isReachable}
+         * @param timeout the time, in milliseconds, before {@link InetAddress#isReachable}
          *                aborts
          * @return a reachable IP address. If no such IP address can be found,
          *         just return the first IP address of the hostname.
@@ -224,7 +229,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                     LOG.warn("IP address {} is unreachable", a);
                 }
             }
-            // All the IP address is unreachable, just return the first one.
+            // All the IP addresses are unreachable, just return the first one.
             return addresses[0];
         }
 
@@ -243,10 +248,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         public LearnerType type = LearnerType.PARTICIPANT;
 
         /**
-         * the time, in millseconds, before {@link InetAddress#isReachable} aborts
+         * the time, in milliseconds, before {@link InetAddress#isReachable} aborts
          * in {@link #getReachableAddress}.
          */
-        private int ipReachableTimeout = 2000;
+        private int ipReachableTimeout = 0;
     }
 
     public enum ServerState {

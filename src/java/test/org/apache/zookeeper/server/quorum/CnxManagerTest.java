@@ -186,9 +186,8 @@ public class CnxManagerTest extends ZKTestCase {
         long begin = System.currentTimeMillis();
         cnxManager.toSend(new Long(2), createMsg(ServerState.LOOKING.ordinal(), 1, -1, 1));
         long end = System.currentTimeMillis();
-        // 5 seconds for socket timeout, 2 seconds for QuorumServer.recreateSocketAddresses
-        // delay, 2 seconds for some other delay.
-        if((end - begin) > 9000) Assert.fail("Waited more than necessary");
+
+        if((end - begin) > 6000) Assert.fail("Waited more than necessary");
         
     }       
     
