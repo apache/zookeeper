@@ -262,6 +262,12 @@ public class QuorumCnxManager {
      * connection if it loses challenge. Otherwise, it keeps the connection.
      */
     public void initiateConnection(final Socket sock, final Long sid) {
+        if(!inprogressConnections.add(sid)) {
+            LOG.debug("Connection request to server id: {} is already in progress, so skipping this request", sid);
+            closeSocket(sock);
+            return;
+        }
+
         try {
             startConnection(sock, sid);
         } catch (IOException e) {
@@ -269,6 +275,8 @@ public class QuorumCnxManager {
                      new Object[] { sid, sock.getRemoteSocketAddress() }, e);
             closeSocket(sock);
             return;
+        } finally {
+            inprogressConnections.remove(sid);
         }
     }
 
@@ -277,23 +285,11 @@ public class QuorumCnxManager {
      * asynchronously via separate connection thread.
      */
     public void initiateConnectionAsync(final Socket sock, final Long sid) {
-        if(!inprogressConnections.add(sid)){
-            // simply return as there is a connection request to
-            // server 'sid' already in progress.
-            LOG.debug("Connection request to server id: {} is already in progress, so skipping this request",
-                    sid);
-            closeSocket(sock);
-            return;
-        }
         try {
             connectionExecutor.execute(
                     new QuorumConnectionReqThread(sock, sid));
             connectionThreadCnt.incrementAndGet();
         } catch (Throwable e) {
-            // Imp: Safer side catching all type of exceptions and remove 'sid'
-            // from inprogress connections. This is to avoid blocking further
-            // connection requests from this 'sid' in case of errors.
-            inprogressConnections.remove(sid);
             LOG.error("Exception while submitting quorum connection request", e);
             closeSocket(sock);
         }
@@ -468,22 +464,26 @@ public class QuorumCnxManager {
 
         //If wins the challenge, then close the new connection.
         if (sid < this.mySid) {
-            /*
-             * This replica might still believe that the connection to sid is
-             * up, so we have to shut down the workers before trying to open a
-             * new connection.
-             */
-            SendWorker sw = senderWorkerMap.get(sid);
-            if (sw != null) {
-                sw.finish();
-            }
-
-            /*
-             * Now we start a new connection
-             */
-            LOG.debug("Create new connection to server: " + sid);
             closeSocket(sock);
-            connectOne(sid);
+
+            if (!inprogressConnections.contains(sid)) {
+                /*
+                 * This replica might still believe that the connection to sid is
+                 * up, so we have to shut down the workers before trying to open a
+                 * new connection.
+                 */
+                SendWorker sw = senderWorkerMap.get(sid);
+                if (sw != null) {
+                    sw.finish();
+                }
+
+                /*
+                 * Now we start a new connection
+                 */
+                LOG.debug("Create new connection to server: " + sid);
+
+                connectOne(sid);
+            }
 
             // Otherwise start worker threads to receive data.
         } else {
