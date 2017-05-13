@@ -389,8 +389,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 parentPath = path.substring(0, lastSlash);
                 parentRecord = getRecordForPath(parentPath);
                 ChangeRecord nodeRecord = getRecordForPath(path);
-                checkACL(zks, parentRecord.acl, ZooDefs.Perms.DELETE,
-                        request.authInfo);
+                checkACL(zks, parentRecord.acl, ZooDefs.Perms.DELETE, request.authInfo);
+                checkACL(zks, nodeRecord.acl, ZooDefs.Perms.DELETE, request.authInfo);
                 int version = deleteRequest.getVersion();
                 if (version != -1 && nodeRecord.stat.getVersion() != version) {
                     throw new KeeperException.BadVersionException(path);

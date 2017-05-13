@@ -135,20 +135,32 @@ public class ClientTest extends ClientBase {
             zk = createClient();
             try {
                 zk.create("/acltest", new byte[0], Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
-                Assert.fail("Should have received an invalid acl error");
+                Assert.fail("Should have received an invalid acl error on create");
+            } catch(InvalidACLException e) {
+                LOG.info("Test successful, invalid acl received : "
+                        + e.getMessage());
+            }
+            ArrayList<ACL> testACL = new ArrayList<ACL>();
+            testACL.add(new ACL(Perms.ALL | Perms.ADMIN, Ids.AUTH_IDS));
+            testACL.add(new ACL(Perms.ALL | Perms.ADMIN, new Id("ip", "127.0.0.1/8")));
+            try {
+                zk.create("/acltest", new byte[0], testACL, CreateMode.PERSISTENT);
+                Assert.fail("Should have received an invalid acl error on create");
             } catch(InvalidACLException e) {
                 LOG.info("Test successful, invalid acl received : "
                         + e.getMessage());
             }
             try {
-                ArrayList<ACL> testACL = new ArrayList<ACL>();
-                testACL.add(new ACL(Perms.ALL | Perms.ADMIN, Ids.AUTH_IDS));
-                testACL.add(new ACL(Perms.ALL | Perms.ADMIN, new Id("ip", "127.0.0.1/8")));
-                zk.create("/acltest", new byte[0], testACL, CreateMode.PERSISTENT);
-                Assert.fail("Should have received an invalid acl error");
+                zk.create("/acltest", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                zk.setACL("/acltest", testACL, -1);
+                zk.delete("/acltest", -1);
+                Assert.fail("Should have received an invalid acl error on delete");
             } catch(InvalidACLException e) {
                 LOG.info("Test successful, invalid acl received : "
                         + e.getMessage());
+
+                zk.setACL("/acltest", Ids.OPEN_ACL_UNSAFE, -1);
+                zk.delete("/acltest", -1);
             }
             zk.addAuthInfo("digest", "ben:passwd".getBytes());
             zk.create("/acltest", new byte[0], Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
