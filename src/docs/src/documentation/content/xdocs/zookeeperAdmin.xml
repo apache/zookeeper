@@ -1076,6 +1076,26 @@ server.3=zoo3:2888:3888</programlisting>
             </listitem>
           </varlistentry>
 
+          <varlistentry>
+            <term>zookeeper.ipReachableTimeout</term>
+
+            <listitem>
+              <para>(Java system property: <emphasis
+                      role="bold">zookeeper.ipReachableTimeout</emphasis>)</para>
+
+              <para><emphasis role="bold">New in 3.4.11:</emphasis>
+                Set this timeout value for IP addresses reachable checking when hostname is resolved, as mesured in
+                milliseconds.
+                By default, ZooKeeper will use the first IP address of the hostname(without any reachable checking).
+                When zookeeper.ipReachableTimeout is set(larger than 0), ZooKeeper will will try to pick up the first 
+                IP address which is reachable. This is done by calling Java API InetAddress.isReachable(long timeout)
+                function, in which this timeout value is used. If none of such reachable IP address can be found, the
+                first IP address of the hostname will be used anyway.
+              </para>
+
+            </listitem>
+          </varlistentry>
+
         </variablelist>
         <para></para>
       </section>

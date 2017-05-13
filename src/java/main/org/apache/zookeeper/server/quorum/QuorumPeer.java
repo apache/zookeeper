@@ -117,6 +117,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             this.id = id;
             this.addr = addr;
             this.electionAddr = electionAddr;
+            String ipReachableValue = System.getProperty("zookeeper.ipReachableTimeout");
+            if (ipReachableValue != null) {
+                this.ipReachableTimeout = Integer.parseInt(ipReachableValue);
+            }    
         }
 
         // VisibleForTesting
@@ -124,6 +128,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             this.id = id;
             this.addr = addr;
             this.electionAddr = null;
+            String ipReachableValue = System.getProperty("zookeeper.ipReachableTimeout");
+            if (ipReachableValue != null) {
+                this.ipReachableTimeout = Integer.parseInt(ipReachableValue);
+            }    
         }
         
         private QuorumServer(long id, InetSocketAddress addr,
@@ -132,24 +140,32 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             this.addr = addr;
             this.electionAddr = electionAddr;
             this.type = type;
+            String ipReachableValue = System.getProperty("zookeeper.ipReachableTimeout");
+            if (ipReachableValue != null) {
+                this.ipReachableTimeout = Integer.parseInt(ipReachableValue);
+            }    
         }
         
         public QuorumServer(long id, String hostname,
                             Integer port, Integer electionPort,
                             LearnerType type) {
-	        this.id = id;
-	        this.hostname=hostname;
-	        if (port!=null){
+	    this.id = id;
+	    this.hostname=hostname;
+	    if (port!=null){
                 this.port=port;
-	        }
-	        if (electionPort!=null){
-                this.electionPort=electionPort;
-	        }
-	        if (type!=null){
-                this.type = type;
-	        }
-	        this.recreateSocketAddresses();
 	    }
+	    if (electionPort!=null){
+                this.electionPort=electionPort;
+	    }
+	    if (type!=null){
+                this.type = type;
+	    }
+            String ipReachableValue = System.getProperty("zookeeper.ipReachableTimeout");
+            if (ipReachableValue != null) {
+                this.ipReachableTimeout = Integer.parseInt(ipReachableValue);
+            }    
+	    this.recreateSocketAddresses();
+	}
 
         /**
          * Performs a DNS lookup of hostname and (re)creates the this.addr and
@@ -163,7 +179,12 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         public void recreateSocketAddresses() {
             InetAddress address = null;
             try {
-                address = InetAddress.getByName(this.hostname);
+                // zookeeper.ipReachableTimeout is not defined
+                if (ipReachableTimeout <= 0) {
+                    address = InetAddress.getByName(this.hostname);
+                } else {
+                    address = getReachableAddress(this.hostname, ipReachableTimeout);
+                }
                 LOG.info("Resolved hostname: {} to address: {}", this.hostname, address);
                 this.addr = new InetSocketAddress(address, this.port);
                 if (this.electionPort > 0){
@@ -185,6 +206,33 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             }
         }
 
+        /**
+         * Resolve the hostname to IP addresses, and find one reachable address.
+         *
+         * @param hostname the name of the host
+         * @param timeout the time, in milliseconds, before {@link InetAddress#isReachable}
+         *                aborts
+         * @return a reachable IP address. If no such IP address can be found,
+         *         just return the first IP address of the hostname.
+         *
+         * @exception UnknownHostException
+         */
+        public InetAddress getReachableAddress(String hostname, int timeout) 
+                throws UnknownHostException {
+            InetAddress[] addresses = InetAddress.getAllByName(hostname);
+            for (InetAddress a : addresses) {
+                try {
+                    if (a.isReachable(timeout)) {
+                        return a;
+                    } 
+                } catch (IOException e) {
+                    LOG.warn("IP address {} is unreachable", a);
+                }
+            }
+            // All the IP addresses are unreachable, just return the first one.
+            return addresses[0];
+        }
+
         public InetSocketAddress addr;
 
         public InetSocketAddress electionAddr;
@@ -198,6 +246,12 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         public long id;
         
         public LearnerType type = LearnerType.PARTICIPANT;
+
+        /**
+         * the time, in milliseconds, before {@link InetAddress#isReachable} aborts
+         * in {@link #getReachableAddress}.
+         */
+        private int ipReachableTimeout = 0;
     }
 
     public enum ServerState {
