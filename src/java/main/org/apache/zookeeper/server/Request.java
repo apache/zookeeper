@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.txn.TxnHeader;
 
@@ -75,7 +76,7 @@ public class Request {
 
     public final List<Id> authInfo;
 
-    public final long createTime = System.currentTimeMillis();
+    public final long createTime = Time.currentElapsedTime();
     
     private Object owner;
     

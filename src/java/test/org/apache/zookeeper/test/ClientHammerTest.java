@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.zookeeper.common.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
@@ -124,7 +125,7 @@ public class ClientHammerTest extends ClientBase {
     {
         try {
             HammerThread[] threads = new HammerThread[threadCount];
-            long start = System.currentTimeMillis();
+            long start = Time.currentElapsedTime();
             for (int i = 0; i < threads.length; i++) {
                 ZooKeeper zk = createClient();
                 String prefix = "/test-" + i;
@@ -157,7 +158,7 @@ public class ClientHammerTest extends ClientBase {
             final int childCount = 10;
 
             HammerThread[] threads = new HammerThread[threadCount];
-            long start = System.currentTimeMillis();
+            long start = Time.currentElapsedTime();
             for (int i = 0; i < threads.length; i++) {
                 String prefix = "/test-" + i;
                 {
@@ -218,7 +219,7 @@ public class ClientHammerTest extends ClientBase {
                     * HAMMERTHREAD_LATENCY * safetyFactor);
         }
         LOG.info(new Date() + " Total time "
-                + (System.currentTimeMillis() - start));
+                + (Time.currentElapsedTime() - start));
 
         ZooKeeper zk = createClient();
         try {
