@@ -26,9 +26,16 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Map;
 import java.util.HashMap;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.apache.jute.Record;
 import org.apache.zookeeper.WatchedEvent;
@@ -227,8 +234,91 @@ public abstract class ServerCnxn implements Stats, Watcher {
     protected final static int isroCmd = ByteBuffer.wrap("isro".getBytes())
             .getInt();
 
-    protected final static HashMap<Integer, String> cmd2String =
-        new HashMap<Integer, String>();
+    protected final static Map<Integer, String> cmd2String = new HashMap<Integer, String>();
+
+    private static final String ZOOKEEPER_4LW_COMMANDS_WHITELIST = "zookeeper.4lw.commands.whitelist";
+
+    private static final Logger LOG = LoggerFactory.getLogger(ServerCnxn.class);
+
+    private static final Set<String> whiteListedCommands = new HashSet<String>();
+
+    private static boolean whiteListInitialized = false;
+
+    // @VisibleForTesting
+    public synchronized static void resetWhiteList() {
+        whiteListInitialized = false;
+        whiteListedCommands.clear();
+    }
+
+    /**
+     * Return the string representation of the specified command code.
+     */
+    public static String getCommandString(int command) {
+        return cmd2String.get(command);
+    }
+
+    /**
+     * Check if the specified command code is from a known command.
+     *
+     * @param command The integer code of command.
+     * @return true if the specified command is known, false otherwise.
+     */
+    public static boolean isKnown(int command) {
+        return cmd2String.containsKey(command);
+    }
+
+    /**
+     * Check if the specified command is enabled.
+     *
+     * In ZOOKEEPER-2693 we introduce a configuration option to only
+     * allow a specific set of white listed commands to execute.
+     * A command will only be executed if it is also configured
+     * in the white list.
+     *
+     * @param command The command string.
+     * @return true if the specified command is enabled.
+     */
+    public synchronized static boolean isEnabled(String command) {
+        if (whiteListInitialized) {
+            return whiteListedCommands.contains(command);
+        }
+
+        String commands = System.getProperty(ZOOKEEPER_4LW_COMMANDS_WHITELIST);
+        if (commands != null) {
+            String[] list = commands.split(",");
+            for (String cmd : list) {
+                if (cmd.trim().equals("*")) {
+                    for (Map.Entry<Integer, String> entry : cmd2String.entrySet()) {
+                        whiteListedCommands.add(entry.getValue());
+                    }
+                    break;
+                }
+                if (!cmd.trim().isEmpty()) {
+                    whiteListedCommands.add(cmd.trim());
+                }
+            }
+        } else {
+            for (Map.Entry<Integer, String> entry : cmd2String.entrySet()) {
+                String cmd = entry.getValue();
+                if (cmd.equals("wchc") || cmd.equals("wchp")) {
+                    // ZOOKEEPER-2693 / disable these exploitable commands by default.
+                    continue;
+                }
+                whiteListedCommands.add(cmd);
+            }
+        }
+
+        // Readonly mode depends on "isro".
+        if (System.getProperty("readonlymode.enabled", "false").equals("true")) {
+            whiteListedCommands.add("isro");
+        }
+        // zkServer.sh depends on "srvr".
+        whiteListedCommands.add("srvr");
+        whiteListInitialized = true;
+        LOG.info("The list of known four letter word commands is : {}", Arrays.asList(cmd2String));
+        LOG.info("The list of enabled four letter word commands is : {}", Arrays.asList(whiteListedCommands));
+        return whiteListedCommands.contains(command);
+    }
 
     // specify all of the commands that are available
     static {

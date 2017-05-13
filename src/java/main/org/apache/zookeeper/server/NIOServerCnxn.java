@@ -825,18 +825,30 @@ public class NIOServerCnxn extends ServerCnxn {
         }
     }
 
+    private class NopCommand extends CommandThread {
+        private String msg;
+
+        public NopCommand(PrintWriter pw, String msg) {
+            super(pw);
+            this.msg = msg;
+        }
+
+        @Override
+        public void commandRun() {
+            pw.println(msg);
+        }
+    }
+
     /** Return if four letter word found and responded to, otw false **/
     private boolean checkFourLetterWord(final SelectionKey k, final int len)
     throws IOException
     {
         // We take advantage of the limited size of the length to look
         // for cmds. They are all 4-bytes which fits inside of an int
-        String cmd = cmd2String.get(len);
-        if (cmd == null) {
+        if (!ServerCnxn.isKnown(len)) {
             return false;
         }
-        LOG.info("Processing " + cmd + " command from "
-                + sock.socket().getRemoteSocketAddress());
+
         packetReceived();
 
         /** cancel the selection key to remove the socket handling
@@ -858,6 +870,19 @@ public class NIOServerCnxn extends ServerCnxn {
 
         final PrintWriter pwriter = new PrintWriter(
                 new BufferedWriter(new SendBufferWriter()));
+
+        String cmd = ServerCnxn.getCommandString(len);
+        // ZOOKEEPER-2693: don't execute 4lw if it's not enabled.
+        if (!ServerCnxn.isEnabled(cmd)) {
+            LOG.debug("Command {} is not executed because it is not in the whitelist.", cmd);
+            NopCommand nopCmd = new NopCommand(pwriter, cmd + " is not executed because it is not in the whitelist.");
+            nopCmd.start();
+            return true;
+        }
+
+        LOG.info("Processing " + cmd + " command from "
+                + sock.socket().getRemoteSocketAddress());
+
         if (len == ruokCmd) {
             RuokCommand ruok = new RuokCommand(pwriter);
             ruok.start();

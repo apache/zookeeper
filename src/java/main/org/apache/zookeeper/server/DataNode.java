@@ -60,6 +60,8 @@ public class DataNode implements Record {
      */
     private Set<String> children = null;
 
+    private static final Set<String> EMPTY_SET = Collections.emptySet();
+
     /**
      * default constructor for the datanode
      */
@@ -130,7 +132,7 @@ public class DataNode implements Record {
      */
     public synchronized Set<String> getChildren() {
         if (children == null) {
-            return children;
+            return EMPTY_SET;
         }
 
         return Collections.unmodifiableSet(children);

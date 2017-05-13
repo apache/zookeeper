@@ -167,9 +167,7 @@ public class SaslQuorumAuthServer implements QuorumAuthServer {
         BinaryOutputArchive boa = BinaryOutputArchive
                 .getArchive(bufferedOutput);
         QuorumAuthPacket authPacket;
-        if (challenge != null && challenge.length < 0) {
-            throw new IOException("Response length < 0");
-        } else if (challenge == null && s != QuorumAuth.Status.SUCCESS) {
+        if (challenge == null && s != QuorumAuth.Status.SUCCESS) {
             authPacket = QuorumAuth.createPacket(
                     QuorumAuth.Status.IN_PROGRESS, challenge);
         } else {

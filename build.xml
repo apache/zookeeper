@@ -20,7 +20,8 @@
 <project name="ZooKeeper" default="jar" 
 xmlns:ivy="antlib:org.apache.ivy.ant"
 xmlns:artifact="antlib:org.apache.maven.artifact.ant"
-xmlns:maven="antlib:org.apache.maven.artifact.ant">
+xmlns:maven="antlib:org.apache.maven.artifact.ant"
+xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
 
     <!-- read build.properties from the basedir if any -->
     <property file="${basedir}/build.properties" />
@@ -30,7 +31,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
 
     <property environment="env"/>
     
-    <property name="version" value="3.4.10-SNAPSHOT" />
+    <property name="version" value="3.4.11-SNAPSHOT" />
     <property name="final.name" value="${name}-${version}"/>
     <property name="revision.dir" value="${basedir}/.revision" />
     <property name="revision.properties" value="revision.properties" />
@@ -153,6 +154,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
     <property name="patch.cmd" value="patch"/>
     <property name="make.cmd" value="make"/>
     <property name="test_patch_sh" value="${test.src.dir}/bin/test-patch.sh"/>
+    <property name="test_pullrequest_sh" value="${test.src.dir}/bin/test-github-pr.sh"/>
 
 	<!-- jdiff.home property set -->
     <property name="jdiff.home" value="${ivy.jdiff.lib}"/>
@@ -1586,32 +1588,20 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
         </cobertura-report>
     </target>
 
-    <target name="checkstyle" depends="checkstyle.check, set-checkstyle-classpath" if="checkstyle.home" 
-			description="Run optional third-party tool targets">
-    	<taskdef resource="checkstyletask.properties">
-        	<classpath refid="checkstyle-classpath"/>
-        </taskdef>
-        <mkdir dir="${test.java.build.dir}"/>
-        <checkstyle config="${test.src.dir}/checkstyle.xml" failOnViolation="false">
-        	<fileset dir="${src.dir}/java" includes="**/*.java" excludes="**/generated/**"/>
-        	<formatter type="xml" toFile="${test.java.build.dir}/checkstyle-errors.xml"/>
-        </checkstyle>
-        <xslt style="${test.src.dir}/checkstyle-noframes-sorted.xsl" in="${test.java.build.dir}/checkstyle-errors.xml"
-        	out="${test.java.build.dir}/checkstyle-errors.html"/>
+    <target name="checkstyle" depends="ivy-retrieve-test" description="Run Checkstyle coding standard checks">
+      <taskdef resource="checkstyletask.properties" uri="antlib:com.puppycrawl.tools.checkstyle">
+        <classpath>
+          <fileset dir="${ivy.test.lib}" includes="*.jar" />
+        </classpath>
+      </taskdef>
+      <mkdir dir="${test.java.build.dir}"/>
+      <cs:checkstyle config="${test.src.dir}/checkstyle.xml" failOnViolation="false">
+        <fileset dir="${src.dir}/java" includes="**/*.java" excludes="**/generated/**"/>
+        <formatter type="xml" toFile="${test.java.build.dir}/checkstyle-errors.xml"/>
+      </cs:checkstyle>
+      <xslt style="${test.src.dir}/checkstyle-noframes-sorted.xsl" in="${test.java.build.dir}/checkstyle-errors.xml"
+            out="${test.java.build.dir}/checkstyle-errors.html"/>
     </target>
-
-    <target name="checkstyle.check" unless="checkstyle.home">
-    	<fail message="'checkstyle.home' is not defined. Please pass -Dcheckstyle.home=&lt;base of checkstyle installation&gt; 
-		to Ant on the command-line." />
-    </target>
-    
-    <target name="set-checkstyle-classpath">
-    	<path id="checkstyle-classpath">
-        	<fileset dir="${checkstyle.home}">
-			<include name="**/*.jar"/>
-         	</fileset>
- 	</path>
-    </target>	
 
     <!-- ================================================================== -->
     <!-- Perform audit activities for the release                           -->
@@ -1709,6 +1699,27 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
     	</exec>
      </target>
 
+   <target name="qa-test-pullrequest" depends="findbugs.check,forrest.check">
+        <exec executable="bash" failonerror="true">
+                <arg value="${test_pullrequest_sh}"/>
+                <arg value="QABUILD"/>
+                <arg value="${scratch.dir}"/>
+                <arg value="${ps.cmd}"/>
+                <arg value="${wget.cmd}"/>
+                <arg value="${jiracli.cmd}"/>
+                <arg value="${git.cmd}"/>
+                <arg value="${grep.cmd}"/>
+                <arg value="${patch.cmd}"/>
+                <arg value="${findbugs.home}"/>
+                <arg value="${forrest.home}"/>
+                <arg value="${basedir}"/>
+                <arg value="${jira.passwd}"/>
+                <arg value="${java5.home}"/>
+                <arg value="${curl.cmd}"/>
+        </exec>
+     </target>
+
+
      <!-- this target runs the hudson trunk build -->
      <target name="hudson-test-trunk" depends="docs,tar,findbugs"/>
 
@@ -1797,7 +1808,7 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
              description="Create eclipse project files">
        <ivy:resolve useOrigin="true" conf="test"/>
        <ivy:cachepath pathid="default.path.id" conf="default" />
-       <ivy:cachepath pathid="junit.path.id" conf="test" transitive="false"/>
+       <ivy:cachepath pathid="junit.path.id" conf="test" />
        <taskdef name="eclipse"
                 classname="prantl.ant.eclipse.EclipseTask"
                 classpathref="java.classpath" />

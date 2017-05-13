@@ -83,7 +83,7 @@ public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
         Map<String, String> authConfigs = new HashMap<String, String>();
         authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "false");
 
-        String connectStr = startQuorum(2, authConfigs, 0);
+        String connectStr = startQuorum(2, authConfigs, 0, false);
         CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT,
                 watcher);
@@ -103,7 +103,7 @@ public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
         Map<String, String> authConfigs = new HashMap<String, String>();
         authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
 
-        String connectStr = startQuorum(2, authConfigs, 1);
+        String connectStr = startQuorum(2, authConfigs, 1, false);
         CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT,
                 watcher);
@@ -123,7 +123,7 @@ public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
         Map<String, String> authConfigs = new HashMap<String, String>();
         authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "true");
 
-        String connectStr = startQuorum(2, authConfigs, 2);
+        String connectStr = startQuorum(2, authConfigs, 2, false);
         CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT,
                 watcher);
@@ -145,7 +145,7 @@ public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
         authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "true");
         authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
 
-        String connectStr = startQuorum(2, authConfigs, 2);
+        String connectStr = startQuorum(2, authConfigs, 2, false);
         CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT,
                 watcher);
@@ -178,7 +178,7 @@ public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
         Map<String, String> authConfigs = new HashMap<String, String>();
         authConfigs.put(QuorumAuth.QUORUM_SASL_AUTH_ENABLED, "false");
 
-        String connectStr = startQuorum(3, authConfigs, 0);
+        String connectStr = startQuorum(3, authConfigs, 0, false);
         CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT,
                 watcher);

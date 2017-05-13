@@ -154,8 +154,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                     synchronized(n) {
                         children = n.getChildren();
                     }
-                    lastChange = new ChangeRecord(-1, path, n.stat,
-                        children != null ? children.size() : 0,
+                    lastChange = new ChangeRecord(-1, path, n.stat, children.size(),
                             zks.getZKDatabase().aclForNode(n));
                 }
             }

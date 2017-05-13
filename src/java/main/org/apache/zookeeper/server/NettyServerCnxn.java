@@ -89,6 +89,12 @@ public class NettyServerCnxn extends ServerCnxn {
             LOG.debug("close called for sessionid:0x"
                     + Long.toHexString(sessionId));
         }
+
+        // ZOOKEEPER-2743:
+        // Always unregister connection upon close to prevent
+        // connection bean leak under certain race conditions.
+        factory.unregisterConnection(this);
+
         synchronized(factory.cnxns){
             // if this is not in cnxns then it's already closed
             if (!factory.cnxns.remove(this)) {
@@ -113,7 +119,6 @@ public class NettyServerCnxn extends ServerCnxn {
         if (channel.isOpen()) {
             channel.close();
         }
-        factory.unregisterConnection(this);
     }
 
     @Override
@@ -618,23 +623,47 @@ public class NettyServerCnxn extends ServerCnxn {
         }
     }
 
+    private class NopCommand extends CommandThread {
+        private String msg;
+
+        public NopCommand(PrintWriter pw, String msg) {
+            super(pw);
+            this.msg = msg;
+        }
+
+        @Override
+        public void commandRun() {
+            pw.println(msg);
+        }
+    }
+
     /** Return if four letter word found and responded to, otw false **/
     private boolean checkFourLetterWord(final Channel channel,
             ChannelBuffer message, final int len) throws IOException
     {
         // We take advantage of the limited size of the length to look
         // for cmds. They are all 4-bytes which fits inside of an int
-        String cmd = cmd2String.get(len);
-        if (cmd == null) {
+        if (!ServerCnxn.isKnown(len)) {
             return false;
         }
+
         channel.setInterestOps(0).awaitUninterruptibly();
-        LOG.info("Processing " + cmd + " command from "
-                + channel.getRemoteAddress());
         packetReceived();
 
         final PrintWriter pwriter = new PrintWriter(
                 new BufferedWriter(new SendBufferWriter()));
+
+        String cmd = ServerCnxn.getCommandString(len);
+        // ZOOKEEPER-2693: don't execute 4lw if it's not enabled.
+        if (!ServerCnxn.isEnabled(cmd)) {
+            LOG.debug("Command {} is not executed because it is not in the whitelist.", cmd);
+            NopCommand nopCmd = new NopCommand(pwriter, cmd + " is not executed because it is not in the whitelist.");
+            nopCmd.start();
+            return true;
+        }
+
+        LOG.info("Processing " + cmd + " command from " + channel.getRemoteAddress());
+
         if (len == ruokCmd) {
             RuokCommand ruok = new RuokCommand(pwriter);
             ruok.start();
