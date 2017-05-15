@@ -30,6 +30,7 @@ import time
 import re
 import requests
 from jinja2 import Template
+from simplejson import JSONDecodeError
 
 # If any of these strings appear in the console output, it's a build one should probably ignore
 # for analyzing failed/hanging tests.
@@ -129,7 +130,11 @@ def parse_cli_args(cli_args):
         excluded_builds = []
         if excluded_builds_arg is not None and excluded_builds_arg[i] != "None":
             excluded_builds = [int(x) for x in excluded_builds_arg[i].split(",")]
-        response = requests.get(job_url + "/api/json").json()
+        try:    
+            response = requests.get(job_url + "/api/json").json()
+        except JSONDecodeError:
+            LOG.error("failed to get: " + job_url + "/api/json")
+            continue
         if "activeConfigurations" in response:
             for config in response["activeConfigurations"]:
                 final_expanded_urls.append({'url': config["url"], 'max_builds': max_builds,
