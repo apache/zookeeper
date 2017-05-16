@@ -16,52 +16,56 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.test;
+package org.apache.zookeeper;
+
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.TestableZooKeeper;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.ClientCnxn.SendThread;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
+import org.apache.zookeeper.test.ClientBase;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class SaslAuthTest extends ClientBase {
-    static {
-        System.setProperty("zookeeper.authProvider.1","org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
-
+    @BeforeClass
+    public static void init() {
+        System.setProperty("zookeeper.authProvider.1",
+                "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
         try {
             File tmpDir = createTmpDir();
             File saslConfFile = new File(tmpDir, "jaas.conf");
             FileWriter fwriter = new FileWriter(saslConfFile);
 
-            fwriter.write("" +
-                    "Server {\n" +
-                    "          org.apache.zookeeper.server.auth.DigestLoginModule required\n" +
-                    "          user_super=\"test\";\n" +
-                    "};\n" +
-                    "Client {\n" +
-                    "       org.apache.zookeeper.server.auth.DigestLoginModule required\n" +
-                    "       username=\"super\"\n" +
-                    "       password=\"test\";\n" +
-                    "};" + "\n");
+            fwriter.write("" + "Server {\n"
+                    + "          org.apache.zookeeper.server.auth.DigestLoginModule required\n"
+                    + "          user_super=\"test\";\n" + "};\n" + "Client {\n"
+                    + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
+                    + "       username=\"super\"\n" + "       password=\"test\";\n" + "};" + "\n");
             fwriter.close();
-            System.setProperty("java.security.auth.login.config",saslConfFile.getAbsolutePath());
+            System.setProperty("java.security.auth.login.config", saslConfFile.getAbsolutePath());
+        } catch (IOException e) {
+            // could not create tmp directory to hold JAAS conf file : test will
+            // fail now.
         }
-        catch (IOException e) {
-            // could not create tmp directory to hold JAAS conf file : test will fail now.
-        }
+    }
+
+    @AfterClass
+    public static void clean() {
+        System.clearProperty("zookeeper.authProvider.1");
+        System.clearProperty("java.security.auth.login.config");
     }
 
     private AtomicInteger authFailed = new AtomicInteger(0);
@@ -141,6 +145,49 @@ public class SaslAuthTest extends ClientBase {
                 i++;
             }
         }
+    }
+    
+    @Test
+    public void testZKOperationsAfterClientSaslAuthFailure() throws Exception {
+        CountdownWatcher watcher = new CountdownWatcher();
+        ZooKeeper zk = new ZooKeeper(hostPort, CONNECTION_TIMEOUT, watcher);
+        watcher.waitForConnected(CONNECTION_TIMEOUT);
+        try {
+            setSaslFailureFlag(zk);
+
+            // try node creation for around 15 second,
+            int totalTry = 10;
+            int tryCount = 0;
+
+            boolean success = false;
+            while (!success && tryCount++ <= totalTry) {
+                try {
+                    zk.create("/saslAuthFail", "data".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                            CreateMode.PERSISTENT_SEQUENTIAL);
+                    success = true;
+                } catch (KeeperException.ConnectionLossException e) {
+                    Thread.sleep(1000);
+                    // do nothing
+                }
+            }
+            assertTrue("ZNode creation is failing continuously after Sasl auth failure.", success);
+
+        } finally {
+            zk.close();
+        }
+    }
+
+    // set saslLoginFailed to true to simulate the LoginException
+    private void setSaslFailureFlag(ZooKeeper zk) throws Exception {
+        Field cnxnField = zk.getClass().getDeclaredField("cnxn");
+        cnxnField.setAccessible(true);
+        ClientCnxn clientCnxn = (ClientCnxn) cnxnField.get(zk);
+        Field sendThreadField = clientCnxn.getClass().getDeclaredField("sendThread");
+        sendThreadField.setAccessible(true);
+        SendThread sendThread = (SendThread) sendThreadField.get(clientCnxn);
+        Field saslLoginFailedField = sendThread.getClass().getDeclaredField("saslLoginFailed");
+        saslLoginFailedField.setAccessible(true);
+        saslLoginFailedField.setBoolean(sendThread, true);
     }
 
 }
