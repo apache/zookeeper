@@ -47,19 +47,39 @@ public class SaslAuthTest extends ClientBase {
         try {
             File tmpDir = createTmpDir();
             File saslConfFile = new File(tmpDir, "jaas.conf");
+            String jaasContent = getJaasFileContent();
             FileWriter fwriter = new FileWriter(saslConfFile);
-
-            fwriter.write("" + "Server {\n"
-                    + "          org.apache.zookeeper.server.auth.DigestLoginModule required\n"
-                    + "          user_super=\"test\";\n" + "};\n" + "Client {\n"
-                    + "       org.apache.zookeeper.server.auth.DigestLoginModule required\n"
-                    + "       username=\"super\"\n" + "       password=\"test\";\n" + "};" + "\n");
+            fwriter.write(jaasContent);
             fwriter.close();
             System.setProperty("java.security.auth.login.config", saslConfFile.getAbsolutePath());
         } catch (IOException e) {
             // could not create tmp directory to hold JAAS conf file : test will
             // fail now.
         }
+    }
+
+    private static String getJaasFileContent() {
+        StringBuilder jaasContent=new StringBuilder();
+        String newLine = System.getProperty("line.separator");
+        jaasContent.append("Server {");
+        jaasContent.append(newLine);
+        jaasContent.append("org.apache.zookeeper.server.auth.DigestLoginModule required");
+        jaasContent.append(newLine);
+        jaasContent.append("user_super=\"test\";");
+        jaasContent.append(newLine);
+        jaasContent.append("};");
+        jaasContent.append(newLine);
+        jaasContent.append("Client {");
+        jaasContent.append(newLine);
+        jaasContent.append("org.apache.zookeeper.server.auth.DigestLoginModule required");
+        jaasContent.append(newLine);
+        jaasContent.append("username=\"super\"");
+        jaasContent.append(newLine);
+        jaasContent.append("password=\"test\";");
+        jaasContent.append(newLine);
+        jaasContent.append("};");
+        jaasContent.append(newLine);
+        return jaasContent.toString();
     }
 
     @AfterClass
