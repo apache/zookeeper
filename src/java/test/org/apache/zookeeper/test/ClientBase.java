@@ -42,6 +42,7 @@ import javax.management.ObjectName;
 
 import junit.framework.TestCase;
 
+import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.TestableZooKeeper;
@@ -123,11 +124,11 @@ public abstract class ClientBase extends ZKTestCase {
         synchronized public void waitForConnected(long timeout)
             throws InterruptedException, TimeoutException
         {
-            long expire = System.currentTimeMillis() + timeout;
+            long expire = Time.currentElapsedTime() + timeout;
             long left = timeout;
             while(!connected && left > 0) {
                 wait(left);
-                left = expire - System.currentTimeMillis();
+                left = expire - Time.currentElapsedTime();
             }
             if (!connected) {
                 throw new TimeoutException("Did not connect");
@@ -137,11 +138,11 @@ public abstract class ClientBase extends ZKTestCase {
         synchronized public void waitForDisconnected(long timeout)
             throws InterruptedException, TimeoutException
         {
-            long expire = System.currentTimeMillis() + timeout;
+            long expire = Time.currentElapsedTime() + timeout;
             long left = timeout;
             while(connected && left > 0) {
                 wait(left);
-                left = expire - System.currentTimeMillis();
+                left = expire - Time.currentElapsedTime();
             }
             if (connected) {
                 throw new TimeoutException("Did not disconnect");
@@ -230,7 +231,7 @@ public abstract class ClientBase extends ZKTestCase {
     }
 
     public static boolean waitForServerUp(String hp, long timeout) {
-        long start = System.currentTimeMillis();
+        long start = Time.currentElapsedTime();
         while (true) {
             try {
                 // if there are multiple hostports, just take the first one
@@ -245,7 +246,7 @@ public abstract class ClientBase extends ZKTestCase {
                 LOG.info("server " + hp + " not up " + e);
             }
 
-            if (System.currentTimeMillis() > start + timeout) {
+            if (Time.currentElapsedTime() > start + timeout) {
                 break;
             }
             try {
@@ -257,7 +258,7 @@ public abstract class ClientBase extends ZKTestCase {
         return false;
     }
     public static boolean waitForServerDown(String hp, long timeout) {
-        long start = System.currentTimeMillis();
+        long start = Time.currentElapsedTime();
         while (true) {
             try {
                 HostPort hpobj = parseHostPortList(hp).get(0);
@@ -266,7 +267,7 @@ public abstract class ClientBase extends ZKTestCase {
                 return true;
             }
 
-            if (System.currentTimeMillis() > start + timeout) {
+            if (Time.currentElapsedTime() > start + timeout) {
                 break;
             }
             try {
@@ -280,7 +281,7 @@ public abstract class ClientBase extends ZKTestCase {
 
     public static boolean waitForServerState(QuorumPeer qp, int timeout,
             String serverState) {
-        long start = System.currentTimeMillis();
+        long start = Time.currentElapsedTime();
         while (true) {
             try {
                 Thread.sleep(250);
@@ -289,7 +290,7 @@ public abstract class ClientBase extends ZKTestCase {
             }
             if (qp.getServerState().equals(serverState))
                 return true;
-            if (System.currentTimeMillis() > start + timeout) {
+            if (Time.currentElapsedTime() > start + timeout) {
                 return false;
             }
         }
