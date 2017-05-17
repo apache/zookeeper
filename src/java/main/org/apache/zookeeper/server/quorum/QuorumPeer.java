@@ -241,7 +241,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         public long id;
         
         public LearnerType type = LearnerType.PARTICIPANT;
-
     }
 
     public enum ServerState {
