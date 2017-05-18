@@ -193,7 +193,8 @@ def analyze_build(args):
         for build in build_id_to_results:
             [_, failed_tests] = build_id_to_results[build]
             if len(failed_tests) > MAX_LEGITIMATE_FAILURES:
-                LOG.info("Skipping build %s due to too many (%s) failures.", build, len(failed_tests));
+                LOG.info("Skipping build %s due to too many (%s) failures.", build, len(failed_tests))
+                continue
             ALL_FAILED_TESTS.update(failed_tests)
             bad_tests.update(failed_tests)
 
