@@ -33,6 +33,7 @@ import javax.security.auth.login.LoginException;
 import javax.security.auth.callback.CallbackHandler;
 
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
+import org.apache.zookeeper.common.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import javax.security.auth.kerberos.KerberosTicket;
@@ -74,7 +75,8 @@ public class Login {
     private String keytabFile = null;
     private String principal = null;
 
-    private long lastLogin = 0;
+    // Initialize 'lastLogin' to do a login at first time
+    private long lastLogin = Time.currentElapsedTime() - MIN_TIME_BEFORE_RELOGIN;
 
     /**
      * LoginThread constructor. The constructor starts the thread used
@@ -128,7 +130,7 @@ public class Login {
                 LOG.info("TGT refresh thread started.");
                 while (true) {  // renewal thread's main loop. if it exits from here, thread will exit.
                     KerberosTicket tgt = getTGT();
-                    long now = System.currentTimeMillis();
+                    long now = Time.currentWallTime();
                     long nextRefresh;
                     Date nextRefreshDate;
                     if (tgt == null) {
@@ -306,7 +308,7 @@ public class Login {
                 (TICKET_RENEW_WINDOW + (TICKET_RENEW_JITTER * rng.nextDouble())));
         if (proposedRefresh > expires) {
             // proposedRefresh is too far in the future: it's after ticket expires: simply return now.
-            return System.currentTimeMillis();
+            return Time.currentWallTime();
         }
         else {
             return proposedRefresh;
@@ -327,7 +329,7 @@ public class Login {
     }
 
     private boolean hasSufficientTimeElapsed() {
-        long now = System.currentTimeMillis();
+        long now = Time.currentElapsedTime();
         if (now - getLastLogin() < MIN_TIME_BEFORE_RELOGIN ) {
             LOG.warn("Not attempting to re-login since the last re-login was " +
                     "attempted less than " + (MIN_TIME_BEFORE_RELOGIN/1000) + " seconds"+
