@@ -95,7 +95,11 @@ def generate_report(build_url):
     :return: classified test results.
     """
     LOG.info("Analyzing %s", build_url)
-    response = requests.get(build_url + "/api/json").json()
+    try:
+        response = requests.get(build_url + "/api/json").json()
+    except JSONDecodeError:
+        LOG.error("failed to get: " + build_url + "/api/json")
+        return
     if response["building"]:
         LOG.info("Skipping this build since it is in progress.")
         return {}
