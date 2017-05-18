@@ -42,6 +42,9 @@ PATTERN_RUNNING_TEST = re.compile('(.*) RUNNING TEST METHOD (.*)')
 PATTERN_FAILED_TEST = re.compile('(.*)- FAILED (.*)')
 PATTERN_SUCCEED_TEST = re.compile('(.*)- SUCCEEDED (.*)')
 MAX_NUM_OF_BUILDS = 10000
+# The upper bound of number of failed tests for a legimitate build.
+# If more tests are failing, then the build is bad (e.g. JVM crash, flaky host, etc.).
+MAX_LEGITIMATE_FAILURES = 30
 
 logging.basicConfig()
 LOG = logging.getLogger(__name__)
@@ -94,7 +97,11 @@ def generate_report(build_url):
     :return: classified test results.
     """
     LOG.info("Analyzing %s", build_url)
-    response = requests.get(build_url + "/api/json").json()
+    try:
+        response = requests.get(build_url + "/api/json").json()
+    except:
+        LOG.error("failed to get: " + build_url + "/api/json")
+        return
     if response["building"]:
         LOG.info("Skipping this build since it is in progress.")
         return {}
@@ -129,7 +136,11 @@ def parse_cli_args(cli_args):
         excluded_builds = []
         if excluded_builds_arg is not None and excluded_builds_arg[i] != "None":
             excluded_builds = [int(x) for x in excluded_builds_arg[i].split(",")]
-        response = requests.get(job_url + "/api/json").json()
+        try:    
+            response = requests.get(job_url + "/api/json").json()
+        except:
+            LOG.error("failed to get: " + job_url + "/api/json")
+            continue
         if "activeConfigurations" in response:
             for config in response["activeConfigurations"]:
                 final_expanded_urls.append({'url': config["url"], 'max_builds': max_builds,
@@ -181,6 +192,9 @@ def analyze_build(args):
         bad_tests = dict()
         for build in build_id_to_results:
             [_, failed_tests] = build_id_to_results[build]
+            if len(failed_tests) > MAX_LEGITIMATE_FAILURES:
+                LOG.info("Skipping build %s due to too many (%s) failures.", build, len(failed_tests))
+                continue
             ALL_FAILED_TESTS.update(failed_tests)
             bad_tests.update(failed_tests)
 
