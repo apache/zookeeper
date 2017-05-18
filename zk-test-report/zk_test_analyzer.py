@@ -42,6 +42,9 @@ PATTERN_RUNNING_TEST = re.compile('(.*) RUNNING TEST METHOD (.*)')
 PATTERN_FAILED_TEST = re.compile('(.*)- FAILED (.*)')
 PATTERN_SUCCEED_TEST = re.compile('(.*)- SUCCEEDED (.*)')
 MAX_NUM_OF_BUILDS = 10000
+# The upper bound of number of failed tests for a legimitate build.
+# If more tests are failing, then the build is bad (e.g. JVM crash, flaky host, etc.).
+MAX_LEGITIMATE_FAILURES = 30
 
 logging.basicConfig()
 LOG = logging.getLogger(__name__)
@@ -189,6 +192,8 @@ def analyze_build(args):
         bad_tests = dict()
         for build in build_id_to_results:
             [_, failed_tests] = build_id_to_results[build]
+            if len(failed_tests) > MAX_LEGITIMATE_FAILURES:
+                LOG.info("Skipping build %s due to too many (%s) failures.", build, len(failed_tests));
             ALL_FAILED_TESTS.update(failed_tests)
             bad_tests.update(failed_tests)
 
