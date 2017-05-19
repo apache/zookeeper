@@ -828,7 +828,8 @@ public class ClientTest extends ClientBase {
      */
     @Test
     public void testNonExistingOpCode() throws Exception  {
-        TestableZooKeeper zk = createClient();
+        CountdownWatcher watcher = new CountdownWatcher();
+        TestableZooKeeper zk = createClient(watcher);
 
         final String path = "/m1";
 
@@ -841,7 +842,9 @@ public class ClientTest extends ClientBase {
         ReplyHeader r = zk.submitRequest(h, request, response, null);
 
         Assert.assertEquals(r.getErr(), Code.UNIMPLEMENTED.intValue());
-        zk.testableWaitForShutdown(CONNECTION_TIMEOUT);
+
+        // Sending a nonexisting opcode should cause the server to disconnect
+        watcher.waitForDisconnected(5000);
     }
 
     @Test
