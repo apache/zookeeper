@@ -545,6 +545,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                 defaultedToObserver = true;
             }
             if (warningPresent && defaultedToObserver) {
+                LOG.debug("Content from console is: {}", line);
                 break;
             }
         }
