@@ -183,9 +183,6 @@ public class ReadOnlyModeTest extends ZKTestCase {
         while (!(zk.getState() == States.CONNECTEDREADONLY)) {
             Thread.sleep(200);
             // FIXME this was originally 5 seconds, but realistically, on random/slow/virt hosts, there is no way to guarantee this
-            Assert.assertTrue("Can't connect to the server", System
-                    .currentTimeMillis()
-                    - start < 30000);
             Assert.assertTrue("Can't connect to the server",
                               Time.currentElapsedTime() - start < 30000);
         }

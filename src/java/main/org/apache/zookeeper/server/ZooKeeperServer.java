@@ -1004,6 +1004,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 Record rsp = processSasl(incomingBuffer,cnxn);
                 ReplyHeader rh = new ReplyHeader(h.getXid(), 0, KeeperException.Code.OK.intValue());
                 cnxn.sendResponse(rh,rsp, "response"); // not sure about 3rd arg..what is it?
+                return;
             }
             else {
                 Request si = new Request(cnxn, cnxn.getSessionId(), h.getXid(),
