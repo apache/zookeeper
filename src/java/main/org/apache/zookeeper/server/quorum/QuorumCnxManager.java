@@ -18,6 +18,12 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import org.apache.zookeeper.server.ZooKeeperThread;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -31,16 +37,11 @@ import java.nio.ByteBuffer;
 import java.nio.channels.UnresolvedAddressException;
 import java.util.Enumeration;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import org.apache.zookeeper.server.ZooKeeperThread;
-import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This class implements a connection manager for leader election using TCP. It
@@ -310,8 +311,8 @@ public class QuorumCnxManager {
      * possible long value to lose the challenge.
      *
      */
-    public void receiveConnection(Socket sock) {
-        Long sid = null, protocolVersion = null;
+    public void receiveConnection(Socket sock) throws ConfigException {
+        Long sid, protocolVersion;
         InetSocketAddress electionAddr = null;
 
         try {
@@ -370,6 +371,10 @@ public class QuorumCnxManager {
             } else {
                 connectOne(sid);
             }
+
+        }else if (sid == self.getId()) {
+            closeSocket(sock);
+            throw new ConfigException(String.format("Appearing duplicate SID: %s", sid));
 
         } else { // Otherwise start worker threads to receive data.
             SendWorker sw = new SendWorker(sock, sid);
@@ -660,6 +665,9 @@ public class QuorumCnxManager {
                             "Ignoring exception", ie);
                     }
                     closeSocket(client);
+                } catch (ConfigException ce) {
+                    LOG.error(ce.getMessage());
+                    throw new RuntimeException(ce);
                 }
             }
             LOG.info("Leaving listener");

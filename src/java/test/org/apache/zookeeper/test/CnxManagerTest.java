@@ -18,29 +18,12 @@
 
 package org.apache.zookeeper.test;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
-import java.net.Socket;
-
-import org.apache.zookeeper.common.Time;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
+import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.server.quorum.QuorumCnxManager;
-import org.apache.zookeeper.server.quorum.QuorumCnxManager.Message;
 import org.apache.zookeeper.server.quorum.QuorumCnxManager.InitialMessage;
+import org.apache.zookeeper.server.quorum.QuorumCnxManager.Message;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
@@ -48,6 +31,19 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.*;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 public class CnxManagerTest extends ZKTestCase {
     protected static final Logger LOG = LoggerFactory.getLogger(FLENewEpochTest.class);
@@ -351,15 +347,55 @@ public class CnxManagerTest extends ZKTestCase {
         LOG.info("Election port: " + port);
         Thread.sleep(1000);
 
-        Socket sock = new Socket();
-        sock.connect(peers.get(1L).electionAddr, 5000);
-        long begin = Time.currentElapsedTime();
-        // Read without sending data. Verify timeout.
-        cnxManager.receiveConnection(sock);
-        long end = Time.currentElapsedTime();
-        if((end - begin) > ((peer.getSyncLimit() * peer.getTickTime()) + 500)) Assert.fail("Waited more than necessary");
-        cnxManager.halt();
-        Assert.assertFalse(cnxManager.listener.isAlive());
+        try (Socket sock = new Socket()) {
+            sock.connect(peers.get(1L).electionAddr, 5000);
+            long begin = Time.currentElapsedTime();
+            // Read without sending data. Verify timeout.
+            cnxManager.receiveConnection(sock);
+            long end = Time.currentElapsedTime();
+            if ((end - begin) > ((peer.getSyncLimit() * peer.getTickTime()) + 500))
+                Assert.fail("Waited more than necessary");
+            cnxManager.halt();
+            Assert.assertFalse(cnxManager.listener.isAlive());
+        }
+    }
+
+    /*
+     * Test if a duplicate SID appears in the cluster
+     */
+    @Test
+    public void testSameSID() throws Exception {
+        QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[2], peerTmpdir[2], peerClientPort[2], 3, 2, 2000, 2, 2);
+        QuorumCnxManager cnxManager = new QuorumCnxManager(peer);
+        QuorumCnxManager.Listener listener = cnxManager.listener;
+        if (listener != null) {
+            Thread.UncaughtExceptionHandler handler = new Thread.UncaughtExceptionHandler() {
+                @Override
+                public void uncaughtException(Thread th, Throwable ex) {
+                    if (ex instanceof RuntimeException) {
+                        String msg = ex.getMessage();
+                        LOG.error(msg);
+                        Assert.assertEquals("org.apache.zookeeper.server.quorum.QuorumPeerConfig$ConfigException:" +
+                                " Appearing duplicate SID: 2", msg);
+                    }
+                }
+            };
+            listener.setUncaughtExceptionHandler(handler);
+            listener.start();
+        } else {
+            LOG.error("Null listener when initializing cnx manager");
+        }
+        try (Socket sock = new Socket()) {
+            InetSocketAddress electionAddr = peers.get(peer.getId()).electionAddr;
+            LOG.info("Creating socket connection, host: {}, port: {}",
+                    electionAddr.getHostString(), electionAddr.getPort());
+            sock.connect(electionAddr, 30000);
+            try (DataOutputStream dout = new DataOutputStream(sock.getOutputStream())) {
+                dout.writeLong(peer.getId());
+                dout.flush();
+                cnxManager.receiveConnection(sock);
+            }
+        }
     }
 
     /*
