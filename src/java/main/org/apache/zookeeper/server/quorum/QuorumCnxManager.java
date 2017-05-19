@@ -625,6 +625,7 @@ public class QuorumCnxManager {
             int numRetries = 0;
             InetSocketAddress addr;
             Socket client = null;
+            ConfigException ce = null;
             while((!shutdown) && (numRetries < 3)){
                 try {
                     ss = new ServerSocket();
@@ -662,12 +663,12 @@ public class QuorumCnxManager {
                         LOG.error("Error closing server socket", ie);
                     } catch (InterruptedException ie) {
                         LOG.error("Interrupted while sleeping. " +
-                            "Ignoring exception", ie);
+                                "Ignoring exception", ie);
                     }
                     closeSocket(client);
-                } catch (ConfigException ce) {
-                    LOG.error(ce.getMessage());
-                    throw new RuntimeException(ce);
+                } catch (ConfigException e) {
+                    LOG.error(e.getMessage());
+                    ce = e;
                 }
             }
             LOG.info("Leaving listener");
@@ -685,6 +686,7 @@ public class QuorumCnxManager {
                     LOG.debug("Error closing server socket", ie);
                 }
             }
+            if (ce !=null) throw new RuntimeException(ce);
         }
 
         /**
