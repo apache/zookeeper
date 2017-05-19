@@ -117,10 +117,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             this.id = id;
             this.addr = addr;
             this.electionAddr = electionAddr;
-            String ipReachableValue = System.getProperty("zookeeper.ipReachableTimeout");
-            if (ipReachableValue != null) {
-                this.ipReachableTimeout = Integer.parseInt(ipReachableValue);
-            }    
         }
 
         // VisibleForTesting
@@ -128,10 +124,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             this.id = id;
             this.addr = addr;
             this.electionAddr = null;
-            String ipReachableValue = System.getProperty("zookeeper.ipReachableTimeout");
-            if (ipReachableValue != null) {
-                this.ipReachableTimeout = Integer.parseInt(ipReachableValue);
-            }    
         }
         
         private QuorumServer(long id, InetSocketAddress addr,
@@ -140,10 +132,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             this.addr = addr;
             this.electionAddr = electionAddr;
             this.type = type;
-            String ipReachableValue = System.getProperty("zookeeper.ipReachableTimeout");
-            if (ipReachableValue != null) {
-                this.ipReachableTimeout = Integer.parseInt(ipReachableValue);
-            }    
         }
         
         public QuorumServer(long id, String hostname,
@@ -160,10 +148,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 	    if (type!=null){
                 this.type = type;
 	    }
-            String ipReachableValue = System.getProperty("zookeeper.ipReachableTimeout");
-            if (ipReachableValue != null) {
-                this.ipReachableTimeout = Integer.parseInt(ipReachableValue);
-            }    
 	    this.recreateSocketAddresses();
 	}
 
@@ -179,6 +163,17 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         public void recreateSocketAddresses() {
             InetAddress address = null;
             try {
+                // the time, in milliseconds, before {@link InetAddress#isReachable} aborts
+                // in {@link #getReachableAddress}.
+                int ipReachableTimeout = 0;
+                String ipReachableValue = System.getProperty("zookeeper.ipReachableTimeout");
+                if (ipReachableValue != null) {
+                    try {
+                        ipReachableTimeout = Integer.parseInt(ipReachableValue);
+                    } catch (NumberFormatException e) {
+                        LOG.error("{} is not a valid number", ipReachableValue);
+                    }
+                }
                 // zookeeper.ipReachableTimeout is not defined
                 if (ipReachableTimeout <= 0) {
                     address = InetAddress.getByName(this.hostname);
@@ -246,12 +241,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         public long id;
         
         public LearnerType type = LearnerType.PARTICIPANT;
-
-        /**
-         * the time, in milliseconds, before {@link InetAddress#isReachable} aborts
-         * in {@link #getReachableAddress}.
-         */
-        private int ipReachableTimeout = 0;
     }
 
     public enum ServerState {
