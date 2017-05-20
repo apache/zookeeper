@@ -18,18 +18,6 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
-
-import java.io.ByteArrayOutputStream;
-import java.io.LineNumberReader;
-import java.io.StringReader;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
-import java.util.Map;
-import java.util.regex.Pattern;
-
 import org.apache.log4j.Layout;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -37,9 +25,9 @@ import org.apache.log4j.WriterAppender;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
@@ -47,6 +35,18 @@ import org.apache.zookeeper.test.ClientBase;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.LineNumberReader;
+import java.io.StringReader;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
+import java.util.Map;
+import java.util.regex.Pattern;
+
+import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 
 /**
  * Test stand-alone server.
@@ -545,7 +545,6 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                 defaultedToObserver = true;
             }
             if (warningPresent && defaultedToObserver) {
-                LOG.debug("Content from console is: {}", line);
                 break;
             }
         }

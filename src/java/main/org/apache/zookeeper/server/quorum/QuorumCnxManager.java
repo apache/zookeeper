@@ -18,12 +18,6 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import org.apache.zookeeper.server.ZooKeeperThread;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
-import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -37,11 +31,17 @@ import java.nio.ByteBuffer;
 import java.nio.channels.UnresolvedAddressException;
 import java.util.Enumeration;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.apache.zookeeper.server.ZooKeeperThread;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class implements a connection manager for leader election using TCP. It
@@ -312,7 +312,7 @@ public class QuorumCnxManager {
      *
      */
     public void receiveConnection(Socket sock) throws ConfigException {
-        Long sid, protocolVersion;
+        long sid, protocolVersion;
         InetSocketAddress electionAddr = null;
 
         try {
@@ -372,9 +372,9 @@ public class QuorumCnxManager {
                 connectOne(sid);
             }
 
-        }else if (sid == self.getId()) {
+        } else if (sid == self.getId()) {
             closeSocket(sock);
-            throw new ConfigException(String.format("Appearing duplicate SID: %s", sid));
+            throw new ConfigException(String.format("Duplicate SID %s found", sid));
 
         } else { // Otherwise start worker threads to receive data.
             SendWorker sw = new SendWorker(sock, sid);
@@ -625,7 +625,7 @@ public class QuorumCnxManager {
             int numRetries = 0;
             InetSocketAddress addr;
             Socket client = null;
-            ConfigException ce = null;
+            ConfigException configException = null;
             while((!shutdown) && (numRetries < 3)){
                 try {
                     ss = new ServerSocket();
@@ -663,12 +663,14 @@ public class QuorumCnxManager {
                         LOG.error("Error closing server socket", ie);
                     } catch (InterruptedException ie) {
                         LOG.error("Interrupted while sleeping. " +
-                                "Ignoring exception", ie);
+                            "Ignoring exception", ie);
                     }
-                    closeSocket(client);
                 } catch (ConfigException e) {
                     LOG.error(e.getMessage());
-                    ce = e;
+                    configException = e;
+                    break;
+                } finally {
+                    closeSocket(client);
                 }
             }
             LOG.info("Leaving listener");
@@ -686,7 +688,7 @@ public class QuorumCnxManager {
                     LOG.debug("Error closing server socket", ie);
                 }
             }
-            if (ce !=null) throw new RuntimeException(ce);
+            if (configException !=null) throw new RuntimeException(configException);
         }
 
         /**
