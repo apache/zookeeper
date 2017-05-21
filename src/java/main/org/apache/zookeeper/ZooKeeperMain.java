@@ -90,8 +90,8 @@ public class ZooKeeperMain {
 
     static void usage() {
         System.err.println("ZooKeeper -server host:port cmd args");
-        for (String cmd : commandMap.keySet()) {
-            System.err.println("\t"+cmd+ " " + commandMap.get(cmd));
+        for (Map.Entry<String, String> entry : commandMap.entrySet()) {
+            System.err.println("\t" + entry.getKey() + " " + entry.getValue());
         }
     }
 

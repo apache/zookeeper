@@ -206,8 +206,9 @@ public class QuorumHierarchical implements QuorumVerifier {
      * different places, so we have a separate method.
      */
     private void computeGroupWeight(){
-        for(long sid : serverGroup.keySet()){
-            Long gid = serverGroup.get(sid);
+        for(Entry<Long, Long> entry : serverGroup.entrySet()){
+            Long sid = entry.getKey();
+            Long gid = entry.getValue();
             if(!groupWeight.containsKey(gid))
                 groupWeight.put(gid, serverWeight.get(sid));
             else {
@@ -254,9 +255,10 @@ public class QuorumHierarchical implements QuorumVerifier {
          * Check if all groups have majority
          */
         int majGroupCounter = 0;
-        for(long gid : expansion.keySet()) {
-            LOG.debug("Group info: " + expansion.get(gid) + ", " + gid + ", " + groupWeight.get(gid));
-            if(expansion.get(gid) > (groupWeight.get(gid) / 2) )
+        for(Entry<Long, Long> entry : expansion.entrySet()) {
+            Long gid = entry.getKey();
+            LOG.debug("Group info: " + entry.getValue() + ", " + gid + ", " + groupWeight.get(gid));
+            if(entry.getValue() > (groupWeight.get(gid) / 2) )
                 majGroupCounter++;
         }
         

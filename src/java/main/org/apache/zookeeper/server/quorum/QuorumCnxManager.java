@@ -196,7 +196,7 @@ public class QuorumCnxManager {
         this.lastMessageSent = new ConcurrentHashMap<Long, ByteBuffer>();
         String cnxToValue = System.getProperty("zookeeper.cnxTimeout");
         if(cnxToValue != null){
-            this.cnxTO = new Integer(cnxToValue); 
+            this.cnxTO = Integer.parseInt(cnxToValue);
         }
 
         this.mySid = mySid;
