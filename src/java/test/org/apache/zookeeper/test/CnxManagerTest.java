@@ -351,15 +351,17 @@ public class CnxManagerTest extends ZKTestCase {
         LOG.info("Election port: " + port);
         Thread.sleep(1000);
 
-        Socket sock = new Socket();
-        sock.connect(peers.get(1L).electionAddr, 5000);
-        long begin = Time.currentElapsedTime();
-        // Read without sending data. Verify timeout.
-        cnxManager.receiveConnection(sock);
-        long end = Time.currentElapsedTime();
-        if((end - begin) > ((peer.getSyncLimit() * peer.getTickTime()) + 500)) Assert.fail("Waited more than necessary");
-        cnxManager.halt();
-        Assert.assertFalse(cnxManager.listener.isAlive());
+        try (Socket sock = new Socket()) {
+            sock.connect(peers.get(1L).electionAddr, 5000);
+            long begin = Time.currentElapsedTime();
+            // Read without sending data. Verify timeout.
+            cnxManager.receiveConnection(sock);
+            long end = Time.currentElapsedTime();
+            if ((end - begin) > ((peer.getSyncLimit() * peer.getTickTime()) + 500))
+                Assert.fail("Waited more than necessary");
+            cnxManager.halt();
+            Assert.assertFalse(cnxManager.listener.isAlive());
+        }
     }
 
     /*
@@ -391,7 +393,7 @@ public class CnxManagerTest extends ZKTestCase {
             InetSocketAddress electionAddr = peers.get(peer.getId()).electionAddr;
             LOG.info("Creating socket connection, host: {}, port: {}",
                     electionAddr.getHostString(), electionAddr.getPort());
-            sock.connect(electionAddr, 15000);
+            sock.connect(electionAddr, 5000);
             try (DataOutputStream dout = new DataOutputStream(sock.getOutputStream())) {
                 dout.writeLong(peer.getId());
                 dout.flush();
