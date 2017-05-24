@@ -169,7 +169,7 @@ public class SaslQuorumAuthServer implements QuorumAuthServer {
         QuorumAuthPacket authPacket;
         if (challenge == null && s != QuorumAuth.Status.SUCCESS) {
             authPacket = QuorumAuth.createPacket(
-                    QuorumAuth.Status.IN_PROGRESS, challenge);
+                    QuorumAuth.Status.IN_PROGRESS, null);
         } else {
             authPacket = QuorumAuth.createPacket(s, challenge);
         }

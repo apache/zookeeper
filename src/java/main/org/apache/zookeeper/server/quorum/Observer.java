@@ -125,6 +125,8 @@ public class Observer extends Learner{
             ObserverZooKeeperServer obs = (ObserverZooKeeperServer)zk;
             obs.commitRequest(request);            
             break;
+        default:
+            LOG.error("Invalid packet type: {} received by Observer", qp.getType());
         }
     }
 

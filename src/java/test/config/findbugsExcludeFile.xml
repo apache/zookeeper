@@ -96,7 +96,12 @@
   <Match>
     <Class name="org.apache.zookeeper.server.quorum.AuthFastLeaderElection$Messenger$WorkerSender"/>
     <Method name="process"/>
-    <Bug code="RV"/>
+    <Bug code="RV,SF"/>
+  </Match>
+  <Match>
+    <Class name="org.apache.zookeeper.server.quorum.AuthFastLeaderElection$Messenger$WorkerReceiver"/>
+    <Method name="run"/>
+    <Bug code="SF"/>
   </Match>
 
   <!-- these are old classes just for upgrading and should go away -->

@@ -637,8 +637,6 @@ public class FileTxnLog implements TxnLog {
                 crc.update(bytes, 0, bytes.length);
                 if (crcValue != crc.getValue())
                     throw new IOException(CRC_ERROR);
-                if (bytes == null || bytes.length == 0)
-                    return false;
                 hdr = new TxnHeader();
                 record = SerializeUtils.deserializeTxn(bytes, hdr);
             } catch (EOFException e) {
