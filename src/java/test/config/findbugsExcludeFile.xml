@@ -111,6 +111,9 @@
 
   <!-- these are old classes just for upgrading and should go away -->
   <Match>
+    <Class name="org.apache.zookeeper.server.quorum.AuthFastLeaderElection"/>
+  </Match>
+  <Match>
     <Class name="org.apache.zookeeper.server.upgrade.DataNodeV1"/>
   </Match> 
 

@@ -376,7 +376,7 @@ public class Leader {
         zk.registerJMX(new LeaderBean(this, zk), self.jmxLocalPeerBean);
 
         try {
-            self.tick = 0;
+            self.tick.set(0);
             zk.loadData();
             
             leaderStateSummary = new StateSummary(self.getCurrentEpoch(), zk.getLastProcessedZxid());
@@ -424,7 +424,7 @@ public class Leader {
                             + "Perhaps the initTicks need to be increased.");
                 }
                 Thread.sleep(self.tickTime);
-                self.tick++;
+                self.tick.incrementAndGet();
                 return;
             }
             
@@ -465,7 +465,7 @@ public class Leader {
             while (true) {
                 Thread.sleep(self.tickTime / 2);
                 if (!tickSkip) {
-                    self.tick++;
+                    self.tick.incrementAndGet();
                 }
                 HashSet<Long> syncedSet = new HashSet<Long>();
 
