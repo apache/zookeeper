@@ -50,7 +50,7 @@ import java.util.regex.Pattern;
  */
 public class ZooKeeperMain {
     private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperMain.class);
-    protected static final Map<String,String> commandMap = new HashMap<String,String>( );
+    static final Map<String,String> commandMap = new HashMap<String,String>( );
 
     protected MyCommandOptions cl = new MyCommandOptions();
     protected HashMap<Integer,String> history = new HashMap<Integer,String>( );
