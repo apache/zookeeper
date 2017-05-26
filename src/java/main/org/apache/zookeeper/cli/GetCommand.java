@@ -83,6 +83,8 @@ public class GetCommand extends CliCommand {
         byte data[];
         try {
             data = zk.getData(path, watch, stat);
+        } catch (IllegalArgumentException ex) {
+            throw new MalformedPathException(ex.getMessage());
         } catch (KeeperException|InterruptedException ex) {
             throw new CliException(ex);
         }

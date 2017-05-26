@@ -80,7 +80,9 @@ public class DeleteCommand extends CliCommand {
         }
         
         try {
-        zk.delete(path, version);
+            zk.delete(path, version);
+        } catch (IllegalArgumentException ex) {
+            throw new MalformedPathException(ex.getMessage());
         } catch(KeeperException|InterruptedException ex) {
             throw new CliWrapperException(ex);
         }

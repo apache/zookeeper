@@ -69,6 +69,8 @@ public class ListQuotaCommand extends CliCommand {
                     + Quotas.statNode, false, stat);
             out.println("Output stat for " + path + " "
                     + new StatsTrack(new String(data)).toString());
+        } catch (IllegalArgumentException ex) {
+            throw new MalformedPathException(ex.getMessage());
         } catch (KeeperException.NoNodeException ne) {
             err.println("quota for " + path + " does not exist.");
         } catch (KeeperException|InterruptedException ex) {

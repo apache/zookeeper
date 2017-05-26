@@ -60,6 +60,8 @@ public class Ls2Command extends CliCommand {
         List<String> children;
         try {
             children = zk.getChildren(path, watch, stat);
+        } catch (IllegalArgumentException ex) {
+            throw new MalformedPathException(ex.getMessage());
         } catch (KeeperException|InterruptedException ex) {
             throw new CliWrapperException(ex);
         }
