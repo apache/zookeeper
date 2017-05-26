@@ -81,6 +81,8 @@ public class StatCommand extends CliCommand {
         Stat stat;
         try {
             stat = zk.exists(path, watch);
+        } catch (IllegalArgumentException ex) {
+            throw new MalformedPathException(ex.getMessage());
         } catch (KeeperException|InterruptedException ex) {
             throw new CliWrapperException(ex);
         }
