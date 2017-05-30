@@ -74,11 +74,6 @@ public class QuorumCnxManager {
     static final int SEND_CAPACITY = 1;
 
     static final int PACKETMAXSIZE = 1024 * 512;
-    /*
-     * Maximum number of attempts to connect to a peer
-     */
-
-    static final int MAX_CONNECTION_ATTEMPTS = 2;
     
     /*
      * Negative counter for observer server ids.
