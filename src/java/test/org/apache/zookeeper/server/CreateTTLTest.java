@@ -75,9 +75,7 @@ public class CreateTTLTest extends ClientBase {
     }
 
     @Test
-    public void testBadTTLs()
-            throws IOException, KeeperException, InterruptedException {
-        Stat stat = new Stat();
+    public void testBadTTLs() throws InterruptedException, KeeperException {
         RequestHeader h = new RequestHeader(1, ZooDefs.OpCode.createTTL);
 
         String path = "/bad_ttl";
