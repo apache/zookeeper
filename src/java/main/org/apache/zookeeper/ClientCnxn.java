@@ -693,10 +693,8 @@ public class ClientCnxn {
                     }
                 }
             } catch (KeeperException.NoWatcherException nwe) {
-                LOG.error("Failed to find watcher!", nwe);
                 p.replyHeader.setErr(nwe.code().intValue());
             } catch (KeeperException ke) {
-                LOG.error("Exception when removing watcher", ke);
                 p.replyHeader.setErr(ke.code().intValue());
             }
         }
