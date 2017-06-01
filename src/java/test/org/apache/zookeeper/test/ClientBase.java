@@ -98,7 +98,12 @@ public abstract class ClientBase extends ZKTestCase {
     public static class CountdownWatcher implements Watcher {
         // XXX this doesn't need to be volatile! (Should probably be final)
         volatile CountDownLatch clientConnected;
+        // Set to true when connected to a read-only server, or a read-write (quorum) server.
         volatile boolean connected;
+        // Set to true when connected to a quorum server.
+        volatile boolean syncConnected;
+        // Set to true when connected to a quorum server in read-only mode
+        volatile boolean readOnlyConnected;
 
         public CountdownWatcher() {
             reset();
@@ -106,16 +111,28 @@ public abstract class ClientBase extends ZKTestCase {
         synchronized public void reset() {
             clientConnected = new CountDownLatch(1);
             connected = false;
+            syncConnected = false;
+            readOnlyConnected = false;
         }
         synchronized public void process(WatchedEvent event) {
-            if (event.getState() == KeeperState.SyncConnected ||
-                event.getState() == KeeperState.ConnectedReadOnly) {
+            KeeperState state = event.getState();
+            if (state == KeeperState.SyncConnected) {
                 connected = true;
-                notifyAll();
-                clientConnected.countDown();
+                syncConnected = true;
+                readOnlyConnected = false;
+            } else if (state == KeeperState.ConnectedReadOnly) {
+                connected = true;
+                syncConnected = false;
+                readOnlyConnected = true;
             } else {
                 connected = false;
-                notifyAll();
+                syncConnected = false;
+                readOnlyConnected = false;
+            }
+
+            notifyAll();
+            if (connected) {
+                clientConnected.countDown();
             }
         }
         synchronized public boolean isConnected() {
@@ -133,6 +150,32 @@ public abstract class ClientBase extends ZKTestCase {
             if (!connected) {
                 throw new TimeoutException("Did not connect");
 
+            }
+        }
+        synchronized public void waitForSyncConnected(long timeout)
+                throws InterruptedException, TimeoutException
+        {
+            long expire = System.currentTimeMillis() + timeout;
+            long left = timeout;
+            while(!syncConnected && left > 0) {
+                wait(left);
+                left = expire - System.currentTimeMillis();
+            }
+            if (!syncConnected) {
+                throw new TimeoutException("Failed to connect to read-write ZooKeeper server.");
+            }
+        }
+        synchronized public void waitForReadOnlyConnected(long timeout)
+                throws InterruptedException, TimeoutException
+        {
+            long expire = System.currentTimeMillis() + timeout;
+            long left = timeout;
+            while(!readOnlyConnected && left > 0) {
+                wait(left);
+                left = expire - System.currentTimeMillis();
+            }
+            if (!readOnlyConnected) {
+                throw new TimeoutException("Failed to connect in read-only mode to ZooKeeper server.");
             }
         }
         synchronized public void waitForDisconnected(long timeout)

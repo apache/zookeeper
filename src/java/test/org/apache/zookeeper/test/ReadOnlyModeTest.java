@@ -109,13 +109,9 @@ public class ReadOnlyModeTest extends ZKTestCase {
      */
     @Test
     public void testConnectionEvents() throws Exception {
-        final List<KeeperState> states = new ArrayList<KeeperState>();
+        CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zk = new ZooKeeper(qu.getConnString(), CONNECTION_TIMEOUT,
-                new Watcher() {
-                    public void process(WatchedEvent event) {
-                        states.add(event.getState());
-                    }
-                }, true);
+                watcher, true);
         boolean success = false;
         for (int i = 0; i < 30; i++) {
             try {
@@ -128,6 +124,7 @@ public class ReadOnlyModeTest extends ZKTestCase {
             }            
         }
         Assert.assertTrue("Did not succeed in connecting in 30s", success);
+        Assert.assertFalse("The connection should not be read-only yet", watcher.readOnlyConnected);
 
         // kill peer and wait no more than 5 seconds for read-only server
         // to be started (which should take one tickTime (2 seconds))
@@ -136,15 +133,10 @@ public class ReadOnlyModeTest extends ZKTestCase {
         while (!(zk.getState() == States.CONNECTEDREADONLY)) {
             Thread.sleep(200);
             // FIXME this was originally 5 seconds, but realistically, on random/slow/virt hosts, there is no way to guarantee this
-            Assert.assertTrue("Can't connect to the server", System
-                    .currentTimeMillis()
-                    - start < 30000);
+            Assert.assertTrue("Can't connect to the server", System.currentTimeMillis() - start < 30000);
         }
 
-        // At this point states list should contain, in the given order,
-        // SyncConnected, Disconnected, and ConnectedReadOnly states
-        Assert.assertTrue("ConnectedReadOnly event wasn't received", states
-                .get(2) == KeeperState.ConnectedReadOnly);
+        watcher.waitForReadOnlyConnected(5000);
         zk.close();
     }
 
