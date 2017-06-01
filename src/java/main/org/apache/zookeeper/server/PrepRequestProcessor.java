@@ -654,10 +654,10 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
             path = createRequest.getPath();
             acl = createRequest.getAcl();
             data = createRequest.getData();
-            ttl = 0;
+            ttl = -1;
         }
         CreateMode createMode = CreateMode.fromFlag(flags);
-        validateCreateRequest(createMode, request);
+        validateCreateRequest(path, createMode, request, ttl);
         String parentPath = validatePathForCreate(path, request.sessionId);
 
         List<ACL> listACL = fixupACL(path, request.authInfo, acl);
@@ -921,8 +921,14 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
         return retval;
     }
     
-    private void validateCreateRequest(CreateMode createMode, Request request)
+    private void validateCreateRequest(String path, CreateMode createMode, Request request, long ttl)
             throws KeeperException {
+        try {
+            EphemeralType.validateTTL(createMode, ttl);
+        } catch (IllegalArgumentException e) {
+            BadArgumentsException bae = new BadArgumentsException(path);
+            throw bae;
+        }
         if (createMode.isEphemeral()) {
             // Exception is set when local session failed to upgrade
             // so we just need to report the error
