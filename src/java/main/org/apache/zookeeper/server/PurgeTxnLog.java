@@ -133,11 +133,18 @@ public class PurgeTxnLog {
             }
         }
         // add all non-excluded log files
-        List<File> files = new ArrayList<File>(Arrays.asList(txnLog
-                .getDataDir().listFiles(new MyFileFilter(PREFIX_LOG))));
+        List<File> files = new ArrayList<File>();
+        File[] fileArray = txnLog.getDataDir().listFiles(new MyFileFilter(PREFIX_LOG));
+        if (fileArray != null) {
+            files.addAll(Arrays.asList(fileArray));
+        }
+
         // add all non-excluded snapshot files to the deletion list
-        files.addAll(Arrays.asList(txnLog.getSnapDir().listFiles(
-                new MyFileFilter(PREFIX_SNAPSHOT))));
+        fileArray = txnLog.getSnapDir().listFiles(new MyFileFilter(PREFIX_SNAPSHOT));
+        if (fileArray != null) {
+            files.addAll(Arrays.asList(fileArray));
+        }
+
         // remove the old files
         for(File f: files)
         {

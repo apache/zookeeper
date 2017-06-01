@@ -505,6 +505,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 version = currentVersion + 1;
                 request.txn = new CheckVersionTxn(path, version);
                 break;
+            default:
+                LOG.error("Invalid OpCode: {} received by PrepRequestProcessor", type);
         }
     }
 
@@ -588,9 +590,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                         try {
                             pRequest2Txn(op.getType(), zxid, request, subrequest, false);
                         } catch (KeeperException e) {
-                            if (ke == null) {
-                                ke = e;
-                            }
+                            ke = e;
                             request.hdr.setType(OpCode.error);
                             request.txn = new ErrorTxn(e.code().intValue());
                             LOG.info("Got user-level KeeperException when processing "
@@ -640,6 +640,9 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
             case OpCode.setWatches:
                 zks.sessionTracker.checkSession(request.sessionId,
                         request.getOwner());
+                break;
+            default:
+                LOG.warn("unknown type " + request.type);
                 break;
             }
         } catch (KeeperException e) {

@@ -136,6 +136,8 @@ public class Follower extends Learner{
         case Leader.SYNC:
             fzk.sync();
             break;
+        default:
+            LOG.error("Invalid packet type: {} received by Observer", qp.getType());
         }
     }
 
