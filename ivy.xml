@@ -41,6 +41,7 @@
   </publications>
 
   <dependencies>
+    <dependency org="commons-collections" name="commons-collections" rev="3.0"/>
     <dependency org="org.slf4j" name="slf4j-api" rev="1.7.5"/>
     <dependency org="org.slf4j" name="slf4j-log4j12" rev="1.7.5" transitive="false"/>
     <dependency org="commons-cli" name="commons-cli" rev="1.2" />
