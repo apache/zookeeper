@@ -304,7 +304,7 @@ public class ZooKeeperMain {
 
     void run() throws CliException, IOException, InterruptedException {
         if (cl.getCommand() == null) {
-            System.out.println("Welcome to ZooKeeper!");
+            System.out.println("Welcome to Rumo version ZooKeeper!");
 
             boolean jlinemissing = false;
             // only use jline if it's in the classpath
