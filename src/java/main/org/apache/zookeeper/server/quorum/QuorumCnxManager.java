@@ -106,6 +106,7 @@ public class QuorumCnxManager {
      */
     final long mySid;
     final int socketTimeout;
+    final boolean tcpKeepAlive;
     final Map<Long, QuorumPeer.QuorumServer> view;
     final boolean listenOnAllIPs;
     private ThreadPoolExecutor connectionExecutor;
@@ -167,10 +168,11 @@ public class QuorumCnxManager {
                             QuorumAuthServer authServer,
                             QuorumAuthLearner authLearner,
                             int socketTimeout,
+                            boolean tcpKeepAlive,
                             boolean listenOnAllIPs,
                             int quorumCnxnThreadsSize,
                             boolean quorumSaslAuthEnabled) {
-        this(mySid, view, authServer, authLearner, socketTimeout, listenOnAllIPs,
+        this(mySid, view, authServer, authLearner, socketTimeout, tcpKeepAlive, listenOnAllIPs,
                 quorumCnxnThreadsSize, quorumSaslAuthEnabled, new ConcurrentHashMap<Long, SendWorker>());
     }
 
@@ -180,6 +182,7 @@ public class QuorumCnxManager {
                             QuorumAuthServer authServer,
                             QuorumAuthLearner authLearner,
                             int socketTimeout,
+                            boolean tcpKeepAlive,
                             boolean listenOnAllIPs,
                             int quorumCnxnThreadsSize,
                             boolean quorumSaslAuthEnabled,
@@ -196,6 +199,7 @@ public class QuorumCnxManager {
 
         this.mySid = mySid;
         this.socketTimeout = socketTimeout;
+        this.tcpKeepAlive = tcpKeepAlive;
         this.view = view;
         this.listenOnAllIPs = listenOnAllIPs;
 
@@ -661,6 +665,7 @@ public class QuorumCnxManager {
      */
     private void setSockOpts(Socket sock) throws SocketException {
         sock.setTcpNoDelay(true);
+        sock.setKeepAlive(tcpKeepAlive);
         sock.setSoTimeout(socketTimeout);
     }
 

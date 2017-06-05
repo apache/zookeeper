@@ -400,6 +400,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     protected boolean quorumListenOnAllIPs = false;
 
     /**
+     * Whether or not to activate tcp keep alive on socket connection.
+     */
+    protected boolean tcpKeepAlive = false;
+
+     /**
      * Enable/Disables quorum authentication using sasl. Defaulting to false.
      */
     protected boolean quorumSaslEnableAuth;
@@ -1205,6 +1210,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         this.initLimit = initLimit;
     }
 
+    public void setTcpKeepAlive(boolean tcpKeepAlive){
+        LOG.info("tcpKeepAlive set to {}",  tcpKeepAlive);
+        this.tcpKeepAlive = tcpKeepAlive;
+    }
+
     /**
      * Get the current tick
      */
@@ -1516,6 +1526,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                                     this.authServer,
                                     this.authLearner,
                                     this.tickTime * this.syncLimit,
+                                    this.tcpKeepAlive,
                                     this.getQuorumListenOnAllIPs(),
                                     this.quorumCnxnThreadsSize,
                                     this.isQuorumSaslAuthEnabled());
