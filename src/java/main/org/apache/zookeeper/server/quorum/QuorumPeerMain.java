@@ -147,7 +147,6 @@ public class QuorumPeerMain {
           quorumPeer.setZKDatabase(new ZKDatabase(quorumPeer.getTxnFactory()));
           quorumPeer.setLearnerType(config.getPeerType());
           quorumPeer.setSyncEnabled(config.getSyncEnabled());
-          quorumPeer.setTcpKeepAlive(config.isTcpKeepAlive());
 
           // sets quorum sasl authentication configurations
           quorumPeer.setQuorumSaslEnabled(config.quorumEnableSasl);

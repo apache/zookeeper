@@ -74,7 +74,6 @@ public class QuorumPeerConfig {
     protected int snapRetainCount = 3;
     protected int purgeInterval = 0;
     protected boolean syncEnabled = true;
-    protected boolean tcpKeepAlive = false;
 
     protected LearnerType peerType = LearnerType.PARTICIPANT;
 
@@ -271,8 +270,6 @@ public class QuorumPeerConfig {
                 quorumServicePrincipal = value;
             } else if (key.equals("quorum.cnxn.threads.size")) {
                 quorumCnxnThreadsSize = Integer.parseInt(value);
-            } else if (key.equals("tcpKeepAlive")) {
-                tcpKeepAlive = Boolean.parseBoolean(value);
             } else {
                 System.setProperty("zookeeper." + key, value);
             }
@@ -480,9 +477,5 @@ public class QuorumPeerConfig {
 
     public Boolean getQuorumListenOnAllIPs() {
         return quorumListenOnAllIPs;
-    }
-
-    public boolean isTcpKeepAlive() {
-        return tcpKeepAlive;
     }
 }

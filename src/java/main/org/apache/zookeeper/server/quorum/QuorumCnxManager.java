@@ -106,8 +106,8 @@ public class QuorumCnxManager {
      */
     final long mySid;
     final int socketTimeout;
-    final boolean tcpKeepAlive;
     final Map<Long, QuorumPeer.QuorumServer> view;
+    final boolean tcpKeepAlive = System.getProperty("zookeeper.tcpKeepAlive", "false").equals("true");
     final boolean listenOnAllIPs;
     private ThreadPoolExecutor connectionExecutor;
     private final Set<Long> inprogressConnections = Collections
@@ -168,11 +168,10 @@ public class QuorumCnxManager {
                             QuorumAuthServer authServer,
                             QuorumAuthLearner authLearner,
                             int socketTimeout,
-                            boolean tcpKeepAlive,
                             boolean listenOnAllIPs,
                             int quorumCnxnThreadsSize,
                             boolean quorumSaslAuthEnabled) {
-        this(mySid, view, authServer, authLearner, socketTimeout, tcpKeepAlive, listenOnAllIPs,
+        this(mySid, view, authServer, authLearner, socketTimeout, listenOnAllIPs,
                 quorumCnxnThreadsSize, quorumSaslAuthEnabled, new ConcurrentHashMap<Long, SendWorker>());
     }
 
@@ -182,7 +181,6 @@ public class QuorumCnxManager {
                             QuorumAuthServer authServer,
                             QuorumAuthLearner authLearner,
                             int socketTimeout,
-                            boolean tcpKeepAlive,
                             boolean listenOnAllIPs,
                             int quorumCnxnThreadsSize,
                             boolean quorumSaslAuthEnabled,
@@ -199,7 +197,6 @@ public class QuorumCnxManager {
 
         this.mySid = mySid;
         this.socketTimeout = socketTimeout;
-        this.tcpKeepAlive = tcpKeepAlive;
         this.view = view;
         this.listenOnAllIPs = listenOnAllIPs;
 
