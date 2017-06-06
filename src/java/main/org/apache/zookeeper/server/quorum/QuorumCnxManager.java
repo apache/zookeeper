@@ -107,7 +107,7 @@ public class QuorumCnxManager {
     final long mySid;
     final int socketTimeout;
     final Map<Long, QuorumPeer.QuorumServer> view;
-    final boolean tcpKeepAlive = System.getProperty("zookeeper.tcpKeepAlive", "false").equals("true");
+    final boolean tcpKeepAlive = Boolean.getBoolean("zookeeper.tcpKeepAlive");
     final boolean listenOnAllIPs;
     private ThreadPoolExecutor connectionExecutor;
     private final Set<Long> inprogressConnections = Collections
