@@ -1454,6 +1454,11 @@ server.3=zoo3:2888:3888</pre>
 <p>
 <strong>New in 3.4.11:</strong>
               Sets the keepAlive flag on the sockets used by quorum members to perform elections.
+	      This will allow for long running connections to remain up when there is network infrastructure 
+	      between quorum members that may otherwise terminate them. Some NATs and firewalls may terminate
+	      or lose state for long-running or idle connections. </p>
+	      Enabling this option relies on OS level settings to work properly, check your operating
+	      system's options regarding TCP keepalive for more information.
               Defaults to <strong>false</strong>.</p>
 </dd>
 
