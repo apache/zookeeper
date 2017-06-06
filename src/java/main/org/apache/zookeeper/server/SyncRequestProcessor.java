@@ -140,7 +140,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
                     if (zks.getZKDatabase().append(si)) {
                         logCount++;
                         if (logCount > (snapCount / 2 + randRoll)) {
-                            randRoll = r.nextInt(snapCount/2);
+                            setRandRoll(r.nextInt(snapCount/2));
                             // roll the log
                             zks.getZKDatabase().rollLog();
                             // take a snapshot

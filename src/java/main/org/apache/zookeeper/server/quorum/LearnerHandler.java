@@ -272,7 +272,7 @@ public class LearnerHandler extends ZooKeeperThread {
             type = "PROPOSAL";
             TxnHeader hdr = new TxnHeader();
             try {
-                txn = SerializeUtils.deserializeTxn(p.getData(), hdr);
+                SerializeUtils.deserializeTxn(p.getData(), hdr);
                 // mess = "transaction: " + txn.toString();
             } catch (IOException e) {
                 LOG.warn("Unexpected exception",e);
@@ -314,7 +314,7 @@ public class LearnerHandler extends ZooKeeperThread {
     public void run() {
         try {
             leader.addLearnerHandler(this);
-            tickOfNextAckDeadline = leader.self.tick
+            tickOfNextAckDeadline = leader.self.tick.get()
                     + leader.self.initLimit + leader.self.syncLimit;
 
             ia = BinaryInputArchive.getArchive(bufferedInput);
@@ -565,7 +565,7 @@ public class LearnerHandler extends ZooKeeperThread {
                 if (LOG.isTraceEnabled()) {
                     ZooTrace.logQuorumPacket(LOG, traceMask, 'i', qp);
                 }
-                tickOfNextAckDeadline = leader.self.tick + leader.self.syncLimit;
+                tickOfNextAckDeadline = leader.self.tick.get() + leader.self.syncLimit;
 
 
                 ByteBuffer bb;
@@ -710,6 +710,6 @@ public class LearnerHandler extends ZooKeeperThread {
 
     public boolean synced() {
         return isAlive()
-        && leader.self.tick <= tickOfNextAckDeadline;
+        && leader.self.tick.get() <= tickOfNextAckDeadline;
     }
 }

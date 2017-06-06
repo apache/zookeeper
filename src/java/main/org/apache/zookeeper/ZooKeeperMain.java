@@ -50,7 +50,7 @@ import java.util.regex.Pattern;
  */
 public class ZooKeeperMain {
     private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperMain.class);
-    protected static final Map<String,String> commandMap = new HashMap<String,String>( );
+    static final Map<String,String> commandMap = new HashMap<String,String>( );
 
     protected MyCommandOptions cl = new MyCommandOptions();
     protected HashMap<Integer,String> history = new HashMap<Integer,String>( );
@@ -90,8 +90,8 @@ public class ZooKeeperMain {
 
     static void usage() {
         System.err.println("ZooKeeper -server host:port cmd args");
-        for (String cmd : commandMap.keySet()) {
-            System.err.println("\t"+cmd+ " " + commandMap.get(cmd));
+        for (Map.Entry<String, String> entry : commandMap.entrySet()) {
+            System.err.println("\t" + entry.getKey() + " " + entry.getValue());
         }
     }
 

@@ -234,7 +234,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
     protected final static int isroCmd = ByteBuffer.wrap("isro".getBytes())
             .getInt();
 
-    protected final static Map<Integer, String> cmd2String = new HashMap<Integer, String>();
+    final static Map<Integer, String> cmd2String = new HashMap<Integer, String>();
 
     private static final String ZOOKEEPER_4LW_COMMANDS_WHITELIST = "zookeeper.4lw.commands.whitelist";
 

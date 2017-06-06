@@ -38,6 +38,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.security.sasl.SaslException;
 
@@ -137,19 +138,19 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         public QuorumServer(long id, String hostname,
                             Integer port, Integer electionPort,
                             LearnerType type) {
-	        this.id = id;
-	        this.hostname=hostname;
-	        if (port!=null){
+	    this.id = id;
+	    this.hostname=hostname;
+	    if (port!=null){
                 this.port=port;
-	        }
-	        if (electionPort!=null){
-                this.electionPort=electionPort;
-	        }
-	        if (type!=null){
-                this.type = type;
-	        }
-	        this.recreateSocketAddresses();
 	    }
+	    if (electionPort!=null){
+                this.electionPort=electionPort;
+	    }
+	    if (type!=null){
+                this.type = type;
+	    }
+	    this.recreateSocketAddresses();
+	}
 
         /**
          * Performs a DNS lookup of hostname and (re)creates the this.addr and
@@ -163,7 +164,23 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         public void recreateSocketAddresses() {
             InetAddress address = null;
             try {
-                address = InetAddress.getByName(this.hostname);
+                // the time, in milliseconds, before {@link InetAddress#isReachable} aborts
+                // in {@link #getReachableAddress}.
+                int ipReachableTimeout = 0;
+                String ipReachableValue = System.getProperty("zookeeper.ipReachableTimeout");
+                if (ipReachableValue != null) {
+                    try {
+                        ipReachableTimeout = Integer.parseInt(ipReachableValue);
+                    } catch (NumberFormatException e) {
+                        LOG.error("{} is not a valid number", ipReachableValue);
+                    }
+                }
+                // zookeeper.ipReachableTimeout is not defined
+                if (ipReachableTimeout <= 0) {
+                    address = InetAddress.getByName(this.hostname);
+                } else {
+                    address = getReachableAddress(this.hostname, ipReachableTimeout);
+                }
                 LOG.info("Resolved hostname: {} to address: {}", this.hostname, address);
                 this.addr = new InetSocketAddress(address, this.port);
                 if (this.electionPort > 0){
@@ -183,6 +200,33 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                                                                            this.electionPort);
                 }
             }
+        }
+
+        /**
+         * Resolve the hostname to IP addresses, and find one reachable address.
+         *
+         * @param hostname the name of the host
+         * @param timeout the time, in milliseconds, before {@link InetAddress#isReachable}
+         *                aborts
+         * @return a reachable IP address. If no such IP address can be found,
+         *         just return the first IP address of the hostname.
+         *
+         * @exception UnknownHostException
+         */
+        public InetAddress getReachableAddress(String hostname, int timeout) 
+                throws UnknownHostException {
+            InetAddress[] addresses = InetAddress.getAllByName(hostname);
+            for (InetAddress a : addresses) {
+                try {
+                    if (a.isReachable(timeout)) {
+                        return a;
+                    } 
+                } catch (IOException e) {
+                    LOG.warn("IP address {} is unreachable", a);
+                }
+            }
+            // All the IP addresses are unreachable, just return the first one.
+            return addresses[0];
         }
 
         public InetSocketAddress addr;
@@ -347,7 +391,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     /**
      * The current tick
      */
-    protected volatile int tick;
+    protected AtomicInteger tick = new AtomicInteger();
 
     /**
      * Whether or not to listen on all IPs for the two quorum ports
@@ -1165,7 +1209,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * Get the current tick
      */
     public int getTick() {
-        return tick;
+        return tick.get();
     }
     
     /**

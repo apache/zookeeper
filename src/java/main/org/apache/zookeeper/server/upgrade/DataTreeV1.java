@@ -347,14 +347,6 @@ public class DataTreeV1 {
 
         public long zxid;
 
-        public int err;
-
-        public int type;
-
-        public String path;
-
-        public Stat stat;
-
         /**
          * Equality is defined as the clientId and the cxid being the same. This
          * allows us to use hash tables to track completion of transactions.
@@ -394,8 +386,6 @@ public class DataTreeV1 {
             rc.clientId = header.getClientId();
             rc.cxid = header.getCxid();
             rc.zxid = header.getZxid();
-            rc.type = header.getType();
-            rc.err = 0;
             if (rc.zxid > lastProcessedZxid) {
                 lastProcessedZxid = rc.zxid;
             }
@@ -406,7 +396,6 @@ public class DataTreeV1 {
                 createNode(createTxn.getPath(), createTxn.getData(), createTxn
                         .getAcl(), createTxn.getEphemeral() ? header
                         .getClientId() : 0, header.getZxid(), header.getTime());
-                rc.path = createTxn.getPath();
                 break;
             case OpCode.delete:
                 DeleteTxn deleteTxn = (DeleteTxn) txn;
@@ -416,22 +405,16 @@ public class DataTreeV1 {
             case OpCode.setData:
                 SetDataTxn setDataTxn = (SetDataTxn) txn;
                 debug = "Set data for  transaction for " + setDataTxn.getPath();
-                rc.stat = setData(setDataTxn.getPath(), setDataTxn.getData(),
-                        setDataTxn.getVersion(), header.getZxid(), header
-                                .getTime());
                 break;
             case OpCode.setACL:
                 SetACLTxn setACLTxn = (SetACLTxn) txn;
                 debug = "Set ACL for  transaction for " + setACLTxn.getPath();
-                rc.stat = setACL(setACLTxn.getPath(), setACLTxn.getAcl(),
-                        setACLTxn.getVersion());
                 break;
             case OpCode.closeSession:
                 killSession(header.getClientId());
                 break;
             case OpCode.error:
                 ErrorTxn errTxn = (ErrorTxn) txn;
-                rc.err = errTxn.getErr();
                 break;
             }
         } catch (KeeperException e) {
