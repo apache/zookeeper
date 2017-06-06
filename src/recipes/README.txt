@@ -18,7 +18,7 @@ Zookeeper is used (and can be used) for more than what we have listed in the doc
 
 7) To run the c tests in all the recipes, 
 - make sure the main zookeeper c libraries in
-{top}/src/c/ are compiled. Run autoreconf -if;./configure; make. The libaries
+{top}/src/c/ are compiled. Run autoreconf -if;./configure; make. The libraries
 will be installed in {top}/src/c/.libs. 
 - run autoreconf if;./configure;make run-check 
   in src/recipes/$recipename/src/c

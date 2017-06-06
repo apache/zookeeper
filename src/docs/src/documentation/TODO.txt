@@ -52,7 +52,7 @@ zookeeperAdmin.xml:445:               When the election algorithm is
 		
 zookeeperAdmin.xml:481:                The default to this option is yes, which
                 means that a leader will accept client connections.
-                <remark>[tbd: how do you specifiy which server is the
+                <remark>[tbd: how do you specify which server is the
                 leader?]</remark>
 		
 zookeeperAdmin.xml:495		When the server
@@ -92,7 +92,7 @@ zookeeperAdmin.xml:755:            Also,
 	    
 zookeeperAdmin.xml:812:     For best results, take note of the following list of good
       Zookeeper practices. <remark>[tbd: I just threw this section in. Do we
-      have list that is is different from the "things to avoid"? If not, I can
+      have list that is different from the "things to avoid"? If not, I can
       easily remove this section.]</remark>
       
 

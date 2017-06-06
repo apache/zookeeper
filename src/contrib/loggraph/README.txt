@@ -7,7 +7,7 @@ LogGraph is an application for viewing and filtering zookeeper logs. It can hand
 
 Run "ant jar" in src/contrib/loggraph/. This will download all dependencies and compile all the loggraph code.
 
-Once compilation has finished, you can run it the the loggraph.sh script in src/contrib/loggraph/bin. This will start and embedded web server on your machine. 
+Once compilation has finished, you can run it the loggraph.sh script in src/contrib/loggraph/bin. This will start and embedded web server on your machine.
 Navigate to http://localhost:8182/graph/main.html
 
 3 - Usage
@@ -41,7 +41,7 @@ To filter by time simply move the slider to the desired start time. The time win
 Content filtering uses a adhoc filtering language, using prefix notation. The language looks somewhat similar to lisp. A statement in the language takes the form (op arg arg ....). A statement resolves to a boolean value. Statements can be nested. 
 
 4.1 - Filter arguments
-An argument can be a number, a string or a symbol. A number is any argument which starts with -, + or 0 to 9. If the number starts with 0x it is interpretted as hexidecimal. Otherwise it is interpretted as decimal. If the argument begins with a double-quote, (") it is interpretted as a string. Anything else is interpretted as a symbol.
+An argument can be a number, a string or a symbol. A number is any argument which starts with -, + or 0 to 9. If the number starts with 0x it is interpretted as hexadecimal. Otherwise it is interpretted as decimal. If the argument begins with a double-quote, (") it is interpretted as a string. Anything else is interpretted as a symbol.
 
 4.2 - Filter symbols
 The possible filter symbols are: 

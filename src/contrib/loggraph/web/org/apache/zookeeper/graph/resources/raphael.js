@@ -3018,9 +3018,9 @@ Raphael = (function () {
                         };
                         break;
                     case "path":
-                        var pathes = path2curve(from[attr], to[attr]);
-                        from[attr] = pathes[0];
-                        var toPath = pathes[1];
+                        var paths = path2curve(from[attr], to[attr]);
+                        from[attr] = paths[0];
+                        var toPath = paths[1];
                         diff[attr] = [];
                         for (var i = 0, ii = from[attr][length]; i < ii; i++) {
                             diff[attr][i] = [0];

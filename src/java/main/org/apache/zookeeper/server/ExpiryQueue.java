@@ -80,7 +80,7 @@ public class ExpiryQueue<E> {
      * Adds or updates expiration time for element in queue, rounding the
      * timeout to the expiry interval bucketed used by this queue.
      * @param elem     element to add/update
-     * @param timeout  timout in milliseconds
+     * @param timeout  timeout in milliseconds
      * @return         time at which the element is now set to expire if
      *                 changed, or null if unchanged
      */

@@ -40,8 +40,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Utility for quorum testing. Setups 2n+1 peers and allows to start/stop all
- * peers, particular peer, n peers etc.
+ * Utility for quorum testing. Setups 2n+1 peers and allows one to
+ * start/stop all peers, particular peer, n peers etc.
  */
 public class QuorumUtil {
 

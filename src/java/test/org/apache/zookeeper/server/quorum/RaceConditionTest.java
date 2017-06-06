@@ -70,7 +70,7 @@ public class RaceConditionTest extends QuorumPeerTestBase {
          * <pre>
          * Verify that there is no deadlock in following ways:
          * 1) If leader is in LOOKING or FOLLOWING, we are sure there is no deadlock.
-         * 2) If leader in in LEADING state then we have to check that this LEADING state is
+         * 2) If leader is in LEADING state then we have to check that this LEADING state is
          * after the leader election, not the old LEADING state.
          * </pre>
          */

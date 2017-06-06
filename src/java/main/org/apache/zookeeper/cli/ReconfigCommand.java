@@ -52,7 +52,7 @@ public class ReconfigCommand extends CliCommand {
     private String members;
 
     /* version - version of config from which we want to reconfigure - if current config is different
-     * reconfiguration will fail. Should be ommitted from the CLI to disable this option.
+     * reconfiguration will fail. Should be omitted from the CLI to disable this option.
      */
     long version = -1;
     private CommandLine cl;

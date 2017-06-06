@@ -543,7 +543,7 @@ ZOOAPI zhandle_t *zookeeper_init2(const char *host, watcher_fn fn,
  * \return ZOK on success or one of the following errcodes on failure:
  * ZBADARGUMENTS - invalid input parameters
  * ZINVALIDSTATE - zhandle state is either ZOO_SESSION_EXPIRED_STATE or ZOO_AUTH_FAILED_STATE
- * ZSYSTEMERROR -- a system (OS) error occured; it's worth checking errno to get details
+ * ZSYSTEMERROR -- a system (OS) error occurred; it's worth checking errno to get details
  */
 ZOOAPI int zoo_set_servers(zhandle_t *zh, const char *hosts);
 
@@ -1531,7 +1531,7 @@ typedef enum {
  * or ZOO_AUTH_FAILED_STATE
  * ZBADARGUMENTS - invalid input parameters
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
- * ZSYSTEMERROR - a system error occured
+ * ZSYSTEMERROR - a system error occurred
  */
 ZOOAPI int zoo_aremove_watchers(zhandle_t *zh, const char *path,
         ZooWatcherType wtype, watcher_fn watcher, void *watcherCtx, int local,
@@ -2054,7 +2054,7 @@ ZOOAPI int zoo_multi(zhandle_t *zh, int count, const zoo_op_t *ops, zoo_op_resul
  * or ZOO_AUTH_FAILED_STATE
  * ZBADARGUMENTS - invalid input parameters
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
- * ZSYSTEMERROR - a system error occured
+ * ZSYSTEMERROR - a system error occurred
  */
 ZOOAPI int zoo_remove_watchers(zhandle_t *zh, const char *path,
         ZooWatcherType wtype, watcher_fn watcher, void *watcherCtx, int local);

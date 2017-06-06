@@ -38,7 +38,7 @@ class AtomicInt{
 public:
     explicit AtomicInt(int32_t init=0):v_(init){}
     AtomicInt(const AtomicInt& other):v_(other){}
-    // assigment
+    // assignment
     AtomicInt& operator=(const AtomicInt& lhs){
         atomic_fetch_store(&v_,lhs);
         return *this;

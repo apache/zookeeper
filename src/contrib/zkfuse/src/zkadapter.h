@@ -160,7 +160,7 @@ class ZooKeeperConfig
         const int m_leaseTimeout;
         
         /**
-         * True if this adapater should attempt to autoreconnect in case 
+         * True if this adapter should attempt to autoreconnect in case
          * the current session has been dropped.
          */
         const bool m_autoReconnect;
@@ -616,7 +616,7 @@ class ZooKeeperAdapter
 
         /**
          * Returns the remaining connect timeout. The timeout resets
-         * to {@link #m_connectTimeout} on a successfull connection to the ZK.
+         * to {@link #m_connectTimeout} on a successful connection to the ZK.
          * 
          * @return the remaining connect timeout, in milliseconds
          */

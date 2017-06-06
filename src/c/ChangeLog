@@ -7,7 +7,7 @@ Release 2.1.0
 2008-04-30 Andrew Kornev <akornev@users.sourceforge.net>
 
     * added the client latency diagnostics; the client prints a warning when the
-      reponse latency exceeds 20ms
+      response latency exceeds 20ms
 
     * modified logging format to report the znode path for which the zookeeper 
       operation is called

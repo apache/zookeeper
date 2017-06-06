@@ -68,7 +68,7 @@ char **collect_keys(zk_hashtable *ht, int *count);
 /**
  * check if the completion has a watcher object associated
  * with it. If it does, move the watcher object to the map of
- * active watchers (only if the checker allows to do so)
+ * active watchers (only if the checker allows one to do so)
  */
     void activateWatcher(zhandle_t *zh, watcher_registration_t* reg, int rc);
     void deactivateWatcher(zhandle_t *zh, watcher_deregistration_t *dereg, int rc);

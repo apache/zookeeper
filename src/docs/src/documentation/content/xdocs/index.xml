@@ -41,7 +41,7 @@
     </p>
     <ul>
 
-      <li><strong>ZooKeeper Overview</strong><p>Technical Overview Documents for Client Developers, Adminstrators, and Contributors</p>
+      <li><strong>ZooKeeper Overview</strong><p>Technical Overview Documents for Client Developers, Administrators, and Contributors</p>
       <ul><li><a href="zookeeperOver.html">Overview</a> - a bird's eye view of ZooKeeper, including design concepts and architecture</li>
       <li><a href="zookeeperStarted.html">Getting Started</a> - a tutorial-style guide for developers to install, run, and program to ZooKeeper</li>
       <li><a href="ext:relnotes">Release Notes</a> - new developer and user facing features, improvements, and incompatibilities</li>
@@ -52,7 +52,7 @@
       <ul>
             <li><a href="ext:api/index">API Docs</a> - the technical reference to ZooKeeper Client APIs</li>
       <li><a href="zookeeperProgrammers.html">Programmer's Guide</a> - a client application developer's guide to ZooKeeper</li>
-      <li><a href="javaExample.html">ZooKeeper Java Example</a> - a simple Zookeeper client appplication, written in Java</li>
+      <li><a href="javaExample.html">ZooKeeper Java Example</a> - a simple Zookeeper client application, written in Java</li>
       <li><a href="zookeeperTutorial.html">Barrier and Queue Tutorial</a> - sample implementations of barriers and queues</li>  
       <li><a href="recipes.html">ZooKeeper Recipes</a> - higher level solutions to common problems in distributed applications</li>
       </ul>

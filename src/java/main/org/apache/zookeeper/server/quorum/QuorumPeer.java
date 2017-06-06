@@ -893,7 +893,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             throws IOException {
         QuorumServer quorumServer = quorumPeers.get(myid);
         if (null == quorumServer) {
-            throw new IOException("No QuorumServer correspoding to myid " + myid);
+            throw new IOException("No QuorumServer corresponding to myid " + myid);
         }
         if (null == quorumServer.clientAddr) {
             return new InetSocketAddress(clientPort);
@@ -1075,7 +1075,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                             LOG.warn("Unexpected exception", e);
                             setPeerState(ServerState.LOOKING);
                         } finally {
-                            // If the thread is in the the grace period, interrupt
+                            // If the thread is in the grace period, interrupt
                             // to come out of waiting.
                             roZkMgr.interrupt();
                             roZk.shutdown();

@@ -153,7 +153,7 @@ public class WatchLeakTest {
             // OK, now the follower knows that the session is valid or invalid, let's try
             // to send the watches
             nioCnxn.doIO(sk);
-            // wait for the the request processor to do his job
+            // wait for the request processor to do his job
             Thread.sleep(1000L);
             LOG.info("Watches processed");
             // If session has not been validated, there must be NO watches

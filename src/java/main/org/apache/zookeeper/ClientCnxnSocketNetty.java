@@ -120,7 +120,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         connectFuture.addListener(new ChannelFutureListener() {
             @Override
             public void operationComplete(ChannelFuture channelFuture) throws Exception {
-                // this lock guarantees that channel won't be assgined after cleanup().
+                // this lock guarantees that channel won't be assigned after cleanup().
                 connectLock.lock();
                 try {
                     if (!channelFuture.isSuccess() || connectFuture == null) {

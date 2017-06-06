@@ -229,7 +229,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     /**
-     * Default constructor, relies on the config for its agrument values
+     * Default constructor, relies on the config for its argument values
      *
      * @throws IOException
      */
@@ -854,7 +854,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     /**
      * return the outstanding requests
-     * in the queue, which havent been
+     * in the queue, which haven't been
      * processed yet
      */
     public long getOutstandingRequests() {

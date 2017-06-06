@@ -301,7 +301,7 @@ public class QuorumPeerConfig {
         }
 
         // Reset to MIN_SNAP_RETAIN_COUNT if invalid (less than 3)
-        // PurgeTxnLog.purge(File, File, int) will not allow to purge less
+        // PurgeTxnLog.purge(File, File, int) will not allow purging less
         // than 3.
         if (snapRetainCount < MIN_SNAP_RETAIN_COUNT) {
             LOG.warn("Invalid autopurge.snapRetainCount: " + snapRetainCount

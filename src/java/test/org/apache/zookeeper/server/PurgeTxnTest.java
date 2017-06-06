@@ -504,7 +504,7 @@ public class PurgeTxnTest extends ZKTestCase {
          * Verify that the last znode that was created above exists.  This znode's creation was
          * captured by the transaction log which was created before any of the above
          * SNAP_RETAIN_COUNT snapshots were created, but it's not captured in any of these
-         * snapshots.  So for it it exist, the (only) existing log file should not have been purged.
+         * snapshots.  So for it to exist, the (only) existing log file should not have been purged.
          */
         final String lastZnode = "/snap-" + (unique - 1);
         final Stat stat = zk.exists(lastZnode, false);

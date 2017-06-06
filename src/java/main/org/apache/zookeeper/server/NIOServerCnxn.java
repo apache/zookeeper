@@ -132,7 +132,7 @@ public class NIOServerCnxn extends ServerCnxn {
     void sendBufferSync(ByteBuffer bb) {
        try {
            /* configure socket to be blocking
-            * so that we dont have to do write in
+            * so that we don't have to do write in
             * a tight while loop
             */
            if (bb != ServerCnxnFactory.closeConn) {

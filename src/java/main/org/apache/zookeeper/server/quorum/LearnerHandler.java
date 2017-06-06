@@ -749,7 +749,7 @@ public class LearnerHandler extends ZooKeeperThread {
             } else if (peerLastZxid < minCommittedLog && txnLogSyncEnabled) {
                 // Use txnlog and committedLog to sync
 
-                // Calculate sizeLimit that we allow to retrieve txnlog from disk
+                // Calculate sizeLimit that we allow one to retrieve txnlog from disk
                 long sizeLimit = db.calculateTxnLogSizeLimit();
                 // This method can return empty iterator if the requested zxid
                 // is older than on-disk txnlog

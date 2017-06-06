@@ -244,7 +244,7 @@ public class LoadFromLogTest extends ZKTestCase {
     }
     /*
      * Does create/delete depending on the type and verifies
-     * if cversion before the operation is 1 less than cversion afer.
+     * if cversion before the operation is 1 less than cversion after.
      */
     private void doOp(FileTxnSnapLog logFile, int type, String path,
             DataTree dt, DataNode parent, int cversion) throws Exception {

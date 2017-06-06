@@ -1348,7 +1348,7 @@
       <![CDATA[the stat string should be of the form count=int,bytes=long
  if stats is called with null the count and bytes are initialized
  to -1.
- @param stats the stat string to be intialized with]]>
+ @param stats the stat string to be initialized with]]>
       </doc>
     </constructor>
     <method name="getCount" return="int"
@@ -1389,7 +1389,7 @@
       deprecated="not deprecated">
       <param name="bytes" type="long"/>
       <doc>
-      <![CDATA[set teh bytes for this stat tracker.
+      <![CDATA[set the bytes for this stat tracker.
 
  @param bytes
             the bytes to set with]]>

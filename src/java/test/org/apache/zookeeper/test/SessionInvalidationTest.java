@@ -42,7 +42,7 @@ public class SessionInvalidationTest extends ClientBase {
      * 
      * We're using our own marshalling here in order to force an operation
      * after the session is closed (ZooKeeper.class will not allow this). Also
-     * by filling the pipe with operations it increases the likelyhood that
+     * by filling the pipe with operations it increases the likelihood that
      * the server will process the create before FinalRequestProcessor
      * removes the session from the tracker.
      */

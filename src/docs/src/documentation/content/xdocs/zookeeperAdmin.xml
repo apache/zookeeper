@@ -37,7 +37,7 @@
 
     <abstract>
       <para>This document contains information about deploying, administering
-      and mantaining ZooKeeper. It also discusses best practices and common
+      and maintaining ZooKeeper. It also discusses best practices and common
       problems.</para>
     </abstract>
   </articleinfo>
@@ -524,7 +524,7 @@ server.3=zoo3:2888:3888</programlisting>
           made to the znodes these changes are appended to a
           transaction log, occasionally, when a log grows large, a
           snapshot of the current state of all znodes will be written
-          to the filesystem. This snapshot supercedes all previous
+          to the filesystem. This snapshot supersedes all previous
           logs.
         </para>
 
@@ -773,7 +773,7 @@ server.3=zoo3:2888:3888</programlisting>
 
               <note>
                 <para>Having a dedicated log device has a large impact on
-                throughput and stable latencies. It is highly recommened to
+                throughput and stable latencies. It is highly recommended to
                 dedicate a log device and set <emphasis
                 role="bold">dataLogDir</emphasis> to point to a directory on
                 that device, and then make sure to point <emphasis

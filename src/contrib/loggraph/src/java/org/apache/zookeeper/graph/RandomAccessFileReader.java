@@ -94,7 +94,7 @@ public class RandomAccessFileReader extends Reader implements DataInput {
        copy what we can from buffer. if it's not enough, fill buffer again and copy again
     */
     synchronized public int read(char[] cbuf, int off, int len) throws IOException {
-	// This could be faster, but probably wont be used
+	// This could be faster, but probably won't be used
 	byte[] b = new byte[2];
 	int bytesread = 0;
 	while (len > 0) {

@@ -85,7 +85,7 @@ public interface TxnLog {
 
     /**
      *
-     * @return transaction log's elapsed sync time in miliseconds
+     * @return transaction log's elapsed sync time in milliseconds
      */
     long getTxnLogSyncElapsedTime();
    

@@ -121,7 +121,7 @@ int handle_error(zhandle_t* zh, SOCKET sock, char* message)
        return -1;
 }
 
-//--create socket pair for interupting selects.
+//--create socket pair for interrupting selects.
 int create_socket_pair(zhandle_t* zh, SOCKET fds[2]) 
 { 
     struct sockaddr_in inaddr; 

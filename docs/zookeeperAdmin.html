@@ -958,7 +958,7 @@ server.3=zoo3:2888:3888</pre>
           made to the znodes these changes are appended to a
           transaction log, occasionally, when a log grows large, a
           snapshot of the current state of all znodes will be written
-          to the filesystem. This snapshot supercedes all previous
+          to the filesystem. This snapshot supersedes all previous
           logs.
         </p>
 <p>A ZooKeeper server <strong>will not remove
@@ -1173,7 +1173,7 @@ server.3=zoo3:2888:3888</pre>
 <div class="content">
                 
 <p>Having a dedicated log device has a large impact on
-                throughput and stable latencies. It is highly recommened to
+                throughput and stable latencies. It is highly recommended to
                 dedicate a log device and set <strong>dataLogDir</strong> to point to a directory on
                 that device, and then make sure to point <strong>dataDir</strong> to a directory
                 <em>not</em> residing on that device.</p>

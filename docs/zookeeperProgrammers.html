@@ -524,7 +524,7 @@ document.write("Last Published: " + document.lastModified);
       
 </div>
 </div>
-<p>Znodes are the main enitity that a programmer access. They have
+<p>Znodes are the main entity that a programmer access. They have
       several characteristics that are worth mentioning here.</p>
 <a name="sc_zkDataMode_watches"></a>
 <h4>Watches</h4>
@@ -1940,7 +1940,7 @@ public abstract class ServerAuthenticationProvider implements AuthenticationProv
               to read /a, client B may read the old value of 0, depending on
               which server it is connected to. If it
               is important that Client A and Client B read the same value,
-              Client B should should call the <strong>sync()</strong> method from the ZooKeeper API
+              Client B should call the <strong>sync()</strong> method from the ZooKeeper API
               method before it performs its read.</p>
 <p>So, ZooKeeper by itself doesn't guarantee that changes occur 
               synchronously across all servers, but ZooKeeper
@@ -1971,7 +1971,7 @@ public abstract class ServerAuthenticationProvider implements AuthenticationProv
       generated classes that are used simply as containers.</p>
 <p>The main class used by a ZooKeeper Java client is the <strong>ZooKeeper</strong> class. Its two constructors differ only
       by an optional session id and password. ZooKeeper supports session
-      recovery accross instances of a process. A Java program may save its
+      recovery across instances of a process. A Java program may save its
       session id and password to stable storage, restart, and recover the
       session that was used by the earlier instance of the program.</p>
 <p>When a ZooKeeper object is created, two threads are created as
@@ -2315,7 +2315,7 @@ public abstract class ServerAuthenticationProvider implements AuthenticationProv
             
 <p>If you are building a multithreaded client, compile with
             -DTHREADED compiler flag to enable the multi-threaded version of
-            the library, and then link against against the
+            the library, and then link against the
             <em>zookeeper_mt</em> library. If you are building a
             single-threaded client, do not compile with -DTHREADED, and be
             sure to link against the<em> zookeeper_st

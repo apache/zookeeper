@@ -67,7 +67,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         final File tmpDir;
 
         public static final int UNSET_STATIC_CLIENTPORT = -1;
-        // standalone mode doens't need myid
+        // standalone mode doesn't need myid
         public static final int UNSET_MYID = -1;
 
         volatile TestQPMain main;

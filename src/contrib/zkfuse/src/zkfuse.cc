@@ -246,7 +246,7 @@ class ZkFuseCommon
         return _regMetadataName;
     }
     /**
-      Get number of not-in-use ZkFuseFile instances to to cache.
+      Get number of not-in-use ZkFuseFile instances to cache.
       \see _cacheSize
      */
     unsigned getCacheSize() const
@@ -707,7 +707,7 @@ class ZkFuseHandleManager : boost::noncopyable
   ZkFuseHandleManagerFactory - factory for ZkFuseHandleManager.
   
   This is the only way to create a ZkFuseHandleManager instance. 
-  to make sure that _thisWeakPtr of the instance is intialized 
+  to make sure that _thisWeakPtr of the instance is initialized
   after the instance is created.
  */
 class ZkFuseHandleManagerFactory
@@ -2248,7 +2248,7 @@ class ZkFuseFile : boost::noncopyable
                     }
                     else {
                         /* Children information is fresh since 
-                         * it is initialized and and have been 
+                         * it is initialized and have been
                          * updated by listener.
                          */
                     }

@@ -636,7 +636,7 @@ public class Leader {
             cnxAcceptor.halt();
         }
 
-        // NIO should not accept conenctions
+        // NIO should not accept connections
         self.setZooKeeperServer(null);
         self.adminServer.setZooKeeperServer(null);
         try {
@@ -1312,7 +1312,7 @@ public class Leader {
             if (zxid != currentZxid) {
                 LOG.error("NEWLEADER ACK from sid: " + sid
                         + " is from a different epoch - current 0x"
-                        + Long.toHexString(currentZxid) + " receieved 0x"
+                        + Long.toHexString(currentZxid) + " received 0x"
                         + Long.toHexString(zxid));
                 return;
             }

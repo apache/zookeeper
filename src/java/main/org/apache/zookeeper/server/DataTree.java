@@ -96,7 +96,7 @@ public class DataTree {
     /** the zookeeper nodes that acts as the management and status node **/
     private static final String procZookeeper = Quotas.procZookeeper;
 
-    /** this will be the string thats stored as a child of root */
+    /** this will be the string that's stored as a child of root */
     private static final String procChildZookeeper = procZookeeper.substring(1);
 
     /**
@@ -105,7 +105,7 @@ public class DataTree {
      */
     private static final String quotaZookeeper = Quotas.quotaZookeeper;
 
-    /** this will be the string thats stored as a child of /zookeeper */
+    /** this will be the string that's stored as a child of /zookeeper */
     private static final String quotaChildZookeeper = quotaZookeeper
             .substring(procZookeeper.length() + 1);
 
@@ -115,7 +115,7 @@ public class DataTree {
      */
     private static final String configZookeeper = ZooDefs.CONFIG_NODE;
 
-    /** this will be the string thats stored as a child of /zookeeper */
+    /** this will be the string that's stored as a child of /zookeeper */
     private static final String configChildZookeeper = configZookeeper
             .substring(procZookeeper.length() + 1);
     

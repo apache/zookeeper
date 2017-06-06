@@ -70,7 +70,7 @@ hash(struct hashtable *h, void *k)
 static int
 hashtable_expand(struct hashtable *h)
 {
-    /* Double the size of the table to accomodate more entries */
+    /* Double the size of the table to accommodate more entries */
     struct entry **newtable;
     struct entry *e;
     struct entry **pE;

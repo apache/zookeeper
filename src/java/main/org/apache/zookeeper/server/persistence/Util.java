@@ -81,7 +81,7 @@ public class Util {
     /**
      * Creates a valid transaction log file name. 
      * 
-     * @param zxid used as a file name suffix (extention)
+     * @param zxid used as a file name suffix (extension)
      * @return file name
      */
     public static String makeLogName(long zxid) {
@@ -280,7 +280,7 @@ public class Util {
     
     
     /**
-     * Compare file file names of form "prefix.version". Sort order result
+     * Compare file names of form "prefix.version". Sort order result
      * returned in order of version.
      */
     private static class DataDirFileComparator

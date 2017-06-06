@@ -181,7 +181,7 @@
         which uses a ZooKeeper service.</para>
       </note>
 
-      <para>Znodes are the main enitity that a programmer access. They have
+      <para>Znodes are the main entity that a programmer access. They have
       several characteristics that are worth mentioning here.</para>
 
       <section id="sc_zkDataMode_watches">
@@ -1353,7 +1353,7 @@ public abstract class ServerAuthenticationProvider implements AuthenticationProv
               to read /a, client B may read the old value of 0, depending on
               which server it is connected to. If it
               is important that Client A and Client B read the same value,
-              Client B should should call the <emphasis
+              Client B should call the <emphasis
               role="bold">sync()</emphasis> method from the ZooKeeper API
               method before it performs its read.</para>
 
@@ -1390,7 +1390,7 @@ public abstract class ServerAuthenticationProvider implements AuthenticationProv
       <para>The main class used by a ZooKeeper Java client is the <emphasis
       role="bold">ZooKeeper</emphasis> class. Its two constructors differ only
       by an optional session id and password. ZooKeeper supports session
-      recovery accross instances of a process. A Java program may save its
+      recovery across instances of a process. A Java program may save its
       session id and password to stable storage, restart, and recover the
       session that was used by the earlier instance of the program.</para>
 
@@ -1676,7 +1676,7 @@ public abstract class ServerAuthenticationProvider implements AuthenticationProv
           <listitem>
             <para>If you are building a multithreaded client, compile with
             -DTHREADED compiler flag to enable the multi-threaded version of
-            the library, and then link against against the
+            the library, and then link against the
             <emphasis>zookeeper_mt</emphasis> library. If you are building a
             single-threaded client, do not compile with -DTHREADED, and be
             sure to link against the<emphasis> zookeeper_st

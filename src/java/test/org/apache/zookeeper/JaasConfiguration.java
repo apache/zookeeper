@@ -25,7 +25,7 @@ import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag;
 
 /**
- * This helper class allows to programmatically create a JAAS configuration.
+ * This helper class allows one to programmatically create a JAAS configuration.
  * Each section must have a name and a login module, and a set of key/values
  * to describe login options.
  *

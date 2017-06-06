@@ -343,7 +343,7 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
 
         // Wait until all updates return
         if(!sem.tryAcquire(ClientBase.CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)) {
-            LOG.warn("Did not aquire semaphore fast enough");
+            LOG.warn("Did not acquire semaphore fast enough");
         }
         mytestfooThread.join(ClientBase.CONNECTION_TIMEOUT);
         if (mytestfooThread.isAlive()) {
@@ -517,7 +517,7 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
 
         // Wait until all updates return
         if(!sem.tryAcquire(ClientBase.CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)) {
-            LOG.warn("Did not aquire semaphore fast enough");
+            LOG.warn("Did not acquire semaphore fast enough");
         }
         mytestfooThread.join(ClientBase.CONNECTION_TIMEOUT);
         if (mytestfooThread.isAlive()) {

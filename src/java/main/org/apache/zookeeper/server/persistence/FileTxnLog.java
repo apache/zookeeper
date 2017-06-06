@@ -153,7 +153,7 @@ public class FileTxnLog implements TxnLog {
     }
 
     /**
-     * creates a checksum alogrithm to be used
+     * creates a checksum algorithm to be used
      * @return the checksum used for this txnlog
      */
     protected Checksum makeChecksumAlgorithm(){
@@ -352,7 +352,7 @@ public class FileTxnLog implements TxnLog {
 
     /**
      *
-     * @return elapsed sync time of transaction log in miliseconds
+     * @return elapsed sync time of transaction log in milliseconds
      */
     public long getTxnLogSyncElapsedTime() {
         return syncElapsedMS;

@@ -29,7 +29,7 @@ WARNING: I have wrote these instructions while installing and configuring the pl
 
 WARNING: I'm going to make the assumption that you know how to work with Cacti and how to setup Data Input Methods for custom scripts. I'm also going to assume that you have already installed Cacti and everything works as expected.
 
-You can extend the Cacti's data gathering functionality through external scripts. Cacti comes with a number of scripts out of the box wich are localted in the scripts/ directory. 
+You can extend the Cacti's data gathering functionality through external scripts. Cacti comes with a number of scripts out of the box which are localted in the scripts/ directory.
 
 
 The check_zookeeper.py script can be used a  custom data input method for Cacti.

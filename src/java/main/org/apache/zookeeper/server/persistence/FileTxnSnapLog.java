@@ -334,7 +334,7 @@ public class FileTxnSnapLog {
     /**
      * save the datatree and the sessions into a snapshot
      * @param dataTree the datatree to be serialized onto disk
-     * @param sessionsWithTimeouts the sesssion timeouts to be
+     * @param sessionsWithTimeouts the session timeouts to be
      * serialized onto disk
      * @throws IOException
      */

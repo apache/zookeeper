@@ -255,7 +255,7 @@ namespace zktreeutil
         private:
 
             ZkTreeNodeSptr zkRootSptr_;     // ZK tree root node
-            bool loaded_;                        // Falg indicating whether ZK tree loaded into memory
+            bool loaded_;                        // Flag indicating whether ZK tree loaded into memory
     };
 }
 

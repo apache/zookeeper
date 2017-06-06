@@ -277,7 +277,7 @@
     processing nodes with the lowest number. The client does not need to issue
     another <emphasis role="bold">getChildren( )</emphasis> until it exhausts
     the list obtained from the first <emphasis role="bold">getChildren(
-    )</emphasis> call. If there are are no children in the queue node, the
+    )</emphasis> call. If there are no children in the queue node, the
     reader waits for a watch notification to check the queue again.</para>
 
     <note>

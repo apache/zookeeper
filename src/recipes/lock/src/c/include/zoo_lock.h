@@ -27,7 +27,7 @@ extern "C" {
 /**
  * \brief the call back function called on status change of lock
  * 
- * the call back funtion is called with a rc of 0 if lock is acquired and 
+ * the call back function is called with a rc of 0 if lock is acquired and
  * with an rc of 1 if the lock is released
  * \param rc the value to let us know if its locked or unlocked
  * \param cbdata the callback data that we passed when initializing 
@@ -82,7 +82,7 @@ ZOOAPI int zkr_lock_init(zkr_lock_mutex_t *mutex, zhandle_t* zh,
  * \param zh the zookeeper handle to use
  * \param path the path in zookeeper to use for locking
  * \param acl the acls to use in zookeeper.
- * \param completion the callback thats called when lock 
+ * \param completion the callback that's called when lock
  * is acquired and released.
  * \param cbdata the callback method is called with data
  * \return return 0 if successful.
@@ -124,7 +124,7 @@ ZOOAPI void zkr_lock_setcallback(zkr_lock_mutex_t *mutex,
 /**
  * \brief get the callback function for zookeeper mutex
  *
- * this method gets the callback funtion for zookeeper mutex
+ * this method gets the callback function for zookeeper mutex
  * \param mutex the zookeeper mutex
  * \return the lock completion function
  */

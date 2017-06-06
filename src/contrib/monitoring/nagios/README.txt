@@ -39,7 +39,7 @@ $ cp zookeeper.cfg /etc/nagios-plugins/config
 
 4. Create a virtual host in Nagios used for monitoring the cluster as a whole -OR-  Create a hostgroup named 'zookeeper-servers' and add all the zookeeper cluster nodes. 
 
-5. Define service checks like I have ilustrated bellow or just use the provided definitions.
+5. Define service checks like I have ilustrated below or just use the provided definitions.
 
 define service {
     use         generic-service

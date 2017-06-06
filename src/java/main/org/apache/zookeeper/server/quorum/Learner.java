@@ -220,7 +220,7 @@ public class Learner {
 
     /**
      * Overridable helper method to simply call sock.connect(). This can be
-     * overriden in tests to fake connection success/failure for connectToLeader. 
+     * overridden in tests to fake connection success/failure for connectToLeader.
      */
     protected void sockConnect(Socket sock, InetSocketAddress addr, int timeout) 
     throws IOException {

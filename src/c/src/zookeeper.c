@@ -577,7 +577,7 @@ static void setup_random()
 /**
  * get the errno from the return code
  * of get addrinfo. Errno is not set
- * with the call to getaddrinfo, so thats
+ * with the call to getaddrinfo, so that's
  * why we have to do this.
  */
 static int getaddrinfo_errno(int rc) {
@@ -1302,7 +1302,7 @@ static int get_next_server_in_reconfig(zhandle_t *zh)
 /**
  * Cycle through our server list to the correct 'next' server. The 'next' server
  * to connect to depends upon whether we're in a 'reconfig' mode or not. Reconfig
- * mode means we've upated the server list and are now trying to find a server
+ * mode means we've updated the server list and are now trying to find a server
  * to connect to. Once we get connected, we are no longer in the reconfig mode.
  * Similarly, if we try to connect to all the servers in the new configuration
  * and failed, reconfig mode is set to false.
@@ -3157,7 +3157,7 @@ int zookeeper_close(zhandle_t *zh)
          * completions from calling zookeeper_close before we have
          * completed the adaptor_finish call below. */
 
-    /* Signal any syncronous completions before joining the threads */
+    /* Signal any synchronous completions before joining the threads */
         enter_critical(zh);
         free_completions(zh,1,ZCLOSING);
         leave_critical(zh);

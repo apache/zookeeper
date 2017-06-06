@@ -227,8 +227,8 @@ public class TruncateTest extends ZKTestCase {
         ZooKeeper zk1 = ClientBase.createZKClient("127.0.0.1:" + port1, 15000);
         zk1.getData("/9", false, new Stat());
         try {
-            // /10 wont work because the session expiration
-            // will match the zxid for /10 and so we wont
+            // /10 won't work because the session expiration
+            // will match the zxid for /10 and so we won't
             // actually truncate the zxid for /10 creation
             // due to an artifact of switching the xid of the standalone
             // /11 is the last entry in the log for the xid

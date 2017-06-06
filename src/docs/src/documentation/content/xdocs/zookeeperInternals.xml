@@ -218,7 +218,7 @@ exact method of electing a leader has long as the following holds:
 </itemizedlist>
 
 <para>
-Of these two requirements only the first, the highest zxid amoung the followers 
+Of these two requirements only the first, the highest zxid among the followers
 needs to hold for correct operation. The second requirement, a quorum of followers, 
 just needs to hold with high probability. We are going to recheck the second requirement, 
 so if a failure happens during or after the leader election and quorum is lost, 
@@ -331,7 +331,7 @@ to worry about two different values being proposed for the same zxid; followers
 committed in order; there is only one active leader at a time since followers only 
 follow a single leader at a time; a new leader has seen all committed proposals 
 from the previous epoch since it has seen the highest zxid from a quorum of servers; 
-any uncommited proposals from a previous epoch seen by a new leader will be committed 
+any uncommitted proposals from a previous epoch seen by a new leader will be committed
 by that leader before it becomes active.</para></section>
 
 <section id="sc_comparisons"><title>Comparisons</title>

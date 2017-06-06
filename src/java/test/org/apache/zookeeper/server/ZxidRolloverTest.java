@@ -189,7 +189,7 @@ public class ZxidRolloverTest extends ZKTestCase {
         Assert.assertTrue("Waiting for server down", ClientBase.waitForServerDown(
                 "127.0.0.1:" + peer.clientPort, ClientBase.CONNECTION_TIMEOUT));
 
-        // if idx is the the leader then everyone will get disconnected,
+        // if idx is the leader then everyone will get disconnected,
         // otherwise if idx is a follower then just that client will get
         // disconnected
         if (idx == idxLeader) {

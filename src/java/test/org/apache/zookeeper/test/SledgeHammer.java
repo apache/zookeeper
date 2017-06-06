@@ -59,10 +59,10 @@ public class SledgeHammer extends Thread{
             for (int i = 0; i < count; i++) {
                 try {
                     System.out.print(i + "\r");
-                    List<String> childs =
+                    List<String> children =
                         zk.getChildren("/hammers", false);
-                    Collections.shuffle(childs);
-                    for (String s : childs) {
+                    Collections.shuffle(children);
+                    for (String s : children) {
                         if (s.startsWith("hammer-")) {
                             s = "/hammers/" + s;
                             zk.setData(s, tag, -1);

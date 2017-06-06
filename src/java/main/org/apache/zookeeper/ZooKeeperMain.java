@@ -102,7 +102,7 @@ public class ZooKeeperMain {
         new CreateCommand().addToMap(commandMapCli);
         new DeleteCommand().addToMap(commandMapCli);
         new DeleteAllCommand().addToMap(commandMapCli);
-        // Depricated: rmr
+        // Deprecated: rmr
         new DeleteAllCommand("rmr").addToMap(commandMapCli);
         new SetCommand().addToMap(commandMapCli);
         new GetCommand().addToMap(commandMapCli);

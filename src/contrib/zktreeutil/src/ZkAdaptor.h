@@ -156,7 +156,7 @@ namespace zktreeutil
             const int m_leaseTimeout;
 
             /**
-             * True if this adapater should attempt to autoreconnect in case 
+             * True if this adapter should attempt to autoreconnect in case
              * the current session has been dropped.
              */
             const bool m_autoReconnect;

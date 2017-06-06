@@ -536,7 +536,7 @@ public class ZKDatabase {
     /**
      * append to the underlying transaction log
      * @param si the request to append
-     * @return true if the append was succesfull and false if not
+     * @return true if the append was successful and false if not
      */
     public boolean append(Request si) throws IOException {
         return this.snapLog.append(si);

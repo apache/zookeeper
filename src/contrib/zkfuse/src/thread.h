@@ -41,7 +41,7 @@ class Thread {
 
     void Create(void* ctx, ThreadFunc func);
     void Join() {
-        //avoid SEGFAULT because of unitialized mThread
+        //avoid SEGFAULT because of uninitialized mThread
         //in case Create(...) was never called
         if (_func != NULL) {
             pthread_join(mThread, 0);

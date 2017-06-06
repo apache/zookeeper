@@ -500,7 +500,7 @@ public:
 
 
     /**
-       returns false if the vectors dont match
+       returns false if the vectors don't match
     **/
     bool compareAcl(struct ACL_vector acl1, struct ACL_vector acl2) {
         if (acl1.count != acl2.count) {
@@ -864,7 +864,7 @@ public:
     void testChroot() {
         // the c client async callbacks do
         // not callback with the path, so
-        // we dont need to test taht for now
+        // we don't need to test that for now
         // we should fix that though soon!
         watchctx_t ctx, ctx_ch;
         zhandle_t *zk, *zk_ch;

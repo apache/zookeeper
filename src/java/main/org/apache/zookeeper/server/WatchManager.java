@@ -94,7 +94,7 @@ class WatchManager {
         return triggerWatch(path, type, null);
     }
 
-    Set<Watcher> triggerWatch(String path, EventType type, Set<Watcher> supress) {
+    Set<Watcher> triggerWatch(String path, EventType type, Set<Watcher> suppress) {
         WatchedEvent e = new WatchedEvent(type,
                 KeeperState.SyncConnected, path);
         HashSet<Watcher> watchers;
@@ -116,7 +116,7 @@ class WatchManager {
             }
         }
         for (Watcher w : watchers) {
-            if (supress != null && supress.contains(w)) {
+            if (suppress != null && suppress.contains(w)) {
                 continue;
             }
             w.process(e);

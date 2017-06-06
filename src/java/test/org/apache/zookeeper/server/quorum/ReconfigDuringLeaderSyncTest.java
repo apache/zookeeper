@@ -122,7 +122,7 @@ public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
 
         /**
          * This server will delay the response to a NEWLEADER message, and run
-         * reconfig command so that message at this processed in bellow order
+         * reconfig command so that message at this processed in below order
          *
          * <pre>
          * NEWLEADER

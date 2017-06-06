@@ -56,7 +56,7 @@ public class ZooInspectorConnectionPropertiesDialog extends JDialog {
     /**
      * @param lastConnectionProps
      *            - the last connection properties used. if this is the first
-     *            conneciton since starting the applications this will be the
+     *            connection since starting the applications this will be the
      *            default settings
      * @param connectionPropertiesTemplateAndLabels
      *            - the connection properties and labels to show in this dialog
