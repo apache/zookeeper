@@ -1186,7 +1186,7 @@ server.3=zoo3:2888:3888</programlisting>
               <para>(Java system property: <emphasis
                       role="bold">zookeeper.tcpKeepAlive</emphasisi>)</para>
 
-              <para><emphasis role="bold">New in 3.4.11:</emphasis>
+              <para><emphasis role="bold">New in 3.5.4:</emphasis>
                 Setting this to true sets the TCP keepAlive flag on the
                 sockets used by quorum members to perform elections.
                 This will allow for connections between quorum members to
