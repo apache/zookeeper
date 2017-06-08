@@ -68,7 +68,7 @@ public class AtomicFileOutputStream extends FilterOutputStream {
         boolean triedToClose = false, success = false;
         try {
             flush();
-            ((FileOutputStream) out).getChannel().force(true);
+            ((FileOutputStream) out).getFD().sync();
 
             triedToClose = true;
             super.close();
