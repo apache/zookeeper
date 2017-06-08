@@ -1052,6 +1052,8 @@ public class ClientCnxn {
         private boolean saslLoginFailed = false;
 
         private void startConnect() throws IOException {
+            // initializing it for new connection
+            saslLoginFailed = false;
             if(!isFirstConnect){
                 try {
                     Thread.sleep(r.nextInt(1000));
