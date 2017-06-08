@@ -108,6 +108,7 @@ public class QuorumCnxManager {
     final long mySid;
     final int socketTimeout;
     final Map<Long, QuorumPeer.QuorumServer> view;
+    final boolean tcpKeepAlive = Boolean.getBoolean("zookeeper.tcpKeepAlive");
     final boolean listenOnAllIPs;
     private ThreadPoolExecutor connectionExecutor;
     private final Set<Long> inprogressConnections = Collections
@@ -646,6 +647,7 @@ public class QuorumCnxManager {
      */
     private void setSockOpts(Socket sock) throws SocketException {
         sock.setTcpNoDelay(true);
+        sock.setKeepAlive(tcpKeepAlive);
         sock.setSoTimeout(socketTimeout);
     }
 
