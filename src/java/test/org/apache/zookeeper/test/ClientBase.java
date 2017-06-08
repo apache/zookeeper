@@ -155,11 +155,19 @@ public abstract class ClientBase extends ZKTestCase {
         synchronized public void waitForSyncConnected(long timeout)
                 throws InterruptedException, TimeoutException
         {
+<<<<<<< HEAD
             long expire = System.currentTimeMillis() + timeout;
             long left = timeout;
             while(!syncConnected && left > 0) {
                 wait(left);
                 left = expire - System.currentTimeMillis();
+=======
+            long expire = Time.currentElapsedTime() + timeout;
+            long left = timeout;
+            while(!syncConnected && left > 0) {
+                wait(left);
+                left = expire - Time.currentElapsedTime();
+>>>>>>> ZOOKEEPER-2722: fix flaky testSessionEstablishment test.
             }
             if (!syncConnected) {
                 throw new TimeoutException("Failed to connect to read-write ZooKeeper server.");
