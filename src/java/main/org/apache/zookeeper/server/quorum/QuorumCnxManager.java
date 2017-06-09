@@ -134,6 +134,12 @@ public class QuorumCnxManager {
      */
     private AtomicInteger threadCnt = new AtomicInteger(0);
 
+    /*
+     * Socket options for TCP keepalive
+     */
+    private final boolean tcpKeepAlive = Boolean.getBoolean("zookeeper.tcpKeepAlive");
+
+
     static public class Message {
         Message(ByteBuffer buffer, long sid) {
             this.buffer = buffer;
@@ -560,6 +566,7 @@ public class QuorumCnxManager {
      */
     private void setSockOpts(Socket sock) throws SocketException {
         sock.setTcpNoDelay(true);
+        sock.setKeepAlive(tcpKeepAlive);
         sock.setSoTimeout(self.tickTime * self.syncLimit);
     }
 
