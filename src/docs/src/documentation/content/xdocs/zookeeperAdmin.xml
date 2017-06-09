@@ -1191,7 +1191,7 @@ server.3=zoo3:2888:3888</programlisting>
 
             <listitem>
               <para>(Java system property: <emphasis
-                      role="bold">zookeeper.tcpKeepAlive</emphasisi>)</para>
+                      role="bold">zookeeper.tcpKeepAlive</emphasis>)</para>
 
               <para><emphasis role="bold">New in 3.5.4:</emphasis>
                 Setting this to true sets the TCP keepAlive flag on the
