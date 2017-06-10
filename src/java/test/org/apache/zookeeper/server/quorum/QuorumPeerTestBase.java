@@ -65,6 +65,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         final File confFile;
         volatile TestQPMain main;
         final File dataDir;
+        CountDownLatch mainFailed;
         File baseDir;
         private final int myid;
         private final int clientPort;
@@ -131,6 +132,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             main = new TestQPMain();
             currentThread = new Thread(this);
             currentThread.start();
+            mainFailed = new CountDownLatch(1);
         }
 
         public void run() {
@@ -141,6 +143,8 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             } catch (Exception e) {
                 // test will still fail even though we just log/ignore
                 LOG.error("unexpected exception in run", e);
+                main.shutdown();
+                mainFailed.countDown();
             } finally {
                 currentThread = null;
             }
