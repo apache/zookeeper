@@ -215,7 +215,7 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
 
     static class MockTestQPMain extends TestQPMain {
         @Override
-        protected QuorumPeer createQuorumPeer() {
+        protected QuorumPeer getQuorumPeer() {
             return new CustomQuorumPeer();
         }
     }
