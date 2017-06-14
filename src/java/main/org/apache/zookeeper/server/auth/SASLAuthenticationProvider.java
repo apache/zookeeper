@@ -38,11 +38,6 @@ public class SASLAuthenticationProvider implements AuthenticationProvider {
     }
 
     public boolean matches(String id,String aclExpr) {
-        if (System.getProperty("zookeeper.superUser") != null) {
-            if (id.equals(System.getProperty("zookeeper.superUser")) || id.equals(aclExpr)) {
-              return true;
-            }
-        }
         if ((id.equals("super") || id.equals(aclExpr))) {
           return true;
         }
