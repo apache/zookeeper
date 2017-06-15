@@ -96,12 +96,6 @@ public class TestableZooKeeper extends ZooKeeperAdmin {
             return false;
         }
     }
-    
-    public boolean testableWaitForShutdown(int wait)
-        throws InterruptedException
-    {
-        return super.testableWaitForShutdown(wait);
-    }
 
     public SocketAddress testableLocalSocketAddress() {
         return super.testableLocalSocketAddress();
