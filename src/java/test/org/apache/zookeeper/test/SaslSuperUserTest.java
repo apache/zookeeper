@@ -109,10 +109,10 @@ public class SaslSuperUserTest extends ClientBase {
             zk.delete("/digest_read", -1);
             zk.delete("/sasl_read/sub", -1);
             zk.delete("/sasl_read", -1);
-            Thread.sleep(1000);
+            //If the test failes it will most likely fail with a NoAuth exception before it ever gets to this assertion
+            Assert.assertEquals(authFailed.get(), 0);
         } finally {
             zk.close();
         }
     }
-
 }
