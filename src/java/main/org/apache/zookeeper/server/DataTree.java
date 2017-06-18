@@ -118,7 +118,7 @@ public class DataTree {
     /** this will be the string thats stored as a child of /zookeeper */
     private static final String configChildZookeeper = configZookeeper
             .substring(procZookeeper.length() + 1);
-    
+
     /**
      * the path trie that keeps track fo the quota nodes in this datatree
      */
@@ -223,13 +223,6 @@ public class DataTree {
      */
     private final DataNode quotaDataNode = new DataNode(new byte[0], -1L, new StatPersisted());
 
-    /**
-     * create a /zookeeper/config node for maintaining the configuration (membership and quorum system) info for
-     * zookeeper
-     */
-    private DataNode configDataNode = new DataNode(new byte[0], -1L, new StatPersisted());
-
-    
     public DataTree() {
         /* Rather than fight it, let root have an alias */
         nodes.put("", root);
@@ -241,10 +234,14 @@ public class DataTree {
 
         procDataNode.addChild(quotaChildZookeeper);
         nodes.put(quotaZookeeper, quotaDataNode);
-        
+
         addConfigNode();
     }
 
+    /**
+     * create a /zookeeper/config node for maintaining the configuration (membership and quorum system) info for
+     * zookeeper
+     */
     public void addConfigNode() {
         DataNode zookeeperZnode = nodes.get(procZookeeper);
         if (zookeeperZnode != null) { // should always be the case
@@ -253,7 +250,7 @@ public class DataTree {
             assert false : "There's no /zookeeper znode - this should never happen.";
         }
 
-        nodes.put(configZookeeper, configDataNode);
+        nodes.put(configZookeeper, new DataNode(new byte[0], -1L, new StatPersisted()));
         try {
             // Reconfig node is access controlled by default (ZOOKEEPER-2014).
             setACL(configZookeeper, ZooDefs.Ids.READ_ACL_UNSAFE, -1);
@@ -406,8 +403,8 @@ public class DataTree {
      * @param zxid
      *            Transaction ID
      * @param time
-     * @throws NodeExistsException 
-     * @throws NoNodeException 
+     * @throws NodeExistsException
+     * @throws NoNodeException
      * @throws KeeperException
      */
     public void createNode(final String path, byte data[], List<ACL> acl,
@@ -415,7 +412,7 @@ public class DataTree {
     		throws NoNodeException, NodeExistsException {
     	createNode(path, data, acl, ephemeralOwner, parentCVersion, zxid, time, null);
     }
-    
+
     /**
      * Add a new node to the DataTree.
      * @param path
@@ -432,8 +429,8 @@ public class DataTree {
      * @param time
      * @param outputStat
      * 			  A Stat object to store Stat output results into.
-     * @throws NodeExistsException 
-     * @throws NoNodeException 
+     * @throws NodeExistsException
+     * @throws NoNodeException
      * @throws KeeperException
      */
     public void createNode(final String path, byte data[], List<ACL> acl,
@@ -1327,37 +1324,37 @@ public class DataTree {
             DataNode node = getNode(path);
             WatchedEvent e = null;
             if (node == null) {
-                watcher.process(new WatchedEvent(EventType.NodeDeleted, 
+                watcher.process(new WatchedEvent(EventType.NodeDeleted,
                             KeeperState.SyncConnected, path));
             } else if (node.stat.getMzxid() > relativeZxid) {
-                watcher.process(new WatchedEvent(EventType.NodeDataChanged, 
+                watcher.process(new WatchedEvent(EventType.NodeDataChanged,
                             KeeperState.SyncConnected, path));
             } else {
                 this.dataWatches.addWatch(path, watcher);
-            }    
-        }    
+            }
+        }
         for (String path : existWatches) {
             DataNode node = getNode(path);
             if (node != null) {
-                watcher.process(new WatchedEvent(EventType.NodeCreated, 
+                watcher.process(new WatchedEvent(EventType.NodeCreated,
                             KeeperState.SyncConnected, path));
             } else {
                 this.dataWatches.addWatch(path, watcher);
-            }    
-        }    
+            }
+        }
         for (String path : childWatches) {
             DataNode node = getNode(path);
             if (node == null) {
-                watcher.process(new WatchedEvent(EventType.NodeDeleted, 
+                watcher.process(new WatchedEvent(EventType.NodeDeleted,
                             KeeperState.SyncConnected, path));
             } else if (node.stat.getPzxid() > relativeZxid) {
-                watcher.process(new WatchedEvent(EventType.NodeChildrenChanged, 
+                watcher.process(new WatchedEvent(EventType.NodeChildrenChanged,
                             KeeperState.SyncConnected, path));
             } else {
                 this.childWatches.addWatch(path, watcher);
-            }    
-        }    
-    }    
+            }
+        }
+    }
 
      /**
       * This method sets the Cversion and Pzxid for the specified node to the
@@ -1435,5 +1432,10 @@ public class DataTree {
             break;
         }
         return removed;
+    }
+
+    // visible for testing
+    public ReferenceCountedACLCache getReferenceCountedAclCache() {
+        return aclCache;
     }
 }
