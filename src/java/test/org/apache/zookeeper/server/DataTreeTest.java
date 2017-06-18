@@ -25,6 +25,8 @@ import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.junit.After;
 import org.junit.Assert;
@@ -46,6 +48,8 @@ import java.lang.reflect.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.List;
+import java.util.ArrayList;
 
 public class DataTreeTest extends ZKTestCase {
     protected static final Logger LOG = LoggerFactory.getLogger(DataTreeTest.class);
@@ -113,7 +117,7 @@ public class DataTreeTest extends ZKTestCase {
                     dataTree.getNode("/").stat.getCversion() + 1, 1, 1);
         }
     }
-    
+
     @Test(timeout = 60000)
     public void testRootWatchTriggered() throws Exception {
         class MyWatcher implements Watcher{
@@ -177,7 +181,7 @@ public class DataTreeTest extends ZKTestCase {
         PathTrie pTrie = (PathTrie)pfield.get(dserTree);
 
         //Check that the node path is removed from pTrie
-        Assert.assertEquals("/bug is still in pTrie", "", pTrie.findMaxPrefix("/bug"));       
+        Assert.assertEquals("/bug is still in pTrie", "", pTrie.findMaxPrefix("/bug"));
     }
 
     /*
@@ -234,5 +238,47 @@ public class DataTreeTest extends ZKTestCase {
 
         //Let's make sure that we hit the code that ran the real assertion above
         Assert.assertTrue("Didn't find the expected node", ranTestCase.get());
+    }
+
+    @Test(timeout = 60000)
+    public void testReconfigACLClearOnDeserialize() throws Exception {
+
+        DataTree tree = new DataTree();
+        // simulate the upgrading scenario, where the reconfig znode
+        // doesn't exist and the acl cache is empty
+        tree.deleteNode(ZooDefs.CONFIG_NODE, 1);
+        tree.getReferenceCountedAclCache().aclIndex = 0;
+
+        Assert.assertEquals(
+            "expected to have 1 acl in acl cache map", 0, tree.aclCacheSize());
+
+        // serialize the data with one znode with acl
+        tree.createNode(
+            "/bug", new byte[20], ZooDefs.Ids.OPEN_ACL_UNSAFE, -1, 1, 1, 1);
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        BinaryOutputArchive oa = BinaryOutputArchive.getArchive(baos);
+        tree.serialize(oa, "test");
+        baos.flush();
+
+        ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+        BinaryInputArchive ia = BinaryInputArchive.getArchive(bais);
+        tree.deserialize(ia, "test");
+
+        Assert.assertEquals(
+            "expected to have 1 acl in acl cache map", 1, tree.aclCacheSize());
+        Assert.assertEquals(
+            "expected to have the same acl", ZooDefs.Ids.OPEN_ACL_UNSAFE,
+            tree.getACL("/bug", new Stat()));
+
+        // simulate the upgrading case where the config node will be created
+        // again after leader election
+        tree.addConfigNode();
+
+        Assert.assertEquals(
+            "expected to have 2 acl in acl cache map", 2, tree.aclCacheSize());
+        Assert.assertEquals(
+            "expected to have the same acl", ZooDefs.Ids.OPEN_ACL_UNSAFE,
+            tree.getACL("/bug", new Stat()));
     }
 }

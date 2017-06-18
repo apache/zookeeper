@@ -75,13 +75,13 @@ public class ZKDatabase {
     protected ConcurrentHashMap<Long, Integer> sessionsWithTimeouts;
     protected FileTxnSnapLog snapLog;
     protected long minCommittedLog, maxCommittedLog;
-    
+
     /**
      * Default value is to use snapshot if txnlog size exceeds 1/3 the size of snapshot
      */
     public static final String SNAPSHOT_SIZE_FACTOR = "zookeeper.snapshotSizeFactor";
     private double snapshotSizeFactor = 0.33;
-    
+
     public static final int commitLogCount = 500;
     protected static int commitLogBuffer = 700;
     protected LinkedList<Proposal> committedLog = new LinkedList<Proposal>();
@@ -268,7 +268,7 @@ public class ZKDatabase {
             wl.unlock();
         }
     }
-    
+
     public double getSnapshotSizeFactor() {
         return snapshotSizeFactor;
     }
@@ -570,7 +570,7 @@ public class ZKDatabase {
         try {
             if (this.dataTree.getNode(ZooDefs.CONFIG_NODE) == null) {
                 // should only happen during upgrade
-                LOG.warn("configuration znode missing (hould only happen during upgrade), creating the node");
+                LOG.warn("configuration znode missing (should only happen during upgrade), creating the node");
                 this.dataTree.addConfigNode();
             }
             this.dataTree.setData(ZooDefs.CONFIG_NODE, qv.toString().getBytes(), -1, qv.getVersion(), Time.currentWallTime());
@@ -578,7 +578,7 @@ public class ZKDatabase {
             System.out.println("configuration node missing - should not happen");
         }
     }
- 
+
     /**
      * Use for unit testing, so we can turn this feature on/off
      * @param snapshotSizeFactor Set to minus value to turn this off.
@@ -603,7 +603,7 @@ public class ZKDatabase {
 
     /**
      * Remove watch from the datatree
-     * 
+     *
      * @param path
      *            node to remove watches from
      * @param type
