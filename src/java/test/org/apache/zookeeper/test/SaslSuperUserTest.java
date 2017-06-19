@@ -21,58 +21,76 @@ package org.apache.zookeeper.test;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
-import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooDefs.Perms;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.auth.DigestAuthenticationProvider;
 import org.junit.Assert;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class SaslSuperUserTest extends ClientBase {
     private static Id otherSaslUser = new Id ("sasl", "joe");
     private static Id otherDigestUser;
- 
-    static {
-        System.setProperty("zookeeper.authProvider.1","org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
+    private static String oldAuthProvider;
+    private static String oldLoginConfig;
+    private static String oldSuperUser;
 
-        try {
-            File tmpDir = createTmpDir();
-            File saslConfFile = new File(tmpDir, "jaas.conf");
-            FileWriter fwriter = new FileWriter(saslConfFile);
+    @BeforeClass
+    public static void setupStatic() throws Exception {
+        oldAuthProvider = System.setProperty("zookeeper.authProvider.1","org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
 
-            fwriter.write("" +
-                    "Server {\n" +
-                    "          org.apache.zookeeper.server.auth.DigestLoginModule required\n" +
-                    "          user_super_duper=\"test\";\n" +
-                    "};\n" +
-                    "Client {\n" +
-                    "       org.apache.zookeeper.server.auth.DigestLoginModule required\n" +
-                    "       username=\"super_duper\"\n" +
-                    "       password=\"test\";\n" +
-                    "};" + "\n");
-            fwriter.close();
-            System.setProperty("java.security.auth.login.config",saslConfFile.getAbsolutePath());
-            System.setProperty("zookeeper.superUser","super_duper");
-            otherDigestUser = new Id ("digest", DigestAuthenticationProvider.generateDigest("jack:jack"));
-        }
-        catch (IOException e) {
-            // could not create tmp directory to hold JAAS conf file : test will fail now.
-        }
-        catch (Exception e) {
-           throw new RuntimeException(e); //This should never happen, but if it does we still blow up
-        }
+        File tmpDir = createTmpDir();
+        File saslConfFile = new File(tmpDir, "jaas.conf");
+        FileWriter fwriter = new FileWriter(saslConfFile);
+
+        fwriter.write("" +
+                "Server {\n" +
+                "          org.apache.zookeeper.server.auth.DigestLoginModule required\n" +
+                "          user_super_duper=\"test\";\n" +
+                "};\n" +
+                "Client {\n" +
+                "       org.apache.zookeeper.server.auth.DigestLoginModule required\n" +
+                "       username=\"super_duper\"\n" +
+                "       password=\"test\";\n" +
+                "};" + "\n");
+        fwriter.close();
+        oldLoginConfig = System.setProperty("java.security.auth.login.config",saslConfFile.getAbsolutePath());
+        oldSuperUser = System.setProperty("zookeeper.superUser","super_duper");
+        otherDigestUser = new Id ("digest", DigestAuthenticationProvider.generateDigest("jack:jack"));
+    }
+
+    @AfterClass
+    public static void cleanupStatic() {
+        if (oldAuthProvider != null) {
+            System.setProperty("zookeeper.authProvider.1", oldAuthProvider);
+	} else {
+            System.clearProperty("zookeeper.authProvider.1");
+	}
+	oldAuthProvider = null;
+
+        if (oldLoginConfig != null) {
+            System.setProperty("java.security.auth.login.config", oldLoginConfig);
+	} else {
+            System.clearProperty("java.security.auth.login.config");
+	}
+	oldLoginConfig = null;
+
+        if (oldSuperUser != null) {
+            System.setProperty("zookeeper.superUser", oldSuperUser);
+	} else {
+            System.clearProperty("zookeeper.superUser");
+	}
+	oldSuperUser = null;
     }
 
     private AtomicInteger authFailed = new AtomicInteger(0);
