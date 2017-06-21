@@ -38,6 +38,8 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 
+import javax.security.sasl.SaslException;
+
 public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
     private static int SERVER_COUNT = 3;
     private MainThread[] mt = new MainThread[SERVER_COUNT];
@@ -181,6 +183,10 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
     static class CustomQuorumPeer extends QuorumPeer {
         private boolean injectError = false;
 
+        public CustomQuorumPeer() throws SaslException {
+
+        }
+
         @Override
         protected Follower makeFollower(FileTxnSnapLog logFactory)
                 throws IOException {
@@ -215,7 +221,7 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
 
     static class MockTestQPMain extends TestQPMain {
         @Override
-        protected QuorumPeer getQuorumPeer() {
+        protected QuorumPeer getQuorumPeer() throws SaslException {
             return new CustomQuorumPeer();
         }
     }
