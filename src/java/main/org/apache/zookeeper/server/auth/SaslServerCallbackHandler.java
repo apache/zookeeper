@@ -39,6 +39,7 @@ import org.apache.zookeeper.server.ZooKeeperSaslServer;
 public class SaslServerCallbackHandler implements CallbackHandler {
     private static final String USER_PREFIX = "user_";
     private static final Logger LOG = LoggerFactory.getLogger(SaslServerCallbackHandler.class);
+    private static final String SYSPROP_SUPER_PASSWORD = "zookeeper.SASLAuthenticationProvider.superPassword";
     private static final String SYSPROP_REMOVE_HOST = "zookeeper.kerberos.removeHostFromPrincipal";
     private static final String SYSPROP_REMOVE_REALM = "zookeeper.kerberos.removeRealmFromPrincipal";
 
@@ -95,7 +96,10 @@ public class SaslServerCallbackHandler implements CallbackHandler {
     }
 
     private void handlePasswordCallback(PasswordCallback pc) {
-        if (credentials.containsKey(userName) ) {
+        if ("super".equals(this.userName) && System.getProperty(SYSPROP_SUPER_PASSWORD) != null) {
+            // superuser: use Java system property for password, if available.
+            pc.setPassword(System.getProperty(SYSPROP_SUPER_PASSWORD).toCharArray());
+        } else if (credentials.containsKey(userName) ) {
             pc.setPassword(credentials.get(userName).toCharArray());
         } else {
             LOG.warn("No password found for user: " + userName);
