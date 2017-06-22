@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.HashSet;
@@ -231,8 +232,8 @@ public class FourLetterCommands {
         // zkServer.sh depends on "srvr".
         whiteListedCommands.add("srvr");
         whiteListInitialized = true;
-        LOG.info("The list of known four letter word commands is : {}", Arrays.asList(cmd2String));
-        LOG.info("The list of enabled four letter word commands is : {}", Arrays.asList(whiteListedCommands));
+        LOG.info("The list of known four letter word commands is : {}", Collections.singletonList(cmd2String));
+        LOG.info("The list of enabled four letter word commands is : {}", Collections.singletonList(whiteListedCommands));
         return whiteListedCommands.contains(command);
     }
 

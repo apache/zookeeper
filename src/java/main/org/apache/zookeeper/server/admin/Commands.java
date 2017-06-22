@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server.admin;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -184,7 +185,7 @@ public class Commands {
      */
     public static class DirsCommand extends CommandBase {
         public DirsCommand() {
-            super(Arrays.asList("dirs"));
+            super(Collections.singletonList("dirs"));
         }
 
         @Override
@@ -207,7 +208,7 @@ public class Commands {
      */
     public static class DumpCommand extends CommandBase {
         public DumpCommand() {
-            super(Arrays.asList("dump"));
+            super(Collections.singletonList("dump"));
         }
 
         @Override
@@ -346,7 +347,7 @@ public class Commands {
      */
     public static class RuokCommand extends CommandBase {
         public RuokCommand() {
-            super(Arrays.asList("ruok"));
+            super(Collections.singletonList("ruok"));
         }
 
         @Override

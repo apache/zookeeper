@@ -23,6 +23,7 @@ import static org.junit.Assert.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -260,7 +261,7 @@ public class MultiTransactionTest extends ClientBase {
         ZooKeeper epheZk = createClient();
         epheZk.create("/foo/bar", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
 
-        List<Op> opList = Arrays.asList(Op.delete("/foo", -1));
+        List<Op> opList = Collections.singletonList(Op.delete("/foo", -1));
         try {
             zk.multi(opList);
             Assert.fail("multi delete should failed for not empty directory");
@@ -348,7 +349,7 @@ public class MultiTransactionTest extends ClientBase {
         zk_chroot = createClient(this.hostPort + chRoot);
         Op createChild = Op.create("/myid", new byte[0],
                 Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        multi(zk_chroot, Arrays.asList(createChild));
+        multi(zk_chroot, Collections.singletonList(createChild));
         
         Assert.assertNotNull("zNode is not created under chroot:" + chRoot, zk
                 .exists(chRoot + "/myid", false));
@@ -359,7 +360,7 @@ public class MultiTransactionTest extends ClientBase {
         
         // Deleting child using chRoot client.
         Op deleteChild = Op.delete("/myid", 0);
-        multi(zk_chroot, Arrays.asList(deleteChild));
+        multi(zk_chroot, Collections.singletonList(deleteChild));
         Assert.assertNull("zNode exists under chroot:" + chRoot, zk.exists(
                 chRoot + "/myid", false));
         Assert.assertNull("zNode exists under chroot:" + chRoot, zk_chroot
@@ -448,7 +449,7 @@ public class MultiTransactionTest extends ClientBase {
         String chRoot = "/appsX";
         Op createChRoot = Op.create(chRoot, new byte[0], Ids.OPEN_ACL_UNSAFE,
                 CreateMode.PERSISTENT);
-        multi(zk, Arrays.asList(createChRoot));
+        multi(zk, Collections.singletonList(createChRoot));
         return chRoot;
     }
 
@@ -562,7 +563,7 @@ public class MultiTransactionTest extends ClientBase {
     @Test
     public void testDeleteUpdateConflict() throws Exception {
 
-        /* Delete of a node folowed by an update of the (now) deleted node */
+        /* Delete of a node followed by an update of the (now) deleted node */
         try {
             multi(zk, Arrays.asList(
                 Op.create("/multi", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
@@ -580,7 +581,7 @@ public class MultiTransactionTest extends ClientBase {
 
     @Test
     public void testGetResults() throws Exception {
-        /* Delete of a node folowed by an update of the (now) deleted node */
+        /* Delete of a node followed by an update of the (now) deleted node */
         Iterable<Op> ops = Arrays.asList(
                 Op.create("/multi", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT),
                 Op.delete("/multi", 0),

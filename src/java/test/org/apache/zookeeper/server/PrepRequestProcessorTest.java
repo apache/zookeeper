@@ -46,6 +46,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -108,7 +109,7 @@ public class PrepRequestProcessorTest extends ClientBase {
         record.serialize(boa, "request");
         baos.close();
         // Id
-        List<Id> ids = Arrays.asList(Ids.ANYONE_ID_UNSAFE);
+        List<Id> ids = Collections.singletonList(Ids.ANYONE_ID_UNSAFE);
         return new Request(null, 1l, 0, opCode, ByteBuffer.wrap(baos.toByteArray()), ids);
     }
 
@@ -133,7 +134,7 @@ public class PrepRequestProcessorTest extends ClientBase {
 
         Assert.assertNull(zks.outstandingChangesForPath.get("/foo"));
 
-        process(Arrays.asList(
+        process(Collections.singletonList(
                 Op.setData("/foo", new byte[0], -1)));
 
         ChangeRecord cr = zks.outstandingChangesForPath.get("/foo");
@@ -141,7 +142,7 @@ public class PrepRequestProcessorTest extends ClientBase {
         Assert.assertEquals("Record zxid wasn't set correctly",
                 1, cr.zxid);
 
-        process(Arrays.asList(
+        process(Collections.singletonList(
                 Op.delete("/foo", -1)));
         cr = zks.outstandingChangesForPath.get("/foo");
         Assert.assertEquals("Record zxid wasn't set correctly",
@@ -149,7 +150,7 @@ public class PrepRequestProcessorTest extends ClientBase {
 
 
         // It should fail and shouldn't change outstanding record.
-        process(Arrays.asList(
+        process(Collections.singletonList(
                 Op.delete("/foo", -1)));
         cr = zks.outstandingChangesForPath.get("/foo");
         // zxid should still be previous result because record's not changed.
