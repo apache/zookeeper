@@ -1131,6 +1131,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                     String authorizationID = saslServer.getAuthorizationID();
                     LOG.info("adding SASL authorization for authorizationID: " + authorizationID);
                     cnxn.addAuthInfo(new Id("sasl",authorizationID));
+                    if (System.getProperty("zookeeper.superUser") != null && 
+                        authorizationID.equals(System.getProperty("zookeeper.superUser"))) {
+                        cnxn.addAuthInfo(new Id("super", ""));
+                    }
                 }
             }
             catch (SaslException e) {
