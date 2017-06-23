@@ -1267,6 +1267,19 @@ server.3=zoo3:2888:3888</programlisting>
           </varlistentry>
 
           <varlistentry>
+            <term>zookeeper.superUser</term>
+            <listitem>
+              <para>(Java system property: <emphasis
+              role="bold">zookeeper.superUser</emphasis>)</para>
+
+              <para>Similar to <emphasis role="bold">zookeeper.X509AuthenticationProvider.superUser</emphasis>
+              but is generic for SASL based logins. It stores the name of 
+              a user that can access the znode hierarchy as a "super" user.
+              </para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
             <term>ssl.keyStore.location and ssl.keyStore.password</term>
             <listitem>
               <para>(Java system properties: <emphasis role="bold">
