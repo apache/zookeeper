@@ -83,7 +83,7 @@ public class FileTxnSnapLog {
     /**
      * the constructor which takes the datadir and
      * snapdir.
-     * @param dataDir the trasaction directory
+     * @param dataDir the transaction directory
      * @param snapDir the snapshot directory
      */
     public FileTxnSnapLog(File dataDir, File snapDir) throws IOException {
@@ -220,9 +220,8 @@ public class FileTxnSnapLog {
                     return dt.lastProcessedZxid;
                 }
                 if (hdr.getZxid() < highestZxid && highestZxid != 0) {
-                    LOG.error("{}(higestZxid) > {}(next log) for type {}",
-                            new Object[] { highestZxid, hdr.getZxid(),
-                                    hdr.getType() });
+                    LOG.error("{}(highestZxid) > {}(next log) for type {}",
+                            highestZxid, hdr.getZxid(), hdr.getType());
                 } else {
                     highestZxid = hdr.getZxid();
                 }
@@ -334,7 +333,7 @@ public class FileTxnSnapLog {
     /**
      * save the datatree and the sessions into a snapshot
      * @param dataTree the datatree to be serialized onto disk
-     * @param sessionsWithTimeouts the sesssion timeouts to be
+     * @param sessionsWithTimeouts the session timeouts to be
      * serialized onto disk
      * @throws IOException
      */
