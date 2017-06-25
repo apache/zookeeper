@@ -61,7 +61,6 @@ import org.apache.zookeeper.server.RequestProcessor.RequestProcessorException;
 import org.apache.zookeeper.server.ServerCnxn.CloseRequestException;
 import org.apache.zookeeper.server.SessionTracker.Session;
 import org.apache.zookeeper.server.SessionTracker.SessionExpirer;
-import org.apache.zookeeper.server.auth.AuthenticationProvider;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServer;
@@ -103,7 +102,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected volatile State state = State.INITIAL;
 
     protected enum State {
-        INITIAL, RUNNING, SHUTDOWN, ERROR;
+        INITIAL, RUNNING, SHUTDOWN, ERROR
     }
 
     /**
@@ -228,7 +227,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     /**
-     * Default constructor, relies on the config for its agrument values
+     * Default constructor, relies on the config for its argument values
      *
      * @throws IOException
      */

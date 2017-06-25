@@ -42,7 +42,6 @@ import org.apache.zookeeper.proto.ReconfigRequest;
 import org.apache.zookeeper.proto.SetACLRequest;
 import org.apache.zookeeper.proto.SetDataRequest;
 import org.apache.zookeeper.server.ZooKeeperServer.ChangeRecord;
-import org.apache.zookeeper.server.auth.AuthenticationProvider;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.quorum.Leader.XidRolloverException;
 import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
@@ -72,7 +71,6 @@ import java.io.StringReader;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -103,7 +101,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
 
     /**
      * this is only for testing purposes.
-     * should never be useed otherwise
+     * should never be used otherwise
      */
     private static  boolean failCreate = false;
 
@@ -450,7 +448,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 long configId = reconfigRequest.getCurConfigId();
   
                 if (configId != -1 && configId!=lzks.self.getLastSeenQuorumVerifier().getVersion()){
-                   String msg = "Reconfiguration from version " + configId + " failed -- last seen version is " + lzks.self.getLastSeenQuorumVerifier().getVersion();
+                   String msg = "Reconfiguration from version " + configId + " failed -- last seen version is " +
+                           lzks.self.getLastSeenQuorumVerifier().getVersion();
                    throw new KeeperException.BadVersionException(msg);
                 }
 
@@ -467,11 +466,9 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                        props.load(new StringReader(newMembers));
                        request.qv = QuorumPeerConfig.parseDynamicConfig(props, lzks.self.getElectionType(), true, false);
                        request.qv.setVersion(request.getHdr().getZxid());
-                   } catch (IOException e) {
+                   } catch (IOException | ConfigException e) {
                        throw new KeeperException.BadArgumentsException(e.getMessage());
-                   } catch (ConfigException e) {
-                       throw new KeeperException.BadArgumentsException(e.getMessage());
-                   }                   
+                   }
                 } else { //incremental change - must be a majority quorum system   
                    LOG.info("Incremental reconfig");
                    
@@ -525,7 +522,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                                }
 
                                nextServers.remove(qs.id);
-                               nextServers.put(Long.valueOf(qs.id), qs);
+                               nextServers.put(qs.id, qs);
                            }  
                        }
                    } catch (ConfigException e){
@@ -910,11 +907,9 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
 
     private List<ACL> removeDuplicates(List<ACL> acl) {
 
-        ArrayList<ACL> retval = new ArrayList<ACL>();
-        Iterator<ACL> it = acl.iterator();
-        while (it.hasNext()) {
-            ACL a = it.next();
-            if (retval.contains(a) == false) {
+        LinkedList<ACL> retval = new LinkedList<ACL>();
+        for (ACL a : acl) {
+            if (!retval.contains(a)) {
                 retval.add(a);
             }
         }
@@ -926,8 +921,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
         try {
             EphemeralType.validateTTL(createMode, ttl);
         } catch (IllegalArgumentException e) {
-            BadArgumentsException bae = new BadArgumentsException(path);
-            throw bae;
+            throw new BadArgumentsException(path);
         }
         if (createMode.isEphemeral()) {
             // Exception is set when local session failed to upgrade
