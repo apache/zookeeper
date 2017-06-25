@@ -77,7 +77,7 @@ public interface TxnLog {
     long getDbId() throws IOException;
     
     /**
-     * commmit the transaction and make sure
+     * commit the transaction and make sure
      * they are persisted
      * @throws IOException
      */
@@ -85,7 +85,7 @@ public interface TxnLog {
 
     /**
      *
-     * @return transaction log's elapsed sync time in miliseconds
+     * @return transaction log's elapsed sync time in milliseconds
      */
     long getTxnLogSyncElapsedTime();
    
