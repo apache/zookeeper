@@ -399,7 +399,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                         checkWatches.getPath(), type, cnxn);
                 if (!containsWatcher) {
                     String msg = String.format(Locale.ENGLISH, "%s (type: %s)",
-                            new Object[] { checkWatches.getPath(), type });
+                            checkWatches.getPath(), type);
                     throw new KeeperException.NoWatcherException(msg);
                 }
                 break;
@@ -414,7 +414,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                         removeWatches.getPath(), type, cnxn);
                 if (!removed) {
                     String msg = String.format(Locale.ENGLISH, "%s (type: %s)",
-                            new Object[] { removeWatches.getPath(), type });
+                            removeWatches.getPath(), type);
                     throw new KeeperException.NoWatcherException(msg);
                 }
                 break;
