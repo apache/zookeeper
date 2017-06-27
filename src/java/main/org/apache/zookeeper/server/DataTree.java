@@ -1160,7 +1160,7 @@ public class DataTree {
         path.append('/');
         int off = path.length();
         for (String child : children) {
-            // since this is single buffer being resused
+            // since this is single buffer being reused
             // we need
             // to truncate the previous bytes of string.
             path.delete(off, Integer.MAX_VALUE);

@@ -28,8 +28,7 @@ public class SASLAuthenticationProvider implements AuthenticationProvider {
     }
 
     public KeeperException.Code
-        handleAuthentication(ServerCnxn cnxn, byte[] authData)
-    {
+        handleAuthentication(ServerCnxn cnxn, byte[] authData) {
         // Should never call this: SASL authentication is negotiated at session initiation.
         // TODO: consider substituting current implementation of direct ClientCnxn manipulation with
         // a call to this method (SASLAuthenticationProvider:handleAuthentication()) at session initiation.
@@ -37,15 +36,12 @@ public class SASLAuthenticationProvider implements AuthenticationProvider {
 
     }
 
-    public boolean matches(String id,String aclExpr) {
-        if ((id.equals("super") || id.equals(aclExpr))) {
-          return true;
+    public boolean matches(String id, String aclExpr) {
+        if (("super".equals(id) || aclExpr.equals(id))) {
+            return true;
         }
         String readAccessUser = System.getProperty("zookeeper.letAnySaslUserDoX");
-        if ( readAccessUser != null && aclExpr.equals(readAccessUser)) {
-          return true;
-        }
-        return false;
+        return readAccessUser != null && aclExpr.equals(readAccessUser);
     }
 
     public boolean isAuthenticated() {
@@ -69,6 +65,5 @@ public class SASLAuthenticationProvider implements AuthenticationProvider {
             return false;
         }
    }
-
 
 }

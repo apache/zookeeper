@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
  * http://zookeeper.apache.org/doc/trunk/zookeeperProgrammers.html#sc_ZooKeeperPluggableAuthentication
  *
  * This class looks for a numeric "key" under the /key node.
- * Authorizaton is granted if the user passes in as authorization a number
+ * Authorization is granted if the user passes in as authorization a number
  * which is a multiple of the key value, i.e. 
  *   (auth % key) == 0
  * In a real implementation, you might do something like storing a public

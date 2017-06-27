@@ -39,11 +39,10 @@ public class DigestLoginModule implements LoginModule {
             // Zookeeper client: get username and password from JAAS conf (only used if using DIGEST-MD5).
             this.subject = subject;
             String username = (String)options.get("username");
-            this.subject.getPublicCredentials().add((Object)username);
+            this.subject.getPublicCredentials().add(username);
             String password = (String)options.get("password");
-            this.subject.getPrivateCredentials().add((Object)password);
+            this.subject.getPrivateCredentials().add(password);
         }
-        return;
     }
 
     public boolean logout() {

@@ -142,8 +142,8 @@ public class SerializeUtils {
         HashMap<Long, Integer> sessSnap = new HashMap<Long, Integer>(sessions);
         oa.writeInt(sessSnap.size(), "count");
         for (Entry<Long, Integer> entry : sessSnap.entrySet()) {
-            oa.writeLong(entry.getKey().longValue(), "id");
-            oa.writeInt(entry.getValue().intValue(), "timeout");
+            oa.writeLong(entry.getKey(), "id");
+            oa.writeInt(entry.getValue(), "timeout");
         }
         dt.serialize(oa, "tree");
     }

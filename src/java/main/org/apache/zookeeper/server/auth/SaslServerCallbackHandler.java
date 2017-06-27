@@ -88,7 +88,7 @@ public class SaslServerCallbackHandler implements CallbackHandler {
     private void handleNameCallback(NameCallback nc) {
         // check to see if this user is in the user password database.
         if (credentials.get(nc.getDefaultName()) == null) {
-            LOG.warn("User '" + nc.getDefaultName() + "' not found in list of DIGEST-MD5 authenticateable users.");
+            LOG.warn("User '" + nc.getDefaultName() + "' not found in list of DIGEST-MD5 authenticatable users.");
             return;
         }
         nc.setName(nc.getDefaultName());
