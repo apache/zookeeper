@@ -183,11 +183,8 @@ public class ZKConfig {
             configFile = (new VerifyingFileFactory.Builder(LOG).warnForRelativePath().failForNonExistingPath().build())
                     .validate(configFile);
             Properties cfg = new Properties();
-            FileInputStream in = new FileInputStream(configFile);
-            try {
+            try (FileInputStream in = new FileInputStream(configFile)) {
                 cfg.load(in);
-            } finally {
-                in.close();
             }
             parseProperties(cfg);
         } catch (IOException | IllegalArgumentException e) {

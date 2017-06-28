@@ -174,7 +174,7 @@ public class PathTrie {
             sb.append("Children of trienode: ");
             synchronized(children) {
                 for (String str: children.keySet()) {
-                    sb.append(" " + str);
+                    sb.append(" ").append(str);
                 }
             }
             return sb.toString();
@@ -261,14 +261,14 @@ public class PathTrie {
         int i = 1;
         String part = null;
         StringBuilder sb = new StringBuilder();
-        int lastindex = -1;
+        int lastIndex = -1;
         while((i < pathComponents.length)) {
             if (parent.getChild(pathComponents[i]) != null) {
                 part = pathComponents[i];
                 parent = parent.getChild(part);
                 components.add(part);
                 if (parent.getProperty()) {
-                    lastindex = i-1;
+                    lastIndex = i - 1;
                 }
             }
             else {
@@ -276,8 +276,8 @@ public class PathTrie {
             }
             i++;
         }
-        for (int j=0; j< (lastindex+1); j++) {
-            sb.append("/" + components.get(j));
+        for (int j = 0; j <= lastIndex; j++) {
+            sb.append("/").append(components.get(j));
         }
         return sb.toString();
     }

@@ -69,7 +69,7 @@ public class IOUtils {
      * Copies from one stream to another.
      * 
      * @param in
-     *            InputStrem to read from
+     *            InputStream to read from
      * @param out
      *            OutputStream to write to
      * @param buffSize
@@ -100,7 +100,7 @@ public class IOUtils {
      * Copies from one stream to another.
      * 
      * @param in
-     *            InputStrem to read from
+     *            InputStream to read from
      * @param out
      *            OutputStream to write to
      * @param buffSize
