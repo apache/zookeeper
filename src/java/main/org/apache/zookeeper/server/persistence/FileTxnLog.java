@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -332,11 +333,13 @@ public class FileTxnLog implements TxnLog {
             if (forceSync) {
                 long startSyncNS = System.nanoTime();
 
-                log.getChannel().force(false);
+                FileChannel channel = log.getChannel();
+                channel.force(false);
 
                 syncElapsedMS = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startSyncNS);
                 if (syncElapsedMS > fsyncWarningThresholdMS) {
-                    LOG.warn("fsync-ing the write ahead log in "
+                    LOG.warn("fsync-ing the write ahead log ("
+                            + channel.size() + " bytes) in "
                             + Thread.currentThread().getName()
                             + " took " + syncElapsedMS
                             + "ms which will adversely effect operation latency. "
