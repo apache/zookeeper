@@ -130,8 +130,8 @@ class XmlOutputArchive implements OutputArchive {
         printEndEnvelope(tag);
     }
     
-    static XmlOutputArchive getArchive(OutputStream strm) {
-        return new XmlOutputArchive(strm);
+    static XmlOutputArchive getArchive(OutputStream stream) {
+        return new XmlOutputArchive(stream);
     }
     
     /** Creates a new instance of XmlOutputArchive */

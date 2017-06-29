@@ -41,32 +41,26 @@ public class RecordReader {
         try {
             archiveFactory.put("binary",
                     BinaryInputArchive.class.getDeclaredMethod(
-                        "getArchive", new Class[]{ InputStream.class } ));
+                        "getArchive", InputStream.class));
             archiveFactory.put("csv",
                     CsvInputArchive.class.getDeclaredMethod(
-                        "getArchive", new Class[]{ InputStream.class }));
+                        "getArchive", InputStream.class));
             archiveFactory.put("xml",
                     XmlInputArchive.class.getDeclaredMethod(
-                        "getArchive", new Class[]{ InputStream.class }));
-        } catch (SecurityException ex) {
-            ex.printStackTrace();
-        } catch (NoSuchMethodException ex) {
+                        "getArchive", InputStream.class));
+        } catch (SecurityException | NoSuchMethodException ex) {
             ex.printStackTrace();
         }
     }
     
     static private InputArchive createArchive(InputStream in, String format)
     throws IOException {
-        Method factory = (Method) archiveFactory.get(format);
+        Method factory = archiveFactory.get(format);
         if (factory != null) {
             Object[] params = { in };
             try {
                 return (InputArchive) factory.invoke(null, params);
-            } catch (IllegalArgumentException ex) {
-                ex.printStackTrace();
-            } catch (InvocationTargetException ex) {
-                ex.printStackTrace();
-            } catch (IllegalAccessException ex) {
+            } catch (IllegalArgumentException | InvocationTargetException | IllegalAccessException ex) {
                 ex.printStackTrace();
             }
         }

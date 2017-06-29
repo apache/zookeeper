@@ -27,11 +27,11 @@ import java.io.InputStream;
  *
  */
 public class BinaryInputArchive implements InputArchive {
-    static public final String UNREASONBLE_LENGTH= "Unreasonable length = ";
+    public static final String UNREASONABLE_LENGTH = "Unreasonable length = ";
     private DataInput in;
     
-    static public BinaryInputArchive getArchive(InputStream strm) {
-        return new BinaryInputArchive(new DataInputStream(strm));
+    static public BinaryInputArchive getArchive(InputStream stream) {
+        return new BinaryInputArchive(new DataInputStream(stream));
     }
     
     static private class BinaryIndex implements Index {
@@ -124,7 +124,7 @@ public class BinaryInputArchive implements InputArchive {
     // write buffers larger than we can read from disk!)
     private void checkLength(int len) throws IOException {
         if (len < 0 || len > maxBuffer + 1024) {
-            throw new IOException(UNREASONBLE_LENGTH + len);
+            throw new IOException(UNREASONABLE_LENGTH + len);
         }
     }
 }

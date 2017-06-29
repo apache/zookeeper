@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Iterator;
 
 /**
  * C++ Code generator front-end for Hadoop record I/O.
@@ -63,7 +62,7 @@ class CppGenerator {
         }
 
         try (FileWriter cc = new FileWriter(new File(outputDirectory, mName + ".cc"));
-             FileWriter hh = new FileWriter(new File(outputDirectory, mName + ".hh"));
+             FileWriter hh = new FileWriter(new File(outputDirectory, mName + ".hh"))
         ) {
             hh.write("/**\n");
             hh.write("* Licensed to the Apache Software Foundation (ASF) under one\n");
@@ -107,14 +106,12 @@ class CppGenerator {
             hh.write("#define __" + mName.toUpperCase().replace('.', '_') + "__\n");
 
             hh.write("#include \"recordio.hh\"\n");
-            for (Iterator<JFile> i = mInclFiles.iterator(); i.hasNext(); ) {
-                JFile f = i.next();
+            for (JFile f : mInclFiles) {
                 hh.write("#include \"" + f.getName() + ".hh\"\n");
             }
             cc.write("#include \"" + mName + ".hh\"\n");
 
-            for (Iterator<JRecord> i = mRecList.iterator(); i.hasNext(); ) {
-                JRecord jr = i.next();
+            for (JRecord jr : mRecList) {
                 jr.genCppCode(hh, cc);
             }
 

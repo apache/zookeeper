@@ -38,7 +38,7 @@ public class BinaryInputArchiveTest {
             Assert.fail("Should have thrown an IOException");
         } catch (IOException e) {
             Assert.assertTrue("Not 'Unreasonable length' exception: " + e,
-                    e.getMessage().startsWith(BinaryInputArchive.UNREASONBLE_LENGTH));
+                    e.getMessage().startsWith(BinaryInputArchive.UNREASONABLE_LENGTH));
         }
     }
 }

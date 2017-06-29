@@ -342,7 +342,7 @@ public abstract class KeeperException extends Exception {
         OPERATIONTIMEOUT (OperationTimeout),
         /** Invalid arguments */
         BADARGUMENTS (BadArguments),
-        /** No quorum of new config is connected and up-to-date with the leader of last commmitted config - try 
+        /** No quorum of new config is connected and up-to-date with the leader of last committed config - try
          *  invoking reconfiguration after new servers are connected and synced */
         NEWCONFIGNOQUORUM (NewConfigNoQuorum),
         /** Another reconfiguration is in progress -- concurrent reconfigs not supported (yet) */

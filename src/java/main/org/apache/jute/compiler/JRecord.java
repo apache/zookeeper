@@ -74,7 +74,7 @@ public class JRecord extends JCompType {
 
     public String getCsharpNameSpace() {
         String[] parts = mModule.split("\\.");
-        StringBuffer namespace = new StringBuffer();
+        StringBuilder namespace = new StringBuilder();
         for (int i = 0; i < parts.length; i++) {
             String capitalized = parts[i].substring(0, 1).toUpperCase() + parts[i].substring(1).toLowerCase();
             namespace.append(capitalized);
@@ -90,8 +90,8 @@ public class JRecord extends JCompType {
     public String getSignature() {
         StringBuilder sb = new StringBuilder();
         sb.append("L").append(mName).append("(");
-        for (Iterator<JField> i = mFields.iterator(); i.hasNext();) {
-            String s = i.next().getSignature();
+        for (JField mField : mFields) {
+            String s = mField.getSignature();
             sb.append(s);
         }
         sb.append(")");
@@ -282,15 +282,14 @@ public class JRecord extends JCompType {
     public void genCppCode(FileWriter hh, FileWriter cc)
         throws IOException {
         String[] ns = getCppNameSpace().split("::");
-        for (int i = 0; i < ns.length; i++) {
-            hh.write("namespace "+ns[i]+" {\n");
+        for (String n : ns) {
+            hh.write("namespace " + n + " {\n");
         }
 
         hh.write("class "+getName()+" : public ::hadoop::Record {\n");
         hh.write("private:\n");
 
-        for (Iterator<JField> i = mFields.iterator(); i.hasNext();) {
-            JField jf = i.next();
+        for (JField jf : mFields) {
             hh.write(jf.genCppDecl());
         }
         hh.write("  mutable std::bitset<"+mFields.size()+"> bs_;\n");
@@ -361,20 +360,18 @@ public class JRecord extends JCompType {
 
         cc.write("bool "+getCppFQName()+"::operator< (const "+getCppFQName()+"& peer_) const {\n");
         cc.write("  return (1\n");
-        for (Iterator<JField> i = mFields.iterator(); i.hasNext();) {
-            JField jf = i.next();
+        for (JField jf : mFields) {
             String name = jf.getName();
-            cc.write("    && (m"+name+" < peer_.m"+name+")\n");
+            cc.write("    && (m" + name + " < peer_.m" + name + ")\n");
         }
         cc.write("  );\n");
         cc.write("}\n");
 
         cc.write("bool "+getCppFQName()+"::operator== (const "+getCppFQName()+"& peer_) const {\n");
         cc.write("  return (1\n");
-        for (Iterator<JField> i = mFields.iterator(); i.hasNext();) {
-            JField jf = i.next();
+        for (JField jf : mFields) {
             String name = jf.getName();
-            cc.write("    && (m"+name+" == peer_.m"+name+")\n");
+            cc.write("    && (m" + name + " == peer_.m" + name + ")\n");
         }
         cc.write("  );\n");
         cc.write("}\n");
@@ -426,8 +423,7 @@ public class JRecord extends JCompType {
             jj.write("package " + getJavaPackage() + ";\n\n");
             jj.write("import org.apache.jute.*;\n");
             jj.write("public class " + getName() + " implements Record {\n");
-            for (Iterator<JField> i = mFields.iterator(); i.hasNext(); ) {
-                JField jf = i.next();
+            for (JField jf : mFields) {
                 jj.write(jf.genJavaDecl());
             }
             jj.write("  public " + getName() + "() {\n");
@@ -745,7 +741,7 @@ public class JRecord extends JCompType {
 
     public static String getCsharpFQName(String name) {
         String[] packages = name.split("\\.");
-        StringBuffer fQName = new StringBuffer();
+        StringBuilder fQName = new StringBuilder();
         for (int i = 0; i < packages.length; i++) {
             String pack = packages[i];
             pack = capitalize(pack);

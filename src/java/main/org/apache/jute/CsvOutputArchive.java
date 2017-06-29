@@ -33,9 +33,9 @@ public class CsvOutputArchive implements OutputArchive {
     private PrintStream stream;
     private boolean isFirst = true;
     
-    static CsvOutputArchive getArchive(OutputStream strm)
+    static CsvOutputArchive getArchive(OutputStream stream)
     throws UnsupportedEncodingException {
-        return new CsvOutputArchive(strm);
+        return new CsvOutputArchive(stream);
     }
     
     private void throwExceptionOnError(String tag) throws IOException {

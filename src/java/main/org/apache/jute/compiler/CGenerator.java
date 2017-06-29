@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Iterator;
 
 /**
  * C++ Code generator front-end for Hadoop record I/O.
@@ -63,7 +62,7 @@ class CGenerator {
         }
 
         try (FileWriter c = new FileWriter(new File(outputDirectory, mName + ".c"));
-             FileWriter h = new FileWriter(new File(outputDirectory, mName + ".h"));
+             FileWriter h = new FileWriter(new File(outputDirectory, mName + ".h"))
         ) {
             h.write("/**\n");
             h.write("* Licensed to the Apache Software Foundation (ASF) under one\n");
@@ -107,8 +106,7 @@ class CGenerator {
             h.write("#define __" + mName.toUpperCase().replace('.', '_') + "__\n");
 
             h.write("#include \"recordio.h\"\n");
-            for (Iterator<JFile> i = mInclFiles.iterator(); i.hasNext(); ) {
-                JFile f = i.next();
+            for (JFile f : mInclFiles) {
                 h.write("#include \"" + f.getName() + ".h\"\n");
             }
             // required for compilation from C++
@@ -117,8 +115,7 @@ class CGenerator {
             c.write("#include <stdlib.h>\n"); // need it for calloc() & free()
             c.write("#include \"" + mName + ".h\"\n\n");
 
-            for (Iterator<JRecord> i = mRecList.iterator(); i.hasNext(); ) {
-                JRecord jr = i.next();
+            for (JRecord jr : mRecList) {
                 jr.genCCode(h, c);
             }
 

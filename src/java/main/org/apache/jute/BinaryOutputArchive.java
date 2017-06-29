@@ -34,8 +34,8 @@ public class BinaryOutputArchive implements OutputArchive {
 
     private DataOutput out;
     
-    public static BinaryOutputArchive getArchive(OutputStream strm) {
-        return new BinaryOutputArchive(new DataOutputStream(strm));
+    public static BinaryOutputArchive getArchive(OutputStream stream) {
+        return new BinaryOutputArchive(new DataOutputStream(stream));
     }
     
     /** Creates a new instance of BinaryOutputArchive */

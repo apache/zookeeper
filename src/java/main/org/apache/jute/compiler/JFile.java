@@ -78,7 +78,7 @@ public class JFile {
         	        outputDirectory);
         	gen.genCode();
         } else {
-            throw new IOException("Cannnot recognize language:" + language);
+            throw new IOException("Cannot recognize language:" + language);
         }
     }
 }

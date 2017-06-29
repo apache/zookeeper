@@ -199,8 +199,8 @@ public class Utils {
             return "";
         }
         StringBuilder sb = new StringBuilder(2*barr.length);
-        for (int idx = 0; idx < barr.length; idx++) {
-            sb.append(Integer.toHexString(barr[idx]));
+        for (byte aBarr : barr) {
+            sb.append(Integer.toHexString(aBarr));
         }
         return sb.toString();
     }
@@ -237,8 +237,8 @@ public class Utils {
         }
         StringBuilder sb = new StringBuilder(barr.length + 1);
         sb.append('#');
-        for(int idx = 0; idx < barr.length; idx++) {
-            sb.append(Integer.toHexString(barr[idx]));
+        for (byte aBarr : barr) {
+            sb.append(Integer.toHexString(aBarr));
         }
         return sb.toString();
     }

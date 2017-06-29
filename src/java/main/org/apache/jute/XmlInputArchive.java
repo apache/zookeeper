@@ -132,9 +132,9 @@ class XmlInputArchive implements InputArchive {
         }
     }
     
-    static XmlInputArchive getArchive(InputStream strm)
+    static XmlInputArchive getArchive(InputStream stream)
     throws ParserConfigurationException, SAXException, IOException {
-        return new XmlInputArchive(strm);
+        return new XmlInputArchive(stream);
     }
     
     /** Creates a new instance of BinaryInputArchive */

@@ -39,7 +39,7 @@ class CsvInputArchive implements InputArchive {
                 stream.unread(c);
             } catch (IOException ex) {
             }
-            return (c == '}') ? true : false;
+            return c == '}';
         }
         public void incr() {}
     }
@@ -66,9 +66,9 @@ class CsvInputArchive implements InputArchive {
         }
     }
     
-    static CsvInputArchive getArchive(InputStream strm)
+    static CsvInputArchive getArchive(InputStream stream)
     throws UnsupportedEncodingException {
-        return new CsvInputArchive(strm);
+        return new CsvInputArchive(stream);
     }
     
     /** Creates a new instance of CsvInputArchive */
@@ -83,7 +83,7 @@ class CsvInputArchive implements InputArchive {
     
     public boolean readBool(String tag) throws IOException {
         String sval = readField(tag);
-        return "T".equals(sval) ? true : false;
+        return "T".equals(sval);
     }
     
     public int readInt(String tag) throws IOException {
@@ -93,8 +93,7 @@ class CsvInputArchive implements InputArchive {
     public long readLong(String tag) throws IOException {
         String sval = readField(tag);
         try {
-            long lval = Long.parseLong(sval);
-            return lval;
+            return Long.parseLong(sval);
         } catch (NumberFormatException ex) {
             throw new IOException("Error deserializing "+tag);
         }
@@ -107,8 +106,7 @@ class CsvInputArchive implements InputArchive {
     public double readDouble(String tag) throws IOException {
         String sval = readField(tag);
         try {
-            double dval = Double.parseDouble(sval);
-            return dval;
+            return Double.parseDouble(sval);
         } catch (NumberFormatException ex) {
             throw new IOException("Error deserializing "+tag);
         }
@@ -156,8 +154,6 @@ class CsvInputArchive implements InputArchive {
         if (c != ',') {
             stream.unread(c);
         }
-        
-        return;
     }
     
     public Index startVector(String tag) throws IOException {
@@ -178,7 +174,6 @@ class CsvInputArchive implements InputArchive {
         if (c != ',') {
             stream.unread(c);
         }
-        return;
     }
     
     public Index startMap(String tag) throws IOException {
@@ -199,6 +194,5 @@ class CsvInputArchive implements InputArchive {
         if (c != ',') {
             stream.unread(c);
         }
-        return;
     }
 }

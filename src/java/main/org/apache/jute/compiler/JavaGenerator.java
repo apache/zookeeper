@@ -21,7 +21,6 @@ package org.apache.jute.compiler;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * Java Code generator front-end for Hadoop record I/O.
@@ -49,8 +48,7 @@ class JavaGenerator {
      * JRecord, since one file is generated for each record.
      */
     void genCode() throws IOException {
-        for (Iterator<JRecord> i = mRecList.iterator(); i.hasNext(); ) {
-            JRecord rec = i.next();
+        for (JRecord rec : mRecList) {
             rec.genJavaCode(outputDirectory);
         }
     }
