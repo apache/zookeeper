@@ -18,12 +18,11 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.fail;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -33,6 +32,7 @@ import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.KeeperException.InvalidACLException;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
@@ -774,8 +774,16 @@ public class ClientTest extends ClientBase {
      */
     @Test
     public void testNonExistingOpCode() throws Exception  {
-        CountdownWatcher watcher = new CountdownWatcher();
-        TestableZooKeeper zk = createClient(watcher);
+        final CountDownLatch clientDisconnected = new CountDownLatch(1);
+        Watcher watcher = new Watcher() {
+            @Override
+            public synchronized void process(WatchedEvent event) {
+                if (event.getState() == KeeperState.Disconnected) {
+                    clientDisconnected.countDown();
+                }
+            }
+        };
+        TestableZooKeeper zk = new TestableZooKeeper(hostPort, CONNECTION_TIMEOUT, watcher);
 
         final String path = "/m1";
 
@@ -785,10 +793,13 @@ public class ClientTest extends ClientBase {
         request.setPath(path);
         request.setWatch(false);
         ExistsResponse response = new ExistsResponse();
+
         ReplyHeader r = zk.submitRequest(h, request, response, null);
+
         Assert.assertEquals(r.getErr(), Code.UNIMPLEMENTED.intValue());
 
         // Sending a nonexisting opcode should cause the server to disconnect
-        watcher.waitForDisconnected(5000);
+        Assert.assertTrue("failed to disconnect",
+                clientDisconnected.await(5000, TimeUnit.MILLISECONDS));
     }
 }
