@@ -149,6 +149,18 @@
     </Or>
   </Match>
 
+  <!-- We perform synchronization on a LinkedBlockingQueue in order to track when it becomes empty
+       See: ZOOKEEPER-2807-->
+  <Match>
+     <Class name="org.apache.zookeeper.server.quorum.CommitProcessor"/>
+     <Bug code="JLM"/>
+     <Or>
+         <Method name="halt" />
+         <Method name="run" />
+         <Method name="waitForCommittedRequests" />
+     </Or>
+  </Match>
+
   <!-- Synchronize on the AtomicInteger to do wait/notify, but not relying
        on the synchronization to control the AtomicInteger value update,
        so it's not a problem -->
@@ -163,8 +175,6 @@
     <Bug code="JLM" />
     <Method name="doWork" />
   </Match>
-
-
 
   <Match>
     <Class name="org.apache.zookeeper.server.quorum.QuorumPeer"/>

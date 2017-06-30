@@ -38,7 +38,7 @@ import org.apache.zookeeper.server.ZooKeeperServerListener;
  * This RequestProcessor matches the incoming committed requests with the
  * locally submitted requests. The trick is that locally submitted requests that
  * change the state of the system will come back as incoming committed requests,
- * so we need to match them up. Instead of just waiting for the committed requests, 
+ * so we need to match them up. Instead of just waiting for the committed requests,
  * we process the uncommitted requests that belong to other sessions.
  *
  * The CommitProcessor is multi-threaded. Communication between threads is
@@ -105,7 +105,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
 
     /** For testing purposes, we use a separated stopping condition for the
      * outer loop.*/
-    protected volatile boolean stoppedMainLoop = true; 
+    protected volatile boolean stoppedMainLoop = true;
     protected volatile boolean stopped = true;
     private long workerShutdownTimeoutMS;
     protected WorkerService workerPool;
@@ -143,7 +143,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
             case OpCode.setACL:
                 return true;
             case OpCode.sync:
-                return matchSyncs;    
+                return matchSyncs;
             case OpCode.createSession:
             case OpCode.closeSession:
                 return !request.isLocalSession();
@@ -240,84 +240,14 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
                     }
 
                     // Process committed head
-                    if ((request = committedRequests.poll()) == null) {
-                        throw new IOException("Error: committed head is null");
-                    }
-
-                    /*
-                     * Check if request is pending, if so, update it with the committed info
-                     */
-                    LinkedList<Request> sessionQueue = pendingRequests
-                            .get(request.sessionId);
-                    if (sessionQueue != null) {
-                        // If session queue != null, then it is also not empty.
-                        Request topPending = sessionQueue.poll();
-                        if (request.cxid != topPending.cxid) {
-                            /*
-                             * TL;DR - we should not encounter this scenario often under normal load.
-                             * We pass the commit to the next processor and put the pending back with a warning.
-                             *
-                             * Generally, we can get commit requests that are not at the queue head after
-                             * a session moved (see ZOOKEEPER-2684). Let's denote the previous server of the session
-                             * with A, and the server that the session moved to with B (keep in mind that it is
-                             * possible that the session already moved from B to a new server C, and maybe C=A).
-                             * 1. If request.cxid < topPending.cxid : this means that the session requested this update
-                             * from A, then moved to B (i.e., which is us), and now B receives the commit
-                             * for the update after the session already performed several operations in B
-                             * (and therefore its cxid is higher than that old request).
-                             * 2. If request.cxid > topPending.cxid : this means that the session requested an updated
-                             * from B with cxid that is bigger than the one we know therefore in this case we
-                             * are A, and we lost the connection to the session. Given that we are waiting for a commit
-                             * for that update, it means that we already sent the request to the leader and it will
-                             * be committed at some point (in this case the order of cxid won't follow zxid, since zxid
-                             * is an increasing order). It is not safe for us to delete the session's queue at this
-                             * point, since it is possible that the session has newer requests in it after it moved
-                             * back to us. We just leave the queue as it is, and once the commit arrives (for the old
-                             * request), the finalRequestProcessor will see a closed cnxn handle, and just won't send a
-                             * response.
-                             * Also note that we don't have a local session, therefore we treat the request
-                             * like any other commit for a remote request, i.e., we perform the update without sending
-                             * a response.
-                             */
-                            LOG.warn("Got request " + request +
-                                    " but we are expecting request " + topPending);
-                            sessionQueue.addFirst(topPending);
-                        } else {
-                            /*
-                             * Generally, we want to send to the next processor our version of the request,
-                             * since it contains the session information that is needed for post update processing.
-                             * In more details, when a request is in the local queue, there is (or could be) a client
-                             * attached to this server waiting for a response, and there is other bookkeeping of
-                             * requests that are outstanding and have originated from this server
-                             * (e.g., for setting the max outstanding requests) - we need to update this info when an
-                             * outstanding request completes. Note that in the other case (above), the operation
-                             * originated from a different server and there is no local bookkeeping or a local client
-                             * session that needs to be notified.
-                             */
-                            topPending.setHdr(request.getHdr());
-                            topPending.setTxn(request.getTxn());
-                            topPending.zxid = request.zxid;
-                            request = topPending;
+                    // We only need to perform synchronization if we are on the last request in the queue
+                    if (committedRequests.size() == 1) {
+                        synchronized (committedRequests) {
+                            processCommittedRequest();
+                            committedRequests.notifyAll();
                         }
-                    }
-
-                    sendToNextProcessor(request);
-
-                    waitForEmptyPool();
-
-                    /*
-                     * Process following reads if any, remove session queue if
-                     * empty.
-                     */
-                    if (sessionQueue != null) {
-                        while (!stopped && !sessionQueue.isEmpty()
-                                && !needCommit(sessionQueue.peek())) {
-                            sendToNextProcessor(sessionQueue.poll());
-                        }
-                        // Remove empty queues
-                        if (sessionQueue.isEmpty()) {
-                            pendingRequests.remove(request.sessionId);
-                        }
+                    } else {
+                        processCommittedRequest();
                     }
                 }
             } while (!stoppedMainLoop);
@@ -327,10 +257,107 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
         LOG.info("CommitProcessor exited loop!");
     }
 
+    private void processCommittedRequest() throws IOException, InterruptedException {
+        // In case of a spurious wakeup in waitForCommittedRequests we should not
+        // remove the request from the queue until it has been processed
+        Request request = committedRequests.peek();
+
+        if (request == null) {
+            committedRequests.poll();
+            throw new IOException("Error: committed head is null");
+        }
+
+        /*
+         * Check if request is pending, if so, update it with the committed info
+         */
+        LinkedList<Request> sessionQueue = pendingRequests
+                .get(request.sessionId);
+        if (sessionQueue != null) {
+            // If session queue != null, then it is also not empty.
+            Request topPending = sessionQueue.poll();
+            if (request.cxid != topPending.cxid) {
+                /*
+                 * TL;DR - we should not encounter this scenario often under normal load.
+                 * We pass the commit to the next processor and put the pending back with a warning.
+                 *
+                 * Generally, we can get commit requests that are not at the queue head after
+                 * a session moved (see ZOOKEEPER-2684). Let's denote the previous server of the session
+                 * with A, and the server that the session moved to with B (keep in mind that it is
+                 * possible that the session already moved from B to a new server C, and maybe C=A).
+                 * 1. If request.cxid < topPending.cxid : this means that the session requested this update
+                 * from A, then moved to B (i.e., which is us), and now B receives the commit
+                 * for the update after the session already performed several operations in B
+                 * (and therefore its cxid is higher than that old request).
+                 * 2. If request.cxid > topPending.cxid : this means that the session requested an updated
+                 * from B with cxid that is bigger than the one we know therefore in this case we
+                 * are A, and we lost the connection to the session. Given that we are waiting for a commit
+                 * for that update, it means that we already sent the request to the leader and it will
+                 * be committed at some point (in this case the order of cxid won't follow zxid, since zxid
+                 * is an increasing order). It is not safe for us to delete the session's queue at this
+                 * point, since it is possible that the session has newer requests in it after it moved
+                 * back to us. We just leave the queue as it is, and once the commit arrives (for the old
+                 * request), the finalRequestProcessor will see a closed cnxn handle, and just won't send a
+                 * response.
+                 * Also note that we don't have a local session, therefore we treat the request
+                 * like any other commit for a remote request, i.e., we perform the update without sending
+                 * a response.
+                 */
+                LOG.warn("Got request " + request +
+                        " but we are expecting request " + topPending);
+                sessionQueue.addFirst(topPending);
+            } else {
+                /*
+                 * Generally, we want to send to the next processor our version of the request,
+                 * since it contains the session information that is needed for post update processing.
+                 * In more details, when a request is in the local queue, there is (or could be) a client
+                 * attached to this server waiting for a response, and there is other bookkeeping of
+                 * requests that are outstanding and have originated from this server
+                 * (e.g., for setting the max outstanding requests) - we need to update this info when an
+                 * outstanding request completes. Note that in the other case (above), the operation
+                 * originated from a different server and there is no local bookkeeping or a local client
+                 * session that needs to be notified.
+                 */
+            topPending.setHdr(request.getHdr());
+            topPending.setTxn(request.getTxn());
+            topPending.zxid = request.zxid;
+            request = topPending;
+        }}
+
+        sendToNextProcessor(request);
+
+        waitForEmptyPool();
+
+        committedRequests.poll();
+
+        /*
+         * Process following reads if any, remove session queue if
+         * empty.
+         */
+        if (sessionQueue != null) {
+            while (!stopped && !sessionQueue.isEmpty()
+                    && !needCommit(sessionQueue.peek())) {
+                sendToNextProcessor(sessionQueue.poll());
+            }
+            // Remove empty queues
+            if (sessionQueue.isEmpty()) {
+                pendingRequests.remove(request.sessionId);
+            }
+        }
+
+    }
+
     private void waitForEmptyPool() throws InterruptedException {
         synchronized(emptyPoolSync) {
             while ((!stopped) && isProcessingRequest()) {
                 emptyPoolSync.wait();
+            }
+        }
+    }
+
+    public void waitForCommittedRequests() throws InterruptedException {
+        synchronized (committedRequests) {
+            while ((!stopped) && !committedRequests.isEmpty()) {
+                committedRequests.wait();
             }
         }
     }
@@ -404,7 +431,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
             emptyPoolSync.notifyAll();
         }
     }
-    
+
     public void commit(Request request) {
         if (stopped || request == null) {
             return;
@@ -432,6 +459,9 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
         stopped = true;
         wakeupOnEmpty();
         wakeup();
+        synchronized (committedRequests) {
+            committedRequests.notifyAll();
+        }
         queuedRequests.clear();
         if (workerPool != null) {
             workerPool.stop();

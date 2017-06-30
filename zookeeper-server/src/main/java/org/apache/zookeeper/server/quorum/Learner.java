@@ -625,6 +625,8 @@ public class Learner {
             // New server type need to handle in-flight packets
             throw new UnsupportedOperationException("Unknown server type");
         }
+
+        zk.waitForCommits();
     }
     
     protected void revalidate(QuorumPacket qp) throws IOException {

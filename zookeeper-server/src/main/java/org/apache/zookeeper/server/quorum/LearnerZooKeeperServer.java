@@ -177,4 +177,8 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
                     e);
         }
     }
+
+    public void waitForCommits() throws InterruptedException {
+        commitProcessor.waitForCommittedRequests();
+    }
 }
