@@ -363,8 +363,9 @@ public class QuorumPeerConfig {
         // static configuration params see writeDynamicConfig()
         if (dynamicConfigFileStr == null) {
             setupQuorumPeerConfig(zkProp, true);
-            if (isDistributed()) {
+            if (isDistributed() && isReconfigEnabled()) {
                 // we don't backup static config for standalone mode.
+                // we also don't backup if reconfig feature is disabled.
                 backupOldConfig();
             }
         }

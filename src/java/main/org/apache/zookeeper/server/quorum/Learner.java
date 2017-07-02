@@ -374,6 +374,13 @@ public class Learner {
                 // The leader is going to dump the database
                 // db is clear as part of deserializeSnapshot()
                 zk.getZKDatabase().deserializeSnapshot(leaderIs);
+                // ZOOKEEPER-2819: overwrite config node content extracted
+                // from leader snapshot with local config, to avoid potential
+                // inconsistency of config node content during rolling restart.
+                if (!QuorumPeerConfig.isReconfigEnabled()) {
+                    LOG.debug("Reset config node content from local config after deserialization of snapshot.");
+                    zk.getZKDatabase().initConfigInZKDatabase(self.getQuorumVerifier());
+                }
                 String signature = leaderIs.readString("signature");
                 if (!signature.equals("BenWasHere")) {
                     LOG.error("Missing signature. Got " + signature);
