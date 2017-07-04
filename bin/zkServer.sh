@@ -155,10 +155,11 @@ start)
          exit 1
       fi
     fi
+    # Add a special START_SERVER_JVMFLAGS option only for `start` command to distinguish JVMFLAGS and SERVER_JVMFLAGS
     nohup "$JAVA" $ZOO_DATADIR_AUTOCREATE "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" \
     "-Dzookeeper.log.file=${ZOO_LOG_FILE}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
     -XX:+HeapDumpOnOutOfMemoryError -XX:OnOutOfMemoryError='kill -9 %p' \
-    -cp "$CLASSPATH" $JVMFLAGS $ZOOMAIN "$ZOOCFG" > "$_ZOO_DAEMON_OUT" 2>&1 < /dev/null &
+    -cp "$CLASSPATH" $JVMFLAGS $START_SERVER_JVMFLAGS $ZOOMAIN "$ZOOCFG" > "$_ZOO_DAEMON_OUT" 2>&1 < /dev/null &
     if [ $? -eq 0 ]
     then
       case "$OSTYPE" in
@@ -196,13 +197,13 @@ start-foreground)
     "${ZOO_CMD[@]}" $ZOO_DATADIR_AUTOCREATE "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" \
     "-Dzookeeper.log.file=${ZOO_LOG_FILE}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" \
     -XX:+HeapDumpOnOutOfMemoryError -XX:OnOutOfMemoryError='kill -9 %p' \
-    -cp "$CLASSPATH" $JVMFLAGS $ZOOMAIN "$ZOOCFG"
+    -cp "$CLASSPATH" $JVMFLAGS $START_SERVER_JVMFLAGS $ZOOMAIN "$ZOOCFG"
     ;;
 print-cmd)
     echo "\"$JAVA\" $ZOO_DATADIR_AUTOCREATE -Dzookeeper.log.dir=\"${ZOO_LOG_DIR}\" \
     -Dzookeeper.log.file=\"${ZOO_LOG_FILE}\" -Dzookeeper.root.logger=\"${ZOO_LOG4J_PROP}\" \
     -XX:+HeapDumpOnOutOfMemoryError -XX:OnOutOfMemoryError='kill -9 %p' \
-    -cp \"$CLASSPATH\" $JVMFLAGS $ZOOMAIN \"$ZOOCFG\" > \"$_ZOO_DAEMON_OUT\" 2>&1 < /dev/null"
+    -cp \"$CLASSPATH\" $JVMFLAGS $START_SERVER_JVMFLAGS $ZOOMAIN \"$ZOOCFG\" > \"$_ZOO_DAEMON_OUT\" 2>&1 < /dev/null"
     ;;
 stop)
     echo -n "Stopping zookeeper ... "
