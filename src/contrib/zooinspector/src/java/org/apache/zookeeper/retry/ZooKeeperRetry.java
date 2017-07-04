@@ -217,12 +217,12 @@ public class ZooKeeperRetry extends ZooKeeper {
     }
 
     @Override
-    public Stat setACL(String path, List<ACL> acl, int version)
+    public Stat setACL(String path, List<ACL> acl, int aclVersion)
             throws KeeperException, InterruptedException {
         int count = 0;
         do {
             try {
-                return super.setACL(path, acl, version);
+                return super.setACL(path, acl, aclVersion);
             } catch (KeeperException.ConnectionLossException e) {
                 LoggerFactory.getLogger().warn(
                         "ZooKeeper connection lost.  Trying to reconnect.");
