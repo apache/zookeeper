@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 
 import javax.management.JMException;
+import javax.security.sasl.SaslException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -129,18 +130,21 @@ public class QuorumPeerMain {
           ServerCnxnFactory cnxnFactory = ServerCnxnFactory.createFactory();
           cnxnFactory.configure(config.getClientPortAddress(),
                                 config.getMaxClientCnxns());
-  
-          quorumPeer = new QuorumPeer(config.getServers(),
-                                      new File(config.getDataDir()),
-                                      new File(config.getDataLogDir()),
-                                      config.getElectionAlg(),
-                                      config.getServerId(),
-                                      config.getTickTime(),
-                                      config.getInitLimit(),
-                                      config.getSyncLimit(),
-                                      config.getQuorumListenOnAllIPs(),
-                                      cnxnFactory,
-                                      config.getQuorumVerifier());
+
+          quorumPeer = getQuorumPeer();
+
+          quorumPeer.setQuorumPeers(config.getServers());
+          quorumPeer.setTxnFactory(new FileTxnSnapLog(
+                  new File(config.getDataDir()),
+                  new File(config.getDataLogDir())));
+          quorumPeer.setElectionType(config.getElectionAlg());
+          quorumPeer.setMyid(config.getServerId());
+          quorumPeer.setTickTime(config.getTickTime());
+          quorumPeer.setInitLimit(config.getInitLimit());
+          quorumPeer.setSyncLimit(config.getSyncLimit());
+          quorumPeer.setQuorumListenOnAllIPs(config.getQuorumListenOnAllIPs());
+          quorumPeer.setCnxnFactory(cnxnFactory);
+          quorumPeer.setQuorumVerifier(config.getQuorumVerifier());
           quorumPeer.setClientPortAddress(config.getClientPortAddress());
           quorumPeer.setMinSessionTimeout(config.getMinSessionTimeout());
           quorumPeer.setMaxSessionTimeout(config.getMaxSessionTimeout());
@@ -167,5 +171,10 @@ public class QuorumPeerMain {
           // warn, but generally this is ok
           LOG.warn("Quorum Peer interrupted", e);
       }
+    }
+
+    // @VisibleForTesting
+    protected QuorumPeer getQuorumPeer() throws SaslException {
+        return new QuorumPeer();
     }
 }
