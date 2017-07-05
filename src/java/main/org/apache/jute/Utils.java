@@ -200,14 +200,8 @@ public class Utils {
         if (barr == null || barr.length == 0) {
             return "";
         }
-        
-        StringBuilder sb = new StringBuilder(2*barr.length);
-        for(int idx = 0; idx < barr.length; idx++) {
-            byte b = barr[idx];
-            sb.append(hexchars[(b & 0xf0) >> 4]);
-            sb.append(hexchars[b & 0x0f]);
-        }
-        return sb.toString().toLowerCase();
+
+        return DatatypeConverter.printHexBinary(barr);
     }
     
     /**
