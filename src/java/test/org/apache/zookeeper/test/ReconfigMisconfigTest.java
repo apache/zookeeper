@@ -45,7 +45,7 @@ public class ReconfigMisconfigTest extends ZKTestCase {
 
     @Before
     public void setup() throws InterruptedException {
-        QuorumPeerConfig.setReconfigEnabled(false);
+        QuorumPeerConfig.setReconfigEnabled(true);
         // Get a three server quorum.
         qu = new QuorumUtil(1);
         qu.disableJMXTest = true;
@@ -77,7 +77,6 @@ public class ReconfigMisconfigTest extends ZKTestCase {
         // This tests the case where ZK ensemble does not have the super user's password configured.
         // Reconfig should fail as the super user has to be explicitly configured via
         // zookeeper.DigestAuthenticationProvider.superDigest.
-        QuorumPeerConfig.setReconfigEnabled(true);
         try {
             reconfigPort();
             Assert.fail(errorMsg);

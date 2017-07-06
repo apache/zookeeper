@@ -57,7 +57,7 @@ public class ReconfigExceptionTest extends ZKTestCase {
     @Before
     public void setup() throws InterruptedException {
         System.setProperty(authProvider, superDigest);
-        QuorumPeerConfig.setReconfigEnabled(false);
+        QuorumPeerConfig.setReconfigEnabled(true);
 
         // Get a three server quorum.
         qu = new QuorumUtil(1);
@@ -88,10 +88,11 @@ public class ReconfigExceptionTest extends ZKTestCase {
     }
 
     @Test(timeout = 10000)
-    public void testReconfigDisabledByDefault() throws InterruptedException {
+    public void testReconfigDisabled() throws InterruptedException {
+        QuorumPeerConfig.setReconfigEnabled(false);
         try {
             reconfigPort();
-            Assert.fail("Reconfig should be disabled by default.");
+            Assert.fail("Reconfig should be disabled.");
         } catch (KeeperException e) {
             Assert.assertTrue(e.code() == KeeperException.Code.RECONFIGDISABLED);
         }
@@ -99,9 +100,6 @@ public class ReconfigExceptionTest extends ZKTestCase {
 
     @Test(timeout = 10000)
     public void testReconfigFailWithoutAuth() throws InterruptedException {
-        // Now enable reconfig feature by turning on the switch.
-        QuorumPeerConfig.setReconfigEnabled(true);
-
         try {
             reconfigPort();
             Assert.fail("Reconfig should fail without auth.");
@@ -113,8 +111,6 @@ public class ReconfigExceptionTest extends ZKTestCase {
 
     @Test(timeout = 10000)
     public void testReconfigEnabledWithSuperUser() throws InterruptedException {
-        QuorumPeerConfig.setReconfigEnabled(true);
-
         try {
             zkAdmin.addAuthInfo("digest", "super:test".getBytes());
             Assert.assertTrue(reconfigPort());
@@ -126,7 +122,6 @@ public class ReconfigExceptionTest extends ZKTestCase {
     @Test(timeout = 10000)
     public void testReconfigFailWithAuthWithNoACL() throws InterruptedException {
         resetZKAdmin();
-        QuorumPeerConfig.setReconfigEnabled(true);
 
         try {
             zkAdmin.addAuthInfo("digest", "user:test".getBytes());
@@ -141,7 +136,6 @@ public class ReconfigExceptionTest extends ZKTestCase {
     @Test(timeout = 10000)
     public void testReconfigEnabledWithAuthAndWrongACL() throws InterruptedException {
         resetZKAdmin();
-        QuorumPeerConfig.setReconfigEnabled(true);
 
         try {
             zkAdmin.addAuthInfo("digest", "super:test".getBytes());
@@ -163,7 +157,6 @@ public class ReconfigExceptionTest extends ZKTestCase {
     @Test(timeout = 10000)
     public void testReconfigEnabledWithAuthAndACL() throws InterruptedException {
         resetZKAdmin();
-        QuorumPeerConfig.setReconfigEnabled(true);
 
         try {
             zkAdmin.addAuthInfo("digest", "super:test".getBytes());
