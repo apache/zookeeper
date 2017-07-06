@@ -28,9 +28,15 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ReconfigTest;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 public class ReconfigRecoveryTest extends QuorumPeerTestBase {
+    @Before
+    public void setup() {
+        QuorumPeerConfig.setReconfigEnabled(true);
+    }
+
     /**
      * Reconfiguration recovery - test that a reconfiguration is completed if
      * leader has .next file during startup and new config is not running yet
