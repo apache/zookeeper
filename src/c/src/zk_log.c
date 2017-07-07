@@ -23,6 +23,9 @@
 #include "zookeeper_log.h"
 #ifndef WIN32
 #include <unistd.h>
+#else
+typedef DWORD pid_t;
+#include <process.h> /* for getpid */
 #endif
 
 #include <stdarg.h>

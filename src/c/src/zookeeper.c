@@ -83,6 +83,14 @@
 #include <mach/mach.h>
 #endif
 
+#ifdef WIN32
+#include <process.h> /* for getpid */
+#include <direct.h> /* for getcwd */
+#define EAI_ADDRFAMILY WSAEINVAL /* is this still needed? */
+#define EHOSTDOWN EPIPE
+#define ESTALE ENODEV
+#endif
+
 #define IF_DEBUG(x) if(logLevel==ZOO_LOG_LEVEL_DEBUG) {x;}
 
 const int ZOOKEEPER_WRITE = 1 << 0;
@@ -2115,10 +2123,12 @@ out:
     return rc;
 }
 
+#if !defined(WIN32) && !defined(min)
 static inline int min(int a, int b)
 {
     return a < b ? a : b;
 }
+#endif
 
 static void zookeeper_set_sock_noblock(zhandle_t *zh, socket_t sock)
 {
@@ -2182,7 +2192,16 @@ static socket_t zookeeper_connect(zhandle_t *zh,
     rc = connect(fd, (struct sockaddr *)addr, addr_len);
 
 #ifdef _WIN32
-    get_errno();
+    errno = GetLastError();
+
+#ifndef EWOULDBLOCK
+#define EWOULDBLOCK WSAEWOULDBLOCK
+#endif
+
+#ifndef EINPROGRESS
+#define EINPROGRESS WSAEINPROGRESS
+#endif
+
 #if _MSC_VER >= 1600
     switch(errno) {
     case WSAEWOULDBLOCK:
