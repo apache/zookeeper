@@ -967,14 +967,6 @@ public class QuorumCnxManager {
             this.sock = sock;
             this.sw = sw;
             this.din = din;
-            try {
-                // OK to wait until socket disconnects while reading.
-                sock.setSoTimeout(0);
-            } catch (IOException e) {
-                LOG.error("Error while accessing socket for " + sid, e);
-                closeSocket(sock);
-                running = false;
-            }
         }
         
         /**
