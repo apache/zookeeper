@@ -1,0 +1,220 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+cmake_minimum_required(VERSION 3.6)
+
+project(zookeeper VERSION 3.5.2)
+set(email user@zookeeper.apache.org)
+set(description "zookeeper C client")
+
+# general options
+include_directories(include tests generated ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
+if(UNIX)
+  add_compile_options(-Wall -fPIC)
+elseif(WIN32)
+  add_compile_options(/W3)
+endif()
+add_definitions(-DUSE_STATIC_LIB)
+
+# TODO: Enable /WX and /W4 on Windows. Currently there are ~1000 warnings.
+# TODO: Add Solaris support.
+# TODO: Add debug configuration.
+# TODO: Add a shared library option.
+
+# Sync API option
+option(WANT_SYNCAPI "Enables Sync API support" ON)
+if(WANT_SYNCAPI)
+  add_definitions(-DTHREADED)
+  if(WIN32)
+    add_compile_options(/MT)
+  endif()
+endif()
+
+# CppUnit option
+option(WANT_CPPUNIT "Enables CppUnit" ON)
+
+# header checks
+function(to_have in out)
+  string(TOUPPER ${in} str)
+  string(REGEX REPLACE "/|\\." "_" str ${str})
+  set(${out} "HAVE_${str}" PARENT_SCOPE)
+endfunction()
+
+# include file checks
+foreach(f generated/zookeeper.jute.h generated/zookeeper.jute.c)
+  if(EXISTS "${CMAKE_SOURCE_DIR}/${f}")
+    to_have(${f} name)
+    set(${name} 1)
+  else()
+    message(FATAL_ERROR
+      "jute files are missing!\n"
+      "Please run 'ant compile_jute' while in the zookeeper top level directory.")
+  endif()
+endforeach()
+
+include(CheckIncludeFile)
+set(check_headers
+  arpa/inet.h
+  dlfcn.h
+  fcntl.h
+  inttypes.h
+  memory.h
+  netdb.h
+  netinet/in.h
+  stdint.h
+  stdlib.h
+  string.h
+  strings.h
+  sys/socket.h
+  sys/stat.h
+  sys/time.h
+  sys/types.h
+  unistd.h
+  sys/utsname.h)
+
+foreach(f ${check_headers})
+  to_have(${f} name)
+  check_include_file(${f} ${name})
+endforeach()
+
+# function checks
+include(CheckFunctionExists)
+set(check_functions
+  getcwd
+  gethostbyname
+  gethostname
+  getlogin
+  getpwuid_r
+  gettimeofday
+  getuid
+  memmove
+  memset
+  poll
+  socket
+  strchr
+  strdup
+  strerror
+  strtol)
+
+foreach(fn ${check_functions})
+  to_have(${fn} name)
+  check_function_exists(${fn} ${name})
+endforeach()
+
+# library checks
+set(check_libraries rt m pthread)
+foreach(lib ${check_libraries})
+  to_have("lib${lib}" name)
+  find_library(${name} ${lib})
+endforeach()
+
+# IPv6 check
+include(CheckStructHasMember)
+check_struct_has_member("struct sockaddr_in6" sin6_addr "netinet/in.h" ZOO_IPV6_ENABLED)
+
+# configure
+configure_file(cmake_config.h.in config.h)
+
+# hashtable library
+set(hashtable_sources src/hashtable/hashtable_itr.c src/hashtable/hashtable.c)
+add_library(hashtable STATIC ${hashtable_sources})
+
+# zookeeper library
+set(zookeeper_sources
+  src/zookeeper.c
+  src/recordio.c
+  generated/zookeeper.jute.c
+  src/zk_log.c
+  src/zk_hashtable.c
+  src/addrvec.c)
+
+if(WANT_SYNCAPI)
+  list(APPEND zookeeper_sources src/mt_adaptor.c)
+else()
+  list(APPEND zookeeper_sources src/st_adaptor.c)
+endif()
+
+if(WIN32)
+  list(APPEND zookeeper_sources src/winport.c)
+endif()
+
+add_library(zookeeper STATIC ${zookeeper_sources})
+target_link_libraries(zookeeper PUBLIC hashtable)
+if(UNIX)
+  target_link_libraries(zookeeper PUBLIC m rt)
+elseif(WIN32)
+  target_link_libraries(zookeeper PUBLIC wsock32 Ws2_32)
+endif()
+
+if(WANT_SYNCAPI AND NOT WIN32)
+  target_link_libraries(zookeeper PUBLIC pthread)
+endif()
+# TODO: Specify symbols to export.
+
+# cli executable
+add_executable(cli src/cli.c)
+target_link_libraries(cli zookeeper)
+
+# load_gen executable
+if(WANT_SYNCAPI AND NOT WIN32)
+  add_executable(load_gen src/load_gen.c)
+  target_link_libraries(load_gen zookeeper)
+endif()
+
+# tests
+set(test_sources
+  tests/TestDriver.cc
+  tests/LibCMocks.cc
+  tests/LibCSymTable.cc
+  tests/MocksBase.cc
+  tests/ZKMocks.cc
+  tests/Util.cc
+  tests/ThreadingUtil.cc
+  tests/TestZookeeperInit.cc
+  tests/TestZookeeperClose.cc
+  tests/TestReconfig.cc
+  tests/TestReconfigServer.cc
+  tests/TestClientRetry.cc
+  tests/TestOperations.cc
+  tests/TestMulti.cc
+  tests/TestWatchers.cc
+  tests/TestClient.cc
+  tests/ZooKeeperQuorumServer.cc
+  tests/TestReadOnlyClient.cc)
+
+if(WANT_SYNCAPI)
+  list(APPEND test_sources tests/PthreadMocks.cc)
+endif()
+
+if(WANT_CPPUNIT)
+  add_executable(zktest ${test_sources})
+  target_compile_definitions(zktest
+    PRIVATE -DZKSERVER_CMD="${CMAKE_SOURCE_DIR}/tests/zkServer.sh")
+  target_link_libraries(zktest zookeeper cppunit dl)
+
+  file(STRINGS tests/wrappers.opt symbol_wrappers)
+  if(WANT_SYNCAPI)
+    file(STRINGS tests/wrappers-mt.opt symbol_wrappers_mt)
+  endif()
+
+  target_link_libraries(zktest ${symbol_wrappers} ${symbol_wrappers_mt})
+
+  enable_testing()
+  add_test(NAME zktest_runner COMMAND zktest)
+  set_property(TEST zktest_runner PROPERTY ENVIRONMENT
+    "ZKROOT=${CMAKE_SOURCE_DIR}/../.."
+    "CLASSPATH=$CLASSPATH:$CLOVER_HOME/lib/clover.jar")
+endif()

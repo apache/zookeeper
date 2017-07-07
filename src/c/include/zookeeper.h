@@ -20,12 +20,17 @@
 #define ZOOKEEPER_H_
 
 #include <stdlib.h>
-#ifndef WIN32
+
+#include "config.h"
+
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
-#include <sys/time.h>
-#else
-#include "winconfig.h"
 #endif
+
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+
 #include <stdio.h>
 #include <ctype.h>
 
