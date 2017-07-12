@@ -131,8 +131,9 @@ public class CnxManagerTest extends ZKTestCase {
                     failed = true;
                     return;
                 }
-
-                cnxManager.testInitiateConnection(sid);
+                Socket socket = new Socket();
+                cnxManager.establishConnection(sid, socket);
+                cnxManager.initiateConnection(sid, socket);
 
                 m = cnxManager.pollRecvQueue(3000, TimeUnit.MILLISECONDS);
                 if(m == null){

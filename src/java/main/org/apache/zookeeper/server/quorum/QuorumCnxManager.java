@@ -233,25 +233,25 @@ public class QuorumCnxManager {
         listener = new Listener();
         listener.setName("QuorumPeerListener");
     }
-
+    
     /**
-     * Invokes initiateConnection for testing purposes
-     * 
+     * establish Connection with sid using its electionAddr.
      * @param sid
+     * @param sock
+     * @throws IOException
      */
-    public void testInitiateConnection(long sid) throws Exception {
-        LOG.debug("Opening channel to server " + sid);
-        Socket sock = new Socket();
+	public void establishConnection(Long sid, Socket sock) throws IOException {
+		LOG.debug("Opening channel to server " + sid);
         setSockOpts(sock);
         sock.connect(self.getVotingView().get(sid).electionAddr, cnxTO);
-        initiateConnection(sock, sid);
-    }
+        LOG.debug("Connected to server " + sid);
+	}
     
     /**
      * If this server has initiated the connection, then it gives up on the
      * connection if it loses challenge. Otherwise, it keeps the connection.
      */
-    public boolean initiateConnection(Socket sock, Long sid) {
+    public boolean initiateConnection(Long sid, Socket sock) {
         try {
             // Use BufferedOutputStream to reduce the number of IP packets. This is
             // important for x-DC scenarios.
@@ -430,20 +430,17 @@ public class QuorumCnxManager {
      *  @param sid  server id
      *  @return boolean success indication
      */
-    synchronized private boolean connectOne(long sid, InetSocketAddress electionAddr){
+    synchronized private boolean connectOne(long sid, InetSocketAddress electionAddr) {
         if (senderWorkerMap.get(sid) != null) {
             LOG.debug("There is a connection already for server " + sid);
             return true;
         }
 
         Socket sock = null;
-        try {
-             LOG.debug("Opening channel to server " + sid);
+        try {             
              sock = new Socket();
-             setSockOpts(sock);
-             sock.connect(electionAddr, cnxTO);
-             LOG.debug("Connected to server " + sid);
-             initiateConnection(sock, sid);
+             establishConnection(sid, sock);
+             initiateConnection(sid, sock);
              return true;
          } catch (UnresolvedAddressException e) {
              // Sun doesn't include the address that causes this
@@ -469,7 +466,7 @@ public class QuorumCnxManager {
      * 
      *  @param sid  server id
      */
-    synchronized void connectOne(long sid){
+    synchronized void connectOne(long sid) {
         if (senderWorkerMap.get(sid) != null) {
             LOG.debug("There is a connection already for server " + sid);
             return;
@@ -507,7 +504,7 @@ public class QuorumCnxManager {
      * doesn't exist.
      */
     
-    public void connectAll(){
+    public void connectAll() {
         long sid;
         for(Enumeration<Long> en = queueSendMap.keys();
             en.hasMoreElements();){
@@ -622,7 +619,7 @@ public class QuorumCnxManager {
             int numRetries = 0;
             InetSocketAddress addr;
             Socket client = null;
-            while((!shutdown) && (numRetries < 3)){
+            while((!shutdown) && (numRetries < 3)) {
                 try {
                     ss = new ServerSocket();
                     ss.setReuseAddress(true);
@@ -684,14 +681,14 @@ public class QuorumCnxManager {
         /**
          * Halts this listener thread.
          */
-        void halt(){
-            try{
+        void halt() {
+            try {
                 LOG.debug("Trying to close listener: " + ss);
                 if(ss != null) {
                     LOG.debug("Closing listener: " + self.getId());
                     ss.close();
                 }
-            } catch (IOException e){
+            } catch (IOException e) {
                 LOG.warn("Exception when shutting down listener: " + e);
             }
         }
@@ -742,34 +739,33 @@ public class QuorumCnxManager {
          * 
          * @return RecvWorker 
          */
-        synchronized RecvWorker getRecvWorker(){
+        synchronized RecvWorker getRecvWorker() {
             return recvWorker;
         }
                 
-        synchronized boolean finish() {
-            LOG.debug("Calling finish for " + sid);
-            
-            if(!running){
-                /*
-                 * Avoids running finish() twice. 
-                 */
-                return running;
-            }
-            
-            running = false;
-            closeSocket(sock);
+		boolean finish() {
+			if (running) {
+				synchronized (this) {
+					if (running) {
+						LOG.debug("Calling finish for " + sid);
 
-            this.interrupt();
-            if (recvWorker != null) {
-                recvWorker.finish();
-            }
+						closeSocket(sock);
 
-            LOG.debug("Removing entry from senderWorkerMap sid=" + sid);
+						this.interrupt();
+						if (recvWorker != null) {
+							recvWorker.finish();
+						}
 
-            senderWorkerMap.remove(sid, this);
-            threadCnt.decrementAndGet();
-            return running;
-        }
+						LOG.debug("Removing entry from senderWorkerMap sid=" + sid);
+
+						senderWorkerMap.remove(sid, this);
+						threadCnt.decrementAndGet();
+						running = false;
+					}
+				}
+			}
+			return running;
+		}
         
         synchronized void send(ByteBuffer b) throws IOException {
             byte[] msgBytes = new byte[b.capacity()];
@@ -830,7 +826,7 @@ public class QuorumCnxManager {
                             break;
                         }
 
-                        if(b != null){
+                        if (b != null) {
                             lastMessageSent.put(sid, b);
                             send(b);
                         }
@@ -880,19 +876,20 @@ public class QuorumCnxManager {
          * 
          * @return boolean  Value of variable running
          */
-        synchronized boolean finish() {
-            if(!running){
-                /*
-                 * Avoids running finish() twice. 
-                 */
-                return running;
-            }
-            running = false;            
+		boolean finish() {
+			if (running) {
+				synchronized (this) {
+					if (running) {
+						LOG.debug("Calling finish for " + sid);
+						this.interrupt();
+						threadCnt.decrementAndGet();
 
-            this.interrupt();
-            threadCnt.decrementAndGet();
-            return running;
-        }
+						running = false;
+					}
+				}
+			}
+			return running;
+		}
 
         @Override
         public void run() {
