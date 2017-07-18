@@ -25,9 +25,31 @@
 #define WINPORT_H_
 
 #ifdef WIN32
-#include <winconfig.h>
+#include "winconfig.h"
+
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#include <winsock2.h> /* must always be included before ws2tcpip.h */
+#include <ws2tcpip.h> /* for struct sock_addr used in zookeeper.h */
+
+/* POSIX names are deprecated, use ISO conformant names instead. */
+#define strdup _strdup
+#define getcwd _getcwd
+#define getpid _getpid
+
+/* Windows "secure" versions of POSIX reentrant functions */
+#define strtok_r strtok_s
+#define localtime_r(a,b) localtime_s(b,a)
+
+/* After this version of MSVC, snprintf became a defined function,
+   and so cannot be redefined, nor can #ifndef be used to guard it. */
+#if ((defined(_MSC_VER) && _MSC_VER < 1900) || !defined(_MSC_VER))
+#define snprintf _snprintf
+#endif
+
+
 #include <errno.h>
 #include <process.h>
+#include <stdint.h> /* for int64_t */
 #include <stdlib.h>
 #include <malloc.h>
 
@@ -105,14 +127,7 @@ int pthread_key_delete(pthread_key_t key);
 void *pthread_getspecific(pthread_key_t key);
 int pthread_setspecific(pthread_key_t key, const void *value);
 
-inline int gettimeofday(struct timeval *tp, void *tzp) {
-        int64_t now = 0;
-        if (tzp != 0) { errno = EINVAL; return -1; }
-        GetSystemTimeAsFileTime( (LPFILETIME)&now );
-        tp->tv_sec = (long)(now / 10000000 - 11644473600LL);
-        tp->tv_usec = (now / 10) % 1000000;
-        return 0;
-}
+int gettimeofday(struct timeval *tp, void *tzp);
 int close(SOCKET fd);
 int Win32WSAStartup();
 void Win32WSACleanup();

@@ -20,12 +20,22 @@
 #define ZOOKEEPER_H_
 
 #include <stdlib.h>
-#ifndef WIN32
+
+#include "config.h"
+
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
-#include <sys/time.h>
-#else
-#include "winconfig.h"
 #endif
+
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+
+#ifdef WIN32
+#include <winsock2.h> /* must always be included before ws2tcpip.h */
+#include <ws2tcpip.h> /* for struct sock_addr and socklen_t */
+#endif
+
 #include <stdio.h>
 #include <ctype.h>
 

@@ -21,7 +21,9 @@
 #include <assert.h>
 #include <errno.h>
 #ifdef WIN32
-#include <WS2tcpip.h>
+#define random rand /* replace POSIX random with Windows rand */
+#include <winsock2.h> /* must always be included before ws2tcpip.h */
+#include <ws2tcpip.h> /* for sockaddr_storage */
 #include "winport.h"
 #endif
 
