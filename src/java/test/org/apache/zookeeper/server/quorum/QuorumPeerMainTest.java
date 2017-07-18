@@ -43,6 +43,7 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
+import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.After;
 import org.junit.Assert;
@@ -83,7 +84,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         String quorumCfgSection =
             "server.1=127.0.0.1:" + PortAssignment.unique()
             + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1
-            + "\nserver.2=127.0.0.1:" + PortAssignment.unique() 
+            + "\nserver.2=127.0.0.1:" + PortAssignment.unique()
             + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP2;
 
         MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
@@ -569,7 +570,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             + ":" + electionPort1 + ";" + CLIENT_PORT_QP1
             + "\nserver.2=127.0.0.1:" + PortAssignment.unique()
             + ":" +  electionPort2 + ";" + CLIENT_PORT_QP2;
-        
+
         MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
         MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection);
         q1.start();
@@ -782,6 +783,96 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                 minSessionTimeOut, quorumPeer.getMinSessionTimeout());
         Assert.assertEquals("maximumSessionTimeOut is wrong",
                 maxSessionTimeOut, quorumPeer.getMaxSessionTimeout());
+    }
+
+    @Test
+    public void testDataLostInDiskTxnSync() throws Exception {
+        SyncRequestProcessor.setSnapCount(100);
+        // 1. set up an ensemble with 5 Servers
+        ClientBase.setupTestEnv();
+        final int SERVER_COUNT = 5;
+        final String path = "/zk-testDataLostInDiskTxnSync-";
+        final byte[] data = new byte[512];
+        final int clientPorts[] = new int[SERVER_COUNT];
+        StringBuilder sb = new StringBuilder();
+        for(int i = 0; i < SERVER_COUNT; i++) {
+              clientPorts[i] = PortAssignment.unique();
+              sb.append("server."+i+"=127.0.0.1:"+PortAssignment.unique()+":"+PortAssignment.unique()+"\n");
+        }
+        String quorumCfgSection = sb.toString();
+
+        MainThread mt[] = new MainThread[SERVER_COUNT];
+        ZooKeeper zk[] = new ZooKeeper[SERVER_COUNT];
+        for(int i = 0; i < SERVER_COUNT; i++) {
+              mt[i] = new MainThread(i, clientPorts[i], quorumCfgSection);
+              mt[i].start();
+              zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i], ClientBase.CONNECTION_TIMEOUT, this);
+        }
+
+        waitForAll(zk, States.CONNECTED);
+
+        int leader = -1;
+        int followerA = -1;
+        int followerB = -1;
+        for (int i = SERVER_COUNT - 1; i >= 0; i--) {
+            if (mt[i].main.quorumPeer.leader != null) {
+                leader = i;
+            } else if (followerB == -1) {
+                followerB = i;
+            } else if (followerA == -1) {
+                followerA = i;
+            }
+        }
+
+        // 2. send a certain number of requests
+        int index = 0;
+        int numOfRequests = 200;
+        for (int i = 0; i < numOfRequests; i++) {
+            zk[leader].create(path + index++,
+               data, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        }
+        // 3. shutdown one follower A and issue 1 more requests
+
+        mt[followerA].shutdown();
+        waitForOne(zk[followerA], States.CONNECTING);
+
+        zk[leader].create(path + index++,
+           data, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        // 4. shutdown another follower B and issue more requests until
+        //    B will take a snap sync with leader
+        mt[followerB].shutdown();
+        waitForOne(zk[followerB], States.CONNECTING);
+
+        int numOfRequestsAfterB = 750;
+        for (int i = 0; i < numOfRequestsAfterB; i++) {
+            zk[leader].create(path + index++,
+               data, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        }
+
+        // 5. start up follower B to have a snap sync
+        mt[followerB].start();
+        waitForOne(zk[followerB], States.CONNECTED);
+        // make sure there is a snap sync
+
+        // 6. make followerB the new leader
+        mt[leader].shutdown();
+        waitForOne(zk[leader], States.CONNECTING);
+        waitForOne(zk[followerB], States.CONNECTED);
+        Assert.assertTrue(mt[followerB].main.quorumPeer.leader != null);
+
+        // 7. send a new request to the quorum
+        zk[followerB].create(path + index++,
+           data, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        // 8. start up follower A to have a on disk diff sync,
+        //    check that all the ZNodes are exist
+        mt[followerA].start();
+        waitForOne(zk[followerA], States.CONNECTED);
+
+        for (int i = 0; i < index; i++) {
+            Assert.assertTrue("Follower should have " + path + i, zk[followerA].exists(path + i, false) != null);
+        }
     }
 
 }
