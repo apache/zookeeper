@@ -16,13 +16,16 @@
  * limitations under the License.
  */
 
-#ifndef DLL_EXPORT
+#if !defined(DLL_EXPORT) && !defined(USE_STATIC_LIB)
 #  define USE_STATIC_LIB
 #endif
 
 #include "zookeeper_log.h"
 #ifndef WIN32
 #include <unistd.h>
+#else
+typedef DWORD pid_t;
+#include <process.h> /* for getpid */
 #endif
 
 #include <stdarg.h>
