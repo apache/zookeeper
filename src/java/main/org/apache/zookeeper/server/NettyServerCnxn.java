@@ -25,6 +25,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
@@ -95,26 +96,7 @@ public class NettyServerCnxn extends ServerCnxn {
         // connection bean leak under certain race conditions.
         factory.unregisterConnection(this);
 
-        synchronized(factory.cnxns){
-            // if this is not in cnxns then it's already closed
-            if (!factory.cnxns.remove(this)) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("cnxns size:" + factory.cnxns.size());
-                }
-                return;
-            }
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("close in progress for sessionid:0x"
-                        + Long.toHexString(sessionId));
-            }
-
-            synchronized (factory.ipMap) {
-                Set<NettyServerCnxn> s =
-                    factory.ipMap.get(((InetSocketAddress)channel
-                            .getRemoteAddress()).getAddress());
-                s.remove(this);
-            }
-        }
+        factory.removeCnxn(this);
 
         if (channel.isOpen()) {
             channel.close();
@@ -204,6 +186,7 @@ public class NettyServerCnxn extends ServerCnxn {
     @Override
     public void setSessionId(long sessionId) {
         this.sessionId = sessionId;
+        factory.addSession(sessionId, this);
     }
 
     @Override
@@ -225,6 +208,15 @@ public class NettyServerCnxn extends ServerCnxn {
         }
         channel.write(wrappedBuffer(sendBuffer));
         packetSent();
+    }
+
+    @Override
+    public InetAddress getSocketAddress() {
+        if (channel == null) {
+            return null;
+        }
+
+        return ((InetSocketAddress)(channel.getRemoteAddress())).getAddress();
     }
 
     /**
