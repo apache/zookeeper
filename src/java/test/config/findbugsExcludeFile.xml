@@ -75,6 +75,11 @@
   </Match>
 
   <Match>
+      <Class name="org.apache.zookeeper.server.quorum.QuorumAuthPacket" />
+      <Bug code="EI2, EI" />
+  </Match>
+
+  <Match>
     <Class name="org.apache.zookeeper.ClientCnxn"/>
       <Bug code="EI, EI2" />
   </Match>

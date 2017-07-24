@@ -48,6 +48,7 @@ import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
+import org.apache.zookeeper.server.quorum.auth.QuorumAuth;
 import org.apache.zookeeper.server.quorum.flexible.QuorumHierarchical;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
@@ -91,6 +92,17 @@ public class QuorumPeerConfig {
     protected boolean syncEnabled = true;
 
     protected LearnerType peerType = LearnerType.PARTICIPANT;
+
+    /**
+     * Configurations for the quorumpeer-to-quorumpeer sasl authentication
+     */
+    protected boolean quorumServerRequireSasl = false;
+    protected boolean quorumLearnerRequireSasl = false;
+    protected boolean quorumEnableSasl = false;
+    protected String quorumServicePrincipal = QuorumAuth.QUORUM_KERBEROS_SERVICE_PRINCIPAL_DEFAULT_VALUE;
+    protected String quorumLearnerLoginContext = QuorumAuth.QUORUM_LEARNER_SASL_LOGIN_CONTEXT_DFAULT_VALUE;
+    protected String quorumServerLoginContext = QuorumAuth.QUORUM_SERVER_SASL_LOGIN_CONTEXT_DFAULT_VALUE;
+    protected int quorumCnxnThreadsSize;
 
     /**
      * Minimum snapshot retain count.
@@ -292,9 +304,45 @@ public class QuorumPeerConfig {
                 }
             } else if ((key.startsWith("server.") || key.startsWith("group") || key.startsWith("weight")) && zkProp.containsKey("dynamicConfigFile")) {
                 throw new ConfigException("parameter: " + key + " must be in a separate dynamic config file");
+            } else if (key.equals(QuorumAuth.QUORUM_SASL_AUTH_ENABLED)) {
+                quorumEnableSasl = Boolean.parseBoolean(value);
+            } else if (key.equals(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED)) {
+                quorumServerRequireSasl = Boolean.parseBoolean(value);
+            } else if (key.equals(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED)) {
+                quorumLearnerRequireSasl = Boolean.parseBoolean(value);
+            } else if (key.equals(QuorumAuth.QUORUM_LEARNER_SASL_LOGIN_CONTEXT)) {
+                quorumLearnerLoginContext = value;
+            } else if (key.equals(QuorumAuth.QUORUM_SERVER_SASL_LOGIN_CONTEXT)) {
+                quorumServerLoginContext = value;
+            } else if (key.equals(QuorumAuth.QUORUM_KERBEROS_SERVICE_PRINCIPAL)) {
+                quorumServicePrincipal = value;
+            } else if (key.equals("quorum.cnxn.threads.size")) {
+                quorumCnxnThreadsSize = Integer.parseInt(value);
             } else {
                 System.setProperty("zookeeper." + key, value);
             }
+        }
+
+        if (!quorumEnableSasl && quorumServerRequireSasl) {
+            throw new IllegalArgumentException(
+                    QuorumAuth.QUORUM_SASL_AUTH_ENABLED
+                            + " is disabled, so cannot enable "
+                            + QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED);
+        }
+        if (!quorumEnableSasl && quorumLearnerRequireSasl) {
+            throw new IllegalArgumentException(
+                    QuorumAuth.QUORUM_SASL_AUTH_ENABLED
+                            + " is disabled, so cannot enable "
+                            + QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED);
+        }
+        // If quorumpeer learner is not auth enabled then self won't be able to
+        // join quorum. So this condition is ensuring that the quorumpeer learner
+        // is also auth enabled while enabling quorum server require sasl.
+        if (!quorumLearnerRequireSasl && quorumServerRequireSasl) {
+            throw new IllegalArgumentException(
+                    QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED
+                            + " is disabled, so cannot enable "
+                            + QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED);
         }
 
         // Reset to MIN_SNAP_RETAIN_COUNT if invalid (less than 3)
