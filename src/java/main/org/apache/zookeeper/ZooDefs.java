@@ -21,10 +21,14 @@ package org.apache.zookeeper;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 
+@InterfaceAudience.Public
 public class ZooDefs {
+
+    @InterfaceAudience.Public
     public interface OpCode {
         public final int notification = 0;
 
@@ -67,6 +71,7 @@ public class ZooDefs {
         public final int error = -1;
     }
 
+    @InterfaceAudience.Public
     public interface Perms {
         int READ = 1 << 0;
 
@@ -81,6 +86,7 @@ public class ZooDefs {
         int ALL = READ | WRITE | CREATE | DELETE | ADMIN;
     }
 
+    @InterfaceAudience.Public
     public interface Ids {
         /**
          * This Id represents anyone.

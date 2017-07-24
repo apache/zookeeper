@@ -17,6 +17,7 @@
 
 package org.apache.zookeeper;
 
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.AsyncCallback.MultiCallback;
 import org.apache.zookeeper.data.ACL;
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ import java.util.List;
  * @since 3.4.0
  *
  */
+@InterfaceAudience.Public
 public class Transaction {
     private ZooKeeper zk;
     private List<Op> ops = new ArrayList<Op>();

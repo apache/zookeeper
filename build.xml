@@ -117,7 +117,9 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
     <property name="ivy.test.lib" value="${build.dir}/test/lib"/>
     <property name="ivy.jdiff.lib" value="${build.dir}/jdiff/lib"/>
     <property name="ivysettings.xml" value="${basedir}/ivysettings.xml"/>
-    
+
+    <property name="audience-annotations.version" value="0.5.0" />
+
     <property name="mvnrepo" value="https://repo1.maven.org/maven2"/>
     <property name="tsk.org" value="/org/apache/maven/maven-ant-tasks/"/>
     <property name="ant-task.version" value="2.1.3"/>
@@ -273,7 +275,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
     <target name="jute" depends="init">
         <javac srcdir="${java.src.dir}" destdir="${build.classes}" includeantruntime="false"
             target="${javac.target}" source="${javac.source}"
-            includes="org/apache/jute/**" debug="on" />
+            includes="org/apache/jute/**" debug="on" classpath="${ivy.lib}/audience-annotations-${audience-annotations.version}.jar" />
     </target>
 
     <target name="compile_jute_uptodate">
@@ -340,9 +342,9 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
         </java>
     </target>
     
-    <target name="build-generated" depends="compile_jute,version-info" >
+    <target name="build-generated" depends="compile_jute,version-info,ivy-retrieve" >
         <javac srcdir="${src_generated.dir}" destdir="${build.classes}" includeantruntime="false"
-            target="${javac.target}" source="${javac.source}" debug="on" />
+            target="${javac.target}" source="${javac.source}" debug="on" classpath="${ivy.lib}/audience-annotations-${audience-annotations.version}.jar" />
     </target>
     
     <target name="ivy-download" unless="ivy.jar.exists" depends="init">
@@ -498,23 +500,24 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
          windowtitle="${Name} ${version} API"
          doctitle="${Name} ${version} API"
          bottom="Copyright &amp;copy; ${year} The Apache Software Foundation"
+         doclet="org.apache.yetus.audience.tools.IncludePublicAnnotationsStandardDoclet"
+         docletpath="${ivy.lib}/audience-annotations-${audience-annotations.version}.jar"
          >
-    	<fileset dir="${java.src.dir}">
-          <include name="org/apache/**/*Main.java"/>
-          <include name="org/apache/zookeeper/AsyncCallback.java"/>
-          <include name="org/apache/zookeeper/CreateMode.java"/>
-          <include name="org/apache/zookeeper/KeeperException.java"/>
-          <include name="org/apache/zookeeper/ServerAdminClient.java"/>
-          <include name="org/apache/zookeeper/Watcher.java"/>
-          <include name="org/apache/zookeeper/WatchedEvent.java"/>
-          <include name="org/apache/zookeeper/ZooDefs.java"/>
-          <include name="org/apache/zookeeper/ZooKeeper.java"/>
+
+        <fileset dir="${java.src.dir}">
+          <include name="org/apache/zookeeper/server/quorum/QuorumPeerMain.java"/>
+          <include name="org/apache/zookeeper/server/ZooKeeperServerMain.java"/>
           <include name="org/apache/zookeeper/server/LogFormatter.java"/>
-          <include name="org/apache/zookeeper/server/SnapshotFormatter.java"/>
           <include name="org/apache/zookeeper/server/PurgeTxnLog.java"/>
-          <exclude name="org/apache/zookeeper/server/quorum/QuorumPacket"/>
-    	</fileset>
+          <include name="org/apache/zookeeper/server/SnapshotFormatter.java"/>
+          <include name="org/apache/zookeeper/server/upgrade/UpgradeMain.java"/>
+        </fileset>
+    	<packageset dir="${java.src.dir}">
+          <include name="org/apache/**"/>
+          <exclude name="org/apache/zookeeper/server/**"/>
+    	</packageset>
     	<packageset dir="${src_generated.dir}">
+          <include name="org/apache/**"/>
           <exclude name="org/apache/zookeeper/proto"/>
           <exclude name="org/apache/zookeeper/txn"/>
           <exclude name="org/apache/zookeeper/version"/>
