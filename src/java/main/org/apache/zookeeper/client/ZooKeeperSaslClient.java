@@ -361,7 +361,7 @@ public class ZooKeeperSaslClient {
                 }
             } catch (SaslException e) {
                 LOG.error("SASL authentication failed using login context '" +
-                        this.getLoginContext() + "'.");
+                        this.getLoginContext() + "' with exception: {}", e);
                 saslState = SaslState.FAILED;
                 gotLastPacket = true;
             }
