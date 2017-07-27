@@ -1532,6 +1532,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     public String getNextDynamicConfigFilename() {
+        if (configFilename == null) {
+            LOG.warn("configFilename is null! This should only happen in tests.");
+            return null;
+        }
         return configFilename + QuorumPeerConfig.nextDynamicConfigFileSuffix;
     }
     
@@ -1552,8 +1556,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             connectNewPeers();
             if (writeToDisk) {
                 try {
-                    QuorumPeerConfig.writeDynamicConfig(
-                            getNextDynamicConfigFilename(), qv, true);
+                    String fileName = getNextDynamicConfigFilename();
+                    if (fileName != null) {
+                        QuorumPeerConfig.writeDynamicConfig(fileName, qv, true);
+                    }
                 } catch (IOException e) {
                     LOG.error("Error writing next dynamic config file to disk: ", e.getMessage());
                 }

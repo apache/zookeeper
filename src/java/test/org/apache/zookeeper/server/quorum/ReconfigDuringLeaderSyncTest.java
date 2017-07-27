@@ -257,6 +257,7 @@ public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
             quorumPeer = new CustomQuorumPeer(config.getQuorumVerifier().getAllMembers(), config.getDataDir(),
                     config.getDataLogDir(), config.getClientPortAddress().getPort(), config.getElectionAlg(),
                     config.getServerId(), config.getTickTime(), config.getInitLimit(), config.getSyncLimit());
+            quorumPeer.setConfigFileName(config.getConfigFilename());
             quorumPeer.start();
             try {
                 quorumPeer.join();

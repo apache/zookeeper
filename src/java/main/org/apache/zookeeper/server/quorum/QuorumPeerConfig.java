@@ -559,7 +559,8 @@ public class QuorumPeerConfig {
     }
 
 
-    public static void deleteFile(String filename){        
+    public static void deleteFile(String filename){
+       if (filename == null) return;
        File f = new File(filename);
        if (f.exists()) {
            try{ 
