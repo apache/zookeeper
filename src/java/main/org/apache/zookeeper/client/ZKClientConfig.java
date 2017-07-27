@@ -20,6 +20,7 @@ package org.apache.zookeeper.client;
 
 import java.io.File;
 
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
@@ -28,6 +29,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
  * Handles client specific properties
  * @since 3.5.2
  */
+@InterfaceAudience.Public
 public class ZKClientConfig extends ZKConfig {
     public static final String ZK_SASL_CLIENT_USERNAME = "zookeeper.sasl.client.username";
     public static final String ZK_SASL_CLIENT_USERNAME_DEFAULT = "zookeeper";

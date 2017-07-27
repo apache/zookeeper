@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Map.Entry;
 
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.common.ZKConfig;
 import org.slf4j.Logger;
@@ -53,7 +54,7 @@ import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.VerifyingFileFactory;
 
-
+@InterfaceAudience.Public
 public class QuorumPeerConfig {
     private static final Logger LOG = LoggerFactory.getLogger(QuorumPeerConfig.class);
     private static final int UNSET_SERVERID = -1;

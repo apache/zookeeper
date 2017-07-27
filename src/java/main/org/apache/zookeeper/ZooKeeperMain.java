@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.cli.CliException;
 import org.apache.zookeeper.cli.CommandNotFoundException;
 import org.apache.zookeeper.cli.MalformedCommandException;
@@ -72,6 +73,7 @@ import org.apache.zookeeper.admin.ZooKeeperAdmin;
  * The command line client to ZooKeeper.
  *
  */
+@InterfaceAudience.Public
 public class ZooKeeperMain {
     private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperMain.class);
     static final Map<String,String> commandMap = new HashMap<String,String>( );

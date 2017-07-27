@@ -19,6 +19,7 @@
 package org.apache.zookeeper;
 
 import org.apache.jute.Record;
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.AsyncCallback.ACLCallback;
 import org.apache.zookeeper.AsyncCallback.Children2Callback;
 import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
@@ -137,6 +138,7 @@ import java.util.Set;
  * signature for backwards compatibility purposes.
 */
 @SuppressWarnings("try")
+@InterfaceAudience.Public
 public class ZooKeeper implements AutoCloseable {
 
     /**
@@ -616,6 +618,7 @@ public class ZooKeeper implements AutoCloseable {
         }
     }
 
+    @InterfaceAudience.Public
     public enum States {
         CONNECTING, ASSOCIATING, CONNECTED, CONNECTEDREADONLY,
         CLOSED, AUTH_FAILED, NOT_CONNECTED;

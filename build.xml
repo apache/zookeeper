@@ -122,7 +122,9 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="ivy.jdiff.lib" value="${build.dir}/jdiff/lib"/>
     <property name="ivy.javacc.lib" value="${build.dir}/javacc/lib"/>
     <property name="ivysettings.xml" value="${basedir}/ivysettings.xml"/>
-    
+
+    <property name="audience-annotations.version" value="0.5.0" />
+
     <property name="mvnrepo" value="https://repo1.maven.org/maven2"/>
     <property name="tsk.org" value="/org/apache/maven/maven-ant-tasks/"/>
     <property name="ant-task.version" value="2.1.3"/>
@@ -272,7 +274,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <target name="jute" depends="generate_jute_parser">
         <javac srcdir="${jute_javacc.dir}" destdir="${build.classes}" includeantruntime="false"
             target="${javac.target}" source="${javac.source}"
-            includes="org/apache/jute/**" debug="on" encoding="${build.encoding}">
+            includes="org/apache/jute/**" debug="on" encoding="${build.encoding}" classpath="${ivy.lib}/audience-annotations-${audience-annotations.version}.jar">
           <src path="${java.src.dir}" />
           <src path="${jute_javacc.dir}" />
         </javac>
@@ -343,9 +345,9 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         </java>
     </target>
     
-    <target name="build-generated" depends="compile_jute,version-info,process-template" >
+    <target name="build-generated" depends="compile_jute,version-info,process-template,ivy-retrieve" >
         <javac srcdir="${src_generated.dir}" destdir="${build.classes}" includeantruntime="false"
-            target="${javac.target}" source="${javac.source}" debug="on" encoding="${build.encoding}" />
+            target="${javac.target}" source="${javac.source}" debug="on" encoding="${build.encoding}" classpath="${ivy.lib}/audience-annotations-${audience-annotations.version}.jar" />
     </target>
     
     <target name="ivy-download" unless="ivy.jar.exists" depends="init">
@@ -525,24 +527,23 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
          windowtitle="${Name} ${version} API"
          doctitle="${Name} ${version} API"
          bottom="Copyright &amp;copy; ${year} The Apache Software Foundation"
+         doclet="org.apache.yetus.audience.tools.IncludePublicAnnotationsStandardDoclet"
+         docletpath="${ivy.lib}/audience-annotations-${audience-annotations.version}.jar"
          >
-    	<fileset dir="${java.src.dir}">
-          <include name="org/apache/**/*Main.java"/>
-          <include name="org/apache/zookeeper/AsyncCallback.java"/>
-          <include name="org/apache/zookeeper/CreateMode.java"/>
-          <include name="org/apache/zookeeper/KeeperException.java"/>
-          <include name="org/apache/zookeeper/ServerAdminClient.java"/>
-          <include name="org/apache/zookeeper/Watcher.java"/>
-          <include name="org/apache/zookeeper/WatchedEvent.java"/>
-          <include name="org/apache/zookeeper/ZooDefs.java"/>
-          <include name="org/apache/zookeeper/ZooKeeper.java"/>
-          <include name="org/apache/zookeeper/admin/ZooKeeperAdmin.java"/>
+
+        <fileset dir="${java.src.dir}">
+          <include name="org/apache/zookeeper/server/quorum/QuorumPeerMain.java"/>
+          <include name="org/apache/zookeeper/server/ZooKeeperServerMain.java"/>
           <include name="org/apache/zookeeper/server/LogFormatter.java"/>
-          <include name="org/apache/zookeeper/server/SnapshotFormatter.java"/>
           <include name="org/apache/zookeeper/server/PurgeTxnLog.java"/>
-          <exclude name="org/apache/zookeeper/server/quorum/QuorumPacket"/>
-    	</fileset>
+          <include name="org/apache/zookeeper/server/SnapshotFormatter.java"/>
+        </fileset>
+    	<packageset dir="${java.src.dir}">
+          <include name="org/apache/**"/>
+          <exclude name="org/apache/zookeeper/server/**"/>
+    	</packageset>
     	<packageset dir="${src_generated.dir}">
+          <include name="org/apache/**"/>
           <exclude name="org/apache/zookeeper/proto"/>
           <exclude name="org/apache/zookeeper/txn"/>
           <exclude name="org/apache/zookeeper/version"/>

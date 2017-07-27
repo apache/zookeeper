@@ -21,6 +21,7 @@ import java.io.IOException;
 
 import javax.management.JMException;
 
+import org.apache.yetus.audience.InterfaceAudience;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.jmx.ManagedUtil;
@@ -61,6 +62,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
  * "myid" that contains the server id as an ASCII decimal value.
  *
  */
+@InterfaceAudience.Public
 public class QuorumPeerMain {
     private static final Logger LOG = LoggerFactory.getLogger(QuorumPeerMain.class);
 

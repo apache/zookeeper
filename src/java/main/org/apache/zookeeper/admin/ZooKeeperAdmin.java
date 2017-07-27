@@ -21,6 +21,7 @@ package org.apache.zookeeper.admin;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.Watcher;
@@ -49,6 +50,7 @@ import org.slf4j.LoggerFactory;
  */
 // See ZooKeeper.java for an explanation of why we need @SuppressWarnings("try")
 @SuppressWarnings("try")
+@InterfaceAudience.Public
 public class ZooKeeperAdmin extends ZooKeeper {
     private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperAdmin.class);
 
