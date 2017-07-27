@@ -26,7 +26,7 @@
 #include <netdb.h>
 #else
 #include <WinSock2.h>
-#include "winstdint.h"
+#include <stdint.h>
 #endif
 
 /**

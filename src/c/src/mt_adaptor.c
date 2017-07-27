@@ -19,7 +19,7 @@
 #define THREADED
 #endif
 
-#ifndef DLL_EXPORT
+#if !defined(DLL_EXPORT) && !defined(USE_STATIC_LIB)
 #  define USE_STATIC_LIB
 #endif
 
@@ -375,8 +375,7 @@ void *do_io(void *v)
         int interest;
         int timeout;
         int maxfd=1;
-        int rc;
-        
+
         zookeeper_interest(zh, &fd, &interest, &tv);
         if (fd != -1) {
             fds[1].fd=fd;
@@ -449,7 +448,7 @@ void *do_io(void *v)
 
 #endif
         // dispatch zookeeper events
-        rc = zookeeper_process(zh, interest);
+        zookeeper_process(zh, interest);
         // check the current state of the zhandle and terminate 
         // if it is_unrecoverable()
         if(is_unrecoverable(zh))

@@ -23,6 +23,8 @@
 #include <stdlib.h>
 #ifndef WIN32
 #include <netinet/in.h>
+#else
+#include <winsock2.h> /* for _htonl and _ntohl */
 #endif
 
 void deallocate_String(char **s)
