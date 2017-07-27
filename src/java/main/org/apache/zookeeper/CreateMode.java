@@ -17,6 +17,7 @@
  */
 package org.apache.zookeeper;
 
+import org.apache.yetus.audience.InterfaceAudience;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException;
@@ -24,6 +25,7 @@ import org.apache.zookeeper.KeeperException;
 /***
  *  CreateMode value determines how the znode is created on ZooKeeper.
  */
+@InterfaceAudience.Public
 public enum CreateMode {
     
     /**

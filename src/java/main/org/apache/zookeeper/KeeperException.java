@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper;
 
+import org.apache.yetus.audience.InterfaceAudience;
+
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -25,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("serial")
+@InterfaceAudience.Public
 public abstract class KeeperException extends Exception {
     /**
      * All multi-requests that result in an exception retain the results
@@ -131,7 +134,7 @@ public abstract class KeeperException extends Exception {
                 return new SessionMovedException();
             case NOTREADONLY:
                 return new NotReadOnlyException();
-            	
+
             case OK:
             default:
                 throw new IllegalArgumentException("Invalid exception code");
@@ -163,6 +166,7 @@ public abstract class KeeperException extends Exception {
      * javadoc to include in the user API spec.
      */
     @Deprecated
+    @InterfaceAudience.Public
     public interface CodeDeprecated {
         /**
          * @deprecated deprecated in 3.1.0, use {@link Code#OK} instead
@@ -288,6 +292,7 @@ public abstract class KeeperException extends Exception {
      * constants. The old, deprecated, values are in "camel case" while the new
      * enum values are in all CAPS.
      */
+    @InterfaceAudience.Public
     public static enum Code implements CodeDeprecated {
         /** Everything is OK */
         OK (Ok),
@@ -482,7 +487,7 @@ public abstract class KeeperException extends Exception {
      * If this exception was thrown by a multi-request then the (partial) results
      * and error codes can be retrieved using this getter.
      * @return A copy of the list of results from the operations in the multi-request.
-     * 
+     *
      * @since 3.4.0
      *
      */
@@ -493,6 +498,7 @@ public abstract class KeeperException extends Exception {
     /**
      *  @see Code#APIERROR
      */
+    @InterfaceAudience.Public
     public static class APIErrorException extends KeeperException {
         public APIErrorException() {
             super(Code.APIERROR);
@@ -502,6 +508,7 @@ public abstract class KeeperException extends Exception {
     /**
      *  @see Code#AUTHFAILED
      */
+    @InterfaceAudience.Public
     public static class AuthFailedException extends KeeperException {
         public AuthFailedException() {
             super(Code.AUTHFAILED);
@@ -511,6 +518,7 @@ public abstract class KeeperException extends Exception {
     /**
      *  @see Code#BADARGUMENTS
      */
+    @InterfaceAudience.Public
     public static class BadArgumentsException extends KeeperException {
         public BadArgumentsException() {
             super(Code.BADARGUMENTS);
@@ -523,6 +531,7 @@ public abstract class KeeperException extends Exception {
     /**
      * @see Code#BADVERSION
      */
+    @InterfaceAudience.Public
     public static class BadVersionException extends KeeperException {
         public BadVersionException() {
             super(Code.BADVERSION);
@@ -535,6 +544,7 @@ public abstract class KeeperException extends Exception {
     /**
      * @see Code#CONNECTIONLOSS
      */
+    @InterfaceAudience.Public
     public static class ConnectionLossException extends KeeperException {
         public ConnectionLossException() {
             super(Code.CONNECTIONLOSS);
@@ -544,6 +554,7 @@ public abstract class KeeperException extends Exception {
     /**
      * @see Code#DATAINCONSISTENCY
      */
+    @InterfaceAudience.Public
     public static class DataInconsistencyException extends KeeperException {
         public DataInconsistencyException() {
             super(Code.DATAINCONSISTENCY);
@@ -553,6 +564,7 @@ public abstract class KeeperException extends Exception {
     /**
      * @see Code#INVALIDACL
      */
+    @InterfaceAudience.Public
     public static class InvalidACLException extends KeeperException {
         public InvalidACLException() {
             super(Code.INVALIDACL);
@@ -565,6 +577,7 @@ public abstract class KeeperException extends Exception {
     /**
      * @see Code#INVALIDCALLBACK
      */
+    @InterfaceAudience.Public
     public static class InvalidCallbackException extends KeeperException {
         public InvalidCallbackException() {
             super(Code.INVALIDCALLBACK);
@@ -574,6 +587,7 @@ public abstract class KeeperException extends Exception {
     /**
      * @see Code#MARSHALLINGERROR
      */
+    @InterfaceAudience.Public
     public static class MarshallingErrorException extends KeeperException {
         public MarshallingErrorException() {
             super(Code.MARSHALLINGERROR);
@@ -583,6 +597,7 @@ public abstract class KeeperException extends Exception {
     /**
      * @see Code#NOAUTH
      */
+    @InterfaceAudience.Public
     public static class NoAuthException extends KeeperException {
         public NoAuthException() {
             super(Code.NOAUTH);
@@ -592,6 +607,7 @@ public abstract class KeeperException extends Exception {
     /**
      * @see Code#NOCHILDRENFOREPHEMERALS
      */
+    @InterfaceAudience.Public
     public static class NoChildrenForEphemeralsException extends KeeperException {
         public NoChildrenForEphemeralsException() {
             super(Code.NOCHILDRENFOREPHEMERALS);
@@ -604,6 +620,7 @@ public abstract class KeeperException extends Exception {
     /**
      * @see Code#NODEEXISTS
      */
+    @InterfaceAudience.Public
     public static class NodeExistsException extends KeeperException {
         public NodeExistsException() {
             super(Code.NODEEXISTS);
@@ -616,6 +633,7 @@ public abstract class KeeperException extends Exception {
     /**
      * @see Code#NONODE
      */
+    @InterfaceAudience.Public
     public static class NoNodeException extends KeeperException {
         public NoNodeException() {
             super(Code.NONODE);
@@ -628,6 +646,7 @@ public abstract class KeeperException extends Exception {
     /**
      * @see Code#NOTEMPTY
      */
+    @InterfaceAudience.Public
     public static class NotEmptyException extends KeeperException {
         public NotEmptyException() {
             super(Code.NOTEMPTY);
@@ -640,6 +659,7 @@ public abstract class KeeperException extends Exception {
     /**
      * @see Code#OPERATIONTIMEOUT
      */
+    @InterfaceAudience.Public
     public static class OperationTimeoutException extends KeeperException {
         public OperationTimeoutException() {
             super(Code.OPERATIONTIMEOUT);
@@ -649,6 +669,7 @@ public abstract class KeeperException extends Exception {
     /**
      * @see Code#RUNTIMEINCONSISTENCY
      */
+    @InterfaceAudience.Public
     public static class RuntimeInconsistencyException extends KeeperException {
         public RuntimeInconsistencyException() {
             super(Code.RUNTIMEINCONSISTENCY);
@@ -658,15 +679,17 @@ public abstract class KeeperException extends Exception {
     /**
      * @see Code#SESSIONEXPIRED
      */
+    @InterfaceAudience.Public
     public static class SessionExpiredException extends KeeperException {
         public SessionExpiredException() {
             super(Code.SESSIONEXPIRED);
         }
     }
-    
+
     /**
      * @see Code#SESSIONMOVED
      */
+    @InterfaceAudience.Public
     public static class SessionMovedException extends KeeperException {
         public SessionMovedException() {
             super(Code.SESSIONMOVED);
@@ -676,6 +699,7 @@ public abstract class KeeperException extends Exception {
     /**
      * @see Code#NOTREADONLY
      */
+    @InterfaceAudience.Public
     public static class NotReadOnlyException extends KeeperException {
         public NotReadOnlyException() {
             super(Code.NOTREADONLY);
@@ -685,6 +709,7 @@ public abstract class KeeperException extends Exception {
     /**
      * @see Code#SYSTEMERROR
      */
+    @InterfaceAudience.Public
     public static class SystemErrorException extends KeeperException {
         public SystemErrorException() {
             super(Code.SYSTEMERROR);
@@ -694,6 +719,7 @@ public abstract class KeeperException extends Exception {
     /**
      * @see Code#UNIMPLEMENTED
      */
+    @InterfaceAudience.Public
     public static class UnimplementedException extends KeeperException {
         public UnimplementedException() {
             super(Code.UNIMPLEMENTED);
