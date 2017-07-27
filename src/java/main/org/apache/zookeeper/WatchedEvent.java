@@ -17,6 +17,7 @@
  */
 package org.apache.zookeeper;
 
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.proto.WatcherEvent;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
@@ -27,6 +28,7 @@ import org.apache.zookeeper.Watcher.Event.KeeperState;
  *  the current state of the ZooKeeper, and the path of the znode that
  *  was involved in the event.
  */
+@InterfaceAudience.Public
 public class WatchedEvent {
     final private KeeperState keeperState;
     final private EventType eventType;

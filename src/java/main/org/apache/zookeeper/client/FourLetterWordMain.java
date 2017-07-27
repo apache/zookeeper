@@ -31,11 +31,13 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
 import org.apache.zookeeper.common.X509Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@InterfaceAudience.Public
 public class FourLetterWordMain {
     //in milliseconds, socket should connect/read within this period otherwise SocketTimeoutException
     private static final int DEFAULT_SOCKET_TIMEOUT = 5000;

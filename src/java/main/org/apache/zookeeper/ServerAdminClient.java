@@ -24,9 +24,12 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+
+import org.apache.yetus.audience.InterfaceAudience;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@InterfaceAudience.Public
 public class ServerAdminClient {
     private static final Logger LOG = LoggerFactory.getLogger(ServerAdminClient.class);
 

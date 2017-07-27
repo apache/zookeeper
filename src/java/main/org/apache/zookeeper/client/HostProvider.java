@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.client;
 
+import org.apache.yetus.audience.InterfaceAudience;
+
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.Collection;
@@ -41,6 +43,7 @@ import java.util.Collection;
  * * A HostProvider that re-resolves the InetSocketAddress after a timeout. 
  * * A HostProvider that prefers nearby hosts.
  */
+@InterfaceAudience.Public
 public interface HostProvider {
     public int size();
 
