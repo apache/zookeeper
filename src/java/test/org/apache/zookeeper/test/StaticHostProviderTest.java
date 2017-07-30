@@ -43,7 +43,7 @@ public class StaticHostProviderTest extends ZKTestCase {
     private static final Logger LOG = LoggerFactory.getLogger(StaticHostProviderTest.class);
     
     @Test
-    public void testNextGoesRound() throws UnknownHostException {
+    public void testNextGoesRound() {
         HostProvider hostProvider = getHostProvider((byte) 2);
         InetSocketAddress first = hostProvider.next(0);
         assertTrue(first instanceof InetSocketAddress);
@@ -52,7 +52,7 @@ public class StaticHostProviderTest extends ZKTestCase {
     }
 
     @Test
-    public void testNextGoesRoundAndSleeps() throws UnknownHostException {
+    public void testNextGoesRoundAndSleeps() {
         byte size = 2;
         HostProvider hostProvider = getHostProvider(size);
         while (size > 0) {
@@ -66,7 +66,7 @@ public class StaticHostProviderTest extends ZKTestCase {
     }
 
     @Test
-    public void testNextDoesNotSleepForZero() throws UnknownHostException {
+    public void testNextDoesNotSleepForZero() {
         byte size = 2;
         HostProvider hostProvider = getHostProvider(size);
         while (size > 0) {
@@ -87,7 +87,7 @@ public class StaticHostProviderTest extends ZKTestCase {
     }
 
     @Test
-    public void testOnConnectDoesNotReset() throws UnknownHostException {
+    public void testOnConnectDoesNotReset() {
         HostProvider hostProvider = getHostProvider((byte) 2);
         InetSocketAddress first = hostProvider.next(0);
         hostProvider.onConnected();
@@ -111,8 +111,26 @@ public class StaticHostProviderTest extends ZKTestCase {
         }
     }
 
-    private StaticHostProvider getHostProviderUnresolved(byte size)
-            throws UnknownHostException {
+    @Test(expected = IllegalArgumentException.class)
+    public void testTwoInvalidHostAddresses() {
+        ArrayList<InetSocketAddress> list = new ArrayList<InetSocketAddress>();
+        list.add(new InetSocketAddress("a", 2181));
+        list.add(new InetSocketAddress("b", 2181));
+        new StaticHostProvider(list);
+    }
+
+    public void testOneInvalidHostAddresses() {
+        Collection<InetSocketAddress> addr = getUnresolvedServerAddresses((byte) 1);
+        addr.add(new InetSocketAddress("a", 2181));
+
+        StaticHostProvider sp = new StaticHostProvider(addr);
+        InetSocketAddress n1 = sp.next(0);
+        InetSocketAddress n2 = sp.next(0);
+
+        assertEquals(n2, n1);
+    }
+
+    private StaticHostProvider getHostProviderUnresolved(byte size) {
         return new StaticHostProvider(getUnresolvedServerAddresses(size));
     }
 
@@ -125,8 +143,7 @@ public class StaticHostProviderTest extends ZKTestCase {
         return list;
     }
     
-    private StaticHostProvider getHostProvider(byte size)
-            throws UnknownHostException {
+    private StaticHostProvider getHostProvider(byte size) {
         ArrayList<InetSocketAddress> list = new ArrayList<InetSocketAddress>(
                 size);
         while (size > 0) {
