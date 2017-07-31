@@ -672,7 +672,7 @@ public class LearnerHandler extends ZooKeeperThread {
         // Keep track of the latest zxid which already queued
         long currentZxid = peerLastZxid;
         boolean needSnap = true;
-        boolean txnLogSyncEnabled = (db.getSnapshotSizeFactor() >= 0);
+        boolean txnLogSyncEnabled = db.isTxnLogSyncEnabled();
         ReentrantReadWriteLock lock = db.getLogLock();
         ReadLock rl = lock.readLock();
         try {
