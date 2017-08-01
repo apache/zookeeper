@@ -578,7 +578,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
             <fileset dir="${java.src.dir}"/>
             <fileset dir="${src_generated.dir}" excludes="**/.generated"/>
             <manifest>
-                <attribute name="Main-Class" value="org.apache.zookeeper.server.quorum.QuorumPeer" />
+                <attribute name="Main-Class" value="org.apache.zookeeper.server.quorum.QuorumPeerMain" />
                 <attribute name="Built-By" value="${user.name}"/>
                 <attribute name="Built-At" value="${build.time}"/>
                 <attribute name="Built-On" value="${host.name}" />
