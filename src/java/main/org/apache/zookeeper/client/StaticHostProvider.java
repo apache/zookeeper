@@ -52,33 +52,35 @@ public final class StaticHostProvider implements HostProvider {
      * 
      * @param serverAddresses
      *            possibly unresolved ZooKeeper server addresses
-     * @throws UnknownHostException
      * @throws IllegalArgumentException
      *             if serverAddresses is empty or resolves to an empty list
      */
-    public StaticHostProvider(Collection<InetSocketAddress> serverAddresses)
-            throws UnknownHostException {
+    public StaticHostProvider(Collection<InetSocketAddress> serverAddresses) {
         for (InetSocketAddress address : serverAddresses) {
-            InetAddress ia = address.getAddress();
-            InetAddress resolvedAddresses[] = InetAddress.getAllByName((ia!=null) ? ia.getHostAddress():
-                address.getHostName());
-            for (InetAddress resolvedAddress : resolvedAddresses) {
-                // If hostName is null but the address is not, we can tell that
-                // the hostName is an literal IP address. Then we can set the host string as the hostname
-                // safely to avoid reverse DNS lookup.
-                // As far as i know, the only way to check if the hostName is null is use toString().
-                // Both the two implementations of InetAddress are final class, so we can trust the return value of
-                // the toString() method.
-                if (resolvedAddress.toString().startsWith("/") 
-                        && resolvedAddress.getAddress() != null) {
-                    this.serverAddresses.add(
-                            new InetSocketAddress(InetAddress.getByAddress(
-                                    address.getHostName(),
-                                    resolvedAddress.getAddress()), 
-                                    address.getPort()));
-                } else {
-                    this.serverAddresses.add(new InetSocketAddress(resolvedAddress.getHostAddress(), address.getPort()));
-                }  
+            try {
+                InetAddress ia = address.getAddress();
+                InetAddress resolvedAddresses[] = InetAddress.getAllByName((ia != null) ? ia.getHostAddress() :
+                        address.getHostName());
+                for (InetAddress resolvedAddress : resolvedAddresses) {
+                    // If hostName is null but the address is not, we can tell that
+                    // the hostName is an literal IP address. Then we can set the host string as the hostname
+                    // safely to avoid reverse DNS lookup.
+                    // As far as i know, the only way to check if the hostName is null is use toString().
+                    // Both the two implementations of InetAddress are final class, so we can trust the return value of
+                    // the toString() method.
+                    if (resolvedAddress.toString().startsWith("/")
+                            && resolvedAddress.getAddress() != null) {
+                        this.serverAddresses.add(
+                                new InetSocketAddress(InetAddress.getByAddress(
+                                        address.getHostName(),
+                                        resolvedAddress.getAddress()),
+                                        address.getPort()));
+                    } else {
+                        this.serverAddresses.add(new InetSocketAddress(resolvedAddress.getHostAddress(), address.getPort()));
+                    }
+                }
+            } catch (UnknownHostException e) {
+                LOG.error("Unable to connect to server: {}", address, e);
             }
         }
         
