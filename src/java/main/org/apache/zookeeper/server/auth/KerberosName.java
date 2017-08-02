@@ -28,6 +28,8 @@
 package org.apache.zookeeper.server.auth;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -356,6 +358,9 @@ public class KerberosName {
    */
   public static void setConfiguration() throws IOException {
     String ruleString = System.getProperty("zookeeper.security.auth_to_local", "DEFAULT");
+    if (ruleString.startsWith("file:")) {
+      ruleString = new String(Files.readAllBytes(Paths.get(ruleString.substring(5))));
+    }
     rules = parseRules(ruleString);
   }
 
