@@ -80,7 +80,8 @@ public class ZKDatabase {
      * Default value is to use snapshot if txnlog size exceeds 1/3 the size of snapshot
      */
     public static final String SNAPSHOT_SIZE_FACTOR = "zookeeper.snapshotSizeFactor";
-    private double snapshotSizeFactor = 0.33;
+    public static final double DEFAULT_SNAPSHOT_SIZE_FACTOR = 0.33;
+    private double snapshotSizeFactor;
 
     public static final int commitLogCount = 500;
     protected static int commitLogBuffer = 700;
@@ -98,6 +99,23 @@ public class ZKDatabase {
         dataTree = new DataTree();
         sessionsWithTimeouts = new ConcurrentHashMap<Long, Integer>();
         this.snapLog = snapLog;
+
+        try {
+            snapshotSizeFactor = Double.parseDouble(
+                System.getProperty(SNAPSHOT_SIZE_FACTOR,
+                        Double.toString(DEFAULT_SNAPSHOT_SIZE_FACTOR)));
+            if (snapshotSizeFactor > 1) {
+                snapshotSizeFactor = DEFAULT_SNAPSHOT_SIZE_FACTOR;
+                LOG.warn("The configured {} is invalid, going to use " +
+                        "the default {}", SNAPSHOT_SIZE_FACTOR,
+                        DEFAULT_SNAPSHOT_SIZE_FACTOR);
+            }
+        } catch (NumberFormatException e) {
+            LOG.error("Error parsing {}, using default value {}",
+                    SNAPSHOT_SIZE_FACTOR, DEFAULT_SNAPSHOT_SIZE_FACTOR);
+            snapshotSizeFactor = DEFAULT_SNAPSHOT_SIZE_FACTOR;
+        }
+        LOG.info("{} = {}", SNAPSHOT_SIZE_FACTOR, snapshotSizeFactor);
     }
 
     /**
@@ -269,8 +287,15 @@ public class ZKDatabase {
         }
     }
 
-    public double getSnapshotSizeFactor() {
-        return snapshotSizeFactor;
+    public boolean isTxnLogSyncEnabled() {
+        boolean enabled = snapshotSizeFactor >= 0;
+        if (enabled) {
+            LOG.info("On disk txn sync enabled with snapshotSizeFactor "
+                + snapshotSizeFactor);
+        } else {
+            LOG.info("On disk txn sync disabled");
+        }
+        return enabled;
     }
 
     public long calculateTxnLogSizeLimit() {
