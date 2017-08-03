@@ -140,9 +140,11 @@ public final class StaticHostProvider implements HostProvider {
      * If true is returned, the function sets pOld and pNew that correspond to the probability to migrate to ones of the
      * new servers in serverAddresses or one of the old servers (migrating to one of the old servers is done only
      * if our client's currentHost is not in serverAddresses). See nextHostInReconfigMode for the selection logic.
-     * 
-     * See {@link https://issues.apache.org/jira/browse/ZOOKEEPER-1355} for the protocol and its evaluation, and
-	 * StaticHostProviderTest for the tests that illustrate how load balancing works with this policy.
+     *
+     * See <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1355">ZOOKEEPER-1355</a>
+     * for the protocol and its evaluation, and StaticHostProviderTest for the tests that illustrate how load balancing
+     * works with this policy.
+     *
      * @param serverAddresses new host list
      * @param currentHost the host to which this client is currently connected
      * @return true if changing connections is necessary for load-balancing, false otherwise  
