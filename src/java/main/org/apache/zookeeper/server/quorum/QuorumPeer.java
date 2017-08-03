@@ -566,7 +566,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         return new QuorumPeer();
     }
 
-    private QuorumPeer() throws SaslException {
+    protected QuorumPeer() throws SaslException {
         super("QuorumPeer");
         quorumStats = new QuorumStats(this);
         initialize();
@@ -1331,6 +1331,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      */
     public void setZKDatabase(ZKDatabase database) {
         this.zkDb = database;
+    }
+
+    protected ZKDatabase getZkDb() {
+        return zkDb;
     }
 
     public void setRunning(boolean running) {
