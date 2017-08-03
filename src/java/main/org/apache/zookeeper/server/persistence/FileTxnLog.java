@@ -91,9 +91,6 @@ import org.slf4j.LoggerFactory;
 public class FileTxnLog implements TxnLog {
     private static final Logger LOG;
 
-    static long preAllocSize =  65536 * 1024;
-    private static final ByteBuffer fill = ByteBuffer.allocateDirect(1);
-
     public final static int TXNLOG_MAGIC =
         ByteBuffer.wrap("ZKLG".getBytes()).getInt();
 
@@ -105,14 +102,6 @@ public class FileTxnLog implements TxnLog {
     static {
         LOG = LoggerFactory.getLogger(FileTxnLog.class);
 
-        String size = System.getProperty("zookeeper.preAllocSize");
-        if (size != null) {
-            try {
-                preAllocSize = Long.parseLong(size) * 1024;
-            } catch (NumberFormatException e) {
-                LOG.warn(size + " is not a valid value for preAllocSize");
-            }
-        }
         fsyncWarningThresholdMS = Long.getLong("fsync.warningthresholdms", 1000);
     }
 
@@ -126,8 +115,8 @@ public class FileTxnLog implements TxnLog {
     long dbId;
     private LinkedList<FileOutputStream> streamsToFlush =
         new LinkedList<FileOutputStream>();
-    long currentSize;
     File logFileWrite = null;
+    private FilePadding filePadding = new FilePadding();
 
     /**
      * constructor for FileTxnLog. Take the directory
@@ -139,22 +128,21 @@ public class FileTxnLog implements TxnLog {
     }
 
     /**
-     * method to allow setting preallocate size
-     * of log file to pad the file.
-     * @param size the size to set to in bytes
-     */
+      * method to allow setting preallocate size
+      * of log file to pad the file.
+      * @param size the size to set to in bytes
+      */
     public static void setPreallocSize(long size) {
-        preAllocSize = size;
+        FilePadding.setPreallocSize(size);
     }
 
     /**
-     * creates a checksum alogrithm to be used
+     * creates a checksum algorithm to be used
      * @return the checksum used for this txnlog
      */
     protected Checksum makeChecksumAlgorithm(){
         return new Adler32();
     }
-
 
     /**
      * rollover the current log file to a new one.
@@ -190,87 +178,47 @@ public class FileTxnLog implements TxnLog {
     public synchronized boolean append(TxnHeader hdr, Record txn)
         throws IOException
     {
-        if (hdr != null) {
-            if (hdr.getZxid() <= lastZxidSeen) {
-                LOG.warn("Current zxid " + hdr.getZxid()
-                        + " is <= " + lastZxidSeen + " for "
-                        + hdr.getType());
-            }
-            if (logStream==null) {
-               if(LOG.isInfoEnabled()){
-                    LOG.info("Creating new log file: log." +  
-                            Long.toHexString(hdr.getZxid()));
-               }
-               
-               logFileWrite = new File(logDir, ("log." + 
-                       Long.toHexString(hdr.getZxid())));
-               fos = new FileOutputStream(logFileWrite);
-               logStream=new BufferedOutputStream(fos);
-               oa = BinaryOutputArchive.getArchive(logStream);
-               FileHeader fhdr = new FileHeader(TXNLOG_MAGIC,VERSION, dbId);
-               fhdr.serialize(oa, "fileheader");
-               // Make sure that the magic number is written before padding.
-               logStream.flush();
-               currentSize = fos.getChannel().position();
-               streamsToFlush.add(fos);
-            }
-            currentSize = padFile(fos.getChannel());
-            byte[] buf = Util.marshallTxnEntry(hdr, txn);
-            if (buf == null || buf.length == 0) {
-                throw new IOException("Faulty serialization for header " +
-                        "and txn");
-            }
-            Checksum crc = makeChecksumAlgorithm();
-            crc.update(buf, 0, buf.length);
-            oa.writeLong(crc.getValue(), "txnEntryCRC");
-            Util.writeTxnBytes(oa, buf);
-            
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * pad the current file to increase its size to the next multiple of preAllocSize greater than the current size and position
-     * @param fileChannel the fileChannel of the file to be padded
-     * @throws IOException
-     */
-    private long padFile(FileChannel fileChannel) throws IOException {
-        long newFileSize = calculateFileSizeWithPadding(fileChannel.position(), currentSize, preAllocSize);
-        if (currentSize != newFileSize) {
-            fileChannel.write((ByteBuffer) fill.position(0), newFileSize - fill.remaining());
-            currentSize = newFileSize;
-        }
-        return currentSize;
-    }
-
-    /**
-     * Calculates a new file size with padding. We only return a new size if
-     * the current file position is sufficiently close (less than 4K) to end of
-     * file and preAllocSize is > 0.
-     *
-     * @param position the point in the file we have written to
-     * @param fileSize application keeps track of the current file size
-     * @param preAllocSize how many bytes to pad
-     * @return the new file size. It can be the same as fileSize if no
-     * padding was done.
-     * @throws IOException
-     */
-    // VisibleForTesting
-    public static long calculateFileSizeWithPadding(long position, long fileSize, long preAllocSize) {
-        // If preAllocSize is positive and we are within 4KB of the known end of the file calculate a new file size
-        if (preAllocSize > 0 && position + 4096 >= fileSize) {
-            // If we have written more than we have previously preallocated we need to make sure the new
-            // file size is larger than what we already have
-            if (position > fileSize){
-                fileSize = position + preAllocSize;
-                fileSize -= fileSize % preAllocSize;
-            } else {
-                fileSize += preAllocSize;
-            }
+        if (hdr == null) {
+            return false;
         }
 
-        return fileSize;
+        if (hdr.getZxid() <= lastZxidSeen) {
+            LOG.warn("Current zxid " + hdr.getZxid()
+                    + " is <= " + lastZxidSeen + " for "
+                    + hdr.getType());
+        } else {
+            lastZxidSeen = hdr.getZxid();
+        }
+
+        if (logStream==null) {
+            if(LOG.isInfoEnabled()){
+                LOG.info("Creating new log file: log." +
+                        Long.toHexString(hdr.getZxid()));
+            }
+
+           logFileWrite = new File(logDir, Util.makeLogName(hdr.getZxid()));
+           fos = new FileOutputStream(logFileWrite);
+           logStream=new BufferedOutputStream(fos);
+           oa = BinaryOutputArchive.getArchive(logStream);
+           FileHeader fhdr = new FileHeader(TXNLOG_MAGIC,VERSION, dbId);
+           fhdr.serialize(oa, "fileheader");
+           // Make sure that the magic number is written before padding.
+           logStream.flush();
+           filePadding.setCurrentSize(fos.getChannel().position());
+           streamsToFlush.add(fos);
+        }
+        filePadding.padFile(fos.getChannel());
+        byte[] buf = Util.marshallTxnEntry(hdr, txn);
+        if (buf == null || buf.length == 0) {
+            throw new IOException("Faulty serialization for header " +
+                    "and txn");
+        }
+        Checksum crc = makeChecksumAlgorithm();
+        crc.update(buf, 0, buf.length);
+        oa.writeLong(crc.getValue(), "txnEntryCRC");
+        Util.writeTxnBytes(oa, buf);
+
+        return true;
     }
 
     /**
