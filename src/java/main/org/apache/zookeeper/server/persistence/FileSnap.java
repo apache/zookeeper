@@ -51,11 +51,12 @@ import org.apache.zookeeper.server.util.SerializeUtils;
 public class FileSnap implements SnapShot {
     File snapDir;
     private volatile boolean close = false;
-    private static final int VERSION=2;
-    private static final long dbId=-1;
+    private static final int VERSION = 2;
+    private static final long dbId = -1;
     private static final Logger LOG = LoggerFactory.getLogger(FileSnap.class);
     public final static int SNAP_MAGIC
-        = ByteBuffer.wrap("ZKSN".getBytes()).getInt();
+            = ByteBuffer.wrap("ZKSN".getBytes()).getInt();
+
     public FileSnap(File snapDir) {
         this.snapDir = snapDir;
     }
@@ -63,7 +64,7 @@ public class FileSnap implements SnapShot {
     /**
      * deserialize a data tree from the most recent snapshot
      * @return the zxid of the snapshot
-     */ 
+     */
     public long deserialize(DataTree dt, Map<Long, Integer> sessions)
             throws IOException {
         // we run through 100 snapshots (not all of them)
@@ -75,16 +76,13 @@ public class FileSnap implements SnapShot {
         }
         File snap = null;
         boolean foundValid = false;
-        for (int i = 0; i < snapList.size(); i++) {
+        for (int i = 0, snapListSize = snapList.size(); i < snapListSize; i++) {
             snap = snapList.get(i);
-            InputStream snapIS = null;
-            CheckedInputStream crcIn = null;
-            try {
-                LOG.info("Reading snapshot " + snap);
-                snapIS = new BufferedInputStream(new FileInputStream(snap));
-                crcIn = new CheckedInputStream(snapIS, new Adler32());
+            LOG.info("Reading snapshot " + snap);
+            try (InputStream snapIS = new BufferedInputStream(new FileInputStream(snap));
+                 CheckedInputStream crcIn = new CheckedInputStream(snapIS, new Adler32())) {
                 InputArchive ia = BinaryInputArchive.getArchive(crcIn);
-                deserialize(dt,sessions, ia);
+                deserialize(dt, sessions, ia);
                 long checkSum = crcIn.getChecksum().getValue();
                 long val = ia.readLong("val");
                 if (val != checkSum) {
@@ -92,14 +90,9 @@ public class FileSnap implements SnapShot {
                 }
                 foundValid = true;
                 break;
-            } catch(IOException e) {
+            } catch (IOException e) {
                 LOG.warn("problem reading snap file " + snap, e);
-            } finally {
-                if (snapIS != null) 
-                    snapIS.close();
-                if (crcIn != null) 
-                    crcIn.close();
-            } 
+            }
         }
         if (!foundValid) {
             throw new IOException("Not able to find valid snapshots in " + snapDir);
@@ -121,7 +114,7 @@ public class FileSnap implements SnapShot {
         header.deserialize(ia, "fileheader");
         if (header.getMagic() != SNAP_MAGIC) {
             throw new IOException("mismatching magic headers "
-                    + header.getMagic() + 
+                    + header.getMagic() +
                     " !=  " + FileSnap.SNAP_MAGIC);
         }
         SerializeUtils.deserializeSnapshot(dt,ia,sessions);
@@ -138,7 +131,7 @@ public class FileSnap implements SnapShot {
         }
         return files.get(0);
     }
-    
+
     /**
      * find the last (maybe) valid n snapshots. this does some 
      * minor checks on the validity of the snapshots. It just
@@ -177,19 +170,21 @@ public class FileSnap implements SnapShot {
     /**
      * find the last n snapshots. this does not have
      * any checks if the snapshot might be valid or not
-     * @param the number of most recent snapshots 
+     * @param n the number of most recent snapshots
      * @return the last n snapshots
      * @throws IOException
      */
     public List<File> findNRecentSnapshots(int n) throws IOException {
         List<File> files = Util.sortDataDir(snapDir.listFiles(), "snapshot", false);
-        int i = 0;
+        int count = 0;
         List<File> list = new ArrayList<File>();
         for (File f: files) {
-            if (i==n)
+            if (count == n)
                 break;
-            i++;
-            list.add(f);
+            if (Util.getZxidFromName(f.getName(), "snapshot") != -1) {
+                count++;
+                list.add(f);
+            }
         }
         return list;
     }
@@ -222,18 +217,17 @@ public class FileSnap implements SnapShot {
     public synchronized void serialize(DataTree dt, Map<Long, Integer> sessions, File snapShot)
             throws IOException {
         if (!close) {
-            OutputStream sessOS = new BufferedOutputStream(new FileOutputStream(snapShot));
-            CheckedOutputStream crcOut = new CheckedOutputStream(sessOS, new Adler32());
-            //CheckedOutputStream cout = new CheckedOutputStream()
-            OutputArchive oa = BinaryOutputArchive.getArchive(crcOut);
-            FileHeader header = new FileHeader(SNAP_MAGIC, VERSION, dbId);
-            serialize(dt,sessions,oa, header);
-            long val = crcOut.getChecksum().getValue();
-            oa.writeLong(val, "val");
-            oa.writeString("/", "path");
-            sessOS.flush();
-            crcOut.close();
-            sessOS.close();
+            try (OutputStream sessOS = new BufferedOutputStream(new FileOutputStream(snapShot));
+                 CheckedOutputStream crcOut = new CheckedOutputStream(sessOS, new Adler32())) {
+                //CheckedOutputStream cout = new CheckedOutputStream()
+                OutputArchive oa = BinaryOutputArchive.getArchive(crcOut);
+                FileHeader header = new FileHeader(SNAP_MAGIC, VERSION, dbId);
+                serialize(dt, sessions, oa, header);
+                long val = crcOut.getChecksum().getValue();
+                oa.writeLong(val, "val");
+                oa.writeString("/", "path");
+                sessOS.flush();
+            }
         }
     }
 
@@ -247,4 +241,4 @@ public class FileSnap implements SnapShot {
         close = true;
     }
 
- }
+}

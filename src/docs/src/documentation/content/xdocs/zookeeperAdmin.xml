@@ -278,6 +278,16 @@ server.3=zoo3:2888:3888</programlisting>
         </listitem>
 
         <listitem>
+          <para>Create an initialization marker file <filename>initialize</filename>
+            in the same directory as <filename>myid</filename>. This file indicates
+            that an empty data directory is expected. When present, an empty data base
+            is created and the marker file deleted. When not present, an empty data
+            directory will mean this peer will not have voting rights and it will not
+            populate the data directory until it communicates with an active leader.
+            Intended use is to only create this file when bringing up a new
+            ensemble. </para>
+        </listitem>
+        <listitem>
           <para>If your configuration file is set up, you can start a
           ZooKeeper server:</para>
 
@@ -948,15 +958,14 @@ server.3=zoo3:2888:3888</programlisting>
             <listitem>
               <para>(No Java system property)</para>
 
-              <para>Election implementation to use. A value of "0" corresponds
-              to the original UDP-based version, "1" corresponds to the
+              <para>Election implementation to use. A value of "1" corresponds to the
               non-authenticated UDP-based version of fast leader election, "2"
               corresponds to the authenticated UDP-based version of fast
               leader election, and "3" corresponds to TCP-based version of
-              fast leader election. Currently, algorithm 3 is the default</para>
+              fast leader election. Currently, algorithm 3 is the default.</para>
               
               <note>
-              <para> The implementations of leader election 0, 1, and 2 are now 
+              <para> The implementations of leader election 1, and 2 are now
               <emphasis role="bold"> deprecated </emphasis>. We have the intention
               of removing them in the next release, at which point only the 
               FastLeaderElection will be available. 
@@ -1019,9 +1028,7 @@ server.3=zoo3:2888:3888</programlisting>
 
               <para>There are two port numbers <emphasis role="bold">nnnnn</emphasis>. 
               The first followers use to connect to the leader, and the second is for 
-              leader election. The leader election port is only necessary if electionAlg 
-              is 1, 2, or 3 (default). If electionAlg is 0, then the second port is not 
-              necessary. If you want to test multiple servers on a single machine, then 
+              leader election. If you want to test multiple servers on a single machine, then
               different ports can be used for each server.</para>
             </listitem>
           </varlistentry>
@@ -1145,6 +1152,63 @@ server.3=zoo3:2888:3888</programlisting>
             </listitem>
           </varlistentry>
 
+          <varlistentry>
+            <term>4lw.commands.whitelist</term>
+
+            <listitem>
+              <para>(Java system property: <emphasis
+                      role="bold">zookeeper.4lw.commands.whitelist</emphasis>)</para>
+
+              <para><emphasis role="bold">New in 3.5.3:</emphasis>
+                A list of comma separated <ulink url="#sc_4lw">Four Letter Words</ulink>
+                commands that user wants to use. A valid Four Letter Words
+                command must be put in this list else ZooKeeper server will
+                not enable the command.
+                By default the whitelist only contains "srvr" command
+                which zkServer.sh uses. The rest of four letter word commands are disabled
+                by default.
+              </para>
+
+              <para>Here's an example of the configuration that enables stat, ruok, conf, and isro
+              command while disabling the rest of Four Letter Words command:</para>
+              <programlisting>
+                4lw.commands.whitelist=stat, ruok, conf, isro
+              </programlisting>
+
+              <para>If you really need enable all four letter word commands by default, you can use
+                the asterisk option so you don't have to include every command one by one in the list.
+                As an example, this will enable all four letter word commands:
+              </para>
+              <programlisting>
+                4lw.commands.whitelist=*
+              </programlisting>
+
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>tcpKeepAlive</term>
+
+            <listitem>
+              <para>(Java system property: <emphasis
+                      role="bold">zookeeper.tcpKeepAlive</emphasis>)</para>
+
+              <para><emphasis role="bold">New in 3.5.4:</emphasis>
+                Setting this to true sets the TCP keepAlive flag on the
+                sockets used by quorum members to perform elections.
+                This will allow for connections between quorum members to
+                remain up when there is network infrastructure that may
+                otherwise break them. Some NATs and firewalls may terminate
+                or lose state for long running or idle connections.</para>
+
+              <para> Enabling this option relies on OS level settings to work
+                properly, check your operating system's options regarding TCP
+                keepalive for more information.  Defaults to
+                <emphasis role="bold">false</emphasis>.
+              </para>
+            </listitem>
+          </varlistentry>
+
         </variablelist>
         <para></para>
       </section>
@@ -1199,6 +1263,19 @@ server.3=zoo3:2888:3888</programlisting>
               When this parameter is set to an X500 principal name, only an
               authenticated client with that principal will be able to bypass
               ACL checking and have full privileges to all znodes.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>zookeeper.superUser</term>
+            <listitem>
+              <para>(Java system property: <emphasis
+              role="bold">zookeeper.superUser</emphasis>)</para>
+
+              <para>Similar to <emphasis role="bold">zookeeper.X509AuthenticationProvider.superUser</emphasis>
+              but is generic for SASL based logins. It stores the name of 
+              a user that can access the znode hierarchy as a "super" user.
+              </para>
             </listitem>
           </varlistentry>
 
@@ -1408,6 +1485,35 @@ server.3=zoo3:2888:3888</programlisting>
         </para>
       </section>
 
+      <section id="sc_db_existence_validation">
+        <title>Enabling db existence validation</title>
+
+        <para><emphasis role="bold">New in 3.6.0:</emphasis> The default
+          behavior of a ZooKeeper server on startup when no data tree
+          is found is to set zxid to zero and join the quorum as a
+          voting member. This can be dangerous if some event (e.g. a
+          rogue 'rm -rf') has removed the data directory while the
+          server was down since this server may help elect a leader
+          that is missing transactions. Enabling db existence validation
+          will change the behavior on startup when no data tree is
+          found: the server joins the ensemble as a non-voting participant
+          until it is able to sync with the leader and acquire an up-to-date
+          version of the ensemble data. To indicate an empty data tree is
+          expected (ensemble creation), the user should place a file
+          'initialize' in the same directory as 'myid'. This file will
+          be detected and deleted by the server on startup.
+        </para>
+
+        <para> Initialization validation can be enabled when running
+          ZooKeeper servers directly from class files by setting
+          <emphasis role="bold">zookeeper.db.autocreate=false</emphasis>
+          on the java command line, i.e.
+          <emphasis role="bold">-Dzookeeper.db.autocreate=false</emphasis>.
+          Running <emphasis role="bold">zkServer-initialize.sh</emphasis>
+          will create the required initialization file.
+        </para>
+      </section>
+
       <section id="sc_performance_options">
         <title>Performance Tuning Options</title>
 
@@ -1600,7 +1706,7 @@ server.3=zoo3:2888:3888</programlisting>
     <section id="sc_zkCommands">
       <title>ZooKeeper Commands</title>
 
-      <section>
+      <section id="sc_4lw">
         <title>The Four Letter Words</title>
         <para>ZooKeeper responds to a small set of commands. Each command is
         composed of four letters. You issue the commands to ZooKeeper via telnet
@@ -1611,7 +1717,16 @@ server.3=zoo3:2888:3888</programlisting>
         while "srvr" and "cons" give extended details on server and
         connections respectively.</para>
 
-        <variablelist>
+        <para><emphasis role="bold">New in 3.5.3:</emphasis>
+          Four Letter Words need to be explicitly white listed before using.
+          Please refer <emphasis role="bold">4lw.commands.whitelist</emphasis>
+           described in <ulink url="#sc_clusterOptions">
+            cluster configuration section</ulink> for details.
+          Moving forward, Four Letter Words will be deprecated, please use
+          <ulink url="#sc_adminserver">AdminServer</ulink> instead.
+        </para>
+
+      <variablelist>
           <varlistentry>
             <term>conf</term>
 
@@ -1943,12 +2058,17 @@ server.3=zoo3:2888:3888</programlisting>
       <section>
         <title>The Data Directory</title>
 
-        <para>This directory has two files in it:</para>
+        <para>This directory has two or three files in it:</para>
 
         <itemizedlist>
           <listitem>
             <para><filename>myid</filename> - contains a single integer in
             human readable ASCII text that represents the server id.</para>
+          </listitem>
+
+          <listitem>
+            <para><filename>initialize</filename> - presence indicates lack of
+              data tree is expected. Cleaned up once data tree is created.</para>
           </listitem>
 
           <listitem>
@@ -2048,7 +2168,7 @@ server.3=zoo3:2888:3888</programlisting>
         </varlistentry>
 
         <varlistentry>
-          <term>incorrect placement of transasction log</term>
+          <term>incorrect placement of transaction log</term>
 
           <listitem>
             <para>The most performance critical part of ZooKeeper is the
@@ -2079,6 +2199,16 @@ server.3=zoo3:2888:3888</programlisting>
             recommend practice for estimating the heap size your system needs
             is to run load tests, and then make sure you are well below the
             usage limit that would cause the system to swap.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>Publicly accessible deployment</term>
+          <listitem>
+            <para>
+              A ZooKeeper ensemble is expected to operate in a trusted computing environment.
+              It is thus recommended to deploy ZooKeeper behind a firewall.
+            </para>
           </listitem>
         </varlistentry>
       </variablelist>

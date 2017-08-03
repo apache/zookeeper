@@ -18,12 +18,11 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.fail;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -33,6 +32,7 @@ import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.KeeperException.InvalidACLException;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
@@ -47,6 +47,7 @@ import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
 import org.apache.zookeeper.server.PrepRequestProcessor;
 import org.apache.zookeeper.server.util.OSMXBean;
+import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -113,8 +114,7 @@ public class ClientTest extends ClientBase {
             LOG.info("{}",zk.testableRemoteSocketAddress());
             LOG.info("{}",zk.toString());
         } finally {
-            zk.close();
-            zk.testableWaitForShutdown(CONNECTION_TIMEOUT);
+            zk.close(CONNECTION_TIMEOUT);
             LOG.info("{}",zk.testableLocalSocketAddress());
             LOG.info("{}",zk.testableRemoteSocketAddress());
             LOG.info("{}",zk.toString());
@@ -759,11 +759,10 @@ public class ClientTest extends ClientBase {
             try {
                 for (; current < count; current++) {
                     TestableZooKeeper zk = createClient();
-                    zk.close();
                     // we've asked to close, wait for it to finish closing
                     // all the sub-threads otw the selector may not be
                     // closed when we check (false positive on test Assert.failure
-                    zk.testableWaitForShutdown(CONNECTION_TIMEOUT);
+                    zk.close(CONNECTION_TIMEOUT);
                 }
             } catch (Throwable t) {
                 LOG.error("test Assert.failed", t);
@@ -829,7 +828,16 @@ public class ClientTest extends ClientBase {
      */
     @Test
     public void testNonExistingOpCode() throws Exception  {
-        TestableZooKeeper zk = createClient();
+        final CountDownLatch clientDisconnected = new CountDownLatch(1);
+        Watcher watcher = new Watcher() {
+            @Override
+            public synchronized void process(WatchedEvent event) {
+                if (event.getState() == KeeperState.Disconnected) {
+                    clientDisconnected.countDown();
+                }
+            }
+        };
+        TestableZooKeeper zk = new TestableZooKeeper(hostPort, CONNECTION_TIMEOUT, watcher);
 
         final String path = "/m1";
 
@@ -839,9 +847,24 @@ public class ClientTest extends ClientBase {
         request.setPath(path);
         request.setWatch(false);
         ExistsResponse response = new ExistsResponse();
+
         ReplyHeader r = zk.submitRequest(h, request, response, null);
 
         Assert.assertEquals(r.getErr(), Code.UNIMPLEMENTED.intValue());
-        zk.testableWaitForShutdown(CONNECTION_TIMEOUT);
+
+        // Sending a nonexisting opcode should cause the server to disconnect
+        Assert.assertTrue("failed to disconnect",
+                clientDisconnected.await(5000, TimeUnit.MILLISECONDS));
+    }
+
+    @Test
+    public void testTryWithResources() throws Exception {
+        ZooKeeper zooKeeper;
+        try (ZooKeeper zk = createClient()) {
+            zooKeeper = zk;
+            Assert.assertTrue(zooKeeper.getState().isAlive());
+        }
+
+        Assert.assertFalse(zooKeeper.getState().isAlive());
     }
 }

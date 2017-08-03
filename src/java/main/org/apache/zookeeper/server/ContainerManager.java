@@ -149,7 +149,7 @@ public class ContainerManager {
                 would be immediately be deleted.
              */
             if ((node != null) && (node.stat.getCversion() > 0) &&
-                    (node.getChildren().size() == 0)) {
+                    (node.getChildren().isEmpty())) {
                 candidates.add(containerPath);
             }
         }
@@ -157,7 +157,7 @@ public class ContainerManager {
             DataNode node = zkDb.getDataTree().getNode(ttlPath);
             if (node != null) {
                 Set<String> children = node.getChildren();
-                if ((children == null) || (children.size() == 0)) {
+                if (children.isEmpty()) {
                     long elapsed = getElapsed(node);
                     long ttl = EphemeralType.getTTL(node.stat.getEphemeralOwner());
                     if ((ttl != 0) && (elapsed > ttl)) {

@@ -21,12 +21,9 @@ import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
-import java.util.Map;
 
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs;
@@ -34,13 +31,10 @@ import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.PrepRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
-import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
-import org.apache.zookeeper.server.admin.AdminServer.AdminServerException;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
-import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.After;
 import org.junit.Assert;
@@ -67,12 +61,28 @@ public class RaceConditionTest extends QuorumPeerTestBase {
         mt = startQuorum();
         // get leader
         QuorumPeer leader = getLeader(mt);
+        long oldLeaderCurrentEpoch = leader.getCurrentEpoch();
         assertNotNull("Leader should not be null", leader);
         // shutdown 2 followers so that leader does not have majority and goes
-        // into looking state or following state.
+        // into looking state or following/leading state.
         shutdownFollowers(mt);
-        assertTrue("Leader failed to transition to LOOKING or FOLLOWING state", ClientBase.waitForServerState(leader,
-                15000, QuorumStats.Provider.LOOKING_STATE, QuorumStats.Provider.FOLLOWING_STATE));
+        /**
+         * <pre>
+         * Verify that there is no deadlock in following ways:
+         * 1) If leader is in LOOKING or FOLLOWING, we are sure there is no deadlock.
+         * 2) If leader in in LEADING state then we have to check that this LEADING state is
+         * after the leader election, not the old LEADING state.
+         * </pre>
+         */
+        boolean leaderStateChanged = ClientBase.waitForServerState(leader, 15000,
+                QuorumStats.Provider.LOOKING_STATE, QuorumStats.Provider.FOLLOWING_STATE);
+        // Wait for the old leader to start completely
+        Assert.assertTrue("Failed to bring up the old leader server", ClientBase
+                .waitForServerUp("127.0.0.1:" + leader.getClientPort(), CONNECTION_TIMEOUT));
+        assertTrue(
+                "Leader failed to transition to new state. Current state is "
+                        + leader.getServerState(),
+                leaderStateChanged || (leader.getCurrentEpoch() > oldLeaderCurrentEpoch));
     }
 
     @After
@@ -148,13 +158,6 @@ public class RaceConditionTest extends QuorumPeerTestBase {
 
         public void setStopPing(boolean stopPing) {
             this.stopPing = stopPing;
-        }
-
-        public CustomQuorumPeer(Map<Long, QuorumServer> quorumPeers, File snapDir, File logDir, int clientPort,
-                int electionAlg, long myid, int tickTime, int initLimit, int syncLimit)
-                throws IOException {
-            super(quorumPeers, snapDir, logDir, electionAlg, myid, tickTime, initLimit, syncLimit, false,
-                    ServerCnxnFactory.createFactory(new InetSocketAddress(clientPort), -1), new QuorumMaj(quorumPeers));
         }
 
         @Override
@@ -234,18 +237,10 @@ public class RaceConditionTest extends QuorumPeerTestBase {
     }
 
     private static class MockTestQPMain extends TestQPMain {
+
         @Override
-        public void runFromConfig(QuorumPeerConfig config)
-                throws IOException, AdminServerException {
-            quorumPeer = new CustomQuorumPeer(config.getQuorumVerifier().getAllMembers(), config.getDataDir(),
-                    config.getDataLogDir(), config.getClientPortAddress().getPort(), config.getElectionAlg(),
-                    config.getServerId(), config.getTickTime(), config.getInitLimit(), config.getSyncLimit());
-            quorumPeer.start();
-            try {
-                quorumPeer.join();
-            } catch (InterruptedException e) {
-                LOG.warn("Quorum Peer interrupted", e);
-            }
+        protected QuorumPeer getQuorumPeer() {
+            return new CustomQuorumPeer();
         }
     }
 }

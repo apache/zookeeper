@@ -29,7 +29,6 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -434,6 +433,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     //last proposed quorum verifier
     public QuorumVerifier lastSeenQuorumVerifier = null;
 
+    // Lock object that guard access to quorumVerifier and lastSeenQuorumVerifier.
+    final Object QV_LOCK = new Object();
+
+
     /**
      * My id
      */
@@ -665,28 +668,40 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         }
     }
 
-    public synchronized InetSocketAddress getQuorumAddress(){
-        return myQuorumAddr;
+    public InetSocketAddress getQuorumAddress(){
+        synchronized (QV_LOCK) {
+            return myQuorumAddr;
+        }
     }
     
-    public synchronized void setQuorumAddress(InetSocketAddress addr){
-        myQuorumAddr = addr;
+    public void setQuorumAddress(InetSocketAddress addr){
+        synchronized (QV_LOCK) {
+            myQuorumAddr = addr;
+        }
     }
-    
+
     public InetSocketAddress getElectionAddress(){
-        return myElectionAddr;
+        synchronized (QV_LOCK) {
+            return myElectionAddr;
+        }
     }
 
     public void setElectionAddress(InetSocketAddress addr){
-        myElectionAddr = addr;
+        synchronized (QV_LOCK) {
+            myElectionAddr = addr;
+        }
     }
     
     public InetSocketAddress getClientAddress(){
-        return myClientAddr;
+        synchronized (QV_LOCK) {
+            return myClientAddr;
+        }
     }
     
     public void setClientAddress(InetSocketAddress addr){
-        myClientAddr = addr;
+        synchronized (QV_LOCK) {
+            myClientAddr = addr;
+        }
     }
     
     private int electionType;
@@ -815,28 +830,16 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         responder.interrupt();
     }
     synchronized public void startLeaderElection() {
-       try {
-           if (getPeerState() == ServerState.LOOKING) {
-               currentVote = new Vote(myid, getLastLoggedZxid(), getCurrentEpoch());
-           }
-       } catch(IOException e) {
-           RuntimeException re = new RuntimeException(e.getMessage());
-           re.setStackTrace(e.getStackTrace());
-           throw re;
-       }
-
-       // if (!getView().containsKey(myid)) {
-      //      throw new RuntimeException("My id " + myid + " not in the peer list");
-        //}
-        if (electionType == 0) {
-            try {
-                udpSocket = new DatagramSocket(myQuorumAddr.getPort());
-                responder = new ResponderThread();
-                responder.start();
-            } catch (SocketException e) {
-                throw new RuntimeException(e);
+        try {
+            if (getPeerState() == ServerState.LOOKING) {
+                currentVote = new Vote(myid, getLastLoggedZxid(), getCurrentEpoch());
             }
+        } catch(IOException e) {
+            RuntimeException re = new RuntimeException(e.getMessage());
+            re.setStackTrace(e.getStackTrace());
+            throw re;
         }
+
         this.electionAlg = createElectionAlgorithm(electionType);
     }
 
@@ -936,29 +939,26 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
         //TODO: use a factory rather than a switch
         switch (electionAlgorithm) {
-        case 0:
-            le = new LeaderElection(this);
-            break;
-        case 1:
-            le = new AuthFastLeaderElection(this);
-            break;
-        case 2:
-            le = new AuthFastLeaderElection(this, true);
-            break;
-        case 3:
-            qcm = new QuorumCnxManager(this);
-            QuorumCnxManager.Listener listener = qcm.listener;
-            if(listener != null){
-                listener.start();
-                FastLeaderElection fle = new FastLeaderElection(this, qcm);
-                fle.start();
-                le = fle;
-            } else {
-                LOG.error("Null listener when initializing cnx manager");
-            }
-            break;
-        default:
-            assert false;
+            case 1:
+                le = new AuthFastLeaderElection(this);
+                break;
+            case 2:
+                le = new AuthFastLeaderElection(this, true);
+                break;
+            case 3:
+                qcm = new QuorumCnxManager(this);
+                QuorumCnxManager.Listener listener = qcm.listener;
+                if(listener != null){
+                    listener.start();
+                    FastLeaderElection fle = new FastLeaderElection(this, qcm);
+                    fle.start();
+                    le = fle;
+                } else {
+                    LOG.error("Null listener when initializing cnx manager");
+                }
+                break;
+            default:
+                assert false;
         }
         return le;
     }
@@ -966,9 +966,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     @SuppressWarnings("deprecation")
     protected Election makeLEStrategy(){
         LOG.debug("Initializing leader election protocol...");
-        if (getElectionType() == 0) {
-            electionAlg = new LeaderElection(this);
-        }
         return electionAlg;
     }
 
@@ -1396,25 +1393,32 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
     
     /**
-     * Return QuorumVerifier object for the last committed configuration
+     * Return QuorumVerifier object for the last committed configuration.
      */
-
-    public synchronized QuorumVerifier getQuorumVerifier(){
-        return quorumVerifier;
-
+    public QuorumVerifier getQuorumVerifier(){
+        synchronized (QV_LOCK) {
+            return quorumVerifier;
+        }
     }
 
-    public synchronized QuorumVerifier getLastSeenQuorumVerifier(){
-        return lastSeenQuorumVerifier;        
+    /**
+     * Return QuorumVerifier object for the last proposed configuration.
+     */
+    public QuorumVerifier getLastSeenQuorumVerifier(){
+        synchronized (QV_LOCK) {
+            return lastSeenQuorumVerifier;
+        }
     }
     
-    public synchronized void connectNewPeers(){
-       if (qcm!=null && getQuorumVerifier()!=null && getLastSeenQuorumVerifier()!=null) {
-           Map<Long, QuorumServer> committedView = getQuorumVerifier().getAllMembers();
-           for (Entry<Long, QuorumServer> e: getLastSeenQuorumVerifier().getAllMembers().entrySet()){
-               if (e.getKey() != getId() && !committedView.containsKey(e.getKey())) 
-                   qcm.connectOne(e.getKey());
-           }
+    private void connectNewPeers(){
+        synchronized (QV_LOCK) {
+            if (qcm != null && quorumVerifier != null && lastSeenQuorumVerifier != null) {
+                Map<Long, QuorumServer> committedView = quorumVerifier.getAllMembers();
+                for (Entry<Long, QuorumServer> e : lastSeenQuorumVerifier.getAllMembers().entrySet()) {
+                    if (e.getKey() != getId() && !committedView.containsKey(e.getKey()))
+                        qcm.connectOne(e.getKey());
+                }
+            }
         }
     }
 
@@ -1428,76 +1432,85 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     public String getNextDynamicConfigFilename() {
+        if (configFilename == null) {
+            LOG.warn("configFilename is null! This should only happen in tests.");
+            return null;
+        }
         return configFilename + QuorumPeerConfig.nextDynamicConfigFileSuffix;
     }
     
-    public synchronized void setLastSeenQuorumVerifier(QuorumVerifier qv, boolean writeToDisk){
-        if (lastSeenQuorumVerifier!=null && lastSeenQuorumVerifier.getVersion() > qv.getVersion()) {
-           LOG.error("setLastSeenQuorumVerifier called with stale config " + qv.getVersion() + 
-                   ". Current version: " + quorumVerifier.getVersion());
-          
-        }
-        // assuming that a version uniquely identifies a configuration, so if
-        // version is the same, nothing to do here.
-        if (lastSeenQuorumVerifier != null &&
-            lastSeenQuorumVerifier.getVersion() == qv.getVersion()) {
-            return;
-        }
-        lastSeenQuorumVerifier = qv;
-        connectNewPeers();
-        if (writeToDisk) {
-            try {
-                QuorumPeerConfig.writeDynamicConfig(
-                        getNextDynamicConfigFilename(), qv, true);
-           } catch(IOException e){
-                LOG.error("Error writing next dynamic config file to disk: ", e.getMessage());
-            }
-        } 
+    public void setLastSeenQuorumVerifier(QuorumVerifier qv, boolean writeToDisk){
+        synchronized (QV_LOCK) {
+            if (lastSeenQuorumVerifier != null && lastSeenQuorumVerifier.getVersion() > qv.getVersion()) {
+                LOG.error("setLastSeenQuorumVerifier called with stale config " + qv.getVersion() +
+                        ". Current version: " + quorumVerifier.getVersion());
 
+            }
+            // assuming that a version uniquely identifies a configuration, so if
+            // version is the same, nothing to do here.
+            if (lastSeenQuorumVerifier != null &&
+                    lastSeenQuorumVerifier.getVersion() == qv.getVersion()) {
+                return;
+            }
+            lastSeenQuorumVerifier = qv;
+            connectNewPeers();
+            if (writeToDisk) {
+                try {
+                    String fileName = getNextDynamicConfigFilename();
+                    if (fileName != null) {
+                        QuorumPeerConfig.writeDynamicConfig(fileName, qv, true);
+                    }
+                } catch (IOException e) {
+                    LOG.error("Error writing next dynamic config file to disk: ", e.getMessage());
+                }
+            }
+        }
      }       
     
-    public synchronized QuorumVerifier setQuorumVerifier(QuorumVerifier qv, boolean writeToDisk){
-        if ((quorumVerifier != null) && (quorumVerifier.getVersion() >= qv.getVersion())) {
-            // this is normal. For example - server found out about new config through FastLeaderElection gossiping
-           // and then got the same config in UPTODATE message so its already known
-           LOG.debug(getId() + " setQuorumVerifier called with known or old config " + qv.getVersion() + 
-                   ". Current version: " + quorumVerifier.getVersion());
-           return quorumVerifier;  
-        }
-        QuorumVerifier prevQV = quorumVerifier;
-        quorumVerifier = qv;
-        if (lastSeenQuorumVerifier == null || (qv.getVersion() > lastSeenQuorumVerifier.getVersion()))
-            lastSeenQuorumVerifier = qv;
-
-        if (writeToDisk) {
-            // some tests initialize QuorumPeer without a static config file
-            if (configFilename != null) {
-                try {
-                    String dynamicConfigFilename = makeDynamicConfigFilename(
-                            qv.getVersion());
-                    QuorumPeerConfig.writeDynamicConfig(
-                            dynamicConfigFilename, qv, false);
-                    QuorumPeerConfig.editStaticConfig(configFilename,
-                            dynamicConfigFilename,
-                            needEraseClientInfoFromStaticConfig());
-                } catch (IOException e) {
-                    LOG.error("Error closing file: ", e.getMessage());
-                }
-            } else {
-                LOG.info("writeToDisk == true but configFilename == null");
+    public QuorumVerifier setQuorumVerifier(QuorumVerifier qv, boolean writeToDisk){
+        synchronized (QV_LOCK) {
+            if ((quorumVerifier != null) && (quorumVerifier.getVersion() >= qv.getVersion())) {
+                // this is normal. For example - server found out about new config through FastLeaderElection gossiping
+                // and then got the same config in UPTODATE message so its already known
+                LOG.debug(getId() + " setQuorumVerifier called with known or old config " + qv.getVersion() +
+                        ". Current version: " + quorumVerifier.getVersion());
+                return quorumVerifier;
             }
-        }
+            QuorumVerifier prevQV = quorumVerifier;
+            quorumVerifier = qv;
+            if (lastSeenQuorumVerifier == null || (qv.getVersion() > lastSeenQuorumVerifier.getVersion()))
+                lastSeenQuorumVerifier = qv;
 
-        if (qv.getVersion() == lastSeenQuorumVerifier.getVersion()){
-           QuorumPeerConfig.deleteFile( getNextDynamicConfigFilename() );
+            if (writeToDisk) {
+                // some tests initialize QuorumPeer without a static config file
+                if (configFilename != null) {
+                    try {
+                        String dynamicConfigFilename = makeDynamicConfigFilename(
+                                qv.getVersion());
+                        QuorumPeerConfig.writeDynamicConfig(
+                                dynamicConfigFilename, qv, false);
+                        QuorumPeerConfig.editStaticConfig(configFilename,
+                                dynamicConfigFilename,
+                                needEraseClientInfoFromStaticConfig());
+                    } catch (IOException e) {
+                        LOG.error("Error closing file: ", e.getMessage());
+                    }
+                } else {
+                    LOG.info("writeToDisk == true but configFilename == null");
+                }
+            }
+
+            if (qv.getVersion() == lastSeenQuorumVerifier.getVersion()) {
+                QuorumPeerConfig.deleteFile(getNextDynamicConfigFilename());
+            }
+            QuorumServer qs = qv.getAllMembers().get(getId());
+            if (qs != null) {
+                setQuorumAddress(qs.addr);
+                setElectionAddress(qs.electionAddr);
+                setClientAddress(qs.clientAddr);
+            }
+            return prevQV;
         }
-        QuorumServer qs = qv.getAllMembers().get(getId());
-        if (qs!=null){
-            setQuorumAddress(qs.addr);
-            setElectionAddress(qs.electionAddr);
-            setClientAddress(qs.clientAddr);
-        }
-        return prevQV;
     }
 
     private String makeDynamicConfigFilename(long version) {
@@ -1735,10 +1748,15 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
    
     public boolean processReconfig(QuorumVerifier qv, Long suggestedLeaderId, Long zxid, boolean restartLE) {
+       if (!QuorumPeerConfig.isReconfigEnabled()) {
+           LOG.debug("Reconfig feature is disabled, skip reconfig processing.");
+           return false;
+       }
+
        InetSocketAddress oldClientAddr = getClientAddress();
 
        // update last committed quorum verifier, write the new config to disk
-       // and restart leader election if config changed
+       // and restart leader election if config changed.
        QuorumVerifier prevQV = setQuorumVerifier(qv, true);
 
        // There is no log record for the initial config, thus after syncing

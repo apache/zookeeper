@@ -96,7 +96,12 @@ public abstract class ClientBase extends ZKTestCase {
     public static class CountdownWatcher implements Watcher {
         // XXX this doesn't need to be volatile! (Should probably be final)
         volatile CountDownLatch clientConnected;
+        // Set to true when connected to a read-only server, or a read-write (quorum) server.
         volatile boolean connected;
+        // Set to true when connected to a quorum server.
+        volatile boolean syncConnected;
+        // Set to true when connected to a quorum server in read-only mode
+        volatile boolean readOnlyConnected;
 
         public CountdownWatcher() {
             reset();
@@ -104,16 +109,28 @@ public abstract class ClientBase extends ZKTestCase {
         synchronized public void reset() {
             clientConnected = new CountDownLatch(1);
             connected = false;
+            syncConnected = false;
+            readOnlyConnected = false;
         }
         synchronized public void process(WatchedEvent event) {
-            if (event.getState() == KeeperState.SyncConnected ||
-                event.getState() == KeeperState.ConnectedReadOnly) {
+            KeeperState state = event.getState();
+            if (state == KeeperState.SyncConnected) {
                 connected = true;
-                notifyAll();
-                clientConnected.countDown();
+                syncConnected = true;
+                readOnlyConnected = false;
+            } else if (state == KeeperState.ConnectedReadOnly) {
+                connected = true;
+                syncConnected = false;
+                readOnlyConnected = true;
             } else {
                 connected = false;
-                notifyAll();
+                syncConnected = false;
+                readOnlyConnected = false;
+            }
+
+            notifyAll();
+            if (connected) {
+                clientConnected.countDown();
             }
         }
         synchronized public boolean isConnected() {
@@ -131,6 +148,32 @@ public abstract class ClientBase extends ZKTestCase {
             if (!connected) {
                 throw new TimeoutException("Failed to connect to ZooKeeper server.");
 
+            }
+        }
+        synchronized public void waitForSyncConnected(long timeout)
+                throws InterruptedException, TimeoutException
+        {
+            long expire = Time.currentElapsedTime() + timeout;
+            long left = timeout;
+            while(!syncConnected && left > 0) {
+                wait(left);
+                left = expire - Time.currentElapsedTime();
+            }
+            if (!syncConnected) {
+                throw new TimeoutException("Failed to connect to read-write ZooKeeper server.");
+            }
+        }
+        synchronized public void waitForReadOnlyConnected(long timeout)
+                throws InterruptedException, TimeoutException
+        {
+            long expire = System.currentTimeMillis() + timeout;
+            long left = timeout;
+            while(!readOnlyConnected && left > 0) {
+                wait(left);
+                left = expire - System.currentTimeMillis();
+            }
+            if (!readOnlyConnected) {
+                throw new TimeoutException("Failed to connect in read-only mode to ZooKeeper server.");
             }
         }
         synchronized public void waitForDisconnected(long timeout)
@@ -325,12 +368,15 @@ public abstract class ClientBase extends ZKTestCase {
         }
     }
 
-
-    public static File createTmpDir() throws IOException {
-        return createTmpDir(BASETEST);
+    public static File createEmptyTestDir() throws IOException {
+        return createTmpDir(BASETEST, false);
     }
 
-    static File createTmpDir(File parentDir) throws IOException {
+    public static File createTmpDir() throws IOException {
+        return createTmpDir(BASETEST, true);
+    }
+
+    static File createTmpDir(File parentDir, boolean createInitFile) throws IOException {
         File tmpFile = File.createTempFile("test", ".junit", parentDir);
         // don't delete tmpFile - this ensures we don't attempt to create
         // a tmpDir with a duplicate name
@@ -338,7 +384,19 @@ public abstract class ClientBase extends ZKTestCase {
         Assert.assertFalse(tmpDir.exists()); // never true if tmpfile does it's job
         Assert.assertTrue(tmpDir.mkdirs());
 
+        // todo not every tmp directory needs this file
+        if (createInitFile) {
+            createInitializeFile(tmpDir);
+        }
+
         return tmpDir;
+    }
+
+    public static void createInitializeFile(File dir) throws IOException {
+        File initFile = new File(dir, "initialize");
+        if (!initFile.exists()) {
+            Assert.assertTrue(initFile.createNewFile());
+        }
     }
 
     private static int getPort(String hostPort) {
@@ -455,7 +513,7 @@ public abstract class ClientBase extends ZKTestCase {
 
         setUpAll();
 
-        tmpDir = createTmpDir(BASETEST);
+        tmpDir = createTmpDir(BASETEST, true);
 
         startServer();
 

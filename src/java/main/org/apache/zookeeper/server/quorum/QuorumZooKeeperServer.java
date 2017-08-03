@@ -23,6 +23,8 @@ import java.nio.ByteBuffer;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.MultiTransactionRecord;
+import org.apache.zookeeper.Op;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.server.ByteBufferInputStream;
@@ -62,18 +64,41 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
         // This is called by the request processor thread (either follower
         // or observer request processor), which is unique to a learner.
         // So will not be called concurrently by two threads.
-        if (request.type != OpCode.create ||
+        if ((request.type != OpCode.create && request.type != OpCode.create2 && request.type != OpCode.multi) ||
             !upgradeableSessionTracker.isLocalSession(request.sessionId)) {
             return null;
         }
-        CreateRequest createRequest = new CreateRequest();
-        request.request.rewind();
-        ByteBufferInputStream.byteBuffer2Record(request.request, createRequest);
-        request.request.rewind();
-        CreateMode createMode = CreateMode.fromFlag(createRequest.getFlags());
-        if (!createMode.isEphemeral()) {
-            return null;
+
+        if (OpCode.multi == request.type) {
+            MultiTransactionRecord multiTransactionRecord = new MultiTransactionRecord();
+            request.request.rewind();
+            ByteBufferInputStream.byteBuffer2Record(request.request, multiTransactionRecord);
+            request.request.rewind();
+            boolean containsEphemeralCreate = false;
+            for (Op op : multiTransactionRecord) {
+                if (op.getType() == OpCode.create || op.getType() == OpCode.create2) {
+                    CreateRequest createRequest = (CreateRequest)op.toRequestRecord();
+                    CreateMode createMode = CreateMode.fromFlag(createRequest.getFlags());
+                    if (createMode.isEphemeral()) {
+                        containsEphemeralCreate = true;
+                        break;
+                    }
+                }
+            }
+            if (!containsEphemeralCreate) {
+                return null;
+            }
+        } else {
+            CreateRequest createRequest = new CreateRequest();
+            request.request.rewind();
+            ByteBufferInputStream.byteBuffer2Record(request.request, createRequest);
+            request.request.rewind();
+            CreateMode createMode = CreateMode.fromFlag(createRequest.getFlags());
+            if (!createMode.isEphemeral()) {
+                return null;
+            }
         }
+
         // Uh oh.  We need to upgrade before we can proceed.
         if (!self.isLocalSessionsUpgradingEnabled()) {
             throw new KeeperException.EphemeralOnLocalSessionException();

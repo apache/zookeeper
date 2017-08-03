@@ -154,7 +154,7 @@ public class ReconfigCommand extends CliCommand {
                 return false;
             }
 
-            byte[] curConfig = ((ZooKeeperAdmin)zk).reconfig(joining,
+            byte[] curConfig = ((ZooKeeperAdmin)zk).reconfigure(joining,
                     leaving, members, version, stat);
             out.println("Committed new configuration:\n" + new String(curConfig));
             

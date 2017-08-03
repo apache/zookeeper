@@ -47,6 +47,7 @@ import org.apache.zookeeper.server.NIOServerCnxnFactory.SelectorThread;
 import org.apache.zookeeper.server.command.CommandExecutor;
 import org.apache.zookeeper.server.command.FourLetterCommands;
 import org.apache.zookeeper.server.command.SetTraceMaskCommand;
+import org.apache.zookeeper.server.command.NopCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -426,7 +427,7 @@ public class NIOServerCnxn extends ServerCnxn {
     }
 
     private void readConnectRequest() throws IOException, InterruptedException {
-        if (isZKServerRunning()) {
+        if (!isZKServerRunning()) {
             throw new IOException("ZooKeeperServer not running");
         }
         zkServer.processConnectRequest(this, incomingBuffer);
@@ -478,12 +479,11 @@ public class NIOServerCnxn extends ServerCnxn {
     {
         // We take advantage of the limited size of the length to look
         // for cmds. They are all 4-bytes which fits inside of an int
-        String cmd = FourLetterCommands.getCmdMapView().get(len);
-        if (cmd == null) {
+        if (!FourLetterCommands.isKnown(len)) {
             return false;
         }
-        LOG.info("Processing " + cmd + " command from "
-                + sock.socket().getRemoteSocketAddress());
+
+        String cmd = FourLetterCommands.getCommandString(len);
         packetReceived();
 
         /** cancel the selection key to remove the socket handling
@@ -505,6 +505,19 @@ public class NIOServerCnxn extends ServerCnxn {
 
         final PrintWriter pwriter = new PrintWriter(
                 new BufferedWriter(new SendBufferWriter()));
+
+        // ZOOKEEPER-2693: don't execute 4lw if it's not enabled.
+        if (!FourLetterCommands.isEnabled(cmd)) {
+            LOG.debug("Command {} is not executed because it is not in the whitelist.", cmd);
+            NopCommand nopCmd = new NopCommand(pwriter, this, cmd +
+                    " is not executed because it is not in the whitelist.");
+            nopCmd.start();
+            return true;
+        }
+
+        LOG.info("Processing " + cmd + " command from "
+                + sock.socket().getRemoteSocketAddress());
+
         if (len == FourLetterCommands.setTraceMaskCmd) {
             incomingBuffer = ByteBuffer.allocate(8);
             int rc = sock.read(incomingBuffer);
@@ -539,15 +552,18 @@ public class NIOServerCnxn extends ServerCnxn {
         if (len < 0 || len > BinaryInputArchive.maxBuffer) {
             throw new IOException("Len error " + len);
         }
-        if (isZKServerRunning()) {
+        if (!isZKServerRunning()) {
             throw new IOException("ZooKeeperServer not running");
         }
         incomingBuffer = ByteBuffer.allocate(len);
         return true;
     }
 
+    /**
+     * @return true if the server is running, false otherwise.
+     */
     boolean isZKServerRunning() {
-        return zkServer == null || !zkServer.isRunning();
+        return zkServer != null && zkServer.isRunning();
     }
 
     public long getOutstandingRequests() {

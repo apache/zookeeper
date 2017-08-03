@@ -89,6 +89,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="test.junit.threads" value="1" />
     <property name="test.junit.printsummary" value="yes" />
     <property name="test.junit.haltonfailure" value="no" />
+    <property name="test.junit.failbuild.ontestfailure" value="true" />
     <property name="config.dir" value="${src.dir}/java/test/config" />
     <property name="test.junit.maxmem" value="512m" />
     <property name="test.quick" value="no" />
@@ -119,8 +120,11 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="ivy.package.lib" value="${build.dir}/package/lib"/>
     <property name="ivy.test.lib" value="${build.dir}/test/lib"/>
     <property name="ivy.jdiff.lib" value="${build.dir}/jdiff/lib"/>
+    <property name="ivy.javacc.lib" value="${build.dir}/javacc/lib"/>
     <property name="ivysettings.xml" value="${basedir}/ivysettings.xml"/>
-    
+
+    <property name="audience-annotations.version" value="0.5.0" />
+
     <property name="mvnrepo" value="https://repo1.maven.org/maven2"/>
     <property name="tsk.org" value="/org/apache/maven/maven-ant-tasks/"/>
     <property name="ant-task.version" value="2.1.3"/>
@@ -253,24 +257,24 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     </target>
     
 	
-    <target name="generate_jute_parser" depends="init,ivy-retrieve">
+    <target name="generate_jute_parser" depends="init,ivy-retrieve,ivy-retrieve-javacc">
       <property name="jute_javacc.dir" value="${build.dir}/jute_compiler" />
       <property name="jute_javacc.packagedir" value="/org/apache/jute/compiler/generated" />
       <mkdir dir="${jute_javacc.dir}${jute_javacc.packagedir}"/>
       <!-- the javacc task expects a "javacc.jar" file... -->
       <ivy:artifactproperty name="[artifact].revision" value="[revision]" />
-      <move file="${ivy.lib}/javacc-${javacc.revision}.jar" tofile="${ivy.lib}/javacc.jar" failonerror="false"/>
+      <move file="${ivy.javacc.lib}/javacc-${javacc.revision}.jar" tofile="${ivy.javacc.lib}/javacc.jar" failonerror="false"/>
       <javacc
           target="${java.src.dir}${jute_javacc.packagedir}/rcc.jj"
           outputdirectory="${jute_javacc.dir}${jute_javacc.packagedir}/"
-          javacchome="${ivy.lib}"
+          javacchome="${ivy.javacc.lib}"
           />
     </target>
      
     <target name="jute" depends="generate_jute_parser">
         <javac srcdir="${jute_javacc.dir}" destdir="${build.classes}" includeantruntime="false"
             target="${javac.target}" source="${javac.source}"
-            includes="org/apache/jute/**" debug="on" encoding="${build.encoding}">
+            includes="org/apache/jute/**" debug="on" encoding="${build.encoding}" classpath="${ivy.lib}/audience-annotations-${audience-annotations.version}.jar">
           <src path="${java.src.dir}" />
           <src path="${jute_javacc.dir}" />
         </javac>
@@ -313,7 +317,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
             includes="org/apache/zookeeper/version/util/**" debug="on" encoding="${build.encoding}" />
     </target>
     
-    <target name="svn-revision" unless="lastRevision">
+    <target name="git-revision" unless="lastRevision">
         <mkdir dir="${revision.dir}" />
         <condition property="shell.name" value="cmd" else="sh">
       	    <os family="windows"/>
@@ -328,7 +332,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <property file="${revision.dir}/${revision.properties}" />
     </target>
     
-    <target name="version-info" depends="ver-gen,svn-revision">
+    <target name="version-info" depends="ver-gen,git-revision">
         <mkdir dir="${src_generated.dir}" />
         <java classname="org.apache.zookeeper.version.util.VerGen" fork="true" 
                 dir="${src_generated.dir}">
@@ -341,9 +345,9 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         </java>
     </target>
     
-    <target name="build-generated" depends="compile_jute,version-info,process-template" >
+    <target name="build-generated" depends="compile_jute,version-info,process-template,ivy-retrieve" >
         <javac srcdir="${src_generated.dir}" destdir="${build.classes}" includeantruntime="false"
-            target="${javac.target}" source="${javac.source}" debug="on" encoding="${build.encoding}" />
+            target="${javac.target}" source="${javac.source}" debug="on" encoding="${build.encoding}" classpath="${ivy.lib}/audience-annotations-${audience-annotations.version}.jar" />
     </target>
     
     <target name="ivy-download" unless="ivy.jar.exists" depends="init">
@@ -383,6 +387,12 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <mkdir dir="${ivy.jdiff.lib}"/>
       <ivy:retrieve settingsRef="${ant.project.name}" conf="jdiff"
                     pattern="${ivy.jdiff.lib}/[artifact]-[revision].[ext]"/>
+    </target>
+
+     <target name="ivy-retrieve-javacc" depends="init,ivy-init">
+      <mkdir dir="${ivy.javacc.lib}"/>
+      <ivy:retrieve settingsRef="${ant.project.name}" conf="javacc"
+                    pattern="${ivy.javacc.lib}/[artifact]-[revision].[ext]"/>
     </target>
 
     <target name="ivy-retrieve-releaseaudit" depends="init,ivy-init">
@@ -517,24 +527,23 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
          windowtitle="${Name} ${version} API"
          doctitle="${Name} ${version} API"
          bottom="Copyright &amp;copy; ${year} The Apache Software Foundation"
+         doclet="org.apache.yetus.audience.tools.IncludePublicAnnotationsStandardDoclet"
+         docletpath="${ivy.lib}/audience-annotations-${audience-annotations.version}.jar"
          >
-    	<fileset dir="${java.src.dir}">
-          <include name="org/apache/**/*Main.java"/>
-          <include name="org/apache/zookeeper/AsyncCallback.java"/>
-          <include name="org/apache/zookeeper/CreateMode.java"/>
-          <include name="org/apache/zookeeper/KeeperException.java"/>
-          <include name="org/apache/zookeeper/ServerAdminClient.java"/>
-          <include name="org/apache/zookeeper/Watcher.java"/>
-          <include name="org/apache/zookeeper/WatchedEvent.java"/>
-          <include name="org/apache/zookeeper/ZooDefs.java"/>
-          <include name="org/apache/zookeeper/ZooKeeper.java"/>
-          <include name="org/apache/zookeeper/admin/ZooKeeperAdmin.java"/>
+
+        <fileset dir="${java.src.dir}">
+          <include name="org/apache/zookeeper/server/quorum/QuorumPeerMain.java"/>
+          <include name="org/apache/zookeeper/server/ZooKeeperServerMain.java"/>
           <include name="org/apache/zookeeper/server/LogFormatter.java"/>
-          <include name="org/apache/zookeeper/server/SnapshotFormatter.java"/>
           <include name="org/apache/zookeeper/server/PurgeTxnLog.java"/>
-          <exclude name="org/apache/zookeeper/server/quorum/QuorumPacket"/>
-    	</fileset>
+          <include name="org/apache/zookeeper/server/SnapshotFormatter.java"/>
+        </fileset>
+    	<packageset dir="${java.src.dir}">
+          <include name="org/apache/**"/>
+          <exclude name="org/apache/zookeeper/server/**"/>
+    	</packageset>
     	<packageset dir="${src_generated.dir}">
+          <include name="org/apache/**"/>
           <exclude name="org/apache/zookeeper/proto"/>
           <exclude name="org/apache/zookeeper/txn"/>
           <exclude name="org/apache/zookeeper/version"/>
@@ -748,7 +757,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
       <ivy:makepom settingsRef="${ant.project.name}" ivyfile="${basedir}/ivy.xml"
                    pomfile="${dist.maven.dir}/${final.name}.pom"
-                   templatefile="${basedir}/src/pom.template">
+                   templatefile="${basedir}/src/pom.template" conf="default,test" >
         <mapping conf="default" scope="compile"/>
         <mapping conf="test" scope="test"/>
       </ivy:makepom>
@@ -786,6 +795,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
       <copy todir="${dist.dir}/src" includeEmptyDirs="true">
         <fileset dir="src" excludes="**/*.template **/docs/build/**/* **/ivy*.jar"/>
+        <fileset file="src/pom.template"/>
       </copy>
   	  
       <chmod perm="ugo+x" type="file" parallel="false">
@@ -902,6 +912,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
       <copy todir="${dist.dir}/src" includeEmptyDirs="true">
         <fileset dir="src" excludes="**/*.template **/docs/build/**/* **/ivy*.jar"/>
+        <fileset file="src/pom.template"/>
       </copy>
   	  
       <chmod perm="ugo+x" type="file" parallel="false">
@@ -1206,6 +1217,10 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
             <fileset refid="testcase.files" />
           </batchtest>
         </junit>
+        <antcall target="fail.build.on.test.failure"/>
+    </target>
+
+    <target name="fail.build.on.test.failure" if="${test.junit.failbuild.ontestfailure}" >
         <fail if="tests.failed">Tests failed!</fail>
     </target>
 
@@ -1232,7 +1247,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
             <fileset refid="testcase.files" />
           </batchtest>
         </junit>
-        <fail if="tests.failed">Tests failed!</fail>
+        <antcall target="fail.build.on.test.failure"/>
     </target>
 
     <target name="check-cppunit-configure" depends="init" >
@@ -1475,7 +1490,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
                 <fileset dir="${test.src.dir}" includes="**/${testcase}.java"/>
             </batchtest>
         </junit>
-        <fail if="tests.failed">Tests failed!</fail>
+        <antcall target="fail.build.on.test.failure"/>
     </target>
 
     <target name="cobertura-report" depends="cobertura-test">

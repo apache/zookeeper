@@ -21,6 +21,7 @@ package org.apache.zookeeper.admin;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.Watcher;
@@ -47,6 +48,9 @@ import org.slf4j.LoggerFactory;
  *
  * @since 3.5.3
  */
+// See ZooKeeper.java for an explanation of why we need @SuppressWarnings("try")
+@SuppressWarnings("try")
+@InterfaceAudience.Public
 public class ZooKeeperAdmin extends ZooKeeper {
     private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperAdmin.class);
 
@@ -172,8 +176,8 @@ public class ZooKeeperAdmin extends ZooKeeper {
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws KeeperException If the server signals an error with a non-zero error code.
      */
-    public byte[] reconfig(String joiningServers, String leavingServers,
-                           String newMembers, long fromConfig, Stat stat) throws KeeperException, InterruptedException {
+    public byte[] reconfigure(String joiningServers, String leavingServers,
+                              String newMembers, long fromConfig, Stat stat) throws KeeperException, InterruptedException {
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.reconfig);
         ReconfigRequest request = new ReconfigRequest(joiningServers, leavingServers, newMembers, fromConfig);
@@ -191,13 +195,13 @@ public class ZooKeeperAdmin extends ZooKeeper {
     /**
      * Convenience wrapper around reconfig that takes Lists of strings instead of comma-separated servers.
      *
-     * @see #reconfig
+     * @see #reconfigure
      *
      */
-    public byte[] reconfig(List<String> joiningServers, List<String> leavingServers,
-                           List<String> newMembers, long fromConfig,
-                           Stat stat) throws KeeperException, InterruptedException {
-        return reconfig(StringUtils.joinStrings(joiningServers, ","),
+    public byte[] reconfigure(List<String> joiningServers, List<String> leavingServers,
+                              List<String> newMembers, long fromConfig,
+                              Stat stat) throws KeeperException, InterruptedException {
+        return reconfigure(StringUtils.joinStrings(joiningServers, ","),
                         StringUtils.joinStrings(leavingServers, ","),
                         StringUtils.joinStrings(newMembers, ","),
                         fromConfig, stat);
@@ -206,11 +210,11 @@ public class ZooKeeperAdmin extends ZooKeeper {
     /**
      * The Asynchronous version of reconfig.
      *
-     * @see #reconfig
+     * @see #reconfigure
      *
      **/
-    public void reconfig(String joiningServers, String leavingServers,
-        String newMembers, long fromConfig, DataCallback cb, Object ctx) {
+    public void reconfigure(String joiningServers, String leavingServers,
+                            String newMembers, long fromConfig, DataCallback cb, Object ctx) {
         RequestHeader h = new RequestHeader();
         h.setType(ZooDefs.OpCode.reconfig);
         ReconfigRequest request = new ReconfigRequest(joiningServers, leavingServers, newMembers, fromConfig);
@@ -222,13 +226,13 @@ public class ZooKeeperAdmin extends ZooKeeper {
     /**
      * Convenience wrapper around asynchronous reconfig that takes Lists of strings instead of comma-separated servers.
      *
-     * @see #reconfig
+     * @see #reconfigure
      *
      */
-    public void reconfig(List<String> joiningServers,
-        List<String> leavingServers, List<String> newMembers, long fromConfig,
-        DataCallback cb, Object ctx) {
-        reconfig(StringUtils.joinStrings(joiningServers, ","),
+    public void reconfigure(List<String> joiningServers,
+                            List<String> leavingServers, List<String> newMembers, long fromConfig,
+                            DataCallback cb, Object ctx) {
+        reconfigure(StringUtils.joinStrings(joiningServers, ","),
                  StringUtils.joinStrings(leavingServers, ","),
                  StringUtils.joinStrings(newMembers, ","),
                  fromConfig, cb, ctx);

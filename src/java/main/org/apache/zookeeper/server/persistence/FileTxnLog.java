@@ -40,7 +40,6 @@ import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
-import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
@@ -125,12 +124,14 @@ public class FileTxnLog implements TxnLog {
     volatile FileOutputStream fos = null;
 
     File logDir;
-    private final boolean forceSync = !System.getProperty("zookeeper.forceSync", "yes").equals("no");;
+    private final boolean forceSync = !System.getProperty("zookeeper.forceSync", "yes").equals("no");
     long dbId;
     private LinkedList<FileOutputStream> streamsToFlush =
         new LinkedList<FileOutputStream>();
     long currentSize;
     File logFileWrite = null;
+
+    private volatile long syncElapsedMS = -1L;
 
     /**
      * constructor for FileTxnLog. Take the directory
@@ -151,7 +152,7 @@ public class FileTxnLog implements TxnLog {
     }
 
     /**
-     * creates a checksum alogrithm to be used
+     * creates a checksum algorithm to be used
      * @return the checksum used for this txnlog
      */
     protected Checksum makeChecksumAlgorithm(){
@@ -319,7 +320,7 @@ public class FileTxnLog implements TxnLog {
     }
 
     /**
-     * commit the logs. make sure that evertyhing hits the
+     * commit the logs. make sure that everything hits the
      * disk
      */
     public synchronized void commit() throws IOException {
@@ -333,8 +334,7 @@ public class FileTxnLog implements TxnLog {
 
                 log.getChannel().force(false);
 
-                long syncElapsedMS =
-                    TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startSyncNS);
+                syncElapsedMS = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startSyncNS);
                 if (syncElapsedMS > fsyncWarningThresholdMS) {
                     LOG.warn("fsync-ing the write ahead log in "
                             + Thread.currentThread().getName()
@@ -347,6 +347,14 @@ public class FileTxnLog implements TxnLog {
         while (streamsToFlush.size() > 1) {
             streamsToFlush.removeFirst().close();
         }
+    }
+
+    /**
+     *
+     * @return elapsed sync time of transaction log in milliseconds
+     */
+    public long getTxnLogSyncElapsedTime() {
+        return syncElapsedMS;
     }
 
     /**
@@ -406,7 +414,7 @@ public class FileTxnLog implements TxnLog {
     /**
      * read the header of the transaction file
      * @param file the transaction file to read
-     * @return header that was read fomr the file
+     * @return header that was read from the file
      * @throws IOException
      */
     private static FileHeader readHeader(File file) throws IOException {
@@ -586,8 +594,7 @@ public class FileTxnLog implements TxnLog {
                 }
             }
             goToNextLog();
-            if (!next())
-                return;
+            next();
         }
         
         /**
@@ -683,7 +690,7 @@ public class FileTxnLog implements TxnLog {
                 hdr = new TxnHeader();
                 record = SerializeUtils.deserializeTxn(bytes, hdr);
             } catch (EOFException e) {
-                LOG.debug("EOF excepton " + e);
+                LOG.debug("EOF exception " + e);
                 inputStream.close();
                 inputStream = null;
                 ia = null;
@@ -703,7 +710,7 @@ public class FileTxnLog implements TxnLog {
         }
 
         /**
-         * reutrn the current header
+         * return the current header
          * @return the current header that
          * is read
          */

@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.management.JMException;
 
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.jmx.ManagedUtil;
 import org.apache.zookeeper.server.admin.AdminServer;
 import org.apache.zookeeper.server.admin.AdminServer.AdminServerException;
@@ -37,6 +38,7 @@ import org.slf4j.LoggerFactory;
 /**
  * This class starts and runs a standalone ZooKeeperServer.
  */
+@InterfaceAudience.Public
 public class ZooKeeperServerMain {
     private static final Logger LOG =
         LoggerFactory.getLogger(ZooKeeperServerMain.class);
@@ -167,7 +169,7 @@ public class ZooKeeperServerMain {
                 secureCnxnFactory.join();
             }
             if (zkServer.canShutdown()) {
-                zkServer.shutdown();
+                zkServer.shutdown(true);
             }
         } catch (InterruptedException e) {
             // warn, but generally this is ok

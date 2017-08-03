@@ -90,6 +90,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
                 if (!logDir.mkdir()) {
                     throw new IOException("unable to mkdir " + logDir);
                 }
+                ClientBase.createInitializeFile(logDir);
             }
             
             String normalizedDataDir = PathUtils.normalizeFileSystemPath(dataDir.toString());
@@ -202,6 +203,12 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         main.deleteDirs();
     }
 
+    /**
+     * Tests that the ZooKeeper server will fail to start if the
+     * snapshot directory is read only.
+     *
+     * This test will fail if it is executed as root user.
+     */
     @Test(timeout = 30000)
     public void testReadOnlySnapshotDir() throws Exception {
         ClientBase.setupTestEnv();
@@ -236,6 +243,12 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         main.deleteDirs();
     }
 
+    /**
+     * Tests that the ZooKeeper server will fail to start if the
+     * transaction log directory is read only.
+     *
+     * This test will fail if it is executed as root user.
+     */
     @Test(timeout = 30000)
     public void testReadOnlyTxnLogDir() throws Exception {
         ClientBase.setupTestEnv();
@@ -307,71 +320,6 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
     }
 
     /**
-     * Test verifies server should fail when data dir or data log dir doesn't
-     * exists. Sets "zookeeper.datadir.autocreate" to false.
-     */
-    @Test(timeout = 30000)
-    public void testWithoutAutoCreateDataLogDir() throws Exception {
-        ClientBase.setupTestEnv();
-        System.setProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE, "false");
-        try {
-            final int CLIENT_PORT = PortAssignment.unique();
-
-            MainThread main = new MainThread(CLIENT_PORT, false, null);
-            String args[] = new String[1];
-            args[0] = main.confFile.toString();
-            main.start();
-
-            Assert.assertFalse("waiting for server being up", ClientBase
-                    .waitForServerUp("127.0.0.1:" + CLIENT_PORT,
-                            CONNECTION_TIMEOUT / 2));
-        } finally {
-            // resets "zookeeper.datadir.autocreate" flag
-            System.setProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE,
-                    FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE_DEFAULT);
-        }
-    }
-
-    /**
-     * Test verifies the auto creation of data dir and data log dir.
-     * Sets "zookeeper.datadir.autocreate" to true.
-     */
-    @Test(timeout = 30000)
-    public void testWithAutoCreateDataLogDir() throws Exception {
-        ClientBase.setupTestEnv();
-        System.setProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE, "true");
-        final int CLIENT_PORT = PortAssignment.unique();
-
-        MainThread main = new MainThread(CLIENT_PORT, false, null);
-        String args[] = new String[1];
-        args[0] = main.confFile.toString();
-        main.start();
-
-        Assert.assertTrue("waiting for server being up",
-                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
-                        CONNECTION_TIMEOUT));
-        clientConnected = new CountDownLatch(1);
-        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT,
-                ClientBase.CONNECTION_TIMEOUT, this);
-        Assert.assertTrue("Failed to establish zkclient connection!",
-                clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
-
-        zk.create("/foo", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
-        Assert.assertEquals(new String(zk.getData("/foo", null, null)),
-                "foobar");
-        zk.close();
-
-        main.shutdown();
-        main.join();
-        main.deleteDirs();
-
-        Assert.assertTrue("waiting for server down", ClientBase
-                .waitForServerDown("127.0.0.1:" + CLIENT_PORT,
-                        ClientBase.CONNECTION_TIMEOUT));
-    }
-
-    /**
      * Test verifies that the server shouldn't allow minsessiontimeout >
      * maxsessiontimeout
      */
@@ -386,7 +334,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         final int maxSessionTimeout = tickTime * 2 - 100; // max is lower
         final String configs = "maxSessionTimeout=" + maxSessionTimeout + "\n"
                 + "minSessionTimeout=" + minSessionTimeout + "\n";
-        MainThread main = new MainThread(CLIENT_PORT, false, configs);
+        MainThread main = new MainThread(CLIENT_PORT, true, configs);
         String args[] = new String[1];
         args[0] = main.confFile.toString();
         try {
@@ -411,7 +359,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         final int minSessionTimeout = tickTime * 2 - 100;
         int maxSessionTimeout = 20 * tickTime;
         final String configs = "minSessionTimeout=" + minSessionTimeout + "\n";
-        MainThread main = new MainThread(CLIENT_PORT, false, configs);
+        MainThread main = new MainThread(CLIENT_PORT, true, configs);
         main.start();
 
         String HOSTPORT = "127.0.0.1:" + CLIENT_PORT;
@@ -444,7 +392,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         final int maxSessionTimeout = 20 * tickTime + 1000;
         final String configs = "maxSessionTimeout=" + maxSessionTimeout + "\n"
                 + "minSessionTimeout=" + minSessionTimeout + "\n";
-        MainThread main = new MainThread(CLIENT_PORT, false, configs);
+        MainThread main = new MainThread(CLIENT_PORT, true, configs);
         main.start();
 
         String HOSTPORT = "127.0.0.1:" + CLIENT_PORT;

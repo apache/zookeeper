@@ -206,16 +206,7 @@ public class HierarchicalQuorumTest extends ClientBase {
             s5.setLearnerType(QuorumPeer.LearnerType.OBSERVER);
         }
         Assert.assertEquals(clientport5, s5.getClientPort());
-        
-        // Observers are currently only compatible with LeaderElection
-        if (withObservers) {
-            s1.setElectionType(0);
-            s2.setElectionType(0);
-            s3.setElectionType(0);
-            s4.setElectionType(0);
-            s5.setElectionType(0);
-        }
-        
+
         LOG.info("start QuorumPeer 1");
         s1.start();
         LOG.info("start QuorumPeer 2");

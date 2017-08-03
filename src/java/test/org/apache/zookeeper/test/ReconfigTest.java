@@ -81,7 +81,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         byte[] config = null;
         for (int j = 0; j < 30; j++) {
             try {
-                config = zkAdmin.reconfig(joiningServers, leavingServers,
+                config = zkAdmin.reconfigure(joiningServers, leavingServers,
                         newMembers, fromConfig, new Stat());
                 break;
             } catch (KeeperException.ConnectionLossException e) {
@@ -481,7 +481,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
  
         LinkedList<Integer> results = new LinkedList<Integer>();
         
-        zkAdminArr[1].reconfig(null, leavingServers, null, -1, this, results);
+        zkAdminArr[1].reconfigure(null, leavingServers, null, -1, this, results);
         
         synchronized (results) {
             while (results.size() < 1) {
@@ -678,7 +678,6 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
 
         Assert.assertTrue(qu.getPeer(leaderIndex).peer.getQuorumAddress()
                 .getPort() == newQuorumPort);
-        Assert.assertTrue(getLeaderId(qu) != leaderIndex); // the leader changed
 
         joiningServers.clear();
 

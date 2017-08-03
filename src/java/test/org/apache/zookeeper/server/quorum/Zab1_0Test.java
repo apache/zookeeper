@@ -19,6 +19,9 @@
 package org.apache.zookeeper.server.quorum;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -34,6 +37,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 
 import org.apache.jute.BinaryInputArchive;
@@ -48,6 +52,7 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.apache.zookeeper.server.ByteBufferOutputStream;
+import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerCnxnFactory;
@@ -57,6 +62,7 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.util.ZxidUtils;
+import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.TestUtils;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.CreateTxn;
@@ -649,6 +655,8 @@ public class Zab1_0Test extends ZKTestCase {
                 tmpDir.mkdir();
                 File logDir = f.fzk.getTxnLogFactory().getDataDir().getParentFile();
                 File snapDir = f.fzk.getTxnLogFactory().getSnapDir().getParentFile();
+                //Spy on ZK so we can check if a snapshot happened or not.
+                f.zk = spy(f.zk);
                 try {
                     Assert.assertEquals(0, f.self.getAcceptedEpoch());
                     Assert.assertEquals(0, f.self.getCurrentEpoch());
@@ -691,6 +699,10 @@ public class Zab1_0Test extends ZKTestCase {
                     oa.writeRecord(qp, null);
                     zkDb.serializeSnapshot(oa);
                     oa.writeString("BenWasHere", null);
+                    Thread.sleep(10); //Give it some time to process the snap
+                    //No Snapshot taken yet, the SNAP was applied in memory
+                    verify(f.zk, never()).takeSnapshot();
+
                     qp.setType(Leader.NEWLEADER);
                     qp.setZxid(ZxidUtils.makeZxid(1, 0));
                     oa.writeRecord(qp, null);
@@ -701,7 +713,8 @@ public class Zab1_0Test extends ZKTestCase {
                     Assert.assertEquals(ZxidUtils.makeZxid(1, 0), qp.getZxid());
                     Assert.assertEquals(1, f.self.getAcceptedEpoch());
                     Assert.assertEquals(1, f.self.getCurrentEpoch());
-                    
+                    //Make sure that we did take the snapshot now
+                    verify(f.zk).takeSnapshot();
                     Assert.assertEquals(firstZxid, f.fzk.getLastProcessedZxid());
                     
                     // Make sure the data was recorded in the filesystem ok
@@ -777,6 +790,8 @@ public class Zab1_0Test extends ZKTestCase {
                 tmpDir.mkdir();
                 File logDir = f.fzk.getTxnLogFactory().getDataDir().getParentFile();
                 File snapDir = f.fzk.getTxnLogFactory().getSnapDir().getParentFile();
+                //Spy on ZK so we can check if a snapshot happened or not.
+                f.zk = spy(f.zk);
                 try {
                     Assert.assertEquals(0, f.self.getAcceptedEpoch());
                     Assert.assertEquals(0, f.self.getCurrentEpoch());
@@ -844,13 +859,28 @@ public class Zab1_0Test extends ZKTestCase {
                     Assert.assertEquals(1, f.self.getAcceptedEpoch());
                     Assert.assertEquals(1, f.self.getCurrentEpoch());
                     
+                    //Wait for the transactions to be written out. The thread that writes them out
+                    // does not send anything back when it is done.
+                    long start = System.currentTimeMillis();
+                    while (createSessionZxid != f.fzk.getLastProcessedZxid() && (System.currentTimeMillis() - start) < 50) {
+                        Thread.sleep(1);
+                    }
+                    
                     Assert.assertEquals(createSessionZxid, f.fzk.getLastProcessedZxid());
                     
                     // Make sure the data was recorded in the filesystem ok
                     ZKDatabase zkDb2 = new ZKDatabase(new FileTxnSnapLog(logDir, snapDir));
+                    start = System.currentTimeMillis();
                     zkDb2.loadDataBase();
+                    while (zkDb2.getSessionWithTimeOuts().isEmpty() && (System.currentTimeMillis() - start) < 50) {
+                        Thread.sleep(1);
+                        zkDb2.loadDataBase();
+                    }
                     LOG.info("zkdb2 sessions:" + zkDb2.getSessions());
+                    LOG.info("zkdb2 with timeouts:" + zkDb2.getSessionWithTimeOuts());
                     Assert.assertNotNull(zkDb2.getSessionWithTimeOuts().get(4L));
+                    //Snapshot was never taken during very simple sync
+                    verify(f.zk, never()).takeSnapshot();
                 } finally {
                     TestUtils.deleteFileRecursively(tmpDir);
                 }
@@ -1313,6 +1343,7 @@ public class Zab1_0Test extends ZKTestCase {
         peer.setCnxnFactory(new NullServerCnxnFactory());
         File version2 = new File(tmpDir, "version-2");
         version2.mkdir();
+        ClientBase.createInitializeFile(tmpDir);
         FileOutputStream fos;
         fos = new FileOutputStream(new File(version2, "currentEpoch"));
         fos.write("0\n".getBytes());
@@ -1336,6 +1367,7 @@ public class Zab1_0Test extends ZKTestCase {
             FileTxnSnapLog logFactory = new FileTxnSnapLog(tmpDir, tmpDir);
             File version2 = new File(tmpDir, "version-2");
             version2.mkdir();
+            logFactory.save(new DataTree(), new ConcurrentHashMap<Long, Integer>());
             long zxid = ZxidUtils.makeZxid(3, 3);
             logFactory.append(new Request(1, 1, ZooDefs.OpCode.error,
                     new TxnHeader(1, 1, zxid, 1, ZooDefs.OpCode.error),

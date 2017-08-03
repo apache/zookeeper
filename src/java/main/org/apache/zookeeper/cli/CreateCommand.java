@@ -23,6 +23,8 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.server.EphemeralType;
 
 /**
  * create command for cli
@@ -33,14 +35,15 @@ public class CreateCommand extends CliCommand {
     private String[] args;
     private CommandLine cl;
 
-    {
+    static {
         options.addOption(new Option("e", false, "ephemeral"));
         options.addOption(new Option("s", false, "sequential"));
         options.addOption(new Option("c", false, "container"));
+        options.addOption(new Option("t", true, "ttl"));
     }
 
     public CreateCommand() {
-        super("create", "[-s] [-e] [-c] path [data] [acl]");
+        super("create", "[-s] [-e] [-c] [-t ttl] path [data] [acl]");
     }
 
 
@@ -62,23 +65,47 @@ public class CreateCommand extends CliCommand {
 
     @Override
     public boolean exec() throws CliException {
-        CreateMode flags = CreateMode.PERSISTENT;
         boolean hasE = cl.hasOption("e");
         boolean hasS = cl.hasOption("s");
         boolean hasC = cl.hasOption("c");
+        boolean hasT = cl.hasOption("t");
         if (hasC && (hasE || hasS)) {
             throw new MalformedCommandException("-c cannot be combined with -s or -e. Containers cannot be ephemeral or sequential.");
         }
+        long ttl;
+        try {
+            ttl = hasT ? Long.parseLong(cl.getOptionValue("t")) : 0;
+        } catch (NumberFormatException e) {
+            throw new MalformedCommandException("-t argument must be a long value");
+        }
 
+        if (hasT && hasE) {
+            throw new MalformedCommandException("TTLs cannot be used with Ephemeral znodes");
+        }
+        if (hasT && hasC) {
+            throw new MalformedCommandException("TTLs cannot be used with Container znodes");
+        }
+
+        CreateMode flags;
         if(hasE && hasS) {
             flags = CreateMode.EPHEMERAL_SEQUENTIAL;
         } else if (hasE) {
             flags = CreateMode.EPHEMERAL;
         } else if (hasS) {
-            flags = CreateMode.PERSISTENT_SEQUENTIAL;
+            flags = hasT ? CreateMode.PERSISTENT_SEQUENTIAL_WITH_TTL : CreateMode.PERSISTENT_SEQUENTIAL;
         } else if (hasC) {
             flags = CreateMode.CONTAINER;
+        } else {
+            flags = hasT ? CreateMode.PERSISTENT_WITH_TTL : CreateMode.PERSISTENT;
         }
+        if (hasT) {
+            try {
+                EphemeralType.ttlToEphemeralOwner(ttl);
+            } catch (IllegalArgumentException e) {
+                throw new MalformedCommandException(e.getMessage());
+            }
+        }
+
         String path = args[1];
         byte[] data = null;
         if (args.length > 2) {
@@ -89,8 +116,10 @@ public class CreateCommand extends CliCommand {
             acl = AclParser.parse(args[3]);
         }
         try {
-            String newPath = zk.create(path, data, acl, flags);
+            String newPath = hasT ? zk.create(path, data, acl, flags, new Stat(), ttl) : zk.create(path, data, acl, flags);
             err.println("Created " + newPath);
+        } catch(IllegalArgumentException ex) {
+            throw new MalformedPathException(ex.getMessage());
         } catch(KeeperException.EphemeralOnLocalSessionException e) {
             err.println("Unable to create ephemeral node on a local session");
             throw new CliWrapperException(e);

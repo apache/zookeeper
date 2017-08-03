@@ -32,6 +32,7 @@
     <conf name="mvn-ant-task" visibility="private"/>
     <conf name="optional"/> <!-- optional in generated pom -->
     <conf name="jdiff" visibility="private"/>
+    <conf name="javacc" visibility="private"/>
     <conf name="releaseaudit" visibility="private" description="Artifacts required for releaseaudit target"/>
   </configurations>
 
@@ -49,6 +50,8 @@
     <!-- transitive false turns off dependency checking, log4j deps seem borked -->
     <dependency org="log4j" name="log4j" rev="1.2.17" transitive="false"/>
     <dependency org="jline" name="jline" rev="2.11" transitive="false" conf="optional->default"/>
+
+    <dependency org="org.apache.yetus" name="audience-annotations" rev="${audience-annotations.version}"/>
 
     <dependency org="io.netty" name="netty" conf="default" rev="3.10.5.Final">
       <artifact name="netty" type="jar" conf="default"/>
@@ -75,7 +78,8 @@
     <dependency org="commons-collections" name="commons-collections" 
                 rev="3.2.2" conf="releaseaudit->default"/>
 
-    <dependency org="net.java.dev.javacc" name="javacc" rev="5.0" />
+    <dependency org="net.java.dev.javacc" name="javacc" rev="5.0"
+                conf="javacc->default" />
 
     <dependency org="org.eclipse.jetty" name="jetty-server" rev="9.2.18.v20160721"
                 conf="optional->default"/>

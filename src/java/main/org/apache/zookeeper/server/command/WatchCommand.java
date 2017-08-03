@@ -32,7 +32,7 @@ public class WatchCommand extends AbstractFourLetterCommand {
 
     @Override
     public void commandRun() {
-        if (isZKServerRunning()) {
+        if (!isZKServerRunning()) {
             pw.println(ZK_NOT_SERVING);
         } else {
             DataTree dt = zkServer.getZKDatabase().getDataTree();

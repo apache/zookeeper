@@ -98,7 +98,7 @@
        |     <broken-links type="none"/>
        |
        |   Two attributes to this node specify whether a page should
-       |   be generated when an error has occured. 'generate' specifies
+       |   be generated when an error has occurred. 'generate' specifies
        |   whether a page should be generated (default: true) and
        |   extension specifies an extension that should be appended
        |   to the generated page's filename (default: none)

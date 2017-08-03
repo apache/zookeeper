@@ -934,6 +934,14 @@ public class FastLeaderElection implements Election {
                      */
                     switch (n.state) {
                     case LOOKING:
+                        if (getInitLastLoggedZxid() == -1) {
+                            LOG.debug("Ignoring notification as our zxid is -1");
+                            break;
+                        }
+                        if (n.zxid == -1) {
+                            LOG.debug("Ignoring notification from member with -1 zxid" + n.sid);
+                            break;
+                        }
                         // If notification > current, replace and send messages out
                         if (n.electionEpoch > logicalclock.get()) {
                             logicalclock.set(n.electionEpoch);

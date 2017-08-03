@@ -255,7 +255,7 @@ namespace zktreeutil
             vector<string> getNodeChildren( const string &path) throw(ZooKeeperException);
 
             /**
-             * \brief Check the existance of path to a znode.
+             * \brief Check the existence of path to a znode.
              * 
              * @param path the absolute path name of the znode
              * @return TRUE if the znode exists; FALSE otherwise

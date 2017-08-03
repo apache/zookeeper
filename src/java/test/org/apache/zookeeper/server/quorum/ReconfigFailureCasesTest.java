@@ -91,7 +91,7 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
         List<String> leavingServers = new ArrayList<String>();
         leavingServers.add("3");
         try {
-             zkAdminArr[1].reconfig(null, leavingServers, null, -1, null);
+             zkAdminArr[1].reconfigure(null, leavingServers, null, -1, null);
             Assert.fail("Reconfig should have failed since the current config isn't Majority QS");
         } catch (KeeperException.BadArgumentsException e) {
             // We expect this to happen.
@@ -121,7 +121,7 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
         leavingServers.add("2");
         leavingServers.add("3");
         try {
-             zkAdminArr[1].reconfig(null, leavingServers, null, -1, null);
+             zkAdminArr[1].reconfigure(null, leavingServers, null, -1, null);
             Assert.fail("Reconfig should have failed since the current config version is not 8");
         } catch (KeeperException.BadArgumentsException e) {
             // We expect this to happen.
@@ -147,7 +147,7 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
         List<String> leavingServers = new ArrayList<String>();
         leavingServers.add("3");
         try {
-             zkAdminArr[1].reconfig(null, leavingServers, null, 8, null);
+             zkAdminArr[1].reconfigure(null, leavingServers, null, 8, null);
             Assert.fail("Reconfig should have failed since the current config version is not 8");
         } catch (KeeperException.BadVersionException e) {
             // We expect this to happen.
@@ -182,7 +182,7 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
             // We try to remove server 3, which requires a quorum of {1,2,3}
             // (we have that) and of {1,2}, but 2 is down so we won't get a
             // quorum of new config ACKs.
-            zkAdminArr[1].reconfig(null, leavingServers, null, -1, null);
+            zkAdminArr[1].reconfigure(null, leavingServers, null, -1, null);
             Assert.fail("Reconfig should have failed since we don't have quorum of new config");
         } catch (KeeperException.ConnectionLossException e) {
             // We expect leader to lose quorum of proposed config and time out
@@ -255,7 +255,7 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
         }
 
         try {
-            zkAdmin[1].reconfig("", "", nextQuorumCfgSection, -1, new Stat());
+            zkAdmin[1].reconfigure("", "", nextQuorumCfgSection, -1, new Stat());
             Assert.fail("Reconfig should have failed with NewConfigNoQuorum");
         } catch (NewConfigNoQuorum e) {
             // This is expected case since server 0 is down and 3 can't vote

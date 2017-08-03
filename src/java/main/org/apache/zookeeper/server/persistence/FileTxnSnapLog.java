@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.persistence;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,7 +46,7 @@ import org.slf4j.LoggerFactory;
  * classes
  */
 public class FileTxnSnapLog {
-    //the direcotry containing the
+    //the directory containing the
     //the transaction logs
     private final File dataDir;
     //the directory containing the
@@ -53,6 +54,7 @@ public class FileTxnSnapLog {
     private final File snapDir;
     private TxnLog txnLog;
     private SnapShot snapLog;
+    private final boolean autoCreateDB;
     public final static int VERSION = 2;
     public final static String version = "version-";
 
@@ -62,6 +64,10 @@ public class FileTxnSnapLog {
             "zookeeper.datadir.autocreate";
 
     public static final String ZOOKEEPER_DATADIR_AUTOCREATE_DEFAULT = "true";
+
+    static final String ZOOKEEPER_DB_AUTOCREATE = "zookeeper.db.autocreate";
+
+    private static final String ZOOKEEPER_DB_AUTOCREATE_DEFAULT = "true";
 
     /**
      * This listener helps
@@ -77,7 +83,7 @@ public class FileTxnSnapLog {
     /**
      * the constructor which takes the datadir and
      * snapdir.
-     * @param dataDir the trasaction directory
+     * @param dataDir the transaction directory
      * @param snapDir the snapshot directory
      */
     public FileTxnSnapLog(File dataDir, File snapDir) throws IOException {
@@ -132,6 +138,9 @@ public class FileTxnSnapLog {
 
         txnLog = new FileTxnLog(this.dataDir);
         snapLog = new FileSnap(this.snapDir);
+
+        autoCreateDB = Boolean.parseBoolean(System.getProperty(ZOOKEEPER_DB_AUTOCREATE,
+                ZOOKEEPER_DB_AUTOCREATE_DEFAULT));
     }
 
     /**
@@ -165,8 +174,39 @@ public class FileTxnSnapLog {
      */
     public long restore(DataTree dt, Map<Long, Integer> sessions,
             PlayBackListener listener) throws IOException {
-        snapLog.deserialize(dt, sessions);
+        long deserializeResult = snapLog.deserialize(dt, sessions);
         FileTxnLog txnLog = new FileTxnLog(dataDir);
+        boolean trustEmptyDB;
+        File initFile = new File(dataDir.getParent(), "initialize");
+        if (Files.deleteIfExists(initFile.toPath())) {
+            LOG.info("Initialize file found, an empty database will not block voting participation");
+            trustEmptyDB = true;
+        } else {
+            trustEmptyDB = autoCreateDB;
+        }
+        if (-1L == deserializeResult) {
+            /* this means that we couldn't find any snapshot, so we need to
+             * initialize an empty database (reported in ZOOKEEPER-2325) */
+            if (txnLog.getLastLoggedZxid() != -1) {
+                throw new IOException(
+                        "No snapshot found, but there are log entries. " +
+                        "Something is broken!");
+            }
+
+            if (trustEmptyDB) {
+                /* TODO: (br33d) we should either put a ConcurrentHashMap on restore()
+                 *       or use Map on save() */
+                save(dt, (ConcurrentHashMap<Long, Integer>)sessions);
+
+                /* return a zxid of 0, since we know the database is empty */
+                return 0L;
+            } else {
+                /* return a zxid of -1, since we are possibly missing data */
+                LOG.warn("Unexpected empty data tree, setting zxid to -1");
+                dt.lastProcessedZxid = -1L;
+                return -1L;
+            }
+        }
         TxnIterator itr = txnLog.read(dt.lastProcessedZxid+1);
         long highestZxid = dt.lastProcessedZxid;
         TxnHeader hdr;
@@ -180,9 +220,8 @@ public class FileTxnSnapLog {
                     return dt.lastProcessedZxid;
                 }
                 if (hdr.getZxid() < highestZxid && highestZxid != 0) {
-                    LOG.error("{}(higestZxid) > {}(next log) for type {}",
-                            new Object[] { highestZxid, hdr.getZxid(),
-                                    hdr.getType() });
+                    LOG.error("{}(highestZxid) > {}(next log) for type {}",
+                            highestZxid, hdr.getZxid(), hdr.getType());
                 } else {
                     highestZxid = hdr.getZxid();
                 }
@@ -294,7 +333,7 @@ public class FileTxnSnapLog {
     /**
      * save the datatree and the sessions into a snapshot
      * @param dataTree the datatree to be serialized onto disk
-     * @param sessionsWithTimeouts the sesssion timeouts to be
+     * @param sessionsWithTimeouts the session timeouts to be
      * serialized onto disk
      * @throws IOException
      */
@@ -360,8 +399,10 @@ public class FileTxnSnapLog {
     }
 
     /**
-     * get the snapshot logs that are greater than
-     * the given zxid
+     * get the snapshot logs which may contain transactions newer than the given zxid.
+     * This includes logs with starting zxid greater than given zxid, as well as the
+     * newest transaction log with starting zxid less than given zxid.  The latter log
+     * file may contain transactions beyond given zxid.
      * @param zxid the zxid that contains logs greater than
      * zxid
      * @return
@@ -386,6 +427,14 @@ public class FileTxnSnapLog {
      */
     public void commit() throws IOException {
         txnLog.commit();
+    }
+
+    /**
+     *
+     * @return elapsed sync time of transaction log commit in milliseconds
+     */
+    public long getTxnLogElapsedSyncTime() {
+        return txnLog.getTxnLogSyncElapsedTime();
     }
 
     /**

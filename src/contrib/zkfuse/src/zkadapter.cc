@@ -673,7 +673,7 @@ ZooKeeperAdapter::deleteNode(const string &path,
             LOG_WARN( LOG, "Error %d for %s", rc, path.c_str() );
             //get all children and delete them recursively...
             vector<string> nodeList;
-            getNodeChildren( nodeList, path, false );
+            getNodeChildren( nodeList, path, NULL );
             for (vector<string>::const_iterator i = nodeList.begin();
                  i != nodeList.end();
                  ++i) {

@@ -23,9 +23,15 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Op;
 import org.apache.zookeeper.OpResult;
+import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.proto.CreateResponse;
+import org.apache.zookeeper.proto.CreateTTLRequest;
+import org.apache.zookeeper.proto.ReplyHeader;
+import org.apache.zookeeper.proto.RequestHeader;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.Assert;
 import org.junit.Test;
@@ -37,7 +43,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class CreateTTLTest extends ClientBase {
-    private ZooKeeper zk;
+    private TestableZooKeeper zk;
 
     @Override
     public void setUp() throws Exception {
@@ -66,6 +72,21 @@ public class CreateTTLTest extends ClientBase {
         fakeElapsed.set(1000);
         containerManager.checkContainers();
         Assert.assertNull("Ttl node should have been deleted", zk.exists("/foo", false));
+    }
+
+    @Test
+    public void testBadTTLs() throws InterruptedException, KeeperException {
+        RequestHeader h = new RequestHeader(1, ZooDefs.OpCode.createTTL);
+
+        String path = "/bad_ttl";
+        CreateTTLRequest request = new CreateTTLRequest(path, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                                                        CreateMode.PERSISTENT_WITH_TTL.toFlag(), -100);
+        CreateResponse response = new CreateResponse();
+        ReplyHeader r = zk.submitRequest(h, request, response, null);
+        Assert.assertEquals("An invalid CreateTTLRequest should throw BadArguments",
+                            r.getErr(), Code.BADARGUMENTS.intValue());
+        Assert.assertNull("An invalid CreateTTLRequest should not result in znode creation",
+                          zk.exists(path, false));
     }
 
     @Test

@@ -19,6 +19,7 @@
 #define __RECORDIO_H__
 
 #include <sys/types.h>
+#include <stdint.h> /* for int64_t */
 #ifdef WIN32
 #include "winconfig.h"
 #endif

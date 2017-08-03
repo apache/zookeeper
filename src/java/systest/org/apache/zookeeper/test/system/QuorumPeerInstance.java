@@ -190,7 +190,7 @@ class QuorumPeerInstance implements Instance {
                     return;
                 }
                 System.err.println("SnapDir = " + snapDir + " LogDir = " + logDir);
-                peer = new QuorumPeer(peers, snapDir, logDir, clientAddr.getPort(), 0, serverId, tickTime, initLimit, syncLimit);
+                peer = new QuorumPeer(peers, snapDir, logDir, clientAddr.getPort(), 3, serverId, tickTime, initLimit, syncLimit);
                 peer.start();
                 for(int i = 0; i < 5; i++) {
                     Thread.sleep(500);

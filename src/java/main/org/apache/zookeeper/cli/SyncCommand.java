@@ -57,12 +57,17 @@ public class SyncCommand extends CliCommand {
     @Override
     public boolean exec() throws CliException {
         String path = args[1];
-        zk.sync(path, new AsyncCallback.VoidCallback() {
+        try {
+            zk.sync(path, new AsyncCallback.VoidCallback() {
 
-            public void processResult(int rc, String path, Object ctx) {
-                out.println("Sync returned " + rc);
-            }
-        }, null);
+                public void processResult(int rc, String path, Object ctx) {
+                    out.println("Sync returned " + rc);
+                }
+            }, null);
+        } catch (IllegalArgumentException ex) {
+            throw new MalformedPathException(ex.getMessage());
+        }
+
 
         return false;
     }

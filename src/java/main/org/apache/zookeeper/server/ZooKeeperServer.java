@@ -61,7 +61,6 @@ import org.apache.zookeeper.server.RequestProcessor.RequestProcessorException;
 import org.apache.zookeeper.server.ServerCnxn.CloseRequestException;
 import org.apache.zookeeper.server.SessionTracker.Session;
 import org.apache.zookeeper.server.SessionTracker.SessionExpirer;
-import org.apache.zookeeper.server.auth.AuthenticationProvider;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.auth.ServerAuthenticationProvider;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -104,7 +103,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected volatile State state = State.INITIAL;
 
     protected enum State {
-        INITIAL, RUNNING, SHUTDOWN, ERROR;
+        INITIAL, RUNNING, SHUTDOWN, ERROR
     }
 
     /**
@@ -229,7 +228,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     /**
-     * Default constructor, relies on the config for its agrument values
+     * Default constructor, relies on the config for its argument values
      *
      * @throws IOException
      */
@@ -526,7 +525,15 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return state == State.RUNNING;
     }
 
-    public synchronized void shutdown() {
+    public void shutdown() {
+        shutdown(false);
+    }
+
+    /**
+     * Shut down the server instance
+     * @param fullyShutDown true if another server using the same database will not replace this one in the same process
+     */
+    public synchronized void shutdown(boolean fullyShutDown) {
         if (!canShutdown()) {
             LOG.debug("ZooKeeper server is not running, so not proceeding to shutdown!");
             return;
@@ -544,9 +551,15 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         if (firstProcessor != null) {
             firstProcessor.shutdown();
         }
-        if (zkDb != null) {
+
+        if (fullyShutDown && zkDb != null) {
             zkDb.clear();
         }
+        // else there is no need to clear the database
+        //  * When a new quorum is established we can still apply the diff
+        //    on top of the same zkDb data
+        //  * If we fetch a new snapshot from leader, the zkDb will be
+        //    cleared anyway before loading the snapshot
 
         unregisterJMX();
     }
@@ -930,6 +943,13 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return this.txnLogFactory;
     }
 
+    /**
+     * Returns the elapsed sync of time of transaction log in milliseconds.
+     */
+    public long getTxnLogElapsedSyncTime() {
+        return txnLogFactory.getTxnLogElapsedSyncTime();
+    }
+
     public String getState() {
         return "standalone";
     }
@@ -1078,6 +1098,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 Record rsp = processSasl(incomingBuffer,cnxn);
                 ReplyHeader rh = new ReplyHeader(h.getXid(), 0, KeeperException.Code.OK.intValue());
                 cnxn.sendResponse(rh,rsp, "response"); // not sure about 3rd arg..what is it?
+                return;
             }
             else {
                 Request si = new Request(cnxn, cnxn.getSessionId(), h.getXid(),
@@ -1110,6 +1131,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                     String authorizationID = saslServer.getAuthorizationID();
                     LOG.info("adding SASL authorization for authorizationID: " + authorizationID);
                     cnxn.addAuthInfo(new Id("sasl",authorizationID));
+                    if (System.getProperty("zookeeper.superUser") != null && 
+                        authorizationID.equals(System.getProperty("zookeeper.superUser"))) {
+                        cnxn.addAuthInfo(new Id("super", ""));
+                    }
                 }
             }
             catch (SaslException e) {

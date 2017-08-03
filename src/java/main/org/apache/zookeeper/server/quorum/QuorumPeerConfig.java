@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Map.Entry;
 
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.common.ZKConfig;
 import org.slf4j.Logger;
@@ -53,7 +54,7 @@ import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.VerifyingFileFactory;
 
-
+@InterfaceAudience.Public
 public class QuorumPeerConfig {
     private static final Logger LOG = LoggerFactory.getLogger(QuorumPeerConfig.class);
     private static final int UNSET_SERVERID = -1;
@@ -255,6 +256,9 @@ public class QuorumPeerConfig {
                 syncLimit = Integer.parseInt(value);
             } else if (key.equals("electionAlg")) {
                 electionAlg = Integer.parseInt(value);
+                if (electionAlg != 1 && electionAlg != 2 && electionAlg != 3) {
+                    throw new ConfigException("Invalid electionAlg value. Only 1, 2, 3 are supported.");
+                }
             } else if (key.equals("quorumListenOnAllIPs")) {
                 quorumListenOnAllIPs = Boolean.parseBoolean(value);
             } else if (key.equals("peerType")) {
@@ -360,8 +364,9 @@ public class QuorumPeerConfig {
         // static configuration params see writeDynamicConfig()
         if (dynamicConfigFileStr == null) {
             setupQuorumPeerConfig(zkProp, true);
-            if (isDistributed()) {
+            if (isDistributed() && isReconfigEnabled()) {
                 // we don't backup static config for standalone mode.
+                // we also don't backup if reconfig feature is disabled.
                 backupOldConfig();
             }
         }
@@ -511,7 +516,8 @@ public class QuorumPeerConfig {
     }
 
 
-    public static void deleteFile(String filename){        
+    public static void deleteFile(String filename){
+       if (filename == null) return;
        File f = new File(filename);
        if (f.exists()) {
            try{ 
@@ -594,17 +600,12 @@ public class QuorumPeerConfig {
                     LOG.warn("Non-optimial configuration, consider an odd number of servers.");
                 }
             }
-            /*
-             * If using FLE, then every server requires a separate election
-             * port.
-             */            
-           if (eAlg != 0) {
-               for (QuorumServer s : qv.getVotingMembers().values()) {
-                   if (s.electionAddr == null)
-                       throw new IllegalArgumentException(
-                               "Missing election port for server: " + s.id);
-               }
-           }   
+
+            for (QuorumServer s : qv.getVotingMembers().values()) {
+                if (s.electionAddr == null)
+                    throw new IllegalArgumentException(
+                            "Missing election port for server: " + s.id);
+            }
         }
         return qv;
     }

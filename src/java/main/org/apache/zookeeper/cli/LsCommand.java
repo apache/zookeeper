@@ -108,6 +108,8 @@ public class LsCommand extends CliCommand {
                 List<String> children = zk.getChildren(path, watch, stat);
                 printChildren(children, stat);
             }
+        } catch (IllegalArgumentException ex) {
+            throw new MalformedPathException(ex.getMessage());
         } catch (KeeperException|InterruptedException ex) {
             throw new CliWrapperException(ex);
         }
