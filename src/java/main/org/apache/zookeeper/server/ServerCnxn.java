@@ -21,6 +21,7 @@ package org.apache.zookeeper.server;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -100,6 +101,11 @@ public abstract class ServerCnxn implements Stats, Watcher {
     abstract void disableRecv();
 
     abstract void setSessionTimeout(int sessionTimeout);
+
+    /**
+     * Wrapper method to return the socket address
+     */
+    public abstract InetAddress getSocketAddress();
 
     protected ZooKeeperSaslServer zooKeeperSaslServer = null;
 
