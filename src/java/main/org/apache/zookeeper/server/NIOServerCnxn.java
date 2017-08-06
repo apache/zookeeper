@@ -687,21 +687,17 @@ public class NIOServerCnxn extends ServerCnxn {
      *      org.apache.jute.Record, java.lang.String)
      */
     @Override
-    public void sendResponse(ReplyHeader h, Record r, String tag) {
+    public void sendResponse(ReplyHeader h, Record r, String tag) throws IOException {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             // Make space for length
             BinaryOutputArchive bos = BinaryOutputArchive.getArchive(baos);
-            try {
-                baos.write(fourBytes);
-                bos.writeRecord(h, "header");
-                if (r != null) {
-                    bos.writeRecord(r, tag);
-                }
-                baos.close();
-            } catch (IOException e) {
-                LOG.error("Error serializing response");
+            baos.write(fourBytes);
+            bos.writeRecord(h, "header");
+            if (r != null) {
+                bos.writeRecord(r, tag);
             }
+            baos.close();
             byte b[] = baos.toByteArray();
             ByteBuffer bb = ByteBuffer.wrap(b);
             bb.putInt(b.length - 4).rewind();
@@ -714,7 +710,7 @@ public class NIOServerCnxn extends ServerCnxn {
                 }
             }
          } catch(Exception e) {
-            LOG.warn("Unexpected exception. Destruction averted.", e);
+            throw new IOException(e);
          }
     }
 
@@ -736,7 +732,11 @@ public class NIOServerCnxn extends ServerCnxn {
         // Convert WatchedEvent to a type that can be sent over the wire
         WatcherEvent e = event.getWrapper();
 
-        sendResponse(h, e, "notification");
+        try {
+            sendResponse(h, e, "notification");
+        } catch (IOException ex) {
+            LOG.debug("Problem sending to " + getRemoteSocketAddress(), ex);
+        }
     }
 
     /*

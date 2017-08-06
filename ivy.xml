@@ -87,5 +87,8 @@
                   conf="optional->default"/>
     <dependency org="org.codehaus.jackson" name="jackson-mapper-asl" rev="1.9.11"
                 conf="optional->default"/>
+    <dependency org="org.jboss.byteman" name="byteman" rev="3.0.6" conf="test->default"/>
+    <dependency org="org.jboss.byteman" name="byteman-bmunit" rev="3.0.6" conf="test->default"/>
+    <dependency org="org.jboss.byteman" name="byteman-submit" rev="3.0.6" conf="test->default"/>
   </dependencies>
 </ivy-module>

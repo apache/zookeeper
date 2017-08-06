@@ -1177,6 +1177,11 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <path id="junit.classpath">
         <path refid="test.java.classpath" />
         <pathelement path="${test.java.classes}" />
+          <!-- Ant & Byteman need tools.jar classpath specified.
+               Maven & Byteman don't require this.
+               With jdk9 tools.jar will be retired so this line should be removed!
+            -->
+          <pathelement location="${java.home}/../lib/tools.jar"/>
       </path>
       <fileset id="quicktest.files" dir="${test.src.dir}">
         <include name="**/*${test.category}Test.java" />
