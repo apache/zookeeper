@@ -1714,7 +1714,115 @@ public abstract class ServerAuthenticationProvider implements AuthenticationProv
     <section id="sc_connectingToZk">
       <title>Connecting to ZooKeeper</title>
 
-      <para></para>
+      <para>Before we begin, you will have to set up a running Zookeeper server so that we can start developing the client. For C client bindings, we will be using the multithreaded library(zookeeper_mt) with a simple example written in C. To establish a connection with Zookeeper server, we make use of C API - <emphasis>zookeeper_init</emphasis> with the following signature:</para>
+
+      <programlisting><emphasis>int</emphasis> <emphasis>zookeeper_init</emphasis>(<emphasis>const</emphasis> <emphasis>char</emphasis> *host, watcher_fn fn, <emphasis>int</emphasis> recv_timeout, <emphasis>const</emphasis> clientid_t *clientid, <emphasis>void</emphasis> *context, <emphasis>int</emphasis> flags);</programlisting>
+
+      <variablelist>
+        <varlistentry>
+          <term>*host</term>
+            <listitem>
+              <para>Connection string to zookeeper server in the format of host:port. If there are multiple servers, use comma as separator after specifying the host:port pairs. Eg: "127.0.0.1:2181,127.0.0.1:3001,127.0.0.1:3002"</para>
+            </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>fn</term>
+          <listitem>
+              <para>Watcher function to process events when a notification is triggered.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>recv_timeout</term>
+          <listitem>
+              <para>Session expiration time in milliseconds.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>*clientid</term>
+          <listitem>
+              <para>We can specify 0 for a new session. If a session has already establish previously, we could provide that client ID and it would reconnect to that previous session.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>*context</term>
+          <listitem>
+              <para>Context object that can be associated with the zkhandle_t handler. If it is not used, we can set it to 0.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>flags</term>
+          <listitem>
+              <para>In an initiation, we can leave it for 0.</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+
+      <para>We will demonstrate client that outputs "Connected to Zookeeper" after successful connection or an error message otherwise. Let's call the following code <emphasis>zkClient.cc</emphasis> :</para>
+      <programlisting>
+#include &lt;stdio.h>
+#include &lt;zookeeper/zookeeper.h>
+#include &lt;errno.h>
+using namespace std;
+
+// Keeping track of the connection state
+static int connected = 0;
+static int expired   = 0;
+
+// *zkHandler handles the connection with Zookeeper
+static zhandle_t *zkHandler;
+
+// watcher function would process events
+void watcher(zhandle_t *zkH, int type, int state, const char *path, void *watcherCtx)
+{
+    if (type == ZOO_SESSION_EVENT) {
+
+        // state refers to states of zookeeper connection.
+        // To keep it simple, we would demonstrate these 3: ZOO_EXPIRED_SESSION_STATE, ZOO_CONNECTED_STATE, ZOO_NOTCONNECTED_STATE
+        // If you are using ACL, you should be aware of an authentication failure state - ZOO_AUTH_FAILED_STATE
+        if (state == ZOO_CONNECTED_STATE) {
+            connected = 1;
+        } else if (state == ZOO_NOTCONNECTED_STATE ) {
+            connected = 0;
+        } else if (state == ZOO_EXPIRED_SESSION_STATE) {
+            expired = 1;
+            connected = 0;
+            zookeeper_close(zkH);
+        }
+    }
+}
+
+int main(){
+    zoo_set_debug_level(ZOO_LOG_LEVEL_DEBUG);
+
+    // zookeeper_init returns the handler upon a successful connection, null otherwise
+    zkHandler = zookeeper_init("localhost:2181", watcher, 10000, 0, 0, 0);
+    
+    if (!zkHandler) {
+        return errno;
+    }else{
+        printf("Connection established with Zookeeper. \n");
+    }
+
+    // Close Zookeeper connection
+    zookeeper_close(zkHandler);
+
+    return 0;
+}
+      </programlisting>
+
+      <para>Compile the code with the multithreaded library mentioned before.</para>
+      <para><command>&gt; g++ -Iinclude/ zkClient.cpp -lzookeeper_mt -o Client</command></para>
+
+      <para>Run the client. </para>
+      <para><command>&gt; ./Client</command></para>
+
+      <para>From the output, you should see "Connected to Zookeeper" along with Zookeeper's DEBUG messages if the connection is successful.</para>
+
     </section>
     
     <section id="sc_readOps">
