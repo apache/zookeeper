@@ -855,6 +855,10 @@ zk.getConfig(watcher, callback, context);</pre>
         
 </div>
 </div>
+<p>If the configuration of existing servers changes or they become unavailable
+          before the joiner succeeds to connect and learn obout configuration changes, the
+          joiner may need to be restarted with an updated configuration file in order to be
+          able to connect.</p>
 <p>Finally, note that once connected to the leader, a joiner adopts
           the last committed configuration, in which it is absent (the initial
           config of the joiner is backed up before being rewritten). If the
