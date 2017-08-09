@@ -31,6 +31,9 @@ public class PathParentIterator implements Iterator<String> {
     private int level = -1;
 
     /**
+     * Return a new PathParentIterator that iterates from the
+     * given path to all parents.
+     *
      * @param path initial path
      */
     public static PathParentIterator forAll(String path) {
@@ -38,6 +41,9 @@ public class PathParentIterator implements Iterator<String> {
     }
 
     /**
+     * Return a new PathParentIterator that only returns the given path - i.e.
+     * does not iterate to parent paths.
+     *
      * @param path initial path
      */
     public static PathParentIterator forPathOnly(String path) {
