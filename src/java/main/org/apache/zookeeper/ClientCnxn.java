@@ -1118,7 +1118,6 @@ public class ClientCnxn {
         @Override
         public void run() {
             clientCnxnSocket.introduce(this, sessionId, outgoingQueue);
-            clientCnxnSocket.updateNow();
             clientCnxnSocket.updateLastSendAndHeard();
             int to;
             long lastPingRwServer = Time.currentElapsedTime();
@@ -1249,7 +1248,6 @@ public class ClientCnxn {
                                     Event.KeeperState.Disconnected,
                                     null));
                         }
-                        clientCnxnSocket.updateNow();
                         clientCnxnSocket.updateLastSendAndHeard();
                     }
                 }

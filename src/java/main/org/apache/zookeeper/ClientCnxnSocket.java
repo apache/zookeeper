@@ -63,7 +63,6 @@ abstract class ClientCnxnSocket {
     protected long recvCount = 0;
     protected long lastHeard;
     protected long lastSend;
-    protected long now;
     protected ClientCnxn.SendThread sendThread;
     protected LinkedBlockingDeque<Packet> outgoingQueue;
     protected ZKClientConfig clientConfig;
@@ -82,16 +81,12 @@ abstract class ClientCnxnSocket {
         this.outgoingQueue = outgoingQueue;
     }
 
-    void updateNow() {
-        now = Time.currentElapsedTime();
-    }
-
     int getIdleRecv() {
-        return (int) (now - lastHeard);
+        return (int) (System.currentTimeMillis() - lastHeard);
     }
 
     int getIdleSend() {
-        return (int) (now - lastSend);
+        return (int) (System.currentTimeMillis() - lastSend);
     }
 
     long getSentCount() {
@@ -103,14 +98,15 @@ abstract class ClientCnxnSocket {
     }
 
     void updateLastHeard() {
-        this.lastHeard = now;
+        this.lastHeard = System.currentTimeMillis();
     }
 
     void updateLastSend() {
-        this.lastSend = now;
+        this.lastSend = System.currentTimeMillis();
     }
 
     void updateLastSendAndHeard() {
+        long now = System.currentTimeMillis();
         this.lastSend = now;
         this.lastHeard = now;
     }

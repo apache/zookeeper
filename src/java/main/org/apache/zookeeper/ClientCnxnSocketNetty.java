@@ -136,7 +136,6 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
                     incomingBuffer = lenBuffer;
 
                     sendThread.primeConnection();
-                    updateNow();
                     updateLastSendAndHeard();
 
                     if (sendThread.tunnelAuthInProgress()) {
@@ -220,38 +219,34 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
                      List<Packet> pendingQueue,
                      ClientCnxn cnxn)
             throws IOException, InterruptedException {
-        try {
-            if (!firstConnect.await(waitTimeOut, TimeUnit.MILLISECONDS)) {
+        if (!firstConnect.await(waitTimeOut, TimeUnit.MILLISECONDS)) {
+            return;
+        }
+        Packet head = null;
+        if (needSasl.get()) {
+            if (!waitSasl.tryAcquire(waitTimeOut, TimeUnit.MILLISECONDS)) {
                 return;
             }
-            Packet head = null;
-            if (needSasl.get()) {
-                if (!waitSasl.tryAcquire(waitTimeOut, TimeUnit.MILLISECONDS)) {
-                    return;
-                }
-            } else {
-                if ((head = outgoingQueue.poll(waitTimeOut, TimeUnit.MILLISECONDS)) == null) {
-                    return;
-                }
-            }
-            // check if being waken up on closing.
-            if (!sendThread.getZkState().isAlive()) {
-                // adding back the patck to notify of failure in conLossPacket().
-                addBack(head);
+        } else {
+            if ((head = outgoingQueue.poll(waitTimeOut, TimeUnit.MILLISECONDS)) == null) {
                 return;
             }
-            // channel disconnection happened
-            if (disconnected.get()) {
-                addBack(head);
-                throw new EndOfStreamException("channel for sessionid 0x"
-                        + Long.toHexString(sessionId)
-                        + " is lost");
-            }
-            if (head != null) {
-                doWrite(pendingQueue, head, cnxn);
-            }
-        } finally {
-            updateNow();
+        }
+        // check if being waken up on closing.
+        if (!sendThread.getZkState().isAlive()) {
+            // adding back the patck to notify of failure in conLossPacket().
+            addBack(head);
+            return;
+        }
+        // channel disconnection happened
+        if (disconnected.get()) {
+            addBack(head);
+            throw new EndOfStreamException("channel for sessionid 0x"
+                    + Long.toHexString(sessionId)
+                    + " is lost");
+        }
+        if (head != null) {
+            doWrite(pendingQueue, head, cnxn);
         }
     }
 
@@ -279,7 +274,6 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
      * doWrite handles writing the packets from outgoingQueue via network to server.
      */
     private void doWrite(List<Packet> pendingQueue, Packet p, ClientCnxn cnxn) {
-        updateNow();
         while (true) {
             if (p != WakeupPacket.getInstance()) {
                 if ((p.requestHeader != null) &&
@@ -400,7 +394,6 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         @Override
         public void messageReceived(ChannelHandlerContext ctx,
                                     MessageEvent e) throws Exception {
-            updateNow();
             ChannelBuffer buf = (ChannelBuffer) e.getMessage();
             while (buf.readable()) {
                 if (incomingBuffer.remaining() > buf.readableBytes()) {
