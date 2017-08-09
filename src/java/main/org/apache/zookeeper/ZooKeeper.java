@@ -579,7 +579,7 @@ public class ZooKeeper implements AutoCloseable {
 
         private void addPersistentWatches(String clientPath, Set<Watcher> result) {
             synchronized (persistentWatches) {
-                for (String path : new PathParentIterator(clientPath).asIterable()) {
+                for (String path : PathParentIterator.forAll(clientPath).asIterable()) {
                     addTo(persistentWatches.get(path), result);
                 }
             }

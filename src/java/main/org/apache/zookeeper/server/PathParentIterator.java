@@ -27,14 +27,27 @@ import java.util.NoSuchElementException;
  */
 public class PathParentIterator implements Iterator<String> {
     private String path;
+    private final int maxLevel;
     private int level = -1;
 
     /**
      * @param path initial path
      */
-    public PathParentIterator(String path) {
+    public static PathParentIterator forAll(String path) {
+        return new PathParentIterator(path, Integer.MAX_VALUE);
+    }
+
+    /**
+     * @param path initial path
+     */
+    public static PathParentIterator forPathOnly(String path) {
+        return new PathParentIterator(path, 0);
+    }
+
+    private PathParentIterator(String path, int maxLevel) {
         // NOTE: asserts that the path has already been validated
         this.path = path;
+        this.maxLevel = maxLevel;
     }
 
     /**
@@ -53,7 +66,7 @@ public class PathParentIterator implements Iterator<String> {
 
     @Override
     public boolean hasNext() {
-        return !path.isEmpty();
+        return !path.isEmpty() && (level < maxLevel);
     }
 
     /**

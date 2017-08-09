@@ -51,6 +51,8 @@ class WatchManager {
     private final Map<Watcher, Set<String>> watch2Paths =
         new HashMap<>();
 
+    private boolean hasHadPersistentWatches = false;    // guarded by sync
+
     synchronized int size(){
         int result = 0;
         for(Map<Watcher, Type> watches : watchTable.values()) {
@@ -77,6 +79,10 @@ class WatchManager {
             watch2Paths.put(watcher, paths);
         }
         paths.add(path);
+
+        if (persistent) {
+            hasHadPersistentWatches = true;
+        }
     }
 
     synchronized void removeWatcher(Watcher watcher) {
@@ -103,8 +109,8 @@ class WatchManager {
         WatchedEvent e = new WatchedEvent(type,
                 KeeperState.SyncConnected, path);
         Set<Watcher> watchers = new HashSet<>();
-        PathParentIterator pathParentIterator = new PathParentIterator(path);
         synchronized (this) {
+            PathParentIterator pathParentIterator = getPathParentIterator(path);
             for (String localPath : pathParentIterator.asIterable()) {
                 Map<Watcher, Type> thisWatchers = watchTable.get(localPath);
                 if (thisWatchers == null || thisWatchers.isEmpty()) {
@@ -206,7 +212,7 @@ class WatchManager {
      * @return true if the watcher exists, false otherwise
      */
     synchronized boolean containsWatcher(String path, Watcher watcher) {
-        PathParentIterator pathParentIterator = new PathParentIterator(path);
+        PathParentIterator pathParentIterator = getPathParentIterator(path);
         for (String localPath : pathParentIterator.asIterable()) {
             Map<Watcher, Type> watchers = watchTable.get(localPath);
             Type watcherType = (watchers != null) ? watchers.get(watcher) : null;
@@ -294,6 +300,14 @@ class WatchManager {
         }
         return new WatchesSummary (watch2Paths.size(), watchTable.size(),
                                    totalWatches);
+    }
+
+    private PathParentIterator getPathParentIterator(String path) {
+        if ( !hasHadPersistentWatches ) {
+            // optimization - if we've never seen a Persistent Watch, there's no need to iterate through parent nodes
+            return PathParentIterator.forPathOnly(path);
+        }
+        return PathParentIterator.forAll(path);
     }
 
     private String getParent(String path) {
