@@ -59,26 +59,16 @@ public class PersistentWatcherTest extends ClientBase {
     @Test
     public void testBasic()
             throws IOException, InterruptedException, KeeperException {
-        ZooKeeper zk = null;
-        try {
-            zk = createClient(new CountdownWatcher(), hostPort);
-
+        try ( ZooKeeper zk = createClient(new CountdownWatcher(), hostPort) ) {
             zk.addPersistentWatch("/a/b", persistentWatcher);
             internalTestBasic(zk);
-        } finally {
-            if (zk != null) {
-                zk.close();
-            }
         }
     }
 
     @Test
     public void testBasicAsync()
             throws IOException, InterruptedException, KeeperException {
-        ZooKeeper zk = null;
-        try {
-            zk = createClient(new CountdownWatcher(), hostPort);
-
+        try ( ZooKeeper zk = createClient(new CountdownWatcher(), hostPort) ) {
             final CountDownLatch latch = new CountDownLatch(1);
             AsyncCallback.VoidCallback cb = new AsyncCallback.VoidCallback() {
                 @Override
@@ -91,10 +81,6 @@ public class PersistentWatcherTest extends ClientBase {
             zk.addPersistentWatch("/a/b", persistentWatcher, cb, null);
             Assert.assertTrue(latch.await(5, TimeUnit.SECONDS));
             internalTestBasic(zk);
-        } finally {
-            if (zk != null) {
-                zk.close();
-            }
         }
     }
 
@@ -120,10 +106,7 @@ public class PersistentWatcherTest extends ClientBase {
     @Test
     public void testRemoval()
             throws IOException, InterruptedException, KeeperException {
-        ZooKeeper zk = null;
-        try {
-            zk = createClient(new CountdownWatcher(), hostPort);
-
+        try ( ZooKeeper zk = createClient(new CountdownWatcher(), hostPort) ) {
             zk.addPersistentWatch("/a/b", persistentWatcher);
             zk.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             zk.create("/a/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -134,29 +117,18 @@ public class PersistentWatcherTest extends ClientBase {
             zk.removeWatches("/a/b", persistentWatcher, Watcher.WatcherType.Any, false);
             zk.create("/a/b/c/d", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             assertEvent(events, Watcher.Event.EventType.PersistentWatchRemoved, "/a/b");
-        } finally {
-            if (zk != null) {
-                zk.close();
-            }
         }
     }
 
     @Test
     public void testDisconnect() throws Exception {
-        ZooKeeper zk = null;
-        try {
-            zk = createClient(new CountdownWatcher(), hostPort);
-
+        try ( ZooKeeper zk = createClient(new CountdownWatcher(), hostPort) ) {
             zk.addPersistentWatch("/a/b", persistentWatcher);
             stopServer();
             assertEvent(events, Watcher.Event.EventType.None, null);
             startServer();
             assertEvent(events, Watcher.Event.EventType.None, null);
             internalTestBasic(zk);
-        } finally {
-            if (zk != null) {
-                zk.close();
-            }
         }
     }
 
@@ -198,10 +170,7 @@ public class PersistentWatcherTest extends ClientBase {
     @Test
     public void testRootWatcher()
             throws IOException, InterruptedException, KeeperException {
-        ZooKeeper zk = null;
-        try {
-            zk = createClient(new CountdownWatcher(), hostPort);
-
+        try ( ZooKeeper zk = createClient(new CountdownWatcher(), hostPort) ) {
             zk.addPersistentWatch("/", persistentWatcher);
             zk.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             zk.create("/a/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -211,10 +180,6 @@ public class PersistentWatcherTest extends ClientBase {
             assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a/b");
             assertEvent(events, Watcher.Event.EventType.NodeCreated, "/b");
             assertEvent(events, Watcher.Event.EventType.NodeCreated, "/b/c");
-        } finally {
-            if (zk != null) {
-                zk.close();
-            }
         }
     }
 
