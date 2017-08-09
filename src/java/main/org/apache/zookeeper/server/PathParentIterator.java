@@ -25,14 +25,14 @@ import java.util.NoSuchElementException;
  * Iterates over a ZooKeeper path. Each iteration goes up one parent path. Thus, the
  * effect of the iterator is to iterate over the initial path and then all of its parents.
  */
-public class PathIterator implements Iterator<String> {
+public class PathParentIterator implements Iterator<String> {
     private String path;
     private int level = -1;
 
     /**
      * @param path initial path
      */
-    public PathIterator(String path) {
+    public PathParentIterator(String path) {
         // NOTE: asserts that the path has already been validated
         this.path = path;
     }
@@ -46,7 +46,7 @@ public class PathIterator implements Iterator<String> {
         return new Iterable<String>() {
             @Override
             public Iterator<String> iterator() {
-                return PathIterator.this;
+                return PathParentIterator.this;
             }
         };
     }

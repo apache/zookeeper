@@ -70,7 +70,7 @@ import org.apache.zookeeper.proto.SyncRequest;
 import org.apache.zookeeper.proto.SyncResponse;
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.EphemeralType;
-import org.apache.zookeeper.server.PathIterator;
+import org.apache.zookeeper.server.PathParentIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -579,7 +579,7 @@ public class ZooKeeper implements AutoCloseable {
 
         private void addPersistentWatches(String clientPath, Set<Watcher> result) {
             synchronized (persistentWatches) {
-                for (String path : new PathIterator(clientPath).asIterable()) {
+                for (String path : new PathParentIterator(clientPath).asIterable()) {
                     addTo(persistentWatches.get(path), result);
                 }
             }

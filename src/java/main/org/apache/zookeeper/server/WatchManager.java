@@ -103,9 +103,9 @@ class WatchManager {
         WatchedEvent e = new WatchedEvent(type,
                 KeeperState.SyncConnected, path);
         Set<Watcher> watchers = new HashSet<>();
-        PathIterator pathIterator = new PathIterator(path);
+        PathParentIterator pathParentIterator = new PathParentIterator(path);
         synchronized (this) {
-            for (String localPath : pathIterator.asIterable()) {
+            for (String localPath : pathParentIterator.asIterable()) {
                 Map<Watcher, Type> thisWatchers = watchTable.get(localPath);
                 if (thisWatchers == null || thisWatchers.isEmpty()) {
                     continue;
@@ -119,7 +119,7 @@ class WatchManager {
                         if ( type != EventType.NodeChildrenChanged ) {
                             watchers.add(watcher);
                         }
-                    } else if (!pathIterator.atParentPath()) {
+                    } else if (!pathParentIterator.atParentPath()) {
                         watchers.add(watcher);
                         iterator.remove();
                         Set<String> paths = watch2Paths.get(watcher);
@@ -206,11 +206,11 @@ class WatchManager {
      * @return true if the watcher exists, false otherwise
      */
     synchronized boolean containsWatcher(String path, Watcher watcher) {
-        PathIterator pathIterator = new PathIterator(path);
-        for (String localPath : pathIterator.asIterable()) {
+        PathParentIterator pathParentIterator = new PathParentIterator(path);
+        for (String localPath : pathParentIterator.asIterable()) {
             Map<Watcher, Type> watchers = watchTable.get(localPath);
             Type watcherType = (watchers != null) ? watchers.get(watcher) : null;
-            if ((watcherType == Type.STANDARD) && !pathIterator.atParentPath()) {
+            if ((watcherType == Type.STANDARD) && !pathParentIterator.atParentPath()) {
                 return true;
             }
             if (watcherType == Type.PERSISTENT) {
