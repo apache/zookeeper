@@ -82,11 +82,11 @@ abstract class ClientCnxnSocket {
     }
 
     int getIdleRecv() {
-        return (int) (System.currentTimeMillis() - lastHeard);
+        return (int) (Time.currentElapsedTime() - lastHeard);
     }
 
     int getIdleSend() {
-        return (int) (System.currentTimeMillis() - lastSend);
+        return (int) (Time.currentElapsedTime() - lastSend);
     }
 
     long getSentCount() {
@@ -98,15 +98,15 @@ abstract class ClientCnxnSocket {
     }
 
     void updateLastHeard() {
-        this.lastHeard = System.currentTimeMillis();
+        this.lastHeard = Time.currentElapsedTime();
     }
 
     void updateLastSend() {
-        this.lastSend = System.currentTimeMillis();
+        this.lastSend = Time.currentElapsedTime();
     }
 
     void updateLastSendAndHeard() {
-        long now = System.currentTimeMillis();
+        long now = Time.currentElapsedTime();
         this.lastSend = now;
         this.lastHeard = now;
     }
