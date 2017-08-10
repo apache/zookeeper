@@ -476,6 +476,20 @@ public class ZKDatabase {
     }
 
     /**
+     * set watches on the datatree
+     * @param relativeZxid the relative zxid that client has seen
+     * @param dataWatches the data watches the client wants to reset
+     * @param existWatches the exists watches the client wants to reset
+     * @param childWatches the child watches the client wants to reset
+     * @param persistentWatches the persistent watches the client wants to reset
+     * @param watcher the watcher function
+     */
+    public void setWatches(long relativeZxid, List<String> dataWatches,
+            List<String> existWatches, List<String> childWatches, List<String> persistentWatches, Watcher watcher) {
+        dataTree.setWatches(relativeZxid, dataWatches, existWatches, childWatches, persistentWatches, watcher);
+    }
+
+    /**
      * get acl for a path
      * @param path the path to query for acl
      * @param stat the stat for the node
@@ -638,5 +652,17 @@ public class ZKDatabase {
      */
     public boolean removeWatch(String path, WatcherType type, Watcher watcher) {
         return dataTree.removeWatch(path, type, watcher);
+    }
+
+    /**
+     * Add a persistent watch
+     *
+     * @param basePath
+     *            watch base
+     * @param watcher
+     *            the watcher
+     */
+    public void addPersistentWatch(String basePath, Watcher watcher) {
+        dataTree.addPersistentWatch(basePath, watcher);
     }
 }

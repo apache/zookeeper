@@ -633,6 +633,11 @@ public class DataTree {
         }
     }
 
+    public void addPersistentWatch(String basePath, Watcher watcher) {
+        dataWatches.addWatch(basePath, watcher, true);
+        childWatches.addWatch(basePath, watcher, true);
+    }
+
     public byte[] getData(String path, Stat stat, Watcher watcher)
             throws KeeperException.NoNodeException {
         DataNode n = nodes.get(path);
@@ -642,7 +647,7 @@ public class DataTree {
         synchronized (n) {
             n.copyStat(stat);
             if (watcher != null) {
-                dataWatches.addWatch(path, watcher);
+                dataWatches.addWatch(path, watcher, false);
             }
             return n.data;
         }
@@ -653,7 +658,7 @@ public class DataTree {
         Stat stat = new Stat();
         DataNode n = nodes.get(path);
         if (watcher != null) {
-            dataWatches.addWatch(path, watcher);
+            dataWatches.addWatch(path, watcher, false);
         }
         if (n == null) {
             throw new KeeperException.NoNodeException();
@@ -677,7 +682,7 @@ public class DataTree {
             List<String> children=new ArrayList<String>(n.getChildren());
 
             if (watcher != null) {
-                childWatches.addWatch(path, watcher);
+                childWatches.addWatch(path, watcher, false);
             }
             return children;
         }
@@ -1320,6 +1325,13 @@ public class DataTree {
     public void setWatches(long relativeZxid, List<String> dataWatches,
             List<String> existWatches, List<String> childWatches,
             Watcher watcher) {
+        setWatches(relativeZxid, dataWatches, existWatches, childWatches,
+                Collections.<String>emptyList(), watcher);
+    }
+
+    public void setWatches(long relativeZxid, List<String> dataWatches,
+            List<String> existWatches, List<String> childWatches, List<String> persistentWatches,
+            Watcher watcher) {
         for (String path : dataWatches) {
             DataNode node = getNode(path);
             WatchedEvent e = null;
@@ -1330,7 +1342,7 @@ public class DataTree {
                 watcher.process(new WatchedEvent(EventType.NodeDataChanged,
                             KeeperState.SyncConnected, path));
             } else {
-                this.dataWatches.addWatch(path, watcher);
+                this.dataWatches.addWatch(path, watcher, false);
             }
         }
         for (String path : existWatches) {
@@ -1339,7 +1351,7 @@ public class DataTree {
                 watcher.process(new WatchedEvent(EventType.NodeCreated,
                             KeeperState.SyncConnected, path));
             } else {
-                this.dataWatches.addWatch(path, watcher);
+                this.dataWatches.addWatch(path, watcher, false);
             }
         }
         for (String path : childWatches) {
@@ -1351,8 +1363,12 @@ public class DataTree {
                 watcher.process(new WatchedEvent(EventType.NodeChildrenChanged,
                             KeeperState.SyncConnected, path));
             } else {
-                this.childWatches.addWatch(path, watcher);
-            }
+                this.childWatches.addWatch(path, watcher, false);
+            }    
+        }
+        for (String path : persistentWatches) {
+            this.childWatches.addWatch(path, watcher, true);
+            this.dataWatches.addWatch(path, watcher, true);
         }
     }
 

@@ -71,6 +71,8 @@ public class TraceFormatter {
             return "error";
         case OpCode.reconfig:
            return "reconfig";
+        case OpCode.addPersistentWatch:
+           return "addPersistentWatch";
         default:
             return "unknown " + op;
         }

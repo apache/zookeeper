@@ -172,6 +172,11 @@
       connection between the client and one of the Zoo Keeper servers is
       broken, the client will receive a local notification. These can be used
       to <emphasis>[tbd]</emphasis>.</para>
+
+      <para><emphasis role="bold">New in 3.5.4: </emphasis>Clients can also set
+      permanent, recursive watches on a znode that are not removed when triggered
+      and that trigger for changes on the registered znode as well as any children
+      znodes recursively.</para>
     </section>
 
     <section>

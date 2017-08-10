@@ -74,11 +74,15 @@ public class ZooDefs {
 
         public final int createTTL = 21;
 
+        public final int addPersistentWatch = 22;
+
         public final int auth = 100;
 
         public final int setWatches = 101;
 
         public final int sasl = 102;
+
+        public final int setWatches2 = 103;
 
         public final int createSession = -10;
 

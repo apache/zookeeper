@@ -35,9 +35,11 @@ import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.proto.AddPersistentWatcherRequest;
 import org.apache.zookeeper.proto.CheckWatchesRequest;
 import org.apache.zookeeper.proto.Create2Response;
 import org.apache.zookeeper.proto.CreateResponse;
+import org.apache.zookeeper.proto.ErrorResponse;
 import org.apache.zookeeper.proto.ExistsRequest;
 import org.apache.zookeeper.proto.ExistsResponse;
 import org.apache.zookeeper.proto.GetACLRequest;
@@ -53,6 +55,7 @@ import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.SetACLResponse;
 import org.apache.zookeeper.proto.SetDataResponse;
 import org.apache.zookeeper.proto.SetWatches;
+import org.apache.zookeeper.proto.SetWatches2;
 import org.apache.zookeeper.proto.SyncRequest;
 import org.apache.zookeeper.proto.SyncResponse;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
@@ -339,6 +342,29 @@ public class FinalRequestProcessor implements RequestProcessor {
                         setWatches.getDataWatches(),
                         setWatches.getExistWatches(),
                         setWatches.getChildWatches(), cnxn);
+                break;
+            }
+            case OpCode.setWatches2: {
+                lastOp = "STW2";
+                SetWatches2 setWatches = new SetWatches2();
+                // XXX We really should NOT need this!!!!
+                request.request.rewind();
+                ByteBufferInputStream.byteBuffer2Record(request.request, setWatches);
+                long relativeZxid = setWatches.getRelativeZxid();
+                zks.getZKDatabase().setWatches(relativeZxid,
+                        setWatches.getDataWatches(),
+                        setWatches.getExistWatches(),
+                        setWatches.getChildWatches(),
+                        setWatches.getPersistentWatches(), cnxn);
+                break;
+            }
+            case OpCode.addPersistentWatch: {
+                lastOp = "APEW";
+                AddPersistentWatcherRequest addPersistentWatcherRequest = new AddPersistentWatcherRequest();
+                ByteBufferInputStream.byteBuffer2Record(request.request,
+                        addPersistentWatcherRequest);
+                zks.getZKDatabase().addPersistentWatch(addPersistentWatcherRequest.getPath(), cnxn);
+                rsp = new ErrorResponse(0);
                 break;
             }
             case OpCode.getACL: {
