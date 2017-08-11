@@ -714,7 +714,7 @@ public class Zab1_0Test extends ZKTestCase {
                     Assert.assertEquals(1, f.self.getAcceptedEpoch());
                     Assert.assertEquals(1, f.self.getCurrentEpoch());
                     //Make sure that we did take the snapshot now
-                    verify(f.zk).takeSnapshot();
+                    verify(f.zk).takeSnapshot(true);
                     Assert.assertEquals(firstZxid, f.fzk.getLastProcessedZxid());
                     
                     // Make sure the data was recorded in the filesystem ok
