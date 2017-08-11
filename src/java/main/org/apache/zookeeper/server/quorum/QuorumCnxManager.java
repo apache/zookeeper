@@ -26,6 +26,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.UnresolvedAddressException;
@@ -647,11 +648,11 @@ public class QuorumCnxManager {
                         numRetries = 0;
                     }
                 } catch (IOException e) {
-                    if (shutdown) {
-                        break;
-                    }
                     LOG.error("Exception while listening", e);
-                    numRetries++;
+                    if (!(e instanceof SocketTimeoutException)) {
+                        numRetries++;
+                    }
+                }finally {
                     try {
                         ss.close();
                         Thread.sleep(1000);
@@ -662,6 +663,9 @@ public class QuorumCnxManager {
                             "Ignoring exception", ie);
                     }
                     closeSocket(client);
+                    if (shutdown) {
+                        break;
+                    }
                 }
             }
             LOG.info("Leaving listener");
