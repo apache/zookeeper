@@ -219,9 +219,10 @@ public class FileSnap implements SnapShot {
     public synchronized void serialize(DataTree dt, Map<Long, Integer> sessions, File snapShot, boolean fsync)
             throws IOException {
         if (!close) {
-            try (OutputStream sessOS = new BufferedOutputStream(fsync ? new AtomicFileOutputStream(snapShot) :
-                                                                        new FileOutputStream(snapShot));
-                 CheckedOutputStream crcOut = new CheckedOutputStream(sessOS, new Adler32())) {
+            try (CheckedOutputStream crcOut =
+                         new CheckedOutputStream(new BufferedOutputStream(fsync ? new AtomicFileOutputStream(snapShot) :
+                                                                                  new FileOutputStream(snapShot)),
+                                                 new Adler32())) {
                 //CheckedOutputStream cout = new CheckedOutputStream()
                 OutputArchive oa = BinaryOutputArchive.getArchive(crcOut);
                 FileHeader header = new FileHeader(SNAP_MAGIC, VERSION, dbId);
@@ -229,7 +230,7 @@ public class FileSnap implements SnapShot {
                 long val = crcOut.getChecksum().getValue();
                 oa.writeLong(val, "val");
                 oa.writeString("/", "path");
-                sessOS.flush();
+                crcOut.flush();
             }
         }
     }
