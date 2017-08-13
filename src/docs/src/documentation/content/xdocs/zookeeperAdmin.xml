@@ -409,7 +409,7 @@ server.3=zoo3:2888:3888</programlisting>
     <section id="sc_designing">
       <title>Designing a ZooKeeper Deployment</title>
 
-      <para>The reliablity of ZooKeeper rests on two basic assumptions.</para>
+      <para>The reliability of ZooKeeper rests on two basic assumptions.</para>
       <orderedlist>
         <listitem><para> Only a minority of servers in a deployment
             will fail. <emphasis>Failure</emphasis> in this context
@@ -524,7 +524,7 @@ server.3=zoo3:2888:3888</programlisting>
           made to the znodes these changes are appended to a
           transaction log, occasionally, when a log grows large, a
           snapshot of the current state of all znodes will be written
-          to the filesystem. This snapshot supercedes all previous
+          to the filesystem. This snapshot supersedes all previous
           logs.
         </para>
 
@@ -769,11 +769,11 @@ server.3=zoo3:2888:3888</programlisting>
               role="bold">dataLogDir</emphasis> rather than the <emphasis
               role="bold">dataDir</emphasis>. This allows a dedicated log
               device to be used, and helps avoid competition between logging
-              and snaphots.</para>
+              and snapshots.</para>
 
               <note>
                 <para>Having a dedicated log device has a large impact on
-                throughput and stable latencies. It is highly recommened to
+                throughput and stable latencies. It is highly recommended to
                 dedicate a log device and set <emphasis
                 role="bold">dataLogDir</emphasis> to point to a directory on
                 that device, and then make sure to point <emphasis
@@ -996,7 +996,7 @@ server.3=zoo3:2888:3888</programlisting>
 
               <para>Leader accepts client connections. Default value is "yes".
               The leader machine coordinates updates. For higher update
-              throughput at thes slight expense of read throughput the leader
+              throughput at the slight expense of read throughput the leader
               can be configured to not accept clients and focus on
               coordination. The default to this option is yes, which means
               that a leader will accept client connections.</para>
@@ -2221,7 +2221,7 @@ server.3=zoo3:2888:3888</programlisting>
       Zookeeper practices:</para>
 
 
-      <para>For multi-tennant installations see the <ulink
+      <para>For multi-tenant installations see the <ulink
       url="zookeeperProgrammers.html#ch_zkSessions">section</ulink>
       detailing ZooKeeper "chroot" support, this can be very useful
       when deploying many applications/services interfacing to a
