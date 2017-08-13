@@ -45,10 +45,11 @@ if(WANT_SYNCAPI)
 endif()
 
 # CppUnit option
-if(WIN32)
-  # The tests do not yet compile on Windows, so we set this to off by default.
+if(WIN32 OR APPLE)
+  # The tests do not yet compile on Windows or macOS,
+  # so we set this to off by default.
   #
-  # Note that CMake can does not have expressions except in conditionals,
+  # Note that CMake does not have expressions except in conditionals,
   # so we're left with this if/else/endif pattern.
   set(DEFAULT_WANT_CPPUNIT OFF)
 else()
@@ -147,6 +148,7 @@ configure_file(cmake_config.h.in ${CMAKE_SOURCE_DIR}/include/config.h)
 # hashtable library
 set(hashtable_sources src/hashtable/hashtable_itr.c src/hashtable/hashtable.c)
 add_library(hashtable STATIC ${hashtable_sources})
+target_link_libraries(hashtable PUBLIC $<$<PLATFORM_ID:Linux>:m>)
 
 # zookeeper library
 set(zookeeper_sources
@@ -168,17 +170,14 @@ if(WIN32)
 endif()
 
 add_library(zookeeper STATIC ${zookeeper_sources})
-target_link_libraries(zookeeper PUBLIC hashtable)
-if(UNIX)
-  target_link_libraries(zookeeper PUBLIC m rt)
-elseif(WIN32)
-  # Link to Winsock 2.0
-  target_link_libraries(zookeeper PUBLIC ws2_32)
-endif()
+target_link_libraries(zookeeper PUBLIC
+  hashtable
+  $<$<PLATFORM_ID:Linux>:rt> # clock_gettime
+  $<$<PLATFORM_ID:Windows>:ws2_32>) # Winsock 2.0
 
 if(WANT_SYNCAPI AND NOT WIN32)
-  # TODO: Use `find_library()` or `FindThreads()` for `pthread`.
-  target_link_libraries(zookeeper PUBLIC pthread)
+  find_package(Threads REQUIRED)
+  target_link_libraries(zookeeper PUBLIC Threads::Threads)
 endif()
 
 # cli executable
