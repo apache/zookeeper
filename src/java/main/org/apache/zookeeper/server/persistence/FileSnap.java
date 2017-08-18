@@ -37,6 +37,7 @@ import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
+import org.apache.zookeeper.common.AtomicFileOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.server.DataTree;
@@ -213,12 +214,15 @@ public class FileSnap implements SnapShot {
      * @param dt the datatree to be serialized
      * @param sessions the sessions to be serialized
      * @param snapShot the file to store snapshot into
+     * @param fsync sync the file immediately after write
      */
-    public synchronized void serialize(DataTree dt, Map<Long, Integer> sessions, File snapShot)
+    public synchronized void serialize(DataTree dt, Map<Long, Integer> sessions, File snapShot, boolean fsync)
             throws IOException {
         if (!close) {
-            try (OutputStream sessOS = new BufferedOutputStream(new FileOutputStream(snapShot));
-                 CheckedOutputStream crcOut = new CheckedOutputStream(sessOS, new Adler32())) {
+            try (CheckedOutputStream crcOut =
+                         new CheckedOutputStream(new BufferedOutputStream(fsync ? new AtomicFileOutputStream(snapShot) :
+                                                                                  new FileOutputStream(snapShot)),
+                                                 new Adler32())) {
                 //CheckedOutputStream cout = new CheckedOutputStream()
                 OutputArchive oa = BinaryOutputArchive.getArchive(crcOut);
                 FileHeader header = new FileHeader(SNAP_MAGIC, VERSION, dbId);
@@ -226,7 +230,7 @@ public class FileSnap implements SnapShot {
                 long val = crcOut.getChecksum().getValue();
                 oa.writeLong(val, "val");
                 oa.writeString("/", "path");
-                sessOS.flush();
+                crcOut.flush();
             }
         }
     }
