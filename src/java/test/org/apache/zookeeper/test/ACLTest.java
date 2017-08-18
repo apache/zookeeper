@@ -208,9 +208,6 @@ public class ACLTest extends ZKTestCase implements Watcher {
                 Assert.fail("Expected InvalidACLException for null ACL parameter");
             } catch (InvalidACLException e) {
                 // Expected. Do nothing
-            } catch (Exception e) {
-                LOG.error("Error in testNullACL", e);
-                Assert.fail("Expected InvalidACLException for null ACL parameter");
             }
 
             // case 2 : null ACL with other create API
@@ -219,9 +216,6 @@ public class ACLTest extends ZKTestCase implements Watcher {
                 Assert.fail("Expected InvalidACLException for null ACL parameter");
             } catch (InvalidACLException e) {
                 // Expected. Do nothing
-            } catch (Exception e) {
-                LOG.error("Error in testNullACL", e);
-                Assert.fail("Expected InvalidACLException for null ACL parameter");
             }
             
             // case 3 : null ACL with setACL
@@ -230,9 +224,6 @@ public class ACLTest extends ZKTestCase implements Watcher {
                 Assert.fail("Expected InvalidACLException for null ACL parameter");
             } catch (InvalidACLException e) {
                 // Expected. Do nothing
-            } catch (Exception e) {
-                LOG.error("Error in testNullACL", e);
-                Assert.fail("Expected InvalidACLException for null ACL parameter");
             }
         } finally {
             zk.close();
@@ -263,9 +254,6 @@ public class ACLTest extends ZKTestCase implements Watcher {
                 Assert.fail("Expected InvalidACLException for null value in ACL List");
             } catch (InvalidACLException e) {
                 // Expected. Do nothing
-            } catch (Exception e) {
-                LOG.error("Error in testNullValueACL", e);
-                Assert.fail("Expected InvalidACLException for null value in ACL List");
             }
 
             // case 2 : null value in ACL list with other create API
@@ -274,9 +262,6 @@ public class ACLTest extends ZKTestCase implements Watcher {
                 Assert.fail("Expected InvalidACLException for null value in ACL List");
             } catch (InvalidACLException e) {
                 // Expected. Do nothing
-            } catch (Exception e) {
-                LOG.error("Error in testNullValueACL", e);
-                Assert.fail("Expected InvalidACLException for null value in ACL List");
             }
 
             // case 3 : null value in ACL list with setACL
@@ -285,9 +270,6 @@ public class ACLTest extends ZKTestCase implements Watcher {
                 Assert.fail("Expected InvalidACLException for null value in ACL List");
             } catch (InvalidACLException e) {
                 // Expected. Do nothing
-            } catch (Exception e) {
-                LOG.error("Error in testNullValueACL", e);
-                Assert.fail("Expected InvalidACLException for null value in ACL List");
             }
         } finally {
             zk.close();
