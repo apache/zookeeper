@@ -639,19 +639,29 @@ public class QuorumCnxManager {
                     LOG.info("My election bind port: " + addr.toString());
                     setName(addr.toString());
                     ss.bind(addr);
+                    ss.setSoTimeout(10 * 1000); // Ten seconds
+                    long acceptStartTime = System.currentTimeMillis();
                     while (!shutdown) {
-                        client = ss.accept();
-                        setSockOpts(client);
-                        LOG.info("Received connection request "
-                                + client.getRemoteSocketAddress());
-                        receiveConnection(client);
-                        numRetries = 0;
+                        try {
+                            client = ss.accept();
+                            setSockOpts(client);
+                            LOG.info("Received connection request "
+                                     + client.getRemoteSocketAddress());
+                            receiveConnection(client);
+                            numRetries = 0;
+                        } catch (SocketTimeoutException e) {
+                            LOG.warn("The socket is listening for the election accepted "
+                                     + "an unexpected timeout ["
+                                     + (System.currentTimeMillis() - acceptStartTime) + "]milliseconds"
+                                     + "after the call to accept(). is this an instance of bug ZOOKEEPER-2836?");
+                        }
                     }
                 } catch (IOException e) {
-                    LOG.error("Exception while listening", e);
-                    if (!(e instanceof SocketTimeoutException)) {
-                        numRetries++;
+                    if (shutdown) {
+                        break;
                     }
+                    LOG.error("Exception while listening", e);
+                    numRetries++;
                     try {
                         ss.close();
                         Thread.sleep(1000);
@@ -662,9 +672,6 @@ public class QuorumCnxManager {
                             "Ignoring exception", ie);
                     }
                     closeSocket(client);
-                    if (shutdown) {
-                        break;
-                    }
                 }
             }
             LOG.info("Leaving listener");
