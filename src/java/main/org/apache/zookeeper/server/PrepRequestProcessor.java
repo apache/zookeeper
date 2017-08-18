@@ -912,9 +912,11 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
     private List<ACL> removeDuplicates(List<ACL> acl) {
 
         LinkedList<ACL> retval = new LinkedList<ACL>();
-        for (ACL a : acl) {
-            if (!retval.contains(a)) {
-                retval.add(a);
+        if (acl != null) {
+            for (ACL a : acl) {
+                if (!retval.contains(a)) {
+                    retval.add(a);
+                }
             }
         }
         return retval;
