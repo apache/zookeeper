@@ -22,11 +22,13 @@ import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException.InvalidACLException;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -187,6 +189,94 @@ public class ACLTest extends ZKTestCase implements Watcher {
             } else {
                 LOG.warn("startsignal " + startSignal);
             }
+        }
+    }
+    
+    @Test
+    public void testNullACL() throws Exception {
+        File tmpDir = ClientBase.createTmpDir();
+        ClientBase.setupTestEnv();
+        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
+        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
+        f.startup(zks);
+        ZooKeeper zk = ClientBase.createZKClient(HOSTPORT);
+        try {
+            // case 1 : null ACL with create
+            try {
+                zk.create("/foo", "foo".getBytes(), null, CreateMode.PERSISTENT);
+                Assert.fail("Expected InvalidACLException for null ACL parameter");
+            } catch (InvalidACLException e) {
+                // Expected. Do nothing
+            }
+
+            // case 2 : null ACL with other create API
+            try {
+                zk.create("/foo", "foo".getBytes(), null, CreateMode.PERSISTENT, null);
+                Assert.fail("Expected InvalidACLException for null ACL parameter");
+            } catch (InvalidACLException e) {
+                // Expected. Do nothing
+            }
+            
+            // case 3 : null ACL with setACL
+            try {
+                zk.setACL("/foo", null, 0);
+                Assert.fail("Expected InvalidACLException for null ACL parameter");
+            } catch (InvalidACLException e) {
+                // Expected. Do nothing
+            }
+        } finally {
+            zk.close();
+            f.shutdown();
+            zks.shutdown();
+            Assert.assertTrue("waiting for server down",
+                    ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT));
+        }
+    }
+
+    @Test
+    public void testNullValueACL() throws Exception {
+        File tmpDir = ClientBase.createTmpDir();
+        ClientBase.setupTestEnv();
+        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
+        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
+        f.startup(zks);
+        ZooKeeper zk = ClientBase.createZKClient(HOSTPORT);
+        try {
+
+            List<ACL> acls = new ArrayList<ACL>();
+            acls.add(null);
+
+            // case 1 : null value in ACL list with create
+            try {
+                zk.create("/foo", "foo".getBytes(), acls, CreateMode.PERSISTENT);
+                Assert.fail("Expected InvalidACLException for null value in ACL List");
+            } catch (InvalidACLException e) {
+                // Expected. Do nothing
+            }
+
+            // case 2 : null value in ACL list with other create API
+            try {
+                zk.create("/foo", "foo".getBytes(), acls, CreateMode.PERSISTENT, null);
+                Assert.fail("Expected InvalidACLException for null value in ACL List");
+            } catch (InvalidACLException e) {
+                // Expected. Do nothing
+            }
+
+            // case 3 : null value in ACL list with setACL
+            try {
+                zk.setACL("/foo", acls, -1);
+                Assert.fail("Expected InvalidACLException for null value in ACL List");
+            } catch (InvalidACLException e) {
+                // Expected. Do nothing
+            }
+        } finally {
+            zk.close();
+            f.shutdown();
+            zks.shutdown();
+            Assert.assertTrue("waiting for server down",
+                    ClientBase.waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT));
         }
     }
 }
