@@ -75,7 +75,7 @@ public class TruncateTest extends ZKTestCase {
         ZKDatabase zkdb = new ZKDatabase(snaplog);
         // make sure to snapshot, so that we have something there when
         // truncateLog reloads the db
-        snaplog.save(zkdb.getDataTree(), zkdb.getSessionWithTimeOuts());
+        snaplog.save(zkdb.getDataTree(), zkdb.getSessionWithTimeOuts(), false);
 
         for (int i = 1; i <= 100; i++) {
             append(zkdb, i);
