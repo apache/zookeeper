@@ -639,8 +639,6 @@ public class QuorumCnxManager {
                     LOG.info("My election bind port: " + addr.toString());
                     setName(addr.toString());
                     ss.bind(addr);
-                    ss.setSoTimeout(10 * 1000); // Ten seconds
-                    long acceptStartTime = System.currentTimeMillis();
                     while (!shutdown) {
                         try {
                             client = ss.accept();
@@ -651,9 +649,8 @@ public class QuorumCnxManager {
                             numRetries = 0;
                         } catch (SocketTimeoutException e) {
                             LOG.warn("The socket is listening for the election accepted "
-                                     + "an unexpected timeout ["
-                                     + (System.currentTimeMillis() - acceptStartTime) + "]milliseconds"
-                                     + "after the call to accept(). is this an instance of bug ZOOKEEPER-2836?");
+                                     + "and it timed out unexpectedly, but will retry."
+                                     + "see ZOOKEEPER-2836");
                         }
                     }
                 } catch (IOException e) {
