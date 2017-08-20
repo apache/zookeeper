@@ -2813,13 +2813,14 @@ public class ZooKeeper implements AutoCloseable {
      * </p>
      *
      * <p>
-     * NOTE: when there are active recursive watches there is a small performance loss as all segments
+     * NOTE: when there are active recursive watches there is a small performance decrease as all segments
      * of ZNode paths must be checked for watch triggering.
      * </p>
      *
      * @param basePath the top path that the watcher applies to
      * @param watcher the watcher
-     * @param recursive if true applies not only to the registered path but all child paths recursively
+     * @param recursive if true applies not only to the registered path but all child paths recursively including
+     *                  any child nodes added in the future
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws KeeperException If the server signals an error with a non-zero
      *  error code.
