@@ -2846,7 +2846,8 @@ public class ZooKeeper implements AutoCloseable {
      *
      * @param basePath the top path that the watcher applies to
      * @param watcher the watcher
-     * @param recursive if true applies not only to the registered path but all child paths recursively
+     * @param recursive if true applies not only to the registered path but all child paths recursively including
+     *                  any child nodes added in the future
      * @param cb a handler for the callback
      * @param ctx context to be provided to the callback
      * @throws IllegalArgumentException if an invalid path is specified
