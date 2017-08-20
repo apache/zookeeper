@@ -718,20 +718,20 @@
 	</section>
 
     <section id="sc_PersistentWatches">
-      <title>Persistent Recursive Watches</title>
+      <title>Persistent Watches</title>
       <para><emphasis role="bold">New in 3.6.0: </emphasis> There is now a variation on the standard
       watch described above whereby you can set a watch that does not get removed when triggered.
       Additionally, these watches trigger the event types <emphasis role="bold">NodeCreated</emphasis>,
       <emphasis role="bold">NodeDeleted</emphasis>, and <emphasis role="bold">NodeDataChanged</emphasis>
-      recursively for all znodes starting at the znode that the watch is registered for. Note that
+      and, optionally, recursively for all znodes starting at the znode that the watch is registered for. Note that
       <emphasis role="bold">NodeChildrenChanged</emphasis> are not triggered for persistent recursive watches as
       it is redundant.</para>
 
-      <para>Persistent recursive watches are set using the method <emphasis
+      <para>Persistent watches are set using the method <emphasis
       role="bold">addPersistentWatch()</emphasis>. The triggering semantics and guarantees
       (other than one-time triggering) are the same as standard watches. The only exception regarding events is that
-      persistent watchers never throw child changed events as they are redundant.
-      Persistent recursive watches are removed using <emphasis role="bold">removeWatches()</emphasis> with watcher type
+      recursive persistent watchers never trigger child changed events as they are redundant.
+      Persistent watches are removed using <emphasis role="bold">removeWatches()</emphasis> with watcher type
       <emphasis role="bold">WatcherType.Any</emphasis>.</para>
     </section>
 

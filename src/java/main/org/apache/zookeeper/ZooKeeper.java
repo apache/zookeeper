@@ -2812,6 +2812,11 @@ public class ZooKeeper implements AutoCloseable {
      * of the given path including children added later.
      * </p>
      *
+     * <p>
+     * NOTE: when there are active recursive watches there is a small performance loss as all segments
+     * of ZNode paths must be checked for watch triggering.
+     * </p>
+     *
      * @param basePath the top path that the watcher applies to
      * @param watcher the watcher
      * @param recursive if true applies not only to the registered path but all child paths recursively
