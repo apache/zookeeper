@@ -355,7 +355,9 @@ public class FinalRequestProcessor implements RequestProcessor {
                         setWatches.getDataWatches(),
                         setWatches.getExistWatches(),
                         setWatches.getChildWatches(),
-                        setWatches.getPersistentWatches(), cnxn);
+                        setWatches.getPersistentWatches(),
+                        setWatches.getPersistentRecursiveWatches(),
+                        cnxn);
                 break;
             }
             case OpCode.addPersistentWatch: {
@@ -363,7 +365,8 @@ public class FinalRequestProcessor implements RequestProcessor {
                 AddPersistentWatcherRequest addPersistentWatcherRequest = new AddPersistentWatcherRequest();
                 ByteBufferInputStream.byteBuffer2Record(request.request,
                         addPersistentWatcherRequest);
-                zks.getZKDatabase().addPersistentWatch(addPersistentWatcherRequest.getPath(), cnxn);
+                zks.getZKDatabase().addPersistentWatch(addPersistentWatcherRequest.getPath(), cnxn,
+                        addPersistentWatcherRequest.getRecursive());
                 rsp = new ErrorResponse(0);
                 break;
             }

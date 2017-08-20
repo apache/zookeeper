@@ -79,6 +79,7 @@ module org.apache.zookeeper.proto {
         vector<ustring>existWatches;
         vector<ustring>childWatches;
         vector<ustring>persistentWatches;
+        vector<ustring>persistentRecursiveWatches;
     }
     class RequestHeader {
         int xid;
@@ -186,6 +187,7 @@ module org.apache.zookeeper.proto {
     }
     class AddPersistentWatcherRequest {
         ustring path;
+        boolean recursive;
     }
     class WatcherEvent {
         int type;  // event type
