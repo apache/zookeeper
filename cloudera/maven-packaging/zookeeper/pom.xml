@@ -58,9 +58,9 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.jboss.netty</groupId>
+      <groupId>io.netty</groupId>
       <artifactId>netty</artifactId>
-      <version>${cdh.netty.version}</version>
+      <version>${cdh.io.netty.version}</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -104,6 +104,7 @@
       <artifactId>apache-rat-tasks</artifactId>
       <version>${cdh.rat.version}</version>     
       <optional>true</optional>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>commons-lang</groupId>
