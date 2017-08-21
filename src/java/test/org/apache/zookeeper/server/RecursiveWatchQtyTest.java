@@ -29,8 +29,8 @@ public class RecursiveWatchQtyTest {
         watchManager.addWatch("/a", watcher1, WatchManager.Type.PERSISTENT_RECURSIVE);
         watchManager.addWatch("/b", watcher2, WatchManager.Type.PERSISTENT_RECURSIVE);
         Assert.assertEquals(2, watchManager.getRecursiveWatchQty());
-        watchManager.removeWatcher("/a", watcher1);
-        watchManager.removeWatcher("/b", watcher2);
+        Assert.assertTrue(watchManager.removeWatcher("/a", watcher1));
+        Assert.assertTrue(watchManager.removeWatcher("/b", watcher2));
         Assert.assertEquals(0, watchManager.getRecursiveWatchQty());
     }
 
@@ -66,7 +66,7 @@ public class RecursiveWatchQtyTest {
         watchManager.addWatch("/a/b", watcher, WatchManager.Type.PERSISTENT_RECURSIVE);
         watchManager.addWatch("/a/b/c", watcher, WatchManager.Type.PERSISTENT_RECURSIVE);
         Assert.assertEquals(3, watchManager.getRecursiveWatchQty());
-        watchManager.removeWatcher("/a/b", watcher);
+        Assert.assertTrue(watchManager.removeWatcher("/a/b", watcher));
         Assert.assertEquals(2, watchManager.getRecursiveWatchQty());
         watchManager.removeWatcher(watcher);
         Assert.assertEquals(0, watchManager.getRecursiveWatchQty());
@@ -82,7 +82,7 @@ public class RecursiveWatchQtyTest {
         Assert.assertEquals(1, watchManager.getRecursiveWatchQty());
         watchManager.addWatch("/a", watcher, WatchManager.Type.STANDARD);
         Assert.assertEquals(0, watchManager.getRecursiveWatchQty());
-        watchManager.removeWatcher("/a", watcher);
+        Assert.assertTrue(watchManager.removeWatcher("/a", watcher));
         Assert.assertEquals(0, watchManager.getRecursiveWatchQty());
     }
 }
