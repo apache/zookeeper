@@ -111,7 +111,7 @@ class WatchManager {
             watchTable.put(path, list);
         }
         Type previousType = list.put(watcher, type);
-        if ((previousType != null) && previousType.isRecursive()) {
+        if (safeIsRecursive(previousType)) {
             --recursiveWatchQty;
         }
         if (type.isRecursive()) {
@@ -127,6 +127,10 @@ class WatchManager {
         paths.add(path);
     }
 
+    private boolean safeIsRecursive(Type type) {
+        return (type != null) && type.isRecursive();
+    }
+
     synchronized void removeWatcher(Watcher watcher) {
         Set<String> paths = watch2Paths.remove(watcher);
         if (paths == null) {
@@ -136,7 +140,7 @@ class WatchManager {
             Map<Watcher, Type> list = watchTable.get(p);
             if (list != null) {
                 Type removedType = list.remove(watcher);
-                if (removedType.isRecursive()) {
+                if (safeIsRecursive(removedType)) {
                     --recursiveWatchQty;
                 }
                 if (list.isEmpty()) {
@@ -295,7 +299,7 @@ class WatchManager {
         if (removedType == null) {
             return false;
         }
-        if (removedType.isRecursive()) {
+        if (safeIsRecursive(removedType)) {
             --recursiveWatchQty;
         }
 
