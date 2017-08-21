@@ -364,6 +364,9 @@ public class LearnerHandler extends ZooKeeperThread {
                 ByteBuffer bbsid = ByteBuffer.wrap(learnerInfoData);
                 if (learnerInfoData.length >= 8) {
                     this.sid = bbsid.getLong();
+                    if (this.sid == QuorumPeer.DYNAMIC_OBSERVER_ID) {
+                        this.sid = leader.followerCounter.getAndDecrement();
+                    }
                 }
                 if (learnerInfoData.length >= 12) {
                     this.version = bbsid.getInt(); // protocolVersion

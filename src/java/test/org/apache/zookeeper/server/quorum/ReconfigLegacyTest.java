@@ -32,6 +32,7 @@ import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.admin.ZooKeeperAdmin;
+import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ReconfigTest;
 import org.junit.Assert;
@@ -100,7 +101,7 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
             // check that static config file doesn't include peerType info
             Properties cfg = readPropertiesFromFile(mt[i].confFile);
             for (int j = 0; j < SERVER_COUNT; j++) {
-                Assert.assertFalse(cfg.containsKey("server." + j));                
+                Assert.assertFalse(cfg.containsKey("server." + j));
             }
             Assert.assertFalse(cfg.containsKey("peerType"));
             Assert.assertTrue(cfg.containsKey("dynamicConfigFile"));
@@ -308,6 +309,114 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
 
         for (int i = 0; i < SERVER_COUNT; i++) {
             mt[i].shutdown();
+        }
+    }
+
+    @Test
+    public void testReconfigKeepDynamicServerIdInStatic() throws Exception {
+        final int serverCount = 4;
+        final int clientPorts[] = new int[serverCount];
+        final int quorumPorts[] = new int[serverCount];
+        final int electionPorts[] = new int[serverCount];
+
+        final int deletedServerIndex = 0;
+        final int observerIndex = serverCount - 1;
+        final int newClientPort = PortAssignment.unique();
+
+        StringBuilder participantSB = new StringBuilder();
+        StringBuilder observerSB = new StringBuilder();
+        ArrayList<String> participantServers = new ArrayList<String>();
+        ArrayList<String> newServers = new ArrayList<String>();
+
+        for (int i = 0; i < serverCount; i++) {
+            clientPorts[i] = PortAssignment.unique();
+            quorumPorts[i] = PortAssignment.unique();
+            electionPorts[i] = PortAssignment.unique();
+
+            // the last server is an observer
+            long serverId = i == observerIndex ? QuorumPeer.DYNAMIC_OBSERVER_ID : i;
+            String role = i == observerIndex ? "observer" : "participant";
+
+            String server = "server." + serverId + "=localhost:" + quorumPorts[i]
+                    +":" + electionPorts[i] + ":" + role;
+            if (i != observerIndex) {
+                participantServers.add(server);
+                participantSB.append(server + "\n");
+            }
+            observerSB.append(server + "\n");
+
+            if(i != deletedServerIndex) {
+                newServers.add(server);
+            }
+        }
+
+        String quorumCfgSection = participantSB.toString();
+        String observerCfgSection = observerSB.toString();
+
+        MainThread mt[] = new MainThread[serverCount];
+        ZooKeeper zk[] = new ZooKeeper[serverCount];
+        ZooKeeperAdmin zkAdmin[] = new ZooKeeperAdmin[serverCount];
+
+        // Start the servers with a static config file, without a dynamic config file.
+        for (int i = 0; i < serverCount; i++) {
+            String cfg = i == observerIndex ? observerCfgSection : quorumCfgSection;
+            long myid = i == observerIndex ? QuorumPeer.DYNAMIC_OBSERVER_ID : i;
+            mt[i] = new MainThread((int) myid, clientPorts[i], cfg, false);
+            mt[i].start();
+        }
+
+        // Check that when a server starts from old style config, it should
+        // keep the server.-1 in the static config.
+        for (int i = 0; i < serverCount; i++) {
+            Assert.assertTrue("waiting for server " + i + " being up",
+                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[i],
+                            CONNECTION_TIMEOUT));
+            zk[i] = ClientBase.createZKClient("127.0.0.1:" + clientPorts[i]);
+            zkAdmin[i] = new ZooKeeperAdmin("127.0.0.1:" + clientPorts[i],
+                    ClientBase.CONNECTION_TIMEOUT, this);
+            zkAdmin[i].addAuthInfo("digest", "super:test".getBytes());
+
+            // Check the server with dynamic observer id is in observing state
+            if (i == observerIndex) {
+                Assert.assertEquals(mt[i].main.quorumPeer.getPeerState(), ServerState.OBSERVING);
+            }
+            ReconfigTest.testServerHasConfig(zk[i], participantServers, null);
+            Properties cfg = readPropertiesFromFile(mt[i].confFile);
+
+            System.out.println(cfg);
+            Assert.assertTrue(cfg.containsKey("dynamicConfigFile"));
+            if (i == observerIndex) {
+                Assert.assertTrue(cfg.containsKey("server." + QuorumPeer.DYNAMIC_OBSERVER_ID));
+            } else {
+                Assert.assertFalse(cfg.containsKey("server." + QuorumPeer.DYNAMIC_OBSERVER_ID));
+            }
+        }
+        ReconfigTest.testNormalOperation(zk[0], zk[1]);
+
+        ReconfigTest.reconfig(zkAdmin[1], null, null, newServers, -1);
+        ReconfigTest.testNormalOperation(zk[0], zk[1]);
+
+        // Sleep since writing the config files may take time.
+        Thread.sleep(1000);
+
+        // Check that after dynamic config the dynamic participant list
+        // is updated on all hosts including the observer.
+        // And the observer still keep "server.-1" in static config
+        for (int i = 0; i < serverCount; i++) {
+            ReconfigTest.testServerHasConfig(zk[i], newServers, null);
+            Properties cfg = readPropertiesFromFile(mt[i].confFile);
+            ReconfigTest.testServerHasConfig(zk[i], newServers, null);
+            if (i == observerIndex) {
+                Assert.assertTrue(cfg.containsKey("server." + QuorumPeer.DYNAMIC_OBSERVER_ID));
+            } else {
+                Assert.assertFalse(cfg.containsKey("server." + QuorumPeer.DYNAMIC_OBSERVER_ID));
+            }
+        }
+
+        for (int i = 0; i < serverCount; i++) {
+            mt[i].shutdown();
+            zk[i].close();
+            zkAdmin[i].close();
         }
     }
 }

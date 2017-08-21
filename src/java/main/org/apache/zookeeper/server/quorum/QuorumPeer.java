@@ -384,11 +384,18 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     /*
-     * To enable observers to have no identifier, we need a generic identifier
-     * at least for QuorumCnxManager. We use the following constant to as the
-     * value of such a generic identifier.
+     * To enable observers to have no identifier, we need a generic identifier.
+     * Observers with this id won't be part of the dynamic config.
      */
+    static final long DYNAMIC_OBSERVER_ID = -1;
 
+    /**
+     * Deprecated, please use DYNAMIC_OBSERVER_ID.
+     *
+     * It's not convenient to use Long.MAX_VALUE, for example, python doesn't
+     * have Long.MAX_VALUE, it's much easier to use -1 instead of a long number.
+     */
+    @Deprecated
     static final long OBSERVER_ID = Long.MAX_VALUE;
 
     /*
@@ -1519,7 +1526,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     private boolean needEraseClientInfoFromStaticConfig() {
         QuorumServer server = quorumVerifier.getAllMembers().get(getId());
-        return (server != null && server.clientAddr != null);
+        return (server != null && server.clientAddr != null &&
+                getId() != QuorumPeer.DYNAMIC_OBSERVER_ID);
     }
 
     /**
@@ -1841,7 +1849,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
    private boolean updateLearnerType(QuorumVerifier newQV) {        
        //check if I'm an observer in new config
-       if (newQV.getObservingMembers().containsKey(getId())) {
+       if (getId() == QuorumPeer.DYNAMIC_OBSERVER_ID ||
+              newQV.getObservingMembers().containsKey(getId())) {
            if (getLearnerType()!=LearnerType.OBSERVER){
                setLearnerType(LearnerType.OBSERVER);
                LOG.info("Becoming an observer");
