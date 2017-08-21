@@ -26,6 +26,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
 
+import org.apache.yetus.audience.InterfaceAudience;
+
+@InterfaceAudience.Public
 public class FourLetterWordMain {
     protected static final Logger LOG = Logger.getLogger(FourLetterWordMain.class);
     

@@ -31,12 +31,14 @@ import java.util.zip.CheckedInputStream;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.InputArchive;
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.server.persistence.FileSnap;
 
 /**
  * Dump a snapshot file to stdout.
  */
+@InterfaceAudience.Public
 public class SnapshotFormatter {
 
     /**

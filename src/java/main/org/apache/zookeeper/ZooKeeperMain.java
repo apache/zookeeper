@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import org.apache.yetus.audience.InterfaceAudience;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
@@ -46,6 +47,7 @@ import java.util.StringTokenizer;
  * The command line client to ZooKeeper.
  *
  */
+@InterfaceAudience.Public
 public class ZooKeeperMain {
     private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperMain.class);
     protected static final Map<String,String> commandMap = new HashMap<String,String>( );
@@ -667,9 +669,9 @@ public class ZooKeeperMain {
             if (args.length >=2) {
                 connectToZK(args[1]);
             } else {
-                connectToZK(host);                
+                connectToZK(host);
             }
-        } 
+        }
         
         // Below commands all need a live connection
         if (zk == null || !zk.getState().isAlive()) {
@@ -743,7 +745,7 @@ public class ZooKeeperMain {
             path = args[1];
             stat = zk.exists(path, watch);
             if (stat == null) {
-              throw new KeeperException.NoNodeException(path);	
+              throw new KeeperException.NoNodeException(path);
             }
             printStat(stat);
         } else if (cmd.equals("listquota") && args.length >= 2) {
@@ -803,7 +805,7 @@ public class ZooKeeperMain {
                 usage();
             }
         } else if (cmd.equals("close")) {
-                zk.close();            
+                zk.close();
         } else if (cmd.equals("sync") && args.length >= 2) {
             path = args[1];
             zk.sync(path, new AsyncCallback.VoidCallback() { public void processResult(int rc, String path, Object ctx) { System.out.println("Sync returned " + rc); } }, null );

@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.yetus.audience.InterfaceAudience;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -41,6 +42,7 @@ import org.apache.zookeeper.server.persistence.Util;
  * files and snapdir files keeping the last "-n" snapshot files
  * and the corresponding logs.
  */
+@InterfaceAudience.Public
 public class PurgeTxnLog {
     private static final Logger LOG = LoggerFactory.getLogger(PurgeTxnLog.class);
 
@@ -53,7 +55,7 @@ public class PurgeTxnLog {
     }
     
     /**
-     * purges the snapshot and logs keeping the last num snapshots 
+     * purges the snapshot and logs keeping the last num snapshots
      * and the corresponding logs.
      * @param dataDir the dir that has the logs
      * @param snapDir the dir that has the snapshots
@@ -72,7 +74,7 @@ public class PurgeTxnLog {
         // files to exclude from deletion
         Set<File> exc=new HashSet<File>();
         List<File> snaps = txnLog.findNRecentSnapshots(num);
-        if (snaps.size() == 0) 
+        if (snaps.size() == 0)
             return;
         File snapShot = snaps.get(snaps.size() -1);
         for (File f: snaps) {

@@ -25,7 +25,7 @@
       <pathelement location="${basedir}/cloudera/maven-packaging/lib/ant-contrib-1.0b3.jar"/>
     </classpath>
   </taskdef>
-  
+
   <!-- Initializes ivy/libraries.properties and build.properties with CDH versions -->
   <if>
     <and>
@@ -138,6 +138,8 @@
     <property name="ivy.jdiff.lib" value="${build.dir}/jdiff/lib"/>
     <property name="ivysettings.xml" value="${basedir}/ivysettings.xml"/>
 
+    <property name="audience-annotations.version" value="0.5.0" />
+
     <available property="clover.present"
                file="${clover.home}/lib/clover.jar"
                classpath="${clover.home}/lib"/>
@@ -248,7 +250,7 @@
     <!-- ====================================================== -->
     <!-- Generate and compile the Java files                    -->
     <!-- ====================================================== -->
-    <target name="init" depends="jvm-check">    
+    <target name="init" depends="jvm-check">
         <mkdir dir="${build.classes}" />
 
         <mkdir dir="${ivy.lib}"/>
@@ -267,7 +269,7 @@
     <target name="jute" depends="init">
         <javac srcdir="${java.src.dir}" destdir="${build.classes}" includeantruntime="false"
             target="${javac.target}" source="${javac.source}"
-            includes="org/apache/jute/**" debug="on" />
+            includes="org/apache/jute/**" debug="on" classpath="${ivy.lib}/audience-annotations-${audience-annotations.version}.jar" />
     </target>
 
     <target name="compile_jute_uptodate">
@@ -334,9 +336,9 @@
         </java>
     </target>
     
-    <target name="build-generated" depends="compile_jute,version-info" >
+    <target name="build-generated" depends="compile_jute,version-info,ivy-retrieve" >
         <javac srcdir="${src_generated.dir}" destdir="${build.classes}" includeantruntime="false"
-            target="${javac.target}" source="${javac.source}" debug="on" />
+            target="${javac.target}" source="${javac.source}" debug="on" classpath="${ivy.lib}/audience-annotations-${audience-annotations.version}.jar" />
     </target>
     
     <target name="ivy-download" unless="ivy.jar.exists" depends="init">
@@ -487,23 +489,24 @@
          windowtitle="${Name} ${version} API"
          doctitle="${Name} ${version} API"
          bottom="Copyright &amp;copy; ${year} The Apache Software Foundation"
+         doclet="org.apache.yetus.audience.tools.IncludePublicAnnotationsStandardDoclet"
+         docletpath="${ivy.lib}/audience-annotations-${audience-annotations.version}.jar"
          >
-    	<fileset dir="${java.src.dir}">
-          <include name="org/apache/**/*Main.java"/>
-          <include name="org/apache/zookeeper/AsyncCallback.java"/>
-          <include name="org/apache/zookeeper/CreateMode.java"/>
-          <include name="org/apache/zookeeper/KeeperException.java"/>
-          <include name="org/apache/zookeeper/ServerAdminClient.java"/>
-          <include name="org/apache/zookeeper/Watcher.java"/>
-          <include name="org/apache/zookeeper/WatchedEvent.java"/>
-          <include name="org/apache/zookeeper/ZooDefs.java"/>
-          <include name="org/apache/zookeeper/ZooKeeper.java"/>
+
+        <fileset dir="${java.src.dir}">
+          <include name="org/apache/zookeeper/server/quorum/QuorumPeerMain.java"/>
+          <include name="org/apache/zookeeper/server/ZooKeeperServerMain.java"/>
           <include name="org/apache/zookeeper/server/LogFormatter.java"/>
-          <include name="org/apache/zookeeper/server/SnapshotFormatter.java"/>
           <include name="org/apache/zookeeper/server/PurgeTxnLog.java"/>
-          <exclude name="org/apache/zookeeper/server/quorum/QuorumPacket"/>
-    	</fileset>
+          <include name="org/apache/zookeeper/server/SnapshotFormatter.java"/>
+          <include name="org/apache/zookeeper/server/upgrade/UpgradeMain.java"/>
+        </fileset>
+    	<packageset dir="${java.src.dir}">
+          <include name="org/apache/**"/>
+          <exclude name="org/apache/zookeeper/server/**"/>
+    	</packageset>
     	<packageset dir="${src_generated.dir}">
+          <include name="org/apache/**"/>
           <exclude name="org/apache/zookeeper/proto"/>
           <exclude name="org/apache/zookeeper/txn"/>
           <exclude name="org/apache/zookeeper/version"/>
@@ -713,7 +716,7 @@
         <fileset file="${build.dir}/${final.name}-sources.jar"/>
         <fileset file="${build.dir}/${final.name}-javadoc.jar"/>
       </copy>
-      
+
       <checksum file="${dist.maven.dir}/${final.name}.jar" algorithm="md5"/>
       <checksum file="${dist.maven.dir}/${final.name}.jar" algorithm="sha1"/>
       <checksum file="${dist.maven.dir}/${final.name}-sources.jar" algorithm="md5"/>
@@ -728,7 +731,7 @@
       </ivy:makepom>
       <checksum file="${dist.maven.dir}/${final.name}.pom" algorithm="md5"/>
       <checksum file="${dist.maven.dir}/${final.name}.pom" algorithm="sha1"/>
-      
+
       <copy file="${build.dir}/${final.name}-test.jar"
             tofile="${dist.maven.dir}/${final.name}-tests.jar"/> 
       <checksum file="${dist.maven.dir}/${final.name}-tests.jar" algorithm="sha1"/>
@@ -801,7 +804,7 @@
         <property name="package.share" value="/share/zookeeper"/>
         <fileset file="${contrib.dir}/build.xml"/>
         <fileset file="${recipes.dir}/build.xml"/>
-      </subant>  	
+      </subant>
 
       <copy todir="${dist.dir}/share/zookeeper"> 
         <fileset file="${build.dir}/${final.name}.jar"/>
@@ -836,7 +839,7 @@
       
       
       <copy file="${build.dir}/${final.name}-test.jar"
-            tofile="${dist.maven.dir}/${final.name}-test.jar"/> 
+            tofile="${dist.maven.dir}/${final.name}-test.jar"/>
       <checksum file="${dist.maven.dir}/${final.name}-test.jar" algorithm="sha1"/>
       <checksum file="${dist.maven.dir}/${final.name}-test.jar" algorithm="md5"/>
       <ivy:makepom settingsRef="${ant.project.name}" ivyfile="${basedir}/ivy.xml"
@@ -1180,7 +1183,7 @@
         <copy todir="${test.data.buffersize.dir}">
             <fileset dir="${basedir}/src/java/test/data/buffersize"/>
         </copy>
-       
+
     </target>
 
     <condition property="quicktest">
@@ -1495,7 +1498,7 @@
         </cobertura-report>
     </target>
 
-    <target name="checkstyle" depends="checkstyle.check, set-checkstyle-classpath" if="checkstyle.home" 
+    <target name="checkstyle" depends="checkstyle.check, set-checkstyle-classpath" if="checkstyle.home"
 			description="Run optional third-party tool targets">
     	<taskdef resource="checkstyletask.properties">
         	<classpath refid="checkstyle-classpath"/>
@@ -1510,17 +1513,17 @@
     </target>
 
     <target name="checkstyle.check" unless="checkstyle.home">
-    	<fail message="'checkstyle.home' is not defined. Please pass -Dcheckstyle.home=&lt;base of checkstyle installation&gt; 
+    	<fail message="'checkstyle.home' is not defined. Please pass -Dcheckstyle.home=&lt;base of checkstyle installation&gt;
 		to Ant on the command-line." />
     </target>
-    
+
     <target name="set-checkstyle-classpath">
     	<path id="checkstyle-classpath">
         	<fileset dir="${checkstyle.home}">
 			<include name="**/*.jar"/>
          	</fileset>
  	</path>
-    </target>	
+    </target>
 
     <!-- ================================================================== -->
     <!-- Perform audit activities for the release                           -->

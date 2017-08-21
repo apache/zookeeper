@@ -64,6 +64,12 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
+      <groupId>org.apache.yetus</groupId>
+      <artifactId>audience-annotations</artifactId>
+      <version>0.5.0</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>${cdh.junit.version}</version>

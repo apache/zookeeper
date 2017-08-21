@@ -23,6 +23,7 @@ import java.io.IOException;
 
 import javax.management.JMException;
 
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.jmx.ManagedUtil;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog.DatadirException;
@@ -33,6 +34,7 @@ import org.slf4j.LoggerFactory;
 /**
  * This class starts and runs a standalone ZooKeeperServer.
  */
+@InterfaceAudience.Public
 public class ZooKeeperServerMain {
     private static final Logger LOG =
         LoggerFactory.getLogger(ZooKeeperServerMain.class);

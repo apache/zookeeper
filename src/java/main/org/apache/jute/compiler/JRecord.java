@@ -426,6 +426,8 @@ public class JRecord extends JCompType {
         jj.write("\n");
         jj.write("package "+getJavaPackage()+";\n\n");
         jj.write("import org.apache.jute.*;\n");
+        jj.write("import org.apache.yetus.audience.InterfaceAudience;\n");
+        jj.write("@InterfaceAudience.Public\n");
         jj.write("public class "+getName()+" implements Record {\n");
         for (Iterator<JField> i = mFields.iterator(); i.hasNext();) {
             JField jf = i.next();
@@ -599,7 +601,7 @@ public class JRecord extends JCompType {
         cs.write("\n");
         cs.write("using System;\n");
         cs.write("using Org.Apache.Jute;\n");
-        cs.write("\n");        
+        cs.write("\n");
         cs.write("namespace "+getCsharpNameSpace()+"\n");
         cs.write("{\n");
 

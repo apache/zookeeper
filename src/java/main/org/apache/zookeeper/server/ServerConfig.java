@@ -21,6 +21,7 @@ package org.apache.zookeeper.server;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 
@@ -30,6 +31,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
  * We use this instead of Properties as it's typed.
  *
  */
+@InterfaceAudience.Public
 public class ServerConfig {
     ////
     //// If you update the configuration parameters be sure

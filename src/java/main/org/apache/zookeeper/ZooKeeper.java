@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper;
 
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.AsyncCallback.*;
 import org.apache.zookeeper.OpResult.ErrorResult;
 import org.apache.zookeeper.client.ConnectStringParser;
@@ -83,6 +84,7 @@ import java.util.*;
  * EventNone and state sKeeperStateDisconnected.
  *
  */
+@InterfaceAudience.Public
 public class ZooKeeper {
 
     public static final String ZOOKEEPER_CLIENT_CNXN_SOCKET = "zookeeper.clientCnxnSocket";
@@ -313,6 +315,7 @@ public class ZooKeeper {
         }
     }
 
+    @InterfaceAudience.Public
     public enum States {
         CONNECTING, ASSOCIATING, CONNECTED, CONNECTEDREADONLY,
         CLOSED, AUTH_FAILED, NOT_CONNECTED;
