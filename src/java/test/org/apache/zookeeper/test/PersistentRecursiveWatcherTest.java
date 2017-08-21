@@ -37,8 +37,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-public class PersistentWatcherTest extends ClientBase {
-    private static final Logger LOG = LoggerFactory.getLogger(PersistentWatcherTest.class);
+public class PersistentRecursiveWatcherTest extends ClientBase {
+    private static final Logger LOG = LoggerFactory.getLogger(PersistentRecursiveWatcherTest.class);
     private BlockingQueue<WatchedEvent> events;
     private Watcher persistentWatcher;
 
@@ -60,7 +60,7 @@ public class PersistentWatcherTest extends ClientBase {
     public void testBasic()
             throws IOException, InterruptedException, KeeperException {
         try ( ZooKeeper zk = createClient(new CountdownWatcher(), hostPort) ) {
-            zk.addPersistentWatch("/a/b", persistentWatcher, false);
+            zk.addPersistentWatch("/a/b", persistentWatcher, true);
             internalTestBasic(zk);
         }
     }
@@ -78,7 +78,7 @@ public class PersistentWatcherTest extends ClientBase {
                     }
                 }
             };
-            zk.addPersistentWatch("/a/b", persistentWatcher, false, cb, null);
+            zk.addPersistentWatch("/a/b", persistentWatcher, true, cb, null);
             Assert.assertTrue(latch.await(5, TimeUnit.SECONDS));
             internalTestBasic(zk);
         }
@@ -88,33 +88,34 @@ public class PersistentWatcherTest extends ClientBase {
         zk.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.create("/a/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.create("/a/b/c", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        zk.setData("/a/b", new byte[0], -1);
-        zk.delete("/a/b/c", -1);
-        zk.delete("/a/b", -1);
-        zk.create("/a/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/a/b/c/d", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/a/b/c/d/e", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.setData("/a/b/c/d/e", new byte[0], -1);
+        zk.delete("/a/b/c/d/e", -1);
+        zk.create("/a/b/c/d/e", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a/b");
-        assertEvent(events, Watcher.Event.EventType.NodeChildrenChanged, "/a/b");
-        assertEvent(events, Watcher.Event.EventType.NodeDataChanged, "/a/b");
-        assertEvent(events, Watcher.Event.EventType.NodeChildrenChanged, "/a/b");
-        assertEvent(events, Watcher.Event.EventType.NodeDeleted, "/a/b");
-        assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a/b");
+        assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a/b/c");
+        assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a/b/c/d");
+        assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a/b/c/d/e");
+        assertEvent(events, Watcher.Event.EventType.NodeDataChanged, "/a/b/c/d/e");
+        assertEvent(events, Watcher.Event.EventType.NodeDeleted, "/a/b/c/d/e");
+        assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a/b/c/d/e");
     }
 
     @Test
     public void testRemoval()
             throws IOException, InterruptedException, KeeperException {
         try ( ZooKeeper zk = createClient(new CountdownWatcher(), hostPort) ) {
-            zk.addPersistentWatch("/a/b", persistentWatcher, false);
+            zk.addPersistentWatch("/a/b", persistentWatcher, true);
             zk.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             zk.create("/a/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             zk.create("/a/b/c", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a/b");
-            assertEvent(events, Watcher.Event.EventType.NodeChildrenChanged, "/a/b");
+            assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a/b/c");
 
             zk.removeWatches("/a/b", persistentWatcher, Watcher.WatcherType.Any, false);
-            zk.delete("/a/b/c", -1);
-            zk.delete("/a/b", -1);
+            zk.create("/a/b/c/d", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             assertEvent(events, Watcher.Event.EventType.PersistentWatchRemoved, "/a/b");
         }
     }
@@ -122,7 +123,7 @@ public class PersistentWatcherTest extends ClientBase {
     @Test
     public void testDisconnect() throws Exception {
         try ( ZooKeeper zk = createClient(new CountdownWatcher(), hostPort) ) {
-            zk.addPersistentWatch("/a/b", persistentWatcher, false);
+            zk.addPersistentWatch("/a/b", persistentWatcher, true);
             stopServer();
             assertEvent(events, Watcher.Event.EventType.None, null);
             startServer();
@@ -142,19 +143,20 @@ public class PersistentWatcherTest extends ClientBase {
 
             zk1.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             zk1.create("/a/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk1.create("/a/b/c", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-            zk1.addPersistentWatch("/a/b", persistentWatcher, false);
-            zk1.setData("/a/b", "one".getBytes(), -1);
+            zk1.addPersistentWatch("/a/b", persistentWatcher, true);
+            zk1.setData("/a/b/c", "one".getBytes(), -1);
             Thread.sleep(1000); // give some time for the event to arrive
 
-            zk2.setData("/a/b", "two".getBytes(), -1);
-            zk2.setData("/a/b", "three".getBytes(), -1);
-            zk2.setData("/a/b", "four".getBytes(), -1);
+            zk2.setData("/a/b/c", "two".getBytes(), -1);
+            zk2.setData("/a/b/c", "three".getBytes(), -1);
+            zk2.setData("/a/b/c", "four".getBytes(), -1);
 
-            assertEvent(events, Watcher.Event.EventType.NodeDataChanged, "/a/b");
-            assertEvent(events, Watcher.Event.EventType.NodeDataChanged, "/a/b");
-            assertEvent(events, Watcher.Event.EventType.NodeDataChanged, "/a/b");
-            assertEvent(events, Watcher.Event.EventType.NodeDataChanged, "/a/b");
+            assertEvent(events, Watcher.Event.EventType.NodeDataChanged, "/a/b/c");
+            assertEvent(events, Watcher.Event.EventType.NodeDataChanged, "/a/b/c");
+            assertEvent(events, Watcher.Event.EventType.NodeDataChanged, "/a/b/c");
+            assertEvent(events, Watcher.Event.EventType.NodeDataChanged, "/a/b/c");
         } finally {
             if (zk1 != null) {
                 zk1.close();
@@ -169,12 +171,15 @@ public class PersistentWatcherTest extends ClientBase {
     public void testRootWatcher()
             throws IOException, InterruptedException, KeeperException {
         try ( ZooKeeper zk = createClient(new CountdownWatcher(), hostPort) ) {
-            zk.addPersistentWatch("/", persistentWatcher, false);
+            zk.addPersistentWatch("/", persistentWatcher, true);
             zk.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            zk.setData("/a", new byte[0], -1);
+            zk.create("/a/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             zk.create("/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-            assertEvent(events, Watcher.Event.EventType.NodeChildrenChanged, "/");
-            assertEvent(events, Watcher.Event.EventType.NodeChildrenChanged, "/");
+            zk.create("/b/c", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a");
+            assertEvent(events, Watcher.Event.EventType.NodeCreated, "/a/b");
+            assertEvent(events, Watcher.Event.EventType.NodeCreated, "/b");
+            assertEvent(events, Watcher.Event.EventType.NodeCreated, "/b/c");
         }
     }
 

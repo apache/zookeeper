@@ -40,9 +40,44 @@ import org.slf4j.LoggerFactory;
 class WatchManager {
     private static final Logger LOG = LoggerFactory.getLogger(WatchManager.class);
 
-    private enum Type {
-        STANDARD,
-        PERSISTENT
+    enum Type {
+        STANDARD() {
+            @Override
+            boolean isPersistent() {
+                return false;
+            }
+
+            @Override
+            boolean isRecursive() {
+                return false;
+            }
+        },
+        PERSISTENT() {
+            @Override
+            boolean isPersistent() {
+                return true;
+            }
+
+            @Override
+            boolean isRecursive() {
+                return false;
+            }
+        },
+        PERSISTENT_RECURSIVE() {
+            @Override
+            boolean isPersistent() {
+                return true;
+            }
+
+            @Override
+            boolean isRecursive() {
+                return true;
+            }
+        }
+        ;
+
+        abstract boolean isPersistent();
+        abstract boolean isRecursive();
     }
 
     private final Map<String, Map<Watcher, Type>> watchTable =
@@ -51,7 +86,12 @@ class WatchManager {
     private final Map<Watcher, Set<String>> watch2Paths =
         new HashMap<>();
 
-    private boolean hasHadPersistentWatches = false;    // guarded by sync
+    private int recursiveWatchQty = 0;    // guarded by sync
+
+    // visible for testing
+    synchronized int getRecursiveWatchQty() {
+        return recursiveWatchQty;
+    }
 
     synchronized int size(){
         int result = 0;
@@ -61,7 +101,7 @@ class WatchManager {
         return result;
     }
 
-    synchronized void addWatch(String path, Watcher watcher, boolean persistent) {
+    synchronized void addWatch(String path, Watcher watcher, WatchManager.Type type) {
         Map<Watcher, Type> list = watchTable.get(path);
         if (list == null) {
             // don't waste memory if there are few watches on a node
@@ -70,7 +110,13 @@ class WatchManager {
             list = new HashMap<>(4);
             watchTable.put(path, list);
         }
-        list.put(watcher, persistent ? Type.PERSISTENT : Type.STANDARD);
+        Type previousType = list.put(watcher, type);
+        if ((previousType != null) && previousType.isRecursive()) {
+            --recursiveWatchQty;
+        }
+        if (type.isRecursive()) {
+            ++recursiveWatchQty;
+        }
 
         Set<String> paths = watch2Paths.get(watcher);
         if (paths == null) {
@@ -79,10 +125,6 @@ class WatchManager {
             watch2Paths.put(watcher, paths);
         }
         paths.add(path);
-
-        if (persistent) {
-            hasHadPersistentWatches = true;
-        }
     }
 
     synchronized void removeWatcher(Watcher watcher) {
@@ -93,7 +135,10 @@ class WatchManager {
         for (String p : paths) {
             Map<Watcher, Type> list = watchTable.get(p);
             if (list != null) {
-                list.remove(watcher);
+                Type removedType = list.remove(watcher);
+                if (removedType.isRecursive()) {
+                    --recursiveWatchQty;
+                }
                 if (list.isEmpty()) {
                     watchTable.remove(p);
                 }
@@ -121,16 +166,18 @@ class WatchManager {
                     Entry<Watcher, Type> entry = iterator.next();
                     Type entryType = entry.getValue();
                     Watcher watcher = entry.getKey();
-                    if (entryType == Type.PERSISTENT) {
+                    if (entryType.isRecursive()) {
                         if ( type != EventType.NodeChildrenChanged ) {
                             watchers.add(watcher);
                         }
                     } else if (!pathParentIterator.atParentPath()) {
                         watchers.add(watcher);
-                        iterator.remove();
-                        Set<String> paths = watch2Paths.get(watcher);
-                        if (paths != null) {
-                            paths.remove(localPath);
+                        if (!entryType.isPersistent()) {
+                            iterator.remove();
+                            Set<String> paths = watch2Paths.get(watcher);
+                            if (paths != null) {
+                                paths.remove(localPath);
+                            }
                         }
                     }
                 }
@@ -216,10 +263,12 @@ class WatchManager {
         for (String localPath : pathParentIterator.asIterable()) {
             Map<Watcher, Type> watchers = watchTable.get(localPath);
             Type watcherType = (watchers != null) ? watchers.get(watcher) : null;
-            if ((watcherType == Type.STANDARD) && !pathParentIterator.atParentPath()) {
-                return true;
+            if ( !pathParentIterator.atParentPath() ) {
+                if ( watcherType != null ) {
+                    return true;    // at the leaf node, all watcher types match
+                }
             }
-            if (watcherType == Type.PERSISTENT) {
+            if (watcherType == Type.PERSISTENT_RECURSIVE) {
                 return true;
             }
         }
@@ -242,8 +291,12 @@ class WatchManager {
         }
 
         Map<Watcher, Type> list = watchTable.get(path);
-        if (list == null || (list.remove(watcher) == null)) {
+        Type removedType = (list != null) ? list.remove(watcher) : null;
+        if (removedType == null) {
             return false;
+        }
+        if (removedType.isRecursive()) {
+            --recursiveWatchQty;
         }
 
         if (list.isEmpty()) {
@@ -303,8 +356,7 @@ class WatchManager {
     }
 
     private PathParentIterator getPathParentIterator(String path) {
-        if ( !hasHadPersistentWatches ) {
-            // optimization - if we've never seen a Persistent Watch, there's no need to iterate through parent nodes
+        if (recursiveWatchQty == 0) {
             return PathParentIterator.forPathOnly(path);
         }
         return PathParentIterator.forAll(path);
