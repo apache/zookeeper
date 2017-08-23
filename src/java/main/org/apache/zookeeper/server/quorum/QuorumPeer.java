@@ -991,7 +991,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         return null;
     }
 
-    boolean shuttingDownLE = false;
+    volatile boolean shuttingDownLE = false;
     
     @Override
     public void run() {
@@ -1063,35 +1063,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                                 }
                             }
                         };
-                        try {
-                            roZkMgr.start();
-                            reconfigFlagClear();
-                            if (shuttingDownLE) {
-                                shuttingDownLE = false;
-                                startLeaderElection();
-                            }
-                            setCurrentVote(makeLEStrategy().lookForLeader());
-                        } catch (Exception e) {
-                            LOG.warn("Unexpected exception", e);
-                            setPeerState(ServerState.LOOKING);
-                        } finally {
-                            // If the thread is in the the grace period, interrupt
-                            // to come out of waiting.
-                            roZkMgr.interrupt();
-                            roZk.shutdown();
-                        }
+                        roZkMgr.start();
+                        electionAndSetCurVote();
+                        // If the thread is in the the grace period, interrupt
+                        // to come out of waiting.
+                        roZkMgr.interrupt();
+                        roZk.shutdown();
                     } else {
-                        try {
-                           reconfigFlagClear();
-                            if (shuttingDownLE) {
-                               shuttingDownLE = false;
-                               startLeaderElection();
-                               }
-                            setCurrentVote(makeLEStrategy().lookForLeader());
-                        } catch (Exception e) {
-                            LOG.warn("Unexpected exception", e);
-                            setPeerState(ServerState.LOOKING);
-                        }                        
+                        electionAndSetCurVote();
                     }
                     break;
                 case OBSERVING:
@@ -1103,8 +1082,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                         LOG.warn("Unexpected exception",e );
                     } finally {
                         observer.shutdown();
-                        setObserver(null);  
-                       updateServerState();
+                        setObserver(null);
+                        updateServerState();
                     }
                     break;
                 case FOLLOWING:
@@ -1152,6 +1131,19 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             jmxQuorumBean = null;
             jmxLocalPeerBean = null;
             jmxRemotePeerBean = null;
+        }
+    }
+
+    private void electionAndSetCurVote() {
+        reconfigFlagClear();
+        if (shuttingDownLE) {
+            startLeaderElection();
+        }
+        try {
+            setCurrentVote(makeLEStrategy().lookForLeader());
+        } catch (Exception e) {
+            LOG.warn("Unexpected exception", e);
+            setPeerState(ServerState.LOOKING);
         }
     }
 
