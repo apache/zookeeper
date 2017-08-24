@@ -21,15 +21,18 @@ package org.apache.zookeeper.server;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.Arrays;
 
 import javax.management.ObjectName;
+import org.apache.zookeeper.common.SocketAddressUtils;
 
 import org.apache.zookeeper.common.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
+import org.jboss.netty.channel.local.LocalAddress;
 
 /**
  * Implementation of connection MBean interface.
@@ -50,11 +53,11 @@ public class ConnectionBean implements ConnectionMXBean, ZKMBeanInfo {
         this.stats = connection;
         this.zk = zk;
         
-        InetSocketAddress sockAddr = connection.getRemoteSocketAddress();
+        SocketAddress sockAddr = connection.getRemoteSocketAddress();
         if (sockAddr == null) {
             remoteIP = "Unknown";
         } else {
-            InetAddress addr = sockAddr.getAddress();
+            InetAddress addr = SocketAddressUtils.getInetAddress(sockAddr);
             if (addr instanceof Inet6Address) {
                 remoteIP = ObjectName.quote(addr.getHostAddress());
             } else {
@@ -69,12 +72,17 @@ public class ConnectionBean implements ConnectionMXBean, ZKMBeanInfo {
     }
 
     public String getSourceIP() {
-        InetSocketAddress sockAddr = connection.getRemoteSocketAddress();
+        SocketAddress sockAddr = connection.getRemoteSocketAddress();
         if (sockAddr == null) {
             return null;
         }
-        return sockAddr.getAddress().getHostAddress()
-            + ":" + sockAddr.getPort();
+        if (sockAddr instanceof InetSocketAddress) {
+            InetSocketAddress inetSocketAddress = (InetSocketAddress) sockAddr;
+            return inetSocketAddress.getAddress().getHostAddress()
+                + ":" + inetSocketAddress.getPort();
+        } else {
+            return null;
+        }
     }
 
     public String getName() {

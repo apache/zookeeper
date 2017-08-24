@@ -23,6 +23,7 @@ import static org.jboss.netty.buffer.ChannelBuffers.dynamicBuffer;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
@@ -39,6 +40,7 @@ import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.common.SocketAddressUtils;
 import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
@@ -59,6 +61,7 @@ import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
+import org.jboss.netty.channel.ServerChannelFactory;
 import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jboss.netty.channel.WriteCompletionEvent;
 import org.jboss.netty.channel.group.ChannelGroup;
@@ -76,7 +79,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     ChannelGroup allChannels = new DefaultChannelGroup("zkServerCnxns");
     HashMap<InetAddress, Set<NettyServerCnxn>> ipMap =
         new HashMap<InetAddress, Set<NettyServerCnxn>>( );
-    InetSocketAddress localAddress;
+    protected SocketAddress localAddress;
     int maxClientCnxns = 60;
 
     /**
@@ -325,17 +328,26 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     
     CnxnChannelHandler channelHandler = new CnxnChannelHandler();
 
-    NettyServerCnxnFactory() {
-        bootstrap = new ServerBootstrap(
-                new NioServerSocketChannelFactory(
-                        Executors.newCachedThreadPool(),
-                        Executors.newCachedThreadPool()));
+    public NettyServerCnxnFactory() {
+        bootstrap = new ServerBootstrap(buildSocketChannelFactory());
+
         // parent channel
         bootstrap.setOption("reuseAddress", true);
         // child channels
         bootstrap.setOption("child.tcpNoDelay", true);
         /* set socket linger to off, so that socket close does not block */
         bootstrap.setOption("child.soLinger", -1);
+
+        initServerBootStrap(bootstrap);
+    }
+
+    protected ServerChannelFactory buildSocketChannelFactory() {
+        return new NioServerSocketChannelFactory(
+                        Executors.newCachedThreadPool(),
+                        Executors.newCachedThreadPool());
+    }
+
+    protected final void initServerBootStrap(ServerBootstrap bootstrap) {
         bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
             @Override
             public ChannelPipeline getPipeline() throws Exception {
@@ -446,7 +458,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
 
     @Override
     public int getLocalPort() {
-        return localAddress.getPort();
+        return SocketAddressUtils.getPort(localAddress);
     }
 
     boolean killed;
@@ -518,16 +530,15 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     }
 
     @Override
-    public InetSocketAddress getLocalAddress() {
+    public SocketAddress getLocalAddress() {
         return localAddress;
     }
 
     private void addCnxn(NettyServerCnxn cnxn) {
         cnxns.add(cnxn);
         synchronized (ipMap){
-            InetAddress addr =
-                ((InetSocketAddress)cnxn.channel.getRemoteAddress())
-                    .getAddress();
+            SocketAddress socketAddress = cnxn.channel.getRemoteAddress();
+            InetAddress addr = SocketAddressUtils.getInetAddress(socketAddress);
             Set<NettyServerCnxn> s = ipMap.get(addr);
             if (s == null) {
                 s = new HashSet<NettyServerCnxn>();

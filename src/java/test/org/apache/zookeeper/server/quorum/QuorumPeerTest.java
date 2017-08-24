@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.common.SocketAddressUtils;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.test.ClientBase;
@@ -61,7 +62,7 @@ public class QuorumPeerTest {
          */
         QuorumPeer peer1 = new QuorumPeer(peersView, dataDir, dataDir, clientPort, electionAlg, myId, tickTime,
                 initLimit, syncLimit);
-        String hostString1 = peer1.cnxnFactory.getLocalAddress().getHostString();
+        String hostString1 = SocketAddressUtils.getHostString(peer1.cnxnFactory.getLocalAddress());
         assertEquals(clientIP.getHostAddress(), hostString1);
 
         // cleanup
@@ -78,7 +79,7 @@ public class QuorumPeerTest {
                         new InetSocketAddress(clientIP, clientPort), LearnerType.PARTICIPANT));
         QuorumPeer peer2 = new QuorumPeer(peersView, dataDir, dataDir, clientPort, electionAlg, myId, tickTime,
                 initLimit, syncLimit);
-        String hostString2 = peer2.cnxnFactory.getLocalAddress().getHostString();
+        String hostString2 = SocketAddressUtils.getHostString(peer2.cnxnFactory.getLocalAddress());
         assertEquals(clientIP.getHostAddress(), hostString2);
         // cleanup
         peer2.shutdown();
