@@ -17,7 +17,6 @@
  */
 package org.apache.zookeeper.test;
 
-
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.common.StringUtils;
 import org.junit.Test;
