@@ -1137,6 +1137,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     private void electionAndSetCurVote() {
         reconfigFlagClear();
         if (shuttingDownLE) {
+            shuttingDownLE = false;
             startLeaderElection();
         }
         try {
