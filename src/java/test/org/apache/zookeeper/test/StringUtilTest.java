@@ -31,13 +31,13 @@ public class StringUtilTest extends ZKTestCase {
     public void testStrings() {
 
         String s1 = "   a  ,   b  , ";
-        assertEquals("[a, b]", StringUtils.split(s1, ","));
+        assertEquals("[a, b]", StringUtils.split(s1, ",").toString());
 
         String s2 = "";
         assertEquals(0, StringUtils.split(s2, ",").size());
 
         String s3 = "1, , 2";
-        assertEquals("[1, 2]", StringUtils.split(s3, ","));
+        assertEquals("[1, 2]", StringUtils.split(s3, ",").toString());
 
     }
 }
