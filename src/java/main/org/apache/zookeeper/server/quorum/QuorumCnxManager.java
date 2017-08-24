@@ -27,6 +27,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.UnresolvedAddressException;
@@ -855,21 +856,27 @@ public class QuorumCnxManager {
                     setName(addr.toString());
                     ss.bind(addr);
                     while (!shutdown) {
-                        client = ss.accept();
-                        setSockOpts(client);
-                        LOG.info("Received connection request "
-                                + client.getRemoteSocketAddress());
-                        // Receive and handle the connection request
-                        // asynchronously if the quorum sasl authentication is
-                        // enabled. This is required because sasl server
-                        // authentication process may take few seconds to finish,
-                        // this may delay next peer connection requests.
-                        if (quorumSaslAuthEnabled) {
-                            receiveConnectionAsync(client);
-                        } else {
-                            receiveConnection(client);
+                        try {
+                            client = ss.accept();
+                            setSockOpts(client);
+                            LOG.info("Received connection request "
+                                     + client.getRemoteSocketAddress());
+                            // Receive and handle the connection request
+                            // asynchronously if the quorum sasl authentication is
+                            // enabled. This is required because sasl server
+                            // authentication process may take few seconds to finish,
+                            // this may delay next peer connection requests.
+                            if (quorumSaslAuthEnabled) {
+                                receiveConnectionAsync(client);
+                            } else {
+                                receiveConnection(client);
+                            }
+                            numRetries = 0;
+                        } catch (SocketTimeoutException e) {
+                            LOG.warn("The socket is listening for the election accepted "
+                                     + "and it timed out unexpectedly, but will retry."
+                                     + "see ZOOKEEPER-2836");
                         }
-                        numRetries = 0;
                     }
                 } catch (IOException e) {
                     if (shutdown) {
