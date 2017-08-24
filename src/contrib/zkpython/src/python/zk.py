@@ -73,4 +73,3 @@ print("Getting ACL / Stat for /zk-python --")
 (stat, acl) =  zookeeper.get_acl(handle, "/zk-python")
 print("Stat:: ", stat)
 print("Acl:: ", acl)
-
