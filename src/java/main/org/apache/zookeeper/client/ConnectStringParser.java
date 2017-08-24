@@ -25,7 +25,6 @@ import java.util.List;
 import org.apache.zookeeper.common.PathUtils;
 import static org.apache.zookeeper.common.StringUtils.split;
 
-
 /**
  * A parser for ZooKeeper Client connect strings.
  * 
