@@ -621,7 +621,7 @@ public class QuorumCnxManager {
         @Override
         public void run() {
             int numRetries = 0;
-            InetSocketAddress addr;
+            InetSocketAddress addr = null;
             Socket client = null;
             while((!shutdown) && (numRetries < 3)){
                 try {
@@ -653,6 +653,9 @@ public class QuorumCnxManager {
                                      + "see ZOOKEEPER-2836");
                         }
                     }
+                } catch (UnresolvedAddressException e) {                   
+                    LOG.warn("Listener thread cannot open channel to " + self.getId()
+                             + " at election address " + addr, e);       
                 } catch (IOException e) {
                     if (shutdown) {
                         break;
