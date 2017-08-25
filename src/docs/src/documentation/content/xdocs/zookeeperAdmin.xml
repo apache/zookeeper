@@ -823,10 +823,10 @@ server.3=zoo3:2888:3888</programlisting>
               role="bold">zookeeper.snapCount</emphasis>)</para>
 
               <para>ZooKeeper logs transactions to a transaction
-              log. After snapCount transactions are written to a log
-              file a snapshot is started and a new transaction log
-              file is created. The default snapCount is
-              100,000.</para>
+              log. After the count of transactions which are written to a log
+              file exceed a runtime-set limit in [snapCount/2, snapCount),a snapshot 
+              is started and a new transaction log file is created. 
+              The default snapCount is 100,000.</para>
             </listitem>
           </varlistentry>
 
