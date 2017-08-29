@@ -18,8 +18,10 @@
 
 #ifdef WIN32
 #include "winport.h"
-#include <winsock2.h>
-#include <ws2tcpip.h>
+#include <stdlib.h>
+#include <stdint.h> /* for int64_t */
+#include <winsock2.h> /* must always be included before ws2tcpip.h */
+#include <ws2tcpip.h> /* for SOCKET */
 
 int pthread_mutex_lock(pthread_mutex_t* _mutex ){      
        int rc = WaitForSingleObject( *_mutex,    // handle to mutex
@@ -255,6 +257,14 @@ int pthread_setspecific(pthread_key_t key, const void *value)
        return ((rc != 0 ) ? 0 : GetLastError());
 }
 
+int gettimeofday(struct timeval *tp, void *tzp) {
+        int64_t now = 0;
+        if (tzp != 0) { errno = EINVAL; return -1; }
+        GetSystemTimeAsFileTime( (LPFILETIME)&now );
+        tp->tv_sec = (long)(now / 10000000 - 11644473600LL);
+        tp->tv_usec = (now / 10) % 1000000;
+        return 0;
+}
 
 int close(SOCKET fd) {
         return closesocket(fd);

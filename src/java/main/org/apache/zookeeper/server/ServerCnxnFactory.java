@@ -24,6 +24,7 @@ import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginException;
@@ -47,6 +48,10 @@ public abstract class ServerCnxnFactory {
     }
     
     private static final Logger LOG = LoggerFactory.getLogger(ServerCnxnFactory.class);
+
+    // sessionMap is used to speed up closeSession()
+    protected final ConcurrentMap<Long, ServerCnxn> sessionMap =
+            new ConcurrentHashMap<Long, ServerCnxn>();
 
     /**
      * The buffer will cause the connection to be close when we do a send.
@@ -156,6 +161,10 @@ public abstract class ServerCnxnFactory {
             }
         }
 
+    }
+
+    public void addSession(long sessionId, ServerCnxn cnxn) {
+        sessionMap.put(sessionId, cnxn);
     }
 
     /**

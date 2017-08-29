@@ -19,6 +19,7 @@ package org.apache.zookeeper;
 
 import java.util.List;
 
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 
@@ -29,11 +30,13 @@ import org.apache.zookeeper.data.Stat;
  * <p/>
  * ZooKeeper provides asynchronous version as equivalent to synchronous APIs.
  */
+@InterfaceAudience.Public
 public interface AsyncCallback {
 
     /**
      * This callback is used to retrieve the stat of the node.
      */
+    @InterfaceAudience.Public
     interface StatCallback extends AsyncCallback {
         /**
          * Process the result of the asynchronous call.
@@ -68,6 +71,7 @@ public interface AsyncCallback {
     /**
      * This callback is used to retrieve the data and stat of the node.
      */
+    @InterfaceAudience.Public
     interface DataCallback extends AsyncCallback {
         /**
          * Process the result of the asynchronous call.
@@ -100,6 +104,7 @@ public interface AsyncCallback {
     /**
      * This callback is used to retrieve the ACL and stat of the node.
      */
+    @InterfaceAudience.Public
     interface ACLCallback extends AsyncCallback {
         /**
          * Process the result of the asynchronous call.
@@ -132,6 +137,7 @@ public interface AsyncCallback {
     /**
      * This callback is used to retrieve the children of the node.
      */
+    @InterfaceAudience.Public
     interface ChildrenCallback extends AsyncCallback {
         /**
          * Process the result of the asynchronous call.
@@ -162,6 +168,7 @@ public interface AsyncCallback {
     /**
      * This callback is used to retrieve the children and stat of the node.
      */
+    @InterfaceAudience.Public
     interface Children2Callback extends AsyncCallback {
         /**
          * Process the result of the asynchronous call.
@@ -183,6 +190,7 @@ public interface AsyncCallback {
     /**
      * This callback is used to retrieve the name of the node.
      */
+    @InterfaceAudience.Public
     interface StringCallback extends AsyncCallback {
         /**
          * Process the result of the asynchronous call.
@@ -226,6 +234,7 @@ public interface AsyncCallback {
      * org.apache.zookeeper.ZooKeeper#sync(String,
      * org.apache.zookeeper.AsyncCallback.VoidCallback, Object)}.
      */
+    @InterfaceAudience.Public
     interface VoidCallback extends AsyncCallback {
         /**
          * Process the result of the asynchronous call.
@@ -268,6 +277,7 @@ public interface AsyncCallback {
      * See {@link org.apache.zookeeper.ZooKeeper#multi} for more information.
      * @since 3.4.7
      */
+    @InterfaceAudience.Public
     interface MultiCallback extends AsyncCallback {
         /**
          * Process the result of the asynchronous call.

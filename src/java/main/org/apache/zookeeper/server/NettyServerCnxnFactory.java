@@ -113,8 +113,8 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             if (cnxn != null) {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Closing " + cnxn);
-                    cnxn.close();
                 }
+                cnxn.close();
             }
         }
 
@@ -287,18 +287,13 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         if (LOG.isDebugEnabled()) {
             LOG.debug("closeSession sessionid:0x" + sessionId);
         }
-        NettyServerCnxn[] allCnxns = null;
-        synchronized (cnxns) {
-            allCnxns = cnxns.toArray(new NettyServerCnxn[cnxns.size()]);
-        }
-        for (NettyServerCnxn cnxn : allCnxns) {
-            if (cnxn.getSessionId() == sessionId) {
-                try {
-                    cnxn.close();
-                } catch (Exception e) {
-                    LOG.warn("exception during session close", e);
-                }
-                break;
+
+        NettyServerCnxn cnxn = (NettyServerCnxn) sessionMap.remove(sessionId);
+        if (cnxn != null) {
+            try {
+                cnxn.close();
+            } catch (Exception e) {
+                LOG.warn("exception during session close", e);
             }
         }
     }
@@ -398,6 +393,28 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                 }
                 s.add(cnxn);
                 ipMap.put(addr,s);
+            }
+        }
+    }
+
+    public void removeCnxn(ServerCnxn cnxn) {
+        synchronized(cnxns){
+            // if this is not in cnxns then it's already closed
+            if (!cnxns.remove(cnxn)) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("cnxns size:" + cnxns.size());
+                }
+                return;
+            }
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("close in progress for sessionid:0x"
+                        + Long.toHexString(cnxn.getSessionId()));
+            }
+
+            synchronized (ipMap) {
+                Set<NettyServerCnxn> s =
+                        ipMap.get(cnxn.getSocketAddress());
+                s.remove(cnxn);
             }
         }
     }

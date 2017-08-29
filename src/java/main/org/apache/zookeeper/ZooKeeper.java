@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper;
 
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.AsyncCallback.*;
 import org.apache.zookeeper.OpResult.ErrorResult;
 import org.apache.zookeeper.client.ConnectStringParser;
@@ -83,6 +84,7 @@ import java.util.*;
  * EventType None and KeeperState Disconnected.
  *
  */
+@InterfaceAudience.Public
 public class ZooKeeper {
 
     public static final String ZOOKEEPER_CLIENT_CNXN_SOCKET = "zookeeper.clientCnxnSocket";
@@ -313,6 +315,7 @@ public class ZooKeeper {
         }
     }
 
+    @InterfaceAudience.Public
     public enum States {
         CONNECTING, ASSOCIATING, CONNECTED, CONNECTEDREADONLY,
         CLOSED, AUTH_FAILED, NOT_CONNECTED;
@@ -1418,25 +1421,25 @@ public class ZooKeeper {
 
     /**
      * Set the ACL for the node of the given path if such a node exists and the
-     * given version matches the version of the node. Return the stat of the
+     * given aclVersion matches the acl version of the node. Return the stat of the
      * node.
      * <p>
      * A KeeperException with error code KeeperException.NoNode will be thrown
      * if no node with the given path exists.
      * <p>
      * A KeeperException with error code KeeperException.BadVersion will be
-     * thrown if the given version does not match the node's version.
+     * thrown if the given aclVersion does not match the node's aclVersion.
      *
-     * @param path
-     * @param acl
-     * @param version
+     * @param path the given path for the node
+     * @param acl the given acl for the node
+     * @param aclVersion the given acl version of the node
      * @return the stat of the node.
      * @throws InterruptedException If the server transaction is interrupted.
      * @throws KeeperException If the server signals an error with a non-zero error code.
      * @throws org.apache.zookeeper.KeeperException.InvalidACLException If the acl is invalide.
      * @throws IllegalArgumentException if an invalid path is specified
      */
-    public Stat setACL(final String path, List<ACL> acl, int version)
+    public Stat setACL(final String path, List<ACL> acl, int aclVersion)
         throws KeeperException, InterruptedException
     {
         final String clientPath = path;
@@ -1452,7 +1455,7 @@ public class ZooKeeper {
             throw new KeeperException.InvalidACLException(clientPath);
         }
         request.setAcl(acl);
-        request.setVersion(version);
+        request.setVersion(aclVersion);
         SetACLResponse response = new SetACLResponse();
         ReplyHeader r = cnxn.submitRequest(h, request, response, null);
         if (r.getErr() != 0) {

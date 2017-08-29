@@ -102,6 +102,8 @@ public abstract class ClientBase extends ZKTestCase {
         volatile boolean connected;
         // Set to true when connected to a quorum server.
         volatile boolean syncConnected;
+        // Set to true when connected to a quorum server in read-only mode
+        volatile boolean readOnlyConnected;
 
         public CountdownWatcher() {
             reset();
@@ -110,18 +112,22 @@ public abstract class ClientBase extends ZKTestCase {
             clientConnected = new CountDownLatch(1);
             connected = false;
             syncConnected = false;
+            readOnlyConnected = false;
         }
         synchronized public void process(WatchedEvent event) {
             KeeperState state = event.getState();
             if (state == KeeperState.SyncConnected) {
                 connected = true;
                 syncConnected = true;
+                readOnlyConnected = false;
             } else if (state == KeeperState.ConnectedReadOnly) {
                 connected = true;
                 syncConnected = false;
+                readOnlyConnected = true;
             } else {
                 connected = false;
                 syncConnected = false;
+                readOnlyConnected = false;
             }
 
             notifyAll();
@@ -157,6 +163,19 @@ public abstract class ClientBase extends ZKTestCase {
             }
             if (!syncConnected) {
                 throw new TimeoutException("Failed to connect to read-write ZooKeeper server.");
+            }
+        }
+        synchronized public void waitForReadOnlyConnected(long timeout)
+                throws InterruptedException, TimeoutException
+        {
+            long expire = System.currentTimeMillis() + timeout;
+            long left = timeout;
+            while(!readOnlyConnected && left > 0) {
+                wait(left);
+                left = expire - System.currentTimeMillis();
+            }
+            if (!readOnlyConnected) {
+                throw new TimeoutException("Failed to connect in read-only mode to ZooKeeper server.");
             }
         }
         synchronized public void waitForDisconnected(long timeout)

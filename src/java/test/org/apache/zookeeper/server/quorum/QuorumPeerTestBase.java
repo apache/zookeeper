@@ -129,7 +129,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         Thread currentThread;
 
         synchronized public void start() {
-            main = new TestQPMain();
+            main = getTestQPMain();
             currentThread = new Thread(this);
             currentThread.start();
             mainFailed = new CountDownLatch(1);
@@ -201,6 +201,10 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
 
         public File getConfFile() {
             return confFile;
+        }
+
+        public TestQPMain getTestQPMain() {
+            return new TestQPMain();
         }
     }
 }

@@ -24,6 +24,7 @@ import java.util.concurrent.CountDownLatch;
 
 import javax.management.JMException;
 
+import org.apache.yetus.audience.InterfaceAudience;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.jmx.ManagedUtil;
@@ -33,6 +34,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 /**
  * This class starts and runs a standalone ZooKeeperServer.
  */
+@InterfaceAudience.Public
 public class ZooKeeperServerMain {
     private static final Logger LOG =
         LoggerFactory.getLogger(ZooKeeperServerMain.class);

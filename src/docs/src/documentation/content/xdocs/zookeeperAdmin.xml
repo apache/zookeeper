@@ -1077,7 +1077,7 @@ server.3=zoo3:2888:3888</programlisting>
           </varlistentry>
 
           <varlistentry>
-            <term>zookeeper.ipReachableTimeout</term>
+            <term>ipReachableTimeout</term>
 
             <listitem>
               <para>(Java system property: <emphasis
@@ -1093,6 +1093,29 @@ server.3=zoo3:2888:3888</programlisting>
                 first IP address of the hostname will be used anyway.
               </para>
 
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>tcpKeepAlive</term>
+
+            <listitem>
+              <para>(Java system property: <emphasis
+                      role="bold">zookeeper.tcpKeepAlive</emphasis>)</para>
+
+              <para><emphasis role="bold">New in 3.4.11:</emphasis>
+                Setting this to true sets the TCP keepAlive flag on the
+                sockets used by quorum members to perform elections.
+                This will allow for connections between quorum members to
+                remain up when there is network infrastructure that may
+                otherwise break them. Some NATs and firewalls may terminate
+                or lose state for long running or idle connections.</para>
+
+              <para> Enabling this option relies on OS level settings to work
+                properly, check your operating system's options regarding TCP
+                keepalive for more information.  Defaults to
+                <emphasis role="bold">false</emphasis>.
+              </para>
             </listitem>
           </varlistentry>
 

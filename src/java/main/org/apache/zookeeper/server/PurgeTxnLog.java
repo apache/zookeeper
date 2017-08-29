@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.Util;
 import org.slf4j.Logger;
@@ -41,6 +42,7 @@ import org.slf4j.LoggerFactory;
  * files and snapdir files keeping the last "-n" snapshot files
  * and the corresponding logs.
  */
+@InterfaceAudience.Public
 public class PurgeTxnLog {
     private static final Logger LOG = LoggerFactory.getLogger(PurgeTxnLog.class);
 
@@ -209,7 +211,7 @@ public class PurgeTxnLog {
      * error and usage and then exits
      *
      * @param number
-     * @return
+     * @return count
      */
     private static int validateAndGetCount(String number) {
         int result = 0;

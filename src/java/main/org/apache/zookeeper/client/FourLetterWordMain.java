@@ -29,11 +29,14 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 
+import org.apache.yetus.audience.InterfaceAudience;
+
+@InterfaceAudience.Public
 public class FourLetterWordMain {
     //in milliseconds, socket should connect/read within this period otherwise SocketTimeoutException
     private static final int DEFAULT_SOCKET_TIMEOUT = 5000;
     protected static final Logger LOG = Logger.getLogger(FourLetterWordMain.class);
-    
+
     /**
      * Send the 4letterword
      * @param host the destination host
