@@ -39,6 +39,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 
 import org.apache.jute.BinaryOutputArchive;
+import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.server.FinalRequestProcessor;
@@ -1115,9 +1116,14 @@ public class Leader {
      * @param f
      * @param r
      */
-
-    public void sendSync(LearnerSyncRequest r){
-        QuorumPacket qp = new QuorumPacket(Leader.SYNC, 0, null, null);
+    public void sendSync(LearnerSyncRequest r) {
+        int err = 0;
+        if (r.getException() != null ) {
+            err = r.getException().code().intValue();
+        } else {
+            err = Code.OK.intValue();
+        }
+        QuorumPacket qp = new QuorumPacket(Leader.SYNC, err, null, null);
         r.fh.queuePacket(qp);
     }
 
