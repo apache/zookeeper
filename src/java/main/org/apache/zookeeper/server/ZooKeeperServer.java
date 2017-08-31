@@ -115,7 +115,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     private final AtomicInteger requestsInProcess = new AtomicInteger(0);
     final List<ChangeRecord> outstandingChanges = new ArrayList<ChangeRecord>();
     // this data structure must be accessed under the outstandingChanges lock
-    final HashMap<String, ChangeRecord> outstandingChangesForPath =
+    final Map<String, ChangeRecord> outstandingChangesForPath =
         new HashMap<String, ChangeRecord>();
 
     protected ServerCnxnFactory serverCnxnFactory;
@@ -284,7 +284,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
         
         // Clean up dead sessions
-        LinkedList<Long> deadSessions = new LinkedList<Long>();
+        List<Long> deadSessions = new LinkedList<Long>();
         for (Long session : zkDb.getSessions()) {
             if (zkDb.getSessionWithTimeOuts().get(session) == null) {
                 deadSessions.add(session);

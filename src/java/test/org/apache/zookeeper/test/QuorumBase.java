@@ -21,10 +21,7 @@ package org.apache.zookeeper.test;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -136,7 +133,7 @@ public class QuorumBase extends ClientBase {
         int tickTime = 2000;
         int initLimit = 3;
         int syncLimit = 3;
-        HashMap<Long,QuorumServer> peers = new HashMap<Long,QuorumServer>();
+        Map<Long,QuorumServer> peers = new HashMap<Long,QuorumServer>();
         peers.put(Long.valueOf(1), new QuorumServer(1, 
                 new InetSocketAddress(LOCALADDR, port1),
                 new InetSocketAddress(LOCALADDR, portLE1),
@@ -293,7 +290,7 @@ public class QuorumBase extends ClientBase {
         setupServer(5);
     }
 
-    HashMap<Long,QuorumServer> peers = null;
+    Map<Long,QuorumServer> peers = null;
     public void setupServer(int i) throws IOException {
         int tickTime = 2000;
         int initLimit = 3;

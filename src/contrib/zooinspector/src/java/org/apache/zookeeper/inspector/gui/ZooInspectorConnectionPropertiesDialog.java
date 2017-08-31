@@ -51,7 +51,7 @@ import org.apache.zookeeper.inspector.manager.Pair;
  */
 public class ZooInspectorConnectionPropertiesDialog extends JDialog {
 
-    private final HashMap<String, JComponent> components;
+    private final Map<String, JComponent> components;
 
     /**
      * @param lastConnectionProps

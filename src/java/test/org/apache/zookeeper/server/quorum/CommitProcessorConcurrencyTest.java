@@ -21,9 +21,7 @@ package org.apache.zookeeper.server.quorum;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -175,8 +173,8 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
     public void processAsMuchUncommittedRequestsAsPossibleTest()
             throws Exception {
         final String path = "/testAsMuchAsPossible";
-        LinkedList<Request> shouldBeProcessed = new LinkedList<Request>();
-        HashSet<Request> shouldNotBeProcessed = new HashSet<Request>();
+        List<Request> shouldBeProcessed = new LinkedList<Request>();
+        Set<Request> shouldNotBeProcessed = new HashSet<Request>();
         for (int sessionId = 1; sessionId <= 5; ++sessionId) {
             for (int readReqId = 1; readReqId <= sessionId; ++readReqId) {
                 Request readReq = newRequest(new GetDataRequest(path, false),
@@ -221,8 +219,8 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
     public void processAllFollowingUncommittedAfterFirstCommitTest()
             throws Exception {
         final String path = "/testUncommittedFollowingCommited";
-        HashSet<Request> shouldBeInPending = new HashSet<Request>();
-        HashSet<Request> shouldBeProcessedAfterPending = new HashSet<Request>();
+        Set<Request> shouldBeInPending = new HashSet<Request>();
+        Set<Request> shouldBeProcessedAfterPending = new HashSet<Request>();
 
         Request writeReq = newRequest(
                 new CreateRequest(path, new byte[0], Ids.OPEN_ACL_UNSAFE,
@@ -282,7 +280,7 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
     public void noStarvationOfNonLocalCommittedRequestsTest() throws Exception {
         final String path = "/noStarvationOfCommittedRequests";
         processor.queuedRequests = new MockRequestsQueue();
-        HashSet<Request> nonLocalCommits = new HashSet<Request>();
+        Set<Request> nonLocalCommits = new HashSet<Request>();
         for (int i = 0; i < 10; i++) {
             Request nonLocalCommitReq = newRequest(
                     new CreateRequest(path, new byte[0], Ids.OPEN_ACL_UNSAFE,
@@ -320,7 +318,7 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
                 OpCode.create, 0x3, 1);
         processor.queuedRequests.add(firstCommittedReq);
         processor.committedRequests.add(firstCommittedReq);
-        HashSet<Request> allReads = new HashSet<Request>();
+        Set<Request> allReads = new HashSet<Request>();
 
         // +1 read request to queuedRequests
         Request firstRead = newRequest(new GetDataRequest(path, false),
@@ -335,7 +333,7 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
                 OpCode.create, 0x99, 2);
         processor.committedRequests.add(secondCommittedReq);
 
-        HashSet<Request> waitingCommittedRequests = new HashSet<Request>();
+        Set<Request> waitingCommittedRequests = new HashSet<Request>();
         // +99 non local committed requests
         for (int writeReqId = 3; writeReqId < 102; ++writeReqId) {
             Request writeReq = newRequest(

@@ -26,10 +26,7 @@ import java.io.File;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.net.Socket;
 
@@ -54,7 +51,7 @@ public class CnxManagerTest extends ZKTestCase {
     protected static final int THRESHOLD = 4;
 
     int count;
-    HashMap<Long,QuorumServer> peers;
+    Map<Long,QuorumServer> peers;
     File peerTmpdir[];
     int peerQuorumPort[];
     int peerClientPort[];

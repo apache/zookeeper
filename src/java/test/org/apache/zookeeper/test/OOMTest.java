@@ -23,6 +23,7 @@ import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -47,7 +48,7 @@ public class OOMTest extends ZKTestCase implements Watcher {
         File tmpDir = ClientBase.createTmpDir();
         // Grab some memory so that it is easier to cause an
         // OOM condition;
-        ArrayList<byte[]> hog = new ArrayList<byte[]>();
+        List<byte[]> hog = new ArrayList<byte[]>();
         while (true) {
             try {
                 hog.add(new byte[1024 * 1024 * 2]);

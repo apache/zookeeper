@@ -20,14 +20,14 @@ package org.apache.jute.compiler;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Java Code generator front-end for Hadoop record I/O.
  */
 class JavaGenerator {
-    private ArrayList<JRecord> mRecList;
+    private List<JRecord> mRecList;
     private final File outputDirectory;
     
     /** Creates a new instance of JavaGenerator
@@ -37,8 +37,8 @@ class JavaGenerator {
      * @param records List of records defined within this file
      * @param outputDirectory 
      */
-    JavaGenerator(String name, ArrayList<JFile> incl,
-            ArrayList<JRecord> records, File outputDirectory)
+    JavaGenerator(String name, List<JFile> incl,
+            List<JRecord> records, File outputDirectory)
     {
         mRecList = records;
         this.outputDirectory = outputDirectory;
