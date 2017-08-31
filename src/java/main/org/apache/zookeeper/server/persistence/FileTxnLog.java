@@ -28,6 +28,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -385,10 +387,12 @@ public class FileTxnLog implements TxnLog {
     /**
      * truncate the current transaction logs
      * @param zxid the zxid to truncate the logs to
-     * @return true if successful false if not
+     * @return void if successful
+     * @throws IOException
      */
-    public boolean truncate(long zxid) throws IOException {
+    public void truncate(long zxid) throws IOException {
         FileTxnIterator itr = null;
+        RandomAccessFile raf = null;
         try {
             itr = new FileTxnIterator(this.logDir, zxid);
             PositionInputStream input = itr.inputStream;
@@ -399,18 +403,26 @@ public class FileTxnLog implements TxnLog {
             }
             long pos = input.getPosition();
             // now, truncate at the current position
-            RandomAccessFile raf=new RandomAccessFile(itr.logFile,"rw");
+            raf = new RandomAccessFile(itr.logFile, "rw");
             raf.setLength(pos);
-            raf.close();
             while(itr.goToNextLog()) {
-                if (!itr.logFile.delete()) {
-                    LOG.warn("Unable to truncate {}", itr.logFile);
+                try {
+                    Files.delete(itr.logFile.toPath());
+                } catch (NoSuchFileException e) {
+                    LOG.info("An NoSuchFileException was thrown when delete file {}" +
+                    ", but will continue. Assume this file has been deleted successfully.", itr.logFile);
                 }
             }
         } finally {
+            if (raf != null) {
+                try {
+                    raf.close();
+                } catch (IOException e) {
+                    LOG.warn("Error closing RandomAccessFile {}, exception = {} ", raf, e);
+                }
+            }
             close(itr);
         }
-        return true;
     }
 
     /**
