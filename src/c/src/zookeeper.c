@@ -2107,6 +2107,7 @@ static void deserialize_response(int type, int xid, int failed, int rc, completi
             cptr->c.string_result(rc, 0, cptr->data);
         } else {
             struct CreateResponse res;
+            memset(&res, 0, sizeof(res));
             deserialize_CreateResponse(ia, "reply", &res);
             cptr->c.string_result(rc, res.path, cptr->data);
             deallocate_CreateResponse(&res);
