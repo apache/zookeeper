@@ -47,7 +47,7 @@ DX_PDF_FEATURE(OFF)
 DX_PS_FEATURE(OFF)
 DX_INIT_DOXYGEN([zookeeper-locks],[c-doc.Doxyfile],[docs])
 
-  
+
 ZOOKEEPER_PATH=${BUILD_PATH}/../../../../../src/c
 ZOOKEEPER_LD=-L${BUILD_PATH}/../../../../../src/c\ -lzookeeper_mt
 
@@ -71,8 +71,8 @@ AC_HEADER_TIME
 AC_C_VOLATILE
 AC_PROG_CC
 AC_PROG_LIBTOOL
-#check for cppunit 
-AM_PATH_CPPUNIT(1.10.2)
+#check for cppunit
+PKG_CHECK_MODULES([CPPUNIT], [cppunit >= 1.10.2])
 # Checks for library functions.
 AC_FUNC_UTIME_NULL
 AC_CHECK_FUNCS([gettimeofday memset mkdir rmdir strdup strerror strstr strtol strtoul strtoull utime])

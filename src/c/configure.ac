@@ -34,7 +34,7 @@ if test "$with_cppunit" = "no" ; then
    CPPUNIT_INCLUDE=
    CPPUNIT_LIBS=
 else
-   AM_PATH_CPPUNIT(1.10.2)
+   PKG_CHECK_MODULES([CPPUNIT], [cppunit >= 1.10.2])
 fi
 
 if test "$CALLER" = "ANT" ; then
@@ -130,11 +130,11 @@ main()
  else
    exit(0);
 }
-], AC_MSG_RESULT(yes) 
-   ipv6=yes, 
-   AC_MSG_RESULT(no) 
-   ipv6=no, 
-   AC_MSG_RESULT(no) 
+], AC_MSG_RESULT(yes)
+   ipv6=yes,
+   AC_MSG_RESULT(no)
+   ipv6=no,
+   AC_MSG_RESULT(no)
    ipv6=no)
 
 if test x"$ipv6" = xyes; then
