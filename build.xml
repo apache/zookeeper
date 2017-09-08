@@ -1178,12 +1178,40 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <path refid="test.java.classpath" />
         <pathelement path="${test.java.classes}" />
       </path>
+
+      <property name="test.category.include.file" value="${test.src.dir}/category/${test.category}" />
+      <property name="test.category.exclude.file" value="${test.src.dir}/category/${test.category}.exclude" />
+
+      <condition property="test.category.include">
+        <and>
+          <isset property="test.category" />
+          <available file="${test.category.include.file}" />
+        </and>
+      </condition>
+      <condition property="test.category.exclude">
+        <and>
+          <isset property="test.category" />
+          <available file="${test.category.exclude.file}" />
+        </and>
+      </condition>
+
+      <property name="test.slow.category" value="Slow" />
+      <property name="test.slow.category.include.file" value="${test.src.dir}/category/${test.slow.category}" />
+
       <fileset id="quicktest.files" dir="${test.src.dir}">
-        <include name="**/*${test.category}Test.java" />
-        <exclude name="**/*HammerTest.java" />
+        <include name="**/*Test.java" unless="test.category.include"/>
+        <patternset>
+          <includesfile name="${test.category.include.file}" if="test.category.include"/>
+          <excludesfile name="${test.category.exclude.file}" if="test.category.exclude" />
+          <excludesfile name="${test.slow.category.include.file}"/>
+        </patternset>
       </fileset>
       <fileset id="fulltest.files" dir="${test.src.dir}">
-        <include name="**/*${test.category}Test.java" />
+        <include name="**/*Test.java" unless="test.category.include"/>
+        <patternset>
+          <includesfile name="${test.category.include.file}" if="test.category.include"/>
+          <excludesfile name="${test.category.exclude.file}" if="test.category.exclude" />
+        </patternset>
       </fileset>
       <fileset id="testcase.files" dir="${test.src.dir}">
         <include name="**/${testcase}.java" />
@@ -1332,7 +1360,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <target name="test-perf" depends="test-init,test-perf-category,junit.run"/>
 
     <target name="test-category">
-      <property name="test.category" value=""/>
     </target>
 
     <target name="test" description="to run core and contrib tests">
