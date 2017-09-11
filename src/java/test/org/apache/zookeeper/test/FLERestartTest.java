@@ -23,6 +23,8 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
 
 import org.slf4j.Logger;
@@ -43,8 +45,8 @@ public class FLERestartTest extends ZKTestCase {
     protected static final Logger LOG = LoggerFactory.getLogger(FLETest.class);
 
     private int count;
-    private HashMap<Long,QuorumServer> peers;
-    private ArrayList<FLERestartThread> restartThreads;
+    private Map<Long,QuorumServer> peers;
+    private List<FLERestartThread> restartThreads;
     private File tmpdir[];
     private int port[];
     private Semaphore finish;

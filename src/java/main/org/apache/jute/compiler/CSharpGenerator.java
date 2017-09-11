@@ -20,10 +20,10 @@ package org.apache.jute.compiler;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.List;
 
 public class CSharpGenerator {
-    private ArrayList<JRecord> mRecList;
+    private List<JRecord> mRecList;
     private final File outputDirectory;
 
     /** Creates a new instance of CSharpGenerator
@@ -33,7 +33,7 @@ public class CSharpGenerator {
      * @param rlist List of records defined within this file
      * @param outputDirectory
      */
-    CSharpGenerator(String name, ArrayList<JFile> ilist, ArrayList<JRecord> rlist,
+    CSharpGenerator(String name, List<JFile> ilist, List<JRecord> rlist,
             File outputDirectory)
      {
         this.outputDirectory = outputDirectory;

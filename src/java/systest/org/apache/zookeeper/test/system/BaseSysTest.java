@@ -24,6 +24,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -143,7 +144,7 @@ public class BaseSysTest {
 
     private QuorumPeer qps[];
     private File qpsDirs[];
-    HashMap<Long,QuorumServer> peers;
+    Map<Long,QuorumServer> peers;
     private void fakeConfigureServers(int count) throws IOException {
         peers = new HashMap<Long,QuorumServer>();
         qps = new QuorumPeer[count];

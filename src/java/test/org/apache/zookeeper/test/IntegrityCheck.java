@@ -33,6 +33,7 @@ package org.apache.zookeeper.test;
  */
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +50,7 @@ public class IntegrityCheck implements StatCallback, DataCallback {
 
     ZooKeeper zk;
 
-    HashMap<String, byte[]> lastValue = new HashMap<String, byte[]>();
+    Map<String, byte[]> lastValue = new HashMap<String, byte[]>();
 
     int count;
 

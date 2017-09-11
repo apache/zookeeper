@@ -21,6 +21,7 @@ package org.apache.jute.compiler;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Container for the Hadoop Record DDL.
@@ -31,8 +32,8 @@ import java.util.ArrayList;
 public class JFile {
     
     private String mName;
-    private ArrayList<JFile> mInclFiles;
-    private ArrayList<JRecord> mRecords;
+    private List<JFile> mInclFiles;
+    private List<JRecord> mRecords;
     
     /** Creates a new instance of JFile
      *
