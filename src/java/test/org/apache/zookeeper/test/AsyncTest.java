@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,7 +96,7 @@ public class AsyncTest extends ZKTestCase
         return zk;
     }
 
-    LinkedList<Integer> results = new LinkedList<Integer>();
+    List<Integer> results = new LinkedList<Integer>();
     @Test
     public void testAsync()
         throws IOException, InterruptedException, KeeperException

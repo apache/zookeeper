@@ -639,7 +639,7 @@ public class FastLeaderElection implements Election {
      *  @param zxid     zxid of the the vote received last
      */
     protected boolean termPredicate(
-            HashMap<Long, Vote> votes,
+            Map<Long, Vote> votes,
             Vote vote) {
 
         HashSet<Long> set = new HashSet<Long>();
@@ -669,7 +669,7 @@ public class FastLeaderElection implements Election {
      * @param   electionEpoch   epoch id
      */
     protected boolean checkLeader(
-            HashMap<Long, Vote> votes,
+            Map<Long, Vote> votes,
             long leader,
             long electionEpoch){
 

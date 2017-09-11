@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.quorum;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +50,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
     LinkedList<Request> committedRequests = new LinkedList<Request>();
 
     RequestProcessor nextProcessor;
-    ArrayList<Request> toProcess = new ArrayList<Request>();
+    List<Request> toProcess = new ArrayList<Request>();
 
     /**
      * This flag indicates whether we need to wait for a response to come back from the

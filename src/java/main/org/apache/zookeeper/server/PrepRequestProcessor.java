@@ -29,6 +29,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -683,7 +684,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
 
     private List<ACL> removeDuplicates(List<ACL> acl) {
 
-        ArrayList<ACL> retval = new ArrayList<ACL>();
+        List<ACL> retval = new ArrayList<ACL>();
         Iterator<ACL> it = acl.iterator();
         while (it.hasNext()) {
             ACL a = it.next();

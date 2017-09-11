@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -798,7 +799,7 @@ public class AuthFastLeaderElection implements Election {
 
     }
 
-    private boolean termPredicate(HashMap<InetSocketAddress, Vote> votes,
+    private boolean termPredicate(Map<InetSocketAddress, Vote> votes,
             long l, long zxid) {
 
 

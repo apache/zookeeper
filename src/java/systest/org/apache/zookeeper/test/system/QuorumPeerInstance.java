@@ -26,6 +26,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import org.slf4j.Logger;
@@ -53,7 +54,7 @@ class QuorumPeerInstance implements Instance {
 
     InetSocketAddress clientAddr;
     InetSocketAddress quorumAddr;
-    HashMap<Long, QuorumServer> peers;
+    Map<Long, QuorumServer> peers;
     File snapDir, logDir;
 
     public QuorumPeerInstance() {

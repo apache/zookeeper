@@ -21,6 +21,7 @@ package org.apache.zookeeper.server;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
@@ -38,11 +39,11 @@ import org.apache.zookeeper.Watcher.Event.KeeperState;
 public class WatchManager {
     private static final Logger LOG = LoggerFactory.getLogger(WatchManager.class);
 
-    private final HashMap<String, HashSet<Watcher>> watchTable =
-        new HashMap<String, HashSet<Watcher>>();
+    private final Map<String, Set<Watcher>> watchTable =
+        new HashMap<String, Set<Watcher>>();
 
-    private final HashMap<Watcher, HashSet<String>> watch2Paths =
-        new HashMap<Watcher, HashSet<String>>();
+    private final Map<Watcher, Set<String>> watch2Paths =
+        new HashMap<Watcher, Set<String>>();
 
     public synchronized int size(){
         int result = 0;
@@ -53,7 +54,7 @@ public class WatchManager {
     }
 
     public synchronized void addWatch(String path, Watcher watcher) {
-        HashSet<Watcher> list = watchTable.get(path);
+        Set<Watcher> list = watchTable.get(path);
         if (list == null) {
             // don't waste memory if there are few watches on a node
             // rehash when the 4th entry is added, doubling size thereafter
@@ -63,7 +64,7 @@ public class WatchManager {
         }
         list.add(watcher);
 
-        HashSet<String> paths = watch2Paths.get(watcher);
+        Set<String> paths = watch2Paths.get(watcher);
         if (paths == null) {
             // cnxns typically have many watches, so use default cap here
             paths = new HashSet<String>();
@@ -73,12 +74,12 @@ public class WatchManager {
     }
 
     public synchronized void removeWatcher(Watcher watcher) {
-        HashSet<String> paths = watch2Paths.remove(watcher);
+        Set<String> paths = watch2Paths.remove(watcher);
         if (paths == null) {
             return;
         }
         for (String p : paths) {
-            HashSet<Watcher> list = watchTable.get(p);
+            Set<Watcher> list = watchTable.get(p);
             if (list != null) {
                 list.remove(watcher);
                 if (list.size() == 0) {
@@ -95,7 +96,7 @@ public class WatchManager {
     public Set<Watcher> triggerWatch(String path, EventType type, Set<Watcher> supress) {
         WatchedEvent e = new WatchedEvent(type,
                 KeeperState.SyncConnected, path);
-        HashSet<Watcher> watchers;
+        Set<Watcher> watchers;
         synchronized (this) {
             watchers = watchTable.remove(path);
             if (watchers == null || watchers.isEmpty()) {
@@ -107,7 +108,7 @@ public class WatchManager {
                 return null;
             }
             for (Watcher w : watchers) {
-                HashSet<String> paths = watch2Paths.get(w);
+                Set<String> paths = watch2Paths.get(w);
                 if (paths != null) {
                     paths.remove(path);
                 }
@@ -133,7 +134,7 @@ public class WatchManager {
             .append(watchTable.size()).append(" paths\n");
 
         int total = 0;
-        for (HashSet<String> paths : watch2Paths.values()) {
+        for (Set<String> paths : watch2Paths.values()) {
             total += paths.size();
         }
         sb.append("Total watches:").append(total);
@@ -149,7 +150,7 @@ public class WatchManager {
      */
     public synchronized void dumpWatches(PrintWriter pwriter, boolean byPath) {
         if (byPath) {
-            for (Entry<String, HashSet<Watcher>> e : watchTable.entrySet()) {
+            for (Entry<String, Set<Watcher>> e : watchTable.entrySet()) {
                 pwriter.println(e.getKey());
                 for (Watcher w : e.getValue()) {
                     pwriter.print("\t0x");
@@ -158,7 +159,7 @@ public class WatchManager {
                 }
             }
         } else {
-            for (Entry<Watcher, HashSet<String>> e : watch2Paths.entrySet()) {
+            for (Entry<Watcher, Set<String>> e : watch2Paths.entrySet()) {
                 pwriter.print("0x");
                 pwriter.println(Long.toHexString(((ServerCnxn)e.getKey()).getSessionId()));
                 for (String path : e.getValue()) {

@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -117,7 +118,7 @@ public class QuorumBase extends ClientBase {
         int tickTime = 2000;
         int initLimit = 3;
         int syncLimit = 3;
-        HashMap<Long,QuorumServer> peers = new HashMap<Long,QuorumServer>();
+        Map<Long,QuorumServer> peers = new HashMap<Long,QuorumServer>();
         peers.put(Long.valueOf(1), new QuorumServer(1, "127.0.0.1", port1 + 1000,
                                                     portLE1 + 1000,
                 LearnerType.PARTICIPANT));
@@ -218,7 +219,7 @@ public class QuorumBase extends ClientBase {
         setupServer(5);
     }
 
-    HashMap<Long,QuorumServer> peers = null;
+    Map<Long,QuorumServer> peers = null;
     public void setupServer(int i) throws IOException {
         int tickTime = 2000;
         int initLimit = 3;

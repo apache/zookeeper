@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
+import java.util.Map;
 
 import junit.framework.Assert;
 
@@ -200,7 +201,7 @@ public class TruncateTest extends ZKTestCase {
         int port3 = baseHostPort+3;
         
         // Start up two of the quorum and add 10 txns
-        HashMap<Long,QuorumServer> peers = new HashMap<Long,QuorumServer>();
+        Map<Long,QuorumServer> peers = new HashMap<Long,QuorumServer>();
         peers.put(Long.valueOf(1), new QuorumServer(1, "127.0.0.1", port1 + 1000, 0, null));
         peers.put(Long.valueOf(2), new QuorumServer(2, "127.0.0.1", port2 + 1000, 0, null));
         peers.put(Long.valueOf(3), new QuorumServer(3, "127.0.0.1", port3 + 1000, 0, null));

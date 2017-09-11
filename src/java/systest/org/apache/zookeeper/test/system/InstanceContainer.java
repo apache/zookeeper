@@ -225,7 +225,7 @@ public class InstanceContainer implements Watcher, AsyncCallback.ChildrenCallbac
         }
     }
 
-    HashMap<String, Instance> instances = new HashMap<String, Instance>();
+    Map<String, Instance> instances = new HashMap<String, Instance>();
     public void processResult(int rc, String path, Object ctx,
             List<String> children) {
         if (rc != KeeperException.Code.OK.intValue()) {
@@ -233,7 +233,7 @@ public class InstanceContainer implements Watcher, AsyncCallback.ChildrenCallbac
             zk.getChildren(assignmentsNode, true, this, null);
             return;
         }
-        HashMap<String, Instance> newList = new HashMap<String, Instance>();
+        Map<String, Instance> newList = new HashMap<String, Instance>();
         // check for differences
         Stat stat = new Stat();
         for(String child: children) {

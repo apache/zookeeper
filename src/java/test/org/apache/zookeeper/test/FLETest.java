@@ -23,6 +23,7 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
@@ -62,9 +63,9 @@ public class FLETest extends ZKTestCase {
     }
 
     int count;
-    HashMap<Long,QuorumServer> peers;
+    Map<Long,QuorumServer> peers;
     ArrayList<LEThread> threads;
-    HashMap<Integer, HashSet<TestVote> > voteMap;
+    Map<Integer, HashSet<TestVote> > voteMap;
     File tmpdir[];
     int port[];
     int successCount;

@@ -18,19 +18,19 @@
 
 package org.apache.jute.compiler;
 
-import java.util.ArrayList;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * C++ Code generator front-end for Hadoop record I/O.
  */
 class CGenerator {
     private String mName;
-    private ArrayList<JFile> mInclFiles;
-    private ArrayList<JRecord> mRecList;
+    private List<JFile> mInclFiles;
+    private List<JRecord> mRecList;
     private final File outputDirectory;
 
     /** Creates a new instance of CppGenerator
@@ -40,7 +40,7 @@ class CGenerator {
      * @param rlist List of records defined within this file
      * @param outputDirectory
      */
-    CGenerator(String name, ArrayList<JFile> ilist, ArrayList<JRecord> rlist,
+    CGenerator(String name, List<JFile> ilist, List<JRecord> rlist,
             File outputDirectory)
     {
         this.outputDirectory = outputDirectory;

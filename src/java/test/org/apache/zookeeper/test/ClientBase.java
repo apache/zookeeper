@@ -213,7 +213,7 @@ public abstract class ClientBase extends ZKTestCase {
         return createClient(watcher, hostPort);
     }
 
-    private LinkedList<ZooKeeper> allClients;
+    private List<ZooKeeper> allClients;
     private boolean allClientsSetup = false;
 
     protected TestableZooKeeper createClient(CountdownWatcher watcher, String hp)

@@ -883,7 +883,7 @@ public class DataTree {
         // so there is no need for synchronization. The list is not
         // changed here. Only create and delete change the list which
         // are again called from FinalRequestProcessor in sequence.
-        HashSet<String> list = ephemerals.remove(session);
+        Set<String> list = ephemerals.remove(session);
         if (list != null) {
             for (String path : list) {
                 try {
@@ -1139,7 +1139,7 @@ public class DataTree {
         for (Map.Entry<Long, HashSet<String>> entry : entrySet) {
             pwriter.print("0x" + Long.toHexString(entry.getKey()));
             pwriter.println(":");
-            HashSet<String> tmp = entry.getValue();
+            Set<String> tmp = entry.getValue();
             if (tmp != null) {
                 synchronized (tmp) {
                     for (String path : tmp) {
