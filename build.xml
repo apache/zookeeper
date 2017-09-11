@@ -1528,6 +1528,29 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
                classpathref="releaseaudit-classpath"/>
     </target>
 
+    <target name="owasp-taskdef" depends="ivy-retrieve-releaseaudit">
+        <typedef format="properties" resource="dependency-check-taskdefs.properties" uri="antlib:org.owasp.dependencycheck.anttasks" classpathref="releaseaudit-classpath"/>
+    </target>
+
+    <target name="owasp" depends="owasp-taskdef,ivy-retrieve" description="OWASP dependency check">
+        <property name="owasp.out.dir" value="${test.java.build.dir}/owasp" />
+
+        <owasp:dependency-check xmlns:owasp="antlib:org.owasp.dependencycheck.anttasks"
+                          projectname="ZooKeeper"
+                          reportoutputdirectory="${owasp.out.dir}"
+                          reportformat="ALL"
+                          failBuildOnCVSS="0">
+
+            <fileset dir="${ivy.lib}">
+                <include name="**/*.jar"/>
+            </fileset>
+
+            <fileset dir="${lib.dir}">
+                <include name="**/*.jar"/>
+            </fileset>
+        </owasp:dependency-check>
+    </target>
+
     <target name="releaseaudit" depends="package,rats-taskdef" description="Release Audit activities">
       <rat:report xmlns:rat="antlib:org.apache.rat.anttasks">
         <fileset dir="${dist.dir}">
