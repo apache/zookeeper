@@ -20,8 +20,10 @@ package org.apache.zookeeper.client;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.zookeeper.common.PathUtils;
+import static org.apache.zookeeper.common.StringUtils.split;
 
 /**
  * A parser for ZooKeeper Client connect strings.
@@ -62,7 +64,7 @@ public final class ConnectStringParser {
             this.chrootPath = null;
         }
 
-        String hostsList[] = connectString.split(",");
+        List<String> hostsList = split(connectString,",");
         for (String host : hostsList) {
             int port = DEFAULT_PORT;
             int pidx = host.lastIndexOf(':');
