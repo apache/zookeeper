@@ -61,6 +61,15 @@ public class ConnectStringParserTest extends ZKTestCase{
         Assert.assertEquals(112, parser.getServerAddresses().get(0).getPort());
         Assert.assertEquals(110, parser.getServerAddresses().get(1).getPort());
     }
+    
+    @Test
+    public void testParseServersContainingSpaces(){
+        String servers = " 10.10.10.1:112 ,10.10.10.2:110";
+        ConnectStringParser parser = new ConnectStringParser(servers);
+
+        Assert.assertEquals("10.10.10.1", parser.getServerAddresses().get(0).getHostName());
+        Assert.assertEquals("10.10.10.2", parser.getServerAddresses().get(1).getHostName());      
+    }
 
     private void assertChrootPath(String expected, ConnectStringParser parser){
         Assert.assertEquals(expected, parser.getChrootPath());
