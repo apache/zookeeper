@@ -733,7 +733,7 @@ public class FastLeaderElection implements Election {
      * @param vote
      *            Identifier of the vote received last
      */
-    private boolean termPredicate(HashMap<Long, Vote> votes, Vote vote) {
+    private boolean termPredicate(Map<Long, Vote> votes, Vote vote) {
         SyncedLearnerTracker voteSet = new SyncedLearnerTracker();
         voteSet.addQuorumVerifier(self.getQuorumVerifier());
         if (self.getLastSeenQuorumVerifier() != null
@@ -767,7 +767,7 @@ public class FastLeaderElection implements Election {
      * @param   electionEpoch   epoch id
      */
     private boolean checkLeader(
-            HashMap<Long, Vote> votes,
+            Map<Long, Vote> votes,
             long leader,
             long electionEpoch){
 
@@ -880,9 +880,9 @@ public class FastLeaderElection implements Election {
            self.start_fle = Time.currentElapsedTime();
         }
         try {
-            HashMap<Long, Vote> recvset = new HashMap<Long, Vote>();
+            Map<Long, Vote> recvset = new HashMap<Long, Vote>();
 
-            HashMap<Long, Vote> outofelection = new HashMap<Long, Vote>();
+            Map<Long, Vote> outofelection = new HashMap<Long, Vote>();
 
             int notTimeout = finalizeWait;
 

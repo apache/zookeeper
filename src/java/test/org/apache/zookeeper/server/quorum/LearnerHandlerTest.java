@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -91,7 +92,7 @@ public class LearnerHandlerTest extends ZKTestCase {
             return 0;
         }
 
-        public LinkedList<Proposal> getCommittedLog() {
+        public List<Proposal> getCommittedLog() {
             return committedLog;
         }
 

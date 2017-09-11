@@ -479,7 +479,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         // lets remove someone who's not the leader
         leavingServers.add(getLeaderId(qu) == 5 ? "4": "5");
  
-        LinkedList<Integer> results = new LinkedList<Integer>();
+        List<Integer> results = new LinkedList<Integer>();
         
         zkAdminArr[1].reconfigure(null, leavingServers, null, -1, this, results);
         

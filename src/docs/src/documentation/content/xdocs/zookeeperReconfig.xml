@@ -698,7 +698,7 @@ System.out.println(configStr);]]></programlisting>
           example, you may specify a Hierarchical Quorum System even if the
           current ensemble uses a Majority Quorum System.</para>
         <para>Bulk mode - example using the Java API:</para>
-        <programlisting><![CDATA[ArrayList<String> newMembers = new ArrayList<String>();
+        <programlisting><![CDATA[List<String> newMembers = new ArrayList<String>();
 newMembers.add("server.1=1111:1234:1235;1236");
 newMembers.add("server.2=1112:1237:1238;1239");
 newMembers.add("server.3=1114:1240:1241:observer;1242");

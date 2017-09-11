@@ -125,7 +125,7 @@ public class ACLTest extends ZKTestCase implements Watcher {
                 id.setId("1.1.1."+j);
                 id.setScheme("ip");
                 acl.setId(id);
-                ArrayList<ACL> list = new ArrayList<ACL>();
+                List<ACL> list = new ArrayList<ACL>();
                 list.add(acl);
                 zk.create(path, path.getBytes(), list, CreateMode.PERSISTENT);
             }

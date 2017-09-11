@@ -64,7 +64,7 @@ public class ZooInspectorPanel extends JPanel implements
         this.zooInspectorManager = zooInspectorManager;
         this.iconResource = iconResource;
         toolbar = new Toolbar(iconResource);
-        final ArrayList<ZooInspectorNodeViewer> nodeViewers = new ArrayList<ZooInspectorNodeViewer>();
+        final List<ZooInspectorNodeViewer> nodeViewers = new ArrayList<ZooInspectorNodeViewer>();
         try {
             List<String> defaultNodeViewersClassNames = this.zooInspectorManager
                     .getDefaultNodeViewerConfiguration();

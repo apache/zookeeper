@@ -19,9 +19,10 @@ package org.apache.zookeeper.graph;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.Map;
 
 public abstract class LogEntry implements Serializable {
-    private HashMap attributes;
+    private Map attributes;
 
     public enum Type { UNKNOWN, LOG4J, TXN };
         

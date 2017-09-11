@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import org.slf4j.Logger;
@@ -79,8 +80,8 @@ public class InstanceManager implements AsyncCallback.ChildrenCallback, Watcher 
             System.err.println("Preferred List is empty");
         }
     }
-    private HashMap<String, HashSet<Assigned>> assignments = new HashMap<String, HashSet<Assigned>>();
-    private HashMap<String, Assigned> instanceToAssignment = new HashMap<String, Assigned>();
+    private Map<String, HashSet<Assigned>> assignments = new HashMap<String, HashSet<Assigned>>();
+    private Map<String, Assigned> instanceToAssignment = new HashMap<String, Assigned>();
     public InstanceManager(ZooKeeper zk, String prefix) throws KeeperException, InterruptedException {
         this.zk = zk;
         this.prefixNode = prefix;
@@ -137,7 +138,7 @@ public class InstanceManager implements AsyncCallback.ChildrenCallback, Watcher 
         if (LOG.isDebugEnabled()) {
             LOG.debug("Got " + children + " children from " + path);
         }
-        HashMap<String, HashSet<Assigned>> newAssignments = new HashMap<String, HashSet<Assigned>>();
+        Map<String, HashSet<Assigned>> newAssignments = new HashMap<String, HashSet<Assigned>>();
         for(String c: children) {
             HashSet<Assigned> a = assignments.remove(c);
             if (a != null) {
