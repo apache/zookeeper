@@ -63,7 +63,7 @@ public class ConnectStringParserTest extends ZKTestCase{
     }
     
     @Test
-    public void testParseServersWithPort(){
+    public void testParseServersWithSpaces(){
         String servers = "10.10.10.1:112,10.10.10.2:110";
         ConnectStringParser parser = new ConnectStringParser(servers);
 
