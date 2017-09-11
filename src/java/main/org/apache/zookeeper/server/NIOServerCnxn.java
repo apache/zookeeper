@@ -363,9 +363,8 @@ public class NIOServerCnxn extends ServerCnxn {
                 }
             }
         } catch (CancelledKeyException e) {
-            LOG.warn("Exception causing close of session 0x"
-                    + Long.toHexString(sessionId)
-                    + " due to " + e);
+            LOG.warn("CancelledKeyException causing close of session 0x"
+                     + Long.toHexString(sessionId));
             if (LOG.isDebugEnabled()) {
                 LOG.debug("CancelledKeyException stack trace", e);
             }
@@ -374,14 +373,15 @@ public class NIOServerCnxn extends ServerCnxn {
             // expecting close to log session closure
             close();
         } catch (EndOfStreamException e) {
-            LOG.warn("caught end of stream exception",e); // tell user why
-
+            LOG.warn(e.getMessage());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("EndOfStreamException stack trace", e);
+            }
             // expecting close to log session closure
             close();
         } catch (IOException e) {
             LOG.warn("Exception causing close of session 0x"
-                    + Long.toHexString(sessionId)
-                    + " due to " + e);
+                     + Long.toHexString(sessionId) + ": " + e.getMessage());
             if (LOG.isDebugEnabled()) {
                 LOG.debug("IOException stack trace", e);
             }
