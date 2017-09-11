@@ -20,6 +20,7 @@ package org.apache.zookeeper.client;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.zookeeper.common.PathUtils;
 import static org.apache.zookeeper.common.StringUtils.split;
