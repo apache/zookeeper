@@ -21,6 +21,7 @@ package org.apache.zookeeper.server.quorum;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -94,7 +95,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
      * Requests that we are holding until commit comes in. Keys represent
      * session ids, each value is a linked list of the session's requests.
      */
-    protected final HashMap<Long, LinkedList<Request>> pendingRequests =
+    protected final Map<Long, LinkedList<Request>> pendingRequests =
             new HashMap<Long, LinkedList<Request>>(10000);
 
     /** The number of requests currently being processed */

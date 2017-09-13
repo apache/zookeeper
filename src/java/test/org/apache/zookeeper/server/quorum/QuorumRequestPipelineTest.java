@@ -21,6 +21,7 @@ package org.apache.zookeeper.server.quorum;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -47,7 +48,7 @@ public class QuorumRequestPipelineTest extends QuorumBase {
     protected final CountDownLatch callComplete = new CountDownLatch(1);
     protected boolean complete = false;
     protected final static String PARENT_PATH = "/foo";
-    protected final static HashSet<String> CHILDREN = new HashSet<String>(Arrays.asList("1", "2", "3"));
+    protected final static Set<String> CHILDREN = new HashSet<String>(Arrays.asList("1", "2", "3"));
     protected final static String AUTH_PROVIDER = "digest";
     protected final static byte[] AUTH = "hello".getBytes();
     protected final static byte[] DATA = "Hint Water".getBytes();

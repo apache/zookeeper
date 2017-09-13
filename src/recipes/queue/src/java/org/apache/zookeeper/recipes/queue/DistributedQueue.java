@@ -19,6 +19,7 @@
 package org.apache.zookeeper.recipes.queue;
 
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.TreeMap;
 import java.util.concurrent.CountDownLatch;
@@ -68,8 +69,8 @@ public class DistributedQueue {
      * @param watcher optional watcher on getChildren() operation.
      * @return map from id to child name for all children
      */
-    private TreeMap<Long,String> orderedChildren(Watcher watcher) throws KeeperException, InterruptedException {
-        TreeMap<Long,String> orderedChildren = new TreeMap<Long,String>();
+    private Map<Long,String> orderedChildren(Watcher watcher) throws KeeperException, InterruptedException {
+        Map<Long,String> orderedChildren = new TreeMap<Long,String>();
 
         List<String> childNames = null;
         try{
@@ -147,7 +148,7 @@ public class DistributedQueue {
      * @throws InterruptedException
      */
     public byte[] element() throws NoSuchElementException, KeeperException, InterruptedException {
-        TreeMap<Long,String> orderedChildren;
+        Map<Long,String> orderedChildren;
 
         // element, take, and remove follow the same pattern.
         // We want to return the child node with the smallest sequence number.
@@ -184,7 +185,7 @@ public class DistributedQueue {
      * @throws InterruptedException
      */
     public byte[] remove() throws NoSuchElementException, KeeperException, InterruptedException {
-        TreeMap<Long,String> orderedChildren;
+        Map<Long,String> orderedChildren;
         // Same as for element.  Should refactor this.
         while(true){
             try{
@@ -234,7 +235,7 @@ public class DistributedQueue {
      * @throws InterruptedException
      */
     public byte[] take() throws KeeperException, InterruptedException {
-        TreeMap<Long,String> orderedChildren;
+        Map<Long,String> orderedChildren;
         // Same as for element.  Should refactor this.
         while(true){
             LatchChildWatcher childWatcher = new LatchChildWatcher();

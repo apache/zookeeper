@@ -20,6 +20,7 @@ package org.apache.zookeeper.test;
 
 
 import java.util.LinkedList;
+import java.util.List;
 
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
@@ -67,7 +68,8 @@ public class AsyncTest extends ZKTestCase
         return zk;
     }
 
-    LinkedList<Integer> results = new LinkedList<Integer>();
+    List<Integer> results = new LinkedList<Integer>();
+
     @Test
     public void testAsync() throws Exception
     {

@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NewConfigNoQuorum;
@@ -226,7 +227,7 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
         int[][] ports = ReconfigRecoveryTest.generatePorts(SERVER_COUNT);
 
         // generate old config string
-        HashSet<Integer> observers = new HashSet<Integer>();
+        Set<Integer> observers = new HashSet<Integer>();
         observers.add(3);
         StringBuilder sb = ReconfigRecoveryTest.generateConfig(SERVER_COUNT, ports, observers);
         String currentQuorumCfgSection = sb.toString();

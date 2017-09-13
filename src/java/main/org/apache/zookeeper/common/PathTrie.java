@@ -21,6 +21,7 @@ package org.apache.zookeeper.common;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +54,7 @@ public class PathTrie {
     
     static class TrieNode {
         boolean property = false;
-        final HashMap<String, TrieNode> children;
+        final Map<String, TrieNode> children;
         TrieNode parent = null;
         /**
          * create a trienode with parent

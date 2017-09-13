@@ -27,6 +27,7 @@ import javax.security.auth.x500.X500Principal;
 
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.common.ZKConfig;
+import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.common.X509Exception.KeyManagerException;
 import org.apache.zookeeper.common.X509Exception.TrustManagerException;
 import org.apache.zookeeper.common.X509Util;
@@ -64,7 +65,7 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
      * <br/><code>zookeeper.ssl.keyStore.password</code>
      * <br/><code>zookeeper.ssl.trustStore.password</code>
      */
-    public X509AuthenticationProvider() {
+    public X509AuthenticationProvider() throws X509Exception {
         String keyStoreLocationProp = System.getProperty(
                 ZKConfig.SSL_KEYSTORE_LOCATION);
         String keyStorePasswordProp = System.getProperty(
@@ -72,25 +73,44 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
 
         X509KeyManager km = null;
         X509TrustManager tm = null;
-        try {
-            km = X509Util.createKeyManager(
-                    keyStoreLocationProp, keyStorePasswordProp);
-        } catch (KeyManagerException e) {
-            LOG.error("Failed to create key manager", e);
+        if (keyStoreLocationProp == null && keyStorePasswordProp == null) {
+            LOG.warn("keystore not specified for client connection");
+        } else {
+            if (keyStoreLocationProp == null) {
+                throw new X509Exception("keystore location not specified for client connection");
+            }
+            if (keyStorePasswordProp == null) {
+                throw new X509Exception("keystore password not specified for client connection");
+            }
+            try {
+                km = X509Util.createKeyManager(
+                        keyStoreLocationProp, keyStorePasswordProp);
+            } catch (KeyManagerException e) {
+                LOG.error("Failed to create key manager", e);
+            }
         }
-
+        
         String trustStoreLocationProp = System.getProperty(
                 ZKConfig.SSL_TRUSTSTORE_LOCATION);
         String trustStorePasswordProp = System.getProperty(
                 ZKConfig.SSL_TRUSTSTORE_PASSWD);
 
-        try {
-            tm = X509Util.createTrustManager(
-                    trustStoreLocationProp, trustStorePasswordProp);
-        } catch (TrustManagerException e) {
-            LOG.error("Failed to create trust manager", e);
+        if (trustStoreLocationProp == null && trustStorePasswordProp == null) {
+            LOG.warn("Truststore not specified for client connection");
+        } else {
+            if (trustStoreLocationProp == null) {
+                throw new X509Exception("Truststore location not specified for client connection");
+            }
+            if (trustStorePasswordProp == null) {
+                throw new X509Exception("Truststore password not specified for client connection");
+            }
+            try {
+                tm = X509Util.createTrustManager(
+                        trustStoreLocationProp, trustStorePasswordProp);
+            } catch (TrustManagerException e) {
+                LOG.error("Failed to create trust manager", e);
+            }
         }
-
         this.keyManager = km;
         this.trustManager = tm;
     }
