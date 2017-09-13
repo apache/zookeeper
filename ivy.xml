@@ -81,6 +81,8 @@
                 rev="${commons-lang.version}" conf="releaseaudit->default"/>
     <dependency org="commons-collections" name="commons-collections" 
                 rev="${commons-collections.version}" conf="releaseaudit->default"/>
+    <dependency org="org.owasp" name="dependency-check-ant"
+                rev="${dependency-check-ant.version}" conf="releaseaudit->default"/>
 
     <dependency org="net.java.dev.javacc" name="javacc" rev="${javacc.version}"
                 conf="javacc->default" />
