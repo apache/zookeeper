@@ -93,6 +93,8 @@ public class QuorumPeerConfig {
 
     protected LearnerType peerType = LearnerType.PARTICIPANT;
 
+    protected boolean ttlNodesEnabled = false;
+
     /**
      * Minimum snapshot retain count.
      * @see org.apache.zookeeper.server.PurgeTxnLog#purge(File, File, int)
@@ -296,6 +298,8 @@ public class QuorumPeerConfig {
                 }
             } else if ((key.startsWith("server.") || key.startsWith("group") || key.startsWith("weight")) && zkProp.containsKey("dynamicConfigFile")) {
                 throw new ConfigException("parameter: " + key + " must be in a separate dynamic config file");
+            } else if (key.equals( "ttlNodesEnabled" )) {
+                ttlNodesEnabled = Boolean.parseBoolean(value);
             } else {
                 System.setProperty("zookeeper." + key, value);
             }
@@ -704,6 +708,10 @@ public class QuorumPeerConfig {
     
     public boolean getSyncEnabled() {
         return syncEnabled;
+    }
+
+    public boolean getTtlNodesEnabled() {
+        return ttlNodesEnabled;
     }
 
     public QuorumVerifier getQuorumVerifier() {

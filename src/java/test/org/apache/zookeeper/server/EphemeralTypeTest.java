@@ -55,4 +55,13 @@ public class EphemeralTypeTest {
         Assert.assertEquals(EphemeralType.NORMAL, EphemeralType.get(1));
         Assert.assertEquals(EphemeralType.NORMAL, EphemeralType.get(Long.MAX_VALUE));
     }
+
+    @Test
+    public void testServerIds() {
+        for ( int i = 0; i < 255; ++i ) {
+            Assert.assertEquals(EphemeralType.NORMAL, EphemeralType.get(SessionTrackerImpl.initializeNextSession(i)));
+        }
+        Assert.assertEquals(EphemeralType.TTL, EphemeralType.get(SessionTrackerImpl.initializeNextSession(255)));
+        Assert.assertEquals(EphemeralType.NORMAL, EphemeralType.get(SessionTrackerImpl.initializeNextSession(EphemeralType.MAX_TTL_SERVER_ID)));
+    }
 }

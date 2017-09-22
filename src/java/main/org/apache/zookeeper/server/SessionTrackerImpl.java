@@ -84,6 +84,9 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements
         long nextSid;
         nextSid = (Time.currentElapsedTime() << 24) >>> 8;
         nextSid =  nextSid | (id <<56);
+        if (nextSid == EphemeralType.CONTAINER_EPHEMERAL_OWNER) {
+            ++nextSid;  // this is an unlikely edge case, but check it just in case
+        }
         return nextSid;
     }
 

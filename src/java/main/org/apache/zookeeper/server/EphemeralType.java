@@ -20,7 +20,6 @@ package org.apache.zookeeper.server;
 
 import org.apache.zookeeper.CreateMode;
 
-
 public enum EphemeralType {
     /**
      * Not ephemeral
@@ -40,19 +39,21 @@ public enum EphemeralType {
     TTL;
 
     public static final long CONTAINER_EPHEMERAL_OWNER = Long.MIN_VALUE;
-    public static final long MAX_TTL = 0x0fffffffffffffffL;
-    public static final long TTL_MASK = 0x8000000000000000L;
+    public static final long MAX_TTL = 0x00ffffffffffffffL;
+    public static final long TTL_MASK = 0xff00000000000000L;
+    public static final long MAX_TTL_SERVER_ID = 0xfe;  // 254
 
     public static EphemeralType get(long ephemeralOwner) {
         if (ephemeralOwner == CONTAINER_EPHEMERAL_OWNER) {
             return CONTAINER;
         }
-        if (ephemeralOwner < 0) {
+        if ((ephemeralOwner & TTL_MASK) == TTL_MASK) {
             return TTL;
         }
         return (ephemeralOwner == 0) ? VOID : NORMAL;
     }
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     public static void validateTTL(CreateMode mode, long ttl) {
         if (mode.isTTL()) {
             ttlToEphemeralOwner(ttl);
@@ -62,7 +63,7 @@ public enum EphemeralType {
     }
 
     public static long getTTL(long ephemeralOwner) {
-        if ((ephemeralOwner < 0) && (ephemeralOwner != CONTAINER_EPHEMERAL_OWNER)) {
+        if (get(ephemeralOwner) == TTL) {
             return (ephemeralOwner & MAX_TTL);
         }
         return 0;
