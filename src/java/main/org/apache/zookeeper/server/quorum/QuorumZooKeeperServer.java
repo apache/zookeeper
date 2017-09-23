@@ -51,6 +51,11 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
     }
 
     @Override
+    public boolean getTtlNodesEnabled() {
+        return self.ttlNodesEnabled;
+    }
+
+    @Override
     protected void startSessionTracker() {
         upgradeableSessionTracker = (UpgradeableSessionTracker) sessionTracker;
         upgradeableSessionTracker.start();

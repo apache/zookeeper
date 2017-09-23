@@ -183,6 +183,7 @@ public class QuorumPeerMain {
           quorumPeer.setSecureCnxnFactory(secureCnxnFactory);
           quorumPeer.setLearnerType(config.getPeerType());
           quorumPeer.setSyncEnabled(config.getSyncEnabled());
+          quorumPeer.setTtlNodes(config.getTtlNodesEnabled());  // must be after quorumPeer.setMyid()
           quorumPeer.setQuorumListenOnAllIPs(config.getQuorumListenOnAllIPs());
 
           // sets quorum sasl authentication configurations

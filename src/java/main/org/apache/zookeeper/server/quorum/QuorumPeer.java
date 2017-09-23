@@ -51,6 +51,7 @@ import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
+import org.apache.zookeeper.server.EphemeralType;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
@@ -538,6 +539,13 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * (broadcast and fast leader election).
      */
     protected boolean quorumListenOnAllIPs = false;
+
+    /**
+     * Enables/Disables TTL Nodes. IMPORTANT: due to how TTL
+     * nodes are implemented the max ServerId becomes 254 when
+     * TTL nodes are enabled
+     */
+    protected boolean ttlNodesEnabled = false;
 
     /**
      * Keeps time taken for leader election in milliseconds. Sets the value to
@@ -1670,6 +1678,18 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      */
     public void setSyncEnabled(boolean syncEnabled) {
         this.syncEnabled = syncEnabled;
+    }
+
+    /**
+     * Set ttlNodesEnabled
+     *
+     * @param ttlNodesEnabled - see {@link #ttlNodesEnabled}
+     */
+    public void setTtlNodes(boolean ttlNodesEnabled) {
+        this.ttlNodesEnabled = ttlNodesEnabled;
+        if (this.ttlNodesEnabled && (myid > EphemeralType.MAX_TTL_SERVER_ID)) {
+            throw new RuntimeException("TTL nodes are enabled but Server ID is too large. Cannot be larger than " + EphemeralType.MAX_TTL_SERVER_ID);
+        }
     }
 
     /**

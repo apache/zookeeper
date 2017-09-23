@@ -125,6 +125,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     private final ZooKeeperServerListener listener;
     private ZooKeeperServerShutdownHandler zkShutdownHandler;
 
+    private volatile boolean defaultTtlNodesEnabled = true;
+
     void removeCnxn(ServerCnxn cnxn) {
         zkDb.removeCnxn(cnxn);
     }
@@ -829,6 +831,15 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             limit = 1000;
         }
         return limit;
+    }
+
+    public boolean getTtlNodesEnabled() {
+        return defaultTtlNodesEnabled; // usually accessed by the overloaded method in QuorumZooKeeperServer
+    }
+
+    // visible for testing
+    void setTtlNodesEnabled(boolean ttlNodesEnabled) {
+        this.defaultTtlNodesEnabled = ttlNodesEnabled;
     }
 
     public void setServerCnxnFactory(ServerCnxnFactory factory) {

@@ -25,7 +25,6 @@ import org.apache.zookeeper.Op;
 import org.apache.zookeeper.OpResult;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.CreateResponse;
@@ -219,6 +218,16 @@ public class CreateTTLTest extends ClientBase {
             Assert.fail("should have thrown IllegalArgumentException");
         } catch (IllegalArgumentException dummy) {
             // correct
+        }
+    }
+
+    @Test(expected = KeeperException.UnimplementedException.class)
+    public void testDisabled() throws KeeperException, InterruptedException {
+        serverFactory.zkServer.setTtlNodesEnabled(false);
+        try {
+            zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL, new Stat(), 100);
+        } finally {
+            serverFactory.zkServer.setTtlNodesEnabled(true);
         }
     }
 
