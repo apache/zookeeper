@@ -24,6 +24,7 @@ import java.io.DataOutputStream;
 import java.io.PrintStream;
 
 import java.util.HashSet;
+import java.util.Set;
 
 public class MeasureThroughput {
     private static final int MS_PER_SEC = 1000;
@@ -45,7 +46,7 @@ public class MeasureThroughput {
 	long currentsec = 0;
 	long currentmin = 0;
 	long currenthour = 0;
-	HashSet<Long> zxids_ms = new HashSet<Long>();
+	Set<Long> zxids_ms = new HashSet<Long>();
 	long zxid_sec = 0;
 	long zxid_min = 0;
 	long zxid_hour = 0;

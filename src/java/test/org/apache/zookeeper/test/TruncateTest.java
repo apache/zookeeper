@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.jute.Record;
 import org.apache.zookeeper.CreateMode;
@@ -75,7 +76,7 @@ public class TruncateTest extends ZKTestCase {
         ZKDatabase zkdb = new ZKDatabase(snaplog);
         // make sure to snapshot, so that we have something there when
         // truncateLog reloads the db
-        snaplog.save(zkdb.getDataTree(), zkdb.getSessionWithTimeOuts());
+        snaplog.save(zkdb.getDataTree(), zkdb.getSessionWithTimeOuts(), false);
 
         for (int i = 1; i <= 100; i++) {
             append(zkdb, i);
@@ -190,7 +191,7 @@ public class TruncateTest extends ZKTestCase {
         int port3 = PortAssignment.unique();
         
         // Start up two of the quorum and add 10 txns
-        HashMap<Long,QuorumServer> peers = new HashMap<Long,QuorumServer>();
+        Map<Long,QuorumServer> peers = new HashMap<Long,QuorumServer>();
         peers.put(Long.valueOf(1), new QuorumServer(1,
                        new InetSocketAddress("127.0.0.1", PortAssignment.unique()),
                        new InetSocketAddress("127.0.0.1", PortAssignment.unique()),

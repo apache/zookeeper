@@ -435,7 +435,7 @@ public class Zab1_0Test extends ZKTestCase {
             Assert.assertTrue(zxid > ZxidUtils.makeZxid(1, 0));
             
             // Generate snapshot and close files.
-            snapLog.save(zkDb.getDataTree(), zkDb.getSessionWithTimeOuts());
+            snapLog.save(zkDb.getDataTree(), zkDb.getSessionWithTimeOuts(), false);
             snapLog.close();
             
             QuorumPeer peer = createQuorumPeer(tmpDir);
@@ -714,7 +714,7 @@ public class Zab1_0Test extends ZKTestCase {
                     Assert.assertEquals(1, f.self.getAcceptedEpoch());
                     Assert.assertEquals(1, f.self.getCurrentEpoch());
                     //Make sure that we did take the snapshot now
-                    verify(f.zk).takeSnapshot();
+                    verify(f.zk).takeSnapshot(true);
                     Assert.assertEquals(firstZxid, f.fzk.getLastProcessedZxid());
                     
                     // Make sure the data was recorded in the filesystem ok
@@ -1367,7 +1367,7 @@ public class Zab1_0Test extends ZKTestCase {
             FileTxnSnapLog logFactory = new FileTxnSnapLog(tmpDir, tmpDir);
             File version2 = new File(tmpDir, "version-2");
             version2.mkdir();
-            logFactory.save(new DataTree(), new ConcurrentHashMap<Long, Integer>());
+            logFactory.save(new DataTree(), new ConcurrentHashMap<Long, Integer>(), false);
             long zxid = ZxidUtils.makeZxid(3, 3);
             logFactory.append(new Request(1, 1, ZooDefs.OpCode.error,
                     new TxnHeader(1, 1, zxid, 1, ZooDefs.OpCode.error),

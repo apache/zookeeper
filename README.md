@@ -1,3 +1,6 @@
+# Apache ZooKeeper
+![alt text](https://zookeeper.apache.org/images/zookeeper_small.gif "ZooKeeper")
+
 For the latest information about Apache ZooKeeper, please visit our website at:
 
    http://zookeeper.apache.org/
@@ -35,3 +38,8 @@ dist-maven directory are deployed to the central repository after the release
 is voted on and approved by the Apache ZooKeeper PMC:
 
   https://repo1.maven.org/maven2/org/apache/zookeeper/zookeeper/
+
+# Contributing
+We always welcome new contributors to the project! See [How to Contribute](https://cwiki.apache.org/confluence/display/ZOOKEEPER/HowToContribute) for details on how to submit patch through pull request and our contribution workflow.
+
+

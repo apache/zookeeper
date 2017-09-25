@@ -196,7 +196,7 @@ public class FileTxnSnapLog {
             if (trustEmptyDB) {
                 /* TODO: (br33d) we should either put a ConcurrentHashMap on restore()
                  *       or use Map on save() */
-                save(dt, (ConcurrentHashMap<Long, Integer>)sessions);
+                save(dt, (ConcurrentHashMap<Long, Integer>)sessions, false);
 
                 /* return a zxid of 0, since we know the database is empty */
                 return 0L;
@@ -335,16 +335,18 @@ public class FileTxnSnapLog {
      * @param dataTree the datatree to be serialized onto disk
      * @param sessionsWithTimeouts the session timeouts to be
      * serialized onto disk
+     * @param syncSnap sync the snapshot immediately after write
      * @throws IOException
      */
     public void save(DataTree dataTree,
-            ConcurrentHashMap<Long, Integer> sessionsWithTimeouts)
+                     ConcurrentHashMap<Long, Integer> sessionsWithTimeouts,
+                     boolean syncSnap)
         throws IOException {
         long lastZxid = dataTree.lastProcessedZxid;
         File snapshotFile = new File(snapDir, Util.makeSnapshotName(lastZxid));
         LOG.info("Snapshotting: 0x{} to {}", Long.toHexString(lastZxid),
                 snapshotFile);
-        snapLog.serialize(dataTree, sessionsWithTimeouts, snapshotFile);
+        snapLog.serialize(dataTree, sessionsWithTimeouts, snapshotFile, syncSnap);
 
     }
 

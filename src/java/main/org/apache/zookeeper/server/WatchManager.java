@@ -320,7 +320,7 @@ class WatchManager {
         Map<Long, Set<String>> id2paths = new HashMap<>();
         for (Entry<Watcher, Set<String>> e: watch2Paths.entrySet()) {
             Long id = ((ServerCnxn) e.getKey()).getSessionId();
-            HashSet<String> paths = new HashSet<>(e.getValue());
+            Set<String> paths = new HashSet<>(e.getValue());
             id2paths.put(id, paths);
         }
         return new WatchesReport(id2paths);

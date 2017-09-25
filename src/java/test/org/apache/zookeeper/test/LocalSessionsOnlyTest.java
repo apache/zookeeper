@@ -19,6 +19,7 @@
 package org.apache.zookeeper.test;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.zookeeper.CreateMode;
@@ -107,7 +108,7 @@ public class LocalSessionsOnlyTest extends ZKTestCase {
         zk.close();
 
         // Validate data on both follower and leader
-        HashMap<String, Integer> peers = new HashMap<String, Integer>();
+        Map<String, Integer> peers = new HashMap<String, Integer>();
         peers.put("leader", leaderIdx);
         peers.put("follower", followerIdx);
         for (Entry<String, Integer> entry: peers.entrySet()) {

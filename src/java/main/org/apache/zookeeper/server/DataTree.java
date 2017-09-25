@@ -150,7 +150,7 @@ public class DataTree {
         if (retv == null) {
             return new HashSet<String>();
         }
-        HashSet<String> cloned = null;
+        Set<String> cloned = null;
         synchronized (retv) {
             cloned = (HashSet<String>) retv.clone();
         }
@@ -549,7 +549,7 @@ public class DataTree {
             } else if (ephemeralType == EphemeralType.TTL) {
                 ttls.remove(path);
             } else if (eowner != 0) {
-                HashSet<String> nodes = ephemerals.get(eowner);
+                Set<String> nodes = ephemerals.get(eowner);
                 if (nodes != null) {
                     synchronized (nodes) {
                         nodes.remove(path);
@@ -1008,7 +1008,7 @@ public class DataTree {
         // so there is no need for synchronization. The list is not
         // changed here. Only create and delete change the list which
         // are again called from FinalRequestProcessor in sequence.
-        HashSet<String> list = ephemerals.remove(session);
+        Set<String> list = ephemerals.remove(session);
         if (list != null) {
             for (String path : list) {
                 try {
@@ -1292,7 +1292,7 @@ public class DataTree {
         for (Entry<Long, HashSet<String>> entry : ephemerals.entrySet()) {
             pwriter.print("0x" + Long.toHexString(entry.getKey()));
             pwriter.println(":");
-            HashSet<String> tmp = entry.getValue();
+            Set<String> tmp = entry.getValue();
             if (tmp != null) {
                 synchronized (tmp) {
                     for (String path : tmp) {
@@ -1309,7 +1309,7 @@ public class DataTree {
      * @return map of session ID to sets of ephemeral znodes
      */
     public Map<Long, Set<String>> getEphemerals() {
-        HashMap<Long, Set<String>> ephemeralsCopy = new HashMap<Long, Set<String>>();
+        Map<Long, Set<String>> ephemeralsCopy = new HashMap<Long, Set<String>>();
         for (Entry<Long, HashSet<String>> e : ephemerals.entrySet()) {
             synchronized (e.getValue()) {
                 ephemeralsCopy.put(e.getKey(), new HashSet<String>(e.getValue()));

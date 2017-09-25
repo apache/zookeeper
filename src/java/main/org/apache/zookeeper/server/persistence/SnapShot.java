@@ -44,11 +44,13 @@ public interface SnapShot {
     /**
      * persist the datatree and the sessions into a persistence storage
      * @param dt the datatree to be serialized
-     * @param sessions 
+     * @param sessions the session timeouts to be serialized
+     * @param name the object name to store snapshot into
+     * @param fsync sync the snapshot immediately after write
      * @throws IOException
      */
-    void serialize(DataTree dt, Map<Long, Integer> sessions, 
-            File name) 
+    void serialize(DataTree dt, Map<Long, Integer> sessions,
+                   File name, boolean fsync)
         throws IOException;
     
     /**

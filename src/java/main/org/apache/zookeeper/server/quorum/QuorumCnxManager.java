@@ -26,6 +26,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.UnresolvedAddressException;
@@ -639,12 +640,18 @@ public class QuorumCnxManager {
                     setName(addr.toString());
                     ss.bind(addr);
                     while (!shutdown) {
-                        client = ss.accept();
-                        setSockOpts(client);
-                        LOG.info("Received connection request "
-                                + client.getRemoteSocketAddress());
-                        receiveConnection(client);
-                        numRetries = 0;
+                        try {
+                            client = ss.accept();
+                            setSockOpts(client);
+                            LOG.info("Received connection request "
+                                     + client.getRemoteSocketAddress());
+                            receiveConnection(client);
+                            numRetries = 0;
+                        } catch (SocketTimeoutException e) {
+                            LOG.warn("The socket is listening for the election accepted "
+                                     + "and it timed out unexpectedly, but will retry."
+                                     + "see ZOOKEEPER-2836");
+                        }
                     }
                 } catch (IOException e) {
                     if (shutdown) {

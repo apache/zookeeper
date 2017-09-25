@@ -48,12 +48,12 @@ public class Environment {
         }
     }
 
-    private static void put(ArrayList<Entry> l, String k, String v) {
+    private static void put(List<Entry> l, String k, String v) {
         l.add(new Entry(k,v));
     }
 
     public static List<Entry> list() {
-        ArrayList<Entry> l = new ArrayList<Entry>();
+        List<Entry> l = new ArrayList<Entry>();
         put(l, "zookeeper.version", Version.getFullVersion());
 
         try {

@@ -74,7 +74,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     ServerBootstrap bootstrap;
     Channel parentChannel;
     ChannelGroup allChannels = new DefaultChannelGroup("zkServerCnxns");
-    HashMap<InetAddress, Set<NettyServerCnxn>> ipMap =
+    Map<InetAddress, Set<NettyServerCnxn>> ipMap =
         new HashMap<InetAddress, Set<NettyServerCnxn>>( );
     InetSocketAddress localAddress;
     int maxClientCnxns = 60;
@@ -547,7 +547,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
 
     @Override
     public Iterable<Map<String, Object>> getAllConnectionInfo(boolean brief) {
-        HashSet<Map<String,Object>> info = new HashSet<Map<String,Object>>();
+        Set<Map<String,Object>> info = new HashSet<Map<String,Object>>();
         // No need to synchronize since cnxns is backed by a ConcurrentHashMap
         for (ServerCnxn c : cnxns) {
             info.add(c.getConnectionInfo(brief));

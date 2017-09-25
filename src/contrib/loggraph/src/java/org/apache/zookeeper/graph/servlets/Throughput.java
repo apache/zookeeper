@@ -25,6 +25,7 @@ import java.io.PrintStream;
 
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.Set;
 
 import org.apache.zookeeper.graph.*;
 import org.slf4j.Logger;
@@ -80,7 +81,7 @@ public class Throughput extends JsonServlet
 	
 	long current = 0;
 	long currentms = 0;
-	HashSet<Long> zxids_ms = new HashSet<Long>();
+	Set<Long> zxids_ms = new HashSet<Long>();
 	long zxidcount = 0;
 
 	JSONArray events = new JSONArray();

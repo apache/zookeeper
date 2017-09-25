@@ -1538,6 +1538,7 @@ public class ZooKeeper implements AutoCloseable {
         final String clientPath = path;
         PathUtils.validatePath(clientPath, createMode.isSequential());
         EphemeralType.validateTTL(createMode, -1);
+        validateACL(acl);
 
         final String serverPath = prependChroot(clientPath);
 
@@ -1548,9 +1549,6 @@ public class ZooKeeper implements AutoCloseable {
         request.setData(data);
         request.setFlags(createMode.toFlag());
         request.setPath(serverPath);
-        if (acl != null && acl.size() == 0) {
-            throw new KeeperException.InvalidACLException();
-        }
         request.setAcl(acl);
         ReplyHeader r = cnxn.submitRequest(h, request, response, null);
         if (r.getErr() != 0) {
@@ -1641,15 +1639,13 @@ public class ZooKeeper implements AutoCloseable {
         final String clientPath = path;
         PathUtils.validatePath(clientPath, createMode.isSequential());
         EphemeralType.validateTTL(createMode, ttl);
+        validateACL(acl);
 
         final String serverPath = prependChroot(clientPath);
 
         RequestHeader h = new RequestHeader();
         setCreateHeader(createMode, h);
         Create2Response response = new Create2Response();
-        if (acl != null && acl.size() == 0) {
-            throw new KeeperException.InvalidACLException();
-        }
         Record record = makeCreateRecord(createMode, serverPath, data, acl, ttl);
         ReplyHeader r = cnxn.submitRequest(h, record, response, null);
         if (r.getErr() != 0) {
@@ -2482,6 +2478,7 @@ public class ZooKeeper implements AutoCloseable {
     {
         final String clientPath = path;
         PathUtils.validatePath(clientPath);
+        validateACL(acl);
 
         final String serverPath = prependChroot(clientPath);
 
@@ -2489,9 +2486,6 @@ public class ZooKeeper implements AutoCloseable {
         h.setType(ZooDefs.OpCode.setACL);
         SetACLRequest request = new SetACLRequest();
         request.setPath(serverPath);
-        if (acl != null && acl.size() == 0) {
-            throw new KeeperException.InvalidACLException(clientPath);
-        }
         request.setAcl(acl);
         request.setVersion(aclVersion);
         SetACLResponse response = new SetACLResponse();
@@ -3123,6 +3117,20 @@ public class ZooKeeper implements AutoCloseable {
                     + clientCnxnSocketName);
             ioe.initCause(e);
             throw ioe;
+        }
+    }
+
+    /**
+     * Validates the provided ACL list for null, empty or null value in it.
+     * 
+     * @param acl
+     *            ACL list
+     * @throws InvalidACLException
+     *             if ACL list is not valid
+     */
+    private void validateACL(List<ACL> acl) throws KeeperException.InvalidACLException {
+        if (acl == null || acl.isEmpty() || acl.contains(null)) {
+            throw new KeeperException.InvalidACLException();
         }
     }
 }
