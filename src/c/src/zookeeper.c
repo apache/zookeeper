@@ -24,6 +24,7 @@
 #define USE_IPV6
 #endif
 
+#include "config.h"
 #include <zookeeper.h>
 #include <zookeeper.jute.h>
 #include <proto.h>
