@@ -33,6 +33,7 @@
     <conf name="package" extends="master"/>
     <conf name="jdiff" visibility="private"/>
     <conf name="releaseaudit" visibility="private" description="Artifacts required for releaseaudit target"/>
+    <conf name="owasp" visibility="private" description="Artifacts required for owasp target"/>
   </configurations>
 
   <publications>
@@ -77,7 +78,7 @@
     <dependency org="commons-collections" name="commons-collections" 
                 rev="3.2.2" conf="releaseaudit->default"/>
     <dependency org="org.owasp" name="dependency-check-ant"
-                rev="2.1.0" conf="releaseaudit->default"/>
+                rev="2.1.0" conf="owasp->default"/>
 
     <dependency org="commons-io" name="commons-io" rev="2.4"
                 conf="test->default"/>
