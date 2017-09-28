@@ -116,6 +116,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
     <property name="ivy.package.lib" value="${build.dir}/package/lib"/>
     <property name="ivy.test.lib" value="${build.dir}/test/lib"/>
     <property name="ivy.jdiff.lib" value="${build.dir}/jdiff/lib"/>
+    <property name="ivy.releaseaudit.lib" value="${build.dir}/releaseaudit/lib"/>
     <property name="ivy.owasp.lib" value="${build.dir}/owasp/lib"/>
     <property name="ivysettings.xml" value="${basedir}/ivysettings.xml"/>
 
@@ -389,7 +390,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
 
     <target name="ivy-retrieve-releaseaudit" depends="init,ivy-init">
       <ivy:retrieve settingsRef="${ant.project.name}" conf="releaseaudit"
-                    pattern="${ivy.lib}/[artifact]-[revision].[ext]"/>
+                    pattern="${ivy.releaseaudit.lib}/[artifact]-[revision].[ext]"/>
       <ivy:cachepath pathid="releaseaudit-classpath" conf="releaseaudit"/>
     </target>
 
