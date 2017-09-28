@@ -102,6 +102,7 @@
     </dependency>
     <dependency org="org.apache.directory.server" name="apacheds-mavibot-partition" rev="2.0.0-M15" conf="test->default">
         <exclude org="org.apache.directory.api" name="api-ldap-schema-data"/>
+        <exclude org="org.slf4j" name="slf4j-log4j12"/>
     </dependency>
     <dependency org="org.apache.directory.api" name="api-all" rev="1.0.0-M20" conf="test->default">
         <exclude org="xml-apis" name="xml-apis"/>
