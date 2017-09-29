@@ -122,6 +122,8 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="ivy.test.lib" value="${build.dir}/test/lib"/>
     <property name="ivy.jdiff.lib" value="${build.dir}/jdiff/lib"/>
     <property name="ivy.javacc.lib" value="${build.dir}/javacc/lib"/>
+    <property name="ivy.releaseaudit.lib" value="${build.dir}/releaseaudit/lib"/>
+    <property name="ivy.owasp.lib" value="${build.dir}/owasp/lib"/>
     <property name="ivysettings.xml" value="${basedir}/ivysettings.xml"/>
 
     <property name="mvnrepo" value="https://repo1.maven.org/maven2"/>
@@ -431,8 +433,14 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
     <target name="ivy-retrieve-releaseaudit" depends="init,ivy-init">
       <ivy:retrieve settingsRef="${ant.project.name}" conf="releaseaudit"
-                    pattern="${ivy.lib}/[artifact]-[revision].[ext]"/>
+                    pattern="${ivy.releaseaudit.lib}/[artifact]-[revision].[ext]"/>
       <ivy:cachepath pathid="releaseaudit-classpath" conf="releaseaudit"/>
+    </target>
+
+    <target name="ivy-retrieve-owasp" depends="init,ivy-init">
+        <ivy:retrieve settingsRef="${ant.project.name}" conf="owasp"
+                      pattern="${ivy.owasp.lib}/[artifact]-[revision].[ext]"/>
+        <ivy:cachepath pathid="owasp-classpath" conf="owasp"/>
     </target>
 
     <target name="process-template">
@@ -1567,8 +1575,8 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
                classpathref="releaseaudit-classpath"/>
     </target>
 
-    <target name="owasp-taskdef" depends="ivy-retrieve-releaseaudit">
-        <typedef format="properties" resource="dependency-check-taskdefs.properties" uri="antlib:org.owasp.dependencycheck.anttasks" classpathref="releaseaudit-classpath"/>
+    <target name="owasp-taskdef" depends="ivy-retrieve-owasp">
+        <typedef format="properties" resource="dependency-check-taskdefs.properties" uri="antlib:org.owasp.dependencycheck.anttasks" classpathref="owasp-classpath"/>
     </target>
 
     <target name="owasp" depends="owasp-taskdef,ivy-retrieve" description="OWASP dependency check">
