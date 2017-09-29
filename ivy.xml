@@ -33,6 +33,7 @@
     <conf name="package" extends="master"/>
     <conf name="jdiff" visibility="private"/>
     <conf name="releaseaudit" visibility="private" description="Artifacts required for releaseaudit target"/>
+    <conf name="owasp" visibility="private" description="Artifacts required for owasp target"/>
   </configurations>
 
   <publications>
@@ -77,7 +78,7 @@
     <dependency org="commons-collections" name="commons-collections" 
                 rev="3.2.2" conf="releaseaudit->default"/>
     <dependency org="org.owasp" name="dependency-check-ant"
-                rev="2.1.0" conf="releaseaudit->default"/>
+                rev="2.1.0" conf="owasp->default"/>
 
     <dependency org="commons-io" name="commons-io" rev="2.4"
                 conf="test->default"/>
@@ -101,6 +102,7 @@
     </dependency>
     <dependency org="org.apache.directory.server" name="apacheds-mavibot-partition" rev="2.0.0-M15" conf="test->default">
         <exclude org="org.apache.directory.api" name="api-ldap-schema-data"/>
+        <exclude org="org.slf4j" name="slf4j-log4j12"/>
     </dependency>
     <dependency org="org.apache.directory.api" name="api-all" rev="1.0.0-M20" conf="test->default">
         <exclude org="xml-apis" name="xml-apis"/>
