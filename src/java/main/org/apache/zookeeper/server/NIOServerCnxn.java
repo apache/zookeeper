@@ -373,7 +373,7 @@ public class NIOServerCnxn extends ServerCnxn {
             // expecting close to log session closure
             close();
         } catch (EndOfStreamException e) {
-            LOG.warn(e.getMessage());
+            LOG.info(e.getMessage());
             if (LOG.isDebugEnabled()) {
                 LOG.debug("EndOfStreamException stack trace", e);
             }
