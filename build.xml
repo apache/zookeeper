@@ -439,6 +439,11 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <ivy:cachepath pathid="owasp-classpath" conf="owasp"/>
     </target>
 
+    <target name="dependency-report" depends="init,ivy-init">
+        <ivy:resolve conf="*"/>
+        <ivy:report conf="*" todir="${build.dir}/dependency-report"/>
+    </target>
+
     <target name="process-template">
       <copy todir="${c.src.dir}" verbose="true" overwrite="true" failonerror="true">
         <fileset dir="${c.src.dir}">
