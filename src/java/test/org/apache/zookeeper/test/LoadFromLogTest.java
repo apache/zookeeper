@@ -297,7 +297,7 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
 		String[] tokens = lastPath.split("-");
 		String expectedPath = "/invalidsnap/test-"
 				+ String.format("%010d",
-						(new Integer(tokens[1])).intValue() + 1);
+                Integer.parseInt(tokens[1]) + 1);
 		long eZxid = zks.getZKDatabase().getDataTreeLastProcessedZxid();
 		// force the zxid to be behind the content
 		zks.getZKDatabase().setlastProcessedZxid(

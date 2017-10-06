@@ -85,8 +85,7 @@ public class OSMXBean
         try {
             classRef = Class.forName("com.sun.management.UnixOperatingSystemMXBean");
             if (classRef.isInstance(osMbean)) {
-                mBeanMethod = classRef.getDeclaredMethod(mBeanMethodName,
-                new Class[0]);
+                mBeanMethod = classRef.getDeclaredMethod(mBeanMethodName);
                 unixos = classRef.cast(osMbean);
                 return (Long)mBeanMethod.invoke(unixos);
             }

@@ -50,7 +50,7 @@ public class ProviderRegistry {
                         Class<?> c = ZooKeeperServer.class.getClassLoader()
                                 .loadClass(className);
                         AuthenticationProvider ap = (AuthenticationProvider) c
-                                .newInstance();
+                                .getDeclaredConstructor().newInstance();
                         authenticationProviders.put(ap.getScheme(), ap);
                     } catch (Exception e) {
                         LOG.warn("Problems loading " + className,e);
