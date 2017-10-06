@@ -28,7 +28,7 @@
   <configurations defaultconfmapping="default">
     <conf name="master"/>
     <conf name="default"/>
-    <conf name="test"/>
+    <conf name="test" extends="default"/>
     <conf name="mvn-ant-task" visibility="private"/>
     <conf name="package" extends="master"/>
     <conf name="jdiff" visibility="private"/>
@@ -47,7 +47,10 @@
     <dependency org="org.apache.maven.wagon" name="wagon-http" rev="${wagon-http.version}"
                 conf="mvn-ant-task->default"/>
     <dependency org="org.apache.maven" name="maven-ant-tasks" rev="${maven-ant-tasks.version}"
-                conf="mvn-ant-task->default"/>
+                conf="mvn-ant-task->default">
+        <exclude org="org.codehaus.plexus" module="plexus-utils"/>
+        <exclude org="org.apache.maven.wagon" module="wagon-provider-api" />
+    </dependency>
     <!-- transitive false turns off dependency checking, log4j deps seem borked -->
     <dependency org="log4j" name="log4j" rev="${log4j.version}" transitive="false" conf="default"/>
     <dependency org="jline" name="jline" rev="${jline.version}" transitive="false" conf="default"/>
@@ -74,7 +77,10 @@
                 conf="jdiff->default"/>
 
     <dependency org="org.apache.rat" name="apache-rat-tasks" 
-                rev="${apache-rat-tasks.version}" conf="releaseaudit->default"/>
+                rev="${apache-rat-tasks.version}" conf="releaseaudit->default">
+        <exclude org="commons-collections" module="commons-collections"/>
+        <exclude org="commons-lang" module="commons-lang"/>
+    </dependency>
     <dependency org="commons-lang" name="commons-lang" 
                 rev="${commons-lang.version}" conf="releaseaudit->default"/>
     <dependency org="commons-collections" name="commons-collections"
@@ -88,35 +94,56 @@
 
     <!-- Apache directory server project, org.apache.directory.* packages for miniKdc tests -->
     <dependency org="org.apache.directory.server" name="apacheds-core-api" rev="${apache-directory-server.version}" conf="test->default">
-        <exclude org="org.apache.directory.api" name="api-ldap-schema-data"/>
+        <exclude org="org.apache.directory.api" module="api-ldap-schema-data"/>
+        <exclude org="org.slf4j" module="slf4j-api"/>
+        <exclude org="commons-collections" module="commons-collections"/>
     </dependency>
     <dependency org="org.apache.directory.server" name="apacheds-interceptor-kerberos" rev="${apache-directory-server.version}" conf="test->default">
-        <exclude org="org.apache.directory.api" name="api-ldap-schema-data"/>
+        <exclude org="org.apache.directory.api" module="api-ldap-schema-data"/>
+        <exclude org="commons-collections" module="commons-collections"/>
+        <exclude org="org.slf4j" module="slf4j-api"/>
     </dependency>
     <dependency org="org.apache.directory.server" name="apacheds-protocol-shared" rev="${apache-directory-server.version}" conf="test->default">
-        <exclude org="org.apache.directory.api" name="api-ldap-schema-data"/>
+        <exclude org="org.apache.directory.api" module="api-ldap-schema-data"/>
+        <exclude org="commons-collections" module="commons-collections"/>
+        <exclude org="org.slf4j" module="slf4j-api"/>
     </dependency>
     <dependency org="org.apache.directory.server" name="apacheds-protocol-kerberos" rev="${apache-directory-server.version}" conf="test->default">
-        <exclude org="org.apache.directory.api" name="api-ldap-schema-data"/>
+        <exclude org="org.apache.directory.api" module="api-ldap-schema-data"/>
+        <exclude org="commons-collections" module="commons-collections"/>
+        <exclude org="org.slf4j" module="slf4j-api"/>
     </dependency>
     <dependency org="org.apache.directory.server" name="apacheds-ldif-partition" rev="${apache-directory-server.version}" conf="test->default">
-        <exclude org="org.apache.directory.api" name="api-ldap-schema-data"/>
+        <exclude org="org.apache.directory.api" module="api-ldap-schema-data"/>
+        <exclude org="commons-collections" module="commons-collections"/>
+        <exclude org="org.slf4j" module="slf4j-api"/>
     </dependency>
     <dependency org="org.apache.directory.server" name="apacheds-mavibot-partition" rev="${apache-directory-server.version}" conf="test->default">
-        <exclude org="org.apache.directory.api" name="api-ldap-schema-data"/>
-        <exclude org="org.slf4j" name="slf4j-log4j12"/>
+        <exclude org="org.apache.directory.api" module="api-ldap-schema-data"/>
+        <exclude org="commons-collections" module="commons-collections"/>
+        <exclude org="org.slf4j" module="slf4j-log4j12"/>
+        <exclude org="log4j" module="log4j"/>
+        <exclude org="org.slf4j" module="slf4j-api"/>
     </dependency>
     <dependency org="org.apache.directory.api" name="api-all" rev="${apache-directory-api.version}" conf="test->default">
-        <exclude org="xml-apis" name="xml-apis"/>
-        <exclude org="xpp3" name="xpp3"/>
-        <exclude org="dom4j" name="dom4j"/>
+        <exclude org="xml-apis" module="xml-apis"/>
+        <exclude org="xpp3" module="xpp3"/>
+        <exclude org="dom4j" module="dom4j"/>
+        <exclude org="commons-collections" module="commons-collections"/>
+        <exclude org="org.slf4j" module="slf4j-api"/>
     </dependency>
     <dependency org="org.apache.directory.server" name="apacheds-jdbm-partition" rev="${apache-directory-server.version}" conf="test->default">
-        <exclude org="org.apache.directory.api" name="api-ldap-schema-data"/>
+        <exclude org="org.apache.directory.api" module="api-ldap-schema-data"/>
+        <exclude org="commons-collections" module="commons-collections"/>
+        <exclude org="org.slf4j" module="slf4j-api"/>
     </dependency>
     <dependency org="org.apache.directory.server" name="apacheds-protocol-ldap" rev="${apache-directory-server.version}" conf="test->default">
-        <exclude org="org.apache.directory.api" name="api-ldap-schema-data"/>
+        <exclude org="org.apache.directory.api" module="api-ldap-schema-data"/>
+        <exclude org="commons-collections" module="commons-collections"/>
+        <exclude org="org.slf4j" module="slf4j-api"/>
     </dependency>
+
+    <conflict manager="strict"/>
 
   </dependencies>
 

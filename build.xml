@@ -251,33 +251,37 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
       </sequential>
     </macrodef>
 
-    <!-- the normal classpath -->
-    <path id="java.classpath">
+    <path id="base.classpath">
       <pathelement location="${build.classes}"/>
       <!-- allow the user to override (e.g. if there are local versions) -->
       <fileset dir="${additional.lib.dir}">
-        <include name="${additional.lib.dir.includes}" />
-        <exclude name="${additional.lib.dir.excludes}" />
+          <include name="${additional.lib.dir.includes}" />
+          <exclude name="${additional.lib.dir.excludes}" />
       </fileset>
       <fileset dir="${lib.dir}">
-        <include name="${lib.dir.includes}" />
-        <exclude name="${lib.dir.excludes}" />
+          <include name="${lib.dir.includes}" />
+          <exclude name="${lib.dir.excludes}" />
       </fileset>
       <fileset dir="${ant.home}/lib">
-        <include name="ant.jar" />
-      </fileset>
-      <fileset dir="${ivy.lib}">
-        <include name="**/*.jar" />
+          <include name="ant.jar" />
       </fileset>
       <pathelement path="${clover.jar}" />
     </path>
 
+    <!-- the normal classpath -->
+    <path id="java.classpath">
+      <path refid="base.classpath"/>
+      <fileset dir="${ivy.lib}">
+        <include name="**/*.jar" />
+      </fileset>
+    </path>
+
     <path id="test.java.classpath">
+      <path refid="base.classpath"/>
       <pathelement location="${test.java.classes}" />
       <fileset dir="${ivy.test.lib}">
         <include name="**/*.jar" />
       </fileset>
-      <path refid="java.classpath"/>
     </path>
 
     <path id="package.classpath">
