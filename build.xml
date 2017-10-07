@@ -436,6 +436,12 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
                     pattern="${ivy.lib}/[artifact]-[revision].[ext]"/>
       <ivy:cachepath pathid="mvn-ant-task-classpath" conf="mvn-ant-task"/>
     </target>
+
+    <target name="dependency-report" depends="init,ivy-init">
+        <ivy:resolve conf="*"/>
+        <ivy:report conf="*" todir="${build.dir}/dependency-report"/>
+    </target>
+
     <target name="compile" depends="ivy-retrieve,clover,build-generated">
         <javac srcdir="${java.src.dir}" destdir="${build.classes}" includeantruntime="false"
                target="${javac.target}" source="${javac.source}" debug="on">
