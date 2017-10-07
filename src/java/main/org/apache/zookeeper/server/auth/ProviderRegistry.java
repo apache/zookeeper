@@ -49,7 +49,7 @@ public class ProviderRegistry {
                     try {
                         Class<?> c = ZooKeeperServer.class.getClassLoader()
                                 .loadClass(className);
-                        AuthenticationProvider ap = (AuthenticationProvider) c
+                        AuthenticationProvider ap = (AuthenticationProvider) c.getDeclaredConstructor()
                                 .newInstance();
                         authenticationProviders.put(ap.getScheme(), ap);
                     } catch (Exception e) {

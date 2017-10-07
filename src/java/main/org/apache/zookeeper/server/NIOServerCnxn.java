@@ -252,7 +252,7 @@ public class NIOServerCnxn extends ServerCnxn {
                      * so we've got to slice the buffer if it's too big.
                      */
                     b = (ByteBuffer) b.slice().limit(
-                        directBuffer.remaining());
+                            directBuffer.remaining());
                 }
                 /*
                  * put() is going to modify the positions of both
