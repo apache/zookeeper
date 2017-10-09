@@ -92,12 +92,14 @@
       <artifactId>jdiff</artifactId>
       <version>${cdh.jdiff.version}</version>
       <optional>true</optional>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>xerces</groupId>
       <artifactId>xerces</artifactId>
       <version>${cdh.xerces.version}</version>
       <optional>true</optional>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.rat</groupId>
@@ -111,12 +113,14 @@
       <artifactId>commons-lang</artifactId>
       <version>${cdh.commons-lang.version}</version>
       <optional>true</optional>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>commons-collections</groupId>
       <artifactId>commons-collections</artifactId>
       <version>${cdh.commons-collections.version}</version>
       <optional>true</optional>
+      <scope>test</scope>
     </dependency>
   </dependencies>
   
