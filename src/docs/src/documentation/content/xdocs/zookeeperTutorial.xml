@@ -369,7 +369,8 @@ In the following section you can find a complete command line application to dem
 recipes. Use the following command to run it.
 </para>
 <programlisting>
-export CLASSPATH=".:$ZOOKEEPER_HOME/*:$ZOOKEEPER_HOME/lib/*:$ZOOKEEPER_HOME/conf"
+ZOOBINDIR="[path_to_distro]/bin"
+. "$ZOOBINDIR"/zkEnv.sh
 java SyncPrimitive [Test Type] [ZK server] [No of elements] [Client type]
 </programlisting>
 
