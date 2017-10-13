@@ -39,6 +39,38 @@ nbdist/
 .cproject
 .buildpath
 
+# Generated docs
+docs/index.html
+docs/index.pdf
+docs/recipes.html
+docs/javaExample.html
+docs/linkmap.html
+docs/javaExample.pdf
+docs/recipes.pdf
+docs/linkmap.pdf
+docs/zookeeperAdmin.html
+docs/zookeeperObservers.html
+docs/zookeeperJMX.pdf
+docs/zookeeperHierarchicalQuorums.pdf
+docs/zookeeperInternals.html
+docs/zookeeperJMX.html
+docs/zookeeperObservers.pdf
+docs/zookeeperInternals.pdf
+docs/zookeeperHierarchicalQuorums.html
+docs/zookeeperAdmin.pdf
+docs/zookeeperReconfig.html
+docs/zookeeperStarted.html
+docs/zookeeperQuotas.html
+docs/zookeeperOver.pdf
+docs/zookeeperQuotas.pdf
+docs/zookeeperTutorial.pdf
+docs/zookeeperProgrammers.pdf
+docs/zookeeperReconfig.pdf
+docs/zookeeperOver.html
+docs/zookeeperProgrammers.html
+docs/zookeeperTutorial.html
+docs/zookeeperStarted.pdf
+
 # Other
 *~
 logs/
