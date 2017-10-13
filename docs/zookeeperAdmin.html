@@ -1145,11 +1145,15 @@ server.3=zoo3:2888:3888</pre>
 </dt>
 <dd>
 <p>(Java system property: <strong>zookeeper.snapCount</strong>)</p>
-<p>ZooKeeper logs transactions to a transaction
-              log. After snapCount transactions are written to a log
-              file a snapshot is started and a new transaction log
-              file is created. The default snapCount is
-              100,000.</p>
+<p>ZooKeeper records its transactions using snapshots and
+              a transaction log (think write-ahead log).The number of
+              transactions recorded in the transaction log before a snapshot
+              can be taken (and the transaction log rolled) is determined
+              by snapCount. In order to prevent all of the machines in the quorum
+              from taking a snapshot at the same time, each ZooKeeper server
+              will take a snapshot when the number of transactions in the transaction log
+              reaches a runtime generated random value in the [snapCount/2+1, snapCount] 
+              range.The default snapCount is 100,000.</p>
 </dd>
 
           
@@ -1446,6 +1450,25 @@ server.3=zoo3:2888:3888</pre>
               </pre>
 </dd>
 
+          
+<dt>
+<term>ipReachableTimeout</term>
+</dt>
+<dd>
+<p>(Java system property: <strong>zookeeper.ipReachableTimeout</strong>)</p>
+<p>
+<strong>New in 3.4.11:</strong>
+                Set this timeout value for IP addresses reachable checking when hostname is resolved, as mesured in
+                milliseconds.
+                By default, ZooKeeper will use the first IP address of the hostname(without any reachable checking).
+                When zookeeper.ipReachableTimeout is set(larger than 0), ZooKeeper will will try to pick up the first 
+                IP address which is reachable. This is done by calling Java API InetAddress.isReachable(long timeout)
+                function, in which this timeout value is used. If none of such reachable IP address can be found, the
+                first IP address of the hostname will be used anyway.
+              </p>
+</dd>
+
+          
 <dt>
 <term>tcpKeepAlive</term>
 </dt>
@@ -1453,15 +1476,20 @@ server.3=zoo3:2888:3888</pre>
 <p>(Java system property: <strong>zookeeper.tcpKeepAlive</strong>)</p>
 <p>
 <strong>New in 3.4.11:</strong>
-              Sets the keepAlive flag on the sockets used by quorum members to perform elections.
-              This will allow for connections between quorum members to remain up when there is 
-              network infrastructure that may otherwise terminate them. Some NATs and firewalls may
-              terminate or lose state for long running or idle connections. </p>
-              Enabling this option relies on OS level settings to work properly, check your operating
-              system's options regarding TCP keepalive for more information.
-              Defaults to <strong>false</strong>.</p>
+                Setting this to true sets the TCP keepAlive flag on the
+                sockets used by quorum members to perform elections.
+                This will allow for connections between quorum members to
+                remain up when there is network infrastructure that may
+                otherwise break them. Some NATs and firewalls may terminate
+                or lose state for long running or idle connections.</p>
+<p> Enabling this option relies on OS level settings to work
+                properly, check your operating system's options regarding TCP
+                keepalive for more information.  Defaults to
+                <strong>false</strong>.
+              </p>
 </dd>
 
+        
 </dl>
 <p></p>
 <a name="sc_authOptions"></a>
@@ -2045,7 +2073,7 @@ imok
 
         
 <dt>
-<term>incorrect placement of transasction log</term>
+<term>incorrect placement of transaction log</term>
 </dt>
 <dd>
 <p>The most performance critical part of ZooKeeper is the
