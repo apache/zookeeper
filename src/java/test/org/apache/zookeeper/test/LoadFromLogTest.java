@@ -60,7 +60,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class LoadFromLogTest extends ZKTestCase implements  Watcher {
-    private static String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
+    private static final String HOST = "127.0.0.1:";
     private static final int CONNECTION_TIMEOUT = 3000;
     private static final int NUM_MESSAGES = 300;
     protected static final Logger LOG = LoggerFactory.getLogger(LoadFromLogTest.class);
@@ -76,17 +76,18 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
      */
     @Test
     public void testLoad() throws Exception {
+        final String hostPort = HOST + PortAssignment.unique();
         // setup a single server cluster
         File tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         SyncRequestProcessor.setSnapCount(100);
-        final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
+        final int PORT = Integer.parseInt(hostPort.split(":")[1]);
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
         f.startup(zks);
         Assert.assertTrue("waiting for server being up ",
-                ClientBase.waitForServerUp(HOSTPORT,CONNECTION_TIMEOUT));
-        ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
+                ClientBase.waitForServerUp(hostPort,CONNECTION_TIMEOUT));
+        ZooKeeper zk = new ZooKeeper(hostPort, CONNECTION_TIMEOUT, this);
 
         // generate some transactions that will get logged
         try {
@@ -99,7 +100,7 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
         }
         f.shutdown();
         Assert.assertTrue("waiting for server to shutdown",
-                ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
+                ClientBase.waitForServerDown(hostPort, CONNECTION_TIMEOUT));
 
         // now verify that the FileTxnLog reads every transaction only once
         File logDir = new File(tmpDir, FileTxnSnapLog.version + FileTxnSnapLog.VERSION);
@@ -271,17 +272,18 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
      */
     @Test
     public void testRestore() throws Exception {
+        final String hostPort = HOST + PortAssignment.unique();
 		// setup a single server cluster
 		File tmpDir = ClientBase.createTmpDir();
 		ClientBase.setupTestEnv();
 		ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
 		SyncRequestProcessor.setSnapCount(10000);
-		final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
+		final int PORT = Integer.parseInt(hostPort.split(":")[1]);
 		ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
 		f.startup(zks);
 		Assert.assertTrue("waiting for server being up ", ClientBase
-				.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
-        ZooKeeper zk = getConnectedZkClient();
+				.waitForServerUp(hostPort, CONNECTION_TIMEOUT));
+        ZooKeeper zk = getConnectedZkClient(hostPort);
 		// generate some transactions
 		String lastPath = null;
 		try {
@@ -314,14 +316,14 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
 		f = ServerCnxnFactory.createFactory(PORT, -1);
 		f.startup(zks);
 		Assert.assertTrue("waiting for server being up ", ClientBase
-				.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+				.waitForServerUp(hostPort, CONNECTION_TIMEOUT));
 		connected = false;
 		long fZxid = zks.getZKDatabase().getDataTreeLastProcessedZxid();
 
 		// Verify lastProcessedZxid is set correctly
 		Assert.assertTrue("Restore failed expected zxid=" + eZxid + " found="
 				+ fZxid, fZxid == eZxid);
-        zk = getConnectedZkClient();
+        zk = getConnectedZkClient(hostPort);
 		// Verify correctness of data and whether sequential znode creation 
 		// proceeds correctly after this point
 		String[] children;
@@ -350,17 +352,18 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
      */
     @Test
     public void testRestoreWithTransactionErrors() throws Exception {
+        final String hostPort = HOST + PortAssignment.unique();
         // setup a single server cluster
         File tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         SyncRequestProcessor.setSnapCount(10000);
-        final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
+        final int PORT = Integer.parseInt(hostPort.split(":")[1]);
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
         f.startup(zks);
         Assert.assertTrue("waiting for server being up ", ClientBase
-                .waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
-        ZooKeeper zk = getConnectedZkClient();
+                .waitForServerUp(hostPort, CONNECTION_TIMEOUT));
+        ZooKeeper zk = getConnectedZkClient(hostPort);
         // generate some transactions
         try {
             for (int i = 0; i < NUM_MESSAGES; i++) {
@@ -391,7 +394,7 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
         f = ServerCnxnFactory.createFactory(PORT, -1);
         f.startup(zks);
         Assert.assertTrue("waiting for server being up ", ClientBase
-                .waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+                .waitForServerUp(hostPort, CONNECTION_TIMEOUT));
         
         f.shutdown();
         zks.shutdown();
@@ -403,17 +406,18 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
      */
     @Test
     public void testReloadSnapshotWithMissingParent() throws Exception {
+        final String hostPort = HOST + PortAssignment.unique();
         // setup a single server cluster
         File tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
         ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         SyncRequestProcessor.setSnapCount(10000);
-        final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
+        final int PORT = Integer.parseInt(hostPort.split(":")[1]);
         ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
         f.startup(zks);
         Assert.assertTrue("waiting for server being up ",
-                ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
-        ZooKeeper zk = getConnectedZkClient();
+                ClientBase.waitForServerUp(hostPort, CONNECTION_TIMEOUT));
+        ZooKeeper zk = getConnectedZkClient(hostPort);
 
         // create transactions to create the snapshot with create/delete pattern
         zk.create("/a", "".getBytes(), Ids.OPEN_ACL_UNSAFE,
@@ -438,12 +442,12 @@ public class LoadFromLogTest extends ZKTestCase implements  Watcher {
         f = ServerCnxnFactory.createFactory(PORT, -1);
         f.startup(zks);
         Assert.assertTrue("waiting for server being up ",
-                ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+                ClientBase.waitForServerUp(hostPort, CONNECTION_TIMEOUT));
         f.shutdown();
     }
 
-    private ZooKeeper getConnectedZkClient() throws IOException {
-        ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
+    private ZooKeeper getConnectedZkClient(String hostPort) throws IOException {
+        ZooKeeper zk = new ZooKeeper(hostPort, CONNECTION_TIMEOUT, this);
 
         long start = Time.currentElapsedTime();
         while (!connected) {
