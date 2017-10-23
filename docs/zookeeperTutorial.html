@@ -216,7 +216,18 @@ document.write("Last Published: " + document.lastModified);
 <a href="#sc_producerConsumerQueues">Producer-Consumer Queues</a>
 </li>
 <li>
-<a href="#sc_sourceListing">Complete Source Listing</a>
+<a href="#Complete+example">Complete example</a>
+<ul class="minitoc">
+<li>
+<a href="#Queue+test">Queue test</a>
+</li>
+<li>
+<a href="#Barrier+test">Barrier test</a>
+</li>
+<li>
+<a href="#sc_sourceListing">Source Listing</a>
+</li>
+</ul>
 </li>
 </ul>
 </div>
@@ -546,9 +557,37 @@ from each one.</p>
 </pre>
 </div>
 
-<a name="sc_sourceListing"></a>
-<h2 class="h3">Complete Source Listing</h2>
+
+<a name="Complete+example"></a>
+<h2 class="h3">Complete example</h2>
 <div class="section">
+<p>
+In the following section you can find a complete command line application to demonstrate the above mentioned
+recipes. Use the following command to run it.
+</p>
+<pre class="code">
+ZOOBINDIR="[path_to_distro]/bin"
+. "$ZOOBINDIR"/zkEnv.sh
+java SyncPrimitive [Test Type] [ZK server] [No of elements] [Client type]
+</pre>
+<a name="Queue+test"></a>
+<h3 class="h4">Queue test</h3>
+<p>Start a producer to create 100 elements</p>
+<pre class="code">
+java SyncPrimitive qTest localhost 100 p
+</pre>
+<p>Start a consumer to consume 100 elements</p>
+<pre class="code">
+java SyncPrimitive qTest localhost 100 c
+</pre>
+<a name="Barrier+test"></a>
+<h3 class="h4">Barrier test</h3>
+<p>Start a barrier with 2 participants (start as many times as many participants you'd like to enter)</p>
+<pre class="code">
+java SyncPrimitive bTest localhost 2
+</pre>
+<a name="sc_sourceListing"></a>
+<h3 class="h4">Source Listing</h3>
 <div class="note example">
 <div class="label">SyncPrimitive.Java</div>
 <div class="content">
@@ -765,15 +804,19 @@ public class SyncPrimitive implements Watcher {
                         mutex.wait();
                     } else {
                         Integer min = new Integer(list.get(0).substring(7));
+                        String minNode = list.get(0);
                         for(String s : list){
                             Integer tempValue = new Integer(s.substring(7));
                             //System.out.println("Temporary value: " + tempValue);
-                            if(tempValue &lt; min) min = tempValue;
+                            if(tempValue &lt; min) {
+                                min = tempValue;
+                                minNode = s;
+                            }
                         }
-                        System.out.println("Temporary value: " + root + "/element" + min);
-                        byte[] b = zk.getData(root + "/element" + min,
-                                    false, stat);
-                        zk.delete(root + "/element" + min, 0);
+                        System.out.println("Temporary value: " + root + "/" + minNode);
+                        byte[] b = zk.getData(root + "/" + minNode,
+                        false, stat);
+                        zk.delete(root + "/" + minNode, 0);
                         ByteBuffer buffer = ByteBuffer.wrap(b);
                         retvalue = buffer.getInt();
 

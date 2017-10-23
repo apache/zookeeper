@@ -52,7 +52,7 @@ except:
     pass
 
 def pp_zk(handle,root, indent = 0):
-    """Pretty print(a zookeeper tree, starting at root""")
+    """Pretty print(a zookeeper tree, starting at root)"""
     def make_path(child):
         if root == "/":
             return "/" + child

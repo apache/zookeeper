@@ -203,6 +203,137 @@ document.write("Last Published: " + document.lastModified);
         PDF</a>
 </div>
 
+        Release Notes - ZooKeeper - Version 3.4.11
+    
+<h2>        Sub-task
+</h2>
+<ul>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2707'>ZOOKEEPER-2707</a>] -         Fix &quot;Unexpected bean exists!&quot; issue in WatcherTests
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2729'>ZOOKEEPER-2729</a>] -         Cleanup findbug warnings in branch-3.4: Correctness Warnings
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2730'>ZOOKEEPER-2730</a>] -         Cleanup findbug warnings in branch-3.4: Disable Internationalization Warnings
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2731'>ZOOKEEPER-2731</a>] -         Cleanup findbug warnings in branch-3.4: Malicious code vulnerability Warnings
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2732'>ZOOKEEPER-2732</a>] -         Cleanup findbug warnings in branch-3.4: Performance Warnings
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2733'>ZOOKEEPER-2733</a>] -         Cleanup findbug warnings in branch-3.4: Dodgy code Warnings
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2749'>ZOOKEEPER-2749</a>] -         Cleanup findbug warnings in branch-3.4: Experimental Warnings
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2754'>ZOOKEEPER-2754</a>] -         Set up Apache Jenkins job that runs the flaky test analyzer script.
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2762'>ZOOKEEPER-2762</a>] -         Multithreaded correctness Warnings
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2834'>ZOOKEEPER-2834</a>] -         ZOOKEEPER-2355 fix for branch-3.4
+</li>
+</ul>
+                            
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-1643'>ZOOKEEPER-1643</a>] -         Windows: fetch_and_add not 64bit-compatible, may not be correct
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2349'>ZOOKEEPER-2349</a>] -         Update documentation for snapCount
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2355'>ZOOKEEPER-2355</a>] -         Ephemeral node is never deleted if follower fails while reading the proposal packet
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2614'>ZOOKEEPER-2614</a>] -         Port ZOOKEEPER-1576 to branch3.4
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2691'>ZOOKEEPER-2691</a>] -         recreateSocketAddresses may recreate the unreachable IP address
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2722'>ZOOKEEPER-2722</a>] -         Flaky Test: org.apache.zookeeper.test.ReadOnlyModeTest.testSessionEstablishment
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2728'>ZOOKEEPER-2728</a>] -         Clean up findbug warnings in branch-3.4
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2740'>ZOOKEEPER-2740</a>] -         Port ZOOKEEPER-2737 to branch-3.4
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2743'>ZOOKEEPER-2743</a>] -         Netty connection leaks JMX connection bean upon connection close in certain race conditions.
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2758'>ZOOKEEPER-2758</a>] -         Typo: transasction --&gt; transaction
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2759'>ZOOKEEPER-2759</a>] -         Flaky test: org.apache.zookeeper.server.quorum.QuorumCnxManagerTest.testNoAuthLearnerConnectToAuthRequiredServerWithHigherSid
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2774'>ZOOKEEPER-2774</a>] -         Ephemeral znode will not be removed when sesstion timeout, if the system time of ZooKeeper node changes unexpectedly.
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2775'>ZOOKEEPER-2775</a>] -         ZK Client not able to connect with Xid out of order error 
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2777'>ZOOKEEPER-2777</a>] -         There is a typo in zk.py which prevents from using/compiling it.
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2783'>ZOOKEEPER-2783</a>] -         follower disconnects and cannot reconnect
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2785'>ZOOKEEPER-2785</a>] -         Server inappropriately throttles connections under load before SASL completes
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2786'>ZOOKEEPER-2786</a>] -         Flaky test: org.apache.zookeeper.test.ClientTest.testNonExistingOpCode
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2798'>ZOOKEEPER-2798</a>] -         Fix flaky test: org.apache.zookeeper.test.ReadOnlyModeTest.testConnectionEvents
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2809'>ZOOKEEPER-2809</a>] -         Unnecessary stack-trace in server when the client disconnect unexpectedly
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2811'>ZOOKEEPER-2811</a>] -         PurgeTxnLog#validateAndGetFile: return tag has no arguments.
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2818'>ZOOKEEPER-2818</a>] -         Improve the ZooKeeper#setACL  java doc
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2841'>ZOOKEEPER-2841</a>] -         ZooKeeper public include files leak porting changes
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2859'>ZOOKEEPER-2859</a>] -         CMake build doesn&#39;t support OS X
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2861'>ZOOKEEPER-2861</a>] -         Main-Class JAR manifest attribute is incorrect
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2874'>ZOOKEEPER-2874</a>] -         Windows Debug builds don&#39;t link with `/MTd`
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2890'>ZOOKEEPER-2890</a>] -         Local automatic variable is left uninitialized and then freed.
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2905'>ZOOKEEPER-2905</a>] -         Don&#39;t include `config.h` in `zookeeper.h`
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2906'>ZOOKEEPER-2906</a>] -         The OWASP dependency check jar should not be included in the default classpath
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2908'>ZOOKEEPER-2908</a>] -         quorum.auth.MiniKdcTest.testKerberosLogin failing with NPE on java 9
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2909'>ZOOKEEPER-2909</a>] -         Create ant task to generate ivy dependency reports
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2914'>ZOOKEEPER-2914</a>] -         compiler warning using java 9
+</li>
+</ul>
+                                
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-1669'>ZOOKEEPER-1669</a>] -         Operations to server will be timed-out while thousands of sessions expired same time
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-1748'>ZOOKEEPER-1748</a>] -         TCP keepalive for leader election connections
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2788'>ZOOKEEPER-2788</a>] -         The define of MAX_CONNECTION_ATTEMPTS in QuorumCnxManager.java seems useless, should it be removed?
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2856'>ZOOKEEPER-2856</a>] -         ZooKeeperSaslClient#respondToServer should log exception message of SaslException
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2864'>ZOOKEEPER-2864</a>] -         Add script to run a java api compatibility tool
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2870'>ZOOKEEPER-2870</a>] -         Improve the efficiency of AtomicFileOutputStream
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2880'>ZOOKEEPER-2880</a>] -         Rename README.txt to README.md
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2887'>ZOOKEEPER-2887</a>] -         define dependency versions in build.xml to be easily overridden in build.properties
+</li>
+</ul>
+            
+<h2>        New Feature
+</h2>
+<ul>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-1703'>ZOOKEEPER-1703</a>] -         Please add instructions for running the tutorial
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2875'>ZOOKEEPER-2875</a>] -         Add ant task for running OWASP dependency report
+</li>
+</ul>
+                                                                
+<h2>        Test
+</h2>
+<ul>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2686'>ZOOKEEPER-2686</a>] -         Flaky Test: org.apache.zookeeper.test.WatcherTest.
+</li>
+</ul>
+
         Release Notes - ZooKeeper - Version 3.4.10
     
 <h2>        Sub-task

@@ -321,8 +321,8 @@ public abstract class ServerCnxn implements Stats, Watcher {
         // zkServer.sh depends on "srvr".
         whiteListedCommands.add("srvr");
         whiteListInitialized = true;
-        LOG.info("The list of known four letter word commands is : {}", Arrays.asList(cmd2String));
-        LOG.info("The list of enabled four letter word commands is : {}", Arrays.asList(whiteListedCommands));
+        LOG.info("The list of known four letter word commands is : {}", Collections.singletonList(cmd2String));
+        LOG.info("The list of enabled four letter word commands is : {}", Collections.singletonList(whiteListedCommands));
         return whiteListedCommands.contains(command);
     }
 

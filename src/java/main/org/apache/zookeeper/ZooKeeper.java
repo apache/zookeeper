@@ -1839,7 +1839,7 @@ public class ZooKeeper {
             clientCnxnSocketName = ClientCnxnSocketNIO.class.getName();
         }
         try {
-            return (ClientCnxnSocket) Class.forName(clientCnxnSocketName)
+            return (ClientCnxnSocket) Class.forName(clientCnxnSocketName).getDeclaredConstructor()
                     .newInstance();
         } catch (Exception e) {
             IOException ioe = new IOException("Couldn't instantiate "
