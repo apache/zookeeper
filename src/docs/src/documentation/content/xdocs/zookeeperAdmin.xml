@@ -907,6 +907,20 @@ server.3=zoo3:2888:3888</programlisting>
            </varlistentry>
 
           <varlistentry>
+            <term>request.warningthresholdms</term>
+            <listitem>
+              <para>(No Java system property)</para>
+
+              <para><emphasis role="bold">New in 3.5.4:</emphasis> A
+                warning message will be output to the log whenever an
+                any request from client takes longer than this value.
+                The values is specified in milliseconds and
+                defaults to 10000. Setting it to 0 will log all requests
+                with warnings and can be useful for debugging.</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
             <term>autopurge.snapRetainCount</term>
 
             <listitem>

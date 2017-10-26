@@ -81,9 +81,11 @@ public class FinalRequestProcessor implements RequestProcessor {
     private static final Logger LOG = LoggerFactory.getLogger(FinalRequestProcessor.class);
 
     ZooKeeperServer zks;
+    ServerStats serverStats;
 
     public FinalRequestProcessor(ZooKeeperServer zks) {
         this.zks = zks;
+        this.serverStats = zks.serverStats();
     }
 
     public void processRequest(Request request) {
@@ -187,16 +189,18 @@ public class FinalRequestProcessor implements RequestProcessor {
 
                 cnxn.sendResponse(new ReplyHeader(-2,
                         zks.getZKDatabase().getDataTreeLastProcessedZxid(), 0), null, "response");
+                serverStats.checkLatency(zks, request);
                 return;
             }
             case OpCode.createSession: {
-                zks.serverStats().updateLatency(request.createTime);
+                serverStats.updateLatency(request.createTime);
 
                 lastOp = "SESS";
                 cnxn.updateStatsForResponse(request.cxid, request.zxid, lastOp,
                         request.createTime, Time.currentElapsedTime());
 
                 zks.finishSessionInit(request.cnxn, true);
+                serverStats.checkLatency(zks, request);
                 return;
             }
             case OpCode.multi: {
@@ -430,6 +434,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             // the client and leader disagree on where the client is most
             // recently attached (and therefore invalid SESSION MOVED generated)
             cnxn.sendCloseSession();
+            serverStats.checkLatency(zks, request);
             return;
         } catch (KeeperException e) {
             err = e.code();
@@ -451,7 +456,7 @@ public class FinalRequestProcessor implements RequestProcessor {
         ReplyHeader hdr =
             new ReplyHeader(request.cxid, lastZxid, err.intValue());
 
-        zks.serverStats().updateLatency(request.createTime);
+        serverStats.updateLatency(request.createTime);
         cnxn.updateStatsForResponse(request.cxid, lastZxid, lastOp,
                     request.createTime, Time.currentElapsedTime());
 
@@ -460,10 +465,12 @@ public class FinalRequestProcessor implements RequestProcessor {
             if (request.type == OpCode.closeSession) {
                 cnxn.sendCloseSession();
             }
+            serverStats.checkLatency(zks, request);
         } catch (IOException e) {
             LOG.error("FIXMSG",e);
         }
     }
+
 
     private boolean closeSession(ServerCnxnFactory serverCnxnFactory, long sessionId) {
         if (serverCnxnFactory == null) {

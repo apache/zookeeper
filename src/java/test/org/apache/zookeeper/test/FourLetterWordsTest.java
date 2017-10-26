@@ -155,6 +155,8 @@ public class FourLetterWordsTest extends ClientBase {
         line = in.readLine();
         Assert.assertTrue(Pattern.matches("^Latency min/avg/max: \\d+/\\d+/\\d+$", line));
         line = in.readLine();
+        Assert.assertTrue(Pattern.matches("^Num Requests that exceeded threshold latency: \\d+$", line));
+        line = in.readLine();
         Assert.assertTrue(Pattern.matches("^Received: \\d+$", line));
         line = in.readLine();
         Assert.assertTrue(Pattern.matches("^Sent: \\d+$", line));
