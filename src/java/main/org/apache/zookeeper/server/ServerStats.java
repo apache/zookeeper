@@ -192,7 +192,7 @@ public class ServerStats {
 
             // Try acquiring lock only if not waiting
             boolean success = waitForLoggingWarnThresholdMsg.compareAndSet(Boolean.FALSE, Boolean.TRUE);
-            if(success) {
+            if (success) {
                 LOG.warn("Request {} exceeded threshold. Took {} ms", request, requestLatency);
                 startCount = zks.serverStats().getNumRequestsAboveThresholdTime();
                 timer.schedule(new TimerTask() {
