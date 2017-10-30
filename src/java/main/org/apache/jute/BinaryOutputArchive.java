@@ -115,6 +115,11 @@ public class BinaryOutputArchive implements OutputArchive {
     		out.writeInt(-1);
     		return;
     	}
+    	if (barr.length >= BinaryInputArchive.maxBuffer) {
+    	  throw new IOException("Len error " + barr.length
+    	      + ", larger than max buffer: "
+    	      + BinaryInputArchive.maxBuffer + " set by jute.maxbuffer");
+    	}
     	out.writeInt(barr.length);
         out.write(barr);
     }

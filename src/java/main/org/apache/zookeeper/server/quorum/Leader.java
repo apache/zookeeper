@@ -48,6 +48,7 @@ import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperCriticalThread;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
+import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1047,20 +1048,9 @@ public class Leader {
             throw new XidRolloverException(msg);
         }
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
-        try {
-            request.getHdr().serialize(boa, "hdr");
-            if (request.getTxn() != null) {
-                request.getTxn().serialize(boa, "txn");
-            }
-            baos.close();
-        } catch (IOException e) {
-            LOG.warn("This really should be impossible", e);
-        }
+        byte[] data = SerializeUtils.serializeRequest(request);
         QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, request.zxid,
-                baos.toByteArray(), null);
-
+            data, null);
         Proposal p = new Proposal();
         p.packet = pp;
         p.request = request;                
