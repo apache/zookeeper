@@ -382,7 +382,7 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
      * In the following test, we verify that we can handle the case that we got a commit
      * of a request we never seen since the session that we just established. This can happen
      * when a session is just established and there is request waiting to be committed in the
-     * in the session queue but it sees a commit for a request that belongs to the previous connection.
+     * session queue but it sees a commit for a request that belongs to the previous connection.
      */
     @Test(timeout = 1000)
     public void noCrashOnCommittedRequestsOfUnseenRequestTest() throws Exception {
