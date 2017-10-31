@@ -384,7 +384,7 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
      * when a session is just established and there is request waiting to be committed in the
      * session queue but it sees a commit for a request that belongs to the previous connection.
      */
-    @Test(timeout = 1000)
+    @Test(timeout = 5000)
     public void noCrashOnCommittedRequestsOfUnseenRequestTest() throws Exception {
         final String path = "/noCrash/OnCommittedRequests/OfUnseenRequestTest";
         final int numberofReads = 10;
@@ -411,8 +411,9 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
 
         //run once
         Assert.assertTrue(processor.queuedRequests.containsAll(localRequests));
-        processor.initThreads(numberofReads* 2);
+        processor.initThreads(defaultSizeOfThreadPool);
         processor.run();
+        Thread.sleep(1000);
 
         //We verify that the processor is waiting for the commit
         Assert.assertTrue(processedRequests.isEmpty());
@@ -426,11 +427,13 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
         processor.committedRequests.add(preSessionCommittedReq);
         processor.committedRequests.add(firstCommittedReq);
         processor.run();
+        Thread.sleep(1000);
 
         //We verify that the commit processor processed the old commit prior to the newer messages
         Assert.assertTrue(processedRequests.peek() == preSessionCommittedReq);
 
         processor.run();
+        Thread.sleep(1000);
 
         //We verify that the commit processor handle all messages.
         Assert.assertTrue(processedRequests.containsAll(localRequests));
@@ -444,7 +447,7 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
      * the leader out of order. Hence, the commits can also arrive "out of order" w.r.t. cxid.
      * We should commit the requests according to the order we receive from the leader, i.e., wait for the relevant commit.
      */
-    @Test(timeout = 1000)
+    @Test(timeout = 5000)
     public void noCrashOnOutofOrderCommittedRequestTest() throws Exception {
         final String path = "/noCrash/OnCommittedRequests/OfUnSeenRequestTest";
         final int sessionid = 0x123456;
@@ -471,8 +474,9 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
         }
 
         //run once
-        processor.initThreads(numberofReads* 2);
+        processor.initThreads(defaultSizeOfThreadPool);
         processor.run();
+        Thread.sleep(1000);
 
         //We verify that the processor is waiting for the commit
         Assert.assertTrue(processedRequests.isEmpty());
@@ -486,12 +490,14 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
         processor.committedRequests.add(otherSessionCommittedReq);
         processor.committedRequests.add(orphanCommittedReq);
         processor.run();
+        Thread.sleep(1000);
 
         //We verify that the commit processor processed the old commit prior to the newer messages
         Assert.assertTrue(processedRequests.size() == 1);
         Assert.assertTrue(processedRequests.contains(otherSessionCommittedReq));
 
         processor.run();
+        Thread.sleep(1000);
 
         //We verify that the commit processor handle all messages.
         Assert.assertTrue(processedRequests.containsAll(localRequests));
