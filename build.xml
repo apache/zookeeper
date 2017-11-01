@@ -807,7 +807,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
 
       <copy todir="${dist.dir}">
         <fileset file="CHANGES.txt"/>
-        <fileset file="README.txt"/>
+        <fileset file="README.md"/>
         <fileset file="README_packaging.txt"/>
         <fileset file="build.xml"/>
         <fileset file="ivy.xml"/>
@@ -926,7 +926,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
 
       <copy todir="${dist.dir}">
         <fileset file="CHANGES.txt"/>
-        <fileset file="README.txt"/>
+        <fileset file="README.md"/>
         <fileset file="README_packaging.txt"/>
         <fileset file="build.xml"/>
         <fileset file="ivy.xml"/>
