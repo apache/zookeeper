@@ -4,6 +4,9 @@ Backward compatible changes:
 
 BUGFIXES:
 
+  ZOOKEEPER-2347: Deadlock shutting down zookeeper
+  (Rakesh R via rgs)
+
   ZOOKEEPER-2039. Jute compareBytes incorrect comparison index (Ian Dimayuga via fpj)
 
   ZOOKEEPER-1901. [JDK8] Sort children for comparison in AsyncOps tests
