@@ -30,20 +30,26 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class BufferSizeTest extends ClientBase {
-    public static final int TEST_MAXBUFFER = 100;
+    public static final int TEST_MAXBUFFER = 1000;
     private static final File TEST_DATA = new File(
             System.getProperty("test.data.dir", "build/test/data"),
             "buffersize");
     
     private ZooKeeper zk;
 
-    @Before
-    public void setMaxBuffer() throws IOException, InterruptedException {
+    @BeforeClass
+    public static void setMaxBuffer() throws IOException, InterruptedException {
         System.setProperty("jute.maxbuffer", "" + TEST_MAXBUFFER);
-        assertEquals("Can't set jute.maxbuffer!", TEST_MAXBUFFER, BinaryInputArchive.maxBuffer);
+    }
+
+    @Before
+    public void checkMaxBuffer() throws IOException, InterruptedException {
+      assertEquals("Can't set jute.maxbuffer!", TEST_MAXBUFFER,
+        BinaryInputArchive.maxBuffer);
         zk = createClient();
     }
     
@@ -71,12 +77,19 @@ public class BufferSizeTest extends ClientBase {
     
     /** Issues requests containing data smaller, equal, and greater than TEST_MAXBUFFER. */
     private void testRequests(ClientOp clientOp) throws Exception {
-        clientOp.execute(new byte[TEST_MAXBUFFER - 60]);
+        clientOp.execute(new byte[TEST_MAXBUFFER - 200]);
+        try {
+          // This should fail since the buffer size > the data size due to extra fields
+          clientOp.execute(new byte[TEST_MAXBUFFER - 10]);
+          fail("Request exceeding jute.maxbuffer succeeded!");
+        } catch (KeeperException.ConnectionLossException e) {}
+
         try {
             // This should fail since the buffer size > the data size due to extra fields
             clientOp.execute(new byte[TEST_MAXBUFFER]);
             fail("Request exceeding jute.maxbuffer succeeded!");
         } catch (KeeperException.ConnectionLossException e) {}
+
         try {
             clientOp.execute(new byte[TEST_MAXBUFFER + 10]);
             fail("Request exceeding jute.maxbuffer succeeded!");
@@ -90,8 +103,8 @@ public class BufferSizeTest extends ClientBase {
     @Test
     public void testStartup() throws Exception {
         final String path = "/test_node";
-        zk.create(path, new byte[TEST_MAXBUFFER - 60], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        zk.setData(path, new byte[TEST_MAXBUFFER - 50], -1);
+        zk.create(path, new byte[TEST_MAXBUFFER - 200], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.setData(path, new byte[TEST_MAXBUFFER - 150], -1);
 
         stopServer();
         startServer();

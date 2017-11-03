@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server;
 
+import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.CreateMode;
@@ -51,6 +52,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
+import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.txn.CheckVersionTxn;
 import org.apache.zookeeper.txn.CreateContainerTxn;
 import org.apache.zookeeper.txn.CreateSessionTxn;
@@ -905,8 +907,20 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 request.setTxn(new ErrorTxn(Code.MARSHALLINGERROR.intValue()));
             }
         }
+        checkProposalSize(request);
         request.zxid = zks.getZxid();
         nextProcessor.processRequest(request);
+    }
+
+    private void checkProposalSize(Request request) {
+        if (request.getHdr() == null) return;
+        byte[] data = SerializeUtils.serializeRequest(request);
+        if (data.length > BinaryInputArchive.maxBuffer) {
+            LOG.error("Len error {}, larger than max buffer: {} set by jute.maxbuffer",
+              data.length, BinaryInputArchive.maxBuffer);
+            request.getHdr().setType(OpCode.error);
+            request.setTxn(new ErrorTxn(Code.BADARGUMENTS.intValue()));
+        }
     }
 
     private List<ACL> removeDuplicates(List<ACL> acl) {
