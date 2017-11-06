@@ -37,8 +37,7 @@ public class ZNodeNameTest {
     @Test
     public void testOrderWithDifferentPrefixes() throws Exception {
         String[] names = { "r-3", "r-2", "r-1", "w-2", "w-1" };
-        // names with duplicated sequence numbers are not included in the result
-        String[] expected = { "r-1", "r-2", "r-3" };
+        String[] expected = { "r-1", "w-1", "r-2", "w-2", "r-3" };
         assertOrderedNodeNames(names, expected);
     }
     @Test
