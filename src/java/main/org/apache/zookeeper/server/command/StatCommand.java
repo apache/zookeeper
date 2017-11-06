@@ -22,6 +22,10 @@ import java.io.PrintWriter;
 
 import org.apache.zookeeper.Version;
 import org.apache.zookeeper.server.ServerCnxn;
+import org.apache.zookeeper.server.ServerStats;
+import org.apache.zookeeper.server.quorum.Leader;
+import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
+import org.apache.zookeeper.server.quorum.ProposalStats;
 import org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,9 +58,15 @@ public class StatCommand extends AbstractFourLetterCommand {
                 }
                 pw.println();
             }
-            pw.print(zkServer.serverStats().toString());
+            ServerStats serverStats = zkServer.serverStats();
+            pw.print(serverStats.toString());
             pw.print("Node count: ");
             pw.println(zkServer.getZKDatabase().getNodeCount());
+            if (serverStats.getServerState().equals("leader")) {
+                Leader leader = ((LeaderZooKeeperServer)zkServer).getLeader();
+                ProposalStats proposalStats = leader.getProposalStats();
+                pw.printf("Proposal sizes last/min/max: %s\n", proposalStats.toString());
+            }
         }
     }
 }

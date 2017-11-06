@@ -19,11 +19,14 @@
 package org.apache.zookeeper.server.util;
 
 import org.apache.jute.BinaryInputArchive;
+import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.common.IOUtils;
 import org.apache.zookeeper.server.DataTree;
+import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.txn.CreateContainerTxn;
 import org.apache.zookeeper.txn.CreateSessionTxn;
@@ -40,6 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.HashMap;
@@ -148,4 +152,20 @@ public class SerializeUtils {
         dt.serialize(oa, "tree");
     }
 
+    public static byte[] serializeRequest(Request request) {
+        if (request == null || request.getHdr() == null) return null;
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
+        try {
+            request.getHdr().serialize(boa, "hdr");
+            if (request.getTxn() != null) {
+                request.getTxn().serialize(boa, "txn");
+            }
+        } catch (IOException e) {
+            LOG.error("This really should be impossible", e);
+        } finally {
+            IOUtils.cleanup(LOG, baos);
+        }
+        return baos.toByteArray();
+    }
 }

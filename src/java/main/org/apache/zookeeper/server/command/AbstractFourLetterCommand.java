@@ -35,7 +35,9 @@ import org.slf4j.LoggerFactory;
 public abstract class AbstractFourLetterCommand {
     private static final Logger LOG = LoggerFactory
         .getLogger(AbstractFourLetterCommand.class);
-    protected static final String ZK_NOT_SERVING = "This ZooKeeper instance is not currently serving requests";
+
+    public static final String ZK_NOT_SERVING = "This ZooKeeper instance is not currently serving requests";
+
     protected PrintWriter pw;
     protected ServerCnxn serverCnxn;
     protected ZooKeeperServer zkServer;

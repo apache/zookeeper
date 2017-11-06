@@ -51,6 +51,7 @@ import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperCriticalThread;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
+import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,6 +105,12 @@ public class Leader {
     // list of all the followers
     private final HashSet<LearnerHandler> learners =
         new HashSet<LearnerHandler>();
+
+    private final ProposalStats proposalStats;
+
+    public ProposalStats getProposalStats() {
+        return proposalStats;
+    }
 
     /**
      * Returns a copy of the current learner snapshot
@@ -222,6 +229,7 @@ public class Leader {
 
     Leader(QuorumPeer self,LeaderZooKeeperServer zk) throws IOException {
         this.self = self;
+        this.proposalStats = new ProposalStats();
         try {
             if (self.getQuorumListenOnAllIPs()) {
                 ss = new ServerSocket(self.getQuorumAddress().getPort());
@@ -721,7 +729,6 @@ public class Leader {
 
     /**
      * @return True if committed, otherwise false.
-     * @param a proposal p
      **/
     synchronized public boolean tryToCommit(Proposal p, long zxid, SocketAddress followerAddr) {       
        // make sure that ops are committed in order. With reconfigurations it is now possible
@@ -992,8 +999,6 @@ public class Leader {
 
     /**
      * Create an inform packet and send it to all observers.
-     * @param zxid
-     * @param proposal
      */
     public void inform(Proposal proposal) {
         QuorumPacket qp = new QuorumPacket(Leader.INFORM, proposal.request.zxid,
@@ -1004,8 +1009,6 @@ public class Leader {
     
     /**
      * Create an inform&activate packet and send it to all observers.
-     * @param zxid
-     * @param proposal
      */
     public void informAndActivate(Proposal proposal, long designatedLeader) {
        byte[] proposalData = proposal.packet.getData();
@@ -1055,19 +1058,9 @@ public class Leader {
             throw new XidRolloverException(msg);
         }
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
-        try {
-            request.getHdr().serialize(boa, "hdr");
-            if (request.getTxn() != null) {
-                request.getTxn().serialize(boa, "txn");
-            }
-            baos.close();
-        } catch (IOException e) {
-            LOG.warn("This really should be impossible", e);
-        }
-        QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, request.zxid,
-                baos.toByteArray(), null);
+        byte[] data = SerializeUtils.serializeRequest(request);
+        proposalStats.setLastProposalSize(data.length);
+        QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, request.zxid, data, null);
 
         Proposal p = new Proposal();
         p.packet = pp;
@@ -1120,11 +1113,7 @@ public class Leader {
 
     /**
      * Sends a sync message to the appropriate server
-     *
-     * @param f
-     * @param r
      */
-
     public void sendSync(LearnerSyncRequest r){
         QuorumPacket qp = new QuorumPacket(Leader.SYNC, 0, null, null);
         r.fh.queuePacket(qp);
