@@ -257,6 +257,9 @@ public class FileTxnLog implements TxnLog {
         List<File> files = Util.sortDataDir(logDirList, "log", false);
         List<File> v = new ArrayList<File>(5);
         for (File f : files) {
+            if (!f.getName().startsWith("log.")) {
+                continue;
+            }
             long fzxid = Util.getZxidFromName(f.getName(), "log");
             if (fzxid > snapshotZxid) {
                 v.add(0, f);
