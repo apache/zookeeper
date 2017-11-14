@@ -139,8 +139,6 @@
     <property name="ivy.jdiff.lib" value="${build.dir}/jdiff/lib"/>
     <property name="ivysettings.xml" value="${basedir}/ivysettings.xml"/>
 
-    <property name="audience-annotations.version" value="0.5.0" />
-
     <available property="clover.present"
                file="${clover.home}/lib/clover.jar"
                classpath="${clover.home}/lib"/>
@@ -198,6 +196,26 @@
     <property name="package.share.dir" value="/share/zookeeper"/>
     <property name="package.buildroot" value="/tmp/zookeeper_package_build_${user.name}"/>
     <property name="package.build.dir" value="/tmp/zookeeper_package_build_${user.name}/BUILD"/>
+
+    <!-- ====================================================== -->
+    <!-- Dependency versions                                    -->
+    <!-- ====================================================== -->
+    <property name="slf4j.version" value="1.7.5"/>
+    <property name="log4j.version" value="1.2.16"/>
+    <property name="jline.version" value="2.11"/>
+    <property name="jdeb.version" value="0.8"/>
+    <property name="audience-annotations.version" value="0.5.0" />
+    <property name="netty.version" value="3.10.5.Final"/>
+    <property name="junit.version" value="4.8.1"/>
+    <property name="mockito.version" value="1.8.5"/>
+    <property name="checkstyle.version" value="5.0"/>
+    <property name="commons-collections.version" value="3.2.2"/>
+    <property name="commons-io.version" value="2.4"/>
+    <property name="jdiff.version" value="1.0.9"/>
+    <property name="xerces.version" value="1.4.4"/>
+    <property name="apache-rat-tasks.version" value="0.6"/>
+    <property name="commons-lang.version" value="2.4"/>
+    <property name="kerby.version" value="1.0.0-RC2"/>
 
     <!-- ====================================================== -->
     <!-- Macro definitions                                      -->

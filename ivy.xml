@@ -39,68 +39,68 @@
   </publications>
 
   <dependencies>
-    <dependency org="org.slf4j" name="slf4j-api" rev="1.7.5"/>
-    <dependency org="org.slf4j" name="slf4j-log4j12" rev="1.7.5" transitive="false"/>
-  
+    <dependency org="org.slf4j" name="slf4j-api" rev="${slf4j.version}"/>
+    <dependency org="org.slf4j" name="slf4j-log4j12" rev="${slf4j.version}" transitive="false"/>
+
     <!-- transitive false turns off dependency checking, log4j deps seem borked -->
-    <dependency org="log4j" name="log4j" rev="1.2.16" transitive="false" conf="default"/>
-    <dependency org="jline" name="jline" rev="2.11" transitive="false" conf="default"/>
+    <dependency org="log4j" name="log4j" rev="${log4j.version}" transitive="false" conf="default"/>
+    <dependency org="jline" name="jline" rev="${jline.version}" transitive="false" conf="default"/>
 
     <dependency org="org.apache.yetus" name="audience-annotations" rev="${audience-annotations.version}"/>
 
-    <dependency org="io.netty" name="netty" conf="default" rev="3.10.5.Final">
+    <dependency org="io.netty" name="netty" conf="default" rev="${netty.version}">
       <artifact name="netty" type="jar" conf="default"/>
     </dependency>
 
-    <dependency org="org.vafer" name="jdeb" rev="0.8" conf="package->master"/>
+    <dependency org="org.vafer" name="jdeb" rev="${jdeb.version}" conf="package->master"/>
 
-    <dependency org="junit" name="junit" rev="4.8.1" conf="test->default"/>
-     <dependency org="org.mockito" name="mockito-all" rev="1.8.5"
+    <dependency org="junit" name="junit" rev="${junit.version}" conf="test->default"/>
+    <dependency org="org.mockito" name="mockito-all" rev="${mockito.version}"
                conf="test->default"/>
-    <dependency org="checkstyle" name="checkstyle" rev="5.0"
+    <dependency org="checkstyle" name="checkstyle" rev="${checkstyle.version}"
                 conf="test->default"/>
-    <dependency org="commons-collections" name="commons-collections"
-                rev="3.2.2" conf="test->default"/>
+    <dependency org="commons-collections" name="commons-collections" 
+                rev="${commons-collections.version}" conf="test->default"/>
 
-    <dependency org="jdiff" name="jdiff" rev="1.0.9"
+    <dependency org="jdiff" name="jdiff" rev="${jdiff.version}"
                 conf="jdiff->default"/>
-    <dependency org="xerces" name="xerces" rev="1.4.4"
+    <dependency org="xerces" name="xerces" rev="${xerces.version}"
                 conf="jdiff->default"/>
 
     <dependency org="org.apache.rat" name="apache-rat-tasks" 
-                rev="0.6" conf="releaseaudit->default"/>
+                rev="${apache-rat-tasks.version}" conf="releaseaudit->default"/>
     <dependency org="commons-lang" name="commons-lang" 
-                rev="2.4" conf="releaseaudit->default"/>
-    <dependency org="commons-collections" name="commons-collections" 
-                rev="3.2.2" conf="releaseaudit->default"/>
+                rev="${commons-lang.version}" conf="releaseaudit->default"/>
+    <dependency org="commons-collections" name="commons-collections"
+                rev="${commons-collections.version}" conf="releaseaudit->default"/>
 
-    <dependency org="commons-io" name="commons-io"
-                rev="2.4" conf="test->default"/>
+    <dependency org="commons-io" name="commons-io" rev="${commons-io.version}"
+                conf="test->default"/>
 
     <dependency org="org.apache.kerby" name="kerb-simplekdc"
-                rev="1.0.0-RC2" conf="test->default"/>
+                rev="${kerby.version}" conf="test->default"/>
     <dependency org="org.apache.kerby" name="kerby-config"
-                rev="1.0.0-RC2" conf="test->default"/>
+                rev="${kerby.version}" conf="test->default"/>
     <dependency org="org.apache.kerby" name="kerb-core"
-                rev="1.0.0-RC2" conf="test->default"/>
+                rev="${kerby.version}" conf="test->default"/>
     <dependency org="org.apache.kerby" name="kerb-server"
-                rev="1.0.0-RC2" conf="test->default"/>
+                rev="${kerby.version}" conf="test->default"/>
     <dependency org="org.apache.kerby" name="kerb-common"
-                rev="1.0.0-RC2" conf="test->default"/>
+                rev="${kerby.version}" conf="test->default"/>
     <dependency org="org.apache.kerby" name="kerb-admin"
-                rev="1.0.0-RC2" conf="test->default"/>
+                rev="${kerby.version}" conf="test->default"/>
     <dependency org="org.apache.kerby" name="kerb-identity"
-                rev="1.0.0-RC2" conf="test->default"/>
+                rev="${kerby.version}" conf="test->default"/>
     <dependency org="org.apache.kerby" name="kerb-client"
-                rev="1.0.0-RC2" conf="test->default"/>
+                rev="${kerby.version}" conf="test->default"/>
     <dependency org="org.apache.kerby" name="kerb-util"
-                rev="1.0.0-RC2" conf="test->default"/>
+                rev="${kerby.version}" conf="test->default"/>
     <dependency org="org.apache.kerby" name="kerb-crypto"
-                rev="1.0.0-RC2" conf="test->default"/>
+                rev="${kerby.version}" conf="test->default"/>
     <dependency org="org.apache.kerby" name="kerby-util"
-                rev="1.0.0-RC2" conf="test->default"/>
+                rev="${kerby.version}" conf="test->default"/>
     <dependency org="org.apache.kerby" name="kerby-asn1"
-                rev="1.0.0-RC2" conf="test->default"/>
+                rev="${kerby.version}" conf="test->default"/>
   </dependencies>
 
 </ivy-module>
