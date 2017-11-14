@@ -36,8 +36,8 @@ BUGFIXES:
 
   ZOOKEEPER-1334. Zookeeper 3.4.x is not OSGi compliant - MANIFEST.MF
   is flawed (Claus Ibsen via phunt)
-  
-  ZOOKEEPER-1535. ZK Shell/Cli re-executes last command on exit 
+
+  ZOOKEEPER-1535. ZK Shell/Cli re-executes last command on exit
   (Edward Ribeiro via camille)
 
   ZOOKEEPER-1495. ZK client hangs when using a function not available
@@ -63,7 +63,7 @@ BUGFIXES:
 
   ZOOKEEPER-1629. testTransactionLogCorruption occasionally fails. (shralex via camille)
 
-  ZOOKEEPER-1731. Unsynchronized access to ServerCnxnFactory.connectionBeans results in 
+  ZOOKEEPER-1731. Unsynchronized access to ServerCnxnFactory.connectionBeans results in
   deadlock. (Dave Latham via camille)
 
   ZOOKEEPER-1379. 'printwatches, redo, history and connect '. client commands always print usage. This is not necessary (edward via fpj)
@@ -76,7 +76,7 @@ BUGFIXES:
 
   ZOOKEEPER-1657. Increased CPU usage by unnecessary SASL checks (Philip K. Warren via fpj)
 
-  ZOOKEEPER-1753. ClientCnxn is not properly releasing the resources, 
+  ZOOKEEPER-1753. ClientCnxn is not properly releasing the resources,
                   which are used to ping RwServer (Rakesh R via fpj)
 
   ZOOKEEPER-1603. StaticHostProviderTest testUpdateClientMigrateOrNot hangs (fpj)
@@ -87,7 +87,7 @@ BUGFIXES:
 
   ZOOKEEPER-1774. QuorumPeerMainTest fails consistently with
   "complains about host" assertion failure (phunt)
-  
+
   ZOOKEEPER-1624. PrepRequestProcessor abort multi-operation incorrectly. (thawan via camille)
 
   ZOOKEEPER-1610. Some classes are using == or != to compare
@@ -99,7 +99,7 @@ BUGFIXES:
   ZOOKEEPER-1557. jenkins jdk7 test failure in
   testBadSaslAuthNotifiesWatch (Eugene Koontz via phunt)
 
-  ZOOKEEPER-1459. Standalone ZooKeeperServer is not closing 
+  ZOOKEEPER-1459. Standalone ZooKeeperServer is not closing
   the transaction log files on shutdown (Rakesh R via fpj)
 
   ZOOKEEPER-1834. Catch IOException in FileTxnLog (fpj via michim)
@@ -108,7 +108,7 @@ BUGFIXES:
   (Germán Blanco via fpj)
 
   ZOOKEEPER-1849. Need to properly tear down tests in various
-  cases (Germán via fpj) 
+  cases (Germán via fpj)
 
   ZOOKEEPER-1852. ServerCnxnFactory instance is not properly
   cleanedup (Rakesh R via fpj)
@@ -157,6 +157,8 @@ BUGFIXES:
 
 IMPROVEMENTS:
 
+  ZOOKEEPER-1583. Document maxClientCnxns in conf/zoo_sample.cfg
+  (Christopher Tubbs via phunt)
 
   ZOOKEEPER-1627. Add org.apache.zookeeper.common to exported packages
   in OSGi MANIFEST (Arnoud Glimmerveen via phunt)
