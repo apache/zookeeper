@@ -106,7 +106,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
     /**
      * This flag indicates whether we need to wait for a response to come back from the
      * leader or we just let the sync operation flow through like a read. The flag will
-     * be true if the CommitProcessor is in a Leader pipeline.
+     * be false if the CommitProcessor is in a Leader pipeline.
      */
     boolean matchSyncs;
 
