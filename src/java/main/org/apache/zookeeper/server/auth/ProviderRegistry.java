@@ -21,6 +21,9 @@ package org.apache.zookeeper.server.auth;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Collections;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +36,9 @@ public class ProviderRegistry {
     private static boolean initialized = false;
     private static Map<String, AuthenticationProvider> authenticationProviders =
         new HashMap<>();
+    // Set of authentication schemes that needs to see an auth packet from
+    // the client before letting it transact with zookeeper
+    private static TreeSet<String> schemesRequiringAuth = new TreeSet<String>();
 
     //VisibleForTesting
     public static void reset() {
@@ -50,6 +56,13 @@ public class ProviderRegistry {
             DigestAuthenticationProvider digp = new DigestAuthenticationProvider();
             authenticationProviders.put(ipp.getScheme(), ipp);
             authenticationProviders.put(digp.getScheme(), digp);
+            if (ipp.needAuthentication()) {
+                schemesRequiringAuth.add(ipp.getScheme());
+            }
+            if (digp.needAuthentication()) {
+                schemesRequiringAuth.add(digp.getScheme());
+            }
+
             Enumeration<Object> en = System.getProperties().keys();
             while (en.hasMoreElements()) {
                 String k = (String) en.nextElement();
@@ -61,6 +74,19 @@ public class ProviderRegistry {
                         AuthenticationProvider ap = (AuthenticationProvider) c.getDeclaredConstructor()
                                 .newInstance();
                         authenticationProviders.put(ap.getScheme(), ap);
+                        // Check if the authentication provider supports the
+                        // new interface
+                        try {
+                            ap.getClass().getDeclaredMethod("needAuthentication");
+                        }
+                        catch (NoSuchMethodException e) {
+                            LOG.warn("Provider for " + ap.getScheme() +
+                                     " does not define needAuthentication");
+                            continue;
+                        }
+                        if (ap.needAuthentication()) {
+                            schemesRequiringAuth.add(ap.getScheme());
+                        }
                     } catch (Exception e) {
                         LOG.warn("Problems loading " + className,e);
                     }
@@ -86,5 +112,11 @@ public class ProviderRegistry {
             sb.append(s).append(" ");
         }
         return sb.toString();
+    }
+
+    public static SortedSet<String> getSchemesRequiringAuth() {
+        if(!initialized)
+            initialize();
+        return Collections.unmodifiableSortedSet(schemesRequiringAuth);
     }
 }

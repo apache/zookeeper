@@ -244,4 +244,9 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
         }
         return keyManager;
     }
+
+    @Override
+    public boolean needAuthentication() {
+        return false;
+    }
 }

@@ -129,4 +129,8 @@ public class IPAuthenticationProvider implements AuthenticationProvider {
         }
         return true;
     }
+
+    public boolean needAuthentication() {
+        return false;
+    }
 }

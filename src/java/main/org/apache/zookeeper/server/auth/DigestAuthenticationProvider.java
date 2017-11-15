@@ -126,6 +126,10 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
         return id.equals(aclExpr);
     }
 
+    public boolean needAuthentication() {
+        return false;
+    }
+
     /** Call with a single argument of user:pass to generate authdata.
      * Authdata output can be used when setting superDigest for example. 
      * @param args single argument of user:pass
