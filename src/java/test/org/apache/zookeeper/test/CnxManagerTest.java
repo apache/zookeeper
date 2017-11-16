@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 import java.net.Socket;
 
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.server.quorum.ExponentialBackoffStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
@@ -110,7 +111,7 @@ public class CnxManagerTest extends ZKTestCase {
         public void run(){
             try {
                 QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[0], peerTmpdir[0], peerClientPort[0], 3, 0, 1000, 2, 2);
-                QuorumCnxManager cnxManager = new QuorumCnxManager(peer);
+                QuorumCnxManager cnxManager = new QuorumCnxManager(peer, ExponentialBackoffStrategy.builder().build());
                 QuorumCnxManager.Listener listener = cnxManager.listener;
                 if(listener != null){
                     listener.start();
@@ -154,7 +155,7 @@ public class CnxManagerTest extends ZKTestCase {
         thread.start();
 
         QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[1], peerTmpdir[1], peerClientPort[1], 3, 1, 1000, 2, 2);
-        QuorumCnxManager cnxManager = new QuorumCnxManager(peer);
+        QuorumCnxManager cnxManager = new QuorumCnxManager(peer, ExponentialBackoffStrategy.builder().build());
         QuorumCnxManager.Listener listener = cnxManager.listener;
         if(listener != null){
             listener.start();
@@ -201,7 +202,7 @@ public class CnxManagerTest extends ZKTestCase {
         peerTmpdir[2] = ClientBase.createTmpDir();
 
         QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[1], peerTmpdir[1], peerClientPort[1], 3, 1, 1000, 2, 2);
-        QuorumCnxManager cnxManager = new QuorumCnxManager(peer);
+        QuorumCnxManager cnxManager = new QuorumCnxManager(peer, ExponentialBackoffStrategy.builder().build());
         QuorumCnxManager.Listener listener = cnxManager.listener;
         if(listener != null){
             listener.start();
@@ -229,7 +230,7 @@ public class CnxManagerTest extends ZKTestCase {
     @Test
     public void testCnxManagerSpinLock() throws Exception {
         QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[1], peerTmpdir[1], peerClientPort[1], 3, 1, 1000, 2, 2);
-        QuorumCnxManager cnxManager = new QuorumCnxManager(peer);
+        QuorumCnxManager cnxManager = new QuorumCnxManager(peer, ExponentialBackoffStrategy.builder().build());
         QuorumCnxManager.Listener listener = cnxManager.listener;
         if(listener != null){
             listener.start();
@@ -294,7 +295,7 @@ public class CnxManagerTest extends ZKTestCase {
         peers.get(2L).type = LearnerType.OBSERVER;
         QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[1], peerTmpdir[1],
                 peerClientPort[1], 3, 1, 1000, 2, 2);
-        QuorumCnxManager cnxManager = new QuorumCnxManager(peer);
+        QuorumCnxManager cnxManager = new QuorumCnxManager(peer, ExponentialBackoffStrategy.builder().build());
         QuorumCnxManager.Listener listener = cnxManager.listener;
         if (listener != null) {
             listener.start();
@@ -341,7 +342,7 @@ public class CnxManagerTest extends ZKTestCase {
     @Test
     public void testSocketTimeout() throws Exception {
         QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[1], peerTmpdir[1], peerClientPort[1], 3, 1, 2000, 2, 2);
-        QuorumCnxManager cnxManager = new QuorumCnxManager(peer);
+        QuorumCnxManager cnxManager = new QuorumCnxManager(peer, ExponentialBackoffStrategy.builder().build());
         QuorumCnxManager.Listener listener = cnxManager.listener;
         if(listener != null){
             listener.start();

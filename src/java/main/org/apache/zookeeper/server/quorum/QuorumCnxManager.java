@@ -217,12 +217,12 @@ public class QuorumCnxManager {
         }
     }
 
-    public QuorumCnxManager(QuorumPeer self) {
+    public QuorumCnxManager(QuorumPeer self, BackoffStrategy backoffStrategy) {
         this.recvQueue = new ArrayBlockingQueue<Message>(RECV_CAPACITY);
         this.queueSendMap = new ConcurrentHashMap<Long, ArrayBlockingQueue<ByteBuffer>>();
         this.senderWorkerMap = new ConcurrentHashMap<Long, SendWorker>();
         this.lastMessageSent = new ConcurrentHashMap<Long, ByteBuffer>();
-        
+
         String cnxToValue = System.getProperty("zookeeper.cnxTimeout");
         if(cnxToValue != null){
             this.cnxTO = Integer.parseInt(cnxToValue);
@@ -231,7 +231,7 @@ public class QuorumCnxManager {
         this.self = self;
 
         // Starts listener thread that waits for connection requests 
-        listener = new Listener();
+        listener = new Listener(backoffStrategy);
         listener.setName("QuorumPeerListener");
     }
 
@@ -607,12 +607,18 @@ public class QuorumCnxManager {
      */
     public class Listener extends ZooKeeperThread {
 
+        /*
+         * Retry BackoffStrategy
+         */
+        private final BackoffStrategy backoffStrategy;
+
         volatile ServerSocket ss = null;
 
-        public Listener() {
+        public Listener(BackoffStrategy backoffStrategy) {
             // During startup of thread, thread name will be overridden to
             // specific election address
             super("ListenerThread");
+            this.backoffStrategy = backoffStrategy;
         }
 
         /**
@@ -620,10 +626,9 @@ public class QuorumCnxManager {
          */
         @Override
         public void run() {
-            int numRetries = 0;
             InetSocketAddress addr;
             Socket client = null;
-            while((!shutdown) && (numRetries < 3)){
+            while(!shutdown){
                 try {
                     ss = new ServerSocket();
                     ss.setReuseAddress(true);
@@ -639,6 +644,7 @@ public class QuorumCnxManager {
                     LOG.info("My election bind port: " + addr.toString());
                     setName(addr.toString());
                     ss.bind(addr);
+                    backoffStrategy.reset();
                     while (!shutdown) {
                         try {
                             client = ss.accept();
@@ -646,7 +652,6 @@ public class QuorumCnxManager {
                             LOG.info("Received connection request "
                                      + client.getRemoteSocketAddress());
                             receiveConnection(client);
-                            numRetries = 0;
                         } catch (SocketTimeoutException e) {
                             LOG.warn("The socket is listening for the election accepted "
                                      + "and it timed out unexpectedly, but will retry."
@@ -658,10 +663,14 @@ public class QuorumCnxManager {
                         break;
                     }
                     LOG.error("Exception while listening", e);
-                    numRetries++;
                     try {
                         ss.close();
-                        Thread.sleep(1000);
+                        long waitTime = backoffStrategy.nextWaitMillis();
+                        if(waitTime == BackoffStrategy.STOP) {
+                            break;
+                        } else if (waitTime > 0) {
+                            Thread.sleep(waitTime);
+                        }
                     } catch (IOException ie) {
                         LOG.error("Error closing server socket", ie);
                     } catch (InterruptedException ie) {

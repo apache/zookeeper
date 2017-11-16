@@ -946,7 +946,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 le = new AuthFastLeaderElection(this, true);
                 break;
             case 3:
-                qcm = new QuorumCnxManager(this);
+                qcm = new QuorumCnxManager(this,
+                    ExponentialBackoffStrategy.builder().build());
                 QuorumCnxManager.Listener listener = qcm.listener;
                 if(listener != null){
                     listener.start();

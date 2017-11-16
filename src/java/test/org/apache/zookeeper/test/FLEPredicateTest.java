@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 
+import org.apache.zookeeper.server.quorum.ExponentialBackoffStrategy;
 import org.apache.zookeeper.server.quorum.FastLeaderElection;
 import org.apache.zookeeper.server.quorum.QuorumCnxManager;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
@@ -41,7 +42,7 @@ public class FLEPredicateTest extends ZKTestCase {
     
     class MockFLE extends FastLeaderElection {
         MockFLE(QuorumPeer peer){
-            super(peer, new QuorumCnxManager(peer));
+            super(peer, new QuorumCnxManager(peer, ExponentialBackoffStrategy.builder().build()));
         }
         
         boolean predicate(long newId, long newZxid, long newEpoch, long curId, long curZxid, long curEpoch){
