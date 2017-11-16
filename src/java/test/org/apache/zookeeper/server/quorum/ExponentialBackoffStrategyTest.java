@@ -21,12 +21,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
+import org.apache.zookeeper.ZKTestCase;
 import org.junit.Test;
 
 /**
  * Unit tests for {@link ExponentialBackoffStrategy}.
  */
-public class ExponentialBackoffStrategyTest {
+public class ExponentialBackoffStrategyTest extends ZKTestCase {
 
     // Input validation tests
     @Test(expected = IllegalArgumentException.class)
