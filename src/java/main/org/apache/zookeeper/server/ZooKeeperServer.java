@@ -1108,25 +1108,28 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             }
             else {
                 List<Id> authInfo = cnxn.getAuthInfo();
-                // Iterate over auth info and create this
-                SortedSet<String> providedAuthSchemes = new TreeSet<String>();
-                for (Id authid : authInfo) {
-                    providedAuthSchemes.add(authid.getScheme());
-                }
+                if (!cnxn.isAuthCheckComplete()) {
+                   // Iterate over auth info and create this
+                   SortedSet<String> providedAuthSchemes = new TreeSet<String>();
+                   for (Id authid : authInfo) {
+                       providedAuthSchemes.add(authid.getScheme());
+                   }
 
-                SortedSet<String> neededAuthSchemes =
-                    ProviderRegistry.getSchemesRequiringAuth();
-                if (!providedAuthSchemes.containsAll(neededAuthSchemes)) {
-                    // We got a data packet without completing the necessary
-                    // authentication; so, nuke it!
-                    LOG.warn("Missing required authentication; closing connection");
-                    ReplyHeader rh = new ReplyHeader(h.getXid(), 0,
-                            KeeperException.Code.NOAUTH.intValue());
-                    cnxn.sendResponse(rh, null, null);
-                    // ... and close connection
-                    cnxn.sendBuffer(ServerCnxnFactory.closeConn);
-                    cnxn.disableRecv();
-                    return;
+                   SortedSet<String> neededAuthSchemes =
+                       ProviderRegistry.getSchemesRequiringAuth();
+                   cnxn.authCheckComplete();
+                   if (!providedAuthSchemes.containsAll(neededAuthSchemes)) {
+                       // We got a data packet without completing the necessary
+                       // authentication; so, nuke it!
+                       LOG.warn("Missing required authentication; closing connection");
+                       ReplyHeader rh = new ReplyHeader(h.getXid(), 0,
+                               KeeperException.Code.NOAUTH.intValue());
+                       cnxn.sendResponse(rh, null, null);
+                       // ... and close connection
+                       cnxn.sendBuffer(ServerCnxnFactory.closeConn);
+                       cnxn.disableRecv();
+                       return;
+                   }
                 }
 
                 Request si = new Request(cnxn, cnxn.getSessionId(), h.getXid(),
