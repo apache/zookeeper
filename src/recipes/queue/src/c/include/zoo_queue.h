@@ -100,7 +100,7 @@ ZOOAPI int zkr_queue_remove(zkr_queue_t *queue, char *buffer, int *buffer_len);
  * \param buffer_len a pointer to the length of the buffer
  * \return returns 0 (ZOK) and sets *buffer_len to the length of data written if successful. Otherwise it will set *buffer_len to -1 and return a zookeeper error code. 
  */
-ZOOAPI int zkr_queue_take(zkr_queue_t *queue, char *buffer, int *buffer_len);
+ZOOAPI int zkr_queue_take(zhandle_t *zh, zkr_queue_t *queue, char *buffer, int *buffer_len);
 
 /**
  * \brief destroys a zookeeper queue structure 

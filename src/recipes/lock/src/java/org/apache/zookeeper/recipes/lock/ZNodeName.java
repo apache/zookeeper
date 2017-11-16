@@ -74,15 +74,17 @@ class ZNodeName implements Comparable<ZNodeName> {
         return name.hashCode() + 37;
     }
 
+    /**
+     * Compare znodes based on their sequence number
+     * @param that other znode to compare to
+     * @return the difference between their sequence numbers: a positive value if this
+     *         znode has a larger sequence number, 0 if they have the same sequence number
+     *         or a negative number if this znode has a lower sequence number
+     */
     public int compareTo(ZNodeName that) {
-        int answer = this.prefix.compareTo(that.prefix);
+        int answer = this.sequence - that.sequence;
         if (answer == 0) {
-            int s1 = this.sequence;
-            int s2 = that.sequence;
-            if (s1 == -1 && s2 == -1) {
-                return this.name.compareTo(that.name);
-            }
-            answer = s1 == -1 ? 1 : s2 == -1 ? -1 : s1 - s2;
+            return this.prefix.compareTo(that.prefix);
         }
         return answer;
     }

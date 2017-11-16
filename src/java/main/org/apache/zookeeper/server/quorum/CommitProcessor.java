@@ -112,10 +112,9 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
     private Object emptyPoolSync = new Object();
 
     /**
-     * This flag indicates whether we need to wait for a response to come back
-     * from the leader or we just let the sync operation flow through like a
-     * read. The flag will be true if the CommitProcessor is in a Leader
-     * pipeline.
+     * This flag indicates whether we need to wait for a response to come back from the
+     * leader or we just let the sync operation flow through like a read. The flag will
+     * be false if the CommitProcessor is in a Leader pipeline.
      */
     boolean matchSyncs;
 
