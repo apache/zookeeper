@@ -946,8 +946,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 le = new AuthFastLeaderElection(this, true);
                 break;
             case 3:
-                qcm = new QuorumCnxManager(this,
-                    ExponentialBackoffStrategy.builder().build());
+                qcm = new QuorumCnxManager(this, buildBackoffStrategy());
                 QuorumCnxManager.Listener listener = qcm.listener;
                 if(listener != null){
                     listener.start();
@@ -962,6 +961,89 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 assert false;
         }
         return le;
+    }
+
+
+    /**
+     * Support configuring the fixed interval backoff strategy via a system property.
+     */
+    public static final String FIXED_INTERVAL_BACKOFF_INTERVALS = "zookeeper.quorum.fixedIntervalBackoff.intervalMillis";
+
+    /**
+     * Support configuring the fixed interval backoff strategy via a system property.
+     */
+    public static final String FIXED_INTERVAL_BACKOFF_INTERVAL_MILLIS = "zookeeper.quorum.fixedIntervalBackoff.intervals";
+
+    /**
+     * Support setting the exponential backoff strategy via a system property.
+     */
+    public static final String EXPONENTIAL_BACKOFF = "zookeeper.quorum.exponentialBackoff";
+
+    /**
+     * Support configuring the fixed interval backoff strategy via a system property.
+     */
+    public static final String EXPONENTIAL_BACKOFF_INITIAL = "zookeeper.quorum.exponentialBackoff.initialBackoff";
+
+    /**
+     * Support configuring the fixed interval backoff strategy via a system property.
+     */
+    public static final String EXPONENTIAL_BACKOFF_MULTIPLIER = "zookeeper.quorum.exponentialBackoff.multiplier";
+
+    /**
+     * Support configuring the fixed interval backoff strategy via a system property.
+     */
+    public static final String EXPONENTIAL_BACKOFF_MAX_ELAPSED = "zookeeper.quorum.exponentialBackoff.maxElapsedMillis";
+
+    /**
+     * Support configuring the fixed interval backoff strategy via a system property.
+     */
+    public static final String EXPONENTIAL_BACKOFF_MAX_BACKOFF = "zookeeper.quorum.exponentialBackoff.maxBackoffMillis";
+
+    /**
+     * Construct the {@link BackoffStrategy} to use.
+     * @return the constructed BackoffStrategy
+     */
+    protected BackoffStrategy buildBackoffStrategy() {
+
+        // if the user specifies the exponential back, configure and create it
+        if(Boolean.getBoolean(EXPONENTIAL_BACKOFF)) {
+            final ExponentialBackoffStrategy.Builder builder = ExponentialBackoffStrategy.builder();
+
+            if(Long.getLong(EXPONENTIAL_BACKOFF_INITIAL) != null) {
+                builder.setInitialBackoff(Long.getLong(EXPONENTIAL_BACKOFF_INITIAL));
+            }
+
+            if(Long.getLong(EXPONENTIAL_BACKOFF_MAX_ELAPSED) != null) {
+                builder.setMaxElapsed(Long.getLong(EXPONENTIAL_BACKOFF_MAX_ELAPSED));
+            }
+
+            if(Long.getLong(EXPONENTIAL_BACKOFF_MAX_BACKOFF) != null) {
+                builder.setMaxBackoff(Long.getLong(EXPONENTIAL_BACKOFF_MAX_BACKOFF));
+            }
+
+            final String multiplierProp = System.getProperty(EXPONENTIAL_BACKOFF_MULTIPLIER);
+            if(multiplierProp != null) {
+                try {
+                    builder.setBackoffMultiplier(Double.valueOf(multiplierProp));
+                } catch(NumberFormatException nfe) {
+                    LOG.warn("{} is not a valid floating point value, ignoring it.", multiplierProp);
+                }
+            }
+
+            return builder.build();
+        }
+
+        // default to FixedIntervalBackoffStrategy to maintain current behavior
+        final FixedIntervalBackoffStrategy.Builder builder = FixedIntervalBackoffStrategy.builder();
+        if(Long.getLong(FIXED_INTERVAL_BACKOFF_INTERVAL_MILLIS) != null) {
+            builder.setIntervalMillis(Long.getLong(FIXED_INTERVAL_BACKOFF_INTERVAL_MILLIS));
+        }
+
+        if(Long.getLong(FIXED_INTERVAL_BACKOFF_INTERVALS) != null) {
+            builder.setIntervals(Long.getLong(FIXED_INTERVAL_BACKOFF_INTERVALS));
+        }
+
+        return builder.build();
     }
 
     @SuppressWarnings("deprecation")
