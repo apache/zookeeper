@@ -963,6 +963,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         return le;
     }
 
+    /**
+     * Support setting the exponential backoff strategy via a system property.
+     */
+    public static final String BACKOFF_STRATEGY = "zookeeper.quorum.backoffStrategy";
 
     /**
      * Support configuring the fixed interval backoff strategy via a system property.
@@ -1004,6 +1008,20 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * @return the constructed BackoffStrategy
      */
     protected BackoffStrategy buildBackoffStrategy() {
+
+        // check for external BackoffStrategy
+        final String externalBackoffStrategy = System.getProperty(BACKOFF_STRATEGY);
+        if(externalBackoffStrategy != null) {
+            try {
+                return (BackoffStrategy) Class.forName(externalBackoffStrategy).newInstance();
+            } catch(ClassNotFoundException cnfe) {
+                LOG.warn("Unable to load BackoffStrategy {}, default to Zookeeper internal BackoffStrategy",
+                    externalBackoffStrategy);
+            } catch(InstantiationException | IllegalAccessException ex) {
+                LOG.warn("Unable to construct BackoffStrategy {}, default to Zookeeper internal BackoffStrategy",
+                    externalBackoffStrategy);
+            }
+        }
 
         // if the user specifies the exponential back, configure and create it
         if(Boolean.getBoolean(EXPONENTIAL_BACKOFF)) {
