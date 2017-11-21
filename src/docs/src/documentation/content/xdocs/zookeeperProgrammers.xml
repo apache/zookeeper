@@ -241,7 +241,7 @@
         counter used to store the next sequence number is a signed int
         (4bytes) maintained by the parent node, the counter will
         overflow when incremented beyond 2147483647 (resulting in a
-        name "&lt;path&gt;-2147483647").</para>
+        name "&lt;path&gt;-2147483648").</para>
       </section>
     </section>
 
