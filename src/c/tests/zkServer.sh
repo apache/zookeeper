@@ -157,8 +157,8 @@ startReadOnly)
         echo "this target is for unit tests only"
         exit 2
     else
-        mkdir -p /tmp/zkdata
-        rm -f /tmp/zkdata/myid && echo 1 > /tmp/zkdata/myid
+        mkdir -p "${base_dir}/build/tmp/zkdata"
+        rm -f "${base_dir}/build/tmp/zkdata/myid" && echo 1 > "${base_dir}/build/tmp/zkdata/myid"
 
         # force read-only mode
         java -cp "$CLASSPATH" -Dreadonlymode.enabled=true org.apache.zookeeper.server.quorum.QuorumPeerMain ${base_dir}/src/c/tests/quorum.cfg &> "${base_dir}/build/tmp/zk.log" &
