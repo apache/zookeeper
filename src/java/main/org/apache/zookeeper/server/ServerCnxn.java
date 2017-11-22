@@ -88,11 +88,11 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     public boolean isAuthCheckComplete() {
         return authCheckCompleted;
-    };
+    }
 
     public void authCheckComplete() {
         authCheckCompleted = true;
-    };
+    }
 
     abstract void sendBuffer(ByteBuffer closeConn);
 
