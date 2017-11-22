@@ -105,12 +105,12 @@ fi
 case $1 in
 start|startClean)
     if [ "x${base_dir}" == "x" ]
-        then
+    then
         mkdir -p /tmp/zkdata
         java -cp "$CLASSPATH" org.apache.zookeeper.server.ZooKeeperServerMain $ZOOPORT /tmp/zkdata 3000 $ZKMAXCNXNS &> /tmp/zk.log &
         pid=$!
         echo -n $! > /tmp/zk.pid
-        else
+    else
         mkdir -p "${base_dir}/build/tmp/zkdata"
         java -cp "$CLASSPATH" org.apache.zookeeper.server.ZooKeeperServerMain $ZOOPORT "${base_dir}/build/tmp/zkdata" 3000 $ZKMAXCNXNS &> "${base_dir}/build/tmp/zk.log" &
         pid=$!
