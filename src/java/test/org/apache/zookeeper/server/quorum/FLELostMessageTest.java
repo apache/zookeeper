@@ -95,7 +95,7 @@ public class FLELostMessageTest extends ZKTestCase {
 
     void mockServer() throws InterruptedException, IOException {
         QuorumPeer peer = new QuorumPeer(peers, tmpdir[0], tmpdir[0], port[0], 3, 0, 1000, 2, 2);
-        cnxManager = new QuorumCnxManager(peer);
+        cnxManager = new QuorumCnxManager(peer, ExponentialBackoffStrategy.builder().build());
         cnxManager.listener.start();
 
         cnxManager.toSend(1l, FLETestUtils.createMsg(ServerState.LOOKING.ordinal(), 0, 0, 0));
