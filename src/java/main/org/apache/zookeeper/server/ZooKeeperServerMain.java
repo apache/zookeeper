@@ -124,6 +124,7 @@ public class ZooKeeperServerMain {
             txnLog = new FileTxnSnapLog(config.dataLogDir, config.dataDir);
             final ZooKeeperServer zkServer = new ZooKeeperServer(txnLog,
                     config.tickTime, config.minSessionTimeout, config.maxSessionTimeout, null);
+            zkServer.setTtlNodesEnabled(config.getTtlNodesEnabled());
 
             // Registers shutdown handler which will be used to know the
             // server error or shutdown state changes.
