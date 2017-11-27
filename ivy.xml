@@ -90,6 +90,39 @@
     <dependency org="org.owasp" name="dependency-check-ant"
                 rev="${dependency-check-ant.version}" conf="owasp->default"/>
 
+    <dependency org="commons-io" name="commons-io"
+                rev="${commons-io.version}" conf="test->default"/>
+
+    <dependency org="org.apache.kerby" name="kerby-config" rev="${kerby.version}" conf="test->default">
+          <exclude org="org.slf4j" module="slf4j-api"/>
+          <exclude org="org.slf4j" module="slf4j-log4j12"/>
+    </dependency>
+    <dependency org="org.apache.kerby" name="kerb-simplekdc" rev="${kerby.version}" conf="test->default">
+        <exclude org="org.slf4j" module="slf4j-api"/>
+    </dependency>
+    <dependency org="org.apache.kerby" name="kerb-core"
+                rev="${kerby.version}" conf="test->default">
+        <exclude org="org.slf4j" module="slf4j-api"/>
+    </dependency>
+    <dependency org="org.apache.kerby" name="kerb-server"
+                rev="${kerby.version}" conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerb-common"
+                rev="${kerby.version}" conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerb-admin"
+                rev="${kerby.version}" conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerb-identity"
+                rev="${kerby.version}" conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerb-client"
+                rev="${kerby.version}" conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerb-util"
+                rev="${kerby.version}" conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerb-crypto"
+                rev="${kerby.version}" conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerby-util"
+                rev="${kerby.version}" conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerby-asn1"
+                rev="${kerby.version}" conf="test->default"/>
+
     <dependency org="net.java.dev.javacc" name="javacc" rev="${javacc.version}"
                 conf="javacc->default" />
 
