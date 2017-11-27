@@ -79,6 +79,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="test.data.dir" value="${test.java.build.dir}/data" />
     <property name="test.data.invalid.dir" value="${test.data.dir}/invalidsnap" />
     <property name="test.data.buffersize.dir" value="${test.data.dir}/buffersize" />
+    <property name="test.data.kerberos.dir" value="${test.data.dir}/kerberos" />
     <property name="test.data.ssl.dir" value="${test.data.dir}/ssl" />
     <property name="test.cppunit.dir" value="${test.java.build.dir}/test-cppunit"/>
     <property name="test.tmp.dir" value="${test.java.build.dir}/tmp" />
@@ -225,6 +226,9 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="jetty.version" value="9.2.18.v20160721"/>
     <property name="jackson-mapper-asl.version" value="1.9.11"/>
     <property name="dependency-check-ant.version" value="2.1.0"/>
+
+    <property name="commons-io.version" value="2.4"/>
+    <property name="kerby.version" value="1.0.0-RC2"/>
 
     <!-- ====================================================== -->
     <!-- Macro definitions                                      -->
@@ -1165,6 +1169,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <delete dir="${test.tmp.dir}" />
         <delete dir="${test.data.invalid.dir}" />
         <delete dir="${test.data.buffersize.dir}" />
+        <delete dir="${test.data.kerberos.dir}" />
         <delete dir="${test.data.ssl.dir}" />
         <delete dir="${test.data.dir}" />
         <mkdir dir="${test.log.dir}" />
@@ -1181,6 +1186,10 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <mkdir dir="${test.data.ssl.dir}" />
         <copy todir="${test.data.ssl.dir}">
             <fileset dir="${basedir}/src/java/test/data/ssl"/>
+        </copy>
+        <mkdir dir="${test.data.kerberos.dir}" />
+        <copy todir="${test.data.kerberos.dir}">
+            <fileset dir="${basedir}/src/java/test/data/kerberos"/>
         </copy>
     </target>
 
