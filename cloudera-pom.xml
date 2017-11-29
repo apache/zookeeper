@@ -145,6 +145,7 @@
                       <arg value="-Dversion=${cdh.zookeeper.version}"/>
                       <arg value="-Dcdh.maven=true"/>
                       <arg value="-Divy.cache.dir=${ivy.cache.dir}"/>
+                      <arg value="-Dtest.junit.output.format=xml" />
                     </exec>
                   </target>
                 </configuration>
