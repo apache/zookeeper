@@ -1,0 +1,8 @@
+# .htaccess for ZooKeeper
+#
+# Old site had /docs while new site has /doc
+RedirectMatch Permanent ^/docs/(.+)$ /doc/$1
+# Old site had /mailing_lists.html while new site has /lists.html
+RedirectMatch Permanent ^/mailing_lists.html$ /lists.html
+# redirect bookkeeper site
+RedirectMatch Permanent ^/bookkeeper/(.+)$ http://bookkeeper.apache.org/$1
