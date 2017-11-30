@@ -5,7 +5,7 @@ layout: page
 
 The Apache Software Foundation takes security issues very seriously. Due to the infrastructure nature of the Apache ZooKeeper project specifically, we haven't had many reports over time, but it doesn't mean that we haven't had concerns over some bugs and vulnerabilities. If you have any concern or believe you have uncovered a vulnerability, we suggest that you get in touch via the e-mail address <a href="mailto:security@zookeeper.apache.org?Subject=[SECURITY] My security issue" target="_top">security@zookeeper.apache.org</a>. In the message, try to provide a description of the issue and ideally a way of reproducing it. Note that this security address should be used only for undisclosed vulnerabilities. Dealing with known issues should be handled regularly via jira and the mailing lists. **Please report any security problems to the project security address before disclosing it publicly.**  
 
-The ASF Security team maintains a page with a description of how vulnerabilities are handled, check their <a href="http://www.apache.org/security/">Web page</a> for more information.
+The ASF Security team maintains a page with a description of how vulnerabilities are handled, check their <a href="https://www.apache.org/security/">Web page</a> for more information.
 
 ## Vulnerability reports
 

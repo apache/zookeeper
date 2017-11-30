@@ -13,7 +13,7 @@
 
   =======================================================================
 -->
-  <Project rdf:about="http://zookeeper.apache.org/">
+  <Project rdf:about="https://zookeeper.apache.org/">
     <created>2011-02-06</created>
     <license rdf:resource="http://usefulinc.com/doap/licenses/asl20" />
     <name>Apache ZooKeeper</name>
