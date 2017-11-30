@@ -1,0 +1,168 @@
+MISSING @SINCE TAG: org.apache.zookeeper.AsyncCallback.Children2Callback Interface
+MISSING @SINCE TAG: org.apache.zookeeper.AsyncCallback.Create2Callback Interface
+MISSING @SINCE TAG: org.apache.zookeeper.AsyncCallback.MultiCallback Interface
+MISSING @SINCE TAG: org.apache.zookeeper.ClientCnxnSocketNetty Class
+NO DOC BLOCK: org.apache.zookeeper.ClientCnxnSocketNIO Class
+MISSING @SINCE TAG: org.apache.zookeeper.KeeperException.EphemeralOnLocalSessionException Class
+MISSING @SINCE TAG: org.apache.zookeeper.KeeperException.NewConfigNoQuorum Class
+MISSING @SINCE TAG: org.apache.zookeeper.KeeperException.NotReadOnlyException Class
+MISSING @SINCE TAG: org.apache.zookeeper.KeeperException.NoWatcherException Class
+MISSING @SINCE TAG: org.apache.zookeeper.KeeperException.ReconfigDisabledException Class
+MISSING @SINCE TAG: org.apache.zookeeper.KeeperException.ReconfigInProgress Class
+MISSING @SINCE TAG: org.apache.zookeeper.KeeperException.SessionMovedException Class
+MISSING @SINCE TAG: org.apache.zookeeper.KeeperException.UnknownSessionException Class
+NO DOC BLOCK: org.apache.zookeeper.Login Class
+MISSING @SINCE TAG: org.apache.zookeeper.MultiResponse Class
+MISSING @SINCE TAG: org.apache.zookeeper.MultiTransactionRecord Class
+MISSING @SINCE TAG: org.apache.zookeeper.Op Class
+NO DOC BLOCK: org.apache.zookeeper.Op.Check Class
+NO DOC BLOCK: org.apache.zookeeper.Op.Create Class
+NO DOC BLOCK: org.apache.zookeeper.Op.CreateTTL Class
+NO DOC BLOCK: org.apache.zookeeper.Op.Delete Class
+NO DOC BLOCK: org.apache.zookeeper.Op.SetData Class
+MISSING @SINCE TAG: org.apache.zookeeper.OpResult Class
+MISSING @SINCE TAG: org.apache.zookeeper.OpResult.CheckResult Class
+MISSING @SINCE TAG: org.apache.zookeeper.OpResult.CreateResult Class
+MISSING @SINCE TAG: org.apache.zookeeper.OpResult.DeleteResult Class
+MISSING @SINCE TAG: org.apache.zookeeper.OpResult.ErrorResult Class
+MISSING @SINCE TAG: org.apache.zookeeper.OpResult.SetDataResult Class
+MISSING @SINCE TAG: org.apache.zookeeper.Shell Class
+MISSING @SINCE TAG: org.apache.zookeeper.Shell.ExitCodeException Class
+MISSING @SINCE TAG: org.apache.zookeeper.Shell.ShellCommandExecutor Class
+MISSING @SINCE TAG: org.apache.zookeeper.Testable Interface
+OK: org.apache.zookeeper.Transaction Class
+MISSING @SINCE TAG: org.apache.zookeeper.WatchDeregistration Class
+MISSING @SINCE TAG: org.apache.zookeeper.Watcher.WatcherType Class
+NO DOC BLOCK: org.apache.zookeeper.ZKUtil Class
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeper.WatchRegistration Class
+MISSING @SINCE TAG: org.apache.zookeeper.ClientCnxn Constructor (java.lang.String, org.apache.zookeeper.client.HostProvider, int, org.apache.zookeeper.ZooKeeper, org.apache.zookeeper.ClientWatchManager, org.apache.zookeeper.ClientCnxnSocket, boolean)
+MISSING @SINCE TAG: org.apache.zookeeper.ClientCnxn Constructor (java.lang.String, org.apache.zookeeper.client.HostProvider, int, org.apache.zookeeper.ZooKeeper, org.apache.zookeeper.ClientWatchManager, org.apache.zookeeper.ClientCnxnSocket, long, byte[], boolean)
+NO DOC BLOCK: org.apache.zookeeper.KeeperException.BadArgumentsException Constructor (java.lang.String)
+NO DOC BLOCK: org.apache.zookeeper.KeeperException.BadVersionException Constructor (java.lang.String)
+NO DOC BLOCK: org.apache.zookeeper.KeeperException.InvalidACLException Constructor (java.lang.String)
+NO DOC BLOCK: org.apache.zookeeper.KeeperException.NoChildrenForEphemeralsException Constructor (java.lang.String)
+NO DOC BLOCK: org.apache.zookeeper.KeeperException.NodeExistsException Constructor (java.lang.String)
+NO DOC BLOCK: org.apache.zookeeper.KeeperException.NoNodeException Constructor (java.lang.String)
+NO DOC BLOCK: org.apache.zookeeper.KeeperException.NotEmptyException Constructor (java.lang.String)
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeper Constructor (java.lang.String, int, org.apache.zookeeper.Watcher, boolean)
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeper Constructor (java.lang.String, int, org.apache.zookeeper.Watcher, boolean, org.apache.zookeeper.client.HostProvider)
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeper Constructor (java.lang.String, int, org.apache.zookeeper.Watcher, boolean, org.apache.zookeeper.client.HostProvider, org.apache.zookeeper.client.ZKClientConfig)
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeper Constructor (java.lang.String, int, org.apache.zookeeper.Watcher, boolean, org.apache.zookeeper.client.ZKClientConfig)
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeper Constructor (java.lang.String, int, org.apache.zookeeper.Watcher, long, byte[], boolean)
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeper Constructor (java.lang.String, int, org.apache.zookeeper.Watcher, long, byte[], boolean, org.apache.zookeeper.client.HostProvider)
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeper Constructor (java.lang.String, int, org.apache.zookeeper.Watcher, org.apache.zookeeper.client.ZKClientConfig)
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Constructor (java.lang.String[])
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Constructor (org.apache.zookeeper.ZooKeeper)
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeperMain Method addToHistory(int, java.lang.String)
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Method connectToZK(java.lang.String)
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeper Method create(java.lang.String, byte[], java.util.List, org.apache.zookeeper.CreateMode, org.apache.zookeeper.data.Stat)
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeper Method create(java.lang.String, byte[], java.util.List, org.apache.zookeeper.CreateMode, org.apache.zookeeper.data.Stat, long)
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeper Method create(java.lang.String, byte[], java.util.List, org.apache.zookeeper.CreateMode, org.apache.zookeeper.AsyncCallback.Create2Callback, java.lang.Object)
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeper Method create(java.lang.String, byte[], java.util.List, org.apache.zookeeper.CreateMode, org.apache.zookeeper.AsyncCallback.Create2Callback, java.lang.Object, long)
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeper Method defaultWatchManager()
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Method executeLine(java.lang.String)
+MISSING @SINCE TAG: org.apache.zookeeper.CreateMode Method fromFlag(int, org.apache.zookeeper.CreateMode)
+OK: org.apache.zookeeper.ZooKeeper Method getChildren(java.lang.String, boolean, org.apache.zookeeper.data.Stat)
+OK: org.apache.zookeeper.ZooKeeper Method getChildren(java.lang.String, org.apache.zookeeper.Watcher, org.apache.zookeeper.data.Stat)
+OK: org.apache.zookeeper.ZooKeeper Method getChildren(java.lang.String, boolean, org.apache.zookeeper.AsyncCallback.Children2Callback, java.lang.Object)
+OK: org.apache.zookeeper.ZooKeeper Method getChildren(java.lang.String, org.apache.zookeeper.Watcher, org.apache.zookeeper.AsyncCallback.Children2Callback, java.lang.Object)
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeper Method getChildWatches()
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeper Method getClientConfig()
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Method getCommands()
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeper Method getConfig(boolean, org.apache.zookeeper.data.Stat)
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeper Method getConfig(org.apache.zookeeper.Watcher, org.apache.zookeeper.data.Stat)
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeper Method getConfig(boolean, org.apache.zookeeper.AsyncCallback.DataCallback, java.lang.Object)
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeper Method getConfig(org.apache.zookeeper.Watcher, org.apache.zookeeper.AsyncCallback.DataCallback, java.lang.Object)
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeper Method getDataWatches()
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeper Method getExistWatches()
+NO DOC BLOCK: org.apache.zookeeper.ClientCnxn Method getLastZxid()
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Method getPrintWatches()
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Method getPrompt()
+OK: org.apache.zookeeper.KeeperException Method getResults()
+NO DOC BLOCK: org.apache.zookeeper.Version Method getRevisionHash()
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeper Method getSaslClient()
+NO DOC BLOCK: org.apache.zookeeper.ClientCnxn Method getSessionTimeout()
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeper Method getSessionTimeout()
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeper Method getTestable()
+NO DOC BLOCK: org.apache.zookeeper.ClientCnxn Method getXid()
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeper Method internalReconfig(java.lang.String, java.lang.String, java.lang.String, long, org.apache.zookeeper.data.Stat)
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeper Method internalReconfig(java.util.List, java.util.List, java.util.List, long, org.apache.zookeeper.data.Stat)
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeper Method internalReconfig(java.lang.String, java.lang.String, java.lang.String, long, org.apache.zookeeper.AsyncCallback.DataCallback, java.lang.Object)
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeper Method internalReconfig(java.util.List, java.util.List, java.util.List, long, org.apache.zookeeper.AsyncCallback.DataCallback, java.lang.Object)
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeper.States Method isConnected()
+NO DOC BLOCK: org.apache.zookeeper.CreateMode Method isContainer()
+NO DOC BLOCK: org.apache.zookeeper.CreateMode Method isTTL()
+OK: org.apache.zookeeper.ZooKeeper Method multi(java.lang.Iterable)
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeper Method multi(java.lang.Iterable, org.apache.zookeeper.AsyncCallback.MultiCallback, java.lang.Object)
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeper Method multiInternal(org.apache.zookeeper.MultiTransactionRecord)
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeper Method multiInternal(org.apache.zookeeper.MultiTransactionRecord, org.apache.zookeeper.AsyncCallback.MultiCallback, java.lang.Object)
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Method printMessage(java.lang.String)
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Method processCmd(org.apache.zookeeper.ZooKeeperMain.MyCommandOptions)
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Method processZKCmd(org.apache.zookeeper.ZooKeeperMain.MyCommandOptions)
+NO DOC BLOCK: org.apache.zookeeper.ClientCnxn Method queuePacket(org.apache.zookeeper.proto.RequestHeader, org.apache.zookeeper.proto.ReplyHeader, org.apache.jute.Record, org.apache.jute.Record, org.apache.zookeeper.AsyncCallback, java.lang.String, java.lang.String, java.lang.Object, org.apache.zookeeper.ZooKeeper.WatchRegistration)
+NO DOC BLOCK: org.apache.zookeeper.ClientCnxn Method queuePacket(org.apache.zookeeper.proto.RequestHeader, org.apache.zookeeper.proto.ReplyHeader, org.apache.jute.Record, org.apache.jute.Record, org.apache.zookeeper.AsyncCallback, java.lang.String, java.lang.String, java.lang.Object, org.apache.zookeeper.ZooKeeper.WatchRegistration, org.apache.zookeeper.WatchDeregistration)
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeper Method reconfig(java.lang.String, java.lang.String, java.lang.String, long, org.apache.zookeeper.data.Stat)
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeper Method reconfig(java.util.List, java.util.List, java.util.List, long, org.apache.zookeeper.data.Stat)
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeper Method reconfig(java.lang.String, java.lang.String, java.lang.String, long, org.apache.zookeeper.AsyncCallback.DataCallback, java.lang.Object)
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeper Method reconfig(java.util.List, java.util.List, java.util.List, long, org.apache.zookeeper.AsyncCallback.DataCallback, java.lang.Object)
+OK: org.apache.zookeeper.ZooKeeper Method removeAllWatches(java.lang.String, org.apache.zookeeper.Watcher.WatcherType, boolean)
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeper Method removeAllWatches(java.lang.String, org.apache.zookeeper.Watcher.WatcherType, boolean, org.apache.zookeeper.AsyncCallback.VoidCallback, java.lang.Object)
+OK: org.apache.zookeeper.ZooKeeper Method removeWatches(java.lang.String, org.apache.zookeeper.Watcher, org.apache.zookeeper.Watcher.WatcherType, boolean)
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeper Method removeWatches(java.lang.String, org.apache.zookeeper.Watcher, org.apache.zookeeper.Watcher.WatcherType, boolean, org.apache.zookeeper.AsyncCallback.VoidCallback, java.lang.Object)
+NO DOC BLOCK: org.apache.zookeeper.ClientCnxn Method saslCompleted()
+NO DOC BLOCK: org.apache.zookeeper.ClientCnxn Method sendPacket(org.apache.jute.Record, org.apache.jute.Record, org.apache.zookeeper.AsyncCallback, int)
+NO DOC BLOCK: org.apache.zookeeper.ClientCnxn Method start()
+NO DOC BLOCK: org.apache.zookeeper.ClientCnxn Method submitRequest(org.apache.zookeeper.proto.RequestHeader, org.apache.jute.Record, org.apache.jute.Record, org.apache.zookeeper.ZooKeeper.WatchRegistration, org.apache.zookeeper.WatchDeregistration)
+OK: org.apache.zookeeper.ZooKeeper Method testableLocalSocketAddress()
+OK: org.apache.zookeeper.ZooKeeper Method testableRemoteSocketAddress()
+OK: org.apache.zookeeper.ZooKeeper Method testableWaitForShutdown(int)
+OK: org.apache.zookeeper.ZooKeeper Method toString()
+OK: org.apache.zookeeper.ZooKeeper Method transaction()
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeper Method updateServerList(java.lang.String)
+MISSING @SINCE TAG: org.apache.zookeeper.Watcher.Event.KeeperState Field AuthFailed
+NO DOC BLOCK: org.apache.zookeeper.ZooDefs.OpCode Field check
+NO DOC BLOCK: org.apache.zookeeper.ZooDefs.OpCode Field checkWatches
+NO DOC BLOCK: org.apache.zookeeper.Watcher.Event.EventType Field ChildWatchRemoved
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Field cl
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Field commandCount
+NO DOC BLOCK: org.apache.zookeeper.ZooDefs Field CONFIG_NODE
+MISSING @SINCE TAG: org.apache.zookeeper.Watcher.Event.KeeperState Field ConnectedReadOnly
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeper.States Field CONNECTEDREADONLY
+MISSING @SINCE TAG: org.apache.zookeeper.CreateMode Field CONTAINER
+NO DOC BLOCK: org.apache.zookeeper.ZooDefs.OpCode Field create2
+NO DOC BLOCK: org.apache.zookeeper.ZooDefs.OpCode Field createContainer
+NO DOC BLOCK: org.apache.zookeeper.ZooDefs.OpCode Field createTTL
+NO DOC BLOCK: org.apache.zookeeper.Watcher.Event.EventType Field DataWatchRemoved
+NO DOC BLOCK: org.apache.zookeeper.ZooDefs.OpCode Field deleteContainer
+MISSING @SINCE TAG: org.apache.zookeeper.KeeperException.Code Field EPHEMERALONLOCALSESSION
+NO DOC BLOCK: org.apache.zookeeper.KeeperException.CodeDeprecated Field EphemeralOnLocalSession
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Field exitCode
+NO DOC BLOCK: org.apache.zookeeper.ZooDefs.OpCode Field getChildren2
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Field history
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Field host
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeper Field hostProvider
+NO DOC BLOCK: org.apache.zookeeper.Environment Field JAAS_CONF_KEY
+NO DOC BLOCK: org.apache.zookeeper.ZooDefs.OpCode Field multi
+MISSING @SINCE TAG: org.apache.zookeeper.KeeperException.Code Field NEWCONFIGNOQUORUM
+MISSING @SINCE TAG: org.apache.zookeeper.KeeperException.CodeDeprecated Field NewConfigNoQuorum
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeper.States Field NOT_CONNECTED
+MISSING @SINCE TAG: org.apache.zookeeper.KeeperException.Code Field NOTREADONLY
+MISSING @SINCE TAG: org.apache.zookeeper.KeeperException.Code Field NOWATCHER
+MISSING @SINCE TAG: org.apache.zookeeper.CreateMode Field PERSISTENT_SEQUENTIAL_WITH_TTL
+MISSING @SINCE TAG: org.apache.zookeeper.CreateMode Field PERSISTENT_WITH_TTL
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Field printWatches
+NO DOC BLOCK: org.apache.zookeeper.ZooDefs.OpCode Field reconfig
+MISSING @SINCE TAG: org.apache.zookeeper.KeeperException.Code Field RECONFIGDISABLED
+MISSING @SINCE TAG: org.apache.zookeeper.KeeperException.Code Field RECONFIGINPROGRESS
+MISSING @SINCE TAG: org.apache.zookeeper.KeeperException.CodeDeprecated Field ReconfigInProgress
+NO DOC BLOCK: org.apache.zookeeper.ZooDefs.OpCode Field removeWatches
+NO DOC BLOCK: org.apache.zookeeper.ZooDefs.OpCode Field sasl
+MISSING @SINCE TAG: org.apache.zookeeper.Watcher.Event.KeeperState Field SaslAuthenticated
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeper Field SECURE_CLIENT
+MISSING @SINCE TAG: org.apache.zookeeper.KeeperException.Code Field SESSIONMOVED
+MISSING @SINCE TAG: org.apache.zookeeper.KeeperException.Code Field UNKNOWNSESSION
+NO DOC BLOCK: org.apache.zookeeper.KeeperException.CodeDeprecated Field UnknownSession
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeper Field watchManager
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Field zk
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeper Field ZOOKEEPER_CLIENT_CNXN_SOCKET
+NO DOC BLOCK: org.apache.zookeeper.ClientCnxn Field zooKeeperSaslClient
