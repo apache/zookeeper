@@ -1,5 +1,6 @@
 ---
 layout: page
+title: IRC
 ---
 # ZooKeeper IRC Channel
 

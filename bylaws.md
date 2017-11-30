@@ -1,5 +1,6 @@
 ---
 layout: page
+title: Project Bylaws
 ---
 # Apache ZooKeeper Project Bylaws
 

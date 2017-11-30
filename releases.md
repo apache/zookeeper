@@ -1,5 +1,6 @@
 ---
 layout: page
+title: Releases
 ---
 # Apache ZooKeeper&trade; Releases
 

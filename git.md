@@ -1,5 +1,6 @@
 ---
 layout: page
+title: Version Control
 ---
 # ZooKeeper Version Control System
 

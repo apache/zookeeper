@@ -1,5 +1,6 @@
 ---
 layout: page
+title: Credits
 ---
 # ZooKeeper Credits
 
