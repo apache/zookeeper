@@ -73,11 +73,13 @@ div#header_background{background: #294563; }
 /*  Top and Bottom Bar Styling */
 /* ====================================================== */
 div.top_red_bar {
-  background: transparent url("../images/top-red-bar.png") repeat 0pt; 
+//  background: transparent url("../images/top-red-bar.png") repeat 0pt; 
+  background: transparent repeat 0pt; 
   overflow: hidden;
 }
 div.bottom_red_bar {
-  background: transparent url("../images/bottom-red-bar.png") repeat 0pt; height: 11px;
+//  background: transparent url("../images/bottom-red-bar.png") repeat 0pt; height: 11px;
+  background: transparent repeat 0pt; height: 11px;
   overflow: hidden;
 }
 
@@ -90,7 +92,7 @@ div#searchbox {
     text-align: right;
     color: white;
     z-index:0;
-    background-image: url(images/rc-t-l-5-1header-2searchbox-3searchbox.png);
+//    background-image: url(images/rc-t-l-5-1header-2searchbox-3searchbox.png);
     background-repeat: no-repeat;
     background-position: top left;
     bottom: -1px; /* compensate for IE rendering issue */
@@ -153,9 +155,9 @@ div#site-quicklinks sup img {
 /* ====================================================== */
 /*  Navigation Styling */
 /* ====================================================== */
-div.navigation {background: #ffffff url("../images/right-box-left.png") repeat-y left 0pt; width:200px;}
-div.navigation_top {background: transparent url("../images/right-box-top.png") no-repeat left top;} 
-div.navigation_bottom {background: transparent url("../images/right-box-bottom.png") no-repeat left bottom;}
+div.navigation {background: #ffffff repeat-y left 0pt; width:200px;}
+div.navigation_top {background: transparent no-repeat left top;} 
+div.navigation_bottom {background: transparent no-repeat left bottom;}
 div.navigation_bottom {padding-left: 5px;padding-right:11px; padding-top:17px; padding-bottom:17px;}
 
 /* div.navigation {float:right;} */
@@ -194,7 +196,7 @@ div.navigation h3 a:link, div.navigation h3 a:visited, div.navigation h3 a:activ
 }
 
 Xdiv.navigation Xh3 {
-  background: url("../images/big-bullet.png") no-repeat 0pt;
+  background: no-repeat 0pt;
   background-position:left center;
   margin-left:15px;
   padding-left: 20px;
