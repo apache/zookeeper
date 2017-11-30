@@ -1,0 +1,191 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+  <head>
+	<link href="css/site.css" rel="stylesheet" type="text/css">
+	<link href="css/type-settings.css" rel="stylesheet" type="text/css">
+
+	<title>Apache ZooKeeper</title>
+
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+</head>
+
+  <body>
+    <div class="white_box">
+      <div class="header">
+        <div class="header_l">
+          <div class="header_r">
+          </div>
+        </div>
+      </div>
+      <div class="content">
+        <div class="content_l">
+          <div class="content_r">
+            <div>
+              <div id="header_background">
+	            <div id="zookeeper_logo">
+		          <a href="/"><img src="images/zookeeper_small.gif"/></a> <b><font size=+4 color=white>Apache ZooKeeper&trade;</font></b> <a href="http://apache.org"><img src="images/feather_small.gif"/></a>
+	            </div>
+              </div>
+              
+              <table border="0">
+                <tbody>
+                  <tr>
+                    <td style="overflow: hidden;" valign="top" width="100%">
+                      <div class="wiki-content">
+                        <h1 id="zookeeper-security">ZooKeeper Security</h1>
+
+<p>The Apache Software Foundation takes security issues very seriously. Due to the infrastructure nature of the Apache ZooKeeper project specifically, we haven&#8217;t had many reports over time, but it doesn&#8217;t mean that we haven&#8217;t had concerns over some bugs and vulnerabilities. If you have any concern or believe you have uncovered a vulnerability, we suggest that you get in touch via the e-mail address <a href="mailto:security@zookeeper.apache.org?Subject=[SECURITY] My security issue" target="_top">security@zookeeper.apache.org</a>. In the message, try to provide a description of the issue and ideally a way of reproducing it. Note that this security address should be used only for undisclosed vulnerabilities. Dealing with known issues should be handled regularly via jira and the mailing lists. <strong>Please report any security problems to the project security address before disclosing it publicly.</strong></p>
+
+<p>The ASF Security team maintains a page with a description of how vulnerabilities are handled, check their <a href="http://www.apache.org/security/">Web page</a> for more information.</p>
+
+<h2 id="vulnerability-reports">Vulnerability reports</h2>
+
+<ul>
+  <li><a href="#CVE-2016-5017">CVE-2016-5017: Buffer overflow vulnerability in ZooKeeper C cli shell</a></li>
+  <li><a href="#CVE-2017-5637">CVE-2017-5637: DOS attack on wchp/wchc four letter words (4lw)</a></li>
+</ul>
+
+<h3 id="CVE-2016-5017">CVE-2016-5017: Buffer overflow vulnerability in ZooKeeper C cli shell</h3>
+
+<p>Severity: moderate</p>
+
+<p>Vendor:
+The Apache Software Foundation</p>
+
+<p>Versions Affected:
+ZooKeeper 3.4.0 to 3.4.8
+ZooKeeper 3.5.0 to 3.5.2
+The unsupported ZooKeeper 1.x through 3.3.x versions may be also affected</p>
+
+<p>Note: The 3.5 branch is still alpha at this time.</p>
+
+<p>Description:
+The ZooKeeper C client shells &#8220;cli_st&#8221; and &#8220;cli_mt&#8221; have a buffer
+overflow vulnerability associated with parsing of the input command
+when using the &#8220;cmd:<cmd>" batch mode syntax. If the command string
+exceeds 1024 characters a buffer overflow will occur. There is no
+known compromise which takes advantage of this vulnerability, and if
+security is enabled the attacker would be limited by client level
+security constraints. The C cli shell is intended as a sample/example
+of how to use the C client interface, not as a production tool - the
+documentation has also been clarified on this point.</cmd></p>
+
+<p>Mitigation:
+It is important to use the fully featured/supported Java cli shell rather
+than the C cli shell independent of version.</p>
+
+<ul>
+  <li>
+    <p>ZooKeeper 3.4.x users should upgrade to 3.4.9 or apply this <a href="https://git-wip-us.apache.org/repos/asf?p=zookeeper.git;a=commitdiff;h=27ecf981a15554dc8e64a28630af7a5c9e2bdf4f">patch</a></p>
+  </li>
+  <li>
+    <p>ZooKeeper 3.5.x users should upgrade to 3.5.3 when released or apply
+this <a href="https://git-wip-us.apache.org/repos/asf?p=zookeeper.git;a=commitdiff;h=f09154d6648eeb4ec5e1ac8a2bacbd2f8c87c14a">patch</a></p>
+  </li>
+</ul>
+
+<p>The patch solves the problem reported here, but it does not make the
+client ready for production use. The community has no plan to make
+this client production ready at this time, and strongly recommends that
+users move to the Java cli and use the C cli for illustration purposes only.</p>
+
+<p>Credit:
+This issue was discovered by Lyon Yang (@l0Op3r)</p>
+
+<p>References:
+<a href="https://zookeeper.apache.org/security.html">Apache ZooKeeper Security Page</a></p>
+
+<h3 id="CVE-2017-5637">CVE-2017-5637: DOS attack on wchp/wchc four letter words (4lw)</h3>
+
+<p>Severity: moderate</p>
+
+<p>Vendor:
+The Apache Software Foundation</p>
+
+<p>Versions Affected:
+ZooKeeper 3.4.0 to 3.4.9
+ZooKeeper 3.5.0 to 3.5.2
+The unsupported ZooKeeper 1.x through 3.3.x versions may be also affected</p>
+
+<p>Note: The 3.5 branch is still beta at this time.</p>
+
+<p>Description:
+Two four letter word commands “wchp/wchc” are CPU intensive and could cause spike of CPU utilization on ZooKeeper server if abused,
+which leads to the server unable to serve legitimate client requests. There is no known compromise which takes advantage of this vulnerability.</p>
+
+<p>Mitigation:
+This affects ZooKeeper ensembles whose client port is publicly accessible, so it is recommended to protect ZooKeeper ensemble with firewall.
+Documentation has also been updated to clarify on this point. In addition, a patch (ZOOKEEPER-2693) is provided to disable &#8220;wchp/wchc” commands
+by default.</p>
+<ul>
+  <li>ZooKeeper 3.4.x users should upgrade to 3.4.10 or apply the patch.</li>
+  <li>ZooKeeper 3.5.x users should upgrade to 3.5.3 or apply the patch.</li>
+</ul>
+
+<p>References
+[1] https://issues.apache.org/jira/browse/ZOOKEEPER-2693</p>
+
+
+                      </div>
+                    </td>
+                    <td valign="top">
+                      <div class="navigation">
+                        <div class="navigation_top">
+                          <div class="searchbox"> 
+<form action="http://search-hadoop.com/zookeeper" method="get"> 
+<input onFocus="getBlank (this, 'Search with Apache Solr');" size="25" name="q" id="query" type="text" value="Search with Apache Solr">&nbsp;
+		  <input value="Search" type="submit"> 
+</form> 
+</div> 
+
+                          <div class="navigation_bottom"> 
+                            
+                            <h3 id="project">Project</h3>
+
+<ul>
+  <li><a href="releases.html#news">News</a></li>
+  <li><a href="releases.html">Releases</a></li>
+  <li><a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/Index">Wiki</a></li>
+  <li><a href="credits.html">Credits</a></li>
+  <li><a href="bylaws.html">Bylaws</a></li>
+  <li><a href="https://www.apache.org/licenses/">License</a></li>
+  <li><a href="privacy.html">Privacy Policy</a></li>
+  <li><a href="https://www.apache.org/foundation/sponsorship.html">Sponsorship</a></li>
+  <li><a href="security.html">Security</a></li>
+  <li><a href="https://www.apache.org/foundation/thanks.html">Thanks</a></li>
+</ul>
+
+<h3 id="documentation">Documentation</h3>
+
+<ul>
+  <li><a href="doc/r3.5.3-beta">Release 3.5.3-beta</a></li>
+  <li><a href="doc/r3.4.11">Release 3.4.11</a></li>
+</ul>
+
+<h3 id="developers">Developers</h3>
+
+<ul>
+  <li><a href="lists.html">Mailing Lists</a></li>
+  <li><a href="irc.html">IRC Channel</a></li>
+  <li><a href="git.html">Version Control</a></li>
+  <li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER">Issue Tracker</a></li>
+</ul>
+
+
+                          </div>
+                        </div>   
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="copyright_footer">
+<p>Copyright &copy; 2010-2017 The Apache Software Foundation, Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.<br>Apache ZooKeeper, ZooKeeper, Apache, the Apache feather logo, and the Apache ZooKeeper project logo are trademarks of The Apache Software Foundation.</p>
+</div>
+
+  </body>
+</html>

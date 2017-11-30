@@ -1,0 +1,323 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+  <head>
+	<link href="css/site.css" rel="stylesheet" type="text/css">
+	<link href="css/type-settings.css" rel="stylesheet" type="text/css">
+
+	<title>Apache ZooKeeper</title>
+
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+</head>
+
+  <body>
+    <div class="white_box">
+      <div class="header">
+        <div class="header_l">
+          <div class="header_r">
+          </div>
+        </div>
+      </div>
+      <div class="content">
+        <div class="content_l">
+          <div class="content_r">
+            <div>
+              <div id="header_background">
+	            <div id="zookeeper_logo">
+		          <a href="/"><img src="images/zookeeper_small.gif"/></a> <b><font size=+4 color=white>Apache ZooKeeper&trade;</font></b> <a href="http://apache.org"><img src="images/feather_small.gif"/></a>
+	            </div>
+              </div>
+              
+              <table border="0">
+                <tbody>
+                  <tr>
+                    <td style="overflow: hidden;" valign="top" width="100%">
+                      <div class="wiki-content">
+                        <h1 id="zookeeper-credits">ZooKeeper Credits</h1>
+
+<ul>
+  <li><a href="#pmc">PMC Members</a></li>
+  <li><a href="#committers">Committers</a></li>
+  <li><a href="#contributors">Contributors</a></li>
+</ul>
+
+<h2 id="pmc-members">PMC Members</h2>
+
+<p>ZooKeeper&#8217;s active PMC members are</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>username</th>
+      <th>name</th>
+      <th>organization</th>
+      <th>timezone</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>tdunning</td>
+      <td>Ted Dunning</td>
+      <td>MapR Technologies</td>
+      <td>-8</td>
+    </tr>
+    <tr>
+      <td>camille</td>
+      <td>Camille Fournier</td>
+      <td>RentTheRunway</td>
+      <td>-5</td>
+    </tr>
+    <tr>
+      <td>phunt</td>
+      <td>Patrick Hunt</td>
+      <td>Cloudera Inc.</td>
+      <td>-8</td>
+    </tr>
+    <tr>
+      <td>fpj</td>
+      <td>Flavio Junqueira</td>
+      <td>Confluent</td>
+      <td>+0</td>
+    </tr>
+    <tr>
+      <td>ivank</td>
+      <td>Ivan Kelly</td>
+      <td>Midokura</td>
+      <td>+2</td>
+    </tr>
+    <tr>
+      <td>mahadev</td>
+      <td>Mahadev Konar</td>
+      <td>Hortonworks Inc.</td>
+      <td>-8</td>
+    </tr>
+    <tr>
+      <td>michim</td>
+      <td>Michi Mutsuzaki</td>
+      <td>Nicira</td>
+      <td>-8</td>
+    </tr>
+    <tr>
+      <td>cnauroth</td>
+      <td>Chris Nauroth</td>
+      <td>Hortonworks Inc.</td>
+      <td>-8</td>
+    </tr>
+    <tr>
+      <td>breed</td>
+      <td>Benjamin Reed</td>
+      <td>Facebook</td>
+      <td>-8</td>
+    </tr>
+    <tr>
+      <td>henry</td>
+      <td>Henry Robinson</td>
+      <td>Cloudera Inc.</td>
+      <td>-8</td>
+    </tr>
+    <tr>
+      <td>rgs</td>
+      <td>Raul Gutierrez Segales</td>
+      <td>Pinterest</td>
+      <td>-8</td>
+    </tr>
+    <tr>
+      <td>rakeshr</td>
+      <td>Rakesh Radhakrishnan</td>
+      <td>Intel</td>
+      <td>+5:30</td>
+    </tr>
+    <tr>
+      <td>hanm</td>
+      <td>Michael Han</td>
+      <td>Cloudera Inc.</td>
+      <td>-8</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="committers">Committers</h2>
+
+<p>ZooKeeper&#8217;s active committers are</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>username</th>
+      <th>name</th>
+      <th>organization</th>
+      <th>timezone</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>camille</td>
+      <td>Camille Fournier</td>
+      <td>RentTheRunway</td>
+      <td>-5</td>
+    </tr>
+    <tr>
+      <td>phunt</td>
+      <td>Patrick Hunt</td>
+      <td>Cloudera Inc.</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>fpj</td>
+      <td>Flavio Junqueira</td>
+      <td>Confluent</td>
+      <td>+1</td>
+    </tr>
+    <tr>
+      <td>cnauroth</td>
+      <td>Chris Nauroth</td>
+      <td>Hortonworks Inc.</td>
+      <td>-8</td>
+    </tr>
+    <tr>
+      <td>mahadev</td>
+      <td>Mahadev Konar</td>
+      <td>Hortonworks Inc.</td>
+      <td>-8</td>
+    </tr>
+    <tr>
+      <td>gkesavan</td>
+      <td>Giridharan Kesavan</td>
+      <td>Hortonworks Inc.</td>
+      <td>-8</td>
+    </tr>
+    <tr>
+      <td>akornev</td>
+      <td>Andrew Kornev</td>
+      <td>&#160;</td>
+      <td>&#160;</td>
+    </tr>
+    <tr>
+      <td>michim</td>
+      <td>Michi Mutsuzaki</td>
+      <td>Nicira</td>
+      <td>-8</td>
+    </tr>
+    <tr>
+      <td>breed</td>
+      <td>Benjamin Reed</td>
+      <td>Facebook</td>
+      <td>-8</td>
+    </tr>
+    <tr>
+      <td>henry</td>
+      <td>Henry Robinson</td>
+      <td>Cloudera Inc.</td>
+      <td>-8</td>
+    </tr>
+    <tr>
+      <td>shralex</td>
+      <td>Alex Shraer</td>
+      <td>Google</td>
+      <td>-8</td>
+    </tr>
+    <tr>
+      <td>thawan</td>
+      <td>Thawan Kooburat</td>
+      <td>Facebook</td>
+      <td>-8</td>
+    </tr>
+    <tr>
+      <td>rakeshr</td>
+      <td>Rakesh Radhakrishnan</td>
+      <td>Intel</td>
+      <td>+5:30</td>
+    </tr>
+    <tr>
+      <td>hdeng</td>
+      <td>Hongchao Deng</td>
+      <td>CoreOS</td>
+      <td>-8</td>
+    </tr>
+    <tr>
+      <td>rgs</td>
+      <td>Raul Gutierrez Segales</td>
+      <td>Pinterest</td>
+      <td>-8</td>
+    </tr>
+    <tr>
+      <td>hanm</td>
+      <td>Michael Han</td>
+      <td>Cloudera Inc.</td>
+      <td>-8</td>
+    </tr>
+    <tr>
+      <td>arshad</td>
+      <td>Mohammad Arshad</td>
+      <td>Huawei</td>
+      <td>+5:30</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="contributors">Contributors</h2>
+
+<p>A list of ZooKeeper contributors and their contributions is available from <a href="https://issues.apache.org/jira/browse/ZooKeeper">Jira</a></p>
+
+                      </div>
+                    </td>
+                    <td valign="top">
+                      <div class="navigation">
+                        <div class="navigation_top">
+                          <div class="searchbox"> 
+<form action="http://search-hadoop.com/zookeeper" method="get"> 
+<input onFocus="getBlank (this, 'Search with Apache Solr');" size="25" name="q" id="query" type="text" value="Search with Apache Solr">&nbsp;
+		  <input value="Search" type="submit"> 
+</form> 
+</div> 
+
+                          <div class="navigation_bottom"> 
+                            
+                            <h3 id="project">Project</h3>
+
+<ul>
+  <li><a href="releases.html#news">News</a></li>
+  <li><a href="releases.html">Releases</a></li>
+  <li><a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/Index">Wiki</a></li>
+  <li><a href="credits.html">Credits</a></li>
+  <li><a href="bylaws.html">Bylaws</a></li>
+  <li><a href="https://www.apache.org/licenses/">License</a></li>
+  <li><a href="privacy.html">Privacy Policy</a></li>
+  <li><a href="https://www.apache.org/foundation/sponsorship.html">Sponsorship</a></li>
+  <li><a href="security.html">Security</a></li>
+  <li><a href="https://www.apache.org/foundation/thanks.html">Thanks</a></li>
+</ul>
+
+<h3 id="documentation">Documentation</h3>
+
+<ul>
+  <li><a href="doc/r3.5.3-beta">Release 3.5.3-beta</a></li>
+  <li><a href="doc/r3.4.11">Release 3.4.11</a></li>
+</ul>
+
+<h3 id="developers">Developers</h3>
+
+<ul>
+  <li><a href="lists.html">Mailing Lists</a></li>
+  <li><a href="irc.html">IRC Channel</a></li>
+  <li><a href="git.html">Version Control</a></li>
+  <li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER">Issue Tracker</a></li>
+</ul>
+
+
+                          </div>
+                        </div>   
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="copyright_footer">
+<p>Copyright &copy; 2010-2017 The Apache Software Foundation, Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.<br>Apache ZooKeeper, ZooKeeper, Apache, the Apache feather logo, and the Apache ZooKeeper project logo are trademarks of The Apache Software Foundation.</p>
+</div>
+
+  </body>
+</html>
