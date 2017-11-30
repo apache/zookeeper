@@ -1,0 +1,50 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+  {% include header.html %}
+  <body>
+    <div class="white_box">
+      <div class="header">
+        <div class="header_l">
+          <div class="header_r">
+          </div>
+        </div>
+      </div>
+      <div class="content">
+        <div class="content_l">
+          <div class="content_r">
+            <div>
+              <div id="header_background">
+	            <div id="zookeeper_logo">
+		          <a href="/"><img src="images/zookeeper_small.gif"/></a> <b><font size=+4 color=white>Apache ZooKeeper&trade;</font></b> <a href="http://apache.org"><img src="images/feather_small.gif"/></a>
+	            </div>
+              </div>
+              
+              <table border="0">
+                <tbody>
+                  <tr>
+                    <td style="overflow: hidden;" valign="top" width="100%">
+                      <div class="wiki-content">
+                        {{ content }}
+                      </div>
+                    </td>
+                    <td valign="top">
+                      <div class="navigation">
+                        <div class="navigation_top">
+                          {% include search.html %}
+                          <div class="navigation_bottom"> 
+                            {% capture my_include %}{% include sidenav.md %}{% endcapture %}
+                            {{ my_include | markdownify }}
+                          </div>
+                        </div>   
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% include footer.html %}
+  </body>
+</html>

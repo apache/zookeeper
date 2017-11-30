@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl"?>
+<rdf:RDF xml:lang="en"
+         xmlns="http://usefulinc.com/ns/doap#" 
+         xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" 
+         xmlns:asfext="http://projects.apache.org/ns/asfext#"
+         xmlns:foaf="http://xmlns.com/foaf/0.1/">
+<!--
+  =======================================================================
+
+   Copyright (c) 2011 The Apache Software Foundation.  
+   All rights reserved.
+
+  =======================================================================
+-->
+  <Project rdf:about="http://zookeeper.apache.org/">
+    <created>2011-02-06</created>
+    <license rdf:resource="http://usefulinc.com/doap/licenses/asl20" />
+    <name>Apache ZooKeeper</name>
+    <homepage rdf:resource="https://zookeeper.apache.org/" />
+    <asfext:pmc rdf:resource="https://zookeeper.apache.org" />
+    <shortdesc>A distributed computing platform.</shortdesc>
+    <description>Apache ZooKeeper is an effort to develop and maintain an open-source server which enables highly reliable distributed coordination.</description>
+    <bug-database rdf:resource="https://issues.apache.org/jira/browse/ZOOKEEPER" />
+    <mailing-list rdf:resource="https://zookeeper.apache.org/lists.html" />
+    <download-page rdf:resource="https://www.apache.org/dyn/closer.cgi/zookeeper/" />
+    <programming-language>Java</programming-language>
+    <category rdf:resource="https://projects.apache.org/category/database" />
+
+    <repository>
+      <GitRepository>
+        <location rdf:resource="https://git-wip-us.apache.org/repos/asf/zookeeper.git"/>
+        <browse rdf:resource="https://github.com/apache/zookeeper"/>
+      </GitRepository>
+    </repository>
+    
+    <maintainer>
+      <foaf:Person>
+        <foaf:name>Apache ZooKeeper Community</foaf:name>
+        <foaf:mbox rdf:resource="mailto:dev@zookeeper.apache.org"/>
+      </foaf:Person>
+    </maintainer>
+
+  </Project>
+</rdf:RDF>
