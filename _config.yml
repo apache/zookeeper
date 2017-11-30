@@ -9,5 +9,6 @@ permalink: none
 
 exclude:
     - README.md
-    - content
+    - doc
+keep_files:
     - doc

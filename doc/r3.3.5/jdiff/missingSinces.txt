@@ -1,0 +1,43 @@
+NO DOC BLOCK: org.apache.zookeeper.AsyncCallback.Children2Callback Interface
+MISSING @SINCE TAG: org.apache.zookeeper.KeeperException.SessionMovedException Class
+NO DOC BLOCK: org.apache.zookeeper.KeeperException.BadArgumentsException Constructor (java.lang.String)
+NO DOC BLOCK: org.apache.zookeeper.KeeperException.BadVersionException Constructor (java.lang.String)
+NO DOC BLOCK: org.apache.zookeeper.KeeperException.InvalidACLException Constructor (java.lang.String)
+NO DOC BLOCK: org.apache.zookeeper.KeeperException.NoChildrenForEphemeralsException Constructor (java.lang.String)
+NO DOC BLOCK: org.apache.zookeeper.KeeperException.NodeExistsException Constructor (java.lang.String)
+NO DOC BLOCK: org.apache.zookeeper.KeeperException.NoNodeException Constructor (java.lang.String)
+NO DOC BLOCK: org.apache.zookeeper.KeeperException.NotEmptyException Constructor (java.lang.String)
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Constructor (java.lang.String[])
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Constructor (org.apache.zookeeper.ZooKeeper)
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeperMain Method addToHistory(int, java.lang.String)
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Method connectToZK(java.lang.String)
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Method executeLine(java.lang.String)
+OK: org.apache.zookeeper.ZooKeeper Method getChildren(java.lang.String, boolean, org.apache.zookeeper.data.Stat)
+OK: org.apache.zookeeper.ZooKeeper Method getChildren(java.lang.String, org.apache.zookeeper.Watcher, org.apache.zookeeper.data.Stat)
+OK: org.apache.zookeeper.ZooKeeper Method getChildren(java.lang.String, boolean, org.apache.zookeeper.AsyncCallback.Children2Callback, java.lang.Object)
+OK: org.apache.zookeeper.ZooKeeper Method getChildren(java.lang.String, org.apache.zookeeper.Watcher, org.apache.zookeeper.AsyncCallback.Children2Callback, java.lang.Object)
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Method getCommands()
+MISSING @SINCE TAG: org.apache.zookeeper.ClientCnxn Method getDisableAutoResetWatch()
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Method getPrintWatches()
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Method getPrompt()
+NO DOC BLOCK: org.apache.zookeeper.ClientCnxn Method getSessionTimeout()
+MISSING @SINCE TAG: org.apache.zookeeper.ZooKeeper Method getSessionTimeout()
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Method printMessage(java.lang.String)
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Method processCmd(org.apache.zookeeper.ZooKeeperMain.MyCommandOptions)
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Method processZKCmd(org.apache.zookeeper.ZooKeeperMain.MyCommandOptions)
+MISSING @SINCE TAG: org.apache.zookeeper.ClientCnxn Method setDisableAutoResetWatch(boolean)
+NO DOC BLOCK: org.apache.zookeeper.ClientCnxn Method start()
+OK: org.apache.zookeeper.ZooKeeper Method testableLocalSocketAddress()
+OK: org.apache.zookeeper.ZooKeeper Method testableRemoteSocketAddress()
+OK: org.apache.zookeeper.ZooKeeper Method testableWaitForShutdown(int)
+OK: org.apache.zookeeper.ZooKeeper Method toString()
+MISSING @SINCE TAG: org.apache.zookeeper.Watcher.Event.KeeperState Field AuthFailed
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Field cl
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Field commandCount
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Field commandMap
+NO DOC BLOCK: org.apache.zookeeper.ZooDefs.OpCode Field getChildren2
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Field history
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Field host
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Field printWatches
+MISSING @SINCE TAG: org.apache.zookeeper.KeeperException.Code Field SESSIONMOVED
+NO DOC BLOCK: org.apache.zookeeper.ZooKeeperMain Field zk
