@@ -77,10 +77,10 @@ ul, ol {
 }
 
 ul li {
-list-style-image: url("../images/small-bullet-red.png");
+//list-style-image: url("../images/small-bullet-red.png");
 }
 ul li ul li{
-list-style-image: url("../images/small-bullet-gray.png");
+//list-style-image: url("../images/small-bullet-gray.png");
 }
 
 pre {
