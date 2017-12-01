@@ -128,14 +128,12 @@ line starting with [VOTE]. Votes may contain multiple items for approval
 and these should be clearly separated. Voting is carried out by replying 
 to the vote mail. Voting may take four flavors. 
 
-|---
-| Vote | Meaning|
-|---
+|Vote|Meaning|
+|----|-------|
 | +1 |'Yes,' 'Agree,' or 'the action should be performed.' In general, this vote also indicates a willingness on the behalf of the voter in 'making it happen'.| 
 | +0 |This vote indicates a willingness for the action under consideration to go ahead. The voter, however will not be able to help.| 
 | -0 |This vote indicates that the voter does not, in general, agree with the proposed action but is not concerned enough to prevent the action going ahead.| 
 | -1 |This is a negative vote. On issues where consensus is required, this vote counts as a veto. All vetoes must contain an explanation of why the veto is appropriate. Vetoes with no explanation are void. It may also be appropriate for a -1 vote to include an alternative course of action.|
-|---
 
 All participants in the ZooKeeper project are encouraged to show their 
 agreement with or against a particular action by voting. For technical 
@@ -155,15 +153,13 @@ are still patches before the code is committed.
 There are the types of approvals that can be sought. Different actions 
 require different types of approvals. 
 
-|---
-|Approval Type |Definition|
-|---
+|Approval Type|Definition|
+|-------------|----------|
 |Consensus |For this to pass, all voters with binding votes must vote and there can be no binding vetoes (-1). Consensus votes are rarely required due to the impracticality of getting all eligible voters to cast a vote.| 
 |Lazy Consensus |Lazy consensus requires 3 binding +1 votes and no binding vetoes.| 
 |Lazy Majority |A lazy majority vote requires 3 binding +1 votes and more binding +1 votes that -1 votes.| 
 |Lazy Approval |An action with lazy approval is implicitly allowed unless a -1 vote is received, at which time, depending on the type of action, either lazy majority or lazy consensus approval must be obtained.| 
 |2/3 Majority |Some actions require a 2/3 majority of active committers or PMC members to pass. Such actions typically affect the foundation of the project (e.g. adopting a new codebase to replace an existing product). The higher threshold is designed to ensure such changes are strongly supported. To pass this vote requires at least 2/3 of binding vote holders to vote +1.| 
-|---
 
 ## Vetoes 
 
@@ -186,9 +182,8 @@ minimum length of time that a vote must remain open, measured in
 business days. In general votes should not be called at times when it is 
 known that interested members of the project will be unavailable. 
 
-|---
-|Action |Description |Approval |Binding Votes |Minimum Length (days)|
-|---
+|Action|Description|Approval|Binding Votes|Minimum Length (days)|
+|------|-----------|--------|-------------|---------------------|
 |Code Change |A change made to a codebase of the project and committed by a committer. This includes source code, documentation, website content, etc. |Lazy approval (not counting the vote of the contributor), moving to lazy majority if a -1 is received |Active committers |1|
 |Release Plan |Defines the timetable and actions for a release. The plan also nominates a Release Manager. |Lazy majority |Active committers |3| 
 |Product Release |When a release of one of the project's products is ready, a vote is required to accept the release as an official release of the project. |Lazy Majority |Active PMC members |3| 
@@ -198,4 +193,3 @@ known that interested members of the project will be unavailable.
 |Committer Removal |When removal of commit privileges is sought. Note: Such actions will also be referred to the ASF board by the PMC chair. |Consensus |Active PMC members (excluding the committer in question if a member of the PMC). |6| 
 |PMC Member Removal |When removal of a PMC member is sought. Note: Such actions will also be referred to the ASF board by the PMC chair. |Consensus |Active PMC members (excluding the member in question). |6| 
 |Modifying Bylaws |Modifying this document. |2/3 majority |Active PMC members |6|
-|---

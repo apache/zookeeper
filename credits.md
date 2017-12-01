@@ -12,9 +12,8 @@ title: Credits
 
 ZooKeeper's active PMC members are
 
-|---
 |username|name|organization|timezone|
-|---
+|--------|----|------------|--------|
 |tdunning|Ted Dunning|MapR Technologies|-8|
 |camille|Camille Fournier|RentTheRunway|-5|
 |phunt|Patrick Hunt|Cloudera Inc.|-8|
@@ -28,15 +27,13 @@ ZooKeeper's active PMC members are
 |rgs|Raul Gutierrez Segales|Pinterest|-8|
 |rakeshr|Rakesh Radhakrishnan|Intel|+5:30|
 |hanm|Michael Han|Cloudera Inc.|-8|
-|---
 
 ## Committers
 
 ZooKeeper's active committers are
 
-|---
 |username|name|organization|timezone|
-|---
+|--------|----|------------|--------|
 |camille|Camille Fournier|RentTheRunway|-5|
 |phunt|Patrick Hunt|Cloudera Inc.|0|
 |fpj|Flavio Junqueira|Confluent|+1|
