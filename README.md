@@ -13,7 +13,7 @@ and `sudo pip install Pygments`. See the Jekyll installation page for more detai
 You can generate the static ZooKeeper website by running:
 
 1. `jekyll build` in this directory.
-1. `cp -rp doc _site/.` - this will include the documentation (see "sub-dir" section below) in the generated site.
+1. `cp -rp _released_docs _site/doc` - this will include the documentation (see "sub-dir" section below) in the generated site.
 
 At this point the contents of _site are "staged" and can be reviewed prior to updating the ZooKeeper
 production website.
@@ -26,11 +26,11 @@ jekyll can serve the site via a web server. To build the site and run a web serv
 
 ## Docs sub-dir
 
-The product docs are not generated as part of the website. They are built separately for each release 
+The product documentation is not generated as part of the website. They are built separately for each release 
 of ZooKeeper from the ZooKeeper source repository.
 
 Typically during a release the versioned documentation will be recreated and should be copied, and committed,
-under the "doc" directory here.
+under the "_released_docs" directory here.
 
 
 ## Pygments
