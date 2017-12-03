@@ -104,6 +104,8 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements
         for (Entry<Long, Integer> e : sessionsWithTimeout.entrySet()) {
             addSession(e.getKey(), e.getValue());
         }
+
+        EphemeralType.validateServerId(serverId);
     }
 
     volatile boolean running = true;

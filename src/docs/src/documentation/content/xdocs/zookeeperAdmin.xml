@@ -275,7 +275,7 @@ server.3=zoo3:2888:3888</programlisting>
           id. So <filename>myid</filename> of server 1 would contain the text
           "1" and nothing else. The id must be unique within the
           ensemble and should have a value between 1 and 255. <emphasis role="bold">IMPORTANT:</emphasis> if you
-          enable TTL Nodes (see below) the id must be
+          enable extended features such as TTL Nodes (see below) the id must be
           between 1 and 254 due to internal limitations.</para>
         </listitem>
 
@@ -949,14 +949,15 @@ server.3=zoo3:2888:3888</programlisting>
           </varlistentry>
 
           <varlistentry>
-            <term>ttlNodesEnabled</term>
+            <term>zookeeper.extendedTypesEnabled</term>
 
             <listitem>
-              <para>(No Java system property)</para>
+                <para>(Java system property only: <emphasis
+                    role="bold">zookeeper.extendedTypesEnabled</emphasis>)</para>
 
-              <para><emphasis role="bold">New in 3.5.4, 3.6.0:</emphasis> Set to "true" to enable
-              the creation of <ulink url="zookeeperProgrammers.html#TTL+Nodes">TTL Nodes</ulink>.
-              They are disabled by default. IMPORTANT: when TTL Nodes are enabled server IDs must
+              <para><emphasis role="bold">New in 3.5.4, 3.6.0:</emphasis> Define to "true" to enable
+              extended features such as the creation of <ulink url="zookeeperProgrammers.html#TTL+Nodes">TTL Nodes</ulink>.
+              They are disabled by default. IMPORTANT: when enabled server IDs must
               be less than 255 due to internal limitations.
               </para>
             </listitem>
