@@ -21,11 +21,11 @@ package org.apache.zookeeper.server;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.Op;
 import org.apache.zookeeper.OpResult;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.CreateResponse;
 import org.apache.zookeeper.proto.CreateTTLRequest;
@@ -37,6 +37,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
@@ -44,14 +45,20 @@ import java.util.concurrent.atomic.AtomicLong;
 public class CreateTTLTest extends ClientBase {
     private TestableZooKeeper zk;
 
+    private static final Collection<String> disabledTests = Collections.singleton("testDisabled");
+
     @Override
     public void setUp() throws Exception {
+        ZooKeeperServer.serverId = 254;
+        System.setProperty(EphemeralType.EXTENDED_TYPES_ENABLED_PROPERTY, disabledTests.contains(getTestName()) ? "false" : "true");
         super.setUp();
         zk = createClient();
     }
 
     @Override
     public void tearDown() throws Exception {
+        ZooKeeperServer.serverId = 1;
+        System.clearProperty("zookeeper.extendedTypesEnabled");
         super.tearDown();
         zk.close();
     }
@@ -223,12 +230,8 @@ public class CreateTTLTest extends ClientBase {
 
     @Test(expected = KeeperException.UnimplementedException.class)
     public void testDisabled() throws KeeperException, InterruptedException {
-        serverFactory.zkServer.setTtlNodesEnabled(false);
-        try {
-            zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL, new Stat(), 100);
-        } finally {
-            serverFactory.zkServer.setTtlNodesEnabled(true);
-        }
+        // note, setUp() enables this test based on the test name
+        zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL, new Stat(), 100);
     }
 
     private ContainerManager newContainerManager(final AtomicLong fakeElapsed) {

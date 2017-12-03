@@ -919,7 +919,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
 
     private void validateCreateRequest(String path, CreateMode createMode, Request request, long ttl)
             throws KeeperException {
-        if (createMode.isTTL() && !zks.getTtlNodesEnabled()) {
+        if (createMode.isTTL() && !EphemeralType.extendedEphemeralTypesEnabled()) {
             throw new KeeperException.UnimplementedException();
         }
         try {

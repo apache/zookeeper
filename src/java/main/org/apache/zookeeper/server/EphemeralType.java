@@ -43,14 +43,33 @@ public enum EphemeralType {
     public static final long TTL_MASK = 0xff00000000000000L;
     public static final long MAX_TTL_SERVER_ID = 0xfe;  // 254
 
+    public static final String EXTENDED_TYPES_ENABLED_PROPERTY = "zookeeper.extendedTypesEnabled";
+
+    public static boolean extendedEphemeralTypesEnabled() {
+        return Boolean.getBoolean(EXTENDED_TYPES_ENABLED_PROPERTY);
+    }
+
     public static EphemeralType get(long ephemeralOwner) {
+        if ( extendedEphemeralTypesEnabled() ) {
+            if ((ephemeralOwner & TTL_MASK) == TTL_MASK) {
+                return TTL;
+            }
+        }
         if (ephemeralOwner == CONTAINER_EPHEMERAL_OWNER) {
             return CONTAINER;
         }
-        if ((ephemeralOwner & TTL_MASK) == TTL_MASK) {
-            return TTL;
-        }
         return (ephemeralOwner == 0) ? VOID : NORMAL;
+    }
+
+    public static void validateServerId(long serverId) {
+        // TODO: in the future, serverId should be validated for all cases, not just the extendedEphemeralTypesEnabled case
+        // TODO: however, for now, it would be too disruptive
+
+        if ( extendedEphemeralTypesEnabled() ) {
+            if (serverId > EphemeralType.MAX_TTL_SERVER_ID) {
+                throw new RuntimeException("extendedTypesEnabled is true but Server ID is too large. Cannot be larger than " + EphemeralType.MAX_TTL_SERVER_ID);
+            }
+        }
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")

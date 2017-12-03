@@ -541,13 +541,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     protected boolean quorumListenOnAllIPs = false;
 
     /**
-     * Enables/Disables TTL Nodes. IMPORTANT: due to how TTL
-     * nodes are implemented the max ServerId becomes 254 when
-     * TTL nodes are enabled
-     */
-    protected boolean ttlNodesEnabled = false;
-
-    /**
      * Keeps time taken for leader election in milliseconds. Sets the value to
      * this variable only after the completion of leader election.
      */
@@ -1678,18 +1671,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      */
     public void setSyncEnabled(boolean syncEnabled) {
         this.syncEnabled = syncEnabled;
-    }
-
-    /**
-     * Set ttlNodesEnabled
-     *
-     * @param ttlNodesEnabled - see {@link #ttlNodesEnabled}
-     */
-    public void setTtlNodes(boolean ttlNodesEnabled) {
-        this.ttlNodesEnabled = ttlNodesEnabled;
-        if (this.ttlNodesEnabled && (myid > EphemeralType.MAX_TTL_SERVER_ID)) {
-            throw new RuntimeException("TTL nodes are enabled but Server ID is too large. Cannot be larger than " + EphemeralType.MAX_TTL_SERVER_ID);
-        }
     }
 
     /**

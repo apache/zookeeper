@@ -48,7 +48,6 @@ public class ServerConfig {
     protected int minSessionTimeout = -1;
     /** defaults to -1 if not set explicitly */
     protected int maxSessionTimeout = -1;
-    protected boolean ttlNodesEnabled = false;
 
     /**
      * Parse arguments for server configuration
@@ -100,7 +99,6 @@ public class ServerConfig {
         maxClientCnxns = config.getMaxClientCnxns();
         minSessionTimeout = config.getMinSessionTimeout();
         maxSessionTimeout = config.getMaxSessionTimeout();
-        ttlNodesEnabled = config.getTtlNodesEnabled();
     }
 
     public InetSocketAddress getClientPortAddress() {
@@ -117,7 +115,4 @@ public class ServerConfig {
     public int getMinSessionTimeout() { return minSessionTimeout; }
     /** maximum session timeout in milliseconds, -1 if unset */
     public int getMaxSessionTimeout() { return maxSessionTimeout; }
-    public boolean getTtlNodesEnabled() {
-        return ttlNodesEnabled;
-    }
 }

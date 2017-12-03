@@ -19,10 +19,22 @@
 package org.apache.zookeeper.server;
 
 import org.apache.zookeeper.CreateMode;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 public class EphemeralTypeTest {
+    @Before
+    public void setUp() {
+        System.setProperty(EphemeralType.EXTENDED_TYPES_ENABLED_PROPERTY, "true");
+    }
+
+    @After
+    public void tearDown() {
+        System.clearProperty(EphemeralType.EXTENDED_TYPES_ENABLED_PROPERTY);
+    }
+
     @Test
     public void testTtls() {
         long ttls[] = {100, 1, EphemeralType.MAX_TTL};

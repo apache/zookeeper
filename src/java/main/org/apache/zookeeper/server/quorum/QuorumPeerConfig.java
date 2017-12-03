@@ -94,8 +94,6 @@ public class QuorumPeerConfig {
 
     protected LearnerType peerType = LearnerType.PARTICIPANT;
 
-    protected boolean ttlNodesEnabled = false;
-
     /**
      * Configurations for the quorumpeer-to-quorumpeer sasl authentication
      */
@@ -321,8 +319,6 @@ public class QuorumPeerConfig {
                 quorumServicePrincipal = value;
             } else if (key.equals("quorum.cnxn.threads.size")) {
                 quorumCnxnThreadsSize = Integer.parseInt(value);
-            } else if (key.equals( "ttlNodesEnabled" )) {
-                ttlNodesEnabled = Boolean.parseBoolean(value);
             } else {
                 System.setProperty("zookeeper." + key, value);
             }
@@ -757,10 +753,6 @@ public class QuorumPeerConfig {
     
     public boolean getSyncEnabled() {
         return syncEnabled;
-    }
-
-    public boolean getTtlNodesEnabled() {
-        return ttlNodesEnabled;
     }
 
     public QuorumVerifier getQuorumVerifier() {
