@@ -263,7 +263,6 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
         Request request = committedRequests.peek();
 
         if (request == null) {
-            committedRequests.poll();
             throw new IOException("Error: committed head is null");
         }
 
