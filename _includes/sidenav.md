@@ -23,5 +23,3 @@
 * [IRC Channel](irc.html)
 * [Version Control](git.html)
 * [Issue Tracker](https://issues.apache.org/jira/browse/ZOOKEEPER)
-
-
