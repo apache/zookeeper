@@ -258,7 +258,7 @@ class ZooKeeperServer(object):
 
             m = re.match('Zxid: (0x[0-9a-fA-F]+)', line)
             if m is not None:
-                result['zk_zxid']         = int(m.group(1), 16) # convert from hex
+                result['zk_zxid']         = m.group(1)
                 result['zk_zxid_counter'] = int(m.group(1), 16) & int('0xffffffff', 16) # lower 32 bits
                 result['zk_zxid_epoch']   = int(m.group(1), 16) >>32 # high 32 bits
                 continue
