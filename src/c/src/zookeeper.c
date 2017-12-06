@@ -1700,7 +1700,7 @@ void free_completions(zhandle_t *zh,int callCompletion,int reason)
 
         get_auth_completions(&zh->auth_h, &a_list);
         zoo_unlock_auth(zh);
-    
+
         a_tmp = &a_list;
         // chain call user's completion function
         while (a_tmp->completion != NULL) {
@@ -2087,10 +2087,16 @@ static int ping_rw_server(zhandle_t* zh)
     socket_t sock;
     int rc;
     sendsize_t ssize;
+    int sock_flags;
 
     addrvec_peek(&zh->addrs, &zh->addr_rw_server);
 
-    sock = socket(zh->addr_rw_server.ss_family, SOCK_STREAM, 0);
+#ifdef SOCK_CLOEXEC_ENABLED
+    sock_flags = SOCK_STREAM | SOCK_CLOEXEC;
+#else
+    sock_flags = SOCK_STREAM;
+#endif
+    sock = socket(zh->addr_rw_server.ss_family, sock_flags, 0);
     if (sock < 0) {
         return 0;
     }
@@ -2221,8 +2227,16 @@ static socket_t zookeeper_connect(zhandle_t *zh,
 int zookeeper_interest(zhandle_t *zh, socket_t *fd, int *interest,
      struct timeval *tv)
 {
+    int sock_flags;
     int rc = 0;
     struct timeval now;
+
+#ifdef SOCK_CLOEXEC_ENABLED
+    sock_flags = SOCK_STREAM | SOCK_CLOEXEC;
+#else
+    sock_flags = SOCK_STREAM;
+#endif
+
     if(zh==0 || fd==0 ||interest==0 || tv==0)
         return ZBADARGUMENTS;
     if (is_unrecoverable(zh))
@@ -2272,7 +2286,7 @@ int zookeeper_interest(zhandle_t *zh, socket_t *fd, int *interest,
                 // No need to delay -- grab the next server and attempt connection
                 zoo_cycle_next_server(zh);
             }
-            zh->fd = socket(zh->addr_cur.ss_family, SOCK_STREAM, 0);
+            zh->fd = socket(zh->addr_cur.ss_family, sock_flags, 0);
             if (zh->fd < 0) {
               rc = handle_socket_error_msg(zh,
                                            __LINE__,
@@ -2607,7 +2621,7 @@ static int deserialize_multi(zhandle_t *zh, int xid, completion_list_t *cptr, st
 
         deserialize_response(zh, entry->c.type, xid, mhdr.type == -1, mhdr.err, entry, ia);
         deserialize_MultiHeader(ia, "multiheader", &mhdr);
-        //While deserializing the response we must destroy completion entry for each operation in 
+        //While deserializing the response we must destroy completion entry for each operation in
         //the zoo_multi transaction. Otherwise this results in memory leak when client invokes zoo_multi
         //operation.
         destroy_completion_entry(entry);
@@ -3524,7 +3538,7 @@ int zoo_acreate(zhandle_t *zh, const char *path, const char *value,
     struct RequestHeader h = {get_xid(), ZOO_CREATE_OP};
     struct CreateRequest req;
 
-    int rc = CreateRequest_init(zh, &req, 
+    int rc = CreateRequest_init(zh, &req,
             path, value, valuelen, acl_entries, flags);
     if (rc != ZOK) {
         return rc;
@@ -3632,7 +3646,7 @@ int zoo_awexists(zhandle_t *zh, const char *path,
     struct oarchive *oa;
     struct RequestHeader h = {get_xid(), ZOO_EXISTS_OP};
     struct ExistsRequest req;
-    int rc = Request_path_watch_init(zh, 0, &req.path, path, 
+    int rc = Request_path_watch_init(zh, 0, &req.path, path,
             &req.watch, watcher != NULL);
     if (rc != ZOK) {
         return rc;
@@ -3666,7 +3680,7 @@ static int zoo_awget_children_(zhandle_t *zh, const char *path,
     struct oarchive *oa;
     struct RequestHeader h = {get_xid(), ZOO_GETCHILDREN_OP};
     struct GetChildrenRequest req ;
-    int rc = Request_path_watch_init(zh, 0, &req.path, path, 
+    int rc = Request_path_watch_init(zh, 0, &req.path, path,
             &req.watch, watcher != NULL);
     if (rc != ZOK) {
         return rc;
@@ -3714,7 +3728,7 @@ static int zoo_awget_children2_(zhandle_t *zh, const char *path,
     struct oarchive *oa;
     struct RequestHeader h = {get_xid(), ZOO_GETCHILDREN2_OP};
     struct GetChildren2Request req ;
-    int rc = Request_path_watch_init(zh, 0, &req.path, path, 
+    int rc = Request_path_watch_init(zh, 0, &req.path, path,
             &req.watch, watcher != NULL);
     if (rc != ZOK) {
         return rc;
@@ -4090,7 +4104,7 @@ void zoo_create_op_init(zoo_op_t *op, const char *path, const char *value,
 }
 
 void zoo_create2_op_init(zoo_op_t *op, const char *path, const char *value,
-        int valuelen,  const struct ACL_vector *acl, int flags, 
+        int valuelen,  const struct ACL_vector *acl, int flags,
         char *path_buffer, int path_buffer_len)
 {
     assert(op);
