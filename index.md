@@ -16,7 +16,7 @@ Learn more about ZooKeeper on the [ZooKeeper Wiki](https://cwiki.apache.org/conf
 
 Start by installing ZooKeeper on a single machine or a very small cluster.
 
-1. [Learn about](doc/trunk) ZooKeeper by reading the documentation.
+1. [Learn about](doc/current/index.html) ZooKeeper by reading the documentation.
 1. [Download](releases.html) ZooKeeper from the release page.
 
 ## Getting Involved
