@@ -169,11 +169,16 @@ class ZooKeeperServer(object):
     def get_stats(self):
         """ Get ZooKeeper server stats as a map """
         data = self._send_cmd('mntr')
+        stat = self._parse_stat(self._send_cmd('stat'))
         if data:
-            return self._parse(data)
+            mntr = self._parse(data)
+            missing = ['zk_zxid', 'zk_zxid_counter', 'zk_zxid_epoch']
+            for m in missing:
+                if m in stat:
+                    mntr[m] = stat[m]
+            return mntr
         else:
-            data = self._send_cmd('stat')
-            return self._parse_stat(data)
+            return stat
 
     def _create_socket(self):
         return socket.socket()
@@ -249,6 +254,13 @@ class ZooKeeperServer(object):
             m = re.match('Node count: (\d+)', line)
             if m is not None:
                 result['zk_znode_count'] = int(m.group(1))
+                continue
+
+            m = re.match('Zxid: (0x[0-9a-fA-F]+)', line)
+            if m is not None:
+                result['zk_zxid']         = m.group(1)
+                result['zk_zxid_counter'] = int(m.group(1), 16) & int('0xffffffff', 16) # lower 32 bits
+                result['zk_zxid_epoch']   = int(m.group(1), 16) >>32 # high 32 bits
                 continue
 
         return result 
