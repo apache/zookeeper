@@ -1041,6 +1041,8 @@ public class ClientCnxn {
 
         private InetSocketAddress rwServerAddress = null;
 
+        private InetSocketAddress addr = null;
+
         private final static int minPingRwTimeout = 100;
 
         private final static int maxPingRwTimeout = 60000;
@@ -1063,7 +1065,6 @@ public class ClientCnxn {
             }
             state = States.CONNECTING;
 
-            InetSocketAddress addr;
             if (rwServerAddress != null) {
                 addr = rwServerAddress;
                 rwServerAddress = null;
@@ -1232,11 +1233,12 @@ public class ClientCnxn {
                         } else if (e instanceof RWServerFoundException) {
                             LOG.info(e.getMessage());
                         } else {
+                            SocketAddress remoteAddr = clientCnxnSocket.getRemoteSocketAddress();
                             LOG.warn(
                                     "Session 0x"
                                             + Long.toHexString(getSessionId())
                                             + " for server "
-                                            + clientCnxnSocket.getRemoteSocketAddress()
+                                            + (remoteAddr == null ? addr : remoteAddr)
                                             + ", unexpected error"
                                             + RETRY_CONN_MSG, e);
                         }
