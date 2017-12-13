@@ -137,7 +137,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                 ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2,
                         ClientBase.CONNECTION_TIMEOUT));
     }
-
+    
     /**
      * Test early leader abandonment.
      */
@@ -161,23 +161,23 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         	mt[i].start();
         	zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i], ClientBase.CONNECTION_TIMEOUT, this);
         }
-
+        
         waitForAll(zk, States.CONNECTED);
-
+        
         // we need to shutdown and start back up to make sure that the create session isn't the first transaction since
         // that is rather innocuous.
         for(int i = 0; i < SERVER_COUNT; i++) {
         	mt[i].shutdown();
         }
-
+        
         waitForAll(zk, States.CONNECTING);
-
+        
         for(int i = 0; i < SERVER_COUNT; i++) {
         	mt[i].start();
         }
-
+        
         waitForAll(zk, States.CONNECTED);
-
+        
         // ok lets find the leader and kill everything else, we have a few
         // seconds, so it should be plenty of time
         int leader = -1;
@@ -190,14 +190,14 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         		outstanding = mt[leader].main.quorumPeer.leader.outstandingProposals;
         	}
         }
-
+        
         try {
         	zk[leader].create("/zk"+leader, "zk".getBytes(), Ids.OPEN_ACL_UNSAFE,
         			CreateMode.PERSISTENT);
         	Assert.fail("create /zk" + leader + " should have failed");
         } catch(KeeperException e) {}
-
-        // just make sure that we actually did get it in process at the
+        
+        // just make sure that we actually did get it in process at the 
         // leader
         Assert.assertTrue(outstanding.size() == 1);
         Assert.assertTrue(((Proposal)outstanding.values().iterator().next()).request.hdr.getType() == OpCode.create);
@@ -216,7 +216,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         		zk[i].create("/zk" + i, "zk".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         	}
         }
-
+        
         mt[leader].start();
         waitForAll(zk, States.CONNECTED);
         // make sure everything is consistent
@@ -236,7 +236,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         	mt[i].shutdown();
         }
     }
-
+    
     /**
      * Test the case of server with highest zxid not present at leader election and joining later.
      * This test case is for reproducing the issue and fixing the bug mentioned in  ZOOKEEPER-1154
@@ -255,7 +255,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                 leader = i;
             }
         }
-
+        
         // make sure there is a leader
         Assert.assertTrue("There should be a leader", leader >=0);
 
@@ -268,11 +268,11 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         // Create a couple of nodes
         servers.zk[leader].create(path+leader, input, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         servers.zk[leader].create(path+nonleader, input, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-
+        
         // make sure the updates indeed committed. If it is not
         // the following statement will throw.
         output = servers.zk[leader].getData(path+nonleader, false, null);
-
+        
         // Shutdown every one else but the leader
         for (int i=0; i < numServers; i++) {
             if (i != leader) {
@@ -283,8 +283,8 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         input[0] = 2;
 
         // Update the node on the leader
-        servers.zk[leader].setData(path+leader, input, -1, null, null);
-
+        servers.zk[leader].setData(path+leader, input, -1, null, null);     
+        
         // wait some time to let this get written to disk
         Thread.sleep(500);
 
@@ -316,7 +316,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         // by setting the value to 2
         servers.zk[nonleader].setData(path+nonleader, input, -1);
 
-        // start the old leader
+        // start the old leader 
         servers.mt[leader].start();
 
         // connect to it
@@ -327,7 +327,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         Assert.assertEquals(
                 "Validating that the deposed leader has rolled back that change it had written",
                 output[0], 1);
-
+        
         // make sure the leader has the subsequent changes that were made while it was offline
         output = servers.zk[leader].getData(path+nonleader, false, null);
         Assert.assertEquals(
@@ -443,7 +443,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         		ClientBase.logAllStackTraces();
 			throw new RuntimeException("Waiting too long");
         	}
-
+        	
         	someoneNotConnected = false;
         	for(ZooKeeper zk: zks) {
         		if (zk.getState() != state) {
@@ -800,14 +800,14 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection);
         q1.start();
         q2.start();
-
+        
         Assert.assertTrue("waiting for server 1 being up",
                 ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
                         CONNECTION_TIMEOUT));
         Assert.assertTrue("waiting for server 2 being up",
                     ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2,
                             CONNECTION_TIMEOUT));
-
+            
         byte[] b = new byte[4];
         int length = 1024*1024*1024;
         ByteBuffer buff = ByteBuffer.wrap(b);
@@ -820,7 +820,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         s = SocketChannel.open(new InetSocketAddress("127.0.0.1", electionPort2));
         s.write(buff);
         s.close();
-
+        
         ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_QP1,
                 ClientBase.CONNECTION_TIMEOUT, this);
         waitForOne(zk, States.CONNECTED);
