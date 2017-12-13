@@ -84,7 +84,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         String quorumCfgSection =
             "server.1=127.0.0.1:" + PortAssignment.unique()
             + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1
-            + "\nserver.2=127.0.0.1:" + PortAssignment.unique()
+            + "\nserver.2=127.0.0.1:" + PortAssignment.unique() 
             + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP2;
 
         MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);

@@ -65,7 +65,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             }
         }
     }
-
+    
     public static class MainThread implements Runnable {
         final File confFile;
         final File tmpDir;
@@ -159,7 +159,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
                 throws IOException {
             this(myid, clientPort, JettyAdminServer.DEFAULT_PORT, quorumCfgSection, null, null, writeDynamicConfigFile);
         }
-
+        
         public MainThread(int myid, int clientPort, String quorumCfgSection, String peerType, boolean writeDynamicConfigFile)
                 throws IOException {
             this(myid, clientPort, JettyAdminServer.DEFAULT_PORT, quorumCfgSection, null, peerType, writeDynamicConfigFile);
@@ -230,7 +230,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             if (secureClientPort != null) {
                 fwriter.write("secureClientPort=" + secureClientPort + "\n");
             }
-
+            
             if (peerType != null) {
                 fwriter.write("peerType=" + peerType + "\n");
             }
@@ -276,7 +276,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         }
 
         public File[] getFilesWithPrefix(final String prefix) {
-            return tmpDir.listFiles(new FilenameFilter() {
+            return tmpDir.listFiles(new FilenameFilter() {      
                 @Override
                 public boolean accept(File dir, String name) {
                     return name.startsWith(prefix);
