@@ -352,7 +352,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         Logger qlogger = Logger.getLogger(QuorumPeer.class);
         qlogger.addAppender(appender);
 
-        int numServers = 3;
+        numServers = 3;
 
         // used for assertions later
         boolean foundLeading = false;
@@ -361,7 +361,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
         try {
           // spin up a quorum, we use a small ticktime to make the test run faster
-          Servers servers = LaunchServers(numServers, 500);
+          servers = LaunchServers(numServers, 500);
 
           // find the leader
           int trueLeader = -1;
