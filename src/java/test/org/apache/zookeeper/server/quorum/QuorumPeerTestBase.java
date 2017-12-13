@@ -65,7 +65,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             }
         }
     }
-    
+
     public static class MainThread implements Runnable {
         final File confFile;
         final File tmpDir;
@@ -82,8 +82,18 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         private String quorumCfgSection;
         private Map<String, String> otherConfigs;
 
+        /**
+         * Create a MainThread
+         *
+         * @param myid
+         * @param clientPort
+         * @param quorumCfgSection
+         * @param otherConfigs
+         * @param tickTime initLimit will be 10 and syncLimit will be 5
+         * @throws IOException
+         */
         public MainThread(int myid, int clientPort, String quorumCfgSection,
-                          Map<String, String> otherConfigs) throws IOException {
+                Map<String, String> otherConfigs, int tickTime) throws IOException {
             baseDir = ClientBase.createTmpDir();
             this.myid = myid;
             this.clientPort = clientPort;
@@ -94,7 +104,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             confFile = new File(baseDir, "zoo.cfg");
 
             FileWriter fwriter = new FileWriter(confFile);
-            fwriter.write("tickTime=4000\n");
+            fwriter.write("tickTime=" + tickTime + "\n");
             fwriter.write("initLimit=10\n");
             fwriter.write("syncLimit=5\n");
 
@@ -149,7 +159,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
                 throws IOException {
             this(myid, clientPort, JettyAdminServer.DEFAULT_PORT, quorumCfgSection, null, null, writeDynamicConfigFile);
         }
-        
+
         public MainThread(int myid, int clientPort, String quorumCfgSection, String peerType, boolean writeDynamicConfigFile)
                 throws IOException {
             this(myid, clientPort, JettyAdminServer.DEFAULT_PORT, quorumCfgSection, null, peerType, writeDynamicConfigFile);
@@ -220,7 +230,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             if (secureClientPort != null) {
                 fwriter.write("secureClientPort=" + secureClientPort + "\n");
             }
-            
+
             if (peerType != null) {
                 fwriter.write("peerType=" + peerType + "\n");
             }
@@ -266,7 +276,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         }
 
         public File[] getFilesWithPrefix(final String prefix) {
-            return tmpDir.listFiles(new FilenameFilter() {      
+            return tmpDir.listFiles(new FilenameFilter() {
                 @Override
                 public boolean accept(File dir, String name) {
                     return name.startsWith(prefix);
@@ -294,6 +304,11 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
                 throws IOException {
             this(myid, clientPort, quorumCfgSection,
                     new HashMap<String, String>());
+        }
+
+        public MainThread(int myid, int clientPort, String quorumCfgSection,
+                          Map<String, String> otherConfigs) throws IOException {
+            this(myid, clientPort, quorumCfgSection, otherConfigs, 4000);
         }
 
         Thread currentThread;
