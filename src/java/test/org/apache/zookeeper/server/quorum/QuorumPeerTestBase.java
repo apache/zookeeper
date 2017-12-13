@@ -265,7 +265,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         }
 
         public File[] getFilesWithPrefix(final String prefix) {
-            return tmpDir.listFiles(new FilenameFilter() {
+            return tmpDir.listFiles(new FilenameFilter() {      
                 @Override
                 public boolean accept(File dir, String name) {
                     return name.startsWith(prefix);

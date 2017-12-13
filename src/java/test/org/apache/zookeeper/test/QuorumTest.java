@@ -313,7 +313,7 @@ public class QuorumTest extends ZKTestCase {
         
         // try to reestablish the quorum
         qu.start(index);
-
+        
         // Connect the client after services are restarted (otherwise we would get
         // SessionExpiredException as the previous local session was not persisted).
         ZooKeeper zk = new ZooKeeper(
@@ -321,7 +321,7 @@ public class QuorumTest extends ZKTestCase {
                 ClientBase.CONNECTION_TIMEOUT, watcher);
 
         try{
-            watcher.waitForConnected(CONNECTION_TIMEOUT);
+            watcher.waitForConnected(CONNECTION_TIMEOUT);      
         } catch(TimeoutException e) {
             Assert.fail("client could not connect to reestablished quorum: giving up after 30+ seconds.");
         }
