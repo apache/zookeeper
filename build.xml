@@ -207,18 +207,18 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
     <!-- ====================================================== -->
     <!-- Dependency versions                                    -->
     <!-- ====================================================== -->
-    <property name="slf4j.version" value="1.6.1"/>
+    <property name="slf4j.version" value="1.7.25"/>
 
     <property name="wagon-http.version" value="2.4"/>
     <property name="maven-ant-tasks.version" value="2.1.3"/>
-    <property name="log4j.version" value="1.2.16"/>
+    <property name="log4j.version" value="1.2.17"/>
     <property name="jline.version" value="0.9.94"/>
 
     <property name="jdeb.version" value="0.8"/>
 
     <property name="audience-annotations.version" value="0.5.0" />
 
-    <property name="netty.version" value="3.10.5.Final"/>
+    <property name="netty.version" value="3.10.6.Final"/>
 
     <property name="junit.version" value="4.8.1"/>
     <property name="mockito.version" value="1.8.5"/>
