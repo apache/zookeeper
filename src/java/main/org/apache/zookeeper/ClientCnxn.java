@@ -1041,7 +1041,7 @@ public class ClientCnxn {
 
         private InetSocketAddress rwServerAddress = null;
 
-        private InetSocketAddress addr = null;
+        private InetSocketAddress serverAddress = null;
 
         private final static int minPingRwTimeout = 100;
 
@@ -1066,13 +1066,13 @@ public class ClientCnxn {
             state = States.CONNECTING;
 
             if (rwServerAddress != null) {
-                addr = rwServerAddress;
+                serverAddress = rwServerAddress;
                 rwServerAddress = null;
             } else {
-                addr = hostProvider.next(1000);
+                serverAddress = hostProvider.next(1000);
             }
 
-            String hostPort = addr.getHostString() + ":" + addr.getPort();
+            String hostPort = serverAddress.getHostString() + ":" + serverAddress.getPort();
             MDC.put("myid", hostPort);
             setName(getName().replaceAll("\\(.*\\)", "(" + hostPort + ")"));
             if (clientConfig.isSaslClientEnabled()) {
@@ -1080,7 +1080,7 @@ public class ClientCnxn {
                     if (zooKeeperSaslClient != null) {
                         zooKeeperSaslClient.shutdown();
                     }
-                    zooKeeperSaslClient = new ZooKeeperSaslClient(getServerPrincipal(addr), clientConfig);
+                    zooKeeperSaslClient = new ZooKeeperSaslClient(getServerPrincipal(serverAddress), clientConfig);
                 } catch (LoginException e) {
                     // An authentication error occurred when the SASL client tried to initialize:
                     // for Kerberos this means that the client failed to authenticate with the KDC.
@@ -1094,9 +1094,9 @@ public class ClientCnxn {
                     saslLoginFailed = true;
                 }
             }
-            logStartConnect(addr);
+            logStartConnect(serverAddress);
 
-            clientCnxnSocket.connect(addr);
+            clientCnxnSocket.connect(serverAddress);
         }
 
         private String getServerPrincipal(InetSocketAddress addr) {
@@ -1233,12 +1233,11 @@ public class ClientCnxn {
                         } else if (e instanceof RWServerFoundException) {
                             LOG.info(e.getMessage());
                         } else {
-                            SocketAddress remoteAddr = clientCnxnSocket.getRemoteSocketAddress();
                             LOG.warn(
                                     "Session 0x"
                                             + Long.toHexString(getSessionId())
                                             + " for server "
-                                            + (remoteAddr == null ? addr : remoteAddr)
+                                            + serverAddress
                                             + ", unexpected error"
                                             + RETRY_CONN_MSG, e);
                         }
