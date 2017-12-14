@@ -26,6 +26,7 @@ import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.ArrayList;
@@ -1041,8 +1042,6 @@ public class ClientCnxn {
 
         private InetSocketAddress rwServerAddress = null;
 
-        private InetSocketAddress serverAddress = null;
-
         private final static int minPingRwTimeout = 100;
 
         private final static int maxPingRwTimeout = 60000;
@@ -1053,7 +1052,7 @@ public class ClientCnxn {
         // throws a LoginException: see startConnect() below.
         private boolean saslLoginFailed = false;
 
-        private void startConnect() throws IOException {
+        private void startConnect(InetSocketAddress addr) throws IOException {
             // initializing it for new connection
             saslLoginFailed = false;
             if(!isFirstConnect){
@@ -1065,14 +1064,7 @@ public class ClientCnxn {
             }
             state = States.CONNECTING;
 
-            if (rwServerAddress != null) {
-                serverAddress = rwServerAddress;
-                rwServerAddress = null;
-            } else {
-                serverAddress = hostProvider.next(1000);
-            }
-
-            String hostPort = serverAddress.getHostString() + ":" + serverAddress.getPort();
+            String hostPort = addr.getHostString() + ":" + addr.getPort();
             MDC.put("myid", hostPort);
             setName(getName().replaceAll("\\(.*\\)", "(" + hostPort + ")"));
             if (clientConfig.isSaslClientEnabled()) {
@@ -1080,7 +1072,7 @@ public class ClientCnxn {
                     if (zooKeeperSaslClient != null) {
                         zooKeeperSaslClient.shutdown();
                     }
-                    zooKeeperSaslClient = new ZooKeeperSaslClient(getServerPrincipal(serverAddress), clientConfig);
+                    zooKeeperSaslClient = new ZooKeeperSaslClient(getServerPrincipal(addr), clientConfig);
                 } catch (LoginException e) {
                     // An authentication error occurred when the SASL client tried to initialize:
                     // for Kerberos this means that the client failed to authenticate with the KDC.
@@ -1094,9 +1086,9 @@ public class ClientCnxn {
                     saslLoginFailed = true;
                 }
             }
-            logStartConnect(serverAddress);
+            logStartConnect(addr);
 
-            clientCnxnSocket.connect(serverAddress);
+            clientCnxnSocket.connect(addr);
         }
 
         private String getServerPrincipal(InetSocketAddress addr) {
@@ -1124,6 +1116,7 @@ public class ClientCnxn {
             int to;
             long lastPingRwServer = Time.currentElapsedTime();
             final int MAX_SEND_PING_INTERVAL = 10000; //10 seconds
+            InetSocketAddress serverAddress = null;
             while (state.isAlive()) {
                 try {
                     if (!clientCnxnSocket.isConnected()) {
@@ -1131,7 +1124,13 @@ public class ClientCnxn {
                         if (closing) {
                             break;
                         }
-                        startConnect();
+                        if (rwServerAddress != null) {
+                            serverAddress = rwServerAddress;
+                            rwServerAddress = null;
+                        } else {
+                            serverAddress = hostProvider.next(1000);
+                        }
+                        startConnect(serverAddress);
                         clientCnxnSocket.updateLastSendAndHeard();
                     }
 
@@ -1232,6 +1231,8 @@ public class ClientCnxn {
                             LOG.info(e.getMessage() + RETRY_CONN_MSG);
                         } else if (e instanceof RWServerFoundException) {
                             LOG.info(e.getMessage());
+                        } else if (e instanceof SocketException) {
+                            LOG.info(String.format("Socket error occurred: %s: %s", serverAddress, e.getMessage()));
                         } else {
                             LOG.warn(
                                     "Session 0x"
