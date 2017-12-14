@@ -374,7 +374,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
           // find a follower
           int falseLeader = (trueLeader + 1) % numServers;
-          Assert.assertTrue(servers.mt[falseLeader].main.quorumPeer.follower != null);
+          Assert.assertTrue("All servers should join the quorum", servers.mt[falseLeader].main.quorumPeer.follower != null);
 
           // to keep the quorum peer running and force it to go into the looking state, we kill leader election
           // and close the connection to the leader
