@@ -1232,15 +1232,13 @@ public class ClientCnxn {
                         } else if (e instanceof RWServerFoundException) {
                             LOG.info(e.getMessage());
                         } else if (e instanceof SocketException) {
-                            LOG.info(String.format("Socket error occurred: %s: %s", serverAddress, e.getMessage()));
+                            LOG.info("Socket error occurred: {}: {}", serverAddress, e.getMessage());
                         } else {
-                            LOG.warn(
-                                    "Session 0x"
-                                            + Long.toHexString(getSessionId())
-                                            + " for server "
-                                            + serverAddress
-                                            + ", unexpected error"
-                                            + RETRY_CONN_MSG, e);
+                            LOG.warn("Session 0x{} for server {}, unexpected error{}",
+                                            Long.toHexString(getSessionId()),
+                                            serverAddress,
+                                            RETRY_CONN_MSG,
+                                            e);
                         }
                         // At this point, there might still be new packets appended to outgoingQueue.
                         // they will be handled in next connection or cleared up if closed.
