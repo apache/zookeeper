@@ -1059,7 +1059,7 @@ public class Leader {
         }
 
         byte[] data = SerializeUtils.serializeRequest(request);
-        proposalStats.setLastProposalSize(data.length);
+        proposalStats.updateProposalSize(data.length);
         QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, request.zxid, data, null);
 
         Proposal p = new Proposal();

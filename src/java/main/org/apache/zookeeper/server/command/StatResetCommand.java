@@ -22,7 +22,6 @@ import java.io.PrintWriter;
 
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerStats;
-import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
 
 public class StatResetCommand extends AbstractFourLetterCommand {
     public StatResetCommand(PrintWriter pw, ServerCnxn serverCnxn) {
@@ -36,9 +35,6 @@ public class StatResetCommand extends AbstractFourLetterCommand {
         } else {
             ServerStats serverStats = zkServer.serverStats();
             serverStats.reset();
-            if (serverStats.getServerState().equals("leader")) {
-                ((LeaderZooKeeperServer)zkServer).getLeader().getProposalStats().reset();
-            }
             pw.println("Server stats reset.");
         }
     }

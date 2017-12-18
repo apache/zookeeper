@@ -18,54 +18,53 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import com.codahale.metrics.ExponentiallyDecayingReservoir;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.JmxReporter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Reservoir;
+import com.codahale.metrics.Snapshot;
+import org.apache.zookeeper.jmx.CommonNames;
+import org.apache.zookeeper.jmx.MBeanRegistry;
+
+import static com.codahale.metrics.MetricRegistry.name;
+
 /**
- * Provides live statistics about a running Leader.
+ * Provides real-time metrics on Leader's proposal size.
+ * The class uses a histogram included in Dropwizard metrics library with ExponentiallyDecayingReservoir.
+ * It provides stats of proposal sizes from the last 5 minutes with acceptable cpu/memory footprint optimized for streaming data.
  */
 public class ProposalStats {
-    /**
-     * Size of the last generated proposal. This should fit into server's jute.maxbuffer setting.
-     */
-    private int lastProposalSize = -1;
+    private final Histogram proposalSizes;
 
-    /**
-     * Size of the smallest proposal which has been generated since the server was started.
-     */
-    private int minProposalSize = -1;
-
-    /**
-     * Size of the largest proposal which has been generated since the server was started.
-     */
-    private int maxProposalSize = -1;
-
-    public synchronized int getLastProposalSize() {
-        return lastProposalSize;
+    ProposalStats() {
+        final MetricRegistry metrics = new MetricRegistry();
+        Reservoir reservoir = new ExponentiallyDecayingReservoir();
+        proposalSizes = new Histogram(reservoir);
+        metrics.register(name(CommonNames.DOMAIN, "Leader", "proposalSize"), proposalSizes);
+        final JmxReporter jmxReporter = JmxReporter.forRegistry(metrics).registerWith(MBeanRegistry.getInstance().getPlatformMBeanServer()).build();
+        jmxReporter.start();
     }
 
-    synchronized void setLastProposalSize(int value) {
-        lastProposalSize = value;
-        if (minProposalSize == -1 || value < minProposalSize) {
-            minProposalSize = value;
-        }
-        if (value > maxProposalSize) {
-            maxProposalSize = value;
-        }
+    void updateProposalSize(int value) {
+        proposalSizes.update(value);
     }
 
-    public synchronized int getMinProposalSize() {
-        return minProposalSize;
+    public double getAverage() {
+        return proposalSizes.getSnapshot().getMean();
     }
 
-    public synchronized int getMaxProposalSize() {
-        return maxProposalSize;
+    public long getMin() {
+        return proposalSizes.getSnapshot().getMin();
     }
 
-    public synchronized void reset() {
-        lastProposalSize = -1;
-        minProposalSize = -1;
-        maxProposalSize = -1;
+    public long getMax() {
+        return proposalSizes.getSnapshot().getMax();
     }
 
-    public synchronized String toString() {
-        return String.format("%d/%d/%d", lastProposalSize, minProposalSize, maxProposalSize);
+    @Override
+    public String toString() {
+        Snapshot s = proposalSizes.getSnapshot();
+        return String.format("%d/%s/%d", s.getMin(), s.getMean(), s.getMax());
     }
 }
