@@ -211,7 +211,7 @@ public class Util {
             long preAllocSize) throws IOException{
         long position = f.getChannel().position();
         if (position + 4096 >= currentSize) {
-            currentSize = currentSize + preAllocSize;
+            currentSize = position + preAllocSize;
             fill.position(0);
             f.getChannel().write(fill, currentSize-fill.remaining());
         }
