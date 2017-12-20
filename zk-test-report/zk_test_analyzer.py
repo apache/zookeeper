@@ -62,7 +62,7 @@ def classify_tests(junit_suites):
             if status in ("REGRESSION","FAILED"):
                 failed_tests[name] += 1
             elif status not in ("PASSED","SKIPPED","FIXED"):
-                print status
+                print "Unknown status {}".format(status)
     
     print "Result > total tests: {:4}   failed : {:4}".format(
         sum(all_tests.values()), sum(failed_tests.values()))
