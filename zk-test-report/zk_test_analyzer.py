@@ -59,7 +59,7 @@ def classify_tests(junit_suites):
             name = case["name"]
             status = case["status"]
             all_tests[name] += 1
-            if status in ("REGRESSION"):
+            if status in ("REGRESSION","FAILED"):
                 failed_tests[name] += 1
             elif status not in ("PASSED","SKIPPED","FIXED"):
                 print status
