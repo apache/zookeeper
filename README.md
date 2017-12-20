@@ -1,2 +1,4 @@
-# valkyrie
-Collection of small projects for archiving and sync purposes.
+# jenkins-tools
+
+The tools Apache ZooKeeper uses for Jenkins.
+
