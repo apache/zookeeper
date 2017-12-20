@@ -31,16 +31,6 @@ import re
 import requests
 from jinja2 import Template
 
-# If any of these strings appear in the console output, it's a build one should probably ignore
-# for analyzing failed/hanging tests.
-BAD_RUN_STRINGS = [
-    "Slave went offline during the build",  # Machine went down, can't do anything about it.
-    "Forked Java VM exited abnormally",  # JVM crashed.
-]
-
-PATTERN_RUNNING_TEST = re.compile('(.*) RUNNING TEST METHOD (.*)')
-PATTERN_FAILED_TEST = re.compile('(.*)- FAILED (.*)')
-PATTERN_SUCCEED_TEST = re.compile('(.*)- SUCCEEDED (.*)')
 MAX_NUM_OF_BUILDS = 10000
 # The upper bound of number of failed tests for a legimitate build.
 # If more tests are failing, then the build is bad (e.g. JVM crash, flaky host, etc.).
@@ -54,35 +44,26 @@ ALL_FAILED_TESTS = defaultdict(int)
 URL_TO_BAD_TEST_RESULTS = OrderedDict()
 
 
-def classify_tests(build_url):
+def classify_tests(junit_suites):
     """
-    Given a build url, pick up all test cases and failed test cases by name.
+    Given a testResponse, identify all test cases and failed test cases by name.
 
-    :param build_url: Jenkins job url.
+    :param build_url: Jenkins job build suites as reported by junit test reporter.
     :return: [all_tests, failed_tests]
     """
-    response = requests.get(build_url)
-    if response.status_code != 200:
-        print "Error getting consoleText. Response = {} {}".format(
-            response.status_code, response.reason)
-        return
-
     all_tests = defaultdict(int)
     failed_tests = defaultdict(int)
 
-    for line in response.content.splitlines():
-        ans = PATTERN_RUNNING_TEST.match(line)
-        if ans:
-            test_case = ans.group(2)
-            all_tests[test_case] += 1
-        ans = PATTERN_FAILED_TEST.match(line)
-        if ans:
-            test_case = ans.group(2)
-            failed_tests[test_case] += 1
-        for bad_string in BAD_RUN_STRINGS:
-            if re.match(".*" + bad_string + ".*", line):
-                print "Bad string found in build:\n > {}".format(line)
-                return
+    for suite in junit_suites:
+        for case in suite["cases"]:
+            name = case["name"]
+            status = case["status"]
+            all_tests[name] += 1
+            if status in ("REGRESSION"):
+                failed_tests[name] += 1
+            elif status not in ("PASSED","SKIPPED","FIXED"):
+                print status
+    
     print "Result > total tests: {:4}   failed : {:4}".format(
         sum(all_tests.values()), sum(failed_tests.values()))
     return [all_tests, failed_tests]
@@ -97,15 +78,14 @@ def generate_report(build_url):
     :return: classified test results.
     """
     LOG.info("Analyzing %s", build_url)
+
+    report_url = build_url + "testReport/api/json?tree=suites[name,cases[className,name,status]]"
     try:
-        response = requests.get(build_url + "/api/json").json()
+        response = requests.get(report_url).json()
     except:
-        LOG.error("failed to get: " + build_url + "/api/json")
+        LOG.error("failed to get: " + report_url)
         return
-    if response["building"]:
-        LOG.info("Skipping this build since it is in progress.")
-        return {}
-    build_result = classify_tests(build_url + "/consoleText")
+    build_result = classify_tests(response["suites"])
     if not build_result:
         LOG.info("Ignoring build %s", build_url)
         return
@@ -162,7 +142,8 @@ def analyze_build(args):
     for url_max_build in expanded_urls:
         url = url_max_build["url"]
         excludes = url_max_build["excludes"]
-        json_response = requests.get(url + "/api/json").json()
+
+        json_response = requests.get(url + "/api/json?tree=builds[number,url]").json()
         if json_response.has_key("builds"):
             builds = json_response["builds"]
             LOG.info("Analyzing job: %s", url)
