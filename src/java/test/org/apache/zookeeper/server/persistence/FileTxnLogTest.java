@@ -15,12 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package org.apache.zookeeper.test;
+package org.apache.zookeeper.server.persistence;
 
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.server.persistence.FileTxnLog;
+import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.Assert;
@@ -32,8 +31,36 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
-public class FileTxnLogPaddingCorruptionTest extends ZKTestCase {
-  protected static final Logger LOG = LoggerFactory.getLogger(FileTxnLogPaddingCorruptionTest.class);
+public class FileTxnLogTest  extends ZKTestCase {
+  protected static final Logger LOG = LoggerFactory.getLogger(FileTxnLogTest.class);
+
+  private static final int KB = 1024;
+
+  @Test
+  public void testInvalidPreallocSize() {
+    Assert.assertEquals("file should not be padded",
+      10 * KB, FileTxnLog.calculateFileSizeWithPadding(7 * KB, 10 * KB, 0));
+    Assert.assertEquals("file should not be padded",
+      10 * KB, FileTxnLog.calculateFileSizeWithPadding(7 * KB, 10 * KB, -1));
+  }
+
+  @Test
+  public void testCalculateFileSizeWithPaddingWhenNotToCurrentSize() {
+    Assert.assertEquals("file should not be padded",
+      10 * KB, FileTxnLog.calculateFileSizeWithPadding(5 * KB, 10 * KB, 10 * KB));
+  }
+
+  @Test
+  public void testCalculateFileSizeWithPaddingWhenCloseToCurrentSize() {
+    Assert.assertEquals("file should be padded an additional 10 KB",
+      20 * KB, FileTxnLog.calculateFileSizeWithPadding(7 * KB, 10 * KB, 10 * KB));
+  }
+
+  @Test
+  public void testFileSizeGreaterThanPosition() {
+    Assert.assertEquals("file should be padded to 40 KB",
+      40 * KB, FileTxnLog.calculateFileSizeWithPadding(31 * KB, 10 * KB, 10 * KB));
+  }
 
   @Test
   public void testPreAllocSizeSmallerThanTxnData() throws IOException {
@@ -41,10 +68,10 @@ public class FileTxnLogPaddingCorruptionTest extends ZKTestCase {
     FileTxnLog fileTxnLog = new FileTxnLog(logDir);
 
     // Set a small preAllocSize (.5 MB)
-    final int preAllocSize = 500000;
+    final int preAllocSize = 500 * KB;
     fileTxnLog.setPreallocSize(preAllocSize);
 
-    // Create dummy txn larger than preAllocSize + 4KB (the size used in Util#padLogFile to determine if padding is necessary)
+    // Create dummy txn larger than preAllocSize
     // Since the file padding inserts a 0, we will fill the data with 0xff to ensure we corrupt the data if we put the 0 in the data
     byte[] data = new byte[2 * preAllocSize];
     Arrays.fill(data, (byte) 0xff);
@@ -71,5 +98,4 @@ public class FileTxnLogPaddingCorruptionTest extends ZKTestCase {
     createTxn = (CreateTxn) fileTxnIterator.getTxn();
     Assert.assertTrue(Arrays.equals(createTxn.getData(), new byte[]{}));
   }
-
 }
