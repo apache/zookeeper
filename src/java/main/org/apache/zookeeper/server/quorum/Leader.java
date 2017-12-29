@@ -1183,8 +1183,10 @@ public class Leader {
             if (lastAcceptedEpoch >= epoch) {
                 epoch = lastAcceptedEpoch+1;
             }
-            connectingFollowers.add(sid);
             QuorumVerifier verifier = self.getQuorumVerifier();
+            if(verifier.getVotingMembers().containsKey(sid)) {
+                connectingFollowers.add(sid);
+            }
             if (connectingFollowers.contains(self.getId()) &&
                                             verifier.containsQuorum(connectingFollowers)) {
                 waitingForNewEpoch = false;
@@ -1213,6 +1215,7 @@ public class Leader {
             if (electionFinished) {
                 return;
             }
+            QuorumVerifier verifier = self.getQuorumVerifier();
             if (ss.getCurrentEpoch() != -1) {
                 if (ss.isMoreRecentThan(leaderStateSummary)) {
                     throw new IOException("Follower is ahead of the leader, leader summary: " 
@@ -1221,11 +1224,10 @@ public class Leader {
                                                     + leaderStateSummary.getLastZxid()
                                                     + " (last zxid)");
                 }
-                if (ss.getLastZxid() != -1) {
+                if (ss.getLastZxid() != -1 && verifier.getVotingMembers().containsKey(id)) {
                     electingFollowers.add(id);
                 }
             }
-            QuorumVerifier verifier = self.getQuorumVerifier();
             if (electingFollowers.contains(self.getId()) && verifier.containsQuorum(electingFollowers)) {
                 electionFinished = true;
                 electingFollowers.notifyAll();
