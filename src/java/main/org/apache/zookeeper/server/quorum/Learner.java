@@ -401,11 +401,12 @@ public class Learner {
                 //we need to truncate the log to the lastzxid of the leader
                 LOG.warn("Truncating log to get in sync with the leader 0x"
                         + Long.toHexString(qp.getZxid()));
-                boolean truncated=zk.getZKDatabase().truncateLog(qp.getZxid());
-                if (!truncated) {
+                try {
+                    zk.getZKDatabase().truncateLog(qp.getZxid());
+                } catch (IOException e) {
                     // not able to truncate the log
-                    LOG.error("Not able to truncate the log "
-                            + Long.toHexString(qp.getZxid()));
+                    LOG.error("Not able to truncate the log {}, unexpected exception {}",
+                            Long.toHexString(qp.getZxid()), e);
                     System.exit(13);
                 }
                 zk.getZKDatabase().setlastProcessedZxid(qp.getZxid());

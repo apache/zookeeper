@@ -519,21 +519,15 @@ public class ZKDatabase {
     /**
      * Truncate the ZKDatabase to the specified zxid
      * @param zxid the zxid to truncate zk database to
-     * @return true if the truncate is successful and false if not
+     * @return void if the truncate is successful
      * @throws IOException
      */
-    public boolean truncateLog(long zxid) throws IOException {
+    public void truncateLog(long zxid) throws IOException {
         clear();
 
         // truncate the log
-        boolean truncated = snapLog.truncateLog(zxid);
-
-        if (!truncated) {
-            return false;
-        }
-
+        snapLog.truncateLog(zxid);
         loadDataBase();
-        return true;
     }
 
     /**

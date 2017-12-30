@@ -65,9 +65,9 @@ public interface TxnLog {
      * truncate the log to get in sync with the 
      * leader.
      * @param zxid the zxid to truncate at.
-     * @throws IOException 
+     * @throws IOException
      */
-    boolean truncate(long zxid) throws IOException;
+    void truncate(long zxid) throws IOException;
     
     /**
      * the dbid for this transaction log. 

@@ -354,17 +354,20 @@ public class FileTxnSnapLog {
      * truncate the transaction logs the zxid
      * specified
      * @param zxid the zxid to truncate the logs to
-     * @return true if able to truncate the log, false if not
+     * @return void if able to truncate the log
      * @throws IOException
      */
-    public boolean truncateLog(long zxid) throws IOException {
+    public void truncateLog(long zxid) throws IOException {
         // close the existing txnLog and snapLog
         close();
 
         // truncate it
         FileTxnLog truncLog = new FileTxnLog(dataDir);
-        boolean truncated = truncLog.truncate(zxid);
-        truncLog.close();
+        try {
+            truncLog.truncate(zxid);
+        } finally {
+            truncLog.close();
+        }
 
         // re-open the txnLog and snapLog
         // I'd rather just close/reopen this object itself, however that 
@@ -373,7 +376,6 @@ public class FileTxnSnapLog {
         txnLog = new FileTxnLog(dataDir);
         snapLog = new FileSnap(snapDir);
 
-        return truncated;
     }
 
     /**
