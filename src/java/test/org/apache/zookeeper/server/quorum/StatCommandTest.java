@@ -29,7 +29,7 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 
-public class StatCommandTest extends CommandTest {
+public class StatCommandTest extends CommandTestCase {
     private StatCommand statCommand;
 
     @Before

@@ -30,7 +30,7 @@ import static org.hamcrest.Matchers.hasKey;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 
-public class MonitorCommandTest extends CommandTest {
+public class MonitorCommandTest extends CommandTestCase {
     private MonitorCommand monitorCommand;
 
     @Before

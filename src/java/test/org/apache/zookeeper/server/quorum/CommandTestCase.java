@@ -32,7 +32,7 @@ import java.util.List;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public abstract class CommandTest {
+public abstract class CommandTestCase {
     ServerCnxn serverCnxnMock;
     StringWriter outputWriter;
     ServerStats.Provider providerMock;
