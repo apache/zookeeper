@@ -30,7 +30,7 @@ import org.apache.zookeeper.server.util.OSMXBean;
 
 public class MonitorCommand extends AbstractFourLetterCommand {
 
-    MonitorCommand(PrintWriter pw, ServerCnxn serverCnxn) {
+    public MonitorCommand(PrintWriter pw, ServerCnxn serverCnxn) {
         super(pw, serverCnxn);
     }
 

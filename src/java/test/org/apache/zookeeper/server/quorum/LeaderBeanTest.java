@@ -93,38 +93,6 @@ public class LeaderBeanTest {
         assertEquals(1, leaderBean.getElectionTimeTaken());
     }
 
-    @Test
-    public void testGetProposalSize() throws IOException, Leader.XidRolloverException {
-        // Arrange
-        Request req = createMockRequest();
-
-        // Act
-        leader.propose(req);
-
-        // Assert
-        byte[] data = SerializeUtils.serializeRequest(req);
-        assertEquals(data.length, leaderBean.getLastProposalSize());
-        assertEquals(data.length, leaderBean.getMinProposalSize());
-        assertEquals(data.length, leaderBean.getMaxProposalSize());
-    }
-
-    @Test
-    public void testResetProposalStats() throws IOException, Leader.XidRolloverException {
-        // Arrange
-        int initialProposalSize = leaderBean.getLastProposalSize();
-        Request req = createMockRequest();
-
-        // Act
-        leader.propose(req);
-
-        // Assert
-        assertNotEquals(initialProposalSize, leaderBean.getLastProposalSize());
-        leaderBean.resetProposalStatistics();
-        assertEquals(initialProposalSize, leaderBean.getLastProposalSize());
-        assertEquals(initialProposalSize, leaderBean.getMinProposalSize());
-        assertEquals(initialProposalSize, leaderBean.getMaxProposalSize());
-    }
-
     private Request createMockRequest() throws IOException {
         TxnHeader header = mock(TxnHeader.class);
         doAnswer(new Answer() {

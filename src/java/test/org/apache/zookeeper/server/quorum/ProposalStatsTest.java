@@ -26,33 +26,20 @@ public class ProposalStatsTest {
     @Test
     public void testSetProposalSizeSetMinMax() {
         ProposalStats stats = new ProposalStats();
-        assertEquals(-1, stats.getLastProposalSize());
-        assertEquals(-1, stats.getMinProposalSize());
-        assertEquals(-1, stats.getMaxProposalSize());
-        stats.setLastProposalSize(10);
-        assertEquals(10, stats.getLastProposalSize());
-        assertEquals(10, stats.getMinProposalSize());
-        assertEquals(10, stats.getMaxProposalSize());
-        stats.setLastProposalSize(20);
-        assertEquals(20, stats.getLastProposalSize());
-        assertEquals(10, stats.getMinProposalSize());
-        assertEquals(20, stats.getMaxProposalSize());
-        stats.setLastProposalSize(5);
-        assertEquals(5, stats.getLastProposalSize());
-        assertEquals(5, stats.getMinProposalSize());
-        assertEquals(20, stats.getMaxProposalSize());
-    }
-
-    @Test
-    public void testReset() {
-        ProposalStats stats = new ProposalStats();
-        stats.setLastProposalSize(10);
-        assertEquals(10, stats.getLastProposalSize());
-        assertEquals(10, stats.getMinProposalSize());
-        assertEquals(10, stats.getMaxProposalSize());
-        stats.reset();
-        assertEquals(-1, stats.getLastProposalSize());
-        assertEquals(-1, stats.getMinProposalSize());
-        assertEquals(-1, stats.getMaxProposalSize());
+        assertEquals(0, stats.getAverage(), 0);
+        assertEquals(0, stats.getMin());
+        assertEquals(0, stats.getMax());
+        stats.updateProposalSize(10);
+        assertEquals(10, stats.getAverage(), 0);
+        assertEquals(10, stats.getMin());
+        assertEquals(10, stats.getMax());
+        stats.updateProposalSize(20);
+        assertEquals(15, stats.getAverage(), 0);
+        assertEquals(10, stats.getMin());
+        assertEquals(20, stats.getMax());
+        stats.updateProposalSize(3);
+        assertEquals(11, stats.getAverage(), 0);
+        assertEquals(3, stats.getMin());
+        assertEquals(20, stats.getMax());
     }
 }

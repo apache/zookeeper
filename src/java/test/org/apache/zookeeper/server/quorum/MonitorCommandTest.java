@@ -18,61 +18,68 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import org.apache.zookeeper.server.command.FourLetterCommands;
-import org.apache.zookeeper.server.command.StatCommand;
+import org.apache.zookeeper.server.command.MonitorCommand;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.PrintWriter;
+import java.util.HashMap;
+import java.util.Map;
 
-import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.Matchers.hasKey;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 
-public class StatCommandTest extends CommandTest {
-    private StatCommand statCommand;
+public class MonitorCommandTest extends CommandTest {
+    private MonitorCommand monitorCommand;
 
     @Before
     @Override
     public void setUp() {
         super.setUp();
-        statCommand = new StatCommand(new PrintWriter(outputWriter), serverCnxnMock, FourLetterCommands.statCmd);
-        statCommand.setZkServer(zks);
-        statCommand.setFactory(serverCnxnFactory);
+        monitorCommand = new MonitorCommand(new PrintWriter(outputWriter), serverCnxnMock);
+        monitorCommand.setZkServer(zks);
+        monitorCommand.setFactory(serverCnxnFactory);
     }
 
     @Test
-    public void testLeaderStatCommand() {
+    public void testLeaderMonitorCommand() {
         // Arrange
         when(providerMock.getState()).thenReturn("leader");
 
         // Act
-        statCommand.commandRun();
+        monitorCommand.commandRun();
 
         // Assert
         String output = outputWriter.toString();
-        assertCommonStrings(output);
-        assertThat(output, containsString("Mode: leader"));
-        assertThat(output, containsString("Proposal min/avg/max:"));
+        Map<String, String> monitors = parseMonitors(output);
+        assertThat(monitors, hasKey("zk_followers"));
     }
 
     @Test
-    public void testFollowerStatCommand() {
+    public void testProposalStats() {
         // Arrange
-        when(providerMock.getState()).thenReturn("follower");
+        when(providerMock.getState()).thenReturn("leader");
 
         // Act
-        statCommand.commandRun();
+        monitorCommand.commandRun();
 
         // Assert
         String output = outputWriter.toString();
-        assertCommonStrings(output);
-        assertThat(output, containsString("Mode: follower"));
+        Map<String, String> monitors = parseMonitors(output);
+
+        assertThat(monitors, hasKey("zk_min_proposal"));
+        assertThat(monitors, hasKey("zk_max_proposal"));
+        assertThat(monitors, hasKey("zk_avg_proposal"));
     }
 
-    private void assertCommonStrings(String output) {
-        assertThat(output, containsString("Clients:"));
-        assertThat(output, containsString("Zookeeper version:"));
-        assertThat(output, containsString("Node count:"));
+    private Map<String, String> parseMonitors(String output) {
+        String[] lines = output.split("\n");
+        Map<String, String> monitors = new HashMap<>();
+        for (String l : lines) {
+            String[] item = l.split("\t");
+            monitors.put(item[0], item[1]);
+        }
+        return monitors;
     }
 }

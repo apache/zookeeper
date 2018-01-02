@@ -139,6 +139,9 @@
     <dependency org="io.dropwizard.metrics" name="metrics-core"
                 rev="${dropwizard.version}" conf="default" />
 
+    <dependency org="org.hamcrest" name="hamcrest-all" rev="1.3"
+                conf="test->default" />
+
     <conflict manager="strict"/>
 
   </dependencies>
