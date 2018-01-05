@@ -133,6 +133,8 @@
     <dependency org="org.codehaus.jackson" name="jackson-mapper-asl"
                 rev="${jackson-mapper-asl.version}" conf="optional->default"/>
 
+    <dependency org="org.openclover" name="clover" rev="${clover.version}"/>
+
     <conflict manager="strict"/>
 
   </dependencies>
