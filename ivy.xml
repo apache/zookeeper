@@ -143,6 +143,8 @@
         <exclude org="org.slf4j" module="slf4j-api"/>
     </dependency>
 
+    <dependency org="org.openclover" name="clover" rev="${clover.version}"/>
+
     <conflict manager="strict"/>
 
   </dependencies>
