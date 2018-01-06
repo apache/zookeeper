@@ -337,7 +337,7 @@ document.write("Last Published: " + document.lastModified);
       node is usually small, in the byte to kilobyte range.) We use the term
       <em>znode</em> to make it clear that we are talking about
       ZooKeeper data nodes.</p>
-<p>Znodes maintain a stat structure that includes version numbers for
+<p>Znodes maintain a state structure that includes version numbers for
       data changes, ACL changes, and timestamps, to allow cache validations
       and coordinated updates. Each time a znode's data changes, the version
       number increases. For instance, whenever a client retrieves data it also
@@ -505,7 +505,7 @@ document.write("Last Published: " + document.lastModified);
       writes are serialized to disk before they are applied to the in-memory
       database.</p>
 <p>Every ZooKeeper server services clients. Clients connect to
-      exactly one server to submit irequests. Read requests are serviced from
+      exactly one server to submit requests. Read requests are serviced from
       the local replica of each server database. Requests that change the
       state of the service, write requests, are processed by an agreement
       protocol.</p>
