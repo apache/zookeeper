@@ -337,7 +337,7 @@ document.write("Last Published: " + document.lastModified);
       node is usually small, in the byte to kilobyte range.) We use the term
       <em>znode</em> to make it clear that we are talking about
       ZooKeeper data nodes.</p>
-<p>Znodes maintain a stat structure that includes version numbers for
+<p>Znodes maintain a state structure that includes version numbers for
       data changes, ACL changes, and timestamps, to allow cache validations
       and coordinated updates. Each time a znode's data changes, the version
       number increases. For instance, whenever a client retrieves data it also
