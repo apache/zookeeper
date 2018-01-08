@@ -137,8 +137,8 @@ public class QuorumPeerMain {
 
           quorumPeer.setQuorumPeers(config.getServers());
           quorumPeer.setTxnFactory(new FileTxnSnapLog(
-                  new File(config.getDataDir()),
-                  new File(config.getDataLogDir())));
+                  new File(config.getDataLogDir()),
+                  new File(config.getDataDir())));
           quorumPeer.setElectionType(config.getElectionAlg());
           quorumPeer.setMyid(config.getServerId());
           quorumPeer.setTickTime(config.getTickTime());

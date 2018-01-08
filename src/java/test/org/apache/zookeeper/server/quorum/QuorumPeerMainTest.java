@@ -19,6 +19,11 @@
 package org.apache.zookeeper.server.quorum;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -50,6 +55,7 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.common.AtomicFileOutputStream;
+import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.test.ClientBase;
@@ -116,7 +122,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         waitForOne(zk, States.CONNECTED);
         zk.create("/foo_q1", "foobar1".getBytes(), Ids.OPEN_ACL_UNSAFE,
                 CreateMode.PERSISTENT);
-        Assert.assertEquals(new String(zk.getData("/foo_q1", null, null)), "foobar1");
+        assertEquals(new String(zk.getData("/foo_q1", null, null)), "foobar1");
         zk.close();
 
         zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_QP2,
@@ -124,7 +130,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         waitForOne(zk, States.CONNECTED);
         zk.create("/foo_q2", "foobar2".getBytes(), Ids.OPEN_ACL_UNSAFE,
                 CreateMode.PERSISTENT);
-        Assert.assertEquals(new String(zk.getData("/foo_q2", null, null)), "foobar2");
+        assertEquals(new String(zk.getData("/foo_q2", null, null)), "foobar2");
         zk.close();
 
         q1.shutdown();
@@ -308,7 +314,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         // validate that the old value is there and not the new one
         output = servers.zk[nonleader].getData(path+leader, false, null);
 
-        Assert.assertEquals(
+        assertEquals(
                 "Expecting old value 1 since 2 isn't committed yet",
                 output[0], 1);
 
@@ -324,13 +330,13 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
         // make sure it doesn't have the new value that it alone had logged
         output = servers.zk[leader].getData(path+leader, false, null);
-        Assert.assertEquals(
+        assertEquals(
                 "Validating that the deposed leader has rolled back that change it had written",
                 output[0], 1);
         
         // make sure the leader has the subsequent changes that were made while it was offline
         output = servers.zk[leader].getData(path+nonleader, false, null);
-        Assert.assertEquals(
+        assertEquals(
                 "Validating that the deposed leader caught up on changes it missed",
                 output[0], 2);
     }
@@ -464,14 +470,14 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
   	    return LaunchServers(numServers, null);
     }
 
-		/** * This is a helper function for launching a set of servers
-		 *
-		 * @param numServers* @param tickTime A ticktime to pass to MainThread
-		 * @return
-		 * @throws IOException
-		 * @throws InterruptedException
-		 */
-		private Servers LaunchServers(int numServers, Integer tickTime) throws IOException, InterruptedException {
+    /** * This is a helper function for launching a set of servers
+     *
+     * @param numServers* @param tickTime A ticktime to pass to MainThread
+     * @return
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    private Servers LaunchServers(int numServers, Integer tickTime) throws IOException, InterruptedException {
   	    int SERVER_COUNT = numServers;
   	    Servers svrs = new Servers();
   	    final int clientPorts[] = new int[SERVER_COUNT];
@@ -826,7 +832,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         waitForOne(zk, States.CONNECTED);
         zk.create("/foo_q1", "foobar1".getBytes(), Ids.OPEN_ACL_UNSAFE,
                 CreateMode.PERSISTENT);
-        Assert.assertEquals(new String(zk.getData("/foo_q1", null, null)), "foobar1");
+        assertEquals(new String(zk.getData("/foo_q1", null, null)), "foobar1");
         zk.close();
         q1.shutdown();
         q2.shutdown();
@@ -981,7 +987,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                 new File(servers.mt[i].dataDir, "version-2"),
                 QuorumPeer.CURRENT_EPOCH_FILENAME);
             LOG.info("Validating current epoch: " + servers.mt[i].dataDir);
-            Assert.assertEquals("Current epoch should be 11.", 11,
+            assertEquals("Current epoch should be 11.", 11,
                                 readLongFromFile(currentEpochFile));
         }
 
@@ -1077,5 +1083,40 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
         Assert.assertFalse(follower.mainFailed.await(10, TimeUnit.SECONDS));
         waitForAll(servers.zk, States.CONNECTED);
+    }
+
+    @Test
+    public void testDataDirAndDataLogDir() throws Exception {
+        // Arrange
+        QuorumPeerConfig configMock = mock(QuorumPeerConfig.class);
+        when(configMock.getDataDir()).thenReturn("/tmp/zookeeper");
+        when(configMock.getDataLogDir()).thenReturn("/tmp/zookeeperLog");
+
+        QuorumPeer qpMock = mock(QuorumPeer.class);
+
+        doCallRealMethod().when(qpMock).setTxnFactory(any(FileTxnSnapLog.class));
+        when(qpMock.getTxnFactory()).thenCallRealMethod();
+        InjectableQuorumPeerMain qpMain = new InjectableQuorumPeerMain(qpMock);
+
+        // Act
+        qpMain.runFromConfig(configMock);
+
+        // Assert
+        FileTxnSnapLog txnFactory = qpMain.getQuorumPeer().getTxnFactory();
+        assertEquals("/tmp/zookeeperLog/version-2", txnFactory.getDataDir().getAbsolutePath());
+        assertEquals("/tmp/zookeeper/version-2", txnFactory.getSnapDir().getAbsolutePath());
+    }
+
+    private class InjectableQuorumPeerMain extends QuorumPeerMain {
+        QuorumPeer qp;
+
+        InjectableQuorumPeerMain(QuorumPeer qp) {
+            this.qp = qp;
+        }
+
+        @Override
+        protected QuorumPeer getQuorumPeer() {
+            return qp;
+        }
     }
 }
