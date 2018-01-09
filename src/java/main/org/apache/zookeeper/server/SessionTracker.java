@@ -47,21 +47,20 @@ public interface SessionTracker {
     long createSession(int sessionTimeout);
 
     /**
-     * Add a global session to those being tracked.
+     * Track the session expire, not add to ZkDb.
      * @param id sessionId
      * @param to sessionTimeout
      * @return whether the session was newly added (if false, already existed)
      */
-    boolean addGlobalSession(long id, int to);
+    boolean trackSession(long id, int to);
 
     /**
-     * Add a session to those being tracked. The session is added as a local
-     * session if they are enabled, otherwise as global.
+     * Add the session to the under layer storage.
      * @param id sessionId
      * @param to sessionTimeout
      * @return whether the session was newly added (if false, already existed)
      */
-    boolean addSession(long id, int to);
+    boolean commitSession(long id, int to);
 
     /**
      * @param sessionId

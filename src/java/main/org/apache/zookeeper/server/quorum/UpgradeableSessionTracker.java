@@ -19,6 +19,8 @@ package org.apache.zookeeper.server.quorum;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.Set;
+import java.util.HashSet;
 
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.server.SessionTracker;
@@ -34,6 +36,7 @@ public abstract class UpgradeableSessionTracker implements SessionTracker {
 
     private ConcurrentMap<Long, Integer> localSessionsWithTimeouts;
     protected LocalSessionTracker localSessionTracker;
+    protected boolean localSessionsEnabled;
 
     public void start() {}
 
@@ -74,12 +77,17 @@ public abstract class UpgradeableSessionTracker implements SessionTracker {
         Integer timeout = localSessionsWithTimeouts.remove(sessionId);
         if (timeout != null) {
             LOG.info("Upgrading session 0x" + Long.toHexString(sessionId));
-            // Add as global before removing as local
-            addGlobalSession(sessionId, timeout);
             localSessionTracker.removeSession(sessionId);
             return timeout;
         }
         return -1;
+    }
+
+    protected void removeLocalSession(long sessionId) {
+         if (localSessionTracker == null) {
+            return;
+        }
+        localSessionTracker.removeSession(sessionId);
     }
 
     public void checkGlobalSession(long sessionId, Object owner)

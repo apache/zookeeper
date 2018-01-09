@@ -58,7 +58,6 @@ public class LearnerSessionTracker extends UpgradeableSessionTracker {
     private final long serverId;
     private final AtomicLong nextSessionId = new AtomicLong();
 
-    private final boolean localSessionsEnabled;
     private final ConcurrentMap<Long, Integer> globalSessionsWithTimeouts;
 
     public LearnerSessionTracker(SessionExpirer expirer,
@@ -101,33 +100,48 @@ public class LearnerSessionTracker extends UpgradeableSessionTracker {
         return globalSessionsWithTimeouts.containsKey(sessionId);
     }
 
-    public boolean addGlobalSession(long sessionId, int sessionTimeout) {
-        boolean added =
-            globalSessionsWithTimeouts.put(sessionId, sessionTimeout) == null;
-        if (localSessionsEnabled && added) {
-            // Only do extra logging so we know what kind of session this is
-            // if we're supporting both kinds of sessions
-            LOG.info("Adding global session 0x" + Long.toHexString(sessionId));
+    // This function doesn't suppose to be used in LearnerSessionTracker
+    public boolean trackSession(long sessionId, int sessionTimeout) {
+        if (isGlobalSession(sessionId)) {
+            LOG.info("Not allowed to track global session 0x{} on learner",
+                    Long.toHexString(sessionId));
+            return false;
         }
-        touchTable.get().put(sessionId, sessionTimeout);
-        return added;
+        return localSessionTracker.trackSession(sessionId, sessionTimeout);
     }
 
-    public boolean addSession(long sessionId, int sessionTimeout) {
-        boolean added;
-        if (localSessionsEnabled && !isGlobalSession(sessionId)) {
-            added = localSessionTracker.addSession(sessionId, sessionTimeout);
-            // Check for race condition with session upgrading
-            if (isGlobalSession(sessionId)) {
-                added = false;
-                localSessionTracker.removeSession(sessionId);
-            } else if (added) {
-                LOG.info("Adding local session 0x"
-                         + Long.toHexString(sessionId));
-            }
-        } else {
-            added = addGlobalSession(sessionId, sessionTimeout);
+    /**
+     * Synchronized on this to avoid race condition of adding a local session
+     * after committed global session, which may cause the same session being
+     * tracked on this server and leader.
+     */
+    public synchronized boolean commitSession(
+            long sessionId, int sessionTimeout) {
+        boolean added =
+            globalSessionsWithTimeouts.put(sessionId, sessionTimeout) == null;
+
+        if (added) {
+            // Only do extra logging so we know what kind of session this is
+            // if we're supporting both kinds of sessions
+            LOG.info("Committing global session 0x" + Long.toHexString(sessionId));
         }
+
+        // If the session moved before the session upgrade finished, it's
+        // possible that the session will be added to the local session
+        // again. Need to double check and remove it from local session
+        // tracker when the global session is quorum committed, otherwise the
+        // local session might be tracked both locally and on leader.
+        //
+        // This cannot totally avoid the local session being upgraded again
+        // because there is still race condition between create another upgrade
+        // request and process the createSession commit, and there is no way
+        // to know there is a on flying createSession request because it might
+        // be upgraded by other server which owns the session before move.
+        if (localSessionsEnabled) {
+            removeLocalSession(sessionId);
+        }
+
+        touchTable.get().put(sessionId, sessionTimeout);
         return added;
     }
 

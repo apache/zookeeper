@@ -92,7 +92,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
     }
 
     /* notify the client the session is closing and close/cleanup socket */
-    abstract void sendCloseSession();
+    public abstract void sendCloseSession();
 
     public abstract void process(WatchedEvent event);
 
