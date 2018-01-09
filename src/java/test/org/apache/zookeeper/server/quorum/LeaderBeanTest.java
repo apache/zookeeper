@@ -18,29 +18,18 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import org.apache.jute.OutputArchive;
-import org.apache.jute.Record;
-import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
-import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.test.ClientBase;
-import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import java.io.File;
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 
 public class LeaderBeanTest {
@@ -91,29 +80,5 @@ public class LeaderBeanTest {
 
         // Assert
         assertEquals(1, leaderBean.getElectionTimeTaken());
-    }
-
-    private Request createMockRequest() throws IOException {
-        TxnHeader header = mock(TxnHeader.class);
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                Object[] args = invocation.getArguments();
-                OutputArchive oa = (OutputArchive) args[0];
-                oa.writeString("header", "test");
-                return null;
-            }
-        }).when(header).serialize(any(OutputArchive.class), anyString());
-        Record txn = mock(Record.class);
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                Object[] args = invocation.getArguments();
-                OutputArchive oa = (OutputArchive) args[0];
-                oa.writeString("record", "test");
-                return null;
-            }
-        }).when(txn).serialize(any(OutputArchive.class), anyString());
-        return new Request(1, 2, 3, header, txn, 4);
     }
 }
