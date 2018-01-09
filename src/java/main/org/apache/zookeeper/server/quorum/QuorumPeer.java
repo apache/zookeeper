@@ -479,7 +479,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         currentVote = v;
     }
 
-    volatile boolean running = true;
+    private volatile boolean running = true;
 
     /**
      * The number of milliseconds of each tick
@@ -1260,7 +1260,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
     
     public void shutdown() {
-        running = false;
+        setRunning(false);
         if (leader != null) {
             leader.shutdown("quorum Peer shutdown");
         }
@@ -1751,7 +1751,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         if (zkDb != null) zkDb.initConfigInZKDatabase(getQuorumVerifier());
     }
     
-    public void setRunning(boolean running) {
+    private void setRunning(boolean running) {
         this.running = running;
     }
 
