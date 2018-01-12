@@ -20,12 +20,17 @@ package org.apache.zookeeper.client;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 import org.apache.yetus.audience.InterfaceAudience;
 import org.slf4j.Logger;
@@ -107,8 +112,32 @@ public final class StaticHostProvider implements HostProvider {
         lastIndex = -1;              
     }
 
+    private Set<Class<? extends InetAddress>> supportedAddressTypes() {
+        Set<Class<? extends InetAddress>> types = new HashSet<>();
+        try {
+            Enumeration<NetworkInterface> inets = NetworkInterface.getNetworkInterfaces();
+            while (inets.hasMoreElements()) {
+                NetworkInterface ne = inets.nextElement();
+
+                Enumeration<InetAddress> addrs = ne.getInetAddresses();
+                while (addrs.hasMoreElements()) {
+                    InetAddress addr = addrs.nextElement();
+                    if (addr.isLinkLocalAddress() || addr.isLoopbackAddress()) {
+                        continue;
+                    }
+                    types.add(addr.getClass());
+                }
+            }
+        } catch (SocketException e) {
+            LOG.error("Failed to resolve supported address types: ", e);
+        }
+        return types;
+    }
+
     private List<InetSocketAddress> resolveAndShuffle(Collection<InetSocketAddress> serverAddresses) {
-        List<InetSocketAddress> tmpList = new ArrayList<InetSocketAddress>(serverAddresses.size());       
+        List<InetSocketAddress> tmpList = new ArrayList<InetSocketAddress>(serverAddresses.size());
+        Set<Class<? extends InetAddress>> supprtedInetTypes = supportedAddressTypes();
+
         for (InetSocketAddress address : serverAddresses) {
             try {
                 InetAddress ia = address.getAddress();
@@ -116,7 +145,10 @@ public final class StaticHostProvider implements HostProvider {
                 InetAddress resolvedAddresses[] = InetAddress.getAllByName(addr);
                 for (InetAddress resolvedAddress : resolvedAddresses) {
                     InetAddress taddr = InetAddress.getByAddress(address.getHostString(), resolvedAddress.getAddress());
-                    tmpList.add(new InetSocketAddress(taddr, address.getPort()));
+                    // try to use IP address only if it's supported by our network stack
+                    if (!supprtedInetTypes.isEmpty() && supprtedInetTypes.contains(taddr.getClass())) {
+                        tmpList.add(new InetSocketAddress(taddr, address.getPort()));
+                    }
                 }
             } catch (UnknownHostException ex) {
                 LOG.warn("No IP address found for server: {}", address, ex);
