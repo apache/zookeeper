@@ -100,14 +100,9 @@ public class LearnerSessionTracker extends UpgradeableSessionTracker {
         return globalSessionsWithTimeouts.containsKey(sessionId);
     }
 
-    // This function doesn't suppose to be used in LearnerSessionTracker
     public boolean trackSession(long sessionId, int sessionTimeout) {
-        if (isGlobalSession(sessionId)) {
-            LOG.info("Not allowed to track global session 0x{} on learner",
-                    Long.toHexString(sessionId));
-            return false;
-        }
-        return localSessionTracker.trackSession(sessionId, sessionTimeout);
+        // Learner doesn't track global session, do nothing here
+        return false;
     }
 
     /**
@@ -139,6 +134,7 @@ public class LearnerSessionTracker extends UpgradeableSessionTracker {
         // be upgraded by other server which owns the session before move.
         if (localSessionsEnabled) {
             removeLocalSession(sessionId);
+            finishedUpgrading(sessionId);
         }
 
         touchTable.get().put(sessionId, sessionTimeout);
@@ -150,7 +146,7 @@ public class LearnerSessionTracker extends UpgradeableSessionTracker {
             if (localSessionTracker.touchSession(sessionId, sessionTimeout)) {
                 return true;
             }
-            if (!isGlobalSession(sessionId)) {
+            if (!isGlobalSession(sessionId) && !isUpgradingSession(sessionId)) {
                 return false;
             }
         }

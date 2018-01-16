@@ -182,7 +182,7 @@ public class SessionTrackerCheckTest extends ZKTestCase {
                 TICK_TIME, expirer.sid, false, testZKSListener());
 
         // Global session
-        sessionId = 0xdeadbef0;
+        sessionId = 0xdeadbeef;
         tracker.trackSession(sessionId, CONNECTION_TIMEOUT);
         try {
             tracker.checkSession(sessionId, null);

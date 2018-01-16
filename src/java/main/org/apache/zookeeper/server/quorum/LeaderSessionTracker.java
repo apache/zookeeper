@@ -119,6 +119,7 @@ public class LeaderSessionTracker extends UpgradeableSessionTracker {
         // be upgraded by other server which owns the session before move.
         if (localSessionsEnabled) {
             removeLocalSession(sessionId);
+            finishedUpgrading(sessionId);
         }
 
         return added;
