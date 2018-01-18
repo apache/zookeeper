@@ -45,6 +45,7 @@ import java.util.regex.Pattern;
 import org.apache.log4j.Layout;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
 import org.apache.log4j.WriterAppender;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -351,9 +352,9 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     @Test
     public void testElectionFraud() throws IOException, InterruptedException {
         // capture QuorumPeer logging
-        Layout layout = Logger.getRootLogger().getAppender("CONSOLE").getLayout();
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        WriterAppender appender = new WriterAppender(layout, os);
+        String loggingPattern = ((PatternLayout) Logger.getRootLogger().getAppender("CONSOLE").getLayout()).getConversionPattern();
+        WriterAppender appender = new WriterAppender(new PatternLayout(loggingPattern), os);
         appender.setThreshold(Level.INFO);
         Logger qlogger = Logger.getLogger(QuorumPeer.class);
         qlogger.addAppender(appender);
