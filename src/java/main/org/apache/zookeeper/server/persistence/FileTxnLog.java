@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -91,6 +92,7 @@ public class FileTxnLog implements TxnLog {
     private static final Logger LOG;
 
     static long preAllocSize =  65536 * 1024;
+    private static final ByteBuffer fill = ByteBuffer.allocateDirect(1);
 
     public final static int TXNLOG_MAGIC =
         ByteBuffer.wrap("ZKLG".getBytes()).getInt();
@@ -212,7 +214,7 @@ public class FileTxnLog implements TxnLog {
                currentSize = fos.getChannel().position();
                streamsToFlush.add(fos);
             }
-            padFile(fos);
+            currentSize = padFile(fos.getChannel());
             byte[] buf = Util.marshallTxnEntry(hdr, txn);
             if (buf == null || buf.length == 0) {
                 throw new IOException("Faulty serialization for header " +
@@ -229,12 +231,46 @@ public class FileTxnLog implements TxnLog {
     }
 
     /**
-     * pad the current file to increase its size
-     * @param out the outputstream to be padded
+     * pad the current file to increase its size to the next multiple of preAllocSize greater than the current size and position
+     * @param fileChannel the fileChannel of the file to be padded
      * @throws IOException
      */
-    private void padFile(FileOutputStream out) throws IOException {
-        currentSize = Util.padLogFile(out, currentSize, preAllocSize);
+    private long padFile(FileChannel fileChannel) throws IOException {
+        long newFileSize = calculateFileSizeWithPadding(fileChannel.position(), currentSize, preAllocSize);
+        if (currentSize != newFileSize) {
+            fileChannel.write((ByteBuffer) fill.position(0), newFileSize - fill.remaining());
+            currentSize = newFileSize;
+        }
+        return currentSize;
+    }
+
+    /**
+     * Calculates a new file size with padding. We only return a new size if
+     * the current file position is sufficiently close (less than 4K) to end of
+     * file and preAllocSize is > 0.
+     *
+     * @param position the point in the file we have written to
+     * @param fileSize application keeps track of the current file size
+     * @param preAllocSize how many bytes to pad
+     * @return the new file size. It can be the same as fileSize if no
+     * padding was done.
+     * @throws IOException
+     */
+    // VisibleForTesting
+    public static long calculateFileSizeWithPadding(long position, long fileSize, long preAllocSize) {
+        // If preAllocSize is positive and we are within 4KB of the known end of the file calculate a new file size
+        if (preAllocSize > 0 && position + 4096 >= fileSize) {
+            // If we have written more than we have previously preallocated we need to make sure the new
+            // file size is larger than what we already have
+            if (position > fileSize){
+                fileSize = position + preAllocSize;
+                fileSize -= fileSize % preAllocSize;
+            } else {
+                fileSize += preAllocSize;
+            }
+        }
+
+        return fileSize;
     }
 
     /**
