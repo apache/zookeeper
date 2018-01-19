@@ -130,8 +130,44 @@ public class FileTxnSnapLog {
             throw new DatadirException("Cannot write to snap directory " + this.snapDir);
         }
 
+        // check content of transaction log and snapshot dirs if they are two different directories
+        if(!this.dataDir.getPath().equals(this.snapDir.getPath())){
+            checkLogDir();
+            checkSnapDir();
+        }
+
         txnLog = new FileTxnLog(this.dataDir);
         snapLog = new FileSnap(this.snapDir);
+    }
+
+    private void checkLogDir() throws LogdirContentCheckException {
+        File[] files = this.dataDir.listFiles();
+        if(files != null) {
+            boolean hasSnapshotFiles = false;
+
+            for (File file : files) {
+                hasSnapshotFiles |= Util.isSnapshotFile(file);
+            }
+
+            if (hasSnapshotFiles) {
+                throw new LogdirContentCheckException("Log directory has snapshot files. Check if dataLogDir and dataDir configuration is correct.");
+            }
+        }
+    }
+
+    private void checkSnapDir() throws SnapdirContentCheckException {
+        File[] files = this.snapDir.listFiles();
+        if(files != null) {
+            boolean hasLogFiles = false;
+
+            for (File file : files) {
+                hasLogFiles |= Util.isLogFile(file);
+            }
+
+            if (hasLogFiles) {
+                throw new SnapdirContentCheckException("Snapshot directory has log files. Check if dataLogDir and dataDir configuration is correct.");
+            }
+        }
     }
 
     /**
@@ -435,6 +471,20 @@ public class FileTxnSnapLog {
         }
         public DatadirException(String msg, Exception e) {
             super(msg, e);
+        }
+    }
+
+    @SuppressWarnings("serial")
+    public static class LogdirContentCheckException extends DatadirException {
+        public LogdirContentCheckException(String msg) {
+            super(msg);
+        }
+    }
+
+    @SuppressWarnings("serial")
+    public static class SnapdirContentCheckException extends DatadirException {
+        public SnapdirContentCheckException(String msg) {
+            super(msg);
         }
     }
 }
