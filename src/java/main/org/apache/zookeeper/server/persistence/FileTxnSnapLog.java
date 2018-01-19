@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.persistence;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,13 +40,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This is a helper class 
- * above the implementations 
- * of txnlog and snapshot 
+ * This is a helper class
+ * above the implementations
+ * of txnlog and snapshot
  * classes
  */
 public class FileTxnSnapLog {
-    //the direcotry containing the 
+    //the direcotry containing the
     //the transaction logs
     private final File dataDir;
     //the directory containing the
@@ -55,22 +56,22 @@ public class FileTxnSnapLog {
     private SnapShot snapLog;
     public final static int VERSION = 2;
     public final static String version = "version-";
-    
+
     private static final Logger LOG = LoggerFactory.getLogger(FileTxnSnapLog.class);
-    
+
     /**
      * This listener helps
      * the external apis calling
      * restore to gather information
-     * while the data is being 
+     * while the data is being
      * restored.
      */
     public interface PlayBackListener {
         void onTxnLoaded(TxnHeader hdr, Record rec);
     }
-    
+
     /**
-     * the constructor which takes the datadir and 
+     * the constructor which takes the datadir and
      * snapdir.
      * @param dataDir the trasaction directory
      * @param snapDir the snapshot directory
@@ -100,10 +101,46 @@ public class FileTxnSnapLog {
             throw new IOException("Cannot write to snap directory " + this.snapDir);
         }
 
+        // check content of transaction log and snapshot dirs if they are two different directories
+        if(!this.dataDir.getPath().equals(this.snapDir.getPath())){
+            checkLogDir();
+            checkSnapDir();
+        }
+
         txnLog = new FileTxnLog(this.dataDir);
         snapLog = new FileSnap(this.snapDir);
     }
-    
+
+    private void checkLogDir() throws LogdirContentCheckException {
+        File[] files = this.dataDir.listFiles();
+        if(files != null) {
+            boolean hasSnapshotFiles = false;
+
+            for (File file : files) {
+                hasSnapshotFiles |= Util.isSnapshotFile(file);
+            }
+
+            if (hasSnapshotFiles) {
+                throw new LogdirContentCheckException("Log directory has snapshot files. Check if dataLogDir and dataDir configuration is correct.");
+            }
+        }
+    }
+
+    private void checkSnapDir() throws SnapdirContentCheckException {
+        File[] files = this.snapDir.listFiles();
+        if(files != null) {
+            boolean hasLogFiles = false;
+
+            for (File file : files) {
+                hasLogFiles |= Util.isLogFile(file);
+            }
+
+            if (hasLogFiles) {
+                throw new SnapdirContentCheckException("Snapshot directory has log files. Check if dataLogDir and dataDir configuration is correct.");
+            }
+        }
+    }
+
     /**
      * get the datadir used by this filetxn
      * snap log
@@ -112,28 +149,28 @@ public class FileTxnSnapLog {
     public File getDataDir() {
         return this.dataDir;
     }
-    
+
     /**
-     * get the snap dir used by this 
+     * get the snap dir used by this
      * filetxn snap log
      * @return the snap dir
      */
     public File getSnapDir() {
         return this.snapDir;
     }
-    
+
     /**
-     * this function restores the server 
-     * database after reading from the 
+     * this function restores the server
+     * database after reading from the
      * snapshots and transaction logs
      * @param dt the datatree to be restored
      * @param sessions the sessions to be restored
-     * @param listener the playback listener to run on the 
+     * @param listener the playback listener to run on the
      * database restoration
      * @return the highest zxid restored
      * @throws IOException
      */
-    public long restore(DataTree dt, Map<Long, Integer> sessions, 
+    public long restore(DataTree dt, Map<Long, Integer> sessions,
             PlayBackListener listener) throws IOException {
         snapLog.deserialize(dt, sessions);
         FileTxnLog txnLog = new FileTxnLog(dataDir);
@@ -142,11 +179,11 @@ public class FileTxnSnapLog {
         TxnHeader hdr;
         try {
             while (true) {
-                // iterator points to 
+                // iterator points to
                 // the first valid txn when initialized
                 hdr = itr.getHeader();
                 if (hdr == null) {
-                    //empty logs 
+                    //empty logs
                     return dt.lastProcessedZxid;
                 }
                 if (hdr.getZxid() < highestZxid && highestZxid != 0) {
@@ -163,7 +200,7 @@ public class FileTxnSnapLog {
                          hdr.getType() + " error: " + e.getMessage(), e);
                 }
                 listener.onTxnLoaded(hdr, itr.getTxn());
-                if (!itr.next()) 
+                if (!itr.next())
                     break;
             }
         } finally {
@@ -248,7 +285,7 @@ public class FileTxnSnapLog {
         LOG.info("Snapshotting: 0x{} to {}", Long.toHexString(lastZxid),
                 snapshotFile);
         snapLog.serialize(dataTree, sessionsWithTimeouts, snapshotFile);
-        
+
     }
 
     /**
@@ -276,11 +313,11 @@ public class FileTxnSnapLog {
 
         return truncated;
     }
-    
+
     /**
      * the most recent snapshot in the snapshot
      * directory
-     * @return the file that contains the most 
+     * @return the file that contains the most
      * recent snapshot
      * @throws IOException
      */
@@ -288,7 +325,7 @@ public class FileTxnSnapLog {
         FileSnap snaplog = new FileSnap(snapDir);
         return snaplog.findMostRecentSnapshot();
     }
-    
+
     /**
      * the n most recent snapshots
      * @param n the number of recent snapshots
@@ -317,7 +354,7 @@ public class FileTxnSnapLog {
     /**
      * append the request to the transaction logs
      * @param si the request to be appended
-     * returns true iff something appended, otw false 
+     * returns true iff something appended, otw false
      * @throws IOException
      */
     public boolean append(Request si) throws IOException {
@@ -334,12 +371,12 @@ public class FileTxnSnapLog {
 
     /**
      * roll the transaction logs
-     * @throws IOException 
+     * @throws IOException
      */
     public void rollLog() throws IOException {
         txnLog.rollLog();
     }
-    
+
     /**
      * close the transaction log files
      * @throws IOException
@@ -347,5 +384,29 @@ public class FileTxnSnapLog {
     public void close() throws IOException {
         txnLog.close();
         snapLog.close();
+    }
+
+    @SuppressWarnings("serial")
+    public static class DatadirException extends IOException {
+        public DatadirException(String msg) {
+            super(msg);
+        }
+        public DatadirException(String msg, Exception e) {
+            super(msg, e);
+        }
+    }
+
+    @SuppressWarnings("serial")
+    public static class LogdirContentCheckException extends DatadirException {
+        public LogdirContentCheckException(String msg) {
+            super(msg);
+        }
+    }
+
+    @SuppressWarnings("serial")
+    public static class SnapdirContentCheckException extends DatadirException {
+        public SnapdirContentCheckException(String msg) {
+            super(msg);
+        }
     }
 }

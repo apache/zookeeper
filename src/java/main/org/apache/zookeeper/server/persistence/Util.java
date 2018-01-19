@@ -50,6 +50,9 @@ public class Util {
     private static final String SNAP_DIR="snapDir";
     private static final String LOG_DIR="logDir";
     private static final String DB_FORMAT_CONV="dbFormatConversion";
+
+    private static final String LOG_FILE_PREFIX = "log";
+    private static final String SNAP_FILE_PREFIX = "snapshot";
     
     public static String makeURIString(String dataDir, String dataLogDir, 
             String convPolicy){
@@ -83,7 +86,7 @@ public class Util {
      * @return file name
      */
     public static String makeLogName(long zxid) {
-        return "log." + Long.toHexString(zxid);
+        return LOG_FILE_PREFIX + "." + Long.toHexString(zxid);
     }
 
     /**
@@ -93,7 +96,7 @@ public class Util {
      * @return file name
      */
     public static String makeSnapshotName(long zxid) {
-        return "snapshot." + Long.toHexString(zxid);
+        return SNAP_FILE_PREFIX + "." + Long.toHexString(zxid);
     }
     
     /**
@@ -296,6 +299,26 @@ public class Util {
         List<File> filelist = Arrays.asList(files);
         Collections.sort(filelist, new DataDirFileComparator(prefix, ascending));
         return filelist;
+    }
+
+    /**
+     * Returns true if file is a log file.
+     *
+     * @param file
+     * @return
+     */
+    public static boolean isLogFile(File file) {
+        return file.getName().startsWith(LOG_FILE_PREFIX);
+    }
+
+    /**
+     * Returns true if file is a snapshot file.
+     *
+     * @param file
+     * @return
+     */
+    public static boolean isSnapshotFile(File file) {
+        return file.getName().startsWith(SNAP_FILE_PREFIX);
     }
     
 }
