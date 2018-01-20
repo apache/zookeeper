@@ -115,11 +115,12 @@ public class FileTxnSnapLog {
         File[] files = this.dataDir.listFiles();
         if(files != null) {
             boolean hasSnapshotFiles = false;
-
             for (File file : files) {
-                hasSnapshotFiles |= Util.isSnapshotFile(file);
+                if(Util.isSnapshotFile(file)){
+                    hasSnapshotFiles = true;
+                    break;
+                }
             }
-
             if (hasSnapshotFiles) {
                 throw new LogdirContentCheckException("Log directory has snapshot files. Check if dataLogDir and dataDir configuration is correct.");
             }
@@ -130,11 +131,12 @@ public class FileTxnSnapLog {
         File[] files = this.snapDir.listFiles();
         if(files != null) {
             boolean hasLogFiles = false;
-
             for (File file : files) {
-                hasLogFiles |= Util.isLogFile(file);
+                if(Util.isLogFile(file)){
+                    hasLogFiles = true;
+                    break;
+                }
             }
-
             if (hasLogFiles) {
                 throw new SnapdirContentCheckException("Snapshot directory has log files. Check if dataLogDir and dataDir configuration is correct.");
             }
