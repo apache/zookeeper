@@ -160,6 +160,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="ivy.javacc.lib" value="${build.dir}/javacc/lib"/>
     <property name="ivy.releaseaudit.lib" value="${build.dir}/releaseaudit/lib"/>
     <property name="ivy.owasp.lib" value="${build.dir}/owasp/lib"/>
+    <property name="ivy.coverage.lib" value="${test.java.build.dir}/lib"/>
     <property name="ivysettings.xml" value="${basedir}/ivysettings.xml"/>
 
     <property name="mvnrepo" value="https://repo1.maven.org/maven2"/>
@@ -170,25 +171,12 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="ant_task.jar" location="${ivy.lib}/maven-ant-tasks-${ant-task.version}.jar"/>
 
     <!-- clover property set -->
-    <property name="clover.home" location="${env.CLOVER_HOME}"/>
+    <property name="clover.home" location="${test.java.build.dir}"/>
     <property name="clover.jar" location="${clover.home}/lib/clover-${clover.version}.jar"/>
     <property name="clover.dest" location="${test.java.build.dir}/clover"/>
     <property name="clover.db.dir" location="${clover.dest}/db"/>
     <property name="clover.report.dir" location="${clover.dest}/reports"/>
     <property name="clover.db" location="${clover.db.dir}/zookeeper-coverage.db"/>
-    <taskdef resource="cloverlib.xml" classpath="${clover.jar}"/>
-
-    <available property="clover.present"
-               classname="com.atlassian.clover.CloverInstr"
-               classpath="${clover.home}/lib/clover-${clover.version}.jar"/>
-
-    <!-- check if clover reports should be generated -->
-    <condition property="clover.enabled">
-      <and>
-        <isset property="run.clover"/>
-        <isset property="clover.present"/>
-      </and>
-    </condition>
 
     <available file="${c.src.dir}/Makefile" property="Makefile.present"/>
 
@@ -455,6 +443,12 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <ivy:retrieve settingsRef="${ant.project.name}" conf="owasp"
                       pattern="${ivy.owasp.lib}/[artifact]-[revision].[ext]"/>
         <ivy:cachepath pathid="owasp-classpath" conf="owasp"/>
+    </target>
+
+    <target name="ivy-retrieve-test-coverage-java" depends="init,ivy-init">
+        <ivy:retrieve settingsRef="${ant.project.name}" conf="test-coverage-java"
+                      pattern="${ivy.coverage.lib}/[artifact]-[revision].[ext]"/>
+        <ivy:cachepath pathid="coverage-classpath" conf="test-coverage-java"/>
     </target>
 
     <target name="dependency-report" depends="init,ivy-init">
@@ -1416,15 +1410,34 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
     <target name="test-core" depends="test-core-java, test-core-cppunit"/>
 
+    <target name="test-coverage-java">
+        <antcall target="test-core-java">
+            <param name="run.clover" value="true"/>
+        </antcall>
+        <antcall target="generate-clover-reports"/>
+    </target>
+
     <!-- ====================================================== -->
     <!-- Run optional third-party tool targets                  -->
     <!-- ====================================================== -->
 
     <!-- clover code coverage -->
-    <target name="clover" depends="clover.setup, clover.info"
-            description="Instrument the Unit tests using Clover.  Requires a Clover license and CLOVER_HOME environment variable set appropriately.  To use, specify -Drun.clover=true on the command line."/>
+    <target name="clover" depends="ivy-retrieve-test-coverage-java, clover.check, clover.setup"
+            description="Instrument the Unit tests using Clover. To use, specify -Drun.clover=true on the command line."/>
 
-    <target name="clover.setup" if="clover.enabled">
+    <target name="clover.check">
+        <available property="clover.present"
+                   classname="com.atlassian.clover.CloverInstr"
+                   classpath="${clover.home}/lib/clover-${clover.version}.jar"/>
+        <fail if="run.clover" unless="clover.present">
+            Clover not found.
+            Please make sure clover-${clover.version}.jar is in ${clover.home}/lib, or made available
+            to Ant using other mechanisms like -lib or CLASSPATH.
+        </fail>
+    </target>
+
+    <target name="clover.setup" if="run.clover">
+      <taskdef resource="cloverlib.xml" classpath="${clover.jar}"/>
       <mkdir dir="${clover.db.dir}"/>
       <clover-setup initString="${clover.db}">
         <fileset dir="${java.src.dir}"
@@ -1435,25 +1448,9 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       </clover-setup>
     </target>
 
-    <target name="clover.info" if="run.clover" unless="clover.present">
-      <echo>
-        Clover not found. Code coverage reports disabled.
-      </echo>
-    </target>
-
-    <target name="clover.check">
-      <fail unless="clover.present">
-        ##################################################################
-        Clover not found.
-        Please make sure clover.jar is in ANT_HOME/lib, or made available
-        to Ant using other mechanisms like -lib or CLASSPATH.
-        ##################################################################
-      </fail>
-    </target>
-
-    <target name="generate-clover-reports" depends="clover.check, clover">
+    <target name="generate-clover-reports" depends="clover">
+      <taskdef resource="cloverlib.xml" classpath="${clover.jar}"/>
       <mkdir dir="${clover.report.dir}"/>
-
       <clover-report initString="${clover.db}">
         <current outfile="${clover.report.dir}" title="${final.name}">
           <format type="html"/>
