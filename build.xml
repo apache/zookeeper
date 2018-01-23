@@ -433,7 +433,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
         <ivy:cachepath pathid="owasp-classpath" conf="owasp"/>
     </target>
 
-    <target name="ivy-retrieve-test-coverage-java" depends="init,ivy-init">
+    <target name="ivy-retrieve-test-coverage-java" if="run.clover" depends="init,ivy-init">
         <ivy:retrieve settingsRef="${ant.project.name}" conf="test-coverage-java"
                       pattern="${ivy.coverage.lib}/[artifact]-[revision].[ext]"/>
         <ivy:cachepath pathid="coverage-classpath" conf="test-coverage-java"/>
@@ -1501,7 +1501,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
     <!-- ====================================================== -->
 
     <!-- clover code coverage -->
-    <target name="clover" depends="ivy-retrieve-test-coverage-java, clover.check, clover.setup"
+    <target name="clover" if="run.clover" depends="ivy-retrieve-test-coverage-java, clover.check, clover.setup"
             description="Instrument the Unit tests using Clover. To use, specify -Drun.clover=true on the command line."/>
 
     <target name="clover.check">
