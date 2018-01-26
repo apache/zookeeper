@@ -26,39 +26,39 @@ import java.util.Map;
 
 /**
  * <p>
- *     Abstraction that interprets the <code>ephemeralOwner</code> field of a ZNode. Originally,
- *     the ephemeralOwner noted that a ZNode is ephemeral and which session created the node.
- *     Through an optional system property (<code>zookeeper.extendedTypesEnabled</code>) "extended"
- *     features such as TTL Nodes can be enabled. Special bits of the ephemeralOwner are used to
- *     denote which feature is enabled and the remaining bits of the ephemeralOwner are feature
- *     specific.
+ * Abstraction that interprets the <code>ephemeralOwner</code> field of a ZNode. Originally,
+ * the ephemeralOwner noted that a ZNode is ephemeral and which session created the node.
+ * Through an optional system property (<code>zookeeper.extendedTypesEnabled</code>) "extended"
+ * features such as TTL Nodes can be enabled. Special bits of the ephemeralOwner are used to
+ * denote which feature is enabled and the remaining bits of the ephemeralOwner are feature
+ * specific.
  * </p>
- *
  * <p>
- *     When the system property <code>zookeeper.extendedTypesEnabled</code> is true, extended types
- *     are enabled. An extended ephemeralOwner is defined as an ephemeralOwner whose high 8 bits are
- *     set (<code>0xff00000000000000L</code>). The two bytes that follow the high 8 bits are
- *     used to denote which extended feature the ephemeralOwner represents. The remaining 5 bytes are
- *     used by the feature for whatever purpose is needed
+ * <p>
+ * When the system property <code>zookeeper.extendedTypesEnabled</code> is true, extended types
+ * are enabled. An extended ephemeralOwner is defined as an ephemeralOwner whose high 8 bits are
+ * set (<code>0xff00000000000000L</code>). The two bytes that follow the high 8 bits are
+ * used to denote which extended feature the ephemeralOwner represents. The remaining 5 bytes are
+ * used by the feature for whatever purpose is needed
  * </p>
- *
  * <p>
- *     Currently, the only extended feature is TTL Nodes. It is denoted by the extended feature value of 0.
- *     i.e. for TTL Nodes, the ephemeralOwner has the high byte set to 0xff and the next 2 bytes are 0 followed
- *     by 5 bytes that represent the TTL value in milliseconds. So, an ephemeralOwner with a TTL value of 1
- *     millisecond is: <code>0xff00000000000001</code>.
+ * <p>
+ * Currently, the only extended feature is TTL Nodes. It is denoted by the extended feature value of 0.
+ * i.e. for TTL Nodes, the ephemeralOwner has the high byte set to 0xff and the next 2 bytes are 0 followed
+ * by 5 bytes that represent the TTL value in milliseconds. So, an ephemeralOwner with a TTL value of 1
+ * millisecond is: <code>0xff00000000000001</code>.
  * </p>
- *
  * <p>
- *     To add new extended features: a) Add a new name to the enum, b) define a constant EXTENDED_BIT_XXXX that's next
- *     in line (after TTLs, that would be <code>0x0001</code>), c) add a mapping to the extendedFeatureMap via the static
- *     initializer
+ * <p>
+ * To add new extended features: a) Add a new name to the enum, b) define a constant EXTENDED_BIT_XXXX that's next
+ * in line (after TTLs, that would be <code>0x0001</code>), c) add a mapping to the extendedFeatureMap via the static
+ * initializer
  * </p>
- *
  * <p>
- *     NOTE: "Container" nodes technically are extended types but as it was implemented before this feature they are
- *     denoted specially. An ephemeral owner with only the high bit set (<code>0x8000000000000000L</code>) is by definition
- *     a container node (irrespective of whether or not extended types are enabled).
+ * <p>
+ * NOTE: "Container" nodes technically are extended types but as it was implemented before this feature they are
+ * denoted specially. An ephemeral owner with only the high bit set (<code>0x8000000000000000L</code>) is by definition
+ * a container node (irrespective of whether or not extended types are enabled).
  * </p>
  */
 public enum EphemeralType {
@@ -96,8 +96,7 @@ public enum EphemeralType {
         public long getValue(long ephemeralOwner) {
             return getExtendedFeatureValue(ephemeralOwner);
         }
-    }
-    ;
+    };
 
     /**
      * For types that support it, the maximum extended value
@@ -129,12 +128,13 @@ public enum EphemeralType {
     public static final long CONTAINER_EPHEMERAL_OWNER = Long.MIN_VALUE;
     public static final long MAX_EXTENDED_SERVER_ID = 0xfe;  // 254
 
-    private static final long EXTENDED_MASK =       0xff00000000000000L;
-    private static final long EXTENDED_BIT_TTL =    0x0000;
-    private static final long RESERVED_BITS_MASK =  0x00ffff0000000000L;
+    private static final long EXTENDED_MASK = 0xff00000000000000L;
+    private static final long EXTENDED_BIT_TTL = 0x0000;
+    private static final long RESERVED_BITS_MASK = 0x00ffff0000000000L;
     private static final long RESERVED_BITS_SHIFT = 40;
 
     private static final Map<Long, EphemeralType> extendedFeatureMap;
+
     static {
         Map<Long, EphemeralType> map = new HashMap<>();
         map.put(EXTENDED_BIT_TTL, TTL);
@@ -145,6 +145,7 @@ public enum EphemeralType {
 
     // Visible for testing
     static final String EXTENDED_TYPES_ENABLED_PROPERTY = "zookeeper.extendedTypesEnabled";
+    static final String TTL_3_5_3_EMULATION_PROPERTY = "zookeeper.emulate353TTLNodes";
 
     /**
      * Return true if extended ephemeral types are enabled
@@ -163,11 +164,17 @@ public enum EphemeralType {
      * @return type
      */
     public static EphemeralType get(long ephemeralOwner) {
-        if ( extendedEphemeralTypesEnabled() ) {
+        if (extendedEphemeralTypesEnabled()) {
+            if (Boolean.getBoolean(TTL_3_5_3_EMULATION_PROPERTY)) {
+                if (OldEphemeralType.get(ephemeralOwner) == OldEphemeralType.TTL) {
+                    return TTL;
+                }
+            }
+
             if ((ephemeralOwner & EXTENDED_MASK) == EXTENDED_MASK) {
                 long extendedFeatureBit = getExtendedFeatureBit(ephemeralOwner);
                 EphemeralType ephemeralType = extendedFeatureMap.get(extendedFeatureBit);
-                if ( ephemeralType == null ) {
+                if (ephemeralType == null) {
                     throw new IllegalArgumentException(String.format("Invalid ephemeralOwner. [%s]", Long.toHexString(ephemeralOwner)));
                 }
                 return ephemeralType;
@@ -189,7 +196,7 @@ public enum EphemeralType {
         // TODO: in the future, serverId should be validated for all cases, not just the extendedEphemeralTypesEnabled case
         // TODO: however, for now, it would be too disruptive
 
-        if ( extendedEphemeralTypesEnabled() ) {
+        if (extendedEphemeralTypesEnabled()) {
             if (serverId > EphemeralType.MAX_EXTENDED_SERVER_ID) {
                 throw new RuntimeException("extendedTypesEnabled is true but Server ID is too large. Cannot be larger than " + EphemeralType.MAX_EXTENDED_SERVER_ID);
             }
@@ -200,7 +207,7 @@ public enum EphemeralType {
      * Utility to validate a create mode and a ttl
      *
      * @param mode create mode
-     * @param ttl ttl
+     * @param ttl  ttl
      * @throws IllegalArgumentException if the ttl is not valid for the mode
      */
     public static void validateTTL(CreateMode mode, long ttl) {

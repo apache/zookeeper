@@ -55,7 +55,7 @@ public class CreateTTLTest extends ClientBase {
 
     @Override
     public void tearDown() throws Exception {
-        System.clearProperty("zookeeper.extendedTypesEnabled");
+        System.clearProperty(EphemeralType.EXTENDED_TYPES_ENABLED_PROPERTY);
         super.tearDown();
         zk.close();
     }
