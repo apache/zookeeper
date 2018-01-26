@@ -130,7 +130,7 @@ public enum EphemeralType {
     public static final long MAX_EXTENDED_SERVER_ID = 0xfe;  // 254
 
     private static final long EXTENDED_MASK =       0xff00000000000000L;
-    private static final long EXTENDED_BIT_TTL =    0x00000;
+    private static final long EXTENDED_BIT_TTL =    0x0000;
     private static final long RESERVED_BITS_MASK =  0x00ffff0000000000L;
     private static final long RESERVED_BITS_SHIFT = 40;
 
