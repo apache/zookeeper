@@ -292,7 +292,7 @@ static void take_latch_destroy_synchronized(take_latch_t *latch){
     pthread_mutex_unlock(mutex);
 }
 
-static void take_latch_setter_trigger_latch(take_latch_t *latch){
+static void take_latch_setter_trigger_latch(zhandle_t *zh, take_latch_t *latch){
     pthread_mutex_t *mutex = &(latch->queue->pmutex);
     pthread_mutex_lock(mutex);
     switch(latch->state){
@@ -303,7 +303,7 @@ static void take_latch_setter_trigger_latch(take_latch_t *latch){
         take_latch_destroy_unsafe(latch);
         break;
     case take_triggered:
-        LOG_DEBUG(("Error! Latch was triggered twice."));
+        LOG_DEBUG(LOGCALLBACK(zh), ("Error! Latch was triggered twice."));
         break;
     case take_waiting:
         pthread_cond_signal(&(latch->latch_condition));
@@ -312,7 +312,7 @@ static void take_latch_setter_trigger_latch(take_latch_t *latch){
     pthread_mutex_unlock(mutex);
 }
 
-static void take_latch_waiter_await(take_latch_t *latch){
+static void take_latch_waiter_await(zhandle_t *zh, take_latch_t *latch){
     pthread_mutex_t *mutex = &(latch->queue->pmutex);
     pthread_mutex_lock(mutex);
     switch(latch->state){
@@ -323,10 +323,10 @@ static void take_latch_waiter_await(take_latch_t *latch){
         take_latch_destroy_unsafe(latch);
         break;
     case take_waiting:
-        LOG_DEBUG(("Error! Called await twice."));
+        LOG_DEBUG(LOGCALLBACK(zh), ("Error! Called await twice."));
         break;
     case take_not_needed:
-        LOG_DEBUG(("Error! Waiting after marking not needed."));
+        LOG_DEBUG(LOGCALLBACK(zh), ("Error! Waiting after marking not needed."));
         break;
     case take_triggered:
         take_latch_destroy_unsafe(latch);
@@ -335,7 +335,7 @@ static void take_latch_waiter_await(take_latch_t *latch){
     pthread_mutex_unlock(mutex);
 }
 
-static void take_latch_waiter_mark_unneeded(take_latch_t *latch){
+static void take_latch_waiter_mark_unneeded(zhandle_t *zh, take_latch_t *latch){
     pthread_mutex_t *mutex = &(latch->queue->pmutex);
     pthread_mutex_lock(mutex);
     switch(latch->state){
@@ -343,10 +343,10 @@ static void take_latch_waiter_mark_unneeded(take_latch_t *latch){
         latch->state = take_not_needed;
         break;
     case take_waiting:
-        LOG_DEBUG(("Error! Can't mark unneeded after waiting."));
+        LOG_DEBUG(LOGCALLBACK(zh), ("Error! Can't mark unneeded after waiting."));
         break;
     case take_not_needed:
-        LOG_DEBUG(("Marked unneeded twice."));
+        LOG_DEBUG(LOGCALLBACK(zh), ("Marked unneeded twice."));
         break;
     case take_triggered:
         take_latch_destroy_unsafe(latch);
@@ -357,12 +357,12 @@ static void take_latch_waiter_mark_unneeded(take_latch_t *latch){
 
 static void take_watcher(zhandle_t *zh, int type, int state, const char *path, void *watcherCtx){
     take_latch_t *latch = (take_latch_t *) watcherCtx;
-    take_latch_setter_trigger_latch(latch);
+    take_latch_setter_trigger_latch(zh, latch);
 }
 
 
 
-ZOOAPI int zkr_queue_take(zkr_queue_t *queue, char *buffer, int *buffer_len){
+ZOOAPI int zkr_queue_take(zhandle_t *zh, zkr_queue_t *queue, char *buffer, int *buffer_len){
     int path_length = strlen(queue->path);
 take_attempt:    
     for(;;){
@@ -392,9 +392,9 @@ take_attempt:
             return get_children_rc;
         }
         if(stvector.count == 0){
-            take_latch_waiter_await(take_latch);
+            take_latch_waiter_await(zh, take_latch);
         }else{
-            take_latch_waiter_mark_unneeded(take_latch);
+            take_latch_waiter_mark_unneeded(zh, take_latch);
         }
 
         sort_children(vector);

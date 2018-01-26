@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Iterator;
@@ -55,7 +56,7 @@ public class LearnerHandlerTest extends ZKTestCase {
         boolean threadStarted = false;
 
         MockLearnerHandler(Socket sock, Leader leader) throws IOException {
-            super(sock, leader);
+            super(sock, new BufferedInputStream(sock.getInputStream()), leader);
         }
 
         protected void startSendingPackets() {

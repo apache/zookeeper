@@ -79,6 +79,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="test.data.dir" value="${test.java.build.dir}/data" />
     <property name="test.data.invalid.dir" value="${test.data.dir}/invalidsnap" />
     <property name="test.data.buffersize.dir" value="${test.data.dir}/buffersize" />
+    <property name="test.data.kerberos.dir" value="${test.data.dir}/kerberos" />
     <property name="test.data.ssl.dir" value="${test.data.dir}/ssl" />
     <property name="test.cppunit.dir" value="${test.java.build.dir}/test-cppunit"/>
     <property name="test.tmp.dir" value="${test.java.build.dir}/tmp" />
@@ -197,7 +198,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <!-- ====================================================== -->
     <!-- Dependency versions                                    -->
     <!-- ====================================================== -->
-    <property name="slf4j.version" value="1.7.5"/>
+    <property name="slf4j.version" value="1.7.25"/>
     <property name="commons-cli.version" value="1.2"/>
 
     <property name="wagon-http.version" value="2.4"/>
@@ -207,7 +208,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
     <property name="audience-annotations.version" value="0.5.0" />
 
-    <property name="netty.version" value="3.10.5.Final"/>
+    <property name="netty.version" value="3.10.6.Final"/>
 
     <property name="junit.version" value="4.12"/>
     <property name="mockito.version" value="1.8.2"/>
@@ -226,6 +227,9 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="jackson-mapper-asl.version" value="1.9.11"/>
     <property name="dependency-check-ant.version" value="2.1.0"/>
 
+    <property name="commons-io.version" value="2.4"/>
+    <property name="kerby.version" value="1.0.0-RC2"/>
+
     <!-- ====================================================== -->
     <!-- Macro definitions                                      -->
     <!-- ====================================================== -->
@@ -240,25 +244,29 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       </sequential>
     </macrodef>
 
-    <!-- the normal classpath -->
-    <path id="java.classpath">
+    <path id="base.classpath">
       <pathelement location="${build.classes}"/>
       <!-- allow the user to override (e.g. if there are local versions) -->
       <fileset dir="${additional.lib.dir}">
-        <include name="${additional.lib.dir.includes}" />
-        <exclude name="${additional.lib.dir.excludes}" />
+          <include name="${additional.lib.dir.includes}" />
+          <exclude name="${additional.lib.dir.excludes}" />
       </fileset>
       <fileset dir="${lib.dir}">
-        <include name="${lib.dir.includes}" />
-        <exclude name="${lib.dir.excludes}" />
+          <include name="${lib.dir.includes}" />
+          <exclude name="${lib.dir.excludes}" />
       </fileset>
       <fileset dir="${ant.home}/lib">
-        <include name="ant.jar" />
+          <include name="ant.jar" />
       </fileset>
+      <pathelement path="${clover.jar}" />
+    </path>
+
+    <!-- the normal classpath -->
+    <path id="java.classpath">
+      <path refid="base.classpath"/>
       <fileset dir="${ivy.lib}">
         <include name="**/*.jar" />
       </fileset>
-      <pathelement path="${clover.jar}" />
     </path>
 
     <path id="test.java.classpath">
@@ -266,7 +274,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <fileset dir="${ivy.test.lib}">
         <include name="**/*.jar" />
       </fileset>
-      <path refid="java.classpath"/>
+      <path refid="base.classpath"/>
     </path>
 
     <!-- ====================================================== -->
@@ -437,6 +445,11 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <ivy:retrieve settingsRef="${ant.project.name}" conf="owasp"
                       pattern="${ivy.owasp.lib}/[artifact]-[revision].[ext]"/>
         <ivy:cachepath pathid="owasp-classpath" conf="owasp"/>
+    </target>
+
+    <target name="dependency-report" depends="init,ivy-init">
+        <ivy:resolve conf="*"/>
+        <ivy:report conf="*" todir="${build.dir}/dependency-report"/>
     </target>
 
     <target name="process-template">
@@ -822,7 +835,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
       <copy todir="${dist.dir}">
         <fileset file="CHANGES.txt"/>
-        <fileset file="README.txt"/>
+        <fileset file="README.md"/>
         <fileset file="README_packaging.txt"/>
         <fileset file="build.xml"/>
         <fileset file="ivy.xml"/>
@@ -939,7 +952,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
       <copy todir="${dist.dir}">
         <fileset file="CHANGES.txt"/>
-        <fileset file="README.txt"/>
+        <fileset file="README.md"/>
         <fileset file="README_packaging.txt"/>
         <fileset file="build.xml"/>
         <fileset file="ivy.xml"/>
@@ -1156,6 +1169,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <delete dir="${test.tmp.dir}" />
         <delete dir="${test.data.invalid.dir}" />
         <delete dir="${test.data.buffersize.dir}" />
+        <delete dir="${test.data.kerberos.dir}" />
         <delete dir="${test.data.ssl.dir}" />
         <delete dir="${test.data.dir}" />
         <mkdir dir="${test.log.dir}" />
@@ -1172,6 +1186,10 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <mkdir dir="${test.data.ssl.dir}" />
         <copy todir="${test.data.ssl.dir}">
             <fileset dir="${basedir}/src/java/test/data/ssl"/>
+        </copy>
+        <mkdir dir="${test.data.kerberos.dir}" />
+        <copy todir="${test.data.kerberos.dir}">
+            <fileset dir="${basedir}/src/java/test/data/kerberos"/>
         </copy>
     </target>
 

@@ -28,7 +28,7 @@
   <configurations defaultconfmapping="default">
     <conf name="master"/>
     <conf name="default" extends="optional"/>
-    <conf name="test"/>
+    <conf name="test" extends="default"/>
     <conf name="mvn-ant-task" visibility="private"/>
     <conf name="optional"/> <!-- optional in generated pom -->
     <conf name="jdiff" visibility="private"/>
@@ -66,7 +66,10 @@
 	<dependency org="org.mockito" name="mockito-all" rev="${mockito.version}"
                conf="test->default"/>
     <dependency org="com.puppycrawl.tools" name="checkstyle" rev="${checkstyle.version}"
-                conf="test->default"/>
+                conf="test->default">
+        <exclude org="commons-collections" module="commons-collections"/>
+        <exclude org="commons-cli" module="commons-cli"/>
+    </dependency>
     <!-- force the tests to pull the latest commons-collections jar -->
     <dependency org="commons-collections" name="commons-collections" 
                 rev="${commons-collections.version}" conf="test->default"/>
@@ -77,13 +80,48 @@
                 conf="jdiff->default"/>
 
     <dependency org="org.apache.rat" name="apache-rat-tasks" 
-                rev="${apache-rat-tasks.version}" conf="releaseaudit->default"/>
+                rev="${apache-rat-tasks.version}" conf="releaseaudit->default">
+        <exclude org="commons-collections" module="commons-collections"/>
+    </dependency>
     <dependency org="commons-lang" name="commons-lang" 
                 rev="${commons-lang.version}" conf="releaseaudit->default"/>
     <dependency org="commons-collections" name="commons-collections" 
                 rev="${commons-collections.version}" conf="releaseaudit->default"/>
     <dependency org="org.owasp" name="dependency-check-ant"
                 rev="${dependency-check-ant.version}" conf="owasp->default"/>
+
+    <dependency org="commons-io" name="commons-io"
+                rev="${commons-io.version}" conf="test->default"/>
+
+    <dependency org="org.apache.kerby" name="kerby-config" rev="${kerby.version}" conf="test->default">
+          <exclude org="org.slf4j" module="slf4j-api"/>
+          <exclude org="org.slf4j" module="slf4j-log4j12"/>
+    </dependency>
+    <dependency org="org.apache.kerby" name="kerb-simplekdc" rev="${kerby.version}" conf="test->default">
+        <exclude org="org.slf4j" module="slf4j-api"/>
+    </dependency>
+    <dependency org="org.apache.kerby" name="kerb-core"
+                rev="${kerby.version}" conf="test->default">
+        <exclude org="org.slf4j" module="slf4j-api"/>
+    </dependency>
+    <dependency org="org.apache.kerby" name="kerb-server"
+                rev="${kerby.version}" conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerb-common"
+                rev="${kerby.version}" conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerb-admin"
+                rev="${kerby.version}" conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerb-identity"
+                rev="${kerby.version}" conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerb-client"
+                rev="${kerby.version}" conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerb-util"
+                rev="${kerby.version}" conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerb-crypto"
+                rev="${kerby.version}" conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerby-util"
+                rev="${kerby.version}" conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerby-asn1"
+                rev="${kerby.version}" conf="test->default"/>
 
     <dependency org="net.java.dev.javacc" name="javacc" rev="${javacc.version}"
                 conf="javacc->default" />
@@ -94,5 +132,8 @@
                   conf="optional->default"/>
     <dependency org="org.codehaus.jackson" name="jackson-mapper-asl"
                 rev="${jackson-mapper-asl.version}" conf="optional->default"/>
+
+    <conflict manager="strict"/>
+
   </dependencies>
 </ivy-module>

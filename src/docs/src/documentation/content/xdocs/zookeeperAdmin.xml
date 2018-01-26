@@ -524,10 +524,14 @@ server.3=zoo3:2888:3888</programlisting>
           of the znodes stored by a particular serving ensemble. These
           are the snapshot and transactional log files. As changes are
           made to the znodes these changes are appended to a
-          transaction log, occasionally, when a log grows large, a
+          transaction log. Occasionally, when a log grows large, a
           snapshot of the current state of all znodes will be written
-          to the filesystem. This snapshot supersedes all previous
-          logs.
+          to the filesystem and a new transaction log file is created
+          for future transactions. During snapshotting, ZooKeeper may
+          continue appending incoming transactions to the old log file.
+          Therefore, some transactions which are newer than a snapshot
+          may be found in the last transaction log preceding the
+          snapshot.
         </para>
 
         <para>A ZooKeeper server <emphasis role="bold">will not remove
@@ -2130,8 +2134,11 @@ server.3=zoo3:2888:3888</programlisting>
         <para>The Log Directory contains the ZooKeeper transaction logs.
         Before any update takes place, ZooKeeper ensures that the transaction
         that represents the update is written to non-volatile storage. A new
-        log file is started each time a snapshot is begun. The log file's
-        suffix is the first zxid written to that log.</para>
+        log file is started when the number of transactions written to the
+        current log file reaches a (variable) threshold. The threshold is
+        computed using the same parameter which influences the frequency of
+        snapshotting (see snapCount above). The log file's suffix is the first
+        zxid written to that log.</para>
       </section>
 
       <section id="sc_filemanagement">
@@ -2151,8 +2158,12 @@ server.3=zoo3:2888:3888</programlisting>
         <para>The ZooKeeper server creates snapshot and log files, but
         never deletes them. The retention policy of the data and log
         files is implemented outside of the ZooKeeper server. The
-        server itself only needs the latest complete fuzzy snapshot
-        and the log files from the start of that snapshot. See the
+        server itself only needs the latest complete fuzzy snapshot, all log
+        files following it, and the last log file preceding it.  The latter
+        requirement is necessary to include updates which happened after this
+        snapshot was started but went into the existing log file at that time.
+        This is possible because snapshotting and rolling over of logs
+        proceed somewhat independently in ZooKeeper. See the
         <ulink url="#sc_maintenance">maintenance</ulink> section in
         this document for more details on setting a retention policy
         and maintenance of ZooKeeper storage.

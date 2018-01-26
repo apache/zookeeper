@@ -42,6 +42,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.security.sasl.SaslException;
+
 /**
  * This test class contains test cases related to race condition in complete
  * ZooKeeper
@@ -156,6 +158,9 @@ public class RaceConditionTest extends QuorumPeerTestBase {
     private static class CustomQuorumPeer extends QuorumPeer {
         private boolean stopPing;
 
+        public CustomQuorumPeer() throws SaslException {
+        }
+
         public void setStopPing(boolean stopPing) {
             this.stopPing = stopPing;
         }
@@ -239,7 +244,7 @@ public class RaceConditionTest extends QuorumPeerTestBase {
     private static class MockTestQPMain extends TestQPMain {
 
         @Override
-        protected QuorumPeer getQuorumPeer() {
+        protected QuorumPeer getQuorumPeer() throws SaslException {
             return new CustomQuorumPeer();
         }
     }

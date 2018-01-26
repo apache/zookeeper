@@ -105,12 +105,12 @@ fi
 case $1 in
 start|startClean)
     if [ "x${base_dir}" == "x" ]
-        then
+    then
         mkdir -p /tmp/zkdata
         java -cp "$CLASSPATH" org.apache.zookeeper.server.ZooKeeperServerMain $ZOOPORT /tmp/zkdata 3000 $ZKMAXCNXNS &> /tmp/zk.log &
         pid=$!
         echo -n $! > /tmp/zk.pid
-        else
+    else
         mkdir -p "${base_dir}/build/tmp/zkdata"
         java -cp "$CLASSPATH" org.apache.zookeeper.server.ZooKeeperServerMain $ZOOPORT "${base_dir}/build/tmp/zkdata" 3000 $ZKMAXCNXNS &> "${base_dir}/build/tmp/zk.log" &
         pid=$!
@@ -157,11 +157,14 @@ startReadOnly)
         echo "this target is for unit tests only"
         exit 2
     else
-        mkdir -p /tmp/zkdata
-        rm -f /tmp/zkdata/myid && echo 1 > /tmp/zkdata/myid
+        tmpdir="${base_dir}/build/tmp"
+        mkdir -p "${tmpdir}/zkdata"
+        rm -f "${tmpdir}/zkdata/myid" && echo 1 > "${tmpdir}/zkdata/myid"
+
+        sed "s#TMPDIR#${tmpdir}#g" ${base_dir}/src/c/tests/quorum.cfg > "${tmpdir}/quorum.cfg"
 
         # force read-only mode
-        java -cp "$CLASSPATH" -Dreadonlymode.enabled=true org.apache.zookeeper.server.quorum.QuorumPeerMain ${base_dir}/src/c/tests/quorum.cfg &> "${base_dir}/build/tmp/zk.log" &
+        java -cp "$CLASSPATH" -Dreadonlymode.enabled=true org.apache.zookeeper.server.quorum.QuorumPeerMain ${tmpdir}/quorum.cfg &> "${tmpdir}/zk.log" &
         pid=$!
         echo -n $pid > "${base_dir}/build/tmp/zk.pid"
         sleep 3 # wait until read-only server is up

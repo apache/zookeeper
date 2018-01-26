@@ -46,13 +46,15 @@ public class SaslServerCallbackHandler implements CallbackHandler {
     private String userName;
     private final Map<String,String> credentials = new HashMap<String,String>();
 
-    public SaslServerCallbackHandler(Configuration configuration) throws IOException {
-        String serverSection = System.getProperty(ZooKeeperSaslServer.LOGIN_CONTEXT_NAME_KEY,
-                                                  ZooKeeperSaslServer.DEFAULT_LOGIN_CONTEXT_NAME);
+    public SaslServerCallbackHandler(Configuration configuration)
+            throws IOException {
+        String serverSection = System.getProperty(
+                ZooKeeperSaslServer.LOGIN_CONTEXT_NAME_KEY,
+                ZooKeeperSaslServer.DEFAULT_LOGIN_CONTEXT_NAME);
         AppConfigurationEntry configurationEntries[] = configuration.getAppConfigurationEntry(serverSection);
 
         if (configurationEntries == null) {
-            String errorMessage = "Could not find a 'Server' entry in this configuration: Server cannot start.";
+            String errorMessage = "Could not find a '" + serverSection + "' entry in this configuration: Server cannot start.";
             LOG.error(errorMessage);
             throw new IOException(errorMessage);
         }

@@ -69,7 +69,7 @@ public class ManagedUtil {
             try {
                 // Create and Register the top level Log4J MBean
                 // org.apache.log4j.jmx.HierarchyDynamicMBean hdm = new org.apache.log4j.jmx.HierarchyDynamicMBean();
-                Object hdm = Class.forName("org.apache.log4j.jmx.HierarchyDynamicMBean").newInstance();
+                Object hdm = Class.forName("org.apache.log4j.jmx.HierarchyDynamicMBean").getDeclaredConstructor().newInstance();
 
                 ObjectName mbo = new ObjectName("log4j:hiearchy=default");
                 mbs.registerMBean(hdm, mbo);
