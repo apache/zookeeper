@@ -48,15 +48,13 @@ public class CreateTTLTest extends ClientBase {
 
     @Override
     public void setUp() throws Exception {
-        ZooKeeperServer.serverId = 254;
         System.setProperty(EphemeralType.EXTENDED_TYPES_ENABLED_PROPERTY, disabledTests.contains(getTestName()) ? "false" : "true");
-        super.setUp();
+        super.setUpWithServerId(254);
         zk = createClient();
     }
 
     @Override
     public void tearDown() throws Exception {
-        ZooKeeperServer.serverId = 1;
         System.clearProperty("zookeeper.extendedTypesEnabled");
         super.tearDown();
         zk.close();
