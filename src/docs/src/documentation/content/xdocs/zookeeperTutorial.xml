@@ -361,7 +361,41 @@ from each one.</para>
 </programlisting>
  
 </section>
-<section id="sc_sourceListing"><title>Complete Source Listing</title>
+
+<section>
+<title>Complete example</title>
+<para>
+In the following section you can find a complete command line application to demonstrate the above mentioned
+recipes. Use the following command to run it.
+</para>
+<programlisting>
+ZOOBINDIR="[path_to_distro]/bin"
+. "$ZOOBINDIR"/zkEnv.sh
+java SyncPrimitive [Test Type] [ZK server] [No of elements] [Client type]
+</programlisting>
+
+<section>
+<title>Queue test</title>
+<para>Start a producer to create 100 elements</para>
+<programlisting>
+java SyncPrimitive qTest localhost 100 p
+</programlisting>
+
+<para>Start a consumer to consume 100 elements</para>
+<programlisting>
+java SyncPrimitive qTest localhost 100 c
+</programlisting>
+</section>
+
+<section>
+<title>Barrier test</title>
+<para>Start a barrier with 2 participants (start as many times as many participants you'd like to enter)</para>
+<programlisting>
+java SyncPrimitive bTest localhost 2
+</programlisting>
+</section>
+
+<section id="sc_sourceListing"><title>Source Listing</title>
 <example id="eg_SyncPrimitive_java">
 <title>SyncPrimitive.Java</title>
 <programlisting>
@@ -574,15 +608,19 @@ public class SyncPrimitive implements Watcher {
                         mutex.wait();
                     } else {
                         Integer min = new Integer(list.get(0).substring(7));
+                        String minNode = list.get(0);
                         for(String s : list){
                             Integer tempValue = new Integer(s.substring(7));
                             //System.out.println("Temporary value: " + tempValue);
-                            if(tempValue &lt; min) min = tempValue;
+                            if(tempValue &lt; min) {
+                                min = tempValue;
+                                minNode = s;
+                            }
                         }
-                        System.out.println("Temporary value: " + root + "/element" + min);
-                        byte[] b = zk.getData(root + "/element" + min,
-                                    false, stat);
-                        zk.delete(root + "/element" + min, 0);
+                        System.out.println("Temporary value: " + root + "/" + minNode);
+                        byte[] b = zk.getData(root + "/" + minNode,
+                        false, stat);
+                        zk.delete(root + "/" + minNode, 0);
                         ByteBuffer buffer = ByteBuffer.wrap(b);
                         retvalue = buffer.getInt();
 
@@ -669,7 +707,6 @@ public class SyncPrimitive implements Watcher {
 }
 </programlisting></example>
 </section>
+</section>
 
 </article>
-
-        

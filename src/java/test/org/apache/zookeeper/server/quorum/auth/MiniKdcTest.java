@@ -175,7 +175,8 @@ public class MiniKdcTest extends KerberosSecurityTestcase {
             loginContext.logout();
 
         } finally {
-            if (loginContext != null) {
+            if (loginContext != null && loginContext.getSubject() != null
+                    && !loginContext.getSubject().getPrincipals().isEmpty()) {
                 loginContext.logout();
             }
         }

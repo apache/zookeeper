@@ -28,12 +28,13 @@
   <configurations defaultconfmapping="default">
     <conf name="master"/>
     <conf name="default" extends="optional"/>
-    <conf name="test"/>
+    <conf name="test" extends="default"/>
     <conf name="mvn-ant-task" visibility="private"/>
     <conf name="optional"/> <!-- optional in generated pom -->
     <conf name="jdiff" visibility="private"/>
     <conf name="javacc" visibility="private"/>
     <conf name="releaseaudit" visibility="private" description="Artifacts required for releaseaudit target"/>
+    <conf name="owasp" visibility="private" description="Artifacts required for owasp target"/>
   </configurations>
 
   <publications>
@@ -41,81 +42,98 @@
   </publications>
 
   <dependencies>
-    <dependency org="org.slf4j" name="slf4j-api" rev="1.7.5"/>
-    <dependency org="org.slf4j" name="slf4j-log4j12" rev="1.7.5" transitive="false"/>
-    <dependency org="commons-cli" name="commons-cli" rev="1.2" />
+    <dependency org="org.slf4j" name="slf4j-api" rev="${slf4j.version}"/>
+    <dependency org="org.slf4j" name="slf4j-log4j12" rev="${slf4j.version}" transitive="false"/>
+    <dependency org="commons-cli" name="commons-cli" rev="${commons-cli.version}" />
   
-    <dependency org="org.apache.maven.wagon" name="wagon-http" rev="2.4" conf="mvn-ant-task->default"/>
-    <dependency org="org.apache.maven" name="maven-ant-tasks" rev="2.1.3" conf="mvn-ant-task->master"/>
+    <dependency org="org.apache.maven.wagon" name="wagon-http" rev="${wagon-http.version}"
+                conf="mvn-ant-task->default"/>
+    <dependency org="org.apache.maven" name="maven-ant-tasks" rev="${maven-ant-tasks.version}"
+                conf="mvn-ant-task->master"/>
     <!-- transitive false turns off dependency checking, log4j deps seem borked -->
-    <dependency org="log4j" name="log4j" rev="1.2.17" transitive="false"/>
-    <dependency org="jline" name="jline" rev="2.11" transitive="false" conf="optional->default"/>
+    <dependency org="log4j" name="log4j" rev="${log4j.version}" transitive="false"/>
+    <dependency org="jline" name="jline" rev="${jline.version}" transitive="false"
+                conf="optional->default"/>
 
-    <dependency org="org.apache.yetus" name="audience-annotations" rev="${audience-annotations.version}"/>
+    <dependency org="org.apache.yetus" name="audience-annotations"
+                rev="${audience-annotations.version}"/>
 
-    <dependency org="io.netty" name="netty" conf="default" rev="3.10.5.Final">
+    <dependency org="io.netty" name="netty" conf="default" rev="${netty.version}">
       <artifact name="netty" type="jar" conf="default"/>
     </dependency>
 
-    <dependency org="junit" name="junit" rev="4.12" conf="test->default"/>
-	<dependency org="org.mockito" name="mockito-all" rev="1.8.2"
+    <dependency org="junit" name="junit" rev="${junit.version}" conf="test->default"/>
+	<dependency org="org.mockito" name="mockito-all" rev="${mockito.version}"
                conf="test->default"/>
-    <dependency org="com.puppycrawl.tools" name="checkstyle" rev="6.13"
-                conf="test->default"/>
+    <dependency org="com.puppycrawl.tools" name="checkstyle" rev="${checkstyle.version}"
+                conf="test->default">
+        <exclude org="commons-collections" module="commons-collections"/>
+        <exclude org="commons-cli" module="commons-cli"/>
+    </dependency>
     <!-- force the tests to pull the latest commons-collections jar -->
     <dependency org="commons-collections" name="commons-collections" 
-                rev="3.2.2" conf="test->default"/>
+                rev="${commons-collections.version}" conf="test->default"/>
 
-    <dependency org="jdiff" name="jdiff" rev="1.0.9"
+    <dependency org="jdiff" name="jdiff" rev="${jdiff.version}"
                 conf="jdiff->default"/>
-    <dependency org="xerces" name="xerces" rev="1.4.4"
+    <dependency org="xerces" name="xerces" rev="${xerces.version}"
                 conf="jdiff->default"/>
 
     <dependency org="org.apache.rat" name="apache-rat-tasks" 
-                rev="0.10" conf="releaseaudit->default"/>
+                rev="${apache-rat-tasks.version}" conf="releaseaudit->default">
+        <exclude org="commons-collections" module="commons-collections"/>
+    </dependency>
     <dependency org="commons-lang" name="commons-lang" 
-                rev="2.6" conf="releaseaudit->default"/>
+                rev="${commons-lang.version}" conf="releaseaudit->default"/>
     <dependency org="commons-collections" name="commons-collections" 
-                rev="3.2.2" conf="releaseaudit->default"/>
+                rev="${commons-collections.version}" conf="releaseaudit->default"/>
     <dependency org="org.owasp" name="dependency-check-ant"
-                rev="2.1.0" conf="releaseaudit->default"/>
+                rev="${dependency-check-ant.version}" conf="owasp->default"/>
 
-    <dependency org="commons-io" name="commons-io" rev="2.4"
-                conf="test->default"/>
+    <dependency org="commons-io" name="commons-io"
+                rev="${commons-io.version}" conf="test->default"/>
 
-    <dependency org="org.apache.kerby" name="kerb-simplekdc" rev="1.0.0-RC2"
-                conf="test->default"/>
-    <dependency org="org.apache.kerby" name="kerby-config" rev="1.0.0-RC2"
-                conf="test->default"/>
-    <dependency org="org.apache.kerby" name="kerb-core" rev="1.0.0-RC2"
-                conf="test->default"/>
-    <dependency org="org.apache.kerby" name="kerb-server" rev="1.0.0-RC2"
-                conf="test->default"/>
-    <dependency org="org.apache.kerby" name="kerb-common" rev="1.0.0-RC2"
-                conf="test->default"/>
-    <dependency org="org.apache.kerby" name="kerb-admin" rev="1.0.0-RC2"
-                conf="test->default"/>
-    <dependency org="org.apache.kerby" name="kerb-identity" rev="1.0.0-RC2"
-                conf="test->default"/>
-    <dependency org="org.apache.kerby" name="kerb-client" rev="1.0.0-RC2"
-                conf="test->default"/>
-    <dependency org="org.apache.kerby" name="kerb-util" rev="1.0.0-RC2"
-                conf="test->default"/>
-    <dependency org="org.apache.kerby" name="kerb-crypto" rev="1.0.0-RC2"
-                conf="test->default"/>
-    <dependency org="org.apache.kerby" name="kerby-util" rev="1.0.0-RC2"
-                conf="test->default"/>
-    <dependency org="org.apache.kerby" name="kerby-asn1" rev="1.0.0-RC2"
-                conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerby-config" rev="${kerby.version}" conf="test->default">
+          <exclude org="org.slf4j" module="slf4j-api"/>
+          <exclude org="org.slf4j" module="slf4j-log4j12"/>
+    </dependency>
+    <dependency org="org.apache.kerby" name="kerb-simplekdc" rev="${kerby.version}" conf="test->default">
+        <exclude org="org.slf4j" module="slf4j-api"/>
+    </dependency>
+    <dependency org="org.apache.kerby" name="kerb-core"
+                rev="${kerby.version}" conf="test->default">
+        <exclude org="org.slf4j" module="slf4j-api"/>
+    </dependency>
+    <dependency org="org.apache.kerby" name="kerb-server"
+                rev="${kerby.version}" conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerb-common"
+                rev="${kerby.version}" conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerb-admin"
+                rev="${kerby.version}" conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerb-identity"
+                rev="${kerby.version}" conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerb-client"
+                rev="${kerby.version}" conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerb-util"
+                rev="${kerby.version}" conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerb-crypto"
+                rev="${kerby.version}" conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerby-util"
+                rev="${kerby.version}" conf="test->default"/>
+    <dependency org="org.apache.kerby" name="kerby-asn1"
+                rev="${kerby.version}" conf="test->default"/>
 
-    <dependency org="net.java.dev.javacc" name="javacc" rev="5.0"
+    <dependency org="net.java.dev.javacc" name="javacc" rev="${javacc.version}"
                 conf="javacc->default" />
 
-    <dependency org="org.eclipse.jetty" name="jetty-server" rev="9.2.18.v20160721"
+    <dependency org="org.eclipse.jetty" name="jetty-server" rev="${jetty.version}"
                 conf="optional->default"/>
-      <dependency org="org.eclipse.jetty" name="jetty-servlet" rev="9.2.18.v20160721"
+      <dependency org="org.eclipse.jetty" name="jetty-servlet" rev="${jetty.version}"
                   conf="optional->default"/>
-    <dependency org="org.codehaus.jackson" name="jackson-mapper-asl" rev="1.9.11"
-                conf="optional->default"/>
+    <dependency org="org.codehaus.jackson" name="jackson-mapper-asl"
+                rev="${jackson-mapper-asl.version}" conf="optional->default"/>
+
+    <conflict manager="strict"/>
+
   </dependencies>
 </ivy-module>

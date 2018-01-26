@@ -93,7 +93,7 @@ ZOOAPI int zkr_lock_unlock(zkr_lock_mutex_t *mutex) {
         while (ret == ZCONNECTIONLOSS && (count < 3)) {
             ret = zoo_delete(zh, buf, -1);
             if (ret == ZCONNECTIONLOSS) {
-                LOG_DEBUG(("connectionloss while deleting the node"));
+                LOG_DEBUG(LOGCALLBACK(zh), ("connectionloss while deleting the node"));
                 nanosleep(&ts, 0);
                 count++;
             }
@@ -109,7 +109,7 @@ ZOOAPI int zkr_lock_unlock(zkr_lock_mutex_t *mutex) {
             pthread_mutex_unlock(&(mutex->pmutex));
             return 0;
         }
-        LOG_WARN(("not able to connect to server - giving up"));
+        LOG_WARN(LOGCALLBACK(zh), ("not able to connect to server - giving up"));
         pthread_mutex_unlock(&(mutex->pmutex));
         return ZCONNECTIONLOSS;
     }
@@ -176,7 +176,7 @@ static int retry_getchildren(zhandle_t *zh, char* path, struct String_vector *ve
     while (ret == ZCONNECTIONLOSS && count < retry) {
         ret = zoo_get_children(zh, path, 0, vector);
         if (ret == ZCONNECTIONLOSS) {
-            LOG_DEBUG(("connection loss to the server"));
+            LOG_DEBUG(LOGCALLBACK(zh), ("connection loss to the server"));
             nanosleep(ts, 0);
             count++;
         }
@@ -212,7 +212,7 @@ static int retry_zoowexists(zhandle_t *zh, char* path, watcher_fn watcher, void*
     while (ret == ZCONNECTIONLOSS && count < retry) {
         ret = zoo_wexists(zh, path, watcher, ctx, stat);
         if (ret == ZCONNECTIONLOSS) {
-            LOG_DEBUG(("connectionloss while setting watch on my predecessor"));
+            LOG_DEBUG(LOGCALLBACK(zh), ("connectionloss while setting watch on my predecessor"));
             nanosleep(ts, 0);
             count++;
         }
@@ -267,7 +267,7 @@ static int zkr_lock_operation(zkr_lock_mutex_t *mutex, struct timespec *ts) {
             // do not want to retry the create since 
             // we would end up creating more than one child
             if (ret != ZOK) {
-                LOG_WARN(("could not create zoo node %s", buf));
+                LOG_WARN(LOGCALLBACK(zh), ("could not create zoo node %s", buf));
                 return ret;
             }
             mutex->id = getName(retbuf);
@@ -277,7 +277,7 @@ static int zkr_lock_operation(zkr_lock_mutex_t *mutex, struct timespec *ts) {
             ret = ZCONNECTIONLOSS;
             ret = retry_getchildren(zh, path, vector, ts, retry);
             if (ret != ZOK) {
-                LOG_WARN(("could not connect to server"));
+                LOG_WARN(LOGCALLBACK(zh), ("could not connect to server"));
                 return ret;
             }
             //sort this list
@@ -299,7 +299,7 @@ static int zkr_lock_operation(zkr_lock_mutex_t *mutex, struct timespec *ts) {
                 // will keep waiting
                 if (ret != ZOK) {
                     free_String_vector(vector);
-                    LOG_WARN(("unable to watch my predecessor"));
+                    LOG_WARN(LOGCALLBACK(zh), ("unable to watch my predecessor"));
                     ret = zkr_lock_unlock(mutex);
                     while (ret == 0) {
                         //we have to give up our leadership
@@ -315,7 +315,7 @@ static int zkr_lock_operation(zkr_lock_mutex_t *mutex, struct timespec *ts) {
                 // this is the case when we are the owner 
                 // of the lock
                 if (strcmp(mutex->id, owner_id) == 0) {
-                    LOG_DEBUG(("got the zoo lock owner - %s", mutex->id));
+                    LOG_DEBUG(LOGCALLBACK(zh), ("got the zoo lock owner - %s", mutex->id));
                     mutex->isOwner = 1;
                     if (mutex->completion != NULL) {
                         mutex->completion(0, mutex->cbdata);

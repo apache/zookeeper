@@ -99,7 +99,8 @@ public class FLEBackwardElectionRoundTest extends ZKTestCase {
             port[i] = clientport;
         }
 
-        ByteBuffer initialMsg = FLETestUtils.createMsg(ServerState.FOLLOWING.ordinal(), 0, 0, 1);
+        ByteBuffer initialMsg0 = getMsg();
+        ByteBuffer initialMsg1 = getMsg();
 
         /*
          * Start server 0
@@ -116,7 +117,7 @@ public class FLEBackwardElectionRoundTest extends ZKTestCase {
         cnxManagers[0] = mockPeer.createCnxnManager();
         cnxManagers[0].listener.start();
 
-        cnxManagers[0].toSend(0l, initialMsg);
+        cnxManagers[0].toSend(0l, initialMsg0);
 
         /*
          * Start mock server 2
@@ -125,7 +126,7 @@ public class FLEBackwardElectionRoundTest extends ZKTestCase {
         cnxManagers[1] = mockPeer.createCnxnManager();
         cnxManagers[1].listener.start();
 
-        cnxManagers[1].toSend(0l, initialMsg);
+        cnxManagers[1].toSend(0l, initialMsg1);
 
         /*
          * Run another instance of leader election.
@@ -137,8 +138,8 @@ public class FLEBackwardElectionRoundTest extends ZKTestCase {
         /*
          * Send the same messages, this time should not make 0 the leader.
          */
-        cnxManagers[0].toSend(0l, initialMsg);
-        cnxManagers[1].toSend(0l, initialMsg);
+        cnxManagers[0].toSend(0l, initialMsg0);
+        cnxManagers[1].toSend(0l, initialMsg1);
 
         thread.join(5000);
 
@@ -146,5 +147,9 @@ public class FLEBackwardElectionRoundTest extends ZKTestCase {
             Assert.fail("Should not have joined");
         }
 
+    }
+
+    private ByteBuffer getMsg() {
+        return FLETestUtils.createMsg(ServerState.FOLLOWING.ordinal(), 0, 0, 1);
     }
 }

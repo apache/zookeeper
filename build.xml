@@ -122,9 +122,9 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="ivy.test.lib" value="${build.dir}/test/lib"/>
     <property name="ivy.jdiff.lib" value="${build.dir}/jdiff/lib"/>
     <property name="ivy.javacc.lib" value="${build.dir}/javacc/lib"/>
+    <property name="ivy.releaseaudit.lib" value="${build.dir}/releaseaudit/lib"/>
+    <property name="ivy.owasp.lib" value="${build.dir}/owasp/lib"/>
     <property name="ivysettings.xml" value="${basedir}/ivysettings.xml"/>
-
-    <property name="audience-annotations.version" value="0.5.0" />
 
     <property name="mvnrepo" value="https://repo1.maven.org/maven2"/>
     <property name="tsk.org" value="/org/apache/maven/maven-ant-tasks/"/>
@@ -196,6 +196,41 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="javadoc-jar" value="${dist.maven.dir}/${final.name}-javadoc.jar"/>
 
     <!-- ====================================================== -->
+    <!-- Dependency versions                                    -->
+    <!-- ====================================================== -->
+    <property name="slf4j.version" value="1.7.25"/>
+    <property name="commons-cli.version" value="1.2"/>
+
+    <property name="wagon-http.version" value="2.4"/>
+    <property name="maven-ant-tasks.version" value="2.1.3"/>
+    <property name="log4j.version" value="1.2.17"/>
+    <property name="jline.version" value="2.11"/>
+
+    <property name="audience-annotations.version" value="0.5.0" />
+
+    <property name="netty.version" value="3.10.6.Final"/>
+
+    <property name="junit.version" value="4.12"/>
+    <property name="mockito.version" value="1.8.2"/>
+    <property name="checkstyle.version" value="6.13"/>
+    <property name="commons-collections.version" value="3.2.2"/>
+
+    <property name="jdiff.version" value="1.0.9"/>
+    <property name="xerces.version" value="1.4.4"/>
+
+    <property name="apache-rat-tasks.version" value="0.10"/>
+    <property name="commons-lang.version" value="2.6"/>
+
+    <property name="javacc.version" value="5.0"/>
+
+    <property name="jetty.version" value="9.2.18.v20160721"/>
+    <property name="jackson-mapper-asl.version" value="1.9.11"/>
+    <property name="dependency-check-ant.version" value="2.1.0"/>
+
+    <property name="commons-io.version" value="2.4"/>
+    <property name="kerby.version" value="1.0.0-RC2"/>
+
+    <!-- ====================================================== -->
     <!-- Macro definitions                                      -->
     <!-- ====================================================== -->
     <macrodef name="macro_tar" description="Worker Macro for tar">
@@ -209,25 +244,29 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       </sequential>
     </macrodef>
 
-    <!-- the normal classpath -->
-    <path id="java.classpath">
+    <path id="base.classpath">
       <pathelement location="${build.classes}"/>
       <!-- allow the user to override (e.g. if there are local versions) -->
       <fileset dir="${additional.lib.dir}">
-        <include name="${additional.lib.dir.includes}" />
-        <exclude name="${additional.lib.dir.excludes}" />
+          <include name="${additional.lib.dir.includes}" />
+          <exclude name="${additional.lib.dir.excludes}" />
       </fileset>
       <fileset dir="${lib.dir}">
-        <include name="${lib.dir.includes}" />
-        <exclude name="${lib.dir.excludes}" />
+          <include name="${lib.dir.includes}" />
+          <exclude name="${lib.dir.excludes}" />
       </fileset>
       <fileset dir="${ant.home}/lib">
-        <include name="ant.jar" />
+          <include name="ant.jar" />
       </fileset>
+      <pathelement path="${clover.jar}" />
+    </path>
+
+    <!-- the normal classpath -->
+    <path id="java.classpath">
+      <path refid="base.classpath"/>
       <fileset dir="${ivy.lib}">
         <include name="**/*.jar" />
       </fileset>
-      <pathelement path="${clover.jar}" />
     </path>
 
     <path id="test.java.classpath">
@@ -235,7 +274,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <fileset dir="${ivy.test.lib}">
         <include name="**/*.jar" />
       </fileset>
-      <path refid="java.classpath"/>
+      <path refid="base.classpath"/>
     </path>
 
     <!-- ====================================================== -->
@@ -398,8 +437,19 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
     <target name="ivy-retrieve-releaseaudit" depends="init,ivy-init">
       <ivy:retrieve settingsRef="${ant.project.name}" conf="releaseaudit"
-                    pattern="${ivy.lib}/[artifact]-[revision].[ext]"/>
+                    pattern="${ivy.releaseaudit.lib}/[artifact]-[revision].[ext]"/>
       <ivy:cachepath pathid="releaseaudit-classpath" conf="releaseaudit"/>
+    </target>
+
+    <target name="ivy-retrieve-owasp" depends="init,ivy-init">
+        <ivy:retrieve settingsRef="${ant.project.name}" conf="owasp"
+                      pattern="${ivy.owasp.lib}/[artifact]-[revision].[ext]"/>
+        <ivy:cachepath pathid="owasp-classpath" conf="owasp"/>
+    </target>
+
+    <target name="dependency-report" depends="init,ivy-init">
+        <ivy:resolve conf="*"/>
+        <ivy:report conf="*" todir="${build.dir}/dependency-report"/>
     </target>
 
     <target name="process-template">
@@ -785,7 +835,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
       <copy todir="${dist.dir}">
         <fileset file="CHANGES.txt"/>
-        <fileset file="README.txt"/>
+        <fileset file="README.md"/>
         <fileset file="README_packaging.txt"/>
         <fileset file="build.xml"/>
         <fileset file="ivy.xml"/>
@@ -902,7 +952,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
       <copy todir="${dist.dir}">
         <fileset file="CHANGES.txt"/>
-        <fileset file="README.txt"/>
+        <fileset file="README.md"/>
         <fileset file="README_packaging.txt"/>
         <fileset file="build.xml"/>
         <fileset file="ivy.xml"/>
@@ -1534,8 +1584,8 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
                classpathref="releaseaudit-classpath"/>
     </target>
 
-    <target name="owasp-taskdef" depends="ivy-retrieve-releaseaudit">
-        <typedef format="properties" resource="dependency-check-taskdefs.properties" uri="antlib:org.owasp.dependencycheck.anttasks" classpathref="releaseaudit-classpath"/>
+    <target name="owasp-taskdef" depends="ivy-retrieve-owasp">
+        <typedef format="properties" resource="dependency-check-taskdefs.properties" uri="antlib:org.owasp.dependencycheck.anttasks" classpathref="owasp-classpath"/>
     </target>
 
     <target name="owasp" depends="owasp-taskdef,ivy-retrieve" description="OWASP dependency check">
