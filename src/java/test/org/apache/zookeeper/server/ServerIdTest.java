@@ -65,7 +65,6 @@ public class ServerIdTest extends ClientBase {
     @Override
     public void tearDown() throws Exception {
         super.tearDown();
-        ZooKeeperServer.serverId = 1;
         System.clearProperty("zookeeper.extendedTypesEnabled");
     }
 
@@ -77,10 +76,9 @@ public class ServerIdTest extends ClientBase {
     @Override
     public void setUp() throws Exception {
         System.setProperty("zookeeper.extendedTypesEnabled", Boolean.toString(testType.ttlsEnabled));
-        ZooKeeperServer.serverId = testType.serverId;
         LOG.info("ttlsEnabled: {} - ServerId: {}", testType.ttlsEnabled, testType.serverId);
         try {
-            super.setUp();
+            super.setUpWithServerId(testType.serverId);
         } catch (RuntimeException e) {
             if ( testType.ttlsEnabled && (testType.serverId >= EphemeralType.MAX_EXTENDED_SERVER_ID) ) {
                 return; // expected

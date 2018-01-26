@@ -413,11 +413,12 @@ public abstract class ClientBase extends ZKTestCase {
      * Starting the given server instance
      */
     public static void startServerInstance(File dataDir,
-            ServerCnxnFactory factory, String hostPort) throws IOException,
+            ServerCnxnFactory factory, String hostPort, int serverId) throws IOException,
             InterruptedException {
         final int port = getPort(hostPort);
         LOG.info("STARTING server instance 127.0.0.1:{}", port);
         ZooKeeperServer zks = new ZooKeeperServer(dataDir, dataDir, 3000);
+        zks.setCreateSessionTrackerServerId(serverId);
         factory.startup(zks);
         Assert.assertTrue("waiting for server up", ClientBase.waitForServerUp(
                 "127.0.0.1:" + port, CONNECTION_TIMEOUT, factory.isSecure()));
@@ -426,7 +427,7 @@ public abstract class ClientBase extends ZKTestCase {
     /**
      * This method instantiates a new server. Starting of the server
      * instance has been moved to a separate method
-     * {@link ClientBase#startServerInstance(File, ServerCnxnFactory, String)}.
+     * {@link ClientBase#startServerInstance(File, ServerCnxnFactory, String, int)}.
      * Because any exception on starting the server would leave the server
      * running and the caller would not be able to shutdown the instance. This
      * may affect other test cases.
@@ -495,6 +496,10 @@ public abstract class ClientBase extends ZKTestCase {
 
     @Before
     public void setUp() throws Exception {
+        setUpWithServerId(1);
+    }
+
+    protected void setUpWithServerId(int serverId) throws Exception {
         /* some useful information - log the number of fds used before
          * and after a test is run. Helps to verify we are freeing resources
          * correctly. Unfortunately this only works on unix systems (the
@@ -515,16 +520,20 @@ public abstract class ClientBase extends ZKTestCase {
 
         tmpDir = createTmpDir(BASETEST, true);
 
-        startServer();
+        startServer(serverId);
 
         LOG.info("Client test setup finished");
     }
 
     protected void startServer() throws Exception {
+        startServer(1);
+    }
+
+    private void startServer(int serverId) throws Exception {
         LOG.info("STARTING server");
         serverFactory = createNewServerInstance(serverFactory, hostPort,
                 maxCnxns);
-        startServerInstance(tmpDir, serverFactory, hostPort);
+        startServerInstance(tmpDir, serverFactory, hostPort, serverId);
         // ensure that server and data bean are registered
         Set<ObjectName> children = JMXEnv.ensureParent("InMemoryDataTree",
                 "StandaloneServer_port");
