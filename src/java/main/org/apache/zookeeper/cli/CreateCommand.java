@@ -100,7 +100,7 @@ public class CreateCommand extends CliCommand {
         }
         if ( hasT ) {
             try {
-                EphemeralType.ttlToEphemeralOwner(ttl);
+                EphemeralType.TTL.toEphemeralOwner(ttl);
             } catch (IllegalArgumentException e) {
                 throw new MalformedCommandException(e.getMessage());
             }

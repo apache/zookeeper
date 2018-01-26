@@ -37,11 +37,11 @@ public class EphemeralTypeTest {
 
     @Test
     public void testTtls() {
-        long ttls[] = {100, 1, EphemeralType.MAX_TTL};
+        long ttls[] = {100, 1, EphemeralType.TTL.maxValue()};
         for (long ttl : ttls) {
-            long ephemeralOwner = EphemeralType.ttlToEphemeralOwner(ttl);
+            long ephemeralOwner = EphemeralType.TTL.toEphemeralOwner(ttl);
             Assert.assertEquals(EphemeralType.TTL, EphemeralType.get(ephemeralOwner));
-            Assert.assertEquals(ttl, EphemeralType.getTTL(ephemeralOwner));
+            Assert.assertEquals(ttl, EphemeralType.TTL.getValue(ephemeralOwner));
         }
 
         EphemeralType.validateTTL(CreateMode.PERSISTENT_WITH_TTL, 100);
@@ -73,7 +73,12 @@ public class EphemeralTypeTest {
         for ( int i = 0; i < 255; ++i ) {
             Assert.assertEquals(EphemeralType.NORMAL, EphemeralType.get(SessionTrackerImpl.initializeNextSession(i)));
         }
-        Assert.assertEquals(EphemeralType.TTL, EphemeralType.get(SessionTrackerImpl.initializeNextSession(255)));
-        Assert.assertEquals(EphemeralType.NORMAL, EphemeralType.get(SessionTrackerImpl.initializeNextSession(EphemeralType.MAX_TTL_SERVER_ID)));
+        try {
+            Assert.assertEquals(EphemeralType.TTL, EphemeralType.get(SessionTrackerImpl.initializeNextSession(255)));
+            Assert.fail("Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+        Assert.assertEquals(EphemeralType.NORMAL, EphemeralType.get(SessionTrackerImpl.initializeNextSession(EphemeralType.MAX_EXTENDED_SERVER_ID)));
     }
 }

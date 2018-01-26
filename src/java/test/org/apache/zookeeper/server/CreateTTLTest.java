@@ -35,7 +35,6 @@ import org.apache.zookeeper.test.ClientBase;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -65,7 +64,7 @@ public class CreateTTLTest extends ClientBase {
 
     @Test
     public void testCreate()
-            throws IOException, KeeperException, InterruptedException {
+            throws KeeperException, InterruptedException {
         Stat stat = new Stat();
         zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL, stat, 100);
         Assert.assertEquals(0, stat.getEphemeralOwner());
@@ -93,11 +92,35 @@ public class CreateTTLTest extends ClientBase {
                             r.getErr(), Code.BADARGUMENTS.intValue());
         Assert.assertNull("An invalid CreateTTLRequest should not result in znode creation",
                           zk.exists(path, false));
+
+        request = new CreateTTLRequest(path, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT_WITH_TTL.toFlag(), EphemeralType.TTL.maxValue() + 1);
+        response = new CreateResponse();
+        r = zk.submitRequest(h, request, response, null);
+        Assert.assertEquals("An invalid CreateTTLRequest should throw BadArguments",
+                r.getErr(), Code.BADARGUMENTS.intValue());
+        Assert.assertNull("An invalid CreateTTLRequest should not result in znode creation",
+                zk.exists(path, false));
+    }
+
+    @Test
+    public void testMaxTTLs() throws InterruptedException, KeeperException {
+        RequestHeader h = new RequestHeader(1, ZooDefs.OpCode.createTTL);
+
+        String path = "/bad_ttl";
+        CreateTTLRequest request = new CreateTTLRequest(path, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                                                        CreateMode.PERSISTENT_WITH_TTL.toFlag(), EphemeralType.TTL.maxValue());
+        CreateResponse response = new CreateResponse();
+        ReplyHeader r = zk.submitRequest(h, request, response, null);
+        Assert.assertEquals("EphemeralType.getMaxTTL() should succeed",
+                            r.getErr(), Code.OK.intValue());
+        Assert.assertNotNull("Node should exist",
+                          zk.exists(path, false));
     }
 
     @Test
     public void testCreateSequential()
-            throws IOException, KeeperException, InterruptedException {
+            throws KeeperException, InterruptedException {
         Stat stat = new Stat();
         String path = zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL_WITH_TTL, stat, 100);
         Assert.assertEquals(0, stat.getEphemeralOwner());
@@ -114,7 +137,7 @@ public class CreateTTLTest extends ClientBase {
 
     @Test
     public void testCreateAsync()
-            throws IOException, KeeperException, InterruptedException {
+            throws KeeperException, InterruptedException {
         AsyncCallback.Create2Callback callback = new AsyncCallback.Create2Callback() {
             @Override
             public void processResult(int rc, String path, Object ctx, String name, Stat stat) {
@@ -135,7 +158,7 @@ public class CreateTTLTest extends ClientBase {
 
     @Test
     public void testModifying()
-            throws IOException, KeeperException, InterruptedException {
+            throws KeeperException, InterruptedException {
         Stat stat = new Stat();
         zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL, stat, 100);
         Assert.assertEquals(0, stat.getEphemeralOwner());
@@ -159,7 +182,7 @@ public class CreateTTLTest extends ClientBase {
 
     @Test
     public void testMulti()
-            throws IOException, KeeperException, InterruptedException {
+            throws KeeperException, InterruptedException {
         Op createTtl = Op.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL, 100);
         Op createTtlSequential = Op.create("/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL_WITH_TTL, 200);
         Op createNonTtl = Op.create("/c", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);

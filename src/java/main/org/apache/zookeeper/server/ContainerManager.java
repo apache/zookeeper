@@ -157,11 +157,13 @@ public class ContainerManager {
             DataNode node = zkDb.getDataTree().getNode(ttlPath);
             if (node != null) {
                 Set<String> children = node.getChildren();
-                if ((children == null) || (children.size() == 0)) {
-                    long elapsed = getElapsed(node);
-                    long ttl = EphemeralType.getTTL(node.stat.getEphemeralOwner());
-                    if ((ttl != 0) && (elapsed > ttl)) {
-                        candidates.add(ttlPath);
+                if (children.isEmpty()) {
+                    if ( EphemeralType.get(node.stat.getEphemeralOwner()) == EphemeralType.TTL ) {
+                        long elapsed = getElapsed(node);
+                        long ttl = EphemeralType.TTL.getValue(node.stat.getEphemeralOwner());
+                        if ((ttl != 0) && (getElapsed(node) > ttl)) {
+                            candidates.add(ttlPath);
+                        }
                     }
                 }
             }
