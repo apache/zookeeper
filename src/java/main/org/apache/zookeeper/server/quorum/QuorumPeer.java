@@ -1260,7 +1260,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
     
     public void shutdown() {
-        setRunning(false);
+        running = false;
         if (leader != null) {
             leader.shutdown("quorum Peer shutdown");
         }
@@ -1749,10 +1749,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     public synchronized void initConfigInZKDatabase() {   
         if (zkDb != null) zkDb.initConfigInZKDatabase(getQuorumVerifier());
-    }
-    
-    private void setRunning(boolean running) {
-        this.running = running;
     }
 
     public boolean isRunning() {
