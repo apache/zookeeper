@@ -82,7 +82,7 @@ public class ServerIdTest extends ClientBase {
         try {
             super.setUp();
         } catch (RuntimeException e) {
-            if ( testType.ttlsEnabled && (testType.serverId >= EphemeralType.MAX_TTL_SERVER_ID) ) {
+            if ( testType.ttlsEnabled && (testType.serverId >= EphemeralType.MAX_EXTENDED_SERVER_ID) ) {
                 return; // expected
             }
             throw e;
@@ -91,7 +91,7 @@ public class ServerIdTest extends ClientBase {
 
     @Test
     public void doTest() throws Exception {
-        if ( testType.ttlsEnabled && (testType.serverId >= EphemeralType.MAX_TTL_SERVER_ID) ) {
+        if ( testType.ttlsEnabled && (testType.serverId >= EphemeralType.MAX_EXTENDED_SERVER_ID) ) {
             return;
         }
 
