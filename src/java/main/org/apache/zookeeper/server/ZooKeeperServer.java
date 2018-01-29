@@ -557,14 +557,24 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             firstProcessor.shutdown();
         }
 
-        if (fullyShutDown && zkDb != null) {
-            zkDb.clear();
+        if (zkDb != null) {
+            if (fullyShutDown) {
+                zkDb.clear();
+            } else {
+                // else there is no need to clear the database
+                //  * When a new quorum is established we can still apply the diff
+                //    on top of the same zkDb data
+                //  * If we fetch a new snapshot from leader, the zkDb will be
+                //    cleared anyway before loading the snapshot
+                try {
+                    //This will fast forward the database to the latest recorded transactions
+                    zkDb.fastForwardDataBase();
+                } catch (IOException e) {
+                    LOG.error("Error updating DB", e);
+                    zkDb.clear();
+                }
+            }
         }
-        // else there is no need to clear the database
-        //  * When a new quorum is established we can still apply the diff
-        //    on top of the same zkDb data
-        //  * If we fetch a new snapshot from leader, the zkDb will be
-        //    cleared anyway before loading the snapshot
 
         unregisterJMX();
     }
