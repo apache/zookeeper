@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server.persistence;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
@@ -112,34 +113,26 @@ public class FileTxnSnapLog {
     }
 
     private void checkLogDir() throws LogdirContentCheckException {
-        File[] files = this.dataDir.listFiles();
-        if(files != null) {
-            boolean hasSnapshotFiles = false;
-            for (File file : files) {
-                if(Util.isSnapshotFile(file)){
-                    hasSnapshotFiles = true;
-                    break;
-                }
+        File[] files = this.dataDir.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return Util.isSnapshotFileName(name);
             }
-            if (hasSnapshotFiles) {
-                throw new LogdirContentCheckException("Log directory has snapshot files. Check if dataLogDir and dataDir configuration is correct.");
-            }
+        });
+        if (files.length > 0) {
+            throw new LogdirContentCheckException("Log directory has snapshot files. Check if dataLogDir and dataDir configuration is correct.");
         }
     }
 
     private void checkSnapDir() throws SnapdirContentCheckException {
-        File[] files = this.snapDir.listFiles();
-        if(files != null) {
-            boolean hasLogFiles = false;
-            for (File file : files) {
-                if(Util.isLogFile(file)){
-                    hasLogFiles = true;
-                    break;
-                }
+        File[] files = this.snapDir.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return Util.isLogFileName(name);
             }
-            if (hasLogFiles) {
-                throw new SnapdirContentCheckException("Snapshot directory has log files. Check if dataLogDir and dataDir configuration is correct.");
-            }
+        });
+        if (files.length > 0) {
+            throw new SnapdirContentCheckException("Snapshot directory has log files. Check if dataLogDir and dataDir configuration is correct.");
         }
     }
 

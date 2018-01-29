@@ -302,23 +302,23 @@ public class Util {
     }
 
     /**
-     * Returns true if file is a log file.
+     * Returns true if fileName is a log file name.
      *
-     * @param file
+     * @param fileName
      * @return
      */
-    public static boolean isLogFile(File file) {
-        return file.getName().startsWith(LOG_FILE_PREFIX);
+    public static boolean isLogFileName(String fileName) {
+        return fileName.startsWith(LOG_FILE_PREFIX + ".");
     }
 
     /**
-     * Returns true if file is a snapshot file.
+     * Returns true if fileName is a snapshot file name.
      *
-     * @param file
+     * @param fileName
      * @return
      */
-    public static boolean isSnapshotFile(File file) {
-        return file.getName().startsWith(SNAP_FILE_PREFIX);
+    public static boolean isSnapshotFileName(String fileName) {
+        return fileName.startsWith(SNAP_FILE_PREFIX + ".");
     }
     
 }
