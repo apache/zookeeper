@@ -23,8 +23,11 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.test.ClientBase;
+import org.apache.zookeeper.test.TestUtils;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnHeader;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -35,13 +38,26 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class FileTxnSnapLogTest {
 
+    private File tmpDir;
+
+    @Before
+    public void setUp() throws Exception {
+        tmpDir = ClientBase.createEmptyTestDir();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        if(tmpDir != null){
+            TestUtils.deleteFileRecursively(tmpDir);
+        }
+    }
+
     /**
      * Test verifies the auto creation of data dir and data log dir.
      * Sets "zookeeper.datadir.autocreate" to true.
      */
     @Test
     public void testWithAutoCreateDataLogDir() throws IOException {
-        File tmpDir = ClientBase.createEmptyTestDir();
         File dataDir = new File(tmpDir, "data");
         File snapDir = new File(tmpDir, "data_txnlog");
         Assert.assertFalse("data directory already exists", dataDir.exists());
@@ -71,7 +87,6 @@ public class FileTxnSnapLogTest {
      */
     @Test
     public void testWithoutAutoCreateDataLogDir() throws Exception {
-        File tmpDir = ClientBase.createEmptyTestDir();
         File dataDir = new File(tmpDir, "data");
         File snapDir = new File(tmpDir, "data_txnlog");
         Assert.assertFalse("data directory already exists", dataDir.exists());
@@ -97,7 +112,6 @@ public class FileTxnSnapLogTest {
 
     @Test
     public void testAutoCreateDb() throws IOException {
-        File tmpDir = ClientBase.createEmptyTestDir();
         File dataDir = new File(tmpDir, "data");
         File snapDir = new File(tmpDir, "data_txnlog");
         Assert.assertTrue("cannot create data directory", dataDir.mkdir());
@@ -118,7 +132,6 @@ public class FileTxnSnapLogTest {
 
     @Test
     public void testGetTxnLogSyncElapsedTime() throws IOException {
-        File tmpDir = ClientBase.createEmptyTestDir();
         FileTxnSnapLog fileTxnSnapLog = new FileTxnSnapLog(new File(tmpDir, "data"),
                 new File(tmpDir, "data_txnlog"));
 
@@ -160,221 +173,122 @@ public class FileTxnSnapLogTest {
         }
     }
 
-    @Test
-    public void testDirCheckWithCorrectFiles() throws IOException {
-        File tmpDir = ClientBase.createEmptyTestDir();
-        File logDir = new File(tmpDir, "logdir");
-        File snapDir = new File(tmpDir, "snapdir");
-        File logVersionDir = new File(logDir, FileTxnSnapLog.version +  FileTxnSnapLog.VERSION);
-        File snapVersionDir = new File(snapDir, FileTxnSnapLog.version +  FileTxnSnapLog.VERSION);
+    private File createVersionDir(File parentDir) {
+        File versionDir = new File(parentDir, FileTxnSnapLog.version + FileTxnSnapLog.VERSION);
+        versionDir.mkdirs();
+        return versionDir;
+    }
 
-        if (!logVersionDir.exists()) {
-            logVersionDir.mkdirs();
-        }
-        if (!snapVersionDir.exists()) {
-            snapVersionDir.mkdirs();
-        }
+    private void createLogFile(File dir, long zxid) throws IOException {
+        File file = new File(dir.getPath() + File.separator + Util.makeLogName(zxid));
+        file.createNewFile();
+    }
 
-        Assert.assertTrue(logVersionDir.exists());
-        Assert.assertTrue(snapVersionDir.exists());
+    private void createSnapshotFile(File dir, long zxid) throws IOException {
+        File file = new File(dir.getPath() + File.separator + Util.makeSnapshotName(zxid));
+        file.createNewFile();
+    }
 
-        // transaction log files in log dir - correct
-        File logFile1 = new File(logVersionDir.getPath() +File.separator + Util.makeLogName(1L));
-        logFile1.createNewFile();
-        File logFile2 = new File(logVersionDir.getPath() +File.separator + Util.makeLogName(2L));
-        logFile2.createNewFile();
-
-        // snapshot files in snap dir - correct
-        File snapFile1 = new File(snapVersionDir.getPath() +File.separator + Util.makeSnapshotName(1L));
-        snapFile1.createNewFile();
-        File snapFile2 = new File(snapVersionDir.getPath() +File.separator + Util.makeSnapshotName(2L));
-        snapFile2.createNewFile();
-
-        Assert.assertTrue(logFile1.exists());
-        Assert.assertTrue(logFile2.exists());
-        Assert.assertTrue(snapFile1.exists());
-        Assert.assertTrue(snapFile2.exists());
-
+    private void createFileTxnSnapLogWithNoAutoCreate(File logDir, File snapDir) throws IOException {
         String priorAutocreateDirValue = System.getProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE);
         System.setProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE, "false");
         FileTxnSnapLog fileTxnSnapLog;
         try {
             fileTxnSnapLog = new FileTxnSnapLog(logDir, snapDir);
-        } catch (FileTxnSnapLog.LogdirContentCheckException e) {
-            Assert.fail("Should not throw LogdirContentCheckException.");
-        } catch (FileTxnSnapLog.SnapdirContentCheckException e) {
-            Assert.fail("Should not throw SnapdirContentCheckException.");
         } finally {
             if (priorAutocreateDirValue == null) {
                 System.clearProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE);
             } else {
                 System.setProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE, priorAutocreateDirValue);
             }
+        }
+    }
+
+    @Test
+    public void testDirCheckWithCorrectFiles() throws IOException {
+        File logDir = new File(tmpDir, "logdir");
+        File snapDir = new File(tmpDir, "snapdir");
+
+        File logVersionDir = createVersionDir(logDir);
+        File snapVersionDir = createVersionDir(snapDir);
+
+        // transaction log files in log dir - correct
+        createLogFile(logVersionDir,1);
+        createLogFile(logVersionDir,2);
+
+        // snapshot files in snap dir - correct
+        createSnapshotFile(snapVersionDir,1);
+        createSnapshotFile(snapVersionDir,2);
+
+        try {
+            createFileTxnSnapLogWithNoAutoCreate(logDir, snapDir);
+        } catch (FileTxnSnapLog.LogdirContentCheckException | FileTxnSnapLog.SnapdirContentCheckException e) {
+            Assert.fail("Should not throw ContentCheckException.");
         }
     }
 
     @Test
     public void testDirCheckWithSameLogAndSnapDirs() throws IOException {
-        File tmpDir = ClientBase.createEmptyTestDir();
         File logDir = new File(tmpDir, "logdir");
+        File logVersionDir = createVersionDir(logDir);
 
-        File logVersionDir = new File(logDir, FileTxnSnapLog.version +  FileTxnSnapLog.VERSION);
+        // transaction log and snapshot files in the same dir
+        createLogFile(logVersionDir,1);
+        createLogFile(logVersionDir,2);
+        createSnapshotFile(logVersionDir,1);
+        createSnapshotFile(logVersionDir,2);
 
-        if (!logVersionDir.exists()) {
-            logVersionDir.mkdirs();
-        }
-
-        Assert.assertTrue(logVersionDir.exists());
-
-        // transaction log and snapshot files in the same dir in case transaction log dir and snapshot dir are configured to be the same
-        File logFile1 = new File(logVersionDir.getPath() +File.separator + Util.makeLogName(1L));
-        logFile1.createNewFile();
-        File logFile2 = new File(logVersionDir.getPath() +File.separator + Util.makeLogName(2L));
-        logFile2.createNewFile();
-        File snapFile1 = new File(logVersionDir.getPath() +File.separator + Util.makeSnapshotName(1L));
-        snapFile1.createNewFile();
-        File snapFile2 = new File(logVersionDir.getPath() +File.separator + Util.makeSnapshotName(2L));
-        snapFile2.createNewFile();
-
-        Assert.assertTrue(logFile1.exists());
-        Assert.assertTrue(logFile2.exists());
-        Assert.assertTrue(snapFile1.exists());
-        Assert.assertTrue(snapFile2.exists());
-
-        String priorAutocreateDirValue = System.getProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE);
-        System.setProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE, "false");
-        FileTxnSnapLog fileTxnSnapLog;
         try {
-            fileTxnSnapLog = new FileTxnSnapLog(logDir, logDir);
-        } catch (FileTxnSnapLog.LogdirContentCheckException e) {
-            Assert.fail("Should not throw LogdirContentCheckException.");
-        } catch (FileTxnSnapLog.SnapdirContentCheckException e) {
-            Assert.fail("Should not throw SnapdirContentCheckException.");
-        } finally {
-            if (priorAutocreateDirValue == null) {
-                System.clearProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE);
-            } else {
-                System.setProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE, priorAutocreateDirValue);
-            }
+            createFileTxnSnapLogWithNoAutoCreate(logDir, logDir);
+        } catch (FileTxnSnapLog.LogdirContentCheckException | FileTxnSnapLog.SnapdirContentCheckException e) {
+            Assert.fail("Should not throw ContentCheckException.");
         }
     }
 
     @Test(expected = FileTxnSnapLog.LogdirContentCheckException.class)
     public void testDirCheckWithSnapFilesInLogDir() throws IOException {
-        File tmpDir = ClientBase.createEmptyTestDir();
         File logDir = new File(tmpDir, "logdir");
         File snapDir = new File(tmpDir, "snapdir");
-        File logVersionDir = new File(logDir, FileTxnSnapLog.version +  FileTxnSnapLog.VERSION);
-        File snapVersionDir = new File(snapDir, FileTxnSnapLog.version +  FileTxnSnapLog.VERSION);
 
-        if (!logVersionDir.exists()) {
-            logVersionDir.mkdirs();
-        }
-        if (!snapVersionDir.exists()) {
-            snapVersionDir.mkdirs();
-        }
-
-        Assert.assertTrue(logVersionDir.exists());
-        Assert.assertTrue(snapVersionDir.exists());
+        File logVersionDir = createVersionDir(logDir);
+        File snapVersionDir = createVersionDir(snapDir);
 
         // transaction log files in log dir - correct
-        File logFile1 = new File(logVersionDir.getPath() +File.separator + Util.makeLogName(1L));
-        logFile1.createNewFile();
-        File logFile2 = new File(logVersionDir.getPath() +File.separator + Util.makeLogName(2L));
-        logFile2.createNewFile();
+        createLogFile(logVersionDir,1);
+        createLogFile(logVersionDir,2);
 
         // snapshot files in log dir - incorrect
-        File snapFile3 = new File(logVersionDir.getPath() +File.separator + Util.makeSnapshotName(3L));
-        snapFile3.createNewFile();
-        File snapFile4 = new File(logVersionDir.getPath() +File.separator + Util.makeSnapshotName(4L));
-        snapFile4.createNewFile();
+        createSnapshotFile(logVersionDir,1);
+        createSnapshotFile(logVersionDir,2);
 
         // snapshot files in snap dir - correct
-        File snapFile1 = new File(snapVersionDir.getPath() +File.separator + Util.makeSnapshotName(1L));
-        snapFile1.createNewFile();
-        File snapFile2 = new File(snapVersionDir.getPath() +File.separator + Util.makeSnapshotName(2L));
-        snapFile2.createNewFile();
+        createSnapshotFile(snapVersionDir,3);
+        createSnapshotFile(snapVersionDir,4);
 
-        Assert.assertTrue(logFile1.exists());
-        Assert.assertTrue(logFile2.exists());
-
-        Assert.assertTrue(snapFile3.exists());
-        Assert.assertTrue(snapFile4.exists());
-
-        Assert.assertTrue(snapFile1.exists());
-        Assert.assertTrue(snapFile2.exists());
-
-        String priorAutocreateDirValue = System.getProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE);
-        System.setProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE, "false");
-        FileTxnSnapLog fileTxnSnapLog;
-        try {
-            fileTxnSnapLog = new FileTxnSnapLog(logDir, snapDir);
-        } finally {
-            if (priorAutocreateDirValue == null) {
-                System.clearProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE);
-            } else {
-                System.setProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE, priorAutocreateDirValue);
-            }
-        }
+        createFileTxnSnapLogWithNoAutoCreate(logDir, snapDir);
     }
 
     @Test(expected = FileTxnSnapLog.SnapdirContentCheckException.class)
     public void testDirCheckWithLogFilesInSnapDir() throws IOException {
-        File tmpDir = ClientBase.createEmptyTestDir();
         File logDir = new File(tmpDir, "logdir");
         File snapDir = new File(tmpDir, "snapdir");
-        File logVersionDir = new File(logDir, FileTxnSnapLog.version +  FileTxnSnapLog.VERSION);
-        File snapVersionDir = new File(snapDir, FileTxnSnapLog.version +  FileTxnSnapLog.VERSION);
 
-        if (!logVersionDir.exists()) {
-            logVersionDir.mkdirs();
-        }
-        if (!snapVersionDir.exists()) {
-            snapVersionDir.mkdirs();
-        }
-
-        Assert.assertTrue(logVersionDir.exists());
-        Assert.assertTrue(snapVersionDir.exists());
+        File logVersionDir = createVersionDir(logDir);
+        File snapVersionDir = createVersionDir(snapDir);
 
         // transaction log files in log dir - correct
-        File logFile1 = new File(logVersionDir.getPath() +File.separator + Util.makeLogName(1L));
-        logFile1.createNewFile();
-        File logFile2 = new File(logVersionDir.getPath() +File.separator + Util.makeLogName(2L));
-        logFile2.createNewFile();
+        createLogFile(logVersionDir,1);
+        createLogFile(logVersionDir,2);
 
         // snapshot files in snap dir - correct
-        File snapFile1 = new File(snapVersionDir.getPath() +File.separator + Util.makeSnapshotName(1L));
-        snapFile1.createNewFile();
-        File snapFile2 = new File(snapVersionDir.getPath() +File.separator + Util.makeSnapshotName(2L));
-        snapFile2.createNewFile();
+        createSnapshotFile(snapVersionDir,1);
+        createSnapshotFile(snapVersionDir,2);
 
         // transaction log files in snap dir - incorrect
-        File logFile3 = new File(snapVersionDir.getPath() +File.separator + Util.makeLogName(3L));
-        logFile3.createNewFile();
-        File logFile4 = new File(snapVersionDir.getPath() +File.separator + Util.makeLogName(4L));
-        logFile4.createNewFile();
+        createLogFile(snapVersionDir,3);
+        createLogFile(snapVersionDir,4);
 
-        Assert.assertTrue(logFile1.exists());
-        Assert.assertTrue(logFile2.exists());
-
-        Assert.assertTrue(snapFile1.exists());
-        Assert.assertTrue(snapFile2.exists());
-
-        Assert.assertTrue(logFile3.exists());
-        Assert.assertTrue(logFile4.exists());
-
-        String priorAutocreateDirValue = System.getProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE);
-        System.setProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE, "false");
-        FileTxnSnapLog fileTxnSnapLog;
-        try {
-            fileTxnSnapLog = new FileTxnSnapLog(logDir, snapDir);
-        } finally {
-            if (priorAutocreateDirValue == null) {
-                System.clearProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE);
-            } else {
-                System.setProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE, priorAutocreateDirValue);
-            }
-        }
+        createFileTxnSnapLogWithNoAutoCreate(logDir, snapDir);
     }
 
 }
