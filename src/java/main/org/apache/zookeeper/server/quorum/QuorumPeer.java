@@ -480,7 +480,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         currentVote = v;
     }
 
-    volatile boolean running = true;
+    private volatile boolean running = true;
 
     /**
      * The number of milliseconds of each tick
@@ -1768,10 +1768,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     public synchronized void initConfigInZKDatabase() {   
         if (zkDb != null) zkDb.initConfigInZKDatabase(getQuorumVerifier());
-    }
-    
-    public void setRunning(boolean running) {
-        this.running = running;
     }
 
     public boolean isRunning() {
