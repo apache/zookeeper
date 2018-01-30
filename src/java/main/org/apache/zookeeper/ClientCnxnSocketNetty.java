@@ -112,7 +112,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
 
         ClientBootstrap bootstrap = new ClientBootstrap(channelFactory);
 
-        bootstrap.setPipelineFactory(new ZKClientPipelineFactory());
+        bootstrap.setPipelineFactory(new ZKClientPipelineFactory(addr.getHostString(), addr.getPort()));
         bootstrap.setOption("soLinger", -1);
         bootstrap.setOption("tcpNoDelay", true);
 
@@ -340,6 +340,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
             return instance;
         }
     }
+
     /**
      * ZKClientPipelineFactory is the netty pipeline factory for this netty
      * connection implementation.
@@ -347,6 +348,13 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
     private class ZKClientPipelineFactory implements ChannelPipelineFactory {
         private SSLContext sslContext = null;
         private SSLEngine sslEngine = null;
+        private String host;
+        private int port;
+
+        public ZKClientPipelineFactory(String host, int port) {
+            this.host = host;
+            this.port = port;
+        }
 
         @Override
         public ChannelPipeline getPipeline() throws Exception {
@@ -363,7 +371,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         private synchronized void initSSL(ChannelPipeline pipeline) throws SSLContextException {
             if (sslContext == null || sslEngine == null) {
                 sslContext = X509Util.createSSLContext(clientConfig);
-                sslEngine = sslContext.createSSLEngine();
+                sslEngine = sslContext.createSSLEngine(host,port);
                 sslEngine.setUseClientMode(true);
             }
             pipeline.addLast("ssl", new SslHandler(sslEngine));
