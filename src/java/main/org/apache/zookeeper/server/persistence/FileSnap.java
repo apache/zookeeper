@@ -37,6 +37,7 @@ import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
+import org.apache.zookeeper.common.AtomicFileOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.server.DataTree;
@@ -51,11 +52,14 @@ import org.apache.zookeeper.server.util.SerializeUtils;
 public class FileSnap implements SnapShot {
     File snapDir;
     private volatile boolean close = false;
-    private static final int VERSION=2;
-    private static final long dbId=-1;
+    private static final int VERSION = 2;
+    private static final long dbId = -1;
     private static final Logger LOG = LoggerFactory.getLogger(FileSnap.class);
     public final static int SNAP_MAGIC
-        = ByteBuffer.wrap("ZKSN".getBytes()).getInt();
+            = ByteBuffer.wrap("ZKSN".getBytes()).getInt();
+
+    public static final String SNAPSHOT_FILE_PREFIX = "snapshot";
+
     public FileSnap(File snapDir) {
         this.snapDir = snapDir;
     }
@@ -63,7 +67,7 @@ public class FileSnap implements SnapShot {
     /**
      * deserialize a data tree from the most recent snapshot
      * @return the zxid of the snapshot
-     */ 
+     */
     public long deserialize(DataTree dt, Map<Long, Integer> sessions)
             throws IOException {
         // we run through 100 snapshots (not all of them)
@@ -95,16 +99,16 @@ public class FileSnap implements SnapShot {
             } catch(IOException e) {
                 LOG.warn("problem reading snap file " + snap, e);
             } finally {
-                if (snapIS != null) 
+                if (snapIS != null)
                     snapIS.close();
-                if (crcIn != null) 
+                if (crcIn != null)
                     crcIn.close();
-            } 
+            }
         }
         if (!foundValid) {
             throw new IOException("Not able to find valid snapshots in " + snapDir);
         }
-        dt.lastProcessedZxid = Util.getZxidFromName(snap.getName(), "snapshot");
+        dt.lastProcessedZxid = Util.getZxidFromName(snap.getName(), SNAPSHOT_FILE_PREFIX);
         return dt.lastProcessedZxid;
     }
 
@@ -121,7 +125,7 @@ public class FileSnap implements SnapShot {
         header.deserialize(ia, "fileheader");
         if (header.getMagic() != SNAP_MAGIC) {
             throw new IOException("mismatching magic headers "
-                    + header.getMagic() + 
+                    + header.getMagic() +
                     " !=  " + FileSnap.SNAP_MAGIC);
         }
         SerializeUtils.deserializeSnapshot(dt,ia,sessions);
@@ -138,7 +142,7 @@ public class FileSnap implements SnapShot {
         }
         return files.get(0);
     }
-    
+
     /**
      * find the last (maybe) valid n snapshots. this does some 
      * minor checks on the validity of the snapshots. It just
@@ -152,7 +156,7 @@ public class FileSnap implements SnapShot {
      * @throws IOException
      */
     private List<File> findNValidSnapshots(int n) throws IOException {
-        List<File> files = Util.sortDataDir(snapDir.listFiles(),"snapshot", false);
+        List<File> files = Util.sortDataDir(snapDir.listFiles(), SNAPSHOT_FILE_PREFIX, false);
         int count = 0;
         List<File> list = new ArrayList<File>();
         for (File f : files) {
@@ -182,13 +186,13 @@ public class FileSnap implements SnapShot {
      * @throws IOException
      */
     public List<File> findNRecentSnapshots(int n) throws IOException {
-        List<File> files = Util.sortDataDir(snapDir.listFiles(), "snapshot", false);
+        List<File> files = Util.sortDataDir(snapDir.listFiles(), SNAPSHOT_FILE_PREFIX, false);
         int count = 0;
         List<File> list = new ArrayList<File>();
         for (File f: files) {
             if (count == n)
                 break;
-            if (Util.getZxidFromName(f.getName(), "snapshot") != -1) {
+            if (Util.getZxidFromName(f.getName(), SNAPSHOT_FILE_PREFIX) != -1) {
                 count++;
                 list.add(f);
             }

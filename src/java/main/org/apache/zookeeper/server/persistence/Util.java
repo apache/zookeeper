@@ -51,9 +51,6 @@ public class Util {
     private static final String LOG_DIR="logDir";
     private static final String DB_FORMAT_CONV="dbFormatConversion";
 
-    private static final String LOG_FILE_PREFIX = "log";
-    private static final String SNAP_FILE_PREFIX = "snapshot";
-    
     public static String makeURIString(String dataDir, String dataLogDir, 
             String convPolicy){
         String uri="file:"+SNAP_DIR+"="+dataDir+";"+LOG_DIR+"="+dataLogDir;
@@ -86,7 +83,7 @@ public class Util {
      * @return file name
      */
     public static String makeLogName(long zxid) {
-        return LOG_FILE_PREFIX + "." + Long.toHexString(zxid);
+        return FileTxnLog.LOG_FILE_PREFIX + "." + Long.toHexString(zxid);
     }
 
     /**
@@ -96,7 +93,7 @@ public class Util {
      * @return file name
      */
     public static String makeSnapshotName(long zxid) {
-        return SNAP_FILE_PREFIX + "." + Long.toHexString(zxid);
+        return FileSnap.SNAPSHOT_FILE_PREFIX + "." + Long.toHexString(zxid);
     }
     
     /**
@@ -160,7 +157,7 @@ public class Util {
      * @throws IOException
      */
     public static boolean isValidSnapshot(File f) throws IOException {
-        if (f==null || Util.getZxidFromName(f.getName(), "snapshot") == -1)
+        if (f==null || Util.getZxidFromName(f.getName(), FileSnap.SNAPSHOT_FILE_PREFIX) == -1)
             return false;
 
         // Check for a valid snapshot
@@ -308,7 +305,7 @@ public class Util {
      * @return
      */
     public static boolean isLogFileName(String fileName) {
-        return fileName.startsWith(LOG_FILE_PREFIX + ".");
+        return fileName.startsWith(FileTxnLog.LOG_FILE_PREFIX + ".");
     }
 
     /**
@@ -318,7 +315,7 @@ public class Util {
      * @return
      */
     public static boolean isSnapshotFileName(String fileName) {
-        return fileName.startsWith(SNAP_FILE_PREFIX + ".");
+        return fileName.startsWith(FileSnap.SNAPSHOT_FILE_PREFIX + ".");
     }
     
 }
