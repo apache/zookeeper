@@ -370,7 +370,8 @@ public class FileTxnLog implements TxnLog {
             if (forceSync) {
                 long startSyncNS = System.nanoTime();
 
-                log.getChannel().force(false);
+                FileChannel channel = log.getChannel();
+                channel.force(false);
 
                 syncElapsedMS = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startSyncNS);
                 if (syncElapsedMS > fsyncWarningThresholdMS) {
@@ -378,6 +379,7 @@ public class FileTxnLog implements TxnLog {
                             + Thread.currentThread().getName()
                             + " took " + syncElapsedMS
                             + "ms which will adversely effect operation latency. "
+                            + "File size is " + channel.size() + " bytes. "
                             + "See the ZooKeeper troubleshooting guide");
                 }
             }
