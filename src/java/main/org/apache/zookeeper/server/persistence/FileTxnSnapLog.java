@@ -138,6 +138,7 @@ public class FileTxnSnapLog {
         }
 
         // check content of transaction log and snapshot dirs if they are two different directories
+        // See ZOOKEEPER-2967 for more details
         if(!this.dataDir.getPath().equals(this.snapDir.getPath())){
             checkLogDir();
             checkSnapDir();
@@ -150,7 +151,7 @@ public class FileTxnSnapLog {
                 ZOOKEEPER_DB_AUTOCREATE_DEFAULT));
     }
 
-    private void checkLogDir() throws LogdirContentCheckException {
+    private void checkLogDir() throws LogDirContentCheckException {
         File[] files = this.dataDir.listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
@@ -158,11 +159,11 @@ public class FileTxnSnapLog {
             }
         });
         if (files.length > 0) {
-            throw new LogdirContentCheckException("Log directory has snapshot files. Check if dataLogDir and dataDir configuration is correct.");
+            throw new LogDirContentCheckException("Log directory has snapshot files. Check if dataLogDir and dataDir configuration is correct.");
         }
     }
 
-    private void checkSnapDir() throws SnapdirContentCheckException {
+    private void checkSnapDir() throws SnapDirContentCheckException {
         File[] files = this.snapDir.listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
@@ -170,7 +171,7 @@ public class FileTxnSnapLog {
             }
         });
         if (files.length > 0) {
-            throw new SnapdirContentCheckException("Snapshot directory has log files. Check if dataLogDir and dataDir configuration is correct.");
+            throw new SnapDirContentCheckException("Snapshot directory has log files. Check if dataLogDir and dataDir configuration is correct.");
         }
     }
 
@@ -498,15 +499,15 @@ public class FileTxnSnapLog {
     }
 
     @SuppressWarnings("serial")
-    public static class LogdirContentCheckException extends DatadirException {
-        public LogdirContentCheckException(String msg) {
+    public static class LogDirContentCheckException extends DatadirException {
+        public LogDirContentCheckException(String msg) {
             super(msg);
         }
     }
 
     @SuppressWarnings("serial")
-    public static class SnapdirContentCheckException extends DatadirException {
-        public SnapdirContentCheckException(String msg) {
+    public static class SnapDirContentCheckException extends DatadirException {
+        public SnapDirContentCheckException(String msg) {
             super(msg);
         }
     }
