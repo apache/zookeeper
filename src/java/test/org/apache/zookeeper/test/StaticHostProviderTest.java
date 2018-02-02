@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.client;
+package org.apache.zookeeper.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
@@ -37,7 +37,6 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Random;
 
 public class StaticHostProviderTest extends ZKTestCase {
     private static final Logger LOG = LoggerFactory.getLogger(StaticHostProviderTest.class);

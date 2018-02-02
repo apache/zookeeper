@@ -21,8 +21,6 @@ package org.apache.zookeeper.test;
 import java.io.ByteArrayOutputStream;
 import java.io.LineNumberReader;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Pattern;
 
 import junit.framework.Assert;
@@ -34,15 +32,11 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NotReadOnlyException;
 import org.apache.zookeeper.Transaction;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.common.Time;
-import org.apache.zookeeper.client.StaticHostProviderTest;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 
 import org.junit.After;

@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,10 @@
 
 package org.apache.zookeeper.client;
 
+import org.apache.yetus.audience.InterfaceAudience;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -25,17 +29,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
-import org.apache.yetus.audience.InterfaceAudience;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 /**
  * Most simple HostProvider, resolves only on instantiation.
- * 
+ *
  */
 @InterfaceAudience.Public
 public final class StaticHostProvider implements HostProvider {
@@ -54,7 +52,7 @@ public final class StaticHostProvider implements HostProvider {
 
     /**
      * Constructs a SimpleHostSet.
-     * 
+     *
      * @param serverAddresses
      *            possibly unresolved ZooKeeper server addresses
      * @throws IllegalArgumentException
@@ -62,16 +60,16 @@ public final class StaticHostProvider implements HostProvider {
      */
     public StaticHostProvider(Collection<InetSocketAddress> serverAddresses) {
         for (InetSocketAddress address : serverAddresses) {
-			try {
-            	InetAddress resolvedAddresses[] =  InetAddress.getAllByName(getHostString(address));
-            	for (InetAddress resolvedAddress : resolvedAddresses) {
-                	this.serverAddresses.add(new InetSocketAddress(resolvedAddress, address.getPort()));
-            	}
-			} catch (UnknownHostException e) {
+            try {
+                InetAddress resolvedAddresses[] = InetAddress.getAllByName(getHostString(address));
+                for (InetAddress resolvedAddress : resolvedAddresses) {
+                    this.serverAddresses.add(new InetSocketAddress(resolvedAddress, address.getPort()));
+                }
+            } catch (UnknownHostException e) {
                 LOG.error("Unable to connect to server: {}", address, e);
             }
         }
-        
+
         if (this.serverAddresses.isEmpty()) {
             throw new IllegalArgumentException(
                     "A HostProvider may not be empty!");
@@ -126,11 +124,11 @@ public final class StaticHostProvider implements HostProvider {
     private int nextAdded = 0;
     private int nextRemoved = 0;
 
-    int getNextAdded() {
+    public int getNextAdded() {
         return nextAdded;
     }
 
-    int getNextRemoved() {
+    public int getNextRemoved() {
         return nextRemoved;
     }
 
