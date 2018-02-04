@@ -165,7 +165,7 @@ public class Follower extends Learner{
             revalidate(qp);
             break;
         case Leader.SYNC:
-            fzk.sync();
+            fzk.sync((int)qp.getZxid());
             break;
         default:
             LOG.warn("Unknown packet type: {}", LearnerHandler.packetToString(qp));

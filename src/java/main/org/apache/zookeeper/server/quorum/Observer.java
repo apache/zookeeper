@@ -116,7 +116,7 @@ public class Observer extends Learner{
             revalidate(qp);
             break;
         case Leader.SYNC:
-            ((ObserverZooKeeperServer)zk).sync();
+            ((ObserverZooKeeperServer) zk).sync((int) qp.getZxid());
             break;
         case Leader.INFORM:
             TxnHeader hdr = new TxnHeader();

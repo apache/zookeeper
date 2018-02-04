@@ -20,6 +20,8 @@ package org.apache.zookeeper.server.quorum;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.KeeperException.Code;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.server.FinalRequestProcessor;
@@ -115,13 +117,16 @@ public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
     /*
      * Process a sync request
      */
-    synchronized public void sync(){
+    synchronized public void sync(int rc) {
         if(pendingSyncs.size() ==0){
             LOG.warn("Not expecting a sync.");
             return;
         }
-                
         Request r = pendingSyncs.remove();
+        if (rc != Code.OK.intValue()) {
+            KeeperException ke = KeeperException.create(Code.get(rc));
+            r.setException(ke);
+        }
         commitProcessor.commit(r);
     }
     
