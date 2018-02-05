@@ -30,7 +30,7 @@ Release notes for Apache Zookeeper releases are available in Jira: [Browse relea
 
 This release fixes 53 issues, it includes support for Java 9 and other critical bug fixes.  See [ZooKeeper 3.4.11 Release Notes](https://zookeeper.apache.org/doc/r3.4.11/releasenotes.html) for details.
 
-**WARNING**: [ZOOKEEPER-2960](https://issues.apache.org/jira/browse/ZOOKEEPER-2960) was recently identified as a regression in 3.4.11 affecting the specification of dataDir and dataLogDir configuration parameters. It will be addressed in 3.4.12.
+**WARNING**: [ZOOKEEPER-2960](https://issues.apache.org/jira/browse/ZOOKEEPER-2960) was recently identified as a regression in 3.4.11 affecting the specification of separate dataDir and dataLogDir configuration parameters (vs the default which is a single directory for both). It will be addressed in 3.4.12.
 
 ### 17 April, 2017: release 3.5.3-beta available
 
