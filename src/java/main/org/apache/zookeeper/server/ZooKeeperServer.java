@@ -102,6 +102,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public final static Exception ok = new Exception("No prob");
     protected RequestProcessor firstProcessor;
     protected volatile State state = State.INITIAL;
+    public static final String AUTHENTICATION_FAILED = "AuthenticationFailed";
 
     protected enum State {
         INITIAL, RUNNING, SHUTDOWN, ERROR
@@ -1101,8 +1102,16 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         } else {
             if (h.getType() == OpCode.sasl) {
                 Record rsp = processSasl(incomingBuffer,cnxn);
-                ReplyHeader rh = new ReplyHeader(h.getXid(), 0, KeeperException.Code.OK.intValue());
-                cnxn.sendResponse(rh,rsp, "response"); // not sure about 3rd arg..what is it?
+                if (rsp == null) {
+                    ReplyHeader rh = new ReplyHeader(h.getXid(), 0, Code.AUTHFAILED.intValue());
+                    cnxn.sendResponse(rh, new SetSASLResponse(AUTHENTICATION_FAILED.getBytes()), "response"); // not sure about 3rd arg..what is it?
+                    LOG.warn("Closing client connection due to SASL authentication failure.");
+                    cnxn.sendBuffer(ServerCnxnFactory.closeConn);
+                    cnxn.disableRecv();
+                } else {
+                    ReplyHeader rh = new ReplyHeader(h.getXid(), 0, KeeperException.Code.OK.intValue());
+                    cnxn.sendResponse(rh, rsp, "response"); // not sure about 3rd arg..what is it?
+                }
                 return;
             }
             else {
@@ -1149,8 +1158,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                   (System.getProperty("zookeeper.allowSaslFailedClients").equals("true"))) {
                     LOG.warn("Maintaining client connection despite SASL authentication failure.");
                 } else {
-                    LOG.warn("Closing client connection due to SASL authentication failure.");
-                    cnxn.close();
+                    return null;
                 }
             }
         }
