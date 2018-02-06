@@ -1125,7 +1125,7 @@ server.3=zoo3:2888:3888</programlisting>
       <section>
         <title>Disabling data directory autocreation</title>
 
-        <para><emphasis role="bold">New in 3.5:</emphasis> The default
+        <para><emphasis role="bold">Backported from 3.5:</emphasis> The default
         behavior of a ZooKeeper server is to automatically create the
         data directory (specified in the configuration file) when
         started if that directory does not already exist. This can be
