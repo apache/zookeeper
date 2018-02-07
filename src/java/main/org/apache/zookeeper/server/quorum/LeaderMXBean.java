@@ -38,4 +38,24 @@ public interface LeaderMXBean extends ZooKeeperServerMXBean {
      * @return time taken for leader election in milliseconds.
      */
     public long getElectionTimeTaken();
+
+    /**
+     * @return size of latest generated proposal
+     */
+    public int getLastProposalSize();
+
+    /**
+     * @return size of smallest generated proposal
+     */
+    public int getMinProposalSize();
+
+    /**
+     * @return size of largest generated proposal
+     */
+    public int getMaxProposalSize();
+
+    /**
+     * Resets statistics of proposal size (min/max/last)
+     */
+    public void resetProposalStatistics();
 }

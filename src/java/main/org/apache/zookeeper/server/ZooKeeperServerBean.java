@@ -20,6 +20,7 @@ package org.apache.zookeeper.server;
 
 import java.util.Date;
 
+import org.apache.jute.BinaryInputArchive;
 import org.apache.zookeeper.Version;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
 
@@ -166,5 +167,10 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
     @Override
     public long getTxnLogElapsedSyncTime() {
         return zks.getTxnLogElapsedSyncTime();
+    }
+
+    @Override
+    public int getJuteMaxBufferSize() {
+        return BinaryInputArchive.maxBuffer;
     }
 }

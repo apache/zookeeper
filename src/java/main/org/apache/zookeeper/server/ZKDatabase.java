@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.server;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collection;
@@ -32,7 +31,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
-import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
@@ -264,19 +262,8 @@ public class ZKDatabase {
                 maxCommittedLog = request.zxid;
             }
 
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
-            try {
-                request.getHdr().serialize(boa, "hdr");
-                if (request.getTxn() != null) {
-                    request.getTxn().serialize(boa, "txn");
-                }
-                baos.close();
-            } catch (IOException e) {
-                LOG.error("This really should be impossible", e);
-            }
-            QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, request.zxid,
-                    baos.toByteArray(), null);
+            byte[] data = SerializeUtils.serializeRequest(request);
+            QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, request.zxid, data, null);
             Proposal p = new Proposal();
             p.packet = pp;
             p.request = request;
