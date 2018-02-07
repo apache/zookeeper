@@ -120,7 +120,7 @@ public class FileTxnSnapLog {
                 return Util.isSnapshotFileName(name);
             }
         });
-        if (files.length > 0) {
+        if (files != null && files.length > 0) {
             throw new LogDirContentCheckException("Log directory has snapshot files. Check if dataLogDir and dataDir configuration is correct.");
         }
     }
@@ -132,7 +132,7 @@ public class FileTxnSnapLog {
                 return Util.isLogFileName(name);
             }
         });
-        if (files.length > 0) {
+        if (files != null && files.length > 0) {
             throw new SnapDirContentCheckException("Snapshot directory has log files. Check if dataLogDir and dataDir configuration is correct.");
         }
     }
