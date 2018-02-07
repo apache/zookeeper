@@ -18,6 +18,7 @@
 package org.apache.zookeeper.server;
 
 import static org.apache.zookeeper.client.FourLetterWordMain.send4LetterWord;
+import static org.apache.zookeeper.server.command.AbstractFourLetterCommand.ZK_NOT_SERVING;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,7 +46,6 @@ public class ZooKeeperServerStartupTest extends ZKTestCase {
     private static int PORT = PortAssignment.unique();
     private static String HOST = "127.0.0.1";
     private static String HOSTPORT = HOST + ":" + PORT;
-    private static final String ZK_NOT_SERVING = "This ZooKeeper instance is not currently serving requests";
 
     private ServerCnxnFactory servcnxnf;
     private ZooKeeperServer zks;
