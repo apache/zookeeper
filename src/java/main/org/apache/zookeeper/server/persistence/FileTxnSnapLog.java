@@ -64,10 +64,6 @@ public class FileTxnSnapLog {
 
     public static final String ZOOKEEPER_DATADIR_AUTOCREATE_DEFAULT = "true";
 
-    static final String ZOOKEEPER_DB_AUTOCREATE = "zookeeper.db.autocreate";
-
-    private static final String ZOOKEEPER_DB_AUTOCREATE_DEFAULT = "true";
-
     /**
      * This listener helps
      * the external apis calling

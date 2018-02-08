@@ -126,22 +126,6 @@ public class FileTxnSnapLogTest {
         return fileTxnSnapLog;
     }
 
-    private FileTxnSnapLog createFileTxnSnapLogWithAutoCreateDB(File logDir, File snapDir, String autoCreateValue) throws IOException {
-        String priorAutocreateDBValue = System.getProperty(FileTxnSnapLog.ZOOKEEPER_DB_AUTOCREATE);
-        System.setProperty(FileTxnSnapLog.ZOOKEEPER_DB_AUTOCREATE, autoCreateValue);
-        FileTxnSnapLog fileTxnSnapLog;
-        try {
-            fileTxnSnapLog = new FileTxnSnapLog(logDir, snapDir);
-        } finally {
-            if (priorAutocreateDBValue == null) {
-                System.clearProperty(FileTxnSnapLog.ZOOKEEPER_DB_AUTOCREATE);
-            } else {
-                System.setProperty(FileTxnSnapLog.ZOOKEEPER_DB_AUTOCREATE, priorAutocreateDBValue);
-            }
-        }
-        return fileTxnSnapLog;
-    }
-
     /**
      * Test verifies the auto creation of log dir and snap dir.
      * Sets "zookeeper.datadir.autocreate" to true.
@@ -177,37 +161,6 @@ public class FileTxnSnapLogTest {
             throw e;
         }
         Assert.fail("Expected exception from FileTxnSnapLog");
-    }
-
-    private void attemptAutoCreateDB(File dataDir, File snapDir, Map<Long, Integer> sessions,
-                                     String autoCreateValue, long expectedValue) throws IOException {
-        sessions.clear();
-
-        FileTxnSnapLog fileTxnSnapLog = createFileTxnSnapLogWithAutoCreateDB(dataDir, snapDir, autoCreateValue);
-
-        long zxid = fileTxnSnapLog.restore(new DataTree(), sessions, new FileTxnSnapLog.PlayBackListener() {
-            @Override
-            public void onTxnLoaded(TxnHeader hdr, Record rec) {
-                // empty by default
-            }
-        });
-        Assert.assertEquals("unexpected zxid", expectedValue, zxid);
-    }
-
-    @Test
-    public void testAutoCreateDB() throws IOException {
-        Assert.assertTrue("cannot create log directory", logDir.mkdir());
-        Assert.assertTrue("cannot create snapshot directory", snapDir.mkdir());
-        File initFile = new File(logDir, "initialize");
-        Assert.assertFalse("initialize file already exists", initFile.exists());
-
-        Map<Long, Integer> sessions = new ConcurrentHashMap<>();
-
-        attemptAutoCreateDB(logDir, snapDir, sessions,"false", -1L);
-        attemptAutoCreateDB(logDir, snapDir, sessions,"true", 0L);
-
-        Assert.assertTrue("cannot create initialize file", initFile.createNewFile());
-        attemptAutoCreateDB(logDir, snapDir, sessions,"false", 0L);
     }
 
     @Test
