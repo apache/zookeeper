@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,6 +37,10 @@ import java.util.List;
  */
 @InterfaceAudience.Public
 public final class StaticHostProvider implements HostProvider {
+    public interface Resolver {
+        InetAddress[] getAllByName(String name) throws UnknownHostException;
+    }
+
     private static final Logger LOG = LoggerFactory
             .getLogger(StaticHostProvider.class);
 
@@ -50,6 +54,8 @@ public final class StaticHostProvider implements HostProvider {
     // Don't re-resolve on first next() call
     private boolean connectedSinceNext = true;
 
+    private Resolver resolver;
+
     /**
      * Constructs a SimpleHostSet.
      *
@@ -59,9 +65,44 @@ public final class StaticHostProvider implements HostProvider {
      *             if serverAddresses is empty or resolves to an empty list
      */
     public StaticHostProvider(Collection<InetSocketAddress> serverAddresses) {
+        this.resolver = new Resolver() {
+            @Override
+            public InetAddress[] getAllByName(String name) throws UnknownHostException {
+                return InetAddress.getAllByName(name);
+            }
+        };
+        init(serverAddresses);
+    }
+
+    /**
+     * Introduced for testing purposes. getAllByName() is a static method of InetAddress, therefore cannot be easily mocked.
+     * By abstraction of Resolver interface we can easily inject a mocked implementation in tests.
+     *
+     * @param serverAddresses
+     *            possibly unresolved ZooKeeper server addresses
+     * @param resolver
+     *            custom resolver implementation
+     * @throws IllegalArgumentException
+     *             if serverAddresses is empty or resolves to an empty list
+     */
+    public StaticHostProvider(Collection<InetSocketAddress> serverAddresses, Resolver resolver) {
+        this.resolver = resolver;
+        init(serverAddresses);
+    }
+
+    /**
+     * Common init method for all constructors.
+     * Resolve all unresolved server addresses, put them in a list and shuffle.
+     */
+    private void init(Collection<InetSocketAddress> serverAddresses) {
+        if (this.serverAddresses.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "A HostProvider may not be empty!");
+        }
+
         for (InetSocketAddress address : serverAddresses) {
             try {
-                InetAddress resolvedAddresses[] = InetAddress.getAllByName(getHostString(address));
+                InetAddress resolvedAddresses[] = this.resolver.getAllByName(getHostString(address));
                 for (InetAddress resolvedAddress : resolvedAddresses) {
                     this.serverAddresses.add(new InetSocketAddress(resolvedAddress, address.getPort()));
                 }
@@ -70,10 +111,6 @@ public final class StaticHostProvider implements HostProvider {
             }
         }
 
-        if (this.serverAddresses.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "A HostProvider may not be empty!");
-        }
         Collections.shuffle(this.serverAddresses);
     }
 
@@ -141,7 +178,7 @@ public final class StaticHostProvider implements HostProvider {
                 LOG.info("Resolving again hostname: {}", getHostString(curAddr));
                 try {
                     int thePort = curAddr.getPort();
-                    InetAddress resolvedAddresses[] = InetAddress.getAllByName(curHostString);
+                    InetAddress resolvedAddresses[] = this.resolver.getAllByName(curHostString);
                     nextAdded = 0;
                     nextRemoved = 0;
                     if (resolvedAddresses.length == 1) {
