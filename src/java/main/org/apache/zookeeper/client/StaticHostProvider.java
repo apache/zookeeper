@@ -95,11 +95,6 @@ public final class StaticHostProvider implements HostProvider {
      * Resolve all unresolved server addresses, put them in a list and shuffle.
      */
     private void init(Collection<InetSocketAddress> serverAddresses) {
-        if (this.serverAddresses.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "A HostProvider may not be empty!");
-        }
-
         for (InetSocketAddress address : serverAddresses) {
             try {
                 InetAddress resolvedAddresses[] = this.resolver.getAllByName(getHostString(address));
@@ -109,6 +104,11 @@ public final class StaticHostProvider implements HostProvider {
             } catch (UnknownHostException e) {
                 LOG.error("Unable to connect to server: {}", address, e);
             }
+        }
+
+        if (this.serverAddresses.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "A HostProvider may not be empty!");
         }
 
         Collections.shuffle(this.serverAddresses);
