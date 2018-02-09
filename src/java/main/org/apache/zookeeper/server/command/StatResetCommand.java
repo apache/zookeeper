@@ -21,7 +21,6 @@ package org.apache.zookeeper.server.command;
 import java.io.PrintWriter;
 
 import org.apache.zookeeper.server.ServerCnxn;
-import org.apache.zookeeper.server.ServerStats;
 
 public class StatResetCommand extends AbstractFourLetterCommand {
     public StatResetCommand(PrintWriter pw, ServerCnxn serverCnxn) {
@@ -33,8 +32,7 @@ public class StatResetCommand extends AbstractFourLetterCommand {
         if (!isZKServerRunning()) {
             pw.println(ZK_NOT_SERVING);
         } else {
-            ServerStats serverStats = zkServer.serverStats();
-            serverStats.reset();
+            zkServer.serverStats().reset();
             pw.println("Server stats reset.");
         }
     }
