@@ -55,7 +55,7 @@ public class LeaderBeanTest {
         qp = new QuorumPeer();
         QuorumVerifier quorumVerifierMock = mock(QuorumVerifier.class);
         qp.setQuorumVerifier(quorumVerifierMock, false);
-        File tmpDir = ClientBase.createEmptyTestDir();
+        File tmpDir = ClientBase.createTmpDir();
         fileTxnSnapLog = new FileTxnSnapLog(new File(tmpDir, "data"),
                 new File(tmpDir, "data_txnlog"));
         ZKDatabase zkDb = new ZKDatabase(fileTxnSnapLog);
