@@ -452,7 +452,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
         <ivy:report conf="*" todir="${build.dir}/dependency-report"/>
     </target>
 
-    <target name="compile" depends="ivy-retrieve,clover,build-generated">
+    <target name="compile" depends="ivy-retrieve,clover,build-generated,print_compile_classpath">
         <javac srcdir="${java.src.dir}" destdir="${build.classes}" includeantruntime="false"
                target="${javac.target}" source="${javac.source}" debug="on">
             <classpath refid="java.classpath"/>
@@ -1346,7 +1346,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
       </and>
     </condition>
 
-    <target name="junit.run">
+    <target name="junit.run" depends="print_test_classpath">
         <junit showoutput="${test.output}"
                printsummary="${test.junit.printsummary}"
                haltonfailure="${test.junit.haltonfailure}"
@@ -1940,11 +1940,11 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
         <echo message="|   |-- ${echo.compile.classpath}"/>
     </target>
 
-    <target name="print_junit_classpath">
-        <pathconvert pathsep="${line.separator}|   |-- " property="echo.junit.classpath" refid="junit.classpath"/>
-        <echo message="|-- junit classpath"/>
+    <target name="print_test_classpath">
+        <pathconvert pathsep="${line.separator}|   |-- " property="echo.test.classpath" refid="test.java.classpath"/>
+        <echo message="|-- test classpath"/>
         <echo message="|   |"/>
-        <echo message="|   |-- ${echo.junit.classpath}"/>
+        <echo message="|   |-- ${echo.test.classpath}"/>
     </target>
 
 </project>
