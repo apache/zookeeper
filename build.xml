@@ -263,7 +263,9 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
       <fileset dir="${ant.home}/lib">
           <include name="ant.jar" />
       </fileset>
-      <pathelement path="${clover.jar}" />
+      <fileset dir="${clover.home}/lib" erroronmissingdir="false">
+          <include name="**/*.jar" if="run.clover" />
+      </fileset>
     </path>
 
     <!-- the normal classpath -->
@@ -1930,5 +1932,19 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
        <delete dir=".settings" />
        <delete dir="${build.dir.eclipse}" />
      </target>
+
+    <target name="print_compile_classpath">
+        <pathconvert pathsep="${line.separator}|   |-- " property="echo.compile.classpath" refid="java.classpath"/>
+        <echo message="|-- compile classpath"/>
+        <echo message="|   |"/>
+        <echo message="|   |-- ${echo.compile.classpath}"/>
+    </target>
+
+    <target name="print_junit_classpath">
+        <pathconvert pathsep="${line.separator}|   |-- " property="echo.junit.classpath" refid="junit.classpath"/>
+        <echo message="|-- junit classpath"/>
+        <echo message="|   |"/>
+        <echo message="|   |-- ${echo.junit.classpath}"/>
+    </target>
 
 </project>
