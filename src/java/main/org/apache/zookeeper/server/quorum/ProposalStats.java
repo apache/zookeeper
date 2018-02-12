@@ -18,14 +18,19 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import com.codahale.metrics.ExponentiallyDecayingReservoir;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Reservoir;
+import com.codahale.metrics.SlidingTimeWindowArrayReservoir;
 import com.codahale.metrics.Snapshot;
+import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.jmx.CommonNames;
 import org.apache.zookeeper.jmx.MBeanRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.TimeUnit;
 
 import static com.codahale.metrics.MetricRegistry.name;
 
@@ -35,11 +40,14 @@ import static com.codahale.metrics.MetricRegistry.name;
  * It provides stats of proposal sizes from the last 5 minutes with acceptable cpu/memory footprint optimized for streaming data.
  */
 public class ProposalStats {
+    private static final Logger LOG = LoggerFactory.getLogger(ZKConfig.class);
     private final Histogram proposalSizes;
 
     ProposalStats() {
         final MetricRegistry metrics = new MetricRegistry();
-        Reservoir reservoir = new ExponentiallyDecayingReservoir();
+        long winSize = getWindowSizeInMinutes();
+        Reservoir reservoir = new SlidingTimeWindowArrayReservoir(winSize, TimeUnit.MINUTES);
+        LOG.info("Initialized histogram sliding window size to {} minutes", winSize);
         proposalSizes = new Histogram(reservoir);
         metrics.register(name(CommonNames.DOMAIN, "Leader", "proposalSize"), proposalSizes);
         final JmxReporter jmxReporter = JmxReporter.forRegistry(metrics).registerWith(MBeanRegistry.getInstance().getPlatformMBeanServer()).build();
@@ -66,5 +74,14 @@ public class ProposalStats {
     public String toString() {
         Snapshot s = proposalSizes.getSnapshot();
         return String.format("%d/%s/%d", s.getMin(), s.getMean(), s.getMax());
+    }
+
+    private Long getWindowSizeInMinutes() {
+        String winSize = System.getProperty("zookeeper.metrics.windowSize");
+        if (winSize == null) {
+            return 5l;
+        } else {
+            return Long.parseLong(winSize);
+        }
     }
 }
