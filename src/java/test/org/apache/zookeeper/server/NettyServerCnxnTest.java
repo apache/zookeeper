@@ -20,13 +20,21 @@ package org.apache.zookeeper.server;
 
 
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.server.quorum.ProposalStats;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+
+import static org.hamcrest.Matchers.greaterThan;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 /**
  * Test verifies the behavior of NettyServerCnxn which represents a connection
@@ -82,6 +90,19 @@ public class NettyServerCnxnTest extends ClientBase {
             }
         } finally {
             zk.close();
+        }
+    }
+
+    @Test
+    public void testClientResponseStatsUpdate() throws IOException, InterruptedException, KeeperException {
+        try (ZooKeeper zk = createClient()) {
+            ProposalStats stats = serverFactory.getZooKeeperServer().serverStats().getClientResponseStats();
+            assertEquals("", -1, stats.getLast());
+
+            zk.create("/a", "test".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT);
+
+            assertThat(stats.getLast(), greaterThan(0));
         }
     }
 }

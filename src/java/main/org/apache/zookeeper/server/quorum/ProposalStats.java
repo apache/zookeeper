@@ -37,11 +37,11 @@ public class ProposalStats {
      */
     private int maxProposalSize = -1;
 
-    public synchronized int getLastProposalSize() {
+    public synchronized int getLast() {
         return lastProposalSize;
     }
 
-    synchronized void setLastProposalSize(int value) {
+    public synchronized void setLastProposalSize(int value) {
         lastProposalSize = value;
         if (minProposalSize == -1 || value < minProposalSize) {
             minProposalSize = value;
@@ -51,11 +51,11 @@ public class ProposalStats {
         }
     }
 
-    public synchronized int getMinProposalSize() {
+    public synchronized int getMin() {
         return minProposalSize;
     }
 
-    public synchronized int getMaxProposalSize() {
+    public synchronized int getMax() {
         return maxProposalSize;
     }
 
@@ -65,6 +65,7 @@ public class ProposalStats {
         maxProposalSize = -1;
     }
 
+    @Override
     public synchronized String toString() {
         return String.format("%d/%d/%d", lastProposalSize, minProposalSize, maxProposalSize);
     }

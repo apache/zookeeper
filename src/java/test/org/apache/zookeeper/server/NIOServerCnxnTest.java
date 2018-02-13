@@ -24,11 +24,17 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.server.quorum.ProposalStats;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.hamcrest.Matchers.greaterThan;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 
 public class NIOServerCnxnTest extends ClientBase {
     private static final Logger LOG = LoggerFactory
@@ -47,7 +53,7 @@ public class NIOServerCnxnTest extends ClientBase {
             // make sure zkclient works
             zk.create(path, "test".getBytes(), Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT);
-            Assert.assertNotNull("Didn't create znode:" + path,
+            assertNotNull("Didn't create znode:" + path,
                     zk.exists(path, false));
             // Defaults ServerCnxnFactory would be instantiated with
             // NIOServerCnxnFactory
@@ -67,6 +73,20 @@ public class NIOServerCnxnTest extends ClientBase {
             }
         } finally {
             zk.close();
+        }
+
+    }
+
+    @Test
+    public void testClientResponseStatsUpdate() throws IOException, InterruptedException, KeeperException {
+        try (ZooKeeper zk = createClient()) {
+            ProposalStats stats = serverFactory.getZooKeeperServer().serverStats().getClientResponseStats();
+            assertEquals("", -1, stats.getLast());
+
+            zk.create("/a", "test".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT);
+
+            assertThat(stats.getLast(), greaterThan(0));
         }
     }
 }

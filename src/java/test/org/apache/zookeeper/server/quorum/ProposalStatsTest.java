@@ -26,33 +26,33 @@ public class ProposalStatsTest {
     @Test
     public void testSetProposalSizeSetMinMax() {
         ProposalStats stats = new ProposalStats();
-        assertEquals(-1, stats.getLastProposalSize());
-        assertEquals(-1, stats.getMinProposalSize());
-        assertEquals(-1, stats.getMaxProposalSize());
+        assertEquals(-1, stats.getLast());
+        assertEquals(-1, stats.getMin());
+        assertEquals(-1, stats.getMax());
         stats.setLastProposalSize(10);
-        assertEquals(10, stats.getLastProposalSize());
-        assertEquals(10, stats.getMinProposalSize());
-        assertEquals(10, stats.getMaxProposalSize());
+        assertEquals(10, stats.getLast());
+        assertEquals(10, stats.getMin());
+        assertEquals(10, stats.getMax());
         stats.setLastProposalSize(20);
-        assertEquals(20, stats.getLastProposalSize());
-        assertEquals(10, stats.getMinProposalSize());
-        assertEquals(20, stats.getMaxProposalSize());
+        assertEquals(20, stats.getLast());
+        assertEquals(10, stats.getMin());
+        assertEquals(20, stats.getMax());
         stats.setLastProposalSize(5);
-        assertEquals(5, stats.getLastProposalSize());
-        assertEquals(5, stats.getMinProposalSize());
-        assertEquals(20, stats.getMaxProposalSize());
+        assertEquals(5, stats.getLast());
+        assertEquals(5, stats.getMin());
+        assertEquals(20, stats.getMax());
     }
 
     @Test
     public void testReset() {
         ProposalStats stats = new ProposalStats();
         stats.setLastProposalSize(10);
-        assertEquals(10, stats.getLastProposalSize());
-        assertEquals(10, stats.getMinProposalSize());
-        assertEquals(10, stats.getMaxProposalSize());
+        assertEquals(10, stats.getLast());
+        assertEquals(10, stats.getMin());
+        assertEquals(10, stats.getMax());
         stats.reset();
-        assertEquals(-1, stats.getLastProposalSize());
-        assertEquals(-1, stats.getMinProposalSize());
-        assertEquals(-1, stats.getMaxProposalSize());
+        assertEquals(-1, stats.getLast());
+        assertEquals(-1, stats.getMin());
+        assertEquals(-1, stats.getMax());
     }
 }

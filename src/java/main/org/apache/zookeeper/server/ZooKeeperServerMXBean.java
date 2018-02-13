@@ -143,4 +143,19 @@ public interface ZooKeeperServerMXBean {
      * @return Returns the value of the following config setting: jute.maxbuffer
      */
     public int getJuteMaxBufferSize();
+
+    /**
+     * @return size of latest generated client response
+     */
+    public int getLastClientResponseSize();
+
+    /**
+     * @return size of smallest generated client response
+     */
+    public int getMinClientResponseSize();
+
+    /**
+     * @return size of largest generated client response
+     */
+    public int getMaxClientResponseSize();
 }

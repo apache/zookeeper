@@ -27,7 +27,6 @@ import org.apache.zookeeper.server.command.StatCommand;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -44,7 +43,7 @@ public class StatCommandTest {
     private ServerStats.Provider providerMock;
 
     @Before
-    public void setUp() throws IOException {
+    public void setUp() {
         outputWriter = new StringWriter();
         ServerCnxn serverCnxnMock = mock(ServerCnxn.class);
 
@@ -82,6 +81,7 @@ public class StatCommandTest {
         assertCommonStrings(output);
         assertThat(output, containsString("Mode: leader"));
         assertThat(output, containsString("Proposal sizes last/min/max:"));
+        assertThat(output, containsString("Client response size last/min/max:"));
     }
 
     @Test
@@ -96,6 +96,7 @@ public class StatCommandTest {
         String output = outputWriter.toString();
         assertCommonStrings(output);
         assertThat(output, containsString("Mode: follower"));
+        assertThat(output, containsString("Client response size last/min/max:"));
     }
 
     private void assertCommonStrings(String output) {

@@ -182,4 +182,19 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
     public int getJuteMaxBufferSize() {
         return BinaryInputArchive.maxBuffer;
     }
+
+    @Override
+    public int getLastClientResponseSize() {
+        return zks.serverStats().getClientResponseStats().getLast();
+    }
+
+    @Override
+    public int getMinClientResponseSize() {
+        return zks.serverStats().getClientResponseStats().getMin();
+    }
+
+    @Override
+    public int getMaxClientResponseSize() {
+        return zks.serverStats().getClientResponseStats().getMax();
+    }
 }

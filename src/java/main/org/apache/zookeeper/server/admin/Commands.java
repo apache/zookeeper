@@ -330,12 +330,20 @@ public class Commands {
             response.put("open_file_descriptor_count", osMbean.getOpenFileDescriptorCount());
             response.put("max_file_descriptor_count", osMbean.getMaxFileDescriptorCount());
 
+            response.put("last_client_response_size", stats.getClientResponseStats().getLast());
+            response.put("max_client_response_size", stats.getClientResponseStats().getMax());
+            response.put("min_client_response_size", stats.getClientResponseStats().getMin());
+
             if (zkServer instanceof LeaderZooKeeperServer) {
                 Leader leader = ((LeaderZooKeeperServer) zkServer).getLeader();
 
                 response.put("followers", leader.getLearners().size());
                 response.put("synced_followers", leader.getForwardingFollowers().size());
                 response.put("pending_syncs", leader.getNumPendingSyncs());
+
+                response.put("last_proposal_size", leader.getProposalStats().getLast());
+                response.put("max_proposal_size", leader.getProposalStats().getMax());
+                response.put("min_proposal_size", leader.getProposalStats().getMin());
             }
 
             return response;
@@ -415,9 +423,12 @@ public class Commands {
             response.put("version", Version.getFullVersion());
             response.put("read_only", zkServer instanceof ReadOnlyZooKeeperServer);
             response.put("server_stats", zkServer.serverStats());
+            if (zkServer instanceof LeaderZooKeeperServer) {
+                Leader leader = ((LeaderZooKeeperServer)zkServer).getLeader();
+                response.put("proposal_stats", leader.getProposalStats());
+            }
             response.put("node_count", zkServer.getZKDatabase().getNodeCount());
             return response;
-
         }
     }
 

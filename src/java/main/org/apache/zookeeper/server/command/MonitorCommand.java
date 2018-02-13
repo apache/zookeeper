@@ -62,6 +62,10 @@ public class MonitorCommand extends AbstractFourLetterCommand {
         print("ephemerals_count", zkdb.getDataTree().getEphemeralsCount());
         print("approximate_data_size", zkdb.getDataTree().approximateDataSize());
 
+        print("last_client_response_size", stats.getClientResponseStats().getLast());
+        print("max_client_response_size", stats.getClientResponseStats().getMax());
+        print("min_client_response_size", stats.getClientResponseStats().getMin());
+
         OSMXBean osMbean = new OSMXBean();
         if (osMbean != null && osMbean.getUnix() == true) {
             print("open_file_descriptor_count", osMbean.getOpenFileDescriptorCount());
@@ -75,9 +79,9 @@ public class MonitorCommand extends AbstractFourLetterCommand {
             print("synced_followers", leader.getForwardingFollowers().size());
             print("pending_syncs", leader.getNumPendingSyncs());
 
-            print("last_proposal_size", leader.getProposalStats().getLastProposalSize());
-            print("max_proposal_size", leader.getProposalStats().getMaxProposalSize());
-            print("min_proposal_size", leader.getProposalStats().getMinProposalSize());
+            print("last_proposal_size", leader.getProposalStats().getLast());
+            print("max_proposal_size", leader.getProposalStats().getMax());
+            print("min_proposal_size", leader.getProposalStats().getMin());
         }
     }
 

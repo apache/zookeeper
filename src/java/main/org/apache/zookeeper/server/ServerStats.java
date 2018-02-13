@@ -21,6 +21,9 @@ package org.apache.zookeeper.server;
 
 
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.server.quorum.ProposalStats;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -28,6 +31,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * Basic Server Statistics
  */
 public class ServerStats {
+    private static final Logger LOG = LoggerFactory.getLogger(ServerStats.class);
+
     private long packetsSent;
     private long packetsReceived;
     private long maxLatency;
@@ -35,6 +40,8 @@ public class ServerStats {
     private long totalLatency = 0;
     private long count = 0;
     private AtomicLong fsyncThresholdExceedCount = new AtomicLong(0);
+
+    private final ProposalStats clientResponseStats = new ProposalStats();
 
     private final Provider provider;
 
@@ -118,6 +125,7 @@ public class ServerStats {
             sb.append("Zxid: 0x"+ Long.toHexString(getLastProcessedZxid())+ "\n");
         }
         sb.append("Mode: " + getServerState() + "\n");
+        sb.append("Client response size last/min/max: " + clientResponseStats.toString() + "\n");
         return sb.toString();
     }
     // mutators
@@ -167,6 +175,15 @@ public class ServerStats {
     synchronized public void reset() {
         resetLatency();
         resetRequestCounters();
+        clientResponseStats.reset();
     }
 
+    public void updateClientResponseSize(int size) {
+        clientResponseStats.setLastProposalSize(size);
+        LOG.info("Client request size = {}", size);
+    }
+
+    public ProposalStats getClientResponseStats() {
+        return clientResponseStats;
+    }
 }
