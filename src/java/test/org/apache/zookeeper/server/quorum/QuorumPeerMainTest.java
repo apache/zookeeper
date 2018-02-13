@@ -435,7 +435,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         int iterations = ClientBase.CONNECTION_TIMEOUT / 500;
         while (zk.getState() != state) {
             if (iterations-- == 0) {
-                throw new RuntimeException("Waiting too long");
+                throw new RuntimeException("Waiting too long " + zk.getState() + " != " + state);
             }
             Thread.sleep(500);
         }
@@ -501,9 +501,9 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
   	        mt[i].start();
   	        zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i], ClientBase.CONNECTION_TIMEOUT, this);
   	    }
-  
+
   	    waitForAll(zk, States.CONNECTED);
-  
+
   	    svrs.mt = mt;
   	    svrs.zk = zk;
   	    return svrs;
@@ -673,7 +673,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             + ":" + electionPort1 + ";" + CLIENT_PORT_QP1
             + "\nserver.2=127.0.0.1:" + PortAssignment.unique()
             + ":" +  electionPort2 + ";" + CLIENT_PORT_QP2;
-        
+
         MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
         MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection);
         q1.start();
@@ -888,4 +888,127 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                 maxSessionTimeOut, quorumPeer.getMaxSessionTimeout());
     }
 
+    @Test
+    public void testTxnAheadSnapInRetainDB() throws Exception {
+        // 1. start up server and wait for leader election to finish
+        ClientBase.setupTestEnv();
+        final int SERVER_COUNT = 3;
+        final int clientPorts[] = new int[SERVER_COUNT];
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            clientPorts[i] = PortAssignment.unique();
+            sb.append("server." + i + "=127.0.0.1:" + PortAssignment.unique() + ":" + PortAssignment.unique() + ";" + clientPorts[i] + "\n");
+        }
+        String quorumCfgSection = sb.toString();
+
+        MainThread mt[] = new MainThread[SERVER_COUNT];
+        ZooKeeper zk[] = new ZooKeeper[SERVER_COUNT];
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            mt[i] = new MainThread(i, clientPorts[i], quorumCfgSection);
+            mt[i].start();
+            zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i], ClientBase.CONNECTION_TIMEOUT, this);
+        }
+
+        waitForAll(zk, States.CONNECTED);
+
+        // we need to shutdown and start back up to make sure that the create session isn't the first transaction since
+        // that is rather innocuous.
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            mt[i].shutdown();
+        }
+
+        waitForAll(zk, States.CONNECTING);
+
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            mt[i].start();
+            // Recreate a client session since the previous session was not persisted.
+            zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i], ClientBase.CONNECTION_TIMEOUT, this);
+        }
+
+        waitForAll(zk, States.CONNECTED);
+
+        // 2. kill all followers
+        int leader = -1;
+        Map<Long, Proposal> outstanding = null;
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            if (mt[i].main.quorumPeer.leader != null) {
+                leader = i;
+                outstanding = mt[leader].main.quorumPeer.leader.outstandingProposals;
+                // increase the tick time to delay the leader going to looking
+                mt[leader].main.quorumPeer.tickTime = 10000;
+            }
+        }
+        LOG.warn("LEADER {}", leader);
+
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            if (i != leader) {
+                mt[i].shutdown();
+            }
+        }
+
+        // 3. start up the followers to form a new quorum
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            if (i != leader) {
+                mt[i].start();
+            }
+        }
+
+        // 4. wait one of the follower to be the leader
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            if (i != leader) {
+                // Recreate a client session since the previous session was not persisted.
+                zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i], ClientBase.CONNECTION_TIMEOUT, this);
+                waitForOne(zk[i], States.CONNECTED);
+            }
+        }
+
+        // 5. send a create request to leader and make sure it's synced to disk,
+        //    which means it acked from itself
+        try {
+            zk[leader].create("/zk" + leader, "zk".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+            Assert.fail("create /zk" + leader + " should have failed");
+        } catch (KeeperException e) {
+        }
+
+        // just make sure that we actually did get it in process at the
+        // leader
+        Assert.assertTrue(outstanding.size() == 1);
+        Proposal p = (Proposal) outstanding.values().iterator().next();
+        Assert.assertTrue(p.request.getHdr().getType() == OpCode.create);
+
+        // make sure it has a chance to write it to disk
+        Thread.sleep(1000);
+        p.qvAcksetPairs.get(0).getAckset().contains(leader);
+
+        // 6. wait the leader to quit due to no enough followers
+        Thread.sleep(4000);
+        //waitForOne(zk[leader], States.CONNECTING);
+        mt[leader].shutdown();
+
+        int newLeader = -1;
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            if (mt[i].main.quorumPeer.leader != null) {
+                newLeader = i;
+            }
+        }
+        // make sure a different leader was elected
+        Assert.assertTrue(newLeader != leader);
+
+        // 7. restart the previous leader
+        mt[leader].start();
+        waitForOne(zk[leader], States.CONNECTED);
+
+        // 8. check the node exist in previous leader but not others
+        //    make sure everything is consistent
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            Assert.assertTrue("server " + i + " should not have /zk" + leader, zk[i].exists("/zk" + leader, false) == null);
+        }
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            zk[i].close();
+        }
+        for (int i = 0; i < SERVER_COUNT; i++) {
+            mt[i].shutdown();
+        }
+    }
 }
