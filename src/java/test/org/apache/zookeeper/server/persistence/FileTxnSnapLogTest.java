@@ -23,8 +23,11 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.test.ClientBase;
+import org.apache.zookeeper.test.TestUtils;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnHeader;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -35,23 +38,84 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class FileTxnSnapLogTest {
 
-    /**
-     * Test verifies the auto creation of data dir and data log dir.
-     * Sets "zookeeper.datadir.autocreate" to true.
-     */
-    @Test
-    public void testWithAutoCreateDataLogDir() throws IOException {
-        File tmpDir = ClientBase.createEmptyTestDir();
-        File dataDir = new File(tmpDir, "data");
-        File snapDir = new File(tmpDir, "data_txnlog");
-        Assert.assertFalse("data directory already exists", dataDir.exists());
-        Assert.assertFalse("snapshot directory already exists", snapDir.exists());
+    private File tmpDir;
 
+    private File logDir;
+
+    private File snapDir;
+
+    private File logVersionDir;
+
+    private File snapVersionDir;
+
+    @Before
+    public void setUp() throws Exception {
+        tmpDir = ClientBase.createEmptyTestDir();
+        logDir = new File(tmpDir, "logdir");
+        snapDir = new File(tmpDir, "snapdir");
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        if(tmpDir != null){
+            TestUtils.deleteFileRecursively(tmpDir);
+        }
+        this.tmpDir = null;
+        this.logDir = null;
+        this.snapDir = null;
+        this.logVersionDir = null;
+        this.snapVersionDir = null;
+    }
+
+    private File createVersionDir(File parentDir) {
+        File versionDir = new File(parentDir, FileTxnSnapLog.version + FileTxnSnapLog.VERSION);
+        versionDir.mkdirs();
+        return versionDir;
+    }
+
+    private void createLogFile(File dir, long zxid) throws IOException {
+        File file = new File(dir.getPath() + File.separator + Util.makeLogName(zxid));
+        file.createNewFile();
+    }
+
+    private void createSnapshotFile(File dir, long zxid) throws IOException {
+        File file = new File(dir.getPath() + File.separator + Util.makeSnapshotName(zxid));
+        file.createNewFile();
+    }
+
+    private void twoDirSetupWithCorrectFiles() throws IOException {
+        logVersionDir = createVersionDir(logDir);
+        snapVersionDir = createVersionDir(snapDir);
+
+        // transaction log files in log dir
+        createLogFile(logVersionDir,1);
+        createLogFile(logVersionDir,2);
+
+        // snapshot files in snap dir
+        createSnapshotFile(snapVersionDir,1);
+        createSnapshotFile(snapVersionDir,2);
+    }
+
+    private void singleDirSetupWithCorrectFiles() throws IOException {
+        logVersionDir = createVersionDir(logDir);
+
+        // transaction log and snapshot files in the same dir
+        createLogFile(logVersionDir,1);
+        createLogFile(logVersionDir,2);
+        createSnapshotFile(logVersionDir,1);
+        createSnapshotFile(logVersionDir,2);
+    }
+
+    private FileTxnSnapLog createFileTxnSnapLogWithNoAutoCreateDataDir(File logDir, File snapDir) throws IOException {
+        return createFileTxnSnapLogWithAutoCreateDataDir(logDir, snapDir, "false");
+    }
+
+    private FileTxnSnapLog createFileTxnSnapLogWithAutoCreateDataDir(File logDir, File snapDir, String autoCreateValue) throws IOException {
         String priorAutocreateDirValue = System.getProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE);
-        System.setProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE, "true");
+        System.setProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE, autoCreateValue);
         FileTxnSnapLog fileTxnSnapLog;
         try {
-            fileTxnSnapLog = new FileTxnSnapLog(dataDir, snapDir);
+            fileTxnSnapLog = new FileTxnSnapLog(logDir, snapDir);
         } finally {
             if (priorAutocreateDirValue == null) {
                 System.clearProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE);
@@ -59,68 +123,96 @@ public class FileTxnSnapLogTest {
                 System.setProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE, priorAutocreateDirValue);
             }
         }
-        Assert.assertTrue(dataDir.exists());
+        return fileTxnSnapLog;
+    }
+
+    private FileTxnSnapLog createFileTxnSnapLogWithAutoCreateDB(File logDir, File snapDir, String autoCreateValue) throws IOException {
+        String priorAutocreateDBValue = System.getProperty(FileTxnSnapLog.ZOOKEEPER_DB_AUTOCREATE);
+        System.setProperty(FileTxnSnapLog.ZOOKEEPER_DB_AUTOCREATE, autoCreateValue);
+        FileTxnSnapLog fileTxnSnapLog;
+        try {
+            fileTxnSnapLog = new FileTxnSnapLog(logDir, snapDir);
+        } finally {
+            if (priorAutocreateDBValue == null) {
+                System.clearProperty(FileTxnSnapLog.ZOOKEEPER_DB_AUTOCREATE);
+            } else {
+                System.setProperty(FileTxnSnapLog.ZOOKEEPER_DB_AUTOCREATE, priorAutocreateDBValue);
+            }
+        }
+        return fileTxnSnapLog;
+    }
+
+    /**
+     * Test verifies the auto creation of log dir and snap dir.
+     * Sets "zookeeper.datadir.autocreate" to true.
+     */
+    @Test
+    public void testWithAutoCreateDataDir() throws IOException {
+        Assert.assertFalse("log directory already exists", logDir.exists());
+        Assert.assertFalse("snapshot directory already exists", snapDir.exists());
+
+        FileTxnSnapLog fileTxnSnapLog = createFileTxnSnapLogWithAutoCreateDataDir(logDir, snapDir, "true");
+
+        Assert.assertTrue(logDir.exists());
         Assert.assertTrue(snapDir.exists());
         Assert.assertTrue(fileTxnSnapLog.getDataDir().exists());
         Assert.assertTrue(fileTxnSnapLog.getSnapDir().exists());
     }
 
     /**
-     * Test verifies server should fail when data dir or data log dir doesn't
-     * exists. Sets "zookeeper.datadir.autocreate" to false.
+     * Test verifies server should fail when log dir or snap dir doesn't exist.
+     * Sets "zookeeper.datadir.autocreate" to false.
      */
-    @Test
-    public void testWithoutAutoCreateDataLogDir() throws Exception {
-        File tmpDir = ClientBase.createEmptyTestDir();
-        File dataDir = new File(tmpDir, "data");
-        File snapDir = new File(tmpDir, "data_txnlog");
-        Assert.assertFalse("data directory already exists", dataDir.exists());
+    @Test(expected = FileTxnSnapLog.DatadirException.class)
+    public void testWithoutAutoCreateDataDir() throws Exception {
+        Assert.assertFalse("log directory already exists", logDir.exists());
         Assert.assertFalse("snapshot directory already exists", snapDir.exists());
 
-        String priorAutocreateDirValue = System.getProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE);
-        System.setProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE, "false");
         try {
-            FileTxnSnapLog fileTxnSnapLog = new FileTxnSnapLog(dataDir, snapDir);
+            createFileTxnSnapLogWithAutoCreateDataDir(logDir, snapDir, "false");
         } catch (FileTxnSnapLog.DatadirException e) {
-            Assert.assertFalse(dataDir.exists());
+            Assert.assertFalse(logDir.exists());
             Assert.assertFalse(snapDir.exists());
-            return;
-        } finally {
-            if (priorAutocreateDirValue == null) {
-                System.clearProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE);
-            } else {
-                System.setProperty(FileTxnSnapLog.ZOOKEEPER_DATADIR_AUTOCREATE, priorAutocreateDirValue);
-            }
+            // rethrow exception
+            throw e;
         }
         Assert.fail("Expected exception from FileTxnSnapLog");
     }
 
+    private void attemptAutoCreateDB(File dataDir, File snapDir, Map<Long, Integer> sessions,
+                                     String autoCreateValue, long expectedValue) throws IOException {
+        sessions.clear();
+
+        FileTxnSnapLog fileTxnSnapLog = createFileTxnSnapLogWithAutoCreateDB(dataDir, snapDir, autoCreateValue);
+
+        long zxid = fileTxnSnapLog.restore(new DataTree(), sessions, new FileTxnSnapLog.PlayBackListener() {
+            @Override
+            public void onTxnLoaded(TxnHeader hdr, Record rec) {
+                // empty by default
+            }
+        });
+        Assert.assertEquals("unexpected zxid", expectedValue, zxid);
+    }
+
     @Test
-    public void testAutoCreateDb() throws IOException {
-        File tmpDir = ClientBase.createEmptyTestDir();
-        File dataDir = new File(tmpDir, "data");
-        File snapDir = new File(tmpDir, "data_txnlog");
-        Assert.assertTrue("cannot create data directory", dataDir.mkdir());
+    public void testAutoCreateDB() throws IOException {
+        Assert.assertTrue("cannot create log directory", logDir.mkdir());
         Assert.assertTrue("cannot create snapshot directory", snapDir.mkdir());
-        File initFile = new File(dataDir, "initialize");
+        File initFile = new File(logDir, "initialize");
         Assert.assertFalse("initialize file already exists", initFile.exists());
 
-        String priorAutocreateDbValue = System.getProperty(FileTxnSnapLog.ZOOKEEPER_DB_AUTOCREATE);
         Map<Long, Integer> sessions = new ConcurrentHashMap<>();
 
-        attemptAutoCreateDb(dataDir, snapDir, sessions, priorAutocreateDbValue, "false", -1L);
-
-        attemptAutoCreateDb(dataDir, snapDir, sessions, priorAutocreateDbValue, "true", 0L);
+        attemptAutoCreateDB(logDir, snapDir, sessions,"false", -1L);
+        attemptAutoCreateDB(logDir, snapDir, sessions,"true", 0L);
 
         Assert.assertTrue("cannot create initialize file", initFile.createNewFile());
-        attemptAutoCreateDb(dataDir, snapDir, sessions, priorAutocreateDbValue, "false", 0L);
+        attemptAutoCreateDB(logDir, snapDir, sessions,"false", 0L);
     }
 
     @Test
     public void testGetTxnLogSyncElapsedTime() throws IOException {
-        File tmpDir = ClientBase.createEmptyTestDir();
-        FileTxnSnapLog fileTxnSnapLog = new FileTxnSnapLog(new File(tmpDir, "data"),
-                new File(tmpDir, "data_txnlog"));
+        FileTxnSnapLog fileTxnSnapLog = createFileTxnSnapLogWithAutoCreateDataDir(logDir, snapDir, "true");
 
         TxnHeader hdr = new TxnHeader(1, 1, 1, 1, ZooDefs.OpCode.setData);
         Record txn = new SetDataTxn("/foo", new byte[0], 1);
@@ -136,27 +228,47 @@ public class FileTxnSnapLogTest {
         }
     }
 
-    private void attemptAutoCreateDb(File dataDir, File snapDir, Map<Long, Integer> sessions,
-                                     String priorAutocreateDbValue, String autoCreateValue,
-                                     long expectedValue) throws IOException {
-        sessions.clear();
-        System.setProperty(FileTxnSnapLog.ZOOKEEPER_DB_AUTOCREATE, autoCreateValue);
-        FileTxnSnapLog fileTxnSnapLog = new FileTxnSnapLog(dataDir, snapDir);
+    @Test
+    public void testDirCheckWithCorrectFiles() throws IOException {
+        twoDirSetupWithCorrectFiles();
 
         try {
-            long zxid = fileTxnSnapLog.restore(new DataTree(), sessions, new FileTxnSnapLog.PlayBackListener() {
-                @Override
-                public void onTxnLoaded(TxnHeader hdr, Record rec) {
-                    // empty by default
-                }
-            });
-            Assert.assertEquals("unexpected zxid", expectedValue, zxid);
-        } finally {
-            if (priorAutocreateDbValue == null) {
-                System.clearProperty(FileTxnSnapLog.ZOOKEEPER_DB_AUTOCREATE);
-            } else {
-                System.setProperty(FileTxnSnapLog.ZOOKEEPER_DB_AUTOCREATE, priorAutocreateDbValue);
-            }
+            createFileTxnSnapLogWithNoAutoCreateDataDir(logDir, snapDir);
+        } catch (FileTxnSnapLog.LogDirContentCheckException | FileTxnSnapLog.SnapDirContentCheckException e) {
+            Assert.fail("Should not throw ContentCheckException.");
         }
+    }
+
+    @Test
+    public void testDirCheckWithSingleDirSetup() throws IOException {
+        singleDirSetupWithCorrectFiles();
+
+        try {
+            createFileTxnSnapLogWithNoAutoCreateDataDir(logDir, logDir);
+        } catch (FileTxnSnapLog.LogDirContentCheckException | FileTxnSnapLog.SnapDirContentCheckException e) {
+            Assert.fail("Should not throw ContentCheckException.");
+        }
+    }
+
+    @Test(expected = FileTxnSnapLog.LogDirContentCheckException.class)
+    public void testDirCheckWithSnapFilesInLogDir() throws IOException {
+        twoDirSetupWithCorrectFiles();
+
+        // add snapshot files to the log version dir
+        createSnapshotFile(logVersionDir,3);
+        createSnapshotFile(logVersionDir,4);
+
+        createFileTxnSnapLogWithNoAutoCreateDataDir(logDir, snapDir);
+    }
+
+    @Test(expected = FileTxnSnapLog.SnapDirContentCheckException.class)
+    public void testDirCheckWithLogFilesInSnapDir() throws IOException {
+        twoDirSetupWithCorrectFiles();
+
+        // add transaction log files to the snap version dir
+        createLogFile(snapVersionDir,3);
+        createLogFile(snapVersionDir,4);
+
+        createFileTxnSnapLogWithNoAutoCreateDataDir(logDir, snapDir);
     }
 }

@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server.persistence;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
@@ -136,11 +137,42 @@ public class FileTxnSnapLog {
             throw new DatadirException("Cannot write to snap directory " + this.snapDir);
         }
 
+        // check content of transaction log and snapshot dirs if they are two different directories
+        // See ZOOKEEPER-2967 for more details
+        if(!this.dataDir.getPath().equals(this.snapDir.getPath())){
+            checkLogDir();
+            checkSnapDir();
+        }
+
         txnLog = new FileTxnLog(this.dataDir);
         snapLog = new FileSnap(this.snapDir);
 
         autoCreateDB = Boolean.parseBoolean(System.getProperty(ZOOKEEPER_DB_AUTOCREATE,
                 ZOOKEEPER_DB_AUTOCREATE_DEFAULT));
+    }
+
+    private void checkLogDir() throws LogDirContentCheckException {
+        File[] files = this.dataDir.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return Util.isSnapshotFileName(name);
+            }
+        });
+        if (files != null && files.length > 0) {
+            throw new LogDirContentCheckException("Log directory has snapshot files. Check if dataLogDir and dataDir configuration is correct.");
+        }
+    }
+
+    private void checkSnapDir() throws SnapDirContentCheckException {
+        File[] files = this.snapDir.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return Util.isLogFileName(name);
+            }
+        });
+        if (files != null && files.length > 0) {
+            throw new SnapDirContentCheckException("Snapshot directory has log files. Check if dataLogDir and dataDir configuration is correct.");
+        }
     }
 
     /**
@@ -463,6 +495,20 @@ public class FileTxnSnapLog {
         }
         public DatadirException(String msg, Exception e) {
             super(msg, e);
+        }
+    }
+
+    @SuppressWarnings("serial")
+    public static class LogDirContentCheckException extends DatadirException {
+        public LogDirContentCheckException(String msg) {
+            super(msg);
+        }
+    }
+
+    @SuppressWarnings("serial")
+    public static class SnapDirContentCheckException extends DatadirException {
+        public SnapDirContentCheckException(String msg) {
+            super(msg);
         }
     }
 }

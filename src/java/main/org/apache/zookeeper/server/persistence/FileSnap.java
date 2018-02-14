@@ -58,6 +58,8 @@ public class FileSnap implements SnapShot {
     public final static int SNAP_MAGIC
             = ByteBuffer.wrap("ZKSN".getBytes()).getInt();
 
+    public static final String SNAPSHOT_FILE_PREFIX = "snapshot";
+
     public FileSnap(File snapDir) {
         this.snapDir = snapDir;
     }
@@ -98,7 +100,7 @@ public class FileSnap implements SnapShot {
         if (!foundValid) {
             throw new IOException("Not able to find valid snapshots in " + snapDir);
         }
-        dt.lastProcessedZxid = Util.getZxidFromName(snap.getName(), "snapshot");
+        dt.lastProcessedZxid = Util.getZxidFromName(snap.getName(), SNAPSHOT_FILE_PREFIX);
         return dt.lastProcessedZxid;
     }
 
@@ -146,7 +148,7 @@ public class FileSnap implements SnapShot {
      * @throws IOException
      */
     private List<File> findNValidSnapshots(int n) throws IOException {
-        List<File> files = Util.sortDataDir(snapDir.listFiles(),"snapshot", false);
+        List<File> files = Util.sortDataDir(snapDir.listFiles(), SNAPSHOT_FILE_PREFIX, false);
         int count = 0;
         List<File> list = new ArrayList<File>();
         for (File f : files) {
@@ -176,13 +178,13 @@ public class FileSnap implements SnapShot {
      * @throws IOException
      */
     public List<File> findNRecentSnapshots(int n) throws IOException {
-        List<File> files = Util.sortDataDir(snapDir.listFiles(), "snapshot", false);
+        List<File> files = Util.sortDataDir(snapDir.listFiles(), SNAPSHOT_FILE_PREFIX, false);
         int count = 0;
         List<File> list = new ArrayList<File>();
         for (File f: files) {
             if (count == n)
                 break;
-            if (Util.getZxidFromName(f.getName(), "snapshot") != -1) {
+            if (Util.getZxidFromName(f.getName(), SNAPSHOT_FILE_PREFIX) != -1) {
                 count++;
                 list.add(f);
             }

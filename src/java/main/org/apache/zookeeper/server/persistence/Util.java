@@ -50,7 +50,7 @@ public class Util {
     private static final String SNAP_DIR="snapDir";
     private static final String LOG_DIR="logDir";
     private static final String DB_FORMAT_CONV="dbFormatConversion";
-    
+
     public static String makeURIString(String dataDir, String dataLogDir, 
             String convPolicy){
         String uri="file:"+SNAP_DIR+"="+dataDir+";"+LOG_DIR+"="+dataLogDir;
@@ -83,7 +83,7 @@ public class Util {
      * @return file name
      */
     public static String makeLogName(long zxid) {
-        return "log." + Long.toHexString(zxid);
+        return FileTxnLog.LOG_FILE_PREFIX + "." + Long.toHexString(zxid);
     }
 
     /**
@@ -93,7 +93,7 @@ public class Util {
      * @return file name
      */
     public static String makeSnapshotName(long zxid) {
-        return "snapshot." + Long.toHexString(zxid);
+        return FileSnap.SNAPSHOT_FILE_PREFIX + "." + Long.toHexString(zxid);
     }
     
     /**
@@ -157,7 +157,7 @@ public class Util {
      * @throws IOException
      */
     public static boolean isValidSnapshot(File f) throws IOException {
-        if (f==null || Util.getZxidFromName(f.getName(), "snapshot") == -1)
+        if (f==null || Util.getZxidFromName(f.getName(), FileSnap.SNAPSHOT_FILE_PREFIX) == -1)
             return false;
 
         // Check for a valid snapshot
@@ -293,6 +293,26 @@ public class Util {
         List<File> filelist = Arrays.asList(files);
         Collections.sort(filelist, new DataDirFileComparator(prefix, ascending));
         return filelist;
+    }
+
+    /**
+     * Returns true if fileName is a log file name.
+     *
+     * @param fileName
+     * @return
+     */
+    public static boolean isLogFileName(String fileName) {
+        return fileName.startsWith(FileTxnLog.LOG_FILE_PREFIX + ".");
+    }
+
+    /**
+     * Returns true if fileName is a snapshot file name.
+     *
+     * @param fileName
+     * @return
+     */
+    public static boolean isSnapshotFileName(String fileName) {
+        return fileName.startsWith(FileSnap.SNAPSHOT_FILE_PREFIX + ".");
     }
     
 }
