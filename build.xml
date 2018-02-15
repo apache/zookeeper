@@ -17,7 +17,7 @@
    limitations under the License.
 -->
 
-<project name="ZooKeeper" default="jar" 
+<project name="ZooKeeper" default="jar"
 xmlns:ivy="antlib:org.apache.ivy.ant"
 xmlns:artifact="antlib:org.apache.maven.artifact.ant"
 xmlns:maven="antlib:org.apache.maven.artifact.ant"
@@ -503,11 +503,15 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <env key="ACLOCAL" value="aclocal -I ${cppunit.m4}"/>
       </exec>
       <mkdir dir="${build.dir}/c" />
+      <condition property="enable.gcov.arg" value="--enable-gcov" else="">
+          <equals arg1="${enable.gcov}" arg2="true"/>
+      </condition>
       <exec executable="${c.src.dir}/configure" dir="${build.dir}/c"
             failonerror="yes">
         <env key="base_dir" value="${basedir}"/>
         <env key="CALLER" value="ANT"/>
         <arg value="--prefix=${build.dir}/c/build/${package.prefix}"/>
+        <arg line="${enable.gcov.arg}"/>
       </exec>
       <property name="c.build" value="${build.dir}/c/build"/>
       <exec dir="${build.dir}/c" executable="make" failonerror="true">
@@ -1342,11 +1346,15 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <param name="cppunit" value="true"/>
       </antcall>
     	<mkdir dir="${test.cppunit.dir}"/>
+        <condition property="enable.gcov.arg" value="--enable-gcov" else="">
+            <equals arg1="${enable.gcov}" arg2="true"/>
+        </condition>
     	<exec executable="${c.src.dir}/configure" dir="${test.cppunit.dir}"
           	failonerror="yes">
                 <env key="base_dir" value="${basedir}"/>
                 <env key="CALLER" value="ANT"/>
       		<arg value="--prefix=${test.cppunit.dir}"/>
+            <arg line="${enable.gcov.arg}"/>
     	</exec>
     </target>
 
@@ -1454,6 +1462,28 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
           <format type="xml"/>
         </current>
       </clover-report>
+    </target>
+
+    <target name="c_coverage_report" description="Runs coverage report for ZK C client code.">
+      <!-- delete configure file so that it gets regenerated with coverage enabled -->
+      <delete file="${c.src.dir}/configure"/>
+      <subant target="test-core-cppunit" failonerror="false">
+        <property name="enable.gcov" value="true"/>
+        <fileset dir="." file="build.xml"/>
+      </subant>
+      <mkdir dir="${build.dir}/c_coverage" />
+        <copy todir="${build.dir}/c" verbose="true" overwrite="true" failonerror="true">
+            <fileset dir="${build.dir}/test/test-cppunit/.libs">
+                <include name="*.gcno"/>
+                <include name="*.gcda"/>
+            </fileset>
+        </copy>
+        <exec dir="${build.dir}/c" executable="lcov">
+            <arg line="-t testname -o ZK_C_client.info -c -d ."/>
+        </exec>
+        <exec dir="${build.dir}/c_coverage" executable="genhtml">
+            <arg line="-o report ${build.dir}/c/ZK_C_client.info"/>
+        </exec>
     </target>
 
     <!-- Run with 'ant -Dfindbugs.home="path to Findbugs directory" findbugs -->

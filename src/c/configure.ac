@@ -86,6 +86,12 @@ else
     fi
 fi
 
+# Check whether to enable gcov (coverage test)
+AC_ARG_ENABLE(gcov, [AS_HELP_STRING([--enable-gcov],[enable coverage test])])
+AC_MSG_CHECKING([whether to enable gcov])
+AS_IF([test "x${enable_gcov}" = "xyes"],AC_MSG_RESULT([yes]), AC_MSG_RESULT([no]))
+AM_CONDITIONAL([ENABLEGCOV],[test "x${enable_gcov}" = "xyes"])
+
 AC_ARG_WITH([syncapi],
  [AS_HELP_STRING([--with-syncapi],[build with support for SyncAPI [default=yes]])],
  [],[with_syncapi=yes])
