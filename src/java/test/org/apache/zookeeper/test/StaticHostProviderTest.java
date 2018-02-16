@@ -126,7 +126,6 @@ public class StaticHostProviderTest extends ZKTestCase {
         ArrayList<InetSocketAddress> list = new ArrayList<InetSocketAddress>(size);
 
         // Test a hostname that resolves to a single address
-        list.clear();
         list.add(InetSocketAddress.createUnresolved("issues.apache.org", 1234));
         final InetAddress issuesApacheOrg = mock(InetAddress.class);
         when(issuesApacheOrg.getHostAddress()).thenReturn("192.168.1.1");
