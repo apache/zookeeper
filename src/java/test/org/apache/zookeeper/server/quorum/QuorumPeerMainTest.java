@@ -889,7 +889,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     }
 
     @Test
-    public void testTxnAheadSnapInRetainDB() throws Exception {
+    public void testFailedTxnAsPartOfQuorumLoss() throws Exception {
         // 1. start up server and wait for leader election to finish
         ClientBase.setupTestEnv();
         final int SERVER_COUNT = 3;
@@ -953,7 +953,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             }
         }
 
-        // 4. wait one of the follower to be the leader
+        // 4. wait one of the follower to be the new leader
         for (int i = 0; i < SERVER_COUNT; i++) {
             if (i != leader) {
                 // Recreate a client session since the previous session was not persisted.
@@ -962,7 +962,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             }
         }
 
-        // 5. send a create request to leader and make sure it's synced to disk,
+        // 5. send a create request to old leader and make sure it's synced to disk,
         //    which means it acked from itself
         try {
             zk[leader].create("/zk" + leader, "zk".getBytes(), Ids.OPEN_ACL_UNSAFE,
@@ -974,16 +974,32 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         // just make sure that we actually did get it in process at the
         // leader
         Assert.assertTrue(outstanding.size() == 1);
-        Proposal p = (Proposal) outstanding.values().iterator().next();
+        Proposal p = outstanding.values().iterator().next();
         Assert.assertTrue(p.request.getHdr().getType() == OpCode.create);
 
         // make sure it has a chance to write it to disk
-        Thread.sleep(1000);
-        p.qvAcksetPairs.get(0).getAckset().contains(leader);
+        int sleepTime = 0;
+        Long longLeader = new Long(leader);
+        while (!p.qvAcksetPairs.get(0).getAckset().contains(longLeader)) {
+            if (sleepTime > 2000) {
+                Assert.fail("Transaction not synced to disk within 1 second " + p.qvAcksetPairs.get(0).getAckset()
+                    + " expected " + leader);
+            }
+            Thread.sleep(100);
+            sleepTime += 100;
+        }
 
-        // 6. wait the leader to quit due to no enough followers
-        Thread.sleep(4000);
-        //waitForOne(zk[leader], States.CONNECTING);
+        // 6. wait for the leader to quit due to not enough followers and come back up as a part of the new quorum
+        sleepTime = 0;
+        Follower f = mt[leader].main.quorumPeer.follower;
+        while (f == null || !f.isRunning()) {
+            if (sleepTime > 4000) {
+                Assert.fail("Took too long for old leader to time out");
+            }
+            Thread.sleep(100);
+            sleepTime += 100;
+            f = mt[leader].main.quorumPeer.follower;
+        }
         mt[leader].shutdown();
 
         int newLeader = -1;
@@ -997,7 +1013,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
         // 7. restart the previous leader
         mt[leader].start();
-        waitForOne(zk[leader], States.CONNECTED);
+        waitForAll(zk, States.CONNECTED);
 
         // 8. check the node exist in previous leader but not others
         //    make sure everything is consistent
