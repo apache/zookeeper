@@ -18,19 +18,11 @@
 
 package org.apache.zookeeper.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.client.StaticHostProvider;
 import org.apache.zookeeper.common.Time;
 import org.junit.Test;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +31,14 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class StaticHostProviderTest extends ZKTestCase {
     private static final Logger LOG = LoggerFactory.getLogger(StaticHostProviderTest.class);
@@ -127,10 +127,12 @@ public class StaticHostProviderTest extends ZKTestCase {
 
         // Test a hostname that resolves to a single address
         list.add(InetSocketAddress.createUnresolved("issues.apache.org", 1234));
+
         final InetAddress issuesApacheOrg = mock(InetAddress.class);
         when(issuesApacheOrg.getHostAddress()).thenReturn("192.168.1.1");
         when(issuesApacheOrg.toString()).thenReturn("issues.apache.org");
         when(issuesApacheOrg.getHostName()).thenReturn("issues.apache.org");
+
         StaticHostProvider.Resolver resolver = new StaticHostProvider.Resolver() {
             @Override
             public InetAddress[] getAllByName(String name) {
@@ -142,8 +144,8 @@ public class StaticHostProviderTest extends ZKTestCase {
         StaticHostProvider hostProvider = new StaticHostProvider(list, resolver);
         InetSocketAddress next = hostProvider.next(0);
         next = hostProvider.next(0);
-        assertTrue("No address was removed", hostProvider.getNextRemoved() == 1);
-        assertTrue("No address was added", hostProvider.getNextAdded() == 1);
+        assertEquals(1, hostProvider.size());
+        assertEquals(issuesApacheOrg, next.getAddress());
     }
 
     @Test
@@ -163,21 +165,23 @@ public class StaticHostProviderTest extends ZKTestCase {
         when(apacheOrg2.getHostAddress()).thenReturn("192.168.1.2");
         when(apacheOrg2.toString()).thenReturn("www.apache.org");
         when(apacheOrg2.getHostName()).thenReturn("www.apache.org");
+
+        final List<InetAddress> resolvedAddresses = new ArrayList<>();
+        resolvedAddresses.add(apacheOrg1);
+        resolvedAddresses.add(apacheOrg2);
         StaticHostProvider.Resolver resolver = new StaticHostProvider.Resolver() {
             @Override
             public InetAddress[] getAllByName(String name) {
-                return new InetAddress[] {
-                        apacheOrg1,
-                        apacheOrg2
-                };
+                return resolvedAddresses.toArray(new InetAddress[resolvedAddresses.size()]);
             }
         };
 
         StaticHostProvider hostProvider = new StaticHostProvider(list, resolver);
         InetSocketAddress next = hostProvider.next(0);
         next = hostProvider.next(0);
-        assertTrue("No address was removed", hostProvider.getNextRemoved() == 2);
-        assertTrue("No address was added", hostProvider.getNextAdded() == 2);
+        assertEquals(2, hostProvider.size());
+        assertEquals(apacheOrg1.getHostAddress(), hostProvider.getServerAddresses().get(0).getAddress().getHostAddress());
+        assertEquals(apacheOrg2.getHostAddress(), hostProvider.getServerAddresses().get(1).getAddress().getHostAddress());
     }
 
     @Test

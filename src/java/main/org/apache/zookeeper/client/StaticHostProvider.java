@@ -18,10 +18,6 @@
 
 package org.apache.zookeeper.client;
 
-import org.apache.yetus.audience.InterfaceAudience;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -30,6 +26,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.yetus.audience.InterfaceAudience;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Most simple HostProvider, resolves only on instantiation.
@@ -155,18 +154,8 @@ public final class StaticHostProvider implements HostProvider {
         return serverAddresses.size();
     }
 
-    // Counts the number of addresses added and removed during
-    // the last call to next. Used mainly for test purposes.
-    // See StasticHostProviderTest.
-    private int nextAdded = 0;
-    private int nextRemoved = 0;
-
-    public int getNextAdded() {
-        return nextAdded;
-    }
-
-    public int getNextRemoved() {
-        return nextRemoved;
+    public List<InetSocketAddress> getServerAddresses() {
+        return Collections.unmodifiableList(serverAddresses);
     }
 
     public InetSocketAddress next(long spinDelay) {
@@ -175,36 +164,26 @@ public final class StaticHostProvider implements HostProvider {
             InetSocketAddress curAddr = serverAddresses.get(currentIndex);
             String curHostString = getHostString(curAddr);
             if (!curHostString.equals(curAddr.getAddress().getHostAddress())) {
-                LOG.info("Resolving again hostname: {}", getHostString(curAddr));
+                LOG.info("Resolving again hostname: {}", curHostString);
                 try {
                     int thePort = curAddr.getPort();
                     InetAddress resolvedAddresses[] = this.resolver.getAllByName(curHostString);
-                    nextAdded = 0;
-                    nextRemoved = 0;
-                    if (resolvedAddresses.length == 1) {
-                        serverAddresses.set(currentIndex, new InetSocketAddress(resolvedAddresses[0], thePort));
-                        nextAdded = nextRemoved = 1;
-                        LOG.debug("Newly resolved address: {}", resolvedAddresses[0]);
-                    } else {
-                        int i = 0;
-                        while (i < serverAddresses.size()) {
-                            if (getHostString(serverAddresses.get(i)).equals(curHostString) &&
-                                    serverAddresses.get(i).getPort() == curAddr.getPort()) {
-                                LOG.debug("Removing address: {}", serverAddresses.get(i));
-                                serverAddresses.remove(i);
-                                nextRemoved++;
-                            } else {
-                                i++;
-                            }
+                    int i = 0;
+                    while (i < serverAddresses.size()) {
+                        if (getHostString(serverAddresses.get(i)).equals(curHostString) &&
+                                serverAddresses.get(i).getPort() == curAddr.getPort()) {
+                            LOG.debug("Removing address: {}", serverAddresses.get(i));
+                            serverAddresses.remove(i);
+                        } else {
+                            i++;
                         }
+                    }
 
-                        for (InetAddress resolvedAddress : resolvedAddresses) {
-                            InetSocketAddress newAddr = new InetSocketAddress(resolvedAddress, thePort);
-                            if (!serverAddresses.contains(newAddr)) {
-                                LOG.debug("Adding address: {}", newAddr);
-                                serverAddresses.add(newAddr);
-                                nextAdded++;
-                            }
+                    for (InetAddress resolvedAddress : resolvedAddresses) {
+                        InetSocketAddress newAddr = new InetSocketAddress(resolvedAddress, thePort);
+                        if (!serverAddresses.contains(newAddr)) {
+                            LOG.debug("Adding address: {}", newAddr);
+                            serverAddresses.add(newAddr);
                         }
                     }
                 } catch (UnknownHostException e) {
