@@ -173,7 +173,10 @@ public class CommandsTest extends ClientBase {
                     new Field("ephemerals_count", Integer.class),
                     new Field("approximate_data_size", Long.class),
                     new Field("open_file_descriptor_count", Long.class),
-                    new Field("max_file_descriptor_count", Long.class));
+                    new Field("max_file_descriptor_count", Long.class),
+                    new Field("last_client_response_size", Integer.class),
+                    new Field("max_client_response_size", Integer.class),
+                    new Field("min_client_response_size", Integer.class));
     }
 
     @Test

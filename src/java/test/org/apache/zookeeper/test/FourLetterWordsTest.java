@@ -167,6 +167,8 @@ public class FourLetterWordsTest extends ClientBase {
         line = in.readLine();
         Assert.assertTrue(Pattern.matches("^Mode: .*$", line));
         line = in.readLine();
+        Assert.assertTrue(Pattern.matches("^Client response size last/min/max: -?\\d+/-?\\d+/-?\\d+$", line));
+        line = in.readLine();
         Assert.assertTrue(Pattern.matches("^Node count: \\d+$", line));
 
         zk1.close();

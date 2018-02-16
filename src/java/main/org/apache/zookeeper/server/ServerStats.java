@@ -180,7 +180,6 @@ public class ServerStats {
 
     public void updateClientResponseSize(int size) {
         clientResponseStats.setLastProposalSize(size);
-        LOG.info("Client request size = {}", size);
     }
 
     public ProposalStats getClientResponseStats() {
