@@ -366,8 +366,7 @@ public abstract class ClientBase extends ZKTestCase {
         File tmpDir = new File(tmpFile + ".dir");
         Assert.assertFalse(tmpDir.exists()); // never true if tmpfile does it's job
         Assert.assertTrue(tmpDir.mkdirs());
-
-        // todo not every tmp directory needs this file
+        
         if (createInitFile) {
             createInitializeFile(tmpDir);
         }
