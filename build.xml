@@ -955,7 +955,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
         <replacetoken>/tmp/zookeeper</replacetoken>
         <replacevalue>${VAR_DIR}/data</replacevalue>
       </replace>
-
+  	  
       <chmod perm="ugo+x" type="file" parallel="false">
         <fileset dir="${dist.dir}/bin"/>
         <fileset dir="${dist.dir}/sbin"/>
@@ -1069,7 +1069,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
         <property name="dist.dir" value="${dist.dir}"/>
         <fileset file="${contrib.dir}/build.xml"/>
         <fileset file="${recipes.dir}/build.xml"/>
-      </subant>
+      </subant>  	
       <path id="c.lib">
         <fileset dir="${build.dir}">
           <include name="${final.name}-lib.tar.gz"/>
@@ -1174,10 +1174,10 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
         </tarfileset>
         <tarfileset dir="${build.dir}/c/build/${package.prefix}/include" prefix="${package.prefix}/include">
           <include name="**" />
-        </tarfileset>
+        </tarfileset> 
         <tarfileset dir="${build.dir}/c/build/${package.prefix}/lib" filemode="755" prefix="${package.prefix}/lib">
           <include name="**" />
-        </tarfileset>
+        </tarfileset> 
         <tarfileset dir="${build.dir}/${final.name}/conf" filemode="644" prefix="${package.conf.dir}">
           <include name="**" />
         </tarfileset>
@@ -1485,11 +1485,11 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
 	<!-- yet to implement -->
     </target>
     
-    <target name="test-core-java" depends="test-init, test-category, junit.run"/>
+    <target name="test-core-java" depends="test-init, test-category, junit.run"/> 
 
-    <target name="test-core-cppunit" depends="test-init, test-category, call-test-cppunit"/>
+    <target name="test-core-cppunit" depends="test-init, test-category, call-test-cppunit"/> 
 
-    <target name="test-core" depends="test-core-java, test-core-cppunit"/>
+    <target name="test-core" depends="test-core-java, test-core-cppunit"/> 
 
     <!-- ====================================================== -->
     <!-- Run optional third-party tool targets                  -->
