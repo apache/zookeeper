@@ -20,7 +20,6 @@ package org.apache.zookeeper.server.persistence;
 
 import org.apache.jute.Record;
 import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.TestUtils;
@@ -33,8 +32,6 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class FileTxnSnapLogTest {
 
