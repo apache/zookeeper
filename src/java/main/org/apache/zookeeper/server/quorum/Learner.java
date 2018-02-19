@@ -201,6 +201,9 @@ public class Learner {
         Vote current = self.getCurrentVote();
         for (QuorumServer s : self.getView().values()) {
             if (s.id == current.getId()) {
+                // Ensure we have the leader's correct IP address before
+                // attempting to connect.
+                s.recreateSocketAddresses();
                 leaderServer = s;
                 break;
             }
