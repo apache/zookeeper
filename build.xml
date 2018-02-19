@@ -17,7 +17,7 @@
    limitations under the License.
 -->
 
-<project name="ZooKeeper" default="jar"
+<project name="ZooKeeper" default="jar" 
 xmlns:ivy="antlib:org.apache.ivy.ant"
 xmlns:artifact="antlib:org.apache.maven.artifact.ant"
 xmlns:maven="antlib:org.apache.maven.artifact.ant"
@@ -504,7 +504,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       </exec>
       <mkdir dir="${build.dir}/c" />
       <condition property="enable.gcov.arg" value="--enable-gcov" else="">
-          <equals arg1="${enable.gcov}" arg2="true"/>
+        <equals arg1="${enable.gcov}" arg2="true"/>
       </condition>
       <exec executable="${c.src.dir}/configure" dir="${build.dir}/c"
             failonerror="yes">
@@ -1316,7 +1316,29 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       </condition>
     </target>	
 
-    <target name="check-cppunit-makefile" depends="init" >
+    <target name="verify-cppunit-makefile-gcov">
+      <fileset id="fileset.makefile.gcov.enabled" dir="${test.cppunit.dir}" erroronmissingdir="false">
+        <include name="Makefile"/>
+        <containsregexp expression="^[^#]+-ftest-coverage.*$"/>
+      </fileset>
+      <condition property="makefile.gcov.enabled">
+        <resourcecount when="greater" count="0" refid="fileset.makefile.gcov.enabled"/>
+      </condition>
+      <echo message="makefile.gcov.enabled = ${makefile.gcov.enabled}"/>
+      <condition property="delete.cppunit.makefile">
+        <and>
+          <isset property="makefile.gcov.enabled"/>
+          <not><equals arg1="${enable.gcov}" arg2="true"/></not>
+        </and>
+      </condition>
+      <echo message="delete.cppunit.makefile = ${delete.cppunit.makefile}"/>
+    </target>
+    
+    <target name="delete-cppunit-makefile" if="delete.cppunit.makefile">
+      <delete file="${test.cppunit.dir}/Makefile"/>
+    </target>
+    
+    <target name="check-cppunit-makefile" depends="init,verify-cppunit-makefile-gcov,delete-cppunit-makefile" >
     	<condition property="need.cppunit.makefile">
        		<not> <available file="${test.cppunit.dir}/Makefile"/> </not>
     	</condition>
@@ -1347,7 +1369,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       </antcall>
     	<mkdir dir="${test.cppunit.dir}"/>
         <condition property="enable.gcov.arg" value="--enable-gcov" else="">
-            <equals arg1="${enable.gcov}" arg2="true"/>
+          <equals arg1="${enable.gcov}" arg2="true"/>
         </condition>
     	<exec executable="${c.src.dir}/configure" dir="${test.cppunit.dir}"
           	failonerror="yes">
@@ -1465,25 +1487,26 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     </target>
 
     <target name="c_coverage_report" description="Runs coverage report for ZK C client code.">
-      <!-- delete configure file so that it gets regenerated with coverage enabled -->
+      <!-- delete configure and make files so that they get regenerated with coverage enabled -->
       <delete file="${c.src.dir}/configure"/>
+      <delete file="${test.cppunit.dir}/Makefile"/>
       <subant target="test-core-cppunit" failonerror="false">
         <property name="enable.gcov" value="true"/>
         <fileset dir="." file="build.xml"/>
       </subant>
       <mkdir dir="${build.dir}/c_coverage" />
-        <copy todir="${build.dir}/c" verbose="true" overwrite="true" failonerror="true">
-            <fileset dir="${build.dir}/test/test-cppunit/.libs">
-                <include name="*.gcno"/>
-                <include name="*.gcda"/>
-            </fileset>
-        </copy>
-        <exec dir="${build.dir}/c" executable="lcov">
-            <arg line="-t testname -o ZK_C_client.info -c -d ."/>
-        </exec>
-        <exec dir="${build.dir}/c_coverage" executable="genhtml">
-            <arg line="-o report ${build.dir}/c/ZK_C_client.info"/>
-        </exec>
+      <copy todir="${build.dir}/c" verbose="true" overwrite="true" failonerror="true">
+        <fileset dir="${build.dir}/test/test-cppunit/.libs">
+          <include name="*.gcno"/>
+          <include name="*.gcda"/>
+        </fileset>
+      </copy>
+      <exec dir="${build.dir}/c" executable="lcov">
+        <arg line="-t testname -o ZK_C_client.info -c -d ."/>
+      </exec>
+      <exec dir="${build.dir}/c_coverage" executable="genhtml">
+        <arg line="-o report ${build.dir}/c/ZK_C_client.info"/>
+      </exec>
     </target>
 
     <!-- Run with 'ant -Dfindbugs.home="path to Findbugs directory" findbugs -->
