@@ -212,7 +212,7 @@ public class ZooKeeper {
                 synchronized (existWatches) {
                     Set<Watcher> list = existWatches.remove(clientPath);
                     if (list != null) {
-                        addTo(existWatches.remove(clientPath), result);
+                        addTo(list, result);
                         LOG.warn("We are triggering an exists watch for delete! Shouldn't happen!");
                     }
                 }
