@@ -475,7 +475,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
                     pattern="${ivy.lib}/[artifact]-[revision].[ext]"/>
       <ivy:cachepath pathid="mvn-ant-task-classpath" conf="mvn-ant-task"/>
     </target>
-    <target name="compile" depends="ivy-retrieve,clover,build-generated">
+    <target name="compile" depends="ivy-retrieve,clover,build-generated,print_compile_classpath">
         <javac srcdir="${java.src.dir}" destdir="${build.classes}" includeantruntime="false"
                target="${javac.target}" source="${javac.source}" debug="on" encoding="${build.encoding}">
             <classpath refid="java.classpath"/>
@@ -1246,7 +1246,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       </fileset>
     </target>
 
-    <target name="junit.run" depends="junit-init,junit.run-single,junit.run-concurrent" />
+    <target name="junit.run" depends="junit-init,print_junit_classpath,junit.run-single,junit.run-concurrent" />
 
     <target name="junit.run-concurrent" if="ant.supports.concurrent.junit.processes">
         <echo>Running ${test.junit.threads} concurrent JUnit processes.</echo>
@@ -1860,5 +1860,19 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
        <delete dir=".settings" />
        <delete dir="${build.dir.eclipse}" />
      </target>
+
+    <target name="print_compile_classpath">
+        <pathconvert pathsep="${line.separator}|   |-- " property="echo.compile.classpath" refid="java.classpath"/>
+        <echo message="|-- compile classpath"/>
+        <echo message="|   |"/>
+        <echo message="|   |-- ${echo.compile.classpath}"/>
+    </target>
+
+    <target name="print_junit_classpath">
+        <pathconvert pathsep="${line.separator}|   |-- " property="echo.junit.classpath" refid="junit.classpath"/>
+        <echo message="|-- junit classpath"/>
+        <echo message="|   |"/>
+        <echo message="|   |-- ${echo.junit.classpath}"/>
+    </target>
 
 </project>
