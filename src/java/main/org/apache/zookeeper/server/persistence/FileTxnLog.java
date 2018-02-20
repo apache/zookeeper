@@ -99,6 +99,8 @@ public class FileTxnLog implements TxnLog {
 
     public final static int VERSION = 2;
 
+    public static final String LOG_FILE_PREFIX = "log";
+
     /** Maximum time we allow for elapsed fsync before WARNing */
     private final static long fsyncWarningThresholdMS;
 
@@ -207,13 +209,11 @@ public class FileTxnLog implements TxnLog {
         }
 
         if (logStream==null) {
-            if(LOG.isInfoEnabled()){
-                LOG.info("Creating new log file: log." +
-                        Long.toHexString(hdr.getZxid()));
-            }
+           if(LOG.isInfoEnabled()){
+                LOG.info("Creating new log file: " + Util.makeLogName(hdr.getZxid()));
+           }
 
-            logFileWrite = new File(logDir, ("log." +
-                    Long.toHexString(hdr.getZxid())));
+            logFileWrite = new File(logDir, Util.makeLogName(hdr.getZxid()));
             fos = new FileOutputStream(logFileWrite);
             logStream=new BufferedOutputStream(fos);
             oa = BinaryOutputArchive.getArchive(logStream);
@@ -290,12 +290,12 @@ public class FileTxnLog implements TxnLog {
      * @return
      */
     public static File[] getLogFiles(File[] logDirList,long snapshotZxid) {
-        List<File> files = Util.sortDataDir(logDirList, "log", true);
+        List<File> files = Util.sortDataDir(logDirList, LOG_FILE_PREFIX, true);
         long logZxid = 0;
         // Find the log file that starts before or at the same time as the
         // zxid of the snapshot
         for (File f : files) {
-            long fzxid = Util.getZxidFromName(f.getName(), "log");
+            long fzxid = Util.getZxidFromName(f.getName(), LOG_FILE_PREFIX);
             if (fzxid > snapshotZxid) {
                 continue;
             }
@@ -307,7 +307,7 @@ public class FileTxnLog implements TxnLog {
         }
         List<File> v=new ArrayList<File>(5);
         for (File f : files) {
-            long fzxid = Util.getZxidFromName(f.getName(), "log");
+            long fzxid = Util.getZxidFromName(f.getName(), LOG_FILE_PREFIX);
             if (fzxid < logZxid) {
                 continue;
             }
@@ -324,7 +324,7 @@ public class FileTxnLog implements TxnLog {
     public long getLastLoggedZxid() {
         File[] files = getLogFiles(logDir.listFiles(), 0);
         long maxLog=files.length>0?
-                Util.getZxidFromName(files[files.length-1].getName(),"log"):-1;
+                Util.getZxidFromName(files[files.length-1].getName(),LOG_FILE_PREFIX):-1;
 
         // if a log file is more recent we must scan it to find
         // the highest zxid
@@ -578,13 +578,13 @@ public class FileTxnLog implements TxnLog {
          */
         void init() throws IOException {
             storedFiles = new ArrayList<File>();
-            List<File> files = Util.sortDataDir(FileTxnLog.getLogFiles(logDir.listFiles(), 0), "log", false);
+            List<File> files = Util.sortDataDir(FileTxnLog.getLogFiles(logDir.listFiles(), 0), LOG_FILE_PREFIX, false);
             for (File f: files) {
-                if (Util.getZxidFromName(f.getName(), "log") >= zxid) {
+                if (Util.getZxidFromName(f.getName(), LOG_FILE_PREFIX) >= zxid) {
                     storedFiles.add(f);
                 }
                 // add the last logfile that is less than the zxid
-                else if (Util.getZxidFromName(f.getName(), "log") < zxid) {
+                else if (Util.getZxidFromName(f.getName(), LOG_FILE_PREFIX) < zxid) {
                     storedFiles.add(f);
                     break;
                 }

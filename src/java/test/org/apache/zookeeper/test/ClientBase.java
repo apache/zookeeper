@@ -351,11 +351,15 @@ public abstract class ClientBase extends ZKTestCase {
         }
     }
 
+    public static File createEmptyTestDir() throws IOException {
+        return createTmpDir(BASETEST, false);
+    }
 
     public static File createTmpDir() throws IOException {
-        return createTmpDir(BASETEST);
+        return createTmpDir(BASETEST, true);
     }
-    static File createTmpDir(File parentDir) throws IOException {
+
+    static File createTmpDir(File parentDir, boolean createInitFile) throws IOException {
         File tmpFile = File.createTempFile("test", ".junit", parentDir);
         // don't delete tmpFile - this ensures we don't attempt to create
         // a tmpDir with a duplicate name
@@ -363,8 +367,21 @@ public abstract class ClientBase extends ZKTestCase {
         Assert.assertFalse(tmpDir.exists()); // never true if tmpfile does it's job
         Assert.assertTrue(tmpDir.mkdirs());
 
+        // todo not every tmp directory needs this file
+        if (createInitFile) {
+            createInitializeFile(tmpDir);
+        }
+
         return tmpDir;
     }
+
+    public static void createInitializeFile(File dir) throws IOException {
+        File initFile = new File(dir, "initialize");
+        if (!initFile.exists()) {
+            Assert.assertTrue(initFile.createNewFile());
+        }
+    }
+
     private static int getPort(String hostPort) {
         String[] split = hostPort.split(":");
         String portstr = split[split.length-1];
@@ -478,7 +495,7 @@ public abstract class ClientBase extends ZKTestCase {
 
         setUpAll();
 
-        tmpDir = createTmpDir(BASETEST);
+        tmpDir = createTmpDir(BASETEST, true);
 
         startServer();
 
