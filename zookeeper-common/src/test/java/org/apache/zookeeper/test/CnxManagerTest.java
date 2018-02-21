@@ -186,10 +186,8 @@ public class CnxManagerTest extends ZKTestCase {
 
     @Test
     public void testCnxManagerTimeout() throws Exception {
-        Random rand = new Random();
-        byte b = (byte) rand.nextInt();
         int deadPort = PortAssignment.unique();
-        String deadAddress = "10.1.1." + b;
+        String deadAddress = "10.1.1.255";
 
         LOG.info("This is the dead address I'm trying: " + deadAddress);
 
@@ -213,7 +211,7 @@ public class CnxManagerTest extends ZKTestCase {
         cnxManager.toSend(2L, createMsg(ServerState.LOOKING.ordinal(), 1, -1, 1));
         long end = Time.currentElapsedTime();
 
-        if((end - begin) > 6000) Assert.fail("Waited more than necessary");
+        if((end - begin) > 3000) Assert.fail("Waited more than necessary");
         cnxManager.halt();
         Assert.assertFalse(cnxManager.listener.isAlive());
     }
