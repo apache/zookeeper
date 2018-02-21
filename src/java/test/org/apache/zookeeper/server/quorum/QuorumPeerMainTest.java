@@ -250,14 +250,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         numServers = 3;
         servers = LaunchServers(numServers);
         String path = "/hzxidtest";
-        int leader = -1;
-
-        // find the leader
-        for (int i = 0; i < numServers; i++) {
-            if (servers.mt[i].main.quorumPeer.leader != null) {
-                leader = i;
-            }
-        }
+        int leader = servers.findLeader();
 
         // make sure there is a leader
         Assert.assertTrue("There should be a leader", leader >= 0);
@@ -367,12 +360,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
           servers = LaunchServers(numServers, 500);
 
           // find the leader
-          int trueLeader = -1;
-          for (int i = 0; i < numServers; i++) {
-            if (servers.mt[i].main.quorumPeer.leader != null) {
-              trueLeader = i;
-            }
-          }
+          int trueLeader = servers.findLeader();
           Assert.assertTrue("There should be a leader", trueLeader >= 0);
 
           // find a follower
@@ -489,8 +477,8 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             }
         }
 
-        public void restartClient(int i, Watcher watcher) throws IOException {
-            zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i], ClientBase.CONNECTION_TIMEOUT, watcher);
+        public void restartClient(int clientIndex, Watcher watcher) throws IOException {
+            zk[clientIndex] = new ZooKeeper("127.0.0.1:" + clientPorts[clientIndex], ClientBase.CONNECTION_TIMEOUT, watcher);
         }
 
         public int findLeader() {
@@ -925,6 +913,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
     @Test
     public void testFailedTxnAsPartOfQuorumLoss() throws Exception {
+        final int LEADER_TIMEOUT_MS = 10_000;
         // 1. start up server and wait for leader election to finish
         ClientBase.setupTestEnv();
         final int SERVER_COUNT = 3;
@@ -943,7 +932,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         int leader = servers.findLeader();
         Map<Long, Proposal> outstanding =  servers.mt[leader].main.quorumPeer.leader.outstandingProposals;
         // increase the tick time to delay the leader going to looking
-        servers.mt[leader].main.quorumPeer.tickTime = 10000;
+        servers.mt[leader].main.quorumPeer.tickTime = LEADER_TIMEOUT_MS;
         LOG.warn("LEADER {}", leader);
 
         for (int i = 0; i < SERVER_COUNT; i++) {
@@ -996,23 +985,24 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         }
 
         // 6. wait for the leader to quit due to not enough followers and come back up as a part of the new quorum
+        LOG.info("Waiting for leader {} to timeout followers", leader);
         sleepTime = 0;
         Follower f = servers.mt[leader].main.quorumPeer.follower;
         while (f == null || !f.isRunning()) {
-            if (sleepTime > 10_000) {
+            if (sleepTime > LEADER_TIMEOUT_MS * 2) {
                 Assert.fail("Took too long for old leader to time out " + servers.mt[leader].main.quorumPeer.getPeerState());
             }
             Thread.sleep(100);
             sleepTime += 100;
             f = servers.mt[leader].main.quorumPeer.follower;
         }
-        servers.mt[leader].shutdown();
 
         int newLeader = servers.findLeader();
         // make sure a different leader was elected
         Assert.assertNotEquals(leader, newLeader);
 
-        // 7. restart the previous leader
+        // 7. restart the previous leader to force it to replay the edits and possibly come up in a bad state
+        servers.mt[leader].shutdown();
         servers.mt[leader].start();
         waitForAll(servers, States.CONNECTED);
 
