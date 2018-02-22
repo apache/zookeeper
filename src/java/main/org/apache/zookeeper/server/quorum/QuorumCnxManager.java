@@ -357,7 +357,7 @@ public class QuorumCnxManager {
                 return;
             }
             try {
-                if (!initiateConnection(sid, view.get(sid).electionAddr)) {
+                if (!initiateConnection(sid, electionAddr)) {
                     if (view.containsKey(sid)) {
                         view.get(sid).recreateSocketAddresses();
                     }
