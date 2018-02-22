@@ -362,10 +362,6 @@ public class LearnerHandler extends ZooKeeperThread {
     @Override
     public void run() {
         try {
-            leader.addLearnerHandler(this);
-            tickOfNextAckDeadline = leader.self.tick.get()
-                    + leader.self.initLimit + leader.self.syncLimit;
-
             ia = BinaryInputArchive.getArchive(bufferedInput);
             bufferedOutput = new BufferedOutputStream(sock.getOutputStream());
             oa = BinaryOutputArchive.getArchive(bufferedOutput);
@@ -375,8 +371,18 @@ public class LearnerHandler extends ZooKeeperThread {
             if(qp.getType() != Leader.FOLLOWERINFO && qp.getType() != Leader.OBSERVERINFO){
                 LOG.error("First packet " + qp.toString()
                         + " is not FOLLOWERINFO or OBSERVERINFO!");
+
+                try {
+                    sock.close();
+                } catch (IOException e) {
+                    LOG.warn("Ignoring unexpected exception during socket close", e);
+                }
                 return;
             }
+
+            leader.addLearnerHandler(this);
+            tickOfNextAckDeadline = leader.self.tick.get()
+                    + leader.self.initLimit + leader.self.syncLimit;
 
             byte learnerInfoData[] = qp.getData();
             if (learnerInfoData != null) {
