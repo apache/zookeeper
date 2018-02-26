@@ -81,7 +81,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     /** auth info for the cnxn, returns an unmodifyable list */
     public List<Id> getAuthInfo() {
-        return Collections.unmodifiableList(authInfo);
+        return Collections.unmodifiableList(new ArrayList<Id>(authInfo));
     }
 
     public void addAuthInfo(Id id) {
