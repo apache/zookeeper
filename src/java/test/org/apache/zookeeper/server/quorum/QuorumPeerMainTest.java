@@ -1013,4 +1013,113 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             Assert.assertNull("server " + i + " should not have /zk" + leader, servers.zk[i].exists("/zk" + leader, false));
         }
     }
+
+    /**
+     * Verify that a node without the leader in its view will not attempt to connect to the leader.
+     */
+    @Test
+    public void testLeaderOutOfView() throws Exception {
+        ClientBase.setupTestEnv();
+
+        Layout layout = new PatternLayout("%d{ISO8601} [,yid:%X{myid}] - %5p [%t:%C{1}@%L] - %m%n");
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        WriterAppender appender = new WriterAppender(layout, os);
+        appender.setThreshold(Level.DEBUG);
+        Logger qlogger = Logger.getLogger("org.apache.zookeeper.server.quorum");
+        qlogger.addAppender(appender);
+
+        try {
+            final int CLIENT_PORT_QP1 = PortAssignment.unique();
+            final int CLIENT_PORT_QP2 = PortAssignment.unique();
+            final int CLIENT_PORT_QP3 = PortAssignment.unique();
+
+            String quorumCfgIncomplete = getUniquePortCfgForId(1) + "\n" + getUniquePortCfgForId(2);
+            String quorumCfgComplete = quorumCfgIncomplete + "\n" + getUniquePortCfgForId(3);
+
+            // Node 1 is started without the leader (3) in its config view
+            MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgIncomplete);
+            MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgComplete);
+            MainThread q3 = new MainThread(3, CLIENT_PORT_QP3, quorumCfgComplete);
+
+            // Node 1 must be started first, before quorum is formed, to trigger the attempted invalid connection to 3
+            q1.start();
+            QuorumPeer quorumPeer1 = waitForQuorumPeer(q1, CONNECTION_TIMEOUT);
+            Assert.assertTrue(quorumPeer1.getPeerState() == QuorumPeer.ServerState.LOOKING);
+
+            // Node 3 started second to avoid 1 and 2 forming a quorum before 3 starts up
+            q3.start();
+            QuorumPeer quorumPeer3 = waitForQuorumPeer(q3, CONNECTION_TIMEOUT);
+            Assert.assertTrue(quorumPeer3.getPeerState() == QuorumPeer.ServerState.LOOKING);
+
+            // Node 2 started last, kicks off leader election
+            q2.start();
+
+            // Nodes 2 and 3 now form quorum and fully start. 1 attempts to vote for 3, fails, returns to LOOKING state
+            Assert.assertTrue("waiting for server 2 to start",
+                    ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2, CONNECTION_TIMEOUT));
+            Assert.assertTrue("waiting for server 3 to start",
+                    ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP3, CONNECTION_TIMEOUT));
+
+            Assert.assertTrue(q1.getQuorumPeer().getPeerState() == QuorumPeer.ServerState.LOOKING);
+            Assert.assertTrue(q2.getQuorumPeer().getPeerState() == QuorumPeer.ServerState.FOLLOWING);
+            Assert.assertTrue(q3.getQuorumPeer().getPeerState() == QuorumPeer.ServerState.LEADING);
+
+            q1.shutdown();
+            q2.shutdown();
+            q3.shutdown();
+
+            Assert.assertTrue("waiting for server 1 down",
+                    ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1,
+                            ClientBase.CONNECTION_TIMEOUT));
+            Assert.assertTrue("waiting for server 2 down",
+                    ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2,
+                            ClientBase.CONNECTION_TIMEOUT));
+            Assert.assertTrue("waiting for server 3 down",
+                    ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP3,
+                            ClientBase.CONNECTION_TIMEOUT));
+
+        } finally {
+            qlogger.removeAppender(appender);
+        }
+
+        // Verify that Node 1 never threw an exception
+        LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
+        String line;
+        boolean found = false;
+        Pattern p = Pattern.compile(".*java.lang.NullPointerException.*");
+        while ((line = r.readLine()) != null) {
+            found = p.matcher(line).matches();
+            if (found) {
+                break;
+            }
+        }
+
+        Assert.assertFalse("Node should not attempt connection to out of view leader", found);
+    }
+
+    private String getUniquePortCfgForId(int id) {
+        return String.format("server.%d=127.0.0.1:%d:%d", id, PortAssignment.unique(), PortAssignment.unique());
+    }
+
+    private QuorumPeer waitForQuorumPeer(MainThread mainThread, int timeout) {
+        long start = Time.currentElapsedTime();
+        while (true) {
+            QuorumPeer quorumPeer = mainThread.getQuorumPeer();
+            if (quorumPeer != null) {
+                return quorumPeer;
+            }
+
+            if (Time.currentElapsedTime() > start + timeout) {
+                LOG.error("Timed out while waiting for QuorumPeer");
+                break;
+            }
+
+            try {
+                Thread.sleep(250);
+            } catch (InterruptedException e) {
+                // ignore
+            }
+        }
+        throw new NullPointerException();
+    }
 }
