@@ -853,10 +853,11 @@ public class FastLeaderElection implements Election {
                             tmpTimeOut : maxNotificationInterval);
                     LOG.info("Notification time out: " + notTimeout);
                 }
-                else if(self.getVotingView().containsKey(n.sid)) {
+                else if(self.getVotingView().containsKey(n.sid) &&
+                        self.getVotingView().containsKey(n.leader)) {
                     /*
                      * Only proceed if the vote comes from a replica in the
-                     * voting view.
+                     * voting view for a replica in the voting view.
                      */
                     switch (n.state) {
                     case LOOKING:
@@ -985,7 +986,12 @@ public class FastLeaderElection implements Election {
                         break;
                     }
                 } else {
-                    LOG.warn("Ignoring notification from non-cluster member " + n.sid);
+                    if (!self.getVotingView().containsKey(n.leader)) {
+                        LOG.warn("Ignoring notification for non-cluster member sid {} from sid {}", n.leader, n.sid);
+                    }
+                    if (!self.getVotingView().containsKey(n.sid)) {
+                        LOG.warn("Ignoring notification from non-cluster member sid {}", n.sid);
+                    }
                 }
             }
             return null;
