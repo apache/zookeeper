@@ -252,6 +252,7 @@ public class SessionTest extends ZKTestCase {
     /**
      * Make sure ephemerals get cleaned up when a session times out.
      */
+    @Ignore
     @Test
     public void testSessionTimeout() throws Exception {
         final int TIMEOUT = 5000;
