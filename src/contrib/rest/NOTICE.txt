@@ -1,7 +1,0 @@
-This contrib module includes software developed under the
-COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0
-
-This contrib depends on binary only jar libraries developed at:
-
-https://jersey.dev.java.net/
-https://grizzly.dev.java.net/
