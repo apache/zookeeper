@@ -1,36 +1,32 @@
-For the latest information about ZooKeeper, please visit our website at:
+# CxxZookeeper
 
-   http://zookeeper.apache.org/
+## C++ 版 zookeeper-3.4.11
 
-and our wiki, at:
+### 目录
+- [特点](#特点)
+- [依赖](#依赖)
+- [对比](#对比)
+- [Support](#support)
 
-   https://cwiki.apache.org/confluence/display/ZOOKEEPER
+#### 特点
+* 兼容性：完全兼容java版zookeeper；
+* 跨平台：同时支持Linux32/64、OSX64和WIN64三大平台，支持C++11及以上；
 
-Full documentation for this release can also be found in docs/index.html
+#### 对比
+* 性能：未深入优化，目前release版本性能接近java版，使用zk-latencies.py测试得出的数据基本一致；
+* 内存：c++版有明显优势，跟java版同环境下对比内存少用一个数量级，且无GC困扰；
+* 更多的对比数据敬请期待~
 
----------------------------
-Packaging/release artifacts
+#### 依赖
+1. [CxxJDK](https://github.com/cxxjava/CxxJDK)
+3. [CxxLog4j](https://github.com/cxxjava/CxxLog4j)
 
-The release artifact contains the following jar file at the toplevel:
+#### Support
+Email: [cxxjava@163.com](mailto:cxxjava@163.com)
 
-zookeeper-<version>.jar         - legacy jar file which contains all classes
-                                  and source files. Prior to version 3.3.0 this
-                                  was the only jar file available. It has the 
-                                  benefit of having the source included (for
-                                  debugging purposes) however is also larger as
-                                  a result
 
-The release artifact contains the following jar files in "dist-maven" directory:
 
-zookeeper-<version>.jar         - bin (binary) jar - contains only class (*.class) files
-zookeeper-<version>-sources.jar - contains only src (*.java) files
-zookeeper-<version>-javadoc.jar - contains only javadoc files
+For more information about Apache ZooKeeper, please visit website at:
 
-These bin/src/javadoc jars were added specifically to support Maven/Ivy which have 
-the ability to pull these down automatically as part of your build process. 
-The content of the legacy jar and the bin+sources jar are the same.
+<http://zookeeper.apache.org/>
 
-As of version 3.3.0 bin/sources/javadoc jars contained in dist-maven directory
-are deployed to the Apache Maven repository after the release has been accepted
-by Apache:
-  http://people.apache.org/repo/m2-ibiblio-rsync-repository/
