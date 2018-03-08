@@ -20,13 +20,11 @@ package org.apache.zookeeper.server;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.CancelledKeyException;
-import java.util.List;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.Assert;
 import org.junit.Test;
@@ -101,24 +99,6 @@ public class NIOServerCnxnTest extends ClientBase {
         } catch (CancelledKeyException e) {
             LOG.error("Exception while sending bytes!", e);
             Assert.fail(e.toString());
-        } finally {
-            zk.close();
-        }
-    }
-
-    @Test(timeout = 30000)
-    public void testServerCnxnGetAuthInfoWithCopy() throws Exception {
-        final ZooKeeper zk = createZKClient(hostPort, 3000);
-        try {
-            Iterable<ServerCnxn> connections = serverFactory.getConnections();
-            for (ServerCnxn serverCnxn : connections) {
-            	List<Id> authInfo = serverCnxn.getAuthInfo();
-            	Id id = new Id("testscheme", "test");
-				serverCnxn.addAuthInfo(id);
-				Assert.assertTrue(!authInfo.contains(id));
-				Assert.assertTrue(serverCnxn.getAuthInfo().contains(id));
-				break;
-            }
         } finally {
             zk.close();
         }
