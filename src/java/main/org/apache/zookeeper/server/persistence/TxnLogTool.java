@@ -41,6 +41,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.zip.Adler32;
@@ -78,8 +79,6 @@ public class TxnLogTool implements Closeable {
         }
     }
 
-    private static final Logger LOG = LoggerFactory.getLogger(TxnLogTool.class);
-
     private File txnLogFile;
     private boolean recoveryMode = false;
     private boolean verbose = false;
@@ -114,7 +113,8 @@ public class TxnLogTool implements Closeable {
         printStat();
     }
 
-    public void init(boolean recoveryMode, boolean verbose, String txnLogFileName) throws FileNotFoundException, TxnLogToolException {
+    public void init(boolean recoveryMode, boolean verbose, String txnLogFileName)
+            throws FileNotFoundException, TxnLogToolException {
         this.recoveryMode = recoveryMode;
         this.verbose = verbose;
         txnLogFile = new File(txnLogFileName);
@@ -141,12 +141,11 @@ public class TxnLogTool implements Closeable {
             throw new TxnLogToolException(1, "TxnLogTool is not yet initialized");
         }
         crcFixed = 0;
+
         FileHeader fhdr = new FileHeader();
         fhdr.deserialize(logStream, "fileheader");
-
         if (fhdr.getMagic() != TXNLOG_MAGIC) {
-            System.err.println("Invalid magic number for " + txnLogFile.getName());
-            System.exit(2);
+            throw new TxnLogToolException(2, "Invalid magic number for %s", txnLogFile.getName());
         }
         System.out.println("ZooKeeper Transactional Log File with dbid "
                 + fhdr.getDbid() + " txnlog format version "
@@ -181,16 +180,14 @@ public class TxnLogTool implements Closeable {
                     printTxn(bytes, "CRC FIXED");
                     ++crcFixed;
                 } else {
-                    throw new IOException("CRC doesn't match " + crcValue +
-                            " vs " + crc.getValue());
+                    printTxn(bytes, "CRC ERROR");
                 }
             }
             if (!recoveryMode || verbose) {
                 printTxn(bytes);
             }
             if (logStream.readByte("EOR") != 'B') {
-                LOG.error("Last transaction was partial.");
-                throw new EOFException("Last transaction was partial.");
+                throw new TxnLogToolException(1, "Last transaction was partial.");
             }
             if (recoveryMode) {
                 recoveryOa.writeLong(crcValue, "crcvalue");

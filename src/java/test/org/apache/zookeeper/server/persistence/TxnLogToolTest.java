@@ -24,18 +24,28 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintStream;
+
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.junit.Assert.assertThat;
+
 
 public class TxnLogToolTest {
     private static final File testData = new File(
             System.getProperty("test.data.dir", "build/test/data"));
 
+    private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+    private final ByteArrayOutputStream errContent = new ByteArrayOutputStream();
     private File mySnapDir;
 
     @Before
     public void setUp() throws IOException {
+        System.setOut(new PrintStream(outContent));
+        System.setErr(new PrintStream(errContent));
         File snapDir = new File(testData, "invalidsnap");
         mySnapDir = ClientBase.createTmpDir();
         FileUtils.copyDirectory(snapDir, mySnapDir);
@@ -43,6 +53,9 @@ public class TxnLogToolTest {
 
     @After
     public void tearDown() throws IOException {
+        System.setOut(System.out);
+        System.setErr(System.err);
+        mySnapDir.setWritable(true);
         FileUtils.deleteDirectory(mySnapDir);
     }
 
@@ -73,9 +86,8 @@ public class TxnLogToolTest {
     @Test(expected = TxnLogTool.TxnLogToolException.class)
     public void testInitWithRecoveryFileExists() throws IOException, TxnLogTool.TxnLogToolException {
         // Arrange
-        File snapDir = new File(testData, "invalidsnap");
-        File logfile = new File(new File(snapDir, "version-2"), "log.274");
-        File recoveryFile = new File(new File(snapDir, "version-2"), "log.274.fixed");
+        File logfile = new File(new File(mySnapDir, "version-2"), "log.274");
+        File recoveryFile = new File(new File(mySnapDir, "version-2"), "log.274.fixed");
         recoveryFile.createNewFile();
         TxnLogTool lt = new TxnLogTool();
 
@@ -83,19 +95,7 @@ public class TxnLogToolTest {
         lt.init(true, false, logfile.toString());
     }
 
-    @Test(expected = TxnLogTool.TxnLogToolException.class)
-    public void testInitWithRecoveryFileNotWritable() throws IOException, TxnLogTool.TxnLogToolException {
-        // Arrange
-        File snapDir = new File(testData, "invalidsnap");
-        snapDir.setWritable(false);
-        File logfile = new File(new File(snapDir, "version-2"), "log.274");
-        TxnLogTool lt = new TxnLogTool();
-
-        // Act
-        lt.init(true, false, logfile.toString());
-    }
-
-    @Test(expected = IOException.class)
+    @Test
     public void testDumpWithCrcError() throws Exception {
         // Arrange
         File logfile = new File(new File(mySnapDir, "version-2"), "log.42");
@@ -104,6 +104,10 @@ public class TxnLogToolTest {
 
         // Act
         lt.dump();
+
+        // Assert
+        String output = outContent.toString();
+        assertThat(output, containsString("CRC ERROR - 3/6/18 11:06:09 AM CET session 0x8061fac5ddeb0000"));
     }
 
     @Test
@@ -118,8 +122,6 @@ public class TxnLogToolTest {
 
         // Assert
         // Should be able to dump the recovered logfile
-        File fixedLogDir = new File(testData, "fixedLog");
-
         logfile = new File(new File(mySnapDir, "version-2"), "log.42.fixed");
         lt.init(false, false, logfile.toString());
         lt.dump();
