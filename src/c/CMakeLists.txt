@@ -39,11 +39,6 @@ add_definitions(-DUSE_STATIC_LIB)
 option(WANT_SYNCAPI "Enables Sync API support" ON)
 if(WANT_SYNCAPI)
   add_definitions(-DTHREADED)
-  if(WIN32)
-    # Note that the generator expression ensures that `/MTd` is used when Debug
-    # configurations are built.
-    add_compile_options(/MT$<$<CONFIG:Debug>:d>)
-  endif()
 endif()
 
 # CppUnit option
