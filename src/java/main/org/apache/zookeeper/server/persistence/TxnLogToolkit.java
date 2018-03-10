@@ -31,8 +31,6 @@ import org.apache.jute.Record;
 import org.apache.zookeeper.server.TraceFormatter;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.txn.TxnHeader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.EOFException;
@@ -41,21 +39,23 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.text.DateFormat;
 import java.util.Date;
+import java.util.Scanner;
 import java.util.zip.Adler32;
 import java.util.zip.Checksum;
 
 import static org.apache.zookeeper.server.persistence.FileTxnLog.TXNLOG_MAGIC;
 
-public class TxnLogTool implements Closeable {
+public class TxnLogToolkit implements Closeable {
 
-    public class TxnLogToolException extends Exception {
+    static class TxnLogToolkitException extends Exception {
         private static final long serialVersionUID = 1L;
         private int exitCode;
 
-        TxnLogToolException(int exitCode, String message, Object... params) {
+        TxnLogToolkitException(int exitCode, String message, Object... params) {
             super(String.format(message, params));
             this.exitCode = exitCode;
         }
@@ -65,11 +65,11 @@ public class TxnLogTool implements Closeable {
         }
     }
 
-    public class TxnLogToolParseException extends TxnLogToolException {
+    static class TxnLogToolkitParseException extends TxnLogToolkitException {
         private static final long serialVersionUID = 1L;
         private Options options;
 
-        TxnLogToolParseException(Options options, int exitCode, String message, Object... params) {
+        TxnLogToolkitParseException(Options options, int exitCode, String message, Object... params) {
             super(exitCode, message, params);
             this.options = options;
         }
@@ -84,47 +84,44 @@ public class TxnLogTool implements Closeable {
     private boolean verbose = false;
     private FileInputStream txnFis;
     private BinaryInputArchive logStream;
-    private boolean initialized = false;
 
     // Recovery mode
     private int crcFixed = 0;
     private FileOutputStream recoveryFos;
     private BinaryOutputArchive recoveryOa;
     private File recoveryLogFile;
+    private FilePadding filePadding = new FilePadding();
+    private boolean force = false;
 
     /**
      * @param args Command line arguments
      */
     public static void main(String[] args) throws Exception {
-        try (final TxnLogTool logf = new TxnLogTool()) {
-            logf.run(args);
-        } catch (TxnLogToolParseException e) {
+        try (final TxnLogToolkit lt = parseCommandLine(args)) {
+            lt.dump(new InputStreamReader(System.in));
+            lt.printStat();
+        } catch (TxnLogToolkitParseException e) {
             System.err.println(e.getMessage() + "\n");
             printHelpAndExit(e.getExitCode(), e.getOptions());
-        } catch (TxnLogToolException e) {
+        } catch (TxnLogToolkitException e) {
             System.err.println(e.getMessage());
             System.exit(e.getExitCode());
         }
     }
 
-    public void run(String[] args) throws Exception {
-        parseCommandLine(args);
-        dump();
-        printStat();
-    }
-
-    public void init(boolean recoveryMode, boolean verbose, String txnLogFileName)
-            throws FileNotFoundException, TxnLogToolException {
+    public TxnLogToolkit(boolean recoveryMode, boolean verbose, String txnLogFileName, boolean force)
+            throws FileNotFoundException, TxnLogToolkitException {
         this.recoveryMode = recoveryMode;
         this.verbose = verbose;
+        this.force = force;
         txnLogFile = new File(txnLogFileName);
         if (!txnLogFile.exists() || !txnLogFile.canRead()) {
-            throw new TxnLogToolException(1, "File doesn't exist or not readable: %s", txnLogFile);
+            throw new TxnLogToolkitException(1, "File doesn't exist or not readable: %s", txnLogFile);
         }
         if (recoveryMode) {
             recoveryLogFile = new File(txnLogFile.toString() + ".fixed");
             if (recoveryLogFile.exists()) {
-                throw new TxnLogToolException(1, "Recovery file %s already exists or not writable", recoveryLogFile);
+                throw new TxnLogToolkitException(1, "Recovery file %s already exists or not writable", recoveryLogFile);
             }
         }
 
@@ -132,20 +129,15 @@ public class TxnLogTool implements Closeable {
         if (recoveryMode) {
             openRecoveryFile();
         }
-
-        initialized = true;
     }
 
-    public void dump() throws Exception {
-        if (!initialized) {
-            throw new TxnLogToolException(1, "TxnLogTool is not yet initialized");
-        }
+    public void dump(Reader input) throws Exception {
         crcFixed = 0;
 
         FileHeader fhdr = new FileHeader();
         fhdr.deserialize(logStream, "fileheader");
         if (fhdr.getMagic() != TXNLOG_MAGIC) {
-            throw new TxnLogToolException(2, "Invalid magic number for %s", txnLogFile.getName());
+            throw new TxnLogToolkitException(2, "Invalid magic number for %s", txnLogFile.getName());
         }
         System.out.println("ZooKeeper Transactional Log File with dbid "
                 + fhdr.getDbid() + " txnlog format version "
@@ -153,6 +145,8 @@ public class TxnLogTool implements Closeable {
 
         if (recoveryMode) {
             fhdr.serialize(recoveryOa, "fileheader");
+            recoveryFos.flush();
+            filePadding.setCurrentSize(recoveryFos.getChannel().position());
         }
 
         int count = 0;
@@ -176,9 +170,17 @@ public class TxnLogTool implements Closeable {
             crc.update(bytes, 0, bytes.length);
             if (crcValue != crc.getValue()) {
                 if (recoveryMode) {
-                    crcValue = crc.getValue();
-                    printTxn(bytes, "CRC FIXED");
-                    ++crcFixed;
+                    if (!force) {
+                        printTxn(bytes, "CRC ERROR");
+                        if (askForFix(input)) {
+                            crcValue = crc.getValue();
+                            ++crcFixed;
+                        }
+                    } else {
+                        crcValue = crc.getValue();
+                        printTxn(bytes, "CRC FIXED");
+                        ++crcFixed;
+                    }
                 } else {
                     printTxn(bytes, "CRC ERROR");
                 }
@@ -187,16 +189,32 @@ public class TxnLogTool implements Closeable {
                 printTxn(bytes);
             }
             if (logStream.readByte("EOR") != 'B') {
-                throw new TxnLogToolException(1, "Last transaction was partial.");
+                throw new TxnLogToolkitException(1, "Last transaction was partial.");
             }
             if (recoveryMode) {
+                filePadding.padFile(recoveryFos.getChannel());
                 recoveryOa.writeLong(crcValue, "crcvalue");
                 recoveryOa.writeBuffer(bytes, "txnEntry");
                 recoveryOa.writeByte((byte)'B', "EOR");
-                // add padding
-
             }
             count++;
+        }
+    }
+
+    private boolean askForFix(Reader input) throws TxnLogToolkitException {
+        try (Scanner scanner = new Scanner(input)) {
+            while (true) {
+                System.out.print("Would you like to fix it (Yes/No/Abort) ? ");
+                char answer = Character.toUpperCase(scanner.next().charAt(0));
+                switch (answer) {
+                    case 'Y':
+                        return true;
+                    case 'N':
+                        return false;
+                    case 'A':
+                        throw new TxnLogToolkitException(0, "Recovery aborted.");
+                }
+            }
         }
     }
 
@@ -246,7 +264,7 @@ public class TxnLogTool implements Closeable {
         }
     }
 
-    private void parseCommandLine(String[] args) throws TxnLogToolException, FileNotFoundException {
+    private static TxnLogToolkit parseCommandLine(String[] args) throws TxnLogToolkitException, FileNotFoundException {
         CommandLineParser parser = new PosixParser();
         Options options = new Options();
 
@@ -262,6 +280,9 @@ public class TxnLogTool implements Closeable {
         Option dumpOpt = new Option("d", "dump", false, "Dump mode. Dump all entries of the log file. (this is the default)");
         options.addOption(dumpOpt);
 
+        Option forceOpt = new Option("y", "yes", false, "Non-interactive mode: repair all CRC errors without asking");
+        options.addOption(forceOpt);
+
         try {
             CommandLine cli = parser.parse(options, args);
             if (cli.hasOption("help")) {
@@ -270,15 +291,15 @@ public class TxnLogTool implements Closeable {
             if (cli.getArgs().length < 1) {
                 printHelpAndExit(1, options);
             }
-            init(cli.hasOption("recover"), cli.hasOption("verbose"), cli.getArgs()[0]);
+            return new TxnLogToolkit(cli.hasOption("recover"), cli.hasOption("verbose"), cli.getArgs()[0], cli.hasOption("yes"));
         } catch (ParseException e) {
-            throw new TxnLogToolParseException(options, 1, e.getMessage());
+            throw new TxnLogToolkitParseException(options, 1, e.getMessage());
         }
     }
 
     private static void printHelpAndExit(int exitCode, Options options) {
         HelpFormatter help = new HelpFormatter();
-        help.printHelp(120,"TxnLogTool [-dhrv] <txn_log_file_name>", "", options, "");
+        help.printHelp(120,"TxnLogToolkit [-dhrv] <txn_log_file_name>", "", options, "");
         System.exit(exitCode);
     }
 

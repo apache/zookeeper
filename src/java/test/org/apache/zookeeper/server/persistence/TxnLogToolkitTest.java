@@ -29,12 +29,14 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.StringReader;
 
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertThat;
 
 
-public class TxnLogToolTest {
+public class TxnLogToolkitTest {
     private static final File testData = new File(
             System.getProperty("test.data.dir", "build/test/data"));
 
@@ -63,47 +65,39 @@ public class TxnLogToolTest {
     public void testDumpMode() throws Exception {
         // Arrange
         File logfile = new File(new File(mySnapDir, "version-2"), "log.274");
-        TxnLogTool lt = new TxnLogTool();
-        lt.init(false, false, logfile.toString());
+        TxnLogToolkit lt = new TxnLogToolkit(false, false, logfile.toString(), true);
 
         // Act
-        lt.dump();
+        lt.dump(null);
 
         // Assert
         // no exception thrown
     }
 
-    @Test(expected = TxnLogTool.TxnLogToolException.class)
-    public void testInitMissingFile() throws FileNotFoundException, TxnLogTool.TxnLogToolException {
-        // Arrange
+    @Test(expected = TxnLogToolkit.TxnLogToolkitException.class)
+    public void testInitMissingFile() throws FileNotFoundException, TxnLogToolkit.TxnLogToolkitException {
+        // Arrange & Act
         File logfile = new File("this_file_should_not_exists");
-        TxnLogTool lt = new TxnLogTool();
-
-        // Act
-        lt.init(false, false, logfile.toString());
+        TxnLogToolkit lt = new TxnLogToolkit(false, false, logfile.toString(), true);
     }
 
-    @Test(expected = TxnLogTool.TxnLogToolException.class)
-    public void testInitWithRecoveryFileExists() throws IOException, TxnLogTool.TxnLogToolException {
-        // Arrange
+    @Test(expected = TxnLogToolkit.TxnLogToolkitException.class)
+    public void testInitWithRecoveryFileExists() throws IOException, TxnLogToolkit.TxnLogToolkitException {
+        // Arrange & Act
         File logfile = new File(new File(mySnapDir, "version-2"), "log.274");
         File recoveryFile = new File(new File(mySnapDir, "version-2"), "log.274.fixed");
         recoveryFile.createNewFile();
-        TxnLogTool lt = new TxnLogTool();
-
-        // Act
-        lt.init(true, false, logfile.toString());
+        TxnLogToolkit lt = new TxnLogToolkit(true, false, logfile.toString(), true);
     }
 
     @Test
     public void testDumpWithCrcError() throws Exception {
         // Arrange
         File logfile = new File(new File(mySnapDir, "version-2"), "log.42");
-        TxnLogTool lt = new TxnLogTool();
-        lt.init(false, false, logfile.toString());
+        TxnLogToolkit lt = new TxnLogToolkit(false, false, logfile.toString(), true);
 
         // Act
-        lt.dump();
+        lt.dump(null);
 
         // Assert
         String output = outContent.toString();
@@ -114,16 +108,43 @@ public class TxnLogToolTest {
     public void testRecoveryFixBrokenFile() throws Exception {
         // Arrange
         File logfile = new File(new File(mySnapDir, "version-2"), "log.42");
-        TxnLogTool lt = new TxnLogTool();
-        lt.init(true, false, logfile.toString());
+        TxnLogToolkit lt = new TxnLogToolkit(true, false, logfile.toString(), true);
 
         // Act
-        lt.dump();
+        lt.dump(null);
 
         // Assert
-        // Should be able to dump the recovered logfile
+        String output = outContent.toString();
+        assertThat(output, containsString("CRC FIXED"));
+
+        // Should be able to dump the recovered logfile with no CRC error
+        outContent.reset();
         logfile = new File(new File(mySnapDir, "version-2"), "log.42.fixed");
-        lt.init(false, false, logfile.toString());
-        lt.dump();
+        lt = new TxnLogToolkit(false, false, logfile.toString(), true);
+        lt.dump(null);
+        output = outContent.toString();
+        assertThat(output, not(containsString("CRC ERROR")));
+    }
+
+    @Test
+    public void testRecoveryInteractiveMode() throws Exception {
+        // Arrange
+        File logfile = new File(new File(mySnapDir, "version-2"), "log.42");
+        TxnLogToolkit lt = new TxnLogToolkit(true, false, logfile.toString(), false);
+
+        // Act
+        lt.dump(new StringReader("y\n"));
+
+        // Assert
+        String output = outContent.toString();
+        assertThat(output, containsString("CRC ERROR"));
+
+        // Should be able to dump the recovered logfile with no CRC error
+        outContent.reset();
+        logfile = new File(new File(mySnapDir, "version-2"), "log.42.fixed");
+        lt = new TxnLogToolkit(false, false, logfile.toString(), true);
+        lt.dump(null);
+        output = outContent.toString();
+        assertThat(output, not(containsString("CRC ERROR")));
     }
 }
