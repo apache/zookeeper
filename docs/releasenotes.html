@@ -202,7 +202,76 @@ document.write("Last Published: " + document.lastModified);
 <a class="dida" href="releasenotes.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
         PDF</a>
 </div>
+        Release Notes - ZooKeeper - Version 3.4.12
 
+<h2>        Sub-task
+</h2>
+<ul>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2980'>ZOOKEEPER-2980</a>] -         Backport ZOOKEEPER-2939 Deal with maxbuffer as it relates to proposals
+</li>
+</ul>
+
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2249'>ZOOKEEPER-2249</a>] -         CRC check failed when preAllocSize smaller than node data
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2690'>ZOOKEEPER-2690</a>] -         Update documentation source for ZOOKEEPER-2574
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2845'>ZOOKEEPER-2845</a>] -         Data inconsistency issue due to retain database in leader election
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2893'>ZOOKEEPER-2893</a>] -         very poor choice of logging if client fails to connect to server
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2923'>ZOOKEEPER-2923</a>] -         The comment of the variable matchSyncs in class CommitProcessor has a mistake.
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2924'>ZOOKEEPER-2924</a>] -         Flaky Test: org.apache.zookeeper.test.LoadFromLogTest.testRestoreWithTransactionErrors
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2931'>ZOOKEEPER-2931</a>] -         WriteLock recipe: incorrect znode ordering when the sessionId is part of the znode name
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2936'>ZOOKEEPER-2936</a>] -         Duplicate Keys in log4j.properties config files
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2944'>ZOOKEEPER-2944</a>] -         Specify correct overflow value
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2951'>ZOOKEEPER-2951</a>] -         zkServer.cmd does not start when JAVA_HOME ends with a \
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2953'>ZOOKEEPER-2953</a>] -         Flaky Test: testNoLogBeforeLeaderEstablishment
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2960'>ZOOKEEPER-2960</a>] -         The dataDir and dataLogDir are used opposingly
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2961'>ZOOKEEPER-2961</a>] -         Fix testElectionFraud Flakyness
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2978'>ZOOKEEPER-2978</a>] -         fix potential null pointer exception when deleting node
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2992'>ZOOKEEPER-2992</a>] -         The eclipse build target fails due to protocol redirection: http-&gt;https
+</li>
+</ul>
+
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2950'>ZOOKEEPER-2950</a>] -         Add keys for the Zxid from the stat command to check_zookeeper.py
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2952'>ZOOKEEPER-2952</a>] -         Upgrade third party libraries to address vulnerabilities
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2962'>ZOOKEEPER-2962</a>] -         The function queueEmpty() in FastLeaderElection.Messenger is not used, should be removed.
+</li>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2967'>ZOOKEEPER-2967</a>] -         Add check to validate dataDir and dataLogDir parameters at startup
+</li>
+</ul>
+
+<h2>        Test
+</h2>
+<ul>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2922'>ZOOKEEPER-2922</a>] -         Flaky Test: org.apache.zookeeper.test.LoadFromLogTest
+</li>
+</ul>
+
+<h2>        Wish
+</h2>
+<ul>
+<li>[<a href='https://issues.apache.org/jira/browse/ZOOKEEPER-2795'>ZOOKEEPER-2795</a>] -         Change log level for &quot;ZKShutdownHandler is not registered&quot; error message
+</li>
+</ul>
         Release Notes - ZooKeeper - Version 3.4.11
     
 <h2>        Sub-task
