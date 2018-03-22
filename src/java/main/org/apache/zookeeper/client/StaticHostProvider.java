@@ -22,6 +22,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -43,15 +44,11 @@ public final class StaticHostProvider implements HostProvider {
     private static final Logger LOG = LoggerFactory
             .getLogger(StaticHostProvider.class);
 
-    private final List<InetSocketAddress> serverAddresses = new ArrayList<InetSocketAddress>(
-            5);
+    private final List<InetSocketAddress> serverAddresses = new ArrayList<InetSocketAddress>(5);
 
     private int lastIndex = -1;
 
     private int currentIndex = -1;
-
-    // Don't re-resolve on first next() call
-    private boolean connectedSinceNext = true;
 
     private Resolver resolver;
 
@@ -94,22 +91,12 @@ public final class StaticHostProvider implements HostProvider {
      * Resolve all unresolved server addresses, put them in a list and shuffle.
      */
     private void init(Collection<InetSocketAddress> serverAddresses) {
-        for (InetSocketAddress address : serverAddresses) {
-            try {
-                InetAddress resolvedAddresses[] = this.resolver.getAllByName(getHostString(address));
-                for (InetAddress resolvedAddress : resolvedAddresses) {
-                    this.serverAddresses.add(new InetSocketAddress(resolvedAddress, address.getPort()));
-                }
-            } catch (UnknownHostException e) {
-                LOG.error("Unable to connect to server: {}", address, e);
-            }
-        }
-
-        if (this.serverAddresses.isEmpty()) {
+        if (serverAddresses.isEmpty()) {
             throw new IllegalArgumentException(
                     "A HostProvider may not be empty!");
         }
 
+        this.serverAddresses.addAll(serverAddresses);
         Collections.shuffle(this.serverAddresses);
     }
 
@@ -154,44 +141,7 @@ public final class StaticHostProvider implements HostProvider {
         return serverAddresses.size();
     }
 
-    public List<InetSocketAddress> getServerAddresses() {
-        return Collections.unmodifiableList(serverAddresses);
-    }
-
-    public InetSocketAddress next(long spinDelay) {
-        // Handle possible connection error by re-resolving hostname if possible
-        if (!connectedSinceNext) {
-            InetSocketAddress curAddr = serverAddresses.get(currentIndex);
-            String curHostString = getHostString(curAddr);
-            if (!curHostString.equals(curAddr.getAddress().getHostAddress())) {
-                LOG.info("Resolving again hostname: {}", curHostString);
-                try {
-                    int thePort = curAddr.getPort();
-                    InetAddress resolvedAddresses[] = this.resolver.getAllByName(curHostString);
-                    int i = 0;
-                    while (i < serverAddresses.size()) {
-                        if (getHostString(serverAddresses.get(i)).equals(curHostString) &&
-                                serverAddresses.get(i).getPort() == curAddr.getPort()) {
-                            LOG.debug("Removing address: {}", serverAddresses.get(i));
-                            serverAddresses.remove(i);
-                        } else {
-                            i++;
-                        }
-                    }
-
-                    for (InetAddress resolvedAddress : resolvedAddresses) {
-                        InetSocketAddress newAddr = new InetSocketAddress(resolvedAddress, thePort);
-                        if (!serverAddresses.contains(newAddr)) {
-                            LOG.debug("Adding address: {}", newAddr);
-                            serverAddresses.add(newAddr);
-                        }
-                    }
-                } catch (UnknownHostException e) {
-                    LOG.warn("Cannot re-resolve server: {}", curAddr, e);
-                }
-            }
-        }
-        connectedSinceNext = false;
+    public InetSocketAddress next(long spinDelay) throws UnknownHostException {
         currentIndex = ++currentIndex % serverAddresses.size();
         if (currentIndex == lastIndex && spinDelay > 0) {
             try {
@@ -204,11 +154,19 @@ public final class StaticHostProvider implements HostProvider {
             lastIndex = 0;
         }
 
-        return serverAddresses.get(currentIndex);
+        InetSocketAddress curAddr = serverAddresses.get(currentIndex);
+
+        String curHostString = getHostString(curAddr);
+        List<InetAddress> resolvedAddresses = new ArrayList<InetAddress>(Arrays.asList(this.resolver.getAllByName(curHostString)));
+        if (resolvedAddresses.isEmpty()) {
+            throw new UnknownHostException("No IP address returned for address: " + curHostString);
+        }
+        Collections.shuffle(resolvedAddresses);
+        return new InetSocketAddress(resolvedAddresses.get(0), curAddr.getPort());
     }
 
+    @Override
     public void onConnected() {
         lastIndex = currentIndex;
-        connectedSinceNext = true;
     }
 }

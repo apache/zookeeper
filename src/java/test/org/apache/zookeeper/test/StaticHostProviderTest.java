@@ -31,10 +31,10 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -53,7 +53,7 @@ public class StaticHostProviderTest extends ZKTestCase {
     private static final Logger LOG = LoggerFactory.getLogger(StaticHostProviderTest.class);
 
     @Test
-    public void testNextGoesRound() {
+    public void testNextGoesRound() throws UnknownHostException {
         HostProvider hostProvider = getHostProvider((byte) 2);
         InetSocketAddress first = hostProvider.next(0);
         assertTrue(first instanceof InetSocketAddress);
@@ -62,7 +62,7 @@ public class StaticHostProviderTest extends ZKTestCase {
     }
 
     @Test
-    public void testNextGoesRoundAndSleeps() {
+    public void testNextGoesRoundAndSleeps() throws UnknownHostException {
         byte size = 2;
         HostProvider hostProvider = getHostProvider(size);
         while (size > 0) {
@@ -76,7 +76,7 @@ public class StaticHostProviderTest extends ZKTestCase {
     }
 
     @Test
-    public void testNextDoesNotSleepForZero() {
+    public void testNextDoesNotSleepForZero() throws UnknownHostException {
         byte size = 2;
         HostProvider hostProvider = getHostProvider(size);
         while (size > 0) {
@@ -90,13 +90,13 @@ public class StaticHostProviderTest extends ZKTestCase {
     }
 
     @Test
-    public void testTwoConsequitiveCallsToNextReturnDifferentElement() {
+    public void testTwoConsequitiveCallsToNextReturnDifferentElement() throws UnknownHostException {
         HostProvider hostProvider = getHostProvider((byte) 2);
         assertNotSame(hostProvider.next(0), hostProvider.next(0));
     }
 
     @Test
-    public void testOnConnectDoesNotReset() {
+    public void testOnConnectDoesNotReset() throws UnknownHostException {
         HostProvider hostProvider = getHostProvider((byte) 2);
         InetSocketAddress first = hostProvider.next(0);
         hostProvider.onConnected();
@@ -122,15 +122,30 @@ public class StaticHostProviderTest extends ZKTestCase {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testTwoInvalidHostAddresses() {
-        ArrayList<InetSocketAddress> list = new ArrayList<InetSocketAddress>();
-        list.add(new InetSocketAddress("a", 2181));
-        list.add(new InetSocketAddress("b", 2181));
-        new StaticHostProvider(list);
+    public void testEmptyServerAddressesList() {
+        HostProvider hp = new StaticHostProvider(new ArrayList<InetSocketAddress>());
+    }
+
+    @Test(expected = UnknownHostException.class)
+    public void testInvalidHostAddresses() throws UnknownHostException {
+        // Arrange
+        final List<InetSocketAddress> invalidAddresses = new ArrayList<InetSocketAddress>();
+        invalidAddresses.add(InetSocketAddress.createUnresolved("a", 1234));
+        StaticHostProvider.Resolver resolver = new StaticHostProvider.Resolver() {
+            @Override
+            public InetAddress[] getAllByName(String name) throws UnknownHostException {
+                throw new UnknownHostException();
+            }
+        };
+        StaticHostProvider sp = new StaticHostProvider(invalidAddresses, resolver);
+
+        // Act & Assert
+        InetSocketAddress n1 = sp.next(0);
     }
 
     @Test
-    public void testReResolvingSingle() {
+    public void testReResolvingSingle() throws UnknownHostException {
+        // Arrange
         byte size = 1;
         ArrayList<InetSocketAddress> list = new ArrayList<InetSocketAddress>(size);
 
@@ -150,15 +165,23 @@ public class StaticHostProviderTest extends ZKTestCase {
                 };
             }
         };
-        StaticHostProvider hostProvider = new StaticHostProvider(list, resolver);
-        InetSocketAddress next = hostProvider.next(0);
-        next = hostProvider.next(0);
-        assertEquals(1, hostProvider.size());
-        assertEquals(issuesApacheOrg, next.getAddress());
+        StaticHostProvider.Resolver spyResolver = spy(resolver);
+
+        // Act
+        StaticHostProvider hostProvider = new StaticHostProvider(list, spyResolver);
+        for (int i = 0; i < 10; i++) {
+            InetSocketAddress next = hostProvider.next(0);
+            assertEquals(issuesApacheOrg, next.getAddress());
+        }
+
+        // Assert
+        // Resolver called 10 times, because we shouldn't cache the resolved addresses
+        verify(spyResolver, times(10)).getAllByName("issues.apache.org"); // resolution occurred
     }
 
     @Test
-    public void testReResolvingMultiple() {
+    public void testReResolvingMultiple() throws UnknownHostException {
+        // Arrange
         byte size = 1;
         ArrayList<InetSocketAddress> list = new ArrayList<InetSocketAddress>(size);
 
@@ -184,13 +207,19 @@ public class StaticHostProviderTest extends ZKTestCase {
                 return resolvedAddresses.toArray(new InetAddress[resolvedAddresses.size()]);
             }
         };
+        StaticHostProvider.Resolver spyResolver = spy(resolver);
 
-        StaticHostProvider hostProvider = new StaticHostProvider(list, resolver);
-        InetSocketAddress next = hostProvider.next(0);
-        next = hostProvider.next(0);
-        assertEquals(2, hostProvider.size());
-        assertEquals(apacheOrg1.getHostAddress(), hostProvider.getServerAddresses().get(0).getAddress().getHostAddress());
-        assertEquals(apacheOrg2.getHostAddress(), hostProvider.getServerAddresses().get(1).getAddress().getHostAddress());
+        // Act & Assert
+        StaticHostProvider hostProvider = new StaticHostProvider(list, spyResolver);
+        assertEquals(1, hostProvider.size()); // single address not extracted
+
+        for (int i = 0; i < 10; i++) {
+            InetSocketAddress next = hostProvider.next(0);
+            assertThat("Bad IP address returned", next.getAddress().getHostAddress(), anyOf(equalTo(apacheOrg1.getHostAddress()), equalTo(apacheOrg2.getHostAddress())));
+            assertEquals(1, hostProvider.size()); // resolve() call keeps the size of provider
+        }
+        // Resolver called 10 times, because we shouldn't cache the resolved addresses
+        verify(spyResolver, times(10)).getAllByName("www.apache.org"); // resolution occurred
     }
 
     @Test
@@ -204,7 +233,7 @@ public class StaticHostProviderTest extends ZKTestCase {
             ipList.add(String.format("192.168.1.%d", i+1));
             final InetAddress apacheOrg = mock(InetAddress.class);
             when(apacheOrg.getHostAddress()).thenReturn(String.format("192.168.1.%d", i+1));
-            when(apacheOrg.toString()).thenReturn("www.apache.org");
+            when(apacheOrg.toString()).thenReturn(String.format("192.168.1.%d", i+1));
             when(apacheOrg.getHostName()).thenReturn("www.apache.org");
             resolvedAddresses.add(apacheOrg);
         }
@@ -220,23 +249,23 @@ public class StaticHostProviderTest extends ZKTestCase {
 
         // Act & Assert
         InetSocketAddress resolvedFirst = hostProvider.next(0);
-        verify(spyResolver, times(1)).getAllByName("www.apache.org"); // resolution occurred
         assertFalse("HostProvider should return resolved addresses", resolvedFirst.isUnresolved());
         assertThat("Bad IP address returned", ipList, hasItems(resolvedFirst.getAddress().getHostAddress()));
 
-        hostProvider.onConnected(); // first address works
+        hostProvider.onConnected(); // first address worked
+
         InetSocketAddress resolvedSecond = hostProvider.next(0);
-        verify(spyResolver, times(1)).getAllByName("www.apache.org"); // resolution didn't occur
         assertFalse("HostProvider should return resolved addresses", resolvedSecond.isUnresolved());
         assertThat("Bad IP address returned", ipList, hasItems(resolvedSecond.getAddress().getHostAddress()));
-        assertThat("HostProvider should return the next IP address", resolvedSecond, is(not(resolvedFirst)));
 
         // Second address doesn't work, so we don't call onConnected() this time
         // StaticHostProvider should try to re-resolve the address in this case
+
         InetSocketAddress resolvedThird = hostProvider.next(0);
-        verify(spyResolver, times(2)).getAllByName("www.apache.org"); // resolution occurred
         assertFalse("HostProvider should return resolved addresses", resolvedThird.isUnresolved());
         assertThat("Bad IP address returned", ipList, hasItems(resolvedThird.getAddress().getHostAddress()));
+
+        verify(spyResolver, times(3)).getAllByName("www.apache.org");  // resolution occured every time
     }
 
     @Test
@@ -267,32 +296,27 @@ public class StaticHostProviderTest extends ZKTestCase {
         StaticHostProvider.Resolver spyResolver = spy(resolver);
         StaticHostProvider hostProvider = new StaticHostProvider(list, spyResolver);
 
+        boolean gotEmpty = false;
+
         // Act & Assert
         for (int i = 0; i < 10; i++) {
-            InetSocketAddress resolved = hostProvider.next(0);
-            hostProvider.onConnected();
-            assertFalse("HostProvider should return resolved addresses", resolved.isUnresolved());
-            assertEquals("192.168.1.1", resolved.getAddress().getHostAddress());
+            try {
+                InetSocketAddress resolved = hostProvider.next(0);
+                hostProvider.onConnected();
+                assertFalse("HostProvider should return resolved addresses", resolved.isUnresolved());
+                assertEquals("192.168.1.1", resolved.getAddress().getHostAddress());
+            } catch (UnknownHostException e) {
+                gotEmpty = true;
+            }
         }
 
-        verify(spyResolver, times(1)).getAllByName("www.apache.org");
-        verify(spyResolver, times(1)).getAllByName("www.google.com");
+        assertThat("Empty resolution hasn't thrown exception", gotEmpty, is(true));
+        verify(spyResolver, times(5)).getAllByName("www.apache.org");
+        verify(spyResolver, times(5)).getAllByName("www.google.com");
     }
 
     @Test
-    public void testOneInvalidHostAddresses() {
-        Collection<InetSocketAddress> addr = getUnresolvedServerAddresses((byte) 1);
-        addr.add(new InetSocketAddress("a", 2181));
-
-        StaticHostProvider sp = new StaticHostProvider(addr);
-        InetSocketAddress n1 = sp.next(0);
-        InetSocketAddress n2 = sp.next(0);
-
-        assertEquals(n2, n1);
-    }
-
-    @Test
-    public void testReResolvingLocalhost() {
+    public void testReResolvingLocalhost() throws UnknownHostException {
         byte size = 2;
         ArrayList<InetSocketAddress> list = new ArrayList<InetSocketAddress>(size);
 

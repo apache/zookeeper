@@ -21,6 +21,7 @@ package org.apache.zookeeper.client;
 import org.apache.yetus.audience.InterfaceAudience;
 
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 
 /**
  * A set of hosts a ZooKeeper client should connect to.
@@ -53,7 +54,7 @@ public interface HostProvider {
      * @param spinDelay
      *            Milliseconds to wait if all hosts have been tried once.
      */
-    public InetSocketAddress next(long spinDelay);
+    public InetSocketAddress next(long spinDelay) throws UnknownHostException;
 
     /**
      * Notify the HostProvider of a successful connection.
