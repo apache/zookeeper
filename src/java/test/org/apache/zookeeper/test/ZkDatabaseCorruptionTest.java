@@ -29,6 +29,7 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.SyncRequestProcessor;
+import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
@@ -38,6 +39,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.junit.Assert.assertEquals;
 
 public class ZkDatabaseCorruptionTest extends ZKTestCase {
     protected static final Logger LOG = LoggerFactory.getLogger(ZkDatabaseCorruptionTest.class);
@@ -153,5 +156,15 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
         if (leaderSid != 5)QuorumBase.shutdown(qb.s5);
     }
 
+    @Test
+    public void testAbsentRecentSnapshot() throws IOException {
+        ZKDatabase zkDatabase = new ZKDatabase(new FileTxnSnapLog(new File("foo"), new File("bar")){
+            @Override
+            public File findMostRecentSnapshot() throws IOException {
+                return null;
+            }
+        });
+        assertEquals(0, zkDatabase.calculateTxnLogSizeLimit());
+    }
 
 }
