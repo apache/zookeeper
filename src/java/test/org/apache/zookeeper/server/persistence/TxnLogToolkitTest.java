@@ -30,10 +30,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.StringReader;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 
 public class TxnLogToolkitTest {
@@ -101,7 +104,9 @@ public class TxnLogToolkitTest {
 
         // Assert
         String output = outContent.toString();
-        assertThat(output, containsString("CRC ERROR - 3/6/18 11:06:09 AM CET session 0x8061fac5ddeb0000"));
+        Pattern p = Pattern.compile("^CRC ERROR.*session 0x8061fac5ddeb0000 cxid 0x0 zxid 0x8800000002 createSession 30000$", Pattern.MULTILINE);
+        Matcher m = p.matcher(output);
+        assertTrue("Output doesn't indicate CRC error for the broken session id: " + output, m.find());
     }
 
     @Test
