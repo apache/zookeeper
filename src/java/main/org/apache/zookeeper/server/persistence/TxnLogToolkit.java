@@ -305,7 +305,7 @@ public class TxnLogToolkit implements Closeable {
 
     private void printStat() {
         if (recoveryMode) {
-            System.out.printf("Recovery file %s has been written with %d fixed CRC error(s)\n", recoveryLogFile, crcFixed);
+            System.out.printf("Recovery file %s has been written with %d fixed CRC error(s)%n", recoveryLogFile, crcFixed);
         }
     }
 
