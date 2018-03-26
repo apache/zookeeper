@@ -116,12 +116,12 @@ public class ContainerManager {
             Request request = new Request(null, 0, 0,
                     ZooDefs.OpCode.deleteContainer, path, null);
             try {
-                LOG.info("Attempting to delete candidate container: %s",
+                LOG.info("Attempting to delete candidate container: {}",
                         containerPath);
                 requestProcessor.processRequest(request);
             } catch (Exception e) {
-                LOG.error(String.format("Could not delete container: %s" ,
-                        containerPath), e);
+                LOG.error("Could not delete container: {}",
+                        containerPath, e);
             }
 
             long elapsedMs = Time.currentElapsedTime() - startMs;
