@@ -109,18 +109,16 @@ public class ReferenceCountedACLCache {
             }
             List<ACL> aclList = new ArrayList<ACL>();
             Index j = ia.startVector("acls");
-            if (j != null) {
-                while (!j.done()) {
-                    ACL acl = new ACL();
-                    acl.deserialize(ia, "acl");
-                    aclList.add(acl);
-                    j.incr();
-                }
-                longKeyMap.put(val, aclList);
-                aclKeyMap.put(aclList, val);
-                referenceCounter.put(val, new AtomicLongWithEquals(0));
-                i--;
+            while (!j.done()) {
+                ACL acl = new ACL();
+                acl.deserialize(ia, "acl");
+                aclList.add(acl);
+                j.incr();
             }
+            longKeyMap.put(val, aclList);
+            aclKeyMap.put(aclList, val);
+            referenceCounter.put(val, new AtomicLongWithEquals(0));
+            i--;
         }
     }
 

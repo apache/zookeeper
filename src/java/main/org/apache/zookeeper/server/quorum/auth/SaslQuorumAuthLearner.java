@@ -94,7 +94,10 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
                     principalConfig,
                     QuorumAuth.QUORUM_SERVER_PROTOCOL_NAME,
                     QuorumAuth.QUORUM_SERVER_SASL_DIGEST, LOG, "QuorumLearner");
-
+            if (sc == null) {
+                LOG.error("SaslClient object is null while trying to create SASL client");
+                throw new SaslException("Exception while trying to create SASL client");
+            }
             if (sc.hasInitialResponse()) {
                 responseToken = createSaslToken(new byte[0], sc, learnerLogin);
             }
