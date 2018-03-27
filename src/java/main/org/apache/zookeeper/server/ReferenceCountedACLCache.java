@@ -109,18 +109,20 @@ public class ReferenceCountedACLCache {
             }
             List<ACL> aclList = new ArrayList<ACL>();
             Index j = ia.startVector("acls");
-            if (j != null) {
-                while (!j.done()) {
-                    ACL acl = new ACL();
-                    acl.deserialize(ia, "acl");
-                    aclList.add(acl);
-                    j.incr();
-                }
-                longKeyMap.put(val, aclList);
-                aclKeyMap.put(aclList, val);
-                referenceCounter.put(val, new AtomicLongWithEquals(0));
-                i--;
+            if (j == null) {
+                LOG.error("ERROR: incorrent format of InputArchive" + ia);
+                throw new RuntimeException("ERROR: incorrent format of InputArchive" + ia);
             }
+            while (!j.done()) {
+                ACL acl = new ACL();
+                acl.deserialize(ia, "acl");
+                aclList.add(acl);
+                j.incr();
+            }
+            longKeyMap.put(val, aclList);
+            aclKeyMap.put(aclList, val);
+            referenceCounter.put(val, new AtomicLongWithEquals(0));
+            i--;
         }
     }
 
