@@ -45,6 +45,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.security.sasl.SaslException;
 
 import org.apache.zookeeper.KeeperException.BadArgumentsException;
+import org.apache.zookeeper.LoginFactoryImpl;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
 import org.apache.zookeeper.common.Time;
@@ -833,7 +834,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             authServer = new SaslQuorumAuthServer(isQuorumServerSaslAuthRequired(),
                     quorumServerLoginContext, authzHosts);
             authLearner = new SaslQuorumAuthLearner(isQuorumLearnerSaslAuthRequired(),
-                    quorumServicePrincipal, quorumLearnerLoginContext);
+                    quorumServicePrincipal, quorumLearnerLoginContext, new LoginFactoryImpl());
         } else {
             authServer = new NullQuorumAuthServer();
             authLearner = new NullQuorumAuthLearner();

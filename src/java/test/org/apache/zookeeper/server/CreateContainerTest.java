@@ -24,7 +24,6 @@ import org.apache.zookeeper.test.ClientBase;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -47,14 +46,14 @@ public class CreateContainerTest extends ClientBase {
 
     @Test(timeout = 30000)
     public void testCreate()
-            throws IOException, KeeperException, InterruptedException {
+            throws KeeperException, InterruptedException {
         createNoStatVerifyResult("/foo");
         createNoStatVerifyResult("/foo/child");
     }
 
     @Test(timeout = 30000)
     public void testCreateWithStat()
-            throws IOException, KeeperException, InterruptedException {
+            throws KeeperException, InterruptedException {
         Stat stat = createWithStatVerifyResult("/foo");
         Stat childStat = createWithStatVerifyResult("/foo/child");
         // Don't expect to get the same stats for different creates.
@@ -64,7 +63,7 @@ public class CreateContainerTest extends ClientBase {
     @SuppressWarnings("ConstantConditions")
     @Test(timeout = 30000)
     public void testCreateWithNullStat()
-            throws IOException, KeeperException, InterruptedException {
+            throws KeeperException, InterruptedException {
         final String name = "/foo";
         Assert.assertNull(zk.exists(name, false));
 
@@ -78,7 +77,7 @@ public class CreateContainerTest extends ClientBase {
 
     @Test(timeout = 30000)
     public void testSimpleDeletion()
-            throws IOException, KeeperException, InterruptedException {
+            throws KeeperException, InterruptedException {
         zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
         zk.create("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.delete("/foo/bar", -1);  // should cause "/foo" to get deleted when checkContainers() is called
@@ -94,7 +93,7 @@ public class CreateContainerTest extends ClientBase {
 
     @Test(timeout = 30000)
     public void testMultiWithContainerSimple()
-            throws IOException, KeeperException, InterruptedException {
+            throws KeeperException, InterruptedException {
         Op createContainer = Op.create("/foo", new byte[0],
                 ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
         zk.multi(Collections.singletonList(createContainer));
@@ -105,7 +104,7 @@ public class CreateContainerTest extends ClientBase {
 
     @Test(timeout = 30000)
     public void testMultiWithContainer()
-            throws IOException, KeeperException, InterruptedException {
+            throws KeeperException, InterruptedException {
         Op createContainer = Op.create("/foo", new byte[0],
                 ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
         Op createChild = Op.create("/foo/bar", new byte[0],
@@ -141,7 +140,7 @@ public class CreateContainerTest extends ClientBase {
 
     @Test(timeout = 30000)
     public void testSimpleDeletionAsync()
-            throws IOException, KeeperException, InterruptedException {
+            throws KeeperException, InterruptedException {
         final CountDownLatch latch = new CountDownLatch(1);
         AsyncCallback.Create2Callback cb = new AsyncCallback.Create2Callback() {
             @Override
@@ -166,7 +165,7 @@ public class CreateContainerTest extends ClientBase {
 
     @Test(timeout = 30000)
     public void testCascadingDeletion()
-            throws IOException, KeeperException, InterruptedException {
+            throws KeeperException, InterruptedException {
         zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
         zk.create("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
         zk.create("/foo/bar/one", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -186,7 +185,7 @@ public class CreateContainerTest extends ClientBase {
 
     @Test(timeout = 30000)
     public void testFalseEmpty()
-            throws IOException, KeeperException, InterruptedException {
+            throws KeeperException, InterruptedException {
         zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.CONTAINER);
         zk.create("/foo/bar", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
@@ -205,11 +204,11 @@ public class CreateContainerTest extends ClientBase {
 
     @Test(timeout = 30000)
     public void testMaxPerMinute()
-            throws IOException, KeeperException, InterruptedException {
+            throws InterruptedException {
         final BlockingQueue<String> queue = new LinkedBlockingQueue<String>();
         RequestProcessor processor = new RequestProcessor() {
             @Override
-            public void processRequest(Request request) throws RequestProcessorException {
+            public void processRequest(Request request) {
                 queue.add(new String(request.request.array()));
             }
 

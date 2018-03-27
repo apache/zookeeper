@@ -31,6 +31,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsEqual.equalTo;
+
 public class FileTxnLogTest  extends ZKTestCase {
   protected static final Logger LOG = LoggerFactory.getLogger(FileTxnLogTest.class);
 
@@ -39,27 +42,27 @@ public class FileTxnLogTest  extends ZKTestCase {
   @Test
   public void testInvalidPreallocSize() {
     Assert.assertEquals("file should not be padded",
-      10 * KB, FileTxnLog.calculateFileSizeWithPadding(7 * KB, 10 * KB, 0));
+      10 * KB, FilePadding.calculateFileSizeWithPadding(7 * KB, 10 * KB, 0));
     Assert.assertEquals("file should not be padded",
-      10 * KB, FileTxnLog.calculateFileSizeWithPadding(7 * KB, 10 * KB, -1));
+      10 * KB, FilePadding.calculateFileSizeWithPadding(7 * KB, 10 * KB, -1));
   }
 
   @Test
   public void testCalculateFileSizeWithPaddingWhenNotToCurrentSize() {
     Assert.assertEquals("file should not be padded",
-      10 * KB, FileTxnLog.calculateFileSizeWithPadding(5 * KB, 10 * KB, 10 * KB));
+      10 * KB, FilePadding.calculateFileSizeWithPadding(5 * KB, 10 * KB, 10 * KB));
   }
 
   @Test
   public void testCalculateFileSizeWithPaddingWhenCloseToCurrentSize() {
     Assert.assertEquals("file should be padded an additional 10 KB",
-      20 * KB, FileTxnLog.calculateFileSizeWithPadding(7 * KB, 10 * KB, 10 * KB));
+      20 * KB, FilePadding.calculateFileSizeWithPadding(7 * KB, 10 * KB, 10 * KB));
   }
 
   @Test
   public void testFileSizeGreaterThanPosition() {
     Assert.assertEquals("file should be padded to 40 KB",
-      40 * KB, FileTxnLog.calculateFileSizeWithPadding(31 * KB, 10 * KB, 10 * KB));
+      40 * KB, FilePadding.calculateFileSizeWithPadding(31 * KB, 10 * KB, 10 * KB));
   }
 
   @Test
@@ -69,7 +72,7 @@ public class FileTxnLogTest  extends ZKTestCase {
 
     // Set a small preAllocSize (.5 MB)
     final int preAllocSize = 500 * KB;
-    fileTxnLog.setPreallocSize(preAllocSize);
+    FilePadding.setPreallocSize(preAllocSize);
 
     // Create dummy txn larger than preAllocSize
     // Since the file padding inserts a 0, we will fill the data with 0xff to ensure we corrupt the data if we put the 0 in the data
@@ -97,5 +100,12 @@ public class FileTxnLogTest  extends ZKTestCase {
     fileTxnIterator.next();
     createTxn = (CreateTxn) fileTxnIterator.getTxn();
     Assert.assertTrue(Arrays.equals(createTxn.getData(), new byte[]{}));
+  }
+
+  @Test
+  public void testSetPreallocSize() {
+    long customPreallocSize = 10101;
+    FileTxnLog.setPreallocSize(customPreallocSize);
+    Assert.assertThat(FilePadding.getPreAllocSize(), is(equalTo(customPreallocSize)));
   }
 }

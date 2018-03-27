@@ -52,7 +52,6 @@ tmp/**/*
 .gradle
 *.patch
 *.swp
-generated
 
 # C
 tags

@@ -109,6 +109,9 @@ public class ReferenceCountedACLCache {
             }
             List<ACL> aclList = new ArrayList<ACL>();
             Index j = ia.startVector("acls");
+            if (j == null) {
+                throw new RuntimeException("Incorrent format of InputArchive when deserialize DataTree - missing acls");
+            }
             while (!j.done()) {
                 ACL acl = new ACL();
                 acl.deserialize(ia, "acl");

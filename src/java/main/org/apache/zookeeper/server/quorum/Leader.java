@@ -97,7 +97,8 @@ public class Leader {
 
     final QuorumPeer self;
 
-    private boolean quorumFormed = false;
+    // VisibleForTesting
+    protected boolean quorumFormed = false;
 
     // the follower acceptor thread
     volatile LearnerCnxAcceptor cnxAcceptor = null;
@@ -358,7 +359,8 @@ public class Leader {
 
     private final ConcurrentLinkedQueue<Proposal> toBeApplied = new ConcurrentLinkedQueue<Proposal>();
 
-    private final Proposal newLeaderProposal = new Proposal();
+    // VisibleForTesting
+    protected final Proposal newLeaderProposal = new Proposal();
 
     class LearnerCnxAcceptor extends ZooKeeperCriticalThread {
         private volatile boolean stop = false;
@@ -507,7 +509,7 @@ public class Leader {
              self.setCurrentEpoch(epoch);    
             
              try {
-                 waitForNewLeaderAck(self.getId(), zk.getZxid(), LearnerType.PARTICIPANT);
+                 waitForNewLeaderAck(self.getId(), zk.getZxid());
              } catch (InterruptedException e) {
                  shutdown("Waiting for a quorum of followers, only synced with sids: [ "
                          + newLeaderProposal.ackSetsToString() + " ]");
@@ -1163,7 +1165,8 @@ public class Leader {
 
         return lastProposed;
     }
-    private final HashSet<Long> connectingFollowers = new HashSet<Long>();
+    // VisibleForTesting
+    protected final Set<Long> connectingFollowers = new HashSet<Long>();
     public long getEpochToPropose(long sid, long lastAcceptedEpoch) throws InterruptedException, IOException {
         synchronized(connectingFollowers) {
             if (!waitingForNewEpoch) {
@@ -1172,7 +1175,9 @@ public class Leader {
             if (lastAcceptedEpoch >= epoch) {
                 epoch = lastAcceptedEpoch+1;
             }
-            connectingFollowers.add(sid);
+            if (isParticipant(sid)) {
+                connectingFollowers.add(sid);
+            }
             QuorumVerifier verifier = self.getQuorumVerifier();
             if (connectingFollowers.contains(self.getId()) &&
                                             verifier.containsQuorum(connectingFollowers)) {
@@ -1195,8 +1200,10 @@ public class Leader {
         }
     }
 
-    private final HashSet<Long> electingFollowers = new HashSet<Long>();
-    private boolean electionFinished = false;
+    // VisibleForTesting
+    protected final Set<Long> electingFollowers = new HashSet<Long>();
+    // VisibleForTesting
+    protected boolean electionFinished = false;
     public void waitForEpochAck(long id, StateSummary ss) throws IOException, InterruptedException {
         synchronized(electingFollowers) {
             if (electionFinished) {
@@ -1210,7 +1217,7 @@ public class Leader {
                                                     + leaderStateSummary.getLastZxid()
                                                     + " (last zxid)");
                 }
-                if (ss.getLastZxid() != -1) {
+                if (ss.getLastZxid() != -1 && isParticipant(id)) {
                     electingFollowers.add(id);
                 }
             }
@@ -1294,10 +1301,9 @@ public class Leader {
      * sufficient acks.
      *
      * @param sid
-     * @param learnerType
      * @throws InterruptedException
      */
-    public void waitForNewLeaderAck(long sid, long zxid, LearnerType learnerType)
+    public void waitForNewLeaderAck(long sid, long zxid)
             throws InterruptedException {
 
         synchronized (newLeaderProposal.qvAcksetPairs) {
@@ -1392,5 +1398,9 @@ public class Leader {
 
     private boolean isRunning() {
         return self.isRunning() && zk.isRunning();
+    }
+
+    private boolean isParticipant(long sid) {
+        return self.getQuorumVerifier().getVotingMembers().containsKey(sid);
     }
 }
