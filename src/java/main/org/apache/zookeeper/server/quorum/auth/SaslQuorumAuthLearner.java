@@ -94,7 +94,7 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
                     principalConfig,
                     QuorumAuth.QUORUM_SERVER_PROTOCOL_NAME,
                     QuorumAuth.QUORUM_SERVER_SASL_DIGEST, LOG, "QuorumLearner");
-
+            // may happen NPE at here
             if (sc.hasInitialResponse()) {
                 responseToken = createSaslToken(new byte[0], sc, learnerLogin);
             }
