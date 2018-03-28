@@ -109,10 +109,6 @@ public class ReferenceCountedACLCache {
             }
             List<ACL> aclList = new ArrayList<ACL>();
             Index j = ia.startVector("acls");
-            if (j == null) {
-                LOG.error("ERROR: incorrent format of InputArchive" + ia);
-                throw new RuntimeException("ERROR: incorrent format of InputArchive" + ia);
-            }
             while (!j.done()) {
                 ACL acl = new ACL();
                 acl.deserialize(ia, "acl");
