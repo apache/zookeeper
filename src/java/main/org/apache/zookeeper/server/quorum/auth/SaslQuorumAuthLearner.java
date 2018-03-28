@@ -97,7 +97,7 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
             // may happen NPE at here
             if (sc == null) {
                 LOG.error("SaslClient object is null while trying to create SASL client");
-                throw new RuntimeException("Exception while trying to create SASL client");
+                throw new SaslException("Exception while trying to create SASL client");
             }
             if (sc.hasInitialResponse()) {
                 responseToken = createSaslToken(new byte[0], sc, learnerLogin);
