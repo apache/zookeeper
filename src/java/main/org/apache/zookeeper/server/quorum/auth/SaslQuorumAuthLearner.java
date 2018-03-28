@@ -138,8 +138,6 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
 
             // Validate status code at the end of authentication exchange.
             checkAuthStatus(sock, qpStatus);
-        } catch (RuntimeException e) {
-            // do nothing
         } finally {
             if (sc != null) {
                 try {
