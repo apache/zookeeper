@@ -207,17 +207,17 @@ public class ReferenceCountedACLCacheTest {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         BinaryOutputArchive archive = BinaryOutputArchive.getArchive(baos);
         serializeCache.serialize(archive);
-
         BinaryInputArchive inArchive = BinaryInputArchive.getArchive(new ByteArrayInputStream(baos.toByteArray()));
         ReferenceCountedACLCache deserializedCache = new ReferenceCountedACLCache();
-        try{
+        try {
             deserializedCache.deserialize(inArchive);
-        }catch (NullPointerException e){
+        } catch (NullPointerException e){
             fail("should not throw NPE while do deserialized");
-        }catch (RuntimeException e) {
+        } catch (RuntimeException e) {
             // do nothing.
         }
     }
+
 
     private void assertCachesEqual(ReferenceCountedACLCache expected, ReferenceCountedACLCache actual){
         assertEquals(expected.aclIndex, actual.aclIndex);
