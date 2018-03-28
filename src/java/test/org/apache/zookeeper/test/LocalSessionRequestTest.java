@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.test;
 
+import org.apache.zookeeper.DisconnectableZooKeeper;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.TraceFormatter;

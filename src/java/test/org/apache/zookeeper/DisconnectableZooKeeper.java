@@ -16,12 +16,9 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.test;
+package org.apache.zookeeper;
 
 import java.io.IOException;
-
-import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZooKeeper;
 
 public class DisconnectableZooKeeper extends ZooKeeper {
     public DisconnectableZooKeeper(String host, int sessionTimeout, Watcher watcher)
@@ -54,5 +51,19 @@ public class DisconnectableZooKeeper extends ZooKeeper {
         java.lang.reflect.Field f = cnxn.getClass().getDeclaredField("closing");
         f.setAccessible(true);
         f.setBoolean(cnxn, true);
+    }
+
+    /**
+     * Expose SendThread for testing
+     */
+    public Thread getSendThread() {
+        return cnxn.getSendThread();
+    }
+
+    /**
+     * Expose EventThread for testing
+     */
+    public Thread getEventThread() {
+        return cnxn.getEventThread();
     }
 }

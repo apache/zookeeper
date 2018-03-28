@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.DisconnectableZooKeeper;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.WatchedEvent;
@@ -538,7 +539,7 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
     }
 
     private static DisconnectableZooKeeper createClient(int port,
-            CountdownWatcher watcher)
+                                                        CountdownWatcher watcher)
         throws IOException, TimeoutException, InterruptedException
     {
         DisconnectableZooKeeper zk = new DisconnectableZooKeeper(

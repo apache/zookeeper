@@ -19,6 +19,7 @@
 package org.apache.zookeeper.test;
 
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.DisconnectableZooKeeper;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
