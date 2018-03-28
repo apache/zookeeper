@@ -193,8 +193,6 @@ public class ReferenceCountedACLCacheTest {
         assertCachesEqual(cache, deserializedCache);
     }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
     @Test
     public void testNPEInDeserialize() throws IOException {
         ReferenceCountedACLCache serializeCache = new ReferenceCountedACLCache(){
@@ -204,27 +202,7 @@ public class ReferenceCountedACLCacheTest {
                 oa.writeLong(1, "long");
                 oa.startVector(null, "acls");
                 oa.endVector(null, "acls");
-=======
-    @Test
-    public void testNPEInDeserialize() throws IOException {
-        ReferenceCountedACLCache serializeCache = new ReferenceCountedACLCache(){
-<<<<<<< HEAD
-        @Override
-        public synchronized void serialize(OutputArchive oa) throws IOException {
-            oa.writeInt(1, "map");
-            oa.writeLong(1, "long");
-            oa.startVector(null, "acls");
-            oa.endVector(null, "acls");
->>>>>>> f7da9b9f... change ZOOK3007 to compare with apache master
-=======
-            @Override
-            public synchronized void serialize(OutputArchive oa) throws IOException {
-                oa.writeInt(1, "map");
-                oa.writeLong(1, "long");
-                oa.startVector(null, "acls");
-                oa.endVector(null, "acls");
->>>>>>> a12b13ff... fix format
-            }
+                }
         };
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         BinaryOutputArchive archive = BinaryOutputArchive.getArchive(baos);
@@ -240,12 +218,6 @@ public class ReferenceCountedACLCacheTest {
         }
     }
 
-
-<<<<<<< HEAD
-=======
->>>>>>> c4db5e25... recover zookeeper master same with apache:master
-=======
->>>>>>> f7da9b9f... change ZOOK3007 to compare with apache master
     private void assertCachesEqual(ReferenceCountedACLCache expected, ReferenceCountedACLCache actual){
         assertEquals(expected.aclIndex, actual.aclIndex);
         assertEquals(expected.aclKeyMap, actual.aclKeyMap);
