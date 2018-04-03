@@ -63,6 +63,10 @@
       <artifact name="netty" type="jar" conf="default"/>
     </dependency>
 
+    <dependency org="org.apache.httpcomponents" name="httpclient" rev="${httpcomponents.version}">
+      <artifact name="httpclient" type="jar" conf="default" />
+    </dependency>
+
     <dependency org="junit" name="junit" rev="${junit.version}" conf="test->default"/>
 	<dependency org="org.mockito" name="mockito-all" rev="${mockito.version}"
                conf="test->default"/>
@@ -74,6 +78,9 @@
     <!-- force the tests to pull the latest commons-collections jar -->
     <dependency org="commons-collections" name="commons-collections" 
                 rev="${commons-collections.version}" conf="test->default"/>
+
+    <dependency org="org.bouncycastle" name="bcprov-jdk15on" rev="${bouncycastle.version}" conf="test->default"/>
+    <dependency org="org.bouncycastle" name="bcpkix-jdk15on" rev="${bouncycastle.version}" conf="test->default"/>
 
     <dependency org="jdiff" name="jdiff" rev="${jdiff.version}"
                 conf="jdiff->default"/>

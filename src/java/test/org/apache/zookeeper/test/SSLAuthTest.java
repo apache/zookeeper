@@ -23,7 +23,8 @@ import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.client.ZKClientConfig;
-import org.apache.zookeeper.common.ZKConfig;
+import org.apache.zookeeper.common.ClientX509Util;
+import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.junit.After;
 import org.junit.Assert;
@@ -31,17 +32,20 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class SSLAuthTest extends ClientBase {
+    
+    private ClientX509Util clientX509Util = new ClientX509Util();
+    
     @Before
     public void setUp() throws Exception {
         String testDataPath = System.getProperty("test.data.dir", "build/test/data");
         System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
         System.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
         System.setProperty(ZKClientConfig.SECURE_CLIENT, "true");
-        System.setProperty(ZKConfig.SSL_AUTHPROVIDER, "x509");
-        System.setProperty(ZKConfig.SSL_KEYSTORE_LOCATION, testDataPath + "/ssl/testKeyStore.jks");
-        System.setProperty(ZKConfig.SSL_KEYSTORE_PASSWD, "testpass");
-        System.setProperty(ZKConfig.SSL_TRUSTSTORE_LOCATION, testDataPath + "/ssl/testTrustStore.jks");
-        System.setProperty(ZKConfig.SSL_TRUSTSTORE_PASSWD, "testpass");
+        System.setProperty(clientX509Util.getSslAuthProviderProperty(), "x509");
+        System.setProperty(clientX509Util.getSslKeystoreLocationProperty(), testDataPath + "/ssl/testKeyStore.jks");
+        System.setProperty(clientX509Util.getSslKeystorePasswdProperty(), "testpass");
+        System.setProperty(clientX509Util.getSslTruststoreLocationProperty(), testDataPath + "/ssl/testTrustStore.jks");
+        System.setProperty(clientX509Util.getSslTruststorePasswdProperty(), "testpass");
         System.setProperty("javax.net.debug", "ssl");
         System.setProperty("zookeeper.authProvider.x509", "org.apache.zookeeper.server.auth.X509AuthenticationProvider");
 
@@ -60,11 +64,11 @@ public class SSLAuthTest extends ClientBase {
         System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
         System.clearProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET);
         System.clearProperty(ZKClientConfig.SECURE_CLIENT);
-        System.clearProperty(ZKConfig.SSL_AUTHPROVIDER);
-        System.clearProperty(ZKConfig.SSL_KEYSTORE_LOCATION);
-        System.clearProperty(ZKConfig.SSL_KEYSTORE_PASSWD);
-        System.clearProperty(ZKConfig.SSL_TRUSTSTORE_LOCATION);
-        System.clearProperty(ZKConfig.SSL_TRUSTSTORE_PASSWD);
+        System.clearProperty(clientX509Util.getSslAuthProviderProperty());
+        System.clearProperty(clientX509Util.getSslKeystoreLocationProperty());
+        System.clearProperty(clientX509Util.getSslKeystorePasswdProperty());
+        System.clearProperty(clientX509Util.getSslTruststoreLocationProperty());
+        System.clearProperty(clientX509Util.getSslTruststorePasswdProperty());
         System.clearProperty("javax.net.debug");
         System.clearProperty("zookeeper.authProvider.x509");
     }
@@ -74,8 +78,8 @@ public class SSLAuthTest extends ClientBase {
         String testDataPath = System.getProperty("test.data.dir", "build/test/data");
 
         // Replace trusted keys with a valid key that is not trusted by the server
-        System.setProperty(ZKConfig.SSL_KEYSTORE_LOCATION, testDataPath + "/ssl/testUntrustedKeyStore.jks");
-        System.setProperty(ZKConfig.SSL_KEYSTORE_PASSWD, "testpass");
+        System.setProperty(clientX509Util.getSslKeystoreLocationProperty(), testDataPath + "/ssl/testUntrustedKeyStore.jks");
+        System.setProperty(clientX509Util.getSslKeystorePasswdProperty(), "testpass");
 
         CountdownWatcher watcher = new CountdownWatcher();
 
@@ -87,11 +91,11 @@ public class SSLAuthTest extends ClientBase {
 
     @Test
     public void testMisconfiguration() throws Exception {
-        System.clearProperty(ZKConfig.SSL_AUTHPROVIDER);
-        System.clearProperty(ZKConfig.SSL_KEYSTORE_LOCATION);
-        System.clearProperty(ZKConfig.SSL_KEYSTORE_PASSWD);
-        System.clearProperty(ZKConfig.SSL_TRUSTSTORE_LOCATION);
-        System.clearProperty(ZKConfig.SSL_TRUSTSTORE_PASSWD);
+        System.clearProperty(clientX509Util.getSslAuthProviderProperty());
+        System.clearProperty(clientX509Util.getSslKeystoreLocationProperty());
+        System.clearProperty(clientX509Util.getSslKeystorePasswdProperty());
+        System.clearProperty(clientX509Util.getSslTruststoreLocationProperty());
+        System.clearProperty(clientX509Util.getSslTruststorePasswdProperty());
 
         CountdownWatcher watcher = new CountdownWatcher();
         new TestableZooKeeper(hostPort, CONNECTION_TIMEOUT, watcher);

@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.quorum;
 
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
+import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -51,7 +52,7 @@ public class LeaderBeanTest {
     private QuorumPeer qp;
 
     @Before
-    public void setUp() throws IOException {
+    public void setUp() throws IOException, X509Exception {
         qp = new QuorumPeer();
         QuorumVerifier quorumVerifierMock = mock(QuorumVerifier.class);
         qp.setQuorumVerifier(quorumVerifierMock, false);

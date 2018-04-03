@@ -26,6 +26,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
 
+import org.apache.zookeeper.common.ClientX509Util;
+import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.junit.Test;
@@ -91,7 +93,7 @@ public class QuorumPeerConfigTest {
     @Test
     public void testCustomSSLAuth()
             throws IOException{
-        System.setProperty(ZKConfig.SSL_AUTHPROVIDER, "y509");
+        System.setProperty(new ClientX509Util().getSslAuthProviderProperty(), "y509");
         QuorumPeerConfig quorumPeerConfig = new QuorumPeerConfig();
         try {
             Properties zkProp = getDefaultZKProperties();
