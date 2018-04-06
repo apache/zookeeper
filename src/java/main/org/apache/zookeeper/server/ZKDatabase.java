@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collection;
@@ -302,7 +303,10 @@ public class ZKDatabase {
     public long calculateTxnLogSizeLimit() {
         long snapSize = 0;
         try {
-            snapSize = snapLog.findMostRecentSnapshot().length();
+            File snapFile = snapLog.findMostRecentSnapshot();
+            if (snapFile != null) {
+                snapSize = snapFile.length();
+            }
         } catch (IOException e) {
             LOG.error("Unable to get size of most recent snapshot");
         }
