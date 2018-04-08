@@ -23,10 +23,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Properties;
 import java.util.Map.Entry;
+import java.util.Set;
 
 
 import org.slf4j.Logger;
@@ -232,7 +232,7 @@ public class QuorumHierarchical implements QuorumVerifier {
     /**
      * Verifies if a given set is a quorum.
      */
-    public boolean containsQuorum(HashSet<Long> set){
+    public boolean containsQuorum(Set<Long> set){
         HashMap<Long, Long> expansion = new HashMap<Long, Long>();
         
         /*

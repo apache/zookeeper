@@ -533,7 +533,7 @@ public class LearnerHandler extends ZooKeeperThread {
                 return;
             }
             LOG.info("Received NEWLEADER-ACK message from " + getSid());
-            leader.waitForNewLeaderAck(getSid(), qp.getZxid(), getLearnerType());
+            leader.waitForNewLeaderAck(getSid(), qp.getZxid());
 
             syncLimitCheck.start();
             
