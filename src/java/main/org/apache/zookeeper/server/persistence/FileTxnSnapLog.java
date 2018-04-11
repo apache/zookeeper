@@ -30,10 +30,8 @@ import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.ZooDefs.OpCode;
-import org.apache.zookeeper.server.DataTree;
+import org.apache.zookeeper.server.*;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
-import org.apache.zookeeper.server.Request;
-import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.TxnHeader;
@@ -55,6 +53,7 @@ public class FileTxnSnapLog {
     private final File snapDir;
     private TxnLog txnLog;
     private SnapShot snapLog;
+    private ServerStats serverStats;
     private final boolean autoCreateDB;
     public final static int VERSION = 2;
     public final static String version = "version-";
@@ -149,6 +148,10 @@ public class FileTxnSnapLog {
 
         autoCreateDB = Boolean.parseBoolean(System.getProperty(ZOOKEEPER_DB_AUTOCREATE,
                 ZOOKEEPER_DB_AUTOCREATE_DEFAULT));
+    }
+
+    public void setServerStats(ServerStats serverStats) {
+        this.serverStats = serverStats;
     }
 
     private void checkLogDir() throws LogDirContentCheckException {

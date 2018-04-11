@@ -204,6 +204,7 @@ def metric_init(params=None):
             'value_type': 'double',
             'format': '%f'
         },
+        'zk_num_alive_connections': {'units': 'connections'},
         'zk_outstanding_requests': {'units': 'connections'},
         'zk_znode_count': {'units': 'znodes'},
         'zk_watch_count': {'units': 'watches'},
@@ -213,7 +214,8 @@ def metric_init(params=None):
         'zk_max_file_descriptor_count': {'units': 'descriptors'},
         'zk_followers': {'units': 'nodes'},
         'zk_synced_followers': {'units': 'nodes'},
-        'zk_pending_syncs': {'units': 'syncs'}
+        'zk_pending_syncs': {'units': 'syncs'},
+        'zk_fsync_threshold_exceed_count': {'units': 'fsyncexceed'}
     }
     metric_handler.descriptors = {}
     for name, updates in metrics.iteritems():

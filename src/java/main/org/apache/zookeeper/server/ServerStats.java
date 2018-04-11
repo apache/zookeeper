@@ -32,6 +32,7 @@ public class ServerStats {
     private long minLatency = Long.MAX_VALUE;
     private long totalLatency = 0;
     private long count = 0;
+    private long fsyncThresholdExceedCount = 0L;
 
     private final Provider provider;
 
@@ -115,6 +116,7 @@ public class ServerStats {
             sb.append("Zxid: 0x"+ Long.toHexString(getLastProcessedZxid())+ "\n");
         }
         sb.append("Mode: " + getServerState() + "\n");
+        sb.append("Fsync threshold exceeded: " + getFsyncThresholdExceedCount() + "\n");
         return sb.toString();
     }
     // mutators
@@ -148,9 +150,23 @@ public class ServerStats {
         packetsReceived = 0;
         packetsSent = 0;
     }
+
+    public long getFsyncThresholdExceedCount() {
+        return fsyncThresholdExceedCount;
+    }
+
+    synchronized public void increaseFsyncThresholdExceedCount() {
+        fsyncThresholdExceedCount++;
+    }
+
+    synchronized void resetFsyncThresholdExceedCount() {
+        fsyncThresholdExceedCount = 0L;
+    }
+
     synchronized public void reset() {
         resetLatency();
         resetRequestCounters();
+        resetFsyncThresholdExceedCount();
     }
 
 }

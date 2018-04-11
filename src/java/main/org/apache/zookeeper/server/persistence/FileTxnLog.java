@@ -41,6 +41,7 @@ import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
+import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
@@ -124,6 +125,8 @@ public class FileTxnLog implements TxnLog {
     File logFileWrite = null;
     private FilePadding filePadding = new FilePadding();
 
+    private ServerStats serverStats;
+
     private volatile long syncElapsedMS = -1L;
 
     /**
@@ -145,6 +148,26 @@ public class FileTxnLog implements TxnLog {
     }
 
     /**
+     * constructor for FileTxnLog. Take the directory
+     * where the txnlogs are stored
+     * @param logDir the directory where the txnlogs are stored
+     */
+    public FileTxnLog(File logDir, ServerStats serverStats) {
+        this(logDir);
+        this.serverStats = serverStats;
+    }
+
+    /**
+     * method to allow setting preallocate size
+     * of log file to pad the file.
+     * @param size the size to set to in bytes
+     */
+    public static void setPreallocSize(long size) {
+        preAllocSize = size;
+    }
+
+    /**
+     * ZOOKEEPER-3019 add metric to track slow fsyncs count + update py script and docs
      * creates a checksum algorithm to be used
      * @return the checksum used for this txnlog
      */
@@ -320,6 +343,9 @@ public class FileTxnLog implements TxnLog {
 
                 syncElapsedMS = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startSyncNS);
                 if (syncElapsedMS > fsyncWarningThresholdMS) {
+                    if(serverStats != null) {
+                        serverStats.increaseFsyncThresholdExceedCount();
+                    }
                     LOG.warn("fsync-ing the write ahead log in "
                             + Thread.currentThread().getName()
                             + " took " + syncElapsedMS
