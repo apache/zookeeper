@@ -1069,7 +1069,7 @@ public class FastLeaderElection implements Election {
                         LOG.warn("Ignoring notification for non-cluster member sid {} from sid {}", n.leader, n.sid);
                     }
                     if (!self.getCurrentAndNextConfigVoters().contains(n.sid)) {
-                        LOG.warn("Ignoring notification from non-cluster member sid {}", n.sid);
+                        LOG.warn("Ignoring notification for sid {} from non-quorum member sid {}", n.leader, n.sid);
                     }
                 }
             }
