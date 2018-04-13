@@ -22,6 +22,8 @@ package org.apache.zookeeper.server;
 
 import org.apache.zookeeper.common.Time;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 /**
  * Basic Server Statistics
  */
@@ -32,7 +34,7 @@ public class ServerStats {
     private long minLatency = Long.MAX_VALUE;
     private long totalLatency = 0;
     private long count = 0;
-    private long fsyncThresholdExceedCount = 0L;
+    private AtomicLong fsyncThresholdExceedCount = new AtomicLong(0);
 
     private final Provider provider;
 
@@ -152,15 +154,15 @@ public class ServerStats {
     }
 
     public long getFsyncThresholdExceedCount() {
-        return fsyncThresholdExceedCount;
+        return fsyncThresholdExceedCount.get();
     }
 
-    synchronized public void increaseFsyncThresholdExceedCount() {
-        fsyncThresholdExceedCount++;
+    public void incrementFsyncThresholdExceedCount() {
+        fsyncThresholdExceedCount.incrementAndGet();
     }
 
-    synchronized void resetFsyncThresholdExceedCount() {
-        fsyncThresholdExceedCount = 0L;
+    public void resetFsyncThresholdExceedCount() {
+        fsyncThresholdExceedCount.set(0);
     }
 
     synchronized public void reset() {

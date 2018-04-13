@@ -30,8 +30,11 @@ import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.ZooDefs.OpCode;
-import org.apache.zookeeper.server.*;
+import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
+import org.apache.zookeeper.server.Request;
+import org.apache.zookeeper.server.ServerStats;
+import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.TxnHeader;
@@ -53,7 +56,6 @@ public class FileTxnSnapLog {
     private final File snapDir;
     private TxnLog txnLog;
     private SnapShot snapLog;
-    private ServerStats serverStats;
     private final boolean autoCreateDB;
     public final static int VERSION = 2;
     public final static String version = "version-";
@@ -151,7 +153,7 @@ public class FileTxnSnapLog {
     }
 
     public void setServerStats(ServerStats serverStats) {
-        this.serverStats = serverStats;
+        txnLog.setServerStats(serverStats);
     }
 
     private void checkLogDir() throws LogDirContentCheckException {
@@ -208,7 +210,7 @@ public class FileTxnSnapLog {
      * @throws IOException
      */
     public long restore(DataTree dt, Map<Long, Integer> sessions,
-            PlayBackListener listener) throws IOException {
+                        PlayBackListener listener) throws IOException {
         long deserializeResult = snapLog.deserialize(dt, sessions);
         FileTxnLog txnLog = new FileTxnLog(dataDir);
         boolean trustEmptyDB;

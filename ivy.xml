@@ -136,6 +136,9 @@
 
     <dependency org="org.openclover" name="clover" rev="${clover.version}" conf="clover->default"/>
 
+    <dependency org="org.hamcrest" name="hamcrest-all" rev="${hamcrest.version}"
+                  conf="test->default" />
+
     <conflict manager="strict"/>
 
   </dependencies>

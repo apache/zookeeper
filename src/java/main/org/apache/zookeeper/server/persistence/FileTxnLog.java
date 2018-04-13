@@ -158,16 +158,17 @@ public class FileTxnLog implements TxnLog {
     }
 
     /**
-     * method to allow setting preallocate size
-     * of log file to pad the file.
-     * @param size the size to set to in bytes
+     * ZOOKEEPER-3019 add metric to track slow fsyncs count + update py script and docs
+     * Setter for ServerStats to monitor fsync threshold exceed
+     * @param serverStats used to update fsyncThresholdExceedCount
      */
-    public static void setPreallocSize(long size) {
-        preAllocSize = size;
+    @Override
+    public void setServerStats(ServerStats serverStats) {
+        this.serverStats = serverStats;
     }
 
     /**
-     * ZOOKEEPER-3019 add metric to track slow fsyncs count + update py script and docs
+     * ZOOKEEPER-3019 add unit test and fix PR comments
      * creates a checksum algorithm to be used
      * @return the checksum used for this txnlog
      */
@@ -344,7 +345,7 @@ public class FileTxnLog implements TxnLog {
                 syncElapsedMS = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startSyncNS);
                 if (syncElapsedMS > fsyncWarningThresholdMS) {
                     if(serverStats != null) {
-                        serverStats.increaseFsyncThresholdExceedCount();
+                        serverStats.incrementFsyncThresholdExceedCount();
                     }
                     LOG.warn("fsync-ing the write ahead log in "
                             + Thread.currentThread().getName()
