@@ -163,8 +163,8 @@
       <section id="sc_requiredSoftware">
         <title>Required Software </title>
 
-        <para>ZooKeeper runs in Java, release 1.7 or greater (JDK 7 or
-        greater, FreeBSD support requires openjdk7).  It runs as an
+        <para>ZooKeeper runs in Java, release 1.8 or greater (JDK 8 or
+        greater, FreeBSD support requires openjdk8).  It runs as an
         <emphasis>ensemble</emphasis> of ZooKeeper servers. Three
         ZooKeeper servers is the minimum recommended size for an
         ensemble, and we also recommend that they run on separate
