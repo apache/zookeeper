@@ -50,7 +50,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TruncateTest extends ZKTestCase {
+public class TruncateTest extends ClientBase {
 	private static final Logger LOG = LoggerFactory.getLogger(TruncateTest.class);
     File dataDir1, dataDir2, dataDir3;
     
@@ -153,7 +153,7 @@ public class TruncateTest extends ZKTestCase {
         int maxCnxns = 100;
         ServerCnxnFactory factory = ClientBase.createNewServerInstance(null,
                 hostPort, maxCnxns);
-        ClientBase.startServerInstance(dataDir1, factory, hostPort);
+        startServerInstance(dataDir1, factory, hostPort);
         ClientBase.shutdownServerInstance(factory, hostPort);
 
         // standalone starts with 0 epoch while quorum starts with 1
@@ -162,7 +162,7 @@ public class TruncateTest extends ZKTestCase {
         origfile.renameTo(newfile);
 
         factory = ClientBase.createNewServerInstance(null, hostPort, maxCnxns);
-        ClientBase.startServerInstance(dataDir1, factory, hostPort);
+        startServerInstance(dataDir1, factory, hostPort);
 
         ZooKeeper zk = ClientBase.createZKClient(hostPort, 15000);
         for(int i = 0; i < 50; i++) {

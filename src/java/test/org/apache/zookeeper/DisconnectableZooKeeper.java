@@ -53,17 +53,4 @@ public class DisconnectableZooKeeper extends ZooKeeper {
         f.setBoolean(cnxn, true);
     }
 
-    /**
-     * Expose SendThread for testing
-     */
-    public Thread getSendThread() {
-        return cnxn.getSendThread();
-    }
-
-    /**
-     * Expose EventThread for testing
-     */
-    public Thread getEventThread() {
-        return cnxn.getEventThread();
-    }
 }

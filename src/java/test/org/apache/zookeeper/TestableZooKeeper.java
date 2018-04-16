@@ -116,4 +116,27 @@ public class TestableZooKeeper extends ZooKeeperAdmin {
             Record response, WatchRegistration watchRegistration) throws InterruptedException {
         return cnxn.submitRequest(h, request, response, watchRegistration);
     }
+
+    /**
+     * Expose SendThread for testing
+     */
+    public Thread getSendThread() {
+        return cnxn.getSendThread();
+    }
+
+    /**
+     * Expose EventThread for testing
+     */
+    public Thread getEventThread() {
+        return cnxn.getEventThread();
+    }
+
+    /** Testing only!!! Really!!!! This is only here to test when the client
+     * disconnects from the server w/o sending a session disconnect (ie
+     * ending the session cleanly). The server will eventually notice the
+     * client is no longer pinging and will timeout the session.
+     */
+    public void disconnect() {
+        cnxn.disconnect();
+    }
 }

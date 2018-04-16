@@ -22,6 +22,7 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.DisconnectableZooKeeper;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
@@ -45,49 +46,17 @@ import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-public class SessionTimeoutTest extends ZKTestCase {
-    protected static final Logger LOG = LoggerFactory.getLogger(SessionTest.class);
+public class SessionTimeoutTest extends ClientBase {
+    protected static final Logger LOG = LoggerFactory.getLogger(SessionTimeoutTest.class);
 
-    private static final String HOSTPORT = "127.0.0.1:" +
-            PortAssignment.unique();
-
-    private ServerCnxnFactory serverFactory;
-    private ZooKeeperServer zs;
-    private DisconnectableZooKeeper zk;
-
+    private TestableZooKeeper zk;
     File tmpDir;
-
-    private final int TIMEOUT = 100;
-    private final int TICK_TIME = 100;
 
     @Before
     public void setUp() throws Exception {
-        if (tmpDir == null) {
-            tmpDir = ClientBase.createTmpDir();
-        }
-
-        ClientBase.setupTestEnv();
-        zs = new ZooKeeperServer(tmpDir, tmpDir, TICK_TIME);
-
-        final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
-        serverFactory = ServerCnxnFactory.createFactory(PORT, -1);
-        serverFactory.startup(zs);
-
-        Assert.assertTrue("waiting for server up",
-                ClientBase.waitForServerUp(HOSTPORT,
-                        CONNECTION_TIMEOUT));
-
-        zk = createClient(TIMEOUT);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        zk.close();
-        serverFactory.shutdown();
-        zs.shutdown();
-        Assert.assertTrue("waiting for server down",
-                ClientBase.waitForServerDown(HOSTPORT,
-                        CONNECTION_TIMEOUT));
+        tickTime = 100;
+        super.setUp();
+        zk = createClient();
     }
 
     /**
@@ -104,7 +73,7 @@ public class SessionTimeoutTest extends ZKTestCase {
         zk.getEventThread().join(10000);
         Assert.assertFalse("EventThread is still running", zk.getEventThread().isAlive());
 
-        zk = createClient(TIMEOUT);
+        zk = createClient();
         Stat stest = zk.exists("/stest", null);
         assertNull("Ephemeral node /stest should have been removed", stest);
     }
@@ -120,7 +89,7 @@ public class SessionTimeoutTest extends ZKTestCase {
 
         zk.close();
 
-        zk = createClient(TIMEOUT);
+        zk = createClient();
         assertNull("Ephemeral node shouldn't exist after client disconnect", zk.exists("/sdisconnect", null));
     }
 
@@ -136,7 +105,7 @@ public class SessionTimeoutTest extends ZKTestCase {
         zk.disconnect();
         zk.close();
 
-        zk = createClient(TIMEOUT);
+        zk = createClient();
         assertNotNull("Ephemeral node should be present when session is restored", zk.exists("/srestore", null));
     }
 
@@ -150,39 +119,10 @@ public class SessionTimeoutTest extends ZKTestCase {
         assertNotNull("Ephemeral node has not been created", zk.exists("/sdeath", null));
 
         zk.disconnect();
-        tearDown();
-        setUp();
+        stopServer();
+        startServer();
+        zk = createClient();
 
         assertNotNull("Ephemeral node should be present when server restarted", zk.exists("/sdeath", null));
-    }
-
-    private DisconnectableZooKeeper createClient(int timeout)
-            throws IOException, InterruptedException
-    {
-        SessionTimeoutTest.CountdownWatcher watcher = new SessionTimeoutTest.CountdownWatcher();
-        return createClient(timeout, watcher);
-    }
-
-    private DisconnectableZooKeeper createClient(int timeout,
-                                                 SessionTimeoutTest.CountdownWatcher watcher)
-            throws IOException, InterruptedException
-    {
-        DisconnectableZooKeeper zk =
-                new DisconnectableZooKeeper(HOSTPORT, timeout, watcher);
-        if(!watcher.clientConnected.await(timeout, TimeUnit.MILLISECONDS)) {
-            Assert.fail("Unable to connect to server");
-        }
-
-        return zk;
-    }
-
-    private static class CountdownWatcher implements Watcher {
-        volatile CountDownLatch clientConnected = new CountDownLatch(1);
-
-        public void process(WatchedEvent event) {
-            if (event.getState() == Event.KeeperState.SyncConnected) {
-                clientConnected.countDown();
-            }
-        }
     }
 }
