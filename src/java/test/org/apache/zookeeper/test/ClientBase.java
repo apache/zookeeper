@@ -72,7 +72,6 @@ public abstract class ClientBase extends ZKTestCase {
     static final File BASETEST =
         new File(System.getProperty("build.test.dir", "build"));
 
-    protected int tickTime = 3000;
     protected String hostPort = "127.0.0.1:" + PortAssignment.unique();
     protected int maxCnxns = 0;
     protected ServerCnxnFactory serverFactory = null;
@@ -413,12 +412,12 @@ public abstract class ClientBase extends ZKTestCase {
     /**
      * Starting the given server instance
      */
-    public void startServerInstance(File dataDir,
+    public static void startServerInstance(File dataDir,
             ServerCnxnFactory factory, String hostPort) throws IOException,
             InterruptedException {
         final int port = getPort(hostPort);
         LOG.info("STARTING server instance 127.0.0.1:{}", port);
-        ZooKeeperServer zks = new ZooKeeperServer(dataDir, dataDir, tickTime);
+        ZooKeeperServer zks = new ZooKeeperServer(dataDir, dataDir, 3000);
         factory.startup(zks);
         Assert.assertTrue("waiting for server up", ClientBase.waitForServerUp(
                 "127.0.0.1:" + port, CONNECTION_TIMEOUT, factory.isSecure()));

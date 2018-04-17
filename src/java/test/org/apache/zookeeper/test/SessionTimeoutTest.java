@@ -44,11 +44,9 @@ public class SessionTimeoutTest extends ClientBase {
     protected static final Logger LOG = LoggerFactory.getLogger(SessionTimeoutTest.class);
 
     private TestableZooKeeper zk;
-    File tmpDir;
 
     @Before
     public void setUp() throws Exception {
-        tickTime = 100;
         super.setUp();
         zk = createClient();
     }
