@@ -40,8 +40,8 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="revision.properties" value="revision.properties" />
     <property file="${basedir}/src/java/${revision.properties}" />
     
-    <property name="javac.target" value="1.7" />
-    <property name="javac.source" value="1.7" />
+    <property name="javac.target" value="1.8" />
+    <property name="javac.source" value="1.8" />
     <property name="build.encoding" value="utf8" />
 
     <property name="src.dir" value="${basedir}/src" />
