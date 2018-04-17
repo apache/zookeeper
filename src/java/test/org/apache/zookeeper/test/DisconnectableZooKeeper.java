@@ -16,7 +16,10 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper;
+package org.apache.zookeeper.test;
+
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooKeeper;
 
 import java.io.IOException;
 
@@ -52,5 +55,4 @@ public class DisconnectableZooKeeper extends ZooKeeper {
         f.setAccessible(true);
         f.setBoolean(cnxn, true);
     }
-
 }
