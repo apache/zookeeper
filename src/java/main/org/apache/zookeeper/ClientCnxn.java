@@ -169,14 +169,6 @@ public class ClientCnxn {
 
     final EventThread eventThread;
 
-    Thread getSendThread() {
-        return sendThread;
-    }
-
-    Thread getEventThread() {
-        return eventThread;
-    }
-
     /**
      * Set to true when close is called. Latches the connection such that we
      * don't attempt to re-connect to the server if in the middle of closing the

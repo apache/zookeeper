@@ -117,20 +117,6 @@ public class TestableZooKeeper extends ZooKeeperAdmin {
         return cnxn.submitRequest(h, request, response, watchRegistration);
     }
 
-    /**
-     * Expose SendThread for testing
-     */
-    public Thread getSendThread() {
-        return cnxn.getSendThread();
-    }
-
-    /**
-     * Expose EventThread for testing
-     */
-    public Thread getEventThread() {
-        return cnxn.getEventThread();
-    }
-
     /** Testing only!!! Really!!!! This is only here to test when the client
      * disconnects from the server w/o sending a session disconnect (ie
      * ending the session cleanly). The server will eventually notice the

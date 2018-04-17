@@ -21,7 +21,10 @@ package org.apache.zookeeper.test;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.TestableZooKeeper;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 import org.junit.Assert;
 import org.junit.Before;
@@ -31,6 +34,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -48,23 +53,32 @@ public class SessionTimeoutTest extends ClientBase {
         zk = createClient();
     }
 
-    /**
-     * Make sure ephemerals get cleaned up when a session times out.
-     */
     @Test
-    public void testSessionTimeout() throws Exception {
-        zk.create("/stest", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                CreateMode.EPHEMERAL);
+    public void testSessionExpiration() throws InterruptedException,
+            KeeperException {
+        final CountDownLatch expirationLatch = new CountDownLatch(1);
+        Watcher watcher = new Watcher() {
+            @Override
+            public void process(WatchedEvent event) {
+                if ( event.getState() == Event.KeeperState.Expired ) {
+                    expirationLatch.countDown();
+                }
+            }
+        };
+        zk.exists("/foo", watcher);
 
-        // stop pinging
-        zk.getSendThread().interrupt();
+        zk.getTestable().injectSessionExpiration();
+        Assert.assertTrue(expirationLatch.await(5, TimeUnit.SECONDS));
 
-        zk.getEventThread().join(10000);
-        Assert.assertFalse("EventThread is still running", zk.getEventThread().isAlive());
-
-        zk = createClient();
-        Stat stest = zk.exists("/stest", null);
-        assertNull("Ephemeral node /stest should have been removed", stest);
+        boolean gotException = false;
+        try {
+            zk.exists("/foo", false);
+            Assert.fail("Should have thrown a SessionExpiredException");
+        } catch (KeeperException.SessionExpiredException e) {
+            // correct
+            gotException = true;
+        }
+        Assert.assertTrue(gotException);
     }
 
     /**
