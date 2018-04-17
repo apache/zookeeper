@@ -1068,8 +1068,8 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
             // Look through the logs for output that indicates Node 1 is LEADING or FOLLOWING
             LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
-            Pattern leading = Pattern.compile(".*myid=1.*LEADING.*");
-            Pattern following = Pattern.compile(".*myid=1.*FOLLOWING.*");
+            Pattern leading = Pattern.compile(".*myid=1.*QuorumPeer.*LEADING.*");
+            Pattern following = Pattern.compile(".*myid=1.*QuorumPeer.*FOLLOWING.*");
 
             String line;
             while ((line = r.readLine()) != null && !foundLeading && !foundFollowing) {
