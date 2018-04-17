@@ -538,7 +538,7 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
     }
 
     private static DisconnectableZooKeeper createClient(int port,
-                                                        CountdownWatcher watcher)
+            CountdownWatcher watcher)
         throws IOException, TimeoutException, InterruptedException
     {
         DisconnectableZooKeeper zk = new DisconnectableZooKeeper(

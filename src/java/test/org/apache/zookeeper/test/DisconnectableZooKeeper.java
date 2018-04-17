@@ -18,10 +18,10 @@
 
 package org.apache.zookeeper.test;
 
+import java.io.IOException;
+
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
-
-import java.io.IOException;
 
 public class DisconnectableZooKeeper extends ZooKeeper {
     public DisconnectableZooKeeper(String host, int sessionTimeout, Watcher watcher)
