@@ -293,7 +293,21 @@ class ZooKeeperServer(object):
                 result['zk_zxid_epoch']   = int(m.group(1), 16) >>32 # high 32 bits
                 continue
 
-        return result 
+            m = re.match('Proposal sizes last/min/max: (\d+)/(\d+)/(\d+)', line)
+            if m is not None:
+                result['zk_last_proposal_size'] = int(m.group(1))
+                result['zk_min_proposal_size'] = int(m.group(2))
+                result['zk_max_proposal_size'] = int(m.group(3))
+                continue
+
+            m = re.match('Client response size last/min/max: (\d+)/(\d+)/(\d+)', line)
+            if m is not None:
+                result['zk_last_client_response_size'] = int(m.group(1))
+                result['zk_min_client_response_size'] = int(m.group(2))
+                result['zk_max_client_response_size'] = int(m.group(3))
+                continue
+
+        return result
 
     def _parse_line(self, line):
         try:
