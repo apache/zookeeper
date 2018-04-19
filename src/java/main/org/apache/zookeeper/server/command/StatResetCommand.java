@@ -37,7 +37,7 @@ public class StatResetCommand extends AbstractFourLetterCommand {
             ServerStats serverStats = zkServer.serverStats();
             serverStats.reset();
             if (serverStats.getServerState().equals("leader")) {
-                ((LeaderZooKeeperServer)zkServer).getLeader().getProposalStats().reset();
+                ((LeaderZooKeeperServer)zkServer).getLeader().getBufferStats().reset();
             }
             pw.println("Server stats reset.");
         }

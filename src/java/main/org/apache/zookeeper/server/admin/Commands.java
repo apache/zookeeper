@@ -330,9 +330,9 @@ public class Commands {
             response.put("open_file_descriptor_count", osMbean.getOpenFileDescriptorCount());
             response.put("max_file_descriptor_count", osMbean.getMaxFileDescriptorCount());
 
-            response.put("last_client_response_size", stats.getClientResponseStats().getLast());
-            response.put("max_client_response_size", stats.getClientResponseStats().getMax());
-            response.put("min_client_response_size", stats.getClientResponseStats().getMin());
+            response.put("last_client_response_size", stats.getClientResponseStats().getLastBufferSize());
+            response.put("max_client_response_size", stats.getClientResponseStats().getMaxBufferSize());
+            response.put("min_client_response_size", stats.getClientResponseStats().getMinBufferSize());
 
             if (zkServer instanceof LeaderZooKeeperServer) {
                 Leader leader = ((LeaderZooKeeperServer) zkServer).getLeader();
@@ -341,9 +341,9 @@ public class Commands {
                 response.put("synced_followers", leader.getForwardingFollowers().size());
                 response.put("pending_syncs", leader.getNumPendingSyncs());
 
-                response.put("last_proposal_size", leader.getProposalStats().getLast());
-                response.put("max_proposal_size", leader.getProposalStats().getMax());
-                response.put("min_proposal_size", leader.getProposalStats().getMin());
+                response.put("last_proposal_size", leader.getBufferStats().getLastBufferSize());
+                response.put("max_proposal_size", leader.getBufferStats().getMaxBufferSize());
+                response.put("min_proposal_size", leader.getBufferStats().getMinBufferSize());
             }
 
             return response;
@@ -425,7 +425,7 @@ public class Commands {
             response.put("server_stats", zkServer.serverStats());
             if (zkServer instanceof LeaderZooKeeperServer) {
                 Leader leader = ((LeaderZooKeeperServer)zkServer).getLeader();
-                response.put("proposal_stats", leader.getProposalStats());
+                response.put("proposal_stats", leader.getBufferStats());
             }
             response.put("node_count", zkServer.getZKDatabase().getNodeCount());
             return response;

@@ -62,9 +62,9 @@ public class MonitorCommand extends AbstractFourLetterCommand {
         print("ephemerals_count", zkdb.getDataTree().getEphemeralsCount());
         print("approximate_data_size", zkdb.getDataTree().approximateDataSize());
 
-        print("last_client_response_size", stats.getClientResponseStats().getLast());
-        print("max_client_response_size", stats.getClientResponseStats().getMax());
-        print("min_client_response_size", stats.getClientResponseStats().getMin());
+        print("last_client_response_size", stats.getClientResponseStats().getLastBufferSize());
+        print("max_client_response_size", stats.getClientResponseStats().getMaxBufferSize());
+        print("min_client_response_size", stats.getClientResponseStats().getMinBufferSize());
 
         OSMXBean osMbean = new OSMXBean();
         if (osMbean != null && osMbean.getUnix() == true) {
@@ -79,9 +79,9 @@ public class MonitorCommand extends AbstractFourLetterCommand {
             print("synced_followers", leader.getForwardingFollowers().size());
             print("pending_syncs", leader.getNumPendingSyncs());
 
-            print("last_proposal_size", leader.getProposalStats().getLast());
-            print("max_proposal_size", leader.getProposalStats().getMax());
-            print("min_proposal_size", leader.getProposalStats().getMin());
+            print("last_proposal_size", leader.getBufferStats().getLastBufferSize());
+            print("max_proposal_size", leader.getBufferStats().getMaxBufferSize());
+            print("min_proposal_size", leader.getBufferStats().getMinBufferSize());
         }
     }
 

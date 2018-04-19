@@ -23,7 +23,7 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.server.quorum.ProposalStats;
+import org.apache.zookeeper.server.quorum.BufferStats;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.Assert;
 import org.junit.Test;
@@ -32,8 +32,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -96,13 +96,15 @@ public class NettyServerCnxnTest extends ClientBase {
     @Test
     public void testClientResponseStatsUpdate() throws IOException, InterruptedException, KeeperException {
         try (ZooKeeper zk = createClient()) {
-            ProposalStats stats = serverFactory.getZooKeeperServer().serverStats().getClientResponseStats();
-            assertEquals("", -1, stats.getLast());
+            BufferStats clientResponseStats = serverFactory.getZooKeeperServer().serverStats().getClientResponseStats();
+            assertThat("Last client response size should be initialized with INIT_VALUE",
+                    clientResponseStats.getLastBufferSize(), equalTo(BufferStats.INIT_VALUE));
 
             zk.create("/a", "test".getBytes(), Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT);
 
-            assertThat(stats.getLast(), greaterThan(0));
+            assertThat("Last client response size should be greater than 0 after client request was performed",
+                    clientResponseStats.getLastBufferSize(), greaterThan(0));
         }
     }
 }

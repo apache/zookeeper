@@ -21,7 +21,7 @@ package org.apache.zookeeper.server;
 
 
 import org.apache.zookeeper.common.Time;
-import org.apache.zookeeper.server.quorum.ProposalStats;
+import org.apache.zookeeper.server.quorum.BufferStats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +41,7 @@ public class ServerStats {
     private long count = 0;
     private AtomicLong fsyncThresholdExceedCount = new AtomicLong(0);
 
-    private final ProposalStats clientResponseStats = new ProposalStats();
+    private final BufferStats clientResponseStats = new BufferStats();
 
     private final Provider provider;
 
@@ -179,10 +179,10 @@ public class ServerStats {
     }
 
     public void updateClientResponseSize(int size) {
-        clientResponseStats.setLastProposalSize(size);
+        clientResponseStats.setLastBufferSize(size);
     }
 
-    public ProposalStats getClientResponseStats() {
+    public BufferStats getClientResponseStats() {
         return clientResponseStats;
     }
 }

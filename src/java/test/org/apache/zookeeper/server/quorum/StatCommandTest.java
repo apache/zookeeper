@@ -54,7 +54,7 @@ public class StatCommandTest {
         ZKDatabase zkDatabaseMock = mock(ZKDatabase.class);
         when(zks.getZKDatabase()).thenReturn(zkDatabaseMock);
         Leader leaderMock = mock(Leader.class);
-        when(leaderMock.getProposalStats()).thenReturn(new ProposalStats());
+        when(leaderMock.getBufferStats()).thenReturn(new BufferStats());
         when(zks.getLeader()).thenReturn(leaderMock);
 
         ServerCnxnFactory serverCnxnFactory = mock(ServerCnxnFactory.class);
