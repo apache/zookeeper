@@ -1936,6 +1936,9 @@ server.3=zoo3:2888:3888</programlisting>
               zk_last_proposal_size 23
               zk_min_proposal_size 23
               zk_max_proposal_size 64
+              zk_last_client_response_size
+              zk_min_client_response_size
+              zk_max_client_response_size
               </programlisting>
 
               <para>The output is compatible with java properties format and the content 
