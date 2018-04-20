@@ -135,7 +135,6 @@ public final class SecurityUtils {
                 return saslClient;
             } catch (Exception e) {
                 LOG.error("Exception while trying to create SASL client", e);
-                // may cause NPE at the caller
                 return null;
             }
         }
