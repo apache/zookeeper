@@ -188,6 +188,7 @@ public class ReferenceCountedACLCacheTest {
         callAddUsageNTimes(deserializedCache, aclId3, 3);
         callAddUsageNTimes(deserializedCache, aclId4, 4);
         callAddUsageNTimes(deserializedCache, aclId5, 5);
+
         assertCachesEqual(cache, deserializedCache);
     }
 
