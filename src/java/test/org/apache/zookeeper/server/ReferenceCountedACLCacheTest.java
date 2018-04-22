@@ -196,12 +196,12 @@ public class ReferenceCountedACLCacheTest {
     @Test
     public void testNPEInDeserialize() throws IOException {
         ReferenceCountedACLCache serializeCache = new ReferenceCountedACLCache(){
-        @Override
-        public synchronized void serialize(OutputArchive oa) throws IOException {
-            oa.writeInt(1, "map");
-            oa.writeLong(1, "long");
-            oa.startVector(null, "acls");
-            oa.endVector(null, "acls");
+            @Override
+            public synchronized void serialize(OutputArchive oa) throws IOException {
+                oa.writeInt(1, "map");
+                oa.writeLong(1, "long");
+                oa.startVector(null, "acls");
+                oa.endVector(null, "acls");
             }
         };
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
