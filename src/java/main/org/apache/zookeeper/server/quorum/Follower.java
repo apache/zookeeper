@@ -73,10 +73,6 @@ public class Follower extends Learner{
         fzk.registerJMX(new FollowerBean(this, zk), self.jmxLocalPeerBean);
         try {
             QuorumServer leaderServer = findLeader();
-            if (leaderServer == null) {
-                LOG.error("found no leader");
-                throw new Exception("found no leader");
-            }
             try {
                 connectToLeader(leaderServer.addr, leaderServer.hostname);
                 long newEpochZxid = registerWithLeader(Leader.FOLLOWERINFO);
