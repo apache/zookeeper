@@ -109,9 +109,19 @@ public class ReferenceCountedACLCache {
             }
             List<ACL> aclList = new ArrayList<ACL>();
             Index j = ia.startVector("acls");
+<<<<<<< HEAD
+<<<<<<< HEAD
             if (j == null) {
                 throw new RuntimeException("Incorrent format of InputArchive when deserialize DataTree - missing acls");
             }
+=======
+>>>>>>> c4db5e25... recover zookeeper master same with apache:master
+=======
+            if (j == null) {
+                LOG.error("ERROR: incorrent format of InputArchive" + ia);
+                throw new RuntimeException("ERROR: incorrent format of InputArchive" + ia);
+            }
+>>>>>>> f7da9b9f... change ZOOK3007 to compare with apache master
             while (!j.done()) {
                 ACL acl = new ACL();
                 acl.deserialize(ia, "acl");

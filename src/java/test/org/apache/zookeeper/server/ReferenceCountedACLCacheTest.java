@@ -20,6 +20,8 @@ package org.apache.zookeeper.server;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
+import org.apache.jute.InputArchive;
+import org.apache.jute.OutputArchive;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
@@ -192,6 +194,8 @@ public class ReferenceCountedACLCacheTest {
         assertCachesEqual(cache, deserializedCache);
     }
 
+<<<<<<< HEAD
+<<<<<<< HEAD
     @Test
     public void testNPEInDeserialize() throws IOException {
         ReferenceCountedACLCache serializeCache = new ReferenceCountedACLCache(){
@@ -201,6 +205,17 @@ public class ReferenceCountedACLCacheTest {
                 oa.writeLong(1, "long");
                 oa.startVector(null, "acls");
                 oa.endVector(null, "acls");
+=======
+    @Test
+    public void testNPEInDeserialize() throws IOException {
+        ReferenceCountedACLCache serializeCache = new ReferenceCountedACLCache(){
+        @Override
+        public synchronized void serialize(OutputArchive oa) throws IOException {
+            oa.writeInt(1, "map");
+            oa.writeLong(1, "long");
+            oa.startVector(null, "acls");
+            oa.endVector(null, "acls");
+>>>>>>> f7da9b9f... change ZOOK3007 to compare with apache master
             }
         };
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -218,6 +233,11 @@ public class ReferenceCountedACLCacheTest {
     }
 
 
+<<<<<<< HEAD
+=======
+>>>>>>> c4db5e25... recover zookeeper master same with apache:master
+=======
+>>>>>>> f7da9b9f... change ZOOK3007 to compare with apache master
     private void assertCachesEqual(ReferenceCountedACLCache expected, ReferenceCountedACLCache actual){
         assertEquals(expected.aclIndex, actual.aclIndex);
         assertEquals(expected.aclKeyMap, actual.aclKeyMap);
