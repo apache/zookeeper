@@ -208,7 +208,7 @@ public class Learner {
         if (leaderServer == null) {
             LOG.warn("Couldn't find the leader with id = "
                     + current.getId());
-            throw New Exception("Couldn't find the leader with id = " + current.getId());
+            throw New RuntimeException("Couldn't find the leader with id = " + current.getId());
         }
         return leaderServer;
     }
