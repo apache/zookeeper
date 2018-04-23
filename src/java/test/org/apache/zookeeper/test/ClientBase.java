@@ -56,6 +56,7 @@ import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ServerCnxnFactoryAccessor;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.persistence.FilePadding;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.util.OSMXBean;
@@ -485,7 +486,7 @@ public abstract class ClientBase extends ZKTestCase {
         // resulting in test Assert.failure (client timeout on first session).
         // set env and directly in order to handle static init/gc issues
         System.setProperty("zookeeper.preAllocSize", "100");
-        FileTxnLog.setPreallocSize(100 * 1024);
+        FilePadding.setPreallocSize(100 * 1024);
     }
 
     protected void setUpAll() throws Exception {
