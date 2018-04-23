@@ -105,10 +105,10 @@ public class Leader {
     private final HashSet<LearnerHandler> learners =
         new HashSet<LearnerHandler>();
 
-    private final BufferStats bufferStats;
+    private final BufferStats proposalStats;
 
-    public BufferStats getBufferStats() {
-        return bufferStats;
+    public BufferStats getProposalStats() {
+        return proposalStats;
     }
 
     /**
@@ -228,7 +228,7 @@ public class Leader {
 
     Leader(QuorumPeer self,LeaderZooKeeperServer zk) throws IOException {
         this.self = self;
-        this.bufferStats = new BufferStats();
+        this.proposalStats = new BufferStats();
         try {
             if (self.getQuorumListenOnAllIPs()) {
                 ss = new ServerSocket(self.getQuorumAddress().getPort());
@@ -1059,7 +1059,7 @@ public class Leader {
         }
 
         byte[] data = SerializeUtils.serializeRequest(request);
-        bufferStats.setLastBufferSize(data.length);
+        proposalStats.setLastBufferSize(data.length);
         QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, request.zxid, data, null);
 
         Proposal p = new Proposal();

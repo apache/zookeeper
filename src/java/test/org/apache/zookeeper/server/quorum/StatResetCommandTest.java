@@ -97,7 +97,7 @@ public class StatResetCommandTest {
         when(serverStats.getServerState()).thenReturn("leader");
 
         BufferStats bufferStats = mock(BufferStats.class);
-        when(leader.getBufferStats()).thenReturn(bufferStats);
+        when(leader.getProposalStats()).thenReturn(bufferStats);
 
         // Act
         statResetCommand.commandRun();

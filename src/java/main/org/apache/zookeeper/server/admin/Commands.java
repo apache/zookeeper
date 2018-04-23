@@ -341,9 +341,9 @@ public class Commands {
                 response.put("synced_followers", leader.getForwardingFollowers().size());
                 response.put("pending_syncs", leader.getNumPendingSyncs());
 
-                response.put("last_proposal_size", leader.getBufferStats().getLastBufferSize());
-                response.put("max_proposal_size", leader.getBufferStats().getMaxBufferSize());
-                response.put("min_proposal_size", leader.getBufferStats().getMinBufferSize());
+                response.put("last_proposal_size", leader.getProposalStats().getLastBufferSize());
+                response.put("max_proposal_size", leader.getProposalStats().getMaxBufferSize());
+                response.put("min_proposal_size", leader.getProposalStats().getMinBufferSize());
             }
 
             return response;
@@ -425,7 +425,7 @@ public class Commands {
             response.put("server_stats", zkServer.serverStats());
             if (zkServer instanceof LeaderZooKeeperServer) {
                 Leader leader = ((LeaderZooKeeperServer)zkServer).getLeader();
-                response.put("proposal_stats", leader.getBufferStats());
+                response.put("proposal_stats", leader.getProposalStats());
             }
             response.put("node_count", zkServer.getZKDatabase().getNodeCount());
             return response;
