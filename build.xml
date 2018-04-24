@@ -80,16 +80,15 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="final.name" value="${name}-${version}"/>
     <property name="revision.dir" value="${basedir}/.revision" />
     <property name="revision.properties" value="revision.properties" />
-    <property file="${basedir}/src/java/${revision.properties}" />
+    <property file="${basedir}/zk-server/${revision.properties}" />
     
     <property name="javac.target" value="1.8" />
     <property name="javac.source" value="1.8" />
     <property name="build.encoding" value="utf8" />
 
-    <property name="src.dir" value="${basedir}/src" />
-    <property name="java.src.dir" value="${src.dir}/java/main" />
+    <property name="java.src.dir" value="${basedir}/zk-server/main" />
 
-    <property name="lib.dir" value="${src.dir}/java/lib" />
+    <property name="lib.dir" value="${basedir}/zk-server/lib" />
     <property name="lib.dir.includes" value="**/*.jar" />
     <property name="lib.dir.excludes" value="**/excluded/" />
 
@@ -102,11 +101,11 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
     <property name="build.dir" value="${basedir}/build" />
     <property name="distribution" value="${basedir}/distribution" />
-    <property name="src_generated.dir" value="${src.dir}/java/generated" />
-    <property name="c.src.dir" value="${src.dir}/c" />    
+    <property name="src_generated.dir" value="${basedir}/zk-server/generated" />
+    <property name="c.src.dir" value="${basedir}/zk-client/zk-client-c" />
     <property name="csrc_generated.dir" value="${c.src.dir}/generated" />
 
-    <property name="jute.file" value="${src.dir}/zookeeper.jute" />
+    <property name="jute.file" value="${basedir}/zookeeper.jute" />
 
     <property name="build.classes" value="${build.dir}/classes"/>
     <property name="build.docs" value="${build.dir}/docs" />
@@ -115,8 +114,8 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
     <property name="test.java.build.dir" value="${build.dir}/test"/>
     <property name="test.java.classes" value="${test.java.build.dir}/classes"/>
-    <property name="test.src.dir" value="${src.dir}/java/test"/>
-    <property name="systest.src.dir" value="${src.dir}/java/systest"/>
+    <property name="test.src.dir" value="${basedir}/zk-server/test"/>
+    <property name="systest.src.dir" value="${basedir}/zk-server/systest"/>
     <property name="test.log.dir" value="${test.java.build.dir}/logs" />
     <property name="test.data.dir" value="${test.java.build.dir}/data" />
     <property name="test.data.invalid.dir" value="${test.data.dir}/invalidsnap" />
@@ -133,12 +132,12 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="test.junit.printsummary" value="yes" />
     <property name="test.junit.haltonfailure" value="no" />
     <property name="test.junit.failbuild.ontestfailure" value="true" />
-    <property name="config.dir" value="${src.dir}/java/test/config" />
+    <property name="config.dir" value="${basedir}/zk-server/test/config" />
     <property name="test.junit.maxmem" value="512m" />
     <property name="test.quick" value="no" />
     <property name="conf.dir" value="${basedir}/conf"/>
     <property name="docs.dir" value="${basedir}/docs"/>
-    <property name="docs.src" value="${basedir}/src/docs"/>
+    <property name="docs.src" value="${basedir}/zk-docs"/>
     <property name="javadoc.link.java"
               value="http://docs.oracle.com/javase/6/docs/api/" />
     <property name="javadoc.packages" value="org.apache.*" />
@@ -146,8 +145,14 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="dist.dir" value="${build.dir}/${final.name}"/>
     <property name="dist.maven.dir" value="${dist.dir}/dist-maven"/>
 
-    <property name="contrib.dir" value="${src.dir}/contrib"/>
-    <property name="recipes.dir" value="${src.dir}/recipes"/>
+    <property name="clover.home" location="${env.CLOVER_HOME}"/>
+    <property name="clover.jar" location="${clover.home}/lib/clover.jar" />
+    <property name="clover.db.dir" location="${test.java.build.dir}/clover/db"/>
+    <property name="clover.report.dir"
+              location="${test.java.build.dir}/clover/reports"/>
+
+    <property name="contrib.dir" value="${basedir}/zk-contrib"/>
+    <property name="recipes.dir" value="${basedir}/zk-recipes"/>
 
     <property name="ivy.version" value="2.4.0"/>
     <property name="ivy.url"
@@ -363,7 +368,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       	    <os family="windows"/>
         </condition>
         <condition property="revision.cmd.line" 
-        	value="/c ${src.dir}\lastRevision.bat" else="${src.dir}/lastRevision.sh">
+        	value="/c ${basedir}\lastRevision.bat" else="${basedir}/lastRevision.sh">
       	    <os family="windows"/>
         </condition>
         <exec executable="${shell.name}">
@@ -814,7 +819,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
       <ivy:makepom settingsRef="${ant.project.name}" ivyfile="${basedir}/ivy.xml"
                    pomfile="${dist.maven.dir}/${final.name}.pom"
-                   templatefile="${basedir}/src/pom.template" conf="default,test" >
+                   templatefile="/pom.template" conf="default,test" >
         <mapping conf="default" scope="compile"/>
         <mapping conf="test" scope="test"/>
       </ivy:makepom>
@@ -846,13 +851,13 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <fileset file="build.xml"/>
         <fileset file="ivy.xml"/>
         <fileset file="ivysettings.xml"/>
-        <fileset file="src/NOTICE.txt"/>
-        <fileset file="src/LICENSE.txt"/>
+        <fileset file="NOTICE.txt"/>
+        <fileset file="LICENSE.txt"/>
       </copy>
 
       <copy todir="${dist.dir}/src" includeEmptyDirs="true">
         <fileset dir="src" excludes="**/*.template **/docs/build/**/* **/ivy*.jar"/>
-        <fileset file="src/pom.template"/>
+        <fileset file="pom.template"/>
       </copy>
   	  
       <chmod perm="ugo+x" type="file" parallel="false">
@@ -921,7 +926,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
       <ivy:makepom settingsRef="${ant.project.name}" ivyfile="${basedir}/ivy.xml"
                    pomfile="${dist.maven.dir}/${name}.pom"
-                   templatefile="${basedir}/src/pom.template">
+                   templatefile="/pom.template">
         <mapping conf="default" scope="compile"/>
         <mapping conf="test" scope="test"/>
       </ivy:makepom>
@@ -963,13 +968,13 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <fileset file="build.xml"/>
         <fileset file="ivy.xml"/>
         <fileset file="ivysettings.xml"/>
-        <fileset file="src/NOTICE.txt"/>
-        <fileset file="src/LICENSE.txt"/>
+        <fileset file="NOTICE.txt"/>
+        <fileset file="LICENSE.txt"/>
       </copy>
 
       <copy todir="${dist.dir}/src" includeEmptyDirs="true">
         <fileset dir="src" excludes="**/*.template **/docs/build/**/* **/ivy*.jar"/>
-        <fileset file="src/pom.template"/>
+        <fileset file="pom.template"/>
       </copy>
   	  
       <chmod perm="ugo+x" type="file" parallel="false">
@@ -1033,8 +1038,8 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <macro_tar param.destfile="${build.dir}/${final.name}-bin.tar.gz">
         <param.listofitems>
           <tarfileset dir="${build.dir}" mode="664">
-            <include name="${final.name}/src/c/**" />
-            <exclude name="${final.name}/src/c/generated/**" />
+            <include name="${final.name}/zk-client/zk-client-c/**" />
+            <exclude name="${final.name}/zk-client/zk-client-c/generated/**" />
           </tarfileset>
           <tarfileset dir="${build.dir}" mode="664">
             <exclude name="${final.name}/bin/*" />
@@ -1183,19 +1188,19 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <mkdir dir="${test.data.dir}" />
         <mkdir dir="${test.data.invalid.dir}" />
         <copy todir="${test.data.invalid.dir}">
-            <fileset dir="${basedir}/src/java/test/data/invalidsnap"/>
+            <fileset dir="${basedir}/zk-server/test/data/invalidsnap"/>
         </copy>
         <mkdir dir="${test.data.buffersize.dir}" />
         <copy todir="${test.data.buffersize.dir}">
-            <fileset dir="${basedir}/src/java/test/data/buffersize"/>
+            <fileset dir="${basedir}/zk-server/test/data/buffersize"/>
         </copy>
         <mkdir dir="${test.data.ssl.dir}" />
         <copy todir="${test.data.ssl.dir}">
-            <fileset dir="${basedir}/src/java/test/data/ssl"/>
+            <fileset dir="${basedir}/zk-server/test/data/ssl"/>
         </copy>
         <mkdir dir="${test.data.kerberos.dir}" />
         <copy todir="${test.data.kerberos.dir}">
-            <fileset dir="${basedir}/src/java/test/data/kerberos"/>
+            <fileset dir="${basedir}/zk-server/test/data/kerberos"/>
         </copy>
     </target>
 
@@ -1584,7 +1589,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       </taskdef>
       <mkdir dir="${test.java.build.dir}"/>
       <cs:checkstyle config="${test.src.dir}/checkstyle.xml" failOnViolation="false">
-        <fileset dir="${src.dir}/java" includes="**/*.java" excludes="**/generated/**"/>
+        <fileset dir="${basedir}/zk-server" includes="**/*.java" excludes="**/generated/**"/>
         <formatter type="xml" toFile="${test.java.build.dir}/checkstyle-errors.xml"/>
       </cs:checkstyle>
       <xslt style="${test.src.dir}/checkstyle-noframes-sorted.xsl" in="${test.java.build.dir}/checkstyle-errors.xml"
@@ -1655,33 +1660,33 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
           <exclude name="**/conf/*"/>
           <exclude name="**/docs/"/>
           <exclude name="**/lib/jdiff/"/>
-          <exclude name="contrib/ZooInspector/src/java/com/nitido/utils/toaster/Toaster.java"/>
-          <exclude name="src/c/*.la"/>
-          <exclude name="src/c/*.lo"/>
-          <exclude name="src/c/.libs/"/>
-          <exclude name="src/c/autom4te.cache/**"/>
-          <exclude name="src/c/config**"/>
-          <exclude name="src/c/include/winstdint.h"/>
-          <exclude name="src/c/src/hashtable/"/>
-          <exclude name="src/c/test-driver"/>
-          <exclude name="src/c/tests/quorum.cfg"/>
-          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/date.format.js"/>
-          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/g.bar.js"/>
-          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/g.dot.js"/>
-          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/g.line.js"/>
-          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/g.pie.js"/>
-          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/g.raphael.js"/>
-          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/raphael.js"/>
-          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/yui-min.js"/>
-          <exclude name="src/contrib/monitoring/JMX-RESOURCES"/>
-          <exclude name="src/contrib/zooinspector/src/java/com/nitido/utils/toaster/Toaster.java"/>
-          <exclude name="src/java/generated/.generated/"/>
-          <exclude name="src/java/test/checkstyle*.xml"/>
-          <exclude name="src/java/test/checkstyle*.xsl"/>
-          <exclude name="src/java/test/config/findbugs*.xml"/>
-          <exclude name="src/**/*.vcproj"/>
-          <exclude name="src/**/*.vcxproj*"/>
-          <exclude name="src/**/*.sln"/>
+          <exclude name="zk-contrib/zk-contrib-zooinspector/src/java/com/nitido/utils/toaster/Toaster.java"/>
+          <exclude name="zk-client/zk-client-c/*.la"/>
+          <exclude name="zk-client/zk-client-c/*.lo"/>
+          <exclude name="zk-client/zk-client-c/.libs/"/>
+          <exclude name="zk-client/zk-client-c/autom4te.cache/**"/>
+          <exclude name="zk-client/zk-client-c/config**"/>
+          <exclude name="zk-client/zk-client-c/include/winstdint.h"/>
+          <exclude name="zk-client/zk-client-c/src/hashtable/"/>
+          <exclude name="zk-client/zk-client-c/test-driver"/>
+          <exclude name="zk-client/zk-client-c/tests/quorum.cfg"/>
+          <exclude name="zk-contrib/zk-contrib-loggraph/web/org/apache/zookeeper/graph/resources/date.format.js"/>
+          <exclude name="zk-contrib/zk-contrib-loggraph/web/org/apache/zookeeper/graph/resources/g.bar.js"/>
+          <exclude name="zk-contrib/zk-contrib-loggraph/web/org/apache/zookeeper/graph/resources/g.dot.js"/>
+          <exclude name="zk-contrib/zk-contrib-loggraph/web/org/apache/zookeeper/graph/resources/g.line.js"/>
+          <exclude name="zk-contrib/zk-contrib-loggraph/web/org/apache/zookeeper/graph/resources/g.pie.js"/>
+          <exclude name="zk-contrib/zk-contrib-loggraph/web/org/apache/zookeeper/graph/resources/g.raphael.js"/>
+          <exclude name="zk-contrib/zk-contrib-loggraph/web/org/apache/zookeeper/graph/resources/raphael.js"/>
+          <exclude name="zk-contrib/zk-contrib-loggraph/web/org/apache/zookeeper/graph/resources/yui-min.js"/>
+          <exclude name="zk-contrib/zk-contrib-monitoring/JMX-RESOURCES"/>
+          <exclude name="zk-contrib/zk-contrib-zooinspector/src/java/com/nitido/utils/toaster/Toaster.java"/>
+          <exclude name="zk-server/generated/.generated/"/>
+          <exclude name="zk-server/test/checkstyle*.xml"/>
+          <exclude name="zk-server/test/checkstyle*.xsl"/>
+          <exclude name="zk-server/test/config/findbugs*.xml"/>
+          <exclude name="**/*.vcproj"/>
+          <exclude name="**/*.vcxproj*"/>
+          <exclude name="**/*.sln"/>
         </fileset>
       </rat:report>
     </target>
@@ -1821,19 +1826,19 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
      <target name="ant-eclipse-download" unless="ant-eclipse.jar.exists">
        <get src="https://downloads.sourceforge.net/project/ant-eclipse/ant-eclipse/1.0/ant-eclipse-1.0.bin.tar.bz2"
-            dest="${src.dir}/java/ant-eclipse-1.0.bin.tar.bz2" usetimestamp="false" />
+            dest="${basedir}/zk-server/ant-eclipse-1.0.bin.tar.bz2" usetimestamp="false" />
 
-       <bunzip2 src="${src.dir}/java/ant-eclipse-1.0.bin.tar.bz2"/>
+       <bunzip2 src="${basedir}/zk-server/ant-eclipse-1.0.bin.tar.bz2"/>
 
-       <untar src="${src.dir}/java/ant-eclipse-1.0.bin.tar"
-              dest="${src.dir}/java">
+       <untar src="${basedir}/zk-server/ant-eclipse-1.0.bin.tar"
+              dest="${basedir}/zk-server">
          <patternset>
            <include name="lib/ant-eclipse-1.0-jvm1.2.jar"/>
          </patternset>
        </untar>
 
-       <delete file="${src.dir}/java/ant-eclipse-1.0.bin.tar" />
-       <delete file="${src.dir}/java/ant-eclipse-1.0.bin.tar.bz2" />
+       <delete file="${basedir}/zk-server/ant-eclipse-1.0.bin.tar" />
+       <delete file="${basedir}/zk-server/ant-eclipse-1.0.bin.tar.bz2" />
      </target>
 
      <target name="eclipse"
