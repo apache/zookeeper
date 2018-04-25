@@ -124,6 +124,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="ivy.javacc.lib" value="${build.dir}/javacc/lib"/>
     <property name="ivy.releaseaudit.lib" value="${build.dir}/releaseaudit/lib"/>
     <property name="ivy.owasp.lib" value="${build.dir}/owasp/lib"/>
+    <property name="ivy.error_prone.lib" value="${build.dir}/error_prone/lib"/>
     <property name="ivysettings.xml" value="${basedir}/ivysettings.xml"/>
 
     <property name="mvnrepo" value="https://repo1.maven.org/maven2"/>
@@ -229,6 +230,8 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
     <property name="commons-io.version" value="2.4"/>
     <property name="kerby.version" value="1.0.0-RC2"/>
+
+    <property name="error_prone.version" value="2.2.0"/>
 
     <!-- ====================================================== -->
     <!-- Macro definitions                                      -->
@@ -429,7 +432,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
                     pattern="${ivy.jdiff.lib}/[artifact]-[revision].[ext]"/>
     </target>
 
-     <target name="ivy-retrieve-javacc" depends="init,ivy-init">
+    <target name="ivy-retrieve-javacc" depends="init,ivy-init">
       <mkdir dir="${ivy.javacc.lib}"/>
       <ivy:retrieve settingsRef="${ant.project.name}" conf="javacc"
                     pattern="${ivy.javacc.lib}/[artifact]-[revision].[ext]"/>
@@ -445,6 +448,12 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <ivy:retrieve settingsRef="${ant.project.name}" conf="owasp"
                       pattern="${ivy.owasp.lib}/[artifact]-[revision].[ext]"/>
         <ivy:cachepath pathid="owasp-classpath" conf="owasp"/>
+    </target>
+
+    <target name="ivy-retrieve-error_prone" depends="init,ivy-init">
+      <mkdir dir="${ivy.error_prone.lib}"/>
+      <ivy:retrieve settingsRef="${ant.project.name}" conf="error_prone"
+                    pattern="${ivy.error_prone.lib}/[artifact]-[revision].[ext]"/>
     </target>
 
     <target name="dependency-report" depends="init,ivy-init">
@@ -475,23 +484,36 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
                     pattern="${ivy.lib}/[artifact]-[revision].[ext]"/>
       <ivy:cachepath pathid="mvn-ant-task-classpath" conf="mvn-ant-task"/>
     </target>
-    <target name="compile" depends="ivy-retrieve,clover,build-generated">
-        <javac srcdir="${java.src.dir}" destdir="${build.classes}" includeantruntime="false"
+    <target name="compile" depends="ivy-retrieve,clover,build-generated,ivy-retrieve-error_prone">
+        <javac compiler="com.google.errorprone.ErrorProneAntCompilerAdapter"
+               srcdir="${java.src.dir}" destdir="${build.classes}" includeantruntime="false"
                target="${javac.target}" source="${javac.source}" debug="on" encoding="${build.encoding}">
+            <compilerclasspath>
+              <pathelement location="${ivy.error_prone.lib}/error_prone_ant-${error_prone.version}.jar"/>
+            </compilerclasspath>
             <classpath refid="java.classpath"/>
             <compilerarg value="-Xlint:all"/>
             <compilerarg value="-Xlint:-path"/>
+
         </javac>
     </target>
 
-    <target name="compile-test" depends="ivy-retrieve-test,compile">
+    <target name="compile-test" depends="ivy-retrieve-test,compile,ivy-retrieve-error_prone">
       <mkdir dir="${test.java.classes}"/>
-      <javac srcdir="${test.src.dir}" destdir="${test.java.classes}" includeantruntime="false"
+      <javac compiler="com.google.errorprone.ErrorProneAntCompilerAdapter"
+             srcdir="${test.src.dir}" destdir="${test.java.classes}" includeantruntime="false"
              target="${javac.target}" source="${javac.source}" debug="on" encoding="${build.encoding}">
+        <compilerclasspath>
+          <pathelement location="${ivy.error_prone.lib}/error_prone_ant-${error_prone.version}.jar"/>
+        </compilerclasspath>
         <classpath refid="test.java.classpath"/>
       </javac>
-      <javac srcdir="${systest.src.dir}" destdir="${test.java.classes}" includeantruntime="false"
+      <javac compiler="com.google.errorprone.ErrorProneAntCompilerAdapter"
+             srcdir="${systest.src.dir}" destdir="${test.java.classes}" includeantruntime="false"
              target="${javac.target}" source="${javac.source}" debug="on" encoding="${build.encoding}">
+        <compilerclasspath>
+          <pathelement location="${ivy.error_prone.lib}/error_prone_ant-${error_prone.version}.jar"/>
+        </compilerclasspath>
         <classpath refid="test.java.classpath"/>
       </javac>
     </target>

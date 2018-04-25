@@ -48,11 +48,11 @@ public class AsyncHammerTest extends ZKTestCase
 
     private volatile boolean bang;
 
-    public void setUp(boolean withObservers) throws Exception {
+    private void setUp(boolean withObservers) throws Exception {
         qb.setUp(withObservers);
     }
 
-    protected void restart() throws Exception {
+    private void restart() throws Exception {
         LOG.info("RESTARTING " + getTestName());
         qb.tearDown();
 
@@ -61,7 +61,7 @@ public class AsyncHammerTest extends ZKTestCase
         qb.startServers();
     }
 
-    public void tearDown() throws Exception {
+    private void tearDown() throws Exception {
         LOG.info("Test clients shutting down");
         qb.tearDown();
     }

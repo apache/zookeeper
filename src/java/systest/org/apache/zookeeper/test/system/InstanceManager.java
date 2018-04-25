@@ -69,6 +69,22 @@ public class InstanceManager implements AsyncCallback.ChildrenCallback, Watcher 
             this.container = container;
             this.weight = weight;
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof Assigned)) {
+                return false;
+            }
+            return container.equals(((Assigned) o).container);
+        }
+
+        @Override
+        public int hashCode() {
+            return container.hashCode();
+        }
     }
     private static List<String> preferredList = new ArrayList<String>();
     static {
@@ -266,7 +282,7 @@ public class InstanceManager implements AsyncCallback.ChildrenCallback, Watcher 
         if (assigned == null) {
             return;
         }
-        assignments.get(assigned.container).remove(name);
+        assignments.get(assigned.container).remove(new Assigned(name, 0));
         doDelete(assignmentsNode + '/' + assigned.container + '/' + name);
         doDelete(reportsNode + '/' + name);
     }

@@ -35,6 +35,7 @@
     <conf name="javacc" visibility="private"/>
     <conf name="releaseaudit" visibility="private" description="Artifacts required for releaseaudit target"/>
     <conf name="owasp" visibility="private" description="Artifacts required for owasp target"/>
+    <conf name="error_prone" visibility="private"/>
   </configurations>
 
   <publications>
@@ -132,6 +133,9 @@
                   conf="optional->default"/>
     <dependency org="org.codehaus.jackson" name="jackson-mapper-asl"
                 rev="${jackson-mapper-asl.version}" conf="optional->default"/>
+
+    <dependency org="com.google.errorprone" name="error_prone_ant" rev="${error_prone.version}"
+                conf="error_prone->default"/>
 
     <conflict manager="strict"/>
 

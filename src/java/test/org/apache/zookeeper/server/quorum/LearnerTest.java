@@ -124,7 +124,7 @@ public class LearnerTest extends ZKTestCase {
         InetSocketAddress addr = new InetSocketAddress(1111);
         
         // pretend each connect attempt takes 4000 milliseconds
-        learner.setTimeMultiplier((long)4000 * 1000000);
+        learner.setTimeMultiplier(4000L * 1000000);
         
         learner.setPassConnectAttempt(5);
 
@@ -134,7 +134,7 @@ public class LearnerTest extends ZKTestCase {
             Assert.fail("should have thrown IOException!");
         } catch (IOException e) {
             //good, wanted to see that, let's make sure we ran out of time
-            Assert.assertTrue(learner.nanoTime() > 2000*5*1000000);
+            Assert.assertTrue(learner.nanoTime() > 2000L * 5 * 1000000);
             Assert.assertEquals(3, learner.getSockConnectAttempt());
         }
     }

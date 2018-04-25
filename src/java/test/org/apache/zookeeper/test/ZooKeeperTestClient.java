@@ -71,13 +71,14 @@ public class ZooKeeperTestClient extends ZKTestCase implements Watcher {
     }
 
     List<String> children1 = zk.getChildren(nodeName, false);
-    List<String> c2 = zk.getChildren(nodeName, false, stat);
+    Stat stat2 = new Stat();
+    List<String> c2 = zk.getChildren(nodeName, false, stat2);
 
     if (!children1.equals(c2)) {
         Assert.fail("children lists from getChildren()/getChildren2() do not match");
     }
 
-    if (!stat.equals(stat)) {
+    if (!stat.equals(stat2)) {
         Assert.fail("stats from exists()/getChildren2() do not match");
     }
 

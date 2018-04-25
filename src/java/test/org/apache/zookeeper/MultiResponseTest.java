@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public class MultiResponseTest extends ZKTestCase {
+    @Test
     public void testRoundTrip() throws IOException {
         MultiResponse response = new MultiResponse();
 
