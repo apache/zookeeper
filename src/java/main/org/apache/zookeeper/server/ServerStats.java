@@ -118,7 +118,6 @@ public class ServerStats {
             sb.append("Zxid: 0x"+ Long.toHexString(getLastProcessedZxid())+ "\n");
         }
         sb.append("Mode: " + getServerState() + "\n");
-        sb.append("Fsync threshold exceeded: " + getFsyncThresholdExceedCount() + "\n");
         return sb.toString();
     }
     // mutators
@@ -168,7 +167,6 @@ public class ServerStats {
     synchronized public void reset() {
         resetLatency();
         resetRequestCounters();
-        resetFsyncThresholdExceedCount();
     }
 
 }

@@ -167,8 +167,6 @@ public class FourLetterWordsTest extends ClientBase {
         line = in.readLine();
         Assert.assertTrue(Pattern.matches("^Mode: .*$", line));
         line = in.readLine();
-        Assert.assertTrue(Pattern.matches("^Fsync threshold exceeded: \\d+$", line));
-        line = in.readLine();
         Assert.assertTrue(Pattern.matches("^Node count: \\d+$", line));
 
         zk1.close();

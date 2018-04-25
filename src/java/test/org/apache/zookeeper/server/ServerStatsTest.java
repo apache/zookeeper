@@ -115,20 +115,17 @@ public class ServerStatsTest extends ZKTestCase {
 
         assertAllPacketsZero(serverStats);
         assertAllLatencyZero(serverStats);
-        assertFsyncThresholdExceedCountZero(serverStats);
 
         // When ...
         serverStats.incrementPacketsSent();
         serverStats.incrementPacketsReceived();
         serverStats.updateLatency(Time.currentElapsedTime()-1000);
-        serverStats.incrementFsyncThresholdExceedCount();
 
         serverStats.reset();
 
         // Then ...
         assertAllPacketsZero(serverStats);
         assertAllLatencyZero(serverStats);
-        assertFsyncThresholdExceedCountZero(serverStats);
     }
 
     private void assertAllPacketsZero(ServerStats serverStats) {
