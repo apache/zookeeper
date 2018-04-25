@@ -208,7 +208,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
     <!-- Dependency versions                                    -->
     <!-- ====================================================== -->
     <property name="slf4j.version" value="1.7.25"/>
-    <property name="commons-cli.version" value="1.2"/>
 
     <property name="wagon-http.version" value="2.4"/>
     <property name="maven-ant-tasks.version" value="2.1.3"/>
