@@ -34,6 +34,7 @@
     <conf name="jdiff" visibility="private"/>
     <conf name="releaseaudit" visibility="private" description="Artifacts required for releaseaudit target"/>
     <conf name="owasp" visibility="private" description="Artifacts required for owasp target"/>
+    <conf name="clover" visibility="private" description="Artifacts required for clover target"/>
   </configurations>
 
   <publications>
@@ -142,6 +143,8 @@
         <exclude org="commons-collections" module="commons-collections"/>
         <exclude org="org.slf4j" module="slf4j-api"/>
     </dependency>
+
+    <dependency org="org.openclover" name="clover" rev="${clover.version}" conf="clover->default"/>
 
     <conflict manager="strict"/>
 
