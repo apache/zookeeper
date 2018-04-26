@@ -20,6 +20,8 @@ package org.apache.zookeeper.server;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
+import org.apache.jute.InputArchive;
+import org.apache.jute.OutputArchive;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
@@ -188,9 +190,34 @@ public class ReferenceCountedACLCacheTest {
         callAddUsageNTimes(deserializedCache, aclId3, 3);
         callAddUsageNTimes(deserializedCache, aclId4, 4);
         callAddUsageNTimes(deserializedCache, aclId5, 5);
-
         assertCachesEqual(cache, deserializedCache);
     }
+
+    @Test
+    public void testNPEInDeserialize() throws IOException {
+        ReferenceCountedACLCache serializeCache = new ReferenceCountedACLCache(){
+            @Override
+            public synchronized void serialize(OutputArchive oa) throws IOException {
+                oa.writeInt(1, "map");
+                oa.writeLong(1, "long");
+                oa.startVector(null, "acls");
+                oa.endVector(null, "acls");
+            }
+        };
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        BinaryOutputArchive archive = BinaryOutputArchive.getArchive(baos);
+        serializeCache.serialize(archive);
+        BinaryInputArchive inArchive = BinaryInputArchive.getArchive(new ByteArrayInputStream(baos.toByteArray()));
+        ReferenceCountedACLCache deserializedCache = new ReferenceCountedACLCache();
+        try {
+            deserializedCache.deserialize(inArchive);
+        } catch (NullPointerException e){
+            fail("should not throw NPE while do deserialized");
+        } catch (RuntimeException e) {
+            // do nothing.
+        }
+    }
+
 
     private void assertCachesEqual(ReferenceCountedACLCache expected, ReferenceCountedACLCache actual){
         assertEquals(expected.aclIndex, actual.aclIndex);
