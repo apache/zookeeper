@@ -20,6 +20,8 @@ package org.apache.zookeeper.server;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
+import org.apache.jute.InputArchive;
+import org.apache.jute.OutputArchive;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
@@ -188,7 +190,6 @@ public class ReferenceCountedACLCacheTest {
         callAddUsageNTimes(deserializedCache, aclId3, 3);
         callAddUsageNTimes(deserializedCache, aclId4, 4);
         callAddUsageNTimes(deserializedCache, aclId5, 5);
-
         assertCachesEqual(cache, deserializedCache);
     }
 
