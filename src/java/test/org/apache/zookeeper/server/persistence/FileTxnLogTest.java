@@ -31,6 +31,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsEqual.equalTo;
+
 public class FileTxnLogTest  extends ZKTestCase {
   protected static final Logger LOG = LoggerFactory.getLogger(FileTxnLogTest.class);
 
@@ -97,5 +100,12 @@ public class FileTxnLogTest  extends ZKTestCase {
     fileTxnIterator.next();
     createTxn = (CreateTxn) fileTxnIterator.getTxn();
     Assert.assertTrue(Arrays.equals(createTxn.getData(), new byte[]{}));
+  }
+
+  @Test
+  public void testSetPreallocSize() {
+    long customPreallocSize = 10101;
+    FileTxnLog.setPreallocSize(customPreallocSize);
+    Assert.assertThat(FilePadding.getPreAllocSize(), is(equalTo(customPreallocSize)));
   }
 }
