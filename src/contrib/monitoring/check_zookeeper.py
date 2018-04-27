@@ -286,11 +286,6 @@ class ZooKeeperServer(object):
                 result['zk_max_file_descriptor_count'] = int(m.group(1))
                 continue
 
-            m = re.match('Fsync threshold exceeded: (\d+)', line)
-            if m is not None:
-                result['zk_fsync_threshold_exceed_count'] = int(m.group(1))
-                continue
-
             m = re.match('Zxid: (0x[0-9a-fA-F]+)', line)
             if m is not None:
                 result['zk_zxid']         = m.group(1)
