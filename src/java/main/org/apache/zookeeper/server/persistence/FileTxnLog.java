@@ -136,6 +136,15 @@ public class FileTxnLog implements TxnLog {
     }
 
     /**
+      * method to allow setting preallocate size
+      * of log file to pad the file.
+      * @param size the size to set to in bytes
+      */
+    public static void setPreallocSize(long size) {
+        FilePadding.setPreallocSize(size);
+    }
+
+    /**
      * creates a checksum algorithm to be used
      * @return the checksum used for this txnlog
      */
