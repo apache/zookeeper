@@ -46,6 +46,13 @@ public class FilePadding {
     private long currentSize;
 
     /**
+     * Getter of preAllocSize has been added for testing
+     */
+    public static long getPreAllocSize() {
+        return preAllocSize;
+    }
+
+    /**
      * method to allow setting preallocate size
      * of log file to pad the file.
      *
