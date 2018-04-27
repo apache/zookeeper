@@ -148,17 +148,6 @@ public class FileTxnLog implements TxnLog {
     }
 
     /**
-     * constructor for FileTxnLog. Take the directory
-     * where the txnlogs are stored
-     * @param logDir the directory where the txnlogs are stored
-     */
-    public FileTxnLog(File logDir, ServerStats serverStats) {
-        this(logDir);
-        this.serverStats = serverStats;
-    }
-
-    /**
-     * ZOOKEEPER-3019 add metric to track slow fsyncs count + update py script and docs
      * Setter for ServerStats to monitor fsync threshold exceed
      * @param serverStats used to update fsyncThresholdExceedCount
      */
@@ -168,7 +157,6 @@ public class FileTxnLog implements TxnLog {
     }
 
     /**
-     * ZOOKEEPER-3019 add unit test and fix PR comments
      * creates a checksum algorithm to be used
      * @return the checksum used for this txnlog
      */
@@ -346,6 +334,8 @@ public class FileTxnLog implements TxnLog {
                 if (syncElapsedMS > fsyncWarningThresholdMS) {
                     if(serverStats != null) {
                         serverStats.incrementFsyncThresholdExceedCount();
+                    } else {
+                        LOG.warn("fsyncWarningThresholdMS exceeded, but serverStats not added in FileTxnLog!");
                     }
                     LOG.warn("fsync-ing the write ahead log in "
                             + Thread.currentThread().getName()
