@@ -192,6 +192,32 @@ public class ReferenceCountedACLCacheTest {
         assertCachesEqual(cache, deserializedCache);
     }
 
+    @Test
+    public void testNPEInDeserialize() throws IOException {
+        ReferenceCountedACLCache serializeCache = new ReferenceCountedACLCache(){
+            @Override
+            public synchronized void serialize(OutputArchive oa) throws IOException {
+                oa.writeInt(1, "map");
+                oa.writeLong(1, "long");
+                oa.startVector(null, "acls");
+                oa.endVector(null, "acls");
+            }
+        };
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        BinaryOutputArchive archive = BinaryOutputArchive.getArchive(baos);
+        serializeCache.serialize(archive);
+        BinaryInputArchive inArchive = BinaryInputArchive.getArchive(new ByteArrayInputStream(baos.toByteArray()));
+        ReferenceCountedACLCache deserializedCache = new ReferenceCountedACLCache();
+        try {
+            deserializedCache.deserialize(inArchive);
+        } catch (NullPointerException e){
+            fail("should not throw NPE while do deserialized");
+        } catch (RuntimeException e) {
+            // do nothing.
+        }
+    }
+
+
     private void assertCachesEqual(ReferenceCountedACLCache expected, ReferenceCountedACLCache actual){
         assertEquals(expected.aclIndex, actual.aclIndex);
         assertEquals(expected.aclKeyMap, actual.aclKeyMap);
