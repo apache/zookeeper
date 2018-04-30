@@ -257,7 +257,7 @@ public class FastLeaderElection implements Election {
                          * learner in the future, we'll have to change the
                          * way we check for observers.
                          */
-                        if(!self.getVotingView().containsKey(response.sid)){
+                        if(!validVoter(response.sid)){
                             Vote current = self.getCurrentVote();
                             ToSend notmsg = new ToSend(ToSend.mType.notification,
                                     current.getId(),
@@ -853,8 +853,7 @@ public class FastLeaderElection implements Election {
                             tmpTimeOut : maxNotificationInterval);
                     LOG.info("Notification time out: " + notTimeout);
                 }
-                else if(self.getVotingView().containsKey(n.sid) &&
-                        self.getVotingView().containsKey(n.leader)) {
+                else if(validVoter(n.sid) && validVoter(n.leader)) {
                     /*
                      * Only proceed if the vote comes from a replica in the
                      * voting view for a replica in the voting view.
@@ -986,11 +985,11 @@ public class FastLeaderElection implements Election {
                         break;
                     }
                 } else {
-                    if (!self.getVotingView().containsKey(n.leader)) {
+                    if (!validVoter(n.leader)) {
                         LOG.warn("Ignoring notification for non-cluster member sid {} from sid {}", n.leader, n.sid);
                     }
-                    if (!self.getVotingView().containsKey(n.sid)) {
-                        LOG.warn("Ignoring notification from non-cluster member sid {}", n.sid);
+                    if (!validVoter(n.sid)) {
+                        LOG.warn("Ignoring notification for sid {} from non-quorum member sid {}", n.leader, n.sid);
                     }
                 }
             }
@@ -1008,5 +1007,16 @@ public class FastLeaderElection implements Election {
             LOG.debug("Number of connection processing threads: {}",
                     manager.getConnectionThreadCount());
         }
+    }
+
+    /**
+     * Check if a given sid is represented in either the current or
+     * the next voting view
+     *
+     * @param sid     Server identifier
+     * @return boolean
+     */
+    private boolean validVoter(long sid) {
+        return self.getVotingView().containsKey(sid);
     }
 }
