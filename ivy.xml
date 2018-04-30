@@ -143,6 +143,8 @@
         <exclude org="org.slf4j" module="slf4j-api"/>
     </dependency>
 
+    <dependency org="org.hamcrest" name="hamcrest-all" rev="${hamcrest.version}" conf="test->default" />
+
     <conflict manager="strict"/>
 
   </dependencies>

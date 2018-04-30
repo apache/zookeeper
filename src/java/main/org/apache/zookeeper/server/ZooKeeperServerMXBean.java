@@ -54,6 +54,11 @@ public interface ZooKeeperServerMXBean {
      * @return number of packets sent so far
      */
     public long getPacketsSent();
+
+    /**
+     * @return number of fsync threshold exceeds so far
+     */
+    public long getFsyncThresholdExceedCount();
     /**
      * @return number of outstanding requests.
      */
@@ -103,6 +108,11 @@ public interface ZooKeeperServerMXBean {
      * Reset max latency statistics only.
      */
     public void resetMaxLatency();
+
+    /**
+     * Reset Fsync Threshold Exceed Count statistics only.
+     */
+    public void resetFsyncThresholdExceedCount();
     /**
      * @return number of alive client connections
      */
