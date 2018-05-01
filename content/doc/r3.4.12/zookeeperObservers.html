@@ -1,0 +1,366 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta content="Apache Forrest" name="Generator">
+<meta name="Forrest-version" content="0.9">
+<meta name="Forrest-skin-name" content="pelt">
+<title>ZooKeeper Observers</title>
+<link type="text/css" href="skin/basic.css" rel="stylesheet">
+<link media="screen" type="text/css" href="skin/screen.css" rel="stylesheet">
+<link media="print" type="text/css" href="skin/print.css" rel="stylesheet">
+<link type="text/css" href="skin/profile.css" rel="stylesheet">
+<script src="skin/getBlank.js" language="javascript" type="text/javascript"></script><script src="skin/getMenu.js" language="javascript" type="text/javascript"></script><script src="skin/fontsize.js" language="javascript" type="text/javascript"></script>
+<link rel="shortcut icon" href="images/favicon.ico">
+</head>
+<body onload="init()">
+<script type="text/javascript">ndeSetTextSize();</script>
+<div id="top">
+<!--+
+    |breadtrail
+    +-->
+<div class="breadtrail">
+<a href="http://www.apache.org/">Apache</a> &gt; <a href="http://zookeeper.apache.org/">ZooKeeper</a> &gt; <a href="http://zookeeper.apache.org/">ZooKeeper</a><script src="skin/breadcrumbs.js" language="JavaScript" type="text/javascript"></script>
+</div>
+<!--+
+    |header
+    +-->
+<div class="header">
+<!--+
+    |start group logo
+    +-->
+<div class="grouplogo">
+<a href="http://hadoop.apache.org/"><img class="logoImage" alt="Hadoop" src="images/hadoop-logo.jpg" title="Apache Hadoop"></a>
+</div>
+<!--+
+    |end group logo
+    +-->
+<!--+
+    |start Project Logo
+    +-->
+<div class="projectlogo">
+<a href="http://zookeeper.apache.org/"><img class="logoImage" alt="ZooKeeper" src="images/zookeeper_small.gif" title="ZooKeeper: distributed coordination"></a>
+</div>
+<!--+
+    |end Project Logo
+    +-->
+<!--+
+    |start Search
+    +-->
+<div class="searchbox">
+<form action="http://www.google.com/search" method="get" class="roundtopsmall">
+<input value="zookeeper.apache.org" name="sitesearch" type="hidden"><input onFocus="getBlank (this, 'Search the site with google');" size="25" name="q" id="query" type="text" value="Search the site with google">&nbsp; 
+                    <input name="Search" value="Search" type="submit">
+</form>
+</div>
+<!--+
+    |end search
+    +-->
+<!--+
+    |start Tabs
+    +-->
+<ul id="tabs">
+<li>
+<a class="unselected" href="http://zookeeper.apache.org/">Project</a>
+</li>
+<li>
+<a class="unselected" href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/">Wiki</a>
+</li>
+<li class="current">
+<a class="selected" href="index.html">ZooKeeper 3.4 Documentation</a>
+</li>
+</ul>
+<!--+
+    |end Tabs
+    +-->
+</div>
+</div>
+<div id="main">
+<div id="publishedStrip">
+<!--+
+    |start Subtabs
+    +-->
+<div id="level2tabs"></div>
+<!--+
+    |end Endtabs
+    +-->
+<script type="text/javascript"><!--
+document.write("Last Published: " + document.lastModified);
+//  --></script>
+</div>
+<!--+
+    |breadtrail
+    +-->
+<div class="breadtrail">
+
+             &nbsp;
+           </div>
+<!--+
+    |start Menu, mainarea
+    +-->
+<!--+
+    |start Menu
+    +-->
+<div id="menu">
+<div onclick="SwitchMenu('menu_1.1', 'skin/')" id="menu_1.1Title" class="menutitle">Overview</div>
+<div id="menu_1.1" class="menuitemgroup">
+<div class="menuitem">
+<a href="index.html">Welcome</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperOver.html">Overview</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperStarted.html">Getting Started</a>
+</div>
+<div class="menuitem">
+<a href="releasenotes.html">Release Notes</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.2', 'skin/')" id="menu_1.2Title" class="menutitle">Developer</div>
+<div id="menu_1.2" class="menuitemgroup">
+<div class="menuitem">
+<a href="api/index.html">API Docs</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperProgrammers.html">Programmer's Guide</a>
+</div>
+<div class="menuitem">
+<a href="javaExample.html">Java Example</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperTutorial.html">Barrier and Queue Tutorial</a>
+</div>
+<div class="menuitem">
+<a href="recipes.html">Recipes</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.3', 'skin/')" id="menu_1.3Title" class="menutitle">BookKeeper</div>
+<div id="menu_1.3" class="menuitemgroup">
+<div class="menuitem">
+<a href="bookkeeperStarted.html">Getting started</a>
+</div>
+<div class="menuitem">
+<a href="bookkeeperOverview.html">Overview</a>
+</div>
+<div class="menuitem">
+<a href="bookkeeperConfig.html">Setup guide</a>
+</div>
+<div class="menuitem">
+<a href="bookkeeperProgrammer.html">Programmer's guide</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_selected_1.4', 'skin/')" id="menu_selected_1.4Title" class="menutitle" style="background-image: url('skin/images/chapter_open.gif');">Admin &amp; Ops</div>
+<div id="menu_selected_1.4" class="selectedmenuitemgroup" style="display: block;">
+<div class="menuitem">
+<a href="zookeeperAdmin.html">Administrator's Guide</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperQuotas.html">Quota Guide</a>
+</div>
+<div class="menuitem">
+<a href="zookeeperJMX.html">JMX</a>
+</div>
+<div class="menupage">
+<div class="menupagetitle">Observers Guide</div>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.5', 'skin/')" id="menu_1.5Title" class="menutitle">Contributor</div>
+<div id="menu_1.5" class="menuitemgroup">
+<div class="menuitem">
+<a href="zookeeperInternals.html">ZooKeeper Internals</a>
+</div>
+</div>
+<div onclick="SwitchMenu('menu_1.6', 'skin/')" id="menu_1.6Title" class="menutitle">Miscellaneous</div>
+<div id="menu_1.6" class="menuitemgroup">
+<div class="menuitem">
+<a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER">Wiki</a>
+</div>
+<div class="menuitem">
+<a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/FAQ">FAQ</a>
+</div>
+<div class="menuitem">
+<a href="http://zookeeper.apache.org/mailing_lists.html">Mailing Lists</a>
+</div>
+</div>
+<div id="credit"></div>
+<div id="roundbottom">
+<img style="display: none" class="corner" height="15" width="15" alt="" src="skin/images/rc-b-l-15-1body-2menu-3menu.png"></div>
+<!--+
+  |alternative credits
+  +-->
+<div id="credit2"></div>
+</div>
+<!--+
+    |end Menu
+    +-->
+<!--+
+    |start content
+    +-->
+<div id="content">
+<div title="Portable Document Format" class="pdflink">
+<a class="dida" href="zookeeperObservers.pdf"><img alt="PDF -icon" src="skin/images/pdfdoc.gif" class="skin"><br>
+        PDF</a>
+</div>
+<h1>ZooKeeper Observers</h1>
+<div id="front-matter">
+<div id="minitoc-area">
+<ul class="minitoc">
+<li>
+<a href="#ch_Introduction">Observers: Scaling ZooKeeper Without Hurting Write Performance
+      </a>
+</li>
+<li>
+<a href="#sc_UsingObservers">How to use Observers</a>
+</li>
+<li>
+<a href="#ch_UseCases">Example use cases</a>
+</li>
+</ul>
+</div>
+</div>
+  
+
+  
+
+  
+<a name="ch_Introduction"></a>
+<h2 class="h3">Observers: Scaling ZooKeeper Without Hurting Write Performance
+      </h2>
+<div class="section">
+<p>
+      Although ZooKeeper performs very well by having clients connect directly
+      to voting members of the ensemble, this architecture makes it hard to
+      scale out to huge numbers of clients. The problem is that as we add more
+      voting members, the write performance drops. This is due to the fact that
+      a write operation requires the agreement of (in general) at least half the
+      nodes in an ensemble and therefore the cost of a vote can increase
+      significantly as more voters are added.
+    </p>
+<p>
+      We have introduced a new type of ZooKeeper node called
+      an <em>Observer</em> which helps address this problem and
+      further improves ZooKeeper's scalability. Observers are non-voting members
+      of an ensemble which only hear the results of votes, not the agreement
+      protocol that leads up to them. Other than this simple distinction,
+      Observers function exactly the same as Followers - clients may connect to
+      them and send read and write requests to them. Observers forward these
+      requests to the Leader like Followers do, but they then simply wait to
+      hear the result of the vote. Because of this, we can increase the number
+      of Observers as much as we like without harming the performance of votes.
+    </p>
+<p>
+      Observers have other advantages. Because they do not vote, they are not a
+      critical part of the ZooKeeper ensemble. Therefore they can fail, or be
+      disconnected from the cluster, without harming the availability of the
+      ZooKeeper service. The benefit to the user is that Observers may connect
+      over less reliable network links than Followers. In fact, Observers may be
+      used to talk to a ZooKeeper server from another data center. Clients of
+      the Observer will see fast reads, as all reads are served locally, and
+      writes result in minimal network traffic as the number of messages
+      required in the absence of the vote protocol is smaller.
+    </p>
+</div>
+  
+<a name="sc_UsingObservers"></a>
+<h2 class="h3">How to use Observers</h2>
+<div class="section">
+<p>Setting up a ZooKeeper ensemble that uses Observers is very simple,
+    and requires just two changes to your config files. Firstly, in the config
+    file of every node that is to be an Observer, you must place this line:
+    </p>
+<pre class="code">
+      peerType=observer
+    </pre>
+<p>
+      This line tells ZooKeeper that the server is to be an Observer. Secondly,
+      in every server config file, you must add :observer to the server
+      definition line of each Observer. For example:
+    </p>
+<pre class="code">
+      server.1:localhost:2181:3181:observer
+    </pre>
+<p>
+      This tells every other server that server.1 is an Observer, and that they
+      should not expect it to vote. This is all the configuration you need to do
+      to add an Observer to your ZooKeeper cluster. Now you can connect to it as
+      though it were an ordinary Follower. Try it out, by running:</p>
+<pre class="code">
+      $ bin/zkCli.sh -server localhost:2181
+    </pre>
+<p>
+      where localhost:2181 is the hostname and port number of the Observer as
+      specified in every config file. You should see a command line prompt
+      through which you can issue commands like <em>ls</em> to query
+      the ZooKeeper service.
+    </p>
+</div>
+  
+  
+<a name="ch_UseCases"></a>
+<h2 class="h3">Example use cases</h2>
+<div class="section">
+<p>
+      Two example use cases for Observers are listed below. In fact, wherever
+      you wish to scale the numbe of clients of your ZooKeeper ensemble, or
+      where you wish to insulate the critical part of an ensemble from the load
+      of dealing with client requests, Observers are a good architectural
+      choice.
+    </p>
+<ul>
+      
+<li>
+	
+<p> As a datacenter bridge: Forming a ZK ensemble between two
+	datacenters is a problematic endeavour as the high variance in latency
+	between the datacenters could lead to false positive failure detection
+	and partitioning. However if the ensemble runs entirely in one
+	datacenter, and the second datacenter runs only Observers, partitions
+	aren't problematic as the ensemble remains connected. Clients of the
+	Observers may still see and issue proposals.</p>
+      
+</li>
+      
+<li>
+	
+<p>As a link to a message bus: Some companies have expressed an
+	interest in using ZK as a component of a persistent reliable message
+	bus. Observers would give a natural integration point for this work: a
+	plug-in mechanism could be used to attach the stream of proposals an
+	Observer sees to a publish-subscribe system, again without loading the
+	core ensemble.
+	</p>
+      
+</li>
+    
+</ul>
+</div>
+
+<p align="right">
+<font size="-2"></font>
+</p>
+</div>
+<!--+
+    |end content
+    +-->
+<div class="clearboth">&nbsp;</div>
+</div>
+<div id="footer">
+<!--+
+    |start bottomstrip
+    +-->
+<div class="lastmodified">
+<script type="text/javascript"><!--
+document.write("Last Published: " + document.lastModified);
+//  --></script>
+</div>
+<div class="copyright">
+        Copyright &copy;
+          <a href="http://www.apache.org/licenses/">The Apache Software Foundation.</a>
+</div>
+<!--+
+    |end bottomstrip
+    +-->
+</div>
+</body>
+</html>
