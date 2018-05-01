@@ -26,6 +26,10 @@ Release notes for Apache Zookeeper releases are available in Jira: [Browse relea
 
 ## News {#news}
 
+### 1 May, 2018: release 3.4.12 available
+
+This release fixes 22 issues, including issues that affect incorrect handling of the dataDir and the dataLogDir.  See [ZooKeeper 3.4.12 Release Notes](https://zookeeper.apache.org/doc/r3.4.12/releasenotes.html) for details.
+
 ### 9 November, 2017: release 3.4.11 available
 
 This release fixes 53 issues, it includes support for Java 9 and other critical bug fixes.  See [ZooKeeper 3.4.11 Release Notes](https://zookeeper.apache.org/doc/r3.4.11/releasenotes.html) for details.
