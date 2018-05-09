@@ -19,17 +19,29 @@
 package org.apache.zookeeper.server;
 
 import org.apache.zookeeper.CreateMode;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 public class EphemeralTypeTest {
+    @Before
+    public void setUp() {
+        System.setProperty(EphemeralType.EXTENDED_TYPES_ENABLED_PROPERTY, "true");
+    }
+
+    @After
+    public void tearDown() {
+        System.clearProperty(EphemeralType.EXTENDED_TYPES_ENABLED_PROPERTY);
+    }
+
     @Test
     public void testTtls() {
-        long ttls[] = {100, 1, EphemeralType.MAX_TTL};
+        long ttls[] = {100, 1, EphemeralType.TTL.maxValue()};
         for (long ttl : ttls) {
-            long ephemeralOwner = EphemeralType.ttlToEphemeralOwner(ttl);
+            long ephemeralOwner = EphemeralType.TTL.toEphemeralOwner(ttl);
             Assert.assertEquals(EphemeralType.TTL, EphemeralType.get(ephemeralOwner));
-            Assert.assertEquals(ttl, EphemeralType.getTTL(ephemeralOwner));
+            Assert.assertEquals(ttl, EphemeralType.TTL.getValue(ephemeralOwner));
         }
 
         EphemeralType.validateTTL(CreateMode.PERSISTENT_WITH_TTL, 100);
@@ -54,5 +66,19 @@ public class EphemeralTypeTest {
         Assert.assertEquals(EphemeralType.VOID, EphemeralType.get(0));
         Assert.assertEquals(EphemeralType.NORMAL, EphemeralType.get(1));
         Assert.assertEquals(EphemeralType.NORMAL, EphemeralType.get(Long.MAX_VALUE));
+    }
+
+    @Test
+    public void testServerIds() {
+        for ( int i = 0; i < 255; ++i ) {
+            Assert.assertEquals(EphemeralType.NORMAL, EphemeralType.get(SessionTrackerImpl.initializeNextSession(i)));
+        }
+        try {
+            Assert.assertEquals(EphemeralType.TTL, EphemeralType.get(SessionTrackerImpl.initializeNextSession(255)));
+            Assert.fail("Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+        Assert.assertEquals(EphemeralType.NORMAL, EphemeralType.get(SessionTrackerImpl.initializeNextSession(EphemeralType.MAX_EXTENDED_SERVER_ID)));
     }
 }

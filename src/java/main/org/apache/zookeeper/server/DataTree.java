@@ -812,7 +812,7 @@ public class DataTree {
                             createTtlTxn.getPath(),
                             createTtlTxn.getData(),
                             createTtlTxn.getAcl(),
-                            EphemeralType.ttlToEphemeralOwner(createTtlTxn.getTtl()),
+                            EphemeralType.TTL.toEphemeralOwner(createTtlTxn.getTtl()),
                             createTtlTxn.getParentCVersion(),
                             header.getZxid(), header.getTime(), stat);
                     rc.stat = stat;
