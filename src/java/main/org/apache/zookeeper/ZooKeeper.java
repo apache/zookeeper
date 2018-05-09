@@ -1526,7 +1526,7 @@ public class ZooKeeper implements AutoCloseable {
      * or {@link CreateMode#PERSISTENT_SEQUENTIAL_WITH_TTL}. If the znode has not been modified
      * within the given TTL, it will be deleted once it has no children. The TTL unit is
      * milliseconds and must be greater than 0 and less than or equal to
-     * {@link EphemeralType#MAX_TTL}.
+     * {@link EphemeralType#maxValue()} for {@link EphemeralType#TTL}.
      */
     public String create(final String path, byte data[], List<ACL> acl,
             CreateMode createMode, Stat stat, long ttl)

@@ -274,7 +274,9 @@ server.3=zoo3:2888:3888</programlisting>
           consists of a single line containing only the text of that machine's
           id. So <filename>myid</filename> of server 1 would contain the text
           "1" and nothing else. The id must be unique within the
-          ensemble and should have a value between 1 and 255.</para>
+          ensemble and should have a value between 1 and 255. <emphasis role="bold">IMPORTANT:</emphasis> if you
+          enable extended features such as TTL Nodes (see below) the id must be
+          between 1 and 254 due to internal limitations.</para>
         </listitem>
 
         <listitem>
@@ -937,6 +939,39 @@ server.3=zoo3:2888:3888</programlisting>
               by default like the participants. This reduces the recovery time
               of the observers on restart. Set to "false" to disable this
               feature. Default is "true"</para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>zookeeper.extendedTypesEnabled</term>
+
+            <listitem>
+                <para>(Java system property only: <emphasis
+                    role="bold">zookeeper.extendedTypesEnabled</emphasis>)</para>
+
+              <para><emphasis role="bold">New in 3.5.4, 3.6.0:</emphasis> Define to "true" to enable
+              extended features such as the creation of <ulink url="zookeeperProgrammers.html#TTL+Nodes">TTL Nodes</ulink>.
+              They are disabled by default. IMPORTANT: when enabled server IDs must
+              be less than 255 due to internal limitations.
+              </para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>zookeeper.emulate353TTLNodes</term>
+
+            <listitem>
+                <para>(Java system property only: <emphasis
+                    role="bold">zookeeper.emulate353TTLNodes</emphasis>)</para>
+
+              <para><emphasis role="bold">New in 3.5.4, 3.6.0:</emphasis> Due to
+                <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-2901">ZOOKEEPER-2901</ulink> TTL nodes
+                created in version 3.5.3 are not supported in 3.5.4/3.6.0. However, a workaround is provided via the
+                zookeeper.emulate353TTLNodes system property. If you used TTL nodes in ZooKeeper 3.5.3 and need to maintain
+                compatibility set <emphasis role="bold">zookeeper.emulate353TTLNodes</emphasis> to "true" in addition to
+                <emphasis role="bold">zookeeper.extendedTypesEnabled</emphasis>. NOTE: due to the bug, server IDs
+                must be 127 or less. Additionally, the maximum support TTL value is 1099511627775 which is smaller
+                than what was allowed in 3.5.3 (1152921504606846975)</para>
             </listitem>
           </varlistentry>
 

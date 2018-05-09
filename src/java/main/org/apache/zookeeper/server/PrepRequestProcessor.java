@@ -916,9 +916,12 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
         }
         return retval;
     }
-    
+
     private void validateCreateRequest(String path, CreateMode createMode, Request request, long ttl)
             throws KeeperException {
+        if (createMode.isTTL() && !EphemeralType.extendedEphemeralTypesEnabled()) {
+            throw new KeeperException.UnimplementedException();
+        }
         try {
             EphemeralType.validateTTL(createMode, ttl);
         } catch (IllegalArgumentException e) {

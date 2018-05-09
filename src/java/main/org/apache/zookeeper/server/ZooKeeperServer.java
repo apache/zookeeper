@@ -124,6 +124,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     private final ServerStats serverStats;
     private final ZooKeeperServerListener listener;
     private ZooKeeperServerShutdownHandler zkShutdownHandler;
+    private volatile int createSessionTrackerServerId = 1;
 
     void removeCnxn(ServerCnxn cnxn) {
         zkDb.removeCnxn(cnxn);
@@ -470,9 +471,19 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return listener;
     }
 
+    /**
+     * Change the server ID used by {@link #createSessionTracker()}. Must be called prior to
+     * {@link #startup()} being called
+     *
+     * @param newId ID to use
+     */
+    public void setCreateSessionTrackerServerId(int newId) {
+        createSessionTrackerServerId = newId;
+    }
+
     protected void createSessionTracker() {
         sessionTracker = new SessionTrackerImpl(this, zkDb.getSessionWithTimeOuts(),
-                tickTime, 1, getZooKeeperServerListener());
+                tickTime, createSessionTrackerServerId, getZooKeeperServerListener());
     }
 
     protected void startSessionTracker() {
