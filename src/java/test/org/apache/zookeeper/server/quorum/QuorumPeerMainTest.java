@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server.quorum;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
+import static org.apache.zookeeper.test.ClientBase.createEmptyTestDir;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doCallRealMethod;
@@ -43,6 +44,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
@@ -1101,23 +1103,30 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     @Test
     public void testDataDirAndDataLogDir() throws Exception {
         // Arrange
-        QuorumPeerConfig configMock = mock(QuorumPeerConfig.class);
-        when(configMock.getDataDir()).thenReturn("/tmp/zookeeper");
-        when(configMock.getDataLogDir()).thenReturn("/tmp/zookeeperLog");
+        File dataDir = createEmptyTestDir();
+        File dataLogDir = createEmptyTestDir();
+        try {
+            QuorumPeerConfig configMock = mock(QuorumPeerConfig.class);
+            when(configMock.getDataDir()).thenReturn(dataDir.getAbsolutePath());
+            when(configMock.getDataLogDir()).thenReturn(dataLogDir.getAbsolutePath());
 
-        QuorumPeer qpMock = mock(QuorumPeer.class);
+            QuorumPeer qpMock = mock(QuorumPeer.class);
 
-        doCallRealMethod().when(qpMock).setTxnFactory(any(FileTxnSnapLog.class));
-        when(qpMock.getTxnFactory()).thenCallRealMethod();
-        InjectableQuorumPeerMain qpMain = new InjectableQuorumPeerMain(qpMock);
+            doCallRealMethod().when(qpMock).setTxnFactory(any(FileTxnSnapLog.class));
+            when(qpMock.getTxnFactory()).thenCallRealMethod();
+            InjectableQuorumPeerMain qpMain = new InjectableQuorumPeerMain(qpMock);
 
-        // Act
-        qpMain.runFromConfig(configMock);
+            // Act
+            qpMain.runFromConfig(configMock);
 
-        // Assert
-        FileTxnSnapLog txnFactory = qpMain.getQuorumPeer().getTxnFactory();
-        assertEquals("/tmp/zookeeperLog/version-2", txnFactory.getDataDir().getAbsolutePath());
-        assertEquals("/tmp/zookeeper/version-2", txnFactory.getSnapDir().getAbsolutePath());
+            // Assert
+            FileTxnSnapLog txnFactory = qpMain.getQuorumPeer().getTxnFactory();
+            assertEquals(dataLogDir.getAbsolutePath() + "/version-2", txnFactory.getDataDir().getAbsolutePath());
+            assertEquals(dataDir.getAbsolutePath() + "/version-2", txnFactory.getSnapDir().getAbsolutePath());
+        } finally {
+            FileUtils.deleteDirectory(dataDir);
+            FileUtils.deleteDirectory(dataLogDir);
+        }
     }
 
     private class InjectableQuorumPeerMain extends QuorumPeerMain {
