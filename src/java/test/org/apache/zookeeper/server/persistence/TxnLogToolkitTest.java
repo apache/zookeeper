@@ -30,6 +30,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.StringReader;
+import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -138,7 +139,7 @@ public class TxnLogToolkitTest {
         TxnLogToolkit lt = new TxnLogToolkit(true, false, logfile.toString(), false);
 
         // Act
-        lt.dump(new StringReader("y\n"));
+        lt.dump(new Scanner("y\n"));
 
         // Assert
         String output = outContent.toString();

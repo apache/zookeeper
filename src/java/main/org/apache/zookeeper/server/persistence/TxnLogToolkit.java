@@ -98,7 +98,7 @@ public class TxnLogToolkit implements Closeable {
      */
     public static void main(String[] args) throws Exception {
         try (final TxnLogToolkit lt = parseCommandLine(args)) {
-            lt.dump(new InputStreamReader(System.in));
+            lt.dump(new Scanner(System.in));
             lt.printStat();
         } catch (TxnLogToolkitParseException e) {
             System.err.println(e.getMessage() + "\n");
@@ -131,7 +131,7 @@ public class TxnLogToolkit implements Closeable {
         }
     }
 
-    public void dump(Reader input) throws Exception {
+    public void dump(Scanner scanner) throws Exception {
         crcFixed = 0;
 
         FileHeader fhdr = new FileHeader();
@@ -172,7 +172,7 @@ public class TxnLogToolkit implements Closeable {
                 if (recoveryMode) {
                     if (!force) {
                         printTxn(bytes, "CRC ERROR");
-                        if (askForFix(input)) {
+                        if (askForFix(scanner)) {
                             crcValue = crc.getValue();
                             ++crcFixed;
                         }
@@ -201,19 +201,17 @@ public class TxnLogToolkit implements Closeable {
         }
     }
 
-    private boolean askForFix(Reader input) throws TxnLogToolkitException {
-        try (Scanner scanner = new Scanner(input)) {
-            while (true) {
-                System.out.print("Would you like to fix it (Yes/No/Abort) ? ");
-                char answer = Character.toUpperCase(scanner.next().charAt(0));
-                switch (answer) {
-                    case 'Y':
-                        return true;
-                    case 'N':
-                        return false;
-                    case 'A':
-                        throw new TxnLogToolkitException(0, "Recovery aborted.");
-                }
+    private boolean askForFix(Scanner scanner) throws TxnLogToolkitException {
+        while (true) {
+            System.out.print("Would you like to fix it (Yes/No/Abort) ? ");
+            char answer = Character.toUpperCase(scanner.next().charAt(0));
+            switch (answer) {
+                case 'Y':
+                    return true;
+                case 'N':
+                    return false;
+                case 'A':
+                    throw new TxnLogToolkitException(0, "Recovery aborted.");
             }
         }
     }
