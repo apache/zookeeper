@@ -19,19 +19,27 @@
 package org.apache.zookeeper.server.quorum;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
+import static org.apache.zookeeper.test.ClientBase.createEmptyTestDir;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.LineNumberReader;
 import java.io.StringReader;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
@@ -45,6 +53,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.After;
@@ -1084,6 +1093,49 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
         Assert.assertFalse("Corrupt peer should never become leader", foundLeading);
         Assert.assertFalse("Corrupt peer should not attempt connection to out of view leader", foundFollowing);
+    }
+
+    @Test
+    public void testDataDirAndDataLogDir() throws Exception {
+        File dataDir = createEmptyTestDir();
+        File dataLogDir = createEmptyTestDir();
+
+        // Arrange
+        try {
+            QuorumPeerConfig configMock = mock(QuorumPeerConfig.class);
+            when(configMock.getDataDir()).thenReturn(dataDir);
+            when(configMock.getDataLogDir()).thenReturn(dataLogDir);
+
+            QuorumPeer qpMock = mock(QuorumPeer.class);
+
+            doCallRealMethod().when(qpMock).setTxnFactory(any(FileTxnSnapLog.class));
+            when(qpMock.getTxnFactory()).thenCallRealMethod();
+            InjectableQuorumPeerMain qpMain = new InjectableQuorumPeerMain(qpMock);
+
+            // Act
+            qpMain.runFromConfig(configMock);
+
+            // Assert
+            FileTxnSnapLog txnFactory = qpMain.getQuorumPeer().getTxnFactory();
+            Assert.assertEquals(Paths.get(dataLogDir.getAbsolutePath(), "version-2").toString(), txnFactory.getDataDir().getAbsolutePath());
+            Assert.assertEquals(Paths.get(dataDir.getAbsolutePath(), "version-2").toString(), txnFactory.getSnapDir().getAbsolutePath());
+        } finally {
+            FileUtils.deleteDirectory(dataDir);
+            FileUtils.deleteDirectory(dataLogDir);
+        }
+    }
+
+    private class InjectableQuorumPeerMain extends QuorumPeerMain {
+        QuorumPeer qp;
+
+        InjectableQuorumPeerMain(QuorumPeer qp) {
+            this.qp = qp;
+        }
+
+        @Override
+        protected QuorumPeer getQuorumPeer() {
+            return qp;
+        }
     }
 
     private WriterAppender getConsoleAppender(ByteArrayOutputStream os, Level level) {
