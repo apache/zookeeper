@@ -153,7 +153,7 @@ public class TruncateTest extends ZKTestCase {
         int maxCnxns = 100;
         ServerCnxnFactory factory = ClientBase.createNewServerInstance(null,
                 hostPort, maxCnxns);
-        ClientBase.startServerInstance(dataDir1, factory, hostPort);
+        ClientBase.startServerInstance(dataDir1, factory, hostPort, 1);
         ClientBase.shutdownServerInstance(factory, hostPort);
 
         // standalone starts with 0 epoch while quorum starts with 1
@@ -162,7 +162,7 @@ public class TruncateTest extends ZKTestCase {
         origfile.renameTo(newfile);
 
         factory = ClientBase.createNewServerInstance(null, hostPort, maxCnxns);
-        ClientBase.startServerInstance(dataDir1, factory, hostPort);
+        ClientBase.startServerInstance(dataDir1, factory, hostPort, 1);
 
         ZooKeeper zk = ClientBase.createZKClient(hostPort, 15000);
         for(int i = 0; i < 50; i++) {
