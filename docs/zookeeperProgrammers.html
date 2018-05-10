@@ -596,6 +596,10 @@ document.write("Last Published: " + document.lastModified);
           you can optionally set a TTL in milliseconds for the znode. If the znode
           is not modified within the TTL and has no children it will become a candidate
           to be deleted by the server at some point in the future.</p>
+<p>Note: TTL Nodes must be enabled via System property as
+        they are disabled by default. See the <a href="zookeeperAdmin.html#sc_configuration">Administrator's
+        Guide</a> for details. If you attempt to create TTL Nodes without the proper System property set the server
+        will throw <em>KeeperException.UnimplementedException</em>.</p>
 <a name="sc_timeInZk"></a>
 <h3 class="h4">Time in ZooKeeper</h3>
 <p>ZooKeeper tracks time multiple ways:</p>
