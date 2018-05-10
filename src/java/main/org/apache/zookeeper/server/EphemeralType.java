@@ -166,7 +166,7 @@ public enum EphemeralType {
     public static EphemeralType get(long ephemeralOwner) {
         if (extendedEphemeralTypesEnabled()) {
             if (Boolean.getBoolean(TTL_3_5_3_EMULATION_PROPERTY)) {
-                if (OldEphemeralType.get(ephemeralOwner) == OldEphemeralType.TTL) {
+                if (EphemeralTypeEmulate353.get(ephemeralOwner) == EphemeralTypeEmulate353.TTL) {
                     return TTL;
                 }
             }

@@ -69,7 +69,7 @@ public class Emulate353TTLTest extends ClientBase {
     public void test353TTL()
             throws KeeperException, InterruptedException {
         DataTree dataTree = serverFactory.zkServer.getZKDatabase().dataTree;
-        long ephemeralOwner = OldEphemeralType.ttlToEphemeralOwner(100);
+        long ephemeralOwner = EphemeralTypeEmulate353.ttlToEphemeralOwner(100);
         dataTree.createNode("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, ephemeralOwner,
                 dataTree.getNode("/").stat.getCversion()+1, 1, 1);
 
