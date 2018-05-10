@@ -22,11 +22,11 @@ package org.apache.zookeeper.server;
  * See https://issues.apache.org/jira/browse/ZOOKEEPER-2901
  *
  * version 3.5.3 introduced bugs associated with how TTL nodes were implemented. version 3.5.4
- * fixes the problems but makes TTL nodes created in 3.5.3 invalid. OldEphemeralType is a copy
+ * fixes the problems but makes TTL nodes created in 3.5.3 invalid. EphemeralTypeEmulate353 is a copy
  * of the old - bad - implementation that is provided as a workaround. {@link EphemeralType#TTL_3_5_3_EMULATION_PROPERTY}
  * can be used to emulate support of the badly specified TTL nodes.
  */
-public enum OldEphemeralType {
+public enum EphemeralTypeEmulate353 {
     /**
      * Not ephemeral
      */
@@ -48,7 +48,7 @@ public enum OldEphemeralType {
     public static final long MAX_TTL = 0x0fffffffffffffffL;
     public static final long TTL_MASK = 0x8000000000000000L;
 
-    public static OldEphemeralType get(long ephemeralOwner) {
+    public static EphemeralTypeEmulate353 get(long ephemeralOwner) {
         if (ephemeralOwner == CONTAINER_EPHEMERAL_OWNER) {
             return CONTAINER;
         }
@@ -56,13 +56,6 @@ public enum OldEphemeralType {
             return TTL;
         }
         return (ephemeralOwner == 0) ? VOID : NORMAL;
-    }
-
-    public static long getTTL(long ephemeralOwner) {
-        if ((ephemeralOwner < 0) && (ephemeralOwner != CONTAINER_EPHEMERAL_OWNER)) {
-            return (ephemeralOwner & MAX_TTL);
-        }
-        return 0;
     }
 
     public static long ttlToEphemeralOwner(long ttl) {
