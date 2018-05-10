@@ -18,7 +18,7 @@
 
 package org.apache.zookeeper.server.quorum.flexible;
 
-import java.util.HashSet;
+import java.util.Set;
 
 //import org.apache.zookeeper.server.quorum.QuorumCnxManager;
 
@@ -56,7 +56,7 @@ public class QuorumMaj implements QuorumVerifier {
     /**
      * Verifies if a set is a majority.
      */
-    public boolean containsQuorum(HashSet<Long> set){
+    public boolean containsQuorum(Set<Long> set){
         return (set.size() > half);
     }
     
