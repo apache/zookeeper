@@ -18,16 +18,16 @@
 
 package org.apache.zookeeper.server.quorum.flexible;
 
-import java.util.HashSet;
+import java.util.Set;
 
 /**
  * All quorum validators have to implement a method called
- * containsQuorum, which verifies if a HashSet of server 
+ * containsQuorum, which verifies if a Set of server 
  * identifiers constitutes a quorum.
  *
  */
 
 public interface QuorumVerifier {
     long getWeight(long id);
-    boolean containsQuorum(HashSet<Long> set);
+    boolean containsQuorum(Set<Long> set);
 }

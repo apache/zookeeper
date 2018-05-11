@@ -18,6 +18,11 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.apache.zookeeper.server.quorum.ZabUtils.createQuorumPeer;
+import static org.apache.zookeeper.server.quorum.ZabUtils.createMockLeader;
+import static org.apache.zookeeper.server.quorum.ZabUtils.MockLeader;
+import static org.apache.zookeeper.server.quorum.ZabUtils.createLeader;
+
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -27,47 +32,34 @@ import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.EOFException;
-import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
-import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.ZooDefs.Ids;
-import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.apache.zookeeper.server.ByteBufferOutputStream;
 import org.apache.zookeeper.server.Request;
-import org.apache.zookeeper.server.ServerCnxn;
-import org.apache.zookeeper.server.ServerCnxnFactory;
-import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooKeeperServer.DataTreeBuilder;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.Util;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
-import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.CreateTxn;
@@ -80,8 +72,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Zab1_0Test {
-    private static final int SYNC_LIMIT = 2;
-
     private static final Logger LOG = LoggerFactory.getLogger(Zab1_0Test.class);
 
     private static final File testData = new File(
@@ -104,25 +94,6 @@ public class Zab1_0Test {
             } finally {
                 leader.shutdown("lead ended");
             }
-        }
-    }
-           
-    private static final class MockLeader extends Leader {
-           
-        MockLeader(QuorumPeer qp, LeaderZooKeeperServer zk)
-        throws IOException {
-            super(qp, zk);
-        }
-           
-        /**
-         * This method returns the value of the variable that holds the epoch
-         * to be proposed and that has been proposed, depending on the point
-         * of the execution in which it is called. 
-         * 
-         * @return epoch
-         */
-        public long getCurrentEpochToPropose() {
-            return epoch;
         }
     }
      
@@ -283,42 +254,6 @@ public class Zab1_0Test {
         }
     }
 
-    private static final class NullServerCnxnFactory extends ServerCnxnFactory {
-        public void startup(ZooKeeperServer zkServer) throws IOException,
-                InterruptedException {
-        }
-        public void start() {
-        }
-        public void shutdown() {
-        }
-        public void setMaxClientCnxnsPerHost(int max) {
-        }
-        public void join() throws InterruptedException {
-        }
-        public int getMaxClientCnxnsPerHost() {
-            return 0;
-        }
-        public int getLocalPort() {
-            return 0;
-        }
-        public InetSocketAddress getLocalAddress() {
-            return null;
-        }
-        public Iterable<ServerCnxn> getConnections() {
-            return null;
-        }
-        public void configure(InetSocketAddress addr, int maxClientCnxns)
-                throws IOException {
-        }
-        public void closeSession(long sessionId) {
-        }
-        public void closeAll() {
-        }
-        @Override
-        public int getNumAliveConnections() {
-            return 0;
-        }
-    }
     static Socket[] getSocketPair() throws IOException {
         ServerSocket ss = new ServerSocket();
         ss.bind(null);
@@ -988,7 +923,7 @@ public class Zab1_0Test {
 
                 LOG.info("Proposal sent.");
 
-                for (int i = 0; i < (2 * SYNC_LIMIT) + 2; i++) {
+                for (int i = 0; i < (2 * ZabUtils.SYNC_LIMIT) + 2; i++) {
                     try {
                         ia.readRecord(qp, null);
                         LOG.info("Ping received: " + i);
@@ -1229,7 +1164,7 @@ public class Zab1_0Test {
         testLeaderConversation(new LeaderConversation() {
             public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l)
                     throws IOException, InterruptedException {
-                /* we test a normal run. everything should work out well. */            	
+                /* we test a normal run. everything should work out well. */                
                 LearnerInfo li = new LearnerInfo(1, 0x10000);
                 byte liBytes[] = new byte[12];
                 ByteBufferOutputStream.record2ByteBuffer(li,
@@ -1245,7 +1180,7 @@ public class Zab1_0Test {
                 Thread.sleep(l.self.getInitLimit()*l.self.getTickTime() + 5000);
                 
                 // The leader didn't get a quorum of acks - make sure that leader's current epoch is not advanced
-                Assert.assertEquals(0, l.self.getCurrentEpoch());			
+                Assert.assertEquals(0, l.self.getCurrentEpoch());           
             }
         });
     }
@@ -1343,30 +1278,6 @@ public class Zab1_0Test {
         }
     }
 
-    private Leader createLeader(File tmpDir, QuorumPeer peer)
-    throws IOException, NoSuchFieldException, IllegalAccessException{
-        LeaderZooKeeperServer zk = prepareLeader(tmpDir, peer);
-        return new Leader(peer, zk);
-    }
-            
-    private Leader createMockLeader(File tmpDir, QuorumPeer peer)
-    throws IOException, NoSuchFieldException, IllegalAccessException{
-        LeaderZooKeeperServer zk = prepareLeader(tmpDir, peer);
-        return new MockLeader(peer, zk);
-    }
-            
-    private LeaderZooKeeperServer prepareLeader(File tmpDir, QuorumPeer peer)
-    throws IOException, NoSuchFieldException, IllegalAccessException {
-        FileTxnSnapLog logFactory = new FileTxnSnapLog(tmpDir, tmpDir);
-        peer.setTxnFactory(logFactory);
-        Field addrField = peer.getClass().getDeclaredField("myQuorumAddr");
-        addrField.setAccessible(true);
-        addrField.set(peer, new InetSocketAddress(PortAssignment.unique()));
-        ZKDatabase zkDb = new ZKDatabase(logFactory);
-        LeaderZooKeeperServer zk = new LeaderZooKeeperServer(logFactory, peer, new ZooKeeperServer.BasicDataTreeBuilder(), zkDb);
-        return zk;
-    }
-
     static class ConversableFollower extends Follower {
 
         ConversableFollower(QuorumPeer self, FollowerZooKeeperServer zk) {
@@ -1419,30 +1330,6 @@ public class Zab1_0Test {
         ObserverZooKeeperServer zk = new ObserverZooKeeperServer(logFactory, peer, treeBuilder, zkDb);
         peer.setZKDatabase(zkDb);
         return new ConversableObserver(peer, zk);
-    }
-        
-    
-    private QuorumPeer createQuorumPeer(File tmpDir) throws IOException,
-            FileNotFoundException {
-        QuorumPeer peer = QuorumPeer.testingQuorumPeer();
-        peer.syncLimit = SYNC_LIMIT;
-        peer.initLimit = 2;
-        peer.tickTime = 2000;
-        peer.quorumPeers = new HashMap<Long, QuorumServer>();
-        peer.quorumPeers.put(1L, new QuorumServer(0, "0.0.0.0", 33221, 0, null));
-        peer.quorumPeers.put(1L, new QuorumServer(1, "0.0.0.0", 33223, 0, null));
-        peer.setQuorumVerifier(new QuorumMaj(3));
-        peer.setCnxnFactory(new NullServerCnxnFactory());
-        File version2 = new File(tmpDir, "version-2");
-        version2.mkdir();
-        FileOutputStream fos;
-        fos = new FileOutputStream(new File(version2, "currentEpoch"));
-        fos.write("0\n".getBytes());
-        fos.close();
-        fos = new FileOutputStream(new File(version2, "acceptedEpoch"));
-        fos.write("0\n".getBytes());
-        fos.close();
-        return peer;
     }
 
     private String readContentsOfFile(File f) throws IOException {
