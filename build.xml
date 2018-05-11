@@ -39,7 +39,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
 
     <property name="netty.version" value="3.10.6.Final"/>
 
-    <property name="junit.version" value="4.8.1"/>
+    <property name="junit.version" value="4.12"/>
     <property name="mockito.version" value="1.8.5"/>
     <property name="checkstyle.version" value="6.1.1"/>
     <property name="commons-collections.version" value="3.2.2"/>
@@ -438,7 +438,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
                       pattern="${ivy.clover.lib}/[artifact]-[revision].[ext]"/>
         <ivy:cachepath pathid="clover-classpath" conf="clover"/>
     </target>
-    
+
     <target name="ivy-retrieve-mvn-ant-task" depends="init,ivy-init">
       <ivy:retrieve settingsRef="${ant.project.name}" conf="mvn-ant-task"
                     pattern="${ivy.lib}/[artifact]-[revision].[ext]"/>

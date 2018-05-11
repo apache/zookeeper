@@ -19,12 +19,15 @@
 package org.apache.zookeeper.server.util;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.jute.BinaryOutputArchive;
+import org.apache.zookeeper.server.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -138,4 +141,19 @@ public class SerializeUtils {
         dt.serialize(oa, "tree");
     }
 
+    public static byte[] serializeRequest(Request request) {
+        if (request == null || request.hdr == null) return null;
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
+        try {
+            request.hdr.serialize(boa, "hdr");
+            if (request.txn != null) {
+                request.txn.serialize(boa, "txn");
+            }
+            baos.close();
+        } catch (IOException e) {
+            LOG.error("This really should be impossible", e);
+        }
+        return baos.toByteArray();
+    }
 }

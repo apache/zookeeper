@@ -22,6 +22,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Date;
 
+import org.apache.jute.BinaryInputArchive;
 import org.apache.zookeeper.Version;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
 
@@ -143,5 +144,10 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
 
     public long getNumAliveConnections() {
         return zks.getNumAliveConnections();
+    }
+
+    @Override
+    public int getJuteMaxBufferSize() {
+        return BinaryInputArchive.maxBuffer;
     }
 }
