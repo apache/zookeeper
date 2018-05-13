@@ -14,14 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.5)
 
-project(zookeeper VERSION 3.5.3)
+project(zookeeper VERSION 3.6.0)
 set(email user@zookeeper.apache.org)
 set(description "zookeeper C client")
 
 # general options
-include_directories(include tests generated ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
 if(UNIX)
   add_compile_options(-Wall -fPIC)
 elseif(WIN32)
@@ -39,11 +38,6 @@ add_definitions(-DUSE_STATIC_LIB)
 option(WANT_SYNCAPI "Enables Sync API support" ON)
 if(WANT_SYNCAPI)
   add_definitions(-DTHREADED)
-  if(WIN32)
-    # Note that the generator expression ensures that `/MTd` is used when Debug
-    # configurations are built.
-    add_compile_options(/MT$<$<CONFIG:Debug>:d>)
-  endif()
 endif()
 
 # CppUnit option
@@ -82,7 +76,7 @@ endfunction()
 
 # include file checks
 foreach(f generated/zookeeper.jute.h generated/zookeeper.jute.c)
-  if(EXISTS "${CMAKE_SOURCE_DIR}/${f}")
+  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${f}")
     to_have(${f} name)
     set(${name} 1)
   else()
@@ -154,12 +148,13 @@ include(CheckStructHasMember)
 check_struct_has_member("struct sockaddr_in6" sin6_addr "netinet/in.h" ZOO_IPV6_ENABLED)
 
 # configure
-configure_file(cmake_config.h.in ${CMAKE_SOURCE_DIR}/include/config.h)
+configure_file(cmake_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/config.h)
 
 # hashtable library
 set(hashtable_sources src/hashtable/hashtable_itr.c src/hashtable/hashtable.c)
 add_library(hashtable STATIC ${hashtable_sources})
-target_link_libraries(hashtable PUBLIC $<$<PLATFORM_ID:Linux>:m>)
+target_include_directories(hashtable PUBLIC include)
+target_link_libraries(hashtable PUBLIC $<$<OR:$<PLATFORM_ID:Linux>,$<PLATFORM_ID:FreeBSD>>:m>)
 
 # zookeeper library
 set(zookeeper_sources
@@ -181,6 +176,7 @@ if(WIN32)
 endif()
 
 add_library(zookeeper STATIC ${zookeeper_sources})
+target_include_directories(zookeeper PUBLIC include ${CMAKE_CURRENT_BINARY_DIR}/include generated)
 target_link_libraries(zookeeper PUBLIC
   hashtable
   $<$<PLATFORM_ID:Linux>:rt> # clock_gettime
@@ -228,8 +224,10 @@ endif()
 
 if(WANT_CPPUNIT)
   add_executable(zktest ${test_sources})
+  target_include_directories(zktest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
   target_compile_definitions(zktest
-    PRIVATE -DZKSERVER_CMD="${CMAKE_SOURCE_DIR}/tests/zkServer.sh")
+    PRIVATE -DZKSERVER_CMD="${CMAKE_CURRENT_SOURCE_DIR}/tests/zkServer.sh")
   # TODO: Use `find_library()` for `cppunit`.
   target_link_libraries(zktest zookeeper cppunit dl)
 
@@ -246,6 +244,6 @@ if(WANT_CPPUNIT)
   enable_testing()
   add_test(NAME zktest_runner COMMAND zktest)
   set_property(TEST zktest_runner PROPERTY ENVIRONMENT
-    "ZKROOT=${CMAKE_SOURCE_DIR}/../.."
+    "ZKROOT=${CMAKE_CURRENT_SOURCE_DIR}/../.."
     "CLASSPATH=$CLASSPATH:$CLOVER_HOME/lib/clover.jar")
 endif()

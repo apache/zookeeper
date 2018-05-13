@@ -116,12 +116,12 @@ public class ContainerManager {
             Request request = new Request(null, 0, 0,
                     ZooDefs.OpCode.deleteContainer, path, null);
             try {
-                LOG.info("Attempting to delete candidate container: %s",
+                LOG.info("Attempting to delete candidate container: {}",
                         containerPath);
                 requestProcessor.processRequest(request);
             } catch (Exception e) {
-                LOG.error(String.format("Could not delete container: %s" ,
-                        containerPath), e);
+                LOG.error("Could not delete container: {}",
+                        containerPath, e);
             }
 
             long elapsedMs = Time.currentElapsedTime() - startMs;
@@ -158,10 +158,12 @@ public class ContainerManager {
             if (node != null) {
                 Set<String> children = node.getChildren();
                 if (children.isEmpty()) {
-                    long elapsed = getElapsed(node);
-                    long ttl = EphemeralType.getTTL(node.stat.getEphemeralOwner());
-                    if ((ttl != 0) && (elapsed > ttl)) {
-                        candidates.add(ttlPath);
+                    if ( EphemeralType.get(node.stat.getEphemeralOwner()) == EphemeralType.TTL ) {
+                        long elapsed = getElapsed(node);
+                        long ttl = EphemeralType.TTL.getValue(node.stat.getEphemeralOwner());
+                        if ((ttl != 0) && (getElapsed(node) > ttl)) {
+                            candidates.add(ttlPath);
+                        }
                     }
                 }
             }
