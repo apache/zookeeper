@@ -4532,30 +4532,6 @@ static void process_sync_completion(zhandle_t *zh,
     }
 }
 
-static int remove_watches(
-    zhandle_t *zh, const char *path, ZooWatcherType wtype,
-    watcher_fn watcher, void *wctx, int local, int all)
-{
-    int rc = 0;
-	    struct sync_completion *sc;
-
-    if (!path)
-        return ZBADARGUMENTS;
-
-    sc = alloc_sync_completion();
-    if (!sc)
-        return ZSYSTEMERROR;
-
-    rc = aremove_watches(zh, path, wtype, watcher, wctx, local,
-                              SYNCHRONOUS_MARKER, sc, all);
-    if (rc == ZOK) {
-        wait_sync_completion(sc);
-        rc = sc->rc;
-    }
-    free_sync_completion(sc);
-    return rc;
-}
-
 /*---------------------------------------------------------------------------*
  * SYNC API
  *---------------------------------------------------------------------------*/
@@ -4863,6 +4839,30 @@ int zoo_set_acl(zhandle_t *zh, const char *path, int version,
     rc=zoo_aset_acl(zh, path, version, (struct ACL_vector*)acl,
             SYNCHRONOUS_MARKER, sc);
     if(rc==ZOK){
+        wait_sync_completion(sc);
+        rc = sc->rc;
+    }
+    free_sync_completion(sc);
+    return rc;
+}
+
+static int remove_watches(
+    zhandle_t *zh, const char *path, ZooWatcherType wtype,
+    watcher_fn watcher, void *wctx, int local, int all)
+{
+    int rc = 0;
+	    struct sync_completion *sc;
+
+    if (!path)
+        return ZBADARGUMENTS;
+
+    sc = alloc_sync_completion();
+    if (!sc)
+        return ZSYSTEMERROR;
+
+    rc = aremove_watches(zh, path, wtype, watcher, wctx, local,
+                              SYNCHRONOUS_MARKER, sc, all);
+    if (rc == ZOK) {
         wait_sync_completion(sc);
         rc = sc->rc;
     }
