@@ -33,6 +33,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.Vote;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 @SuppressWarnings("deprecation")
@@ -90,6 +91,7 @@ public class LETest extends ZKTestCase {
     }
 
     @Test
+    @Ignore("ZOOKEEPER-1932, this test is flaky and already removed in master")
     public void testLE() throws Exception {
         int count = 30;
         HashMap<Long,QuorumServer> peers = new HashMap<Long,QuorumServer>(count);
