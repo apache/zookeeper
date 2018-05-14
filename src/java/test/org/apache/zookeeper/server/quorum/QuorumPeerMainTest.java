@@ -446,6 +446,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         boolean someoneNotConnected = true;
         while (someoneNotConnected) {
             if (iterations-- == 0) {
+                logStates(zks);
                 ClientBase.logAllStackTraces();
                 throw new RuntimeException("Waiting too long");
             }
@@ -460,6 +461,15 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             Thread.sleep(1000);
         }
     }
+    
+    private void logStates(ZooKeeper[] zks) {
+            StringBuilder sbBuilder = new StringBuilder("Connection States: {");
+           for (int i = 0; i < zks.length; i++) {
+                sbBuilder.append(i + " : " + zks[i].getState() + ", ");
+           }
+            sbBuilder.append('}');
+            LOG.error(sbBuilder.toString());
+    }
 
     // This class holds the servers and clients for those servers
     private static class Servers {
@@ -473,7 +483,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             }
         }
 
-        public void restartAllServersAndClients(Watcher watcher) throws IOException {
+        public void restartAllServersAndClients(Watcher watcher) throws IOException, InterruptedException {
             for (MainThread t : mt) {
                 if (!t.isAlive()) {
                     t.start();
@@ -484,7 +494,10 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             }
         }
 
-        public void restartClient(int clientIndex, Watcher watcher) throws IOException {
+        public void restartClient(int clientIndex, Watcher watcher) throws IOException, InterruptedException {
+            if (zk[clientIndex] != null) {
+                zk[clientIndex].close();
+            }
             zk[clientIndex] = new ZooKeeper("127.0.0.1:" + clientPorts[clientIndex], ClientBase.CONNECTION_TIMEOUT, watcher);
         }
 
@@ -966,9 +979,11 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
         // just make sure that we actually did get it in process at the
         // leader
-        Assert.assertEquals(1, outstanding.size());
-        Proposal p = outstanding.values().iterator().next();
-        Assert.assertEquals(OpCode.create, p.request.getHdr().getType());
+        // there can be extra sessionClose proposals
+        Assert.assertTrue(outstanding.size() > 0);
+        Proposal p = findProposalOfType(outstanding, OpCode.create);
+        LOG.info(String.format("Old leader id: %d. All proposals: %s", leader, outstanding));
+        Assert.assertNotNull("Old leader doesn't have 'create' proposal", p);
 
         // make sure it has a chance to write it to disk
         int sleepTime = 0;
@@ -1002,6 +1017,8 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         // 7. restart the previous leader to force it to replay the edits and possibly come up in a bad state
         servers.mt[leader].shutdown();
         servers.mt[leader].start();
+        // old client session can expire, restart it
+        servers.restartClient(leader, this);
         waitForAll(servers, States.CONNECTED);
 
         // 8. check the node exist in previous leader but not others
@@ -1167,5 +1184,14 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                 // ignore
             }
         }
+    }
+    
+    private Proposal findProposalOfType(Map<Long, Proposal> proposals, int type) {
+        for (Proposal proposal : proposals.values()) {
+            if (proposal.request.getHdr().getType() == type) {
+                return proposal;
+            }
+        }
+        return null;
     }
 }
