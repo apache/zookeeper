@@ -423,6 +423,7 @@ public class Commands {
             response.put("version", Version.getFullVersion());
             response.put("read_only", zkServer instanceof ReadOnlyZooKeeperServer);
             response.put("server_stats", zkServer.serverStats());
+            response.put("client_response", zkServer.serverStats().getClientResponseStats());
             if (zkServer instanceof LeaderZooKeeperServer) {
                 Leader leader = ((LeaderZooKeeperServer)zkServer).getLeader();
                 response.put("proposal_stats", leader.getProposalStats());

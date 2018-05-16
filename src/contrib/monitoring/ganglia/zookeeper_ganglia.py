@@ -217,10 +217,7 @@ def metric_init(params=None):
         'zk_pending_syncs': {'units': 'syncs'},
         'zk_last_proposal_size': {'units': 'bytes'},
         'zk_min_proposal_size': {'units': 'bytes'},
-        'zk_max_proposal_size': {'units': 'bytes'},
-        'zk_last_client_response_size': {'units': 'bytes'},
-        'zk_min_client_response_size': {'units': 'bytes'},
-        'zk_max_client_response_size': {'units': 'bytes'}
+        'zk_max_proposal_size': {'units': 'bytes'}
     }
     metric_handler.descriptors = {}
     for name, updates in metrics.iteritems():

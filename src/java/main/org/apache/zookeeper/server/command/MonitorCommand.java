@@ -62,10 +62,6 @@ public class MonitorCommand extends AbstractFourLetterCommand {
         print("ephemerals_count", zkdb.getDataTree().getEphemeralsCount());
         print("approximate_data_size", zkdb.getDataTree().approximateDataSize());
 
-        print("last_client_response_size", stats.getClientResponseStats().getLastBufferSize());
-        print("max_client_response_size", stats.getClientResponseStats().getMaxBufferSize());
-        print("min_client_response_size", stats.getClientResponseStats().getMinBufferSize());
-
         OSMXBean osMbean = new OSMXBean();
         if (osMbean != null && osMbean.getUnix() == true) {
             print("open_file_descriptor_count", osMbean.getOpenFileDescriptorCount());

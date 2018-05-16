@@ -125,7 +125,6 @@ public class ServerStats {
             sb.append("Zxid: 0x"+ Long.toHexString(getLastProcessedZxid())+ "\n");
         }
         sb.append("Mode: " + getServerState() + "\n");
-        sb.append("Client response size last/min/max: " + clientResponseStats.toString() + "\n");
         return sb.toString();
     }
     // mutators

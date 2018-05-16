@@ -49,8 +49,5 @@ collection_group {
   metric { name = "zk_last_proposal_size" }
   metric { name = "zk_min_proposal_size" }
   metric { name = "zk_max_proposal_size" }
-  metric { name = "zk_last_client_response_size" }
-  metric { name = "zk_min_client_response_size" }
-  metric { name = "zk_max_client_response_size" }
 }
 
