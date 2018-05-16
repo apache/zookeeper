@@ -81,7 +81,6 @@ public class StatCommandTest {
         assertCommonStrings(output);
         assertThat(output, containsString("Mode: leader"));
         assertThat(output, containsString("Proposal sizes last/min/max:"));
-        assertThat(output, containsString("Client response size last/min/max:"));
     }
 
     @Test
@@ -96,7 +95,6 @@ public class StatCommandTest {
         String output = outputWriter.toString();
         assertCommonStrings(output);
         assertThat(output, containsString("Mode: follower"));
-        assertThat(output, containsString("Client response size last/min/max:"));
     }
 
     private void assertCommonStrings(String output) {
