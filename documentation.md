@@ -6,6 +6,7 @@ title: Documentation
 
 Setup instructions, programming guides, and other documentation are available for each stable version of ZooKeeper below:
 
+* [ZooKeeper 3.5.4-beta](doc/r3.5.4-beta/index.html)
 * [ZooKeeper 3.5.3-beta](doc/r3.5.3-beta/index.html)
 * [ZooKeeper 3.5.2-alpha](doc/r3.5.2-alpha/index.html)
 * [ZooKeeper 3.5.1-alpha](doc/r3.5.1-alpha/index.html)

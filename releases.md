@@ -26,6 +26,12 @@ Release notes for Apache Zookeeper releases are available in Jira: [Browse relea
 
 ## News {#news}
 
+### 17 May, 2018: release 3.5.4-beta available
+
+3.5.4-beta is the second beta in the planned 3.5 release line leading up to a stable 3.5 release. It comprises 113 bug fixes and improvements.
+
+Release 3.5.3 added a new feature ZOOKEEPER-2169 "Enable creation of nodes with TTLs". There was a major oversight when TTL nodes were implemented. The session ID generator for each server is seeded with the configured Server ID in the high byte. TTL Nodes were using the highest bit to denote a TTL node when used in the ephemeral owner. This meant that Server IDs > 127 that created ephemeral nodes would have those nodes always considered TTL nodes (with the TTL being essentially a random number). ZOOKEEPER-2901 fixes the issue. By default TTL is disabled and must now be enabled in zoo.cfg. When TTL Nodes are enabled, the max Server ID changes from 255 to 254. See the documentation for TTL in the administrator guide (or the referenced JIRAs) for more details.
+
 ### 1 May, 2018: release 3.4.12 available
 
 This release fixes 22 issues, including issues that affect incorrect handling of the dataDir and the dataLogDir.  See [ZooKeeper 3.4.12 Release Notes](https://zookeeper.apache.org/doc/r3.4.12/releasenotes.html) for details.
