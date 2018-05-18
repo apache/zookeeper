@@ -47,6 +47,7 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.PKIXBuilderParameters;
 import java.security.cert.X509CertSelector;
+import java.util.Arrays;
 
 import org.apache.zookeeper.common.X509Exception.KeyManagerException;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
@@ -298,6 +299,7 @@ public abstract class X509Util {
     private void configureSSLSocket(SSLSocket sslSocket) {
         if (cipherSuites != null) {
             SSLParameters sslParameters = sslSocket.getSSLParameters();
+            LOG.debug("Setup cipher suites for client socket: {}", Arrays.toString(cipherSuites));
             sslParameters.setCipherSuites(cipherSuites);
             sslSocket.setSSLParameters(sslParameters);
         }
@@ -322,6 +324,7 @@ public abstract class X509Util {
         SSLParameters sslParameters = sslServerSocket.getSSLParameters();
         sslParameters.setNeedClientAuth(true);
         if (cipherSuites != null) {
+            LOG.debug("Setup cipher suites for server socket: {}", Arrays.toString(cipherSuites));
             sslParameters.setCipherSuites(cipherSuites);
         }
 

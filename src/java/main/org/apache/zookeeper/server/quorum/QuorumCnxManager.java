@@ -543,8 +543,8 @@ public class QuorumCnxManager {
                 LOG.info("Setting arbitrary identifier to observer: " + sid);
             }
         } catch (IOException e) {
+            LOG.warn("Exception reading or writing challenge: {}", e);
             closeSocket(sock);
-            LOG.warn("Exception reading or writing challenge: {}", e.toString());
             return;
         }
         // do authenticating learner

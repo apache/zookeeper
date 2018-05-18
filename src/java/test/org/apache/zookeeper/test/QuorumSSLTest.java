@@ -146,12 +146,16 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
 
     private Date certStartTime;
     private Date certEndTime;
+
+    private int originalTimeout;
     
     @Rule
     public Timeout timeout = Timeout.builder().withTimeout(5, TimeUnit.MINUTES).withLookingForStuckThread(true).build();
 
     @Before
     public void setup() throws Exception {
+        originalTimeout = CONNECTION_TIMEOUT;
+        CONNECTION_TIMEOUT = 5000;
         ClientBase.setupTestEnv();
 
         tmpDir = createTmpDir().getAbsolutePath();
@@ -368,6 +372,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
 
     @After
     public void cleanUp() throws Exception {
+        CONNECTION_TIMEOUT = originalTimeout;
         clearSSLSystemProperties();
         q1.shutdown();
         q2.shutdown();
@@ -674,7 +679,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
     @Test
     public void testCipherSuites() throws Exception {
         System.setProperty(quorumX509Util.getCipherSuitesProperty(),
-                "SSL_DHE_DSS_WITH_3DES_EDE_CBC_SHA,SSL_RSA_WITH_RC4_128_MD5");
+                "SSL_DHE_RSA_WITH_3DES_EDE_CBC_SHA,SSL_RSA_WITH_RC4_128_MD5");
 
         q1 = new MainThread(1, clientPortQp1, quorumConfiguration, SSL_QUORUM_ENABLED);
         q2 = new MainThread(2, clientPortQp2, quorumConfiguration, SSL_QUORUM_ENABLED);
