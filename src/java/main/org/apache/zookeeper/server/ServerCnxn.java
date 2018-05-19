@@ -54,6 +54,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
     private static final Logger LOG = LoggerFactory.getLogger(ServerCnxn.class);
     
     private Set<Id> authInfo = Collections.newSetFromMap(new ConcurrentHashMap<Id, Boolean>());
+    private boolean authCheckCompleted = false;
 
     /**
      * If the client is of old version, we don't send r-o mode info to it.
@@ -89,6 +90,14 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     public boolean removeAuthInfo(Id id) {
         return authInfo.remove(id);
+    }
+
+    public boolean isAuthCheckComplete() {
+        return authCheckCompleted;
+    }
+
+    public void authCheckComplete() {
+        authCheckCompleted = true;
     }
 
     abstract void sendBuffer(ByteBuffer closeConn);

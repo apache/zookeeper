@@ -74,4 +74,9 @@ class WrappedAuthenticationProvider extends ServerAuthenticationProvider {
     public boolean isValid(String id) {
         return implementation.isValid(id);
     }
+
+    @Override
+    public boolean needAuthentication() {
+        return implementation.needAuthentication();
+    }
 }

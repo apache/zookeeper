@@ -79,4 +79,13 @@ public interface AuthenticationProvider {
      * @return true if id is well formed.
      */
     boolean isValid(String id);
+
+    /**
+     * This method is used to check and see if the provider has to
+     * authenticate the client before any requests from it can be processed.
+     *
+     * @return true if this provider needs to authenticate the client before
+     * it can honor any requests from it
+     */
+    boolean needAuthentication();
 }

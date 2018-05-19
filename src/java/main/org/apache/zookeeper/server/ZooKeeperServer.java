@@ -34,6 +34,8 @@ import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import javax.security.sasl.SaslException;
 
@@ -1127,8 +1129,33 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 return;
             }
             else {
+                List<Id> authInfo = cnxn.getAuthInfo();
+                if (!cnxn.isAuthCheckComplete()) {
+                   // Iterate over auth info and create this
+                   SortedSet<String> providedAuthSchemes = new TreeSet<String>();
+                   for (Id authid : authInfo) {
+                       providedAuthSchemes.add(authid.getScheme());
+                   }
+
+                   SortedSet<String> neededAuthSchemes =
+                       ProviderRegistry.getSchemesRequiringAuth();
+                   cnxn.authCheckComplete();
+                   if (!providedAuthSchemes.containsAll(neededAuthSchemes)) {
+                       // We got a data packet without completing the necessary
+                       // authentication; so, nuke it!
+                       LOG.warn("Missing required authentication; closing connection");
+                       ReplyHeader rh = new ReplyHeader(h.getXid(), 0,
+                               KeeperException.Code.NOAUTH.intValue());
+                       cnxn.sendResponse(rh, null, null);
+                       // ... and close connection
+                       cnxn.sendBuffer(ServerCnxnFactory.closeConn);
+                       cnxn.disableRecv();
+                       return;
+                   }
+                }
+
                 Request si = new Request(cnxn, cnxn.getSessionId(), h.getXid(),
-                  h.getType(), incomingBuffer, cnxn.getAuthInfo());
+                  h.getType(), incomingBuffer, authInfo);
                 si.setOwner(ServerCnxn.me);
                 // Always treat packet from the client as a possible
                 // local request.

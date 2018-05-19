@@ -70,5 +70,8 @@ public class SASLAuthenticationProvider implements AuthenticationProvider {
         }
    }
 
+   public boolean needAuthentication() {
+        return false;
+   }
 
 }
