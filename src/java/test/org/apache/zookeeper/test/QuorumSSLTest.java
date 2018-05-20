@@ -83,6 +83,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 
+import javax.net.ssl.SSLServerSocketFactory;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -111,6 +112,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import static org.apache.zookeeper.test.ClientBase.createTmpDir;
+import static org.junit.Assert.fail;
 
 public class QuorumSSLTest extends QuorumPeerTestBase {
 
@@ -188,7 +190,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
 
         defaultKeyPair = createKeyPair();
         X509Certificate validCertificate = buildEndEntityCert(defaultKeyPair, rootCertificate, rootKeyPair.getPrivate(),
-                HOSTNAME, null, null, null);
+                HOSTNAME, "127.0.0.1", null, null);
         writeKeystore(validCertificate, defaultKeyPair, validKeystorePath);
 
         setSSLSystemProperties();
@@ -679,8 +681,22 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
 
     @Test
     public void testCipherSuites() throws Exception {
-        System.setProperty(quorumX509Util.getCipherSuitesProperty(),
-                "SSL_DHE_RSA_WITH_3DES_EDE_CBC_SHA,SSL_RSA_WITH_RC4_128_MD5,SSL_DHE_RSA_WITH_DES_CBC_SHA");
+        // Get default cipher suites from JDK
+        SSLServerSocketFactory ssf = (SSLServerSocketFactory)SSLServerSocketFactory.getDefault();
+        List<String> defaultCiphers = new ArrayList<String>();
+        for (String cipher : ssf.getDefaultCipherSuites()) {
+            if (!cipher.matches(".*EMPTY.*") && cipher.startsWith("TLS") && cipher.contains("RSA")) {
+                defaultCiphers.add(cipher);
+            }
+        }
+
+        if (defaultCiphers.size() < 2) {
+            fail("JDK has to support at least 2 valid (RSA) cipher suites for this test to run");
+        }
+
+        // Use them all except one to build the ensemble
+        String suitesOfEnsemble = String.join(",", defaultCiphers.subList(1, defaultCiphers.size()));
+        System.setProperty(quorumX509Util.getCipherSuitesProperty(), suitesOfEnsemble);
 
         q1 = new MainThread(1, clientPortQp1, quorumConfiguration, SSL_QUORUM_ENABLED);
         q2 = new MainThread(2, clientPortQp2, quorumConfiguration, SSL_QUORUM_ENABLED);
@@ -691,11 +707,13 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         Assert.assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp1, CONNECTION_TIMEOUT));
         Assert.assertTrue(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp2, CONNECTION_TIMEOUT));
 
-        System.setProperty(quorumX509Util.getCipherSuitesProperty(), "TLS_RSA_WITH_AES_128_CBC_SHA");
+        // Use the odd one out for the client
+        String suiteOfClient = defaultCiphers.get(0);
+        System.setProperty(quorumX509Util.getCipherSuitesProperty(), suiteOfClient);
 
         // This server should fail to join the quorum as it is not using one of the supported suites from the other
         // quorum members
-        q3 = new MainThread(3, clientPortQp3, quorumConfiguration);
+        q3 = new MainThread(3, clientPortQp3, quorumConfiguration, SSL_QUORUM_ENABLED);
         q3.start();
 
         Assert.assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));

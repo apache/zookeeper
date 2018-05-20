@@ -59,7 +59,7 @@ import org.apache.zookeeper.common.X509Exception.TrustManagerException;
 public abstract class X509Util {
     private static final Logger LOG = LoggerFactory.getLogger(X509Util.class);
 
-    static final String DEFAULT_PROTOCOL = "TLSv1";
+    static final String DEFAULT_PROTOCOL = "TLSv1.2";
 
     private String sslProtocolProperty = getConfigPrefix() + "protocol";
     private String cipherSuitesProperty = getConfigPrefix() + "ciphersuites";
