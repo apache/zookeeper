@@ -10,8 +10,72 @@ The ASF Security team maintains a page with a description of how vulnerabilities
 
 ## Vulnerability reports
 
-* [CVE-2016-5017: Buffer overflow vulnerability in ZooKeeper C cli shell](#CVE-2016-5017)
+* [CVE-2018-8012: Apache ZooKeeper Quorum Peer mutual authentication](#CVE-2018-8012)
 * [CVE-2017-5637: DOS attack on wchp/wchc four letter words (4lw)](#CVE-2017-5637)
+* [CVE-2016-5017: Buffer overflow vulnerability in ZooKeeper C cli shell](#CVE-2016-5017)
+
+
+
+### CVE-2018-8012: Apache ZooKeeper Quorum Peer mutual authentication
+
+Severity: Critical
+
+Vendor:
+The Apache Software Foundation
+
+Versions Affected:
+ZooKeeper prior to 3.4.10
+ZooKeeper 3.5.0-alpha through 3.5.3-beta
+The unsupported ZooKeeper 1.x through 3.3.x versions may be also affected
+
+Description:
+No authentication/authorization is enforced when a server attempts to join a quorum. As a result an arbitrary end point could join the cluster and begin propagating counterfeit changes to the leader.
+
+Mitigation:
+Upgrade to 3.4.10 or later (3.5.4-beta or later if on the 3.5 branch) and enable Quorum Peer mutual authentication.
+
+Alternately ensure the ensemble election/quorum communication is protected by a firewall as this will mitigate the issue.
+
+See the documentation for more details on correct cluster administration.
+
+Credit:
+This issue was identified by Földi Tamás and Eugene Koontz
+
+References:
+https://issues.apache.org/jira/browse/ZOOKEEPER-1045
+https://cwiki.apache.org/confluence/display/ZOOKEEPER/Server-Server+mutual+authentication
+http://zookeeper.apache.org/doc/current/zookeeperAdmin.html
+
+
+
+### CVE-2017-5637: DOS attack on wchp/wchc four letter words (4lw) {#CVE-2017-5637}
+
+Severity: moderate
+
+Vendor:
+The Apache Software Foundation
+
+Versions Affected:
+ZooKeeper 3.4.0 to 3.4.9
+ZooKeeper 3.5.0 to 3.5.2
+The unsupported ZooKeeper 1.x through 3.3.x versions may be also affected
+
+Note: The 3.5 branch is still beta at this time.
+
+Description:
+Two four letter word commands “wchp/wchc” are CPU intensive and could cause spike of CPU utilization on ZooKeeper server if abused,
+which leads to the server unable to serve legitimate client requests. There is no known compromise which takes advantage of this vulnerability.
+
+Mitigation:
+This affects ZooKeeper ensembles whose client port is publicly accessible, so it is recommended to protect ZooKeeper ensemble with firewall.
+Documentation has also been updated to clarify on this point. In addition, a patch (ZOOKEEPER-2693) is provided to disable "wchp/wchc” commands
+by default.
+- ZooKeeper 3.4.x users should upgrade to 3.4.10 or apply the patch.
+- ZooKeeper 3.5.x users should upgrade to 3.5.3 or apply the patch.
+
+References
+[1] https://issues.apache.org/jira/browse/ZOOKEEPER-2693
+
 
 
 ### CVE-2016-5017: Buffer overflow vulnerability in ZooKeeper C cli shell {#CVE-2016-5017}
@@ -59,34 +123,4 @@ This issue was discovered by Lyon Yang (@l0Op3r)
 
 References:
 [Apache ZooKeeper Security Page](https://zookeeper.apache.org/security.html)
-
-
-### CVE-2017-5637: DOS attack on wchp/wchc four letter words (4lw) {#CVE-2017-5637}
-
-Severity: moderate
-
-Vendor:
-The Apache Software Foundation
-
-Versions Affected:
-ZooKeeper 3.4.0 to 3.4.9
-ZooKeeper 3.5.0 to 3.5.2
-The unsupported ZooKeeper 1.x through 3.3.x versions may be also affected
-
-Note: The 3.5 branch is still beta at this time.
-
-Description:
-Two four letter word commands “wchp/wchc” are CPU intensive and could cause spike of CPU utilization on ZooKeeper server if abused,
-which leads to the server unable to serve legitimate client requests. There is no known compromise which takes advantage of this vulnerability.
-
-Mitigation:
-This affects ZooKeeper ensembles whose client port is publicly accessible, so it is recommended to protect ZooKeeper ensemble with firewall.
-Documentation has also been updated to clarify on this point. In addition, a patch (ZOOKEEPER-2693) is provided to disable "wchp/wchc” commands
-by default.
-- ZooKeeper 3.4.x users should upgrade to 3.4.10 or apply the patch.
-- ZooKeeper 3.5.x users should upgrade to 3.5.3 or apply the patch.
-
-References
-[1] https://issues.apache.org/jira/browse/ZOOKEEPER-2693
-
 
