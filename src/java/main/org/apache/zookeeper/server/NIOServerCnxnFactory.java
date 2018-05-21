@@ -817,7 +817,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
 
     private void addCnxn(NIOServerCnxn cnxn) {
         InetAddress addr = cnxn.getSocketAddress();
-        Set<NIOServerCnxn> set = ipMap.get(addr);
+        Set<NIOServerCnxn> set = (addr == null ? null : ipMap.get(addr));
         if (set == null) {
             // in general we will see 1 connection from each
             // host, setting the initial cap to 2 allows us
