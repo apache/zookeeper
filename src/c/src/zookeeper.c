@@ -4043,10 +4043,10 @@ static int aremove_watches(
     int rc;
     struct oarchive *oa;
     struct RequestHeader h = { 
-		get_xid(), 
-		all ? ZOO_REMOVE_WATCHES : ZOO_CHECK_WATCHES 
-	};
-	WatchesRequest req;
+        get_xid(), 
+        all ? ZOO_REMOVE_WATCHES : ZOO_CHECK_WATCHES 
+    };
+    WatchesRequest req;
     watcher_deregistration_t *wdo;
 
     if (!zh || !isValidPath(server_path, 0)) {
@@ -4076,7 +4076,7 @@ static int aremove_watches(
     oa = create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
 
-	if (all) {
+    if (all) {
        req.remove.path = (char*)server_path;
        req.remove.type = wtype;
        rc = rc < 0 ? rc : serialize_RemoveWatchesRequest(oa, "req", &req.remove);
@@ -4084,24 +4084,24 @@ static int aremove_watches(
         req.check.path = (char*)server_path;
         req.check.type = wtype;
         rc = rc < 0 ? rc : serialize_CheckWatchesRequest(oa, "req", &req.check);
-	}
+    }
 
-	if (rc < 0) {
+    if (rc < 0) {
         goto done;
     }
 
     wdo = create_watcher_deregistration(
         server_path, watcher, watcherCtx, wtype);
 
-	if (!wdo) {
+    if (!wdo) {
         rc = ZSYSTEMERROR;
         goto done;
     }
 
     enter_critical(zh);
-	rc = add_completion_deregistration(
-		zh, h.xid, COMPLETION_VOID, completion, data, 0, wdo, 0);
-	rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
+    rc = add_completion_deregistration(
+        zh, h.xid, COMPLETION_VOID, completion, data, 0, wdo, 0);
+    rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
     rc = rc < 0 ? ZMARSHALLINGERROR : ZOK;
     leave_critical(zh);
@@ -4851,7 +4851,7 @@ static int remove_watches(
     watcher_fn watcher, void *wctx, int local, int all)
 {
     int rc = 0;
-	    struct sync_completion *sc;
+    struct sync_completion *sc;
 
     if (!path)
         return ZBADARGUMENTS;
