@@ -818,7 +818,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     private void addCnxn(NIOServerCnxn cnxn) throws IOException {
         InetAddress addr = cnxn.getSocketAddress();
         if (addr == null) {
-            throw new IOException("Scoket of " + cnxn + " has been closed");
+            throw new IOException("Socket of " + cnxn + " has been closed");
         }
         Set<NIOServerCnxn> set = ipMap.get(addr);
         if (set == null) {
