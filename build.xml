@@ -75,7 +75,9 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="version-major" value="3" />
     <property name="version-minor" value="5" />
     <property name="version-patch" value="5" />
-    <property name="version" value="${version-major}.${version-minor}.${version-patch}-beta-SNAPSHOT" />
+    <property name="version-base" value="${version-major}.${version-minor}.${version-patch}" />
+    <property name="version-suffix" value="beta-SNAPSHOT" />
+    <property name="version" value="${version-base}-${version-suffix}" />
 
     <property name="final.name" value="${name}-${version}"/>
     <property name="revision.dir" value="${basedir}/.revision" />
@@ -619,6 +621,8 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <!-- ====================================================== -->
     <!-- Make zookeeper.jar                                     -->
     <!-- ====================================================== -->
+	
+	
     <target name="jar" depends="compile">
         <java classname="org.apache.zookeeper.Version" fork="true"
               outputproperty="revision" errorproperty="revision.error" failonerror="true">
@@ -629,7 +633,17 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
             </classpath>
         </java>
         <exec executable="hostname" outputproperty="host.name"/>
-        <jar jarfile="${build.dir}/${final.name}.jar">
+	    
+    	<!-- Ensure that OSGi versions order properly whatever suffix is used by -->
+    	<!-- using DEV and REL at the start of the qualifier. DEV versions also -->
+    	<!-- use a timestamp to ensure later snapshots have higher versions -->
+	    <condition property="version-osgi" 
+		       value="${version-base}.DEV-${DSTAMP}-${TSTAMP}-${version-suffix}"
+		       else="${version-base}.REL-${version-suffix}">
+	        <contains string="${version-suffix}" substring="SNAPSHOT" />
+	    </condition>
+        
+    	<jar jarfile="${build.dir}/${final.name}.jar">
             <fileset file="LICENSE.txt" />
             <fileset dir="${build.classes}" excludes="**/.generated"/>
             <fileset dir="${java.src.dir}"/>
@@ -650,11 +664,11 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
                 <attribute name="Bundle-Name" value="ZooKeeper Bundle"/>
                 <attribute name="Bundle-SymbolicName" value="org.apache.hadoop.zookeeper"/>
                 <attribute name="Bundle-ManifestVersion" value="2"/>
-                <attribute name="Bundle-Version" value="${version}"/>
+                <attribute name="Bundle-Version" value="${version-osgi}"/>
                 <attribute name="Bundle-License" value="http://www.apache.org/licenses/LICENSE-2.0.txt"/>
                 <attribute name="Bundle-DocURL" value="http://hadoop.apache.org/zookeeper"/>
                 <attribute name="Import-Package" value='javax.management;resolution:=optional,javax.security.auth.callback,javax.security.auth.login,javax.security.sasl,org.slf4j;version="[1.6,2)",org.jboss.netty.buffer;resolution:=optional;version="[3.2,4)",org.jboss.netty.channel;resolution:=optional;version="[3.2,4)",org.jboss.netty.channel.group;resolution:=optional;version="[3.2,4)",org.jboss.netty.channel.socket.nio;resolution:=optional;version="[3.2,4)",org.osgi.framework;resolution:=optional;version="[1.5,2)",org.osgi.util.tracker;resolution:=optional;version="[1.4,2)",org.ietf.jgss'/>
-                <attribute name="Export-Package" value='org.apache.zookeeper;version="${version}",org.apache.zookeeper.client;version="${version}",org.apache.zookeeper.data;version="${version}",org.apache.zookeeper.version;version="${version}",org.apache.zookeeper.server;version="${version}",org.apache.zookeeper.server.auth;version="${version}",org.apache.zookeeper.server.persistence;version="${version}",org.apache.zookeeper.server.quorum;version="${version}",org.apache.zookeeper.common;version="${version}"'/>
+                <attribute name="Export-Package" value='org.apache.zookeeper;version="${version-osgi}",org.apache.zookeeper.client;version="${version-osgi}",org.apache.zookeeper.data;version="${version-osgi}",org.apache.zookeeper.version;version="${version-osgi}",org.apache.zookeeper.server;version="${version-osgi}",org.apache.zookeeper.server.auth;version="${version-osgi}",org.apache.zookeeper.server.persistence;version="${version-osgi}",org.apache.zookeeper.server.quorum;version="${version-osgi}",org.apache.zookeeper.common;version="${version-osgi}"'/>
             </manifest>
         </jar>
     </target>
