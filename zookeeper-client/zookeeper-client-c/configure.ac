@@ -25,17 +25,20 @@ DX_INIT_DOXYGEN([zookeeper],[c-doc.Doxyfile],[docs])
 AM_INIT_AUTOMAKE([-Wall foreign])
 AC_CONFIG_HEADER([config.h])
 
-# Checks for programs.
-AC_ARG_WITH(cppunit,
-        [  --without-cppunit       do not use CPPUNIT])
+AC_DEFUN([ZK_PKG_CONFIG_STATIC],
+    [AC_REQUIRE([PKG_PROG_PKG_CONFIG])dnl
+        _save_PKG_CONFIG=$PKG_CONFIG
+        PKG_CONFIG="$PKG_CONFIG --static"
+        PKG_CHECK_MODULES([$1], [$2], [$3], [$4], [$5])
+        PKG_CONFIG=$_save_PKG_CONFIG[]dnl
+])
 
-if test "$with_cppunit" = "no" ; then
-   CPPUNIT_PATH="No_CPPUNIT"
-   CPPUNIT_INCLUDE=
-   CPPUNIT_LIBS=
-else
-   AM_PATH_CPPUNIT(1.10.2)
-fi
+# Checks for programs.
+AC_ARG_WITH([cppunit],
+    AS_HELP_STRING([--without-cppunit], [do not use CPPUNIT]))
+AS_IF([test "x$without_cppunit" != "xyes"], [
+    ZK_PKG_CONFIG_STATIC([CPPUNIT], [cppunit >= 1.10.2])
+])
 
 if test "$CALLER" = "ANT" ; then
 CPPUNIT_CFLAGS="$CPPUNIT_CFLAGS -DZKSERVER_CMD=\"\\\"${base_dir}/zookeeper-client/zookeeper-client-c/tests/zkServer.sh\\\"\""
