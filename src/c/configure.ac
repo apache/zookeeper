@@ -5,6 +5,7 @@ AC_PREREQ(2.59)
 
 AC_INIT([zookeeper C client],3.6.0,[user@zookeeper.apache.org],[zookeeper])
 AC_CONFIG_SRCDIR([src/zookeeper.c])
+AC_CONFIG_MACRO_DIRS([m4])
 
 # Save initial CFLAGS and CXXFLAGS values before AC_PROG_CC and AC_PROG_CXX
 init_cflags="$CFLAGS"
