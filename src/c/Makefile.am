@@ -2,7 +2,6 @@
 include $(top_srcdir)/aminclude.am
 
 AUTOMAKE_OPTIONS = serial-tests
-ACLOCAL_AMFLAGS = -I m4
 if SOLARIS
   SOLARIS_CPPFLAGS = -D_POSIX_PTHREAD_SEMANTICS
   SOLARIS_LIB_LDFLAGS = -lnsl -lsocket

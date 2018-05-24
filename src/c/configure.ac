@@ -5,7 +5,6 @@ AC_PREREQ(2.59)
 
 AC_INIT([zookeeper C client],3.6.0,[user@zookeeper.apache.org],[zookeeper])
 AC_CONFIG_SRCDIR([src/zookeeper.c])
-AC_CONFIG_MACRO_DIRS([m4])
 
 # Save initial CFLAGS and CXXFLAGS values before AC_PROG_CC and AC_PROG_CXX
 init_cflags="$CFLAGS"
@@ -27,16 +26,11 @@ AM_INIT_AUTOMAKE([-Wall foreign])
 AC_CONFIG_HEADER([config.h])
 
 # Checks for programs.
-AC_ARG_WITH(cppunit,
-        [  --without-cppunit       do not use CPPUNIT])
-
-if test "$with_cppunit" = "no" ; then
-   CPPUNIT_PATH="No_CPPUNIT"
-   CPPUNIT_INCLUDE=
-   CPPUNIT_LIBS=
-else
-   AM_PATH_CPPUNIT(1.10.2)
-fi
+AC_ARG_WITH([cppunit],
+    AS_HELP_STRING([--without-cppunit], [do not use CPPUNIT]))
+AS_IF([test "x$without_cppunit" != "xyes"], [
+    PKG_CHECK_MODULES_STATIC([CPPUNIT], [cppunit >= 1.10.2])
+])
 
 if test "$CALLER" = "ANT" ; then
 CPPUNIT_CFLAGS="$CPPUNIT_CFLAGS -DZKSERVER_CMD=\"\\\"${base_dir}/src/c/tests/zkServer.sh\\\"\""
