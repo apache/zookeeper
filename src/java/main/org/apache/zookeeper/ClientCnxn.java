@@ -27,6 +27,7 @@ import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.ArrayList;
@@ -1271,7 +1272,7 @@ public class ClientCnxn {
                                      "SendThread exitedloop.");
         }
 
-        private void pingRwServer() throws RWServerFoundException {
+        private void pingRwServer() throws RWServerFoundException, UnknownHostException {
             String result = null;
             InetSocketAddress addr = hostProvider.next(0);
             LOG.info("Checking server " + addr + " for being r/w." +
