@@ -57,7 +57,7 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
         super(logFactory, self.tickTime, self.minSessionTimeout, self.maxSessionTimeout, zkDb, self);
     }
 
-    public Leader getLeader(){
+    public Leader getLeader() {
         return self.leader;
     }
 

@@ -450,7 +450,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
     }
 
+    //注册 服务！！
     public synchronized void startup() {
+        //
         if (sessionTracker == null) {
             createSessionTracker();
         }
@@ -790,6 +792,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected void setLocalSessionFlag(Request si) {
     }
 
+    // 处理请求！！
     public void submitRequest(Request si) {
         if (firstProcessor == null) {
             synchronized (this) {
@@ -810,6 +813,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             }
         }
         try {
+            // 检测 session
             touch(si.cnxn);
             boolean validpacket = Request.isValid(si.type);
             if (validpacket) {
@@ -1069,6 +1073,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return false;
     }
 
+    // 处理 packet
     public void processPacket(ServerCnxn cnxn, ByteBuffer incomingBuffer) throws IOException {
         // We have the request, now process and setup for next
         InputStream bais = new ByteBufferInputStream(incomingBuffer);

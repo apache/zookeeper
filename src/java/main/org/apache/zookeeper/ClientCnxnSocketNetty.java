@@ -65,6 +65,7 @@ import static org.apache.zookeeper.common.X509Exception.SSLContextException;
  * It's responsible for connecting to server, reading/writing network traffic and
  * being a layer between network data and higher level packets.
  */
+// Client 发送请求！！
 public class ClientCnxnSocketNetty extends ClientCnxnSocket {
     private static final Logger LOG = LoggerFactory.getLogger(ClientCnxnSocketNetty.class);
 

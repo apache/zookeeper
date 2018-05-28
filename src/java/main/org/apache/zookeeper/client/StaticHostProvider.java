@@ -75,6 +75,7 @@ public final class StaticHostProvider implements HostProvider {
     public StaticHostProvider(Collection<InetSocketAddress> serverAddresses) {
        sourceOfRandomness = new Random(System.currentTimeMillis() ^ this.hashCode());
 
+        // 获取server节点列表放在list中打散
         this.serverAddresses = resolveAndShuffle(serverAddresses);
         if (this.serverAddresses.isEmpty()) {
             throw new IllegalArgumentException(

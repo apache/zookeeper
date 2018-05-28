@@ -171,12 +171,8 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             }
         }
 
+        // IMPORTANT !!  接收并处理消息
         private void processMessage(MessageEvent e, NettyServerCnxn cnxn) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug(Long.toHexString(cnxn.sessionId) + " queuedBuffer: "
-                        + cnxn.queuedBuffer);
-            }
-
             if (e instanceof NettyServerCnxn.ResumeMessageEvent) {
                 LOG.debug("Received ResumeMessageEvent");
                 if (cnxn.queuedBuffer != null) {
@@ -199,25 +195,14 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                 cnxn.channel.setReadable(true);
             } else {
                 ChannelBuffer buf = (ChannelBuffer)e.getMessage();
-                if (LOG.isTraceEnabled()) {
-                    LOG.trace(Long.toHexString(cnxn.sessionId)
-                            + " buf 0x"
-                            + ChannelBuffers.hexDump(buf));
-                }
-                
+                //节流，放入队列中
                 if (cnxn.throttled) {
-                    LOG.debug("Received message while throttled");
                     // we are throttled, so we need to queue
                     if (cnxn.queuedBuffer == null) {
                         LOG.debug("allocating queue");
                         cnxn.queuedBuffer = dynamicBuffer(buf.readableBytes());
                     }
                     cnxn.queuedBuffer.writeBytes(buf);
-                    if (LOG.isTraceEnabled()) {
-                        LOG.trace(Long.toHexString(cnxn.sessionId)
-                                + " queuedBuffer 0x"
-                                + ChannelBuffers.hexDump(cnxn.queuedBuffer));
-                    }
                 } else {
                     LOG.debug("not throttled");
                     if (cnxn.queuedBuffer != null) {
@@ -533,7 +518,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                 s = new HashSet<NettyServerCnxn>();
             }
             s.add(cnxn);
-            ipMap.put(addr,s);
+            ipMap.put(addr, s);
         }
     }
 

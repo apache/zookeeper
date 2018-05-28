@@ -108,6 +108,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
 
     LinkedBlockingQueue<Request> submittedRequests = new LinkedBlockingQueue<Request>();
 
+    // ProposalRequestProcessor
     private final RequestProcessor nextProcessor;
 
     ZooKeeperServer zks;
