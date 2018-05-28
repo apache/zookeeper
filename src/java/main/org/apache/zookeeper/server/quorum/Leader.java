@@ -48,6 +48,7 @@ import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperThread;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
+import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,7 +102,13 @@ public class Leader {
     // list of followers that are ready to follow (i.e synced with the leader)
     private final HashSet<LearnerHandler> forwardingFollowers =
         new HashSet<LearnerHandler>();
-    
+
+    private final ProposalStats proposalStats;
+
+    public ProposalStats getProposalStats() {
+        return proposalStats;
+    }
+
     /**
      * Returns a copy of the current forwarding follower snapshot
      */
@@ -185,6 +192,7 @@ public class Leader {
 
     Leader(QuorumPeer self,LeaderZooKeeperServer zk) throws IOException {
         this.self = self;
+        this.proposalStats = new ProposalStats();
         try {
             if (self.getQuorumListenOnAllIPs()) {
                 ss = new ServerSocket(self.getQuorumAddress().getPort());
@@ -764,20 +772,9 @@ public class Leader {
             shutdown(msg);
             throw new XidRolloverException(msg);
         }
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
-        try {
-            request.hdr.serialize(boa, "hdr");
-            if (request.txn != null) {
-                request.txn.serialize(boa, "txn");
-            }
-            baos.close();
-        } catch (IOException e) {
-            LOG.warn("This really should be impossible", e);
-        }
-        QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, request.zxid, 
-                baos.toByteArray(), null);
+        byte[] data = SerializeUtils.serializeRequest(request);
+        proposalStats.setLastProposalSize(data.length);
+        QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, request.zxid, data, null);
         
         Proposal p = new Proposal();
         p.packet = pp;

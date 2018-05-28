@@ -58,6 +58,18 @@ public class Request {
         this.authInfo = authInfo;
     }
 
+    public Request(long sessionId, int xid, int type, TxnHeader hdr, Record txn, long zxid) {
+        this.sessionId = sessionId;
+        this.cxid = xid;
+        this.type = type;
+        this.hdr = hdr;
+        this.txn = txn;
+        this.zxid = zxid;
+        this.request = null;
+        this.cnxn = null;
+        this.authInfo = null;
+    }
+
     public final long sessionId;
 
     public final int cxid;

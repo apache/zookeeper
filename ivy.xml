@@ -34,6 +34,7 @@
     <conf name="jdiff" visibility="private"/>
     <conf name="releaseaudit" visibility="private" description="Artifacts required for releaseaudit target"/>
     <conf name="owasp" visibility="private" description="Artifacts required for owasp target"/>
+    <conf name="clover" visibility="private" description="Artifacts required for clover target"/>
   </configurations>
 
   <publications>
@@ -144,6 +145,8 @@
     </dependency>
 
     <dependency org="org.hamcrest" name="hamcrest-all" rev="${hamcrest.version}" conf="test->default" />
+
+    <dependency org="org.openclover" name="clover" rev="${clover.version}" conf="clover->default"/>
 
     <conflict manager="strict"/>
 
