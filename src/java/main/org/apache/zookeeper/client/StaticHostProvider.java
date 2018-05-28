@@ -32,7 +32,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Most simple HostProvider, resolves only on instantiation.
+ * Most simple HostProvider, resolves on every next() call.
+ *
+ * Please be aware that although this class doesn't do any DNS caching, there're multiple levels of caching already
+ * present across the stack like in JVM, OS level, hardware, etc. The best we could do here is to get the most recent
+ * address from the underlying system which is considered up-to-date.
  *
  */
 @InterfaceAudience.Public
@@ -141,7 +145,7 @@ public final class StaticHostProvider implements HostProvider {
         return serverAddresses.size();
     }
 
-    public InetSocketAddress next(long spinDelay) throws UnknownHostException {
+    public InetSocketAddress next(long spinDelay) {
         currentIndex = ++currentIndex % serverAddresses.size();
         if (currentIndex == lastIndex && spinDelay > 0) {
             try {
@@ -155,14 +159,17 @@ public final class StaticHostProvider implements HostProvider {
         }
 
         InetSocketAddress curAddr = serverAddresses.get(currentIndex);
-
-        String curHostString = getHostString(curAddr);
-        List<InetAddress> resolvedAddresses = new ArrayList<InetAddress>(Arrays.asList(this.resolver.getAllByName(curHostString)));
-        if (resolvedAddresses.isEmpty()) {
-            throw new UnknownHostException("No IP address returned for address: " + curHostString);
+        try {
+            String curHostString = getHostString(curAddr);
+            List<InetAddress> resolvedAddresses = new ArrayList<InetAddress>(Arrays.asList(this.resolver.getAllByName(curHostString)));
+            if (resolvedAddresses.isEmpty()) {
+                return curAddr;
+            }
+            Collections.shuffle(resolvedAddresses);
+            return new InetSocketAddress(resolvedAddresses.get(0), curAddr.getPort());
+        } catch (UnknownHostException e) {
+            return curAddr;
         }
-        Collections.shuffle(resolvedAddresses);
-        return new InetSocketAddress(resolvedAddresses.get(0), curAddr.getPort());
     }
 
     @Override

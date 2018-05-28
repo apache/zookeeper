@@ -52,10 +52,10 @@ public interface HostProvider {
      * For a spinDelay of 0 there should be no wait.
      *
      * @param spinDelay Milliseconds to wait if all hosts have been tried once.
-     * @return The next host to try to connect to.
-     * @throws UnknownHostException if next host in the list is unresolvable. Call again to advance pointer to next item in the list.
+     * @return The next host to try to connect to with resolved address. If the host is not resolvable, the unresolved
+     * address will be returned.
      */
-    public InetSocketAddress next(long spinDelay) throws UnknownHostException;
+    public InetSocketAddress next(long spinDelay);
 
     /**
      * Notify the HostProvider of a successful connection.

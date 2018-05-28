@@ -39,6 +39,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -53,7 +54,7 @@ public class StaticHostProviderTest extends ZKTestCase {
     private static final Logger LOG = LoggerFactory.getLogger(StaticHostProviderTest.class);
 
     @Test
-    public void testNextGoesRound() throws UnknownHostException {
+    public void testNextGoesRound() {
         HostProvider hostProvider = getHostProvider((byte) 2);
         InetSocketAddress first = hostProvider.next(0);
         assertTrue(first instanceof InetSocketAddress);
@@ -62,7 +63,7 @@ public class StaticHostProviderTest extends ZKTestCase {
     }
 
     @Test
-    public void testNextGoesRoundAndSleeps() throws UnknownHostException {
+    public void testNextGoesRoundAndSleeps() {
         byte size = 2;
         HostProvider hostProvider = getHostProvider(size);
         while (size > 0) {
@@ -76,7 +77,7 @@ public class StaticHostProviderTest extends ZKTestCase {
     }
 
     @Test
-    public void testNextDoesNotSleepForZero() throws UnknownHostException {
+    public void testNextDoesNotSleepForZero() {
         byte size = 2;
         HostProvider hostProvider = getHostProvider(size);
         while (size > 0) {
@@ -90,13 +91,13 @@ public class StaticHostProviderTest extends ZKTestCase {
     }
 
     @Test
-    public void testTwoConsequitiveCallsToNextReturnDifferentElement() throws UnknownHostException {
+    public void testTwoConsequitiveCallsToNextReturnDifferentElement() {
         HostProvider hostProvider = getHostProvider((byte) 2);
         assertNotSame(hostProvider.next(0), hostProvider.next(0));
     }
 
     @Test
-    public void testOnConnectDoesNotReset() throws UnknownHostException {
+    public void testOnConnectDoesNotReset() {
         HostProvider hostProvider = getHostProvider((byte) 2);
         InetSocketAddress first = hostProvider.next(0);
         hostProvider.onConnected();
@@ -105,7 +106,7 @@ public class StaticHostProviderTest extends ZKTestCase {
     }
 
     @Test
-    public void testLiteralIPNoReverseNS() throws Exception {
+    public void testLiteralIPNoReverseNS() {
         byte size = 30;
         HostProvider hostProvider = getHostProviderUnresolved(size);
         for (int i = 0; i < size; i++) {
@@ -126,11 +127,12 @@ public class StaticHostProviderTest extends ZKTestCase {
         HostProvider hp = new StaticHostProvider(new ArrayList<InetSocketAddress>());
     }
 
-    @Test(expected = UnknownHostException.class)
-    public void testInvalidHostAddresses() throws UnknownHostException {
+    @Test
+    public void testInvalidHostAddresses() {
         // Arrange
         final List<InetSocketAddress> invalidAddresses = new ArrayList<InetSocketAddress>();
-        invalidAddresses.add(InetSocketAddress.createUnresolved("a", 1234));
+        InetSocketAddress unresolved = InetSocketAddress.createUnresolved("a", 1234);
+        invalidAddresses.add(unresolved);
         StaticHostProvider.Resolver resolver = new StaticHostProvider.Resolver() {
             @Override
             public InetAddress[] getAllByName(String name) throws UnknownHostException {
@@ -141,6 +143,8 @@ public class StaticHostProviderTest extends ZKTestCase {
 
         // Act & Assert
         InetSocketAddress n1 = sp.next(0);
+        assertTrue("Provider should return unresolved address is host is unresolvable", n1.isUnresolved());
+        assertSame("Provider should return original address is host is unresolvable", unresolved, n1);
     }
 
     @Test
@@ -296,27 +300,24 @@ public class StaticHostProviderTest extends ZKTestCase {
         StaticHostProvider.Resolver spyResolver = spy(resolver);
         StaticHostProvider hostProvider = new StaticHostProvider(list, spyResolver);
 
-        boolean gotEmpty = false;
-
         // Act & Assert
         for (int i = 0; i < 10; i++) {
-            try {
-                InetSocketAddress resolved = hostProvider.next(0);
-                hostProvider.onConnected();
+            InetSocketAddress resolved = hostProvider.next(0);
+            hostProvider.onConnected();
+            if (resolved.getHostName().equals("www.google.com")) {
+                assertTrue("HostProvider should return unresolved address if host is unresolvable", resolved.isUnresolved());
+            } else {
                 assertFalse("HostProvider should return resolved addresses", resolved.isUnresolved());
                 assertEquals("192.168.1.1", resolved.getAddress().getHostAddress());
-            } catch (UnknownHostException e) {
-                gotEmpty = true;
             }
         }
 
-        assertThat("Empty resolution hasn't thrown exception", gotEmpty, is(true));
         verify(spyResolver, times(5)).getAllByName("www.apache.org");
         verify(spyResolver, times(5)).getAllByName("www.google.com");
     }
 
     @Test
-    public void testReResolvingLocalhost() throws UnknownHostException {
+    public void testReResolvingLocalhost() {
         byte size = 2;
         ArrayList<InetSocketAddress> list = new ArrayList<InetSocketAddress>(size);
 
