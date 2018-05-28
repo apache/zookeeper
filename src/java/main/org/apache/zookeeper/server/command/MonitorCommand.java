@@ -68,8 +68,6 @@ public class MonitorCommand extends AbstractFourLetterCommand {
             print("max_file_descriptor_count", osMbean.getMaxFileDescriptorCount());
         }
 
-        print("fsync_threshold_exceed_count", stats.getFsyncThresholdExceedCount());
-
         if (stats.getServerState().equals("leader")) {
             Leader leader = ((LeaderZooKeeperServer)zkServer).getLeader();
 

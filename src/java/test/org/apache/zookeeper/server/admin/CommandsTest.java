@@ -173,8 +173,7 @@ public class CommandsTest extends ClientBase {
                     new Field("ephemerals_count", Integer.class),
                     new Field("approximate_data_size", Long.class),
                     new Field("open_file_descriptor_count", Long.class),
-                    new Field("max_file_descriptor_count", Long.class),
-                    new Field("fsync_threshold_exceed_count", Long.class));
+                    new Field("max_file_descriptor_count", Long.class));
     }
 
     @Test

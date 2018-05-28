@@ -330,8 +330,6 @@ public class Commands {
             response.put("open_file_descriptor_count", osMbean.getOpenFileDescriptorCount());
             response.put("max_file_descriptor_count", osMbean.getMaxFileDescriptorCount());
 
-            response.put("fsync_threshold_exceed_count", stats.getFsyncThresholdExceedCount());
-
             if (zkServer instanceof LeaderZooKeeperServer) {
                 Leader leader = ((LeaderZooKeeperServer) zkServer).getLeader();
 
