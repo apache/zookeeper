@@ -219,6 +219,15 @@ static __attribute__((unused)) void print_completion_queue(zhandle_t *zh);
 static void *SYNCHRONOUS_MARKER = (void*)&SYNCHRONOUS_MARKER;
 static int isValidPath(const char* path, const int flags);
 
+static int aremove_watches(
+    zhandle_t *zh, const char *path, ZooWatcherType wtype,
+    watcher_fn watcher, void *watcherCtx, int local,
+    void_completion_t *completion, const void *data, int all);
+
+static int remove_watches(
+    zhandle_t *zh, const char *path, ZooWatcherType wtype,
+    watcher_fn watcher, void *watcherCtx, int local, int all);
+
 #ifdef _WINDOWS
 static int zookeeper_send(SOCKET s, const char* buf, int len)
 #else
@@ -3782,11 +3791,12 @@ int zoo_set_acl(zhandle_t *zh, const char *path, int version,
     return rc;
 }
 
-int zoo_remove_watchers(zhandle_t *zh, const char *path, ZooWatcherType wtype,
-         watcher_fn watcher, void *watcherCtx, int local)
+static int remove_watches(
+    zhandle_t *zh, const char *path, ZooWatcherType wtype,
+    watcher_fn watcher, void *wctx, int local, int all)
 {
-    struct sync_completion *sc;
     int rc = 0;
+    struct sync_completion *sc;
 
     if (!path)
         return ZBADARGUMENTS;
@@ -3795,8 +3805,8 @@ int zoo_remove_watchers(zhandle_t *zh, const char *path, ZooWatcherType wtype,
     if (!sc)
         return ZSYSTEMERROR;
 
-    rc = zoo_aremove_watchers(zh, path, wtype, watcher, watcherCtx, local,
-                              SYNCHRONOUS_MARKER, sc);
+    rc = aremove_watches(zh, path, wtype, watcher, wctx, local,
+                              SYNCHRONOUS_MARKER, sc, all);
     if (rc == ZOK) {
         wait_sync_completion(sc);
         rc = sc->rc;
@@ -3805,15 +3815,25 @@ int zoo_remove_watchers(zhandle_t *zh, const char *path, ZooWatcherType wtype,
     return rc;
 }
 
-int zoo_aremove_watchers(zhandle_t *zh, const char *path, ZooWatcherType wtype,
+typedef union WatchesRequest WatchesRequest;
+
+union WatchesRequest {
+    struct CheckWatchesRequest check;
+    struct RemoveWatchesRequest remove;
+};
+
+static int aremove_watches(zhandle_t *zh, const char *path, ZooWatcherType wtype,
         watcher_fn watcher, void *watcherCtx, int local,
-        void_completion_t *completion, const void *data)
+        void_completion_t *completion, const void *data, int all)
 {
     char *server_path = prepend_string(zh, path);
     int rc;
     struct oarchive *oa;
-    struct RequestHeader h = { get_xid(), ZOO_REMOVE_WATCHES };
-    struct RemoveWatchesRequest req =  { (char*)server_path, wtype };
+    struct RequestHeader h = { 
+        get_xid(), 
+        all ? ZOO_REMOVE_WATCHES : ZOO_CHECK_WATCHES 
+    };
+    WatchesRequest req;
     watcher_deregistration_t *wdo;
 
     if (!zh || !isValidPath(server_path, 0)) {
@@ -3840,10 +3860,20 @@ int zoo_aremove_watchers(zhandle_t *zh, const char *path, ZooWatcherType wtype,
 
     oa = create_buffer_oarchive();
     rc = serialize_RequestHeader(oa, "header", &h);
-    rc = rc < 0 ? rc : serialize_RemoveWatchesRequest(oa, "req", &req);
+    if (all) {
+       req.remove.path = (char*)server_path;
+       req.remove.type = wtype;
+       rc = rc < 0 ? rc : serialize_RemoveWatchesRequest(oa, "req", &req.remove);
+    } else {
+        req.check.path = (char*)server_path;
+        req.check.type = wtype;
+        rc = rc < 0 ? rc : serialize_CheckWatchesRequest(oa, "req", &req.check);
+    }
+
     if (rc < 0) {
         goto done;
     }
+
 
     wdo = create_watcher_deregistration(server_path, watcher, watcherCtx,
                                         wtype);
@@ -3853,8 +3883,8 @@ int zoo_aremove_watchers(zhandle_t *zh, const char *path, ZooWatcherType wtype,
     }
 
     enter_critical(zh);
-    rc = add_completion_deregistration(zh, h.xid, COMPLETION_VOID,
-                                       completion, data, 0, wdo, 0);
+    rc = add_completion_deregistration(
+         zh, h.xid, COMPLETION_VOID, completion, data, 0, wdo, 0);
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
     rc = rc < 0 ? ZMARSHALLINGERROR : ZOK;
@@ -3868,4 +3898,33 @@ int zoo_aremove_watchers(zhandle_t *zh, const char *path, ZooWatcherType wtype,
 done:
     free_duplicate_path(server_path, path);
     return rc;
+}
+
+int zoo_remove_watches(zhandle_t *zh, const char *path, ZooWatcherType wtype,
+         watcher_fn watcher, void *watcherCtx, int local)
+{
+    return remove_watches(zh, path, wtype, watcher, watcherCtx, local, 0);
+}
+
+int zoo_remove_all_watches(
+        zhandle_t *zh, const char *path, ZooWatcherType wtype, int local)
+{
+    return remove_watches(zh, path, wtype, NULL, NULL, local, 1);
+
+}
+
+int zoo_aremove_watches(zhandle_t *zh, const char *path, ZooWatcherType wtype,
+        watcher_fn watcher, void *watcherCtx, int local,
+        void_completion_t *completion, const void *data)
+{
+    return aremove_watches(
+        zh, path, wtype, watcher, watcherCtx, local, completion, data, 0);
+}
+
+int zoo_aremove_all_watches(zhandle_t *zh, const char *path,
+        ZooWatcherType wtype, int local, void_completion_t *completion,
+        const void *data)
+{
+    return aremove_watches(
+        zh, path, wtype, NULL, NULL, local, completion, data, 1);
 }

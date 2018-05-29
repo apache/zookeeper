@@ -425,14 +425,14 @@ void removeWatchers(zhandle_t *zh, const char* path, ZooWatcherType type,
         watcher_fn watcher, void *watcherCtx)
 {
     switch (type) {
-    case ZWATCHERTYPE_CHILDREN:
+    case ZWATCHTYPE_CHILD:
         removeWatcher(zh->active_child_watchers, path, watcher, watcherCtx);
         break;
-    case ZWATCHERTYPE_DATA:
+    case ZWATCHTYPE_DATA:
         removeWatcher(zh->active_node_watchers, path, watcher, watcherCtx);
         removeWatcher(zh->active_exist_watchers, path, watcher, watcherCtx);
         break;
-    case ZWATCHERTYPE_ANY:
+    case ZWATCHTYPE_ANY:
         removeWatcher(zh->active_child_watchers, path, watcher, watcherCtx);
         removeWatcher(zh->active_node_watchers, path, watcher, watcherCtx);
         removeWatcher(zh->active_exist_watchers, path, watcher, watcherCtx);
@@ -446,11 +446,11 @@ int pathHasWatcher(zhandle_t *zh, const char *path, int wtype,
     int watcher_found = 0;
 
     switch (wtype) {
-    case ZWATCHERTYPE_CHILDREN:
+    case ZWATCHTYPE_CHILD:
         watcher_found = containsWatcher(zh->active_child_watchers,
                                         path, watcher, watcherCtx);
         break;
-    case ZWATCHERTYPE_DATA:
+    case ZWATCHTYPE_DATA:
         watcher_found = containsWatcher(zh->active_node_watchers, path,
                                         watcher, watcherCtx);
         if (!watcher_found) {
@@ -458,7 +458,7 @@ int pathHasWatcher(zhandle_t *zh, const char *path, int wtype,
                                             watcher, watcherCtx);
         }
         break;
-    case ZWATCHERTYPE_ANY:
+    case ZWATCHTYPE_ANY:
         watcher_found = containsWatcher(zh->active_child_watchers, path,
                                         watcher, watcherCtx);
         if (!watcher_found) {

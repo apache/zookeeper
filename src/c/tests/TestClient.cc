@@ -1129,66 +1129,80 @@ public:
       }
     }
 
-    static void watcher_remove_watchers(zhandle_t *zh, int type,
-                                    int state, const char *path,void *watcherCtx) {
-        count++;
+	static void watcher_rw(zhandle_t *zh,
+		                   int type,
+		                   int state,
+		                   const char *path,
+		                   void *ctx) {
+		count++;
+	}
+
+	static void watcher_rw2(zhandle_t *zh,
+		                    int type,
+		                    int state,
+		                    const char *path,
+		                    void *ctx) {
+		count++;
     }
 
     void testRemoveWatchers() {
+      char *path = "/something";
+      char buf[1024];
+      int blen = sizeof(buf);		
       int rc;
       watchctx_t ctx;
-      zhandle_t *zk = createClient(&ctx);
+			zhandle_t *zk;
+
+			/* setup path */
+      zk = createClient(&ctx);
       CPPUNIT_ASSERT(zk);
 
-      count = 0;
-
-      rc = zoo_create(zk, "/something", "", 0,
-                      &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+      rc = zoo_create(zk, path, "", 0, &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
       CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
-
-      char buf[1024];
-      int blen = sizeof(buf);
-      rc = zoo_get(zk, "/something", 1, buf, &blen, NULL);
 
       /* remove all watchers */
-      rc = zoo_remove_watchers(zk, "/something", ZWATCHERTYPE_DATA,
-                               NULL, NULL, 0);
-      CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
-
+      count = 0;
+      rc = zoo_wget(zk, path, watcher_rw, NULL, buf, &blen, NULL);
+      rc = zoo_wget(zk, path, watcher_rw2, NULL, buf, &blen, NULL);
+      rc = zoo_remove_all_watches(zk, path, ZWATCHTYPE_ANY, 0);
+			CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+			rc = zoo_set(zk, path, "nowatch", 7, -1);
+      CPPUNIT_ASSERT(count == 0);
+			
       /* remove a specific watcher before it's added (should fail) */
-      rc = zoo_remove_watchers(zk, "/something", ZWATCHERTYPE_DATA,
-                               watcher_remove_watchers, NULL, 0);
+      rc = zoo_remove_watches(zk, path, ZWATCHTYPE_DATA,
+                               watcher_rw, NULL, 0);
       CPPUNIT_ASSERT_EQUAL((int)ZNOWATCHER, rc);
 
       /* now add a specific watcher and then remove it */
-      rc = zoo_wget(zk, "/something", watcher_remove_watchers, NULL,
+      rc = zoo_wget(zk, path, watcher_rw, NULL,
                     buf, &blen, NULL);
       CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
-      rc = zoo_remove_watchers(zk, "/something", ZWATCHERTYPE_DATA,
-                               watcher_remove_watchers, NULL, 0);
+      rc = zoo_remove_watches(zk, path, ZWATCHTYPE_DATA,
+                               watcher_rw, NULL, 0);
       CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
 
       /* ditto for children watcher */
-      rc = zoo_remove_watchers(zk, "/something", ZWATCHERTYPE_CHILDREN,
-                               watcher_remove_watchers, NULL, 0);
+      rc = zoo_remove_watches(zk, path, ZWATCHTYPE_CHILD,
+                               watcher_rw, NULL, 0);
       CPPUNIT_ASSERT_EQUAL((int)ZNOWATCHER, rc);
 
       struct String_vector str_vec = {0, NULL};
-      rc = zoo_wget_children(zk, "/something", watcher_remove_watchers, NULL,
+      rc = zoo_wget_children(zk, path, watcher_rw, NULL,
                              &str_vec);
       CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
-      rc = zoo_remove_watchers(zk, "/something", ZWATCHERTYPE_CHILDREN,
-                               watcher_remove_watchers, NULL, 0);
+      rc = zoo_remove_watches(zk, path, ZWATCHTYPE_CHILD,
+                               watcher_rw, NULL, 0);
       CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
 
       /* add a watch, stop the server, and have remove fail */
-      rc = zoo_wget(zk, "/something", watcher_remove_watchers, NULL,
+      rc = zoo_wget(zk, path, watcher_rw, NULL,
                     buf, &blen, NULL);
       CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
       stopServer();
       ctx.waitForDisconnected(zk);
-      rc = zoo_remove_watchers(zk, "/something", ZWATCHERTYPE_DATA,
-                               watcher_remove_watchers, NULL, 0);
+      rc = zoo_remove_watches(zk, path, ZWATCHTYPE_DATA,
+                               watcher_rw, NULL, 0);
       CPPUNIT_ASSERT_EQUAL((int)ZCONNECTIONLOSS, rc);
 
       /* bring the server back */
@@ -1200,8 +1214,8 @@ public:
                     buf, &blen, NULL);
       CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
       stopServer();
-      rc = zoo_remove_watchers(zk, "/something", ZWATCHERTYPE_DATA,
-                               watcher_remove_watchers, NULL, 1);
+      rc = zoo_remove_watches(zk, path, ZWATCHTYPE_DATA,
+                               watcher_rw, ctx1, 1);
       CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
     }
 };
