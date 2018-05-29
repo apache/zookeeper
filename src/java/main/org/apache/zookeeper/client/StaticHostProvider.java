@@ -131,6 +131,8 @@ public final class StaticHostProvider implements HostProvider {
                     "A HostProvider may not be empty!");
         }
         this.serverAddresses = shuffle(serverAddresses);
+        currentIndex = -1;
+        lastIndex = -1;
     }
 
     private InetSocketAddress resolve(InetSocketAddress address) {
