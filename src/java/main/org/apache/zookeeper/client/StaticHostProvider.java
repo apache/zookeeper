@@ -22,6 +22,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -37,6 +38,10 @@ import org.slf4j.LoggerFactory;
  */
 @InterfaceAudience.Public
 public final class StaticHostProvider implements HostProvider {
+    public interface Resolver {
+        InetAddress[] getAllByName(String name) throws UnknownHostException;
+    }
+
     private static final Logger LOG = LoggerFactory
             .getLogger(StaticHostProvider.class);
 
@@ -64,6 +69,8 @@ public final class StaticHostProvider implements HostProvider {
 
     private float pOld, pNew;
 
+    private Resolver resolver;
+
     /**
      * Constructs a SimpleHostSet.
      * 
@@ -73,15 +80,27 @@ public final class StaticHostProvider implements HostProvider {
      *             if serverAddresses is empty or resolves to an empty list
      */
     public StaticHostProvider(Collection<InetSocketAddress> serverAddresses) {
-       sourceOfRandomness = new Random(System.currentTimeMillis() ^ this.hashCode());
+        init(serverAddresses,
+                System.currentTimeMillis() ^ this.hashCode(),
+                new Resolver() {
+            @Override
+            public InetAddress[] getAllByName(String name) throws UnknownHostException {
+                return InetAddress.getAllByName(name);
+            }
+        });
+    }
 
-        this.serverAddresses = resolveAndShuffle(serverAddresses);
-        if (this.serverAddresses.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "A HostProvider may not be empty!");
-        }       
-        currentIndex = -1;
-        lastIndex = -1;              
+    /**
+     * Constructs a SimpleHostSet. This constructor is used from StaticHostProviderTest to inject custom
+     * resolver implementation.
+     *
+     * @param serverAddresses
+     *              possibly unresolved ZooKeeper server addresses
+     * @param resolver
+     *              custom resolver implementation
+     */
+    public StaticHostProvider(Collection<InetSocketAddress> serverAddresses, Resolver resolver) {
+        init(serverAddresses, System.currentTimeMillis() ^ this.hashCode(), resolver);
     }
 
     /**
@@ -96,36 +115,44 @@ public final class StaticHostProvider implements HostProvider {
      */
     public StaticHostProvider(Collection<InetSocketAddress> serverAddresses,
         long randomnessSeed) {
-        sourceOfRandomness = new Random(randomnessSeed);
-
-        this.serverAddresses = resolveAndShuffle(serverAddresses);
-        if (this.serverAddresses.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "A HostProvider may not be empty!");
-        }       
-        currentIndex = -1;
-        lastIndex = -1;              
+        init(serverAddresses, randomnessSeed, new Resolver() {
+            @Override
+            public InetAddress[] getAllByName(String name) throws UnknownHostException {
+                return InetAddress.getAllByName(name);
+            }
+        });
     }
 
-    private List<InetSocketAddress> resolveAndShuffle(Collection<InetSocketAddress> serverAddresses) {
-        List<InetSocketAddress> tmpList = new ArrayList<InetSocketAddress>(serverAddresses.size());       
-        for (InetSocketAddress address : serverAddresses) {
-            try {
-                InetAddress ia = address.getAddress();
-                String addr = (ia != null) ? ia.getHostAddress() : address.getHostString();
-                InetAddress resolvedAddresses[] = InetAddress.getAllByName(addr);
-                for (InetAddress resolvedAddress : resolvedAddresses) {
-                    InetAddress taddr = InetAddress.getByAddress(address.getHostString(), resolvedAddress.getAddress());
-                    tmpList.add(new InetSocketAddress(taddr, address.getPort()));
-                }
-            } catch (UnknownHostException ex) {
-                LOG.warn("No IP address found for server: {}", address, ex);
-            }
+    private void init(Collection<InetSocketAddress> serverAddresses, long randomnessSeed, Resolver resolver) {
+        this.sourceOfRandomness = new Random(randomnessSeed);
+        this.resolver = resolver;
+        if (serverAddresses.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "A HostProvider may not be empty!");
         }
+        this.serverAddresses = shuffle(serverAddresses);
+    }
+
+    private InetSocketAddress resolve(InetSocketAddress address) {
+        try {
+            String curHostString = address.getHostString();
+            List<InetAddress> resolvedAddresses = new ArrayList<>(Arrays.asList(this.resolver.getAllByName(curHostString)));
+            if (resolvedAddresses.isEmpty()) {
+                return address;
+            }
+            Collections.shuffle(resolvedAddresses);
+            return new InetSocketAddress(resolvedAddresses.get(0), address.getPort());
+        } catch (UnknownHostException e) {
+            return address;
+        }
+    }
+
+    private List<InetSocketAddress> shuffle(Collection<InetSocketAddress> serverAddresses) {
+        List<InetSocketAddress> tmpList = new ArrayList<>(serverAddresses.size());
+        tmpList.addAll(serverAddresses);
         Collections.shuffle(tmpList, sourceOfRandomness);
         return tmpList;
-    } 
-
+    }
 
     /**
      * Update the list of servers. This returns true if changing connections is necessary for load-balancing, false
@@ -149,15 +176,12 @@ public final class StaticHostProvider implements HostProvider {
      * @param currentHost the host to which this client is currently connected
      * @return true if changing connections is necessary for load-balancing, false otherwise  
      */
-
-
     @Override
     public synchronized boolean updateServerList(
             Collection<InetSocketAddress> serverAddresses,
             InetSocketAddress currentHost) {
-        // Resolve server addresses and shuffle them
-        List<InetSocketAddress> resolvedList = resolveAndShuffle(serverAddresses);
-        if (resolvedList.isEmpty()) {
+        List<InetSocketAddress> shuffledList = shuffle(serverAddresses);
+        if (shuffledList.isEmpty()) {
             throw new IllegalArgumentException(
                     "A HostProvider may not be empty!");
         }
@@ -183,7 +207,7 @@ public final class StaticHostProvider implements HostProvider {
             }
         }
 
-        for (InetSocketAddress addr : resolvedList) {
+        for (InetSocketAddress addr : shuffledList) {
             if (addr.getPort() == myServer.getPort()
                     && ((addr.getAddress() != null
                             && myServer.getAddress() != null && addr
@@ -200,11 +224,11 @@ public final class StaticHostProvider implements HostProvider {
         oldServers.clear();
         // Divide the new servers into oldServers that were in the previous list
         // and newServers that were not in the previous list
-        for (InetSocketAddress resolvedAddress : resolvedList) {
-            if (this.serverAddresses.contains(resolvedAddress)) {
-                oldServers.add(resolvedAddress);
+        for (InetSocketAddress address : shuffledList) {
+            if (this.serverAddresses.contains(address)) {
+                oldServers.add(address);
             } else {
-                newServers.add(resolvedAddress);
+                newServers.add(address);
             }
         }
 
@@ -245,11 +269,11 @@ public final class StaticHostProvider implements HostProvider {
         }
 
         if (!reconfigMode) {
-            currentIndex = resolvedList.indexOf(getServerAtCurrentIndex());
+            currentIndex = shuffledList.indexOf(getServerAtCurrentIndex());
         } else {
             currentIndex = -1;
         }
-        this.serverAddresses = resolvedList;
+        this.serverAddresses = shuffledList;
         currentIndexOld = -1;
         currentIndexNew = -1;
         lastIndex = currentIndex;
@@ -314,7 +338,7 @@ public final class StaticHostProvider implements HostProvider {
                 addr = nextHostInReconfigMode();
                 if (addr != null) {
                 	currentIndex = serverAddresses.indexOf(addr);
-                	return addr;                
+                	return resolve(addr);
                 }
                 //tried all servers and couldn't connect
                 reconfigMode = false;
@@ -339,7 +363,7 @@ public final class StaticHostProvider implements HostProvider {
             }
         }
 
-        return addr;
+        return resolve(addr);
     }
 
     public synchronized void onConnected() {
