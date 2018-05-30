@@ -55,8 +55,8 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="jackson.version" value="2.9.5"/>
     <property name="dependency-check-ant.version" value="2.1.0"/>
 
-    <property name="commons-io.version" value="2.4"/>
-    <property name="kerby.version" value="1.0.0-RC2"/>
+    <property name="commons-io.version" value="2.6"/>
+    <property name="kerby.version" value="1.1.0"/>
 
     <property name="clover.version" value="4.2.1" />
 
