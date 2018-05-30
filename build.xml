@@ -238,12 +238,12 @@ xmlns:maven="antlib:org.apache.maven.artifact.ant">
     <property name="mockito.version" value="1.8.5"/>
     <property name="checkstyle.version" value="5.0"/>
     <property name="commons-collections.version" value="3.2.2"/>
-    <property name="commons-io.version" value="2.4"/>
+    <property name="commons-io.version" value="2.6"/>
     <property name="jdiff.version" value="1.0.9"/>
     <property name="xerces.version" value="1.4.4"/>
     <property name="apache-rat-tasks.version" value="0.6"/>
     <property name="commons-lang.version" value="2.4"/>
-    <property name="kerby.version" value="1.0.0-RC2"/>
+    <property name="kerby.version" value="1.1.0"/>
 
     <!-- ====================================================== -->
     <!-- Macro definitions                                      -->
