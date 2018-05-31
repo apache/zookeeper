@@ -108,6 +108,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
 
     LinkedBlockingQueue<Request> submittedRequests = new LinkedBlockingQueue<Request>();
 
+    // ProposalRequestProcessor
     private final RequestProcessor nextProcessor;
 
     ZooKeeperServer zks;
@@ -890,7 +891,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
 
             StringBuilder sb = new StringBuilder();
             ByteBuffer bb = request.request;
-            if(bb != null){
+            if(bb != null) {
                 bb.rewind();
                 while (bb.hasRemaining()) {
                     sb.append(Integer.toHexString(bb.get() & 0xff));

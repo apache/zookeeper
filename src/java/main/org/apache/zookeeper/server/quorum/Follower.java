@@ -129,12 +129,12 @@ public class Follower extends Learner{
             }
             lastQueued = hdr.getZxid();
             
-            if (hdr.getType() == OpCode.reconfig){
+            if (hdr.getType() == OpCode.reconfig) {
                SetDataTxn setDataTxn = (SetDataTxn) txn;       
                QuorumVerifier qv = self.configFromString(new String(setDataTxn.getData()));
                self.setLastSeenQuorumVerifier(qv, true);                               
             }
-            
+            // 处理核心
             fzk.logRequest(hdr, txn);
             break;
         case Leader.COMMIT:

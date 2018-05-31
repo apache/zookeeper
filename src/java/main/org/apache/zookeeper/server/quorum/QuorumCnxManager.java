@@ -251,7 +251,9 @@ public class QuorumCnxManager {
                             boolean listenOnAllIPs,
                             int quorumCnxnThreadsSize,
                             boolean quorumSaslAuthEnabled) {
+        //接收队列
         this.recvQueue = new ArrayBlockingQueue<Message>(RECV_CAPACITY);
+        //发送队列
         this.queueSendMap = new ConcurrentHashMap<Long, ArrayBlockingQueue<ByteBuffer>>();
         this.senderWorkerMap = new ConcurrentHashMap<Long, SendWorker>();
         this.lastMessageSent = new ConcurrentHashMap<Long, ByteBuffer>();
@@ -507,6 +509,7 @@ public class QuorumCnxManager {
         }
     }
 
+    //选举算法 处理请求
     private void handleConnection(Socket sock, DataInputStream din)
             throws IOException {
         Long sid = null, protocolVersion = null;

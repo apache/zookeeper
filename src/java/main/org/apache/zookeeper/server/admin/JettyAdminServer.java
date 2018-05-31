@@ -90,7 +90,7 @@ public class JettyAdminServer implements AdminServer {
         ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
         context.setContextPath("/*");
         server.setHandler(context);
-
+        // admin
         context.addServlet(new ServletHolder(new CommandServlet()), commandUrl + "/*");
     }
 

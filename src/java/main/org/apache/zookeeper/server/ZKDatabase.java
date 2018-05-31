@@ -224,6 +224,7 @@ public class ZKDatabase {
         return sessionsWithTimeouts;
     }
 
+    //将 事务日志对应的事务放到提交队列中
     private final PlayBackListener commitProposalPlaybackListener = new PlayBackListener() {
         public void onTxnLoaded(TxnHeader hdr, Record txn){
             addCommittedProposal(hdr, txn);

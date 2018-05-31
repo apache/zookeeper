@@ -45,6 +45,8 @@ import org.slf4j.LoggerFactory;
  * above the implementations
  * of txnlog and snapshot
  * classes
+ *
+ * 文件存储
  */
 public class FileTxnSnapLog {
     //the directory containing the
@@ -206,6 +208,7 @@ public class FileTxnSnapLog {
      */
     public long restore(DataTree dt, Map<Long, Integer> sessions,
             PlayBackListener listener) throws IOException {
+        //从快照中恢复 DataTree和session
         long deserializeResult = snapLog.deserialize(dt, sessions);
         FileTxnLog txnLog = new FileTxnLog(dataDir);
         boolean trustEmptyDB;
@@ -239,6 +242,7 @@ public class FileTxnSnapLog {
                 return -1L;
             }
         }
+        //
         return fastForwardFromEdits(dt, sessions, listener);
     }
 
@@ -274,7 +278,7 @@ public class FileTxnSnapLog {
                     highestZxid = hdr.getZxid();
                 }
                 try {
-                    processTransaction(hdr,dt,sessions, itr.getTxn());
+                    processTransaction(hdr,dt, sessions, itr.getTxn());
                 } catch(KeeperException.NoNodeException e) {
                    throw new IOException("Failed to process transaction type: " +
                          hdr.getType() + " error: " + e.getMessage(), e);

@@ -65,7 +65,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
  * 
  * Note that it is still necessary to define peers using the server keyword.
  */
-
+// 服务器列表！！
 public class QuorumHierarchical implements QuorumVerifier {
     private static final Logger LOG = LoggerFactory.getLogger(QuorumHierarchical.class);
 

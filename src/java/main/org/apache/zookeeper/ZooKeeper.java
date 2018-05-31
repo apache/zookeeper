@@ -457,8 +457,7 @@ public class ZooKeeper implements AutoCloseable {
         @Override
         public Set<Watcher> materialize(Watcher.Event.KeeperState state,
                                         Watcher.Event.EventType type,
-                                        String clientPath)
-        {
+                                        String clientPath) {
             Set<Watcher> result = new HashSet<Watcher>();
 
             switch (type) {
@@ -870,15 +869,20 @@ public class ZooKeeper implements AutoCloseable {
             clientConfig = new ZKClientConfig();
         }
         this.clientConfig = clientConfig;
+        // 观察者管理器
         watchManager = defaultWatchManager();
         watchManager.defaultWatcher = watcher;
         ConnectStringParser connectStringParser = new ConnectStringParser(
                 connectString);
         hostProvider = aHostProvider;
 
-        cnxn = new ClientCnxn(connectStringParser.getChrootPath(),
-                hostProvider, sessionTimeout, this, watchManager,
-                getClientCnxnSocket(), canBeReadOnly);
+        cnxn = new ClientCnxn(connectStringParser.getChrootPath(),// 客户端隔离命名空间，相当于试图模式。只对某个path的进行操作
+                hostProvider,// 服务器提供者列表
+                sessionTimeout,//会话超时时间
+                this,
+                watchManager, // 监听管理器
+                getClientCnxnSocket(),// 客户端套接字通讯工具 ClientCnxnSocket 比如 ClientCnxnSocketNetty
+                canBeReadOnly);
         cnxn.start();
     }
 
@@ -1430,7 +1434,7 @@ public class ZooKeeper implements AutoCloseable {
         PathUtils.validatePath(clientPath, createMode.isSequential());
         EphemeralType.validateTTL(createMode, -1);
         validateACL(acl);
-
+        // 如果是带有客户端隔离命名空间，追加路径
         final String serverPath = prependChroot(clientPath);
 
         RequestHeader h = new RequestHeader();
@@ -2023,7 +2027,7 @@ public class ZooKeeper implements AutoCloseable {
         if (watcher != null) {
             wcb = new DataWatchRegistration(watcher, clientPath);
         }
-
+        // 拼接路径
         final String serverPath = prependChroot(clientPath);
 
         RequestHeader h = new RequestHeader();

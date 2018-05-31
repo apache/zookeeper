@@ -50,8 +50,10 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
     ConcurrentLinkedQueue<Request> pendingSyncs;
 
     /**
-     * @param port
-     * @param dataDir
+     *
+     * @param logFactory
+     * @param self
+     * @param zkDb
      * @throws IOException
      */
     FollowerZooKeeperServer(FileTxnSnapLog logFactory,QuorumPeer self,
@@ -105,6 +107,7 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
             LOG.error("Committing zxid 0x" + Long.toHexString(zxid)
                     + " but next pending txn 0x"
                     + Long.toHexString(firstElementZxid));
+            // 优雅停机
             System.exit(12);
         }
         Request request = pendingTxns.remove();

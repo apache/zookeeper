@@ -196,6 +196,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
                 while (!stopped && requestsToProcess > 0
                         && (request = queuedRequests.poll()) != null) {
                     requestsToProcess--;
+                    // 需要提交的请求，放在pendingRequest里
                     if (needCommit(request)
                             || pendingRequests.containsKey(request.sessionId)) {
                         // Add request to pending
@@ -208,6 +209,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
                         requests.addLast(request);
                     }
                     else {
+                        //不需要提交的请求，直接提交给FinalRequestProcessor
                         sendToNextProcessor(request);
                     }
                     /*
@@ -232,18 +234,15 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
                 }
 
                 // Handle a single committed request
-                if (commitIsWaiting && !stopped){
+                if (commitIsWaiting && !stopped) {
                     waitForEmptyPool();
-
                     if (stopped){
                         return;
                     }
-
                     // Process committed head
                     if ((request = committedRequests.poll()) == null) {
                         throw new IOException("Error: committed head is null");
                     }
-
                     /*
                      * Check if request is pending, if so, update it with the committed info
                      */
@@ -300,11 +299,8 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
                             request = topPending;
                         }
                     }
-
                     sendToNextProcessor(request);
-
                     waitForEmptyPool();
-
                     /*
                      * Process following reads if any, remove session queue if
                      * empty.
@@ -386,6 +382,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
 
         public void doWork() throws RequestProcessorException {
             try {
+                // toBeAppliedRequestProcessor
                 nextProcessor.processRequest(request);
             } finally {
                 if (numRequestsProcessing.decrementAndGet() == 0){

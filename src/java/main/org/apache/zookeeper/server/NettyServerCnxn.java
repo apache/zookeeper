@@ -341,19 +341,6 @@ public class NettyServerCnxn extends ServerCnxn {
                     }
                     message.readBytes(bb);
                     bb.limit(bb.capacity());
-
-                    if (LOG.isTraceEnabled()) {
-                        LOG.trace("after readBytes message readable "
-                                + message.readableBytes()
-                                + " bb len " + bb.remaining() + " " + bb);
-                        ByteBuffer dat = bb.duplicate();
-                        dat.flip();
-                        LOG.trace("after readbytes "
-                                + Long.toHexString(sessionId)
-                                + " bb 0x"
-                                + ChannelBuffers.hexDump(
-                                        ChannelBuffers.copiedBuffer(dat)));
-                    }
                     if (bb.remaining() == 0) {
                         packetReceived();
                         bb.flip();
@@ -363,6 +350,7 @@ public class NettyServerCnxn extends ServerCnxn {
                             throw new IOException("ZK down");
                         }
                         if (initialized) {
+                            //由 ZooKeeperServer 处理
                             zks.processPacket(this, bb);
 
                             if (zks.shouldThrottle(outstandingCount.incrementAndGet())) {

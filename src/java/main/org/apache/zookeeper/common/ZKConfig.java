@@ -95,6 +95,7 @@ public class ZKConfig {
 
     private void init() {
         /**
+         * 向后兼容
          * backward compatibility for all currently available client properties
          */
         handleBackwardCompatibility();

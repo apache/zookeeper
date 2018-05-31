@@ -126,6 +126,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
                             // roll the log
                             zks.getZKDatabase().rollLog();
                             // take a snapshot
+                            // 异步线程 快照
                             if (snapInProcess != null && snapInProcess.isAlive()) {
                                 LOG.warn("Too busy to snap, skipping");
                             } else {

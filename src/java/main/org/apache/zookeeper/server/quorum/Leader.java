@@ -383,6 +383,7 @@ public class Leader {
 
                         BufferedInputStream is = new BufferedInputStream(
                                 s.getInputStream());
+                        // leader 处理
                         LearnerHandler fh = new LearnerHandler(s, is, Leader.this);
                         fh.start();
                     } catch (SocketException e) {
@@ -874,7 +875,7 @@ public class Leader {
 
         if (hasCommitted && p.request!=null && p.request.getHdr().getType() == OpCode.reconfig){
                long curZxid = zxid;
-           while (allowedToCommit && hasCommitted && p!=null){
+           while (allowedToCommit && hasCommitted && p!=null) {
                curZxid++;
                p = outstandingProposals.get(curZxid);
                if (p !=null) hasCommitted = tryToCommit(p, curZxid, null);             
@@ -915,6 +916,7 @@ public class Leader {
          * @see org.apache.zookeeper.server.RequestProcessor#processRequest(org.apache.zookeeper.server.Request)
          */
         public void processRequest(Request request) throws RequestProcessorException {
+            // FinalRequestProcessor
             next.processRequest(request);
 
             // The only requests that should be on toBeApplied are write
@@ -1063,26 +1065,20 @@ public class Leader {
         byte[] data = SerializeUtils.serializeRequest(request);
         proposalStats.setLastProposalSize(data.length);
         QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, request.zxid, data, null);
-
         Proposal p = new Proposal();
         p.packet = pp;
         p.request = request;                
-        
         synchronized(this) {
            p.addQuorumVerifier(self.getQuorumVerifier());
-                   
            if (request.getHdr().getType() == OpCode.reconfig){
                self.setLastSeenQuorumVerifier(request.qv, true);                       
            }
-           
            if (self.getQuorumVerifier().getVersion()<self.getLastSeenQuorumVerifier().getVersion()) {
                p.addQuorumVerifier(self.getLastSeenQuorumVerifier());
            }
-                   
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Proposing:: " + request);
             }
-
             lastProposed = p.packet.getZxid();
             outstandingProposals.put(lastProposed, p);
             sendPacket(pp);
