@@ -225,7 +225,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      */
     public ZooKeeperServer(File snapDir, File logDir, int tickTime)
             throws IOException {
-        this( new FileTxnSnapLog(snapDir, logDir),
+        this(new FileTxnSnapLog(snapDir, logDir),
                 tickTime);
     }
 
