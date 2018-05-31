@@ -54,7 +54,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
     <property name="apache-rat-tasks.version" value="0.6"/>
     <property name="commons-lang.version" value="2.4"/>
 
-    <property name="dependency-check-ant.version" value="2.1.0"/>
+    <property name="dependency-check-ant.version" value="3.2.1"/>
 
     <property name="clover.version" value="4.2.1" />
 
