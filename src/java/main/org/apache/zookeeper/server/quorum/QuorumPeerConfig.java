@@ -63,6 +63,7 @@ public class QuorumPeerConfig {
 
     private static boolean standaloneEnabled = true;
     private static boolean reconfigEnabled = false;
+    private static int requestWarnThresholdMs = 10000;
 
     protected InetSocketAddress clientPortAddress;
     protected InetSocketAddress secureClientPortAddress;
@@ -322,6 +323,14 @@ public class QuorumPeerConfig {
                 quorumServicePrincipal = value;
             } else if (key.equals("quorum.cnxn.threads.size")) {
                 quorumCnxnThreadsSize = Integer.parseInt(value);
+            } else if (key.equals("request.warningthresholdms")) {
+                try {
+                    // 0 is for logging every request, Useful during debugging
+                    // -1 disables the threshold warnings
+                    setRequestWarnResponseThresholdMs(Integer.parseInt(value));
+                } catch(NumberFormatException ex) {
+                    throw new ConfigException("Invalid input for request warning threshold time. Choose any positive integer.");
+                }
             } else {
                 System.setProperty("zookeeper." + key, value);
             }
@@ -784,7 +793,11 @@ public class QuorumPeerConfig {
     public Boolean getQuorumListenOnAllIPs() {
         return quorumListenOnAllIPs;
     }
- 
+
+    public static void setRequestWarnResponseThresholdMs(int requestWarnThresholdMs) { QuorumPeerConfig.requestWarnThresholdMs = requestWarnThresholdMs; }
+
+    public static int getRequestWarnResponseThresholdMs() { return requestWarnThresholdMs; }
+
     public static boolean isStandaloneEnabled() {
 	return standaloneEnabled;
     }

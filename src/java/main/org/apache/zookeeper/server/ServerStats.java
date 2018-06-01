@@ -21,17 +21,33 @@ package org.apache.zookeeper.server;
 
 
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Basic Server Statistics
  */
 public class ServerStats {
+    private static final Logger LOG = LoggerFactory.getLogger(ServerStats.class);
+
     private long packetsSent;
     private long packetsReceived;
     private long maxLatency;
     private long minLatency = Long.MAX_VALUE;
     private long totalLatency = 0;
     private long count = 0;
+    private long numRequestsAboveThresholdTime = 0;
+
+    final static long requestWarnThresholdMs = QuorumPeerConfig.getRequestWarnResponseThresholdMs();
+    final static Timer timer = new Timer();
+    final static AtomicReference<Boolean> waitForLoggingWarnThresholdMsg = new AtomicReference<>(false);
+    private long startCount;
+    private int delayTimeForLoggingWarnThresholdMsg = 60000;
 
     private final Provider provider;
 
@@ -88,6 +104,10 @@ public class ServerStats {
         return packetsSent;
     }
 
+    synchronized public long getNumRequestsAboveThresholdTime() {
+        return numRequestsAboveThresholdTime;
+    }
+
     public String getServerState() {
         return provider.getState();
     }
@@ -106,6 +126,7 @@ public class ServerStats {
         StringBuilder sb = new StringBuilder();
         sb.append("Latency min/avg/max: " + getMinLatency() + "/"
                 + getAvgLatency() + "/" + getMaxLatency() + "\n");
+        sb.append("Num Requests that exceeded threshold latency: " + getNumRequestsAboveThresholdTime() + "\n");
         sb.append("Received: " + getPacketsReceived() + "\n");
         sb.append("Sent: " + getPacketsSent() + "\n");
         sb.append("Connections: " + getNumAliveClientConnections() + "\n");
@@ -117,6 +138,11 @@ public class ServerStats {
         sb.append("Mode: " + getServerState() + "\n");
         return sb.toString();
     }
+
+    synchronized void incNumRequestsAboveThresholdTime() {
+        numRequestsAboveThresholdTime++;
+    }
+
     // mutators
     synchronized void updateLatency(long requestCreateTime) {
         long latency = Time.currentElapsedTime() - requestCreateTime;
@@ -148,9 +174,46 @@ public class ServerStats {
         packetsReceived = 0;
         packetsSent = 0;
     }
+    synchronized public void resetNumRequestsAboveThresholdTime() {
+        numRequestsAboveThresholdTime = 0;
+    }
     synchronized public void reset() {
         resetLatency();
         resetRequestCounters();
+        resetNumRequestsAboveThresholdTime();
+    }
+
+    public void checkLatency(final ZooKeeperServer zks, Request request) {
+        long requestLatency = Time.currentElapsedTime() - request.createTime;
+        boolean enabledAndAboveThreshold = (requestWarnThresholdMs == 0) ||
+                (requestWarnThresholdMs > -1 && requestLatency > requestWarnThresholdMs);
+        if (enabledAndAboveThreshold) {
+            zks.serverStats().incNumRequestsAboveThresholdTime();
+
+            // Try acquiring lock only if not waiting
+            boolean success = waitForLoggingWarnThresholdMsg.compareAndSet(Boolean.FALSE, Boolean.TRUE);
+            if (success) {
+                LOG.warn("Request {} exceeded threshold. Took {} ms", request, requestLatency);
+                startCount = zks.serverStats().getNumRequestsAboveThresholdTime();
+                timer.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        long count = zks.serverStats().getNumRequestsAboveThresholdTime() - startCount;
+                        LOG.warn("Number of requests that exceeded {} ms in past {} ms: {}",
+                                requestWarnThresholdMs, delayTimeForLoggingWarnThresholdMsg, count);
+                        waitForLoggingWarnThresholdMsg.set(Boolean.FALSE);
+                    }
+                }, delayTimeForLoggingWarnThresholdMsg);
+            }
+        }
+    }
+
+    public void setDelayTimeForLoggingWarnThresholdMsg(int delay) {
+        this.delayTimeForLoggingWarnThresholdMsg = delay;
+    }
+
+    public void setWaitForLoggingWarnThresholdMsgToFalse() {
+        ServerStats.waitForLoggingWarnThresholdMsg.set(Boolean.FALSE);
     }
 
 }

@@ -49,6 +49,7 @@ import org.junit.Test;
  * Test stand-alone server.
  *
  */
+
 public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
     protected static final Logger LOG =
         LoggerFactory.getLogger(ZooKeeperServerMainTest.class);
@@ -64,10 +65,15 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
 
         public MainThread(int clientPort, boolean preCreateDirs, String configs)
                 throws IOException {
-            this(clientPort, preCreateDirs, ClientBase.createTmpDir(), configs);
+            this(clientPort, preCreateDirs, ClientBase.createTmpDir(), configs, -1);
         }
 
-        public MainThread(int clientPort, boolean preCreateDirs, File tmpDir, String configs)
+        public MainThread(int clientPort, boolean preCreateDirs, String configs, int requestWarningThresholdMs)
+                throws IOException {
+            this(clientPort, preCreateDirs, ClientBase.createTmpDir(), configs, requestWarningThresholdMs);
+        }
+
+        public MainThread(int clientPort, boolean preCreateDirs, File tmpDir, String configs, int requestWarningThresholdMs)
                 throws IOException {
             super("Standalone server with clientPort:" + clientPort);
             this.tmpDir = tmpDir;
@@ -77,6 +83,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
             fwriter.write("tickTime=2000\n");
             fwriter.write("initLimit=10\n");
             fwriter.write("syncLimit=5\n");
+            fwriter.write("request.warningthresholdms=" + requestWarningThresholdMs + "\n");
             if(configs != null){
                 fwriter.write(configs);
             }
@@ -138,13 +145,30 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         ServerCnxnFactory getCnxnFactory() {
             return main.getCnxnFactory();
         }
+
     }
 
-    public static  class TestZKSMain extends ZooKeeperServerMain {
+    public static class TestZKSMain extends ZooKeeperServerMain {
+
+        private ServerStats serverStats;
+
+        @Override
+        public ZooKeeperServer getZooKeeperServer(FileTxnSnapLog txnLog, ServerConfig config, ZKDatabase zkDb) {
+            ZooKeeperServer zooKeeperServer = super.getZooKeeperServer(txnLog, config, zkDb);
+            serverStats = zooKeeperServer.serverStats();
+            return zooKeeperServer;
+        }
+
+        @Override
         public void shutdown() {
             super.shutdown();
         }
+
+        public ServerStats getServerStats() {
+            return serverStats;
+        }
     }
+
 
     /**
      * Test case for https://issues.apache.org/jira/browse/ZOOKEEPER-2247.
@@ -163,7 +187,6 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         Assert.assertTrue("waiting for server being up",
                 ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
                         CONNECTION_TIMEOUT));
-
 
         ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT,
                 ClientBase.CONNECTION_TIMEOUT, this);
@@ -229,7 +252,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         snapDir.setWritable(false);
 
         // Restart ZK and observe a failure
-        main = new MainThread(CLIENT_PORT, false, tmpDir, null);
+        main = new MainThread(CLIENT_PORT, false, tmpDir, null, -1);
         main.start();
 
         Assert.assertFalse("waiting for server being up", ClientBase
@@ -269,7 +292,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         logDir.setWritable(false);
 
         // Restart ZK and observe a failure
-        main = new MainThread(CLIENT_PORT, false, tmpDir, null);
+        main = new MainThread(CLIENT_PORT, false, tmpDir, null, -1);
         main.start();
 
         Assert.assertFalse("waiting for server being up", ClientBase
