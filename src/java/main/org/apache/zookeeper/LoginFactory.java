@@ -15,37 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef PROTO_H_
-#define PROTO_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+package org.apache.zookeeper;
 
-#define ZOO_NOTIFY_OP 0
-#define ZOO_CREATE_OP 1
-#define ZOO_DELETE_OP 2
-#define ZOO_EXISTS_OP 3
-#define ZOO_GETDATA_OP 4
-#define ZOO_SETDATA_OP 5
-#define ZOO_GETACL_OP 6
-#define ZOO_SETACL_OP 7
-#define ZOO_GETCHILDREN_OP 8
-#define ZOO_SYNC_OP 9
-#define ZOO_PING_OP 11
-#define ZOO_GETCHILDREN2_OP 12
-#define ZOO_CHECK_OP 13
-#define ZOO_MULTI_OP 14
-#define ZOO_CREATE2_OP 15
-#define ZOO_RECONFIG_OP 16
-#define ZOO_CHECK_WATCHES 17
-#define ZOO_REMOVE_WATCHES 18
-#define ZOO_CLOSE_OP -11
-#define ZOO_SETAUTH_OP 100
-#define ZOO_SETWATCHES_OP 101
+import org.apache.zookeeper.common.ZKConfig;
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.login.LoginException;
 
-#ifdef __cplusplus
+public interface LoginFactory {
+    Login createLogin(final String loginContextName, CallbackHandler callbackHandler, final ZKConfig zkConfig) throws LoginException;
 }
-#endif
-
-#endif /*PROTO_H_*/

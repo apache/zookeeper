@@ -190,10 +190,6 @@ public class ReferenceCountedACLCacheTest {
         callAddUsageNTimes(deserializedCache, aclId3, 3);
         callAddUsageNTimes(deserializedCache, aclId4, 4);
         callAddUsageNTimes(deserializedCache, aclId5, 5);
-<<<<<<< HEAD
-
-=======
->>>>>>> c4db5e25... recover zookeeper master same with apache:master
         assertCachesEqual(cache, deserializedCache);
     }
 

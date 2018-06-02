@@ -21,12 +21,11 @@ package org.apache.zookeeper.server;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.Op;
 import org.apache.zookeeper.OpResult;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.CreateResponse;
 import org.apache.zookeeper.proto.CreateTTLRequest;
@@ -36,8 +35,8 @@ import org.apache.zookeeper.test.ClientBase;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
@@ -45,21 +44,25 @@ import java.util.concurrent.atomic.AtomicLong;
 public class CreateTTLTest extends ClientBase {
     private TestableZooKeeper zk;
 
+    private static final Collection<String> disabledTests = Collections.singleton("testDisabled");
+
     @Override
     public void setUp() throws Exception {
-        super.setUp();
+        System.setProperty(EphemeralType.EXTENDED_TYPES_ENABLED_PROPERTY, disabledTests.contains(getTestName()) ? "false" : "true");
+        super.setUpWithServerId(254);
         zk = createClient();
     }
 
     @Override
     public void tearDown() throws Exception {
+        System.clearProperty(EphemeralType.EXTENDED_TYPES_ENABLED_PROPERTY);
         super.tearDown();
         zk.close();
     }
 
     @Test
     public void testCreate()
-            throws IOException, KeeperException, InterruptedException {
+            throws KeeperException, InterruptedException {
         Stat stat = new Stat();
         zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL, stat, 100);
         Assert.assertEquals(0, stat.getEphemeralOwner());
@@ -87,11 +90,35 @@ public class CreateTTLTest extends ClientBase {
                             r.getErr(), Code.BADARGUMENTS.intValue());
         Assert.assertNull("An invalid CreateTTLRequest should not result in znode creation",
                           zk.exists(path, false));
+
+        request = new CreateTTLRequest(path, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT_WITH_TTL.toFlag(), EphemeralType.TTL.maxValue() + 1);
+        response = new CreateResponse();
+        r = zk.submitRequest(h, request, response, null);
+        Assert.assertEquals("An invalid CreateTTLRequest should throw BadArguments",
+                r.getErr(), Code.BADARGUMENTS.intValue());
+        Assert.assertNull("An invalid CreateTTLRequest should not result in znode creation",
+                zk.exists(path, false));
+    }
+
+    @Test
+    public void testMaxTTLs() throws InterruptedException, KeeperException {
+        RequestHeader h = new RequestHeader(1, ZooDefs.OpCode.createTTL);
+
+        String path = "/bad_ttl";
+        CreateTTLRequest request = new CreateTTLRequest(path, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                                                        CreateMode.PERSISTENT_WITH_TTL.toFlag(), EphemeralType.TTL.maxValue());
+        CreateResponse response = new CreateResponse();
+        ReplyHeader r = zk.submitRequest(h, request, response, null);
+        Assert.assertEquals("EphemeralType.getMaxTTL() should succeed",
+                            r.getErr(), Code.OK.intValue());
+        Assert.assertNotNull("Node should exist",
+                          zk.exists(path, false));
     }
 
     @Test
     public void testCreateSequential()
-            throws IOException, KeeperException, InterruptedException {
+            throws KeeperException, InterruptedException {
         Stat stat = new Stat();
         String path = zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL_WITH_TTL, stat, 100);
         Assert.assertEquals(0, stat.getEphemeralOwner());
@@ -108,7 +135,7 @@ public class CreateTTLTest extends ClientBase {
 
     @Test
     public void testCreateAsync()
-            throws IOException, KeeperException, InterruptedException {
+            throws KeeperException, InterruptedException {
         AsyncCallback.Create2Callback callback = new AsyncCallback.Create2Callback() {
             @Override
             public void processResult(int rc, String path, Object ctx, String name, Stat stat) {
@@ -129,7 +156,7 @@ public class CreateTTLTest extends ClientBase {
 
     @Test
     public void testModifying()
-            throws IOException, KeeperException, InterruptedException {
+            throws KeeperException, InterruptedException {
         Stat stat = new Stat();
         zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL, stat, 100);
         Assert.assertEquals(0, stat.getEphemeralOwner());
@@ -153,7 +180,7 @@ public class CreateTTLTest extends ClientBase {
 
     @Test
     public void testMulti()
-            throws IOException, KeeperException, InterruptedException {
+            throws KeeperException, InterruptedException {
         Op createTtl = Op.create("/a", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL, 100);
         Op createTtlSequential = Op.create("/b", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL_WITH_TTL, 200);
         Op createNonTtl = Op.create("/c", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -220,6 +247,12 @@ public class CreateTTLTest extends ClientBase {
         } catch (IllegalArgumentException dummy) {
             // correct
         }
+    }
+
+    @Test(expected = KeeperException.UnimplementedException.class)
+    public void testDisabled() throws KeeperException, InterruptedException {
+        // note, setUp() enables this test based on the test name
+        zk.create("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_WITH_TTL, new Stat(), 100);
     }
 
     private ContainerManager newContainerManager(final AtomicLong fakeElapsed) {

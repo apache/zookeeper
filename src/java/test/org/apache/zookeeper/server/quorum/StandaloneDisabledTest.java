@@ -28,6 +28,7 @@ import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.admin.ZooKeeperAdmin;
+import org.apache.zookeeper.client.FourLetterWordMain;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ReconfigTest;
 import org.junit.Assert;
@@ -52,7 +53,7 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
      * Test normal quorum operations work cleanly
      * with just a single server.
      */
-    @Test
+    @Test(timeout = 600000)
     public void startSingleServerTest() throws Exception {
         setUpData();
 
@@ -179,6 +180,9 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
         zkHandles[id] = ClientBase.createZKClient("127.0.0.1:" + clientPorts[id]);
         zkAdminHandles[id] = new ZooKeeperAdmin("127.0.0.1:" + clientPorts[id], CONNECTION_TIMEOUT, this);
         zkAdminHandles[id].addAuthInfo("digest", "super:test".getBytes());
+        String statCommandOut = FourLetterWordMain.send4LetterWord("127.0.0.1", clientPorts[id], "stat");
+        LOG.info(String.format("Started server id %d with config:\n%s\nStat output:\n%s",
+                id, config, statCommandOut));
     }
 
     /**

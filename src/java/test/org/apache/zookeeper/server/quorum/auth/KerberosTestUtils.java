@@ -24,7 +24,7 @@ import java.util.UUID;
 import org.apache.zookeeper.util.SecurityUtils;
 
 public class KerberosTestUtils {
-    private static String keytabFile = new File(System.getProperty("test.dir", "build"), UUID.randomUUID().toString())
+    private static String keytabFile = new File(System.getProperty("build.test.dir", "build"), UUID.randomUUID().toString())
             .getAbsolutePath();
 
     public static String getRealm() {
