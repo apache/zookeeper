@@ -41,12 +41,16 @@ import java.util.regex.Pattern;
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import org.apache.commons.io.FileUtils;
 =======
 >>>>>>> 4d072621... ZOOKEEPER-2988: NPE triggered if server receives a vote for a server …
 =======
 import org.apache.commons.io.FileUtils;
 >>>>>>> 989a35a0... ZOOKEEPER-3012: Fix unit test: testDataDirAndDataLogDir should not use hardcode test folders
+=======
+import org.apache.commons.io.FileUtils;
+>>>>>>> b83abd772a35ca8f3322fe8d2159de5afff97c3b
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
@@ -1103,8 +1107,11 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 989a35a0... ZOOKEEPER-3012: Fix unit test: testDataDirAndDataLogDir should not use hardcode test folders
+=======
+>>>>>>> b83abd772a35ca8f3322fe8d2159de5afff97c3b
     @Test
     public void testDataDirAndDataLogDir() throws Exception {
         File dataDir = createEmptyTestDir();
@@ -1149,10 +1156,13 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 4d072621... ZOOKEEPER-2988: NPE triggered if server receives a vote for a server …
 =======
 >>>>>>> 989a35a0... ZOOKEEPER-3012: Fix unit test: testDataDirAndDataLogDir should not use hardcode test folders
+=======
+>>>>>>> b83abd772a35ca8f3322fe8d2159de5afff97c3b
     private WriterAppender getConsoleAppender(ByteArrayOutputStream os, Level level) {
         String loggingPattern = ((PatternLayout) Logger.getRootLogger().getAppender("CONSOLE").getLayout()).getConversionPattern();
         WriterAppender appender = new WriterAppender(new PatternLayout(loggingPattern), os);

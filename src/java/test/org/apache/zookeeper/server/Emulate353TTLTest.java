@@ -71,6 +71,7 @@ public class Emulate353TTLTest extends ClientBase {
         DataTree dataTree = serverFactory.zkServer.getZKDatabase().dataTree;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         long ephemeralOwner = EphemeralTypeEmulate353.ttlToEphemeralOwner(100);
 =======
         long ephemeralOwner = OldEphemeralType.ttlToEphemeralOwner(100);
@@ -78,6 +79,9 @@ public class Emulate353TTLTest extends ClientBase {
 =======
         long ephemeralOwner = EphemeralTypeEmulate353.ttlToEphemeralOwner(100);
 >>>>>>> fe318199... ZOOKEEPER-3038: Cleanup some nitpicks in TTL implementation
+=======
+        long ephemeralOwner = EphemeralTypeEmulate353.ttlToEphemeralOwner(100);
+>>>>>>> b83abd772a35ca8f3322fe8d2159de5afff97c3b
         dataTree.createNode("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, ephemeralOwner,
                 dataTree.getNode("/").stat.getCversion()+1, 1, 1);
 

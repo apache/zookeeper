@@ -168,6 +168,7 @@ public enum EphemeralType {
             if (Boolean.getBoolean(TTL_3_5_3_EMULATION_PROPERTY)) {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                 if (EphemeralTypeEmulate353.get(ephemeralOwner) == EphemeralTypeEmulate353.TTL) {
 =======
                 if (OldEphemeralType.get(ephemeralOwner) == OldEphemeralType.TTL) {
@@ -175,6 +176,9 @@ public enum EphemeralType {
 =======
                 if (EphemeralTypeEmulate353.get(ephemeralOwner) == EphemeralTypeEmulate353.TTL) {
 >>>>>>> fe318199... ZOOKEEPER-3038: Cleanup some nitpicks in TTL implementation
+=======
+                if (EphemeralTypeEmulate353.get(ephemeralOwner) == EphemeralTypeEmulate353.TTL) {
+>>>>>>> b83abd772a35ca8f3322fe8d2159de5afff97c3b
                     return TTL;
                 }
             }
