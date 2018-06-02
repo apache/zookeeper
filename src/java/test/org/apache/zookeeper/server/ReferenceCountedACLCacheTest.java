@@ -218,6 +218,7 @@ public class ReferenceCountedACLCacheTest {
         }
     }
 
+
     private void assertCachesEqual(ReferenceCountedACLCache expected, ReferenceCountedACLCache actual){
         assertEquals(expected.aclIndex, actual.aclIndex);
         assertEquals(expected.aclKeyMap, actual.aclKeyMap);
