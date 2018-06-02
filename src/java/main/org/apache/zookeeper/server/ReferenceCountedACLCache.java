@@ -118,8 +118,7 @@ public class ReferenceCountedACLCache {
 >>>>>>> c4db5e25... recover zookeeper master same with apache:master
 =======
             if (j == null) {
-                LOG.error("ERROR: incorrent format of InputArchive" + ia);
-                throw new RuntimeException("ERROR: incorrent format of InputArchive" + ia);
+                throw new RuntimeException("ERROR: incorrent format of InputArchive when deserialize DataTree");
             }
 >>>>>>> f7da9b9f... change ZOOK3007 to compare with apache master
             while (!j.done()) {

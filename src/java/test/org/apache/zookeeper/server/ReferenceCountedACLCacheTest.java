@@ -190,7 +190,6 @@ public class ReferenceCountedACLCacheTest {
         callAddUsageNTimes(deserializedCache, aclId3, 3);
         callAddUsageNTimes(deserializedCache, aclId4, 4);
         callAddUsageNTimes(deserializedCache, aclId5, 5);
-
         assertCachesEqual(cache, deserializedCache);
     }
 
@@ -209,6 +208,7 @@ public class ReferenceCountedACLCacheTest {
     @Test
     public void testNPEInDeserialize() throws IOException {
         ReferenceCountedACLCache serializeCache = new ReferenceCountedACLCache(){
+<<<<<<< HEAD
         @Override
         public synchronized void serialize(OutputArchive oa) throws IOException {
             oa.writeInt(1, "map");
@@ -216,6 +216,14 @@ public class ReferenceCountedACLCacheTest {
             oa.startVector(null, "acls");
             oa.endVector(null, "acls");
 >>>>>>> f7da9b9f... change ZOOK3007 to compare with apache master
+=======
+            @Override
+            public synchronized void serialize(OutputArchive oa) throws IOException {
+                oa.writeInt(1, "map");
+                oa.writeLong(1, "long");
+                oa.startVector(null, "acls");
+                oa.endVector(null, "acls");
+>>>>>>> a12b13ff... fix format
             }
         };
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
