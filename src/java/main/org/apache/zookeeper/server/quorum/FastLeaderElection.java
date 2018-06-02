@@ -22,7 +22,6 @@ package org.apache.zookeeper.server.quorum;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -322,7 +321,7 @@ public class FastLeaderElection implements Election {
                          * If it is from a non-voting server (such as an observer or
                          * a non-voting follower), respond right away.
                          */
-                        if(!self.getCurrentAndNextConfigVoters().contains(response.sid)) {
+                        if(!validVoter(response.sid)) {
                             Vote current = self.getCurrentVote();
                             QuorumVerifier qv = self.getQuorumVerifier();
                             ToSend notmsg = new ToSend(ToSend.mType.notification,
@@ -927,10 +926,10 @@ public class FastLeaderElection implements Election {
                             tmpTimeOut : maxNotificationInterval);
                     LOG.info("Notification time out: " + notTimeout);
                 } 
-                else if (self.getCurrentAndNextConfigVoters().contains(n.sid)) {
+                else if (validVoter(n.sid) && validVoter(n.leader)) {
                     /*
                      * Only proceed if the vote comes from a replica in the current or next
-                     * voting view.
+                     * voting view for a replica in the current or next voting view.
                      */
                     switch (n.state) {
                     case LOOKING:
@@ -1064,7 +1063,12 @@ public class FastLeaderElection implements Election {
                         break;
                     }
                 } else {
-                    LOG.warn("Ignoring notification from non-cluster member " + n.sid);
+                    if (!validVoter(n.leader)) {
+                        LOG.warn("Ignoring notification for non-cluster member sid {} from sid {}", n.leader, n.sid);
+                    }
+                    if (!validVoter(n.sid)) {
+                        LOG.warn("Ignoring notification for sid {} from non-quorum member sid {}", n.leader, n.sid);
+                    }
                 }
             }
             return null;
@@ -1081,5 +1085,16 @@ public class FastLeaderElection implements Election {
             LOG.debug("Number of connection processing threads: {}",
                     manager.getConnectionThreadCount());
         }
+    }
+
+    /**
+     * Check if a given sid is represented in either the current or
+     * the next voting view
+     *
+     * @param sid     Server identifier
+     * @return boolean
+     */
+    private boolean validVoter(long sid) {
+        return self.getCurrentAndNextConfigVoters().contains(sid);
     }
 }
