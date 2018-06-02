@@ -69,19 +69,7 @@ public class Emulate353TTLTest extends ClientBase {
     public void test353TTL()
             throws KeeperException, InterruptedException {
         DataTree dataTree = serverFactory.zkServer.getZKDatabase().dataTree;
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
         long ephemeralOwner = EphemeralTypeEmulate353.ttlToEphemeralOwner(100);
-=======
-        long ephemeralOwner = OldEphemeralType.ttlToEphemeralOwner(100);
->>>>>>> d0536b3d... ZOOKEEPER-2901: TTL Nodes don't work with Server IDs > 127
-=======
-        long ephemeralOwner = EphemeralTypeEmulate353.ttlToEphemeralOwner(100);
->>>>>>> fe318199... ZOOKEEPER-3038: Cleanup some nitpicks in TTL implementation
-=======
-        long ephemeralOwner = EphemeralTypeEmulate353.ttlToEphemeralOwner(100);
->>>>>>> b83abd772a35ca8f3322fe8d2159de5afff97c3b
         dataTree.createNode("/foo", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, ephemeralOwner,
                 dataTree.getNode("/").stat.getCversion()+1, 1, 1);
 

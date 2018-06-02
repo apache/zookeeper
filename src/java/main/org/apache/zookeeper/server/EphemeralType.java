@@ -166,19 +166,7 @@ public enum EphemeralType {
     public static EphemeralType get(long ephemeralOwner) {
         if (extendedEphemeralTypesEnabled()) {
             if (Boolean.getBoolean(TTL_3_5_3_EMULATION_PROPERTY)) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
                 if (EphemeralTypeEmulate353.get(ephemeralOwner) == EphemeralTypeEmulate353.TTL) {
-=======
-                if (OldEphemeralType.get(ephemeralOwner) == OldEphemeralType.TTL) {
->>>>>>> d0536b3d... ZOOKEEPER-2901: TTL Nodes don't work with Server IDs > 127
-=======
-                if (EphemeralTypeEmulate353.get(ephemeralOwner) == EphemeralTypeEmulate353.TTL) {
->>>>>>> fe318199... ZOOKEEPER-3038: Cleanup some nitpicks in TTL implementation
-=======
-                if (EphemeralTypeEmulate353.get(ephemeralOwner) == EphemeralTypeEmulate353.TTL) {
->>>>>>> b83abd772a35ca8f3322fe8d2159de5afff97c3b
                     return TTL;
                 }
             }
