@@ -52,25 +52,8 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="javacc.version" value="5.0"/>
 
     <property name="jetty.version" value="9.4.10.v20180503"/>
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
     <property name="jackson.version" value="2.9.5"/>
     <property name="dependency-check-ant.version" value="3.2.1"/>
-<<<<<<< HEAD
-=======
-    <property name="jackson-mapper-asl.version" value="1.9.11"/>
-=======
-    <property name="jackson.version" value="2.9.5"/>
->>>>>>> a56d3093... ZOOKEEPER-3051: Updated jackson to the latest version
-    <property name="dependency-check-ant.version" value="2.1.0"/>
->>>>>>> 97ee54ce... ZOOKEEPER-3050: update to the newest version of Jetty
-=======
->>>>>>> 78ff7f00... ZOOKEEPER-2920: Upgrade OWASP Dependency Check to 3.2.1
-=======
-    <property name="jackson.version" value="2.9.5"/>
-    <property name="dependency-check-ant.version" value="3.2.1"/>
->>>>>>> b83abd772a35ca8f3322fe8d2159de5afff97c3b
 
     <property name="commons-io.version" value="2.6"/>
     <property name="kerby.version" value="1.1.0"/>
@@ -1485,17 +1468,10 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       </antcall>
       <antcall target="clover-report"/>
     </target>
-<<<<<<< HEAD
 
     <target name="clover" if="run.clover" depends="ivy-retrieve-clover,clover.check,clover.setup"
             description="Used in compile target to add source code instrumentation for Clover and sets up the Clover database."/>
 
-=======
-
-    <target name="clover" if="run.clover" depends="ivy-retrieve-clover,clover.check,clover.setup"
-            description="Used in compile target to add source code instrumentation for Clover and sets up the Clover database."/>
-
->>>>>>> b83abd772a35ca8f3322fe8d2159de5afff97c3b
     <target name="clover.check">
         <available property="clover.present"
                    classname="com.atlassian.clover.CloverInstr"
