@@ -202,7 +202,7 @@ public class ReferenceCountedACLCacheTest {
                 oa.writeLong(1, "long");
                 oa.startVector(null, "acls");
                 oa.endVector(null, "acls");
-                }
+            }
         };
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         BinaryOutputArchive archive = BinaryOutputArchive.getArchive(baos);
