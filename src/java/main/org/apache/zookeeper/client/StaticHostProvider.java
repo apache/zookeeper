@@ -33,8 +33,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Most simple HostProvider, resolves only on instantiation.
- * 
+ * Most simple HostProvider, resolves on every next() call.
+ *
+ * Please be aware that although this class doesn't do any DNS caching, there're multiple levels of caching already
+ * present across the stack like in JVM, OS level, hardware, etc. The best we could do here is to get the most recent
+ * address from the underlying system which is considered up-to-date.
+ *
  */
 @InterfaceAudience.Public
 public final class StaticHostProvider implements HostProvider {
@@ -91,8 +95,10 @@ public final class StaticHostProvider implements HostProvider {
     }
 
     /**
-     * Constructs a SimpleHostSet. This constructor is used from StaticHostProviderTest to inject custom
-     * resolver implementation.
+     * Constructs a SimpleHostSet.
+     *
+     * Introduced for testing purposes. getAllByName() is a static method of InetAddress, therefore cannot be easily mocked.
+     * By abstraction of Resolver interface we can easily inject a mocked implementation in tests.
      *
      * @param serverAddresses
      *              possibly unresolved ZooKeeper server addresses
