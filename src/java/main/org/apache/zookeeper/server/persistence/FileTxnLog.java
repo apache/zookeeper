@@ -334,8 +334,6 @@ public class FileTxnLog implements TxnLog {
                 if (syncElapsedMS > fsyncWarningThresholdMS) {
                     if(serverStats != null) {
                         serverStats.incrementFsyncThresholdExceedCount();
-                    } else {
-                        LOG.warn("fsyncWarningThresholdMS exceeded, but serverStats not added in FileTxnLog!");
                     }
                     LOG.warn("fsync-ing the write ahead log in "
                             + Thread.currentThread().getName()
