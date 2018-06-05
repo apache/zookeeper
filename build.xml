@@ -133,7 +133,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="test.junit.fork.mode" value="perTest" />
     <property name="test.junit.threads" value="1" />
     <property name="test.junit.printsummary" value="yes" />
-    <property name="test.junit.haltonfailure" value="no" />
+    <property name="test.junit.haltonfailure" value="yes" />
     <property name="test.junit.failbuild.ontestfailure" value="true" />
     <property name="config.dir" value="${src.dir}/java/test/config" />
     <property name="test.junit.maxmem" value="512m" />

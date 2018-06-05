@@ -400,7 +400,7 @@ public abstract class ClientBase extends ZKTestCase {
         }
     }
 
-    private static int getPort(String hostPort) {
+    public static int getPort(String hostPort) {
         String[] split = hostPort.split(":");
         String portstr = split[split.length-1];
         String[] pc = portstr.split("/");

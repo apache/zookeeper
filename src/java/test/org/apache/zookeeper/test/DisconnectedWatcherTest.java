@@ -18,10 +18,17 @@
 
 package org.apache.zookeeper.test;
 
+import static org.apache.zookeeper.client.FourLetterWordMain.send4LetterWord;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
@@ -250,6 +257,55 @@ public class DisconnectedWatcherTest extends ClientBase {
 
             i++;
         }
+    }
+    
+    // experimental test to collect performance data from apache infra
+    @Test(timeout = 200000)
+    public void testCreateManyChildren() throws Exception {
+        ZooKeeper zk1 = createClient();
+
+        // 110 character base path
+        String pathBase = "/long-path-000000000-111111111-222222222-333333333-444444444-"
+                          + "555555555-666666666-777777777-888888888-999999999";
+
+        zk1.create(pathBase, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        int port = getPort(hostPort);
+        long startTime = System.currentTimeMillis();
+        LOG.info(execSysCmd("dmesg -T | tail"));
+        LOG.info(execSysCmd("top -b -n 1"));
+        LOG.info("Creating 10,000 nodes.");
+        List<String> paths = new ArrayList<String>();
+        for (int i = 0; i < 10000; i++) {
+            String path = zk1.create(pathBase + "/ch-", null, Ids.OPEN_ACL_UNSAFE,
+                                     CreateMode.PERSISTENT_SEQUENTIAL);
+            paths.add(path);
+            if ((i + 1) % 100 == 0) {
+            	    long estimatedTime = System.currentTimeMillis() - startTime;
+                LOG.info("Created 100 nodes: " + estimatedTime + " ms");
+                
+                startTime = System.currentTimeMillis();
+            }
+            if ((i + 1) % 1000 == 0) {
+                LOG.info(send4LetterWord("127.0.0.1", port, "stat"));
+                LOG.info("Sys stats:\n" + execSysCmd("uptime;vmstat;less /proc/diskstats;top -b -n 1"));
+                startTime = System.currentTimeMillis();
+            }
+        }
+        LOG.info("Created 10,000 nodes.");
+        Assert.fail("Stop testing");
+    }
+    
+    private String execSysCmd(String cmd) throws IOException {
+        Process p = Runtime.getRuntime().exec(
+                new String[] { "bash", "-c", cmd});
+        InputStream in = p.getInputStream();
+        BufferedReader outBuffer = new BufferedReader(
+                new InputStreamReader(in));
+        
+        String output = outBuffer.lines().collect(Collectors.joining("\n"));
+        outBuffer.close();
+        return output;
     }
 
 }

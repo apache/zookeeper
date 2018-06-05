@@ -32,6 +32,7 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.Adler32;
 import java.util.zip.Checksum;
@@ -90,6 +91,7 @@ import org.slf4j.LoggerFactory;
  */
 public class FileTxnLog implements TxnLog {
     private static final Logger LOG;
+    private static final Random random = new Random();
 
     public final static int TXNLOG_MAGIC =
         ByteBuffer.wrap("ZKLG".getBytes()).getInt();
@@ -307,18 +309,24 @@ public class FileTxnLog implements TxnLog {
      * disk
      */
     public synchronized void commit() throws IOException {
+        boolean timeit = random.nextInt(1000) < 5;
+        long startNS = 0, logStreamEndNS = 0, logEndNS = 0, syncEndNS = 0, endNS = 0;
+        
+        startNS = System.nanoTime();    
         if (logStream != null) {
             logStream.flush();
+            logStreamEndNS = System.nanoTime();
         }
         for (FileOutputStream log : streamsToFlush) {
             log.flush();
+            logEndNS = System.nanoTime();
             if (forceSync) {
                 long startSyncNS = System.nanoTime();
 
                 FileChannel channel = log.getChannel();
                 channel.force(false);
-
-                syncElapsedMS = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startSyncNS);
+                syncEndNS = System.nanoTime();
+                syncElapsedMS = TimeUnit.NANOSECONDS.toMillis(syncEndNS - startSyncNS);
                 if (syncElapsedMS > fsyncWarningThresholdMS) {
                     LOG.warn("fsync-ing the write ahead log in "
                             + Thread.currentThread().getName()
@@ -331,6 +339,13 @@ public class FileTxnLog implements TxnLog {
         }
         while (streamsToFlush.size() > 1) {
             streamsToFlush.removeFirst().close();
+        }
+        endNS = System.nanoTime();
+        
+        if (timeit) {
+            String msg = String.format("logStream.flush %d, log.flush %d, forceSync %d, close %d, total %d ns",
+                    logStreamEndNS - startNS, logEndNS - logStreamEndNS, syncEndNS - logEndNS, endNS - syncEndNS, endNS - startNS);
+            LOG.info(msg);
         }
     }
 
