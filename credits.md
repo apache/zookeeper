@@ -52,6 +52,7 @@ ZooKeeper's active committers are
 |hanm|Michael Han|Cloudera Inc.|-8|
 |arshad|Mohammad Arshad|Huawei|+5:30|
 |afine|Abraham Fine|IFTTT|-8|
+|andor|Andor Molnar|Cloudera Inc.|+2|
 
 ## Contributors
 
