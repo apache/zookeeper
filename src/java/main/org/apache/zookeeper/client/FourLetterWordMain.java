@@ -86,7 +86,7 @@ public class FourLetterWordMain {
             throws IOException, SSLContextException {
         LOG.info("connecting to {} {}", host, port);
         Socket sock;
-        InetSocketAddress hostaddress= host != null ? new InetSocketAddress(host, port) :
+        InetSocketAddress hostaddress = host != null ? new InetSocketAddress(host, port) :
             new InetSocketAddress(InetAddress.getByName(null), port);
         if (secure) {
             LOG.info("using secure socket");

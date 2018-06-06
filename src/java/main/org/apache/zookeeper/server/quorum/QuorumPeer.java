@@ -68,9 +68,12 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
+import org.apache.zookeeper.server.util.ConfigUtils;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.apache.zookeeper.common.NetUtils.formatInetAddr;
 
 /**
  * This class manages the quorum protocol. There are three states this server
@@ -193,27 +196,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             }
         }
 
-        private static String[] splitWithLeadingHostname(String s)
-                throws ConfigException
-        {
-            /* Does it start with an IPv6 literal? */
-            if (s.startsWith("[")) {
-                int i = s.indexOf("]:");
-                if (i < 0) {
-                    throw new ConfigException(s + " starts with '[' but has no matching ']:'");
-                }
-
-                String[] sa = s.substring(i + 2).split(":");
-                String[] nsa = new String[sa.length + 1];
-                nsa[0] = s.substring(1, i);
-                System.arraycopy(sa, 0, nsa, 1, sa.length);
-
-                return nsa;
-            } else {
-                return s.split(":");
-            }
-        }
-
         private static final String wrongFormat = " does not have the form server_config or server_config;client_config"+
         " where server_config is host:port:port or host:port:port:type and client_config is port or host:port";
 
@@ -221,7 +203,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             // LOG.warn("sid = " + sid + " addressStr = " + addressStr);
             this.id = sid;
             String serverClientParts[] = addressStr.split(";");
-            String serverParts[] = splitWithLeadingHostname(serverClientParts[0]);
+            String serverParts[] = ConfigUtils.splitServerConfig(serverClientParts[0]);
             if ((serverClientParts.length > 2) || (serverParts.length < 3)
                     || (serverParts.length > 4)) {
                 throw new ConfigException(addressStr + wrongFormat);
@@ -229,7 +211,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
             if (serverClientParts.length == 2) {
                 //LOG.warn("ClientParts: " + serverClientParts[1]);
-                String clientParts[] = splitWithLeadingHostname(serverClientParts[1]);
+                String clientParts[] = ConfigUtils.splitServerConfig(serverClientParts[1]);
                 if (clientParts.length > 2) {
                     throw new ConfigException(addressStr + wrongFormat);
                 }
@@ -1354,14 +1336,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             if (leader != null) {
                 for (LearnerHandler fh : leader.getLearners()) {
                     if (fh.getSocket() != null) {
-                        String s = fh.getSocket().getRemoteSocketAddress().toString();
+                        String s = formatInetAddr((InetSocketAddress)fh.getSocket().getRemoteSocketAddress());
                         if (leader.isLearnerSynced(fh))
                             s += "*";
                         l.add(s);
                     }
                 }
             } else if (follower != null) {
-                l.add(follower.sock.getRemoteSocketAddress().toString());
+                l.add(formatInetAddr((InetSocketAddress)follower.sock.getRemoteSocketAddress()));
             }
         }
         return l.toArray(new String[0]);
@@ -1992,8 +1974,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     private void updateThreadName() {
         String plain = cnxnFactory != null ?
                 cnxnFactory.getLocalAddress() != null ?
-                        cnxnFactory.getLocalAddress().toString() : "disabled" : "disabled";
-        String secure = secureCnxnFactory != null ? secureCnxnFactory.getLocalAddress().toString() : "disabled";
+                        formatInetAddr(cnxnFactory.getLocalAddress()) : "disabled" : "disabled";
+        String secure = secureCnxnFactory != null ? formatInetAddr(secureCnxnFactory.getLocalAddress()) : "disabled";
         setName(String.format("QuorumPeer[myid=%d](plain=%s)(secure=%s)", getId(), plain, secure));
     }
 

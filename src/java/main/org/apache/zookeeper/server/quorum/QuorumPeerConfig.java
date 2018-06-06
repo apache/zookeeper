@@ -54,6 +54,9 @@ import org.apache.zookeeper.server.quorum.flexible.QuorumHierarchical;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.VerifyingFileFactory;
+import org.apache.zookeeper.server.util.ConfigUtils;
+
+import static org.apache.zookeeper.common.NetUtils.formatInetAddr;
 
 @InterfaceAudience.Public
 public class QuorumPeerConfig {
@@ -373,10 +376,10 @@ public class QuorumPeerConfig {
         } else if (clientPortAddress != null) {
             this.clientPortAddress = new InetSocketAddress(
                     InetAddress.getByName(clientPortAddress), clientPort);
-            LOG.info("clientPortAddress is {}", this.clientPortAddress.toString());
+            LOG.info("clientPortAddress is {}", formatInetAddr(this.clientPortAddress));
         } else {
             this.clientPortAddress = new InetSocketAddress(clientPort);
-            LOG.info("clientPortAddress is {}", this.clientPortAddress.toString());
+            LOG.info("clientPortAddress is {}", formatInetAddr(this.clientPortAddress));
         }
 
         if (secureClientPort == 0) {
@@ -387,10 +390,10 @@ public class QuorumPeerConfig {
         } else if (secureClientPortAddress != null) {
             this.secureClientPortAddress = new InetSocketAddress(
                     InetAddress.getByName(secureClientPortAddress), secureClientPort);
-            LOG.info("secureClientPortAddress is {}", this.secureClientPortAddress.toString());
+            LOG.info("secureClientPortAddress is {}", formatInetAddr(this.secureClientPortAddress));
         } else {
             this.secureClientPortAddress = new InetSocketAddress(secureClientPort);
-            LOG.info("secureClientPortAddress is {}", this.secureClientPortAddress.toString());
+            LOG.info("secureClientPortAddress is {}", formatInetAddr(this.secureClientPortAddress));
         }
         if (this.secureClientPortAddress != null) {
             configureSSLAuth();
