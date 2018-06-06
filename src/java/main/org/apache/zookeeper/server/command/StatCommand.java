@@ -65,7 +65,7 @@ public class StatCommand extends AbstractFourLetterCommand {
             if (serverStats.getServerState().equals("leader")) {
                 Leader leader = ((LeaderZooKeeperServer)zkServer).getLeader();
                 ProposalStats proposalStats = leader.getProposalStats();
-                pw.printf("Proposal sizes last/min/max: %s%n", proposalStats.toString());
+                pw.printf("Proposal min/avg/max: %s%n", proposalStats.toString());
             }
         }
     }

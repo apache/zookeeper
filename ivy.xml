@@ -136,6 +136,14 @@
 
     <dependency org="org.openclover" name="clover" rev="${clover.version}" conf="clover->default"/>
 
+    <dependency org="io.dropwizard.metrics" name="metrics-core"
+                rev="${dropwizard.version}" conf="default">
+      <exclude org="org.slf4j" module="slf4j-api"/>
+    </dependency>
+
+    <dependency org="org.hamcrest" name="hamcrest-all" rev="1.3"
+                conf="test->default" />
+
     <conflict manager="strict"/>
 
   </dependencies>

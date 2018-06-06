@@ -30,7 +30,7 @@ import org.apache.zookeeper.server.util.OSMXBean;
 
 public class MonitorCommand extends AbstractFourLetterCommand {
 
-    MonitorCommand(PrintWriter pw, ServerCnxn serverCnxn) {
+    public MonitorCommand(PrintWriter pw, ServerCnxn serverCnxn) {
         super(pw, serverCnxn);
     }
 
@@ -75,14 +75,18 @@ public class MonitorCommand extends AbstractFourLetterCommand {
             print("synced_followers", leader.getForwardingFollowers().size());
             print("pending_syncs", leader.getNumPendingSyncs());
 
-            print("last_proposal_size", leader.getProposalStats().getLastProposalSize());
-            print("max_proposal_size", leader.getProposalStats().getMaxProposalSize());
-            print("min_proposal_size", leader.getProposalStats().getMinProposalSize());
+            print("avg_proposal", leader.getProposalStats().getAverage());
+            print("max_proposal", leader.getProposalStats().getMax());
+            print("min_proposal", leader.getProposalStats().getMin());
         }
     }
 
     private void print(String key, long number) {
         print(key, "" + number);
+    }
+
+    private void print(String key, double number) {
+        print(key, String.format("%s", number));
     }
 
     private void print(String key, String value) {

@@ -106,6 +106,5 @@ public class StatResetCommandTest {
         String output = outputWriter.toString();
         assertEquals("Server stats reset.\n", output);
         verify(serverStats, times(1)).reset();
-        verify(proposalStats, times(1)).reset();
     }
 }
