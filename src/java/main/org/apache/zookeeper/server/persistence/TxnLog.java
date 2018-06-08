@@ -21,6 +21,7 @@ package org.apache.zookeeper.server.persistence;
 import java.io.IOException;
 
 import org.apache.jute.Record;
+import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.txn.TxnHeader;
 
 /**
@@ -28,6 +29,12 @@ import org.apache.zookeeper.txn.TxnHeader;
  *
  */
 public interface TxnLog {
+
+    /**
+     +     * Setter for ServerStats to monitor fsync threshold exceed
+     +     * @param serverStats used to update fsyncThresholdExceedCount
+     +     */
+     void setServerStats(ServerStats serverStats);
     
     /**
      * roll the current

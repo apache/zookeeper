@@ -103,6 +103,7 @@ public class FourLetterWordsTest extends ClientBase {
         verify("cons", "queued");
         verify("mntr", "zk_server_state\tstandalone");
         verify("mntr", "num_alive_connections");
+        verify("mntr", "fsync_threshold_exceed_count");
         verify("stat", "Connections");
         verify("srvr", "Connections");
     }

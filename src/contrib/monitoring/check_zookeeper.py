@@ -256,6 +256,31 @@ class ZooKeeperServer(object):
                 result['zk_znode_count'] = int(m.group(1))
                 continue
 
+            m = re.match('Watch count: (\d+)', line)
+            if m is not None:
+                result['zk_watch_count'] = int(m.group(1))
+                continue
+
+            m = re.match('Ephemerals count: (\d+)', line)
+            if m is not None:
+                result['zk_ephemerals_count'] = int(m.group(1))
+                continue
+
+            m = re.match('Approximate data size: (\d+)', line)
+            if m is not None:
+                result['zk_approximate_data_size'] = int(m.group(1))
+                continue
+
+            m = re.match('Open file descriptor count: (\d+)', line)
+            if m is not None:
+                result['zk_open_file_descriptor_count'] = int(m.group(1))
+                continue
+
+            m = re.match('Max file descriptor count: (\d+)', line)
+            if m is not None:
+                result['zk_max_file_descriptor_count'] = int(m.group(1))
+                continue
+
             m = re.match('Zxid: (0x[0-9a-fA-F]+)', line)
             if m is not None:
                 result['zk_zxid']         = m.group(1)

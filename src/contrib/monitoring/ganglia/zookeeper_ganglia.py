@@ -178,7 +178,8 @@ def metric_init(params=None):
         'zk_max_file_descriptor_count': {'units': 'descriptors'},
         'zk_followers': {'units': 'nodes'},
         'zk_synced_followers': {'units': 'nodes'},
-        'zk_pending_syncs': {'units': 'syncs'}
+        'zk_pending_syncs': {'units': 'syncs'},
+        'zk_fsync_threshold_exceed_count': {'units': 'fsyncexceed'}
     }
     metric_handler.descriptors = {}
     for name, updates in metrics.iteritems():

@@ -32,6 +32,7 @@ import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
 import org.apache.zookeeper.server.Request;
+import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
 import org.apache.zookeeper.txn.CreateSessionTxn;
@@ -110,6 +111,10 @@ public class FileTxnSnapLog {
 
         txnLog = new FileTxnLog(this.dataDir);
         snapLog = new FileSnap(this.snapDir);
+    }
+
+    public void setServerStats(ServerStats serverStats) {
+        txnLog.setServerStats(serverStats);
     }
 
     private void checkLogDir() throws LogDirContentCheckException {

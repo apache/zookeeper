@@ -200,6 +200,7 @@ public class FourLetterWordsWhiteListTest extends ClientBase {
         verifyFuzzyMatch("cons", "queued");
         verifyFuzzyMatch("mntr", "zk_server_state\tstandalone");
         verifyFuzzyMatch("mntr", "num_alive_connections");
+        verifyFuzzyMatch("mntr", "fsync_threshold_exceed_count");
         verifyFuzzyMatch("stat", "Connections");
         verifyFuzzyMatch("srvr", "Connections");
     }

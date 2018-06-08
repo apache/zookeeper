@@ -45,5 +45,6 @@ collection_group {
   metric { name = "zk_followers" }
   metric { name = "zk_synced_followers" }
   metric { name = "zk_pending_syncs" }
+  metric { name = "zk_fsync_threshold_exceed_count" }
 }
 
