@@ -34,6 +34,7 @@ zk_ephemerals_count 0
 zk_approximate_data_size    41
 zk_open_file_descriptor_count   20
 zk_max_file_descriptor_count    1024
+zk_fsync_threshold_exceed_count	0
 
 Python 2.6 (maybe it works on previous version but it's not tested yet).
 

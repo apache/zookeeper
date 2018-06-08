@@ -1383,6 +1383,7 @@ zk_synced_followers 4               - only exposed by the Leader
 zk_pending_syncs    0               - only exposed by the Leader
 zk_open_file_descriptor_count 23    - only available on Unix platforms
 zk_max_file_descriptor_count 1024   - only available on Unix platforms
+zk_fsync_threshold_exceed_count	0
 </programlisting>
 
           <para>The output is compatible with java properties format and the content 

@@ -19,6 +19,8 @@
 package org.apache.zookeeper.server;
 
 
+import java.util.concurrent.atomic.AtomicLong;
+
 /**
  * Basic Server Statistics
  */
@@ -29,6 +31,7 @@ public class ServerStats {
     private long minLatency = Long.MAX_VALUE;
     private long totalLatency = 0;
     private long count = 0;
+    private AtomicLong fsyncThresholdExceedCount = new AtomicLong(0);
 
     private final Provider provider;
 
@@ -100,6 +103,19 @@ public class ServerStats {
         sb.append("Mode: " + getServerState() + "\n");
         return sb.toString();
     }
+
+    public long getFsyncThresholdExceedCount() {
+        return fsyncThresholdExceedCount.get();
+    }
+
+    public void incrementFsyncThresholdExceedCount() {
+        fsyncThresholdExceedCount.incrementAndGet();
+    }
+
+    public void resetFsyncThresholdExceedCount() {
+        fsyncThresholdExceedCount.set(0);
+    }
+
     // mutators
     synchronized void updateLatency(long requestCreateTime) {
         long latency = System.currentTimeMillis() - requestCreateTime;

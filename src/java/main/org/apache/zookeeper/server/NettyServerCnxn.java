@@ -577,7 +577,9 @@ public class NettyServerCnxn extends ServerCnxn {
                 print("open_file_descriptor_count", osMbean.getOpenFileDescriptorCount());
                 print("max_file_descriptor_count", osMbean.getMaxFileDescriptorCount());
             }
-          
+
+            print("fsync_threshold_exceed_count", stats.getFsyncThresholdExceedCount());
+
             if(stats.getServerState().equals("leader")) {
                 Leader leader = ((LeaderZooKeeperServer)zkServer).getLeader();
 

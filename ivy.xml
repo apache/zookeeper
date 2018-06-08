@@ -106,6 +106,9 @@
     <dependency org="org.apache.kerby" name="kerby-asn1"
                 rev="${kerby.version}" conf="test->default"/>
 
+    <dependency org="org.hamcrest" name="hamcrest-all" 
+                rev="${hamcrest.version}" conf="test->default" />
+
     <dependency org="org.openclover" name="clover" 
                 rev="${clover.version}" conf="clover->default"/>
 

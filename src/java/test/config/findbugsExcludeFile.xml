@@ -90,6 +90,11 @@
      <Bug code="IS"/>
   </Match>
   <Match>
+    <Class name="org.apache.zookeeper.server.persistence.FileTxnLog"/>
+    <Field name="serverStats"/>
+    <Bug code="IS"/>
+  </Match>
+  <Match>
      <Class name="org.apache.zookeeper.server.quorum.LearnerSessionTracker"/>
        <Bug code="UrF"/>
   </Match>
