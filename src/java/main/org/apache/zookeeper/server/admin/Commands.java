@@ -290,6 +290,7 @@ public class Commands {
      *   - "approximate_data_size": Long
      *   - "open_file_descriptor_count": Long (unix only)
      *   - "max_file_descritpor_count": Long (unix only)
+     *   - "fsync_threshold_exceed_count": Long
      *   - "followers": Integer (leader only)
      *   - "synced_followers": Integer (leader only)
      *   - "pending_syncs": Integer (leader only)

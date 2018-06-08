@@ -153,6 +153,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             int minSessionTimeout, int maxSessionTimeout, ZKDatabase zkDb) {
         serverStats = new ServerStats(this);
         this.txnLogFactory = txnLogFactory;
+        this.txnLogFactory.setServerStats(this.serverStats);
         this.zkDb = zkDb;
         this.tickTime = tickTime;
         setMinSessionTimeout(minSessionTimeout);
