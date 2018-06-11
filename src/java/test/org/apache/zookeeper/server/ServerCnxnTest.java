@@ -38,12 +38,12 @@ public class ServerCnxnTest extends ZKTestCase {
      */
     @Test
     public void testServerCnxnGetAuthInfoWithCopy() throws Exception {
-            MockServerCnxn serverCnxn = new MockServerCnxn();
-                List<Id> authInfo = serverCnxn.getAuthInfo();
-                Id id = new Id("testscheme", "test");
-                serverCnxn.addAuthInfo(id);
-                Assert.assertFalse(authInfo.contains(id));
-                Assert.assertTrue(serverCnxn.getAuthInfo().contains(id));
+        MockServerCnxn serverCnxn = new MockServerCnxn();
+        List<Id> authInfo = serverCnxn.getAuthInfo();
+        Id id = new Id("testscheme", "test");
+        serverCnxn.addAuthInfo(id);
+        Assert.assertFalse(authInfo.contains(id));
+        Assert.assertTrue(serverCnxn.getAuthInfo().contains(id));
     }
     
     /**
@@ -51,12 +51,13 @@ public class ServerCnxnTest extends ZKTestCase {
      * AuthInfo behavior (ZOOKEEPER-2977).
      */
     private static class MockServerCnxn extends ServerCnxn {
+
         public MockServerCnxn() {
         }
 
         @Override
         int getSessionTimeout() {
-                return 0;
+            return 0;
         }
 
         @Override
@@ -77,7 +78,7 @@ public class ServerCnxnTest extends ZKTestCase {
 
         @Override
         long getSessionId() {
-                return 0;
+            return 0;
         }
 
         @Override
@@ -102,22 +103,22 @@ public class ServerCnxnTest extends ZKTestCase {
 
         @Override
         protected ServerStats serverStats() {
-                return null;
+            return null;
         }
 
         @Override
         public long getOutstandingRequests() {
-                return 0;
+            return 0;
         }
 
         @Override
         public InetSocketAddress getRemoteSocketAddress() {
-                return null;
+            return null;
         }
 
         @Override
         public int getInterestOps() {
-                return 0;
+            return 0;
         }
 
         @Override
