@@ -48,6 +48,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.PKIXBuilderParameters;
 import java.security.cert.X509CertSelector;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.zookeeper.common.X509Exception.KeyManagerException;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
@@ -68,12 +69,13 @@ public abstract class X509Util {
     private String sslTruststoreLocationProperty = getConfigPrefix() + "trustStore.location";
     private String sslTruststorePasswdProperty = getConfigPrefix() + "trustStore.password";
     private String sslHostnameVerificationEnabledProperty = getConfigPrefix() + "hostnameVerification";
+    private String sslClientHostnameVerificationEnabledProperty = getConfigPrefix() + "clientHostnameVerification";
     private String sslCrlEnabledProperty = getConfigPrefix() + "crl";
     private String sslOcspEnabledProperty = getConfigPrefix() + "ocsp";
 
     private String[] cipherSuites;
 
-    private volatile SSLContext defaultSSLContext;
+    private AtomicReference<SSLContext> defaultSSLContext = new AtomicReference<>(null);
 
     public X509Util() {
         String cipherSuitesInput = System.getProperty(cipherSuitesProperty);
@@ -114,6 +116,11 @@ public abstract class X509Util {
     public String getSslHostnameVerificationEnabledProperty() {
         return sslHostnameVerificationEnabledProperty;
     }
+
+    public String getSslClientHostnameVerificationEnabledProperty() {
+        return sslClientHostnameVerificationEnabledProperty;
+    }
+
     public String getSslCrlEnabledProperty() {
         return sslCrlEnabledProperty;
     }
@@ -123,10 +130,15 @@ public abstract class X509Util {
     }
 
     public synchronized SSLContext getDefaultSSLContext() throws X509Exception.SSLContextException {
-        if (defaultSSLContext == null) {
-            defaultSSLContext = createSSLContext();
+        SSLContext result = defaultSSLContext.get();
+        if (result == null) {
+            result = createSSLContext();
+            if (!defaultSSLContext.compareAndSet(null, result)) {
+                // lost the race, another thread already set the value
+                result = defaultSSLContext.get();
+            }
         }
-        return defaultSSLContext;
+        return result;
     }
 
     private SSLContext createSSLContext() throws SSLContextException {
@@ -172,6 +184,8 @@ public abstract class X509Util {
         boolean sslCrlEnabled = config.getBoolean(this.sslCrlEnabledProperty);
         boolean sslOcspEnabled = config.getBoolean(this.sslOcspEnabledProperty);
         boolean sslServerHostnameVerificationEnabled = config.getBoolean(this.getSslHostnameVerificationEnabledProperty(), true);
+        boolean sslClientHostnameVerificationEnabled =
+                config.getBoolean(this.getSslClientHostnameVerificationEnabledProperty(), shouldVerifyClientHostname());
 
         if (trustStoreLocationProp == null) {
             LOG.warn(getSslTruststoreLocationProperty() + " not specified");
@@ -179,7 +193,7 @@ public abstract class X509Util {
             try {
                 trustManagers = new TrustManager[]{
                         createTrustManager(trustStoreLocationProp, trustStorePasswordProp, sslCrlEnabled, sslOcspEnabled,
-                                sslServerHostnameVerificationEnabled, shouldVerifyClientHostname())};
+                                sslServerHostnameVerificationEnabled, sslClientHostnameVerificationEnabled)};
             } catch (TrustManagerException trustManagerException) {
                 throw new SSLContextException("Failed to create TrustManager", trustManagerException);
             }
@@ -230,8 +244,8 @@ public abstract class X509Util {
 
     public static X509TrustManager createTrustManager(String trustStoreLocation, String trustStorePassword,
                                                       boolean crlEnabled, boolean ocspEnabled,
-                                                      final boolean hostnameVerificationEnabled,
-                                                      final boolean shouldVerifyClientHostname)
+                                                      final boolean serverHostnameVerificationEnabled,
+                                                      final boolean clientHostnameVerificationEnabled)
             throws TrustManagerException {
         FileInputStream inputStream = null;
         try {
@@ -264,7 +278,8 @@ public abstract class X509Util {
 
             for (final TrustManager tm : tmf.getTrustManagers()) {
                 if (tm instanceof X509ExtendedTrustManager) {
-                    return new ZKTrustManager((X509ExtendedTrustManager) tm, hostnameVerificationEnabled, shouldVerifyClientHostname);
+                    return new ZKTrustManager((X509ExtendedTrustManager) tm,
+                            serverHostnameVerificationEnabled, clientHostnameVerificationEnabled);
                 }
             }
             throw new TrustManagerException("Couldn't find X509TrustManager");

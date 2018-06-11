@@ -201,8 +201,8 @@ public class ZKTrustManagerTest extends ZKTestCase {
         X509Certificate[] certificateChain = createSelfSignedCertifcateChain(null, HOSTNAME);
         zkTrustManager.checkClientTrusted(certificateChain, null, mockSocket);
 
-        verify(mockInetAddress, times(0)).getHostAddress();
-        verify(mockInetAddress, times(0)).getHostName();
+        verify(mockInetAddress, times(1)).getHostAddress();
+        verify(mockInetAddress, times(1)).getHostName();
 
         verify(mockX509ExtendedTrustManager, times(1)).checkClientTrusted(certificateChain, null, mockSocket);
     }

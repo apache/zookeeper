@@ -20,7 +20,7 @@ package org.apache.zookeeper.common;
 
 public class ClientX509Util extends X509Util {
 
-    private String sslAuthProviderProperty = getConfigPrefix() + "authProvider";
+    private final String sslAuthProviderProperty = getConfigPrefix() + "authProvider";
 
     @Override
     protected String getConfigPrefix() {

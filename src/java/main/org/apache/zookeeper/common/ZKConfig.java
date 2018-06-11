@@ -122,6 +122,8 @@ public class ZKConfig {
                 System.getProperty(x509Util.getSslTruststorePasswdProperty()));
         properties.put(x509Util.getSslHostnameVerificationEnabledProperty(),
                 System.getProperty(x509Util.getSslHostnameVerificationEnabledProperty()));
+        properties.put(x509Util.getSslClientHostnameVerificationEnabledProperty(),
+                System.getProperty(x509Util.getSslClientHostnameVerificationEnabledProperty()));
         properties.put(x509Util.getSslCrlEnabledProperty(),
                 System.getProperty(x509Util.getSslCrlEnabledProperty()));
         properties.put(x509Util.getSslOcspEnabledProperty(),

@@ -41,8 +41,8 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
     private static final Logger LOG = LoggerFactory.getLogger(ZKTrustManager.class);
 
     private X509ExtendedTrustManager x509ExtendedTrustManager;
-    private boolean hostnameVerificationEnabled;
-    private boolean shouldVerifyClientHostname;
+    private boolean serverHostnameVerificationEnabled;
+    private boolean clientHostnameVerificationEnabled;
 
     private DefaultHostnameVerifier hostnameVerifier;
 
@@ -50,20 +50,19 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
      * Instantiate a new ZKTrustManager.
      *
      * @param x509ExtendedTrustManager The trustmanager to use for checkClientTrusted/checkServerTrusted logic
-     * @param verifySSLServerHostname  If true, this TrustManager should verify hostnames of servers that this
+     * @param serverHostnameVerificationEnabled  If true, this TrustManager should verify hostnames of servers that this
      *                                 instance connects to.
-     * @param verifySSLClientHostname  If true, and verifySSLServerHostname is true, the hostname of a client
+     * @param clientHostnameVerificationEnabled  If true, and verifySSLServerHostname is true, the hostname of a client
      *                                 connecting to this machine will be verified in addition to the servers that this
      *                                 instance connects to. If false, and verifySSLServerHostname is true, only
      *                                 the hostnames of servers that this instance connects to will be verified. If
      *                                 verifySSLServerHostname is false, this argument is ignored.
      */
-    public ZKTrustManager(X509ExtendedTrustManager x509ExtendedTrustManager, boolean verifySSLServerHostname,
-                          boolean verifySSLClientHostname) {
+    ZKTrustManager(X509ExtendedTrustManager x509ExtendedTrustManager, boolean serverHostnameVerificationEnabled,
+                   boolean clientHostnameVerificationEnabled) {
         this.x509ExtendedTrustManager = x509ExtendedTrustManager;
-        this.hostnameVerificationEnabled = verifySSLServerHostname;
-        this.shouldVerifyClientHostname = verifySSLClientHostname;
-
+        this.serverHostnameVerificationEnabled = serverHostnameVerificationEnabled;
+        this.clientHostnameVerificationEnabled = clientHostnameVerificationEnabled;
         hostnameVerifier = new DefaultHostnameVerifier();
     }
 
@@ -74,42 +73,42 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
 
     @Override
     public void checkClientTrusted(X509Certificate[] chain, String authType, Socket socket) throws CertificateException {
-        if (hostnameVerificationEnabled && shouldVerifyClientHostname) {
+        x509ExtendedTrustManager.checkClientTrusted(chain, authType, socket);
+        if (clientHostnameVerificationEnabled) {
             performHostVerification(socket.getInetAddress(), chain[0]);
         }
-        x509ExtendedTrustManager.checkClientTrusted(chain, authType, socket);
     }
 
     @Override
     public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket) throws CertificateException {
-        if (hostnameVerificationEnabled) {
+        x509ExtendedTrustManager.checkServerTrusted(chain, authType, socket);
+        if (serverHostnameVerificationEnabled) {
             performHostVerification(socket.getInetAddress(), chain[0]);
         }
-        x509ExtendedTrustManager.checkServerTrusted(chain, authType, socket);
     }
 
     @Override
     public void checkClientTrusted(X509Certificate[] chain, String authType, SSLEngine engine) throws CertificateException {
-        if (hostnameVerificationEnabled && shouldVerifyClientHostname) {
+        x509ExtendedTrustManager.checkServerTrusted(chain, authType, engine);
+        if (clientHostnameVerificationEnabled) {
             try {
                 performHostVerification(InetAddress.getByName(engine.getPeerHost()), chain[0]);
             } catch (UnknownHostException e) {
                 throw new CertificateException("failed to verify host", e);
             }
         }
-        x509ExtendedTrustManager.checkServerTrusted(chain, authType, engine);
     }
 
     @Override
     public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine engine) throws CertificateException {
-        if (hostnameVerificationEnabled) {
+        x509ExtendedTrustManager.checkServerTrusted(chain, authType, engine);
+        if (serverHostnameVerificationEnabled) {
             try {
                 performHostVerification(InetAddress.getByName(engine.getPeerHost()), chain[0]);
             } catch (UnknownHostException e) {
                 throw new CertificateException("failed to verify host", e);
             }
         }
-        x509ExtendedTrustManager.checkServerTrusted(chain, authType, engine);
     }
 
     @Override
@@ -122,6 +121,14 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
         x509ExtendedTrustManager.checkServerTrusted(chain, authType);
     }
 
+    /**
+     * Compares peer's hostname with the one stored in the provided client certificate. Performs verification
+     * with the help of provided HostnameVerifier.
+     *
+     * @param inetAddress Peer's inet address.
+     * @param certificate Peer's certificate
+     * @throws CertificateException Thrown if the provided certificate doesn't match the peer hostname.
+     */
     private void performHostVerification(InetAddress inetAddress, X509Certificate certificate) throws CertificateException {
         String hostAddress = "";
         String hostName = "";

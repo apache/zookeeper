@@ -109,7 +109,8 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
             }
             try {
                 tm = X509Util.createTrustManager(
-                        trustStoreLocation, trustStorePassword, crlEnabled, ocspEnabled, hostnameVerificationEnabled, false);
+                        trustStoreLocation, trustStorePassword, crlEnabled, ocspEnabled,
+                        hostnameVerificationEnabled, false);
             } catch (TrustManagerException e) {
                 LOG.error("Failed to create trust manager", e);
             }

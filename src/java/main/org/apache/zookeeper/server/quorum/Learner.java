@@ -248,7 +248,7 @@ public class Learner {
      */
     protected void connectToLeader(InetSocketAddress addr, String hostname)
     throws IOException, InterruptedException, X509Exception {
-        createSocket();
+        this.sock = createSocket();
 
         int initLimitTime = self.tickTime * self.initLimit;
         int remainingInitLimitTime = initLimitTime;
@@ -286,7 +286,7 @@ public class Learner {
                     LOG.warn("Unexpected exception, tries=" + tries +
                             ", remaining init limit=" + remainingInitLimitTime +
                             ", connecting to " + addr,e);
-                    createSocket();
+                    this.sock = createSocket();
                 }
             }
             Thread.sleep(1000);
@@ -300,7 +300,8 @@ public class Learner {
         leaderOs = BinaryOutputArchive.getArchive(bufferedOutput);
     }
 
-    private void createSocket() throws X509Exception, IOException {
+    private Socket createSocket() throws X509Exception, IOException {
+        Socket sock;
         if (self.isSslQuorum()) {
             if (x509Util == null) {
                 x509Util = new QuorumX509Util();
@@ -310,6 +311,7 @@ public class Learner {
             sock = new Socket();
         }
         sock.setSoTimeout(self.tickTime * self.initLimit);
+        return sock;
     }
 
     /**

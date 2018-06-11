@@ -646,10 +646,13 @@ public class QuorumCnxManager {
                  sslSock.connect(electionAddr, cnxTO);
                  sslSock.startHandshake();
                  sock = sslSock;
-             } else {sock = new Socket();
-             setSockOpts(sock);
-             sock.connect(electionAddr, cnxTO);
-             }LOG.debug("Connected to server " + sid);
+             } else {
+                 sock = new Socket();
+                 setSockOpts(sock);
+                 sock.connect(electionAddr, cnxTO);
+
+             }
+             LOG.debug("Connected to server " + sid);
             // Sends connection request asynchronously if the quorum
             // sasl authentication is enabled. This is required because
             // sasl server authentication process may take few seconds to
