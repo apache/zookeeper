@@ -522,7 +522,6 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
      */
     private void testHostnameVerification(String keystorePath, boolean expectSuccess) throws Exception {
         System.setProperty(quorumX509Util.getSslHostnameVerificationEnabledProperty(), "false");
-        System.setProperty(quorumX509Util.getSslClientHostnameVerificationEnabledProperty(), "false");
 
         q1 = new MainThread(1, clientPortQp1, quorumConfiguration, SSL_QUORUM_ENABLED);
         q2 = new MainThread(2, clientPortQp2, quorumConfiguration, SSL_QUORUM_ENABLED);
@@ -551,7 +550,6 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
 
         setSSLSystemProperties();
         System.clearProperty(quorumX509Util.getSslHostnameVerificationEnabledProperty());
-        System.clearProperty(quorumX509Util.getSslClientHostnameVerificationEnabledProperty());
 
         q1.start();
         q2.start();

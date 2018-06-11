@@ -69,7 +69,6 @@ public abstract class X509Util {
     private String sslTruststoreLocationProperty = getConfigPrefix() + "trustStore.location";
     private String sslTruststorePasswdProperty = getConfigPrefix() + "trustStore.password";
     private String sslHostnameVerificationEnabledProperty = getConfigPrefix() + "hostnameVerification";
-    private String sslClientHostnameVerificationEnabledProperty = getConfigPrefix() + "clientHostnameVerification";
     private String sslCrlEnabledProperty = getConfigPrefix() + "crl";
     private String sslOcspEnabledProperty = getConfigPrefix() + "ocsp";
 
@@ -115,10 +114,6 @@ public abstract class X509Util {
 
     public String getSslHostnameVerificationEnabledProperty() {
         return sslHostnameVerificationEnabledProperty;
-    }
-
-    public String getSslClientHostnameVerificationEnabledProperty() {
-        return sslClientHostnameVerificationEnabledProperty;
     }
 
     public String getSslCrlEnabledProperty() {
@@ -184,8 +179,7 @@ public abstract class X509Util {
         boolean sslCrlEnabled = config.getBoolean(this.sslCrlEnabledProperty);
         boolean sslOcspEnabled = config.getBoolean(this.sslOcspEnabledProperty);
         boolean sslServerHostnameVerificationEnabled = config.getBoolean(this.getSslHostnameVerificationEnabledProperty(), true);
-        boolean sslClientHostnameVerificationEnabled =
-                config.getBoolean(this.getSslClientHostnameVerificationEnabledProperty(), shouldVerifyClientHostname());
+        boolean sslClientHostnameVerificationEnabled = sslServerHostnameVerificationEnabled && shouldVerifyClientHostname();
 
         if (trustStoreLocationProp == null) {
             LOG.warn(getSslTruststoreLocationProperty() + " not specified");
