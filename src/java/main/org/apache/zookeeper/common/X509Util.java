@@ -61,6 +61,18 @@ public abstract class X509Util {
     private static final Logger LOG = LoggerFactory.getLogger(X509Util.class);
 
     static final String DEFAULT_PROTOCOL = "TLSv1.2";
+    private static final String[] DEFAULT_CIPHERS_JAVA8 = {
+            "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
+            "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",
+            "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+    };
+    private static final String[] DEFAULT_CIPHERS_JAVA9 = {
+            "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+            "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
+            "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256"
+    };
 
     private String sslProtocolProperty = getConfigPrefix() + "protocol";
     private String cipherSuitesProperty = getConfigPrefix() + "ciphersuites";
@@ -79,7 +91,7 @@ public abstract class X509Util {
     public X509Util() {
         String cipherSuitesInput = System.getProperty(cipherSuitesProperty);
         if (cipherSuitesInput == null) {
-            cipherSuites = null;
+            cipherSuites = getDefaultCipherSuites();
         } else {
             cipherSuites = cipherSuitesInput.split(",");
         }
@@ -124,7 +136,7 @@ public abstract class X509Util {
         return sslOcspEnabledProperty;
     }
 
-    public synchronized SSLContext getDefaultSSLContext() throws X509Exception.SSLContextException {
+    public SSLContext getDefaultSSLContext() throws X509Exception.SSLContextException {
         SSLContext result = defaultSSLContext.get();
         if (result == null) {
             result = createSSLContext();
@@ -338,5 +350,21 @@ public abstract class X509Util {
         }
 
         sslServerSocket.setSSLParameters(sslParameters);
+    }
+
+    private String[] getDefaultCipherSuites() {
+        String javaVersion = System.getProperty("java.version");
+        String[] versionParts = javaVersion.split("\\.");
+        if (versionParts.length == 0) {
+            LOG.warn("Unable to parse Java version properly. Using Java8-optimized cipher suites for Java version {}", javaVersion);
+            return DEFAULT_CIPHERS_JAVA8;
+        }
+        int majorVersion = Integer.parseInt(versionParts[0]);
+        if (majorVersion >= 9) {
+            LOG.debug("Using Java9-optimized cipher suites for Java version {}", javaVersion);
+            return DEFAULT_CIPHERS_JAVA9;
+        }
+        LOG.debug("Using Java8-optimized cipher suites for Java version {}", javaVersion);
+        return DEFAULT_CIPHERS_JAVA8;
     }
 }
