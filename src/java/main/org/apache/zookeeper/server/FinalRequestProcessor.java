@@ -110,8 +110,8 @@ public class FinalRequestProcessor implements RequestProcessor {
                 Record txn = request.getTxn();
                 long zxid = hdr.getZxid();
                 while (!zks.outstandingChanges.isEmpty()
-                       && zks.outstandingChanges.get(0).zxid <= zxid) {
-                    ChangeRecord cr = zks.outstandingChanges.remove(0);
+                       && zks.outstandingChanges.peek().zxid <= zxid) {
+                    ChangeRecord cr = zks.outstandingChanges.remove();
                     if (cr.zxid < zxid) {
                         LOG.warn("Zxid outstanding " + cr.zxid
                                  + " is less than current " + zxid);
