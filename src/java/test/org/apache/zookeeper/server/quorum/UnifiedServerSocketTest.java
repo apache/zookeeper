@@ -35,6 +35,9 @@ import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertThat;
+
 public class UnifiedServerSocketTest {
 
     private static final int MAX_RETRIES = 5;
@@ -121,6 +124,7 @@ public class UnifiedServerSocketTest {
     @Test
     public void testConnectWithoutSSL() throws Exception {
         final byte[] testData = "hello there".getBytes();
+        final String[] dataReadFromClient = {null};
 
         class ServerThread extends Thread {
             public void run() {
@@ -128,6 +132,9 @@ public class UnifiedServerSocketTest {
                     Socket unifiedSocket = new UnifiedServerSocket(x509Util, port).accept();
                     unifiedSocket.getOutputStream().write(testData);
                     unifiedSocket.getOutputStream().flush();
+                    byte[] inputbuff = new byte[5];
+                    unifiedSocket.getInputStream().read(inputbuff, 0, 5);
+                    dataReadFromClient[0] = new String(inputbuff);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -151,7 +158,7 @@ public class UnifiedServerSocketTest {
             retries++;
         }
 
-        socket.getOutputStream().write("hello".getBytes());
+        socket.getOutputStream().write("hellobello".getBytes());
         socket.getOutputStream().flush();
 
         byte[] readBytes = new byte[testData.length];
@@ -160,5 +167,6 @@ public class UnifiedServerSocketTest {
         serverThread.join(TIMEOUT);
 
         Assert.assertArrayEquals(testData, readBytes);
+        assertThat("Data sent by the client is invalid", dataReadFromClient[0], equalTo("hello"));
     }
 }

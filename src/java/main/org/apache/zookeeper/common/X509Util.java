@@ -56,6 +56,11 @@ import org.apache.zookeeper.common.X509Exception.TrustManagerException;
 
 /**
  * Utility code for X509 handling
+ *
+ * Default cipher suites:
+ *
+ *   Performance testing done by Facebook engineers shows that on Intel x86_64 machines, Java9 performs better with
+ *   GCM and Java8 performs better with CBC, so these seem like reasonable defaults.
  */
 public abstract class X509Util {
     private static final Logger LOG = LoggerFactory.getLogger(X509Util.class);
@@ -326,7 +331,6 @@ public abstract class X509Util {
         }
     }
 
-
     public SSLServerSocket createSSLServerSocket() throws X509Exception, IOException {
         SSLServerSocket sslServerSocket = (SSLServerSocket) getDefaultSSLContext().getServerSocketFactory().createServerSocket();
         configureSSLServerSocket(sslServerSocket);
@@ -353,14 +357,8 @@ public abstract class X509Util {
     }
 
     private String[] getDefaultCipherSuites() {
-        String javaVersion = System.getProperty("java.version");
-        String[] versionParts = javaVersion.split("\\.");
-        if (versionParts.length == 0) {
-            LOG.warn("Unable to parse Java version properly. Using Java8-optimized cipher suites for Java version {}", javaVersion);
-            return DEFAULT_CIPHERS_JAVA8;
-        }
-        int majorVersion = Integer.parseInt(versionParts[0]);
-        if (majorVersion >= 9) {
+        String javaVersion = System.getProperty("java.specification.version");
+        if ("9".equals(javaVersion)) {
             LOG.debug("Using Java9-optimized cipher suites for Java version {}", javaVersion);
             return DEFAULT_CIPHERS_JAVA9;
         }

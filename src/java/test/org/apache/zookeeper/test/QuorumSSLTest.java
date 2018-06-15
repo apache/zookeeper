@@ -735,7 +735,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         System.setProperty(quorumX509Util.getSslProtocolProperty(), "TLSv1.1");
 
         // This server should fail to join the quorum as it is not using TLSv1.2
-        q3 = new MainThread(3, clientPortQp3, quorumConfiguration);
+        q3 = new MainThread(3, clientPortQp3, quorumConfiguration, SSL_QUORUM_ENABLED);
         q3.start();
 
         Assert.assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
