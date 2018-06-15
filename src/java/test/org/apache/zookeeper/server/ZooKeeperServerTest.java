@@ -19,6 +19,55 @@
 package org.apache.zookeeper.server;
 
 import org.apache.zookeeper.ZKTestCase;
+import org.junit.Test;
+
+import static org.hamcrest.Matchers.sameInstance;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
 
 public class ZooKeeperServerTest extends ZKTestCase {
+
+    @Test
+    public void testServerCnxnFactoryGetNonSecure() {
+        // Arrange
+        ZooKeeperServer zks = new ZooKeeperServer();
+        ServerCnxnFactory serverCnxnFactoryMock = mock(ServerCnxnFactory.class);
+
+        // Act
+        zks.setServerCnxnFactory(serverCnxnFactoryMock);
+
+        // Assert
+        assertThat("ServerCnxnFactory getter should return non-secure instance when secure is not set",
+                zks.getServerCnxnFactory(), sameInstance(serverCnxnFactoryMock));
+    }
+
+    @Test
+    public void testServerCnxnFactoryGetSecure() {
+        // Arrange
+        ZooKeeperServer zks = new ZooKeeperServer();
+        ServerCnxnFactory serverCnxnFactoryMock = mock(ServerCnxnFactory.class);
+
+        // Act
+        zks.setSecureServerCnxnFactory(serverCnxnFactoryMock);
+
+        // Assert
+        assertThat("ServerCnxnFactory getter should return secure instance when it's set",
+                zks.getServerCnxnFactory(), sameInstance(serverCnxnFactoryMock));
+    }
+
+    @Test
+    public void testServerCnxnFactoryGetBoth() {
+        // Arrange
+        ZooKeeperServer zks = new ZooKeeperServer();
+        ServerCnxnFactory serverCnxnFactoryMock = mock(ServerCnxnFactory.class);
+        ServerCnxnFactory serverCnxnFactorySecureMock = mock(ServerCnxnFactory.class);
+
+        // Act
+        zks.setServerCnxnFactory(serverCnxnFactoryMock);
+        zks.setSecureServerCnxnFactory(serverCnxnFactorySecureMock);
+
+        // Assert
+        assertThat("ServerCnxnFactory getter should return secure instance when both are set",
+                zks.getServerCnxnFactory(), sameInstance(serverCnxnFactorySecureMock));
+    }
 }
