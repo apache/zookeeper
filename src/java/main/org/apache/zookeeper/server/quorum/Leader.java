@@ -231,19 +231,17 @@ public class Leader {
         this.self = self;
         this.proposalStats = new BufferStats();
         try {
-            if (self.isSslQuorum()) {
-                if (self.shouldUsePortUnification()) {
-                    if (self.getQuorumListenOnAllIPs()) {
-                        ss = new UnifiedServerSocket(new QuorumX509Util(), self.getQuorumAddress().getPort());
-                    } else {
-                        ss = new UnifiedServerSocket(new QuorumX509Util());
-                    }
+            if (self.shouldUsePortUnification()) {
+                if (self.getQuorumListenOnAllIPs()) {
+                    ss = new UnifiedServerSocket(new QuorumX509Util(), self.getQuorumAddress().getPort());
                 } else {
-                    if (self.getQuorumListenOnAllIPs()) {
-                        ss = new QuorumX509Util().createSSLServerSocket(self.getQuorumAddress().getPort());
-                    } else {
-                        ss = new QuorumX509Util().createSSLServerSocket();
-                    }
+                    ss = new UnifiedServerSocket(new QuorumX509Util());
+                }
+            } else if (self.isSslQuorum()) {
+                if (self.getQuorumListenOnAllIPs()) {
+                    ss = new QuorumX509Util().createSSLServerSocket(self.getQuorumAddress().getPort());
+                } else {
+                    ss = new QuorumX509Util().createSSLServerSocket();
                 }
             } else {
                 if (self.getQuorumListenOnAllIPs()) {
