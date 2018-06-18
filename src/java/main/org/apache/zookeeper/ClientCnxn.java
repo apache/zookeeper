@@ -1260,6 +1260,10 @@ public class ClientCnxn {
                 cleanup();
             }
             clientCnxnSocket.close();
+            if (state.isAlive()) {
+                eventThread.queueEvent(new WatchedEvent(Event.EventType.None,
+                        Event.KeeperState.Disconnected, null));
+            }
             eventThread.queueEvent(new WatchedEvent(Event.EventType.None,
                         Event.KeeperState.Closed, null));
             ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),

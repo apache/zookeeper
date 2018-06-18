@@ -91,7 +91,7 @@ public interface Watcher {
              * the server, but is generated locally when a client calls
              * {@link ZooKeeper#close()} or {@link ZooKeeper#close(int)}
              */
-            Closed (-2);
+            Closed (7);
 
             private final int intValue;     // Integer representation of value
                                             // for sending over wire
@@ -114,7 +114,7 @@ public interface Watcher {
                     case    5: return KeeperState.ConnectedReadOnly;
                     case    6: return KeeperState.SaslAuthenticated;
                     case -112: return KeeperState.Expired;
-                    case   -2: return KeeperState.Closed;
+                    case   7: return KeeperState.Closed;
 
                     default:
                         throw new RuntimeException("Invalid integer value for conversion to KeeperState");
