@@ -217,11 +217,7 @@ public final class StaticHostProvider implements HostProvider {
         }
 
         for (InetSocketAddress addr : shuffledList) {
-            if (addr.getPort() == myServer.getPort()
-                    && ((addr.getAddress() != null
-                            && myServer.getAddress() != null && addr
-                            .getAddress().equals(myServer.getAddress())) || addr
-                            .getHostString().equals(myServer.getHostString()))) {
+            if (myServer.equals(addr)) {
                 myServerInNewConfig = true;
                 break;
             }
