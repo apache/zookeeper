@@ -412,8 +412,8 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             }
 
             synchronized (ipMap) {
-            	InetAddress addr = cnxn.getSocketAddress();
-            	if (addr != null) {
+                InetAddress addr = cnxn.getSocketAddress();
+                if (addr != null) {
                     Set<NettyServerCnxn> s = ipMap.get(addr);
                     if (s != null) {
                         s.remove(cnxn);

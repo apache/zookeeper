@@ -169,7 +169,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory implements Runnable 
 
             synchronized (ipMap) {
                 InetAddress addr = cnxn.getSocketAddress();
-            	if (addr != null) {
+                if (addr != null) {
                     Set<NIOServerCnxn> s = ipMap.get(addr);
                     if (s != null) {
                         s.remove(cnxn);
