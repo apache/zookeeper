@@ -32,6 +32,7 @@ import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.jmx.CommonNames;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
+import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumHierarchical;
 import org.junit.Assert;
@@ -226,6 +227,43 @@ public class HierarchicalQuorumTest extends ClientBase {
                                     CONNECTION_TIMEOUT));
             LOG.info(hp + " is accepting client connections");
         }
+        LOG.info("initial status " + s1.getCurrentVote() + "," + s2.getCurrentVote() + "," + s3.getCurrentVote());
+
+        verifyJMXData();
+
+        // bounce some server
+        s1.shutdown();
+        s2.shutdown();
+        s3.shutdown();
+
+        hq1 = new QuorumHierarchical(qp);
+        s1 = new QuorumPeer(peers, s1dir, s1dir, clientport1, 3, 1, tickTime, initLimit, syncLimit, hq1);
+        Assert.assertEquals(clientport1, s1.getClientPort());
+        s1.start();
+
+        hq2 = new QuorumHierarchical(qp);
+        s2 = new QuorumPeer(peers, s2dir, s2dir, clientport2, 3, 2, tickTime, initLimit, syncLimit, hq2);
+        Assert.assertEquals(clientport2, s2.getClientPort());
+        s2.start();
+
+        hq3 = new QuorumHierarchical(qp);
+        s3 = new QuorumPeer(peers, s3dir, s3dir, clientport3, 3, 3, tickTime, initLimit, syncLimit, hq3);
+        Assert.assertEquals(clientport3, s3.getClientPort());
+        s3.start();
+
+        for (String hp : hostPort.split(",")) {
+            Assert.assertTrue("waiting for server up",
+                       ClientBase.waitForServerUp(hp,
+                                    CONNECTION_TIMEOUT));
+            LOG.info(hp + " is accepting client connections");
+        }
+        
+        LOG.info("final status " + s1.getCurrentVote() + "," + s2.getCurrentVote() + "," + s3.getCurrentVote());
+        
+        verifyJMXData();
+    }
+
+    private void verifyJMXData() throws Exception, InterruptedException, IOException {
         final int numberOfPeers = 5;
         // interesting to see what's there...
         JMXEnv.dump();
@@ -236,12 +274,12 @@ public class HierarchicalQuorumTest extends ClientBase {
         }
         for (int i = 1; i <= numberOfPeers; i++) {
             ensureNames.add("name0=ReplicatedServer_id" + i
-                 + ",name1=replica." + i + ",name2=");
+                    + ",name1=replica." + i + ",name2=");
         }
         for (int i = 1; i <= numberOfPeers; i++) {
             for (int j = 1; j <= numberOfPeers; j++) {
                 ensureNames.add("name0=ReplicatedServer_id" + i
-                     + ",name1=replica." + j);
+                        + ",name1=replica." + j);
             }
         }
         for (int i = 1; i <= numberOfPeers; i++) {
@@ -264,8 +302,8 @@ public class HierarchicalQuorumTest extends ClientBase {
             }
         }
         Assert.assertEquals(1, countLeadersUsingLocalPeerBean);
-
-
+        
+        
         int countLeadersUseRemotePeerBean = 0;
         for (int i = 1; i <= numberOfPeers; i++) {
             for (int j = 1; j <= numberOfPeers; j++) {
@@ -289,7 +327,7 @@ public class HierarchicalQuorumTest extends ClientBase {
             }
         }
         Assert.assertEquals(numberOfPeers - 1, countLeadersUseRemotePeerBean);
-
+        
         Assert.assertEquals(numberOfPeers, countLeadersUseRemotePeerBean + countLeadersUsingLocalPeerBean);
     }
 
