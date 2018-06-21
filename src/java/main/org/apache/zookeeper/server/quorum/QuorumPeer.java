@@ -1093,7 +1093,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                         jmxLocalPeerBean = null;
                     }
                 } else {
-                    RemotePeerBean rBean = new RemotePeerBean(s);
+                    RemotePeerBean rBean = new RemotePeerBean(this, s);
                     try {
                         MBeanRegistry.getInstance().register(rBean, jmxQuorumBean);
                         jmxRemotePeerBean.put(s.id, rBean);
@@ -1895,7 +1895,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         joiningMembers.remove(getId()); // remove self as it is local bean
         for (Long id : joiningMembers) {
             QuorumServer qs = newMembers.get(id);
-            RemotePeerBean rBean = new RemotePeerBean(qs);
+            RemotePeerBean rBean = new RemotePeerBean(this, qs);
             try {
                 MBeanRegistry.getInstance().register(rBean, jmxQuorumBean);
                 jmxRemotePeerBean.put(qs.id, rBean);
@@ -2068,5 +2068,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 this.getQuorumListenOnAllIPs(),
                 this.quorumCnxnThreadsSize,
                 this.isQuorumSaslAuthEnabled());
+    }
+
+    boolean isLeader(long id) {
+        Vote vote = getCurrentVote();
+        return vote != null && id == vote.getId();
     }
 }

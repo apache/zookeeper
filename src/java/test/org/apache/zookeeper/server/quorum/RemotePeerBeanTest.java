@@ -36,7 +36,7 @@ public class RemotePeerBeanTest {
         InetSocketAddress peerCommunicationAddress = null;
         // Here peerCommunicationAddress is null, also clientAddr is null
         QuorumServer peer = new QuorumServer(1, peerCommunicationAddress);
-        RemotePeerBean remotePeerBean = new RemotePeerBean(peer);
+        RemotePeerBean remotePeerBean = new RemotePeerBean(null /*QuorumPeer*/, peer);
         String clientAddress = remotePeerBean.getClientAddress();
         assertNotNull(clientAddress);
         assertEquals(0, clientAddress.length());

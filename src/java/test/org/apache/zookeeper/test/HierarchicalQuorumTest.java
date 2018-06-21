@@ -226,30 +226,31 @@ public class HierarchicalQuorumTest extends ClientBase {
                                     CONNECTION_TIMEOUT));
             LOG.info(hp + " is accepting client connections");
         }
-
+        final int numberOfPeers = 5;
         // interesting to see what's there...
         JMXEnv.dump();
         // make sure we have these 5 servers listed
         Set<String> ensureNames = new LinkedHashSet<String>();
-        for (int i = 1; i <= 5; i++) {
+        for (int i = 1; i <= numberOfPeers; i++) {
             ensureNames.add("InMemoryDataTree");
         }
-        for (int i = 1; i <= 5; i++) {
+        for (int i = 1; i <= numberOfPeers; i++) {
             ensureNames.add("name0=ReplicatedServer_id" + i
                  + ",name1=replica." + i + ",name2=");
         }
-        for (int i = 1; i <= 5; i++) {
-            for (int j = 1; j <= 5; j++) {
+        for (int i = 1; i <= numberOfPeers; i++) {
+            for (int j = 1; j <= numberOfPeers; j++) {
                 ensureNames.add("name0=ReplicatedServer_id" + i
                      + ",name1=replica." + j);
             }
         }
-        for (int i = 1; i <= 5; i++) {
+        for (int i = 1; i <= numberOfPeers; i++) {
             ensureNames.add("name0=ReplicatedServer_id" + i);
         }
         JMXEnv.ensureAll(ensureNames.toArray(new String[ensureNames.size()]));
-
-        for (int i = 1; i <= 5; i++) {
+        int countLeadersUsingLocalPeerBean = 0;
+        for (int i = 1; i <= numberOfPeers; i++) {
+            // LocalPeerBean
             String bean = CommonNames.DOMAIN + ":name0=ReplicatedServer_id" + i
                     + ",name1=replica." + i;
             JMXEnv.ensureBeanAttribute(bean, "ConfigVersion");
@@ -257,7 +258,39 @@ public class HierarchicalQuorumTest extends ClientBase {
             JMXEnv.ensureBeanAttribute(bean, "ClientAddress");
             JMXEnv.ensureBeanAttribute(bean, "ElectionAddress");
             JMXEnv.ensureBeanAttribute(bean, "QuorumSystemInfo");
+            boolean leader = (boolean) JMXEnv.ensureBeanAttribute(bean, "Leader");
+            if (leader) {
+                countLeadersUsingLocalPeerBean++;
+            }
         }
+        Assert.assertEquals(1, countLeadersUsingLocalPeerBean);
+
+
+        int countLeadersUseRemotePeerBean = 0;
+        for (int i = 1; i <= numberOfPeers; i++) {
+            for (int j = 1; j <= numberOfPeers; j++) {
+                if (j != i) {
+                    // RemotePeerBean
+                    String bean = CommonNames.DOMAIN + ":name0=ReplicatedServer_id" + i
+                            + ",name1=replica." + j;
+                    JMXEnv.ensureBeanAttribute(bean, "Name");
+                    JMXEnv.ensureBeanAttribute(bean, "LearnerType");
+                    JMXEnv.ensureBeanAttribute(bean, "ClientAddress");
+                    JMXEnv.ensureBeanAttribute(bean, "ElectionAddress");
+                    JMXEnv.ensureBeanAttribute(bean, "QuorumAddress");
+                    boolean leader = (boolean) JMXEnv.ensureBeanAttribute(bean, "Leader");
+                    if (leader) {
+                        countLeadersUseRemotePeerBean++;
+                        LOG.info("bean "+bean+", is LEADER");
+                    } else {
+                        LOG.info("bean "+bean+", is not LEADER");
+                    }
+                }
+            }
+        }
+        Assert.assertEquals(numberOfPeers - 1, countLeadersUseRemotePeerBean);
+
+        Assert.assertEquals(numberOfPeers, countLeadersUseRemotePeerBean + countLeadersUsingLocalPeerBean);
     }
 
     @Override
