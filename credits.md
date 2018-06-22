@@ -26,7 +26,7 @@ ZooKeeper's active PMC members are
 |henry|Henry Robinson|Cloudera Inc.|-8|
 |rgs|Raul Gutierrez Segales|Pinterest|-8|
 |rakeshr|Rakesh Radhakrishnan|Intel|+5:30|
-|hanm|Michael Han|Cloudera Inc.|-8|
+|hanm|Michael Han|Twitter|-8|
 
 ## Committers
 
@@ -44,12 +44,12 @@ ZooKeeper's active committers are
 |michim|Michi Mutsuzaki|Nicira|-8|
 |breed|Benjamin Reed|Facebook|-8|
 |henry|Henry Robinson|Cloudera Inc.|-8|
-|shralex|Alex Shraer|Google|-8|
+|shralex|Alex Shraer|Apple|-8|
 |thawan|Thawan Kooburat|Facebook|-8|
 |rakeshr|Rakesh Radhakrishnan|Intel|+5:30|
 |hdeng|Hongchao Deng|CoreOS|-8|
 |rgs|Raul Gutierrez Segales|Pinterest|-8|
-|hanm|Michael Han|Cloudera Inc.|-8|
+|hanm|Michael Han|Twitter|-8|
 |arshad|Mohammad Arshad|Huawei|+5:30|
 |afine|Abraham Fine|IFTTT|-8|
 |andor|Andor Molnar|Cloudera Inc.|+2|
