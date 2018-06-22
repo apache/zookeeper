@@ -29,16 +29,29 @@ public class QuorumBean implements QuorumMXBean, ZKMBeanInfo {
         this.peer = peer;
         name = "ReplicatedServer_id" + peer.getId();
     }
-    
+
+    @Override
     public String getName() {
         return name;
     }
-    
+
+    @Override
     public boolean isHidden() {
         return false;
     }
-    
+
+    @Override
     public int getQuorumSize() {
         return peer.getQuorumSize();
+    }
+
+    @Override
+    public boolean isSslQuorum() {
+        return peer.isSslQuorum();
+    }
+
+    @Override
+    public boolean isPortUnification() {
+        return peer.shouldUsePortUnification();
     }
 }
