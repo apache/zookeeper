@@ -248,7 +248,6 @@ public class HierarchicalQuorumTest extends ClientBase {
             ensureNames.add("name0=ReplicatedServer_id" + i);
         }
         JMXEnv.ensureAll(ensureNames.toArray(new String[ensureNames.size()]));
-        int countLeadersUsingLocalPeerBean = 0;
         for (int i = 1; i <= numberOfPeers; i++) {
             // LocalPeerBean
             String bean = CommonNames.DOMAIN + ":name0=ReplicatedServer_id" + i
@@ -258,15 +257,9 @@ public class HierarchicalQuorumTest extends ClientBase {
             JMXEnv.ensureBeanAttribute(bean, "ClientAddress");
             JMXEnv.ensureBeanAttribute(bean, "ElectionAddress");
             JMXEnv.ensureBeanAttribute(bean, "QuorumSystemInfo");
-            boolean leader = (boolean) JMXEnv.ensureBeanAttribute(bean, "Leader");
-            if (leader) {
-                countLeadersUsingLocalPeerBean++;
-            }
+            JMXEnv.ensureBeanAttribute(bean, "Leader");
         }
-        Assert.assertEquals(1, countLeadersUsingLocalPeerBean);
 
-
-        int countLeadersUseRemotePeerBean = 0;
         for (int i = 1; i <= numberOfPeers; i++) {
             for (int j = 1; j <= numberOfPeers; j++) {
                 if (j != i) {
@@ -278,19 +271,10 @@ public class HierarchicalQuorumTest extends ClientBase {
                     JMXEnv.ensureBeanAttribute(bean, "ClientAddress");
                     JMXEnv.ensureBeanAttribute(bean, "ElectionAddress");
                     JMXEnv.ensureBeanAttribute(bean, "QuorumAddress");
-                    boolean leader = (boolean) JMXEnv.ensureBeanAttribute(bean, "Leader");
-                    if (leader) {
-                        countLeadersUseRemotePeerBean++;
-                        LOG.info("bean "+bean+", is LEADER");
-                    } else {
-                        LOG.info("bean "+bean+", is not LEADER");
-                    }
+                    JMXEnv.ensureBeanAttribute(bean, "Leader");
                 }
             }
         }
-        Assert.assertEquals(numberOfPeers - 1, countLeadersUseRemotePeerBean);
-
-        Assert.assertEquals(numberOfPeers, countLeadersUseRemotePeerBean + countLeadersUsingLocalPeerBean);
     }
 
     @Override
