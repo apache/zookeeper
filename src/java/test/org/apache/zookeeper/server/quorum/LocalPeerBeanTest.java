@@ -19,8 +19,12 @@
 package org.apache.zookeeper.server.quorum;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.mockito.Matchers.eq;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -78,5 +82,19 @@ public class LocalPeerBeanTest {
         // cleanup
         cnxnFactory.shutdown();
     }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testIsLeader() {
+        long peerId = 7;
+        QuorumPeer peerMock = mock(QuorumPeer.class);
+        LocalPeerBean localPeerBean = new LocalPeerBean(peerMock);
+        when(peerMock.getId()).thenReturn(peerId);
+        when(peerMock.isLeader(eq(peerId))).thenReturn(true);
+        assertTrue(localPeerBean.isLeader());
+        when(peerMock.isLeader(eq(peerId))).thenReturn(false);
+        assertFalse(localPeerBean.isLeader());
+    }
+
 
 }

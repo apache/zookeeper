@@ -148,6 +148,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         public QuorumServer(long id, InetSocketAddress addr) {
             this(id, addr, (InetSocketAddress)null, (InetSocketAddress)null, LearnerType.PARTICIPANT);
         }
+ 
+        public long getId() {
+            return id;
+        }
 
         /**
          * Performs a DNS lookup for server address and election address.

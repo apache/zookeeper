@@ -66,7 +66,7 @@ public class RemotePeerBean implements RemotePeerMXBean,ZKMBeanInfo {
 
     @Override
     public boolean isLeader() {
-        return localPeer.isLeader(peer.id);
+        return localPeer.isLeader(peer.getId());
     }
     
 }
