@@ -110,7 +110,7 @@ public class QuorumPeerTest {
     }
 
     @Test
-    public void testNotIsLeaderBecauseNoVote() throws Exception {
+    public void testIsNotLeaderBecauseNoVote() throws Exception {
         long localPeerId = 7;
         QuorumPeer peer = new QuorumPeer();
         peer.setId(localPeerId);
