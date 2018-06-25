@@ -470,6 +470,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         return myid;
     }
 
+    // VisibleForTesting
+    void setId(long id) {
+        this.myid = id;
+    }
+
     /**
      * This is who I think the leader currently is.
      */

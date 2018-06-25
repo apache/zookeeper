@@ -22,9 +22,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.mockito.Matchers.eq;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -85,14 +82,23 @@ public class LocalPeerBeanTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testIsLeader() {
-        long peerId = 7;
-        QuorumPeer peerMock = mock(QuorumPeer.class);
-        LocalPeerBean localPeerBean = new LocalPeerBean(peerMock);
-        when(peerMock.getId()).thenReturn(peerId);
-        when(peerMock.isLeader(eq(peerId))).thenReturn(true);
+    public void testIsLeader() throws Exception {
+        long localPeerId = 7;
+        long otherPeerId = 17;
+        QuorumPeer peer = new QuorumPeer();
+        peer.setId(localPeerId);
+        LocalPeerBean localPeerBean = new LocalPeerBean(peer);
+
+        Vote voteLocalPeerIsLeader = new Vote(localPeerId, 0);
+        peer.setCurrentVote(voteLocalPeerIsLeader);
         assertTrue(localPeerBean.isLeader());
-        when(peerMock.isLeader(eq(peerId))).thenReturn(false);
+
+        Vote voteLocalPeerIsNotLeader = new Vote(otherPeerId, 0);
+        peer.setCurrentVote(voteLocalPeerIsNotLeader);
+        assertFalse(localPeerBean.isLeader());
+
+        // no current vote
+        peer.setCurrentVote(null);
         assertFalse(localPeerBean.isLeader());
     }
 
