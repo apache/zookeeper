@@ -4360,7 +4360,7 @@ static const char* format_endpoint_info(const struct sockaddr_storage* ep)
     char addrstr[128] = { 0 };
     const char *fmtstring;
     void *inaddr;
-    int inet6 = 0;  // poor man's boolean
+    char is_inet6 = 0;  // poor man's boolean
 #ifdef _WIN32
     char * addrstring;
 #endif
@@ -4372,7 +4372,7 @@ static const char* format_endpoint_info(const struct sockaddr_storage* ep)
     if(ep->ss_family==AF_INET6){
         inaddr=&((struct sockaddr_in6*)ep)->sin6_addr;
         port=((struct sockaddr_in6*)ep)->sin6_port;
-        inet6 = 1;
+        is_inet6 = 1;
     } else {
 #endif
         inaddr=&((struct sockaddr_in*)ep)->sin_addr;
@@ -4380,7 +4380,7 @@ static const char* format_endpoint_info(const struct sockaddr_storage* ep)
 #if defined(AF_INET6)
     }
 #endif
-    fmtstring = (inet6 ? "[%s]:%d" : "%s:%d");
+    fmtstring = (is_inet6 ? "[%s]:%d" : "%s:%d");
 #ifdef _WIN32
     addrstring = inet_ntoa (*(struct in_addr*)inaddr);
     sprintf(buf,fmtstring,addrstring,ntohs(port));
