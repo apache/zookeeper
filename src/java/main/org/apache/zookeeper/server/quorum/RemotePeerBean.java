@@ -26,9 +26,11 @@ import org.apache.zookeeper.jmx.ZKMBeanInfo;
  */
 public class RemotePeerBean implements RemotePeerMXBean,ZKMBeanInfo {
     private QuorumPeer.QuorumServer peer;
-    
-    public RemotePeerBean(QuorumPeer.QuorumServer peer){
+    private final QuorumPeer localPeer;
+
+    public RemotePeerBean(QuorumPeer localPeer, QuorumPeer.QuorumServer peer){
         this.peer=peer;
+        this.localPeer = localPeer;
     }
 
     public void setQuorumServer(QuorumPeer.QuorumServer peer) {
@@ -61,4 +63,10 @@ public class RemotePeerBean implements RemotePeerMXBean,ZKMBeanInfo {
     public String getLearnerType() {
         return peer.type.toString();
     }
+
+    @Override
+    public boolean isLeader() {
+        return localPeer.isLeader(peer.getId());
+    }
+    
 }
