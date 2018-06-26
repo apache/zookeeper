@@ -686,6 +686,8 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         LOG.info("binding to port " + addr);
         ss.socket().bind(addr);
         ss.configureBlocking(false);
+        int port = ss.socket().getLocalPort();
+        LOG.info("bound to port " + port);
         acceptThread = new AcceptThread(ss, addr, selectorThreads);
     }
 
@@ -706,6 +708,8 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             LOG.info("binding to port " + addr);
             ss.socket().bind(addr);
             ss.configureBlocking(false);
+            int port = ss.socket().getLocalPort();
+            LOG.info("bound to port " + port);
             acceptThread.setReconfiguring();
             tryClose(oldSS);
             acceptThread.wakeupSelector();
