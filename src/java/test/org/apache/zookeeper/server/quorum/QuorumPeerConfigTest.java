@@ -107,7 +107,7 @@ public class QuorumPeerConfigTest {
      * Test case for https://issues.apache.org/jira/browse/ZOOKEEPER-2873
      */
     @Test
-    public void testSamePortConfiguredForClientAndElection() throws IOException, ConfigException {
+    public void testSamePortConfiguredForClientAndElection() throws IOException {
         QuorumPeerConfig quorumPeerConfig = new QuorumPeerConfig();
         try {
             Properties zkProp = getDefaultZKProperties();

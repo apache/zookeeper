@@ -801,10 +801,12 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
 
     @Test
     public void testUnspecifiedClientAddress() throws Exception {
-    	int[] ports = new int[3];
-    	for (int port : ports) {
-    		port = PortAssignment.unique();
-    	}
+    	int[] ports = {
+                PortAssignment.unique(),
+                PortAssignment.unique(),
+                PortAssignment.unique()
+    	};
+
     	String server = "server.0=localhost:" + ports[0] + ":" + ports[1] + ";" + ports[2];
     	QuorumServer qs = new QuorumServer(0, server);
     	Assert.assertEquals(qs.clientAddr.getHostString(), "0.0.0.0");
