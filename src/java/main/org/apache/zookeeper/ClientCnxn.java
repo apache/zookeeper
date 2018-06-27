@@ -820,7 +820,8 @@ public class ClientCnxn {
                 if(replyHdr.getErr() == KeeperException.Code.AUTHFAILED.intValue()) {
                     state = States.AUTH_FAILED;                    
                     eventThread.queueEvent( new WatchedEvent(Watcher.Event.EventType.None, 
-                            Watcher.Event.KeeperState.AuthFailed, null) );            		            		
+                            Watcher.Event.KeeperState.AuthFailed, null) );
+                    eventThread.queueEventOfDeath();
                 }
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Got auth sessionid:0x"
@@ -1164,6 +1165,9 @@ public class ClientCnxn {
                                 eventThread.queueEvent(new WatchedEvent(
                                       Watcher.Event.EventType.None,
                                       authState,null));
+                                if (state == States.AUTH_FAILED) {
+                                  eventThread.queueEventOfDeath();
+                                }
                             }
                         }
                         to = readTimeout - clientCnxnSocket.getIdleRecv();
@@ -1264,6 +1268,8 @@ public class ClientCnxn {
                 eventThread.queueEvent(new WatchedEvent(Event.EventType.None,
                         Event.KeeperState.Disconnected, null));
             }
+            eventThread.queueEvent(new WatchedEvent(Event.EventType.None,
+                        Event.KeeperState.Closed, null));
             ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),
                     "SendThread exited loop for session: 0x"
                            + Long.toHexString(getSessionId()));
@@ -1438,6 +1444,11 @@ public class ClientCnxn {
         }
 
         sendThread.close();
+        try {
+            sendThread.join();
+        } catch (InterruptedException ex) {
+            LOG.warn("Got interrupted while waiting for the sender thread to close", ex);
+        }
         eventThread.queueEventOfDeath();
         if (zooKeeperSaslClient != null) {
             zooKeeperSaslClient.shutdown();

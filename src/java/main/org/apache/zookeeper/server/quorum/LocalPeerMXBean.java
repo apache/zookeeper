@@ -104,4 +104,9 @@ public interface LocalPeerMXBean extends ServerMXBean {
      * @return true if quorum peer is part of the ensemble, false otherwise
      */
     public boolean isPartOfEnsemble();
+
+    /**
+     * @return true if the peer is the current leader
+     */
+    public boolean isLeader();
 }

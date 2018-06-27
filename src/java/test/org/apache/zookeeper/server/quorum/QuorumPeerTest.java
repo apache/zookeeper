@@ -84,4 +84,34 @@ public class QuorumPeerTest {
         peer2.shutdown();
     }
 
+    @Test
+    public void testLocalPeerIsLeader() throws Exception {
+        long localPeerId = 7;
+        QuorumPeer peer = new QuorumPeer();
+        peer.setId(localPeerId);
+        Vote voteLocalPeerIsLeader = new Vote(localPeerId, 0);
+        peer.setCurrentVote(voteLocalPeerIsLeader);
+        assertTrue(peer.isLeader(localPeerId));
+    }
+
+    @Test
+    public void testLocalPeerIsNotLeader() throws Exception {
+        long localPeerId = 7;
+        long otherPeerId = 17;
+        QuorumPeer peer = new QuorumPeer();
+        peer.setId(localPeerId);
+        Vote voteLocalPeerIsNotLeader = new Vote(otherPeerId, 0);
+        peer.setCurrentVote(voteLocalPeerIsNotLeader);
+        assertFalse(peer.isLeader(localPeerId));
+    }
+
+    @Test
+    public void testIsNotLeaderBecauseNoVote() throws Exception {
+        long localPeerId = 7;
+        QuorumPeer peer = new QuorumPeer();
+        peer.setId(localPeerId);
+        peer.setCurrentVote(null);
+        assertFalse(peer.isLeader(localPeerId));
+    }
+
 }

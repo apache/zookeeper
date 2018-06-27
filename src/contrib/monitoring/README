@@ -26,6 +26,7 @@ zk_max_latency  1788
 zk_min_latency  0
 zk_packets_received 385466
 zk_packets_sent 435364
+zk_num_alive_connections	1
 zk_outstanding_requests 0
 zk_server_state follower
 zk_znode_count  5

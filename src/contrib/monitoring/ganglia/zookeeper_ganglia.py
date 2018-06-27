@@ -204,6 +204,7 @@ def metric_init(params=None):
             'value_type': 'double',
             'format': '%f'
         },
+        'zk_num_alive_connections': {'units': 'connections'},
         'zk_outstanding_requests': {'units': 'connections'},
         'zk_znode_count': {'units': 'znodes'},
         'zk_watch_count': {'units': 'watches'},

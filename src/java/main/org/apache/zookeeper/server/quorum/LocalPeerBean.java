@@ -109,4 +109,9 @@ public class LocalPeerBean extends ServerBean implements LocalPeerMXBean {
     public boolean isPartOfEnsemble() {
         return peer.getView().containsKey(peer.getId());
     }
+
+    @Override
+    public boolean isLeader() {
+        return peer.isLeader(peer.getId());
+    }
 }

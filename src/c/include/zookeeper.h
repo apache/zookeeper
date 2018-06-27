@@ -1511,24 +1511,24 @@ ZOOAPI void zoo_set_log_callback(zhandle_t *zh, log_callback_fn callback);
 ZOOAPI void zoo_deterministic_conn_order(int yesOrNo);
 
 /**
- * Type of watchers: used to select which type of watchers should be removed
+ * Type of watches: used to select which type of watches should be removed
  */
 typedef enum {
-  ZWATCHERTYPE_CHILDREN = 1,
-  ZWATCHERTYPE_DATA = 2,
-  ZWATCHERTYPE_ANY = 3
+  ZWATCHTYPE_CHILD = 1,
+  ZWATCHTYPE_DATA = 2,
+  ZWATCHTYPE_ANY = 3	
 } ZooWatcherType;
 
 /**
- * \brief removes the watchers for the given path and watcher type.
+ * \brief removes the watches for the given path and watcher type.
  *
  * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
- * \param path the path for which watchers will be removed
+ * \param path the path for which watches will be removed
  * \param wtype the watcher type to be removed
- * \param watcher the watcher to be removed, if null all watchers for that
+ * \param watcher the watcher to be removed, if null all watches for that
  * path (and watcher type) will be removed
  * \param watcherCtx the contex associated with the watcher to be removed
- * \param local whether the watchers will be removed locally even if there is
+ * \param local whether the watches will be removed locally even if there is
  * no server connection
  * \return the return code for the function call.
  * ZOK - operation completed successfully
@@ -1539,10 +1539,50 @@ typedef enum {
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
  * ZSYSTEMERROR - a system error occured
  */
-ZOOAPI int zoo_aremove_watchers(zhandle_t *zh, const char *path,
+ZOOAPI int zoo_aremove_watches(zhandle_t *zh, const char *path,
         ZooWatcherType wtype, watcher_fn watcher, void *watcherCtx, int local,
         void_completion_t *completion, const void *data);
 
+/**
+ * \brief removes all the watches for the given path and watcher type.
+ *
+ * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
+ * \param path the path for which watches will be removed
+ * \param wtype the watcher type to be removed
+ * \param local whether the watches will be removed locally even if there is
+ * no server connection
+ * \return the return code for the function call.
+ * ZOK - operation completed successfully
+ * ZNOWATCHER - the watcher couldn't be found.
+ * ZINVALIDSTATE - if !local, zhandle state is either ZOO_SESSION_EXPIRED_STATE
+ * or ZOO_AUTH_FAILED_STATE
+ * ZBADARGUMENTS - invalid input parameters
+ * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
+ * ZSYSTEMERROR - a system error occured
+ */
+ZOOAPI int zoo_remove_all_watches(zhandle_t *zh, const char *path,
+        ZooWatcherType wtype, int local);
+
+/**
+ * \brief removes all the watches for the given path and watcher type.
+ *
+ * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
+ * \param path the path for which watches will be removed
+ * \param wtype the watcher type to be removed
+ * \param local whether the watches will be removed locally even if there is
+ * no server connection
+ * \return the return code for the function call.
+ * ZOK - operation completed successfully
+ * ZNOWATCHER - the watcher couldn't be found.
+ * ZINVALIDSTATE - if !local, zhandle state is either ZOO_SESSION_EXPIRED_STATE
+ * or ZOO_AUTH_FAILED_STATE
+ * ZBADARGUMENTS - invalid input parameters
+ * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
+ * ZSYSTEMERROR - a system error occured
+*/
+ZOOAPI int zoo_aremove_all_watches(zhandle_t *zh, const char *path,
+        ZooWatcherType wtype, int local, void_completion_t *completion,
+        const void *data);
 
 #ifdef THREADED
 /**
@@ -2043,15 +2083,15 @@ ZOOAPI int zoo_set_acl(zhandle_t *zh, const char *path, int version,
 ZOOAPI int zoo_multi(zhandle_t *zh, int count, const zoo_op_t *ops, zoo_op_result_t *results);
 
 /**
- * \brief removes the watchers for the given path and watcher type.
+ * \brief removes the watches for the given path and watcher type.
  *
  * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
- * \param path the path for which watchers will be removed
+ * \param path the path for which watches will be removed
  * \param wtype the watcher type to be removed
- * \param watcher the watcher to be removed, if null all watchers for that
+ * \param watcher the watcher to be removed, if null all watches for that
  * path (and watcher type) will be removed
  * \param watcherCtx the contex associated with the watcher to be removed
- * \param local whether the watchers will be removed locally even if there is
+ * \param local whether the watches will be removed locally even if there is
  * no server connection
  * \return the return code for the function call.
  * ZOK - operation completed successfully
@@ -2062,7 +2102,7 @@ ZOOAPI int zoo_multi(zhandle_t *zh, int count, const zoo_op_t *ops, zoo_op_resul
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
  * ZSYSTEMERROR - a system error occured
  */
-ZOOAPI int zoo_remove_watchers(zhandle_t *zh, const char *path,
+ZOOAPI int zoo_remove_watches(zhandle_t *zh, const char *path,
         ZooWatcherType wtype, watcher_fn watcher, void *watcherCtx, int local);
 #endif
 #ifdef __cplusplus
