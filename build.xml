@@ -133,7 +133,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
     <property name="test.quick" value="no" />
     <property name="conf.dir" value="${basedir}/conf"/>
     <property name="docs.dir" value="${basedir}/docs"/>
-    <property name="docs.src" value="${basedir}/src/docs"/>
+    <property name="docs.src" value="${basedir}/zookeeper-docs"/>
     <property name="javadoc.link.java"
               value="http://docs.oracle.com/javase/6/docs/api/" />
     <property name="javadoc.packages" value="org.apache.*" />
