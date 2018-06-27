@@ -102,9 +102,9 @@ public class ClientPortBindTest extends ZKTestCase implements Watcher {
         startSignal = new CountDownLatch(1);
         ZooKeeper zk = new ZooKeeper(HOSTPORT, CONNECTION_TIMEOUT, this);
         try {
-            startSignal.await(CONNECTION_TIMEOUT,
+            boolean isZero = startSignal.await(CONNECTION_TIMEOUT,
                     TimeUnit.MILLISECONDS);
-            Assert.assertTrue("count == 0", startSignal.getCount() == 0);
+            Assert.assertTrue("count == " + startSignal.getCount(), isZero);
             zk.close();
         } finally {
             f.shutdown();
