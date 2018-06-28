@@ -106,18 +106,12 @@ public class QuorumPeerConfigTest {
     /**
      * Test case for https://issues.apache.org/jira/browse/ZOOKEEPER-2873
      */
-    @Test
-    public void testSamePortConfiguredForClientAndElection() throws IOException {
+    @Test(expected = ConfigException.class)
+    public void testSamePortConfiguredForClientAndElection() throws IOException, ConfigException {
         QuorumPeerConfig quorumPeerConfig = new QuorumPeerConfig();
-        try {
-            Properties zkProp = getDefaultZKProperties();
-            zkProp.setProperty("server.1", "localhost:2888:2888");
-            quorumPeerConfig.parseProperties(zkProp);
-            fail("ConfigException is expected");
-        } catch (ConfigException ce) {
-            String expectedMessage = "Client and election port must be different! Please update the configuration file on server.1";
-            assertEquals(expectedMessage, ce.getMessage());
-        }
+        Properties zkProp = getDefaultZKProperties();
+        zkProp.setProperty("server.1", "localhost:2888:2888");
+        quorumPeerConfig.parseProperties(zkProp);
     }
 
     private Properties getDefaultZKProperties() {
