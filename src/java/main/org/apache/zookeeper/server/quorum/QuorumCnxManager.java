@@ -240,7 +240,6 @@ public class QuorumCnxManager {
             if (host_port.length != 2) {
                 throw new InitialMessageException("Badly formed address: %s", addr);
             }
-            //String[] host_port = addr.split(":");
 
             int port;
             try {

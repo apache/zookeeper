@@ -58,10 +58,10 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
     }
 
     /*
-     * Tests that an incremental reconfig fails if the current config is hierarchical.
+     * Tests that an incremental reconfig fails if the current config is hiearchical.
      */
     @Test
-    public void testIncrementalReconfigInvokedOnHierarchicalQS() throws Exception {
+    public void testIncrementalReconfigInvokedOnHiearchicalQS() throws Exception {
         qu = new QuorumUtil(2); // create 5 servers
         qu.disableJMXTest = true;
         qu.startAll();
