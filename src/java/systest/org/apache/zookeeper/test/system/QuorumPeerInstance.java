@@ -275,7 +275,7 @@ class QuorumPeerInstance implements Instance {
     /**
      * Stop an instance of the quorumPeer
      * @param im the manager of the instance
-     * @param index the zero based index fo the server to stop
+     * @param index the zero based index of the server to stop
      * @throws InterruptedException
      * @throws KeeperException
      * @throws NoAssignmentException

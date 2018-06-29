@@ -7,7 +7,7 @@
 # aminclude.m4 file and a compatible doxygen configuration file. Defines the
 # following public macros:
 #
-# DX_???_FEATURE(ON|OFF) - control the default setting fo a Doxygen feature.
+# DX_???_FEATURE(ON|OFF) - control the default setting of a Doxygen feature.
 # Supported features are 'DOXYGEN' itself, 'DOT' for generating graphics,
 # 'HTML' for plain HTML, 'CHM' for compressed HTML help (for MS users), 'CHI'
 # for generating a seperate .chi file by the .chm file, and 'MAN', 'RTF',
