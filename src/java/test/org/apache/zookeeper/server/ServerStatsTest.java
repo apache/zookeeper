@@ -26,7 +26,7 @@ import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
 
 public class ServerStatsTest extends ZKTestCase {
 
@@ -73,11 +73,11 @@ public class ServerStatsTest extends ZKTestCase {
 
         // Then ...
         assertThat("Max latency check", 2000L,
-                greaterThanOrEqualTo(serverStats.getMaxLatency()));
+                lessThanOrEqualTo(serverStats.getMaxLatency()));
         assertThat("Min latency check", 1000L,
-                greaterThanOrEqualTo(serverStats.getMinLatency()));
+                lessThanOrEqualTo(serverStats.getMinLatency()));
         assertThat("Avg latency check", 1500L,
-                greaterThanOrEqualTo(serverStats.getAvgLatency()));
+                lessThanOrEqualTo(serverStats.getAvgLatency()));
 
         // When reset...
         serverStats.resetLatency();
