@@ -260,6 +260,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 throw new ConfigException("Address unresolved: " + serverParts[0] + ":" + serverParts[2]);
             }
 
+            if(addr.getPort() == electionAddr.getPort()) {
+                throw new ConfigException(
+                        "Client and election port must be different! Please update the configuration file on server." + sid);
+            }
+
             if (serverParts.length == 4) {
                 setType(serverParts[3]);
             }
