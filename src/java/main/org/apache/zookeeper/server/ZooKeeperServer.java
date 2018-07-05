@@ -754,7 +754,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             cnxn.sendBuffer(bb);
 
             if (valid) {
-                LOG.info("Established session 0x"
+                LOG.debug("Established session 0x"
                         + Long.toHexString(cnxn.getSessionId())
                         + " with negotiated timeout " + cnxn.getSessionTimeout()
                         + " for client "
@@ -1047,14 +1047,19 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         cnxn.disableRecv();
         long sessionId = connReq.getSessionId();
         if (sessionId == 0) {
-            LOG.info("Client attempting to establish new session at "
-                    + cnxn.getRemoteSocketAddress());
-            createSession(cnxn, passwd, sessionTimeout);
+            long id = createSession(cnxn, passwd, sessionTimeout);
+            LOG.info("Client attempting to establish new session: session = 0x"
+                    + Long.toHexString(id)
+                    + ", zxid = 0x" + Long.toHexString(connReq.getLastZxidSeen())
+                    + ", timeout = " + connReq.getTimeOut()
+                    + ", address = " + cnxn.getRemoteSocketAddress());
         } else {
             long clientSessionId = connReq.getSessionId();
-            LOG.info("Client attempting to renew session 0x"
+            LOG.info("Client attempting to renew session: session = 0x"
                     + Long.toHexString(clientSessionId)
-                    + " at " + cnxn.getRemoteSocketAddress());
+                    + ", zxid = 0x" + Long.toHexString(connReq.getLastZxidSeen())
+                    + ", timeout = " + connReq.getTimeOut()
+                    + ", address = " + cnxn.getRemoteSocketAddress());
             if (serverCnxnFactory != null) {
                 serverCnxnFactory.closeSession(sessionId);
             }

@@ -186,7 +186,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         private final Collection<SelectorThread> selectorThreads;
         private Iterator<SelectorThread> selectorIterator;
         private volatile boolean reconfiguring = false;
-        
+
         public AcceptThread(ServerSocketChannel ss, InetSocketAddress addr,
                 Set<SelectorThread> selectorThreads) throws IOException {
             super("NIOServerCxnFactory.AcceptThread:" + addr);
@@ -213,13 +213,13 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 closeSelector();
                 // This will wake up the selector threads, and tell the
                 // worker thread pool to begin shutdown.
-            	if (!reconfiguring) {                    
+            	if (!reconfiguring) {
                     NIOServerCnxnFactory.this.stop();
                 }
                 LOG.info("accept thread exitted run method");
             }
         }
-        
+
         public void setReconfiguring() {
         	reconfiguring = true;
         }
@@ -293,7 +293,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                                           + " - max is " + maxClientCnxns );
                 }
 
-                LOG.info("Accepted socket connection from "
+                LOG.debug("Accepted socket connection from "
                          + sc.socket().getRemoteSocketAddress());
                 sc.configureBlocking(false);
 
@@ -699,7 +699,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
 
     @Override
     public void reconfigure(InetSocketAddress addr) {
-        ServerSocketChannel oldSS = ss;        
+        ServerSocketChannel oldSS = ss;
         try {
             this.ss = ServerSocketChannel.open();
             ss.socket().setReuseAddress(true);
