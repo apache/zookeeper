@@ -50,12 +50,12 @@ import org.slf4j.LoggerFactory;
 public class FileTxnSnapLog {
     //the directory containing the
     //the transaction logs
-    private final File dataDir;
+    final File dataDir;
     //the directory containing the
     //the snapshot directory
-    private final File snapDir;
-    private TxnLog txnLog;
-    private SnapShot snapLog;
+    final File snapDir;
+    TxnLog txnLog;
+    SnapShot snapLog;
     private final boolean autoCreateDB;
     public final static int VERSION = 2;
     public final static String version = "version-";
@@ -399,8 +399,30 @@ public class FileTxnSnapLog {
         File snapshotFile = new File(snapDir, Util.makeSnapshotName(lastZxid));
         LOG.info("Snapshotting: 0x{} to {}", Long.toHexString(lastZxid),
                 snapshotFile);
-        snapLog.serialize(dataTree, sessionsWithTimeouts, snapshotFile, syncSnap);
-
+        try {
+            snapLog.serialize(dataTree, sessionsWithTimeouts, snapshotFile, syncSnap);
+        } catch (IOException e) {
+            if (snapshotFile.length() == 0) {
+                /* This may be caused by a full disk. In such a case, the server
+                 * will get stuck in a loop where it tries to write a snapshot
+                 * out to disk, and ends up creating an empty file instead.
+                 * Doing so will eventually result in valid snapshots being
+                 * removed during cleanup. */
+                if (snapshotFile.delete()) {
+                    LOG.info("Deleted empty snapshot file: " +
+                             snapshotFile.getAbsolutePath());
+                } else {
+                    LOG.warn("Could not delete empty snapshot file: " +
+                             snapshotFile.getAbsolutePath());
+                }
+            } else {
+                /* Something else went wrong when writing the snapshot out to
+                 * disk. If this snapshot file is invalid, when restarting,
+                 * ZooKeeper will skip it, and find the last known good snapshot
+                 * instead. */
+            }
+            throw e;
+        }
     }
 
     /**
