@@ -170,6 +170,9 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
 
             KeeperException ke = request.getException();
+            if (ke instanceof SessionMovedException) {
+                throw ke;
+            }
             if (ke != null && request.type != OpCode.multi) {
                 throw ke;
             }
@@ -228,6 +231,9 @@ public class FinalRequestProcessor implements RequestProcessor {
                             break;
                         case OpCode.error:
                             subResult = new ErrorResult(subTxnResult.err) ;
+                            if (subTxnResult.err == Code.SESSIONMOVED.intValue()) {
+                                throw new SessionMovedException();
+                            }
                             break;
                         default:
                             throw new IOException("Invalid type of op");
