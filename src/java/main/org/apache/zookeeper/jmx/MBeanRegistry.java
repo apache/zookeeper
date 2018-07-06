@@ -42,14 +42,14 @@ import org.slf4j.LoggerFactory;
  */
 public class MBeanRegistry {
     private static final Logger LOG = LoggerFactory.getLogger(MBeanRegistry.class);
-
+    
     private static volatile MBeanRegistry instance = new MBeanRegistry();
-
+    
     private final Object LOCK = new Object();
-
+    
     private Map<ZKMBeanInfo, String> mapBean2Path =
         new ConcurrentHashMap<ZKMBeanInfo, String>();
-
+    
     private MBeanServer mBeanServer;
 
     /**
@@ -67,7 +67,7 @@ public class MBeanRegistry {
 
     public MBeanRegistry () {
         try {
-            mBeanServer = ManagementFactory.getPlatformMBeanServer();
+            mBeanServer = ManagementFactory.getPlatformMBeanServer();        
         } catch (Error e) {
             // Account for running within IKVM and create a new MBeanServer
             // if the PlatformMBeanServer does not exist.
@@ -85,7 +85,7 @@ public class MBeanRegistry {
     }
 
     /**
-     * Registers a new MBean with the platform MBean server.
+     * Registers a new MBean with the platform MBean server. 
      * @param bean the bean being registered
      * @param parent if not null, the new bean will be registered as a child
      * node of this parent.
@@ -128,9 +128,9 @@ public class MBeanRegistry {
             synchronized (LOCK) {
                mBeanServer.unregisterMBean(objName);
             }
-        }
+        }        
     }
-
+    
     /**
      * @return a {@link Collection} with the {@link ZKMBeanInfo} instances not
      *         unregistered. Mainly for testing purposes.
@@ -175,13 +175,13 @@ public class MBeanRegistry {
         }
         return sb.toString();
     }
-
+    
     protected String makeFullPath(String prefix, ZKMBeanInfo bean) {
         return makeFullPath(prefix, bean == null ? null : bean.getName());
     }
 
     /**
-     * This takes a path, such as /a/b/c, and converts it to
+     * This takes a path, such as /a/b/c, and converts it to 
      * name0=a,name1=b,name2=c
      */
     private int tokenize(StringBuilder sb, String path, int index){
@@ -195,7 +195,7 @@ public class MBeanRegistry {
         return index;
     }
     /**
-     * Builds an MBean path and creates an ObjectName instance using the path.
+     * Builds an MBean path and creates an ObjectName instance using the path. 
      * @param path MBean path
      * @param bean the MBean instance
      * @return ObjectName to be registered with the platform MBean server
