@@ -61,10 +61,16 @@ public class ConfigUtils {
         return version + " " + sb.toString();
     }
 
+    /**
+     * Splits server config to server and port
+     * with support for IPv6 literals
+     * @return String[] first element being the
+     *  IP address and the next being the port
+     * @param s server config, server:port
+     */
     public static String[] splitServerConfig(String s)
         throws ConfigException
     {
-        /* Does it start with an IPv6 literal? */
         if (s.startsWith("[")) {
             int i = s.indexOf("]:");
             if (i < 0) {
