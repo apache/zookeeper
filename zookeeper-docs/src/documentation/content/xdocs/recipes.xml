@@ -283,7 +283,7 @@
     <note>
       <para>There now exists a Queue implementation in ZooKeeper
       recipes directory. This is distributed with the release --
-      src/recipes/queue directory of the release artifact.
+      zookeeper-recipes/zookeeper-recipes-queue directory of the release artifact.
       </para>
     </note>
 
@@ -312,7 +312,7 @@
     <note>
       <para>There now exists a Lock implementation in ZooKeeper
       recipes directory. This is distributed with the release --
-      src/recipes/lock directory of the release artifact.
+        zookeeper-recipes/zookeeper-recipes-lock directory of the release artifact.
       </para>
     </note>
 
