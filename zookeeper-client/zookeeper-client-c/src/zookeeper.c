@@ -227,8 +227,6 @@ static void cleanup_bufs(zhandle_t *zh,int callCompletion,int rc);
 
 static int disable_conn_permute=0; // permute enabled by default
 
-static __attribute__((unused)) void print_completion_queue(zhandle_t *zh);
-
 static void *SYNCHRONOUS_MARKER = (void*)&SYNCHRONOUS_MARKER;
 static int isValidPath(const char* path, const int flags);
 
@@ -1842,26 +1840,6 @@ int api_epilog(zhandle_t *zh,int rc)
     if(inc_ref_counter(zh,-1)==0 && zh->close_requested!=0)
         zookeeper_close(zh);
     return rc;
-}
-
-static __attribute__((unused)) void print_completion_queue(zhandle_t *zh)
-{
-    completion_list_t* cptr;
-
-    if(logLevel<ZOO_LOG_LEVEL_DEBUG) return;
-
-    LOG_DEBUG(LOGSTREAM,"Completion queue: ");
-    if (zh->sent_requests.head==0) {
-        LOG_DEBUG(LOGSTREAM,"empty\n");
-        return;
-    }
-
-    cptr=zh->sent_requests.head;
-    while(cptr){
-        LOG_DEBUG(LOGSTREAM,"%d,",cptr->xid);
-        cptr=cptr->next;
-    }
-    LOG_DEBUG(LOGSTREAM,"end\n");
 }
 
 //#ifdef THREADED
