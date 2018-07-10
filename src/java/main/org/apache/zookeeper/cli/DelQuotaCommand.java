@@ -63,7 +63,7 @@ public class DelQuotaCommand extends CliCommand {
     @Override
     public boolean exec() throws CliException {
         //if neither option -n or -b is specified, we delete
-        // the quota node for thsi node.
+        // the quota node for this node.
         String path = args[1];
         try {
             if (cl.hasOption("b")) {
