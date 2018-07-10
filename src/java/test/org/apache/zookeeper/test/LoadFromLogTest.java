@@ -91,7 +91,7 @@ public class LoadFromLogTest extends ClientBase {
             hdr = itr.getHeader();
             expectedZxid++;
             Assert.assertTrue("not the same transaction. lastZxid=" + lastZxid + ", zxid=" + hdr.getZxid(), lastZxid != hdr.getZxid());
-            Assert.assertTrue("excepting next transaction. expected=" + expectedZxid + ", retreived=" + hdr.getZxid(), (hdr.getZxid() == expectedZxid));
+            Assert.assertTrue("excepting next transaction. expected=" + expectedZxid + ", retrieved=" + hdr.getZxid(), (hdr.getZxid() == expectedZxid));
             lastZxid = hdr.getZxid();
         }while(itr.next());
 

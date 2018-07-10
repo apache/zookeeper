@@ -253,8 +253,6 @@ static void cleanup_bufs(zhandle_t *zh,int callCompletion,int rc);
 static int disable_conn_permute=0; // permute enabled by default
 static struct sockaddr_storage *addr_rw_server = 0;
 
-static __attribute__((unused)) void print_completion_queue(zhandle_t *zh);
-
 static void *SYNCHRONOUS_MARKER = (void*)&SYNCHRONOUS_MARKER;
 static int isValidPath(const char* path, const int flags);
 
@@ -2530,26 +2528,6 @@ int api_epilog(zhandle_t *zh,int rc)
     return rc;
 }
 
-static __attribute__((unused)) void print_completion_queue(zhandle_t *zh)
-{
-    completion_list_t* cptr;
-
-    if(logLevel<ZOO_LOG_LEVEL_DEBUG) return;
-
-    fprintf(LOGSTREAM,"Completion queue: ");
-    if (zh->sent_requests.head==0) {
-        fprintf(LOGSTREAM,"empty\n");
-        return;
-    }
-
-    cptr=zh->sent_requests.head;
-    while(cptr){
-        fprintf(LOGSTREAM,"%d,",cptr->xid);
-        cptr=cptr->next;
-    }
-    fprintf(LOGSTREAM,"end\n");
-}
-
 //#ifdef THREADED
 // IO thread queues session events to be processed by the completion thread
 static int queue_session_event(zhandle_t *zh, int state)
@@ -4357,7 +4335,7 @@ int zoo_add_auth(zhandle_t *zh,const char* scheme,const char* cert,
 static const char* format_endpoint_info(const struct sockaddr_storage* ep)
 {
     static char buf[128] = { 0 };
-    char addrstr[128] = { 0 };
+    char addrstr[INET6_ADDRSTRLEN] = { 0 };
     void *inaddr;
 #ifdef _WIN32
     char * addrstring;

@@ -246,6 +246,52 @@ public class QuorumTest extends ZKTestCase {
     }
 
     /**
+     * Make sure the previous connection closed after session move within
+     * multiop.
+     *
+     * @throws IOException
+     * @throws InterruptedException
+     * @throws KeeperException
+     */
+    @Test
+    public void testSessionMovedWithMultiOp() throws Exception {
+        String hostPorts[] = qb.hostPort.split(",");
+        DisconnectableZooKeeper zk = new DisconnectableZooKeeper(hostPorts[0],
+                ClientBase.CONNECTION_TIMEOUT, new Watcher() {
+            public void process(WatchedEvent event) {
+            }});
+        zk.multi(Arrays.asList(
+            Op.create("/testSessionMovedWithMultiOp", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL)
+        ));
+
+        // session moved to the next server
+        ZooKeeper zknew = new ZooKeeper(hostPorts[1],
+            ClientBase.CONNECTION_TIMEOUT,
+            new Watcher() {public void process(WatchedEvent event) {
+            }},
+            zk.getSessionId(),
+            zk.getSessionPasswd());
+        zknew.multi(Arrays.asList(
+            Op.create("/testSessionMovedWithMultiOp-1", new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL)
+        ));
+
+        // try to issue the multi op again from the old connection
+        // expect to have ConnectionLossException instead of keep
+        // getting SessionMovedException
+        try {
+            zk.multi(Arrays.asList(
+                Op.create("/testSessionMovedWithMultiOp-Failed",
+                    new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL)
+            ));
+            Assert.fail("Should have lost the connection");
+        } catch (KeeperException.ConnectionLossException e) {
+        }
+
+        zk.close();
+        zknew.close();
+    }
+
+    /**
      * Connect to two different servers with two different handles using the same session and
      * make sure we cannot do any changes.
      */
@@ -295,8 +341,8 @@ public class QuorumTest extends ZKTestCase {
         zk.close();
     }
 
-    /** 
-     * See ZOOKEEPER-790 for details 
+    /**
+     * See ZOOKEEPER-790 for details
      * */
     @Test
     public void testFollowersStartAfterLeader() throws Exception {
@@ -310,10 +356,10 @@ public class QuorumTest extends ZKTestCase {
 
         // break the quorum
         qu.shutdown(index);
-        
+
         // try to reestablish the quorum
         qu.start(index);
-        
+
         // Connect the client after services are restarted (otherwise we would get
         // SessionExpiredException as the previous local session was not persisted).
         ZooKeeper zk = new ZooKeeper(
@@ -321,7 +367,7 @@ public class QuorumTest extends ZKTestCase {
                 ClientBase.CONNECTION_TIMEOUT, watcher);
 
         try{
-            watcher.waitForConnected(CONNECTION_TIMEOUT);      
+            watcher.waitForConnected(CONNECTION_TIMEOUT);
         } catch(TimeoutException e) {
             Assert.fail("client could not connect to reestablished quorum: giving up after 30+ seconds.");
         }
@@ -334,7 +380,7 @@ public class QuorumTest extends ZKTestCase {
     /**
      * Tests if a multiop submitted to a non-leader propagates to the leader properly
      * (see ZOOKEEPER-1124).
-     * 
+     *
      * The test works as follows. It has a client connect to a follower and submit a multiop
      * to the follower. It then verifies that the multiop successfully gets committed by the leader.
      *
