@@ -179,7 +179,10 @@ def metric_init(params=None):
         'zk_followers': {'units': 'nodes'},
         'zk_synced_followers': {'units': 'nodes'},
         'zk_pending_syncs': {'units': 'syncs'},
-        'zk_fsync_threshold_exceed_count': {'units': 'fsyncexceed'}
+        'zk_fsync_threshold_exceed_count': {'units': 'fsyncexceed'},
+        'zk_last_proposal_size': {'units': 'bytes'},
+        'zk_min_proposal_size': {'units': 'bytes'},
+        'zk_max_proposal_size': {'units': 'bytes'}
     }
     metric_handler.descriptors = {}
     for name, updates in metrics.iteritems():

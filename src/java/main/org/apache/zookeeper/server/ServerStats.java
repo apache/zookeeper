@@ -18,6 +18,9 @@
 
 package org.apache.zookeeper.server;
 
+import org.apache.zookeeper.server.quorum.BufferStats;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -25,6 +28,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * Basic Server Statistics
  */
 public class ServerStats {
+    private static final Logger LOG = LoggerFactory.getLogger(ServerStats.class);
+
     private long packetsSent;
     private long packetsReceived;
     private long maxLatency;
@@ -32,6 +37,8 @@ public class ServerStats {
     private long totalLatency = 0;
     private long count = 0;
     private AtomicLong fsyncThresholdExceedCount = new AtomicLong(0);
+
+    private final BufferStats clientResponseStats = new BufferStats();
 
     private final Provider provider;
 
@@ -150,6 +157,14 @@ public class ServerStats {
     synchronized public void reset() {
         resetLatency();
         resetRequestCounters();
+        clientResponseStats.reset();
     }
 
+    public void updateClientResponseSize(int size) {
+        clientResponseStats.setLastBufferSize(size);
+    }
+
+    public BufferStats getClientResponseStats() {
+        return clientResponseStats;
+    }
 }

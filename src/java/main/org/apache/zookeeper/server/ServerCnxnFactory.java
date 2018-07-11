@@ -63,6 +63,10 @@ public abstract class ServerCnxnFactory {
         }
     }
 
+    ZooKeeperServer getZooKeeperServer() {
+        return zkServer;
+    }
+
     public abstract void closeSession(long sessionId);
 
     public abstract void configure(InetSocketAddress addr,

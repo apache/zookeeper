@@ -106,7 +106,7 @@ abstract class ClientCnxnSocket {
         this.lastHeard = now;
     }
 
-    protected void readLength() throws IOException {
+    void readLength() throws IOException {
         int len = incomingBuffer.getInt();
         if (len < 0 || len >= ClientCnxn.packetLen) {
             throw new IOException("Packet len" + len + " is out of range!");

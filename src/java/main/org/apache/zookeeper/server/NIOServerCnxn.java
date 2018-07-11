@@ -19,7 +19,6 @@
 package org.apache.zookeeper.server;
 
 import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
@@ -35,9 +34,8 @@ import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.jute.BinaryInputArchive;
-import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
-import org.apache.zookeeper.server.quorum.ProposalStats;
+import org.apache.zookeeper.server.quorum.BufferStats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.Environment;
@@ -687,7 +685,7 @@ public class NIOServerCnxn extends ServerCnxn {
                 pw.println(zkServer.getZKDatabase().getNodeCount());
                 if (serverStats.getServerState().equals("leader")) {
                     Leader leader = ((LeaderZooKeeperServer)zkServer).getLeader();
-                    ProposalStats proposalStats = leader.getProposalStats();
+                    BufferStats proposalStats = leader.getProposalStats();
                     pw.printf("Proposal sizes last/min/max: %s%n", proposalStats.toString());
                 }
             }
@@ -795,9 +793,9 @@ public class NIOServerCnxn extends ServerCnxn {
                 print("synced_followers", leader.getForwardingFollowers().size());
                 print("pending_syncs", leader.getNumPendingSyncs());
 
-                print("last_proposal_size", leader.getProposalStats().getLastProposalSize());
-                print("max_proposal_size", leader.getProposalStats().getMaxProposalSize());
-                print("min_proposal_size", leader.getProposalStats().getMinProposalSize());
+                print("last_proposal_size", leader.getProposalStats().getLastBufferSize());
+                print("max_proposal_size", leader.getProposalStats().getMaxBufferSize());
+                print("min_proposal_size", leader.getProposalStats().getMinBufferSize());
             }
         }
 
@@ -1094,8 +1092,6 @@ public class NIOServerCnxn extends ServerCnxn {
         }
     }
     
-    private final static byte fourBytes[] = new byte[4];
-
     /*
      * (non-Javadoc)
      *
@@ -1105,23 +1101,7 @@ public class NIOServerCnxn extends ServerCnxn {
     @Override
     synchronized public void sendResponse(ReplyHeader h, Record r, String tag) {
         try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            // Make space for length
-            BinaryOutputArchive bos = BinaryOutputArchive.getArchive(baos);
-            try {
-                baos.write(fourBytes);
-                bos.writeRecord(h, "header");
-                if (r != null) {
-                    bos.writeRecord(r, tag);
-                }
-                baos.close();
-            } catch (IOException e) {
-                LOG.error("Error serializing response");
-            }
-            byte b[] = baos.toByteArray();
-            ByteBuffer bb = ByteBuffer.wrap(b);
-            bb.putInt(b.length - 4).rewind();
-            sendBuffer(bb);
+            super.sendResponse(h, r, tag);
             if (h.getXid() > 0) {
                 synchronized(this){
                     outstandingRequests--;

@@ -21,7 +21,6 @@ package org.apache.zookeeper.server;
 import static org.jboss.netty.buffer.ChannelBuffers.wrappedBuffer;
 
 import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
@@ -35,9 +34,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.jute.BinaryInputArchive;
-import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
-import org.apache.zookeeper.server.quorum.ProposalStats;
+import org.apache.zookeeper.server.quorum.BufferStats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.Environment;
@@ -150,7 +148,6 @@ public class NettyServerCnxn extends ServerCnxn {
         }
     }
 
-    private static final byte[] fourBytes = new byte[4];
     static class ResumeMessageEvent implements MessageEvent {
         Channel channel;
         ResumeMessageEvent(Channel channel) {
@@ -172,23 +169,7 @@ public class NettyServerCnxn extends ServerCnxn {
         if (!channel.isOpen()) {
             return;
         }
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        // Make space for length
-        BinaryOutputArchive bos = BinaryOutputArchive.getArchive(baos);
-        try {
-            baos.write(fourBytes);
-            bos.writeRecord(h, "header");
-            if (r != null) {
-                bos.writeRecord(r, tag);
-            }
-            baos.close();
-        } catch (IOException e) {
-            LOG.error("Error serializing response");
-        }
-        byte b[] = baos.toByteArray();
-        ByteBuffer bb = ByteBuffer.wrap(b);
-        bb.putInt(b.length - 4).rewind();
-        sendBuffer(bb);
+        super.sendResponse(h, r, tag);
         if (h.getXid() > 0) {
             // zks cannot be null otherwise we would not have gotten here!
             if (!zkServer.shouldThrottle(outstandingCount.decrementAndGet())) {
@@ -491,7 +472,7 @@ public class NettyServerCnxn extends ServerCnxn {
                 pw.println(zkServer.getZKDatabase().getNodeCount());
                 if (serverStats.getServerState().equals("leader")) {
                     Leader leader = ((LeaderZooKeeperServer)zkServer).getLeader();
-                    ProposalStats proposalStats = leader.getProposalStats();
+                    BufferStats proposalStats = leader.getProposalStats();
                     pw.printf("Proposal sizes last/min/max: %s%n", proposalStats.toString());
                 }
             }
@@ -597,9 +578,9 @@ public class NettyServerCnxn extends ServerCnxn {
                 print("synced_followers", leader.getForwardingFollowers().size());
                 print("pending_syncs", leader.getNumPendingSyncs());
 
-                print("last_proposal_size", leader.getProposalStats().getLastProposalSize());
-                print("max_proposal_size", leader.getProposalStats().getMaxProposalSize());
-                print("min_proposal_size", leader.getProposalStats().getMinProposalSize());
+                print("last_proposal_size", leader.getProposalStats().getLastBufferSize());
+                print("max_proposal_size", leader.getProposalStats().getMaxBufferSize());
+                print("min_proposal_size", leader.getProposalStats().getMinBufferSize());
             }
         }
 

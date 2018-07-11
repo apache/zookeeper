@@ -85,7 +85,7 @@ import java.util.*;
  *
  */
 @InterfaceAudience.Public
-public class ZooKeeper {
+public class ZooKeeper implements AutoCloseable {
 
     public static final String ZOOKEEPER_CLIENT_CNXN_SOCKET = "zookeeper.clientCnxnSocket";
 

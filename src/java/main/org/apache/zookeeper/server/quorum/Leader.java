@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import java.io.ByteArrayOutputStream;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.BindException;
@@ -41,7 +40,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import javax.security.sasl.SaslException;
 
-import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
@@ -90,6 +88,12 @@ public class Leader {
     private final HashSet<LearnerHandler> learners =
         new HashSet<LearnerHandler>();
 
+    private final BufferStats proposalStats;
+
+    public BufferStats getProposalStats() {
+        return proposalStats;
+    }
+
     /**
      * Returns a copy of the current learner snapshot
      */
@@ -102,12 +106,6 @@ public class Leader {
     // list of followers that are ready to follow (i.e synced with the leader)
     private final HashSet<LearnerHandler> forwardingFollowers =
         new HashSet<LearnerHandler>();
-
-    private final ProposalStats proposalStats;
-
-    public ProposalStats getProposalStats() {
-        return proposalStats;
-    }
 
     /**
      * Returns a copy of the current forwarding follower snapshot
@@ -192,7 +190,7 @@ public class Leader {
 
     Leader(QuorumPeer self,LeaderZooKeeperServer zk) throws IOException {
         this.self = self;
-        this.proposalStats = new ProposalStats();
+        this.proposalStats = new BufferStats();
         try {
             ss = new ServerSocket();
             ss.setReuseAddress(true);
@@ -757,7 +755,7 @@ public class Leader {
             throw new XidRolloverException(msg);
         }
         byte[] data = SerializeUtils.serializeRequest(request);
-        proposalStats.setLastProposalSize(data.length);
+        proposalStats.setLastBufferSize(data.length);
         QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, request.zxid, data, null);
         
         Proposal p = new Proposal();
