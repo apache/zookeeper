@@ -214,7 +214,10 @@ def metric_init(params=None):
         'zk_max_file_descriptor_count': {'units': 'descriptors'},
         'zk_followers': {'units': 'nodes'},
         'zk_synced_followers': {'units': 'nodes'},
-        'zk_pending_syncs': {'units': 'syncs'}
+        'zk_pending_syncs': {'units': 'syncs'},
+        'zk_last_proposal_size': {'units': 'bytes'},
+        'zk_min_proposal_size': {'units': 'bytes'},
+        'zk_max_proposal_size': {'units': 'bytes'}
     }
     metric_handler.descriptors = {}
     for name, updates in metrics.iteritems():
