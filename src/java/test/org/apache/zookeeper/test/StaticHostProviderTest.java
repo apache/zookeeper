@@ -18,22 +18,6 @@
 
 package org.apache.zookeeper.test;
 
-import static org.hamcrest.CoreMatchers.anyOf;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.hasItems;
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.client.StaticHostProvider;
@@ -46,9 +30,26 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class StaticHostProviderTest extends ZKTestCase {
     private Random r = new Random(1);
@@ -575,6 +576,120 @@ public class StaticHostProviderTest extends ZKTestCase {
         // Assert
         assertTrue(disconnectRequired);
         hostProvider.onConnected();
+    }
+
+    @Test
+    public void testUpdateServerList_ResolvedWithUnResolvedAddress_ForceDisconnect() {
+        // Arrange
+        // Create a HostProvider with a list of unresolved server address(es)
+        List<InetSocketAddress> addresses = Collections.singletonList(
+                InetSocketAddress.createUnresolved("testhost-1.resolvable.zk", 1235)
+        );
+        HostProvider hostProvider = new StaticHostProvider(addresses, new TestResolver());
+        InetSocketAddress currentHost = hostProvider.next(100);
+        assertThat("CurrentHost is which the client is currently connecting to, it should be resolved",
+                currentHost.isUnresolved(), is(false));
+
+        // Act
+        InetSocketAddress replaceHost = InetSocketAddress.createUnresolved("testhost-1.resolvable.zk", 1235);
+        assertThat("Replace host must be unresolved in this test case", replaceHost.isUnresolved(), is(true));
+        boolean disconnect = hostProvider.updateServerList(new ArrayList<>(
+            Collections.singletonList(replaceHost)),
+            currentHost
+        );
+
+        // Assert
+        assertThat(disconnect, is(true));
+    }
+
+    @Test
+    public void testUpdateServerList_ResolvedWithResolvedAddress_NoDisconnect() throws UnknownHostException {
+        // Arrange
+        // Create a HostProvider with a list of unresolved server address(es)
+        List<InetSocketAddress> addresses = Collections.singletonList(
+                InetSocketAddress.createUnresolved("testhost-1.resolvable.zk", 1235)
+        );
+        HostProvider hostProvider = new StaticHostProvider(addresses, new TestResolver());
+        InetSocketAddress currentHost = hostProvider.next(100);
+        assertThat("CurrentHost is which the client is currently connecting to, it should be resolved",
+                currentHost.isUnresolved(), is(false));
+
+        // Act
+        InetSocketAddress replaceHost =
+                new InetSocketAddress(InetAddress.getByAddress(currentHost.getHostString(),
+                        currentHost.getAddress().getAddress()), currentHost.getPort());
+        assertThat("Replace host must be resolved in this test case", replaceHost.isUnresolved(), is(false));
+        boolean disconnect = hostProvider.updateServerList(new ArrayList<>(
+            Collections.singletonList(replaceHost)),
+            currentHost
+        );
+
+        // Assert
+        assertThat(disconnect, equalTo(false));
+    }
+
+    @Test
+    public void testUpdateServerList_UnResolvedWithUnResolvedAddress_ForceDisconnect() {
+        // Arrange
+        // Create a HostProvider with a list of unresolved server address(es)
+        List<InetSocketAddress> addresses = Collections.singletonList(
+                InetSocketAddress.createUnresolved("testhost-1.zookeepertest.zk", 1235)
+        );
+        HostProvider hostProvider = new StaticHostProvider(addresses, new TestResolver());
+        InetSocketAddress currentHost = hostProvider.next(100);
+        assertThat("CurrentHost is not resolvable in this test case",
+                currentHost.isUnresolved(), is(true));
+
+        // Act
+        InetSocketAddress replaceHost = InetSocketAddress.createUnresolved("testhost-1.resolvable.zk", 1235);
+        assertThat("Replace host must be unresolved in this test case", replaceHost.isUnresolved(), is(true));
+        boolean disconnect = hostProvider.updateServerList(new ArrayList<>(
+                        Collections.singletonList(replaceHost)),
+                currentHost
+        );
+
+        // Assert
+        assertThat(disconnect, is(true));
+    }
+
+    @Test
+    public void testUpdateServerList_UnResolvedWithResolvedAddress_ForceDisconnect() throws UnknownHostException {
+        // Arrange
+        // Create a HostProvider with a list of unresolved server address(es)
+        List<InetSocketAddress> addresses = Collections.singletonList(
+                InetSocketAddress.createUnresolved("testhost-1.zookeepertest.zk", 1235)
+        );
+        HostProvider hostProvider = new StaticHostProvider(addresses, new TestResolver());
+        InetSocketAddress currentHost = hostProvider.next(100);
+        assertThat("CurrentHost not resolvable in this test case",
+                currentHost.isUnresolved(), is(true));
+
+        // Act
+        byte[] addr = new byte[] { 10, 0, 0, 1 };
+        InetSocketAddress replaceHost =
+                new InetSocketAddress(InetAddress.getByAddress(currentHost.getHostString(), addr),
+                        currentHost.getPort());
+        assertThat("Replace host must be resolved in this test case", replaceHost.isUnresolved(), is(false));
+        boolean disconnect = hostProvider.updateServerList(new ArrayList<>(
+                        Collections.singletonList(replaceHost)),
+                currentHost
+        );
+
+        // Assert
+        assertThat(disconnect, equalTo(true));
+    }
+
+    private class TestResolver implements StaticHostProvider.Resolver {
+        private byte counter = 1;
+
+        @Override
+        public InetAddress[] getAllByName(String name) throws UnknownHostException {
+            if (name.contains("resolvable")) {
+                byte[] addr = new byte[] { 10, 0, 0, (byte)(counter++ % 10) };
+                return new InetAddress[] { InetAddress.getByAddress(name, addr) };
+            }
+            throw new UnknownHostException();
+        }
     }
 
     private double lowerboundCPS(int numClients, int numServers) {
