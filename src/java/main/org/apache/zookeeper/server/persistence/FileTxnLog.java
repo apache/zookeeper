@@ -99,6 +99,9 @@ public class FileTxnLog implements TxnLog {
 
     public static final String LOG_FILE_PREFIX = "log";
 
+    static final String FSYNC_WARNING_THRESHOLD_MS_PROPERTY = "fsync.warningthresholdms";
+    static final String ZOOKEEPER_FSYNC_WARNING_THRESHOLD_MS_PROPERTY = "zookeeper."+FSYNC_WARNING_THRESHOLD_MS_PROPERTY;
+
     /** Maximum time we allow for elapsed fsync before WARNing */
     private final static long fsyncWarningThresholdMS;
 
@@ -107,8 +110,8 @@ public class FileTxnLog implements TxnLog {
 
         /** Local variable to read fsync.warningthresholdms into */
         Long fsyncWarningThreshold;
-        if ((fsyncWarningThreshold = Long.getLong("zookeeper.fsync.warningthresholdms")) == null)
-            fsyncWarningThreshold = Long.getLong("fsync.warningthresholdms", 1000);
+        if ((fsyncWarningThreshold = Long.getLong(ZOOKEEPER_FSYNC_WARNING_THRESHOLD_MS_PROPERTY)) == null)
+            fsyncWarningThreshold = Long.getLong(FSYNC_WARNING_THRESHOLD_MS_PROPERTY, 1000);
         fsyncWarningThresholdMS = fsyncWarningThreshold;
     }
 
@@ -339,7 +342,8 @@ public class FileTxnLog implements TxnLog {
                             + Thread.currentThread().getName()
                             + " took " + syncElapsedMS
                             + "ms which will adversely effect operation latency. "
-                            + "File size is " + channel.size() + " bytes. "
+                            + "File size is " + channel.size() + " bytes and "
+                            + FSYNC_WARNING_THRESHOLD_MS_PROPERTY + " is " + fsyncWarningThresholdMS + ". "
                             + "See the ZooKeeper troubleshooting guide");
                 }
             }
