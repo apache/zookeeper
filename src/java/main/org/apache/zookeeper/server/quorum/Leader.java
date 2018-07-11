@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import java.io.ByteArrayOutputStream;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.BindException;
@@ -41,7 +40,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import javax.security.sasl.SaslException;
 
-import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.server.FinalRequestProcessor;
@@ -106,9 +104,9 @@ public class Leader {
     private final HashSet<LearnerHandler> learners =
         new HashSet<LearnerHandler>();
 
-    private final ProposalStats proposalStats;
+    private final BufferStats proposalStats;
 
-    public ProposalStats getProposalStats() {
+    public BufferStats getProposalStats() {
         return proposalStats;
     }
 
@@ -229,7 +227,7 @@ public class Leader {
 
     Leader(QuorumPeer self,LeaderZooKeeperServer zk) throws IOException {
         this.self = self;
-        this.proposalStats = new ProposalStats();
+        this.proposalStats = new BufferStats();
         try {
             if (self.getQuorumListenOnAllIPs()) {
                 ss = new ServerSocket(self.getQuorumAddress().getPort());
@@ -1060,7 +1058,7 @@ public class Leader {
         }
 
         byte[] data = SerializeUtils.serializeRequest(request);
-        proposalStats.setLastProposalSize(data.length);
+        proposalStats.setLastBufferSize(data.length);
         QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, request.zxid, data, null);
 
         Proposal p = new Proposal();

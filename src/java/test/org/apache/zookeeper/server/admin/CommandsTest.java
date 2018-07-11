@@ -23,11 +23,13 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.nio.Buffer;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.quorum.BufferStats;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.Test;
 
@@ -173,7 +175,10 @@ public class CommandsTest extends ClientBase {
                     new Field("ephemerals_count", Integer.class),
                     new Field("approximate_data_size", Long.class),
                     new Field("open_file_descriptor_count", Long.class),
-                    new Field("max_file_descriptor_count", Long.class));
+                    new Field("max_file_descriptor_count", Long.class),
+                    new Field("last_client_response_size", Integer.class),
+                    new Field("max_client_response_size", Integer.class),
+                    new Field("min_client_response_size", Integer.class));
     }
 
     @Test
@@ -187,7 +192,8 @@ public class CommandsTest extends ClientBase {
                 new Field("version", String.class),
                 new Field("read_only", Boolean.class),
                 new Field("server_stats", ServerStats.class),
-                new Field("node_count", Integer.class));
+                new Field("node_count", Integer.class),
+                new Field("client_response", BufferStats.class));
     }
 
     @Test
@@ -205,7 +211,8 @@ public class CommandsTest extends ClientBase {
                     new Field("read_only", Boolean.class),
                     new Field("server_stats", ServerStats.class),
                     new Field("node_count", Integer.class),
-                    new Field("connections", Iterable.class));
+                    new Field("connections", Iterable.class),
+                    new Field("client_response", BufferStats.class));
     }
 
     @Test
