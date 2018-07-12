@@ -496,10 +496,26 @@ public class CnxManagerTest extends ZKTestCase {
             Assert.fail("bad hostport accepted");
         } catch (InitialMessage.InitialMessageException ex) {}
 
-        // good message
+        // good message(IPv4)
         try {
 
             hostport = "10.0.0.2:3888";
+            bos = new ByteArrayOutputStream();
+            dout = new DataOutputStream(bos);
+            dout.writeLong(5L); // sid
+            dout.writeInt(hostport.getBytes().length);
+            dout.writeBytes(hostport);
+
+            // now parse it
+            din = new DataInputStream(new ByteArrayInputStream(bos.toByteArray()));
+            msg = InitialMessage.parse(QuorumCnxManager.PROTOCOL_VERSION, din);
+        } catch (InitialMessage.InitialMessageException ex) {
+            Assert.fail(ex.toString());
+        }
+        // good message(Ipv6)
+        try {
+
+            hostport = "3FFE:FFFF:7654:FEDA:1245:BA98:3210:4562:3888";
             bos = new ByteArrayOutputStream();
             dout = new DataOutputStream(bos);
             dout.writeLong(5L); // sid

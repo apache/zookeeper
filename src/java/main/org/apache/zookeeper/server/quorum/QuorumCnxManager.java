@@ -223,14 +223,14 @@ public class QuorumCnxManager {
                         num_read, remaining, sid);
             }
 
-            // FIXME: IPv6 is not supported. Using something like Guava's HostAndPort
-            //        parser would be good.
             String addr = new String(b);
-            String[] host_port = addr.split(":");
-
-            if (host_port.length != 2) {
-                throw new InitialMessageException("Badly formed address: %s", addr);
+            int pos = addr.lastIndexOf(":");
+           
+            if (pos == -1 || pos + 1  == addr.length()) {
+               throw new InitialMessageException("Badly formed address: %s", addr);
             }
+
+            String[] host_port = { addr.substring(0, pos), addr.substring(pos+1) };
 
             int port;
             try {
