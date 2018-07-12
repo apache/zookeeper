@@ -599,7 +599,7 @@ public class StaticHostProviderTest extends ZKTestCase {
         );
 
         // Assert
-        assertThat(disconnect, is(true));
+        assertThat(disconnect, is(false));
     }
 
     @Test
@@ -676,7 +676,7 @@ public class StaticHostProviderTest extends ZKTestCase {
         );
 
         // Assert
-        assertThat(disconnect, equalTo(true));
+        assertThat(disconnect, equalTo(false));
     }
 
     private class TestResolver implements StaticHostProvider.Resolver {
