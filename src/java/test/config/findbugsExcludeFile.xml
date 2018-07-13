@@ -47,6 +47,13 @@
        <Bug pattern="DM_EXIT" />
    </Match>
 
+  <!-- QuorumCnxManager Listener thread fails to bind election port -->
+  <Match>
+    <Class name="org.apache.zookeeper.server.quorum.QuorumCnxManager$Listener"/>
+    <Method name="run" />
+    <Bug pattern="DM_EXIT" />
+  </Match>
+  
   <Match>
     <Package name="org.apache.jute.compiler.generated" />
   </Match>
