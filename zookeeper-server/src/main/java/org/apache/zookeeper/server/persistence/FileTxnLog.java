@@ -106,6 +106,20 @@ public class FileTxnLog implements TxnLog {
     /** Maximum time we allow for elapsed fsync before WARNing */
     private final static long fsyncWarningThresholdMS;
 
+    /**
+     * This parameter limit the size of each txnlog to a given limit (KB).
+     * It does not affect how often the system will take a snapshot
+     * [zookeeper.snapCount]
+     *
+     * The feature is disabled by default (-1)
+     */
+    public static final String LOG_SIZE_LIMIT = "zookeeper.txnlogSizeLimit";
+
+    /**
+     * The actual txnlog size limit in bytes.
+     */
+    public static long logSizeLimit = -1;
+
     static {
         LOG = LoggerFactory.getLogger(FileTxnLog.class);
 
@@ -114,6 +128,18 @@ public class FileTxnLog implements TxnLog {
         if ((fsyncWarningThreshold = Long.getLong(ZOOKEEPER_FSYNC_WARNING_THRESHOLD_MS_PROPERTY)) == null)
             fsyncWarningThreshold = Long.getLong(FSYNC_WARNING_THRESHOLD_MS_PROPERTY, 1000);
         fsyncWarningThresholdMS = fsyncWarningThreshold;
+
+        Long logSize = Long.getLong(LOG_SIZE_LIMIT, -1);
+        if (logSize > 0) {
+            // Convert to bytes
+            logSize = logSize * 1024;
+            if (logSize <= preAllocSize) {
+                LOG.error("Ignoring invalid txn log size limit (lesser than preAllocSize)");
+            } else {
+                LOG.info(LOG_SIZE_LIMIT + "=" + logSize);
+                logSizeLimit = logSize;
+            }
+        }
     }
 
     long lastZxidSeen;
@@ -126,6 +152,12 @@ public class FileTxnLog implements TxnLog {
     long dbId;
     private LinkedList<FileOutputStream> streamsToFlush =
         new LinkedList<FileOutputStream>();
+
+    /**
+     * The current file size including the padding.
+     */
+    private long currentSize;
+
     File logFileWrite = null;
     private FilePadding filePadding = new FilePadding();
 
@@ -158,6 +190,24 @@ public class FileTxnLog implements TxnLog {
     @Override
     public void setServerStats(ServerStats serverStats) {
         this.serverStats = serverStats;
+    }
+
+    /**
+     * Set log size limit
+     */
+    public static void setLogSizeLimit(long size) {
+        logSizeLimit = size;
+    }
+
+    /**
+     * Return the current on-disk size of log size. This will be accurate only
+     * after commit() is called. Otherwise, unflushed txns may not be included.
+     */
+    public synchronized long getCurrentLogSize() {
+        if (logFileWrite != null) {
+            return logFileWrite.length();
+        }
+        return 0;
     }
 
     /**
@@ -351,6 +401,13 @@ public class FileTxnLog implements TxnLog {
         }
         while (streamsToFlush.size() > 1) {
             streamsToFlush.removeFirst().close();
+        }
+
+        // Roll the log file if we exceed the size limit
+        long logSize = getCurrentLogSize();
+        if ((logSizeLimit > 0) && (logSize > logSizeLimit)) {
+            LOG.debug("Log size limit reached: " + logSize);
+            rollLog();
         }
     }
 
