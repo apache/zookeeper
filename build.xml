@@ -142,7 +142,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
     <property name="dist.maven.dir" value="${dist.dir}/dist-maven"/>
 
     <property name="contrib.dir" value="${src.dir}/contrib"/>
-    <property name="recipes.dir" value="${src.dir}/recipes"/>
+    <property name="recipes.dir" value="${basedir}/zookeeper-recipes"/>
 
     <property name="ivy.version" value="2.4.0"/>
     <property name="ivy.url"
