@@ -47,6 +47,7 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.server.util.ConfigUtils;
 import org.apache.zookeeper.server.ZooKeeperThread;
@@ -921,7 +922,7 @@ public class QuorumCnxManager {
                     // After leaving listener thread, the host cannot join the
                     // quorum anymore, this is a severe error that we cannot
                     // recover from, so we need to exit
-                    System.exit(14);
+                    System.exit(ExitCode.UNABLE_TO_JOIN_QUORUM.getValue());
                 }
             } else if (ss != null) {
                 // Clean up for shutdown.

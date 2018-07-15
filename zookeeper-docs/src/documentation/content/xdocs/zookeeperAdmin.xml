@@ -388,6 +388,10 @@ server.3=zoo3:2888:3888</programlisting>
         </listitem>
 
         <listitem>
+          <para><xref linkend="sc_exitcodes" /></para>
+        </listitem>
+
+        <listitem>
           <para><xref linkend="sc_configuration" /></para>
         </listitem>
 
@@ -672,6 +676,41 @@ server.3=zoo3:2888:3888</programlisting>
 		</listitem>
 		</varlistentry>
 		</variablelist>
+    </section>
+
+    <section id="sc_exitcodes">
+      <title>Exit Codes</title>
+      <para> ZooKeeper has several exit codes. From 3.6.0, these codes will be gathered in ExitCode (excluding contrib projects).
+      As the codes themselves were not changed to keep backward compatibility, some codes may overlap.
+      A good example is error code 1 and 2. They can both indicate invalid arguments passed to ZooKeeper or other
+      runtime errors.
+      </para>
+      <itemizedlist>
+        <listitem>
+          <para>1: Unexpected errors like IO Exceptions</para>
+        </listitem>
+        <listitem>
+          <para>2: Invalid arguments during invocations</para>
+        </listitem>
+        <listitem>
+          <para>3: Cannot access datadir when trying to replicate server</para>
+        </listitem>
+        <listitem>
+          <para>4: Unable to start admin server at ZooKeeper startup</para>
+        </listitem>
+        <listitem>
+          <para>10: Severe error during snapshot IO</para>
+        </listitem>
+        <listitem>
+          <para>12: zxid from COMMIT does not match the one from pendingTxns queue</para>
+        </listitem>
+        <listitem>
+          <para>13: Unexpected packet from leader, or unable to truncate log on Leader.TRUNC</para>
+        </listitem>
+        <listitem>
+          <para>14: After leaving listener thread, the host cannot join the quorum anymore</para>
+        </listitem>
+      </itemizedlist>
     </section>
 
     <section id="sc_configuration">

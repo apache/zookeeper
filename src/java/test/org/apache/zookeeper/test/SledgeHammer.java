@@ -27,6 +27,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.server.ExitCode;
 
 public class SledgeHammer extends Thread{
     ZooKeeper zk;
@@ -100,11 +101,11 @@ public class SledgeHammer extends Thread{
         if (args.length != 3) {
             System.err
                     .println("USAGE: SledgeHammer zookeeper_server reps reads_per_rep");
-            System.exit(3);
+            System.exit(ExitCode.UNABLE_TO_ACCESS_DATADIR.getValue());
         }
         SledgeHammer h = new SledgeHammer(args[0], Integer.parseInt(args[1]),
                 Integer.parseInt(args[2]));
         h.start();
-        System.exit(0);
+        System.exit(ExitCode.EXECUTION_FINISHED.getValue());
     }
 }
