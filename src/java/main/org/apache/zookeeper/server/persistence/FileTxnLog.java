@@ -254,7 +254,7 @@ public class FileTxnLog implements TxnLog {
         for (File f : files) {
             long fzxid = Util.getZxidFromName(f.getName(), LOG_FILE_PREFIX);
             if (fzxid > snapshotZxid) {
-                continue;
+                break;
             }
             // the files
             // are sorted with zxid's
