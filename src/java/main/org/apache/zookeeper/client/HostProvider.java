@@ -34,8 +34,9 @@ import java.util.Collection;
  * 
  * * The size() of a HostProvider may never be zero.
  * 
- * A HostProvider must return resolved InetSocketAddress instances on next(),
- * but it's up to the HostProvider, when it wants to do the resolving.
+ * A HostProvider must return resolved InetSocketAddress instances on next() if the next address is resolvable.
+ * In that case, it's up to the HostProvider, whether it returns the next resolvable address in the list or return
+ * the next one as UnResolved.
  * 
  * Different HostProvider could be imagined:
  * 
