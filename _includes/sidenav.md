@@ -14,7 +14,7 @@
 ### Documentation
 
 * [Release 3.5.4-beta](doc/r3.5.4-beta)
-* [Release 3.4.12](doc/r3.4.12)
+* [Release 3.4.13](doc/r3.4.13)
 * [Older Versions](documentation.html)
 
 ### Developers
