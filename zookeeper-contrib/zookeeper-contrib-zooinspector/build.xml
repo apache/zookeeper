@@ -40,7 +40,7 @@
 			<fileset file="${basedir}/lib/log4j.properties" />
 		</copy>
 		<copy todir="${build.dir}/lib">
-			<fileset file="../../../build/zookeeper-${version}.jar" />
+			<fileset file="../../build/zookeeper-${version}.jar" />
 		</copy>
 		<copy todir="${build.dir}">
 			<fileset dir="${basedir}" includes="*.*" excludes="build.xml,ivy.xml" />
