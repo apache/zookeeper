@@ -113,7 +113,7 @@ public class FileTxnLog implements TxnLog {
      *
      * The feature is disabled by default (-1)
      */
-    public static final String LOG_SIZE_LIMIT = "zookeeper.txnlogSizeLimit";
+    public static final String LOG_SIZE_LIMIT = "zookeeper.txnlogSizeLimitInKb";
 
     /**
      * The actual txnlog size limit in bytes.
@@ -131,14 +131,11 @@ public class FileTxnLog implements TxnLog {
 
         Long logSize = Long.getLong(LOG_SIZE_LIMIT, -1);
         if (logSize > 0) {
+            LOG.info("{} = {}", LOG_SIZE_LIMIT, logSize);
+
             // Convert to bytes
             logSize = logSize * 1024;
-            if (logSize <= preAllocSize) {
-                LOG.error("Ignoring invalid txn log size limit (lesser than preAllocSize)");
-            } else {
-                LOG.info(LOG_SIZE_LIMIT + "=" + logSize);
-                logSizeLimit = logSize;
-            }
+            logSizeLimit = logSize;
         }
     }
 
@@ -404,10 +401,13 @@ public class FileTxnLog implements TxnLog {
         }
 
         // Roll the log file if we exceed the size limit
-        long logSize = getCurrentLogSize();
-        if ((logSizeLimit > 0) && (logSize > logSizeLimit)) {
-            LOG.debug("Log size limit reached: " + logSize);
-            rollLog();
+        if(logSizeLimit > 0) {
+            long logSize = getCurrentLogSize();
+
+            if (logSize > logSizeLimit) {
+                LOG.debug("Log size limit reached: {}", logSize);
+                rollLog();
+            }
         }
     }
 
