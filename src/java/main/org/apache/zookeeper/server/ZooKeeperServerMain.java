@@ -84,7 +84,7 @@ public class ZooKeeperServerMain {
             System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
         LOG.info("Exiting normally");
-        System.exit(0);
+        System.exit(ExitCode.EXECUTION_FINISHED.getValue());
     }
 
     protected void initializeAndRun(String[] args)

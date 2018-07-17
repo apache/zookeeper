@@ -68,6 +68,7 @@ import org.apache.zookeeper.cli.StatCommand;
 import org.apache.zookeeper.cli.SyncCommand;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.admin.ZooKeeperAdmin;
+import org.apache.zookeeper.server.ExitCode;
 
 /**
  * The command line client to ZooKeeper.
@@ -84,7 +85,7 @@ public class ZooKeeperMain {
     protected HashMap<Integer,String> history = new HashMap<Integer,String>( );
     protected int commandCount = 0;
     protected boolean printWatches = true;
-    protected int exitCode = 0;
+    protected int exitCode = ExitCode.EXECUTION_FINISHED.getValue();
 
     protected ZooKeeper zk;
     protected String host = "";
@@ -586,7 +587,7 @@ public class ZooKeeperMain {
         boolean watch = false;
         try {
             watch = processZKCmd(co);
-            exitCode = 0;
+            exitCode = ExitCode.EXECUTION_FINISHED.getValue();
         } catch (CliException ex) {
             exitCode = ex.getExitCode();
             System.err.println(ex.getMessage());
