@@ -108,9 +108,10 @@ public class FileTxnLog implements TxnLog {
 
     /**
      * This parameter limit the size of each txnlog to a given limit (KB).
-     * It does not affect how often the system will take a snapshot
-     * [zookeeper.snapCount]
-     *
+     * It does not affect how often the system will take a snapshot [zookeeper.snapCount]
+     * We roll the txnlog when either of the two limits are reached.
+     * Also since we only roll the logs at transaction boundaries, actual file size can exceed
+     * this limit by the maximum size of a serialized transaction.
      * The feature is disabled by default (-1)
      */
     public static final String LOG_SIZE_LIMIT = "zookeeper.txnlogSizeLimitInKb";
