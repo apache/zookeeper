@@ -4276,10 +4276,10 @@ const char* zerror(int c)
       return "session moved to another server, so operation is ignored";
     case ZNOTREADONLY:
       return "state-changing request is passed to read-only server";
-   case ZNEWCONFIGNOQUORUM:
-       return "no quorum of new config is connected and up-to-date with the leader of last commmitted config - try invoking reconfiguration after new servers are connected and synced";
-   case ZRECONFIGINPROGRESS:
-     return "Another reconfiguration is in progress -- concurrent reconfigs not supported (yet)";
+    case ZNEWCONFIGNOQUORUM:
+      return "no quorum of new config is connected and up-to-date with the leader of last commmitted config - try invoking reconfiguration after new servers are connected and synced";
+    case ZRECONFIGINPROGRESS:
+      return "Another reconfiguration is in progress -- concurrent reconfigs not supported (yet)";
     }
     if (c > 0) {
       return strerror(c);
