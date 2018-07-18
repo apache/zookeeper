@@ -103,6 +103,17 @@ public class QuorumPeerConfigTest {
         }
     }
 
+    /**
+     * Test case for https://issues.apache.org/jira/browse/ZOOKEEPER-2873
+     */
+    @Test(expected = ConfigException.class)
+    public void testSamePortConfiguredForClientAndElection() throws IOException, ConfigException {
+        QuorumPeerConfig quorumPeerConfig = new QuorumPeerConfig();
+        Properties zkProp = getDefaultZKProperties();
+        zkProp.setProperty("server.1", "localhost:2888:2888");
+        quorumPeerConfig.parseProperties(zkProp);
+    }
+
     private Properties getDefaultZKProperties() {
         Properties zkProp = new Properties();
         zkProp.setProperty("dataDir", new File("myDataDir").getAbsolutePath());

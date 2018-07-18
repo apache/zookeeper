@@ -55,17 +55,17 @@ public class LeaderBean extends ZooKeeperServerBean implements LeaderMXBean {
 
     @Override
     public int getLastProposalSize() {
-        return leader.getProposalStats().getLastProposalSize();
+        return leader.getProposalStats().getLastBufferSize();
     }
 
     @Override
     public int getMinProposalSize() {
-        return leader.getProposalStats().getMinProposalSize();
+        return leader.getProposalStats().getMinBufferSize();
     }
 
     @Override
     public int getMaxProposalSize() {
-        return leader.getProposalStats().getMaxProposalSize();
+        return leader.getProposalStats().getMaxBufferSize();
     }
 
     @Override

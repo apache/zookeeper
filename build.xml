@@ -39,7 +39,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="netty.version" value="3.10.6.Final"/>
 
     <property name="junit.version" value="4.12"/>
-    <property name="mockito.version" value="1.8.2"/>
+    <property name="mockito.version" value="1.8.5"/>
     <property name="checkstyle.version" value="6.13"/>
     <property name="commons-collections.version" value="3.2.2"/>
 
@@ -140,7 +140,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="test.quick" value="no" />
     <property name="conf.dir" value="${basedir}/conf"/>
     <property name="docs.dir" value="${basedir}/docs"/>
-    <property name="docs.src" value="${basedir}/src/docs"/>
+    <property name="docs.src" value="${basedir}/zookeeper-docs"/>
     <property name="javadoc.link.java"
               value="http://docs.oracle.com/javase/6/docs/api/" />
     <property name="javadoc.packages" value="org.apache.*" />
@@ -149,7 +149,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="dist.maven.dir" value="${dist.dir}/dist-maven"/>
 
     <property name="contrib.dir" value="${src.dir}/contrib"/>
-    <property name="recipes.dir" value="${src.dir}/recipes"/>
+    <property name="recipes.dir" value="${basedir}/zookeeper-recipes"/>
 
     <property name="ivy.version" value="2.4.0"/>
     <property name="ivy.url"

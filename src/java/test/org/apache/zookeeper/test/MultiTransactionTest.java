@@ -143,10 +143,10 @@ public class MultiTransactionTest extends ClientBase {
             }
             for (int i = 0; i < res.results.size(); i++) {
                 OpResult opResult = res.results.get(i);
-                Assert.assertTrue("Did't recieve proper error response",
+                Assert.assertTrue("Did't receive proper error response",
                         opResult instanceof ErrorResult);
                 ErrorResult errRes = (ErrorResult) opResult;
-                Assert.assertEquals("Did't recieve proper error code",
+                Assert.assertEquals("Did't receive proper error code",
                         expectedResultCodes.get(i).intValue(), errRes.getErr());
             }
         } else {

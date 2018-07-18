@@ -24,7 +24,7 @@
   <property name="name" value="${ant.project.name}"/>
   <property name="root" value="${basedir}"/>
 
-  <property name="zk.root" location="${root}/../../../"/>
+  <property name="zk.root" location="${root}/../../"/>
 
   <property name="src.dir"  location="${root}/src/java"/>
   <property name="src.test" location="${root}/src/test"/>

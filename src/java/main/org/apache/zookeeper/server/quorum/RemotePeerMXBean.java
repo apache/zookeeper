@@ -45,4 +45,9 @@ public interface RemotePeerMXBean {
      * @return the learner type
      */
     public String getLearnerType();
+
+    /**
+     * @return true if the peer is the current leader
+     */
+    public boolean isLeader();
 }

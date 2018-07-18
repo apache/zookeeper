@@ -148,6 +148,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         public QuorumServer(long id, InetSocketAddress addr) {
             this(id, addr, (InetSocketAddress)null, (InetSocketAddress)null, LearnerType.PARTICIPANT);
         }
+ 
+        public long getId() {
+            return id;
+        }
 
         /**
          * Performs a DNS lookup for server address and election address.
@@ -253,6 +257,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                         Integer.parseInt(serverParts[2]));
             } catch (NumberFormatException e) {
                 throw new ConfigException("Address unresolved: " + serverParts[0] + ":" + serverParts[2]);
+            }
+
+            if(addr.getPort() == electionAddr.getPort()) {
+                throw new ConfigException(
+                        "Client and election port must be different! Please update the configuration file on server." + sid);
             }
 
             if (serverParts.length == 4) {
@@ -464,6 +473,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      */
     public long getId() {
         return myid;
+    }
+
+    // VisibleForTesting
+    void setId(long id) {
+        this.myid = id;
     }
 
     /**
@@ -1093,7 +1107,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                         jmxLocalPeerBean = null;
                     }
                 } else {
-                    RemotePeerBean rBean = new RemotePeerBean(s);
+                    RemotePeerBean rBean = new RemotePeerBean(this, s);
                     try {
                         MBeanRegistry.getInstance().register(rBean, jmxQuorumBean);
                         jmxRemotePeerBean.put(s.id, rBean);
@@ -1895,7 +1909,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         joiningMembers.remove(getId()); // remove self as it is local bean
         for (Long id : joiningMembers) {
             QuorumServer qs = newMembers.get(id);
-            RemotePeerBean rBean = new RemotePeerBean(qs);
+            RemotePeerBean rBean = new RemotePeerBean(this, qs);
             try {
                 MBeanRegistry.getInstance().register(rBean, jmxQuorumBean);
                 jmxRemotePeerBean.put(qs.id, rBean);
@@ -2068,5 +2082,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 this.getQuorumListenOnAllIPs(),
                 this.quorumCnxnThreadsSize,
                 this.isQuorumSaslAuthEnabled());
+    }
+
+    boolean isLeader(long id) {
+        Vote vote = getCurrentVote();
+        return vote != null && id == vote.getId();
     }
 }
