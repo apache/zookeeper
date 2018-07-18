@@ -29,6 +29,7 @@ import os
 import time
 import re
 import requests
+import urllib
 from jinja2 import Template
 
 MAX_NUM_OF_BUILDS = 10000
@@ -79,7 +80,7 @@ def generate_report(build_url):
     """
     LOG.info("Analyzing %s", build_url)
 
-    report_url = build_url + "testReport/api/json?tree=suites[name,cases[className,name,status]]"
+    report_url = build_url + "testReport/api/json?tree=suites" + urllib.quote("[name,cases[className,name,status]]")
     try:
         response = requests.get(report_url).json()
     except:
@@ -143,7 +144,7 @@ def analyze_build(args):
         url = url_max_build["url"]
         excludes = url_max_build["excludes"]
 
-        json_response = requests.get(url + "/api/json?tree=builds[number,url]").json()
+        json_response = requests.get(url + "/api/json?tree=" + urllib.quote("builds[number,url]")).json()
         if json_response.has_key("builds"):
             builds = json_response["builds"]
             LOG.info("Analyzing job: %s", url)
