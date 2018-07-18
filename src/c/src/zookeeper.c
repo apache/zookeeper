@@ -4280,6 +4280,12 @@ const char* zerror(int c)
       return "session moved to another server, so operation is ignored";
     case ZNOTREADONLY:
       return "state-changing request is passed to read-only server";
+    case ZEPHEMERALONLOCALSESSION:
+      return "attempt to create ephemeral node on a local session";
+    case ZNOWATCHER:
+      return "the watcher couldn't be found";
+    case ZRECONFIGDISABLED:
+      return "attempts to perform a reconfiguration operation when reconfiguration feature is disable";
     }
     if (c > 0) {
       return strerror(c);
