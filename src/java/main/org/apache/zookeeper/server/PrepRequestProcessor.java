@@ -818,10 +818,9 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                             txn = new ErrorTxn(e.code().intValue());
 
                             if (e.code().intValue() > Code.APIERROR.intValue()) {
-                                LOG.info("Got user-level KeeperException when processing "
-                                        + request.toString() + " aborting remaining multi ops."
-                                        + " Error Path:" + e.getPath()
-                                        + " Error:" + e.getMessage());
+                                LOG.info("Got user-level KeeperException when processing {} aborting" +
+                                        " remaining multi ops. Error Path:{} Error:{}",
+                                        request.toString(), e.getPath(), e.getMessage());
                             }
 
                             request.setException(e);
@@ -882,10 +881,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
             }
 
             if (e.code().intValue() > Code.APIERROR.intValue()) {
-                LOG.info("Got user-level KeeperException when processing "
-                        + request.toString()
-                        + " Error Path:" + e.getPath()
-                        + " Error:" + e.getMessage());
+                LOG.info("Got user-level KeeperException when processing {} Error Path:{} Error:{}",
+                        request.toString(), e.getPath(), e.getMessage());
             }
             request.setException(e);
         } catch (Exception e) {

@@ -1048,18 +1048,20 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         long sessionId = connReq.getSessionId();
         if (sessionId == 0) {
             long id = createSession(cnxn, passwd, sessionTimeout);
-            LOG.info("Client attempting to establish new session: session = 0x"
-                    + Long.toHexString(id)
-                    + ", zxid = 0x" + Long.toHexString(connReq.getLastZxidSeen())
-                    + ", timeout = " + connReq.getTimeOut()
-                    + ", address = " + cnxn.getRemoteSocketAddress());
+            LOG.debug("Client attempting to establish new session:" +
+                            " session = 0x{}, zxid = 0x{}, timeout = {}, address = {}",
+                    Long.toHexString(id),
+                    Long.toHexString(connReq.getLastZxidSeen()),
+                    connReq.getTimeOut(),
+                    cnxn.getRemoteSocketAddress());
         } else {
             long clientSessionId = connReq.getSessionId();
-            LOG.info("Client attempting to renew session: session = 0x"
-                    + Long.toHexString(clientSessionId)
-                    + ", zxid = 0x" + Long.toHexString(connReq.getLastZxidSeen())
-                    + ", timeout = " + connReq.getTimeOut()
-                    + ", address = " + cnxn.getRemoteSocketAddress());
+            LOG.debug("Client attempting to renew session:" +
+                            " session = 0x{}, zxid = 0x{}, timeout = {}, address = {}",
+                    Long.toHexString(clientSessionId),
+                    Long.toHexString(connReq.getLastZxidSeen()),
+                    connReq.getTimeOut(),
+                    cnxn.getRemoteSocketAddress());
             if (serverCnxnFactory != null) {
                 serverCnxnFactory.closeSession(sessionId);
             }
