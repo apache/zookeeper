@@ -124,9 +124,7 @@ public class MBeanRegistry {
             return;
         if (!bean.isHidden()) {
             final ObjectName objName = makeObjectName(path, bean);
-            if (LOG.isInfoEnabled()) {
-                LOG.info("Unregister MBean [{}]", objName);
-            }
+            LOG.debug("Unregister MBean [{}]", objName);
             synchronized (LOCK) {
                mBeanServer.unregisterMBean(objName);
             }
