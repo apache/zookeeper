@@ -62,13 +62,13 @@ public class ConfigUtils {
     }
 
     /**
-     * Splits server config to server and port
+     * Gets host and port by spliting server config
      * with support for IPv6 literals
      * @return String[] first element being the
      *  IP address and the next being the port
      * @param s server config, server:port
      */
-    public static String[] splitServerConfig(String s)
+    public static String[] getHostAndPort(String s)
         throws ConfigException
     {
         if (s.startsWith("[")) {

@@ -227,12 +227,10 @@ public class QuorumCnxManager {
                         num_read, remaining, sid);
             }
 
-            // FIXME: IPv6 is not supported. Using something like Guava's HostAndPort
-            //        parser would be good.
             String addr = new String(b);
             String[] host_port;
             try {
-                host_port = ConfigUtils.splitServerConfig(addr);
+                host_port = ConfigUtils.getHostAndPort(addr);
             } catch (ConfigException e) {
                 throw new InitialMessageException("Badly formed address: %s", addr);
             }
@@ -868,7 +866,7 @@ public class QuorumCnxManager {
                         self.recreateSocketAddresses(self.getId());
                         addr = self.getElectionAddress();
                     }
-                    LOG.info("My election bind port: " + formatInetAddr(addr));
+                    LOG.info("My election bind port: " + addr.toString());
                     setName(addr.toString());
                     ss.bind(addr);
                     while (!shutdown) {
