@@ -293,7 +293,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                                           + " - max is " + maxClientCnxns );
                 }
 
-                LOG.info("Accepted socket connection from "
+                LOG.debug("Accepted socket connection from "
                          + sc.socket().getRemoteSocketAddress());
                 sc.configureBlocking(false);
 
