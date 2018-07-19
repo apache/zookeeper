@@ -68,8 +68,9 @@ public class ServerStatsTest extends ZKTestCase {
         ServerStats serverStats = new ServerStats(providerMock);
 
         // When incremented...
-        serverStats.updateLatency(Time.currentElapsedTime()-1000);
-        serverStats.updateLatency(Time.currentElapsedTime()-2000);
+        Request fakeRequest = new Request(0, 0, 0, null, null, 0);
+        serverStats.updateLatency(fakeRequest, fakeRequest.createTime + 1000);
+        serverStats.updateLatency(fakeRequest, fakeRequest.createTime + 2000);
 
         // Then ...
         assertThat("Max latency check", 2000L,
@@ -117,9 +118,10 @@ public class ServerStatsTest extends ZKTestCase {
         assertAllLatencyZero(serverStats);
 
         // When ...
+        Request fakeRequest = new Request(0, 0, 0, null, null, 0);
         serverStats.incrementPacketsSent();
         serverStats.incrementPacketsReceived();
-        serverStats.updateLatency(Time.currentElapsedTime()-1000);
+        serverStats.updateLatency(fakeRequest, fakeRequest.createTime + 1000);
 
         serverStats.reset();
 

@@ -114,4 +114,11 @@ public abstract class UpgradeableSessionTracker implements SessionTracker {
             KeeperException.SessionMovedException {
         throw new UnsupportedOperationException();
     }
+
+    public long getLocalSessionCount() {
+        if (localSessionsWithTimeouts == null) {
+            return 0;
+        }
+        return localSessionsWithTimeouts.size();
+    }
 }

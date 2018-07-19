@@ -281,5 +281,9 @@ public class PrepRequestProcessorTest extends ClientBase {
         public Map<Long, Set<Long>> getSessionExpiryMap() {
             return new HashMap<Long, Set<Long>>();
         }
+        @Override
+        public long getLocalSessionCount() {
+            return 0;
+        }
     }
 }

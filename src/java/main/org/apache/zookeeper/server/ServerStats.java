@@ -21,6 +21,7 @@ package org.apache.zookeeper.server;
 
 
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.server.metric.AvgMinMaxCounter;
 import org.apache.zookeeper.server.quorum.BufferStats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,17 +34,17 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ServerStats {
     private static final Logger LOG = LoggerFactory.getLogger(ServerStats.class);
 
-    private long packetsSent;
-    private long packetsReceived;
-    private long maxLatency;
-    private long minLatency = Long.MAX_VALUE;
-    private long totalLatency = 0;
-    private long count = 0;
+    private final AtomicLong packetsSent = new AtomicLong();
+    private final AtomicLong packetsReceived = new AtomicLong();
+
+    private final AvgMinMaxCounter requestLatency = new AvgMinMaxCounter("request_latency");
+
     private AtomicLong fsyncThresholdExceedCount = new AtomicLong(0);
 
     private final BufferStats clientResponseStats = new BufferStats();
 
     private final Provider provider;
+    private final long startTime = Time.currentElapsedTime();
 
     public interface Provider {
         public long getOutstandingRequests();
@@ -59,19 +60,16 @@ public class ServerStats {
     }
     
     // getters
-    synchronized public long getMinLatency() {
-        return minLatency == Long.MAX_VALUE ? 0 : minLatency;
+    public long getMinLatency() {
+        return requestLatency.getMin();
     }
 
-    synchronized public long getAvgLatency() {
-        if (count != 0) {
-            return totalLatency / count;
-        }
-        return 0;
+    public long getAvgLatency() {
+        return requestLatency.getAvg();
     }
 
-    synchronized public long getMaxLatency() {
-        return maxLatency;
+    public long getMaxLatency() {
+        return requestLatency.getMax();
     }
 
     public long getOutstandingRequests() {
@@ -90,12 +88,12 @@ public class ServerStats {
         return provider.getLogDirSize();
     }
     
-    synchronized public long getPacketsReceived() {
-        return packetsReceived;
+    public long getPacketsReceived() {
+        return packetsReceived.get();
     }
 
-    synchronized public long getPacketsSent() {
-        return packetsSent;
+    public long getPacketsSent() {
+        return packetsSent.get();
     }
 
     public String getServerState() {
@@ -105,6 +103,10 @@ public class ServerStats {
     /** The number of client connections alive to this server */
     public int getNumAliveClientConnections() {
     	return provider.getNumAliveConnections();
+    }
+
+    public long getUptime() {
+        return Time.currentElapsedTime() - startTime;
     }
 
     public boolean isProviderNull() {
@@ -127,36 +129,45 @@ public class ServerStats {
         sb.append("Mode: " + getServerState() + "\n");
         return sb.toString();
     }
-    // mutators
-    synchronized void updateLatency(long requestCreateTime) {
-        long latency = Time.currentElapsedTime() - requestCreateTime;
-        totalLatency += latency;
-        count++;
-        if (latency < minLatency) {
-            minLatency = latency;
+
+    /**
+     * Update request statistic. This should only be called from a request
+     * that originated from that machine.
+     */
+    public void updateLatency(Request request, long currentTime) {
+        long latency = currentTime - request.createTime;
+        if (latency < 0) {
+            return;
         }
-        if (latency > maxLatency) {
-            maxLatency = latency;
+        requestLatency.addDataPoint(latency);
+        if (request.getHdr() != null) {
+            // Only quorum request should have header
+            ServerMetrics.UPDATE_LATENCY.add(latency);
+        } else {
+            // All read request should goes here
+            ServerMetrics.READ_LATENCY.add(latency);
         }
     }
-    synchronized public void resetLatency(){
-        totalLatency = 0;
-        count = 0;
-        maxLatency = 0;
-        minLatency = Long.MAX_VALUE;
+
+    public void resetLatency() {
+        requestLatency.reset();
     }
-    synchronized public void resetMaxLatency(){
-        maxLatency = getMinLatency();
+
+    public void resetMaxLatency() {
+        requestLatency.resetMax();
     }
-    synchronized public void incrementPacketsReceived() {
-        packetsReceived++;
+
+    public void incrementPacketsReceived() {
+        packetsReceived.incrementAndGet();
     }
-    synchronized public void incrementPacketsSent() {
-        packetsSent++;
+
+    public void incrementPacketsSent() {
+        packetsSent.incrementAndGet();
     }
-    synchronized public void resetRequestCounters(){
-        packetsReceived = 0;
-        packetsSent = 0;
+
+    public void resetRequestCounters(){
+        packetsReceived.set(0);
+        packetsSent.set(0);
     }
 
     public long getFsyncThresholdExceedCount() {
@@ -171,10 +182,11 @@ public class ServerStats {
         fsyncThresholdExceedCount.set(0);
     }
 
-    synchronized public void reset() {
+    public void reset() {
         resetLatency();
         resetRequestCounters();
         clientResponseStats.reset();
+        ServerMetrics.resetAll();
     }
 
     public void updateClientResponseSize(int size) {

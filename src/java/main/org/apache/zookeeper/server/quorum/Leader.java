@@ -46,6 +46,7 @@ import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ZooKeeperCriticalThread;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
@@ -425,6 +426,19 @@ public class Leader {
     // when a reconfig occurs where the leader is removed or becomes an observer,
    // it does not commit ops after committing the reconfig
     boolean allowedToCommit = true;
+
+    /**
+     * Timestamp when this leader started serving request (Quorum is running)
+     */
+    private long leaderStartTime;
+
+    public long getUptime() {
+        if (leaderStartTime > 0) {
+            return Time.currentElapsedTime() - leaderStartTime;
+        }
+        return 0;
+    }
+
     /**
      * This method is main function that is called to lead
      *
@@ -435,6 +449,7 @@ public class Leader {
         self.end_fle = Time.currentElapsedTime();
         long electionTimeTaken = self.end_fle - self.start_fle;
         self.setElectionTimeTaken(electionTimeTaken);
+        ServerMetrics.ELECTION_TIME.add(electionTimeTaken);
         LOG.info("LEADING - LEADER ELECTION TOOK - {} {}", electionTimeTaken,
                 QuorumPeer.FLE_TIME_UNIT);
         self.start_fle = 0;
@@ -988,6 +1003,7 @@ public class Leader {
         }
         QuorumPacket qp = new QuorumPacket(Leader.COMMIT, zxid, null, null);
         sendPacket(qp);
+        ServerMetrics.COMMIT_COUNT.add(1);
     }
 
     //commit and send some info
@@ -1345,6 +1361,7 @@ public class Leader {
             allowedToCommit = false;
         }
 
+        leaderStartTime = Time.currentElapsedTime();
         zk.startup();
         /*
          * Update the election vote here to ensure that all members of the

@@ -143,10 +143,27 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
         }
 
+        if (request.getHdr() != null) {
+            /*
+             * Request header is created only by the leader, so this must be
+             * a quorum request. Since we're comparing timestamps across hosts,
+             * this metric may be incorrect. However, it's still a very useful
+             * metric to track in the happy case. If there is clock drift,
+             * the latency can go negative. Note: headers use wall time, not
+             * CLOCK_MONOTONIC.
+             */
+            long propagationLatency = Time.currentWallTime() - request.getHdr().getTime();
+            if (propagationLatency > 0) {
+                ServerMetrics.PROPAGATION_LATENCY.add(propagationLatency);
+            }
+        }
+
         if (request.cnxn == null) {
             return;
         }
         ServerCnxn cnxn = request.cnxn;
+
+        long lastZxid = zks.getZKDatabase().getDataTreeLastProcessedZxid();
 
         String lastOp = "NA";
         zks.decInProcess();
@@ -182,22 +199,15 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             switch (request.type) {
             case OpCode.ping: {
-                zks.serverStats().updateLatency(request.createTime);
-
                 lastOp = "PING";
-                cnxn.updateStatsForResponse(request.cxid, request.zxid, lastOp,
-                        request.createTime, Time.currentElapsedTime());
+                updateStats(request, lastOp, lastZxid);
 
-                cnxn.sendResponse(new ReplyHeader(-2,
-                        zks.getZKDatabase().getDataTreeLastProcessedZxid(), 0), null, "response");
+                cnxn.sendResponse(new ReplyHeader(-2, lastZxid, 0), null, "response");
                 return;
             }
             case OpCode.createSession: {
-                zks.serverStats().updateLatency(request.createTime);
-
                 lastOp = "SESS";
-                cnxn.updateStatsForResponse(request.cxid, request.zxid, lastOp,
-                        request.createTime, Time.currentElapsedTime());
+                updateStats(request, lastOp, lastZxid);
 
                 zks.finishSessionInit(request.cnxn, true);
                 return;
@@ -453,13 +463,10 @@ public class FinalRequestProcessor implements RequestProcessor {
             err = Code.MARSHALLINGERROR;
         }
 
-        long lastZxid = zks.getZKDatabase().getDataTreeLastProcessedZxid();
         ReplyHeader hdr =
             new ReplyHeader(request.cxid, lastZxid, err.intValue());
 
-        zks.serverStats().updateLatency(request.createTime);
-        cnxn.updateStatsForResponse(request.cxid, lastZxid, lastOp,
-                    request.createTime, Time.currentElapsedTime());
+        updateStats(request, lastOp, lastZxid);
 
         try {
             cnxn.sendResponse(hdr, rsp, "response");
@@ -487,4 +494,13 @@ public class FinalRequestProcessor implements RequestProcessor {
         LOG.info("shutdown of request processor complete");
     }
 
+    private void updateStats(Request request, String lastOp, long lastZxid) {
+        if (request.cnxn == null) {
+            return;
+        }
+        long currentTime = Time.currentElapsedTime();
+        zks.serverStats().updateLatency(request, currentTime);
+        request.cnxn.updateStatsForResponse(request.cxid, lastZxid, lastOp,
+                request.createTime, currentTime);
+    }
 }
