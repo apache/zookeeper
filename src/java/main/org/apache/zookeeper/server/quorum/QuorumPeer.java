@@ -203,7 +203,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             // LOG.warn("sid = " + sid + " addressStr = " + addressStr);
             this.id = sid;
             String serverClientParts[] = addressStr.split(";");
-            String serverParts[] = ConfigUtils.splitServerConfig(serverClientParts[0]);
+            String serverParts[] = ConfigUtils.getHostAndPort(serverClientParts[0]);
             if ((serverClientParts.length > 2) || (serverParts.length < 3)
                     || (serverParts.length > 4)) {
                 throw new ConfigException(addressStr + wrongFormat);
@@ -211,7 +211,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
             if (serverClientParts.length == 2) {
                 //LOG.warn("ClientParts: " + serverClientParts[1]);
-                String clientParts[] = ConfigUtils.splitServerConfig(serverClientParts[1]);
+                String clientParts[] = ConfigUtils.getHostAndPort(serverClientParts[1]);
                 if (clientParts.length > 2) {
                     throw new ConfigException(addressStr + wrongFormat);
                 }
