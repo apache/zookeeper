@@ -4246,6 +4246,10 @@ const char* zerror(int c)
       return "bad arguments";
     case ZINVALIDSTATE:
       return "invalid zhandle state";
+    case ZNEWCONFIGNOQUORUM:
+      return "no quorum of new config is connected and up-to-date with the leader of last commmitted config - try invoking reconfiguration after new servers are connected and synced";
+    case ZRECONFIGINPROGRESS:
+      return "Another reconfiguration is in progress -- concurrent reconfigs not supported (yet)";
     case ZAPIERROR:
       return "api error";
     case ZNONODE:
@@ -4276,10 +4280,12 @@ const char* zerror(int c)
       return "session moved to another server, so operation is ignored";
     case ZNOTREADONLY:
       return "state-changing request is passed to read-only server";
-   case ZNEWCONFIGNOQUORUM:
-       return "no quorum of new config is connected and up-to-date with the leader of last commmitted config - try invoking reconfiguration after new servers are connected and synced";
-   case ZRECONFIGINPROGRESS:
-     return "Another reconfiguration is in progress -- concurrent reconfigs not supported (yet)";
+    case ZEPHEMERALONLOCALSESSION:
+      return "attempt to create ephemeral node on a local session";
+    case ZNOWATCHER:
+      return "the watcher couldn't be found";
+    case ZRECONFIGDISABLED:
+      return "attempts to perform a reconfiguration operation when reconfiguration feature is disable";
     }
     if (c > 0) {
       return strerror(c);
