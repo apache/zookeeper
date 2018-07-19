@@ -708,7 +708,8 @@ server.3=zoo3:2888:3888</programlisting>
           <para>13: Unexpected packet from leader, or unable to truncate log on Leader.TRUNC</para>
         </listitem>
         <listitem>
-          <para>14: After leaving listener thread, the host cannot join the quorum anymore</para>
+          <para>14: After listener thread tried to bind to election port 3 times, it will exit -
+            leaving the server unable to join the quorum</para>
         </listitem>
       </itemizedlist>
     </section>

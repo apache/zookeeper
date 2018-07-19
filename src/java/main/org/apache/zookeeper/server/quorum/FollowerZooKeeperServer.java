@@ -106,7 +106,7 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
             LOG.error("Committing zxid 0x" + Long.toHexString(zxid)
                     + " but next pending txn 0x"
                     + Long.toHexString(firstElementZxid));
-            System.exit(ExitCode.INVALID_TXN_COMMIT.getValue());
+            System.exit(ExitCode.UNMATCHED_TXN_COMMIT.getValue());
         }
         Request request = pendingTxns.remove();
         commitProcessor.commit(request);

@@ -35,11 +35,11 @@ public enum ExitCode {
     /* Severe error during snapshot IO */
     TXNLOG_ERROR_TAKING_SNAPSHOT(10),
     /* zxid from COMMIT does not match the one from pendingTxns queue */
-    INVALID_TXN_COMMIT(12),
+    UNMATCHED_TXN_COMMIT(12),
     /* Unexpected packet from leader, or unable to truncate log on Leader.TRUNC */
     QUORUM_PACKET_ERROR(13),
-    /* After leaving listener thread, the host cannot join the quorum anymore */
-    UNABLE_TO_JOIN_QUORUM(14);
+    /* Unable to bind to the quorum (election) port after multiple retry */
+    UNABLE_TO_BIND_QUORUM_PORT(14);
 
     private final int value;
 
