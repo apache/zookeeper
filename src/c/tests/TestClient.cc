@@ -204,6 +204,7 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testAsyncWatcherAutoReset);
     CPPUNIT_TEST(testDeserializeString);
     CPPUNIT_TEST(testFirstServerDown);
+    CPPUNIT_TEST(testNonexistentHost);
 #ifdef THREADED
     CPPUNIT_TEST(testNullData);
 #ifdef ZOO_IPV6_ENABLED
@@ -325,7 +326,17 @@ public:
         CPPUNIT_ASSERT(zk != 0);
         CPPUNIT_ASSERT(ctx.waitForConnected(zk));
     }
-    
+
+    /* Checks that a non-existent host will not block the connection*/
+    void testNonexistentHost() {
+      char hosts[] = "jimmy:5555,127.0.0.1:22181";
+      watchctx_t ctx;
+      zoo_deterministic_conn_order(true /* disable permute */);
+      zhandle_t *zh = createClient(hosts, &ctx);
+      CPPUNIT_ASSERT(ctx.waitForConnected(zh));
+      zoo_deterministic_conn_order(false /* enable permute */);
+    }
+
     /** this checks for a deadlock in calling zookeeper_close and calls from a default watcher that might get triggered just when zookeeper_close() is in progress **/
     void testHangingClient() {
         int zrc = 0;

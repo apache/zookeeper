@@ -810,7 +810,7 @@ static int resolve_hosts(const zhandle_t *zh, const char *hosts_in, addrvec_t *a
                 LOG_ERROR(LOGCALLBACK(zh), "getaddrinfo: %s\n", strerror(errno));
 #endif
                 rc=ZSYSTEMERROR;
-                goto fail;
+                goto next;
             }
         }
 
@@ -842,11 +842,16 @@ static int resolve_hosts(const zhandle_t *zh, const char *hosts_in, addrvec_t *a
         }
 
         freeaddrinfo(res0);
-
+next:
         host = strtok_r(0, ",", &strtok_last);
         }
 #endif
     }
+    if (avec->count == 0) {
+      rc = ZSYSTEMERROR; // not a single host resolved
+      goto fail;
+    }
+
     free(hosts);
 
     if(!disable_conn_permute){
