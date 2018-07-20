@@ -872,12 +872,17 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
       <copy todir="${dist.dir}/src" includeEmptyDirs="true">
         <fileset dir="src" excludes="**/*.template **/docs/build/**/* **/ivy*.jar"/>
+        <fileset dir="${basedir}" excludes="**/*.template **/docs/build/**/* **/ivy*.jar">
+          <include name="zookeeper-recipes/**"/>
+          <include name="zookeeper-docs/**"/>
+          <include name="zookeeper-contrib/**"/>
+        </fileset>
         <fileset file="src/pom.template"/>
       </copy>
   	  
       <chmod perm="ugo+x" type="file" parallel="false">
         <fileset dir="${dist.dir}/bin"/>
-        <fileset dir="${dist.dir}/src/contrib/">
+        <fileset dir="${dist.dir}/src/zookeeper-contrib/">
           <include name="*/bin/*" />
         </fileset>
       </chmod>
@@ -995,7 +1000,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <chmod perm="ugo+x" type="file" parallel="false">
         <fileset dir="${dist.dir}/bin"/>
         <fileset dir="${dist.dir}/sbin"/>
-        <fileset dir="${dist.dir}/src/contrib/">
+        <fileset dir="${dist.dir}/src/zookeeper-contrib/">
           <include name="*/bin/*" />
         </fileset>
       </chmod>
