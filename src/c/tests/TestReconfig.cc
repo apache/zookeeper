@@ -102,11 +102,18 @@ public:
     string getServerNoPort()
     {
         string addrstring = getServer();
-
-        size_t found = addrstring.find(":");
+        size_t found = addrstring.find_last_of(":");
         CPPUNIT_ASSERT(found != string::npos);
 
-        return addrstring.substr(0, found);
+        // ipv6 address case (to remove leading and trailing bracket)
+        if (addrstring.find("[") != string::npos)
+        {
+            return addrstring.substr(1, found-2);
+        }
+        else
+        {
+            return addrstring.substr(0, found);
+        }
     }
 
     /**
@@ -116,7 +123,7 @@ public:
     {
         string addrstring = getServer();
 
-        size_t found = addrstring.find(":");
+        size_t found = addrstring.find_last_of(":");
         CPPUNIT_ASSERT(found != string::npos);
 
         string portStr = addrstring.substr(found+1);
@@ -471,16 +478,18 @@ public:
         // We should try all the new servers *BEFORE* trying any old servers
         string seen;
         for (int i = 0; i < num_coming; i++) {
-            string next = client.cycleNextServer();
+            client.cycleNextServer();
 
             // Assert next server is in the 'new' list
-            size_t found = newComing.find(next);
-            CPPUNIT_ASSERT_MESSAGE(next + " not in newComing list",
+            stringstream next;
+            next << client.getServerNoPort() << ":" << client.getServerPort();
+            size_t found = newComing.find(next.str());
+            CPPUNIT_ASSERT_MESSAGE(next.str() + " not in newComing list",
                                    found != string::npos);
 
             // Assert not in seen list then append
-            found = seen.find(next);
-            CPPUNIT_ASSERT_MESSAGE(next + " in seen list",
+            found = seen.find(next.str());
+            CPPUNIT_ASSERT_MESSAGE(next.str() + " in seen list",
                                    found == string::npos);
             seen += found + ", ";
         }
@@ -488,14 +497,16 @@ public:
         // Now it should start connecting to the old servers
         seen.clear();
         for (int i = 0; i < num_staying; i++) {
-            string next = client.cycleNextServer();
+            client.cycleNextServer();
 
             // Assert it's in the old list
-            size_t found = oldStaying.find(next);
+            stringstream next;
+            next << client.getServerNoPort() << ":" << client.getServerPort();
+            size_t found = oldStaying.find(next.str());
             CPPUNIT_ASSERT(found != string::npos);
 
             // Assert not in seen list then append
-            found = seen.find(next);
+            found = seen.find(next.str());
             CPPUNIT_ASSERT(found == string::npos);
             seen += found + ", ";
         }
