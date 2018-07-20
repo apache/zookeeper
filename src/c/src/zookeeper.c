@@ -1755,7 +1755,7 @@ static void cleanup(zhandle_t *zh,int rc)
     cleanup_bufs(zh,1,rc);
     zh->fd = -1;
 
-    LOG_DEBUG(LOGCALLBACK(zh), "Previous connection=[%s] delay=%d", zoo_get_current_server(zh), zh->delay);
+    LOG_DEBUG(LOGCALLBACK(zh), "Previous connection=%s delay=%d", zoo_get_current_server(zh), zh->delay);
 
     if (!is_unrecoverable(zh)) {
         zh->state = 0;
@@ -1784,7 +1784,7 @@ static int handle_socket_error_msg(zhandle_t *zh, int line, int rc,
         va_start(va,format);
         vsnprintf(buf, sizeof(buf)-1,format,va);
         log_message(LOGCALLBACK(zh), ZOO_LOG_LEVEL_ERROR,line,__func__,
-            "Socket [%s] zk retcode=%d, errno=%d(%s): %s",
+            "Socket %s zk retcode=%d, errno=%d(%s): %s",
             zoo_get_current_server(zh),rc,errno,strerror(errno),buf);
         va_end(va);
     }
@@ -2327,7 +2327,7 @@ int zookeeper_interest(zhandle_t *zh, socket_t *fd, int *interest,
                 }
 
                 LOG_INFO(LOGCALLBACK(zh),
-                         "Initiated connection to server [%s]",
+                         "Initiated connection to server %s",
                          format_endpoint_info(&zh->addr_cur));
             }
             *tv = get_timeval(zh->recv_timeout/3);
@@ -2443,7 +2443,7 @@ static int check_events(zhandle_t *zh, int events)
         if((rc=prime_connection(zh))!=0)
             return rc;
 
-        LOG_INFO(LOGCALLBACK(zh), "initiated connection to server [%s]", format_endpoint_info(&zh->addr_cur));
+        LOG_INFO(LOGCALLBACK(zh), "initiated connection to server %s", format_endpoint_info(&zh->addr_cur));
         return ZOK;
     }
     if (zh->to_send.head && (events&ZOOKEEPER_WRITE)) {
@@ -2492,7 +2492,7 @@ static int check_events(zhandle_t *zh, int events)
                       ZOO_READONLY_STATE : ZOO_CONNECTED_STATE;
                     zh->reconfig = 0;
                     LOG_INFO(LOGCALLBACK(zh),
-                             "session establishment complete on server [%s], sessionId=%#llx, negotiated timeout=%d %s",
+                             "session establishment complete on server %s, sessionId=%#llx, negotiated timeout=%d %s",
                              format_endpoint_info(&zh->addr_cur),
                              newid, zh->recv_timeout,
                              zh->primer_storage.readOnly ? "(READ-ONLY mode)" : "");
@@ -3210,7 +3210,7 @@ int zookeeper_close(zhandle_t *zh)
     if (is_connected(zh)){
         struct oarchive *oa;
         struct RequestHeader h = {get_xid(), ZOO_CLOSE_OP};
-        LOG_INFO(LOGCALLBACK(zh), "Closing zookeeper sessionId=%#llx to [%s]\n",
+        LOG_INFO(LOGCALLBACK(zh), "Closing zookeeper sessionId=%#llx to %s\n",
                 zh->client_id.client_id,zoo_get_current_server(zh));
         oa = create_buffer_oarchive();
         rc = serialize_RequestHeader(oa, "header", &h);
@@ -4342,7 +4342,9 @@ static const char* format_endpoint_info(const struct sockaddr_storage* ep)
 {
     static char buf[128] = { 0 };
     char addrstr[INET6_ADDRSTRLEN] = { 0 };
+    const char *fmtstring;
     void *inaddr;
+    char is_inet6 = 0;  // poor man's boolean
 #ifdef _WIN32
     char * addrstring;
 #endif
@@ -4354,6 +4356,7 @@ static const char* format_endpoint_info(const struct sockaddr_storage* ep)
     if(ep->ss_family==AF_INET6){
         inaddr=&((struct sockaddr_in6*)ep)->sin6_addr;
         port=((struct sockaddr_in6*)ep)->sin6_port;
+        is_inet6 = 1;
     } else {
 #endif
         inaddr=&((struct sockaddr_in*)ep)->sin_addr;
@@ -4361,12 +4364,13 @@ static const char* format_endpoint_info(const struct sockaddr_storage* ep)
 #if defined(AF_INET6)
     }
 #endif
+    fmtstring = (is_inet6 ? "[%s]:%d" : "%s:%d");
 #ifdef _WIN32
     addrstring = inet_ntoa (*(struct in_addr*)inaddr);
-    sprintf(buf,"%s:%d",addrstring,ntohs(port));
+    sprintf(buf,fmtstring,addrstring,ntohs(port));
 #else
     inet_ntop(ep->ss_family,inaddr,addrstr,sizeof(addrstr)-1);
-    sprintf(buf,"%s:%d",addrstr,ntohs(port));
+    sprintf(buf,fmtstring,addrstr,ntohs(port));
 #endif
     return buf;
 }
