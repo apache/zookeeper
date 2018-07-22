@@ -135,7 +135,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory implements Runnable 
             synchronized (ipMap){
                 InetAddress addr = cnxn.getSocketAddress();
                 if (addr == null) {
-                	throw new IOException("Socket of " + cnxn + " has been closed");
+                    throw new IOException("Socket of " + cnxn + " has been closed");
                 }
                 Set<NIOServerCnxn> s = ipMap.get(addr);
                 if (s == null) {
