@@ -142,6 +142,8 @@ enum ZOO_ERRORS {
   ZRECONFIGDISABLED = -123, /*!< Attempts to perform a reconfiguration operation when reconfiguration feature is disabled */
   ZSESSIONCLOSEDREQUIRESASLAUTH = -124, /*!< The session has been closed by server because server requires client to do SASL authentication, but client is not configured with SASL authentication or configuted with SASL but failed (i.e. wrong credential used.). */
   ZTHROTTLEDOP = -127 /*!< Operation was throttled and not executed at all. please, retry! */
+
+  /* when adding/changing values here also update zerror(int) to return correct error message */
 };
 
 #ifdef __cplusplus
