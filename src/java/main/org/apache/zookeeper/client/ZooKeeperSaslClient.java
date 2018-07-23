@@ -66,6 +66,9 @@ public class ZooKeeperSaslClient {
      */
     @Deprecated
     public static final String ENABLE_CLIENT_SASL_DEFAULT = "true";
+
+    public static final String AUTHENTICATION_FAILED = "AuthenticationFailed";
+
     private volatile boolean initializedLogin = false; 
 
     /**
@@ -310,6 +313,9 @@ public class ZooKeeperSaslClient {
             // TODO: introspect about runtime environment (such as jaas.conf)
             saslState = SaslState.FAILED;
             throw new SaslException("Error in authenticating with a Zookeeper Quorum member: the quorum member's saslToken is null.");
+        } else if (new String(saslToken).equals(AUTHENTICATION_FAILED)) {
+            saslState = SaslState.FAILED;
+            throw new SaslException("Invalid username or password during SASL authentication");
         }
 
         Subject subject = login.getSubject();
