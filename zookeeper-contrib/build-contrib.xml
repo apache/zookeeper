@@ -27,7 +27,7 @@
 
   <property name="zk.root" location="${root}/../../"/>
 
-  <property name="src.dir"  location="${root}/src/java"/>
+  <property name="src.dir"  location="${root}/src/main/java"/>
   <property name="src.test" location="${root}/src/test"/>
 
   <property name="lib.dir"  location="${zk.root}/src/java/lib"/>

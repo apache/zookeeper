@@ -7,7 +7,8 @@ LogGraph is an application for viewing and filtering zookeeper logs. It can hand
 
 Run "ant jar" in src/contrib/loggraph/. This will download all dependencies and compile all the loggraph code.
 
-Once compilation has finished, you can run it the the loggraph.sh script in src/contrib/loggraph/bin. This will start and embedded web server on your machine. 
+Once compilation has finished, you can run it the the loggraph.sh script in zookeeper-contrib/zookeeper-contrib-loggraph/src/main/resources.
+This will start and embedded web server on your machine.
 Navigate to http://localhost:8182/graph/main.html
 
 3 - Usage

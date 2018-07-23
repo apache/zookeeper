@@ -34,10 +34,13 @@
 		</copy>
 		<mkdir dir="${build.dir}/config" />
 		<copy todir="${build.dir}/config">
-			<fileset dir="${basedir}/config" />
+			<fileset dir="${basedir}/src/main/resources">
+				<include name="defaultConnectionSettings.cfg" />
+				<include name="defaultNodeViewers.cfg" />
+			</fileset>
 		</copy>
 		<copy todir="${build.dir}/lib">
-			<fileset file="${basedir}/lib/log4j.properties" />
+			<fileset file="${basedir}/src/main/resources/log4j.properties" />
 		</copy>
 		<copy todir="${build.dir}/lib">
 			<fileset file="../../build/zookeeper-${version}.jar" />
@@ -63,8 +66,11 @@
 			</manifest>
 			<fileset file="${zk.root}/LICENSE.txt" />
 			<fileset dir="${build.classes}" />
-			<fileset dir="${basedir}/src/main/resources" />
-			<fileset dir="${basedir}/src/java" excludes="**/*.jar, **/*.java"/>
+			<fileset dir="${basedir}/src/main/resources">
+				<exclude name="*.cfg" />
+				<exclude name="*.properties" />
+			</fileset>
+			<fileset dir="${basedir}/src/main/java" excludes="**/*.jar, **/*.java"/>
 		</jar>
 	</target>
 
@@ -133,7 +139,10 @@
 		</copy>
 		<mkdir dir="${dist.dir}/contrib/${name}/config" />
 		<copy todir="${dist.dir}/contrib/${name}/config">
-			<fileset dir="${basedir}/config" />
+			<fileset dir="${basedir}/src/main/resources">
+				<include name="defaultConnectionSettings.cfg" />
+				<include name="defaultNodeViewers.cfg" />
+			</fileset>
 		</copy>
 	</target>
 </project>

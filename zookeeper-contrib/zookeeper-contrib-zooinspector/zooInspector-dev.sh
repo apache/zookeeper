@@ -15,4 +15,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
          
-java -cp ../../../build/contrib/ZooInspector/*:../../../build/*:../../../build/lib/*:lib org.apache.zookeeper.inspector.ZooInspector
+java -cp ../../build/contrib/ZooInspector/*:../../../build/*:../../../build/lib/*:lib org.apache.zookeeper.inspector.ZooInspector

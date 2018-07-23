@@ -93,9 +93,9 @@ public class ZooInspectorManagerImpl implements ZooInspectorManager {
 
 
     private static final File defaultNodeViewersFile = new File(
-            "./config/defaultNodeViewers.cfg");
+            "./src/main/resources/defaultNodeViewers.cfg");
     private static final File defaultConnectionFile = new File(
-            "./config/defaultConnectionSettings.cfg");
+            "./src/main/resources/defaultConnectionSettings.cfg");
 
     private DataEncryptionManager encryptionManager;
     private String connectString;

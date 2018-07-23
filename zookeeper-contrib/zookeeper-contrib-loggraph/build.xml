@@ -38,7 +38,7 @@
     <jar destfile="${jarname}">
       <fileset file="${zk.root}/LICENSE.txt" />
       <fileset dir="${build.classes}" />
-      <fileset dir="web"/>
+      <fileset dir="src/main/webapp"/>
       <manifest>
         <attribute name="Built-By" value="${user.name}"/>
         <attribute name="Built-At" value="${build.time}"/>
@@ -62,7 +62,7 @@
 
     <mkdir dir="${dist.dir}/contrib/${name}/src"/>
     <copy todir="${dist.dir}/contrib/${name}/src">
-      <fileset dir="${basedir}/src"/>
+      <fileset dir="${basedir}/src/main"/>
     </copy>
 
   </target>

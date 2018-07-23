@@ -21,7 +21,7 @@
   <import file="../build-contrib.xml"/>
 
 	<property name="test.build.dir" value="${build.test}" />
-    <property name="test.src.dir" value="src/test"/>
+    <property name="test.src.dir" value="src/test/java"/>
     <property name="test.log.dir" value="${test.build.dir}/logs" />
     <property name="test.data.dir" value="${test.build.dir}/data" />
     <property name="test.data.upgrade.dir" value="${test.data.dir}/upgrade" />

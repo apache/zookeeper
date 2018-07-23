@@ -38,7 +38,7 @@
         <attribute name="Implementation-Version" value="${revision}"/>
         <attribute name="Implementation-Vendor" value="The Apache Software Foundation"/>
       </manifest>
-      <fileset file="${basedir}/conf/mainClasses" />
+      <fileset file="${basedir}/src/main/resources/mainClasses" />
       <fileset dir="${build.classes}"/>
       <fileset dir="${build.test}"/>
       <fileset file="${zk.root}/LICENSE.txt" />
@@ -58,7 +58,7 @@
 
     <mkdir dir="${dist.dir}/contrib/${name}/conf"/>
     <copy todir="${dist.dir}/contrib/${name}/conf">
-      <fileset dir="${basedir}/conf"/>
+      <fileset dir="${basedir}/src/main/resources"/>
     </copy>
 
     <mkdir dir="${dist.dir}/contrib/${name}/src"/>
