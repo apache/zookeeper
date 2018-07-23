@@ -1553,6 +1553,26 @@ public abstract class ServerAuthenticationProvider implements AuthenticationProv
                     <para>Specifies path to kinit binary. Default is "/usr/bin/kinit".</para>
                 </listitem>
             </varlistentry>
+            <varlistentry>
+                <term>zookeeper.request.timeout</term>
+                <listitem>
+                <para>
+                  <emphasis role="bold">New in 3.6.0,3.5.5:</emphasis>
+                  If ZooKeeper server is not responding or if there is a delay in the
+                  network, ZooKeeper client java sync API waits infinitely for the
+                  response. To avoid this situation configure
+                  zookeeper.request.timeout. By default this feature is disabled and
+                  default value is 0. To enable this feature configure a positive
+                  integer value. for example to set value to 30 second configure
+                  zookeeper.request.timeout=30000.
+                </para>
+                <para>
+                    If response is not received within configured zookeeper.request.timeout
+                    then outgoing and pending requests are cancelled with
+                    org.apache.zookeeper.KeeperException.ConnectionLossException.
+                </para>
+                </listitem>
+            </varlistentry>
         </variablelist>
     </section>
     </section>

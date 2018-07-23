@@ -144,6 +144,8 @@ public abstract class KeeperException extends Exception {
                 return new NoWatcherException();
             case RECONFIGDISABLED:
                 return new ReconfigDisabledException();
+            case REQUESTTIMEOUT:
+                return new RequestTimeoutException();
             case OK:
             default:
                 throw new IllegalArgumentException("Invalid exception code");
@@ -392,6 +394,8 @@ public abstract class KeeperException extends Exception {
         EPHEMERALONLOCALSESSION (EphemeralOnLocalSession),
         /** Attempts to remove a non-existing watcher */
         NOWATCHER (-121),
+        /** Request not completed within max allowed time.*/
+        REQUESTTIMEOUT (-122),
         /** Attempts to perform a reconfiguration operation when reconfiguration feature is disabled. */
         RECONFIGDISABLED(-123);
 
@@ -841,6 +845,15 @@ public abstract class KeeperException extends Exception {
         public ReconfigDisabledException() { super(Code.RECONFIGDISABLED); }
         public ReconfigDisabledException(String path) {
             super(Code.RECONFIGDISABLED, path);
+        }
+    }
+
+    /**
+     * @see Code#REQUESTTIMEOUT
+     */
+    public static class RequestTimeoutException extends KeeperException {
+        public RequestTimeoutException() {
+            super(Code.REQUESTTIMEOUT);
         }
     }
 }

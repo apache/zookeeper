@@ -201,6 +201,11 @@ public class ClientCnxn {
     public ZooKeeperSaslClient zooKeeperSaslClient;
 
     private final ZKClientConfig clientConfig;
+    /**
+     * If any request's response in not received in configured requestTimeout
+     * then it is assumed that the response packet is lost.
+     */
+    private long requestTimeout;
 
     public long getSessionId() {
         return sessionId;
@@ -395,6 +400,7 @@ public class ClientCnxn {
         sendThread = new SendThread(clientCnxnSocket);
         eventThread = new EventThread();
         this.clientConfig=zooKeeper.getClientConfig();
+        initRequestTimeout();
     }
 
     public void start() {
@@ -671,7 +677,8 @@ public class ClientCnxn {
        }
     }
 
-    private void finishPacket(Packet p) {
+    // @VisibleForTesting
+    protected void finishPacket(Packet p) {
         int err = p.replyHeader.getErr();
         if (p.watchRegistration != null) {
             p.watchRegistration.register(err);
@@ -1246,15 +1253,7 @@ public class ClientCnxn {
                         }
                         // At this point, there might still be new packets appended to outgoingQueue.
                         // they will be handled in next connection or cleared up if closed.
-                        cleanup();
-                        if (state.isAlive()) {
-                            eventThread.queueEvent(new WatchedEvent(
-                                    Event.EventType.None,
-                                    Event.KeeperState.Disconnected,
-                                    null));
-                        }
-                        clientCnxnSocket.updateNow();
-                        clientCnxnSocket.updateLastSendAndHeard();
+                        cleanAndNotifyState();
                     }
                 }
             }
@@ -1273,6 +1272,16 @@ public class ClientCnxn {
             ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),
                     "SendThread exited loop for session: 0x"
                            + Long.toHexString(getSessionId()));
+        }
+
+        private void cleanAndNotifyState() {
+            cleanup();
+            if (state.isAlive()) {
+                eventThread.queueEvent(new WatchedEvent(Event.EventType.None,
+                        Event.KeeperState.Disconnected, null));
+            }
+            clientCnxnSocket.updateNow();
+            clientCnxnSocket.updateLastSendAndHeard();
         }
 
         private void pingRwServer() throws RWServerFoundException {
@@ -1506,11 +1515,38 @@ public class ClientCnxn {
         Packet packet = queuePacket(h, r, request, response, null, null, null,
                 null, watchRegistration, watchDeregistration);
         synchronized (packet) {
-            while (!packet.finished) {
-                packet.wait();
+            if (requestTimeout > 0) {
+                // Wait for request completion with timeout
+                waitForPacketFinish(r, packet);
+            } else {
+                // Wait for request completion infinitely
+                while (!packet.finished) {
+                    packet.wait();
+                }
             }
         }
+        if (r.getErr() == Code.REQUESTTIMEOUT.intValue()) {
+            sendThread.cleanAndNotifyState();
+        }
         return r;
+    }
+
+    /**
+     * Wait for request completion with timeout.
+     */
+    private void waitForPacketFinish(ReplyHeader r, Packet packet)
+            throws InterruptedException {
+        long waitStartTime = Time.currentElapsedTime();
+        while (!packet.finished) {
+            packet.wait(requestTimeout);
+            if (!packet.finished && ((Time.currentElapsedTime()
+                    - waitStartTime) >= requestTimeout)) {
+                LOG.error("Timeout error occurred for the packet '{}'.",
+                        packet);
+                r.setErr(Code.REQUESTTIMEOUT.intValue());
+                break;
+            }
+        }
     }
 
     public void saslCompleted() {
@@ -1601,6 +1637,24 @@ public class ClientCnxn {
             this.rc = rc;
             this.path = path;
             this.ctx = ctx;
+        }
+    }
+
+    private void initRequestTimeout() {
+        try {
+            requestTimeout = clientConfig.getLong(
+                    ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT,
+                    ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT_DEFAULT);
+            LOG.info("{} value is {}. feature enabled=",
+                    ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT,
+                    requestTimeout, requestTimeout > 0);
+        } catch (NumberFormatException e) {
+            LOG.error(
+                    "Configured value {} for property {} can not be parsed to long.",
+                    clientConfig.getProperty(
+                            ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT),
+                    ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT);
+            throw e;
         }
     }
 }
