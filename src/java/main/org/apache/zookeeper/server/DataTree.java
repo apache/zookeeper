@@ -66,6 +66,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * This class maintains the tree data structure. It doesn't have any networking
@@ -127,8 +128,7 @@ public class DataTree {
     /**
      * This hashtable lists the paths of the ephemeral nodes of a session.
      */
-    private final Map<Long, HashSet<String>> ephemerals =
-        new ConcurrentHashMap<Long, HashSet<String>>();
+    private final ConcurrentMap<Long, HashSet<String>> ephemerals = new ConcurrentHashMap<>();
 
     /**
      * This set contains the paths of all container nodes
@@ -478,7 +478,10 @@ public class DataTree {
                 HashSet<String> list = ephemerals.get(ephemeralOwner);
                 if (list == null) {
                     list = new HashSet<String>();
-                    ephemerals.put(ephemeralOwner, list);
+                    HashSet<String> _list;
+                    if ((_list = ephemerals.putIfAbsent(ephemeralOwner, list)) != null) {
+                        list = _list;
+                    }
                 }
                 synchronized (list) {
                     list.add(path);
