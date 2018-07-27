@@ -158,6 +158,9 @@ extern ZOOAPI const int ZOO_PERM_ALL;
 /* flags for zookeeper_init{,2} */
 #define ZOO_READONLY         1
 
+/** Disable logging of the client environment at initialization time. */
+#define ZOO_NO_LOG_CLIENTENV 2
+
 /** This Id represents anyone. */
 extern ZOOAPI struct Id ZOO_ANYONE_ID_UNSAFE;
 /** This Id is only usable to set ACLs. It will get substituted with the

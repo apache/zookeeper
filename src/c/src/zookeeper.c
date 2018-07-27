@@ -1139,7 +1139,10 @@ static zhandle_t *zookeeper_init_internal(const char *host, watcher_fn watcher,
 
     // Set log callback before calling into log_env
     zh->log_callback = log_callback;
-    log_env(zh);
+
+    if (!(flags & ZOO_NO_LOG_CLIENTENV)) {
+        log_env(zh);
+    }
 
 #ifdef _WIN32
     if (Win32WSAStartup()){
