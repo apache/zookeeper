@@ -216,7 +216,8 @@ set(test_sources
   tests/TestWatchers.cc
   tests/TestClient.cc
   tests/ZooKeeperQuorumServer.cc
-  tests/TestReadOnlyClient.cc)
+  tests/TestReadOnlyClient.cc
+  tests/TestLogClientEnv.cc)
 
 if(WANT_SYNCAPI)
   list(APPEND test_sources tests/PthreadMocks.cc)

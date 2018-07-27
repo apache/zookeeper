@@ -98,7 +98,7 @@ TEST_SOURCES = \
 	tests/TestZookeeperClose.cc \
 	tests/TestReconfig.cc \
 	tests/TestReconfigServer.cc \
-    tests/TestClientRetry.cc \
+	tests/TestClientRetry.cc \
 	tests/TestOperations.cc \
 	tests/TestMulti.cc \
 	tests/TestWatchers.cc \
@@ -106,6 +106,7 @@ TEST_SOURCES = \
 	tests/ZooKeeperQuorumServer.cc \
 	tests/ZooKeeperQuorumServer.h \
 	tests/TestReadOnlyClient.cc \
+	tests/TestLogClientEnv.cc \
 	$(NULL)
 
 if SOLARIS
