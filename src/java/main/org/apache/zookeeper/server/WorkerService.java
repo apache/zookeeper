@@ -133,21 +133,14 @@ public class WorkerService {
         } else {
             // When there is no worker thread pool, do the work directly
             // and wait for its completion
-            scheduledWorkRequest.start();
-            try {
-                scheduledWorkRequest.join();
-            } catch (InterruptedException e) {
-                LOG.warn("Unexpected exception", e);
-                Thread.currentThread().interrupt();
-            }
+            scheduledWorkRequest.run();
         }
     }
 
-    private class ScheduledWorkRequest extends ZooKeeperThread {
+    private class ScheduledWorkRequest implements Runnable {
         private final WorkRequest workRequest;
 
         ScheduledWorkRequest(WorkRequest workRequest) {
-            super("ScheduledWorkRequest");
             this.workRequest = workRequest;
         }
 
