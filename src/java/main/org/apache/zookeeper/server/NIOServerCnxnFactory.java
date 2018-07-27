@@ -129,11 +129,14 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory implements Runnable 
         return ss.socket().getLocalPort();
     }
 
-    private void addCnxn(NIOServerCnxn cnxn) {
+    private void addCnxn(NIOServerCnxn cnxn) throws IOException {
         synchronized (cnxns) {
             cnxns.add(cnxn);
             synchronized (ipMap){
-                InetAddress addr = cnxn.sock.socket().getInetAddress();
+                InetAddress addr = cnxn.getSocketAddress();
+                if (addr == null) {
+                    throw new IOException("Socket of " + cnxn + " has been closed");
+                }
                 Set<NIOServerCnxn> s = ipMap.get(addr);
                 if (s == null) {
                     // in general we will see 1 connection from each
@@ -165,9 +168,13 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory implements Runnable 
             }
 
             synchronized (ipMap) {
-                Set<NIOServerCnxn> s =
-                        ipMap.get(cnxn.getSocketAddress());
-                s.remove(cnxn);
+                InetAddress addr = cnxn.getSocketAddress();
+                if (addr != null) {
+                    Set<NIOServerCnxn> s = ipMap.get(addr);
+                    if (s != null) {
+                        s.remove(cnxn);
+                    }
+            	}
             }
 
             unregisterConnection(cnxn);
