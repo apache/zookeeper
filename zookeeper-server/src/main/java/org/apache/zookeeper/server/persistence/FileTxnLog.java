@@ -114,12 +114,12 @@ public class FileTxnLog implements TxnLog {
      * this limit by the maximum size of a serialized transaction.
      * The feature is disabled by default (-1)
      */
-    public static final String LOG_SIZE_LIMIT = "zookeeper.txnlogSizeLimitInKb";
+    private static final String txnLogSizeLimitSetting = "zookeeper.txnLogSizeLimitInKb";
 
     /**
      * The actual txnlog size limit in bytes.
      */
-    public static long logSizeLimit = -1;
+    private static long txnLogSizeLimit = -1;
 
     static {
         LOG = LoggerFactory.getLogger(FileTxnLog.class);
@@ -130,13 +130,13 @@ public class FileTxnLog implements TxnLog {
             fsyncWarningThreshold = Long.getLong(FSYNC_WARNING_THRESHOLD_MS_PROPERTY, 1000);
         fsyncWarningThresholdMS = fsyncWarningThreshold;
 
-        Long logSize = Long.getLong(LOG_SIZE_LIMIT, -1);
+        Long logSize = Long.getLong(txnLogSizeLimitSetting, -1);
         if (logSize > 0) {
-            LOG.info("{} = {}", LOG_SIZE_LIMIT, logSize);
+            LOG.info("{} = {}", txnLogSizeLimitSetting, logSize);
 
             // Convert to bytes
             logSize = logSize * 1024;
-            logSizeLimit = logSize;
+            txnLogSizeLimit = logSize;
         }
     }
 
@@ -150,12 +150,6 @@ public class FileTxnLog implements TxnLog {
     long dbId;
     private LinkedList<FileOutputStream> streamsToFlush =
         new LinkedList<FileOutputStream>();
-
-    /**
-     * The current file size including the padding.
-     */
-    private long currentSize;
-
     File logFileWrite = null;
     private FilePadding filePadding = new FilePadding();
 
@@ -193,8 +187,8 @@ public class FileTxnLog implements TxnLog {
     /**
      * Set log size limit
      */
-    public static void setLogSizeLimit(long size) {
-        logSizeLimit = size;
+    public static void setTxnLogSizeLimit(long size) {
+        txnLogSizeLimit = size;
     }
 
     /**
@@ -402,10 +396,10 @@ public class FileTxnLog implements TxnLog {
         }
 
         // Roll the log file if we exceed the size limit
-        if(logSizeLimit > 0) {
+        if(txnLogSizeLimit > 0) {
             long logSize = getCurrentLogSize();
 
-            if (logSize > logSizeLimit) {
+            if (logSize > txnLogSizeLimit) {
                 LOG.debug("Log size limit reached: {}", logSize);
                 rollLog();
             }
