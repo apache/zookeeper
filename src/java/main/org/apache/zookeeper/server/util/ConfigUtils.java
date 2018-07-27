@@ -60,4 +60,31 @@ public class ConfigUtils {
         }
         return version + " " + sb.toString();
     }
+
+    /**
+     * Gets host and port by spliting server config
+     * with support for IPv6 literals
+     * @return String[] first element being the
+     *  IP address and the next being the port
+     * @param s server config, server:port
+     */
+    public static String[] getHostAndPort(String s)
+        throws ConfigException
+    {
+        if (s.startsWith("[")) {
+            int i = s.indexOf("]:");
+            if (i < 0) {
+                throw new ConfigException(s + " starts with '[' but has no matching ']:'");
+            }
+
+            String[] sa = s.substring(i + 2).split(":");
+            String[] nsa = new String[sa.length + 1];
+            nsa[0] = s.substring(1, i);
+            System.arraycopy(sa, 0, nsa, 1, sa.length);
+
+            return nsa;
+        } else {
+            return s.split(":");
+        }
+    }
 }
