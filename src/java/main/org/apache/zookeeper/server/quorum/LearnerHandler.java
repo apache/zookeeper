@@ -792,7 +792,14 @@ public class LearnerHandler extends ZooKeeperThread {
                     txnProposalItr.close();
                 }
             } else {
-                LOG.warn("Unhandled scenario for peer sid: " +  getSid());
+                LOG.warn("Unhandled scenario for peer sid: {} maxCommittedLog=0x{}"
+                        + " minCommittedLog=0x{} lastProcessedZxid=0x{}"
+                        + " peerLastZxid=0x{} txnLogSyncEnabled={}", getSid(),
+                        Long.toHexString(maxCommittedLog),
+                        Long.toHexString(minCommittedLog),
+                        Long.toHexString(lastProcessedZxid),
+                        Long.toHexString(peerLastZxid),
+                        txnLogSyncEnabled);
             }
             LOG.debug("Start forwarding 0x" + Long.toHexString(currentZxid) +
                       " for peer sid: " +  getSid());
