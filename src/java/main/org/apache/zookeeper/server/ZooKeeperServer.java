@@ -1130,24 +1130,22 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 cnxn.disableRecv();
             }
             return;
+        } else if (h.getType() == OpCode.sasl) {
+            Record rsp = processSasl(incomingBuffer,cnxn);
+            ReplyHeader rh = new ReplyHeader(h.getXid(), 0, KeeperException.Code.OK.intValue());
+            cnxn.sendResponse(rh,rsp, "response"); // not sure about 3rd arg..what is it?
+            return;
         } else {
-            if (h.getType() == OpCode.sasl) {
-                Record rsp = processSasl(incomingBuffer,cnxn);
-                ReplyHeader rh = new ReplyHeader(h.getXid(), 0, KeeperException.Code.OK.intValue());
-                cnxn.sendResponse(rh,rsp, "response"); // not sure about 3rd arg..what is it?
-                return;
-            }
-            else {
-                Request si = new Request(cnxn, cnxn.getSessionId(), h.getXid(),
-                  h.getType(), incomingBuffer, cnxn.getAuthInfo());
-                si.setOwner(ServerCnxn.me);
-                // Always treat packet from the client as a possible
-                // local request.
-                setLocalSessionFlag(si);
-                submitRequest(si);
-            }
+            cnxn.incrOutstandingRequests(h);
+            Request si = new Request(cnxn, cnxn.getSessionId(), h.getXid(),
+              h.getType(), incomingBuffer, cnxn.getAuthInfo());
+            si.setOwner(ServerCnxn.me);
+            // Always treat packet from the client as a possible
+            // local request.
+            setLocalSessionFlag(si);
+            submitRequest(si);
+            return;
         }
-        cnxn.incrOutstandingRequests(h);
     }
 
     private Record processSasl(ByteBuffer incomingBuffer, ServerCnxn cnxn) throws IOException {
