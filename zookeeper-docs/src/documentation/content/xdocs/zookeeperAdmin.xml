@@ -1222,7 +1222,11 @@ server.3=zoo3:2888:3888</programlisting>
               <emphasis role="bold">x</emphasis> in <emphasis
               role="bold">server.x</emphasis> in the left hand side of this
               setting.</para>
-
+              
+              <para><emphasis role="bold">hostname</emphasis> can also be configured 
+              with IPv4/IPv6 address.Notice when use IPv6 address which should be 
+              surrounded by brackets([])</para>
+              
               <para>The list of servers that make up ZooKeeper servers that is
               used by the clients must match the list of ZooKeeper servers
               that each ZooKeeper server has.</para>
