@@ -477,11 +477,7 @@ public class DataTree {
             } else if (ephemeralOwner != 0) {
                 HashSet<String> list = ephemerals.get(ephemeralOwner);
                 if (list == null) {
-                    list = new HashSet<String>();
-                    HashSet<String> _list;
-                    if ((_list = ephemerals.putIfAbsent(ephemeralOwner, list)) != null) {
-                        list = _list;
-                    }
+                    list = ephemerals.computeIfAbsent(ephemeralOwner, _list -> new HashSet<>());
                 }
                 synchronized (list) {
                     list.add(path);
