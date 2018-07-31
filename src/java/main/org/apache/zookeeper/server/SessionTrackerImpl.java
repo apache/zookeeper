@@ -281,8 +281,7 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements
     }
 
     public synchronized boolean commitSession(long id, int sessionTimeout) {
-        sessionsWithTimeout.put(id, sessionTimeout);
-        return true;
+        return sessionsWithTimeout.put(id, sessionTimeout) == null;
     }
 
     public boolean isTrackingSession(long sessionId) {

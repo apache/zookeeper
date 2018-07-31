@@ -50,12 +50,12 @@ public interface SessionTracker {
      * Track the session expire, not add to ZkDb.
      * @param id sessionId
      * @param to sessionTimeout
-     * @return whether the session was newly added (if false, already existed)
+     * @return whether the session was newly tracked (if false, already tracked)
      */
     boolean trackSession(long id, int to);
 
     /**
-     * Add the session to the under layer storage.
+     * Add the session to the local session map or global one in zkDB.
      * @param id sessionId
      * @param to sessionTimeout
      * @return whether the session was newly added (if false, already existed)

@@ -106,6 +106,10 @@ public class LeaderSessionTracker extends UpgradeableSessionTracker {
         boolean added =
             globalSessionTracker.commitSession(sessionId, sessionTimeout);
 
+        if (added) {
+            LOG.info("Committing global session 0x" + Long.toHexString(sessionId));
+        }
+
         // If the session moved before the session upgrade finished, it's
         // possible that the session will be added to the local session
         // again. Need to double check and remove it from local session

@@ -66,8 +66,8 @@ public class QuorumBase extends ClientBase {
     protected int portClient4;
     protected int portClient5;
 
-    public boolean localSessionsEnabled = false;
-    public boolean localSessionsUpgradingEnabled = false;
+    protected boolean localSessionsEnabled = false;
+    protected boolean localSessionsUpgradingEnabled = false;
 
     @Test
     // This just avoids complaints by junit

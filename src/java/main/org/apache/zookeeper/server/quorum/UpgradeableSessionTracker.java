@@ -19,8 +19,6 @@ package org.apache.zookeeper.server.quorum;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.Set;
-import java.util.HashSet;
 
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.server.SessionTracker;
