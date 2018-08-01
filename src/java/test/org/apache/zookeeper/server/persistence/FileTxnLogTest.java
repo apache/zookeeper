@@ -116,7 +116,7 @@ public class FileTxnLogTest  extends ZKTestCase {
     // Given ...
 
     // Set threshold to -1, as after the first commit it takes 0ms to commit to disk.
-    java.lang.System.setProperty("zookeeper.fsync.warningthresholdms", "-1");
+    java.lang.System.setProperty(FileTxnLog.ZOOKEEPER_FSYNC_WARNING_THRESHOLD_MS_PROPERTY, "-1");
     ServerStats.Provider providerMock = mock(ServerStats.Provider.class);
     ServerStats serverStats = new ServerStats(providerMock);
 
