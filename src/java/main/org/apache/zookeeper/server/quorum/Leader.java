@@ -1172,6 +1172,58 @@ public class Leader {
     }
     // VisibleForTesting
     protected final Set<Long> connectingFollowers = new HashSet<Long>();
+
+    private volatile boolean quitWaitForEpoch = false;
+    private volatile long timeStartWaitForEpoch = -1;
+    private volatile SyncedLearnerTracker voteSet;
+
+    public static final String MIN_TIME_WAIT_FOR_EPOCH = "zookeeper.leader.minTimeToWaitForEpoch";
+    private static int minTimeToWaitForEpoch;
+    static {
+        minTimeToWaitForEpoch = Integer.getInteger(MIN_TIME_WAIT_FOR_EPOCH, -1);
+        LOG.info(MIN_TIME_WAIT_FOR_EPOCH + " = " + minTimeToWaitForEpoch);
+    }
+
+    // visible for test
+    public static void setMinTimeToWaitForEpoch(int minTimeToWaitForEpoch) {
+        Leader.minTimeToWaitForEpoch = minTimeToWaitForEpoch;
+        LOG.info(MIN_TIME_WAIT_FOR_EPOCH + " set to " + minTimeToWaitForEpoch);
+    }
+
+    /**
+     * Quit condition:
+     *
+     * 1 voter goes to looking again and time waitForEpoch > minTimeToWaitForEpoch
+     *
+     * Note: the voter may go to looking again due to:
+     * 1. change mind in the last minute when received a different notifications
+     * 2. the leader hadn't started leading when it tried to connect to it.
+     */
+    private void quitLeading() {
+        synchronized(connectingFollowers) {
+            quitWaitForEpoch = true;
+            connectingFollowers.notifyAll();
+        }
+        LOG.info("Quit leading due to disloyal voter.");
+    }
+
+    public void setLeadingVoteSet(SyncedLearnerTracker voteSet) {
+        this.voteSet = voteSet;
+    }
+
+    public void reportLookingSid(long sid) {
+        if (minTimeToWaitForEpoch < 0 || timeStartWaitForEpoch < 0
+                || !waitingForNewEpoch) {
+            return;
+        }
+        if (voteSet == null || !voteSet.hasSid(sid)) {
+            return;
+        }
+        if (Time.currentElapsedTime() - timeStartWaitForEpoch > minTimeToWaitForEpoch) {
+            quitLeading();
+        }
+    }
+
     public long getEpochToPropose(long sid, long lastAcceptedEpoch) throws InterruptedException, IOException {
         synchronized(connectingFollowers) {
             if (!waitingForNewEpoch) {
@@ -1191,9 +1243,12 @@ public class Leader {
                 connectingFollowers.notifyAll();
             } else {
                 long start = Time.currentElapsedTime();
+                if (sid == self.getId()) {
+                    timeStartWaitForEpoch = start;
+                }
                 long cur = start;
                 long end = start + self.getInitLimit()*self.getTickTime();
-                while(waitingForNewEpoch && cur < end) {
+                while(waitingForNewEpoch && cur < end  && !quitWaitForEpoch) {
                     connectingFollowers.wait(end - cur);
                     cur = Time.currentElapsedTime();
                 }
