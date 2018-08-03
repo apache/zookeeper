@@ -128,10 +128,14 @@ static void free_String_vector(struct String_vector *v) {
     }
 }
 
+static int strcmp_suffix(const char *str1, const char *str2) {
+    return strcmp(strrchr(str1, '-')+1, strrchr(str2, '-')+1);
+}
+
 static int vstrcmp(const void* str1, const void* str2) {
     const char **a = (const char**)str1;
     const char **b = (const char**) str2;
-    return strcmp(strrchr(*a, '-')+1, strrchr(*b, '-')+1); 
+    return strcmp_suffix(*a, *b);
 } 
 
 static void sort_children(struct String_vector *vector) {
@@ -140,12 +144,24 @@ static void sort_children(struct String_vector *vector) {
         
 static char* child_floor(char **sorted_data, int len, char *element) {
     char* ret = NULL;
-    int i =0;
-    for (i=0; i < len; i++) {
-        if (strcmp(sorted_data[i], element) < 0) {
-            ret = sorted_data[i];
-        }
-    }
+    int targetpos = -1, s = 0, e = len -1;
+
+    while ( targetpos < 0 && s <= e ) {
+		int const i = s + (e - s) / 2;
+		int const cmp = strcmp_suffix(sorted_data[i], element);
+		if (cmp < 0) {
+			s = i + 1;
+		} else if (cmp == 0) {
+			targetpos = i;
+		} else {
+			e = i - 1;
+		}
+	}
+
+	if (targetpos > 0) {
+		ret = sorted_data[targetpos - 1];
+	}
+
     return ret;
 }
 
