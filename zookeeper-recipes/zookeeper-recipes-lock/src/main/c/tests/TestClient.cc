@@ -28,6 +28,7 @@ using namespace std;
 #include <cstring>
 #include <list>
 
+#include <unistd.h>
 #include <zookeeper.h>
 #include <zoo_lock.h>
 
