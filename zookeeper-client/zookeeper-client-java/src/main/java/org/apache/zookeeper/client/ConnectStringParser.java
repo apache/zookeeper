@@ -69,7 +69,8 @@ public final class ConnectStringParser {
         List<String> hostsList = split(connectString,",");
         for (String host : hostsList) {
             int port = DEFAULT_PORT;
-            if (!connectString.startsWith("[")) {//IPv4
+            if (!connectString.startsWith("[")) {
+            	//IPv4
 	            int pidx = host.lastIndexOf(':');
 	            if (pidx >= 0) {
 	                // otherwise : is at the end of the string, ignore
@@ -77,10 +78,11 @@ public final class ConnectStringParser {
 	                    port = Integer.parseInt(host.substring(pidx + 1));
 	                }
 	                host = host.substring(0, pidx);
-            	}
-            } else {                            //IPv6
-            	int pidx = host.lastIndexOf(':');
-            	int bracketIdx = host.lastIndexOf(']');
+                }
+            } else {
+            	//IPv6 e.g. [2001:db8:1::242:ac11:2]:1234
+                int pidx = host.lastIndexOf(':');
+                int bracketIdx = host.lastIndexOf(']');
 	            if (pidx >=0 && bracketIdx >=0 && pidx > bracketIdx) {
 	                if (pidx < host.length() - 1) {
 	                    port = Integer.parseInt(host.substring(pidx + 1));
