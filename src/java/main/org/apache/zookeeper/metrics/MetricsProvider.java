@@ -38,7 +38,7 @@ public interface MetricsProvider {
      *
      * @throws MetricsProviderLifeCycleException in case of invalid configuration.
      */
-    public void configure(Properties configuration) throws MetricsProviderLifeCycleException;
+    void configure(Properties configuration) throws MetricsProviderLifeCycleException;
 
     /**
      * Start the provider.
@@ -46,19 +46,19 @@ public interface MetricsProvider {
      *
      * @throws MetricsProviderLifeCycleException in case of failure
      */
-    public void start() throws MetricsProviderLifeCycleException;
+    void start() throws MetricsProviderLifeCycleException;
 
     /**
      * Provides access to the root context.
      *
      * @return the root context
      */
-    public MetricsContext getRootContext();
+    MetricsContext getRootContext();
 
     /**
      * Releases resources held by the provider.<br>
      * This method must not throw exceptions.<br>
      * This method can be called more than once.
      */
-    public void stop();
+    void stop();
 }

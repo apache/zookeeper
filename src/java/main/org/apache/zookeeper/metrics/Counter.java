@@ -26,22 +26,24 @@ public interface Counter {
 
     /**
      * Increment the value by one.
+     * <p>This method is thread safe, The MetricsProvider will take care of synchronization.</p>
      */
-    public default void inc() {
+    default void inc() {
         inc(1);
     }
 
     /**
      * Increment the value by a given amount.
+     * <p>This method is thread safe, The MetricsProvider will take care of synchronization.<p>
      *
-     * @param delta
+     * @param delta amount to increment, this cannot be a negative number.
      */
-    public void inc(long delta);
+    void inc(long delta);
 
     /**
      * Get the current value held by the counter.
      *
      * @return the current value
      */
-    public long get();
+    long get();
 }

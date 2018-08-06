@@ -31,5 +31,5 @@ public interface Gauge {
      *
      * @return the current value for the gauge
      */
-    public long getCurrentValue();
+    long get();
 }

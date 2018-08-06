@@ -26,9 +26,10 @@ public interface Summary {
 
      /**
       * Register a value.
+      * <p>This method is thread safe, The MetricsProvider will take care of synchronization.</p>
       *
       * @param value current value
       */
-     public void registerValue(long value);
+     void registerValue(long value);
 
 }

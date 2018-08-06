@@ -31,7 +31,7 @@ public interface MetricsContext {
      *
      * @return a new metrics context.
      */
-    public MetricsContext getContext(String name);
+    MetricsContext getContext(String name);
 
     /**
      * Returns a counter.
@@ -39,16 +39,18 @@ public interface MetricsContext {
      * @param name
      * @return the counter identified by name in this context.
      */
-    public Counter getCounter(String name);
+    Counter getCounter(String name);
 
     /**
      * Registers an user provided {@link Gauge} which will be called by the MetricsProvider in order to sample
      * an integer value.
      *
-     * @param name
-     * @param gauge
+     * @param name unique name of the Gauge in this context
+     * @param gauge the implementation of the Gauge
+     *
+     * @return true is the Gauge was successfully registered, false if the Gauge was already registered.
      */
-    public void registerGauge(String name, Gauge gauge);
+    boolean registerGauge(String name, Gauge gauge);
 
     /**
      * Returns a summary.
@@ -56,6 +58,6 @@ public interface MetricsContext {
      * @param name
      * @return the summary identified by name in this context.
      */
-    public Summary getSummary(String name);
+    Summary getSummary(String name);
 
 }
