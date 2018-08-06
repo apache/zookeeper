@@ -34,7 +34,7 @@ public interface Counter {
 
     /**
      * Increment the value by a given amount.
-     * <p>This method is thread safe, The MetricsProvider will take care of synchronization.<p>
+     * <p>This method is thread safe, The MetricsProvider will take care of synchronization.</p>
      *
      * @param delta amount to increment, this cannot be a negative number.
      */
@@ -42,7 +42,7 @@ public interface Counter {
 
     /**
      * Get the current value held by the counter.
-     * <p>This method is thread safe, The MetricsProvider will take care of synchronization.<p>
+     * <p>This method is thread safe, The MetricsProvider will take care of synchronization.</p>
      *
      * @return the current value
      */

@@ -48,7 +48,7 @@ public interface MetricsContext {
      * @param name unique name of the Gauge in this context
      * @param gauge the implementation of the Gauge
      *
-     * @return true is the Gauge was successfully registered, false if the Gauge was already registered.
+     * @return true if the Gauge was successfully registered, false if the Gauge was already registered.
      */
     boolean registerGauge(String name, Gauge gauge);
 
