@@ -38,6 +38,7 @@ import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
+import org.apache.zookeeper.server.ExitCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.ZooDefs.OpCode;
@@ -50,8 +51,6 @@ import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnHeader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This class is the superclass of two of the three main actors in a ZK
@@ -409,7 +408,7 @@ public class Learner {
                     // not able to truncate the log
                     LOG.error("Not able to truncate the log "
                             + Long.toHexString(qp.getZxid()));
-                    System.exit(13);
+                    System.exit(ExitCode.QUORUM_PACKET_ERROR.getValue());
                 }
                 zk.getZKDatabase().setlastProcessedZxid(qp.getZxid());
 
@@ -417,7 +416,7 @@ public class Learner {
             else {
                 LOG.error("Got unexpected packet from leader: {}, exiting ... ",
                           LearnerHandler.packetToString(qp));
-                System.exit(13);
+                System.exit(ExitCode.QUORUM_PACKET_ERROR.getValue());
 
             }
             zk.getZKDatabase().initConfigInZKDatabase(self.getQuorumVerifier());

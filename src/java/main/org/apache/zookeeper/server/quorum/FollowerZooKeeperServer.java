@@ -25,6 +25,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.jute.Record;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
@@ -105,7 +106,7 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
             LOG.error("Committing zxid 0x" + Long.toHexString(zxid)
                     + " but next pending txn 0x"
                     + Long.toHexString(firstElementZxid));
-            System.exit(12);
+            System.exit(ExitCode.UNMATCHED_TXN_COMMIT.getValue());
         }
         Request request = pendingTxns.remove();
         commitProcessor.commit(request);
