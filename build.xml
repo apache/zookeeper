@@ -148,7 +148,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="dist.dir" value="${build.dir}/${final.name}"/>
     <property name="dist.maven.dir" value="${dist.dir}/dist-maven"/>
 
-    <property name="contrib.dir" value="${src.dir}/contrib"/>
+    <property name="contrib.dir" value="${basedir}/zookeeper-contrib"/>
     <property name="recipes.dir" value="${basedir}/zookeeper-recipes"/>
 
     <property name="ivy.version" value="2.4.0"/>
@@ -872,12 +872,17 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
       <copy todir="${dist.dir}/src" includeEmptyDirs="true">
         <fileset dir="src" excludes="**/*.template **/docs/build/**/* **/ivy*.jar"/>
+        <fileset dir="${basedir}" excludes="**/*.template **/docs/build/**/* **/ivy*.jar">
+          <include name="zookeeper-recipes/**"/>
+          <include name="zookeeper-docs/**"/>
+          <include name="zookeeper-contrib/**"/>
+        </fileset>
         <fileset file="src/pom.template"/>
       </copy>
   	  
       <chmod perm="ugo+x" type="file" parallel="false">
         <fileset dir="${dist.dir}/bin"/>
-        <fileset dir="${dist.dir}/src/contrib/">
+        <fileset dir="${dist.dir}/src/zookeeper-contrib/">
           <include name="*/bin/*" />
         </fileset>
       </chmod>
@@ -995,7 +1000,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <chmod perm="ugo+x" type="file" parallel="false">
         <fileset dir="${dist.dir}/bin"/>
         <fileset dir="${dist.dir}/sbin"/>
-        <fileset dir="${dist.dir}/src/contrib/">
+        <fileset dir="${dist.dir}/src/zookeeper-contrib/">
           <include name="*/bin/*" />
         </fileset>
       </chmod>
@@ -1721,10 +1726,12 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
           <exclude name="**/OldChangeLog"/>
           <exclude name="**/Changes"/>
           <exclude name="**/contrib/zkperl/MANIFEST"/>
+          <exclude name="**/zookeeper-contrib/zookeeper-contrib-zkperl/MANIFEST"/>
           <exclude name="**/conf/*"/>
           <exclude name="**/docs/"/>
+          <exclude name="**/zookeeper-docs/"/>
           <exclude name="**/lib/jdiff/"/>
-          <exclude name="contrib/ZooInspector/src/java/com/nitido/utils/toaster/Toaster.java"/>
+          <exclude name="contrib/ZooInspector/src/main/java/com/nitido/utils/toaster/Toaster.java"/>
           <exclude name="src/c/*.la"/>
           <exclude name="src/c/*.lo"/>
           <exclude name="src/c/.libs/"/>
@@ -1734,16 +1741,25 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
           <exclude name="src/c/src/hashtable/"/>
           <exclude name="src/c/test-driver"/>
           <exclude name="src/c/tests/quorum.cfg"/>
-          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/date.format.js"/>
-          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/g.bar.js"/>
-          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/g.dot.js"/>
-          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/g.line.js"/>
-          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/g.pie.js"/>
-          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/g.raphael.js"/>
-          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/raphael.js"/>
-          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/yui-min.js"/>
-          <exclude name="src/contrib/monitoring/JMX-RESOURCES"/>
-          <exclude name="src/contrib/zooinspector/src/java/com/nitido/utils/toaster/Toaster.java"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/webapp/org/apache/zookeeper/graph/resources/date.format.js"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/webapp/org/apache/zookeeper/graph/resources/g.bar.js"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/webapp/org/apache/zookeeper/graph/resources/g.dot.js"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/webapp/org/apache/zookeeper/graph/resources/g.line.js"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/webapp/org/apache/zookeeper/graph/resources/g.pie.js"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/webapp/org/apache/zookeeper/graph/resources/g.raphael.js"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/webapp/org/apache/zookeeper/graph/resources/raphael.js"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/webapp/org/apache/zookeeper/graph/resources/yui-min.js"/>
+          <exclude name="contrib/loggraph/src/webapp/org/apache/zookeeper/graph/resources/date.format.js"/>
+          <exclude name="contrib/loggraph/src/webapp/org/apache/zookeeper/graph/resources/g.bar.js"/>
+          <exclude name="contrib/loggraph/src/webapp/org/apache/zookeeper/graph/resources/g.dot.js"/>
+          <exclude name="contrib/loggraph/src/webapp/org/apache/zookeeper/graph/resources/g.line.js"/>
+          <exclude name="contrib/loggraph/src/webapp/org/apache/zookeeper/graph/resources/g.pie.js"/>
+          <exclude name="contrib/loggraph/src/webapp/org/apache/zookeeper/graph/resources/g.raphael.js"/>
+          <exclude name="contrib/loggraph/src/webapp/org/apache/zookeeper/graph/resources/raphael.js"/>
+          <exclude name="contrib/loggraph/src/webapp/org/apache/zookeeper/graph/resources/yui-min.js"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-monitoring/JMX-RESOURCES"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-zooinspector/src/main/java/com/nitido/utils/toaster/Toaster.java"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-fatjar/src/main/resources/mainClasses"/>
           <exclude name="src/java/generated/.generated/"/>
           <exclude name="src/java/test/checkstyle*.xml"/>
           <exclude name="src/java/test/checkstyle*.xsl"/>
