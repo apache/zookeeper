@@ -92,6 +92,7 @@ public class NettyServerCnxn extends ServerCnxn {
             LOG.debug("close called for sessionid:0x"
                     + Long.toHexString(sessionId));
         }
+        setStale();
 
         // ZOOKEEPER-2743:
         // Always unregister connection upon close to prevent

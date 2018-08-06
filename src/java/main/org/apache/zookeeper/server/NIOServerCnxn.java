@@ -594,6 +594,7 @@ public class NIOServerCnxn extends ServerCnxn {
      */
     @Override
     public void close() {
+        setStale();
         if (!factory.removeCnxn(this)) {
             return;
         }
