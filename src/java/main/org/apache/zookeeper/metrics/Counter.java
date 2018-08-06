@@ -42,6 +42,7 @@ public interface Counter {
 
     /**
      * Get the current value held by the counter.
+     * <p>This method is thread safe, The MetricsProvider will take care of synchronization.<p>
      *
      * @return the current value
      */
