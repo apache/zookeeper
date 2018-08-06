@@ -35,6 +35,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.zookeeper.server.ExitCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
@@ -167,7 +168,7 @@ public class IntegrityCheck implements StatCallback, DataCallback {
             childrenCount=Integer.parseInt(args[2]);
         } catch (NumberFormatException e) {
             e.printStackTrace();
-            System.exit(1);
+            System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
 
         try{
@@ -187,7 +188,7 @@ public class IntegrityCheck implements StatCallback, DataCallback {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            System.exit(2);
+            System.exit(ExitCode.INVALID_INVOCATION.getValue());
         }
     }
 

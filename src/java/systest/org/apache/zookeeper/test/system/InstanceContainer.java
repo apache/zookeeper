@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.zookeeper.server.ExitCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.AsyncCallback;
@@ -205,7 +206,7 @@ public class InstanceContainer implements Watcher, AsyncCallback.ChildrenCallbac
     public static void main(String[] args) throws UnknownHostException, IOException, InterruptedException, KeeperException {
         if (args.length != 3) {
             System.err.println("USAGE: " + InstanceContainer.class.getName() + " name zkHostPort znodePrefix");
-            System.exit(2);
+            System.exit(ExitCode.INVALID_INVOCATION.getValue());
         }
         new InstanceContainer(args[0], args[1], args[2]).run();
         while(true) {
@@ -217,7 +218,7 @@ public class InstanceContainer implements Watcher, AsyncCallback.ChildrenCallbac
         if (KeeperState.Expired == event.getState()) {
             // It's all over
             LOG.error("Lost session");
-            System.exit(4);
+            System.exit(ExitCode.ERROR_STARTING_ADMIN_SERVER.getValue());
         }
         if (event.getPath() != null && event.getPath().equals(assignmentsNode)) {
             // children have changed, so read in the new list

@@ -28,6 +28,7 @@ import org.apache.commons.cli.PosixParser;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
+import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.TraceFormatter;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.txn.TxnHeader;
@@ -114,12 +115,12 @@ public class TxnLogToolkit implements Closeable {
         this.force = force;
         txnLogFile = new File(txnLogFileName);
         if (!txnLogFile.exists() || !txnLogFile.canRead()) {
-            throw new TxnLogToolkitException(1, "File doesn't exist or not readable: %s", txnLogFile);
+            throw new TxnLogToolkitException(ExitCode.UNEXPECTED_ERROR.getValue(), "File doesn't exist or not readable: %s", txnLogFile);
         }
         if (recoveryMode) {
             recoveryLogFile = new File(txnLogFile.toString() + ".fixed");
             if (recoveryLogFile.exists()) {
-                throw new TxnLogToolkitException(1, "Recovery file %s already exists or not writable", recoveryLogFile);
+                throw new TxnLogToolkitException(ExitCode.UNEXPECTED_ERROR.getValue(), "Recovery file %s already exists or not writable", recoveryLogFile);
             }
         }
 
@@ -135,7 +136,7 @@ public class TxnLogToolkit implements Closeable {
         FileHeader fhdr = new FileHeader();
         fhdr.deserialize(logStream, "fileheader");
         if (fhdr.getMagic() != TXNLOG_MAGIC) {
-            throw new TxnLogToolkitException(2, "Invalid magic number for %s", txnLogFile.getName());
+            throw new TxnLogToolkitException(ExitCode.INVALID_INVOCATION.getValue(), "Invalid magic number for %s", txnLogFile.getName());
         }
         System.out.println("ZooKeeper Transactional Log File with dbid "
                 + fhdr.getDbid() + " txnlog format version "
@@ -187,7 +188,7 @@ public class TxnLogToolkit implements Closeable {
                 printTxn(bytes);
             }
             if (logStream.readByte("EOR") != 'B') {
-                throw new TxnLogToolkitException(1, "Last transaction was partial.");
+                throw new TxnLogToolkitException(ExitCode.UNEXPECTED_ERROR.getValue(), "Last transaction was partial.");
             }
             if (recoveryMode) {
                 filePadding.padFile(recoveryFos.getChannel());
@@ -209,7 +210,7 @@ public class TxnLogToolkit implements Closeable {
                 case 'N':
                     return false;
                 case 'A':
-                    throw new TxnLogToolkitException(0, "Recovery aborted.");
+                    throw new TxnLogToolkitException(ExitCode.EXECUTION_FINISHED.getValue(), "Recovery aborted.");
             }
         }
     }
@@ -289,7 +290,7 @@ public class TxnLogToolkit implements Closeable {
             }
             return new TxnLogToolkit(cli.hasOption("recover"), cli.hasOption("verbose"), cli.getArgs()[0], cli.hasOption("yes"));
         } catch (ParseException e) {
-            throw new TxnLogToolkitParseException(options, 1, e.getMessage());
+            throw new TxnLogToolkitParseException(options, ExitCode.UNEXPECTED_ERROR.getValue(), e.getMessage());
         }
     }
 

@@ -317,7 +317,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             LOG.error("Severe unrecoverable error, exiting", e);
             // This is a severe error that we cannot recover from,
             // so we need to exit
-            System.exit(10);
+            System.exit(ExitCode.TXNLOG_ERROR_TAKING_SNAPSHOT.getValue());
         }
     }
 
