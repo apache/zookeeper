@@ -19,26 +19,40 @@
 package org.apache.zookeeper.server.quorum;
 
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
+import org.apache.zookeeper.server.SocketUtil;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 
 public class QuorumBean implements QuorumMXBean, ZKMBeanInfo {
     private final QuorumPeer peer;
     private final String name;
-    
+
     public QuorumBean(QuorumPeer peer){
         this.peer = peer;
         name = "ReplicatedServer_id" + peer.getId();
     }
-    
+
     public String getName() {
         return name;
     }
-    
+
     public boolean isHidden() {
         return false;
     }
-    
+
     public int getQuorumSize() {
         return peer.getQuorumSize();
+    }
+
+    public int getNetworkBufferSize() {
+        return SocketUtil.getNetworkBufferSize();
+    }
+
+    /**
+     * The new buffer size will be used to establish new socket
+     * between leader/OM and learner, but it won't affect the
+     * ones which have already established.
+     */
+    public void setNetworkBufferSize(int networkBufferSize) {
+        SocketUtil.setNetworkBufferSize(networkBufferSize);
     }
 }
