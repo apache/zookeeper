@@ -141,7 +141,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
     <property name="dist.dir" value="${build.dir}/${final.name}"/>
     <property name="dist.maven.dir" value="${dist.dir}/dist-maven"/>
 
-    <property name="contrib.dir" value="${src.dir}/contrib"/>
+    <property name="contrib.dir" value="${basedir}/zookeeper-contrib"/>
     <property name="recipes.dir" value="${basedir}/zookeeper-recipes"/>
 
     <property name="ivy.version" value="2.4.0"/>
@@ -829,12 +829,17 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
 
       <copy todir="${dist.dir}/src" includeEmptyDirs="true">
         <fileset dir="src" excludes="**/*.template **/docs/build/**/* **/ivy*.jar"/>
+        <fileset dir="${basedir}" excludes="**/*.template **/docs/build/**/* **/ivy*.jar">
+          <include name="zookeeper-recipes/**"/>
+          <include name="zookeeper-docs/**"/>
+          <include name="zookeeper-contrib/**"/>
+        </fileset>
         <fileset file="src/pom.template"/>
       </copy>
   	  
       <chmod perm="ugo+x" type="file" parallel="false">
         <fileset dir="${dist.dir}/bin"/>
-        <fileset dir="${dist.dir}/src/contrib/">
+        <fileset dir="${dist.dir}/src/zookeeper-contrib/">
           <include name="*/bin/*" />
         </fileset>
       </chmod>
@@ -964,7 +969,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
       <chmod perm="ugo+x" type="file" parallel="false">
         <fileset dir="${dist.dir}/bin"/>
         <fileset dir="${dist.dir}/sbin"/>
-        <fileset dir="${dist.dir}/src/contrib/">
+        <fileset dir="${dist.dir}/src/zookeeper-contrib/">
           <include name="*/bin/*" />
         </fileset>
       </chmod>
@@ -1771,17 +1776,40 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
           <exclude name="**/compile"/>
           <exclude name="**/depcomp"/>
           <exclude name="**/install-sh"/>
+          <exclude name="**/log4j.properties"/>
           <exclude name="**/ltmain.sh"/>
           <exclude name="**/missing"/>
           <exclude name="**/wrappers*.opt"/>
           <exclude name="CHANGES.txt"/>
+          <exclude name="**/README.md"/>
+          <exclude name="README_packaging.txt"/>
           <exclude name="**/VERSION"/>
           <exclude name="**/ChangeLog"/>
           <exclude name="**/OldChangeLog"/>
           <exclude name="**/Changes"/>
           <exclude name="**/contrib/zkperl/MANIFEST"/>
+          <exclude name="**/zookeeper-contrib/zookeeper-contrib-zkperl/MANIFEST"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/webapp/org/apache/zookeeper/graph/resources/date.format.js"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/webapp/org/apache/zookeeper/graph/resources/g.bar.js"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/webapp/org/apache/zookeeper/graph/resources/g.dot.js"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/webapp/org/apache/zookeeper/graph/resources/g.line.js"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/webapp/org/apache/zookeeper/graph/resources/g.pie.js"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/webapp/org/apache/zookeeper/graph/resources/g.raphael.js"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/webapp/org/apache/zookeeper/graph/resources/raphael.js"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/webapp/org/apache/zookeeper/graph/resources/yui-min.js"/>
+          <exclude name="contrib/loggraph/src/webapp/org/apache/zookeeper/graph/resources/date.format.js"/>
+          <exclude name="contrib/loggraph/src/webapp/org/apache/zookeeper/graph/resources/g.bar.js"/>
+          <exclude name="contrib/loggraph/src/webapp/org/apache/zookeeper/graph/resources/g.dot.js"/>
+          <exclude name="contrib/loggraph/src/webapp/org/apache/zookeeper/graph/resources/g.line.js"/>
+          <exclude name="contrib/loggraph/src/webapp/org/apache/zookeeper/graph/resources/g.pie.js"/>
+          <exclude name="contrib/loggraph/src/webapp/org/apache/zookeeper/graph/resources/g.raphael.js"/>
+          <exclude name="contrib/loggraph/src/webapp/org/apache/zookeeper/graph/resources/raphael.js"/>
+          <exclude name="contrib/loggraph/src/webapp/org/apache/zookeeper/graph/resources/yui-min.js"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-fatjar/src/main/resources/mainClasses"/>
+          <exclude name="contrib/ZooInspector/licences/epl-v10.html"/>
           <exclude name="**/conf/*"/>
           <exclude name="**/docs/"/>
+          <exclude name="**/zookeeper-docs/"/>
           <exclude name="**/lib/jdiff/"/>
           <exclude name="src/c/autom4te.cache/**"/>
           <exclude name="src/c/config**"/>
