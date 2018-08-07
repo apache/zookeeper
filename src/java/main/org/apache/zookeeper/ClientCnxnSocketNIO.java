@@ -283,7 +283,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
         SocketChannel sock = createSock();
         try {
            registerAndConnect(sock, addr);
-      } catch (IOException e) {
+      } catch (Exception e) { // UnresolvedAddressException is not an IOException
             LOG.error("Unable to open socket to " + addr);
             sock.close();
             throw e;
