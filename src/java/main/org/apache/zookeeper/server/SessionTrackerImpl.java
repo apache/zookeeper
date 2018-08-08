@@ -102,7 +102,7 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements
         this.sessionsWithTimeout = sessionsWithTimeout;
         this.nextSessionId.set(initializeNextSession(serverId));
         for (Entry<Long, Integer> e : sessionsWithTimeout.entrySet()) {
-            addSession(e.getKey(), e.getValue());
+            trackSession(e.getKey(), e.getValue());
         }
 
         EphemeralType.validateServerId(serverId);
@@ -245,17 +245,12 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements
 
     public long createSession(int sessionTimeout) {
         long sessionId = nextSessionId.getAndIncrement();
-        addSession(sessionId, sessionTimeout);
+        trackSession(sessionId, sessionTimeout);
         return sessionId;
     }
 
-    public boolean addGlobalSession(long id, int sessionTimeout) {
-        return addSession(id, sessionTimeout);
-    }
-
-    public synchronized boolean addSession(long id, int sessionTimeout) {
-        sessionsWithTimeout.put(id, sessionTimeout);
-
+    @Override
+    public synchronized boolean trackSession(long id, int sessionTimeout) {
         boolean added = false;
 
         SessionImpl session = sessionsById.get(id);
@@ -283,6 +278,10 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements
 
         updateSessionExpiry(session, sessionTimeout);
         return added;
+    }
+
+    public synchronized boolean commitSession(long id, int sessionTimeout) {
+        return sessionsWithTimeout.put(id, sessionTimeout) == null;
     }
 
     public boolean isTrackingSession(long sessionId) {

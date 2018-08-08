@@ -40,7 +40,9 @@ public class LocalSessionTracker extends SessionTrackerImpl {
         return false;
     }
 
-    public boolean addGlobalSession(long sessionId, int sessionTimeout) {
-        throw new UnsupportedOperationException();
+    public long createSession(int sessionTimeout) {
+        long sessionId = super.createSession(sessionTimeout);
+        commitSession(sessionId, sessionTimeout);
+        return sessionId;
     }
 }
