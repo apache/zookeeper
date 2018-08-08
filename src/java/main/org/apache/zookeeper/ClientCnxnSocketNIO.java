@@ -19,6 +19,7 @@
 package org.apache.zookeeper;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
@@ -280,10 +281,14 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
     
     @Override
     void connect(InetSocketAddress addr) throws IOException {
+        // if UnresolvedAddressException throw on connect and it would leak a SocketChannelImpl in cancelledKeys EVERY time.
+        // it's hard to deal all situations on socks.cancel,
+        // while an easy way is, ensure DNS resolve successful before register channel.
+        InetAddress.getByName(addr.getHostName());
         SocketChannel sock = createSock();
         try {
            registerAndConnect(sock, addr);
-      } catch (Exception e) { // UnresolvedAddressException is not an IOException
+        } catch (IOException e) {
             LOG.error("Unable to open socket to " + addr);
             sock.close();
             throw e;
