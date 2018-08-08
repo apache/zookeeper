@@ -208,18 +208,18 @@ public class PrepRequestProcessorTest extends ClientBase {
         @Override
         public void shutdown() {
             // TODO Auto-generated method stub
-            
+
         }
     }
-    
+
     private class MySessionTracker implements SessionTracker {
         @Override
-        public boolean addGlobalSession(long id, int to) {
+        public boolean trackSession(long id, int to) {
             // TODO Auto-generated method stub
             return false;
         }
         @Override
-        public boolean addSession(long id, int to) {
+        public boolean commitSession(long id, int to) {
             // TODO Auto-generated method stub
             return false;
         }

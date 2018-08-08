@@ -432,9 +432,9 @@ public abstract class ClientBase extends ZKTestCase {
      * Because any exception on starting the server would leave the server
      * running and the caller would not be able to shutdown the instance. This
      * may affect other test cases.
-     * 
+     *
      * @return newly created server instance
-     * 
+     *
      * @see <a
      *      href="https://issues.apache.org/jira/browse/ZOOKEEPER-1852">ZOOKEEPER-1852</a>
      *      for more information.
@@ -508,7 +508,7 @@ public abstract class ClientBase extends ZKTestCase {
          */
         OSMXBean osMbean = new OSMXBean();
         if (osMbean.getUnix() == true) {
-            initialFdCount = osMbean.getOpenFileDescriptorCount();  	
+            initialFdCount = osMbean.getOpenFileDescriptorCount();
             LOG.info("Initial fdcount is: "
                     + initialFdCount);
         }
@@ -568,7 +568,7 @@ public abstract class ClientBase extends ZKTestCase {
 
     /**
      * Returns a string representation of the given long value session id
-     * 
+     *
      * @param sessionId
      *            long value of session id
      * @return string representation of session id
@@ -630,7 +630,7 @@ public abstract class ClientBase extends ZKTestCase {
          */
         OSMXBean osMbean = new OSMXBean();
         if (osMbean.getUnix() == true) {
-            long fdCount = osMbean.getOpenFileDescriptorCount();     
+            long fdCount = osMbean.getOpenFileDescriptorCount();
             String message = "fdcount after test is: "
                     + fdCount + " at start it was " + initialFdCount;
             LOG.info(message);

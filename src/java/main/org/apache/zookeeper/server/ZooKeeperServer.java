@@ -1217,13 +1217,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         if (opCode == OpCode.createSession) {
             if (hdr != null && txn instanceof CreateSessionTxn) {
                 CreateSessionTxn cst = (CreateSessionTxn) txn;
-                sessionTracker.addGlobalSession(sessionId, cst.getTimeOut());
-            } else if (request != null && request.isLocalSession()) {
-                request.request.rewind();
-                int timeout = request.request.getInt();
-                request.request.rewind();
-                sessionTracker.addSession(request.sessionId, timeout);
-            } else {
+                sessionTracker.commitSession(sessionId, cst.getTimeOut());
+            } else if (request == null || !request.isLocalSession()) {
                 LOG.warn("*****>>>>> Got "
                         + txn.getClass() + " "
                         + txn.toString());
