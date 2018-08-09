@@ -25,17 +25,17 @@ import org.apache.zookeeper.jmx.ZKMBeanInfo;
  */
 public class DataTreeBean implements DataTreeMXBean, ZKMBeanInfo {
     DataTree dataTree;
-    
+
     public DataTreeBean(org.apache.zookeeper.server.DataTree dataTree){
         this.dataTree = dataTree;
     }
-    
+
     public int getNodeCount() {
         return dataTree.getNodeCount();
     }
 
     public long approximateDataSize() {
-        return dataTree.approximateDataSize();
+        return dataTree.cachedApproximateDataSize();
     }
 
     public int countEphemerals() {
