@@ -100,7 +100,7 @@ public class Leader {
     // the follower acceptor thread
     volatile LearnerCnxAcceptor cnxAcceptor = null;
 
-    // list of all the followers
+    // list of all the learners, including followers and observers
     private final HashSet<LearnerHandler> learners =
         new HashSet<LearnerHandler>();
 

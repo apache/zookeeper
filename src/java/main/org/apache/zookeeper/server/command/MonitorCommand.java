@@ -71,7 +71,7 @@ public class MonitorCommand extends AbstractFourLetterCommand {
         if (stats.getServerState().equals("leader")) {
             Leader leader = ((LeaderZooKeeperServer)zkServer).getLeader();
 
-            print("followers", leader.getLearners().size());
+            print("learners", leader.getLearners().size());
             print("synced_followers", leader.getForwardingFollowers().size());
             print("pending_syncs", leader.getNumPendingSyncs());
 
