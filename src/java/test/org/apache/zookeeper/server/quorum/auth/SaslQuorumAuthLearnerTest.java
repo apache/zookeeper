@@ -52,7 +52,7 @@ public class SaslQuorumAuthLearnerTest {
         Configuration configMock = mock(Configuration.class);
         when(configMock.getAppConfigurationEntry(any(String.class))).thenReturn(new AppConfigurationEntry[1]);
         Configuration.setConfiguration(configMock);
-
+        //mock object
         Login loginMock = mock(Login.class);
         Subject subjectMock = new Subject();
         Principal principalMock = mock(Principal.class);
