@@ -19,8 +19,16 @@
 package org.apache.zookeeper.metrics;
 
 /**
- * Container of metrics.
+ * A MetricsContext is like a namespace for metrics.
+ * Each component/submodule will have its own MetricsContext.
+ * <p>In some cases it is possible to have a separate MetricsContext
+ * for each instance of a component, for instance on the server side
+ * a possible usecase it to gather metrics for every other peer.
+ * </p>
+ * <p>
  * Contexts are organized in a hierarchy.
+ * </p>
+ *
  */
 public interface MetricsContext {
 

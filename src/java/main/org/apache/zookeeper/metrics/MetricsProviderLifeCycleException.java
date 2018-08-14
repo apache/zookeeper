@@ -20,8 +20,12 @@ package org.apache.zookeeper.metrics;
 
 /**
  * A generic exception thrown during the licecycle of a MetricsProvider.
+ * <p>These exception will prevent the system from booting.</p>
+ * <p>Normally these exception will be ignored during shutdown.</p>
  */
 public class MetricsProviderLifeCycleException extends Exception {
+
+    private static final long serialVersionUID = 1L;
 
     public MetricsProviderLifeCycleException() {
     }
