@@ -105,7 +105,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="build.dir" value="${basedir}/build" />
     <property name="distribution" value="${basedir}/distribution" />
     <property name="src_generated.dir" value="${src.dir}/java/generated" />
-    <property name="c.src.dir" value="${src.dir}/c" />    
+    <property name="c.src.dir" value="${basedir}/zookeeper-client/zookeeper-client-c" />
     <property name="csrc_generated.dir" value="${c.src.dir}/generated" />
 
     <property name="jute.file" value="${src.dir}/zookeeper.jute" />
@@ -346,7 +346,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <java classname="org.apache.jute.compiler.generated.Rcc" fork="true" dir="${csrc_generated.dir}">
             <arg value="-l" />
             <arg value="c" />
-            <arg value="../../zookeeper.jute" />
+            <arg value="../../../src/zookeeper.jute" />
             <classpath>
                 <pathelement path="${build.classes}" />
             </classpath>
@@ -876,6 +876,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
           <include name="zookeeper-recipes/**"/>
           <include name="zookeeper-docs/**"/>
           <include name="zookeeper-contrib/**"/>
+          <include name="zookeeper-client/**"/>
         </fileset>
         <fileset file="src/pom.template"/>
       </copy>
@@ -1058,8 +1059,8 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <macro_tar param.destfile="${build.dir}/${final.name}-bin.tar.gz">
         <param.listofitems>
           <tarfileset dir="${build.dir}" mode="664">
-            <include name="${final.name}/src/c/**" />
-            <exclude name="${final.name}/src/c/generated/**" />
+            <include name="${final.name}/zookeeper-client/zookeeper-client-c/**" />
+            <exclude name="${final.name}/zookeeper-client/zookeeper-client-c/generated/**" />
           </tarfileset>
           <tarfileset dir="${build.dir}" mode="664">
             <exclude name="${final.name}/bin/*" />
@@ -1732,15 +1733,15 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
           <exclude name="**/zookeeper-docs/"/>
           <exclude name="**/lib/jdiff/"/>
           <exclude name="contrib/ZooInspector/src/main/java/com/nitido/utils/toaster/Toaster.java"/>
-          <exclude name="src/c/*.la"/>
-          <exclude name="src/c/*.lo"/>
-          <exclude name="src/c/.libs/"/>
-          <exclude name="src/c/autom4te.cache/**"/>
-          <exclude name="src/c/config**"/>
-          <exclude name="src/c/include/winstdint.h"/>
-          <exclude name="src/c/src/hashtable/"/>
-          <exclude name="src/c/test-driver"/>
-          <exclude name="src/c/tests/quorum.cfg"/>
+          <exclude name="src/zookeeper-client/zookeeper-client-c/*.la"/>
+          <exclude name="src/zookeeper-client/zookeeper-client-c/*.lo"/>
+          <exclude name="src/zookeeper-client/zookeeper-client-c/.libs/"/>
+          <exclude name="src/zookeeper-client/zookeeper-client-c/autom4te.cache/**"/>
+          <exclude name="src/zookeeper-client/zookeeper-client-c/config**"/>
+          <exclude name="src/zookeeper-client/zookeeper-client-c/include/winstdint.h"/>
+          <exclude name="src/zookeeper-client/zookeeper-client-c/src/hashtable/"/>
+          <exclude name="src/zookeeper-client/zookeeper-client-c/test-driver"/>
+          <exclude name="src/zookeeper-client/zookeeper-client-c/tests/quorum.cfg"/>
           <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/webapp/org/apache/zookeeper/graph/resources/date.format.js"/>
           <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/webapp/org/apache/zookeeper/graph/resources/g.bar.js"/>
           <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/webapp/org/apache/zookeeper/graph/resources/g.dot.js"/>
