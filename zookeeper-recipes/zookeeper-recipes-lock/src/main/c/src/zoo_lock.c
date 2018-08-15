@@ -74,11 +74,7 @@ ZOOAPI int zkr_lock_init_cb(zkr_lock_mutex_t *mutex, zhandle_t* zh,
     return 0;
 }
 
-/**
- * unlock the mutex
- */
-ZOOAPI int zkr_lock_unlock(zkr_lock_mutex_t *mutex) {
-    pthread_mutex_lock(&(mutex->pmutex));
+static int _zkr_lock_unlock_nolock(zkr_lock_mutex_t *mutex) {
     zhandle_t *zh = mutex->zh;
     if (mutex->id != NULL) {
         int len = strlen(mutex->path) + strlen(mutex->id) + 2;
@@ -106,15 +102,23 @@ ZOOAPI int zkr_lock_unlock(zkr_lock_mutex_t *mutex) {
 
             free(mutex->id);
             mutex->id = NULL;
-            pthread_mutex_unlock(&(mutex->pmutex));
             return 0;
         }
         LOG_WARN(("not able to connect to server - giving up"));
-        pthread_mutex_unlock(&(mutex->pmutex));
         return ZCONNECTIONLOSS;
     }
+
+	return ZSYSTEMERROR;
+}
+/**
+ * unlock the mutex
+ */
+ZOOAPI int zkr_lock_unlock(zkr_lock_mutex_t *mutex) {
+	int ret = 0;
+    pthread_mutex_lock(&(mutex->pmutex));
+    ret = _zkr_lock_unlock_nolock(mutex);
     pthread_mutex_unlock(&(mutex->pmutex));
-    return ZSYSTEMERROR;
+    return ret;
 }
 
 static void free_String_vector(struct String_vector *v) {
@@ -316,11 +320,11 @@ static int zkr_lock_operation(zkr_lock_mutex_t *mutex, struct timespec *ts) {
                 if (ret != ZOK) {
                     free_String_vector(vector);
                     LOG_WARN(("unable to watch my predecessor"));
-                    ret = zkr_lock_unlock(mutex);
+                    ret = _zkr_lock_unlock_nolock(mutex);
                     while (ret == 0) {
                         //we have to give up our leadership
                         // since we cannot watch out predecessor
-                        ret = zkr_lock_unlock(mutex);
+                        ret = _zkr_lock_unlock_nolock(mutex);
                     }
                     return ret;
                 }
