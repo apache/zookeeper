@@ -16,7 +16,7 @@
 -->
 
 1) This election interface recipe implements the leader election recipe
-mentioned in ../../../docs/recipes.[html,pdf].
+mentioned in ../../docs/recipes.[html,pdf].
 
 2) To compile the leader election java recipe you can just run ant jar from
 this directory.
