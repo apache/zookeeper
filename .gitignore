@@ -33,6 +33,7 @@ out/
 # NetBeans
 *~.nib
 nbbuild/
+nbproject/
 dist/
 nbdist/
 .ndb-gradle/
