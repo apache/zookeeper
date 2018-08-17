@@ -18,6 +18,7 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
+import java.util.Properties;
 
 import javax.management.JMException;
 import javax.security.sasl.SaslException;
@@ -26,6 +27,9 @@ import org.apache.yetus.audience.InterfaceAudience;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.jmx.ManagedUtil;
+import org.apache.zookeeper.metrics.MetricsProvider;
+import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
+import org.apache.zookeeper.metrics.impl.MetricsProviderBootstrap;
 import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZKDatabase;
@@ -141,6 +145,16 @@ public class QuorumPeerMain {
 
       LOG.info("Starting quorum peer");
       try {
+          MetricsProvider metricsProvider;
+          try {
+              metricsProvider = MetricsProviderBootstrap
+                      .startMetricsProvider(config.metricsProviderClassName, new Properties());
+          } catch (MetricsProviderLifeCycleException error) {
+              LOG.error("Cannot boot MetricsProvider {}", config.metricsProviderClassName, error);
+              throw new IOException("Cannot boot MetricsProvider " + config.metricsProviderClassName,
+                      error);
+          }
+
           ServerCnxnFactory cnxnFactory = null;
           ServerCnxnFactory secureCnxnFactory = null;
 
@@ -159,6 +173,7 @@ public class QuorumPeerMain {
           }
 
           quorumPeer = getQuorumPeer();
+          quorumPeer.setRootMetricsContext(metricsProvider.getRootContext());
           quorumPeer.setTxnFactory(new FileTxnSnapLog(
                       config.getDataLogDir(),
                       config.getDataDir()));

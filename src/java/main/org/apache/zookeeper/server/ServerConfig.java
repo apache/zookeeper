@@ -23,6 +23,7 @@ import java.net.InetSocketAddress;
 import java.util.Arrays;
 
 import org.apache.yetus.audience.InterfaceAudience;
+import org.apache.zookeeper.metrics.impl.NullMetricsProvider;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 
@@ -48,6 +49,7 @@ public class ServerConfig {
     protected int minSessionTimeout = -1;
     /** defaults to -1 if not set explicitly */
     protected int maxSessionTimeout = -1;
+    protected String metricsProviderClassName = NullMetricsProvider.class.getName();
 
     /**
      * Parse arguments for server configuration
@@ -99,6 +101,7 @@ public class ServerConfig {
         maxClientCnxns = config.getMaxClientCnxns();
         minSessionTimeout = config.getMinSessionTimeout();
         maxSessionTimeout = config.getMaxSessionTimeout();
+        metricsProviderClassName = config.getMetricsProviderClassName();
     }
 
     public InetSocketAddress getClientPortAddress() {
@@ -115,4 +118,6 @@ public class ServerConfig {
     public int getMinSessionTimeout() { return minSessionTimeout; }
     /** maximum session timeout in milliseconds, -1 if unset */
     public int getMaxSessionTimeout() { return maxSessionTimeout; }
+    public String getMetricsProviderClassName() { return metricsProviderClassName;}
+
 }

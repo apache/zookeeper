@@ -74,6 +74,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.apache.zookeeper.common.NetUtils.formatInetAddr;
+import org.apache.zookeeper.metrics.MetricsContext;
+import org.apache.zookeeper.metrics.impl.NullMetricsProvider;
 
 /**
  * This class manages the quorum protocol. There are three states this server
@@ -772,6 +774,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     private final QuorumStats quorumStats;
 
     AdminServer adminServer;
+
+    private MetricsContext rootMetricsContext = NullMetricsProvider.NullMetricsContext.INSTANCE;
 
     public static QuorumPeer testingQuorumPeer() throws SaslException {
         return new QuorumPeer();
@@ -1677,6 +1681,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     public void setSecureCnxnFactory(ServerCnxnFactory secureCnxnFactory) {
         this.secureCnxnFactory = secureCnxnFactory;
+    }
+
+    public void setRootMetricsContext(MetricsContext rootMetricsContext) {
+        this.rootMetricsContext = rootMetricsContext;
     }
 
     private void startServerCnxnFactory() {

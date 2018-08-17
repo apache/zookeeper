@@ -24,6 +24,7 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -39,6 +40,10 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.common.PathUtils;
+import org.apache.zookeeper.metrics.MetricsContext;
+import org.apache.zookeeper.metrics.MetricsProvider;
+import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
+import org.apache.zookeeper.metrics.impl.NullMetricsProvider;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.test.ClientBase;
@@ -344,6 +349,137 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         } catch (ConfigException iae) {
             // expected
         }
+    }
+
+    /**
+     * Test verifies that the server shouldn't boot with an invalid metrics provider
+     */
+    @Test
+    public void testInvalidMetricsProvider()
+            throws Exception {
+        ClientBase.setupTestEnv();
+
+        final int CLIENT_PORT = PortAssignment.unique();
+        final String configs = "metricsProvider.className=BadClass\n";
+        MainThread main = new MainThread(CLIENT_PORT, true, configs);
+        String args[] = new String[1];
+        args[0] = main.confFile.toString();
+        try {
+            main.main.initializeAndRun(args);
+            Assert.fail("Must throw exception as metrics provider is not "
+                    + "well configured");
+        } catch (ConfigException iae) {
+            // expected
+        }
+    }
+
+    /**
+     * Test verifies that the server shouldn't boot with a faulty metrics provider
+     */
+    @Test
+    public void testFaultyMetricsProviderOnStart()
+            throws Exception {
+        ClientBase.setupTestEnv();
+
+        final int CLIENT_PORT = PortAssignment.unique();
+        final String configs = "metricsProvider.className="+MetricsProviderWithErrorInStart.class.getName()+"\n";
+        MainThread main = new MainThread(CLIENT_PORT, true, configs);
+        String args[] = new String[1];
+        args[0] = main.confFile.toString();
+        try {
+            main.main.initializeAndRun(args);
+            Assert.fail("Must throw exception as metrics provider is cannot boot");
+        } catch (IOException iae) {
+            // expected
+        }
+    }
+
+    /**
+     * Test verifies that the server shouldn't boot with a faulty metrics provider
+     */
+    @Test
+    public void testFaultyMetricsProviderOnConfigure()
+            throws Exception {
+        ClientBase.setupTestEnv();
+
+        final int CLIENT_PORT = PortAssignment.unique();
+        final String configs = "metricsProvider.className="+MetricsProviderWithErrorInConfigure.class.getName()+"\n";
+        MainThread main = new MainThread(CLIENT_PORT, true, configs);
+        String args[] = new String[1];
+        args[0] = main.confFile.toString();
+        try {
+            main.main.initializeAndRun(args);
+            Assert.fail("Must throw exception as metrics provider is cannot boot");
+        } catch (IOException iae) {
+            // expected
+        }
+    }
+
+
+    /**
+     * Test verifies that the server shouldn't be affected but runtime errors on stop()
+     */
+//    @Test
+    public void testFaultyMetricsProviderOnStop()
+            throws Exception {
+        ClientBase.setupTestEnv();
+
+        final int CLIENT_PORT = PortAssignment.unique();
+        final String configs = "metricsProvider.className="+MetricsProviderWithErrorInStop.class.getName()+"\n";
+        MainThread main = new MainThread(CLIENT_PORT, true, configs);
+        String args[] = new String[1];
+        args[0] = main.confFile.toString();
+        main.main.initializeAndRun(args);
+        main.shutdown();
+        main.deleteDirs();
+    }
+
+    public static abstract class BaseMetricsProvider implements MetricsProvider {
+
+        @Override
+        public void configure(Properties prprts) throws MetricsProviderLifeCycleException {
+        }
+
+        @Override
+        public void start() throws MetricsProviderLifeCycleException {
+        }
+
+        @Override
+        public MetricsContext getRootContext() {
+            return NullMetricsProvider.NullMetricsContext.INSTANCE;
+        }
+
+        @Override
+        public void stop() {
+        }
+        
+    }
+
+    public static final class MetricsProviderWithErrorInStart extends BaseMetricsProvider {
+
+        @Override
+        public void start() throws MetricsProviderLifeCycleException {
+            throw new MetricsProviderLifeCycleException();
+        }
+
+    }
+
+    public static final class MetricsProviderWithErrorInConfigure extends BaseMetricsProvider {
+
+        @Override
+        public void configure(Properties prprts) throws MetricsProviderLifeCycleException {
+            throw new MetricsProviderLifeCycleException();
+        }
+
+    }
+
+    public static final class MetricsProviderWithErrorInStop extends BaseMetricsProvider {
+
+        @Override
+        public void stop() {
+            throw new RuntimeException();
+        }
+
     }
 
     /**

@@ -52,6 +52,8 @@ import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.jmx.MBeanRegistry;
+import org.apache.zookeeper.metrics.MetricsContext;
+import org.apache.zookeeper.metrics.impl.NullMetricsProvider;
 import org.apache.zookeeper.proto.AuthPacket;
 import org.apache.zookeeper.proto.ConnectRequest;
 import org.apache.zookeeper.proto.ConnectResponse;
@@ -127,6 +129,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     private final ServerStats serverStats;
     private final ZooKeeperServerListener listener;
+    private MetricsContext rootMetricsContext = NullMetricsProvider.NullMetricsContext.INSTANCE;
     private ZooKeeperServerShutdownHandler zkShutdownHandler;
     private volatile int createSessionTrackerServerId = 1;
 
@@ -871,6 +874,14 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     public void setSecureServerCnxnFactory(ServerCnxnFactory factory) {
         secureServerCnxnFactory = factory;
+    }
+
+    public MetricsContext getRootMetricsContext() {
+        return rootMetricsContext;
+    }
+
+    public void setRootMetricsContext(MetricsContext rootMetricsContext) {
+        this.rootMetricsContext = rootMetricsContext;
     }
 
     /**
