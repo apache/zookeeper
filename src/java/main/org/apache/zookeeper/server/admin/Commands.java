@@ -337,7 +337,7 @@ public class Commands {
             if (zkServer instanceof LeaderZooKeeperServer) {
                 Leader leader = ((LeaderZooKeeperServer) zkServer).getLeader();
 
-                response.put("followers", leader.getLearners().size());
+                response.put("learners", leader.getLearners().size());
                 response.put("synced_followers", leader.getForwardingFollowers().size());
                 response.put("pending_syncs", leader.getNumPendingSyncs());
 
