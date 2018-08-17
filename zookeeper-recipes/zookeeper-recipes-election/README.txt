@@ -15,12 +15,11 @@
    limitations under the License.
 -->
 
-1) This lock interface recipe implements the lock recipe
-mentioned in ../../../docs/recipes.[html,pdf].
+1) This election interface recipe implements the leader election recipe
+mentioned in ../../docs/recipes.[html,pdf].
 
-2) To compile the lock java recipe you can just run ant jar from 
-this directory. For compiling the c libarary go to src/c and read
-the INSTALLATION instructions. 
+2) To compile the leader election java recipe you can just run ant jar from
+this directory.
 Please report any bugs on the jira 
 
 http://issues.apache.org/jira/browse/ZOOKEEPER
