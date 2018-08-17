@@ -24,6 +24,7 @@ import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
+import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.txn.TxnHeader;
@@ -42,6 +43,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class LeaderBeanTest {
     private Leader leader;
@@ -147,5 +149,22 @@ public class LeaderBeanTest {
             }
         }).when(txn).serialize(any(OutputArchive.class), anyString());
         return new Request(1, 2, 3, header, txn, 4);
+    }
+
+    @Test
+    public void testFollowerInfo() throws IOException {
+        LearnerHandler follower = mock(LearnerHandler.class);
+        when(follower.getLearnerType()).thenReturn(LearnerType.PARTICIPANT);
+        when(follower.toString()).thenReturn("1");
+        leader.addLearnerHandler(follower);
+
+        assertEquals("1\n", leaderBean.followerInfo());
+
+        LearnerHandler observer = mock(LearnerHandler.class);
+        when(observer.getLearnerType()).thenReturn(LearnerType.OBSERVER);
+        when(observer.toString()).thenReturn("2");
+        leader.addLearnerHandler(observer);
+
+        assertEquals("1\n", leaderBean.followerInfo());
     }
 }

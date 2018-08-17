@@ -20,18 +20,19 @@ package org.apache.zookeeper.server.quorum;
 
 import org.apache.zookeeper.server.ZooKeeperServerBean;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 
 /**
  * Leader MBean interface implementation.
  */
 public class LeaderBean extends ZooKeeperServerBean implements LeaderMXBean {
     private final Leader leader;
-    
+
     public LeaderBean(Leader leader, ZooKeeperServer zks) {
         super(zks);
         this.leader = leader;
     }
-    
+
     public String getName() {
         return "Leader";
     }
@@ -39,11 +40,13 @@ public class LeaderBean extends ZooKeeperServerBean implements LeaderMXBean {
     public String getCurrentZxid() {
         return "0x" + Long.toHexString(zks.getZxid());
     }
-    
+
     public String followerInfo() {
         StringBuilder sb = new StringBuilder();
         for (LearnerHandler handler : leader.getLearners()) {
-            sb.append(handler.toString()).append("\n");
+            if (handler.getLearnerType() == LearnerType.PARTICIPANT) {
+                sb.append(handler.toString()).append("\n");
+            }
         }
         return sb.toString();
     }
