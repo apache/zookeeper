@@ -27,10 +27,14 @@ import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLSocket;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.SocketException;
+import java.nio.channels.SocketChannel;
 
 /**
  * A ServerSocket that can act either as a regular ServerSocket, as a SSLServerSocket, or as both, depending on
@@ -139,32 +143,494 @@ public class UnifiedServerSocket extends ServerSocket {
         }
         final PrependableSocket prependableSocket = new PrependableSocket(null);
         implAccept(prependableSocket);
+        return new UnifiedSocket(x509Util, allowInsecureConnection, prependableSocket);
+    }
 
-        byte[] litmus = new byte[5];
-        int bytesRead = prependableSocket.getInputStream().read(litmus, 0, 5);
+    /**
+     * The result of calling accept() on a UnifiedServerSocket. This is a Socket that doesn't know if it's
+     * using plaintext or SSL/TLS at the time when it is created. Calling a method that indicates a desire to
+     * read or write from the socket will cause the socket to detect if the connected client is attempting
+     * to establish a TLS or plaintext connection. This is done by doing a blocking read of 5 bytes off the
+     * socket and checking if the bytes look like the start of a TLS ClientHello message. If it looks like
+     * the client is attempting to connect with TLS, the internal socket is upgraded to a SSLSocket. If not,
+     * any bytes read from the socket are pushed back to the input stream, and the socket continues
+     * to be treated as a plaintext socket.
+     *
+     * The methods that trigger this behavior are:
+     * <ul>
+     *     <li>{@link UnifiedSocket#getInputStream()}</li>
+     *     <li>{@link UnifiedSocket#getOutputStream()}</li>
+     *     <li>{@link UnifiedSocket#sendUrgentData(int)}</li>
+     * </ul>
+     *
+     * Calling other socket methods (i.e option setters such as {@link Socket#setTcpNoDelay(boolean)}) does
+     * not trigger mode detection.
+     *
+     * Because detecting the mode is a potentially blocking operation, it should not be done in the
+     * accepting thread. Attempting to read from or write to the socket in the accepting thread opens the
+     * caller up to a denial-of-service attack, in which a client connects and then does nothing. This would
+     * prevent any other clients from connecting. Passing the socket returned by accept() to a separate
+     * thread which handles all read and write operations protects against this DoS attack.
+     *
+     * Callers can check if the socket has been upgraded to TLS by calling {@link UnifiedSocket#isSecureSocket()},
+     * and can get the underlying SSLSocket by calling {@link UnifiedSocket#getSslSocket()}.
+     */
+    public static class UnifiedSocket extends Socket {
+        private enum Mode {
+            UNKNOWN,
+            PLAINTEXT,
+            TLS
+        }
 
-        if (bytesRead == 5 && SslHandler.isEncrypted(ChannelBuffers.wrappedBuffer(litmus))) {
-            LOG.info(getInetAddress() + " attempting to connect over ssl");
-            SSLSocket sslSocket;
-            try {
-                sslSocket = x509Util.createSSLSocket(prependableSocket, litmus);
-            } catch (X509Exception e) {
-                throw new IOException("failed to create SSL context", e);
-            }
-            sslSocket.setUseClientMode(false);
-            sslSocket.setNeedClientAuth(true); // TODO: probably need to add a property for this in X509Util
-            return sslSocket;
-        } else {
-            if (allowInsecureConnection) {
-                LOG.info(getInetAddress() + " attempting to connect without ssl");
-                prependableSocket.prependToInputStream(litmus);
-                return prependableSocket;
+        private final X509Util x509Util;
+        private final boolean allowInsecureConnection;
+        private PrependableSocket prependableSocket;
+        private SSLSocket sslSocket;
+        private Mode mode;
+
+        /**
+         * Note: this constructor is intentionally private. The only intended caller is
+         * {@link UnifiedServerSocket#accept()}.
+         *
+         * @param x509Util
+         * @param allowInsecureConnection
+         * @param prependableSocket
+         */
+        private UnifiedSocket(X509Util x509Util, boolean allowInsecureConnection, PrependableSocket prependableSocket) {
+            this.x509Util = x509Util;
+            this.allowInsecureConnection = allowInsecureConnection;
+            this.prependableSocket = prependableSocket;
+            this.sslSocket = null;
+            this.mode = Mode.UNKNOWN;
+        }
+
+        /**
+         * Returns true if the socket mode has been determined to be TLS.
+         * @return true if the mode is TLS, false if it is UNKNOWN or PLAINTEXT.
+         */
+        public boolean isSecureSocket() {
+            return mode == Mode.TLS;
+        }
+
+        /**
+         * Returns true if the socket mode has been determined to be PLAINTEXT.
+         * @return true if the mode is PLAINTEXT, false if it is UNKNOWN or TLS.
+         */
+        public boolean isPlaintextSocket() {
+            return mode == Mode.PLAINTEXT;
+        }
+
+        /**
+         * Returns true if the socket mode is not yet known.
+         * @return true if the mode is UNKNOWN, false if it is PLAINTEXT or TLS.
+         */
+        public boolean isModeKnown() {
+            return mode != Mode.UNKNOWN;
+        }
+
+        /**
+         * Detects the socket mode, see comments at the top of the class for more details. This is a blocking operation
+         * and should not be called in the accept() thread.
+         * @throws IOException
+         */
+        private void detectMode() throws IOException {
+            byte[] litmus = new byte[5];
+            int bytesRead = prependableSocket.getInputStream().read(litmus, 0, litmus.length);
+
+            if (bytesRead == litmus.length && SslHandler.isEncrypted(ChannelBuffers.wrappedBuffer(litmus))) {
+                try {
+                    sslSocket = x509Util.createSSLSocket(prependableSocket, litmus);
+                } catch (X509Exception e) {
+                    throw new IOException("failed to create SSL context", e);
+                }
+                sslSocket.setUseClientMode(false);
+                sslSocket.setNeedClientAuth(true);  // TODO: probably need to add a property for this in X509Util
+                prependableSocket = null;
+                mode = Mode.TLS;
+            } else if (allowInsecureConnection) {
+                prependableSocket.prependToInputStream(litmus, 0, bytesRead);
+                mode = Mode.PLAINTEXT;
             } else {
-                LOG.info(getInetAddress() + " attempted to connect without ssl but allowInsecureConnection is false, " +
-                    "closing socket");
                 prependableSocket.close();
+                mode = Mode.PLAINTEXT;
                 throw new IOException("Blocked insecure connection attempt");
             }
+        }
+
+        private Socket getSocketAllowUnknownMode() {
+            if (isSecureSocket()) {
+                return sslSocket;
+            } else { // Note: mode is UNKNOWN or PLAINTEXT
+                return prependableSocket;
+            }
+        }
+
+        /**
+         * Returns the underlying socket, detecting the socket mode if it is not yet known. This is a potentially
+         * blocking operation and should not be called in the accept() thread.
+         * @return the underlying socket, after the socket mode has been determined.
+         * @throws IOException
+         */
+        private Socket getSocket() throws IOException {
+            if (!isModeKnown()) {
+                detectMode();
+            }
+            if (mode == Mode.TLS) {
+                return sslSocket;
+            } else {
+                return prependableSocket;
+            }
+        }
+
+        /**
+         * Returns the underlying SSLSocket if the mode is TLS. If the mode is UNKNOWN, causes mode detection which is a
+         * potentially blocking operation. If the mode ends up being PLAINTEXT, this will throw a SocketException, so
+         * callers are advised to only call this method after checking that {@link UnifiedSocket#isSecureSocket()}
+         * returned true.
+         * @return the underlying SSLSocket if the mode is known to be TLS.
+         * @throws IOException if detecting the socket mode fails
+         * @throws SocketException if the mode is PLAINTEXT.
+         */
+        public SSLSocket getSslSocket() throws IOException {
+            if (!isModeKnown()) {
+                detectMode();
+            }
+            if (!isSecureSocket()) {
+                throw new SocketException("Socket mode is not TLS");
+            }
+            return sslSocket;
+        }
+
+        /**
+         * See {@link Socket#connect(SocketAddress)}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public void connect(SocketAddress endpoint) throws IOException {
+            getSocketAllowUnknownMode().connect(endpoint);
+        }
+
+        /**
+         * See {@link Socket#connect(SocketAddress, int)}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public void connect(SocketAddress endpoint, int timeout) throws IOException {
+            getSocketAllowUnknownMode().connect(endpoint, timeout);
+        }
+
+        /**
+         * See {@link Socket#bind(SocketAddress)}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public void bind(SocketAddress bindpoint) throws IOException {
+            getSocketAllowUnknownMode().bind(bindpoint);
+        }
+
+        /**
+         * See {@link Socket#getInetAddress()}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public InetAddress getInetAddress() {
+            return getSocketAllowUnknownMode().getInetAddress();
+        }
+
+        /**
+         * See {@link Socket#getLocalAddress()}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public InetAddress getLocalAddress() {
+            return getSocketAllowUnknownMode().getLocalAddress();
+        }
+
+        /**
+         * See {@link Socket#getPort()}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public int getPort() {
+            return getSocketAllowUnknownMode().getPort();
+        }
+
+        /**
+         * See {@link Socket#getLocalPort()}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public int getLocalPort() {
+            return getSocketAllowUnknownMode().getLocalPort();
+        }
+
+        /**
+         * See {@link Socket#getRemoteSocketAddress()}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public SocketAddress getRemoteSocketAddress() {
+            return getSocketAllowUnknownMode().getRemoteSocketAddress();
+        }
+
+        /**
+         * See {@link Socket#getLocalSocketAddress()}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public SocketAddress getLocalSocketAddress() {
+            return getSocketAllowUnknownMode().getLocalSocketAddress();
+        }
+
+        /**
+         * See {@link Socket#getChannel()}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public SocketChannel getChannel() {
+            return getSocketAllowUnknownMode().getChannel();
+        }
+
+        /**
+         * See {@link Socket#getInputStream()}. Calling this method triggers mode detection, which is a potentially
+         * blocking operation, so it should not be done in the accept() thread.
+         */
+        @Override
+        public InputStream getInputStream() throws IOException {
+            return getSocket().getInputStream();
+        }
+
+        /**
+         * See {@link Socket#getOutputStream()}. Calling this method triggers mode detection, which is a potentially
+         * blocking operation, so it should not be done in the accept() thread.
+         */
+        @Override
+        public OutputStream getOutputStream() throws IOException {
+            return getSocket().getOutputStream();
+        }
+
+        /**
+         * See {@link Socket#setTcpNoDelay(boolean)}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public void setTcpNoDelay(boolean on) throws SocketException {
+            getSocketAllowUnknownMode().setTcpNoDelay(on);
+        }
+
+        /**
+         * See {@link Socket#getTcpNoDelay()}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public boolean getTcpNoDelay() throws SocketException {
+            return getSocketAllowUnknownMode().getTcpNoDelay();
+        }
+
+        /**
+         * See {@link Socket#setSoLinger(boolean, int)}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public void setSoLinger(boolean on, int linger) throws SocketException {
+            getSocketAllowUnknownMode().setSoLinger(on, linger);
+        }
+
+        /**
+         * See {@link Socket#getSoLinger()}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public int getSoLinger() throws SocketException {
+            return getSocketAllowUnknownMode().getSoLinger();
+        }
+
+        /**
+         * See {@link Socket#sendUrgentData(int)}. Calling this method triggers mode detection, which is a potentially
+         * blocking operation, so it should not be done in the accept() thread.
+         */
+        @Override
+        public void sendUrgentData(int data) throws IOException {
+            getSocket().sendUrgentData(data);
+        }
+
+        /**
+         * See {@link Socket#setOOBInline(boolean)}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public void setOOBInline(boolean on) throws SocketException {
+            getSocketAllowUnknownMode().setOOBInline(on);
+        }
+
+        /**
+         * See {@link Socket#getOOBInline()}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public boolean getOOBInline() throws SocketException {
+            return getSocketAllowUnknownMode().getOOBInline();
+        }
+
+        /**
+         * See {@link Socket#setSoTimeout(int)}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public synchronized void setSoTimeout(int timeout) throws SocketException {
+            getSocketAllowUnknownMode().setSoTimeout(timeout);
+        }
+
+        /**
+         * See {@link Socket#getSoTimeout()}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public synchronized int getSoTimeout() throws SocketException {
+            return getSocketAllowUnknownMode().getSoTimeout();
+        }
+
+        /**
+         * See {@link Socket#setSendBufferSize(int)}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public synchronized void setSendBufferSize(int size) throws SocketException {
+            getSocketAllowUnknownMode().setSendBufferSize(size);
+        }
+
+        /**
+         * See {@link Socket#getSendBufferSize()}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public synchronized int getSendBufferSize() throws SocketException {
+            return getSocketAllowUnknownMode().getSendBufferSize();
+        }
+
+        /**
+         * See {@link Socket#setReceiveBufferSize(int)}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public synchronized void setReceiveBufferSize(int size) throws SocketException {
+            getSocketAllowUnknownMode().setReceiveBufferSize(size);
+        }
+
+        /**
+         * See {@link Socket#getReceiveBufferSize()}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public synchronized int getReceiveBufferSize() throws SocketException {
+            return getSocketAllowUnknownMode().getReceiveBufferSize();
+        }
+
+        /**
+         * See {@link Socket#setKeepAlive(boolean)}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public void setKeepAlive(boolean on) throws SocketException {
+            getSocketAllowUnknownMode().setKeepAlive(on);
+        }
+
+        /**
+         * See {@link Socket#getKeepAlive()}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public boolean getKeepAlive() throws SocketException {
+            return getSocketAllowUnknownMode().getKeepAlive();
+        }
+
+        /**
+         * See {@link Socket#setTrafficClass(int)}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public void setTrafficClass(int tc) throws SocketException {
+            getSocketAllowUnknownMode().setTrafficClass(tc);
+        }
+
+        /**
+         * See {@link Socket#getTrafficClass()}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public int getTrafficClass() throws SocketException {
+            return getSocketAllowUnknownMode().getTrafficClass();
+        }
+
+        /**
+         * See {@link Socket#setReuseAddress(boolean)}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public void setReuseAddress(boolean on) throws SocketException {
+            getSocketAllowUnknownMode().setReuseAddress(on);
+        }
+
+        /**
+         * See {@link Socket#getReuseAddress()}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public boolean getReuseAddress() throws SocketException {
+            return getSocketAllowUnknownMode().getReuseAddress();
+        }
+
+        /**
+         * See {@link Socket#close()}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public synchronized void close() throws IOException {
+            getSocketAllowUnknownMode().close();
+        }
+
+        /**
+         * See {@link Socket#shutdownInput()}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public void shutdownInput() throws IOException {
+            getSocketAllowUnknownMode().shutdownInput();
+        }
+
+        /**
+         * See {@link Socket#shutdownOutput()}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public void shutdownOutput() throws IOException {
+            getSocketAllowUnknownMode().shutdownOutput();
+        }
+
+        /**
+         * See {@link Socket#toString()}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public String toString() {
+            return "UnifiedSocket[mode=" + mode.toString() + "socket=" + getSocketAllowUnknownMode().toString() + "]";
+        }
+
+        /**
+         * See {@link Socket#isConnected()}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public boolean isConnected() {
+            return getSocketAllowUnknownMode().isConnected();
+        }
+
+        /**
+         * See {@link Socket#isBound()}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public boolean isBound() {
+            return getSocketAllowUnknownMode().isBound();
+        }
+
+        /**
+         * See {@link Socket#isClosed()}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public boolean isClosed() {
+            return getSocketAllowUnknownMode().isClosed();
+        }
+
+        /**
+         * See {@link Socket#isInputShutdown()}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public boolean isInputShutdown() {
+            return getSocketAllowUnknownMode().isInputShutdown();
+        }
+
+        /**
+         * See {@link Socket#isOutputShutdown()}. Calling this method does not trigger mode detection.
+         */
+        @Override
+        public boolean isOutputShutdown() {
+            return getSocketAllowUnknownMode().isOutputShutdown();
+        }
+
+        /**
+         * See {@link Socket#setPerformancePreferences(int, int, int)}. Calling this method does not trigger
+         * mode detection.
+         */
+        @Override
+        public void setPerformancePreferences(int connectionTime, int latency, int bandwidth) {
+            getSocketAllowUnknownMode().setPerformancePreferences(connectionTime, latency, bandwidth);
         }
     }
 }

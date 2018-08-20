@@ -43,16 +43,21 @@ public class PrependableSocket extends Socket {
 
   /**
    * Prepend some bytes that have already been read back to the socket's input stream. Note that this method can be
-   * called at most once per socket instance.
+   * called at most once with a non-0 length per socket instance.
    * @param bytes the bytes to prepend.
+   * @param offset offset in the byte array to start at.
+   * @param length number of bytes to prepend.
    * @throws IOException if this method was already called on the socket instance, or if super.getInputStream() throws.
    */
-  public void prependToInputStream(byte[] bytes) throws IOException {
+  public void prependToInputStream(byte[] bytes, int offset, int length) throws IOException {
+    if (length == 0) {
+      return; // nothing to prepend
+    }
     if (pushbackInputStream != null) {
       throw new IOException("prependToInputStream() called more than once");
     }
-    PushbackInputStream pushbackInputStream = new PushbackInputStream(getInputStream(), bytes.length);
-    pushbackInputStream.unread(bytes);
+    PushbackInputStream pushbackInputStream = new PushbackInputStream(getInputStream(), length);
+    pushbackInputStream.unread(bytes, offset, length);
     this.pushbackInputStream = pushbackInputStream;
   }
 
