@@ -178,7 +178,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
                 ServerMetrics.getMetrics().SYNC_PROCESSOR_QUEUE_TIME.add(startProcessTime - si.syncQueueStartTime);
 
                 // track the number of records written to the log
-                if (zks.getZKDatabase().append(si)) {
+                if (!si.isThrottled() && zks.getZKDatabase().append(si)) {
                     if (shouldSnapshot()) {
                         resetSnapshotStats();
                         // roll the log

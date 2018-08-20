@@ -65,7 +65,6 @@ import org.slf4j.LoggerFactory;
  * message (including heartbeats) from the leader.</li>
  * <li>server.<i>id</i> - This is the host:port[:port] that the server with the
  * given id will use for the quorum protocol.</li>
- * </ol>
  * In addition to the config file. There is a file in the data directory called
  * "myid" that contains the server id as an ASCII decimal value.
  *

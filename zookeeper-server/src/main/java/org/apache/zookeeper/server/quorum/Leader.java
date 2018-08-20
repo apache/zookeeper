@@ -1218,6 +1218,10 @@ public class Leader extends LearnerMaster {
      * @return the proposal that is queued to send to all the members
      */
     public Proposal propose(Request request) throws XidRolloverException {
+        if (request.isThrottled()) {
+            LOG.error("Throttled request send as proposal: " + request + ". Exiting.");
+            System.exit(1);
+        }
         /**
          * Address the rollover issue. All lower 32bits set indicate a new leader
          * election. Force a re-election instead. See ZOOKEEPER-1277

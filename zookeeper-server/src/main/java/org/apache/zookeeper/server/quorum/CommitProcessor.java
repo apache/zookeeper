@@ -165,6 +165,9 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
     }
 
     protected boolean needCommit(Request request) {
+        if (request.isThrottled()) {
+          return false;
+        }
         switch (request.type) {
         case OpCode.create:
         case OpCode.create2:
@@ -306,6 +309,11 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
                         // Process committed head
                         request = committedRequests.peek();
 
+                        if (request.isThrottled()) {
+                            LOG.error("Throttled request in committed pool: " + request + ". Exiting.");
+                            System.exit(1);
+                        }
+
                         /*
                          * Check if this is a local write request is pending,
                          * if so, update it with the committed info. If the commit matches
@@ -349,6 +357,10 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
                                 topPending.zxid = request.zxid;
                                 topPending.commitRecvTime = request.commitRecvTime;
                                 request = topPending;
+                                if (request.isThrottled()) {
+                                    LOG.error("Throttled request in committed & pending pool: " + request + ". Exiting.");
+                                    System.exit(1);
+                                }
                                 // Only decrement if we take a request off the queue.
                                 numWriteQueuedRequests.decrementAndGet();
                                 queuedWriteRequests.poll();
@@ -452,7 +464,8 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
      */
     private void sendToNextProcessor(Request request) {
         numRequestsProcessing.incrementAndGet();
-        workerPool.schedule(new CommitWorkRequest(request), request.sessionId);
+        CommitWorkRequest workRequest = new CommitWorkRequest(request);
+        workerPool.schedule(workRequest, request.sessionId);
     }
 
     private void processWrite(Request request) throws RequestProcessorException {

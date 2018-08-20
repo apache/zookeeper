@@ -234,6 +234,10 @@ public class Learner {
      * @throws IOException
      */
     void request(Request request) throws IOException {
+        if (request.isThrottled()) {
+          LOG.error("Throttled request sent to leader: " + request + ". Exiting");
+          System.exit(1);
+        }
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream oa = new DataOutputStream(baos);
         oa.writeLong(request.sessionId);
