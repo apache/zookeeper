@@ -68,6 +68,7 @@ public class QuorumPeerConfig {
     protected InetSocketAddress secureClientPortAddress;
     protected boolean sslQuorum = false;
     protected boolean shouldUsePortUnification = false;
+    protected boolean sslQuorumReloadCertFiles = false;
     protected File dataDir;
     protected File dataLogDir;
     protected String dynamicConfigFileStr = null;
@@ -307,8 +308,10 @@ public class QuorumPeerConfig {
                 }
             } else if (key.equals("sslQuorum")){
                 sslQuorum = Boolean.parseBoolean(value);
-            } else if (key.equals("portUnification")){
+            } else if (key.equals("portUnification")) {
                 shouldUsePortUnification = Boolean.parseBoolean(value);
+            } else if (key.equals("sslQuorumReloadCertFiles")) {
+                sslQuorumReloadCertFiles = Boolean.parseBoolean(value);
             } else if ((key.startsWith("server.") || key.startsWith("group") || key.startsWith("weight")) && zkProp.containsKey("dynamicConfigFile")) {
                 throw new ConfigException("parameter: " + key + " must be in a separate dynamic config file");
             } else if (key.equals(QuorumAuth.QUORUM_SASL_AUTH_ENABLED)) {

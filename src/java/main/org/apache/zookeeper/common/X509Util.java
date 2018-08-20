@@ -42,6 +42,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardWatchEventKinds;
+import java.nio.file.WatchEvent;
 import java.security.GeneralSecurityException;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
@@ -52,6 +56,7 @@ import java.security.cert.X509CertSelector;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 /**
  * Utility code for X509 handling
@@ -136,6 +141,18 @@ public abstract class X509Util {
 
     private AtomicReference<SSLContext> defaultSSLContext = new AtomicReference<>(null);
 
+    private FileChangeWatcher keyStoreFileWatcher;
+    private FileChangeWatcher trustStoreFileWatcher;
+
+    // Finalizer guardian object, see Effective Java item 7
+    @SuppressWarnings("unused")
+    private final Object finalizerGuardian = new Object() {
+        @Override
+        protected void finalize() {
+            disableCertFileReloading();
+        }
+    };
+
     public X509Util() {
         String cipherSuitesInput = System.getProperty(cipherSuitesProperty);
         if (cipherSuitesInput == null) {
@@ -143,9 +160,11 @@ public abstract class X509Util {
         } else {
             cipherSuites = cipherSuitesInput.split(",");
         }
+        keyStoreFileWatcher = trustStoreFileWatcher = null;
     }
 
     protected abstract String getConfigPrefix();
+
     protected abstract boolean shouldVerifyClientHostname();
 
     public String getSslProtocolProperty() {
@@ -204,13 +223,18 @@ public abstract class X509Util {
         return result;
     }
 
+    private void resetDefaultSSLContext() throws X509Exception.SSLContextException {
+        SSLContext newContext = createSSLContext();
+        defaultSSLContext.set(newContext);
+    }
+
     private SSLContext createSSLContext() throws SSLContextException {
         /*
          * Since Configuration initializes the key store and trust store related
          * configuration from system property. Reading property from
          * configuration will be same reading from system property
          */
-        ZKConfig config=new ZKConfig();
+        ZKConfig config = new ZKConfig();
         return createSSLContext(config);
     }
 
@@ -274,7 +298,7 @@ public abstract class X509Util {
             SSLContext sslContext = SSLContext.getInstance(protocol);
             sslContext.init(keyManagers, trustManagers, null);
             return sslContext;
-        } catch (NoSuchAlgorithmException |KeyManagementException sslContextInitException) {
+        } catch (NoSuchAlgorithmException | KeyManagementException sslContextInitException) {
             throw new SSLContextException(sslContextInitException);
         }
     }
@@ -324,7 +348,7 @@ public abstract class X509Util {
                 }
             }
             throw new KeyManagerException("Couldn't find X509KeyManager");
-        } catch (IOException|GeneralSecurityException keyManagerCreationException) {
+        } catch (IOException | GeneralSecurityException keyManagerCreationException) {
             throw new KeyManagerException(keyManagerCreationException);
         } finally {
             if (inputStream != null) {
@@ -410,7 +434,7 @@ public abstract class X509Util {
                 }
             }
             throw new TrustManagerException("Couldn't find X509TrustManager");
-        } catch (IOException|GeneralSecurityException trustManagerCreationException) {
+        } catch (IOException | GeneralSecurityException trustManagerCreationException) {
             throw new TrustManagerException(trustManagerCreationException);
         } finally {
             if (inputStream != null) {
@@ -486,6 +510,92 @@ public abstract class X509Util {
         }
         LOG.debug("Using Java8-optimized cipher suites for Java version {}", javaVersion);
         return DEFAULT_CIPHERS_JAVA8;
+    }
+
+    /**
+     * Enables automatic reloading of the trust store and key store files when they change on disk.
+     *
+     * @throws IOException if creating the FileChangeWatcher objects fails.
+     */
+    public void enableCertFileReloading() throws IOException {
+        ZKConfig config = new ZKConfig();
+        String keyStoreLocation = config.getProperty(sslKeystoreLocationProperty);
+        if (keyStoreLocation != null && !keyStoreLocation.isEmpty()) {
+            final Path filePath = Paths.get(keyStoreLocation).toAbsolutePath();
+            keyStoreFileWatcher = new FileChangeWatcher(
+                    filePath.getParent(),
+                    new Consumer<WatchEvent<?>>() {
+                        @Override
+                        public void accept(WatchEvent<?> watchEvent) {
+                            handleWatchEvent(filePath, watchEvent);
+                        }
+                    });
+        }
+        String trustStoreLocation = config.getProperty(sslTruststoreLocationProperty);
+        if (trustStoreLocation != null && !trustStoreLocation.isEmpty()) {
+            final Path filePath = Paths.get(trustStoreLocation).toAbsolutePath();
+            trustStoreFileWatcher = new FileChangeWatcher(
+                    filePath.getParent(),
+                    new Consumer<WatchEvent<?>>() {
+                        @Override
+                        public void accept(WatchEvent<?> watchEvent) {
+                            handleWatchEvent(filePath, watchEvent);
+                        }
+                    });
+        }
+    }
+
+    /**
+     * Disables automatic reloading of the trust store and key store files when they change on disk.
+     * Stops background threads and closes WatchService instances.
+     */
+    public void disableCertFileReloading() {
+        if (keyStoreFileWatcher != null) {
+            keyStoreFileWatcher.stop();
+            keyStoreFileWatcher = null;
+        }
+        if (trustStoreFileWatcher != null) {
+            trustStoreFileWatcher.stop();
+            trustStoreFileWatcher = null;
+        }
+    }
+
+    /**
+     * Handler for watch events that let us know a file we may care about has changed on disk.
+     *
+     * @param filePath the path to the file we are watching for changes.
+     * @param event    the WatchEvent.
+     */
+    private void handleWatchEvent(Path filePath, WatchEvent<?> event) {
+        boolean shouldResetContext = false;
+        Path dirPath = filePath.getParent();
+        if (event.kind().equals(StandardWatchEventKinds.OVERFLOW)) {
+            // If we get notified about possibly missed events, reload the key store / trust store just to be sure.
+            shouldResetContext = true;
+        } else if (event.kind().equals(StandardWatchEventKinds.ENTRY_MODIFY) ||
+                event.kind().equals(StandardWatchEventKinds.ENTRY_CREATE)) {
+            Path eventFilePath = dirPath.resolve((Path) event.context());
+            if (filePath.equals(eventFilePath)) {
+                shouldResetContext = true;
+            }
+        }
+        // Note: we don't care about delete events
+        if (shouldResetContext) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Attempting to reset default SSL context after receiving watch event: " +
+                        event.kind() + " with context: " + event.context());
+            }
+            try {
+                this.resetDefaultSSLContext();
+            } catch (SSLContextException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Ignoring watch event and keeping previous default SSL context. Event kind: " +
+                        event.kind() + " with context: " + event.context());
+            }
+        }
     }
 
     /**

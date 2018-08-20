@@ -45,9 +45,7 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.zookeeper.common.QuorumX509Util;
 import org.apache.zookeeper.common.X509Exception;
-import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.server.ZooKeeperThread;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthLearner;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthServer;
@@ -169,9 +167,6 @@ public class QuorumCnxManager {
      */
     private final boolean tcpKeepAlive = Boolean.getBoolean("zookeeper.tcpKeepAlive");
 
-
-    private X509Util x509Util;
-
     static public class Message {
         Message(ByteBuffer buffer, long sid) {
             this.buffer = buffer;
@@ -280,8 +275,6 @@ public class QuorumCnxManager {
         // Starts listener thread that waits for connection requests
         listener = new Listener();
         listener.setName("QuorumPeerListener");
-
-        x509Util = new QuorumX509Util();
     }
 
     private void initializeAuth(final long mySid,
@@ -639,9 +632,9 @@ public class QuorumCnxManager {
 
         Socket sock = null;
         try {
-             LOG.debug("Opening channel to server " + sid);
-             if (self.isSslQuorum()) {
-                 SSLSocket sslSock = x509Util.createSSLSocket();
+            LOG.debug("Opening channel to server " + sid);
+            if (self.isSslQuorum()) {
+                 SSLSocket sslSock = self.getX509Util().createSSLSocket();
                  setSockOpts(sslSock);
                  sslSock.connect(electionAddr, cnxTO);
                  sslSock.startHandshake();
@@ -860,9 +853,9 @@ public class QuorumCnxManager {
             while((!shutdown) && (numRetries < 3)){
                 try {
                     if (self.shouldUsePortUnification()) {
-                        ss = new UnifiedServerSocket(x509Util);
+                        ss = new UnifiedServerSocket(self.getX509Util());
                     } else if (self.isSslQuorum()) {
-                        ss = x509Util.createSSLServerSocket();
+                        ss = self.getX509Util().createSSLServerSocket();
                     } else {
                         ss = new ServerSocket();
                     }
