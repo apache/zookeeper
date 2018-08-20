@@ -20,151 +20,274 @@ package org.apache.zookeeper.server.quorum;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.ClientX509Util;
-import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.common.X509Exception;
+import org.apache.zookeeper.common.X509KeyType;
+import org.apache.zookeeper.common.X509TestContext;
 import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.server.ServerCnxnFactory;
+import org.apache.zookeeper.test.ClientBase;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import javax.net.ssl.HandshakeCompletedEvent;
 import javax.net.ssl.HandshakeCompletedListener;
 import javax.net.ssl.SSLSocket;
+import java.io.File;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.Security;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
+@RunWith(Parameterized.class)
 public class UnifiedServerSocketTest {
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> params() {
+        ArrayList<Object[]> result = new ArrayList<>();
+        int paramIndex = 0;
+        for (X509KeyType caKeyType : X509KeyType.values()) {
+            for (X509KeyType certKeyType : X509KeyType.values()) {
+                for (String keyPassword : new String[]{"", "pa$$w0rd"}) {
+                    for (Boolean hostnameVerification : new Boolean[] { true, false  }) {
+                        result.add(new Object[]{
+                                caKeyType,
+                                certKeyType,
+                                keyPassword,
+                                hostnameVerification,
+                                paramIndex++
+                        });
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Because key generation and writing / deleting files is kind of expensive, we cache the certs and on-disk files
+     * between test cases. None of the test cases modify any of this data so it's safe to reuse between tests. This
+     * caching makes all test cases after the first one for a given parameter combination complete almost instantly.
+     */
+    private static Map<Integer, X509TestContext> cachedTestContexts;
+    private static File tempDir;
 
     private static final int MAX_RETRIES = 5;
     private static final int TIMEOUT = 1000;
+    private static final byte[] DATA_TO_CLIENT = "hello client".getBytes();
+    private static final byte[] DATA_FROM_CLIENT = "hello server".getBytes();
 
     private X509Util x509Util;
     private int port;
+    private InetSocketAddress localServerAddress;
     private volatile boolean handshakeCompleted;
+    private X509TestContext x509TestContext;
+
+    @BeforeClass
+    public static void setUpClass() throws Exception {
+        Security.addProvider(new BouncyCastleProvider());
+        cachedTestContexts = new HashMap<>();
+        tempDir = ClientBase.createEmptyTestDir();
+    }
+
+    @AfterClass
+    public static void cleanUpClass() {
+        Security.removeProvider(BouncyCastleProvider.PROVIDER_NAME);
+        cachedTestContexts.clear();
+        cachedTestContexts = null;
+    }
+
+    public UnifiedServerSocketTest(
+            X509KeyType caKeyType,
+            X509KeyType certKeyType,
+            String keyPassword,
+            Boolean hostnameVerification,
+            Integer paramIndex) throws Exception {
+        if (cachedTestContexts.containsKey(paramIndex)) {
+            x509TestContext = cachedTestContexts.get(paramIndex);
+        } else {
+            x509TestContext = X509TestContext.newBuilder()
+                    .setTempDir(tempDir)
+                    .setKeyStorePassword(keyPassword)
+                    .setKeyStoreKeyType(certKeyType)
+                    .setTrustStorePassword(keyPassword)
+                    .setTrustStoreKeyType(caKeyType)
+                    .setHostnameVerification(hostnameVerification)
+                    .build();
+            cachedTestContexts.put(paramIndex, x509TestContext);
+        }
+    }
 
     @Before
     public void setUp() throws Exception {
         handshakeCompleted = false;
 
         port = PortAssignment.unique();
+        localServerAddress = new InetSocketAddress("localhost", port);
 
-        String testDataPath = System.getProperty("test.data.dir", "build/test/data");
         System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
         System.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
         System.setProperty(ZKClientConfig.SECURE_CLIENT, "true");
 
         x509Util = new ClientX509Util();
 
-        System.setProperty(x509Util.getSslKeystoreLocationProperty(), testDataPath + "/ssl/testKeyStore.jks");
-        System.setProperty(x509Util.getSslKeystorePasswdProperty(), "testpass");
-        System.setProperty(x509Util.getSslTruststoreLocationProperty(), testDataPath + "/ssl/testTrustStore.jks");
-        System.setProperty(x509Util.getSslTruststorePasswdProperty(), "testpass");
-        System.setProperty(x509Util.getSslHostnameVerificationEnabledProperty(), "false");
+        x509TestContext.setSystemProperties(x509Util, X509Util.StoreFileType.JKS, X509Util.StoreFileType.JKS);
     }
 
-    @Test
-    public void testConnectWithSSL() throws Exception {
-        class ServerThread extends Thread {
-            public void run() {
-                try {
-                    Socket unifiedSocket = new UnifiedServerSocket(x509Util, port).accept();
-                    ((SSLSocket)unifiedSocket).getSession(); // block until handshake completes
-                } catch (IOException e) {
-                    e.printStackTrace();
+    private static void forceClose(java.io.Closeable s) {
+        if (s == null) {
+            return;
+        }
+        try {
+            s.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static final class UnifiedServerThread extends Thread {
+        private final X509Util x509Util;
+        private final InetSocketAddress bindAddress;
+        private final byte[] dataToClient;
+        private byte[] dataFromClient;
+
+        UnifiedServerThread(X509Util x509Util,
+                            InetSocketAddress bindAddress,
+                            byte[] dataToClient) {
+            this.x509Util = x509Util;
+            this.bindAddress = bindAddress;
+            this.dataToClient = dataToClient;
+            this.dataFromClient = new byte[0];
+        }
+
+        @Override
+        public void run() {
+            ServerSocket serverSocket = null;
+            Socket unifiedSocket = null;
+            try {
+                serverSocket = new UnifiedServerSocket(x509Util);
+                serverSocket.bind(bindAddress);
+                unifiedSocket = serverSocket.accept();
+                byte[] buf = new byte[1024];
+                int bytesRead = unifiedSocket.getInputStream().read(buf, 0, 1024);
+                if (bytesRead > 0) {
+                    dataFromClient = new byte[bytesRead];
+                    System.arraycopy(buf, 0, dataFromClient, 0, bytesRead);
                 }
+                unifiedSocket.getOutputStream().write(dataToClient);
+                unifiedSocket.getOutputStream().flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            } finally {
+                forceClose(unifiedSocket);
+                forceClose(serverSocket);
             }
         }
-        ServerThread serverThread = new ServerThread();
-        serverThread.start();
 
+        byte[] getDataFromClient() {
+            return dataFromClient;
+        }
+    }
+
+    private SSLSocket connectWithSSL() throws IOException, X509Exception, InterruptedException {
         SSLSocket sslSocket = null;
         int retries = 0;
         while (retries < MAX_RETRIES) {
             try {
                 sslSocket = x509Util.createSSLSocket();
+                sslSocket.addHandshakeCompletedListener(new HandshakeCompletedListener() {
+                    @Override
+                    public void handshakeCompleted(HandshakeCompletedEvent handshakeCompletedEvent) {
+                        handshakeCompleted = true;
+                    }
+                });
                 sslSocket.setSoTimeout(TIMEOUT);
-                sslSocket.connect(new InetSocketAddress("localhost", port), TIMEOUT);
+                sslSocket.connect(localServerAddress, TIMEOUT);
                 break;
             } catch (ConnectException connectException) {
                 connectException.printStackTrace();
+                forceClose(sslSocket);
+                sslSocket = null;
                 Thread.sleep(TIMEOUT);
             }
             retries++;
         }
 
-        sslSocket.addHandshakeCompletedListener(new HandshakeCompletedListener() {
-            @Override
-            public void handshakeCompleted(HandshakeCompletedEvent handshakeCompletedEvent) {
-                completeHandshake();
-            }
-        });
-        sslSocket.startHandshake();
-
-        serverThread.join(TIMEOUT);
-
-        long start = Time.currentElapsedTime();
-        while (Time.currentElapsedTime() < start + TIMEOUT) {
-            if (handshakeCompleted) {
-                return;
-            }
-        }
-
-        Assert.fail("failed to complete handshake");
+        Assert.assertNotNull("Failed to connect to server with SSL", sslSocket);
+        return sslSocket;
     }
 
-    private void completeHandshake() {
-        handshakeCompleted = true;
-    }
-
-    @Test
-    public void testConnectWithoutSSL() throws Exception {
-        final byte[] testData = "hello there".getBytes();
-        final byte[] dataFromClient = "hellobello".getBytes();
-        final String[] dataReadFromClient = {null};
-
-        class ServerThread extends Thread {
-            public void run() {
-                try {
-                    Socket unifiedSocket = new UnifiedServerSocket(x509Util, port).accept();
-                    unifiedSocket.getOutputStream().write(testData);
-                    unifiedSocket.getOutputStream().flush();
-                    byte[] inputbuff = new byte[dataFromClient.length];
-                    unifiedSocket.getInputStream().read(inputbuff, 0, dataFromClient.length);
-                    dataReadFromClient[0] = new String(inputbuff);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        ServerThread serverThread = new ServerThread();
-        serverThread.start();
-
+    private Socket connectWithoutSSL() throws IOException, InterruptedException {
         Socket socket = null;
         int retries = 0;
         while (retries < MAX_RETRIES) {
             try {
                 socket = new Socket();
                 socket.setSoTimeout(TIMEOUT);
-                socket.connect(new InetSocketAddress("localhost", port), TIMEOUT);
+                socket.connect(localServerAddress, TIMEOUT);
                 break;
             } catch (ConnectException connectException) {
                 connectException.printStackTrace();
+                forceClose(socket);
+                socket = null;
                 Thread.sleep(TIMEOUT);
             }
             retries++;
         }
+        Assert.assertNotNull("Failed to connect to server without SSL", socket);
+        return socket;
+    }
 
-        socket.getOutputStream().write(dataFromClient);
-        socket.getOutputStream().flush();
+    @Test
+    public void testConnectWithSSL() throws Exception {
+        UnifiedServerThread serverThread = new UnifiedServerThread(
+                x509Util, localServerAddress, DATA_TO_CLIENT);
+        serverThread.start();
 
-        byte[] readBytes = new byte[testData.length];
-        socket.getInputStream().read(readBytes, 0, testData.length);
+        Socket sslSocket = connectWithSSL();
+        sslSocket.getOutputStream().write(DATA_FROM_CLIENT);
+        sslSocket.getOutputStream().flush();
+        byte[] buf = new byte[DATA_TO_CLIENT.length];
+        int bytesRead = sslSocket.getInputStream().read(buf, 0, buf.length);
+        Assert.assertEquals(buf.length, bytesRead);
+        Assert.assertArrayEquals(DATA_TO_CLIENT, buf);
 
         serverThread.join(TIMEOUT);
+        forceClose(sslSocket);
 
-        Assert.assertArrayEquals(testData, readBytes);
-        Assert.assertEquals(new String(dataFromClient), dataReadFromClient[0]);
+        Assert.assertTrue(handshakeCompleted);
+        Assert.assertArrayEquals(DATA_FROM_CLIENT, serverThread.getDataFromClient());
+    }
+
+    @Test
+    public void testConnectWithoutSSL() throws Exception {
+        UnifiedServerThread serverThread = new UnifiedServerThread(
+                x509Util, localServerAddress, DATA_TO_CLIENT);
+        serverThread.start();
+
+        Socket socket = connectWithoutSSL();
+        socket.getOutputStream().write(DATA_FROM_CLIENT);
+        socket.getOutputStream().flush();
+        byte[] buf = new byte[DATA_TO_CLIENT.length];
+        int bytesRead = socket.getInputStream().read(buf, 0, buf.length);
+        Assert.assertEquals(buf.length, bytesRead);
+        Assert.assertArrayEquals(DATA_TO_CLIENT, buf);
+
+        serverThread.join(TIMEOUT);
+        forceClose(socket);
+
+        Assert.assertArrayEquals(DATA_FROM_CLIENT, serverThread.getDataFromClient());
     }
 }
