@@ -72,6 +72,7 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
 
         String keyStoreLocation = config.getProperty(x509Util.getSslKeystoreLocationProperty());
         String keyStorePassword = config.getProperty(x509Util.getSslKeystorePasswdProperty());
+        String keyStoreTypeProp = config.getProperty(x509Util.getSslKeystoreTypeProperty());
 
         boolean crlEnabled = Boolean.parseBoolean(System.getProperty(x509Util.getSslCrlEnabledProperty()));
         boolean ocspEnabled = Boolean.parseBoolean(System.getProperty(x509Util.getSslOcspEnabledProperty()));
@@ -88,8 +89,15 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
             if (keyStorePassword == null) {
                 throw new X509Exception("keystore password not specified for client connection");
             }
+            X509Util.StoreFileType keyStoreType;
             try {
-                km = X509Util.createKeyManager(keyStoreLocation, keyStorePassword);
+                keyStoreType = X509Util.StoreFileType.fromPropertyValue(keyStoreTypeProp);
+            } catch (IllegalArgumentException e) {
+                throw new X509Exception(
+                        "Bad value for " + x509Util.getSslKeystoreTypeProperty() + ": " + keyStoreTypeProp, e);
+            }
+            try {
+                km = X509Util.createKeyManager(keyStoreLocation, keyStorePassword, keyStoreType);
             } catch (KeyManagerException e) {
                 LOG.error("Failed to create key manager", e);
             }
@@ -97,6 +105,7 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
         
         String trustStoreLocation = config.getProperty(x509Util.getSslTruststoreLocationProperty());
         String trustStorePassword = config.getProperty(x509Util.getSslTruststorePasswdProperty());
+        String trustStoreTypeProp = config.getProperty(x509Util.getSslTruststoreTypeProperty());
 
         if (trustStoreLocation == null && trustStorePassword == null) {
             LOG.warn("Truststore not specified for client connection");
@@ -107,9 +116,16 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
             if (trustStorePassword == null) {
                 throw new X509Exception("Truststore password not specified for client connection");
             }
+            X509Util.StoreFileType trustStoreType;
+            try {
+                trustStoreType = X509Util.StoreFileType.fromPropertyValue(trustStoreTypeProp);
+            } catch (IllegalArgumentException e) {
+                throw new X509Exception(
+                        "Bad value for " + x509Util.getSslTruststoreTypeProperty() + ": " + trustStoreTypeProp, e);
+            }
             try {
                 tm = X509Util.createTrustManager(
-                        trustStoreLocation, trustStorePassword, crlEnabled, ocspEnabled,
+                        trustStoreLocation, trustStorePassword, trustStoreType, crlEnabled, ocspEnabled,
                         hostnameVerificationEnabled, false);
             } catch (TrustManagerException e) {
                 LOG.error("Failed to create trust manager", e);

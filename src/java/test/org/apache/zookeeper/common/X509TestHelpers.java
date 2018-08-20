@@ -2,6 +2,7 @@ package org.apache.zookeeper.common;
 
 import org.bouncycastle.asn1.DERIA5String;
 import org.bouncycastle.asn1.DEROctetString;
+import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.BasicConstraints;
@@ -18,10 +19,14 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.bouncycastle.crypto.util.PrivateKeyFactory;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
+import org.bouncycastle.openssl.jcajce.JcaPKCS8Generator;
+import org.bouncycastle.openssl.jcajce.JceOpenSSLPKCS8EncryptorBuilder;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
 import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder;
 import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.operator.OutputEncryptor;
 import org.bouncycastle.operator.bc.BcContentSignerBuilder;
 import org.bouncycastle.operator.bc.BcECContentSignerBuilder;
 import org.bouncycastle.operator.bc.BcRSAContentSignerBuilder;
@@ -30,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -49,7 +55,7 @@ import java.util.Date;
 
 /**
  * This class contains helper methods for creating X509 certificates and key pairs, and for serializing them
- * to JKS files. Support for PEM serialization will be added in a later diff.
+ * to JKS or PEM files.
  */
 public class X509TestHelpers {
     private static final Logger LOG = LoggerFactory.getLogger(X509TestHelpers.class);
@@ -246,6 +252,67 @@ public class X509TestHelpers {
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC");
         keyGen.initialize(new ECGenParameterSpec(DEFAULT_ELLIPTIC_CURVE_NAME), PRNG);
         return keyGen.generateKeyPair();
+    }
+
+    /**
+     * PEM-encodes the given X509 certificate and private key (compatible with OpenSSL), optionally protecting the
+     * private key with a password. Concatenates them both and returns the result as a single string.
+     * This creates the PEM encoding of a key store.
+     * @param cert the X509 certificate to PEM-encode.
+     * @param privateKey the private key to PEM-encode.
+     * @param keyPassword an optional key password. If empty or null, the private key will not be encrypted.
+     * @return a String containing the PEM encodings of the certificate and private key.
+     * @throws IOException if converting the certificate or private key to PEM format fails.
+     * @throws OperatorCreationException if constructing the encryptor from the given password fails.
+     */
+    public static String pemEncodeCertAndPrivateKey(
+            X509Certificate cert,
+            PrivateKey privateKey,
+            String keyPassword) throws IOException, OperatorCreationException {
+        return pemEncodeX509Certificate(cert) +
+                "\n" +
+                pemEncodePrivateKey(privateKey, keyPassword);
+    }
+
+    /**
+     * PEM-encodes the given private key (compatible with OpenSSL), optionally protecting it with a password, and
+     * returns the result as a String.
+     * @param key the private key.
+     * @param password an optional key password. If empty or null, the private key will not be encrypted.
+     * @return a String containing the PEM encoding of the private key.
+     * @throws IOException if converting the key to PEM format fails.
+     * @throws OperatorCreationException if constructing the encryptor from the given password fails.
+     */
+    public static String pemEncodePrivateKey(
+            PrivateKey key,
+            String password) throws IOException, OperatorCreationException {
+        StringWriter stringWriter = new StringWriter();
+        JcaPEMWriter pemWriter = new JcaPEMWriter(stringWriter);
+        OutputEncryptor encryptor = null;
+        if (password != null && password.length() > 0) {
+            encryptor = new JceOpenSSLPKCS8EncryptorBuilder(PKCSObjectIdentifiers.pbeWithSHAAnd3_KeyTripleDES_CBC)
+                    .setProvider(BouncyCastleProvider.PROVIDER_NAME)
+                    .setRandom(PRNG)
+                    .setPasssword(password.toCharArray())
+                    .build();
+        }
+        pemWriter.writeObject(new JcaPKCS8Generator(key, encryptor));
+        pemWriter.close();
+        return stringWriter.toString();
+    }
+
+    /**
+     * PEM-encodes the given X509 certificate (compatible with OpenSSL) and returns the result as a String.
+     * @param cert the certificate.
+     * @return a String containing the PEM encoding of the certificate.
+     * @throws IOException if converting the certificate to PEM format fails.
+     */
+    public static String pemEncodeX509Certificate(X509Certificate cert) throws IOException {
+        StringWriter stringWriter = new StringWriter();
+        JcaPEMWriter pemWriter = new JcaPEMWriter(stringWriter);
+        pemWriter.writeObject(cert);
+        pemWriter.close();
+        return stringWriter.toString();
     }
 
     /**

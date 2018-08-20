@@ -1,5 +1,7 @@
 package org.apache.zookeeper.common;
 
+import org.apache.commons.codec.Charsets;
+import org.apache.commons.io.FileUtils;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -32,6 +34,7 @@ public class X509TestContext {
     private final X509Certificate trustStoreCertificate;
     private final String trustStorePassword;
     private File trustStoreJksFile;
+    private File trustStorePemFile;
 
     private final X509KeyType keyStoreKeyType;
     private final KeyPair keyStoreKeyPair;
@@ -39,6 +42,7 @@ public class X509TestContext {
     private final X509Certificate keyStoreCertificate;
     private final String keyStorePassword;
     private File keyStoreJksFile;
+    private File keyStorePemFile;
 
     private final Boolean hostnameVerification;
 
@@ -94,7 +98,7 @@ public class X509TestContext {
                 nameBuilder.build(),
                 keyStoreKeyPair.getPublic(),
                 keyStoreCertExpirationMillis);
-        trustStoreJksFile = keyStoreJksFile = null;
+        trustStorePemFile = trustStoreJksFile = keyStorePemFile = keyStoreJksFile = null;
 
         this.hostnameVerification = hostnameVerification;
     }
@@ -137,10 +141,9 @@ public class X509TestContext {
     }
 
     /**
-     * Returns the path to the trust store file in the given format. Currently only JKS is supported. Note that the
-     * file is created lazily, the first time this method is called. The trust store file is temporary and will be
-     * deleted on exit.
-     * @param storeFileType the store file type.
+     * Returns the path to the trust store file in the given format (JKS or PEM). Note that the file is created lazily,
+     * the first time this method is called. The trust store file is temporary and will be deleted on exit.
+     * @param storeFileType the store file type (JKS or PEM).
      * @return the path to the trust store file.
      * @throws IOException if there is an error creating the trust store file.
      */
@@ -148,6 +151,8 @@ public class X509TestContext {
         switch (storeFileType) {
             case JKS:
                 return getTrustStoreJksFile();
+            case PEM:
+                return getTrustStorePemFile();
             default:
                 throw new IllegalArgumentException("Invalid trust store type: " + storeFileType + ", must be one of: " +
                         Arrays.toString(X509Util.StoreFileType.values()));
@@ -176,6 +181,21 @@ public class X509TestContext {
         return trustStoreJksFile;
     }
 
+    private File getTrustStorePemFile() throws IOException {
+        if (trustStorePemFile == null) {
+            File trustStorePemFile = File.createTempFile(
+                    TRUST_STORE_PREFIX, X509Util.StoreFileType.PEM.getDefaultFileExtension(), tempDir);
+            trustStorePemFile.deleteOnExit();
+            FileUtils.writeStringToFile(
+                    trustStorePemFile,
+                    X509TestHelpers.pemEncodeX509Certificate(trustStoreCertificate),
+                    Charsets.US_ASCII,
+                    false);
+            this.trustStorePemFile = trustStorePemFile;
+        }
+        return trustStorePemFile;
+    }
+
     public X509KeyType getKeyStoreKeyType() {
         return keyStoreKeyType;
     }
@@ -201,10 +221,9 @@ public class X509TestContext {
     }
 
     /**
-     * Returns the path to the key store file in the given format. Currently only JKS is supported. Note that the
-     * file is created lazily, the first time this method is called. The key store file is temporary and will be
-     * deleted on exit.
-     * @param storeFileType the store file type.
+     * Returns the path to the key store file in the given format (JKS or PEM). Note that the file is created lazily,
+     * the first time this method is called. The key store file is temporary and will be deleted on exit.
+     * @param storeFileType the store file type (JKS or PEM).
      * @return the path to the key store file.
      * @throws IOException if there is an error creating the key store file.
      */
@@ -212,6 +231,8 @@ public class X509TestContext {
         switch (storeFileType) {
             case JKS:
                 return getKeyStoreJksFile();
+            case PEM:
+                return getKeyStorePemFile();
             default:
                 throw new IllegalArgumentException("Invalid key store type: " + storeFileType + ", must be one of: " +
                         Arrays.toString(X509Util.StoreFileType.values()));
@@ -241,6 +262,26 @@ public class X509TestContext {
         return keyStoreJksFile;
     }
 
+    private File getKeyStorePemFile() throws IOException {
+        if (keyStorePemFile == null) {
+            try {
+                File keyStorePemFile = File.createTempFile(
+                        KEY_STORE_PREFIX, X509Util.StoreFileType.PEM.getDefaultFileExtension(), tempDir);
+                keyStorePemFile.deleteOnExit();
+                FileUtils.writeStringToFile(
+                        keyStorePemFile,
+                        X509TestHelpers.pemEncodeCertAndPrivateKey(
+                                keyStoreCertificate, keyStoreKeyPair.getPrivate(), keyStorePassword),
+                        Charsets.US_ASCII,
+                        false);
+                this.keyStorePemFile = keyStorePemFile;
+            } catch (OperatorCreationException e) {
+                throw new IOException(e);
+            }
+        }
+        return keyStorePemFile;
+    }
+
     /**
      * Sets the SSL system properties such that the given X509Util object can be used to create SSL Contexts that
      * will use the trust store and key store files created by this test context. Example usage:
@@ -263,10 +304,12 @@ public class X509TestContext {
                 x509Util.getSslKeystoreLocationProperty(),
                 this.getKeyStoreFile(keyStoreFileType).getAbsolutePath());
         System.setProperty(x509Util.getSslKeystorePasswdProperty(), this.getKeyStorePassword());
+        System.setProperty(x509Util.getSslKeystoreTypeProperty(), keyStoreFileType.getPropertyValue());
         System.setProperty(
                 x509Util.getSslTruststoreLocationProperty(),
                 this.getTrustStoreFile(trustStoreFileType).getAbsolutePath());
         System.setProperty(x509Util.getSslTruststorePasswdProperty(), this.getTrustStorePassword());
+        System.setProperty(x509Util.getSslTruststoreTypeProperty(), trustStoreFileType.getPropertyValue());
         if (hostnameVerification != null) {
             System.setProperty(x509Util.getSslHostnameVerificationEnabledProperty(), hostnameVerification.toString());
         } else {
