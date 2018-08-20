@@ -112,6 +112,8 @@ public class ZKConfig {
     }
     
     private void putSSLProperties(X509Util x509Util) {
+        properties.put(x509Util.getSslProtocolProperty(),
+                System.getProperty(x509Util.getSslProtocolProperty()));
         properties.put(x509Util.getSslKeystoreLocationProperty(),
                 System.getProperty(x509Util.getSslKeystoreLocationProperty()));
         properties.put(x509Util.getSslKeystorePasswdProperty(),

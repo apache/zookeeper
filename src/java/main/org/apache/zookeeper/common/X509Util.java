@@ -211,7 +211,7 @@ public abstract class X509Util {
             }
         }
 
-        String protocol = System.getProperty(sslProtocolProperty, DEFAULT_PROTOCOL);
+        String protocol = config.getProperty(sslProtocolProperty, DEFAULT_PROTOCOL);
         try {
             SSLContext sslContext = SSLContext.getInstance(protocol);
             sslContext.init(keyManagers, trustManagers, null);
