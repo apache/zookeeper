@@ -33,6 +33,7 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509ExtendedTrustManager;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -315,8 +316,15 @@ public abstract class X509Util {
         return sslSocket;
     }
 
-    public SSLSocket createSSLSocket(Socket socket) throws X509Exception, IOException {
-        SSLSocket sslSocket = (SSLSocket) getDefaultSSLContext().getSocketFactory().createSocket(socket, null, socket.getPort(), true);
+    public SSLSocket createSSLSocket(Socket socket, byte[] pushbackBytes) throws X509Exception, IOException {
+        SSLSocket sslSocket = null;
+        if (pushbackBytes != null && pushbackBytes.length > 0) {
+            sslSocket = (SSLSocket) getDefaultSSLContext().getSocketFactory().createSocket(
+                    socket, new ByteArrayInputStream(pushbackBytes), true);
+        } else {
+            sslSocket = (SSLSocket) getDefaultSSLContext().getSocketFactory().createSocket(
+                    socket, null, socket.getPort(), true);
+        }
         configureSSLSocket(sslSocket);
 
         return sslSocket;

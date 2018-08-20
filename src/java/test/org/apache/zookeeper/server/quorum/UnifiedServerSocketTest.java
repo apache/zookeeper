@@ -35,9 +35,6 @@ import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
-
 public class UnifiedServerSocketTest {
 
     private static final int MAX_RETRIES = 5;
@@ -88,7 +85,7 @@ public class UnifiedServerSocketTest {
             try {
                 sslSocket = x509Util.createSSLSocket();
                 sslSocket.setSoTimeout(TIMEOUT);
-                sslSocket.connect(new InetSocketAddress(port), TIMEOUT);
+                sslSocket.connect(new InetSocketAddress("localhost", port), TIMEOUT);
                 break;
             } catch (ConnectException connectException) {
                 connectException.printStackTrace();
@@ -124,6 +121,7 @@ public class UnifiedServerSocketTest {
     @Test
     public void testConnectWithoutSSL() throws Exception {
         final byte[] testData = "hello there".getBytes();
+        final byte[] dataFromClient = "hellobello".getBytes();
         final String[] dataReadFromClient = {null};
 
         class ServerThread extends Thread {
@@ -132,8 +130,8 @@ public class UnifiedServerSocketTest {
                     Socket unifiedSocket = new UnifiedServerSocket(x509Util, port).accept();
                     unifiedSocket.getOutputStream().write(testData);
                     unifiedSocket.getOutputStream().flush();
-                    byte[] inputbuff = new byte[5];
-                    unifiedSocket.getInputStream().read(inputbuff, 0, 5);
+                    byte[] inputbuff = new byte[dataFromClient.length];
+                    unifiedSocket.getInputStream().read(inputbuff, 0, dataFromClient.length);
                     dataReadFromClient[0] = new String(inputbuff);
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -149,7 +147,7 @@ public class UnifiedServerSocketTest {
             try {
                 socket = new Socket();
                 socket.setSoTimeout(TIMEOUT);
-                socket.connect(new InetSocketAddress(port), TIMEOUT);
+                socket.connect(new InetSocketAddress("localhost", port), TIMEOUT);
                 break;
             } catch (ConnectException connectException) {
                 connectException.printStackTrace();
@@ -158,7 +156,7 @@ public class UnifiedServerSocketTest {
             retries++;
         }
 
-        socket.getOutputStream().write("hellobello".getBytes());
+        socket.getOutputStream().write(dataFromClient);
         socket.getOutputStream().flush();
 
         byte[] readBytes = new byte[testData.length];
@@ -167,6 +165,6 @@ public class UnifiedServerSocketTest {
         serverThread.join(TIMEOUT);
 
         Assert.assertArrayEquals(testData, readBytes);
-        assertThat("Data sent by the client is invalid", dataReadFromClient[0], equalTo("hello"));
+        Assert.assertEquals(new String(dataFromClient), dataReadFromClient[0]);
     }
 }

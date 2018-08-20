@@ -59,20 +59,21 @@ public class UnifiedServerSocket extends ServerSocket {
 
         byte[] litmus = new byte[5];
         int bytesRead = prependableSocket.getInputStream().read(litmus, 0, 5);
-        prependableSocket.prependToInputStream(litmus);
 
         if (bytesRead == 5 && SslHandler.isEncrypted(ChannelBuffers.wrappedBuffer(litmus))) {
             LOG.info(getInetAddress() + " attempting to connect over ssl");
             SSLSocket sslSocket;
             try {
-                sslSocket = x509Util.createSSLSocket(prependableSocket);
+                sslSocket = x509Util.createSSLSocket(prependableSocket, litmus);
             } catch (X509Exception e) {
                 throw new IOException("failed to create SSL context", e);
             }
             sslSocket.setUseClientMode(false);
+            sslSocket.setNeedClientAuth(true); // TODO: probably need to add a property for this in X509Util
             return sslSocket;
         } else {
             LOG.info(getInetAddress() + " attempting to connect without ssl");
+            prependableSocket.prependToInputStream(litmus);
             return prependableSocket;
         }
     }
