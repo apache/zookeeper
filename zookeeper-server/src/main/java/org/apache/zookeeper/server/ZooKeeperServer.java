@@ -79,7 +79,6 @@ import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 /**
  * This class implements a simple standalone ZooKeeperServer. It sets up the
  * following chain of RequestProcessors to process requests:
@@ -96,6 +95,14 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         ZookeeperBanner.printBanner(LOG);
 
         Environment.logEnv("Server environment:", LOG);
+    }
+
+    private static final String SHUTDOWN_TIMEOUT = "zookeeper.shutdownTimeout";
+    private static int shutdownTimeout = 10000;
+
+    static {
+        shutdownTimeout = Integer.getInteger(SHUTDOWN_TIMEOUT, 10000);
+        LOG.info(SHUTDOWN_TIMEOUT + "=" + shutdownTimeout);
     }
 
     protected ZooKeeperServerBean jmxServerBean;
@@ -187,6 +194,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     // Connection throttling
     private BlueThrottle connThrottle;
 
+    private RequestThrottler requestThrottler;
+
     void removeCnxn(ServerCnxn cnxn) {
         zkDb.removeCnxn(cnxn);
     }
@@ -250,8 +259,17 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                            ZKDatabase zkDb, String initialConfig) {
         this(txnLogFactory, tickTime, minSessionTimeout, maxSessionTimeout, clientPortListenBacklog, zkDb, initialConfig);
         this.jvmPauseMonitor = jvmPauseMonitor;
-        if(jvmPauseMonitor != null) {
+        if (jvmPauseMonitor != null) {
             LOG.info("Added JvmPauseMonitor to server");
+        }
+    }
+
+    static boolean getBooleanProp(String name, boolean def) {
+        String val = System.getProperty(name);
+        if(val != null) {
+            return Boolean.parseBoolean(val);
+        } else {
+            return def;
         }
     }
 
@@ -558,6 +576,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         startSessionTracker();
         setupRequestProcessors();
 
+        requestThrottler = new RequestThrottler(this);
+        requestThrottler.start();
+
         registerJMX();
 
         startJvmPauseMonitor();
@@ -674,6 +695,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         // subclasses will do their specific clean up
         unregisterMetrics();
 
+        if (requestThrottler != null) {
+            requestThrottler.shutdown();
+        }
+
         // Since sessionTracker and syncThreads poll we just have to
         // set running to false and they will detect it during the poll
         // interval.
@@ -735,10 +760,26 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     public void decInProcess() {
         requestsInProcess.decrementAndGet();
+        requestThrottler.throttleWake();
     }
 
     public int getInProcess() {
         return requestsInProcess.get();
+    }
+
+    public int getInflight() {
+        if (RequestThrottler.enabled()) {
+            return requestThrottleInflight();
+        } else {
+            return getInProcess();
+        }
+    }
+
+    public int requestThrottleInflight() {
+        if (requestThrottler != null) {
+            return requestThrottler.getInflight();
+        }
+        return 0;
     }
 
     /**
@@ -910,6 +951,37 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public void submitRequest(Request si) {
+        if (RequestThrottler.enabled()) {
+            enqueueRequest(si);
+        }
+        else {
+            submitRequestNow(si);
+        }
+    }
+
+    public void enqueueRequest(Request si) {
+        if (requestThrottler == null) {
+            synchronized (this) {
+                try {
+                    // Since all requests are passed to the request
+                    // processor it should wait for setting up the request
+                    // processor chain. The state will be updated to RUNNING
+                    // after the setup.
+                    while (state == State.INITIAL) {
+                        wait(1000);
+                    }
+                } catch (InterruptedException e) {
+                    LOG.warn("Unexpected interruption", e);
+                }
+                if (requestThrottler == null) {
+                    throw new RuntimeException("Not started");
+                }
+            }
+        }
+        requestThrottler.submitRequest(si);
+    }
+
+    public void submitRequestNow(Request si) {
         if (firstProcessor == null) {
             synchronized (this) {
                 try {
@@ -1224,7 +1296,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public boolean shouldThrottle(long outStandingCount) {
-        if (getGlobalOutstandingLimit() < getInProcess()) {
+        if (getGlobalOutstandingLimit() < getInflight()) {
             return outStandingCount > 0;
         }
         return false;
@@ -1255,6 +1327,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     static void setMaxBatchSize(int size) {
         LOG.info("{}={}", MAX_BATCH_SIZE, size);
         maxBatchSize = size;
+    }
+
+    public static int getShutdownTimeout() {
+        return shutdownTimeout;
     }
 
     public void processPacket(ServerCnxn cnxn, ByteBuffer incomingBuffer) throws IOException {

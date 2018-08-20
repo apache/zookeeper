@@ -217,6 +217,11 @@ public class FinalRequestProcessor implements RequestProcessor {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("{}",request);
             }
+
+            if (request.isStale()) {
+                ServerMetrics.getMetrics().STALE_REPLIES.add(1);
+            }
+
             switch (request.type) {
             case OpCode.ping: {
                 lastOp = "PING";

@@ -68,8 +68,6 @@ public abstract class ServerCnxn implements Stats, Watcher {
      */
     boolean isOldClient = true;
 
-    private volatile boolean stale = false;
-
     AtomicLong outstandingCount = new AtomicLong();
 
     /** The ZooKeeperServer for this connection. May be null if the server
@@ -122,6 +120,22 @@ public abstract class ServerCnxn implements Stats, Watcher {
     public ServerCnxn(final ZooKeeperServer zkServer) {
         this.zkServer = zkServer;
     }
+
+    /**
+     * Flag that indicates that this connection is known to be closed/closing
+     * and from which we can optionally ignore outstanding requests as part
+     * of request throttling. This flag may be false when a connection is
+     * actually closed (false negative), but should never be true with
+     * a connection is still alive (false positive).
+     */
+    private volatile boolean stale = false;
+
+    /**
+     * Flag that indicates that a request for this connection was previously
+     * dropped as part of request throttling and therefore all future requests
+     * must also be dropped to ensure ordering guarantees.
+     */
+    private volatile boolean invalid = false;
 
     abstract int getSessionTimeout();
 
@@ -274,6 +288,19 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     public void setStale() {
         stale = true;
+    }
+
+    public boolean isInvalid() {
+        return invalid;
+    }
+
+    public void setInvalid() {
+        if (!invalid) {
+            if (!stale) {
+                sendCloseSession();
+            }
+            invalid = true;
+        }
     }
 
     protected void packetReceived(long bytes) {

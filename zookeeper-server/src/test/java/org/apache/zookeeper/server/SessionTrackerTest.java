@@ -48,6 +48,7 @@ public class SessionTrackerTest extends ZKTestCase {
      */
     @Test(timeout = 20000)
     public void testAddSessionAfterSessionExpiry() throws Exception {
+        System.setProperty("zookeeper.request_throttle", "false");
         ZooKeeperServer zks = setupSessionTracker();
 
         latch = new CountDownLatch(1);
