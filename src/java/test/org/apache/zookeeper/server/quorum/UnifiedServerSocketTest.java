@@ -44,6 +44,7 @@ import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.security.Security;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -159,14 +160,17 @@ public class UnifiedServerSocketTest {
     private static final class UnifiedServerThread extends Thread {
         private final X509Util x509Util;
         private final InetSocketAddress bindAddress;
+        private final boolean allowInsecureConnection;
         private final byte[] dataToClient;
         private byte[] dataFromClient;
 
         UnifiedServerThread(X509Util x509Util,
                             InetSocketAddress bindAddress,
+                            boolean allowInsecureConnection,
                             byte[] dataToClient) {
             this.x509Util = x509Util;
             this.bindAddress = bindAddress;
+            this.allowInsecureConnection = allowInsecureConnection;
             this.dataToClient = dataToClient;
             this.dataFromClient = new byte[0];
         }
@@ -176,7 +180,7 @@ public class UnifiedServerSocketTest {
             ServerSocket serverSocket = null;
             Socket unifiedSocket = null;
             try {
-                serverSocket = new UnifiedServerSocket(x509Util);
+                serverSocket = new UnifiedServerSocket(x509Util, allowInsecureConnection);
                 serverSocket.bind(bindAddress);
                 unifiedSocket = serverSocket.accept();
                 byte[] buf = new byte[1024];
@@ -251,9 +255,9 @@ public class UnifiedServerSocketTest {
     }
 
     @Test
-    public void testConnectWithSSL() throws Exception {
+    public void testConnectWithSSLToNonStrictServer() throws Exception {
         UnifiedServerThread serverThread = new UnifiedServerThread(
-                x509Util, localServerAddress, DATA_TO_CLIENT);
+                x509Util, localServerAddress, true, DATA_TO_CLIENT);
         serverThread.start();
 
         Socket sslSocket = connectWithSSL();
@@ -272,9 +276,31 @@ public class UnifiedServerSocketTest {
     }
 
     @Test
-    public void testConnectWithoutSSL() throws Exception {
+    public void testConnectWithSSLToStrictServer() throws Exception {
         UnifiedServerThread serverThread = new UnifiedServerThread(
-                x509Util, localServerAddress, DATA_TO_CLIENT);
+                x509Util, localServerAddress, false, DATA_TO_CLIENT);
+        serverThread.start();
+
+        Socket sslSocket = connectWithSSL();
+        sslSocket.getOutputStream().write(DATA_FROM_CLIENT);
+        sslSocket.getOutputStream().flush();
+        byte[] buf = new byte[DATA_TO_CLIENT.length];
+        int bytesRead = sslSocket.getInputStream().read(buf, 0, buf.length);
+        Assert.assertEquals(buf.length, bytesRead);
+        Assert.assertArrayEquals(DATA_TO_CLIENT, buf);
+
+        serverThread.join(TIMEOUT);
+        forceClose(sslSocket);
+
+        Assert.assertTrue(handshakeCompleted);
+
+        Assert.assertArrayEquals(DATA_FROM_CLIENT, serverThread.getDataFromClient());
+    }
+
+    @Test
+    public void testConnectWithoutSSLToNonStrictServer() throws Exception {
+        UnifiedServerThread serverThread = new UnifiedServerThread(
+                x509Util, localServerAddress, true, DATA_TO_CLIENT);
         serverThread.start();
 
         Socket socket = connectWithoutSSL();
@@ -289,5 +315,26 @@ public class UnifiedServerSocketTest {
         forceClose(socket);
 
         Assert.assertArrayEquals(DATA_FROM_CLIENT, serverThread.getDataFromClient());
+    }
+
+    @Test
+    public void testConnectWithoutSSLToStrictServer() throws Exception {
+        UnifiedServerThread serverThread = new UnifiedServerThread(
+                x509Util, localServerAddress, false, DATA_TO_CLIENT);
+        serverThread.start();
+
+        Socket socket = connectWithoutSSL();
+        socket.getOutputStream().write(DATA_FROM_CLIENT);
+        socket.getOutputStream().flush();
+        byte[] buf = new byte[DATA_TO_CLIENT.length];
+        try {
+            socket.getInputStream().read(buf, 0, buf.length);
+        } catch (SocketException e) {
+            // We expect the other end to hang up the connection
+            serverThread.join(TIMEOUT);
+            forceClose(socket);
+            return;
+        }
+        Assert.fail("Expected server to hang up the connection. Read from server succeeded unexpectedly.");
     }
 }
