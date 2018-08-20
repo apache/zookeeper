@@ -219,6 +219,9 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
             // Note: this will close the connection
             conn.setInvalid();
         }
+        // Notify ZooKeeperServer that the request has finished so that it can
+        // update any request accounting/throttling limits.
+        zks.requestFinished(request);
     }
 
     public void submitRequest(Request request) {

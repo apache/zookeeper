@@ -957,6 +957,16 @@ property, when available, is noted below.
     consistency check during recovery process.
     Default value is false.
 
+* *largeRequestMaxBytes* :
+    (Java system property: **zookeeper.largeRequestMaxBytes**)
+    **New in 3.6.0:**
+    The maximum number of bytes of all inflight large request. The connection will be closed if a coming large request causes the limit exceeded. The default is 100 * 1024 * 1024.
+
+* *largeRequestThreshold* :
+    (Java system property: **zookeeper.largeRequestThreshold**)
+    **New in 3.6.0:**
+    The size threshold after which a request is considered a large request. If it is -1, then all requests are considered small, effectively turning off large request throttling. The default is -1.
+
 <a name="sc_clusterOptions"></a>
 
 #### Cluster Options
