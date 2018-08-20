@@ -80,6 +80,48 @@ public abstract class X509Util {
             "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256"
     };
 
+    /**
+     * This enum represents the file type of a KeyStore or TrustStore. Currently, only JKS (java keystore) type is
+     * supported, but PEM support will be added in a future diff.
+     */
+    public enum StoreFileType {
+        JKS(".jks");
+
+        private final String defaultFileExtension;
+
+        StoreFileType(String defaultFileExtension) {
+            this.defaultFileExtension = defaultFileExtension;
+        }
+
+        /**
+         * The property string that specifies that a key store or trust store should use this store file type.
+         */
+        public String getPropertyValue() {
+            return this.name();
+        }
+
+        /**
+         * The file extension that is associated with this file type.
+         */
+        public String getDefaultFileExtension() {
+            return defaultFileExtension;
+        }
+
+        /**
+         * Converts a property value to a StoreFileType enum. If the property value is not set or is empty, returns
+         * null.
+         * @param prop the property value.
+         * @return the StoreFileType.
+         * @throws IllegalArgumentException if the property value is not "JKS", "PEM", or empty/null.
+         */
+        public static StoreFileType fromPropertyValue(String prop) {
+            if (prop == null || prop.length() == 0) {
+                return null;
+            }
+            return StoreFileType.valueOf(prop.toUpperCase());
+        }
+    }
+
     private String sslProtocolProperty = getConfigPrefix() + "protocol";
     private String cipherSuitesProperty = getConfigPrefix() + "ciphersuites";
     private String sslKeystoreLocationProperty = getConfigPrefix() + "keyStore.location";
