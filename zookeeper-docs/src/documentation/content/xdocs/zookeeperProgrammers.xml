@@ -941,7 +941,7 @@
 
       <note><para>This is a very simple example which is intended to show
         how to interact with ZooKeeper ACLs
-        specifically. See <filename>.../trunk/src/c/src/cli.c</filename>
+        specifically. See <filename>.../trunk/zookeeper-client/zookeeper-client-c/src/cli.c</filename>
         for an example of a C client implementation</para>
       </note>
 
@@ -1329,11 +1329,11 @@ authProvider.2=com.f.MyAuth2
             <para>Run <command>ant compile_jute</command> from the ZooKeeper
             top level directory (<filename>.../trunk</filename>).
             This will create a directory named "generated" under
-            <filename>.../trunk/src/c</filename>.</para>
+            <filename>.../trunk/zookeeper-client/zookeeper-client-c</filename>.</para>
           </listitem>
 
           <listitem>
-            <para>Change directory to the<filename>.../trunk/src/c</filename>
+            <para>Change directory to the<filename>.../trunk/zookeeper-client/zookeeper-client-c</filename>
             and run <command>autoreconf -if</command> to bootstrap <emphasis
             role="bold">autoconf</emphasis>, <emphasis
             role="bold">automake</emphasis> and <emphasis
@@ -1345,7 +1345,7 @@ authProvider.2=com.f.MyAuth2
           <listitem>
             <para>If you are building from a project source package,
             unzip/untar the source tarball and cd to the<filename>
-            zookeeper-x.x.x/src/c</filename> directory.</para>
+            zookeeper-x.x.x/zookeeper-client/zookeeper-client-c</filename> directory.</para>
           </listitem>
 
           <listitem>
@@ -1429,7 +1429,7 @@ authProvider.2=com.f.MyAuth2
         </orderedlist>
 
         <note><para>
-          See <filename>.../trunk/src/c/src/cli.c</filename>
+          See <filename>.../trunk/zookeeper-client/zookeeper-client-c/src/cli.c</filename>
             for an example of a C client implementation</para>
         </note>
       </section>
