@@ -161,7 +161,7 @@ startReadOnly)
         mkdir -p "${tmpdir}/zkdata"
         rm -f "${tmpdir}/zkdata/myid" && echo 1 > "${tmpdir}/zkdata/myid"
 
-        sed "s#TMPDIR#${tmpdir}#g" ${base_dir}/src/c/tests/quorum.cfg > "${tmpdir}/quorum.cfg"
+        sed "s#TMPDIR#${tmpdir}#g" ${base_dir}/zookeeper-client/zookeeper-client-c/tests/quorum.cfg > "${tmpdir}/quorum.cfg"
 
         # force read-only mode
         java -cp "$CLASSPATH" -Dreadonlymode.enabled=true org.apache.zookeeper.server.quorum.QuorumPeerMain ${tmpdir}/quorum.cfg &> "${tmpdir}/zk.log" &

@@ -39,9 +39,10 @@ follow the steps outlined below. If you're building from a release
 tar downloaded from Apache please skip to step 2.
 
 1) do a "ant compile_jute" from the zookeeper top level directory (.../trunk).
-   This will create a directory named "generated" under src/c.  Skip to step 3.
-2) unzip/untar the source tarball and cd to the zookeeper-x.x.x/src/c directory
-3) change directory to src/c and do a "autoreconf -if" to bootstrap
+   This will create a directory named "generated" under zookeeper-client/zookeeper-client-c.
+   Skip to step 3.
+2) unzip/untar the source tarball and cd to the zookeeper-x.x.x/zookeeper-client/zookeeper-client-c directory
+3) change directory to zookeeper-client/zookeeper-client-c and do a "autoreconf -if" to bootstrap
    autoconf, automake and libtool. Please make sure you have autoconf
    version 2.59 or greater installed. If cppunit is installed in a non-standard
    directory, you need to specify where to find cppunit.m4. For example, if
