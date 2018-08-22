@@ -549,10 +549,10 @@ public class DataTree {
         if (node == null) {
             throw new KeeperException.NoNodeException();
         }
-        nodeDataSize.addAndGet(-getNodeSize(path, node.data));
         nodes.remove(path);
         synchronized (node) {
             aclCache.removeUsage(node.acl);
+            nodeDataSize.addAndGet(-getNodeSize(path, node.data));
         }
         DataNode parent = nodes.get(parentName);
         if (parent == null) {
