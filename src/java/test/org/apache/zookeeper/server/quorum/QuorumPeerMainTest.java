@@ -1410,7 +1410,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     /**
      * Test leader election finished  with 1 disloyal voter and without
      * majority followers, expecting to see the quorum stablized only
-     * after waiting for minTimeToWaitForEpoch.
+     * after waiting for maxTimeToWaitForEpoch.
      */
     @Test
     public void testLeaderElectionWithDisloyalVoter() throws IOException {
@@ -1422,7 +1422,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
      * followers, expecting to see the quorum stablized immediately even
      * there is 1 disloyal voter.
      *
-     * Set the minTimeToWaitForEpoch to 3s and maxTimeWaitForServerUp to
+     * Set the maxTimeToWaitForEpoch to 3s and maxTimeWaitForServerUp to
      * 2s to confirm this.
      */
     @Test
@@ -1432,9 +1432,9 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     }
 
     void testLeaderElection(int totalServers, int serversToStart,
-            int minTimeToWaitForEpoch, int maxTimeWaitForServerUp)
+            int maxTimeToWaitForEpoch, int maxTimeWaitForServerUp)
             throws IOException {
-        Leader.setMinTimeToWaitForEpoch(minTimeToWaitForEpoch);
+        Leader.setMaxTimeToWaitForEpoch(maxTimeToWaitForEpoch);
 
         // set up config for an ensemble with given number of servers
         servers = new Servers();

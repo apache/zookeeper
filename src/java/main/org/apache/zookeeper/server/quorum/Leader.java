@@ -1177,34 +1177,36 @@ public class Leader {
     private volatile long timeStartWaitForEpoch = -1;
     private volatile SyncedLearnerTracker voteSet;
 
-    public static final String MIN_TIME_WAIT_FOR_EPOCH = "zookeeper.leader.minTimeToWaitForEpoch";
-    private static int minTimeToWaitForEpoch;
+    public static final String MAX_TIME_TO_WAIT_FOR_EPOCH = "zookeeper.leader.maxTimeToWaitForEpoch";
+    private static int maxTimeToWaitForEpoch;
     static {
-        minTimeToWaitForEpoch = Integer.getInteger(MIN_TIME_WAIT_FOR_EPOCH, -1);
-        LOG.info(MIN_TIME_WAIT_FOR_EPOCH + " = " + minTimeToWaitForEpoch);
+        maxTimeToWaitForEpoch = Integer.getInteger(MAX_TIME_TO_WAIT_FOR_EPOCH, -1);
+        LOG.info("{} = {}ms", MAX_TIME_TO_WAIT_FOR_EPOCH, maxTimeToWaitForEpoch);
     }
 
     // visible for test
-    public static void setMinTimeToWaitForEpoch(int minTimeToWaitForEpoch) {
-        Leader.minTimeToWaitForEpoch = minTimeToWaitForEpoch;
-        LOG.info(MIN_TIME_WAIT_FOR_EPOCH + " set to " + minTimeToWaitForEpoch);
+    public static void setMaxTimeToWaitForEpoch(int maxTimeToWaitForEpoch) {
+        Leader.maxTimeToWaitForEpoch = maxTimeToWaitForEpoch;
+        LOG.info("Set {} to {}ms", MAX_TIME_TO_WAIT_FOR_EPOCH, Leader.maxTimeToWaitForEpoch);
     }
 
     /**
      * Quit condition:
      *
-     * 1 voter goes to looking again and time waitForEpoch > minTimeToWaitForEpoch
+     * 1 voter goes to looking again and time waitForEpoch > maxTimeToWaitForEpoch
      *
-     * Note: the voter may go to looking again due to:
-     * 1. change mind in the last minute when received a different notifications
-     * 2. the leader hadn't started leading when it tried to connect to it.
+     * Note: the voter may go to looking again in case of:
+     * 1. change mind in the last minute when received a different notification
+     * 2. the leader hadn't started leading when it tried to connect to it
+     * 3. connection broken between the voter and leader
+     * 4. voter being shutdown or restarted
      */
     private void quitLeading() {
         synchronized(connectingFollowers) {
             quitWaitForEpoch = true;
             connectingFollowers.notifyAll();
         }
-        LOG.info("Quit leading due to disloyal voter.");
+        LOG.info("Quit leading due to voter changed mind.");
     }
 
     public void setLeadingVoteSet(SyncedLearnerTracker voteSet) {
@@ -1212,14 +1214,14 @@ public class Leader {
     }
 
     public void reportLookingSid(long sid) {
-        if (minTimeToWaitForEpoch < 0 || timeStartWaitForEpoch < 0
+        if (maxTimeToWaitForEpoch < 0 || timeStartWaitForEpoch < 0
                 || !waitingForNewEpoch) {
             return;
         }
         if (voteSet == null || !voteSet.hasSid(sid)) {
             return;
         }
-        if (Time.currentElapsedTime() - timeStartWaitForEpoch > minTimeToWaitForEpoch) {
+        if (Time.currentElapsedTime() - timeStartWaitForEpoch > maxTimeToWaitForEpoch) {
             quitLeading();
         }
     }
