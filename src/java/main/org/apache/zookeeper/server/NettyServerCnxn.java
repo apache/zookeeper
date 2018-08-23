@@ -38,6 +38,7 @@ import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.server.quorum.ProposalStats;
+import org.apache.zookeeper.common.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.Environment;
@@ -341,15 +342,21 @@ public class NettyServerCnxn extends ServerCnxn {
     }
     
     private class SetTraceMaskCommand extends CommandThread {
-        long trace = 0;
-        SetTraceMaskCommand(PrintWriter pw, long trace) {
+        SetTraceMaskCommandArgs args;
+        SetTraceMaskCommand(PrintWriter pw, SetTraceMaskCommandArgs args) {
             super(pw);
-            this.trace = trace;
+            this.args = args;
         }
-        
+
         @Override
         public void commandRun() {
-            pw.print(trace);
+            ZooTrace.setTextTraceLevel(args.getTraceMask());
+            pw.print(args.getTraceMask());
+
+            ZooTrace.setTraceRates(args.getRates());
+            for( short rate : args.getRates()) {
+                pw.print(rate);
+            }
         }
     }
     
@@ -680,14 +687,7 @@ public class NettyServerCnxn extends ServerCnxn {
             tmask.start();
             return true;
         } else if (len == setTraceMaskCmd) {
-            ByteBuffer mask = ByteBuffer.allocate(8);
-            message.readBytes(mask);
-            mask.flip();
-            long traceMask = mask.getLong();
-            ZooTrace.setTextTraceLevel(traceMask);
-            SetTraceMaskCommand setMask = new SetTraceMaskCommand(pwriter, traceMask);
-            setMask.start();
-            return true;
+            return executeSetTraceMaskCmd(message, pwriter);
         } else if (len == enviCmd) {
             EnvCommand env = new EnvCommand(pwriter);
             env.start();
@@ -730,6 +730,19 @@ public class NettyServerCnxn extends ServerCnxn {
             return true;
         }
         return false;
+    }
+
+    private boolean executeSetTraceMaskCmd(ChannelBuffer message, PrintWriter pwriter) throws IOException {
+        // Netty will fail readBytes when readableBytes is less than buffer size
+        // At the same time we don't want to read all readableBytes
+        int bufferSize = Math.min(SetTraceMaskCommandArgs.MAX_BUFFER_SIZE, message.readableBytes());
+        ByteBuffer inputArgs = ByteBuffer.allocate(bufferSize);
+        message.readBytes(inputArgs);
+        inputArgs.flip();
+        SetTraceMaskCommandArgs args = SetTraceMaskCommandArgs.fromBuffer(inputArgs);
+        SetTraceMaskCommand setMask = new SetTraceMaskCommand(pwriter, args);
+        setMask.start();
+        return true;
     }
 
     public void receiveMessage(ChannelBuffer message) {

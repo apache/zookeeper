@@ -227,7 +227,7 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
 
         running = false;
         if (LOG.isTraceEnabled()) {
-            ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),
+            ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
                                      "Shutdown SessionTrackerImpl!");
         }
     }

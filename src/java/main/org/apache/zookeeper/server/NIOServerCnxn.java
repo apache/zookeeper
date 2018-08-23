@@ -37,6 +37,7 @@ import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.server.quorum.ProposalStats;
+import org.apache.zookeeper.common.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.Environment;
@@ -557,15 +558,21 @@ public class NIOServerCnxn extends ServerCnxn {
     }
     
     private class SetTraceMaskCommand extends CommandThread {
-        long trace = 0;
-        SetTraceMaskCommand(PrintWriter pw, long trace) {
+        SetTraceMaskCommandArgs args;
+        SetTraceMaskCommand(PrintWriter pw, SetTraceMaskCommandArgs args) {
             super(pw);
-            this.trace = trace;
+            this.args = args;
         }
-        
+
         @Override
         public void commandRun() {
-            pw.print(trace);
+            ZooTrace.setTextTraceLevel(args.getTraceMask());
+            pw.print(args.getTraceMask());
+
+            ZooTrace.setTraceRates(args.getRates());
+            for( short rate : args.getRates()) {
+                pw.print(rate);
+            }
         }
     }
     
@@ -917,18 +924,7 @@ public class NIOServerCnxn extends ServerCnxn {
             tmask.start();
             return true;
         } else if (len == setTraceMaskCmd) {
-            incomingBuffer = ByteBuffer.allocate(8);
-            int rc = sock.read(incomingBuffer);
-            if (rc < 0) {
-                throw new IOException("Read error");
-            }
-
-            incomingBuffer.flip();
-            long traceMask = incomingBuffer.getLong();
-            ZooTrace.setTextTraceLevel(traceMask);
-            SetTraceMaskCommand setMask = new SetTraceMaskCommand(pwriter, traceMask);
-            setMask.start();
-            return true;
+            return executeSetTraceMaskCmd(pwriter);
         } else if (len == enviCmd) {
             EnvCommand env = new EnvCommand(pwriter);
             env.start();
@@ -971,6 +967,16 @@ public class NIOServerCnxn extends ServerCnxn {
             return true;
         }
         return false;
+    }
+
+    private boolean executeSetTraceMaskCmd(PrintWriter pwriter) throws IOException {
+        incomingBuffer = ByteBuffer.allocate(SetTraceMaskCommandArgs.MAX_BUFFER_SIZE);
+        this.sock.read(incomingBuffer);
+        incomingBuffer.flip();
+        SetTraceMaskCommandArgs args = SetTraceMaskCommandArgs.fromBuffer(incomingBuffer);
+        SetTraceMaskCommand setMask = new SetTraceMaskCommand(pwriter, args);
+        setMask.start();
+        return true;
     }
 
     /** Reads the first 4 bytes of lenBuffer, which could be true length or

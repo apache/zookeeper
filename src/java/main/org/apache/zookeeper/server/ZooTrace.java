@@ -23,6 +23,9 @@ import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.server.quorum.LearnerHandler;
 import org.apache.zookeeper.server.quorum.QuorumPacket;
 
+import java.util.Arrays;
+import java.util.concurrent.ThreadLocalRandom;
+
 /**
  * This class encapsulates and centralizes tracing for the ZooKeeper server.
  * Trace messages go to the log with TRACE level.
@@ -48,44 +51,109 @@ public class ZooTrace {
 
     final static public long JMX_TRACE_MASK = 1 << 9;
 
+    final static public short MAX_TRACE_RATE = 1000;
+
+    final static public int NUM_OF_BITS = 10;
+
+    final static public short[] DEFAULT_RATES = initTraceRates(MAX_TRACE_RATE);
+
     private static long traceMask = CLIENT_REQUEST_TRACE_MASK
             | SERVER_PACKET_TRACE_MASK | SESSION_TRACE_MASK
             | WARNING_TRACE_MASK;
 
-    public static long getTextTraceLevel() {
+    private static short[] traceRates = DEFAULT_RATES;
+
+    private static short[] initTraceRates(short value) {
+        short[] rates = new short[NUM_OF_BITS];
+        Arrays.fill(rates, value);
+        return rates;
+    }
+
+    public static boolean validate() {
+        if (traceRates.length != NUM_OF_BITS) {
+            return  false;
+        }
+
+        for (short rate : traceRates) {
+            if (!validateRate(rate)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static boolean validateRate(short rate) {
+        return (rate >= 0 && rate <= MAX_TRACE_RATE);
+    }
+
+    public static short getTraceRateForBit(Long mask) {
+        if (mask == 0) {
+            return 0;
+
+        }
+
+        int index = Long.numberOfTrailingZeros(mask);
+        return traceRates[index];
+    }
+
+    public static synchronized void setTraceRates(short[] rates) {
+        traceRates = rates;
+        final Logger LOG = LoggerFactory.getLogger(ZooTrace.class);
+        LOG.info("Set trace rates to " + Arrays.toString(rates));
+        if (!validate()) {
+            LOG.error("Unsupported trace rates value " + Arrays.toString(traceRates));
+        }
+    }
+
+    public static synchronized long getTextTraceLevel() {
         return traceMask;
     }
 
-    public static void setTextTraceLevel(long mask) {
+    public static synchronized void setTextTraceLevel(long mask) {
         traceMask = mask;
-        Logger LOG = LoggerFactory.getLogger(ZooTrace.class);
+        final Logger LOG = LoggerFactory.getLogger(ZooTrace.class);
         LOG.info("Set text trace mask to 0x" + Long.toHexString(mask));
     }
 
-    public static boolean isTraceEnabled(Logger log, long mask) {
-        return log.isTraceEnabled() && (mask & traceMask) != 0;
+    public static synchronized boolean isTraceEnabled(Logger log, long mask) {
+        short traceRate = getTraceRateForBit(mask);
+        return log.isTraceEnabled() && (mask & traceMask) != 0 && validateRate(traceRate) && traceRate != 0;
+    }
+
+    public static boolean coinFlip(long mask) {
+        short traceRate = getTraceRateForBit(mask);
+        return ThreadLocalRandom.current().nextInt(0, MAX_TRACE_RATE) < traceRate;
     }
 
     public static void logTraceMessage(Logger log, long mask, String msg) {
-        if (isTraceEnabled(log, mask)) {
+        if (isTraceEnabled(log, mask) && coinFlip(mask)) {
             log.trace(msg);
         }
     }
 
     static public void logQuorumPacket(Logger log, long mask,
-            char direction, QuorumPacket qp)
+                                       char direction, QuorumPacket qp)
     {
-        if (isTraceEnabled(log, mask)) { 
+        if (isTraceEnabled(log, mask) && coinFlip(mask)) {
             logTraceMessage(log, mask, direction +
                     " " + LearnerHandler.packetToString(qp));
-         }
+        }
     }
 
     static public void logRequest(Logger log, long mask,
-            char rp, Request request, String header)
+                                  char rp, Request request, String header)
     {
-        if (isTraceEnabled(log, mask)) {
-            log.trace(header + ":" + rp + request.toString());
+        if (isTraceEnabled(log, mask) && coinFlip(mask)) {
+            log.trace(header + ":" + rp + request.toString() + ":" + getAddress(request));
+        }
+    }
+
+    static private String getAddress(Request request) {
+        try {
+            return request.cnxn.getRemoteSocketAddress().toString();
+        } catch (NullPointerException ex) {
+            return "";
         }
     }
 }

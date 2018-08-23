@@ -40,6 +40,8 @@ public class FourLetterWordsTest extends ClientBase {
     protected static final Logger LOG =
         LoggerFactory.getLogger(FourLetterWordsTest.class);
 
+    public static final short[] EMPTY_SHORT_ARRAY = new short[0];
+
     @Rule
     public Timeout timeout = new Timeout(30000);
 
@@ -205,11 +207,28 @@ public class FourLetterWordsTest extends ClientBase {
         Assert.assertFalse(gtmkResp.isEmpty());
         long formerMask = Long.valueOf(gtmkResp);
         try {
-            verify(buildSetTraceMaskRequest(0), "0");
+            verify(buildSetTraceMaskRequest(0, EMPTY_SHORT_ARRAY), "0");
             verify("gtmk", "0");
         } finally {
             // Restore former value.
-            sendRequest(buildSetTraceMaskRequest(formerMask));
+            sendRequest(buildSetTraceMaskRequest(formerMask, EMPTY_SHORT_ARRAY));
+        }
+    }
+
+    @Test
+    public void testSetTraceMaskWithRates() throws Exception {
+        String gtmkResp = sendRequest("gtmk");
+        Assert.assertNotNull(gtmkResp);
+        gtmkResp = gtmkResp.trim();
+        Assert.assertFalse(gtmkResp.isEmpty());
+        long formerMask = Long.valueOf(gtmkResp);
+        short[] rates = {10, 2, 50, 100, 2, 0, 0, 0, 0, 1};
+        try {
+            verify(buildSetTraceMaskRequest(0, rates), "0" + joinRates(rates));
+            verify("gtmk", "0");
+        } finally {
+            // Restore former value.
+            sendRequest(buildSetTraceMaskRequest(formerMask, EMPTY_SHORT_ARRAY));
         }
     }
 
@@ -218,10 +237,11 @@ public class FourLetterWordsTest extends ClientBase {
      * "stmk" followed by the 8-byte long representation of the trace mask.
      *
      * @param mask trace mask to set
+     * @param rates array of 10 ints - rates per each mask bit value
      * @return built request
      * @throws IOException if there is an I/O error
      */
-    private String buildSetTraceMaskRequest(long mask) throws IOException {
+    private String buildSetTraceMaskRequest(long mask, short[] rates) throws IOException {
         ByteArrayOutputStream baos = null;
         DataOutputStream dos = null;
         try {
@@ -229,10 +249,21 @@ public class FourLetterWordsTest extends ClientBase {
             dos = new DataOutputStream(baos);
             dos.writeBytes("stmk");
             dos.writeLong(mask);
+            for( short rate : rates) {
+                dos.writeShort(rate);
+            }
         } finally {
             IOUtils.closeStream(dos);
             IOUtils.closeStream(baos);
         }
         return new String(baos.toByteArray());
+    }
+
+    private String joinRates(short[] rates) {
+        StringBuilder sb = new StringBuilder();
+        for(short value : rates) {
+            sb.append(value);
+        }
+        return sb.toString();
     }
 }

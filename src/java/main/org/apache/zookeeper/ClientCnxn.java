@@ -1189,7 +1189,7 @@ public class ClientCnxn {
                 eventThread.queueEvent(new WatchedEvent(Event.EventType.None,
                         Event.KeeperState.Disconnected, null));
             }
-            ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),
+            ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
                     "SendThread exited loop for session: 0x"
                            + Long.toHexString(getSessionId()));
         }

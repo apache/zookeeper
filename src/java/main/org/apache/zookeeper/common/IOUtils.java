@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.nio.ByteBuffer;
 
 import org.slf4j.Logger;
 
@@ -118,6 +119,14 @@ public class IOUtils {
             }
             bytesRead = in.read(buf);
         }
+    }
+
+    public static short[] readShortArray(ByteBuffer buffer, int size) {
+        short[] result = new short[size];
+        for(int i = 0; i < size; i++) {
+            result[i] = buffer.getShort();
+        }
+        return result;
     }
 
 }
