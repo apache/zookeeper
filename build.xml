@@ -99,7 +99,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
     <property name="build.dir" value="${basedir}/build" />
     <property name="distribution" value="${basedir}/distribution" />
     <property name="src_generated.dir" value="${src.dir}/java/generated" />
-    <property name="c.src.dir" value="${src.dir}/c" />    
+    <property name="c.src.dir" value="${basedir}/zookeeper-client/zookeeper-client-c" />
     <property name="csrc_generated.dir" value="${c.src.dir}/generated" />
 
     <property name="jute.file" value="${src.dir}/zookeeper.jute" />
@@ -328,7 +328,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
         <java classname="org.apache.jute.compiler.generated.Rcc" fork="true" dir="${src_generated.dir}">
             <arg value="-l" />
             <arg value="java" />
-            <arg value="../../zookeeper.jute" /> 
+            <arg value="../../zookeeper.jute" />
             <classpath>
                 <pathelement path="${build.classes}" />
             </classpath>
@@ -337,7 +337,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
         <java classname="org.apache.jute.compiler.generated.Rcc" fork="true" dir="${csrc_generated.dir}">
             <arg value="-l" />
             <arg value="c" />
-            <arg value="../../zookeeper.jute" />
+            <arg value="../../../src/zookeeper.jute" />
             <classpath>
                 <pathelement path="${build.classes}" />
             </classpath>
@@ -833,6 +833,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
           <include name="zookeeper-recipes/**"/>
           <include name="zookeeper-docs/**"/>
           <include name="zookeeper-contrib/**"/>
+          <include name="zookeeper-client/**"/>
         </fileset>
         <fileset file="src/pom.template"/>
       </copy>
@@ -1027,8 +1028,8 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
       <macro_tar param.destfile="${build.dir}/${final.name}-bin.tar.gz">
         <param.listofitems>
           <tarfileset dir="${build.dir}" mode="664">
-            <include name="${final.name}/src/c/**" />
-            <exclude name="${final.name}/src/c/generated/**" />
+            <include name="${final.name}/zookeeper-client/zookeeper-client-c/**" />
+            <exclude name="${final.name}/zookeeper-client/zookeeper-client-c/generated/**" />
           </tarfileset>
           <tarfileset dir="${build.dir}" mode="664">
             <exclude name="${final.name}/bin/*" />
@@ -1811,9 +1812,9 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
           <exclude name="**/docs/"/>
           <exclude name="**/zookeeper-docs/"/>
           <exclude name="**/lib/jdiff/"/>
-          <exclude name="src/c/autom4te.cache/**"/>
-          <exclude name="src/c/config**"/>
-          <exclude name="src/c/src/hashtable/"/>
+          <exclude name="src/zookeeper-client/zookeeper-client-c/autom4te.cache/**"/>
+          <exclude name="src/zookeeper-client/zookeeper-client-c/config**"/>
+          <exclude name="src/zookeeper-client/zookeeper-client-c/src/hashtable/"/>
           <exclude name="src/java/generated/.generated/"/>
           <exclude name="src/java/test/checkstyle*.xml"/>
           <exclude name="src/java/test/checkstyle*.xsl"/>
