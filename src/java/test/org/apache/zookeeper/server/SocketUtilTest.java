@@ -37,7 +37,7 @@ public class SocketUtilTest {
         Assert.assertEquals(initReceiveBufferSize, s.getReceiveBufferSize());
 
         // set NETWORK_BUFFER_SIZE
-        int networkBufferSize = 1024 * 1024;
+        int networkBufferSize = 32 * 1024;
         SocketUtil.setNetworkBufferSize(networkBufferSize);
         SocketUtil.setSocketBufferSize("test", s);
         Assert.assertEquals(networkBufferSize, s.getSendBufferSize());

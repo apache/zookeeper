@@ -1643,11 +1643,11 @@ server.3=zoo3:2888:3888</programlisting>
           </varlistentry>
 
           <varlistentry>
-            <term>NetworkBufferSize</term>
+            <term>networkBufferSize</term>
 
             <listitem>
               <para>(Java system property: zookeeper.<emphasis
-                      role="bold">NetworkBufferSize</emphasis>)</para>
+                      role="bold">networkBufferSize</emphasis>)</para>
 
               <para><emphasis role="bold">New in 3.6.0:</emphasis>
                 Sets the socket send and receive buffer size between leader
