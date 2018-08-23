@@ -32,7 +32,7 @@ public class SocketUtil {
     private static final Logger LOG = LoggerFactory.getLogger(SocketUtil.class);
 
     public static final String NETWORK_BUFFER_SIZE = "zookeeper.networkBufferSize";
-    protected static int networkBufferSize;
+    private static int networkBufferSize;
 
 
     static {
