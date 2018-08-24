@@ -946,6 +946,22 @@ public class DataTree {
             }
         }
 
+
+        /*
+         * Things we can only update after the whole txn is applied to data
+         * tree.
+         *
+         * If we update the lastProcessedZxid with the first sub txn in multi
+         * and there is a snapshot in progress, it's possible that the zxid
+         * associated with the snapshot only include partial of the multi op.
+         *
+         * When loading snapshot, it will only load the txns after the zxid
+         * associated with snapshot file, which could data inconsistency due
+         * to missing sub txns.
+         *
+         * To avoid this, we only update the lastProcessedZxid when the whole
+         * multi-op txn is applied to DataTree.
+         */
         if (!isSubTxn) {
             /*
              * A snapshot might be in progress while we are modifying the data
