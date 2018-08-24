@@ -24,7 +24,10 @@ import static org.junit.Assert.assertNull;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
+import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs.Ids;
@@ -147,7 +150,11 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
 
         // close the session and newly created ephemeral node should be deleted
         zk.close();
-
+        
+        SyncCallback cb = new SyncCallback();
+        followerZK.sync(nodePath, cb, null);
+        cb.sync.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
+        
         nodeAtFollower = followerZK.exists(nodePath, false);
 
         // Problem 2: Before fix, after session close the ephemeral node
@@ -223,6 +230,15 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
         @Override
         protected QuorumPeer getQuorumPeer() throws SaslException {
             return new CustomQuorumPeer();
+        }
+    }
+    
+    private static class SyncCallback implements AsyncCallback.VoidCallback {
+        private final CountDownLatch sync = new CountDownLatch(1);
+        
+        @Override
+        public void processResult(int rc, String path, Object ctx) {
+        	sync.countDown();
         }
     }
 }
