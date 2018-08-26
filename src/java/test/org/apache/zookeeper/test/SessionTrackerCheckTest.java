@@ -98,8 +98,7 @@ public class SessionTrackerCheckTest extends ZKTestCase {
         }
 
         // Local session
-        sessionId = 0xf005ba11;
-        tracker.addSession(sessionId, CONNECTION_TIMEOUT);
+        sessionId = tracker.createSession(CONNECTION_TIMEOUT);
         try {
             tracker.checkSession(sessionId, null);
         } catch (Exception e) {
@@ -144,8 +143,8 @@ public class SessionTrackerCheckTest extends ZKTestCase {
             Assert.fail("local session from other server should not fail");
         }
 
-        // Global session
-        tracker.addGlobalSession(sessionId, CONNECTION_TIMEOUT);
+        // Track global session
+        tracker.trackSession(sessionId, CONNECTION_TIMEOUT);
         try {
             tracker.checkSession(sessionId, null);
         } catch (Exception e) {
@@ -158,9 +157,7 @@ public class SessionTrackerCheckTest extends ZKTestCase {
         }
 
         // Local session from the leader
-        sessionId = (expirer.sid << 56) + 1;
-        ;
-        tracker.addSession(sessionId, CONNECTION_TIMEOUT);
+        sessionId = tracker.createSession(CONNECTION_TIMEOUT);
         try {
             tracker.checkSession(sessionId, null);
         } catch (Exception e) {
@@ -168,7 +165,7 @@ public class SessionTrackerCheckTest extends ZKTestCase {
         }
 
         // During session upgrade
-        tracker.addGlobalSession(sessionId, CONNECTION_TIMEOUT);
+        tracker.trackSession(sessionId, CONNECTION_TIMEOUT);
         try {
             tracker.checkSession(sessionId, null);
         } catch (Exception e) {
@@ -186,7 +183,7 @@ public class SessionTrackerCheckTest extends ZKTestCase {
 
         // Global session
         sessionId = 0xdeadbeef;
-        tracker.addSession(sessionId, CONNECTION_TIMEOUT);
+        tracker.trackSession(sessionId, CONNECTION_TIMEOUT);
         try {
             tracker.checkSession(sessionId, null);
         } catch (Exception e) {

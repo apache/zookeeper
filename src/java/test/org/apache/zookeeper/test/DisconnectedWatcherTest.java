@@ -178,7 +178,7 @@ public class DisconnectedWatcherTest extends ClientBase {
 
     // @see jira issue ZOOKEEPER-706. Test auto reset of a large number of
     // watches which require multiple SetWatches calls.
-    @Test
+    @Test(timeout = 840000)
     public void testManyChildWatchersAutoReset() throws Exception {
         ZooKeeper zk1 = createClient();
 
@@ -199,6 +199,7 @@ public class DisconnectedWatcherTest extends ClientBase {
                                      CreateMode.PERSISTENT_SEQUENTIAL);
             paths.add(path);
         }
+        LOG.info("Created 10,000 nodes.");
 
         MyWatcher childWatcher = new MyWatcher();
 

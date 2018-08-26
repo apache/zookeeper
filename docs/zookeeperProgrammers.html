@@ -596,6 +596,10 @@ document.write("Last Published: " + document.lastModified);
           you can optionally set a TTL in milliseconds for the znode. If the znode
           is not modified within the TTL and has no children it will become a candidate
           to be deleted by the server at some point in the future.</p>
+<p>Note: TTL Nodes must be enabled via System property as
+        they are disabled by default. See the <a href="zookeeperAdmin.html#sc_configuration">Administrator's
+        Guide</a> for details. If you attempt to create TTL Nodes without the proper System property set the server
+        will throw <em>KeeperException.UnimplementedException</em>.</p>
 <a name="sc_timeInZk"></a>
 <h3 class="h4">Time in ZooKeeper</h3>
 <p>ZooKeeper tracks time multiple ways:</p>
@@ -1598,7 +1602,7 @@ document.write("Last Published: " + document.lastModified);
 <div class="content">
 <p>This is a very simple example which is intended to show
         how to interact with ZooKeeper ACLs
-        specifically. See <span class="codefrag filename">.../trunk/src/c/src/cli.c</span>
+        specifically. See <span class="codefrag filename">.../trunk/zookeeper-client/zookeeper-client-c/src/cli.c</span>
         for an example of a C client implementation</p>
       
 </div>
@@ -2178,14 +2182,14 @@ public abstract class ServerAuthenticationProvider implements AuthenticationProv
 <p>Run <span class="codefrag command">ant compile_jute</span> from the ZooKeeper
             top level directory (<span class="codefrag filename">.../trunk</span>).
             This will create a directory named "generated" under
-            <span class="codefrag filename">.../trunk/src/c</span>.</p>
+            <span class="codefrag filename">.../trunk/zookeeper-client/zookeeper-client-c</span>.</p>
           
 </li>
 
           
 <li>
             
-<p>Change directory to the<span class="codefrag filename">.../trunk/src/c</span>
+<p>Change directory to the<span class="codefrag filename">.../trunk/zookeeper-client/zookeeper-client-c</span>
             and run <span class="codefrag command">autoreconf -if</span> to bootstrap <strong>autoconf</strong>, <strong>automake</strong> and <strong>libtool</strong>. Make sure you have <strong>autoconf version 2.59</strong> or greater installed.
             Skip to step<strong> 4</strong>.</p>
           
@@ -2196,7 +2200,7 @@ public abstract class ServerAuthenticationProvider implements AuthenticationProv
             
 <p>If you are building from a project source package,
             unzip/untar the source tarball and cd to the<span class="codefrag filename">
-            zookeeper-x.x.x/src/c</span> directory.</p>
+            zookeeper-x.x.x/zookeeper-client/zookeeper-client-c</span> directory.</p>
           
 </li>
 
@@ -2327,7 +2331,7 @@ public abstract class ServerAuthenticationProvider implements AuthenticationProv
 <div class="note">
 <div class="label">Note</div>
 <div class="content">
-<p>See <span class="codefrag filename">.../trunk/src/c/src/cli.c</span>
+<p>See <span class="codefrag filename">.../trunk/zookeeper-client/zookeeper-client-c/src/cli.c</span>
           for an example of a C client implementation</p>
         
 </div>

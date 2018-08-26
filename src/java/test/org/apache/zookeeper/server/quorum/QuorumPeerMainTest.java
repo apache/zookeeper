@@ -36,14 +36,18 @@ import java.nio.channels.SocketChannel;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
+import javax.security.sasl.SaslException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.WriterAppender;
+import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
@@ -53,6 +57,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.test.ClientBase;
@@ -85,18 +90,22 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     /**
      * Verify the ability to start a cluster.
      */
-    @Test
-    public void testQuorum() throws Exception {
+    public void testQuorumInternal(String addr) throws Exception {
         ClientBase.setupTestEnv();
 
         final int CLIENT_PORT_QP1 = PortAssignment.unique();
         final int CLIENT_PORT_QP2 = PortAssignment.unique();
 
-        String quorumCfgSection =
-            "server.1=127.0.0.1:" + PortAssignment.unique()
-            + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1
-            + "\nserver.2=127.0.0.1:" + PortAssignment.unique() 
-            + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP2;
+        String quorumCfgSection = String.format("server.1=%1$s:%2$s:%3$s;%4$s",
+                addr,
+                PortAssignment.unique(),
+                PortAssignment.unique(),
+                CLIENT_PORT_QP1) + "\n" +
+            String.format("server.2=%1$s:%2$s:%3$s;%4$s",
+                    addr,
+                    PortAssignment.unique(),
+                    PortAssignment.unique(),
+                    CLIENT_PORT_QP2);
 
         MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
         MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection);
@@ -104,34 +113,34 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         q2.start();
 
         Assert.assertTrue("waiting for server 1 being up",
-                        ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
-                        CONNECTION_TIMEOUT));
+            ClientBase.waitForServerUp(addr + ":" + CLIENT_PORT_QP1,
+                CONNECTION_TIMEOUT));
         Assert.assertTrue("waiting for server 2 being up",
-                        ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2,
-                        CONNECTION_TIMEOUT));
+            ClientBase.waitForServerUp(addr + ":" + CLIENT_PORT_QP2,
+                CONNECTION_TIMEOUT));
         QuorumPeer quorumPeer = q1.main.quorumPeer;
 
         int tickTime = quorumPeer.getTickTime();
         Assert.assertEquals(
-                "Default value of minimumSessionTimeOut is not considered",
-                tickTime * 2, quorumPeer.getMinSessionTimeout());
+            "Default value of minimumSessionTimeOut is not considered",
+            tickTime * 2, quorumPeer.getMinSessionTimeout());
         Assert.assertEquals(
-                "Default value of maximumSessionTimeOut is not considered",
-                tickTime * 20, quorumPeer.getMaxSessionTimeout());
+            "Default value of maximumSessionTimeOut is not considered",
+            tickTime * 20, quorumPeer.getMaxSessionTimeout());
 
-        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_QP1,
-                ClientBase.CONNECTION_TIMEOUT, this);
+        ZooKeeper zk = new ZooKeeper(addr + ":" + CLIENT_PORT_QP1,
+            ClientBase.CONNECTION_TIMEOUT, this);
         waitForOne(zk, States.CONNECTED);
         zk.create("/foo_q1", "foobar1".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+            CreateMode.PERSISTENT);
         Assert.assertEquals(new String(zk.getData("/foo_q1", null, null)), "foobar1");
         zk.close();
 
-        zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_QP2,
-                ClientBase.CONNECTION_TIMEOUT, this);
+        zk = new ZooKeeper(addr + ":" + CLIENT_PORT_QP2,
+            ClientBase.CONNECTION_TIMEOUT, this);
         waitForOne(zk, States.CONNECTED);
         zk.create("/foo_q2", "foobar2".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+            CreateMode.PERSISTENT);
         Assert.assertEquals(new String(zk.getData("/foo_q2", null, null)), "foobar2");
         zk.close();
 
@@ -139,11 +148,27 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         q2.shutdown();
 
         Assert.assertTrue("waiting for server 1 down",
-                ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1,
-                        ClientBase.CONNECTION_TIMEOUT));
+            ClientBase.waitForServerDown(addr + ":" + CLIENT_PORT_QP1,
+                ClientBase.CONNECTION_TIMEOUT));
         Assert.assertTrue("waiting for server 2 down",
-                ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2,
-                        ClientBase.CONNECTION_TIMEOUT));
+            ClientBase.waitForServerDown(addr + ":" + CLIENT_PORT_QP2,
+                ClientBase.CONNECTION_TIMEOUT));
+    }
+
+    /**
+     * Verify the ability to start a cluster.
+     */
+    @Test
+    public void testQuorum() throws Exception {
+        testQuorumInternal("127.0.0.1");
+    }
+
+    /**
+     * Verify the ability to start a cluster. IN V6!!!!
+     */
+    @Test
+    public void testQuorumV6() throws Exception {
+        testQuorumInternal("[::1]");
     }
 
     /**
@@ -446,6 +471,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         boolean someoneNotConnected = true;
         while (someoneNotConnected) {
             if (iterations-- == 0) {
+                logStates(zks);
                 ClientBase.logAllStackTraces();
                 throw new RuntimeException("Waiting too long");
             }
@@ -461,6 +487,15 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         }
     }
 
+    private void logStates(ZooKeeper[] zks) {
+            StringBuilder sbBuilder = new StringBuilder("Connection States: {");
+           for (int i = 0; i < zks.length; i++) {
+                sbBuilder.append(i + " : " + zks[i].getState() + ", ");
+           }
+            sbBuilder.append('}');
+            LOG.error(sbBuilder.toString());
+    }
+
     // This class holds the servers and clients for those servers
     private static class Servers {
         MainThread mt[];
@@ -473,7 +508,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             }
         }
 
-        public void restartAllServersAndClients(Watcher watcher) throws IOException {
+        public void restartAllServersAndClients(Watcher watcher) throws IOException, InterruptedException {
             for (MainThread t : mt) {
                 if (!t.isAlive()) {
                     t.start();
@@ -484,7 +519,10 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             }
         }
 
-        public void restartClient(int clientIndex, Watcher watcher) throws IOException {
+        public void restartClient(int clientIndex, Watcher watcher) throws IOException, InterruptedException {
+            if (zk[clientIndex] != null) {
+                zk[clientIndex].close();
+            }
             zk[clientIndex] = new ZooKeeper("127.0.0.1:" + clientPorts[clientIndex], ClientBase.CONNECTION_TIMEOUT, watcher);
         }
 
@@ -966,9 +1004,11 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
         // just make sure that we actually did get it in process at the
         // leader
-        Assert.assertEquals(1, outstanding.size());
-        Proposal p = outstanding.values().iterator().next();
-        Assert.assertEquals(OpCode.create, p.request.getHdr().getType());
+        // there can be extra sessionClose proposals
+        Assert.assertTrue(outstanding.size() > 0);
+        Proposal p = findProposalOfType(outstanding, OpCode.create);
+        LOG.info(String.format("Old leader id: %d. All proposals: %s", leader, outstanding));
+        Assert.assertNotNull("Old leader doesn't have 'create' proposal", p);
 
         // make sure it has a chance to write it to disk
         int sleepTime = 0;
@@ -1002,6 +1042,8 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         // 7. restart the previous leader to force it to replay the edits and possibly come up in a bad state
         servers.mt[leader].shutdown();
         servers.mt[leader].start();
+        // old client session can expire, restart it
+        servers.restartClient(leader, this);
         waitForAll(servers, States.CONNECTED);
 
         // 8. check the node exist in previous leader but not others
@@ -1166,6 +1208,307 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             } catch (InterruptedException e) {
                 // ignore
             }
+        }
+    }
+
+    private Proposal findProposalOfType(Map<Long, Proposal> proposals, int type) {
+        for (Proposal proposal : proposals.values()) {
+            if (proposal.request.getHdr().getType() == type) {
+                return proposal;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Currently, in SNAP sync, the leader will start queuing the
+     * proposal/commits and the NEWLEADER packet before sending
+     * over the snapshot over wire. So it's possible that the zxid
+     * associated with the snapshot might be higher than all the
+     * packets queued before NEWLEADER.
+     *
+     * When the follower received the snapshot, it will apply all
+     * the txns queued before NEWLEADER, which may not cover all
+     * the txns up to the zxid in the snapshot. After that, it
+     * will write the snapshot out to disk with the zxid associated
+     * with the snapshot. In case the server crashed after writing
+     * this out, when loading the data from disk, it will use zxid
+     * of the snapshot file to sync with leader, and it could cause
+     * data inconsistent, because we only replayed partial of the
+     * historical data during previous syncing.
+     *
+     * This test case is going to cover and simulate this scenario
+     * and make sure there is no data inconsistency issue after fix.
+     */
+    @Test
+    public void testInconsistentDueToNewLeaderOrder() throws Exception {
+
+        // 1. set up an ensemble with 3 servers
+        final int ENSEMBLE_SERVERS = 3;
+        final int clientPorts[] = new int[ENSEMBLE_SERVERS];
+        StringBuilder sb = new StringBuilder();
+        String server;
+
+        for (int i = 0; i < ENSEMBLE_SERVERS; i++) {
+            clientPorts[i] = PortAssignment.unique();
+            server = "server." + i + "=127.0.0.1:" + PortAssignment.unique()
+                    + ":" + PortAssignment.unique() + ":participant;127.0.0.1:"
+                    + clientPorts[i];
+            sb.append(server + "\n");
+        }
+        String currentQuorumCfgSection = sb.toString();
+
+        // start servers
+        MainThread[] mt = new MainThread[ENSEMBLE_SERVERS];
+        ZooKeeper zk[] = new ZooKeeper[ENSEMBLE_SERVERS];
+        Context contexts[] = new Context[ENSEMBLE_SERVERS];
+        for (int i = 0; i < ENSEMBLE_SERVERS; i++) {
+            final Context context = new Context();
+            contexts[i] = context;
+            mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection,
+                    false) {
+                @Override
+                public TestQPMain getTestQPMain() {
+                    return new CustomizedQPMain(context);
+                }
+            };
+            mt[i].start();
+            zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i],
+                    ClientBase.CONNECTION_TIMEOUT, this);
+        }
+        waitForAll(zk, States.CONNECTED);
+        LOG.info("all servers started");
+
+        String nodePath = "/testInconsistentDueToNewLeader";
+
+        int leaderId = -1;
+        int followerA = -1;
+        for (int i = 0; i < ENSEMBLE_SERVERS; i++) {
+            if (mt[i].main.quorumPeer.leader != null) {
+                leaderId = i;
+            } else if (followerA == -1) {
+                followerA = i;
+            }
+        }
+        LOG.info("shutdown follower {}", followerA);
+        mt[followerA].shutdown();
+        waitForOne(zk[followerA], States.CONNECTING);
+
+        try {
+            // 2. set force snapshot to be true
+            LOG.info("force snapshot sync");
+            System.setProperty(LearnerHandler.FORCE_SNAP_SYNC, "true");
+
+            // 3. create a node
+            String initialValue = "1";
+            final ZooKeeper leaderZk = zk[leaderId];
+            leaderZk.create(nodePath, initialValue.getBytes(), Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT);
+            LOG.info("created node {} with value {}", nodePath, initialValue);
+
+            CustomQuorumPeer leaderQuorumPeer =
+                    (CustomQuorumPeer) mt[leaderId].main.quorumPeer;
+
+            // 4. on the customized leader catch the startForwarding call
+            //    (without synchronized), set the node to value v1, then
+            //    call the super.startForwarding to generate the ongoing
+            //    txn proposal and commit for v1 value update
+            leaderQuorumPeer.setStartForwardingListener(
+                    new StartForwardingListener() {
+                @Override
+                public void start() {
+                    if (!Boolean.getBoolean(LearnerHandler.FORCE_SNAP_SYNC)) {
+                        return;
+                    }
+                    final String value = "2";
+                    LOG.info("start forwarding, set {} to {}", nodePath, value);
+                    // use async, otherwise it will block the logLock in
+                    // ZKDatabase and the setData request will timeout
+                    try {
+                        leaderZk.setData(nodePath, value.getBytes(), -1,
+                                new AsyncCallback.StatCallback() {
+                            public void processResult(int rc, String path,
+                                   Object ctx, Stat stat) {}
+                        }, null);
+                        // wait for the setData txn being populated
+                        Thread.sleep(1000);
+                    } catch (Exception e) {
+                        LOG.error("error when set {} to {}", nodePath, value, e);
+                    }
+                }
+            });
+
+            // 5. on the customized leader catch the beginSnapshot call in
+            //    LearnerSnapshotThrottler to set the node to value v2,
+            //    wait it hit data tree
+            leaderQuorumPeer.setBeginSnapshotListener(new BeginSnapshotListener() {
+                @Override
+                public void start() {
+                    String value = "3";
+                    LOG.info("before sending snapshot, set {} to {}",
+                            nodePath, value);
+                    try {
+                        leaderZk.setData(nodePath, value.getBytes(), -1);
+                        LOG.info("successfully set {} to {}", nodePath, value);
+                    } catch (Exception e) {
+                        LOG.error("error when set {} to {}, {}", nodePath, value, e);
+                    }
+                }
+            });
+
+            // 6. exit follower A after taking snapshot
+            CustomQuorumPeer followerAQuorumPeer =
+                    ((CustomQuorumPeer) mt[followerA].main.quorumPeer);
+            LOG.info("set exit when ack new leader packet on {}", followerA);
+            contexts[followerA].exitWhenAckNewLeader = true;
+            CountDownLatch latch = new CountDownLatch(1);
+            final MainThread followerAMT = mt[followerA];
+            contexts[followerA].newLeaderAckCallback = new NewLeaderAckCallback() {
+                @Override
+                public void start() {
+                    try {
+                        latch.countDown();
+                        followerAMT.shutdown();
+                    } catch (Exception e) {}
+                }
+            };
+
+            // 7. start follower A to do snapshot sync
+            LOG.info("starting follower {}", followerA);
+            mt[followerA].start();
+            Assert.assertTrue(latch.await(30, TimeUnit.SECONDS));
+
+            // 8. now we have invalid data on disk, let's load it and verify
+            LOG.info("disable exit when ack new leader packet on {}", followerA);
+            System.setProperty(LearnerHandler.FORCE_SNAP_SYNC, "false");
+            contexts[followerA].exitWhenAckNewLeader = true;
+            contexts[followerA].newLeaderAckCallback = null;
+
+            LOG.info("restarting follower {}", followerA);
+            mt[followerA].start();
+            zk[followerA].close();
+
+            zk[followerA] = new ZooKeeper("127.0.0.1:" + clientPorts[followerA],
+                    ClientBase.CONNECTION_TIMEOUT, this);
+
+            // 9. start follower A, after it's in broadcast state, make sure
+            //    the node value is same as what we have on leader
+            waitForOne(zk[followerA], States.CONNECTED);
+            Assert.assertEquals(
+                new String(zk[followerA].getData(nodePath, null, null)),
+                new String(zk[leaderId].getData(nodePath, null, null))
+            );
+        } finally {
+            System.clearProperty(LearnerHandler.FORCE_SNAP_SYNC);
+            for (int i = 0; i < ENSEMBLE_SERVERS; i++) {
+                mt[i].shutdown();
+                zk[i].close();
+            }
+        }
+    }
+
+    static class Context {
+        boolean quitFollowing = false;
+        boolean exitWhenAckNewLeader = false;
+        NewLeaderAckCallback newLeaderAckCallback = null;
+    }
+
+    static interface NewLeaderAckCallback {
+        public void start();
+    }
+
+    static interface StartForwardingListener {
+        public void start();
+    }
+
+    static interface BeginSnapshotListener {
+        public void start();
+    }
+
+    static class CustomizedQPMain extends TestQPMain {
+
+        private Context context;
+
+        public CustomizedQPMain(Context context) {
+            this.context = context;
+        }
+
+        @Override
+        protected QuorumPeer getQuorumPeer() throws SaslException {
+            return new CustomQuorumPeer(context);
+        }
+    }
+
+    static class CustomQuorumPeer extends QuorumPeer {
+        private Context context;
+
+        private StartForwardingListener startForwardingListener;
+        private BeginSnapshotListener beginSnapshotListener;
+
+        public CustomQuorumPeer(Context context)
+                throws SaslException {
+            this.context = context;
+        }
+
+        public void setStartForwardingListener(
+                StartForwardingListener startForwardingListener) {
+            this.startForwardingListener = startForwardingListener;
+        }
+
+        public void setBeginSnapshotListener(
+                BeginSnapshotListener beginSnapshotListener) {
+            this.beginSnapshotListener = beginSnapshotListener;
+        }
+
+        @Override
+        protected Follower makeFollower(FileTxnSnapLog logFactory)
+                throws IOException {
+            return new Follower(this, new FollowerZooKeeperServer(logFactory,
+                    this, this.getZkDb())) {
+
+                @Override
+                void writePacket(QuorumPacket pp, boolean flush) throws IOException {
+                    if (pp != null && pp.getType() == Leader.ACK
+                            && context.exitWhenAckNewLeader) {
+                        if (context.newLeaderAckCallback != null) {
+                            context.newLeaderAckCallback.start();
+                        }
+                    }
+                    super.writePacket(pp, flush);
+                }
+            };
+        }
+
+        @Override
+        protected Leader makeLeader(FileTxnSnapLog logFactory) throws IOException {
+            return new Leader(this, new LeaderZooKeeperServer(logFactory,
+                    this, this.getZkDb())) {
+                @Override
+                public long startForwarding(LearnerHandler handler,
+                        long lastSeenZxid) {
+                    if (startForwardingListener != null) {
+                        startForwardingListener.start();
+                    }
+                    return super.startForwarding(handler, lastSeenZxid);
+                }
+
+                @Override
+                public LearnerSnapshotThrottler createLearnerSnapshotThrottler(
+                        int maxConcurrentSnapshots, long maxConcurrentSnapshotTimeout) {
+                    return new LearnerSnapshotThrottler(
+                            maxConcurrentSnapshots, maxConcurrentSnapshotTimeout) {
+
+                        @Override
+                        public LearnerSnapshot beginSnapshot(boolean essential)
+                                throws SnapshotThrottleException, InterruptedException {
+                            if (beginSnapshotListener != null) {
+                                beginSnapshotListener.start();
+                            }
+                            return super.beginSnapshot(essential);
+                        }
+                    };
+                }
+            };
         }
     }
 }

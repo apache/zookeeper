@@ -68,9 +68,12 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
+import org.apache.zookeeper.server.util.ConfigUtils;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.apache.zookeeper.common.NetUtils.formatInetAddr;
 
 /**
  * This class manages the quorum protocol. There are three states this server
@@ -148,6 +151,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         public QuorumServer(long id, InetSocketAddress addr) {
             this(id, addr, (InetSocketAddress)null, (InetSocketAddress)null, LearnerType.PARTICIPANT);
         }
+ 
+        public long getId() {
+            return id;
+        }
 
         /**
          * Performs a DNS lookup for server address and election address.
@@ -189,27 +196,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             }
         }
 
-        private static String[] splitWithLeadingHostname(String s)
-                throws ConfigException
-        {
-            /* Does it start with an IPv6 literal? */
-            if (s.startsWith("[")) {
-                int i = s.indexOf("]:");
-                if (i < 0) {
-                    throw new ConfigException(s + " starts with '[' but has no matching ']:'");
-                }
-
-                String[] sa = s.substring(i + 2).split(":");
-                String[] nsa = new String[sa.length + 1];
-                nsa[0] = s.substring(1, i);
-                System.arraycopy(sa, 0, nsa, 1, sa.length);
-
-                return nsa;
-            } else {
-                return s.split(":");
-            }
-        }
-
         private static final String wrongFormat = " does not have the form server_config or server_config;client_config"+
         " where server_config is host:port:port or host:port:port:type and client_config is port or host:port";
 
@@ -217,7 +203,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             // LOG.warn("sid = " + sid + " addressStr = " + addressStr);
             this.id = sid;
             String serverClientParts[] = addressStr.split(";");
-            String serverParts[] = splitWithLeadingHostname(serverClientParts[0]);
+            String serverParts[] = ConfigUtils.getHostAndPort(serverClientParts[0]);
             if ((serverClientParts.length > 2) || (serverParts.length < 3)
                     || (serverParts.length > 4)) {
                 throw new ConfigException(addressStr + wrongFormat);
@@ -225,7 +211,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
             if (serverClientParts.length == 2) {
                 //LOG.warn("ClientParts: " + serverClientParts[1]);
-                String clientParts[] = splitWithLeadingHostname(serverClientParts[1]);
+                String clientParts[] = ConfigUtils.getHostAndPort(serverClientParts[1]);
                 if (clientParts.length > 2) {
                     throw new ConfigException(addressStr + wrongFormat);
                 }
@@ -253,6 +239,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                         Integer.parseInt(serverParts[2]));
             } catch (NumberFormatException e) {
                 throw new ConfigException("Address unresolved: " + serverParts[0] + ":" + serverParts[2]);
+            }
+
+            if(addr.getPort() == electionAddr.getPort()) {
+                throw new ConfigException(
+                        "Client and election port must be different! Please update the configuration file on server." + sid);
             }
 
             if (serverParts.length == 4) {
@@ -464,6 +455,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      */
     public long getId() {
         return myid;
+    }
+
+    // VisibleForTesting
+    void setId(long id) {
+        this.myid = id;
     }
 
     /**
@@ -1093,7 +1089,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                         jmxLocalPeerBean = null;
                     }
                 } else {
-                    RemotePeerBean rBean = new RemotePeerBean(s);
+                    RemotePeerBean rBean = new RemotePeerBean(this, s);
                     try {
                         MBeanRegistry.getInstance().register(rBean, jmxQuorumBean);
                         jmxRemotePeerBean.put(s.id, rBean);
@@ -1340,14 +1336,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             if (leader != null) {
                 for (LearnerHandler fh : leader.getLearners()) {
                     if (fh.getSocket() != null) {
-                        String s = fh.getSocket().getRemoteSocketAddress().toString();
+                        String s = formatInetAddr((InetSocketAddress)fh.getSocket().getRemoteSocketAddress());
                         if (leader.isLearnerSynced(fh))
                             s += "*";
                         l.add(s);
                     }
                 }
             } else if (follower != null) {
-                l.add(follower.sock.getRemoteSocketAddress().toString());
+                l.add(formatInetAddr((InetSocketAddress)follower.sock.getRemoteSocketAddress()));
             }
         }
         return l.toArray(new String[0]);
@@ -1895,7 +1891,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         joiningMembers.remove(getId()); // remove self as it is local bean
         for (Long id : joiningMembers) {
             QuorumServer qs = newMembers.get(id);
-            RemotePeerBean rBean = new RemotePeerBean(qs);
+            RemotePeerBean rBean = new RemotePeerBean(this, qs);
             try {
                 MBeanRegistry.getInstance().register(rBean, jmxQuorumBean);
                 jmxRemotePeerBean.put(qs.id, rBean);
@@ -1978,8 +1974,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     private void updateThreadName() {
         String plain = cnxnFactory != null ?
                 cnxnFactory.getLocalAddress() != null ?
-                        cnxnFactory.getLocalAddress().toString() : "disabled" : "disabled";
-        String secure = secureCnxnFactory != null ? secureCnxnFactory.getLocalAddress().toString() : "disabled";
+                        formatInetAddr(cnxnFactory.getLocalAddress()) : "disabled" : "disabled";
+        String secure = secureCnxnFactory != null ? formatInetAddr(secureCnxnFactory.getLocalAddress()) : "disabled";
         setName(String.format("QuorumPeer[myid=%d](plain=%s)(secure=%s)", getId(), plain, secure));
     }
 
@@ -2068,5 +2064,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 this.getQuorumListenOnAllIPs(),
                 this.quorumCnxnThreadsSize,
                 this.isQuorumSaslAuthEnabled());
+    }
+
+    boolean isLeader(long id) {
+        Vote vote = getCurrentVote();
+        return vote != null && id == vote.getId();
     }
 }

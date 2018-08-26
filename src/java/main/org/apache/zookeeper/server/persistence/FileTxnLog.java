@@ -41,6 +41,7 @@ import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
+import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
@@ -98,6 +99,9 @@ public class FileTxnLog implements TxnLog {
 
     public static final String LOG_FILE_PREFIX = "log";
 
+    static final String FSYNC_WARNING_THRESHOLD_MS_PROPERTY = "fsync.warningthresholdms";
+    static final String ZOOKEEPER_FSYNC_WARNING_THRESHOLD_MS_PROPERTY = "zookeeper." + FSYNC_WARNING_THRESHOLD_MS_PROPERTY;
+
     /** Maximum time we allow for elapsed fsync before WARNing */
     private final static long fsyncWarningThresholdMS;
 
@@ -106,8 +110,8 @@ public class FileTxnLog implements TxnLog {
 
         /** Local variable to read fsync.warningthresholdms into */
         Long fsyncWarningThreshold;
-        if ((fsyncWarningThreshold = Long.getLong("zookeeper.fsync.warningthresholdms")) == null)
-            fsyncWarningThreshold = Long.getLong("fsync.warningthresholdms", 1000);
+        if ((fsyncWarningThreshold = Long.getLong(ZOOKEEPER_FSYNC_WARNING_THRESHOLD_MS_PROPERTY)) == null)
+            fsyncWarningThreshold = Long.getLong(FSYNC_WARNING_THRESHOLD_MS_PROPERTY, 1000);
         fsyncWarningThresholdMS = fsyncWarningThreshold;
     }
 
@@ -123,6 +127,8 @@ public class FileTxnLog implements TxnLog {
         new LinkedList<FileOutputStream>();
     File logFileWrite = null;
     private FilePadding filePadding = new FilePadding();
+
+    private ServerStats serverStats;
 
     private volatile long syncElapsedMS = -1L;
 
@@ -142,6 +148,15 @@ public class FileTxnLog implements TxnLog {
       */
     public static void setPreallocSize(long size) {
         FilePadding.setPreallocSize(size);
+    }
+
+    /**
+     * Setter for ServerStats to monitor fsync threshold exceed
+     * @param serverStats used to update fsyncThresholdExceedCount
+     */
+    @Override
+    public void setServerStats(ServerStats serverStats) {
+        this.serverStats = serverStats;
     }
 
     /**
@@ -320,6 +335,9 @@ public class FileTxnLog implements TxnLog {
 
                 syncElapsedMS = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startSyncNS);
                 if (syncElapsedMS > fsyncWarningThresholdMS) {
+                    if(serverStats != null) {
+                        serverStats.incrementFsyncThresholdExceedCount();
+                    }
                     LOG.warn("fsync-ing the write ahead log in "
                             + Thread.currentThread().getName()
                             + " took " + syncElapsedMS

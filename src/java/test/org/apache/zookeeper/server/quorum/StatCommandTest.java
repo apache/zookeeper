@@ -27,7 +27,6 @@ import org.apache.zookeeper.server.command.StatCommand;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -44,7 +43,7 @@ public class StatCommandTest {
     private ServerStats.Provider providerMock;
 
     @Before
-    public void setUp() throws IOException {
+    public void setUp() {
         outputWriter = new StringWriter();
         ServerCnxn serverCnxnMock = mock(ServerCnxn.class);
 
@@ -55,7 +54,7 @@ public class StatCommandTest {
         ZKDatabase zkDatabaseMock = mock(ZKDatabase.class);
         when(zks.getZKDatabase()).thenReturn(zkDatabaseMock);
         Leader leaderMock = mock(Leader.class);
-        when(leaderMock.getProposalStats()).thenReturn(new ProposalStats());
+        when(leaderMock.getProposalStats()).thenReturn(new BufferStats());
         when(zks.getLeader()).thenReturn(leaderMock);
 
         ServerCnxnFactory serverCnxnFactory = mock(ServerCnxnFactory.class);

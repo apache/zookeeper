@@ -96,8 +96,8 @@ public class StatResetCommandTest {
 
         when(serverStats.getServerState()).thenReturn("leader");
 
-        ProposalStats proposalStats = mock(ProposalStats.class);
-        when(leader.getProposalStats()).thenReturn(proposalStats);
+        BufferStats bufferStats = mock(BufferStats.class);
+        when(leader.getProposalStats()).thenReturn(bufferStats);
 
         // Act
         statResetCommand.commandRun();
@@ -106,6 +106,6 @@ public class StatResetCommandTest {
         String output = outputWriter.toString();
         assertEquals("Server stats reset.\n", output);
         verify(serverStats, times(1)).reset();
-        verify(proposalStats, times(1)).reset();
+        verify(bufferStats, times(1)).reset();
     }
 }

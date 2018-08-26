@@ -127,6 +127,10 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
     public long getPacketsSent() {
         return zks.serverStats().getPacketsSent();
     }
+
+    public long getFsyncThresholdExceedCount() {
+        return zks.serverStats().getFsyncThresholdExceedCount();
+    }
     
     public void resetLatency() {
         zks.serverStats().resetLatency();
@@ -136,10 +140,15 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
         zks.serverStats().resetMaxLatency();
     }
 
+    public void resetFsyncThresholdExceedCount() {
+        zks.serverStats().resetFsyncThresholdExceedCount();
+    }
+
     public void resetStatistics() {
         ServerStats serverStats = zks.serverStats();
         serverStats.resetRequestCounters();
         serverStats.resetLatency();
+        serverStats.resetFsyncThresholdExceedCount();
     }
 
     public long getNumAliveConnections() {
@@ -172,5 +181,20 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
     @Override
     public int getJuteMaxBufferSize() {
         return BinaryInputArchive.maxBuffer;
+    }
+
+    @Override
+    public int getLastClientResponseSize() {
+        return zks.serverStats().getClientResponseStats().getLastBufferSize();
+    }
+
+    @Override
+    public int getMinClientResponseSize() {
+        return zks.serverStats().getClientResponseStats().getMinBufferSize();
+    }
+
+    @Override
+    public int getMaxClientResponseSize() {
+        return zks.serverStats().getClientResponseStats().getMaxBufferSize();
     }
 }

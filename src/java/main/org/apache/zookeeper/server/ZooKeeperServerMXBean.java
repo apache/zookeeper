@@ -55,6 +55,10 @@ public interface ZooKeeperServerMXBean {
      */
     public long getPacketsSent();
     /**
+     * @return number of fsync threshold exceeds so far
+     */
+    public long getFsyncThresholdExceedCount();
+    /**
      * @return number of outstanding requests.
      */
     public long getOutstandingRequests();
@@ -104,6 +108,10 @@ public interface ZooKeeperServerMXBean {
      */
     public void resetMaxLatency();
     /**
+     * Reset Fsync Threshold Exceed Count statistics only.
+     */
+    public void resetFsyncThresholdExceedCount();
+    /**
      * @return number of alive client connections
      */
     public long getNumAliveConnections();
@@ -135,4 +143,19 @@ public interface ZooKeeperServerMXBean {
      * @return Returns the value of the following config setting: jute.maxbuffer
      */
     public int getJuteMaxBufferSize();
+
+    /**
+     * @return size of latest generated client response
+     */
+    public int getLastClientResponseSize();
+
+    /**
+     * @return size of smallest generated client response
+     */
+    public int getMinClientResponseSize();
+
+    /**
+     * @return size of largest generated client response
+     */
+    public int getMaxClientResponseSize();
 }

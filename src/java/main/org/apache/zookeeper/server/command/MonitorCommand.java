@@ -71,13 +71,13 @@ public class MonitorCommand extends AbstractFourLetterCommand {
         if (stats.getServerState().equals("leader")) {
             Leader leader = ((LeaderZooKeeperServer)zkServer).getLeader();
 
-            print("followers", leader.getLearners().size());
+            print("learners", leader.getLearners().size());
             print("synced_followers", leader.getForwardingFollowers().size());
             print("pending_syncs", leader.getNumPendingSyncs());
 
-            print("last_proposal_size", leader.getProposalStats().getLastProposalSize());
-            print("max_proposal_size", leader.getProposalStats().getMaxProposalSize());
-            print("min_proposal_size", leader.getProposalStats().getMinProposalSize());
+            print("last_proposal_size", leader.getProposalStats().getLastBufferSize());
+            print("max_proposal_size", leader.getProposalStats().getMaxBufferSize());
+            print("min_proposal_size", leader.getProposalStats().getMinBufferSize());
         }
     }
 

@@ -293,7 +293,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                                           + " - max is " + maxClientCnxns );
                 }
 
-                LOG.info("Accepted socket connection from "
+                LOG.debug("Accepted socket connection from "
                          + sc.socket().getRemoteSocketAddress());
                 sc.configureBlocking(false);
 
@@ -815,8 +815,11 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         cnxnExpiryQueue.update(cnxn, cnxn.getSessionTimeout());
     }
 
-    private void addCnxn(NIOServerCnxn cnxn) {
+    private void addCnxn(NIOServerCnxn cnxn) throws IOException {
         InetAddress addr = cnxn.getSocketAddress();
+        if (addr == null) {
+            throw new IOException("Socket of " + cnxn + " has been closed");
+        }
         Set<NIOServerCnxn> set = ipMap.get(addr);
         if (set == null) {
             // in general we will see 1 connection from each

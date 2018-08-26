@@ -131,10 +131,13 @@
                 conf="optional->default"/>
       <dependency org="org.eclipse.jetty" name="jetty-servlet" rev="${jetty.version}"
                   conf="optional->default"/>
-    <dependency org="org.codehaus.jackson" name="jackson-mapper-asl"
-                rev="${jackson-mapper-asl.version}" conf="optional->default"/>
+    <dependency org="com.fasterxml.jackson.core" name="jackson-databind"
+                rev="${jackson.version}" conf="optional->default"/>
 
     <dependency org="org.openclover" name="clover" rev="${clover.version}" conf="clover->default"/>
+
+    <dependency org="org.hamcrest" name="hamcrest-all" rev="${hamcrest.version}"
+                  conf="test->default" />
 
     <conflict manager="strict"/>
 

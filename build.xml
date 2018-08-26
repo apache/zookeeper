@@ -39,7 +39,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="netty.version" value="3.10.6.Final"/>
 
     <property name="junit.version" value="4.12"/>
-    <property name="mockito.version" value="1.8.2"/>
+    <property name="mockito.version" value="1.8.5"/>
     <property name="checkstyle.version" value="6.13"/>
     <property name="commons-collections.version" value="3.2.2"/>
 
@@ -51,12 +51,12 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
     <property name="javacc.version" value="5.0"/>
 
-    <property name="jetty.version" value="9.2.18.v20160721"/>
-    <property name="jackson-mapper-asl.version" value="1.9.11"/>
-    <property name="dependency-check-ant.version" value="2.1.0"/>
+    <property name="jetty.version" value="9.4.10.v20180503"/>
+    <property name="jackson.version" value="2.9.5"/>
+    <property name="dependency-check-ant.version" value="3.2.1"/>
 
-    <property name="commons-io.version" value="2.4"/>
-    <property name="kerby.version" value="1.0.0-RC2"/>
+    <property name="commons-io.version" value="2.6"/>
+    <property name="kerby.version" value="1.1.0"/>
 
     <property name="clover.version" value="4.2.1" />
 
@@ -75,7 +75,9 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="version-major" value="3" />
     <property name="version-minor" value="6" />
     <property name="version-patch" value="0" />
-    <property name="version" value="${version-major}.${version-minor}.${version-patch}-SNAPSHOT" />
+    <property name="version-base" value="${version-major}.${version-minor}.${version-patch}" />
+    <property name="version-suffix" value="SNAPSHOT" />
+    <property name="version" value="${version-base}-${version-suffix}" />
 
     <property name="final.name" value="${name}-${version}"/>
     <property name="revision.dir" value="${basedir}/.revision" />
@@ -103,7 +105,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="build.dir" value="${basedir}/build" />
     <property name="distribution" value="${basedir}/distribution" />
     <property name="src_generated.dir" value="${src.dir}/java/generated" />
-    <property name="c.src.dir" value="${src.dir}/c" />    
+    <property name="c.src.dir" value="${basedir}/zookeeper-client/zookeeper-client-c" />
     <property name="csrc_generated.dir" value="${c.src.dir}/generated" />
 
     <property name="jute.file" value="${src.dir}/zookeeper.jute" />
@@ -138,7 +140,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="test.quick" value="no" />
     <property name="conf.dir" value="${basedir}/conf"/>
     <property name="docs.dir" value="${basedir}/docs"/>
-    <property name="docs.src" value="${basedir}/src/docs"/>
+    <property name="docs.src" value="${basedir}/zookeeper-docs"/>
     <property name="javadoc.link.java"
               value="http://docs.oracle.com/javase/6/docs/api/" />
     <property name="javadoc.packages" value="org.apache.*" />
@@ -146,8 +148,8 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="dist.dir" value="${build.dir}/${final.name}"/>
     <property name="dist.maven.dir" value="${dist.dir}/dist-maven"/>
 
-    <property name="contrib.dir" value="${src.dir}/contrib"/>
-    <property name="recipes.dir" value="${src.dir}/recipes"/>
+    <property name="contrib.dir" value="${basedir}/zookeeper-contrib"/>
+    <property name="recipes.dir" value="${basedir}/zookeeper-recipes"/>
 
     <property name="ivy.version" value="2.4.0"/>
     <property name="ivy.url"
@@ -227,6 +229,8 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="sources-jar" value="${dist.maven.dir}/${final.name}-sources.jar"/>
     <property name="javadoc-jar" value="${dist.maven.dir}/${final.name}-javadoc.jar"/>
 
+
+    <property name="hamcrest.version" value="1.3"/>
 
     <!-- ====================================================== -->
     <!-- Macro definitions                                      -->
@@ -342,7 +346,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <java classname="org.apache.jute.compiler.generated.Rcc" fork="true" dir="${csrc_generated.dir}">
             <arg value="-l" />
             <arg value="c" />
-            <arg value="../../zookeeper.jute" />
+            <arg value="../../../src/zookeeper.jute" />
             <classpath>
                 <pathelement path="${build.classes}" />
             </classpath>
@@ -509,11 +513,15 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <env key="ACLOCAL" value="aclocal -I ${cppunit.m4}"/>
       </exec>
       <mkdir dir="${build.dir}/c" />
+      <condition property="enable.gcov.arg" value="--enable-gcov" else="">
+        <equals arg1="${enable.gcov}" arg2="true"/>
+      </condition>
       <exec executable="${c.src.dir}/configure" dir="${build.dir}/c"
             failonerror="yes">
         <env key="base_dir" value="${basedir}"/>
         <env key="CALLER" value="ANT"/>
         <arg value="--prefix=${build.dir}/c/build/${package.prefix}"/>
+        <arg line="${enable.gcov.arg}"/>
       </exec>
       <property name="c.build" value="${build.dir}/c/build"/>
       <exec dir="${build.dir}/c" executable="make" failonerror="true">
@@ -619,6 +627,8 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <!-- ====================================================== -->
     <!-- Make zookeeper.jar                                     -->
     <!-- ====================================================== -->
+	
+	
     <target name="jar" depends="compile">
         <java classname="org.apache.zookeeper.Version" fork="true"
               outputproperty="revision" errorproperty="revision.error" failonerror="true">
@@ -629,7 +639,17 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
             </classpath>
         </java>
         <exec executable="hostname" outputproperty="host.name"/>
-        <jar jarfile="${build.dir}/${final.name}.jar">
+	    
+    	<!-- Ensure that OSGi versions order properly whatever suffix is used by -->
+    	<!-- using DEV and REL at the start of the qualifier. DEV versions also -->
+    	<!-- use a timestamp to ensure later snapshots have higher versions -->
+	    <condition property="version-osgi" 
+		       value="${version-base}.DEV-${DSTAMP}-${TSTAMP}-${version-suffix}"
+		       else="${version-base}.REL-${version-suffix}">
+	        <contains string="${version-suffix}" substring="SNAPSHOT" />
+	    </condition>
+        
+    	<jar jarfile="${build.dir}/${final.name}.jar">
             <fileset file="LICENSE.txt" />
             <fileset dir="${build.classes}" excludes="**/.generated"/>
             <fileset dir="${java.src.dir}"/>
@@ -650,11 +670,11 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
                 <attribute name="Bundle-Name" value="ZooKeeper Bundle"/>
                 <attribute name="Bundle-SymbolicName" value="org.apache.hadoop.zookeeper"/>
                 <attribute name="Bundle-ManifestVersion" value="2"/>
-                <attribute name="Bundle-Version" value="${version}"/>
+                <attribute name="Bundle-Version" value="${version-osgi}"/>
                 <attribute name="Bundle-License" value="http://www.apache.org/licenses/LICENSE-2.0.txt"/>
                 <attribute name="Bundle-DocURL" value="http://hadoop.apache.org/zookeeper"/>
                 <attribute name="Import-Package" value='javax.management;resolution:=optional,javax.security.auth.callback,javax.security.auth.login,javax.security.sasl,org.slf4j;version="[1.6,2)",org.jboss.netty.buffer;resolution:=optional;version="[3.2,4)",org.jboss.netty.channel;resolution:=optional;version="[3.2,4)",org.jboss.netty.channel.group;resolution:=optional;version="[3.2,4)",org.jboss.netty.channel.socket.nio;resolution:=optional;version="[3.2,4)",org.osgi.framework;resolution:=optional;version="[1.5,2)",org.osgi.util.tracker;resolution:=optional;version="[1.4,2)",org.ietf.jgss'/>
-                <attribute name="Export-Package" value='org.apache.zookeeper;version="${version}",org.apache.zookeeper.client;version="${version}",org.apache.zookeeper.data;version="${version}",org.apache.zookeeper.version;version="${version}",org.apache.zookeeper.server;version="${version}",org.apache.zookeeper.server.auth;version="${version}",org.apache.zookeeper.server.persistence;version="${version}",org.apache.zookeeper.server.quorum;version="${version}",org.apache.zookeeper.common;version="${version}"'/>
+                <attribute name="Export-Package" value='org.apache.zookeeper;version="${version-osgi}",org.apache.zookeeper.client;version="${version-osgi}",org.apache.zookeeper.data;version="${version-osgi}",org.apache.zookeeper.version;version="${version-osgi}",org.apache.zookeeper.server;version="${version-osgi}",org.apache.zookeeper.server.auth;version="${version-osgi}",org.apache.zookeeper.server.persistence;version="${version-osgi}",org.apache.zookeeper.server.quorum;version="${version-osgi}",org.apache.zookeeper.common;version="${version-osgi}"'/>
             </manifest>
         </jar>
     </target>
@@ -852,12 +872,18 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
       <copy todir="${dist.dir}/src" includeEmptyDirs="true">
         <fileset dir="src" excludes="**/*.template **/docs/build/**/* **/ivy*.jar"/>
+        <fileset dir="${basedir}" excludes="**/*.template **/docs/build/**/* **/ivy*.jar">
+          <include name="zookeeper-recipes/**"/>
+          <include name="zookeeper-docs/**"/>
+          <include name="zookeeper-contrib/**"/>
+          <include name="zookeeper-client/**"/>
+        </fileset>
         <fileset file="src/pom.template"/>
       </copy>
   	  
       <chmod perm="ugo+x" type="file" parallel="false">
         <fileset dir="${dist.dir}/bin"/>
-        <fileset dir="${dist.dir}/src/contrib/">
+        <fileset dir="${dist.dir}/src/zookeeper-contrib/">
           <include name="*/bin/*" />
         </fileset>
       </chmod>
@@ -975,7 +1001,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <chmod perm="ugo+x" type="file" parallel="false">
         <fileset dir="${dist.dir}/bin"/>
         <fileset dir="${dist.dir}/sbin"/>
-        <fileset dir="${dist.dir}/src/contrib/">
+        <fileset dir="${dist.dir}/src/zookeeper-contrib/">
           <include name="*/bin/*" />
         </fileset>
       </chmod>
@@ -1033,8 +1059,8 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <macro_tar param.destfile="${build.dir}/${final.name}-bin.tar.gz">
         <param.listofitems>
           <tarfileset dir="${build.dir}" mode="664">
-            <include name="${final.name}/src/c/**" />
-            <exclude name="${final.name}/src/c/generated/**" />
+            <include name="${final.name}/zookeeper-client/zookeeper-client-c/**" />
+            <exclude name="${final.name}/zookeeper-client/zookeeper-client-c/generated/**" />
           </tarfileset>
           <tarfileset dir="${build.dir}" mode="664">
             <exclude name="${final.name}/bin/*" />
@@ -1318,7 +1344,29 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       </condition>
     </target>	
 
-    <target name="check-cppunit-makefile" depends="init" >
+    <target name="verify-cppunit-makefile-gcov">
+      <fileset id="fileset.makefile.gcov.enabled" dir="${test.cppunit.dir}" erroronmissingdir="false">
+        <include name="Makefile"/>
+        <containsregexp expression="^[^#]+-ftest-coverage.*$"/>
+      </fileset>
+      <condition property="makefile.gcov.enabled">
+        <resourcecount when="greater" count="0" refid="fileset.makefile.gcov.enabled"/>
+      </condition>
+      <echo message="makefile.gcov.enabled = ${makefile.gcov.enabled}"/>
+      <condition property="delete.cppunit.makefile">
+        <and>
+          <isset property="makefile.gcov.enabled"/>
+          <not><equals arg1="${enable.gcov}" arg2="true"/></not>
+        </and>
+      </condition>
+      <echo message="delete.cppunit.makefile = ${delete.cppunit.makefile}"/>
+    </target>
+    
+    <target name="delete-cppunit-makefile" if="delete.cppunit.makefile">
+      <delete file="${test.cppunit.dir}/Makefile"/>
+    </target>
+    
+    <target name="check-cppunit-makefile" depends="init,verify-cppunit-makefile-gcov,delete-cppunit-makefile" >
     	<condition property="need.cppunit.makefile">
        		<not> <available file="${test.cppunit.dir}/Makefile"/> </not>
     	</condition>
@@ -1348,11 +1396,15 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <param name="cppunit" value="true"/>
       </antcall>
     	<mkdir dir="${test.cppunit.dir}"/>
+        <condition property="enable.gcov.arg" value="--enable-gcov" else="">
+          <equals arg1="${enable.gcov}" arg2="true"/>
+        </condition>
     	<exec executable="${c.src.dir}/configure" dir="${test.cppunit.dir}"
           	failonerror="yes">
                 <env key="base_dir" value="${basedir}"/>
                 <env key="CALLER" value="ANT"/>
       		<arg value="--prefix=${test.cppunit.dir}"/>
+            <arg line="${enable.gcov.arg}"/>
     	</exec>
     </target>
 
@@ -1469,6 +1521,29 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
           <format type="xml"/>
         </current>
       </clover-report>
+    </target>
+
+    <target name="c_coverage_report" description="Runs coverage report for ZK C client code.">
+      <!-- delete configure and make files so that they get regenerated with coverage enabled -->
+      <delete file="${c.src.dir}/configure"/>
+      <delete file="${test.cppunit.dir}/Makefile"/>
+      <subant target="test-core-cppunit" failonerror="false">
+        <property name="enable.gcov" value="true"/>
+        <fileset dir="." file="build.xml"/>
+      </subant>
+      <mkdir dir="${build.dir}/c_coverage" />
+      <copy todir="${build.dir}/c" verbose="true" overwrite="true" failonerror="true">
+        <fileset dir="${build.dir}/test/test-cppunit/.libs">
+          <include name="*.gcno"/>
+          <include name="*.gcda"/>
+        </fileset>
+      </copy>
+      <exec dir="${build.dir}/c" executable="lcov">
+        <arg line="-t testname -o ZK_C_client.info -c -d ."/>
+      </exec>
+      <exec dir="${build.dir}/c_coverage" executable="genhtml">
+        <arg line="-o report ${build.dir}/c/ZK_C_client.info"/>
+      </exec>
     </target>
 
     <!-- Run with 'ant -Dfindbugs.home="path to Findbugs directory" findbugs -->
@@ -1652,29 +1727,40 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
           <exclude name="**/OldChangeLog"/>
           <exclude name="**/Changes"/>
           <exclude name="**/contrib/zkperl/MANIFEST"/>
+          <exclude name="**/zookeeper-contrib/zookeeper-contrib-zkperl/MANIFEST"/>
           <exclude name="**/conf/*"/>
           <exclude name="**/docs/"/>
+          <exclude name="**/zookeeper-docs/"/>
           <exclude name="**/lib/jdiff/"/>
-          <exclude name="contrib/ZooInspector/src/java/com/nitido/utils/toaster/Toaster.java"/>
-          <exclude name="src/c/*.la"/>
-          <exclude name="src/c/*.lo"/>
-          <exclude name="src/c/.libs/"/>
-          <exclude name="src/c/autom4te.cache/**"/>
-          <exclude name="src/c/config**"/>
-          <exclude name="src/c/include/winstdint.h"/>
-          <exclude name="src/c/src/hashtable/"/>
-          <exclude name="src/c/test-driver"/>
-          <exclude name="src/c/tests/quorum.cfg"/>
-          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/date.format.js"/>
-          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/g.bar.js"/>
-          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/g.dot.js"/>
-          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/g.line.js"/>
-          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/g.pie.js"/>
-          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/g.raphael.js"/>
-          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/raphael.js"/>
-          <exclude name="src/contrib/loggraph/web/org/apache/zookeeper/graph/resources/yui-min.js"/>
-          <exclude name="src/contrib/monitoring/JMX-RESOURCES"/>
-          <exclude name="src/contrib/zooinspector/src/java/com/nitido/utils/toaster/Toaster.java"/>
+          <exclude name="contrib/ZooInspector/src/main/java/com/nitido/utils/toaster/Toaster.java"/>
+          <exclude name="src/zookeeper-client/zookeeper-client-c/*.la"/>
+          <exclude name="src/zookeeper-client/zookeeper-client-c/*.lo"/>
+          <exclude name="src/zookeeper-client/zookeeper-client-c/.libs/"/>
+          <exclude name="src/zookeeper-client/zookeeper-client-c/autom4te.cache/**"/>
+          <exclude name="src/zookeeper-client/zookeeper-client-c/config**"/>
+          <exclude name="src/zookeeper-client/zookeeper-client-c/include/winstdint.h"/>
+          <exclude name="src/zookeeper-client/zookeeper-client-c/src/hashtable/"/>
+          <exclude name="src/zookeeper-client/zookeeper-client-c/test-driver"/>
+          <exclude name="src/zookeeper-client/zookeeper-client-c/tests/quorum.cfg"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/webapp/org/apache/zookeeper/graph/resources/date.format.js"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/webapp/org/apache/zookeeper/graph/resources/g.bar.js"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/webapp/org/apache/zookeeper/graph/resources/g.dot.js"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/webapp/org/apache/zookeeper/graph/resources/g.line.js"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/webapp/org/apache/zookeeper/graph/resources/g.pie.js"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/webapp/org/apache/zookeeper/graph/resources/g.raphael.js"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/webapp/org/apache/zookeeper/graph/resources/raphael.js"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/webapp/org/apache/zookeeper/graph/resources/yui-min.js"/>
+          <exclude name="contrib/loggraph/src/webapp/org/apache/zookeeper/graph/resources/date.format.js"/>
+          <exclude name="contrib/loggraph/src/webapp/org/apache/zookeeper/graph/resources/g.bar.js"/>
+          <exclude name="contrib/loggraph/src/webapp/org/apache/zookeeper/graph/resources/g.dot.js"/>
+          <exclude name="contrib/loggraph/src/webapp/org/apache/zookeeper/graph/resources/g.line.js"/>
+          <exclude name="contrib/loggraph/src/webapp/org/apache/zookeeper/graph/resources/g.pie.js"/>
+          <exclude name="contrib/loggraph/src/webapp/org/apache/zookeeper/graph/resources/g.raphael.js"/>
+          <exclude name="contrib/loggraph/src/webapp/org/apache/zookeeper/graph/resources/raphael.js"/>
+          <exclude name="contrib/loggraph/src/webapp/org/apache/zookeeper/graph/resources/yui-min.js"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-monitoring/JMX-RESOURCES"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-zooinspector/src/main/java/com/nitido/utils/toaster/Toaster.java"/>
+          <exclude name="src/zookeeper-contrib/zookeeper-contrib-fatjar/src/main/resources/mainClasses"/>
           <exclude name="src/java/generated/.generated/"/>
           <exclude name="src/java/test/checkstyle*.xml"/>
           <exclude name="src/java/test/checkstyle*.xsl"/>

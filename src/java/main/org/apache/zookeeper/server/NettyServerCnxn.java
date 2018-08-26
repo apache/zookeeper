@@ -160,7 +160,6 @@ public class NettyServerCnxn extends ServerCnxn {
         }
     }
 
-    private static final byte[] fourBytes = new byte[4];
     static class ResumeMessageEvent implements MessageEvent {
         Channel channel;
         ResumeMessageEvent(Channel channel) {
@@ -182,23 +181,7 @@ public class NettyServerCnxn extends ServerCnxn {
         if (closingChannel || !channel.isOpen()) {
             return;
         }
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        // Make space for length
-        BinaryOutputArchive bos = BinaryOutputArchive.getArchive(baos);
-        try {
-            baos.write(fourBytes);
-            bos.writeRecord(h, "header");
-            if (r != null) {
-                bos.writeRecord(r, tag);
-            }
-            baos.close();
-        } catch (IOException e) {
-            LOG.error("Error serializing response");
-        }
-        byte b[] = baos.toByteArray();
-        ByteBuffer bb = ByteBuffer.wrap(b);
-        bb.putInt(b.length - 4).rewind();
-        sendBuffer(bb);
+        super.sendResponse(h, r, tag);
         if (h.getXid() > 0) {
             // zks cannot be null otherwise we would not have gotten here!
             if (!zkServer.shouldThrottle(outstandingCount.decrementAndGet())) {

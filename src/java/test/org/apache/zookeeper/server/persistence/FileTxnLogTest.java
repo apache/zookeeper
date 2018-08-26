@@ -19,6 +19,7 @@ package org.apache.zookeeper.server.persistence;
 
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.TxnHeader;
@@ -33,6 +34,7 @@ import java.util.Arrays;
 
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
+import static org.mockito.Mockito.mock;
 
 public class FileTxnLogTest  extends ZKTestCase {
   protected static final Logger LOG = LoggerFactory.getLogger(FileTxnLogTest.class);
@@ -107,5 +109,30 @@ public class FileTxnLogTest  extends ZKTestCase {
     long customPreallocSize = 10101;
     FileTxnLog.setPreallocSize(customPreallocSize);
     Assert.assertThat(FilePadding.getPreAllocSize(), is(equalTo(customPreallocSize)));
+  }
+
+  public void testSyncThresholdExceedCount() throws IOException {
+    // Given ...
+
+    // Set threshold to -1, as after the first commit it takes 0ms to commit to disk.
+    java.lang.System.setProperty(FileTxnLog.ZOOKEEPER_FSYNC_WARNING_THRESHOLD_MS_PROPERTY, "-1");
+    ServerStats.Provider providerMock = mock(ServerStats.Provider.class);
+    ServerStats serverStats = new ServerStats(providerMock);
+
+    File logDir = ClientBase.createTmpDir();
+    FileTxnLog fileTxnLog = new FileTxnLog(logDir);
+    fileTxnLog.setServerStats(serverStats);
+
+    // Verify serverStats is 0 before any commit
+    Assert.assertEquals(0L, serverStats.getFsyncThresholdExceedCount());
+
+    // When ...
+    for (int i = 0; i < 50; i++) {
+      fileTxnLog.append(new TxnHeader(1, 1, 1, 1, ZooDefs.OpCode.create),
+              new CreateTxn("/testFsyncThresholdCountIncreased", new byte[]{}, ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 0));
+      fileTxnLog.commit(); // only 1 commit, otherwise it will be flaky
+      // Then ... verify serverStats is updated to the number of commits (as threshold is set to 0)
+      Assert.assertEquals((long) i + 1 , serverStats.getFsyncThresholdExceedCount());
+    }
   }
 }

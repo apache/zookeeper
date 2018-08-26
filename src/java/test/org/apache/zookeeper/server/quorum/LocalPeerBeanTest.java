@@ -20,11 +20,14 @@ package org.apache.zookeeper.server.quorum;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.junit.Test;
@@ -57,7 +60,7 @@ public class LocalPeerBeanTest {
 
         result = remotePeerBean.getClientAddress();
         String ipv4 = "0.0.0.0:" + clientPort;
-        String ipv6 = "0:0:0:0:0:0:0:0:" + clientPort;
+        String ipv6 = "[0:0:0:0:0:0:0:0]:" + clientPort;
         assertTrue(result.equals(ipv4) || result.equals(ipv6));
         // cleanup
         cnxnFactory.shutdown();
@@ -77,6 +80,26 @@ public class LocalPeerBeanTest {
         assertEquals(expectedResult, result);
         // cleanup
         cnxnFactory.shutdown();
+    }
+
+    @Test
+    public void testLocalPeerIsLeader() throws Exception {
+        long localPeerId = 7;
+        QuorumPeer peer = mock(QuorumPeer.class);
+        when(peer.getId()).thenReturn(localPeerId);
+        when(peer.isLeader(eq(localPeerId))).thenReturn(true);
+        LocalPeerBean localPeerBean = new LocalPeerBean(peer);
+        assertTrue(localPeerBean.isLeader());
+    }
+
+    @Test
+    public void testLocalPeerIsNotLeader() throws Exception {
+        long localPeerId = 7;
+        QuorumPeer peer = mock(QuorumPeer.class);
+        when(peer.getId()).thenReturn(localPeerId);
+        when(peer.isLeader(eq(localPeerId))).thenReturn(false);
+        LocalPeerBean localPeerBean = new LocalPeerBean(peer);
+        assertFalse(localPeerBean.isLeader());
     }
 
 }

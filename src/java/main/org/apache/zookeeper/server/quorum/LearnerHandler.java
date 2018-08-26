@@ -74,7 +74,7 @@ public class LearnerHandler extends ZooKeeperThread {
      * on the syncLimit. Once the deadline is past this learner should
      * be considered no longer "sync'd" with the leader. */
     volatile long tickOfNextAckDeadline;
-    
+
     /**
      * ZooKeeper server identifier of this learner
      */
@@ -159,7 +159,7 @@ public class LearnerHandler extends ZooKeeperThread {
 
     private final BufferedInputStream bufferedInput;
     private BufferedOutputStream bufferedOutput;
-    
+
     /**
      * Keep track of whether we have started send packets thread
      */
@@ -176,7 +176,7 @@ public class LearnerHandler extends ZooKeeperThread {
      * that we are going to blast it to the learner
      */
     private boolean needOpPacket = true;
-    
+
     /**
      * Last zxid sent to the learner as part of synchronization
      */
@@ -187,6 +187,11 @@ public class LearnerHandler extends ZooKeeperThread {
         this.sock = sock;
         this.leader = leader;
         this.bufferedInput = bufferedInput;
+
+        if (Boolean.getBoolean(FORCE_SNAP_SYNC)) {
+            forceSnapSync = true;
+            LOG.info("Forcing snapshot sync is enabled");
+        }
 
         try {
             if (leader.self != null) {
@@ -403,7 +408,7 @@ public class LearnerHandler extends ZooKeeperThread {
             } else {
                 LOG.info("Follower sid: " + this.sid + " not in the current config " + Long.toHexString(leader.self.getQuorumVerifier().getVersion()));
             }
-                        
+
             if (qp.getType() == Leader.OBSERVERINFO) {
                   learnerType = LearnerType.OBSERVER;
             }
@@ -440,11 +445,38 @@ public class LearnerHandler extends ZooKeeperThread {
                 leader.waitForEpochAck(this.getSid(), ss);
             }
             peerLastZxid = ss.getLastZxid();
-           
+
             // Take any necessary action if we need to send TRUNC or DIFF
             // startForwarding() will be called in all cases
             boolean needSnap = syncFollower(peerLastZxid, leader.zk.getZKDatabase(), leader);
-            
+
+            /* if we are not truncating or sending a diff just send a snapshot */
+            if (needSnap) {
+                boolean exemptFromThrottle = getLearnerType() != LearnerType.OBSERVER;
+                LearnerSnapshot snapshot =
+                        leader.getLearnerSnapshotThrottler().beginSnapshot(exemptFromThrottle);
+                try {
+                    long zxidToSend = leader.zk.getZKDatabase().getDataTreeLastProcessedZxid();
+                    oa.writeRecord(new QuorumPacket(Leader.SNAP, zxidToSend, null, null), "packet");
+                    bufferedOutput.flush();
+
+                    LOG.info("Sending snapshot last zxid of peer is 0x{}, zxid of leader is 0x{}, "
+                            + "send zxid of db as 0x{}, {} concurrent snapshots, "
+                            + "snapshot was {} from throttle",
+                            Long.toHexString(peerLastZxid),
+                            Long.toHexString(leaderLastZxid),
+                            Long.toHexString(zxidToSend),
+                            snapshot.getConcurrentSnapshotNumber(),
+                            snapshot.isEssential() ? "exempt" : "not exempt");
+                    // Dump data to peer
+                    leader.zk.getZKDatabase().serializeSnapshot(oa);
+                    oa.writeString("BenWasHere", "signature");
+                    bufferedOutput.flush();
+                } finally {
+                    snapshot.close();
+                }
+            }
+
             LOG.debug("Sending NEWLEADER message to " + sid);
             // the version of this quorumVerifier will be set by leader.lead() in case
             // the leader is just being established. waitForEpochAck makes sure that readyToStart is true if
@@ -461,36 +493,9 @@ public class LearnerHandler extends ZooKeeperThread {
             }
             bufferedOutput.flush();
 
-            /* if we are not truncating or sending a diff just send a snapshot */
-            if (needSnap) {
-                boolean exemptFromThrottle = getLearnerType() != LearnerType.OBSERVER;
-                LearnerSnapshot snapshot = 
-                        leader.getLearnerSnapshotThrottler().beginSnapshot(exemptFromThrottle);
-                try {
-                    long zxidToSend = leader.zk.getZKDatabase().getDataTreeLastProcessedZxid();
-                    oa.writeRecord(new QuorumPacket(Leader.SNAP, zxidToSend, null, null), "packet");
-                    bufferedOutput.flush();
-
-                    LOG.info("Sending snapshot last zxid of peer is 0x{}, zxid of leader is 0x{}, "
-                            + "send zxid of db as 0x{}, {} concurrent snapshots, " 
-                            + "snapshot was {} from throttle",
-                            Long.toHexString(peerLastZxid), 
-                            Long.toHexString(leaderLastZxid),
-                            Long.toHexString(zxidToSend), 
-                            snapshot.getConcurrentSnapshotNumber(),
-                            snapshot.isEssential() ? "exempt" : "not exempt");
-                    // Dump data to peer
-                    leader.zk.getZKDatabase().serializeSnapshot(oa);
-                    oa.writeString("BenWasHere", "signature");
-                    bufferedOutput.flush();
-                } finally {
-                    snapshot.close();
-                }
-            }
-
             // Start thread that blast packets in the queue to learner
             startSendingPackets();
-            
+
             /*
              * Have to wait for the first ACK, wait until
              * the leader is ready, and only then we can
@@ -505,12 +510,12 @@ public class LearnerHandler extends ZooKeeperThread {
             }
 
             if(LOG.isDebugEnabled()){
-            	LOG.debug("Received NEWLEADER-ACK message from " + sid);   
+            	LOG.debug("Received NEWLEADER-ACK message from " + sid);
             }
             leader.waitForNewLeaderAck(getSid(), qp.getZxid());
 
             syncLimitCheck.start();
-            
+
             // now that the ack has been processed expect the syncLimit
             sock.setSoTimeout(leader.self.tickTime * leader.self.syncLimit);
 
@@ -526,7 +531,7 @@ public class LearnerHandler extends ZooKeeperThread {
             // so we need to mark when the peer can actually start
             // using the data
             //
-            LOG.debug("Sending UPTODATE message to " + sid);      
+            LOG.debug("Sending UPTODATE message to " + sid);
             queuedPackets.add(new QuorumPacket(Leader.UPTODATE, -1, null, null));
 
             while (true) {
@@ -792,7 +797,14 @@ public class LearnerHandler extends ZooKeeperThread {
                     txnProposalItr.close();
                 }
             } else {
-                LOG.warn("Unhandled scenario for peer sid: " +  getSid());
+                LOG.warn("Unhandled scenario for peer sid: {} maxCommittedLog=0x{}"
+                        + " minCommittedLog=0x{} lastProcessedZxid=0x{}"
+                        + " peerLastZxid=0x{} txnLogSyncEnabled={}", getSid(),
+                        Long.toHexString(maxCommittedLog),
+                        Long.toHexString(minCommittedLog),
+                        Long.toHexString(lastProcessedZxid),
+                        Long.toHexString(peerLastZxid),
+                        txnLogSyncEnabled);
             }
             LOG.debug("Start forwarding 0x" + Long.toHexString(currentZxid) +
                       " for peer sid: " +  getSid());
@@ -913,8 +925,8 @@ public class LearnerHandler extends ZooKeeperThread {
         }
 
         return queuedZxid;
-    }    
-    
+    }
+
     public void shutdown() {
         // Send the packet of death
         try {
@@ -968,7 +980,7 @@ public class LearnerHandler extends ZooKeeperThread {
         QuorumPacket packet = new QuorumPacket(type, zxid, null, null);
         queuePacket(packet);
     }
-    
+
     void queuePacket(QuorumPacket p) {
         queuedPackets.add(p);
     }
@@ -977,7 +989,7 @@ public class LearnerHandler extends ZooKeeperThread {
         return isAlive()
         && leader.self.tick.get() <= tickOfNextAckDeadline;
     }
-    
+
     /**
      * For testing, return packet queue
      * @return

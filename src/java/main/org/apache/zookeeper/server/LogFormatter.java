@@ -46,7 +46,7 @@ public class LogFormatter {
     public static void main(String[] args) throws Exception {
         if (args.length != 1) {
             System.err.println("USAGE: LogFormatter log_file");
-            System.exit(2);
+            System.exit(ExitCode.INVALID_INVOCATION.getValue());
         }
         FileInputStream fis = new FileInputStream(args[0]);
         BinaryInputArchive logStream = BinaryInputArchive.getArchive(fis);
@@ -55,7 +55,7 @@ public class LogFormatter {
 
         if (fhdr.getMagic() != FileTxnLog.TXNLOG_MAGIC) {
             System.err.println("Invalid magic number for " + args[0]);
-            System.exit(2);
+            System.exit(ExitCode.INVALID_INVOCATION.getValue());
         }
         System.out.println("ZooKeeper Transactional Log File with dbid "
                 + fhdr.getDbid() + " txnlog format version "

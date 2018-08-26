@@ -47,7 +47,7 @@ public class SnapshotFormatter {
     public static void main(String[] args) throws Exception {
         if (args.length != 1) {
             System.err.println("USAGE: SnapshotFormatter snapshot_file");
-            System.exit(2);
+            System.exit(ExitCode.INVALID_INVOCATION.getValue());
         }
 
         new SnapshotFormatter().run(args[0]);
