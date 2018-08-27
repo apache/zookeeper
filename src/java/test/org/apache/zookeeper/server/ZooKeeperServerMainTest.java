@@ -390,7 +390,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         args[0] = main.confFile.toString();
         try {
             main.main.initializeAndRun(args);
-            Assert.fail("Must throw exception as metrics provider is cannot boot");
+            Assert.fail("Must throw exception as metrics provider cannot boot");
         } catch (IOException iae) {
             // expected
         }

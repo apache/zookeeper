@@ -68,7 +68,7 @@ public class NullMetricsProvider implements MetricsProvider {
 
         @Override
         public Summary getSummary(String name) {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            return NullSummary.INSTANCE;
         }
 
     }
