@@ -123,9 +123,8 @@ public class ZooKeeperServerMain {
         try {
             try {
                 metricsProvider = MetricsProviderBootstrap
-                        .startMetricsProvider(config.metricsProviderClassName, new Properties());
+                        .startMetricsProvider(config.metricsProviderClassName, config.metricsProviderConfiguration);
             } catch (MetricsProviderLifeCycleException error) {
-                LOG.error("Cannot boot MetricsProvider {}", config.metricsProviderClassName, error);
                 throw new IOException("Cannot boot MetricsProvider "+config.metricsProviderClassName,
                     error);
             }
@@ -194,7 +193,11 @@ public class ZooKeeperServerMain {
                 txnLog.close();
             }
             if (metricsProvider != null) {
-                metricsProvider.stop();
+                try {
+                    metricsProvider.stop();
+                } catch (Throwable error) {
+                    LOG.warn("Error while stopping metrics", error);
+                }
             }
         }
     }

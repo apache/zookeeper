@@ -25,6 +25,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -57,7 +58,6 @@ import org.apache.zookeeper.server.ServerCnxnFactoryAccessor;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FilePadding;
-import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.util.OSMXBean;
 import org.junit.After;
@@ -287,6 +287,9 @@ public abstract class ClientBase extends ZKTestCase {
                         !result.contains("READ-ONLY")) {
                     return true;
                 }
+            } catch (ConnectException e) {
+                // ignore as this is expected, do not log stacktrace
+                LOG.info("server {} not up", hp);
             } catch (IOException e) {
                 // ignore as this is expected
                 LOG.info("server {} not up", hp, e);

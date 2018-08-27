@@ -144,16 +144,15 @@ public class QuorumPeerMain {
       }
 
       LOG.info("Starting quorum peer");
+      MetricsProvider metricsProvider;
       try {
-          MetricsProvider metricsProvider;
-          try {
-              metricsProvider = MetricsProviderBootstrap
-                      .startMetricsProvider(config.metricsProviderClassName, new Properties());
-          } catch (MetricsProviderLifeCycleException error) {
-              LOG.error("Cannot boot MetricsProvider {}", config.metricsProviderClassName, error);
-              throw new IOException("Cannot boot MetricsProvider " + config.metricsProviderClassName,
+        metricsProvider = MetricsProviderBootstrap
+                      .startMetricsProvider(config.metricsProviderClassName, config.metricsProviderConfiguration);
+      } catch (MetricsProviderLifeCycleException error) {
+        throw new IOException("Cannot boot MetricsProvider " + config.metricsProviderClassName,
                       error);
-          }
+      }
+      try {
 
           ServerCnxnFactory cnxnFactory = null;
           ServerCnxnFactory secureCnxnFactory = null;
@@ -218,6 +217,14 @@ public class QuorumPeerMain {
       } catch (InterruptedException e) {
           // warn, but generally this is ok
           LOG.warn("Quorum Peer interrupted", e);
+      } finally {
+          if (metricsProvider != null) {
+              try {
+                  metricsProvider.stop();
+              } catch (Throwable error) {
+                  LOG.warn("Error while stopping metrics", error);
+              }
+          }
       }
     }
 

@@ -27,6 +27,8 @@ import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -419,19 +421,80 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
     /**
      * Test verifies that the server shouldn't be affected but runtime errors on stop()
      */
-//    @Test
+    @Test
     public void testFaultyMetricsProviderOnStop()
             throws Exception {
         ClientBase.setupTestEnv();
 
         final int CLIENT_PORT = PortAssignment.unique();
+        MetricsProviderWithErrorInStop.stopCalled.set(false);
         final String configs = "metricsProvider.className="+MetricsProviderWithErrorInStop.class.getName()+"\n";
         MainThread main = new MainThread(CLIENT_PORT, true, configs);
-        String args[] = new String[1];
-        args[0] = main.confFile.toString();
-        main.main.initializeAndRun(args);
+        main.start();
+
+        Assert.assertTrue("waiting for server being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
+                        CONNECTION_TIMEOUT));
+
+        clientConnected = new CountDownLatch(1);
+        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT,
+                ClientBase.CONNECTION_TIMEOUT, this);
+        Assert.assertTrue("Failed to establish zkclient connection!",
+                clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+
+        zk.create("/foo", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        Assert.assertEquals(new String(zk.getData("/foo", null, null)), "foobar");
+        zk.close();
+
         main.shutdown();
+        main.join();
         main.deleteDirs();
+
+        Assert.assertTrue("waiting for server down",
+                ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT,
+                        ClientBase.CONNECTION_TIMEOUT));
+        Assert.assertTrue(MetricsProviderWithErrorInStop.stopCalled.get());
+    }
+
+    /**
+     * Test verifies that configuration is passed to the MetricsProvider.
+     */
+    @Test
+    public void testMetricsProviderConfiguration()
+            throws Exception {
+        ClientBase.setupTestEnv();
+
+        final int CLIENT_PORT = PortAssignment.unique();
+        MetricsProviderWithConfiguration.httpPort.set(0);
+        final String configs = "metricsProvider.className="+MetricsProviderWithConfiguration.class.getName()+"\n"+
+                               "metricsProvider.httpPort=1234\n";
+        MainThread main = new MainThread(CLIENT_PORT, true, configs);
+        main.start();
+
+        Assert.assertTrue("waiting for server being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
+                        CONNECTION_TIMEOUT));
+
+        clientConnected = new CountDownLatch(1);
+        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT,
+                ClientBase.CONNECTION_TIMEOUT, this);
+        Assert.assertTrue("Failed to establish zkclient connection!",
+                clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+
+        zk.create("/foo", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        Assert.assertEquals(new String(zk.getData("/foo", null, null)), "foobar");
+        zk.close();
+
+        main.shutdown();
+        main.join();
+        main.deleteDirs();
+
+        Assert.assertTrue("waiting for server down",
+                ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT,
+                        ClientBase.CONNECTION_TIMEOUT));
+        Assert.assertEquals(1234, MetricsProviderWithConfiguration.httpPort.get());
     }
 
     public static abstract class BaseMetricsProvider implements MetricsProvider {
@@ -473,10 +536,23 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
 
     }
 
+    public static final class MetricsProviderWithConfiguration extends BaseMetricsProvider {
+
+        private static final AtomicInteger httpPort = new AtomicInteger();
+
+        @Override
+        public void configure(Properties prprts) throws MetricsProviderLifeCycleException {
+            httpPort.set(Integer.parseInt(prprts.getProperty("httpPort")));
+        }
+
+    }
+
     public static final class MetricsProviderWithErrorInStop extends BaseMetricsProvider {
+        private static final AtomicBoolean stopCalled = new AtomicBoolean();
 
         @Override
         public void stop() {
+            stopCalled.set(true);
             throw new RuntimeException();
         }
 

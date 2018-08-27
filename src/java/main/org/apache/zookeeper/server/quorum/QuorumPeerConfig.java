@@ -54,7 +54,6 @@ import org.apache.zookeeper.server.quorum.flexible.QuorumHierarchical;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.VerifyingFileFactory;
-import org.apache.zookeeper.server.util.ConfigUtils;
 
 import static org.apache.zookeeper.common.NetUtils.formatInetAddr;
 import org.apache.zookeeper.metrics.impl.NullMetricsProvider;
@@ -81,6 +80,7 @@ public class QuorumPeerConfig {
     /** defaults to -1 if not set explicitly */
     protected int maxSessionTimeout = -1;
     protected String metricsProviderClassName = NullMetricsProvider.class.getName();
+    protected Properties metricsProviderConfiguration = new Properties();
     protected boolean localSessionsEnabled = false;
     protected boolean localSessionsUpgradingEnabled = false;
 
@@ -329,6 +329,9 @@ public class QuorumPeerConfig {
                 quorumCnxnThreadsSize = Integer.parseInt(value);
             } else if (key.equals("metricsProvider.className")) {
                 metricsProviderClassName = value;
+            } else if (key.startsWith("metricsProvider.")) {
+                String keyForMetricsProvider = key.substring(16);
+                metricsProviderConfiguration.put(keyForMetricsProvider, value);
             } else {
                 System.setProperty("zookeeper." + key, value);
             }
@@ -747,6 +750,7 @@ public class QuorumPeerConfig {
     public int getMinSessionTimeout() { return minSessionTimeout; }
     public int getMaxSessionTimeout() { return maxSessionTimeout; }
     public String getMetricsProviderClassName() { return metricsProviderClassName; }
+    public Properties getMetricsProviderConfiguration() { return metricsProviderConfiguration; }
     public boolean areLocalSessionsEnabled() { return localSessionsEnabled; }
     public boolean isLocalSessionsUpgradingEnabled() {
         return localSessionsUpgradingEnabled;

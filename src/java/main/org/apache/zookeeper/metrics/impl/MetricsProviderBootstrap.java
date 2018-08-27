@@ -17,11 +17,9 @@
  */
 package org.apache.zookeeper.metrics.impl;
 
-import java.io.IOException;
 import java.util.Properties;
 import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
-import org.apache.zookeeper.server.quorum.QuorumPeerMain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
