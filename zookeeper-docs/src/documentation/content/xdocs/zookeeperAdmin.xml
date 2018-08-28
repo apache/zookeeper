@@ -1650,7 +1650,7 @@ server.3=zoo3:2888:3888</programlisting>
                       role="bold">networkBufferSize</emphasis>)</para>
 
               <para><emphasis role="bold">New in 3.6.0:</emphasis>
-                Sets the socket send and receive buffer size between leader
+                Sets the socket send and receive buffer size in bytes between leader
                 and learner to tune the network IO performance.
               </para>
 
