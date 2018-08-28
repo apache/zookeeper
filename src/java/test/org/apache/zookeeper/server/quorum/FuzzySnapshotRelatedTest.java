@@ -152,6 +152,8 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
 
         LOG.info("Restart the server");
         mt[followerA].shutdown();
+        QuorumPeerMainTest.waitForOne(zk[followerA], States.CONNECTING);
+
         mt[followerA].start();
         QuorumPeerMainTest.waitForOne(zk[followerA], States.CONNECTED);
 
