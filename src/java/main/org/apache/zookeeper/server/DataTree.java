@@ -956,8 +956,8 @@ public class DataTree {
          * associated with the snapshot only include partial of the multi op.
          *
          * When loading snapshot, it will only load the txns after the zxid
-         * associated with snapshot file, which could data inconsistency due
-         * to missing sub txns.
+         * associated with snapshot file, which could cause data inconsistency
+         * due to missing sub txns.
          *
          * To avoid this, we only update the lastProcessedZxid when the whole
          * multi-op txn is applied to DataTree.
