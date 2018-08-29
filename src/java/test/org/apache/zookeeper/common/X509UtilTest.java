@@ -120,8 +120,10 @@ public class X509UtilTest extends ZKTestCase {
     public void cleanUp() {
         System.clearProperty(x509Util.getSslKeystoreLocationProperty());
         System.clearProperty(x509Util.getSslKeystorePasswdProperty());
+        System.clearProperty(x509Util.getSslKeystoreTypeProperty());
         System.clearProperty(x509Util.getSslTruststoreLocationProperty());
         System.clearProperty(x509Util.getSslTruststorePasswdProperty());
+        System.clearProperty(x509Util.getSslTruststoreTypeProperty());
         System.clearProperty(x509Util.getSslHostnameVerificationEnabledProperty());
         System.clearProperty(x509Util.getSslOcspEnabledProperty());
         System.clearProperty(x509Util.getSslCrlEnabledProperty());
@@ -149,7 +151,7 @@ public class X509UtilTest extends ZKTestCase {
         Assert.assertEquals(protocol, sslContext.getProtocol());
     }
 
-    @Test(timeout = 5000, expected = X509Exception.SSLContextException.class)
+    @Test(timeout = 5000)
     public void testCreateSSLContextWithoutKeyStoreLocation() throws Exception {
         System.clearProperty(x509Util.getSslKeystoreLocationProperty());
         x509Util.getDefaultSSLContext();
@@ -234,6 +236,18 @@ public class X509UtilTest extends ZKTestCase {
     }
 
     @Test
+    public void testLoadPEMKeyStoreNullPassword() throws Exception {
+        if (!x509TestContext.getKeyStorePassword().isEmpty()) {
+            return;
+        }
+        // Make sure that empty password and null password are treated the same
+        X509KeyManager km = X509Util.createKeyManager(
+                x509TestContext.getKeyStoreFile(X509Util.StoreFileType.PEM).getAbsolutePath(),
+                null,
+                X509Util.StoreFileType.PEM);
+    }
+
+    @Test
     public void testLoadPEMKeyStoreAutodetectStoreFileType() throws Exception {
         // Make sure we can instantiate a key manager from the PEM file on disk
         X509KeyManager km = X509Util.createKeyManager(
@@ -265,6 +279,23 @@ public class X509UtilTest extends ZKTestCase {
     }
 
     @Test
+    public void testLoadPEMTrustStoreNullPassword() throws Exception {
+        if (!x509TestContext.getTrustStorePassword().isEmpty()) {
+            return;
+        }
+        // Make sure that empty password and null password are treated the same
+        X509TrustManager tm = X509Util.createTrustManager(
+                x509TestContext.getTrustStoreFile(X509Util.StoreFileType.PEM).getAbsolutePath(),
+                null,
+                X509Util.StoreFileType.PEM,
+                false,
+                false,
+                true,
+                true);
+
+    }
+
+    @Test
     public void testLoadPEMTrustStoreAutodetectStoreFileType() throws Exception {
         // Make sure we can instantiate a trust manager from the PEM file on disk
         X509TrustManager tm = X509Util.createTrustManager(
@@ -283,6 +314,18 @@ public class X509UtilTest extends ZKTestCase {
         X509KeyManager km = X509Util.createKeyManager(
                 x509TestContext.getKeyStoreFile(X509Util.StoreFileType.JKS).getAbsolutePath(),
                 x509TestContext.getKeyStorePassword(),
+                X509Util.StoreFileType.JKS);
+    }
+
+    @Test
+    public void testLoadJKSKeyStoreNullPassword() throws Exception {
+        if (!x509TestContext.getKeyStorePassword().isEmpty()) {
+            return;
+        }
+        // Make sure that empty password and null password are treated the same
+        X509KeyManager km = X509Util.createKeyManager(
+                x509TestContext.getKeyStoreFile(X509Util.StoreFileType.JKS).getAbsolutePath(),
+                null,
                 X509Util.StoreFileType.JKS);
     }
 
@@ -313,6 +356,22 @@ public class X509UtilTest extends ZKTestCase {
                 X509Util.StoreFileType.JKS,
                 true,
                 true,
+                true,
+                true);
+    }
+
+    @Test
+    public void testLoadJKSTrustStoreNullPassword() throws Exception {
+        if (!x509TestContext.getTrustStorePassword().isEmpty()) {
+            return;
+        }
+        // Make sure that empty password and null password are treated the same
+        X509TrustManager tm = X509Util.createTrustManager(
+                x509TestContext.getTrustStoreFile(X509Util.StoreFileType.JKS).getAbsolutePath(),
+                null,
+                X509Util.StoreFileType.JKS,
+                false,
+                false,
                 true,
                 true);
     }

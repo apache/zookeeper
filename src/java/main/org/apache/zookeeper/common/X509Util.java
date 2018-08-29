@@ -242,22 +242,17 @@ public abstract class X509Util {
         KeyManager[] keyManagers = null;
         TrustManager[] trustManagers = null;
 
-        String keyStoreLocationProp = config.getProperty(sslKeystoreLocationProperty);
-        String keyStorePasswordProp = config.getProperty(sslKeystorePasswdProperty);
+        String keyStoreLocationProp = config.getProperty(sslKeystoreLocationProperty, "");
+        String keyStorePasswordProp = config.getProperty(sslKeystorePasswdProperty, "");
         String keyStoreTypeProp = config.getProperty(sslKeystoreTypeProperty);
 
         // There are legal states in some use cases for null KeyManager or TrustManager.
-        // But if a user wanna specify one, location and password are required.
+        // But if a user wanna specify one, location is required. Password defaults to empty string if it is not
+        // specified by the user.
 
-        if (keyStoreLocationProp == null && keyStorePasswordProp == null) {
+        if (keyStoreLocationProp.isEmpty()) {
             LOG.warn(getSslKeystoreLocationProperty() + " not specified");
         } else {
-            if (keyStoreLocationProp == null) {
-                throw new SSLContextException(getSslKeystoreLocationProperty() + " not specified");
-            }
-            if (keyStorePasswordProp == null) {
-                throw new SSLContextException(getSslKeystorePasswdProperty() + " not specified");
-            }
             try {
                 StoreFileType keyStoreType = StoreFileType.fromPropertyValue(keyStoreTypeProp);
                 keyManagers = new KeyManager[]{
@@ -269,8 +264,8 @@ public abstract class X509Util {
             }
         }
 
-        String trustStoreLocationProp = config.getProperty(sslTruststoreLocationProperty);
-        String trustStorePasswordProp = config.getProperty(sslTruststorePasswdProperty);
+        String trustStoreLocationProp = config.getProperty(sslTruststoreLocationProperty, "");
+        String trustStorePasswordProp = config.getProperty(sslTruststorePasswdProperty, "");
         String trustStoreTypeProp = config.getProperty(sslTruststoreTypeProperty);
 
         boolean sslCrlEnabled = config.getBoolean(this.sslCrlEnabledProperty);
@@ -278,7 +273,7 @@ public abstract class X509Util {
         boolean sslServerHostnameVerificationEnabled = config.getBoolean(this.getSslHostnameVerificationEnabledProperty(), true);
         boolean sslClientHostnameVerificationEnabled = sslServerHostnameVerificationEnabled && shouldVerifyClientHostname();
 
-        if (trustStoreLocationProp == null) {
+        if (trustStoreLocationProp.isEmpty()) {
             LOG.warn(getSslTruststoreLocationProperty() + " not specified");
         } else {
             try {
@@ -317,6 +312,9 @@ public abstract class X509Util {
     public static X509KeyManager createKeyManager(String keyStoreLocation, String keyStorePassword, StoreFileType keyStoreType)
             throws KeyManagerException {
         FileInputStream inputStream = null;
+        if (keyStorePassword == null) {
+            keyStorePassword = "";
+        }
         try {
             char[] keyStorePasswordChars = keyStorePassword.toCharArray();
             File keyStoreFile = new File(keyStoreLocation);
@@ -385,6 +383,9 @@ public abstract class X509Util {
                                                       final boolean clientHostnameVerificationEnabled)
             throws TrustManagerException {
         FileInputStream inputStream = null;
+        if (trustStorePassword == null) {
+            trustStorePassword = "";
+        }
         try {
             File trustStoreFile = new File(trustStoreLocation);
             if (trustStoreType == null) {
@@ -395,12 +396,8 @@ public abstract class X509Util {
                 case JKS:
                     ts = KeyStore.getInstance("JKS");
                     inputStream = new FileInputStream(trustStoreFile);
-                    if (trustStorePassword != null) {
-                        char[] trustStorePasswordChars = trustStorePassword.toCharArray();
-                        ts.load(inputStream, trustStorePasswordChars);
-                    } else {
-                        ts.load(inputStream, null);
-                    }
+                    char[] trustStorePasswordChars = trustStorePassword.toCharArray();
+                    ts.load(inputStream, trustStorePasswordChars);
                     break;
                 case PEM:
                     ts = PemReader.loadTrustStore(trustStoreFile);
