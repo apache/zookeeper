@@ -114,6 +114,10 @@ public class ZKConfig {
     private void putSSLProperties(X509Util x509Util) {
         properties.put(x509Util.getSslProtocolProperty(),
                 System.getProperty(x509Util.getSslProtocolProperty()));
+        properties.put(x509Util.getSslEnabledProtocolsProperty(),
+                System.getProperty(x509Util.getSslEnabledProtocolsProperty()));
+        properties.put(x509Util.getSslCipherSuitesProperty(),
+                System.getProperty(x509Util.getSslCipherSuitesProperty()));
         properties.put(x509Util.getSslKeystoreLocationProperty(),
                 System.getProperty(x509Util.getSslKeystoreLocationProperty()));
         properties.put(x509Util.getSslKeystorePasswdProperty(),
@@ -132,6 +136,8 @@ public class ZKConfig {
                 System.getProperty(x509Util.getSslCrlEnabledProperty()));
         properties.put(x509Util.getSslOcspEnabledProperty(),
                 System.getProperty(x509Util.getSslOcspEnabledProperty()));
+        properties.put(x509Util.getSslClientAuthProperty(),
+                System.getProperty(x509Util.getSslClientAuthProperty()));
     }
 
     /**

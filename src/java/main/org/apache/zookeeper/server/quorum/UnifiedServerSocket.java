@@ -243,8 +243,6 @@ public class UnifiedServerSocket extends ServerSocket {
                 } catch (X509Exception e) {
                     throw new IOException("failed to create SSL context", e);
                 }
-                sslSocket.setUseClientMode(false);
-                sslSocket.setNeedClientAuth(true);  // TODO: probably need to add a property for this in X509Util
                 prependableSocket = null;
                 mode = Mode.TLS;
             } else if (allowInsecureConnection) {
