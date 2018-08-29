@@ -36,6 +36,7 @@ import javax.security.sasl.SaslException;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.Login;
+import org.apache.zookeeper.LoginFactory;
 import org.apache.zookeeper.SaslClientCallbackHandler;
 import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.server.quorum.QuorumAuthPacket;
@@ -52,7 +53,7 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
     private final String quorumServicePrincipal;
 
     public SaslQuorumAuthLearner(boolean quorumRequireSasl,
-            String quorumServicePrincipal, String loginContext)
+            String quorumServicePrincipal, String loginContext, LoginFactory loginFactory)
                     throws SaslException {
         this.quorumRequireSasl = quorumRequireSasl;
         this.quorumServicePrincipal = quorumServicePrincipal;
@@ -66,8 +67,8 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
                                          + "section '" + loginContext
                                          + "' could not be found.");
             }
-            this.learnerLogin = new Login(loginContext,
-                                    new SaslClientCallbackHandler(null, "QuorumLearner"), new ZKConfig());
+            this.learnerLogin = loginFactory.createLogin(loginContext,
+                    new SaslClientCallbackHandler(null, "QuorumLearner"), new ZKConfig());
             this.learnerLogin.startThreadIfNeeded();
         } catch (LoginException e) {
             throw new SaslException("Failed to initialize authentication mechanism using SASL", e);
@@ -94,7 +95,10 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
                     principalConfig,
                     QuorumAuth.QUORUM_SERVER_PROTOCOL_NAME,
                     QuorumAuth.QUORUM_SERVER_SASL_DIGEST, LOG, "QuorumLearner");
-
+            if (sc == null) {
+                LOG.error("SaslClient object is null while trying to create SASL client");
+                throw new SaslException("Exception while trying to create SASL client");
+            }
             if (sc.hasInitialResponse()) {
                 responseToken = createSaslToken(new byte[0], sc, learnerLogin);
             }
