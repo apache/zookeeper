@@ -112,6 +112,10 @@ class WatchManager {
                 Set<String> paths = watch2Paths.get(w);
                 if (paths != null) {
                     paths.remove(path);
+                    if(paths.isEmpty())
+                    {
+                        watch2Paths.remove(w);
+                    }
                 }
             }
         }
@@ -201,6 +205,10 @@ class WatchManager {
         Set<String> paths = watch2Paths.get(watcher);
         if (paths == null || !paths.remove(path)) {
             return false;
+        }
+        if(paths.isEmpty())
+        {
+            watch2Paths.remove(watcher);
         }
 
         Set<Watcher> list = watchTable.get(path);
