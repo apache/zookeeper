@@ -25,7 +25,7 @@ import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 
 public class SyncedLearnerTracker {
 
-    protected ArrayList<QuorumVerifierAcksetPair> qvAcksetPairs = 
+    protected ArrayList<QuorumVerifierAcksetPair> qvAcksetPairs =
                 new ArrayList<QuorumVerifierAcksetPair>();
 
     public void addQuorumVerifier(QuorumVerifier qv) {
@@ -44,6 +44,15 @@ public class SyncedLearnerTracker {
         return change;
     }
 
+    public boolean hasSid(long sid) {
+        for (QuorumVerifierAcksetPair qvAckset : qvAcksetPairs) {
+            if (!qvAckset.getQuorumVerifier().getVotingMembers().containsKey(sid)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public boolean hasAllQuorums() {
         for (QuorumVerifierAcksetPair qvAckset : qvAcksetPairs) {
             if (!qvAckset.getQuorumVerifier().containsQuorum(qvAckset.getAckset()))
@@ -51,14 +60,14 @@ public class SyncedLearnerTracker {
         }
         return true;
     }
-        
+
     public String ackSetsToString(){
         StringBuilder sb = new StringBuilder();
-            
+
         for (QuorumVerifierAcksetPair qvAckset : qvAcksetPairs) {
             sb.append(qvAckset.getAckset().toString()).append(",");
         }
-            
+
         return sb.substring(0, sb.length()-1);
     }
 
@@ -66,7 +75,7 @@ public class SyncedLearnerTracker {
         private final QuorumVerifier qv;
         private final HashSet<Long> ackset;
 
-        public QuorumVerifierAcksetPair(QuorumVerifier qv, HashSet<Long> ackset) {                
+        public QuorumVerifierAcksetPair(QuorumVerifier qv, HashSet<Long> ackset) {
             this.qv = qv;
             this.ackset = ackset;
         }

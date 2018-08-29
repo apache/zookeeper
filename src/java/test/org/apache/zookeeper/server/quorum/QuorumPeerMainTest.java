@@ -1407,6 +1407,85 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         }
     }
 
+    /**
+     * Test leader election finished  with 1 disloyal voter and without
+     * majority followers, expecting to see the quorum stablized only
+     * after waiting for maxTimeToWaitForEpoch.
+     */
+    @Test
+    public void testLeaderElectionWithDisloyalVoter() throws IOException {
+        testLeaderElection(5, 3, 1000, 10000);
+    }
+
+    /**
+     * Test leader election finished  with 1 disloyal voter and majority
+     * followers, expecting to see the quorum stablized immediately even
+     * there is 1 disloyal voter.
+     *
+     * Set the maxTimeToWaitForEpoch to 3s and maxTimeWaitForServerUp to
+     * 2s to confirm this.
+     */
+    @Test
+    public void testLeaderElectionWithDisloyalVoter_stillHasMajority()
+            throws IOException {
+        testLeaderElection(5, 5, 3000, 2000);
+    }
+
+    void testLeaderElection(int totalServers, int serversToStart,
+            int maxTimeToWaitForEpoch, int maxTimeWaitForServerUp)
+            throws IOException {
+        Leader.setMaxTimeToWaitForEpoch(maxTimeToWaitForEpoch);
+
+        // set up config for an ensemble with given number of servers
+        servers = new Servers();
+        int ENSEMBLE_SERVERS = totalServers;
+        final int clientPorts[] = new int[ENSEMBLE_SERVERS];
+        StringBuilder sb = new StringBuilder();
+        String server;
+
+        for (int i = 0; i < ENSEMBLE_SERVERS; i++) {
+            clientPorts[i] = PortAssignment.unique();
+            server = "server." + i + "=127.0.0.1:" + PortAssignment.unique()
+                    + ":" + PortAssignment.unique() + ":participant;127.0.0.1:"
+                    + clientPorts[i];
+            sb.append(server + "\n");
+        }
+        String currentQuorumCfgSection = sb.toString();
+
+        // start servers
+        int SERVERS_TO_START = serversToStart;
+        MainThread[] mt = new MainThread[SERVERS_TO_START];
+        Context[] contexts = new Context[SERVERS_TO_START];
+        servers.mt = mt;
+        numServers = SERVERS_TO_START;
+        for (int i = 0; i < SERVERS_TO_START; i++) {
+            // hook the 1st follower to quit following after leader election
+            // simulate the behavior of changing voting during looking
+            final Context context = new Context();
+            if (i == 0) {
+                context.quitFollowing = true;
+            }
+            contexts[i] = context;
+            mt[i] = new MainThread(i, clientPorts[i], currentQuorumCfgSection,
+                    false) {
+                @Override
+                public TestQPMain getTestQPMain() {
+                    return new CustomizedQPMain(context);
+                }
+            };
+            mt[i].start();
+        }
+
+        // make sure the quorum can be formed within initLimit * tickTime
+        // the default setting is 10 * 4000 = 40000 ms
+        for (int i = 0; i < SERVERS_TO_START; i++) {
+            Assert.assertTrue(
+                "Server " + i + " should have joined quorum by now",
+                ClientBase.waitForServerUp(
+                        "127.0.0.1:" + clientPorts[i], maxTimeWaitForServerUp));
+        }
+    }
+
     static class Context {
         boolean quitFollowing = false;
         boolean exitWhenAckNewLeader = false;
@@ -1465,6 +1544,17 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                 throws IOException {
             return new Follower(this, new FollowerZooKeeperServer(logFactory,
                     this, this.getZkDb())) {
+                @Override
+                void followLeader() throws InterruptedException {
+                    if (context.quitFollowing) {
+                        // reset the flag
+                        context.quitFollowing = false;
+                        LOG.info("Quit following");
+                        return;
+                    } else {
+                        super.followLeader();
+                    }
+                }
 
                 @Override
                 void writePacket(QuorumPacket pp, boolean flush) throws IOException {

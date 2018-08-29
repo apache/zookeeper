@@ -1172,6 +1172,60 @@ public class Leader {
     }
     // VisibleForTesting
     protected final Set<Long> connectingFollowers = new HashSet<Long>();
+
+    private volatile boolean quitWaitForEpoch = false;
+    private volatile long timeStartWaitForEpoch = -1;
+    private volatile SyncedLearnerTracker voteSet;
+
+    public static final String MAX_TIME_TO_WAIT_FOR_EPOCH = "zookeeper.leader.maxTimeToWaitForEpoch";
+    private static int maxTimeToWaitForEpoch;
+    static {
+        maxTimeToWaitForEpoch = Integer.getInteger(MAX_TIME_TO_WAIT_FOR_EPOCH, -1);
+        LOG.info("{} = {}ms", MAX_TIME_TO_WAIT_FOR_EPOCH, maxTimeToWaitForEpoch);
+    }
+
+    // visible for test
+    public static void setMaxTimeToWaitForEpoch(int maxTimeToWaitForEpoch) {
+        Leader.maxTimeToWaitForEpoch = maxTimeToWaitForEpoch;
+        LOG.info("Set {} to {}ms", MAX_TIME_TO_WAIT_FOR_EPOCH, Leader.maxTimeToWaitForEpoch);
+    }
+
+    /**
+     * Quit condition:
+     *
+     * 1 voter goes to looking again and time waitForEpoch > maxTimeToWaitForEpoch
+     *
+     * Note: the voter may go to looking again in case of:
+     * 1. change mind in the last minute when received a different notification
+     * 2. the leader hadn't started leading when it tried to connect to it
+     * 3. connection broken between the voter and leader
+     * 4. voter being shutdown or restarted
+     */
+    private void quitLeading() {
+        synchronized(connectingFollowers) {
+            quitWaitForEpoch = true;
+            connectingFollowers.notifyAll();
+        }
+        LOG.info("Quit leading due to voter changed mind.");
+    }
+
+    public void setLeadingVoteSet(SyncedLearnerTracker voteSet) {
+        this.voteSet = voteSet;
+    }
+
+    public void reportLookingSid(long sid) {
+        if (maxTimeToWaitForEpoch < 0 || timeStartWaitForEpoch < 0
+                || !waitingForNewEpoch) {
+            return;
+        }
+        if (voteSet == null || !voteSet.hasSid(sid)) {
+            return;
+        }
+        if (Time.currentElapsedTime() - timeStartWaitForEpoch > maxTimeToWaitForEpoch) {
+            quitLeading();
+        }
+    }
+
     public long getEpochToPropose(long sid, long lastAcceptedEpoch) throws InterruptedException, IOException {
         synchronized(connectingFollowers) {
             if (!waitingForNewEpoch) {
@@ -1191,9 +1245,12 @@ public class Leader {
                 connectingFollowers.notifyAll();
             } else {
                 long start = Time.currentElapsedTime();
+                if (sid == self.getId()) {
+                    timeStartWaitForEpoch = start;
+                }
                 long cur = start;
                 long end = start + self.getInitLimit()*self.getTickTime();
-                while(waitingForNewEpoch && cur < end) {
+                while(waitingForNewEpoch && cur < end  && !quitWaitForEpoch) {
                     connectingFollowers.wait(end - cur);
                     cur = Time.currentElapsedTime();
                 }
