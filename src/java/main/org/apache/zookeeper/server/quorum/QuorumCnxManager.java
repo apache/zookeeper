@@ -47,12 +47,17 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.zookeeper.server.ExitCode;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+import org.apache.zookeeper.server.util.ConfigUtils;
 import org.apache.zookeeper.server.ZooKeeperThread;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthLearner;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.apache.zookeeper.common.NetUtils.formatInetAddr;
 
 /**
  * This class implements a connection manager for leader election using TCP. It
@@ -223,10 +228,13 @@ public class QuorumCnxManager {
                         num_read, remaining, sid);
             }
 
-            // FIXME: IPv6 is not supported. Using something like Guava's HostAndPort
-            //        parser would be good.
             String addr = new String(b);
-            String[] host_port = addr.split(":");
+            String[] host_port;
+            try {
+                host_port = ConfigUtils.getHostAndPort(addr);
+            } catch (ConfigException e) {
+                throw new InitialMessageException("Badly formed address: %s", addr);
+            }
 
             if (host_port.length != 2) {
                 throw new InitialMessageException("Badly formed address: %s", addr);
@@ -237,6 +245,8 @@ public class QuorumCnxManager {
                 port = Integer.parseInt(host_port[1]);
             } catch (NumberFormatException e) {
                 throw new InitialMessageException("Bad port number: %s", host_port[1]);
+            } catch (ArrayIndexOutOfBoundsException e) {
+                throw new InitialMessageException("No port number in: %s", addr);
             }
 
             return new InitialMessage(sid, new InetSocketAddress(host_port[0], port));
@@ -404,7 +414,7 @@ public class QuorumCnxManager {
             // represents protocol version (in other words - message type)
             dout.writeLong(PROTOCOL_VERSION);
             dout.writeLong(self.getId());
-            String addr = self.getElectionAddress().getHostString() + ":" + self.getElectionAddress().getPort();
+            String addr = formatInetAddr(self.getElectionAddress());
             byte[] addr_bytes = addr.getBytes();
             dout.writeInt(addr_bytes.length);
             dout.write(addr_bytes);
@@ -865,7 +875,7 @@ public class QuorumCnxManager {
                             client = ss.accept();
                             setSockOpts(client);
                             LOG.info("Received connection request "
-                                     + client.getRemoteSocketAddress());
+                                     + formatInetAddr((InetSocketAddress)client.getRemoteSocketAddress()));
                             // Receive and handle the connection request
                             // asynchronously if the quorum sasl authentication is
                             // enabled. This is required because sasl server
@@ -907,12 +917,12 @@ public class QuorumCnxManager {
                 LOG.error("As I'm leaving the listener thread, "
                         + "I won't be able to participate in leader "
                         + "election any longer: "
-                        + self.getElectionAddress());
+                        + formatInetAddr(self.getElectionAddress()));
                 if (exitException instanceof BindException) {
                     // After leaving listener thread, the host cannot join the
                     // quorum anymore, this is a severe error that we cannot
                     // recover from, so we need to exit
-                    System.exit(14);
+                    System.exit(ExitCode.UNABLE_TO_BIND_QUORUM_PORT.getValue());
                 }
             } else if (ss != null) {
                 // Clean up for shutdown.

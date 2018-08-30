@@ -44,7 +44,7 @@ public class MockServerCnxn extends ServerCnxn {
     }
 
     @Override
-    void sendCloseSession() {
+    public void sendCloseSession() {
     }
 
     @Override

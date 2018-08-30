@@ -317,7 +317,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             LOG.error("Severe unrecoverable error, exiting", e);
             // This is a severe error that we cannot recover from,
             // so we need to exit
-            System.exit(10);
+            System.exit(ExitCode.TXNLOG_ERROR_TAKING_SNAPSHOT.getValue());
         }
     }
 
@@ -1130,24 +1130,22 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 cnxn.disableRecv();
             }
             return;
+        } else if (h.getType() == OpCode.sasl) {
+            Record rsp = processSasl(incomingBuffer,cnxn);
+            ReplyHeader rh = new ReplyHeader(h.getXid(), 0, KeeperException.Code.OK.intValue());
+            cnxn.sendResponse(rh,rsp, "response"); // not sure about 3rd arg..what is it?
+            return;
         } else {
-            if (h.getType() == OpCode.sasl) {
-                Record rsp = processSasl(incomingBuffer,cnxn);
-                ReplyHeader rh = new ReplyHeader(h.getXid(), 0, KeeperException.Code.OK.intValue());
-                cnxn.sendResponse(rh,rsp, "response"); // not sure about 3rd arg..what is it?
-                return;
-            }
-            else {
-                Request si = new Request(cnxn, cnxn.getSessionId(), h.getXid(),
-                  h.getType(), incomingBuffer, cnxn.getAuthInfo());
-                si.setOwner(ServerCnxn.me);
-                // Always treat packet from the client as a possible
-                // local request.
-                setLocalSessionFlag(si);
-                submitRequest(si);
-            }
+            cnxn.incrOutstandingRequests(h);
+            Request si = new Request(cnxn, cnxn.getSessionId(), h.getXid(),
+              h.getType(), incomingBuffer, cnxn.getAuthInfo());
+            si.setOwner(ServerCnxn.me);
+            // Always treat packet from the client as a possible
+            // local request.
+            setLocalSessionFlag(si);
+            submitRequest(si);
+            return;
         }
-        cnxn.incrOutstandingRequests(h);
     }
 
     private Record processSasl(ByteBuffer incomingBuffer, ServerCnxn cnxn) throws IOException {
@@ -1219,13 +1217,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         if (opCode == OpCode.createSession) {
             if (hdr != null && txn instanceof CreateSessionTxn) {
                 CreateSessionTxn cst = (CreateSessionTxn) txn;
-                sessionTracker.addGlobalSession(sessionId, cst.getTimeOut());
-            } else if (request != null && request.isLocalSession()) {
-                request.request.rewind();
-                int timeout = request.request.getInt();
-                request.request.rewind();
-                sessionTracker.addSession(request.sessionId, timeout);
-            } else {
+                sessionTracker.commitSession(sessionId, cst.getTimeOut());
+            } else if (request == null || !request.isLocalSession()) {
                 LOG.warn("*****>>>>> Got "
                         + txn.getClass() + " "
                         + txn.toString());

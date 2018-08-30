@@ -51,7 +51,7 @@ public class SessionTrackerTest extends ZKTestCase {
         ZooKeeperServer zks = setupSessionTracker();
 
         latch = new CountDownLatch(1);
-        zks.sessionTracker.addSession(sessionId, sessionTimeout);
+        zks.sessionTracker.trackSession(sessionId, sessionTimeout);
         SessionTrackerImpl sessionTrackerImpl = (SessionTrackerImpl) zks.sessionTracker;
         SessionImpl sessionImpl = sessionTrackerImpl.sessionsById
                 .get(sessionId);
@@ -68,7 +68,7 @@ public class SessionTrackerTest extends ZKTestCase {
         // Simulating FinalRequestProcessor logic: create session request has
         // delayed and now reaches FinalRequestProcessor. Here the leader zk
         // will do sessionTracker.addSession(id, timeout)
-        sessionTrackerImpl.addSession(sessionId, sessionTimeout);
+        sessionTrackerImpl.trackSession(sessionId, sessionTimeout);
         try {
             sessionTrackerImpl.checkSession(sessionId, sessionOwner);
             Assert.fail("Should throw session expiry exception "
@@ -93,7 +93,7 @@ public class SessionTrackerTest extends ZKTestCase {
         ZooKeeperServer zks = setupSessionTracker();
 
         latch = new CountDownLatch(1);
-        zks.sessionTracker.addSession(sessionId, sessionTimeout);
+        zks.sessionTracker.trackSession(sessionId, sessionTimeout);
         SessionTrackerImpl sessionTrackerImpl = (SessionTrackerImpl) zks.sessionTracker;
         SessionImpl sessionImpl = sessionTrackerImpl.sessionsById
                 .get(sessionId);

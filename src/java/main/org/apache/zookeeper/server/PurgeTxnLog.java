@@ -231,6 +231,6 @@ public class PurgeTxnLog {
 
     private static void printUsageThenExit() {
         printUsage();
-        System.exit(1);
+        System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
     }
 }

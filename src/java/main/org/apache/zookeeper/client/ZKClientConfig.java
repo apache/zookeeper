@@ -56,9 +56,15 @@ public class ZKClientConfig extends ZKConfig {
     @SuppressWarnings("deprecation")
     public static final String SECURE_CLIENT = ZooKeeper.SECURE_CLIENT;
     public static final int CLIENT_MAX_PACKET_LENGTH_DEFAULT = 4096 * 1024; /* 4 MB */
+    public static final String ZOOKEEPER_REQUEST_TIMEOUT = "zookeeper.request.timeout";
+    /**
+     * Feature is disabled by default.
+     */
+    public static final long ZOOKEEPER_REQUEST_TIMEOUT_DEFAULT = 0;
 
     public ZKClientConfig() {
         super();
+        initFromJavaSystemProperties();
     }
 
     public ZKClientConfig(File configFile) throws ConfigException {
@@ -67,6 +73,15 @@ public class ZKClientConfig extends ZKConfig {
 
     public ZKClientConfig(String configPath) throws ConfigException {
         super(configPath);
+    }
+
+    /**
+     * Initialize all the ZooKeeper client properties which are configurable as
+     * java system property
+     */
+    private void initFromJavaSystemProperties() {
+        setProperty(ZOOKEEPER_REQUEST_TIMEOUT,
+                System.getProperty(ZOOKEEPER_REQUEST_TIMEOUT));
     }
 
     @Override
@@ -99,5 +114,27 @@ public class ZKClientConfig extends ZKConfig {
      */
     public boolean isSaslClientEnabled() {
         return Boolean.valueOf(getProperty(ENABLE_CLIENT_SASL_KEY, ENABLE_CLIENT_SASL_DEFAULT));
+    }
+
+    /**
+     * Get the value of the <code>key</code> property as an <code>long</code>.
+     * If property is not set, the provided <code>defaultValue</code> is
+     * returned
+     *
+     * @param key
+     *            property key.
+     * @param defaultValue
+     *            default value.
+     * @throws NumberFormatException
+     *             when the value is invalid
+     * @return return property value as an <code>long</code>, or
+     *         <code>defaultValue</code>
+     */
+    public long getLong(String key, long defaultValue) {
+        String value = getProperty(key);
+        if (value != null) {
+            return Long.parseLong(value.trim());
+        }
+        return defaultValue;
     }
 }

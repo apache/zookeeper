@@ -85,31 +85,47 @@ public class LeaderSessionTracker extends UpgradeableSessionTracker {
         return globalSessionTracker.isTrackingSession(sessionId);
     }
 
-    public boolean addGlobalSession(long sessionId, int sessionTimeout) {
-        boolean added =
-            globalSessionTracker.addSession(sessionId, sessionTimeout);
-        if (localSessionsEnabled && added) {
+    public boolean trackSession(long sessionId, int sessionTimeout) {
+        boolean tracked =
+            globalSessionTracker.trackSession(sessionId, sessionTimeout);
+        if (localSessionsEnabled && tracked) {
             // Only do extra logging so we know what kind of session this is
             // if we're supporting both kinds of sessions
-            LOG.info("Adding global session 0x" + Long.toHexString(sessionId));
+            LOG.info("Tracking global session 0x" + Long.toHexString(sessionId));
         }
-        return added;
+        return tracked;
     }
 
-    public boolean addSession(long sessionId, int sessionTimeout) {
-        boolean added;
-        if (localSessionsEnabled && !isGlobalSession(sessionId)) {
-            added = localSessionTracker.addSession(sessionId, sessionTimeout);
-            // Check for race condition with session upgrading
-            if (isGlobalSession(sessionId)) {
-                added = false;
-                localSessionTracker.removeSession(sessionId);
-            } else if (added) {
-              LOG.info("Adding local session 0x" + Long.toHexString(sessionId));
-            }
-        } else {
-            added = addGlobalSession(sessionId, sessionTimeout);
+    /**
+     * Synchronized on this to avoid race condition of adding a local session
+     * after committed global session, which may cause the same session being
+     * tracked on this server and leader.
+     */
+    public synchronized boolean commitSession(
+            long sessionId, int sessionTimeout) {
+        boolean added =
+            globalSessionTracker.commitSession(sessionId, sessionTimeout);
+
+        if (added) {
+            LOG.info("Committing global session 0x" + Long.toHexString(sessionId));
         }
+
+        // If the session moved before the session upgrade finished, it's
+        // possible that the session will be added to the local session
+        // again. Need to double check and remove it from local session
+        // tracker when the global session is quorum committed, otherwise the
+        // local session might be tracked both locally and on leader.
+        //
+        // This cannot totally avoid the local session being upgraded again
+        // because there is still race condition between create another upgrade
+        // request and process the createSession commit, and there is no way
+        // to know there is a on flying createSession request because it might
+        // be upgraded by other server which owns the session before move.
+        if (localSessionsEnabled) {
+            removeLocalSession(sessionId);
+            finishedUpgrading(sessionId);
+        }
+
         return added;
     }
 

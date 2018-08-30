@@ -19,7 +19,7 @@
   <import file="../build-recipes.xml"/>
     <property name="test.main.classes" value="${zk.root}/build/test/classes"/>
     <property name="test.build.dir" value="${build.test}" />
-    <property name="test.src.dir" value="test"/>
+    <property name="test.src.dir" value="src/test/java"/>
     <property name="test.log.dir" value="${test.build.dir}/logs" />
     <property name="test.data.dir" value="${test.build.dir}/data" />
     <property name="test.data.upgrade.dir" value="${test.data.dir}/upgrade" />
@@ -52,7 +52,7 @@
 
 	<target name="compile-test" depends="compile">
   		<property name="target.jdk" value="${ant.java.version}" />	
-		<property name="src.test.local" location="${basedir}/test" />
+		<property name="src.test.local" location="${basedir}/src/test/java" />
 		<mkdir dir="${build.test}"/>
 		<javac srcdir="${src.test.local}" 
 			destdir="${build.test}" 
@@ -114,13 +114,13 @@
 
     <copy file="${basedir}/build.xml" todir="${dist.dir}/recipes/${name}"/>
 
-    <mkdir dir="${dist.dir}/recipes/${name}/test"/>
-    <copy todir="${dist.dir}/recipes/${name}/test">
-      <fileset dir="${basedir}/test"/>
+    <mkdir dir="${dist.dir}/recipes/${name}/src/test/java"/>
+    <copy todir="${dist.dir}/recipes/${name}/src/test/java">
+      <fileset dir="${basedir}/src/test/java"/>
     </copy>
-    <mkdir dir="${dist.dir}/recipes/${name}/src"/>
-    <copy todir="${dist.dir}/recipes/${name}/src">
-      <fileset dir="${basedir}/src"/>
+    <mkdir dir="${dist.dir}/recipes/${name}/src/main/java"/>
+    <copy todir="${dist.dir}/recipes/${name}/src/main/java">
+      <fileset dir="${basedir}/src/main/java"/>
     </copy>
   </target>
 

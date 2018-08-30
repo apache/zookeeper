@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import org.apache.zookeeper.server.ExitCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
@@ -684,7 +685,7 @@ public class GenerateLoad {
                 doUsage();
             } catch (IOException e) {
                 e.printStackTrace();
-                System.exit(2);
+                System.exit(ExitCode.INVALID_INVOCATION.getValue());
             }
         } else {
             doUsage();
@@ -713,6 +714,6 @@ public class GenerateLoad {
     private static void doUsage() {
         System.err.println("USAGE: " + GenerateLoad.class.getName()
                 + " [--leaderOnly] [--leaderServes] zookeeper_host:port containerPrefix #ofServers #ofClients requestSize");
-        System.exit(2);
+        System.exit(ExitCode.INVALID_INVOCATION.getValue());
     }
 }

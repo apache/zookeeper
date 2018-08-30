@@ -296,11 +296,11 @@ server.3=zoo3:2888:3888</programlisting>
           <para><computeroutput>$ java -cp zookeeper.jar:lib/slf4j-api-1.7.5.jar:lib/slf4j-log4j12-1.7.5.jar:lib/log4j-1.2.17.jar:conf \
               org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.cfg
           </computeroutput></para>
-          
+
           <para>QuorumPeerMain starts a ZooKeeper server,
             <ulink url="http://java.sun.com/javase/technologies/core/mntr-mgmt/javamanagement/">JMX</ulink>
             management beans are also registered which allows
-            management through a JMX management console. 
+            management through a JMX management console.
             The <ulink url="zookeeperJMX.html">ZooKeeper JMX
             document</ulink> contains details on managing ZooKeeper with JMX.
           </para>
@@ -388,6 +388,10 @@ server.3=zoo3:2888:3888</programlisting>
         </listitem>
 
         <listitem>
+          <para><xref linkend="sc_exitcodes" /></para>
+        </listitem>
+
+        <listitem>
           <para><xref linkend="sc_configuration" /></para>
         </listitem>
 
@@ -424,7 +428,7 @@ server.3=zoo3:2888:3888</programlisting>
             components that perform consistently.</para>
         </listitem>
       </orderedlist>
-    
+
     <para>The sections below contain considerations for ZooKeeper
       administrators to maximize the probability for these assumptions
       to hold true. Some of these are cross-machines considerations,
@@ -433,7 +437,7 @@ server.3=zoo3:2888:3888</programlisting>
 
     <section id="sc_CrossMachineRequirements">
       <title>Cross Machine Requirements</title>
-    
+
       <para>For the ZooKeeper service to be active, there must be a
         majority of non-failing machines that can communicate with
         each other. To create a deployment that can tolerate the
@@ -649,9 +653,9 @@ server.3=zoo3:2888:3888</programlisting>
       <ulink url="http://www.slf4j.org/manual.html">its manual</ulink>.</para>
 
     <para>For more information about LOG4J, see
-      <ulink url="http://logging.apache.org/log4j/1.2/manual.html#defaultInit">Log4j Default Initialization Procedure</ulink> 
+      <ulink url="http://logging.apache.org/log4j/1.2/manual.html#defaultInit">Log4j Default Initialization Procedure</ulink>
       of the log4j manual.</para>
-      
+
     </section>
 
     <section id="sc_troubleshooting">
@@ -660,10 +664,10 @@ server.3=zoo3:2888:3888</programlisting>
 		<varlistentry>
 		<term> Server not coming up because of file corruption</term>
 		<listitem>
-		<para>A server might not be able to read its database and fail to come up because of 
+		<para>A server might not be able to read its database and fail to come up because of
 		some file corruption in the transaction logs of the ZooKeeper server. You will
 		see some IOException on loading ZooKeeper database. In such a case,
-		make sure all the other servers in your ensemble are up and  working. Use "stat" 
+		make sure all the other servers in your ensemble are up and  working. Use "stat"
 		command on the command port to see if they are in good health. After you have verified that
 		all the other servers of the ensemble are up, you can go ahead and clean the database
 		of the corrupt server. Delete all the files in datadir/version-2 and datalogdir/version-2/.
@@ -672,6 +676,42 @@ server.3=zoo3:2888:3888</programlisting>
 		</listitem>
 		</varlistentry>
 		</variablelist>
+    </section>
+
+    <section id="sc_exitcodes">
+      <title>Exit Codes</title>
+      <para> ZooKeeper has several exit codes. From 3.6.0, these codes will be gathered in ExitCode (excluding contrib projects).
+      As the codes themselves were not changed to keep backward compatibility, some codes may overlap.
+      A good example is error code 1 and 2. They can both indicate invalid arguments passed to ZooKeeper or other
+      runtime errors.
+      </para>
+      <itemizedlist>
+        <listitem>
+          <para>1: Unexpected errors like IO Exceptions</para>
+        </listitem>
+        <listitem>
+          <para>2: Invalid arguments during invocations</para>
+        </listitem>
+        <listitem>
+          <para>3: Cannot access datadir when trying to replicate server</para>
+        </listitem>
+        <listitem>
+          <para>4: Unable to start admin server at ZooKeeper startup</para>
+        </listitem>
+        <listitem>
+          <para>10: Severe error during snapshot IO</para>
+        </listitem>
+        <listitem>
+          <para>12: zxid from COMMIT does not match the one from pendingTxns queue</para>
+        </listitem>
+        <listitem>
+          <para>13: Unexpected packet from leader, or unable to truncate log on Leader.TRUNC</para>
+        </listitem>
+        <listitem>
+          <para>14: After listener thread tried to bind to election port 3 times, it will exit -
+            leaving the server unable to join the quorum</para>
+        </listitem>
+      </itemizedlist>
     </section>
 
     <section id="sc_configuration">
@@ -835,7 +875,7 @@ server.3=zoo3:2888:3888</programlisting>
               by snapCount. In order to prevent all of the machines in the quorum
               from taking a snapshot at the same time, each ZooKeeper server
               will take a snapshot when the number of transactions in the transaction log
-              reaches a runtime generated random value in the [snapCount/2+1, snapCount] 
+              reaches a runtime generated random value in the [snapCount/2+1, snapCount]
               range.The default snapCount is 100,000.</para>
             </listitem>
           </varlistentry>
@@ -845,10 +885,10 @@ server.3=zoo3:2888:3888</programlisting>
             <listitem>
               <para>(No Java system property)</para>
 
-              <para>Limits the number of concurrent connections (at the socket 
+              <para>Limits the number of concurrent connections (at the socket
               level) that a single client, identified by IP address, may make
-              to a single member of the ZooKeeper ensemble. This is used to 
-              prevent certain classes of DoS attacks, including file 
+              to a single member of the ZooKeeper ensemble. This is used to
+              prevent certain classes of DoS attacks, including file
               descriptor exhaustion. The default is 60. Setting this to 0
               entirely removes the limit on concurrent connections.</para>
             </listitem>
@@ -892,7 +932,7 @@ server.3=zoo3:2888:3888</programlisting>
               the <emphasis role="bold">tickTime</emphasis>.</para>
             </listitem>
            </varlistentry>
-           
+
            <varlistentry>
              <term>fsync.warningthresholdms</term>
              <listitem>
@@ -914,16 +954,16 @@ server.3=zoo3:2888:3888</programlisting>
             <listitem>
               <para>(No Java system property)</para>
 
-              <para><emphasis role="bold">New in 3.4.0:</emphasis> 
+              <para><emphasis role="bold">New in 3.4.0:</emphasis>
               When enabled, ZooKeeper auto purge feature retains
               the <emphasis role="bold">autopurge.snapRetainCount</emphasis> most
-              recent snapshots and the corresponding transaction logs in the 
-              <emphasis role="bold">dataDir</emphasis> and <emphasis 
+              recent snapshots and the corresponding transaction logs in the
+              <emphasis role="bold">dataDir</emphasis> and <emphasis
               role="bold">dataLogDir</emphasis> respectively and deletes the rest.
               Defaults to 3. Minimum value is 3.</para>
             </listitem>
           </varlistentry>
-          
+
           <varlistentry>
             <term>autopurge.purgeInterval</term>
 
@@ -1006,14 +1046,36 @@ server.3=zoo3:2888:3888</programlisting>
               corresponds to the authenticated UDP-based version of fast
               leader election, and "3" corresponds to TCP-based version of
               fast leader election. Currently, algorithm 3 is the default.</para>
-              
+
               <note>
               <para> The implementations of leader election 1, and 2 are now
               <emphasis role="bold"> deprecated </emphasis>. We have the intention
-              of removing them in the next release, at which point only the 
-              FastLeaderElection will be available. 
+              of removing them in the next release, at which point only the
+              FastLeaderElection will be available.
               </para>
               </note>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>maxTimeToWaitForEpoch</term>
+
+            <listitem>
+              <para>(Java system property: zookeeper.leader.<emphasis
+                      role="bold">maxTimeToWaitForEpoch</emphasis>)</para>
+
+              <para><emphasis role="bold">New in 3.6.0:</emphasis>
+                The maximum time to wait for epoch from voters when activating
+                leader. If leader received a LOOKING notification from one of
+                it's voters, and it hasn't received epoch packets from majority
+                within maxTimeToWaitForEpoch, then it will goto LOOKING and
+                elect leader again.
+
+                This can be tuned to reduce the quorum or server unavailable
+                time, it can be set to be much smaller than initLimit * tickTime.
+                In cross datacenter environment, it can be set to something
+                like 2s.
+              </para>
             </listitem>
           </varlistentry>
 
@@ -1069,8 +1131,8 @@ server.3=zoo3:2888:3888</programlisting>
               used by the clients must match the list of ZooKeeper servers
               that each ZooKeeper server has.</para>
 
-              <para>There are two port numbers <emphasis role="bold">nnnnn</emphasis>. 
-              The first followers use to connect to the leader, and the second is for 
+              <para>There are two port numbers <emphasis role="bold">nnnnn</emphasis>.
+              The first followers use to connect to the leader, and the second is for
               leader election. If you want to test multiple servers on a single machine, then
               different ports can be used for each server.</para>
             </listitem>
@@ -1096,11 +1158,11 @@ server.3=zoo3:2888:3888</programlisting>
               <para>(No Java system property)</para>
 
               <para>Enables a hierarchical quorum construction."x" is a group identifier
-              and the numbers following the "=" sign correspond to server identifiers. 
+              and the numbers following the "=" sign correspond to server identifiers.
               The left-hand side of the assignment is a colon-separated list of server
               identifiers. Note that groups must be disjoint and the union of all groups
               must be the ZooKeeper ensemble. </para>
-              
+
               <para> You will find an example <ulink url="zookeeperHierarchicalQuorums.html">here</ulink>
               </para>
             </listitem>
@@ -1117,14 +1179,14 @@ server.3=zoo3:2888:3888</programlisting>
               when voting. There are a few parts of ZooKeeper that require voting
               such as leader election and the atomic broadcast protocol. By default
               the weight of server is 1. If the configuration defines groups, but not
-              weights, then a value of 1 will be assigned to all servers.  
+              weights, then a value of 1 will be assigned to all servers.
               </para>
-              
+
               <para> You will find an example <ulink url="zookeeperHierarchicalQuorums.html">here</ulink>
               </para>
             </listitem>
           </varlistentry>
-          
+
           <varlistentry>
             <term>cnxTimeout</term>
 
@@ -1132,8 +1194,8 @@ server.3=zoo3:2888:3888</programlisting>
               <para>(Java system property: zookeeper.<emphasis
               role="bold">cnxTimeout</emphasis>)</para>
 
-              <para>Sets the timeout value for opening connections for leader election notifications. 
-              Only applicable if you are using electionAlg 3. 
+              <para>Sets the timeout value for opening connections for leader election notifications.
+              Only applicable if you are using electionAlg 3.
               </para>
 
               <note>
@@ -1316,7 +1378,7 @@ server.3=zoo3:2888:3888</programlisting>
               role="bold">zookeeper.superUser</emphasis>)</para>
 
               <para>Similar to <emphasis role="bold">zookeeper.X509AuthenticationProvider.superUser</emphasis>
-              but is generic for SASL based logins. It stores the name of 
+              but is generic for SASL based logins. It stores the name of
               a user that can access the znode hierarchy as a "super" user.
               </para>
             </listitem>
@@ -1458,10 +1520,10 @@ server.3=zoo3:2888:3888</programlisting>
             <term>quorumListenOnAllIPs</term>
 
             <listitem>
-              <para>When set to true the ZooKeeper server will listen  
+              <para>When set to true the ZooKeeper server will listen
               for connections from its peers on all available IP addresses,
               and not only the address configured in the server list of the
-              configuration file. It affects the connections handling the 
+              configuration file. It affects the connections handling the
               ZAB protocol and the Fast Leader Election protocol. Default
               value is <emphasis role="bold">false</emphasis>.</para>
             </listitem>
@@ -1724,7 +1786,7 @@ server.3=zoo3:2888:3888</programlisting>
                     <para>(Java system property: <emphasis
                             role="bold">zookeeper.admin.idleTimeout</emphasis>)</para>
 
-                    <para>Set the maximum idle time in milliseconds that a connection can wait 
+                    <para>Set the maximum idle time in milliseconds that a connection can wait
                           before sending or receiving data. Defaults to 30000 ms.</para>
                 </listitem>
             </varlistentry>
@@ -1910,7 +1972,7 @@ server.3=zoo3:2888:3888</programlisting>
             <term>mntr</term>
 
             <listitem>
-              <para><emphasis role="bold">New in 3.4.0:</emphasis> Outputs a list 
+              <para><emphasis role="bold">New in 3.4.0:</emphasis> Outputs a list
               of variables that could be used for monitoring the health of the cluster.</para>
 
               <programlisting>$ echo mntr | nc localhost 2185
@@ -1938,7 +2000,7 @@ server.3=zoo3:2888:3888</programlisting>
               zk_max_proposal_size 64
               </programlisting>
 
-              <para>The output is compatible with java properties format and the content 
+              <para>The output is compatible with java properties format and the content
               may change over time (new keys added). Your scripts should expect changes.</para>
 
               <para>ATTENTION: Some of the keys are platform specific and some of the keys are only exported by the Leader. </para>

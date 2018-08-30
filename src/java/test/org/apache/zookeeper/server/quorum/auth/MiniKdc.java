@@ -23,6 +23,7 @@ import org.apache.kerby.kerberos.kerb.server.KdcConfigKey;
 import org.apache.kerby.kerberos.kerb.server.SimpleKdcServer;
 import org.apache.kerby.util.IOUtil;
 import org.apache.kerby.util.NetworkUtil;
+import org.apache.zookeeper.server.ExitCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,7 +87,7 @@ public class MiniKdc {
         if (args.length < 4) {
             System.out.println("Arguments: <WORKDIR> <MINIKDCPROPERTIES> " +
                     "<KEYTABFILE> [<PRINCIPALS>]+");
-            System.exit(1);
+            System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
         File workDir = new File(args[0]);
         if (!workDir.exists()) {

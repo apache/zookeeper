@@ -121,12 +121,15 @@ public class BufferSizeTest extends ClientBase {
     private void testStartupFailure(File testDir, String failureMsg) throws Exception {
         stopServer();
         // Point server at testDir
+        File oldTmpDir = tmpDir;
         tmpDir = testDir;
         try {
             startServer();
             fail(failureMsg);
         } catch (IOException e) {
             LOG.info("Successfully caught IOException: " + e);
+        } finally {
+            tmpDir = oldTmpDir;
         }
     }
 }

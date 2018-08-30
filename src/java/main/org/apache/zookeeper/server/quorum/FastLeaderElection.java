@@ -69,12 +69,12 @@ public class FastLeaderElection implements Election {
      */
 
     final static int maxNotificationInterval = 60000;
-    
+
     /**
      * This value is passed to the methods that check the quorum
      * majority of an established ensemble for those values that
-     * should not be taken into account in the comparison 
-     * (electionEpoch and zxid). 
+     * should not be taken into account in the comparison
+     * (electionEpoch and zxid).
      */
     final static int IGNOREVALUE = -1;
 
@@ -86,6 +86,7 @@ public class FastLeaderElection implements Election {
 
     QuorumCnxManager manager;
 
+    private SyncedLearnerTracker leadingVoteSet;
 
     /**
      * Notifications are messages that let other peers know that
@@ -126,7 +127,7 @@ public class FastLeaderElection implements Election {
          * Address of sender
          */
         long sid;
-        
+
         QuorumVerifier qv;
         /*
          * epoch of the proposed leader
@@ -247,7 +248,7 @@ public class FastLeaderElection implements Election {
 
                         // this is the backwardCompatibility mode for no version information
                         boolean backCompatibility40 = (response.buffer.capacity() == 40);
-                        
+
                         response.buffer.clear();
 
                         // Instantiate Notification and set its attributes
@@ -266,7 +267,7 @@ public class FastLeaderElection implements Election {
                                 /*
                                  * Version added in 3.4.6
                                  */
-                                
+
                                 version = response.buffer.getInt();
                             } else {
                                 LOG.info("Backward compatibility mode (36 bits), server id: {}", response.sid);
@@ -284,7 +285,7 @@ public class FastLeaderElection implements Election {
                             byte b[] = new byte[configLength];
 
                             response.buffer.get(b);
-                                                       
+
                             synchronized(self) {
                                 try {
                                     rqv = self.configFromString(new String(b));
@@ -312,11 +313,11 @@ public class FastLeaderElection implements Election {
                                } catch (ConfigException e) {
                                    LOG.error("Something went wrong while processing config received from {}", response.sid);
                                }
-                            }                          
+                            }
                         } else {
                             LOG.info("Backward compatibility mode (before reconfig), server id: {}", response.sid);
                         }
-                       
+
                         /*
                          * If it is from a non-voting server (such as an observer or
                          * a non-voting follower), respond right away.
@@ -408,6 +409,13 @@ public class FastLeaderElection implements Election {
                                  */
                                 Vote current = self.getCurrentVote();
                                 if(ackstate == QuorumPeer.ServerState.LOOKING){
+                                    if (self.leader != null) {
+                                        if (leadingVoteSet != null) {
+                                            self.leader.setLeadingVoteSet(leadingVoteSet);
+                                            leadingVoteSet = null;
+                                        }
+                                        self.leader.reportLookingSid(response.sid);
+                                    }
                                     if(LOG.isDebugEnabled()){
                                         LOG.debug("Sending new notification. My id ={} recipient={} zxid=0x{} leader={} config version = {}",
                                                 self.getId(),
@@ -653,6 +661,7 @@ public class FastLeaderElection implements Election {
         stop = true;
         proposedLeader = -1;
         proposedZxid = -1;
+        leadingVoteSet = null;
         LOG.debug("Shutting down connection manager");
         manager.halt();
         LOG.debug("Shutting down messenger");
@@ -724,15 +733,16 @@ public class FastLeaderElection implements Election {
     }
 
     /**
-     * Termination predicate. Given a set of votes, determines if have
-     * sufficient to declare the end of the election round.
-     * 
+     * Given a set of votes, return the SyncedLearnerTracker which is used to
+     * determines if have sufficient to declare the end of the election round.
+     *
      * @param votes
      *            Set of votes
      * @param vote
      *            Identifier of the vote received last
+     * @return the SyncedLearnerTracker with vote details
      */
-    private boolean termPredicate(Map<Long, Vote> votes, Vote vote) {
+    private SyncedLearnerTracker getVoteTracker(Map<Long, Vote> votes, Vote vote) {
         SyncedLearnerTracker voteSet = new SyncedLearnerTracker();
         voteSet.addQuorumVerifier(self.getQuorumVerifier());
         if (self.getLastSeenQuorumVerifier() != null
@@ -751,7 +761,7 @@ public class FastLeaderElection implements Election {
             }
         }
 
-        return voteSet.hasAllQuorums();
+        return voteSet;
     }
 
     /**
@@ -828,7 +838,7 @@ public class FastLeaderElection implements Election {
      * @return long
      */
     private long getInitId(){
-        if(self.getQuorumVerifier().getVotingMembers().containsKey(self.getId()))       
+        if(self.getQuorumVerifier().getVotingMembers().containsKey(self.getId()))
             return self.getId();
         else return Long.MIN_VALUE;
     }
@@ -859,6 +869,19 @@ public class FastLeaderElection implements Election {
         		throw re;
         	}
         else return Long.MIN_VALUE;
+    }
+
+    /**
+     * Update the peer state based on the given proposedLeader. Also update
+     * the leadingVoteSet if it becomes the leader.
+     */
+    private void setPeerState(long proposedLeader, SyncedLearnerTracker voteSet) {
+        ServerState ss = (proposedLeader == self.getId()) ?
+                ServerState.LEADING: learningState();
+        self.setPeerState(ss);
+        if (ss == ServerState.LEADING) {
+            leadingVoteSet = voteSet;
+        }
     }
 
     /**
@@ -894,6 +917,8 @@ public class FastLeaderElection implements Election {
                     ", proposed zxid=0x" + Long.toHexString(proposedZxid));
             sendNotifications();
 
+            SyncedLearnerTracker voteSet;
+
             /*
              * Loop in which we exchange notifications until we find a leader
              */
@@ -925,7 +950,7 @@ public class FastLeaderElection implements Election {
                     notTimeout = (tmpTimeOut < maxNotificationInterval?
                             tmpTimeOut : maxNotificationInterval);
                     LOG.info("Notification time out: " + notTimeout);
-                } 
+                }
                 else if (validVoter(n.sid) && validVoter(n.leader)) {
                     /*
                      * Only proceed if the vote comes from a replica in the current or next
@@ -976,9 +1001,11 @@ public class FastLeaderElection implements Election {
 
                         recvset.put(n.sid, new Vote(n.leader, n.zxid, n.electionEpoch, n.peerEpoch));
 
-                        if (termPredicate(recvset,
-                                new Vote(proposedLeader, proposedZxid,
-                                        logicalclock.get(), proposedEpoch))) {
+                        voteSet = getVoteTracker(
+                                recvset, new Vote(proposedLeader, proposedZxid,
+                                        logicalclock.get(), proposedEpoch));
+
+                        if (voteSet.hasAllQuorums()) {
 
                             // Verify if there is any change in the proposed leader
                             while((n = recvqueue.poll(finalizeWait,
@@ -995,8 +1022,7 @@ public class FastLeaderElection implements Election {
                              * relevant message from the reception queue
                              */
                             if (n == null) {
-                                self.setPeerState((proposedLeader == self.getId()) ?
-                                        ServerState.LEADING: learningState());
+                                setPeerState(proposedLeader, voteSet);
 
                                 Vote endVote = new Vote(proposedLeader,
                                         proposedZxid, proposedEpoch);
@@ -1016,11 +1042,12 @@ public class FastLeaderElection implements Election {
                          */
                         if(n.electionEpoch == logicalclock.get()){
                             recvset.put(n.sid, new Vote(n.leader, n.zxid, n.electionEpoch, n.peerEpoch));
-                            if(termPredicate(recvset, new Vote(n.leader,
-                                            n.zxid, n.electionEpoch, n.peerEpoch, n.state))
+                            voteSet = getVoteTracker(
+                                    recvset, new Vote(n.leader, n.zxid,
+                                    n.electionEpoch, n.peerEpoch, n.state));
+                            if(voteSet.hasAllQuorums()
                                             && checkLeader(outofelection, n.leader, n.electionEpoch)) {
-                                self.setPeerState((n.leader == self.getId()) ?
-                                        ServerState.LEADING: learningState());
+                                setPeerState(n.leader, voteSet);
 
                                 Vote endVote = new Vote(n.leader, n.zxid, n.peerEpoch);
                                 leaveInstance(endVote);
@@ -1036,21 +1063,22 @@ public class FastLeaderElection implements Election {
                          * least one corner case in which the ensemble can be
                          * created with inconsistent zxid and election epoch
                          * info. However, given that only one ensemble can be
-                         * running at a single point in time and that each 
-                         * epoch is used only once, using only the epoch to 
+                         * running at a single point in time and that each
+                         * epoch is used only once, using only the epoch to
                          * compare the votes is sufficient.
-                         * 
+                         *
                          * @see https://issues.apache.org/jira/browse/ZOOKEEPER-1732
                          */
-                        outofelection.put(n.sid, new Vote(n.leader, 
+                        outofelection.put(n.sid, new Vote(n.leader,
                                 IGNOREVALUE, IGNOREVALUE, n.peerEpoch, n.state));
-                        if (termPredicate(outofelection, new Vote(n.leader,
-                                IGNOREVALUE, IGNOREVALUE, n.peerEpoch, n.state))
+                        voteSet = getVoteTracker(
+                                outofelection, new Vote(n.leader,
+                                IGNOREVALUE, IGNOREVALUE, n.peerEpoch, n.state));
+                        if (voteSet.hasAllQuorums()
                                 && checkLeader(outofelection, n.leader, IGNOREVALUE)) {
                             synchronized(this){
                                 logicalclock.set(n.electionEpoch);
-                                self.setPeerState((n.leader == self.getId()) ?
-                                        ServerState.LEADING: learningState());
+                                setPeerState(n.leader, voteSet);
                             }
                             Vote endVote = new Vote(n.leader, n.zxid, n.peerEpoch);
                             leaveInstance(endVote);

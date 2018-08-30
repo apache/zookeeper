@@ -18,7 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
-
+import static org.apache.zookeeper.common.NetUtils.formatInetAddr;
 
 /**
  * Implementation of the local peer MBean interface.
@@ -71,7 +71,7 @@ public class LocalPeerBean extends ServerBean implements LocalPeerMXBean {
     }
     
     public String getQuorumAddress() {
-        return peer.getQuorumAddress().toString();
+        return formatInetAddr(peer.getQuorumAddress());
     }
     
     public int getElectionType() {
@@ -79,14 +79,12 @@ public class LocalPeerBean extends ServerBean implements LocalPeerMXBean {
     }
 
     public String getElectionAddress() {
-        return peer.getElectionAddress().getHostString() + ":" +
-            peer.getElectionAddress().getPort();
+        return formatInetAddr(peer.getElectionAddress());
     }
 
     public String getClientAddress() {
         if (null != peer.cnxnFactory) {
-            return String.format("%s:%d", peer.cnxnFactory.getLocalAddress()
-                    .getHostString(), peer.getClientPort());
+            return formatInetAddr(peer.cnxnFactory.getLocalAddress());
         } else {
             return "";
         }

@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper;
 
+import org.apache.zookeeper.server.ExitCode;
+
 public class Version implements org.apache.zookeeper.version.Info {
 
     /*
@@ -57,7 +59,7 @@ public class Version implements org.apache.zookeeper.version.Info {
                 .print("Usage:\tjava -cp ... org.apache.zookeeper.Version "
                         + "[--full | --short | --revision],\n\tPrints --full version "
                         + "info if no arg specified.");
-        System.exit(1);
+        System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
     }
 
     /**
@@ -77,7 +79,7 @@ public class Version implements org.apache.zookeeper.version.Info {
         }
         if (args.length == 0 || (args.length == 1 && args[0].equals("--full"))) {
             System.out.println(getFullVersion());
-            System.exit(0);
+            System.exit(ExitCode.EXECUTION_FINISHED.getValue());
         }
         if (args[0].equals("--short"))
             System.out.println(getVersion());
@@ -85,6 +87,6 @@ public class Version implements org.apache.zookeeper.version.Info {
             System.out.println(getVersionRevision());
         else
             printUsage();
-        System.exit(0);
+        System.exit(ExitCode.EXECUTION_FINISHED.getValue());
     }
 }

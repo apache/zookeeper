@@ -66,25 +66,25 @@ public class ZooKeeperServerMain {
             LOG.error("Invalid arguments, exiting abnormally", e);
             LOG.info(USAGE);
             System.err.println(USAGE);
-            System.exit(2);
+            System.exit(ExitCode.INVALID_INVOCATION.getValue());
         } catch (ConfigException e) {
             LOG.error("Invalid config, exiting abnormally", e);
             System.err.println("Invalid config, exiting abnormally");
-            System.exit(2);
+            System.exit(ExitCode.INVALID_INVOCATION.getValue());
         } catch (DatadirException e) {
             LOG.error("Unable to access datadir, exiting abnormally", e);
             System.err.println("Unable to access datadir, exiting abnormally");
-            System.exit(3);
+            System.exit(ExitCode.UNABLE_TO_ACCESS_DATADIR.getValue());
         } catch (AdminServerException e) {
             LOG.error("Unable to start AdminServer, exiting abnormally", e);
             System.err.println("Unable to start AdminServer, exiting abnormally");
-            System.exit(4);
+            System.exit(ExitCode.ERROR_STARTING_ADMIN_SERVER.getValue());
         } catch (Exception e) {
             LOG.error("Unexpected exception, exiting abnormally", e);
-            System.exit(1);
+            System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
         LOG.info("Exiting normally");
-        System.exit(0);
+        System.exit(ExitCode.EXECUTION_FINISHED.getValue());
     }
 
     protected void initializeAndRun(String[] args)
