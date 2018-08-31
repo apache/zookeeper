@@ -18,17 +18,15 @@
 
 package org.apache.zookeeper.server;
 
+import org.apache.zookeeper.metrics.BaseTestMetricsProvider;
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,10 +40,11 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.common.PathUtils;
-import org.apache.zookeeper.metrics.MetricsContext;
-import org.apache.zookeeper.metrics.MetricsProvider;
-import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
-import org.apache.zookeeper.metrics.impl.NullMetricsProvider;
+import org.apache.zookeeper.metrics.BaseTestMetricsProvider.MetricsProviderCapturingLifecycle;
+import org.apache.zookeeper.metrics.BaseTestMetricsProvider.MetricsProviderWithConfiguration;
+import org.apache.zookeeper.metrics.BaseTestMetricsProvider.MetricsProviderWithErrorInConfigure;
+import org.apache.zookeeper.metrics.BaseTestMetricsProvider.MetricsProviderWithErrorInStart;
+import org.apache.zookeeper.metrics.BaseTestMetricsProvider.MetricsProviderWithErrorInStop;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.test.ClientBase;
@@ -417,7 +416,6 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         }
     }
 
-
     /**
      * Test verifies that the server shouldn't be affected but runtime errors on stop()
      */
@@ -497,65 +495,52 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         Assert.assertEquals(1234, MetricsProviderWithConfiguration.httpPort.get());
     }
 
-    public static abstract class BaseMetricsProvider implements MetricsProvider {
+    /**
+     * Test verifies that all of the lifecycle methods of the MetricsProvider are called.
+     */
+    @Test
+    public void testMetricsProviderLifecycle()
+            throws Exception {
+        ClientBase.setupTestEnv();
+        MetricsProviderCapturingLifecycle.reset();
 
-        @Override
-        public void configure(Properties prprts) throws MetricsProviderLifeCycleException {
-        }
+        final int CLIENT_PORT = PortAssignment.unique();
+        final String configs = "metricsProvider.className="+MetricsProviderCapturingLifecycle.class.getName()+"\n"+
+                               "metricsProvider.httpPort=1234\n";
+        MainThread main = new MainThread(CLIENT_PORT, true, configs);
+        main.start();
 
-        @Override
-        public void start() throws MetricsProviderLifeCycleException {
-        }
+        Assert.assertTrue("waiting for server being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
+                        CONNECTION_TIMEOUT));
 
-        @Override
-        public MetricsContext getRootContext() {
-            return NullMetricsProvider.NullMetricsContext.INSTANCE;
-        }
+        clientConnected = new CountDownLatch(1);
+        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT,
+                ClientBase.CONNECTION_TIMEOUT, this);
+        Assert.assertTrue("Failed to establish zkclient connection!",
+                clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
 
-        @Override
-        public void stop() {
-        }
-        
-    }
+        zk.create("/foo", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        Assert.assertEquals(new String(zk.getData("/foo", null, null)), "foobar");
+        zk.close();
 
-    public static final class MetricsProviderWithErrorInStart extends BaseMetricsProvider {
+        main.shutdown();
+        main.join();
+        main.deleteDirs();
 
-        @Override
-        public void start() throws MetricsProviderLifeCycleException {
-            throw new MetricsProviderLifeCycleException();
-        }
+        Assert.assertTrue("waiting for server down",
+                ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT,
+                        ClientBase.CONNECTION_TIMEOUT));
 
-    }
-
-    public static final class MetricsProviderWithErrorInConfigure extends BaseMetricsProvider {
-
-        @Override
-        public void configure(Properties prprts) throws MetricsProviderLifeCycleException {
-            throw new MetricsProviderLifeCycleException();
-        }
-
-    }
-
-    public static final class MetricsProviderWithConfiguration extends BaseMetricsProvider {
-
-        private static final AtomicInteger httpPort = new AtomicInteger();
-
-        @Override
-        public void configure(Properties prprts) throws MetricsProviderLifeCycleException {
-            httpPort.set(Integer.parseInt(prprts.getProperty("httpPort")));
-        }
-
-    }
-
-    public static final class MetricsProviderWithErrorInStop extends BaseMetricsProvider {
-        private static final AtomicBoolean stopCalled = new AtomicBoolean();
-
-        @Override
-        public void stop() {
-            stopCalled.set(true);
-            throw new RuntimeException();
-        }
-
+        Assert.assertTrue("metrics provider lifecycle error",
+                BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.configureCalled.get());
+        Assert.assertTrue("metrics provider lifecycle error",
+                BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.startCalled.get());
+        Assert.assertTrue("metrics provider lifecycle error",
+                BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.getRootContextCalled.get());
+        Assert.assertTrue("metrics provider lifecycle error",
+                BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.stopCalled.get());
     }
 
     /**

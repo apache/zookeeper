@@ -58,6 +58,7 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.metrics.BaseTestMetricsProvider;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.test.ClientBase;
@@ -1484,6 +1485,377 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                 ClientBase.waitForServerUp(
                         "127.0.0.1:" + clientPorts[i], maxTimeWaitForServerUp));
         }
+    }
+
+    /**
+     * Verify boot works configuring a MetricsProvider
+     */
+    @Test
+    public void testMetricsProviderLifecycle() throws Exception {
+        ClientBase.setupTestEnv();
+        BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.reset();
+
+        // setup the logger to capture all logs
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        WriterAppender appender = getConsoleAppender(os, Level.WARN);
+        Logger qlogger = Logger.getLogger("org.apache.zookeeper.server.quorum");
+        qlogger.addAppender(appender);
+
+        try {
+            final int CLIENT_PORT_QP1 = PortAssignment.unique();
+            final int CLIENT_PORT_QP2 = PortAssignment.unique();
+
+            String quorumCfgSectionServer
+                    = "server.1=127.0.0.1:" + PortAssignment.unique()
+                    + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1 + "\n"
+                    + "server.2=127.0.0.1:" + PortAssignment.unique()
+                    + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP2 + "\n";
+
+            // server 1 boots with a MetricsProvider
+            String quorumCfgSectionServer1 =
+                    quorumCfgSectionServer
+                    + "metricsProvider.className=" + BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.class.getName() + "\n";
+
+            MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSectionServer1);
+            MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSectionServer);
+            q1.start();
+            q2.start();
+
+            boolean isup1
+                    = ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
+                            30000);
+            boolean isup2
+                    = ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2,
+                            30000);
+            Assert.assertTrue("Server 1 never came up", isup1);
+            Assert.assertTrue("Server 2 never came up", isup2);
+
+            q1.shutdown();
+            q2.shutdown();
+
+            Assert.assertTrue("waiting for server 1 down",
+                    ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1,
+                            ClientBase.CONNECTION_TIMEOUT));
+
+            Assert.assertTrue("waiting for server 2 down",
+                    ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2,
+                            ClientBase.CONNECTION_TIMEOUT));
+        } finally {
+            qlogger.removeAppender(appender);
+        }
+
+        Assert.assertTrue("metrics provider lifecycle error",
+                BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.configureCalled.get());
+        Assert.assertTrue("metrics provider lifecycle error",
+                BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.startCalled.get());
+        Assert.assertTrue("metrics provider lifecycle error",
+                BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.getRootContextCalled.get());
+        Assert.assertTrue("metrics provider lifecycle error",
+                BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.stopCalled.get());
+    }
+
+    /**
+     * Test verifies that configuration is passed to the MetricsProvider.
+     */
+    @Test
+    public void testMetricsProviderConfiguration() throws Exception {
+        ClientBase.setupTestEnv();
+        BaseTestMetricsProvider.MetricsProviderWithConfiguration.httpPort.set(0);
+
+        // setup the logger to capture all logs
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        WriterAppender appender = getConsoleAppender(os, Level.WARN);
+        Logger qlogger = Logger.getLogger("org.apache.zookeeper.server.quorum");
+        qlogger.addAppender(appender);
+
+        try {
+            final int CLIENT_PORT_QP1 = PortAssignment.unique();
+            final int CLIENT_PORT_QP2 = PortAssignment.unique();
+
+            String quorumCfgSectionServer
+                    = "server.1=127.0.0.1:" + PortAssignment.unique()
+                    + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1 + "\n"
+                    + "server.2=127.0.0.1:" + PortAssignment.unique()
+                    + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP2 + "\n";
+
+            // server 1 boots with a MetricsProvider
+            String quorumCfgSectionServer1 =
+                    quorumCfgSectionServer
+                    + "metricsProvider.className=" + BaseTestMetricsProvider.MetricsProviderWithConfiguration.class.getName() + "\n"
+                    + "metricsProvider.httpPort=1234";
+
+            MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSectionServer1);
+            MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSectionServer);
+            q1.start();
+            q2.start();
+
+            boolean isup1
+                    = ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
+                            30000);
+            boolean isup2
+                    = ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2,
+                            30000);
+            Assert.assertTrue("Server 1 never came up", isup1);
+            Assert.assertTrue("Server 2 never came up", isup2);
+
+            q1.shutdown();
+            q2.shutdown();
+
+            Assert.assertTrue("waiting for server 1 down",
+                    ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1,
+                            ClientBase.CONNECTION_TIMEOUT));
+
+            Assert.assertTrue("waiting for server 2 down",
+                    ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2,
+                            ClientBase.CONNECTION_TIMEOUT));
+        } finally {
+            qlogger.removeAppender(appender);
+        }
+
+        Assert.assertEquals(1234,
+                BaseTestMetricsProvider.MetricsProviderWithConfiguration.httpPort.get());
+    }
+
+    /**
+     * Test verifies that the server shouldn't be affected but runtime errors on stop()
+     */
+    @Test
+    public void testFaultyMetricsProviderOnStop() throws Exception {
+        ClientBase.setupTestEnv();
+        BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.reset();
+
+        // setup the logger to capture all logs
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        WriterAppender appender = getConsoleAppender(os, Level.WARN);
+        Logger qlogger = Logger.getLogger("org.apache.zookeeper.server.quorum");
+        qlogger.addAppender(appender);
+
+        try {
+            final int CLIENT_PORT_QP1 = PortAssignment.unique();
+            final int CLIENT_PORT_QP2 = PortAssignment.unique();
+
+            String quorumCfgSectionServer
+                    = "server.1=127.0.0.1:" + PortAssignment.unique()
+                    + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1 + "\n"
+                    + "server.2=127.0.0.1:" + PortAssignment.unique()
+                    + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP2 + "\n";
+
+            // server 1 boots with a MetricsProvider
+            String quorumCfgSectionServer1 =
+                    quorumCfgSectionServer
+                    + "metricsProvider.className=" + BaseTestMetricsProvider.MetricsProviderWithErrorInStop.class.getName() + "\n";
+
+            MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSectionServer1);
+            MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSectionServer);
+            q1.start();
+            q2.start();
+
+            boolean isup1
+                    = ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
+                            30000);
+            boolean isup2
+                    = ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2,
+                            30000);
+            Assert.assertTrue("Server 1 never came up", isup1);
+            Assert.assertTrue("Server 2 never came up", isup2);
+
+            q1.shutdown();
+            q2.shutdown();
+
+            Assert.assertTrue("waiting for server 1 down",
+                    ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1,
+                            ClientBase.CONNECTION_TIMEOUT));
+
+            Assert.assertTrue("waiting for server 2 down",
+                    ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2,
+                            ClientBase.CONNECTION_TIMEOUT));
+        } finally {
+            qlogger.removeAppender(appender);
+        }
+
+        Assert.assertTrue("metrics provider lifecycle error",
+                BaseTestMetricsProvider.MetricsProviderWithErrorInStop.stopCalled.get());
+
+        LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
+        String line;
+        boolean found = false;
+        Pattern p
+                = Pattern.compile(".*Error while stopping metrics.*");
+        while ((line = r.readLine()) != null) {
+            found = p.matcher(line).matches();
+            if (found) {
+                break;
+            }
+        }
+        Assert.assertTrue("complains about metrics provider", found);
+    }
+
+    /**
+     * Verify boot fails with a bad MetricsProvider
+     */
+    @Test
+    public void testInvalidMetricsProvider() throws Exception {
+        ClientBase.setupTestEnv();
+
+        // setup the logger to capture all logs
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        WriterAppender appender = getConsoleAppender(os, Level.WARN);
+        Logger qlogger = Logger.getLogger("org.apache.zookeeper.server.quorum");
+        qlogger.addAppender(appender);
+
+        try {
+            final int CLIENT_PORT_QP1 = PortAssignment.unique();
+
+            String quorumCfgSection
+                    = "server.1=127.0.0.1:" + PortAssignment.unique()
+                    + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1 + "\n"
+                    + "server.2=127.0.0.1:" + PortAssignment.unique()
+                    + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1 + "\n"
+                    + "metricsProvider.className=BadClass\n";
+
+            MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
+            q1.start();
+
+            boolean isup
+                    = ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
+                            5000);
+
+            Assert.assertFalse("Server never came up", isup);
+
+            q1.shutdown();
+
+            Assert.assertTrue("waiting for server 1 down",
+                    ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1,
+                            ClientBase.CONNECTION_TIMEOUT));
+
+        } finally {
+            qlogger.removeAppender(appender);
+        }
+
+        LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
+        String line;
+        boolean found = false;
+        Pattern p
+                = Pattern.compile(".*BadClass.*");
+        while ((line = r.readLine()) != null) {
+            found = p.matcher(line).matches();
+            if (found) {
+                break;
+            }
+        }
+        Assert.assertTrue("complains about metrics provider", found);
+    }
+
+    /**
+     * Verify boot fails with a MetricsProvider with fails to start
+     */
+    @Test
+    public void testFaultyMetricsProviderOnStart() throws Exception {
+        ClientBase.setupTestEnv();
+
+        // setup the logger to capture all logs
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        WriterAppender appender = getConsoleAppender(os, Level.WARN);
+        Logger qlogger = Logger.getLogger("org.apache.zookeeper.server.quorum");
+        qlogger.addAppender(appender);
+
+        try {
+            final int CLIENT_PORT_QP1 = PortAssignment.unique();
+
+            String quorumCfgSection
+                    = "server.1=127.0.0.1:" + PortAssignment.unique()
+                    + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1 + "\n"
+                    + "server.2=127.0.0.1:" + PortAssignment.unique()
+                    + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1 + "\n"
+                    + "metricsProvider.className=" + BaseTestMetricsProvider.MetricsProviderWithErrorInStart.class.getName() + "\n";
+
+            MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
+            q1.start();
+
+            boolean isup
+                    = ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
+                            5000);
+
+            Assert.assertFalse("Server never came up", isup);
+
+            q1.shutdown();
+
+            Assert.assertTrue("waiting for server 1 down",
+                    ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1,
+                            ClientBase.CONNECTION_TIMEOUT));
+
+        } finally {
+            qlogger.removeAppender(appender);
+        }
+
+        LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
+        String line;
+        boolean found = false;
+        Pattern p
+                = Pattern.compile(".*MetricsProviderLifeCycleException.*");
+        while ((line = r.readLine()) != null) {
+            found = p.matcher(line).matches();
+            if (found) {
+                break;
+            }
+        }
+        Assert.assertTrue("complains about metrics provider MetricsProviderLifeCycleException", found);
+    }
+
+    /**
+     * Verify boot fails with a MetricsProvider with fails to start
+     */
+    @Test
+    public void testFaultyMetricsProviderOnConfigure() throws Exception {
+        ClientBase.setupTestEnv();
+
+        // setup the logger to capture all logs
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        WriterAppender appender = getConsoleAppender(os, Level.WARN);
+        Logger qlogger = Logger.getLogger("org.apache.zookeeper.server.quorum");
+        qlogger.addAppender(appender);
+
+        try {
+            final int CLIENT_PORT_QP1 = PortAssignment.unique();
+
+            String quorumCfgSection
+                    = "server.1=127.0.0.1:" + PortAssignment.unique()
+                    + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1 + "\n"
+                    + "server.2=127.0.0.1:" + PortAssignment.unique()
+                    + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1 + "\n"
+                    + "metricsProvider.className=" + BaseTestMetricsProvider.MetricsProviderWithErrorInConfigure.class.getName() + "\n";
+
+            MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
+            q1.start();
+
+            boolean isup
+                    = ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
+                            5000);
+
+            Assert.assertFalse("Server never came up", isup);
+
+            q1.shutdown();
+
+            Assert.assertTrue("waiting for server 1 down",
+                    ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1,
+                            ClientBase.CONNECTION_TIMEOUT));
+
+        } finally {
+            qlogger.removeAppender(appender);
+        }
+
+        LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
+        String line;
+        boolean found = false;
+        Pattern p
+                = Pattern.compile(".*MetricsProviderLifeCycleException.*");
+        while ((line = r.readLine()) != null) {
+            found = p.matcher(line).matches();
+            if (found) {
+                break;
+            }
+        }
+        Assert.assertTrue("complains about metrics provider MetricsProviderLifeCycleException", found);
     }
 
     static class Context {
