@@ -82,7 +82,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
             if (!incomingBuffer.hasRemaining()) {
                 incomingBuffer.flip();
                 if (incomingBuffer == lenBuffer) {
-                    recvCount++;
+                    recvCount.getAndIncrement();
                     readLength();
                 } else if (!initialized) {
                     readConnectResult();
@@ -122,7 +122,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
                 }
                 sock.write(p.bb);
                 if (!p.bb.hasRemaining()) {
-                    sentCount++;
+                    sentCount.getAndIncrement();
                     outgoingQueue.removeFirstOccurrence(p);
                     if (p.requestHeader != null
                             && p.requestHeader.getType() != OpCode.ping

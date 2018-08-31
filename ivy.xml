@@ -59,8 +59,8 @@
     <dependency org="org.apache.yetus" name="audience-annotations"
                 rev="${audience-annotations.version}"/>
 
-    <dependency org="io.netty" name="netty" conf="default" rev="${netty.version}">
-      <artifact name="netty" type="jar" conf="default"/>
+    <dependency org="io.netty" name="netty-all" conf="default" rev="${netty.version}">
+      <artifact name="netty-all" type="jar" conf="default"/>
     </dependency>
 
     <dependency org="com.googlecode.json-simple" name="json-simple" rev="${json.version}" >
