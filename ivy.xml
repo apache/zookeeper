@@ -142,6 +142,9 @@
     <dependency org="org.hamcrest" name="hamcrest-all" rev="${hamcrest.version}"
                   conf="test->default" />
 
+    <dependency org="org.openjdk.jmh" name="jmh-core" rev="${jmh.version}" conf="test->default"/>
+    <dependency org="org.openjdk.jmh" name="jmh-generator-annprocess" rev="${jmh.version}" conf="test->default"/>
+
     <conflict manager="strict"/>
 
   </dependencies>

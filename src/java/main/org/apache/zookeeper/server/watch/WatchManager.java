@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
  * This class manages watches. It allows watches to be associated with a string
  * and removes watchers and their watches in addition to managing triggers.
  */
-class WatchManager implements IWatchManager {
+public class WatchManager implements IWatchManager {
     private static final Logger LOG = LoggerFactory.getLogger(WatchManager.class);
 
     private final Map<String, Set<Watcher>> watchTable =
