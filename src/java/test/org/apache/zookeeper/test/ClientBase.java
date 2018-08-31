@@ -25,6 +25,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -287,6 +288,9 @@ public abstract class ClientBase extends ZKTestCase {
                         !result.contains("READ-ONLY")) {
                     return true;
                 }
+            } catch (ConnectException e) {
+                // ignore as this is expected, do not log stacktrace
+                LOG.info("server {} not up: {}", hp, e.toString());
             } catch (IOException e) {
                 // ignore as this is expected
                 LOG.info("server {} not up", hp, e);
