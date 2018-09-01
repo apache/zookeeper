@@ -1,6 +1,5 @@
 package org.apache.zookeeper.common;
 
-import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.asn1.x500.style.BCStyle;
@@ -11,6 +10,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.Security;
@@ -189,7 +189,7 @@ public class X509TestContext {
             FileUtils.writeStringToFile(
                     trustStorePemFile,
                     X509TestHelpers.pemEncodeX509Certificate(trustStoreCertificate),
-                    Charsets.US_ASCII,
+                    StandardCharsets.US_ASCII,
                     false);
             this.trustStorePemFile = trustStorePemFile;
         }
@@ -272,7 +272,7 @@ public class X509TestContext {
                         keyStorePemFile,
                         X509TestHelpers.pemEncodeCertAndPrivateKey(
                                 keyStoreCertificate, keyStoreKeyPair.getPrivate(), keyStorePassword),
-                        Charsets.US_ASCII,
+                        StandardCharsets.US_ASCII,
                         false);
                 this.keyStorePemFile = keyStorePemFile;
             } catch (OperatorCreationException e) {

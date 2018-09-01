@@ -38,8 +38,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
     <property name="netty.version" value="3.10.6.Final"/>
 
-    <property name="httpcomponents.version" value="4.5.3"/>
-
     <property name="junit.version" value="4.12"/>
     <property name="mockito.version" value="1.8.5"/>
     <property name="checkstyle.version" value="7.1.2"/>

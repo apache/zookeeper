@@ -1,6 +1,5 @@
 package org.apache.zookeeper.common;
 
-import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.test.ClientBase;
@@ -11,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.util.ArrayList;
@@ -55,7 +55,7 @@ public class FileChangeWatcherTest extends ZKTestCase {
             Thread.sleep(1000L); // XXX hack
             for (int i = 0; i < 3; i++) {
                 LOG.info("Modifying file, attempt " + (i + 1));
-                FileUtils.writeStringToFile(tempFile, "Hello world " + i + "\n", Charsets.UTF_8, true);
+                FileUtils.writeStringToFile(tempFile, "Hello world " + i + "\n", StandardCharsets.UTF_8, true);
                 synchronized (events) {
                     if (events.size() < i + 1) {
                         events.wait(3000L);
@@ -210,14 +210,14 @@ public class FileChangeWatcherTest extends ZKTestCase {
             watcher.waitForBackgroundThreadToStart();
             Thread.sleep(1000L); // XXX hack
             LOG.info("Modifying file");
-            FileUtils.writeStringToFile(tempFile, "Hello world\n", Charsets.UTF_8, true);
+            FileUtils.writeStringToFile(tempFile, "Hello world\n", StandardCharsets.UTF_8, true);
             synchronized (callCount) {
                 while (callCount.get() == 0) {
                     callCount.wait(3000L);
                 }
             }
             LOG.info("Modifying file again");
-            FileUtils.writeStringToFile(tempFile, "Hello world again\n", Charsets.UTF_8, true);
+            FileUtils.writeStringToFile(tempFile, "Hello world again\n", StandardCharsets.UTF_8, true);
             synchronized (events) {
                 if (events.isEmpty()) {
                     events.wait(3000L);
