@@ -59,6 +59,7 @@ import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.metrics.BaseTestMetricsProvider;
+import org.apache.zookeeper.metrics.impl.NullMetricsProvider;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.test.ClientBase;
@@ -1147,6 +1148,8 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             QuorumPeerConfig configMock = mock(QuorumPeerConfig.class);
             when(configMock.getDataDir()).thenReturn(dataDir);
             when(configMock.getDataLogDir()).thenReturn(dataLogDir);
+            when(configMock.getMetricsProviderClassName())
+                    .thenReturn(NullMetricsProvider.class.getName());
 
             QuorumPeer qpMock = mock(QuorumPeer.class);
 

@@ -123,9 +123,10 @@ public class ZooKeeperServerMain {
         try {
             try {
                 metricsProvider = MetricsProviderBootstrap
-                        .startMetricsProvider(config.metricsProviderClassName, config.metricsProviderConfiguration);
+                        .startMetricsProvider(config.getMetricsProviderClassName(),
+                                              config.getMetricsProviderConfiguration());
             } catch (MetricsProviderLifeCycleException error) {
-                throw new IOException("Cannot boot MetricsProvider "+config.metricsProviderClassName,
+                throw new IOException("Cannot boot MetricsProvider "+config.getMetricsProviderClassName(),
                     error);
             }
 
