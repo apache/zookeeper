@@ -281,4 +281,24 @@ public class DataTreeTest extends ZKTestCase {
             "expected to have the same acl", ZooDefs.Ids.OPEN_ACL_UNSAFE,
             tree.getACL("/bug", new Stat()));
     }
+
+    @Test
+    public void testCachedApproximateDataSize() throws Exception {
+        DataTree dt = new DataTree();
+        long initialSize = dt.approximateDataSize();
+        Assert.assertEquals(dt.cachedApproximateDataSize(), dt.approximateDataSize());
+
+        // create a node
+        dt.createNode("/testApproximateDataSize", new byte[20], null, -1, 1, 1, 1);
+        dt.createNode("/testApproximateDataSize1", new byte[20], null, -1, 1, 1, 1);
+        Assert.assertEquals(dt.cachedApproximateDataSize(), dt.approximateDataSize());
+
+        // update data
+        dt.setData("/testApproximateDataSize1", new byte[32], -1, 1, 1);
+        Assert.assertEquals(dt.cachedApproximateDataSize(), dt.approximateDataSize());
+
+        // delete a node
+        dt.deleteNode("/testApproximateDataSize", -1);
+        Assert.assertEquals(dt.cachedApproximateDataSize(), dt.approximateDataSize());
+    }
 }

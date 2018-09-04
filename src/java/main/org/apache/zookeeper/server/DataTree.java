@@ -66,6 +66,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * This class maintains the tree data structure. It doesn't have any networking
@@ -89,6 +90,9 @@ public class DataTree {
     private final WatchManager dataWatches = new WatchManager();
 
     private final WatchManager childWatches = new WatchManager();
+
+    /** cached total size of paths and data for all DataNodes */
+    private final AtomicLong nodeDataSize = new AtomicLong(0);
 
     /** the root of zookeeper tree */
     private static final String rootZookeeper = "/";
@@ -199,11 +203,22 @@ public class DataTree {
         for (Map.Entry<String, DataNode> entry : nodes.entrySet()) {
             DataNode value = entry.getValue();
             synchronized (value) {
-                result += entry.getKey().length();
-                result += value.getApproximateDataSize();
+                result += getNodeSize(entry.getKey(), value.data);
             }
         }
         return result;
+    }
+
+    /**
+     * Get the size of the node based on path and data length.
+     */
+    private static long getNodeSize(String path, byte[] data) {
+        return (path == null ? 0 : path.length())
+                + (data == null ? 0 : data.length);
+    }
+
+    public long cachedApproximateDataSize() {
+        return nodeDataSize.get();
     }
 
     /**
@@ -236,6 +251,8 @@ public class DataTree {
         nodes.put(quotaZookeeper, quotaDataNode);
 
         addConfigNode();
+
+        nodeDataSize.set(approximateDataSize());
     }
 
     /**
@@ -468,6 +485,7 @@ public class DataTree {
             Long longval = aclCache.convertAcls(acl);
             DataNode child = new DataNode(data, longval, stat);
             parent.addChild(childName);
+            nodeDataSize.addAndGet(getNodeSize(path, child.data));
             nodes.put(path, child);
             EphemeralType ephemeralType = EphemeralType.get(ephemeralOwner);
             if (ephemeralType == EphemeralType.CONTAINER) {
@@ -534,6 +552,7 @@ public class DataTree {
         nodes.remove(path);
         synchronized (node) {
             aclCache.removeUsage(node.acl);
+            nodeDataSize.addAndGet(-getNodeSize(path, node.data));
         }
         DataNode parent = nodes.get(parentName);
         if (parent == null) {
@@ -609,6 +628,7 @@ public class DataTree {
           this.updateBytes(lastPrefix, (data == null ? 0 : data.length)
               - (lastdata == null ? 0 : lastdata.length));
         }
+        nodeDataSize.addAndGet(getNodeSize(path, data) - getNodeSize(path, lastdata));
         dataWatches.triggerWatch(path, EventType.NodeDataChanged);
         return s;
     }
@@ -1183,6 +1203,7 @@ public class DataTree {
         aclCache.deserialize(ia);
         nodes.clear();
         pTrie.clear();
+        nodeDataSize.set(0);
         String path = ia.readString("path");
         while (!"/".equals(path)) {
             DataNode node = new DataNode();
@@ -1220,6 +1241,9 @@ public class DataTree {
             path = ia.readString("path");
         }
         nodes.put("/", root);
+
+        nodeDataSize.set(approximateDataSize());
+
         // we are done with deserializing the
         // the datatree
         // update the quotas - create path trie

@@ -60,7 +60,7 @@ public class MonitorCommand extends AbstractFourLetterCommand {
 
         print("watch_count", zkdb.getDataTree().getWatchCount());
         print("ephemerals_count", zkdb.getDataTree().getEphemeralsCount());
-        print("approximate_data_size", zkdb.getDataTree().approximateDataSize());
+        print("approximate_data_size", zkdb.getDataTree().cachedApproximateDataSize());
 
         OSMXBean osMbean = new OSMXBean();
         if (osMbean != null && osMbean.getUnix() == true) {

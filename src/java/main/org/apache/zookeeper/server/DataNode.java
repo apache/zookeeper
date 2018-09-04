@@ -135,11 +135,6 @@ public class DataNode implements Record {
         return Collections.unmodifiableSet(children);
     }
 
-    public synchronized long getApproximateDataSize() {
-        if(null==data) return 0;
-        return data.length;
-    }
-
     synchronized public void copyStat(Stat to) {
         to.setAversion(stat.getAversion());
         to.setCtime(stat.getCtime());

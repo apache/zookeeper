@@ -324,7 +324,7 @@ public class Commands {
 
             response.put("watch_count", zkdb.getDataTree().getWatchCount());
             response.put("ephemerals_count", zkdb.getDataTree().getEphemeralsCount());
-            response.put("approximate_data_size", zkdb.getDataTree().approximateDataSize());
+            response.put("approximate_data_size", zkdb.getDataTree().cachedApproximateDataSize());
 
             OSMXBean osMbean = new OSMXBean();
             response.put("open_file_descriptor_count", osMbean.getOpenFileDescriptorCount());
