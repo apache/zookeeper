@@ -20,6 +20,8 @@ package org.apache.zookeeper.server.util;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
+import org.apache.yetus.audience.InterfaceAudience;
+import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.persistence.FileHeader;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.txn.TxnHeader;
@@ -38,30 +40,32 @@ import java.util.zip.Checksum;
 /**
  * this class will chop the log at the specified zxid
  */
+@InterfaceAudience.Public
 public class LogChopper {
     public static void main(String args[]) {
+        ExitCode rc = ExitCode.INVALID_INVOCATION;
         if (args.length != 3) {
             System.out.println("Usage: LogChopper zxid_to_chop_to txn_log_to_chop chopped_filename");
             System.out.println("    this program will read the txn_log_to_chop file and copy all the transactions");
             System.out.println("    from it up to (and including) the given zxid into chopped_filename.");
-            System.exit(1);
+            System.exit(rc.getValue());
         }
-        long zxid = Long.decode(args[0]);
         String txnLog = args[1];
         String choppedLog = args[2];
 
-        int rc = 2;
         try (
             InputStream is = new BufferedInputStream(new FileInputStream(txnLog));
             OutputStream os = new BufferedOutputStream(new FileOutputStream(choppedLog))
         ) {
+            long zxid = Long.decode(args[0]);
+
             if (chop(is, os, zxid)) {
-                rc = 0;
+                rc = ExitCode.EXECUTION_FINISHED;
             }
         } catch (Exception e) {
             System.out.println("Got exception: " + e.getMessage());
         }
-        System.exit(rc);
+        System.exit(rc.getValue());
     }
 
     public static boolean chop(InputStream is, OutputStream os, long zxid) throws IOException {
@@ -115,7 +119,7 @@ public class LogChopper {
                 throw new EOFException("Last transaction was partial.");
             }
 
-            long txnZxid = hdr.getZxid();
+            final long txnZxid = hdr.getZxid();
             if (txnZxid == zxid) {
                 hasZxid = true;
             }
@@ -125,15 +129,19 @@ public class LogChopper {
                 long txnEpoch = ZxidUtils.getEpochFromZxid(txnZxid);
                 long txnCounter = ZxidUtils.getCounterFromZxid(txnZxid);
                 long previousEpoch = ZxidUtils.getEpochFromZxid(previousZxid);
-                if (txnEpoch == previousEpoch || txnCounter != 1) {
+                if (txnEpoch == previousEpoch) {
                     System.out.println(
-                        String.format("There is gap between %x and %x",
+                            String.format("There is intra-epoch gap between %x and %x",
+                                    previousZxid, txnZxid));
+                } else if (txnCounter != 1) {
+                    System.out.println(
+                        String.format("There is inter-epoch gap between %x and %x",
                                 previousZxid, txnZxid));
                 }
             }
             previousZxid = txnZxid;
 
-            if (hdr.getZxid() > zxid) {
+            if (txnZxid > zxid) {
                 if (count == 0 || !hasZxid) {
                     System.out.println(String.format("This log does not contain zxid %x", zxid));
                     return false;
