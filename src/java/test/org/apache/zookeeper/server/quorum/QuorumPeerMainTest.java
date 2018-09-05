@@ -427,7 +427,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         Assert.assertTrue("falseLeader never rejoins the quorum", foundFollowing);
     }
 
-    private void waitForOne(ZooKeeper zk, States state) throws InterruptedException {
+    public static void waitForOne(ZooKeeper zk, States state) throws InterruptedException {
         int iterations = ClientBase.CONNECTION_TIMEOUT / 500;
         while (zk.getState() != state) {
             if (iterations-- == 0) {
@@ -441,7 +441,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         waitForAll(servers.zk, state);
     }
 
-    private void waitForAll(ZooKeeper[] zks, States state) throws InterruptedException {
+    public static void waitForAll(ZooKeeper[] zks, States state) throws InterruptedException {
         int iterations = ClientBase.CONNECTION_TIMEOUT / 1000;
         boolean someoneNotConnected = true;
         while (someoneNotConnected) {
@@ -461,8 +461,8 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             Thread.sleep(1000);
         }
     }
-    
-    private void logStates(ZooKeeper[] zks) {
+
+    public static void logStates(ZooKeeper[] zks) {
             StringBuilder sbBuilder = new StringBuilder("Connection States: {");
            for (int i = 0; i < zks.length; i++) {
                 sbBuilder.append(i + " : " + zks[i].getState() + ", ");

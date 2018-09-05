@@ -768,7 +768,11 @@ public class DataTree {
 
     public volatile long lastProcessedZxid = 0;
 
-    public ProcessTxnResult processTxn(TxnHeader header, Record txn)
+    public ProcessTxnResult processTxn(TxnHeader header, Record txn) {
+        return this.processTxn(header, txn, false);
+    }
+
+    public ProcessTxnResult processTxn(TxnHeader header, Record txn, boolean isSubTxn)
     {
         ProcessTxnResult rc = new ProcessTxnResult();
 
@@ -923,7 +927,7 @@ public class DataTree {
                         TxnHeader subHdr = new TxnHeader(header.getClientId(), header.getCxid(),
                                                          header.getZxid(), header.getTime(),
                                                          subtxn.getType());
-                        ProcessTxnResult subRc = processTxn(subHdr, record);
+                        ProcessTxnResult subRc = processTxn(subHdr, record, true);
                         rc.multiResult.add(subRc);
                         if (subRc.err != 0 && rc.err == 0) {
                             rc.err = subRc.err ;
@@ -941,22 +945,41 @@ public class DataTree {
                 LOG.debug("Failed: " + header + ":" + txn, e);
             }
         }
+
+
         /*
-         * A snapshot might be in progress while we are modifying the data
-         * tree. If we set lastProcessedZxid prior to making corresponding
-         * change to the tree, then the zxid associated with the snapshot
-         * file will be ahead of its contents. Thus, while restoring from
-         * the snapshot, the restore method will not apply the transaction
-         * for zxid associated with the snapshot file, since the restore
-         * method assumes that transaction to be present in the snapshot.
+         * Things we can only update after the whole txn is applied to data
+         * tree.
          *
-         * To avoid this, we first apply the transaction and then modify
-         * lastProcessedZxid.  During restore, we correctly handle the
-         * case where the snapshot contains data ahead of the zxid associated
-         * with the file.
+         * If we update the lastProcessedZxid with the first sub txn in multi
+         * and there is a snapshot in progress, it's possible that the zxid
+         * associated with the snapshot only include partial of the multi op.
+         *
+         * When loading snapshot, it will only load the txns after the zxid
+         * associated with snapshot file, which could cause data inconsistency
+         * due to missing sub txns.
+         *
+         * To avoid this, we only update the lastProcessedZxid when the whole
+         * multi-op txn is applied to DataTree.
          */
-        if (rc.zxid > lastProcessedZxid) {
-            lastProcessedZxid = rc.zxid;
+        if (!isSubTxn) {
+            /*
+             * A snapshot might be in progress while we are modifying the data
+             * tree. If we set lastProcessedZxid prior to making corresponding
+             * change to the tree, then the zxid associated with the snapshot
+             * file will be ahead of its contents. Thus, while restoring from
+             * the snapshot, the restore method will not apply the transaction
+             * for zxid associated with the snapshot file, since the restore
+             * method assumes that transaction to be present in the snapshot.
+             *
+             * To avoid this, we first apply the transaction and then modify
+             * lastProcessedZxid.  During restore, we correctly handle the
+             * case where the snapshot contains data ahead of the zxid associated
+             * with the file.
+             */
+            if (rc.zxid > lastProcessedZxid) {
+                lastProcessedZxid = rc.zxid;
+            }
         }
 
         /*

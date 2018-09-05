@@ -95,7 +95,7 @@ public class ZKDatabase {
      * @param snapLog the FileTxnSnapLog mapping this zkdatabase
      */
     public ZKDatabase(FileTxnSnapLog snapLog) {
-        dataTree = new DataTree();
+        dataTree = createDataTree();
         sessionsWithTimeouts = new ConcurrentHashMap<Long, Integer>();
         this.snapLog = snapLog;
 
@@ -138,7 +138,7 @@ public class ZKDatabase {
         /* to be safe we just create a new
          * datatree.
          */
-        dataTree = new DataTree();
+        dataTree = createDataTree();
         sessionsWithTimeouts.clear();
         WriteLock lock = logLock.writeLock();
         try {
@@ -643,5 +643,10 @@ public class ZKDatabase {
      */
     public boolean removeWatch(String path, WatcherType type, Watcher watcher) {
         return dataTree.removeWatch(path, type, watcher);
+    }
+
+    // visible for testing
+    public DataTree createDataTree() {
+        return new DataTree();
     }
 }
