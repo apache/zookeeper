@@ -30,9 +30,12 @@ import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.TraceFormatter;
+import org.apache.zookeeper.server.util.LogChopper;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.txn.TxnHeader;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.Closeable;
 import java.io.EOFException;
 import java.io.File;
@@ -40,6 +43,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.Scanner;
@@ -92,13 +97,20 @@ public class TxnLogToolkit implements Closeable {
     private FilePadding filePadding = new FilePadding();
     private boolean force = false;
 
+    // chop mode
+    private long zxid = -1L;
+
     /**
      * @param args Command line arguments
      */
     public static void main(String[] args) throws Exception {
         try (final TxnLogToolkit lt = parseCommandLine(args)) {
-            lt.dump(new Scanner(System.in));
-            lt.printStat();
+            if (lt.isDumpMode()) {
+                lt.dump(new Scanner(System.in));
+                lt.printStat();
+            } else {
+                lt.chop();
+            }
         } catch (TxnLogToolkitParseException e) {
             System.err.println(e.getMessage() + "\n");
             printHelpAndExit(e.getExitCode(), e.getOptions());
@@ -113,10 +125,7 @@ public class TxnLogToolkit implements Closeable {
         this.recoveryMode = recoveryMode;
         this.verbose = verbose;
         this.force = force;
-        txnLogFile = new File(txnLogFileName);
-        if (!txnLogFile.exists() || !txnLogFile.canRead()) {
-            throw new TxnLogToolkitException(ExitCode.UNEXPECTED_ERROR.getValue(), "File doesn't exist or not readable: %s", txnLogFile);
-        }
+        txnLogFile = loadTxnFile(txnLogFileName);
         if (recoveryMode) {
             recoveryLogFile = new File(txnLogFile.toString() + ".fixed");
             if (recoveryLogFile.exists()) {
@@ -128,6 +137,19 @@ public class TxnLogToolkit implements Closeable {
         if (recoveryMode) {
             openRecoveryFile();
         }
+    }
+
+    public TxnLogToolkit(String txnLogFileName, String zxidName) throws TxnLogToolkitException {
+        txnLogFile = loadTxnFile(txnLogFileName);
+        zxid = Long.decode(zxidName);
+    }
+
+    private File loadTxnFile(String txnLogFileName) throws TxnLogToolkitException {
+        File logFile = new File(txnLogFileName);
+        if (!logFile.exists() || !logFile.canRead()) {
+            throw new TxnLogToolkitException(ExitCode.UNEXPECTED_ERROR.getValue(), "File doesn't exist or not readable: %s", logFile);
+        }
+        return logFile;
     }
 
     public void dump(Scanner scanner) throws Exception {
@@ -198,6 +220,24 @@ public class TxnLogToolkit implements Closeable {
             }
             count++;
         }
+    }
+
+    public void chop() {
+        File targetFile = new File(txnLogFile.getParentFile(), txnLogFile.getName() + ".chopped" + zxid);
+        try (
+                InputStream is = new BufferedInputStream(new FileInputStream(txnLogFile));
+                OutputStream os = new BufferedOutputStream(new FileOutputStream(targetFile))
+        ) {
+            if (!LogChopper.chop(is, os, zxid)) {
+                throw new TxnLogToolkitException(ExitCode.INVALID_INVOCATION.getValue(), "Failed to chop %s", txnLogFile.getName());
+            }
+        } catch (Exception e) {
+            System.out.println("Got exception: " + e.getMessage());
+        }
+    }
+
+    public boolean isDumpMode() {
+        return zxid < 0;
     }
 
     private boolean askForFix(Scanner scanner) throws TxnLogToolkitException {
@@ -280,6 +320,12 @@ public class TxnLogToolkit implements Closeable {
         Option forceOpt = new Option("y", "yes", false, "Non-interactive mode: repair all CRC errors without asking");
         options.addOption(forceOpt);
 
+        // Chop mode options
+        Option chopOpt = new Option("c", "chop", false, "Chop mode. Chop txn file to a zxid.");
+        Option zxidOpt = new Option("z", "zxid", true, "Used with chop. Zxid to which to chop.");
+        options.addOption(chopOpt);
+        options.addOption(zxidOpt);
+
         try {
             CommandLine cli = parser.parse(options, args);
             if (cli.hasOption("help")) {
@@ -287,6 +333,9 @@ public class TxnLogToolkit implements Closeable {
             }
             if (cli.getArgs().length < 1) {
                 printHelpAndExit(1, options);
+            }
+            if (cli.hasOption("chop") && cli.hasOption("zxid")) {
+                return new TxnLogToolkit(cli.getArgs()[0], cli.getOptionValue("zxid"));
             }
             return new TxnLogToolkit(cli.hasOption("recover"), cli.hasOption("verbose"), cli.getArgs()[0], cli.hasOption("yes"));
         } catch (ParseException e) {
@@ -296,7 +345,7 @@ public class TxnLogToolkit implements Closeable {
 
     private static void printHelpAndExit(int exitCode, Options options) {
         HelpFormatter help = new HelpFormatter();
-        help.printHelp(120,"TxnLogToolkit [-dhrv] <txn_log_file_name>", "", options, "");
+        help.printHelp(120,"TxnLogToolkit [-dhrvc] <txn_log_file_name> (-z <zxid>)", "", options, "");
         System.exit(exitCode);
     }
 
