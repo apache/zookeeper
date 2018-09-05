@@ -1703,6 +1703,24 @@ server.3=zoo3:2888:3888</programlisting>
                 Default is "10000".</para>
             </listitem>
           </varlistentry>
+
+          <varlistentry>
+            <term>networkBufferSize</term>
+
+            <listitem>
+              <para>(Java system property: zookeeper.<emphasis
+                      role="bold">networkBufferSize</emphasis>)</para>
+
+              <para><emphasis role="bold">New in 3.6.0:</emphasis>
+                Sets the socket send and receive buffer size in bytes between leader
+                and learner to tune the network IO performance.
+              </para>
+
+              <note>
+                <para>Default value is -1, which means using the default buffer size in Socket.</para>
+              </note>
+            </listitem>
+          </varlistentry>
         </variablelist>
       </section>
 

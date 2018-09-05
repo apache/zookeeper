@@ -26,9 +26,12 @@ public interface QuorumMXBean {
      * @return the name of the quorum
      */
     public String getName();
-    
+
     /**
      * @return configured number of peers in the quorum
      */
     public int getQuorumSize();
+
+    public int getNetworkBufferSize();
+    public void setNetworkBufferSize(int networkBufferSize);
 }
