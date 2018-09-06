@@ -174,7 +174,10 @@ public class Commands {
         @Override
         public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
             CommandResponse response = initializeResponse();
-            response.put("connections", zkServer.getServerCnxnFactory().getAllConnectionInfo(false));
+            response.put("connections",
+                    zkServer.getServerCnxnFactory() != null ?
+                            zkServer.getServerCnxnFactory().getAllConnectionInfo(false) :
+                            zkServer.getSecureServerCnxnFactory().getAllConnectionInfo(false));
             return response;
         }
     }
