@@ -1027,15 +1027,19 @@ public class DataTree {
         }
 
         /*
-         * Snapshots are taken lazily. It can happen that the child
-         * znodes of a parent are created after the parent
-         * is serialized. Therefore, while replaying logs during restore, a
-         * create might fail because the node was already
-         * created.
+         * Snapshots are taken lazily. When serializing a node, it's data
+         * and children copied in a synchronization block on that node,
+         * which means newly created node won't be in the snapshot, so
+         * we won't have mismatched cversion and pzxid when replaying the
+         * createNode txn.
          *
-         * After seeing this failure, we should increment
-         * the cversion of the parent znode since the parent was serialized
-         * before its children.
+         * But there is a tricky scenario that if the child is deleted due
+         * to session close and re-created in a different global session
+         * after that the parent is serialized, then when replay the txn
+         * because the node is belonging to a different session, replay the
+         * closeSession txn won't delete it anymore, and we'll get NODEEXISTS
+         * error when replay the createNode txn. In this case, we need to
+         * update the cversion and pzxid to the new value.
          *
          * Note, such failures on DT should be seen only during
          * restore.
