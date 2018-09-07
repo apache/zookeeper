@@ -801,7 +801,7 @@ public class ClientCnxn {
     class SendThread extends ZooKeeperThread {
         private long lastPingSentNs;
         private final ClientCnxnSocket clientCnxnSocket;
-        private Random r = new Random(System.nanoTime());        
+        private Random r = new Random();
         private boolean isFirstConnect = true;
 
         void readResponse(ByteBuffer incomingBuffer) throws IOException {
