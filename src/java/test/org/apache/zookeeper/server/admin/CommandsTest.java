@@ -27,10 +27,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.zookeeper.server.ServerCnxnFactory;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.BufferStats;
@@ -166,25 +169,34 @@ public class CommandsTest extends ClientBase {
 
     @Test
     public void testMonitor() throws IOException, InterruptedException {
-        testCommand("monitor",
-                    new Field("version", String.class),
-                    new Field("avg_latency", Long.class),
-                    new Field("max_latency", Long.class),
-                    new Field("min_latency", Long.class),
-                    new Field("packets_received", Long.class),
-                    new Field("packets_sent", Long.class),
-                    new Field("num_alive_connections", Integer.class),
-                    new Field("outstanding_requests", Long.class),
-                    new Field("server_state", String.class),
-                    new Field("znode_count", Integer.class),
-                    new Field("watch_count", Integer.class),
-                    new Field("ephemerals_count", Integer.class),
-                    new Field("approximate_data_size", Long.class),
-                    new Field("open_file_descriptor_count", Long.class),
-                    new Field("max_file_descriptor_count", Long.class),
-                    new Field("last_client_response_size", Integer.class),
-                    new Field("max_client_response_size", Integer.class),
-                    new Field("min_client_response_size", Integer.class));
+        ArrayList<Field> fields = new ArrayList<>(Arrays.asList(
+                new Field("version", String.class),
+                new Field("avg_latency", Long.class),
+                new Field("max_latency", Long.class),
+                new Field("min_latency", Long.class),
+                new Field("packets_received", Long.class),
+                new Field("packets_sent", Long.class),
+                new Field("num_alive_connections", Integer.class),
+                new Field("outstanding_requests", Long.class),
+                new Field("server_state", String.class),
+                new Field("znode_count", Integer.class),
+                new Field("watch_count", Integer.class),
+                new Field("ephemerals_count", Integer.class),
+                new Field("approximate_data_size", Long.class),
+                new Field("open_file_descriptor_count", Long.class),
+                new Field("max_file_descriptor_count", Long.class),
+                new Field("last_client_response_size", Integer.class),
+                new Field("max_client_response_size", Integer.class),
+                new Field("min_client_response_size", Integer.class),
+                new Field("uptime", Long.class),
+                new Field("global_sessions", Long.class),
+                new Field("local_sessions", Long.class)
+        ));
+        for (String metric : ServerMetrics.getAllValues().keySet()) {
+            fields.add(new Field(metric, Long.class));
+        }
+        Field fieldsArray[] = fields.toArray(new Field[0]);
+        testCommand("monitor", fieldsArray);
     }
 
     @Test
