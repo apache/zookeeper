@@ -107,7 +107,6 @@ public class FinalRequestProcessor implements RequestProcessor {
             // that add to outstandingChanges.
             if (request.getHdr() != null) {
                 TxnHeader hdr = request.getHdr();
-                Record txn = request.getTxn();
                 long zxid = hdr.getZxid();
                 while (!zks.outstandingChanges.isEmpty()
                        && zks.outstandingChanges.peek().zxid <= zxid) {
