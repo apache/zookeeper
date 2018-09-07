@@ -40,10 +40,14 @@ public class SimpleCounter implements Metric {
         counter.set(0);
     }
 
+    public long getCount() {
+        return counter.get();
+    }
+
     @Override
     public Map<String, Long> values() {
         Map<String, Long> m = new LinkedHashMap<String, Long>();
-        m.put(name, counter.get());
+        m.put(name, this.getCount());
         return m;
     }
 }
