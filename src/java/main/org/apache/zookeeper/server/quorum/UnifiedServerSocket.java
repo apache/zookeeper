@@ -404,21 +404,23 @@ public class UnifiedServerSocket extends ServerSocket {
         }
 
         /**
-         * See {@link Socket#getInputStream()}. Calling this method triggers mode detection, which is a potentially
-         * blocking operation, so it should not be done in the accept() thread.
+         * See {@link Socket#getInputStream()}. If the socket mode has not yet been detected, the first read from the
+         * returned input stream will trigger mode detection, which is a potentially blocking operation. This means
+         * the accept() thread should avoid reading from this input stream if possible.
          */
         @Override
         public InputStream getInputStream() throws IOException {
-            return getSocket().getInputStream();
+            return new UnifiedInputStream(this);
         }
 
         /**
-         * See {@link Socket#getOutputStream()}. Calling this method triggers mode detection, which is a potentially
-         * blocking operation, so it should not be done in the accept() thread.
+         * See {@link Socket#getOutputStream()}. If the socket mode has not yet been detected, the first read from the
+         * returned input stream will trigger mode detection, which is a potentially blocking operation. This means
+         * the accept() thread should avoid reading from this input stream if possible.
          */
         @Override
         public OutputStream getOutputStream() throws IOException {
-            return getSocket().getOutputStream();
+            return new UnifiedOutputStream(this);
         }
 
         /**
@@ -654,5 +656,130 @@ public class UnifiedServerSocket extends ServerSocket {
         public void setPerformancePreferences(int connectionTime, int latency, int bandwidth) {
             getSocketAllowUnknownMode().setPerformancePreferences(connectionTime, latency, bandwidth);
         }
+    }
+
+    /**
+     * An input stream for a UnifiedSocket. The first read from this stream will trigger mode detection on the
+     * underlying UnifiedSocket.
+     */
+    private static class UnifiedInputStream extends InputStream {
+        private final UnifiedSocket unifiedSocket;
+        private InputStream realInputStream;
+
+        private UnifiedInputStream(UnifiedSocket unifiedSocket) {
+            this.unifiedSocket = unifiedSocket;
+            this.realInputStream = null;
+        }
+
+        @Override
+        public int read() throws IOException {
+            return getRealInputStream().read();
+        }
+
+        /**
+         * Note: SocketInputStream has optimized implementations of bulk-read operations, so we need to call them
+         * directly instead of relying on the base-class implementation which just calls the single-byte read() over
+         * and over. Not implementing these results in awful performance.
+         */
+        @Override
+        public int read(byte[] b) throws IOException {
+            return getRealInputStream().read(b);
+        }
+
+        @Override
+        public int read(byte[] b, int off, int len) throws IOException {
+            return getRealInputStream().read(b, off, len);
+        }
+
+        private InputStream getRealInputStream() throws IOException {
+            if (realInputStream == null) {
+                // Note: The first call to getSocket() triggers mode detection which can block
+                realInputStream = unifiedSocket.getSocket().getInputStream();
+            }
+            return realInputStream;
+        }
+
+        @Override
+        public long skip(long n) throws IOException {
+            return getRealInputStream().skip(n);
+        }
+
+        @Override
+        public int available() throws IOException {
+            return getRealInputStream().available();
+        }
+
+        @Override
+        public void close() throws IOException {
+            getRealInputStream().close();
+        }
+
+        @Override
+        public synchronized void mark(int readlimit) {
+            try {
+                getRealInputStream().mark(readlimit);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public synchronized void reset() throws IOException {
+            getRealInputStream().reset();
+        }
+
+        @Override
+        public boolean markSupported() {
+            try {
+                return getRealInputStream().markSupported();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+    }
+
+    private static class UnifiedOutputStream extends OutputStream {
+        private final UnifiedSocket unifiedSocket;
+        private OutputStream realOutputStream;
+
+        private UnifiedOutputStream(UnifiedSocket unifiedSocket) {
+            this.unifiedSocket = unifiedSocket;
+            this.realOutputStream = null;
+        }
+
+        @Override
+        public void write(int b) throws IOException {
+            getRealOutputStream().write(b);
+        }
+
+        @Override
+        public void write(byte[] b) throws IOException {
+            getRealOutputStream().write(b);
+        }
+
+        @Override
+        public void write(byte[] b, int off, int len) throws IOException {
+            getRealOutputStream().write(b, off, len);
+        }
+
+        @Override
+        public void flush() throws IOException {
+            getRealOutputStream().flush();
+        }
+
+        @Override
+        public void close() throws IOException {
+            getRealOutputStream().close();
+        }
+
+        private OutputStream getRealOutputStream() throws IOException {
+            if (realOutputStream == null) {
+                // Note: The first call to getSocket() triggers mode detection which can block
+                realOutputStream = unifiedSocket.getSocket().getOutputStream();
+            }
+            return realOutputStream;
+        }
+
     }
 }

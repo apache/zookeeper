@@ -391,8 +391,6 @@ public class Leader {
                         s.setSoTimeout(self.tickTime * self.initLimit);
                         s.setTcpNoDelay(nodelay);
 
-                        // Note: the call to s.getInputStream() will block the accepting thread if ss is a
-                        // UnifiedServerSocket.
                         BufferedInputStream is = new BufferedInputStream(
                                 s.getInputStream());
                         LearnerHandler fh = new LearnerHandler(s, is, Leader.this);

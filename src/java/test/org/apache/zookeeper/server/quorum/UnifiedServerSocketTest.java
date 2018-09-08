@@ -38,6 +38,7 @@ import org.junit.runners.Parameterized;
 import javax.net.ssl.HandshakeCompletedEvent;
 import javax.net.ssl.HandshakeCompletedListener;
 import javax.net.ssl.SSLSocket;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.ConnectException;
@@ -180,6 +181,8 @@ public class UnifiedServerSocketTest {
                     unifiedSocket.setSoTimeout(TIMEOUT);
                     final boolean keepAlive = rnd.nextBoolean();
                     unifiedSocket.setKeepAlive(keepAlive);
+                    // Note: getting the input stream should not block the thread or trigger mode detection.
+                    BufferedInputStream bis = new BufferedInputStream(unifiedSocket.getInputStream());
                     Thread t = new Thread(new Runnable() {
                         @Override
                         public void run() {
