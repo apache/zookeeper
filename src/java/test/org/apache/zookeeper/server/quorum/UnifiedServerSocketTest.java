@@ -506,4 +506,115 @@ public class UnifiedServerSocketTest {
         dosThread.interrupt();
         dosThread.join(TIMEOUT);
     }
+
+    /**
+     * Similar to the DoS resistance tests above, but the bad client disconnects immediately without sending any data.
+     * @throws Exception
+     */
+    @Test
+    public void testImmediateDisconnectResistanceNonStrictServer() throws Exception {
+        UnifiedServerThread serverThread = new UnifiedServerThread(
+                x509Util, localServerAddress, true, DATA_TO_CLIENT);
+        serverThread.start();
+        final boolean[] disconnectThreadConnected = new boolean[] { false };
+
+        Thread disconnectThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Socket socket = connectWithoutSSL();
+                    socket.close();
+                    synchronized (disconnectThreadConnected) {
+                        disconnectThreadConnected[0] = true;
+                        disconnectThreadConnected.notifyAll();
+                    }
+                } catch (Exception e) {
+                    // ...
+                }
+            }
+        });
+        disconnectThread.start();
+        // make sure the disconnect thread connects first
+        synchronized (disconnectThreadConnected) {
+            while (!disconnectThreadConnected[0]) {
+                disconnectThreadConnected.wait();
+            }
+        }
+
+        Socket socket = connectWithoutSSL();
+        socket.getOutputStream().write(DATA_FROM_CLIENT);
+        socket.getOutputStream().flush();
+        byte[] buf = new byte[DATA_TO_CLIENT.length];
+        int bytesRead = socket.getInputStream().read(buf, 0, buf.length);
+        Assert.assertEquals(buf.length, bytesRead);
+        Assert.assertArrayEquals(DATA_TO_CLIENT, buf);
+        Assert.assertFalse(handshakeCompleted);
+        Assert.assertArrayEquals(DATA_FROM_CLIENT, serverThread.getDataFromClient(0));
+        forceClose(socket);
+
+        socket = connectWithSSL();
+        socket.getOutputStream().write(DATA_FROM_CLIENT);
+        socket.getOutputStream().flush();
+        buf = new byte[DATA_TO_CLIENT.length];
+        bytesRead = socket.getInputStream().read(buf, 0, buf.length);
+        Assert.assertEquals(buf.length, bytesRead);
+        Assert.assertArrayEquals(DATA_TO_CLIENT, buf);
+        Assert.assertTrue(handshakeCompleted);
+        Assert.assertArrayEquals(DATA_FROM_CLIENT, serverThread.getDataFromClient(1));
+        forceClose(socket);
+
+        serverThread.shutdown(TIMEOUT);
+        disconnectThread.join(TIMEOUT);
+    }
+
+    /**
+     * Like the above test, but with a strict server socket (closes non-TLS connections after seeing that there is
+     * no handshake).
+     */
+    @Test
+    public void testImmediateDisconnectResistanceStrictServer() throws Exception {
+        UnifiedServerThread serverThread = new UnifiedServerThread(
+                x509Util, localServerAddress, false, DATA_TO_CLIENT);
+        serverThread.start();
+        final boolean[] disconnectThreadConnected = new boolean[] { false };
+
+        Thread disconnectThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Socket socket = connectWithoutSSL();
+                    socket.close();
+                    synchronized (disconnectThreadConnected) {
+                        disconnectThreadConnected[0] = true;
+                        disconnectThreadConnected.notifyAll();
+                    }
+                } catch (Exception e) {
+                    // ...
+                }
+            }
+        });
+        disconnectThread.start();
+        // make sure the disconnect thread connects first
+        synchronized (disconnectThreadConnected) {
+            while (!disconnectThreadConnected[0]) {
+                disconnectThreadConnected.wait();
+            }
+        }
+
+        Socket sslSocket = connectWithSSL();
+        sslSocket.getOutputStream().write(DATA_FROM_CLIENT);
+        sslSocket.getOutputStream().flush();
+        byte[] buf = new byte[DATA_TO_CLIENT.length];
+        int bytesRead = sslSocket.getInputStream().read(buf, 0, buf.length);
+        Assert.assertEquals(buf.length, bytesRead);
+        Assert.assertArrayEquals(DATA_TO_CLIENT, buf);
+
+        serverThread.shutdown(TIMEOUT);
+        forceClose(sslSocket);
+
+        Assert.assertTrue(handshakeCompleted);
+        Assert.assertArrayEquals(DATA_FROM_CLIENT, serverThread.getDataFromClient(0));
+        disconnectThread.interrupt();
+        disconnectThread.join(TIMEOUT);
+    }
 }

@@ -83,6 +83,8 @@ public abstract class X509Util {
             "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256"
     };
 
+    public static final int DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS = 5000;
+
     /**
      * This enum represents the file type of a KeyStore or TrustStore. Currently, JKS (java keystore) and PEM types
      * are supported.
@@ -167,6 +169,7 @@ public abstract class X509Util {
         private final String[] cipherSuites;
         private final ClientAuth clientAuth;
         private final SSLContext sslContext;
+        private final int handshakeDetectionTimeoutMillis;
 
         /**
          * Note: constructor is intentionally private, only the enclosing X509Util should be creating instances of this
@@ -175,11 +178,12 @@ public abstract class X509Util {
          * @param sslContext
          */
         private SSLContextAndOptions(final ZKConfig config,
-                             final SSLContext sslContext) {
+                                     final SSLContext sslContext) {
             this.sslContext = sslContext;
             this.enabledProtocols = getEnabledProtocols(config, sslContext);
             this.cipherSuites = getCipherSuites(config);
             this.clientAuth = getClientAuth(config);
+            this.handshakeDetectionTimeoutMillis = getHandshakeDetectionTimeoutMillis(config);
         }
 
         public SSLContext getSSLContext() {
@@ -292,6 +296,24 @@ public abstract class X509Util {
         private ClientAuth getClientAuth(final ZKConfig config) {
             return ClientAuth.fromPropertyValue(config.getProperty(getSslClientAuthProperty()));
         }
+
+        private int getHandshakeDetectionTimeoutMillis(final ZKConfig config) {
+            String propertyString = config.getProperty(getSslHandshakeDetectionTimeoutMillisProperty());
+            int result;
+            if (propertyString == null) {
+                result = DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS;
+            } else {
+                result = Integer.parseInt(propertyString);
+                if (result < 1) {
+                    // Timeout of 0 is not allowed, since an infinite timeout can permanently lock up an
+                    // accept() thread.
+                    LOG.warn("Invalid value for " + getSslHandshakeDetectionTimeoutMillisProperty() + ": " + result +
+                            ", using the default value of " + DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS);
+                    result = DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS;
+                }
+            }
+            return result;
+        }
     }
 
     private String sslProtocolProperty = getConfigPrefix() + "protocol";
@@ -307,6 +329,7 @@ public abstract class X509Util {
     private String sslCrlEnabledProperty = getConfigPrefix() + "crl";
     private String sslOcspEnabledProperty = getConfigPrefix() + "ocsp";
     private String sslClientAuthProperty = getConfigPrefix() + "clientAuth";
+    private String sslHandshakeDetectionTimeoutMillisProperty = getConfigPrefix() + "handshakeDetectionTimeoutMillis";
 
     private ZKConfig zkConfig;
     private AtomicReference<SSLContextAndOptions> defaultSSLContextAndOptions = new AtomicReference<>(null);
@@ -392,6 +415,16 @@ public abstract class X509Util {
         return sslClientAuthProperty;
     }
 
+    /**
+     * Returns the config property key that controls the amount of time, in milliseconds, that the first
+     * UnifiedServerSocket read operation will block for when trying to detect the client mode (TLS or PLAINTEXT).
+     *
+     * @return the config property key.
+     */
+    public String getSslHandshakeDetectionTimeoutMillisProperty() {
+        return sslHandshakeDetectionTimeoutMillisProperty;
+    }
+
     public SSLContext getDefaultSSLContext() throws X509Exception.SSLContextException {
         return getDefaultSSLContextAndOptions().getSSLContext();
     }
@@ -426,6 +459,25 @@ public abstract class X509Util {
         return createSSLContextAndOptions(zkConfig == null ? new ZKConfig() : zkConfig);
     }
 
+    /**
+     * Returns the max amount of time, in milliseconds, that the first UnifiedServerSocket read() operation should
+     * block for when trying to detect the client mode (TLS or PLAINTEXT).
+     * Defaults to {@link X509Util#DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS}.
+     *
+     * @return the handshake detection timeout, in milliseconds.
+     */
+    public int getSslHandshakeTimeoutMillis() {
+        try {
+            SSLContextAndOptions ctx = getDefaultSSLContextAndOptions();
+            return ctx.handshakeDetectionTimeoutMillis;
+        } catch (SSLContextException e) {
+            LOG.error("Error creating SSL context and options", e);
+            return DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS;
+        } catch (Exception e) {
+            LOG.error("Error parsing config property " + getSslHandshakeDetectionTimeoutMillisProperty(), e);
+            return DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS;
+        }
+    }
 
     public SSLContextAndOptions createSSLContextAndOptions(ZKConfig config) throws SSLContextException {
         KeyManager[] keyManagers = null;

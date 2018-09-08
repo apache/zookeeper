@@ -138,6 +138,8 @@ public class ZKConfig {
                 System.getProperty(x509Util.getSslOcspEnabledProperty()));
         properties.put(x509Util.getSslClientAuthProperty(),
                 System.getProperty(x509Util.getSslClientAuthProperty()));
+        properties.put(x509Util.getSslHandshakeDetectionTimeoutMillisProperty(),
+                System.getProperty(x509Util.getSslHandshakeDetectionTimeoutMillisProperty()));
     }
 
     /**

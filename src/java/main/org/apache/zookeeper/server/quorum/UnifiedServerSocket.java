@@ -34,6 +34,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.nio.channels.SocketChannel;
 
 /**
@@ -229,13 +230,36 @@ public class UnifiedServerSocket extends ServerSocket {
         }
 
         /**
-         * Detects the socket mode, see comments at the top of the class for more details. This is a blocking operation
-         * and should not be called in the accept() thread.
+         * Detects the socket mode, see comments at the top of the class for more details. This operation will block
+         * for up to {@link X509Util#getSslHandshakeTimeoutMillis()} milliseconds and should not be called in the
+         * accept() thread if possible.
          * @throws IOException
          */
         private void detectMode() throws IOException {
             byte[] litmus = new byte[5];
-            int bytesRead = prependableSocket.getInputStream().read(litmus, 0, litmus.length);
+            int oldTimeout = -1;
+            int bytesRead = 0;
+            int newTimeout = x509Util.getSslHandshakeTimeoutMillis();
+            try {
+                oldTimeout = prependableSocket.getSoTimeout();
+                prependableSocket.setSoTimeout(newTimeout);
+                bytesRead = prependableSocket.getInputStream().read(litmus, 0, litmus.length);
+            } catch (SocketTimeoutException e) {
+                // Didn't read anything within the timeout, fallthrough and assume the connection is plaintext.
+                LOG.warn("Socket mode detection timed out after " + newTimeout + " ms, assuming PLAINTEXT");
+            } finally {
+                // restore socket timeout to the old value
+                try {
+                    if (oldTimeout != -1) {
+                        prependableSocket.setSoTimeout(oldTimeout);
+                    }
+                } catch (Exception e) {
+                    LOG.warn("Failed to restore old socket timeout value of " + oldTimeout + " ms", e);
+                }
+            }
+            if (bytesRead < 0) { // Got a EOF right away, definitely not using TLS. Fallthrough.
+                bytesRead = 0;
+            }
 
             if (bytesRead == litmus.length && SslHandler.isEncrypted(ChannelBuffers.wrappedBuffer(litmus))) {
                 try {

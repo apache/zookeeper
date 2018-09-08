@@ -381,19 +381,24 @@ public class Leader {
         public void run() {
             try {
                 while (!stop) {
-                    try{
-                        Socket s = ss.accept();
+                    Socket s = null;
+                    boolean error = false;
+                    try {
+                        s = ss.accept();
 
                         // start with the initLimit, once the ack is processed
                         // in LearnerHandler switch to the syncLimit
                         s.setSoTimeout(self.tickTime * self.initLimit);
                         s.setTcpNoDelay(nodelay);
 
+                        // Note: the call to s.getInputStream() will block the accepting thread if ss is a
+                        // UnifiedServerSocket.
                         BufferedInputStream is = new BufferedInputStream(
                                 s.getInputStream());
                         LearnerHandler fh = new LearnerHandler(s, is, Leader.this);
                         fh.start();
                     } catch (SocketException e) {
+                        error = true;
                         if (stop) {
                             LOG.info("exception while shutting down acceptor: "
                                     + e);
@@ -407,6 +412,19 @@ public class Leader {
                         }
                     } catch (SaslException e){
                         LOG.error("Exception while connecting to quorum learner", e);
+                        error = true;
+                    } catch (Exception e) {
+                        error = true;
+                        throw e;
+                    } finally {
+                        // Don't leak sockets on errors
+                        if (error && s != null && !s.isClosed()) {
+                            try {
+                                s.close();
+                            } catch (IOException e) {
+                                LOG.warn("Error closing socket", e);
+                            }
+                        }
                     }
                 }
             } catch (Exception e) {
