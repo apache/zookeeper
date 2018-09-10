@@ -869,6 +869,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return serverCnxnFactory;
     }
 
+    public ServerCnxnFactory getSecureServerCnxnFactory() {
+        return secureServerCnxnFactory;
+    }
+
     public void setSecureServerCnxnFactory(ServerCnxnFactory factory) {
         secureServerCnxnFactory = factory;
     }

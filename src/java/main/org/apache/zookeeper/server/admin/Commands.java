@@ -18,7 +18,9 @@
 
 package org.apache.zookeeper.server.admin;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -29,6 +31,7 @@ import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.Environment.Entry;
 import org.apache.zookeeper.Version;
 import org.apache.zookeeper.server.DataTree;
+import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
@@ -174,7 +177,18 @@ public class Commands {
         @Override
         public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
             CommandResponse response = initializeResponse();
-            response.put("connections", zkServer.getServerCnxnFactory().getAllConnectionInfo(false));
+            ServerCnxnFactory serverCnxnFactory = zkServer.getServerCnxnFactory();
+            if (serverCnxnFactory != null) {
+                response.put("connections", serverCnxnFactory.getAllConnectionInfo(false));
+            } else {
+                response.put("connections", Collections.emptyList());
+            }
+            ServerCnxnFactory secureServerCnxnFactory = zkServer.getSecureServerCnxnFactory();
+            if (secureServerCnxnFactory != null) {
+                response.put("secure_connections", secureServerCnxnFactory.getAllConnectionInfo(false));
+            } else {
+                response.put("secure_connections", Collections.emptyList());
+            }
             return response;
         }
     }
