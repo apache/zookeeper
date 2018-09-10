@@ -18,15 +18,19 @@
 
 package org.apache.zookeeper.server.admin;
 
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
-import java.nio.Buffer;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.BufferStats;
@@ -108,7 +112,9 @@ public class CommandsTest extends ClientBase {
     @Test
     public void testConnections() throws IOException, InterruptedException {
         testCommand("connections",
-                    new Field("connections", Iterable.class));
+                    new Field("connections", Iterable.class),
+                    new Field("secure_connections", Iterable.class)
+                );
     }
 
     @Test
@@ -240,4 +246,19 @@ public class CommandsTest extends ClientBase {
                     new Field("num_total_watches", Integer.class));
     }
 
+    @Test
+    public void testConsCommandSecureOnly() {
+        // Arrange
+        Commands.ConsCommand cmd = new Commands.ConsCommand();
+        ZooKeeperServer zkServer = mock(ZooKeeperServer.class);
+        ServerCnxnFactory cnxnFactory = mock(ServerCnxnFactory.class);
+        when(zkServer.getSecureServerCnxnFactory()).thenReturn(cnxnFactory);
+
+        // Act
+        CommandResponse response = cmd.run(zkServer, null);
+
+        // Assert
+        assertThat(response.toMap().containsKey("connections"), is(true));
+        assertThat(response.toMap().containsKey("secure_connections"), is(true));
+    }
 }
