@@ -257,5 +257,6 @@ public class CommandsTest extends ClientBase {
 
         // Assert
         assertThat(response.toMap().containsKey("connections"), is(true));
+        assertThat(response.toMap().containsKey("secure_connections"), is(true));
     }
 }
