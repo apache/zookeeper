@@ -112,7 +112,9 @@ public class CommandsTest extends ClientBase {
     @Test
     public void testConnections() throws IOException, InterruptedException {
         testCommand("connections",
-                    new Field("connections", Iterable.class));
+                    new Field("connections", Iterable.class),
+                    new Field("secure_connections", Iterable.class)
+                );
     }
 
     @Test

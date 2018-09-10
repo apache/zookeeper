@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.admin;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -180,13 +181,13 @@ public class Commands {
             if (serverCnxnFactory != null) {
                 response.put("connections", serverCnxnFactory.getAllConnectionInfo(false));
             } else {
-                response.put("connections", new Object[] {});
+                response.put("connections", Collections.emptyList());
             }
             ServerCnxnFactory secureServerCnxnFactory = zkServer.getSecureServerCnxnFactory();
             if (secureServerCnxnFactory != null) {
                 response.put("secure_connections", secureServerCnxnFactory.getAllConnectionInfo(false));
             } else {
-                response.put("secure_connections", new Object[] {});
+                response.put("secure_connections", Collections.emptyList());
             }
             return response;
         }
