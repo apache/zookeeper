@@ -61,7 +61,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
      * invoked after flush returns successfully.
      */
     private final LinkedList<Request> toFlush = new LinkedList<Request>();
-    private final Random r = new Random(System.nanoTime());
+    private final Random r = new Random();
     /**
      * The number of log entries to log before starting a snapshot
      */
