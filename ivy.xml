@@ -63,6 +63,9 @@
       <artifact name="netty" type="jar" conf="default"/>
     </dependency>
 
+    <dependency org="com.googlecode.json-simple" name="json-simple" rev="${json.version}" >
+      <exclude org="junit" module="junit"/>
+    </dependency>
     <dependency org="junit" name="junit" rev="${junit.version}" conf="test->default"/>
 	<dependency org="org.mockito" name="mockito-all" rev="${mockito.version}"
                conf="test->default"/>
