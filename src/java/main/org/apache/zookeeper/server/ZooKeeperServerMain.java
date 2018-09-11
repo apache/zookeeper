@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server;
 
 import java.io.IOException;
+import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -26,6 +27,9 @@ import javax.management.JMException;
 
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.jmx.ManagedUtil;
+import org.apache.zookeeper.metrics.MetricsProvider;
+import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
+import org.apache.zookeeper.metrics.impl.MetricsProviderBootstrap;
 import org.apache.zookeeper.server.admin.AdminServer;
 import org.apache.zookeeper.server.admin.AdminServer.AdminServerException;
 import org.apache.zookeeper.server.admin.AdminServerFactory;
@@ -50,7 +54,7 @@ public class ZooKeeperServerMain {
     private ServerCnxnFactory cnxnFactory;
     private ServerCnxnFactory secureCnxnFactory;
     private ContainerManager containerManager;
-
+    private MetricsProvider metricsProvider;
     private AdminServer adminServer;
 
     /*
@@ -117,6 +121,15 @@ public class ZooKeeperServerMain {
         LOG.info("Starting server");
         FileTxnSnapLog txnLog = null;
         try {
+            try {
+                metricsProvider = MetricsProviderBootstrap
+                        .startMetricsProvider(config.getMetricsProviderClassName(),
+                                              config.getMetricsProviderConfiguration());
+            } catch (MetricsProviderLifeCycleException error) {
+                throw new IOException("Cannot boot MetricsProvider "+config.getMetricsProviderClassName(),
+                    error);
+            }
+
             // Note that this thread isn't going to be doing anything else,
             // so rather than spawning another thread, we will just call
             // run() in this thread.
@@ -124,6 +137,7 @@ public class ZooKeeperServerMain {
             txnLog = new FileTxnSnapLog(config.dataLogDir, config.dataDir);
             final ZooKeeperServer zkServer = new ZooKeeperServer(txnLog,
                     config.tickTime, config.minSessionTimeout, config.maxSessionTimeout, null);
+            zkServer.setRootMetricsContext(metricsProvider.getRootContext());
             txnLog.setServerStats(zkServer.serverStats());
 
             // Registers shutdown handler which will be used to know the
@@ -178,6 +192,13 @@ public class ZooKeeperServerMain {
         } finally {
             if (txnLog != null) {
                 txnLog.close();
+            }
+            if (metricsProvider != null) {
+                try {
+                    metricsProvider.stop();
+                } catch (Throwable error) {
+                    LOG.warn("Error while stopping metrics", error);
+                }
             }
         }
     }

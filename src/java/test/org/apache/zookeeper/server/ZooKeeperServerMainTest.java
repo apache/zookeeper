@@ -39,6 +39,12 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.common.PathUtils;
+import org.apache.zookeeper.metrics.BaseTestMetricsProvider;
+import org.apache.zookeeper.metrics.BaseTestMetricsProvider.MetricsProviderCapturingLifecycle;
+import org.apache.zookeeper.metrics.BaseTestMetricsProvider.MetricsProviderWithConfiguration;
+import org.apache.zookeeper.metrics.BaseTestMetricsProvider.MetricsProviderWithErrorInConfigure;
+import org.apache.zookeeper.metrics.BaseTestMetricsProvider.MetricsProviderWithErrorInStart;
+import org.apache.zookeeper.metrics.BaseTestMetricsProvider.MetricsProviderWithErrorInStop;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.test.ClientBase;
@@ -344,6 +350,197 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         } catch (ConfigException iae) {
             // expected
         }
+    }
+
+    /**
+     * Test verifies that the server shouldn't boot with an invalid metrics provider
+     */
+    @Test
+    public void testInvalidMetricsProvider()
+            throws Exception {
+        ClientBase.setupTestEnv();
+
+        final int CLIENT_PORT = PortAssignment.unique();
+        final String configs = "metricsProvider.className=BadClass\n";
+        MainThread main = new MainThread(CLIENT_PORT, true, configs);
+        String args[] = new String[1];
+        args[0] = main.confFile.toString();
+        try {
+            main.main.initializeAndRun(args);
+            Assert.fail("Must throw exception as metrics provider is not "
+                    + "well configured");
+        } catch (ConfigException iae) {
+            // expected
+        }
+    }
+
+    /**
+     * Test verifies that the server shouldn't boot with a faulty metrics provider
+     */
+    @Test
+    public void testFaultyMetricsProviderOnStart()
+            throws Exception {
+        ClientBase.setupTestEnv();
+
+        final int CLIENT_PORT = PortAssignment.unique();
+        final String configs = "metricsProvider.className="+MetricsProviderWithErrorInStart.class.getName()+"\n";
+        MainThread main = new MainThread(CLIENT_PORT, true, configs);
+        String args[] = new String[1];
+        args[0] = main.confFile.toString();
+        try {
+            main.main.initializeAndRun(args);
+            Assert.fail("Must throw exception as metrics provider cannot boot");
+        } catch (IOException iae) {
+            // expected
+        }
+    }
+
+    /**
+     * Test verifies that the server shouldn't boot with a faulty metrics provider
+     */
+    @Test
+    public void testFaultyMetricsProviderOnConfigure()
+            throws Exception {
+        ClientBase.setupTestEnv();
+
+        final int CLIENT_PORT = PortAssignment.unique();
+        final String configs = "metricsProvider.className="+MetricsProviderWithErrorInConfigure.class.getName()+"\n";
+        MainThread main = new MainThread(CLIENT_PORT, true, configs);
+        String args[] = new String[1];
+        args[0] = main.confFile.toString();
+        try {
+            main.main.initializeAndRun(args);
+            Assert.fail("Must throw exception as metrics provider is cannot boot");
+        } catch (IOException iae) {
+            // expected
+        }
+    }
+
+    /**
+     * Test verifies that the server shouldn't be affected but runtime errors on stop()
+     */
+    @Test
+    public void testFaultyMetricsProviderOnStop()
+            throws Exception {
+        ClientBase.setupTestEnv();
+
+        final int CLIENT_PORT = PortAssignment.unique();
+        MetricsProviderWithErrorInStop.stopCalled.set(false);
+        final String configs = "metricsProvider.className="+MetricsProviderWithErrorInStop.class.getName()+"\n";
+        MainThread main = new MainThread(CLIENT_PORT, true, configs);
+        main.start();
+
+        Assert.assertTrue("waiting for server being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
+                        CONNECTION_TIMEOUT));
+
+        clientConnected = new CountDownLatch(1);
+        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT,
+                ClientBase.CONNECTION_TIMEOUT, this);
+        Assert.assertTrue("Failed to establish zkclient connection!",
+                clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+
+        zk.create("/foo", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        Assert.assertEquals(new String(zk.getData("/foo", null, null)), "foobar");
+        zk.close();
+
+        main.shutdown();
+        main.join();
+        main.deleteDirs();
+
+        Assert.assertTrue("waiting for server down",
+                ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT,
+                        ClientBase.CONNECTION_TIMEOUT));
+        Assert.assertTrue(MetricsProviderWithErrorInStop.stopCalled.get());
+    }
+
+    /**
+     * Test verifies that configuration is passed to the MetricsProvider.
+     */
+    @Test
+    public void testMetricsProviderConfiguration()
+            throws Exception {
+        ClientBase.setupTestEnv();
+
+        final int CLIENT_PORT = PortAssignment.unique();
+        MetricsProviderWithConfiguration.httpPort.set(0);
+        final String configs = "metricsProvider.className="+MetricsProviderWithConfiguration.class.getName()+"\n"+
+                               "metricsProvider.httpPort=1234\n";
+        MainThread main = new MainThread(CLIENT_PORT, true, configs);
+        main.start();
+
+        Assert.assertTrue("waiting for server being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
+                        CONNECTION_TIMEOUT));
+
+        clientConnected = new CountDownLatch(1);
+        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT,
+                ClientBase.CONNECTION_TIMEOUT, this);
+        Assert.assertTrue("Failed to establish zkclient connection!",
+                clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+
+        zk.create("/foo", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        Assert.assertEquals(new String(zk.getData("/foo", null, null)), "foobar");
+        zk.close();
+
+        main.shutdown();
+        main.join();
+        main.deleteDirs();
+
+        Assert.assertTrue("waiting for server down",
+                ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT,
+                        ClientBase.CONNECTION_TIMEOUT));
+        Assert.assertEquals(1234, MetricsProviderWithConfiguration.httpPort.get());
+    }
+
+    /**
+     * Test verifies that all of the lifecycle methods of the MetricsProvider are called.
+     */
+    @Test
+    public void testMetricsProviderLifecycle()
+            throws Exception {
+        ClientBase.setupTestEnv();
+        MetricsProviderCapturingLifecycle.reset();
+
+        final int CLIENT_PORT = PortAssignment.unique();
+        final String configs = "metricsProvider.className="+MetricsProviderCapturingLifecycle.class.getName()+"\n"+
+                               "metricsProvider.httpPort=1234\n";
+        MainThread main = new MainThread(CLIENT_PORT, true, configs);
+        main.start();
+
+        Assert.assertTrue("waiting for server being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT,
+                        CONNECTION_TIMEOUT));
+
+        clientConnected = new CountDownLatch(1);
+        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT,
+                ClientBase.CONNECTION_TIMEOUT, this);
+        Assert.assertTrue("Failed to establish zkclient connection!",
+                clientConnected.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS));
+
+        zk.create("/foo", "foobar".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        Assert.assertEquals(new String(zk.getData("/foo", null, null)), "foobar");
+        zk.close();
+
+        main.shutdown();
+        main.join();
+        main.deleteDirs();
+
+        Assert.assertTrue("waiting for server down",
+                ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT,
+                        ClientBase.CONNECTION_TIMEOUT));
+
+        Assert.assertTrue("metrics provider lifecycle error",
+                BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.configureCalled.get());
+        Assert.assertTrue("metrics provider lifecycle error",
+                BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.startCalled.get());
+        Assert.assertTrue("metrics provider lifecycle error",
+                BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.getRootContextCalled.get());
+        Assert.assertTrue("metrics provider lifecycle error",
+                BaseTestMetricsProvider.MetricsProviderCapturingLifecycle.stopCalled.get());
     }
 
     /**
