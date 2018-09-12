@@ -87,8 +87,12 @@ public class Learner {
     
     protected static final Logger LOG = LoggerFactory.getLogger(Learner.class);
 
+    private static final int leaderConnectDelayDuringRetryMs =
+            Integer.getInteger("zookeeper.leaderConnectDelayDuringRetryMs", 100);
+
     static final private boolean nodelay = System.getProperty("follower.nodelay", "true").equals("true");
     static {
+        LOG.info("leaderConnectDelayDuringRetryMs: " + leaderConnectDelayDuringRetryMs);
         LOG.info("TCP NoDelay set to: " + nodelay);
     }   
     
@@ -235,8 +239,8 @@ public class Learner {
     }
 
     /**
-     * Establish a connection with the Leader found by findLeader. Retries
-     * until either initLimit time has elapsed or 5 tries have happened. 
+     * Establish a connection with the LearnerMaster found by findLearnerMaster.
+     * Retries until either initLimit time has elapsed or 5 tries have happened.
      * @param addr - the address of the Leader to connect to.
      * @throws IOException - if the socket connection fails on the 5th attempt
      * <li>if there is an authentication failure while connecting to leader</li>
@@ -248,12 +252,12 @@ public class Learner {
         this.sock = createSocket();
 
         int initLimitTime = self.tickTime * self.initLimit;
-        int remainingInitLimitTime = initLimitTime;
+        int remainingInitLimitTime;
         long startNanoTime = nanoTime();
 
         for (int tries = 0; tries < 5; tries++) {
             try {
-                // recalculate the init limit time because retries sleep for 1000 milliseconds
+                // recalculate the init limit time because retries sleep for 500 milliseconds
                 remainingInitLimitTime = initLimitTime - (int)((nanoTime() - startNanoTime) / 1000000);
                 if (remainingInitLimitTime <= 0) {
                     LOG.error("initLimit exceeded on retries.");
@@ -286,7 +290,7 @@ public class Learner {
                     this.sock = createSocket();
                 }
             }
-            Thread.sleep(1000);
+            Thread.sleep(leaderConnectDelayDuringRetryMs);
         }
 
         self.authLearner.authenticate(sock, hostname);

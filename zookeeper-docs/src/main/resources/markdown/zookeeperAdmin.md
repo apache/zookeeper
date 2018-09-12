@@ -550,6 +550,13 @@ in the configuration file:
     Note that SSL feature will be enabled when user plugs-in
     zookeeper.serverCnxnFactory, zookeeper.clientCnxnSocket as Netty.
 
+* *observerMasterPort* :
+    the port to listen for observer connections; that is, the
+    port that observers attempt to connect to.
+    if the property is set then the server will host observer connections
+    when in follower mode in addition to when in leader mode and correspondingly
+    attempt to connect to any voting peer when in observer mode.
+
 * *dataDir* :
     the location where ZooKeeper will store the in-memory
     database snapshots and, unless specified otherwise, the

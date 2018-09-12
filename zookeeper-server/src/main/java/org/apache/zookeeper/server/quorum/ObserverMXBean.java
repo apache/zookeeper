@@ -34,4 +34,16 @@ public interface ObserverMXBean extends ZooKeeperServerMXBean {
      * @return socket address
      */
     public String getQuorumAddress();
+
+    /**
+     * @return address of the current learner master
+     */
+    public String getLearnerMaster();
+
+    /**
+     * requests the Observer switch to a new learner master
+     *
+     * @param learnerMaster address of the desired learner master
+     */
+    public void setLearnerMaster(String learnerMaster);
 }

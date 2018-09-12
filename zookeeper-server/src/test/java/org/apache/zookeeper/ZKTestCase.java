@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper;
 
+import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.junit.Rule;
@@ -75,4 +76,29 @@ public class ZKTestCase {
 
     };
 
+    public interface WaitForCondition {
+        /**
+         * @return true when success
+         */
+        boolean evaluate();
+    }
+
+    /**
+     * Wait for condition to be true; otherwise fail the test if it exceed
+     * timeout
+     * @param msg       error message to print when fail
+     * @param condition condition to evaluate
+     * @param timeout   timeout in seconds
+     * @throws InterruptedException
+     */
+    public void waitFor(String msg, WaitForCondition condition, int timeout)
+            throws InterruptedException {
+        for (int i = 0; i < timeout; ++i) {
+            if (condition.evaluate()) {
+                return;
+            }
+            Thread.sleep(1000);
+        }
+        Assert.fail(msg);
+    }
 }

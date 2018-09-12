@@ -144,6 +144,16 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         }
     }
 
+    private int observerMasterPort;
+
+    public int getObserverMasterPort() {
+        return observerMasterPort;
+    }
+
+    public void setObserverMasterPort(int observerMasterPort) {
+        this.observerMasterPort = observerMasterPort;
+    }
+
     public static class QuorumServer {
         public InetSocketAddress addr = null;
 
@@ -1231,8 +1241,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                         LOG.warn("Unexpected exception",e );
                     } finally {
                         observer.shutdown();
-                        setObserver(null);  
-                       updateServerState();
+                        setObserver(null);
+                        updateServerState();
+
+                        // Add delay jitter before we switch to LOOKING
+                        // state to reduce the load of ObserverMaster
+                        if (isRunning()) {
+                            Observer.waitForReconnectDelay();
+                        }
                     }
                     break;
                 case FOLLOWING:
@@ -1651,6 +1667,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             if (qs != null) {
                 setAddrs(qs.addr, qs.electionAddr, qs.clientAddr);
             }
+            updateObserverMasterList();
             return prevQV;
         }
     }
@@ -1989,7 +2006,75 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         }
     }
 
-   private boolean updateLearnerType(QuorumVerifier newQV) {        
+    private ArrayList<QuorumServer> observerMasters = new ArrayList<>();
+    private void updateObserverMasterList() {
+        if (observerMasterPort <= 0) {
+            return; // observer masters not enabled
+        }
+        observerMasters.clear();
+        StringBuilder sb = new StringBuilder();
+        for (QuorumServer server : quorumVerifier.getVotingMembers().values()) {
+            InetSocketAddress addr = new InetSocketAddress(server.addr.getAddress(), observerMasterPort);
+            observerMasters.add(new QuorumServer(server.id, addr));
+            sb.append(addr).append(",");
+        }
+        LOG.info("Updated learner master list to be {}", sb.toString());
+        Collections.shuffle(observerMasters);
+    }
+
+    private boolean useObserverMasters() {
+        return getLearnerType() == LearnerType.OBSERVER && observerMasters.size() > 0;
+    }
+
+    private int nextObserverMaster = 0;
+    private QuorumServer nextObserverMaster() {
+        if (nextObserverMaster >= observerMasters.size()) {
+            nextObserverMaster = 0;
+        }
+        return observerMasters.get(nextObserverMaster++);
+    }
+
+    QuorumServer findLearnerMaster(QuorumServer leader) {
+        return useObserverMasters() ? nextObserverMaster() : leader;
+    }
+
+
+    /**
+     * Vet a given learner master's information.
+     * Allows specification by server id, ip  only, or ip and port
+     */
+    QuorumServer validateLearnerMaster(String desiredMaster) {
+        if (useObserverMasters()) {
+            Long sid;
+            try {
+                sid = Long.parseLong(desiredMaster);
+            } catch (NumberFormatException e) {
+                sid = null;
+            }
+            for (QuorumServer server : observerMasters) {
+                if (sid == null) {
+                    String serverAddr = server.addr.getAddress().getHostAddress() + ':' + server.addr.getPort();
+                    if (serverAddr.startsWith(desiredMaster)) {
+                        return server;
+                    }
+                } else {
+                    if (sid.equals(server.id)) {
+                        return server;
+                    }
+                }
+            }
+            if (sid == null) {
+                LOG.info("could not find learner master address={}", desiredMaster);
+            } else {
+                LOG.warn("could not find learner master sid={}", sid);
+            }
+        } else {
+            LOG.info("cannot validate request, observer masters not enabled");
+        }
+        return null;
+    }
+
+   private boolean updateLearnerType(QuorumVerifier newQV) {
        //check if I'm an observer in new config
        if (newQV.getObservingMembers().containsKey(getId())) {
            if (getLearnerType()!=LearnerType.OBSERVER){

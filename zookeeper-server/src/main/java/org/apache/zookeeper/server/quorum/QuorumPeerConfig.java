@@ -71,6 +71,7 @@ public class QuorumPeerConfig {
     protected InetSocketAddress secureClientPortAddress;
     protected boolean sslQuorum = false;
     protected boolean shouldUsePortUnification = false;
+    protected int observerMasterPort;
     protected File dataDir;
     protected File dataLogDir;
     protected String dynamicConfigFileStr = null;
@@ -239,6 +240,7 @@ public class QuorumPeerConfig {
     throws IOException, ConfigException {
         int clientPort = 0;
         int secureClientPort = 0;
+        int observerMasterPort = 0;
         String clientPortAddress = null;
         String secureClientPortAddress = null;
         VerifyingFileFactory vff = new VerifyingFileFactory.Builder(LOG).warnForRelativePath().build();
@@ -261,6 +263,8 @@ public class QuorumPeerConfig {
                 secureClientPort = Integer.parseInt(value);
             } else if (key.equals("secureClientPortAddress")){
                 secureClientPortAddress = value.trim();
+            } else if (key.equals("observerMasterPort")) {
+                observerMasterPort = Integer.parseInt(value);
             } else if (key.equals("tickTime")) {
                 tickTime = Integer.parseInt(value);
             } else if (key.equals("maxClientCnxns")) {
@@ -410,6 +414,13 @@ public class QuorumPeerConfig {
         }
         if (this.secureClientPortAddress != null) {
             configureSSLAuth();
+        }
+
+        if (observerMasterPort <= 0) {
+            LOG.info("observerMasterPort is not set");
+        } else {
+            this.observerMasterPort = observerMasterPort;
+            LOG.info("observerMasterPort is {}", observerMasterPort);
         }
 
         if (tickTime == 0) {
@@ -754,6 +765,7 @@ public class QuorumPeerConfig {
 
     public InetSocketAddress getClientPortAddress() { return clientPortAddress; }
     public InetSocketAddress getSecureClientPortAddress() { return secureClientPortAddress; }
+    public int getObserverMasterPort() { return observerMasterPort; }
     public File getDataDir() { return dataDir; }
     public File getDataLogDir() { return dataLogDir; }
     public int getTickTime() { return tickTime; }
