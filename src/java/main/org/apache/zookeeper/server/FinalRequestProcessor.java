@@ -161,7 +161,7 @@ public class FinalRequestProcessor implements RequestProcessor {
         Record rsp = null;
         try {
             if (request.getHdr() != null && request.getHdr().getType() == OpCode.error) {
-                addFailedTxnAduitLog(request);
+                addFailedTxnAuditLog(request);
                 /*
                  * When local session upgrading is disabled, leader will
                  * reject the ephemeral node creation due to session expire.
@@ -295,8 +295,10 @@ public class FinalRequestProcessor implements RequestProcessor {
                 lastOp = "SETA";
                 rsp = new SetACLResponse(rc.stat);
                 err = Code.get(rc.err);
-                addAuditLog(request, cnxn, AuditConstants.OP_SETACL, rc.path, getACLs(request),
-                        err);
+                /** Here audit enable check is done to avoid getACLs() call in case audit is disabled. */                
+                if (ZKAuditLogger.isAuditEnabled()) {
+                    addAuditLog(request, cnxn, AuditConstants.OP_SETACL, rc.path, getACLs(request), err);
+                }
                 break;
             }
             case OpCode.closeSession: {
@@ -565,7 +567,7 @@ public class FinalRequestProcessor implements RequestProcessor {
         return ZKUtil.aclToString(setACLRequest.getAcl());
     }
 
-    private void addFailedTxnAduitLog(Request request) {
+    private void addFailedTxnAuditLog(Request request) {
         if (!ZKAuditLogger.isAuditEnabled()) {
             return;
         }
@@ -590,7 +592,6 @@ public class FinalRequestProcessor implements RequestProcessor {
             case OpCode.delete:
             case OpCode.deleteContainer:
                 op = AuditConstants.OP_DELETE;
-                // path = new String(request.request.array());
                 DeleteRequest deleteRequest = new DeleteRequest();
                 ByteBufferInputStream.byteBuffer2Record(reqData, deleteRequest);
                 path = deleteRequest.getPath();
