@@ -314,7 +314,7 @@ public class TxnLogToolkit implements Closeable {
         Option quietOpt = new Option("v", "verbose", false, "Be verbose in recovery mode: print all entries, not just fixed ones.");
         options.addOption(quietOpt);
 
-        Option dumpOpt = new Option("d", "dump", false, "Dump mode. Dump all entries of the log file. (this is the default)");
+        Option dumpOpt = new Option("d", "dump", false, "Dump mode. Dump all entries of the log file with printing the content of a nodepath (default)");
         options.addOption(dumpOpt);
 
         Option forceOpt = new Option("y", "yes", false, "Non-interactive mode: repair all CRC errors without asking");
