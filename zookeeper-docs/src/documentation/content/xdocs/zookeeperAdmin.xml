@@ -2170,7 +2170,7 @@ server.3=zoo3:2888:3888</programlisting>
           $ bin/zkTxnLogToolkit.sh
 
           usage: TxnLogToolkit [-dhrv] txn_log_file_name
-          -d,--dump      Dump mode. Dump all entries of the log file. (this is the default)
+          -d,--dump      Dump mode. Dump all entries of the log file with printing the content of a nodepath (default)
           -h,--help      Print help message
           -r,--recover   Recovery mode. Re-calculate CRC for broken entries.
           -v,--verbose   Be verbose in recovery mode: print all entries, not just fixed ones.
