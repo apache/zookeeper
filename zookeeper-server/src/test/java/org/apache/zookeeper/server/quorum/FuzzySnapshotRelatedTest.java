@@ -125,7 +125,7 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
     public void testMultiOpConsistency() throws Exception {
         LOG.info("Create a parent node");
         final String path = "/testMultiOpConsistency";
-        createEmptyNode(zk[followerA], path);
+        createEmptyNode(zk[followerA], path, CreateMode.PERSISTENT);
 
         LOG.info("Hook to catch the 2nd sub create node txn in multi-op");
         CustomDataTree dt = (CustomDataTree) mt[followerA].main.quorumPeer.getZkDb().getDataTree();
@@ -175,8 +175,10 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
 
         final String parent = "/testPZxidUpdatedWhenDeletingNonExistNode";
         final String child = parent + "/child";
-        createEmptyNode(zk[leaderId], parent);
-        createEmptyNode(zk[leaderId], child);
+        createEmptyNode(zk[leaderId], parent, CreateMode.PERSISTENT);
+        createEmptyNode(zk[leaderId], child, CreateMode.EPHEMERAL);
+        // create another child to test closeSession
+        createEmptyNode(zk[leaderId], child + "1", CreateMode.EPHEMERAL);
 
         LOG.info("shutdown follower {}", followerA);
         mt[followerA].shutdown();
@@ -205,8 +207,10 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
 
         final String parent = "/testPZxidUpdatedDuringTakingSnapshot";
         final String child = parent + "/child";
-        createEmptyNode(zk[followerA], parent);
-        createEmptyNode(zk[followerA], child);
+        createEmptyNode(zk[followerA], parent, CreateMode.PERSISTENT);
+        createEmptyNode(zk[followerA], child, CreateMode.EPHEMERAL);
+        // create another child to test closeSession
+        createEmptyNode(zk[leaderId], child + "1", CreateMode.EPHEMERAL);
 
         LOG.info("Set up ZKDatabase to catch the node serializing in DataTree");
         addSerializeListener(followerA, parent, child);
@@ -217,8 +221,12 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
 
         LOG.info("Restarting follower A to load snapshot");
         mt[followerA].shutdown();
-        QuorumPeerMainTest.waitForOne(zk[followerA], States.CONNECTING);
+        QuorumPeerMainTest.waitForOne(zk[followerA], States.CLOSED);
         mt[followerA].start();
+        // zk[followerA] will be closed in addSerializeListener, re-create it
+        zk[followerA] = new ZooKeeper("127.0.0.1:" + clientPorts[followerA],
+                ClientBase.CONNECTION_TIMEOUT, this);
+
         QuorumPeerMainTest.waitForOne(zk[followerA], States.CONNECTED);
 
         LOG.info("Check and make sure the pzxid of the parent is the same " + "on leader and follower A");
@@ -226,13 +234,14 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
     }
 
     private void addSerializeListener(int sid, String parent, String child) {
-        final ZooKeeper zkClient = zk[followerA];
+        final ZooKeeper zkClient = zk[sid];
         CustomDataTree dt = (CustomDataTree) mt[sid].main.quorumPeer.getZkDb().getDataTree();
         dt.addListener(parent, new NodeSerializeListener() {
             @Override
             public void nodeSerialized(String path) {
                 try {
                     zkClient.delete(child, -1);
+                    zkClient.close();
                     LOG.info("Deleted the child node after the parent is serialized");
                 } catch (Exception e) {
                     LOG.error("Error when deleting node {}", e);
@@ -242,13 +251,26 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
     }
 
     private void compareStat(String path, int sid, int compareWithSid) throws Exception {
-        Stat stat1 = new Stat();
-        zk[sid].getData(path, null, stat1);
+        ZooKeeper[] compareZk = new ZooKeeper[2];
+        compareZk[0] = new ZooKeeper("127.0.0.1:" + clientPorts[sid],
+                ClientBase.CONNECTION_TIMEOUT, this);
+        compareZk[1] = new ZooKeeper("127.0.0.1:" + clientPorts[compareWithSid],
+                ClientBase.CONNECTION_TIMEOUT, this);
+        QuorumPeerMainTest.waitForAll(compareZk, States.CONNECTED);
 
-        Stat stat2 = new Stat();
-        zk[compareWithSid].getData(path, null, stat2);
+        try {
+            Stat stat1 = new Stat();
+            compareZk[0].getData(path, null, stat1);
 
-        assertEquals(stat1, stat2);
+            Stat stat2 = new Stat();
+            compareZk[1].getData(path, null, stat2);
+
+            assertEquals(stat1, stat2);
+        } finally {
+            for (ZooKeeper z: compareZk) {
+                z.close();
+            }
+        }
     }
 
     @Test
@@ -286,19 +308,13 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
         LOG.info("Make sure the global sessions are consistent with leader");
 
         Map<Long, Integer> globalSessionsOnLeader = mt[leaderId].main.quorumPeer.getZkDb().getSessionWithTimeOuts();
-        if (mt[followerA].main.quorumPeer == null) {
-            LOG.info("quorumPeer is null");
-        }
-        if (mt[followerA].main.quorumPeer.getZkDb() == null) {
-            LOG.info("zkDb is null");
-        }
         Map<Long, Integer> globalSessionsOnFollowerA = mt[followerA].main.quorumPeer.getZkDb().getSessionWithTimeOuts();
         LOG.info("sessions are {}, {}", globalSessionsOnLeader.keySet(), globalSessionsOnFollowerA.keySet());
         assertTrue(globalSessionsOnFollowerA.keySet().containsAll(globalSessionsOnLeader.keySet()));
     }
 
-    private void createEmptyNode(ZooKeeper zk, String path) throws Exception {
-        zk.create(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+    private void createEmptyNode(ZooKeeper zk, String path, CreateMode mode) throws Exception {
+        zk.create(path, new byte[0], Ids.OPEN_ACL_UNSAFE, mode);
     }
 
     interface NodeCreateListener {

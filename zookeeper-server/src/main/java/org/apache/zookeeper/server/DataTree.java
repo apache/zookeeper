@@ -63,6 +63,7 @@ import org.apache.zookeeper.server.watch.WatchesPathReport;
 import org.apache.zookeeper.server.watch.WatchesReport;
 import org.apache.zookeeper.server.watch.WatchesSummary;
 import org.apache.zookeeper.txn.CheckVersionTxn;
+import org.apache.zookeeper.txn.CloseSessionTxn;
 import org.apache.zookeeper.txn.CreateContainerTxn;
 import org.apache.zookeeper.txn.CreateTTLTxn;
 import org.apache.zookeeper.txn.CreateTxn;
@@ -947,7 +948,14 @@ public class DataTree {
                 rc.stat = setACL(setACLTxn.getPath(), setACLTxn.getAcl(), setACLTxn.getVersion());
                 break;
             case OpCode.closeSession:
-                killSession(header.getClientId(), header.getZxid());
+                long sessionId = header.getClientId();
+                if (txn != null) {
+                    killSession(sessionId, header.getZxid(),
+                            ephemerals.remove(sessionId),
+                            ((CloseSessionTxn) txn).getPaths2Delete());
+                } else {
+                    killSession(sessionId, header.getZxid());
+                }
                 break;
             case OpCode.error:
                 ErrorTxn errTxn = (ErrorTxn) txn;
@@ -1119,20 +1127,45 @@ public class DataTree {
         // so there is no need for synchronization. The list is not
         // changed here. Only create and delete change the list which
         // are again called from FinalRequestProcessor in sequence.
-        Set<String> list = ephemerals.remove(session);
-        if (list != null) {
-            for (String path : list) {
-                try {
-                    deleteNode(path, zxid);
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Deleting ephemeral node " + path + " for session 0x" + Long.toHexString(session));
-                    }
-                } catch (NoNodeException e) {
-                    LOG.warn("Ignoring NoNodeException for path "
-                             + path
-                             + " while removing ephemeral for dead session 0x"
-                             + Long.toHexString(session));
+        killSession(session, zxid, ephemerals.remove(session), null);
+    }
+
+    void killSession(long session, long zxid, Set<String> paths2DeleteLocal,
+            List<String> paths2DeleteInTxn) {
+        if (paths2DeleteInTxn != null) {
+            deleteNodes(session, zxid, paths2DeleteInTxn);
+        }
+
+        if (paths2DeleteLocal == null) {
+            return;
+        }
+
+        if (paths2DeleteInTxn != null) {
+            // explicitly check and remove to avoid potential performance
+            // issue when using removeAll
+            for (String path: paths2DeleteInTxn) {
+                paths2DeleteLocal.remove(path);
+            }
+            if (!paths2DeleteLocal.isEmpty()) {
+                LOG.warn("Unexpected extra paths under session {} which "
+                        + "are not in txn 0x{}", paths2DeleteLocal,
+                        Long.toHexString(zxid));
+            }
+        }
+
+        deleteNodes(session, zxid, paths2DeleteLocal);
+    }
+
+    void deleteNodes(long session, long zxid, Iterable<String> paths2Delete) {
+        for (String path : paths2Delete) {
+            try {
+                deleteNode(path, zxid);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Deleting ephemeral node {} for session 0x{}", path, Long.toHexString(session));
                 }
+            } catch (NoNodeException e) {
+                LOG.warn("Ignoring NoNodeException for path {} while removing ephemeral for dead session 0x{}",
+                        path, Long.toHexString(session));
             }
         }
     }
