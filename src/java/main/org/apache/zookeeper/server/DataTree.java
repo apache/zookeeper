@@ -265,7 +265,7 @@ public class DataTree {
         } catch (Exception e) {
             LOG.error("Unexpected exception when creating WatchManager, " +
                     "exiting abnormally", e);
-            System.exit(1);
+            System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
     }
 

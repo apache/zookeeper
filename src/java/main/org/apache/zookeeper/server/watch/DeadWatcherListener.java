@@ -20,6 +20,9 @@ package org.apache.zookeeper.server.watch;
 
 import java.util.Set;
 
+/**
+ * Interface used to process the dead watchers related to closed cnxns.
+ */
 public interface DeadWatcherListener {
 
     /**

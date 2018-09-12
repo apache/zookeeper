@@ -23,6 +23,10 @@ import java.util.HashMap;
 import java.util.BitSet;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+/**
+ * This is a helper class to maintain the bit to specific value and the
+ * reversed value to bit mapping.
+ */
 public class BitMap<T> {
 
     private final Map<T, Integer> value2Bit = new HashMap<T, Integer>();

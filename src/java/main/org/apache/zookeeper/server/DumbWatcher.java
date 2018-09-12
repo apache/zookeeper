@@ -27,7 +27,12 @@ import org.apache.jute.Record;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.proto.ReplyHeader;
+import org.apache.zookeeper.server.ServerCnxn;
+import org.apache.zookeeper.server.ServerStats;
 
+/**
+ * A empthy watcher implementation used in bench and unit test.
+ */
 public class DumbWatcher extends ServerCnxn {
 
     private long sessionId;
@@ -39,6 +44,9 @@ public class DumbWatcher extends ServerCnxn {
     public DumbWatcher(long sessionId) {
         this.sessionId = sessionId;
     }
+
+    @Override
+    void setSessionTimeout(int sessionTimeout) { }
 
     @Override
     public void process(WatchedEvent event) { }
@@ -69,9 +77,6 @@ public class DumbWatcher extends ServerCnxn {
 
     @Override
     void disableRecv() { }
-
-    @Override
-    void setSessionTimeout(int sessionTimeout) { }
 
     @Override
     protected ServerStats serverStats() { return null; }

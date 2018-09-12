@@ -23,6 +23,10 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * A factory used to produce the actual watch manager based on the
+ * zookeeper.watchManagerName option.
+ */
 public class WatchManagerFactory {
     private static final Logger LOG = LoggerFactory.getLogger(WatchManagerFactory.class);
 
