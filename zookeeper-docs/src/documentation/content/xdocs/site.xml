@@ -52,6 +52,7 @@ See http://forrest.apache.org/docs/linking.html for more info.
       <jmx   label="JMX"                    href="zookeeperJMX.html" />
       <observers label="Observers Guide" href="zookeeperObservers.html" />
       <reconfig label="Dynamic Reconfiguration" href="zookeeperReconfig.html" />
+      <reconfig label="Audit Logging" href="zookeeperAuditLogs.html" />
   </docs>
   
   <docs label="Contributor">

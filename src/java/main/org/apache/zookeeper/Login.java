@@ -286,6 +286,13 @@ public class Login {
         return subject;
     }
 
+    public String getUserName() {
+        if (principal == null || principal.isEmpty()) {
+            return System.getProperty("user.name", "<NA>");
+        }
+        return principal;
+    }
+
     public String getLoginContextName() {
         return loginContextName;
     }

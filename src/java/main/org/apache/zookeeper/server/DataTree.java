@@ -35,6 +35,8 @@ import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.Watcher.WatcherType;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.audit.AuditConstants;
+import org.apache.zookeeper.audit.ZKAuditLogger;
 import org.apache.zookeeper.common.PathTrie;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
@@ -1005,8 +1007,10 @@ public class DataTree {
         HashSet<String> list = ephemerals.remove(session);
         if (list != null) {
             for (String path : list) {
+                boolean deleted = false;
                 try {
                     deleteNode(path, zxid);
+                    deleted = true;
                     if (LOG.isDebugEnabled()) {
                         LOG
                                 .debug("Deleting ephemeral node " + path
@@ -1017,6 +1021,20 @@ public class DataTree {
                     LOG.warn("Ignoring NoNodeException for path " + path
                             + " while removing ephemeral for dead session 0x"
                             + Long.toHexString(session));
+                }
+                String sessionHex = "0x" + Long.toHexString(session);
+                if (deleted) {
+                    if (ZKAuditLogger.isAuditEnabled()) {
+                        ZKAuditLogger.logSuccess(ZKAuditLogger.getZKUser(),
+                                AuditConstants.OP_DEL_EZNODE_EXP, path, null,
+                                sessionHex, null);
+                    }
+                } else {
+                    if (ZKAuditLogger.isAuditEnabled()) {
+                        ZKAuditLogger.logFailure(ZKAuditLogger.getZKUser(),
+                                AuditConstants.OP_DEL_EZNODE_EXP, path, null,
+                                sessionHex, null);
+                    }
                 }
             }
         }

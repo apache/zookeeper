@@ -66,6 +66,7 @@
       <li><a href="zookeeperHierarchicalQuorums.html">Hierarchical quorums</a></li>
       <li><a href="zookeeperObservers.html">Observers</a> - non-voting ensemble members that easily improve ZooKeeper's scalability</li>
       <li><a href="zookeeperReconfig.html">Dynamic Reconfiguration</a> - a guide on how to use dynamic reconfiguration in ZooKeeper</li>
+      <li><a href="zookeeperAuditLogs.html">Audit Logging</a> - a guide on how to configure audit logs in ZooKeeper Server and what contents are logged.</li>
       </ul>
       </li>
       

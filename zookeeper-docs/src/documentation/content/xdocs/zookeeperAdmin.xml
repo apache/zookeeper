@@ -974,6 +974,19 @@ server.3=zoo3:2888:3888</programlisting>
                 than what was allowed in 3.5.3 (1152921504606846975)</para>
             </listitem>
           </varlistentry>
+          <varlistentry>
+            <term>audit.enable</term>
+            <listitem>
+                <para>(Java system property:
+                    <emphasis role="bold">zookeeper.audit.enable</emphasis>)
+                </para>
+                <para>
+                    <emphasis role="bold">New in 3.5.5:</emphasis>
+                    By default audit logs are disabled. Set to "true" to enable it. Default value is "false". See
+                    <ulink url="zookeeperAuditLogs.html"> ZooKeeper audit logs </ulink> for more information.
+                </para>
+            </listitem>
+          </varlistentry>
 
         </variablelist>
       </section>

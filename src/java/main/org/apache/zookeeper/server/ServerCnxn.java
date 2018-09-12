@@ -22,6 +22,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.security.cert.Certificate;
@@ -390,5 +391,27 @@ public abstract class ServerCnxn implements Stats, Watcher {
                 LOG.error("Error closing a command socket ", e);
             }
         }
+    }
+
+    /**
+     * Returns the IP address or empty string.
+     */
+    public String getHostAddress() {
+        InetSocketAddress remoteSocketAddress = getRemoteSocketAddress();
+        if (remoteSocketAddress == null) {
+            return "";
+        }
+        InetAddress address = remoteSocketAddress.getAddress();
+        if (address == null) {
+            return "";
+        }
+        return address.getHostAddress();
+    }
+
+    /**
+     * Get session id in hexadecimal notation.
+     */
+    public String getSessionIdHex() {
+        return "0x" + Long.toHexString(getSessionId());
     }
 }
