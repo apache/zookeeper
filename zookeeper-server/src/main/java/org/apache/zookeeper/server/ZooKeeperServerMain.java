@@ -25,6 +25,8 @@ import java.util.concurrent.TimeUnit;
 import javax.management.JMException;
 
 import org.apache.yetus.audience.InterfaceAudience;
+import org.apache.zookeeper.audit.AuditConstants;
+import org.apache.zookeeper.audit.ZKAuditLogger;
 import org.apache.zookeeper.jmx.ManagedUtil;
 import org.apache.zookeeper.server.admin.AdminServer;
 import org.apache.zookeeper.server.admin.AdminServer.AdminServerException;
@@ -66,21 +68,26 @@ public class ZooKeeperServerMain {
             LOG.error("Invalid arguments, exiting abnormally", e);
             LOG.info(USAGE);
             System.err.println(USAGE);
+            addServerStartFailureAuditLog();
             System.exit(2);
         } catch (ConfigException e) {
             LOG.error("Invalid config, exiting abnormally", e);
             System.err.println("Invalid config, exiting abnormally");
+            addServerStartFailureAuditLog();
             System.exit(2);
         } catch (DatadirException e) {
             LOG.error("Unable to access datadir, exiting abnormally", e);
             System.err.println("Unable to access datadir, exiting abnormally");
+            addServerStartFailureAuditLog();
             System.exit(3);
         } catch (AdminServerException e) {
             LOG.error("Unable to start AdminServer, exiting abnormally", e);
             System.err.println("Unable to start AdminServer, exiting abnormally");
+            addServerStartFailureAuditLog();
             System.exit(4);
         } catch (Exception e) {
             LOG.error("Unexpected exception, exiting abnormally", e);
+            addServerStartFailureAuditLog();
             System.exit(1);
         }
         LOG.info("Exiting normally");
@@ -156,6 +163,7 @@ public class ZooKeeperServerMain {
                     Integer.getInteger("znode.container.maxPerMinute", 10000)
             );
             containerManager.start();
+            ZKAuditLogger.addZKStartStopAuditLog();
 
             // Watch status of ZooKeeper server. It will do a graceful shutdown
             // if the server is not running or hits an internal error.
@@ -180,6 +188,10 @@ public class ZooKeeperServerMain {
                 txnLog.close();
             }
         }
+    }
+
+    private static void addServerStartFailureAuditLog() {
+        ZKAuditLogger.logFailure(ZKAuditLogger.getZKUser(), AuditConstants.OP_START);
     }
 
     /**

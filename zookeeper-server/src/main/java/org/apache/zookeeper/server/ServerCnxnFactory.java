@@ -54,6 +54,7 @@ public abstract class ServerCnxnFactory {
      */
     static final ByteBuffer closeConn = ByteBuffer.allocate(0);
 
+    private static String loginUser = System.getProperty("user.name", "<NA>");
     public abstract int getLocalPort();
     
     public abstract Iterable<ServerCnxn> getConnections();
@@ -238,10 +239,19 @@ public abstract class ServerCnxnFactory {
         try {
             saslServerCallbackHandler = new SaslServerCallbackHandler(Configuration.getConfiguration());
             login = new Login(serverSection, saslServerCallbackHandler, new ZKConfig() );
+            loginUser = login.getUserName();
             login.startThreadIfNeeded();
         } catch (LoginException e) {
             throw new IOException("Could not configure server because SASL configuration did not allow the "
               + " ZooKeeper server to authenticate itself properly: " + e);
         }
+    }
+
+    /**
+     * User who has started the ZooKeeper server user, it will be the logged-in
+     * user. If no user logged-in then system user
+     */
+    public static String getUserName() {
+        return loginUser;
     }
 }

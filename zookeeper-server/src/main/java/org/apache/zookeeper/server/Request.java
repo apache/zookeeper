@@ -27,6 +27,7 @@ import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
+import org.apache.zookeeper.server.util.AuthUtil;
 import org.apache.zookeeper.txn.TxnHeader;
 
 /**
@@ -296,5 +297,32 @@ public class Request {
 
     public KeeperException getException() {
         return e;
+    }
+
+    /**
+     * Returns comma separated list of users authenticated in the current
+     * session
+     */
+    public String getUsers() {
+        if (authInfo == null) {
+            return (String) null;
+        }
+        if (authInfo.size() == 1) {
+            return AuthUtil.getUser(authInfo.get(0));
+        }
+        StringBuilder users = new StringBuilder();
+        boolean first = true;
+        for (Id id : authInfo) {
+            String user = AuthUtil.getUser(id);
+            if (user != null) {
+                if (first) {
+                    first = false;
+                } else {
+                    users.append(",");
+                }
+                users.append(user);
+            }
+        }
+        return users.toString();
     }
 }

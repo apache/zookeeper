@@ -27,6 +27,7 @@ import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.common.PathUtils;
+import org.apache.zookeeper.data.ACL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -167,5 +168,42 @@ public class ZKUtil {
             // but gets deleted before it can be queried
             return; // ignore
         }
+    }
+
+    /**
+     * @param perms
+     *            ACL permissions
+     * @return string representation of permissions
+     */
+    public static String getPermString(int perms) {
+        StringBuilder p = new StringBuilder();
+        if ((perms & ZooDefs.Perms.CREATE) != 0) {
+            p.append('c');
+        }
+        if ((perms & ZooDefs.Perms.DELETE) != 0) {
+            p.append('d');
+        }
+        if ((perms & ZooDefs.Perms.READ) != 0) {
+            p.append('r');
+        }
+        if ((perms & ZooDefs.Perms.WRITE) != 0) {
+            p.append('w');
+        }
+        if ((perms & ZooDefs.Perms.ADMIN) != 0) {
+            p.append('a');
+        }
+        return p.toString();
+    }
+
+    public static String aclToString(List<ACL> acls) {
+        StringBuilder sb = new StringBuilder();
+        for (ACL acl : acls) {
+            sb.append(acl.getId().getScheme());
+            sb.append(":");
+            sb.append(acl.getId().getId());
+            sb.append(":");
+            sb.append(getPermString(acl.getPerms()));
+        }
+        return sb.toString();
     }
 }
