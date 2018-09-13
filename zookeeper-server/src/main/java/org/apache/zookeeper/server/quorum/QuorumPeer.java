@@ -73,6 +73,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.ConfigUtils;
+import org.apache.zookeeper.server.util.JvmPauseMonitor;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -132,6 +133,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      */
     private ZKDatabase zkDb;
 
+    private JvmPauseMonitor jvmPauseMonitor;
     public static final class AddressTuple {
         public final InetSocketAddress quorumAddr;
         public final InetSocketAddress electionAddr;
@@ -462,6 +464,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     public int getQuorumSize(){
         return getVotingView().size();
+    }
+
+    public void setJvmPauseMonitor(JvmPauseMonitor jvmPauseMonitor) {
+        this.jvmPauseMonitor = jvmPauseMonitor;
     }
 
     /**
@@ -916,6 +922,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             System.out.println(e);
         }
         startLeaderElection();
+        startJvmPauseMonitor();
         super.start();
     }
 
@@ -980,6 +987,12 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         }
 
         this.electionAlg = createElectionAlgorithm(electionType);
+    }
+
+    private void startJvmPauseMonitor() {
+        if (this.jvmPauseMonitor != null) {
+            this.jvmPauseMonitor.serviceStart();
+        }
     }
 
     /**
