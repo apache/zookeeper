@@ -49,6 +49,7 @@ import static org.apache.zookeeper.server.persistence.FileSnap.SNAPSHOT_FILE_PRE
 @InterfaceAudience.Public
 public class SnapshotFormatter {
 
+    // per-znode counter so ncdu treats each as a unique object
     private static Integer INODE_IDX = 1000;
 
     /**
@@ -72,9 +73,14 @@ public class SnapshotFormatter {
             }
         }
         if (args.length != i || snapshotFile == null) {
-            System.err.println("USAGE: SnapshotFormatter [-d] snapshot_file");
+            System.err.println("USAGE: SnapshotFormatter [-d|-json] snapshot_file");
             System.err.println("       -d dump the data for each znode");
             System.err.println("       -json dump znode info in json format");
+            System.exit(ExitCode.INVALID_INVOCATION.getValue());
+        }
+
+        if (dumpData && dumpJson) {
+            System.err.println("Cannot specify both data dump (-d) and json mode (-json) in same call");
             System.exit(ExitCode.INVALID_INVOCATION.getValue());
         }
 
