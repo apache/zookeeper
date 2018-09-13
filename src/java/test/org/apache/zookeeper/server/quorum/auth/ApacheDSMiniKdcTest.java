@@ -18,8 +18,8 @@
 
 package org.apache.zookeeper.server.quorum.auth;
 
-import org.apache.kerby.kerberos.kerb.keytab.Keytab;
-import org.apache.kerby.kerberos.kerb.type.base.PrincipalName;
+import org.apache.directory.server.kerberos.shared.keytab.Keytab;
+import org.apache.directory.server.kerberos.shared.keytab.KeytabEntry;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -30,7 +30,6 @@ import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import java.io.File;
 import java.security.Principal;
-import java.util.List;
 import java.util.Set;
 import java.util.Map;
 import java.util.HashSet;
@@ -44,32 +43,33 @@ import java.util.Arrays;
  * Branch : trunk
  * Github Revision: 916140604ffef59466ba30832478311d3e6249bd
  */
-public class MiniKdcTest extends KerberosSecurityTestcase {
+public class ApacheDSMiniKdcTest extends ApacheDSKerberosSecurityTestcase {
     private static final boolean IBM_JAVA = System.getProperty("java.vendor")
             .contains("IBM");
 
     @Test(timeout = 60000)
     public void testMiniKdcStart() {
-        MiniKdc kdc = getKdc();
+        ApacheDSMiniKdc kdc = getKdc();
         Assert.assertNotSame(0, kdc.getPort());
     }
 
     @Test(timeout = 60000)
     public void testKeytabGen() throws Exception {
-        MiniKdc kdc = getKdc();
+        ApacheDSMiniKdc kdc = getKdc();
         File workDir = getWorkDir();
 
         kdc.createPrincipal(new File(workDir, "keytab"), "foo/bar", "bar/foo");
-        List<PrincipalName> principalNameList =
-                Keytab.loadKeytab(new File(workDir, "keytab")).getPrincipals();
+        Keytab kt = Keytab.read(new File(workDir, "keytab"));
 
         Set<String> principals = new HashSet<String>();
-        for (PrincipalName principalName : principalNameList) {
-          principals.add(principalName.getName());
+        for (KeytabEntry entry : kt.getEntries()) {
+            principals.add(entry.getPrincipalName());
         }
-
+        //here principals use \ instead of /
+        //because org.apache.directory.server.kerberos.shared.keytab.KeytabDecoder
+        // .getPrincipalName(IoBuffer buffer) use \\ when generates principal
         Assert.assertEquals(new HashSet<String>(Arrays.asList(
-                "foo/bar@" + kdc.getRealm(), "bar/foo@" + kdc.getRealm())),
+                "foo\\bar@" + kdc.getRealm(), "bar\\foo@" + kdc.getRealm())),
                 principals);
       }
 
@@ -133,7 +133,7 @@ public class MiniKdcTest extends KerberosSecurityTestcase {
 
     @Test(timeout = 60000)
     public void testKerberosLogin() throws Exception {
-        MiniKdc kdc = getKdc();
+        ApacheDSMiniKdc kdc = getKdc();
         File workDir = getWorkDir();
         LoginContext loginContext = null;
         try {
