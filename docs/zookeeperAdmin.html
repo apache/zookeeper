@@ -2527,7 +2527,8 @@ server.3=zoo3:2888:3888</pre>
 <p>Using older log and snapshot files, you can look at the previous
         state of ZooKeeper servers and even restore that state. The
         LogFormatter class allows an administrator to look at the transactions
-        in a log.</p>
+        in a log. The LogChopper class allows an administrator to create
+         truncated versions of transaction logs.</p>
 <p>The ZooKeeper server creates snapshot and log files, but
         never deletes them. The retention policy of the data and log
         files is implemented outside of the ZooKeeper server. The
