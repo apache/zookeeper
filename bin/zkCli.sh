@@ -38,6 +38,6 @@ fi
 
 ZOO_LOG_FILE=zookeeper-$USER-cli-$HOSTNAME.log
 
-"$JAVA" "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" "-Dzookeeper.log.file=${ZOO_LOG_FILE}" "-Dzookeeper.clientCnxnSocket=org.apache.zookeeper.ClientCnxnSocketNetty" "-Dzookeeper.client.secure=true" "-Dzookeeper.ssl.keyStore.location=/Users/buaacss/ownCloud/projects/java/zookeeper/ssl/client.jks" "-Dzookeeper.ssl.keyStore.password=testpass" "-Dzookeeper.ssl.trustStore.location=/Users/buaacss/ownCloud/projects/java/zookeeper/ssl/clienttrust.jks" "-Dzookeeper.ssl.trustStore.password=testpass" \
+"$JAVA" "-Dzookeeper.log.dir=${ZOO_LOG_DIR}" "-Dzookeeper.root.logger=${ZOO_LOG4J_PROP}" "-Dzookeeper.log.file=${ZOO_LOG_FILE}" \
      -cp "$CLASSPATH" $CLIENT_JVMFLAGS $JVMFLAGS \
      org.apache.zookeeper.ZooKeeperMain "$@"
