@@ -208,7 +208,10 @@ public class SnapshotFormatter {
 
         System.out.print(",");
 
-        int dataLen = (n.data == null) ? 0 : n.data.length;
+        int dataLen;
+        synchronized (n) { // keep findbugs happy
+            dataLen = (n.data == null) ? 0 : n.data.length;
+        }
         StringBuilder nodeSB = new StringBuilder();
         nodeSB.append("{");
         nodeSB.append("\"name\":\"").append(JSONValue.escape(name)).append("\"").append(",");
