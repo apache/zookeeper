@@ -327,4 +327,8 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements
             throw new KeeperException.SessionExpiredException();
         }
     }
+
+    public long getLocalSessionCount() {
+        return 0;
+    }
 }

@@ -143,12 +143,13 @@ public abstract class ServerCnxn implements Stats, Watcher {
         }
     }
 
-    protected void packetReceived() {
+    protected void packetReceived(long bytes) {
         incrPacketsReceived();
         ServerStats serverStats = serverStats();
         if (serverStats != null) {
             serverStats().incrementPacketsReceived();
         }
+        ServerMetrics.BYTES_RECEIVED_COUNT.add(bytes);
     }
 
     protected void packetSent() {

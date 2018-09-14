@@ -217,6 +217,13 @@ public class ZKDatabase {
     }
 
     /**
+     * @return number of (global) sessions
+     */
+    public long getSessionCount() {
+        return sessionsWithTimeouts.size();
+    }
+
+    /**
      * get sessions with timeouts
      * @return the hashmap of sessions with timeouts
      */
@@ -237,8 +244,12 @@ public class ZKDatabase {
      * @throws IOException
      */
     public long loadDataBase() throws IOException {
+        long startTime = Time.currentElapsedTime();
         long zxid = snapLog.restore(dataTree, sessionsWithTimeouts, commitProposalPlaybackListener);
         initialized = true;
+        long loadTime = Time.currentElapsedTime() - startTime;
+        ServerMetrics.DB_INIT_TIME.add(loadTime);
+        LOG.info("Snapshot loaded in " + loadTime + " ms");
         return zxid;
     }
 

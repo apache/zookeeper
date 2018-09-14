@@ -32,12 +32,15 @@ import org.apache.zookeeper.Environment.Entry;
 import org.apache.zookeeper.Version;
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.ServerCnxnFactory;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
+import org.apache.zookeeper.server.quorum.QuorumPeer;
+import org.apache.zookeeper.server.quorum.QuorumZooKeeperServer;
 import org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServer;
 import org.apache.zookeeper.server.util.OSMXBean;
 import org.slf4j.Logger;
@@ -332,6 +335,7 @@ public class Commands {
             response.put("num_alive_connections", stats.getNumAliveClientConnections());
 
             response.put("outstanding_requests", stats.getOutstandingRequests());
+            response.put("uptime", stats.getUptime());
 
             response.put("server_state", stats.getServerState());
             response.put("znode_count", zkdb.getNodeCount());
@@ -339,6 +343,10 @@ public class Commands {
             response.put("watch_count", zkdb.getDataTree().getWatchCount());
             response.put("ephemerals_count", zkdb.getDataTree().getEphemeralsCount());
             response.put("approximate_data_size", zkdb.getDataTree().cachedApproximateDataSize());
+
+            response.put("global_sessions", zkdb.getSessionCount());
+            response.put("local_sessions",
+                    zkServer.getSessionTracker().getLocalSessionCount());
 
             OSMXBean osMbean = new OSMXBean();
             response.put("open_file_descriptor_count", osMbean.getOpenFileDescriptorCount());
@@ -348,17 +356,26 @@ public class Commands {
             response.put("max_client_response_size", stats.getClientResponseStats().getMaxBufferSize());
             response.put("min_client_response_size", stats.getClientResponseStats().getMinBufferSize());
 
+            if (zkServer instanceof QuorumZooKeeperServer) {
+                QuorumPeer peer = ((QuorumZooKeeperServer) zkServer).self;
+                response.put("quorum_size", peer.getQuorumSize());
+            }
+
             if (zkServer instanceof LeaderZooKeeperServer) {
                 Leader leader = ((LeaderZooKeeperServer) zkServer).getLeader();
 
                 response.put("learners", leader.getLearners().size());
                 response.put("synced_followers", leader.getForwardingFollowers().size());
+                response.put("synced_observers", leader.getObservingLearners().size());
                 response.put("pending_syncs", leader.getNumPendingSyncs());
+                response.put("leader_uptime", leader.getUptime());
 
                 response.put("last_proposal_size", leader.getProposalStats().getLastBufferSize());
                 response.put("max_proposal_size", leader.getProposalStats().getMaxBufferSize());
                 response.put("min_proposal_size", leader.getProposalStats().getMinBufferSize());
             }
+
+            response.putAll(ServerMetrics.getAllValues());
 
             return response;
 
