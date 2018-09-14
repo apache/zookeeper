@@ -176,7 +176,8 @@ if(WIN32)
 endif()
 
 add_library(zookeeper STATIC ${zookeeper_sources})
-target_include_directories(zookeeper PUBLIC include ${CMAKE_CURRENT_BINARY_DIR}/include generated)
+target_include_directories(zookeeper PUBLIC include ${CMAKE_CURRENT_BINARY_DIR}/include generated /opt/local/include)
+link_directories(/opt/local/lib)
 target_link_libraries(zookeeper PUBLIC
   hashtable
   $<$<PLATFORM_ID:Linux>:rt> # clock_gettime
@@ -189,7 +190,7 @@ endif()
 
 # cli executable
 add_executable(cli src/cli.c)
-target_link_libraries(cli zookeeper)
+target_link_libraries(cli zookeeper ssl crypto)
 
 # load_gen executable
 if(WANT_SYNCAPI AND NOT WIN32)
