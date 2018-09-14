@@ -521,6 +521,13 @@ ZOOAPI zhandle_t *zookeeper_init2(const char *host, watcher_fn fn,
   int recv_timeout, const clientid_t *clientid, void *context, int flags,
   log_callback_fn log_callback);
 
+ZOOAPI zhandle_t *zookeeper_ssl_init(const char *host, const char *ca, const char *cert, const char *key, const char *passwd, watcher_fn watcher,
+                                     int recv_timeout, const clientid_t *clientid, void *context, int flags);
+
+ZOOAPI zhandle_t *zookeeper_ssl_init2(const char *host, const char *ca, const char *cert, const char *key, const char *passwd, watcher_fn watcher,
+                               int recv_timeout, const clientid_t *clientid, void *context, int flags,
+                               log_callback_fn log_callback);
+
 /**
  * \brief update the list of servers this client will connect to.
  *

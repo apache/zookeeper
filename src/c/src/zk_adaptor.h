@@ -22,6 +22,8 @@
 #ifdef THREADED
 #ifndef WIN32
 #include <pthread.h>
+#include <openssl/ossl_typ.h>
+
 #else
 #include "winport.h"
 #endif
@@ -184,12 +186,27 @@ typedef struct _auth_list_head {
 /**
  * This structure represents the connection to zookeeper.
  */
-struct _zhandle {
+typedef struct _zcert {
+    char *ca;
+    char *cert;
+    char *key;
+    char *passwd;
+} zcert_t;
+
+typedef struct _zsock {
 #ifdef WIN32
-    SOCKET fd;                          // the descriptor used to talk to zookeeper
+    SOCKET sock;
 #else
-    int fd;                             // the descriptor used to talk to zookeeper
+    int sock;
 #endif
+    zcert_t *cert;
+    SSL *ssl_sock;
+    SSL_CTX *ssl_ctx;
+} zsock_t;
+
+struct _zhandle {
+
+    zsock_t *fd;                        // the descriptor used to talk to zookeeper
 
     // Hostlist and list of addresses
     char *hostname;                     // hostname contains list of zookeeper servers to connect to
@@ -321,5 +338,3 @@ int32_t fetch_and_add(volatile int32_t* operand, int incr);
 #endif
 
 #endif /*ZK_ADAPTOR_H_*/
-
-

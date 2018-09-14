@@ -45,6 +45,7 @@ int write(int _Filehandle, const void * _Buf, unsigned int _MaxCharCount);
 #include <time.h>
 #include <errno.h>
 #include <assert.h>
+#include "zk_adaptor.h"
 
 #ifdef YCA
 #include <yca/yca.h>
@@ -325,6 +326,10 @@ int startsWith(const char *line, const char *prefix) {
 }
 
 static const char *hostPort;
+static const char *caFile;
+static const char *clientCert;
+static const char *clientKey;
+static const char *clientPasswd;
 static int verbose = 0;
 
 void processline(char *line) {
@@ -727,7 +732,16 @@ int main(int argc, char **argv) {
     zoo_set_debug_level(ZOO_LOG_LEVEL_WARN);
     zoo_deterministic_conn_order(1); // enable deterministic order
     hostPort = argv[1];
-    zh = zookeeper_init(hostPort, watcher, 30000, &myid, NULL, flags);
+    if (strchr(hostPort, '|') != NULL) {
+        const char *hp = strtok(hostPort, "|");
+        char **c = calloc(4, sizeof(char*));
+        for (int i = 0; i < 4; i++) {
+            c[i] = strtok (NULL, ",");
+        }
+        zh = zookeeper_ssl_init(hp, c[0], c[1], c[2], c[3], watcher, 30000, &myid, NULL, flags);
+    } else {
+        zh = zookeeper_init(hostPort, watcher, 30000, &myid, NULL, flags);
+    }
     if (!zh) {
         return errno;
     }
