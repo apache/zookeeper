@@ -60,9 +60,6 @@ public class FollowerBean extends ZooKeeperServerBean implements FollowerMXBean 
 
     @Override
     public void setObserverMasterPacketSizeLimit(int sizeLimit) {
-        ObserverMaster om = follower.om;
-        if (om != null) {
-            om.setPktsSizeLimit(sizeLimit);
-        }
+        ObserverMaster.setPktsSizeLimit(sizeLimit);
     }
 }

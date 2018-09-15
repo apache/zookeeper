@@ -490,7 +490,7 @@ public class ObserverMaster implements LearnerMaster, Runnable {
         return pktsSizeLimit;
     }
 
-    void setPktsSizeLimit(final int sizeLimit) {
+    static void setPktsSizeLimit(final int sizeLimit) {
         pktsSizeLimit = sizeLimit;
     }
 

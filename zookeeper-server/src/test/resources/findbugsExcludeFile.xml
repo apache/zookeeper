@@ -199,4 +199,12 @@
     <Class name="org.apache.zookeeper.server.EphemeralType"/>
       <Bug pattern="RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT" />
   </Match>
+
+  <!-- Disable 'Inconsistent synchronization' to allow the ServerSocket to listen without
+       locking the class -->
+  <Match>
+    <Class name="org.apache.zookeeper.server.quorum.ObserverMaster"/>
+    <Field name="ss"/>
+    <Bug code="IS"/>
+  </Match>
 </FindBugsFilter>

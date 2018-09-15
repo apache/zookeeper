@@ -132,7 +132,11 @@ public class Observer extends Learner{
                 self.findLearnerMaster(findLeader()) :
                 prescribedLearnerMaster;
         currentLearnerMaster = master;
-        LOG.info("Observing new leader sid={} addr={}", master == null ? -1 : master.id, master.addr);
+        if (master == null) {
+            LOG.warn("No learner master found");
+        } else {
+            LOG.info("Observing new leader sid={} addr={}", master.id, master.addr);
+        }
         return master;
     }
 
