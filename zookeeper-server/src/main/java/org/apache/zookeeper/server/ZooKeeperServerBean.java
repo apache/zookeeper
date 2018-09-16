@@ -66,7 +66,7 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
         return Version.getFullVersion();
     }
     
-    public long getAvgRequestLatency() {
+    public double getAvgRequestLatency() {
         return zks.serverStats().getAvgLatency();
     }
     

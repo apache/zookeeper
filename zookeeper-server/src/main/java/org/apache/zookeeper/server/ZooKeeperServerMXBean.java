@@ -41,7 +41,7 @@ public interface ZooKeeperServerMXBean {
     /**
      * @return average request latency in ms
      */
-    public long getAvgRequestLatency();
+    public double getAvgRequestLatency();
     /**
      * @return max request latency in ms
      */
