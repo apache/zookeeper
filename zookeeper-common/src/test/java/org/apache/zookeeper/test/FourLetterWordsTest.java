@@ -146,7 +146,7 @@ public class FourLetterWordsTest extends ClientBase {
         Assert.assertTrue(count >= 2);
 
         line = in.readLine();
-        Assert.assertTrue(Pattern.matches("^Latency min/avg/max: \\d+/\\d+/\\d+$", line));
+        Assert.assertTrue(Pattern.matches("^Latency min/avg/max: \\d+/-?[0-9]*.?[0-9]*/\\d+$", line));
         line = in.readLine();
         Assert.assertTrue(Pattern.matches("^Received: \\d+$", line));
         line = in.readLine();
