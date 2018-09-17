@@ -48,6 +48,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.StatPersisted;
@@ -314,6 +315,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public void takeSnapshot(boolean syncSnap){
+        long start = Time.currentElapsedTime();
         try {
             txnLogFactory.save(zkDb.getDataTree(), zkDb.getSessionWithTimeOuts(), syncSnap);
         } catch (IOException e) {
@@ -322,6 +324,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             // so we need to exit
             System.exit(ExitCode.TXNLOG_ERROR_TAKING_SNAPSHOT.getValue());
         }
+        long elapsed = Time.currentElapsedTime() - start;
+        LOG.info("Snapshot taken in " + elapsed + " ms");
+        ServerMetrics.SNAPSHOT_TIME.add(elapsed);
     }
 
     @Override
@@ -1017,6 +1022,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                     + " client's lastZxid is 0x"
                     + Long.toHexString(connReq.getLastZxidSeen()));
         }
+        ServerMetrics.CONNECTION_REQUEST_COUNT.add(1);
         boolean readOnly = false;
         try {
             readOnly = bia.readBool("readOnly");

@@ -131,4 +131,10 @@ public interface SessionTracker {
      * Returns a mapping of time to session IDs that expire at that time.
      */
     Map<Long, Set<Long>> getSessionExpiryMap();
+
+    /**
+     * If this session tracker supports local sessions, return how many.
+     * otherwise returns 0;
+     */
+    public long getLocalSessionCount();
 }

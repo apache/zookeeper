@@ -41,6 +41,7 @@ import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.txn.TxnHeader;
@@ -345,6 +346,7 @@ public class FileTxnLog implements TxnLog {
                             + "File size is " + channel.size() + " bytes. "
                             + "See the ZooKeeper troubleshooting guide");
                 }
+                ServerMetrics.FSYNC_TIME.add(syncElapsedMS);
             }
         }
         while (streamsToFlush.size() > 1) {

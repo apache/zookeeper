@@ -173,8 +173,8 @@ public class NIOServerCnxn extends ServerCnxn {
         }
 
         if (incomingBuffer.remaining() == 0) { // have we read length bytes?
-            packetReceived();
             incomingBuffer.flip();
+            packetReceived(4 + incomingBuffer.remaining());
             if (!initialized) {
                 readConnectRequest();
             } else {
@@ -484,7 +484,7 @@ public class NIOServerCnxn extends ServerCnxn {
         }
 
         String cmd = FourLetterCommands.getCommandString(len);
-        packetReceived();
+        packetReceived(4);
 
         /** cancel the selection key to remove the socket handling
          * from selector. This is to prevent netcat problem wherein

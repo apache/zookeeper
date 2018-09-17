@@ -275,7 +275,7 @@ public class NettyServerCnxn extends ServerCnxn {
         String cmd = FourLetterCommands.getCommandString(len);
 
         channel.setInterestOps(0).awaitUninterruptibly();
-        packetReceived();
+        packetReceived(4);
 
         final PrintWriter pwriter = new PrintWriter(
                 new BufferedWriter(new SendBufferWriter()));
@@ -342,8 +342,8 @@ public class NettyServerCnxn extends ServerCnxn {
                                         ChannelBuffers.copiedBuffer(dat)));
                     }
                     if (bb.remaining() == 0) {
-                        packetReceived();
                         bb.flip();
+                        packetReceived(4 + bb.remaining());
 
                         ZooKeeperServer zks = this.zkServer;
                         if (zks == null || !zks.isRunning()) {
