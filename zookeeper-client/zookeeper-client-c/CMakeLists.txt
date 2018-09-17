@@ -156,6 +156,7 @@ add_library(hashtable STATIC ${hashtable_sources})
 target_include_directories(hashtable PUBLIC include)
 target_link_libraries(hashtable PUBLIC $<$<OR:$<PLATFORM_ID:Linux>,$<PLATFORM_ID:FreeBSD>>:m>)
 
+
 # zookeeper library
 set(zookeeper_sources
   src/zookeeper.c
@@ -175,10 +176,18 @@ if(WIN32)
   list(APPEND zookeeper_sources src/winport.c)
 endif()
 
+
+set(SSL_ENABLED 1)
+#find_package(PkgConfig REQUIRED)
+#set(ENV{PKG_CONFIG_PATH}  "/opt/local/lib/pkgconfig")
+#pkg_search_module(OPENSSL REQUIRED openssl)
 add_library(zookeeper STATIC ${zookeeper_sources})
-target_include_directories(zookeeper PUBLIC include ${CMAKE_CURRENT_BINARY_DIR}/include generated)
+target_include_directories(zookeeper PUBLIC include ${CMAKE_CURRENT_BINARY_DIR}/include generated /opt/local/include)
+link_directories(/opt/local/lib)
 target_link_libraries(zookeeper PUBLIC
   hashtable
+        ssl
+        crypto
   $<$<PLATFORM_ID:Linux>:rt> # clock_gettime
   $<$<PLATFORM_ID:Windows>:ws2_32>) # Winsock 2.0
 

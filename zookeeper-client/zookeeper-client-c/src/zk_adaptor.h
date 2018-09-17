@@ -19,6 +19,7 @@
 #ifndef ZK_ADAPTOR_H_
 #define ZK_ADAPTOR_H_
 #include <zookeeper.jute.h>
+#include <openssl/ossl_typ.h>
 #ifdef THREADED
 #ifndef WIN32
 #include <pthread.h>
@@ -182,14 +183,35 @@ typedef struct _auth_list_head {
 } auth_list_head_t;
 
 /**
+ * This structure represents the certificates to zookeeper.
+ */
+typedef struct _zcert {
+    char *ca;
+    char *cert;
+    char *key;
+    char *passwd;
+} zcert_t;
+
+/**
+ * This structure represents the socket to zookeeper.
+ */
+typedef struct _zsock {
+#ifdef WIN32
+    SOCKET sock;
+#else
+    int sock;
+#endif
+    zcert_t *cert;
+    SSL *ssl_sock;
+    SSL_CTX *ssl_ctx;
+} zsock_t;
+
+/**
  * This structure represents the connection to zookeeper.
  */
 struct _zhandle {
-#ifdef WIN32
-    SOCKET fd;                          // the descriptor used to talk to zookeeper
-#else
-    int fd;                             // the descriptor used to talk to zookeeper
-#endif
+
+    zsock_t *fd;
 
     // Hostlist and list of addresses
     char *hostname;                     // hostname contains list of zookeeper servers to connect to
