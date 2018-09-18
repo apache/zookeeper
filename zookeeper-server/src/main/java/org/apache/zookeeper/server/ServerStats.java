@@ -22,7 +22,6 @@ package org.apache.zookeeper.server;
 
 import org.apache.zookeeper.common.Time;
 
-import java.text.DecimalFormat;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -36,8 +35,6 @@ public class ServerStats {
     private long totalLatency = 0;
     private long count = 0;
     private AtomicLong fsyncThresholdExceedCount = new AtomicLong(0);
-
-    private DecimalFormat df = new DecimalFormat("#.0000");
     
     private final Provider provider;
 
@@ -59,8 +56,7 @@ public class ServerStats {
 
     synchronized public double getAvgLatency() {
         if (count != 0) {
-            String avgLatency = df.format((double)totalLatency / count);
-            return Double.parseDouble(avgLatency);
+            return (totalLatency * 10000 / count) / 10000.0;
         }
         return 0;
     }
