@@ -32,6 +32,8 @@
 #include <ws2tcpip.h> /* for struct sock_addr and socklen_t */
 #endif
 
+#define SSL_ENABLED 1
+
 #include <stdio.h>
 #include <ctype.h>
 
@@ -483,6 +485,9 @@ typedef void (*log_callback_fn)(const char *message);
  * indicates the reason.
  */
 ZOOAPI zhandle_t *zookeeper_init(const char *host, watcher_fn fn,
+  int recv_timeout, const clientid_t *clientid, void *context, int flags);
+
+ZOOAPI zhandle_t *zookeeper_init_ssl(const char *host, const char *cert, watcher_fn fn,
   int recv_timeout, const clientid_t *clientid, void *context, int flags);
 
 /**
