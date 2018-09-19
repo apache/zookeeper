@@ -85,7 +85,7 @@ public class ServerStatsTest extends ZKTestCase {
         // Then ...
         assertAllLatencyZero(serverStats);
     }
-
+    
     @Test
     public void testFsyncThresholdExceedMetrics() {
         // Given ...

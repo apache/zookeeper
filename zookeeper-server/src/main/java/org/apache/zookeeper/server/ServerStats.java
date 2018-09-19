@@ -37,7 +37,7 @@ public class ServerStats {
     private AtomicLong fsyncThresholdExceedCount = new AtomicLong(0);
     
     private final Provider provider;
-
+    
     public interface Provider {
         public long getOutstandingRequests();
         public long getLastProcessedZxid();
@@ -53,9 +53,10 @@ public class ServerStats {
     synchronized public long getMinLatency() {
         return minLatency == Long.MAX_VALUE ? 0 : minLatency;
     }
-
+    
     synchronized public double getAvgLatency() {
         if (count != 0) {
+            //be account to four decimal places
             return (totalLatency * 10000 / count) / 10000.0;
         }
         return 0;

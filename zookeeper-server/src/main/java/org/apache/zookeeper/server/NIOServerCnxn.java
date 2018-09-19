@@ -819,7 +819,11 @@ public class NIOServerCnxn extends ServerCnxn {
             }
         }
 
-        private void print(String key, Object number) {
+        private void print(String key, long number) {
+            print(key, "" + number);
+        }
+        
+        private void print(String key, double number) {
             print(key, "" + number);
         }
 
