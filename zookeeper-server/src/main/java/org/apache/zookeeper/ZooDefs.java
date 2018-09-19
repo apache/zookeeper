@@ -31,6 +31,8 @@ public class ZooDefs {
    
    final public static String CONFIG_NODE = "/zookeeper/config";
 
+   final public static String ZOOKEEPER_NODE_SUBTREE = "/zookeeper/";
+
    @InterfaceAudience.Public
     public interface OpCode {
         public final int notification = 0;

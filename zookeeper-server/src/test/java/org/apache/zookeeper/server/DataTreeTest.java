@@ -28,6 +28,7 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.server.util.DigestCalculator;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -143,17 +144,25 @@ public class DataTreeTest extends ZKTestCase {
      */
     @Test(timeout = 60000)
     public void testIncrementCversion() throws Exception {
-        dt.createNode("/test", new byte[0], null, 0, dt.getNode("/").stat.getCversion()+1, 1, 1);
-        DataNode zk = dt.getNode("/test");
-        int prevCversion = zk.stat.getCversion();
-        long prevPzxid = zk.stat.getPzxid();
-        dt.setCversionPzxid("/test/",  prevCversion + 1, prevPzxid + 1);
-        int newCversion = zk.stat.getCversion();
-        long newPzxid = zk.stat.getPzxid();
-        Assert.assertTrue("<cversion, pzxid> verification failed. Expected: <" +
-                (prevCversion + 1) + ", " + (prevPzxid + 1) + ">, found: <" +
-                newCversion + ", " + newPzxid + ">",
-                (newCversion == prevCversion + 1 && newPzxid == prevPzxid + 1));
+        try {
+            DigestCalculator.setDigestEnabled(true);
+            DataTree dt = new DataTree();
+            dt.createNode("/test", new byte[0], null, 0, dt.getNode("/").stat.getCversion()+1, 1, 1);
+            DataNode zk = dt.getNode("/test");
+            int prevCversion = zk.stat.getCversion();
+            long prevPzxid = zk.stat.getPzxid();
+            long digestBefore = dt.getTreeDigest();
+            dt.setCversionPzxid("/test/",  prevCversion + 1, prevPzxid + 1);
+            int newCversion = zk.stat.getCversion();
+            long newPzxid = zk.stat.getPzxid();
+            Assert.assertTrue("<cversion, pzxid> verification failed. Expected: <" +
+                    (prevCversion + 1) + ", " + (prevPzxid + 1) + ">, found: <" +
+                    newCversion + ", " + newPzxid + ">",
+                    (newCversion == prevCversion + 1 && newPzxid == prevPzxid + 1));
+            Assert.assertNotEquals(digestBefore, dt.getTreeDigest());
+        } finally {
+            DigestCalculator.setDigestEnabled(false);
+        }
     }
 
     @Test
@@ -418,5 +427,48 @@ public class DataTreeTest extends ZKTestCase {
         Assert.assertEquals(3L, values.get("cnt_" + TOP1 + "_read_per_namespace"));
         Assert.assertEquals(readBytes2, values.get("sum_" + TOP2+ "_read_per_namespace"));
         Assert.assertEquals(1L, values.get("cnt_" + TOP2 + "_read_per_namespace"));
+    }
+
+    /**
+     * Test digest with general ops in DataTree, check that digest are
+     * updated when call different ops.
+     */
+    @Test
+    public void testDigest() throws Exception {
+        try {
+            // enable diegst check
+            DigestCalculator.setDigestEnabled(true);
+
+            DataTree dt = new DataTree();
+
+            // create a node and check the digest is updated
+            long previousDigest = dt.getTreeDigest();
+            dt.createNode("/digesttest", new byte[0], null, -1, 1, 1, 1);
+            Assert.assertNotEquals(dt.getTreeDigest(), previousDigest);
+
+            // create a child and check the digest is updated
+            previousDigest = dt.getTreeDigest();
+            dt.createNode("/digesttest/1", "1".getBytes(), null, -1, 2, 2, 2);
+            Assert.assertNotEquals(dt.getTreeDigest(), previousDigest);
+            
+            // check the digest is not chhanged when creating the same node
+            previousDigest = dt.getTreeDigest();
+            try {
+                dt.createNode("/digesttest/1", "1".getBytes(), null, -1, 2, 2, 2);
+            } catch (NodeExistsException e) { /* ignore */ }
+            Assert.assertEquals(dt.getTreeDigest(), previousDigest);
+
+            // check digest with updated data 
+            previousDigest = dt.getTreeDigest();
+            dt.setData("/digesttest/1", "2".getBytes(), 3, 3, 3);
+            Assert.assertNotEquals(dt.getTreeDigest(), previousDigest);
+
+            // check digest with deleted node
+            previousDigest = dt.getTreeDigest();
+            dt.deleteNode("/digesttest/1", 5);
+            Assert.assertNotEquals(dt.getTreeDigest(), previousDigest);
+        } finally {
+            DigestCalculator.setDigestEnabled(false);
+        }
     }
 }

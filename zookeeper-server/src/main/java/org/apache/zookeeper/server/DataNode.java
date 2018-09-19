@@ -39,6 +39,14 @@ import org.apache.zookeeper.data.StatPersisted;
  */
 @SuppressFBWarnings("EI_EXPOSE_REP2")
 public class DataNode implements Record {
+
+    // the digest value of this node, calculated from path, data and stat
+    private long digest;
+
+    // indicate if the digest of this node is up to date or not, used to 
+    // optimize the performance.
+    boolean digestCached;
+
     /** the data for this datanode */
     byte data[];
 
@@ -181,5 +189,25 @@ public class DataNode implements Record {
         archive.writeLong(acl, "acl");
         stat.serialize(archive, "statpersisted");
         archive.endRecord(this, "node");
+    }
+
+    public boolean isDigestCached() {
+        return digestCached;
+    }
+
+    public void setDigestCached(boolean digestCached) {
+        this.digestCached = digestCached;
+    }
+
+    public long getDigest() {
+        return digest;
+    }
+
+    public void setDigest(long digest) {
+        this.digest = digest;
+    }
+
+    public byte[] getData() {
+        return data;
     }
 }

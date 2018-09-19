@@ -227,6 +227,8 @@ public final class ServerMetrics {
         REQUEST_THROTTLE_WAIT_COUNT = metricsContext.getCounter("request_throttle_wait_count");
 
         NETTY_QUEUED_BUFFER = metricsContext.getSummary("netty_queued_buffer_capacity", DetailLevel.BASIC);
+
+        DIGEST_MISMATCHES_COUNT = metricsContext.getCounter("digest_mismatches_count");
     }
 
     /**
@@ -427,6 +429,10 @@ public final class ServerMetrics {
     public final Counter REQUEST_THROTTLE_WAIT_COUNT;
 
     public final Summary NETTY_QUEUED_BUFFER;
+
+    // Total number of digest mismatches that are observed when applying 
+    // txns to data tree.
+    public final Counter DIGEST_MISMATCHES_COUNT;
 
     private final MetricsProvider metricsProvider;
 

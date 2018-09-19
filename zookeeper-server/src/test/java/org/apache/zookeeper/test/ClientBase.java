@@ -522,6 +522,8 @@ public abstract class ClientBase extends ZKTestCase {
 
         setupTestEnv();
 
+        setupCustomizedEnv();
+
         JMXEnv.setUp();
 
         setUpAll();
@@ -536,6 +538,11 @@ public abstract class ClientBase extends ZKTestCase {
     protected void startServer() throws Exception {
         startServer(1);
     }
+
+    /**
+     * Give it a chance to set up customized env before starting the server.
+     */
+    public void setupCustomizedEnv() { /* do nothing by default */ }
 
     private void startServer(int serverId) throws Exception {
         LOG.info("STARTING server");
@@ -640,7 +647,11 @@ public abstract class ClientBase extends ZKTestCase {
                 //assertTrue(message, fdCount <= initialFdCount);
             }
         }
+
+        cleanUpCustomizedEnv();
     }
+
+    public void cleanUpCustomizedEnv() { /* do nothing by default */ }
 
     public static MBeanServerConnection jmxConn() throws IOException {
         return JMXEnv.conn();

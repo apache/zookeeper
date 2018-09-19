@@ -257,7 +257,20 @@ public class FileTxnSnapLog {
                 return -1L;
             }
         }
-        return fastForwardFromEdits(dt, sessions, listener);
+
+        long highestZxid = fastForwardFromEdits(dt, sessions, listener);
+        // The snapshotZxidDigest will reset after replaying the txn of the
+        // zxid in the snapshotZxidDigest, if it's not reset to null after
+        // restoring, it means either there are not enough txns to cover that
+        // zxid or that txn is missing
+        DataTree.ZxidDigest snapshotZxidDigest = dt.getDigestFromLoadedSnapshot();
+        if (snapshotZxidDigest != null) {
+            LOG.warn("Highest txn zxid 0x{} is not covering the snapshot " +
+                    "digest zxid 0x{}, which might lead to inconsistent state",
+                    Long.toHexString(highestZxid),
+                    Long.toHexString(snapshotZxidDigest.getZxid()));
+        }
+        return highestZxid;
     }
 
     /**
