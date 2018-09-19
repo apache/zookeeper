@@ -85,6 +85,8 @@
 #ifdef __MACH__ // OS X
 #include <mach/clock.h>
 #include <mach/mach.h>
+#include <netinet/tcp.h>
+
 #endif
 
 #ifdef WIN32
@@ -1158,7 +1160,7 @@ static void log_env(zhandle_t *zh) {
  */
 static zhandle_t *zookeeper_init_internal(const char *host, watcher_fn watcher,
         int recv_timeout, const clientid_t *clientid, void *context, int flags,
-        log_callback_fn log_callback)
+        log_callback_fn log_callback, zcert_t *cert)
 {
     int errnosave = 0;
     zhandle_t *zh = NULL;
@@ -1180,6 +1182,10 @@ static zhandle_t *zookeeper_init_internal(const char *host, watcher_fn watcher,
 
     zh->fd = calloc(1, sizeof(zsock_t));
     zh->fd->sock = -1;
+    if (cert) {
+        zh->fd->cert = calloc(1, sizeof(zcert_t));
+        memcpy(zh->fd->cert, cert, sizeof(zcert_t));
+    }
 
 #ifdef _WIN32
     if (Win32WSAStartup()){
@@ -1215,16 +1221,6 @@ static zhandle_t *zookeeper_init_internal(const char *host, watcher_fn watcher,
         errno=EINVAL;
         goto abort;
     }
-    /*index_cert = strchr(host, '|');
-    if (index_cert) {
-        strtok(host, "|");
-        char **c = calloc(4, sizeof(char *));
-        for (int i = 0; i < 4; i++) {
-            c[i] = strtok(NULL, ",");
-        }
-        zh->fd->cert = calloc(1, sizeof(zcert_t));
-        memcpy(zh->fd->cert, &((zcert_t) {.ca = c[0], .cert = c[1], .key = c[2], .passwd = c[3]}), sizeof(zcert_t));
-    }*/
     //parse the host to get the chroot if available
     index_chroot = strchr(host, '/');
     if (index_chroot) {
@@ -1253,12 +1249,9 @@ static zhandle_t *zookeeper_init_internal(const char *host, watcher_fn watcher,
     if (zh->hostname == 0) {
         goto abort;
     }
-
-
     if(update_addrs(zh) != 0) {
         goto abort;
     }
-
     if (clientid) {
         memcpy(&zh->client_id, clientid, sizeof(zh->client_id));
     } else {
@@ -1293,14 +1286,21 @@ abort:
 zhandle_t *zookeeper_init(const char *host, watcher_fn watcher,
         int recv_timeout, const clientid_t *clientid, void *context, int flags)
 {
-    return zookeeper_init_internal(host, watcher, recv_timeout, clientid, context, flags, NULL);
+    return zookeeper_init_internal(host, watcher, recv_timeout, clientid, context, flags, NULL, NULL);
 }
 
 zhandle_t *zookeeper_init2(const char *host, watcher_fn watcher,
         int recv_timeout, const clientid_t *clientid, void *context, int flags,
         log_callback_fn log_callback)
 {
-    return zookeeper_init_internal(host, watcher, recv_timeout, clientid, context, flags, log_callback);
+    return zookeeper_init_internal(host, watcher, recv_timeout, clientid, context, flags, log_callback, NULL);
+}
+
+zhandle_t *zookeeper_init_ssl(const char *host, const char *cert, watcher_fn watcher,
+        int recv_timeout, const clientid_t *clientid, void *context, int flags)
+{
+    zcert_t *zcert = &((zcert_t) {.ca = strtok(cert, ","), .cert = strtok(NULL, ","), .key = strtok(NULL, ","), .passwd = strtok(NULL, ",")});
+    return zookeeper_init_internal(host, watcher, recv_timeout, clientid, context, flags, NULL, zcert);
 }
 
 /**

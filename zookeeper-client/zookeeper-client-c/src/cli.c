@@ -45,6 +45,7 @@ int write(int _Filehandle, const void * _Buf, unsigned int _MaxCharCount);
 #include <time.h>
 #include <errno.h>
 #include <assert.h>
+#include <getopt.h>
 
 #ifdef YCA
 #include <yca/yca.h>
@@ -56,7 +57,8 @@ static zhandle_t *zh;
 static clientid_t myid;
 static const char *clientIdFile = 0;
 struct timeval startTime;
-static char cmd[1024];
+static char *cmd;
+static char *cert;
 static int batchMode=0;
 
 static int to_send=0;
@@ -665,48 +667,67 @@ int main(int argc, char **argv) {
     int flags, i;
     FILE *fh;
 
-    if (argc < 2) {
+    int opt;
+    int option_index = 0;
+    opterr = 0;
+    static struct option long_options[] = {
+            {"host",    required_argument, NULL, 'h'}, //hostPort
+            {"myid",    optional_argument, NULL, 'i'}, //myId
+            {"cmd",     optional_argument, NULL, 'c'}, //cmd
+            {"cert",    optional_argument, NULL, 's'}, //certificates files
+            {NULL,      0,                 NULL, 0},
+    };
+    flags = 0;
+    while ((opt = getopt_long(argc, argv, "h:m::rc::s::", long_options, &option_index)) != -1) {
+        switch (opt) {
+            case 'h':
+                hostPort = strdup(optarg);
+                break;
+            case 'i':
+                clientIdFile = strdup(optarg);
+                fh = fopen(clientIdFile, "r");
+                if (fh) {
+                    if (fread(&myid, sizeof(myid), 1, fh) != sizeof(myid)) {
+                        memset(&myid, 0, sizeof(myid));
+                    }
+                    fclose(fh);
+                }
+                break;
+            case 'r':
+                flags = ZOOKEEPER_READ;
+                break;
+            case 'c':
+                cmd = strdup(optarg);
+                batchMode = 1;
+                fprintf(stderr,"Batch mode: %s\n",cmd);
+                break;
+            case 's':
+                cert = strdup(optarg);
+                break;
+            case '?':
+                if (optopt == 'h') {
+                    fprintf (stderr, "Option -%c requires host list.\n", optopt);
+                } else if (isprint (optopt)) {
+                    fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+                } else {
+                    fprintf (stderr,
+                             "Unknown option character `\\x%x'.\n",
+                             optopt);
+                    return 1;
+                }
+        }
+    }
+
+    if (!hostPort) {
         fprintf(stderr,
-                "USAGE %s zookeeper_host_list [clientid_file|cmd:(ls|ls2|create|create2|od|...)]\n", 
+                "USAGE %s -h zookeeper_host_list -i clientid_file -c (ls|ls2|create|create2|od|...) -s ca,cert,key,passwd \n",
                 argv[0]);
         fprintf(stderr,
-                "Version: ZooKeeper cli (c client) version %d.%d.%d\n", 
+                "Version: ZooKeeper cli (c client) version %d.%d.%d\n",
                 ZOO_MAJOR_VERSION,
                 ZOO_MINOR_VERSION,
                 ZOO_PATCH_VERSION);
         return 2;
-    }
-    if (argc > 2) {
-      if(strncmp("cmd:",argv[2],4)==0){
-        size_t cmdlen = strlen(argv[2]);
-        if (cmdlen > sizeof(cmd)) {
-          fprintf(stderr,
-                  "Command length %zu exceeds max length of %zu\n",
-                  cmdlen,
-                  sizeof(cmd));
-          return 2;
-        }
-        strncpy(cmd, argv[2]+4, sizeof(cmd));
-        batchMode=1;
-        fprintf(stderr,"Batch mode: %s\n",cmd);
-      }else{
-        clientIdFile = argv[2];
-        fh = fopen(clientIdFile, "r");
-        if (fh) {
-            if (fread(&myid, sizeof(myid), 1, fh) != sizeof(myid)) {
-                memset(&myid, 0, sizeof(myid));
-            }
-            fclose(fh);
-        }
-      }
-    }
-
-    flags = 0;
-    for (i = 1; i < argc; ++i) {
-      if (strcmp("-r", argv[i]) == 0) {
-        flags = ZOO_READONLY;
-        break;
-      }
     }
 
 #ifdef YCA
@@ -726,8 +747,11 @@ int main(int argc, char **argv) {
     verbose = 0;
     zoo_set_debug_level(ZOO_LOG_LEVEL_WARN);
     zoo_deterministic_conn_order(1); // enable deterministic order
-    hostPort = argv[1];
-    zh = zookeeper_init(hostPort, watcher, 30000, &myid, NULL, flags);
+    if (!cert) {
+        zh = zookeeper_init(hostPort, watcher, 30000, &myid, NULL, flags);
+    } else {
+        zh = zookeeper_init_ssl(hostPort, cert, watcher, 30000, &myid, NULL, flags);
+    }
     if (!zh) {
         return errno;
     }
