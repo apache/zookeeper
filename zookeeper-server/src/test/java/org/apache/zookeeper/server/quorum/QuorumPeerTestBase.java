@@ -32,6 +32,9 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Properties;
 
+import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.ZooKeeper;
+import org.junit.After;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.WatchedEvent;
@@ -52,6 +55,22 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             .getLogger(QuorumPeerTestBase.class);
 
     public static final int TIMEOUT = 5000;
+
+    protected Servers servers;
+    protected int numServers = 0;
+
+    @After
+    public void tearDown() throws Exception {
+        if (servers == null || servers.mt == null) {
+            LOG.info("No servers to shutdown!");
+            return;
+        }
+        for (int i = 0; i < numServers; i++) {
+            if (i < servers.mt.length) {
+                servers.mt[i].shutdown();
+            }
+        }
+    }
 
     public void process(WatchedEvent event) {
         // ignore for this test
@@ -402,4 +421,129 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         }
 
     }
+
+    // This class holds the servers and clients for those servers
+    protected static class Servers {
+        MainThread mt[];
+        ZooKeeper zk[];
+        int[] clientPorts;
+
+        public void shutDownAllServers() throws InterruptedException {
+            for (MainThread t: mt) {
+                t.shutdown();
+            }
+        }
+
+        public void restartAllServersAndClients(Watcher watcher) throws IOException, InterruptedException {
+            for (MainThread t : mt) {
+                if (!t.isAlive()) {
+                    t.start();
+                }
+            }
+            for (int i = 0; i < zk.length; i++) {
+                restartClient(i, watcher);
+            }
+        }
+
+        public void restartClient(int clientIndex, Watcher watcher) throws IOException, InterruptedException {
+            if (zk[clientIndex] != null) {
+                zk[clientIndex].close();
+            }
+            zk[clientIndex] = new ZooKeeper("127.0.0.1:" + clientPorts[clientIndex], ClientBase.CONNECTION_TIMEOUT, watcher);
+        }
+
+        public int findLeader() {
+            for (int i = 0; i < mt.length; i++) {
+                if (mt[i].main.quorumPeer.leader != null) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+    }
+
+    protected Servers LaunchServers(int numServers) throws IOException, InterruptedException {
+        return LaunchServers(numServers, null);
+    }
+
+    /** * This is a helper function for launching a set of servers
+     *
+     * @param numServers the number of servers
+     * @param tickTime A ticktime to pass to MainThread
+     * @return
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    protected Servers LaunchServers(int numServers, Integer tickTime) throws IOException, InterruptedException {
+        int SERVER_COUNT = numServers;
+        QuorumPeerMainTest.Servers svrs = new QuorumPeerMainTest.Servers();
+        svrs.clientPorts = new int[SERVER_COUNT];
+        StringBuilder sb = new StringBuilder();
+        for(int i = 0; i < SERVER_COUNT; i++) {
+            svrs.clientPorts[i] = PortAssignment.unique();
+            sb.append("server."+i+"=127.0.0.1:"+PortAssignment.unique()+":"+PortAssignment.unique()+";"+svrs.clientPorts[i]+"\n");
+        }
+        String quorumCfgSection = sb.toString();
+
+        svrs.mt = new MainThread[SERVER_COUNT];
+        svrs.zk = new ZooKeeper[SERVER_COUNT];
+        for(int i = 0; i < SERVER_COUNT; i++) {
+            if (tickTime != null) {
+                svrs.mt[i] = new MainThread(i, svrs.clientPorts[i], quorumCfgSection, new HashMap<String, String>(), tickTime);
+            } else {
+                svrs.mt[i] = new MainThread(i, svrs.clientPorts[i], quorumCfgSection);
+            }
+            svrs.mt[i].start();
+            svrs.restartClient(i, this);
+        }
+
+        waitForAll(svrs, ZooKeeper.States.CONNECTED);
+
+        return svrs;
+    }
+
+    public static void waitForOne(ZooKeeper zk, ZooKeeper.States state) throws InterruptedException {
+        int iterations = ClientBase.CONNECTION_TIMEOUT / 500;
+        while (zk.getState() != state) {
+            if (iterations-- == 0) {
+                throw new RuntimeException("Waiting too long " + zk.getState() + " != " + state);
+            }
+            Thread.sleep(500);
+        }
+    }
+
+    protected void waitForAll(Servers servers, ZooKeeper.States state) throws InterruptedException {
+        waitForAll(servers.zk, state);
+    }
+
+    public static void waitForAll(ZooKeeper[] zks, ZooKeeper.States state) throws InterruptedException {
+        int iterations = ClientBase.CONNECTION_TIMEOUT / 1000;
+        boolean someoneNotConnected = true;
+        while (someoneNotConnected) {
+            if (iterations-- == 0) {
+                logStates(zks);
+                ClientBase.logAllStackTraces();
+                throw new RuntimeException("Waiting too long");
+            }
+
+            someoneNotConnected = false;
+            for (ZooKeeper zk : zks) {
+                if (zk.getState() != state) {
+                    someoneNotConnected = true;
+                    break;
+                }
+            }
+            Thread.sleep(1000);
+        }
+    }
+
+    public static void logStates(ZooKeeper[] zks) {
+        StringBuilder sbBuilder = new StringBuilder("Connection States: {");
+        for (int i = 0; i < zks.length; i++) {
+            sbBuilder.append(i + " : " + zks[i].getState() + ", ");
+        }
+        sbBuilder.append('}');
+        LOG.error(sbBuilder.toString());
+    }
+
 }

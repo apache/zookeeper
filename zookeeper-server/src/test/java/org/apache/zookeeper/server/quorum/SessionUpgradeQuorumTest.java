@@ -266,12 +266,6 @@ public class SessionUpgradeQuorumTest extends QuorumPeerTestBase {
         }
     }
 
-    private void waitForOne(ZooKeeper zk, States state) throws InterruptedException {
-        ArrayList<States> states = new ArrayList<States>();
-        states.add(state);
-        waitForOne(zk, states);
-    }
-
     private void waitForOne(ZooKeeper zk, ArrayList<States> states) throws InterruptedException {
         int iterations = ClientBase.CONNECTION_TIMEOUT / 500;
         while (!states.contains(zk.getState())) {
