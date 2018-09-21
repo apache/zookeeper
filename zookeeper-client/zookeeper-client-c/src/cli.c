@@ -747,11 +747,16 @@ int main(int argc, char **argv) {
     verbose = 0;
     zoo_set_debug_level(ZOO_LOG_LEVEL_WARN);
     zoo_deterministic_conn_order(1); // enable deterministic order
+#ifdef HAVE_OPENSSL_H
     if (!cert) {
         zh = zookeeper_init(hostPort, watcher, 30000, &myid, NULL, flags);
     } else {
         zh = zookeeper_init_ssl(hostPort, cert, watcher, 30000, &myid, NULL, flags);
     }
+#else
+    zh = zookeeper_init(hostPort, watcher, 30000, &myid, NULL, flags);
+#endif
+
     if (!zh) {
         return errno;
     }

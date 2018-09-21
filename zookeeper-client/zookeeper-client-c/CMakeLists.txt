@@ -176,19 +176,20 @@ if(WIN32)
   list(APPEND zookeeper_sources src/winport.c)
 endif()
 
-
-#find_package(PkgConfig REQUIRED)
-#set(ENV{PKG_CONFIG_PATH}  "/opt/local/lib/pkgconfig")
-#pkg_search_module(OPENSSL REQUIRED openssl)
 add_library(zookeeper STATIC ${zookeeper_sources})
-target_include_directories(zookeeper PUBLIC include ${CMAKE_CURRENT_BINARY_DIR}/include generated /opt/local/include)
-link_directories(/opt/local/lib)
+target_include_directories(zookeeper PUBLIC include ${CMAKE_CURRENT_BINARY_DIR}/include generated)
 target_link_libraries(zookeeper PUBLIC
   hashtable
-        ssl
-        crypto
   $<$<PLATFORM_ID:Linux>:rt> # clock_gettime
   $<$<PLATFORM_ID:Windows>:ws2_32>) # Winsock 2.0
+
+option(WITH_OPENSSL "openssl directory" OFF)
+if(WITH_OPENSSL)
+  add_compile_definitions(HAVE_OPENSSL_H)
+  include_directories(${WITH_OPENSSL}/include)
+  link_directories(${WITH_OPENSSL}/lib)
+  link_libraries(ssl crypto)
+endif()
 
 if(WANT_SYNCAPI AND NOT WIN32)
   find_package(Threads REQUIRED)
