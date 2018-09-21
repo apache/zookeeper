@@ -177,7 +177,6 @@ if(WIN32)
 endif()
 
 
-set(SSL_ENABLED 1)
 #find_package(PkgConfig REQUIRED)
 #set(ENV{PKG_CONFIG_PATH}  "/opt/local/lib/pkgconfig")
 #pkg_search_module(OPENSSL REQUIRED openssl)

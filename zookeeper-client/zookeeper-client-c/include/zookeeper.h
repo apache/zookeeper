@@ -32,8 +32,6 @@
 #include <ws2tcpip.h> /* for struct sock_addr and socklen_t */
 #endif
 
-#define SSL_ENABLED 1
-
 #include <stdio.h>
 #include <ctype.h>
 

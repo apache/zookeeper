@@ -664,7 +664,7 @@ int main(int argc, char **argv) {
     char appId[64];
 #endif
     int bufoff = 0;
-    int flags, i;
+    int flags;
     FILE *fh;
 
     int opt;
