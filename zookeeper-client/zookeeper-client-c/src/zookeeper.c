@@ -79,8 +79,10 @@
 #include <pwd.h>
 #endif
 
+#ifdef HAVE_OPENSSL_H
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#endif
 
 #ifdef __MACH__ // OS X
 #include <mach/clock.h>
@@ -312,15 +314,19 @@ static void abort_singlethreaded(zhandle_t *zh)
 
 static ssize_t zookeeper_send(zsock_t *fd, const void* buf, size_t len)
 {
+#ifdef HAVE_OPENSSL_H
     if (fd->ssl_sock)
         return (ssize_t)SSL_write(fd->ssl_sock, buf, (int)len);
+#endif
     return send(fd->sock, buf, len, SEND_FLAGS);
 }
 
 static ssize_t zookeeper_recv(zsock_t *fd, void *buf, size_t len, int flags)
 {
+#ifdef HAVE_OPENSSL_H
     if (fd->ssl_sock)
         return (ssize_t)SSL_read(fd->ssl_sock, buf, (int)len);
+#endif
     return recv(fd->sock, buf, len, flags);
 }
 
@@ -554,12 +560,14 @@ zk_hashtable *child_result_checker(zhandle_t *zh, int rc)
 static void close_zsock(zsock_t *fd)
 {
     if (fd->sock != -1) {
+#ifdef HAVE_OPENSSL_H
         if (fd->ssl_sock) {
             SSL_free(fd->ssl_sock);
             fd->ssl_sock = NULL;
             SSL_CTX_free(fd->ssl_ctx);
             fd->ssl_ctx = NULL;
         }
+#endif
         close(fd->sock);
         fd->sock = -1;
     }
@@ -1291,12 +1299,14 @@ zhandle_t *zookeeper_init2(const char *host, watcher_fn watcher,
     return zookeeper_init_internal(host, watcher, recv_timeout, clientid, context, flags, log_callback, NULL);
 }
 
+#ifdef HAVE_OPENSSL_H
 zhandle_t *zookeeper_init_ssl(const char *host, const char *cert, watcher_fn watcher,
         int recv_timeout, const clientid_t *clientid, void *context, int flags)
 {
     zcert_t *zcert = &((zcert_t) {.ca = strtok(strdup(cert), ","), .cert = strtok(NULL, ","), .key = strtok(NULL, ","), .passwd = strtok(NULL, ",")});
     return zookeeper_init_internal(host, watcher, recv_timeout, clientid, context, flags, NULL, zcert);
 }
+#endif
 
 /**
  * Set a new list of zk servers to connect to.  Disconnect will occur if
@@ -2249,6 +2259,7 @@ static socket_t zookeeper_connect(zhandle_t *zh,
     LOG_DEBUG(LOGCALLBACK(zh), "[zk] connect()\n");
     rc = connect(fd, (struct sockaddr *)addr, addr_len);
 
+#ifdef HAVE_OPENSSL_H
     if (zh->fd->cert != NULL) {
         SSL_CTX *ctx = NULL;
         SSL *ssl = NULL;
@@ -2312,6 +2323,7 @@ static socket_t zookeeper_connect(zhandle_t *zh,
             errno = EWOULDBLOCK;
         }
     }
+#endif
 
 #ifdef _WIN32
     errno = GetLastError();

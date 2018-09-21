@@ -19,7 +19,9 @@
 #ifndef ZK_ADAPTOR_H_
 #define ZK_ADAPTOR_H_
 #include <zookeeper.jute.h>
+#ifdef HAVE_OPENSSL_H
 #include <openssl/ossl_typ.h>
+#endif
 #ifdef THREADED
 #ifndef WIN32
 #include <pthread.h>
@@ -202,8 +204,10 @@ typedef struct _zsock {
     int sock;
 #endif
     zcert_t *cert;
+#ifdef HAVE_OPENSSL_H
     SSL *ssl_sock;
     SSL_CTX *ssl_ctx;
+#endif
 } zsock_t;
 
 /**
