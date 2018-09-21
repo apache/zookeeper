@@ -312,20 +312,16 @@ static void abort_singlethreaded(zhandle_t *zh)
 
 static ssize_t zookeeper_send(zsock_t *fd, const void* buf, size_t len)
 {
-#ifdef SSL_ENABLED
-    return (ssize_t)SSL_write(fd->ssl_sock, buf, (int)len);
-#else
+    if (fd->ssl_sock)
+        return (ssize_t)SSL_write(fd->ssl_sock, buf, (int)len);
     return send(fd->sock, buf, len, SEND_FLAGS);
-#endif
 }
 
 static ssize_t zookeeper_recv(zsock_t *fd, void *buf, size_t len, int flags)
 {
-#ifdef SSL_ENABLED
-    return (ssize_t)SSL_read(fd->ssl_sock, buf, (int)len);
-#else
+    if (fd->ssl_sock)
+        return (ssize_t)SSL_read(fd->ssl_sock, buf, (int)len);
     return recv(fd->sock, buf, len, flags);
-#endif
 }
 
 /**
@@ -558,12 +554,12 @@ zk_hashtable *child_result_checker(zhandle_t *zh, int rc)
 static void close_zsock(zsock_t *fd)
 {
     if (fd->sock != -1) {
-#ifdef SSL_ENABLED
-        SSL_free(fd->ssl_sock);
-        fd->ssl_sock = NULL;
-        SSL_CTX_free(fd->ssl_ctx);
-        fd->ssl_ctx = NULL;
-#endif
+        if (fd->ssl_sock) {
+            SSL_free(fd->ssl_sock);
+            fd->ssl_sock = NULL;
+            SSL_CTX_free(fd->ssl_ctx);
+            fd->ssl_ctx = NULL;
+        }
         close(fd->sock);
         fd->sock = -1;
     }
@@ -1165,7 +1161,6 @@ static zhandle_t *zookeeper_init_internal(const char *host, watcher_fn watcher,
     int errnosave = 0;
     zhandle_t *zh = NULL;
     char *index_chroot = NULL;
-    char *index_cert = NULL;
 
     // Create our handle
     zh = calloc(1, sizeof(*zh));
@@ -1299,7 +1294,7 @@ zhandle_t *zookeeper_init2(const char *host, watcher_fn watcher,
 zhandle_t *zookeeper_init_ssl(const char *host, const char *cert, watcher_fn watcher,
         int recv_timeout, const clientid_t *clientid, void *context, int flags)
 {
-    zcert_t *zcert = &((zcert_t) {.ca = strtok(cert, ","), .cert = strtok(NULL, ","), .key = strtok(NULL, ","), .passwd = strtok(NULL, ",")});
+    zcert_t *zcert = &((zcert_t) {.ca = strtok(strdup(cert), ","), .cert = strtok(NULL, ","), .key = strtok(NULL, ","), .passwd = strtok(NULL, ",")});
     return zookeeper_init_internal(host, watcher, recv_timeout, clientid, context, flags, NULL, zcert);
 }
 
@@ -2262,7 +2257,7 @@ static socket_t zookeeper_connect(zhandle_t *zh,
         SSL_library_init();
         SSL_load_error_strings();
         OpenSSL_add_all_algorithms();
-        method = TLSv1_client_method();
+        method = TLS_client_method();
         ctx = SSL_CTX_new(method);
 
         SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, 0);

@@ -130,9 +130,6 @@
 /* Define to 1 if SOCK_CLOEXEC is available and wanted */
 #cmakedefine SOCK_CLOEXEC_ENABLED 1
 
-/* Define to 1 if SSL is available an wanted */
-#cmakedefine SSL_ENABLED 1
-
 /* poll() second argument type */
 #define POLL_NFDS_TYPE nfds_t
 
