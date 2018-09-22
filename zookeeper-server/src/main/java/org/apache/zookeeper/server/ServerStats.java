@@ -22,6 +22,7 @@ package org.apache.zookeeper.server;
 
 import org.apache.zookeeper.common.Time;
 
+import java.math.BigDecimal;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -57,7 +58,9 @@ public class ServerStats {
     synchronized public double getAvgLatency() {
         if (count != 0) {
             //be account to four decimal places
-            return (totalLatency * 10000 / count) / 10000.0;
+            double avgLatency = totalLatency / (double)count;
+            BigDecimal bg = new BigDecimal(avgLatency);
+            return bg.setScale(4, BigDecimal.ROUND_HALF_UP).doubleValue();
         }
         return 0;
     }
