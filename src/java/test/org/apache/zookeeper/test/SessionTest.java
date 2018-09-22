@@ -390,4 +390,23 @@ public class SessionTest extends ZKTestCase {
         zk.close();
         LOG.info(zk.toString());
     }
+
+    @Test
+    public void testMaximumCnxnPerIP() throws Exception {
+        final int maxClientCnxnsPerIP = 3;
+        serverFactory.setMaxClientCnxnsPerHost(maxClientCnxnsPerIP);
+        ZooKeeper[] clients = new ZooKeeper[maxClientCnxnsPerIP + 1];
+        for (int i = 0; i < clients.length; i++) {
+            CountdownWatcher watcher = new CountdownWatcher();
+            // wait for 3s
+            int timeout = 3000;
+            clients[i] = new DisconnectableZooKeeper(HOSTPORT, timeout, watcher);
+            boolean result = watcher.clientConnected.await(timeout, TimeUnit.MILLISECONDS);
+            if (i >= maxClientCnxnsPerIP) {
+                Assert.assertFalse(result);
+            } else {
+                Assert.assertTrue(result);
+            }
+        }
+    }
 }
