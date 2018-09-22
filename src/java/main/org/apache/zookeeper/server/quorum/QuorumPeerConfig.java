@@ -712,6 +712,7 @@ public class QuorumPeerConfig {
                         " is different from client address found in dynamic file: " + qs.clientAddr);
         }
         if (qs != null && qs.clientAddr != null) clientPortAddress = qs.clientAddr;
+        if (qs != null && qs.clientAddr == null) qs.clientAddr = clientPortAddress;
     }
 
     private void setupPeerType() {

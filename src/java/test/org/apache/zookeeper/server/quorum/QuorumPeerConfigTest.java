@@ -24,10 +24,12 @@ import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.Properties;
 
 import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.junit.Test;
 
 public class QuorumPeerConfigTest {
@@ -112,6 +114,37 @@ public class QuorumPeerConfigTest {
         Properties zkProp = getDefaultZKProperties();
         zkProp.setProperty("server.1", "localhost:2888:2888");
         quorumPeerConfig.parseProperties(zkProp);
+    }
+
+    /**
+     * Extend the existing QuorumPeerConfig to set the server id.
+     */
+    public static class MockQuorumPeerConfig extends QuorumPeerConfig {
+        public MockQuorumPeerConfig(long serverId) {
+            this.serverId = serverId;
+        }
+    }
+
+    /**
+     * Test case for https://issues.apache.org/jira/browse/ZOOKEEPER-2847
+     */
+    @Test
+    public void testClientAddrFromClientPort()
+            throws IOException, ConfigException {
+        long serverId = 1;
+        QuorumPeerConfig quorumPeerConfig = new MockQuorumPeerConfig(serverId);
+        Properties zkProp = getDefaultZKProperties();
+        int clientPort = 12345;
+        zkProp.setProperty("clientPort", Integer.toString(clientPort));
+        zkProp.setProperty("server.1", "127.0.0.1:2889:3889:participant");
+        quorumPeerConfig.parseProperties(zkProp);
+
+        QuorumServer qs =
+            quorumPeerConfig.getQuorumVerifier().getAllMembers().get(serverId);
+        InetSocketAddress expectedAddress =
+            new InetSocketAddress("0.0.0.0", clientPort);
+        assertEquals(expectedAddress, quorumPeerConfig.getClientPortAddress());
+        assertEquals(quorumPeerConfig.getClientPortAddress(), qs.clientAddr);
     }
 
     private Properties getDefaultZKProperties() {
