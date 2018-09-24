@@ -56,7 +56,7 @@ option(WANT_CPPUNIT "Enables CppUnit and tests" ${DEFAULT_WANT_CPPUNIT})
 # SOCK_CLOEXEC
 option(WANT_SOCK_CLOEXEC "Enables SOCK_CLOEXEC on sockets" OFF)
 include(CheckSymbolExists)
-check_symbol_exists(SOCK_CLOEXEC sys/socket.h HAVE_SOCK_CLOEXEC)
+check_symbol_exists(zktest_runnerSOCK_CLOEXEC sys/socket.h HAVE_SOCK_CLOEXEC)
 if(WANT_SOCK_CLOEXEC AND HAVE_SOCK_CLOEXEC)
   set(SOCK_CLOEXEC_ENABLED 1)
 endif()
@@ -185,10 +185,10 @@ target_link_libraries(zookeeper PUBLIC
 
 option(WITH_OPENSSL "openssl directory" OFF)
 if(WITH_OPENSSL)
-  add_compile_definitions(HAVE_OPENSSL_H)
+  target_compile_definitions(zookeeper PUBLIC HAVE_OPENSSL_H)
   include_directories(${WITH_OPENSSL}/include)
   link_directories(${WITH_OPENSSL}/lib)
-  link_libraries(ssl crypto)
+  target_link_libraries(zookeeper PUBLIC ssl crypto)
 endif()
 
 if(WANT_SYNCAPI AND NOT WIN32)
@@ -233,6 +233,7 @@ if(WANT_SYNCAPI)
 endif()
 
 if(WANT_CPPUNIT)
+  set (CMAKE_CXX_STANDARD 11)
   add_executable(zktest ${test_sources})
   target_include_directories(zktest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 

@@ -111,8 +111,13 @@ start|startClean)
         pid=$!
         echo -n $! > /tmp/zk.pid
     else
-        mkdir -p "${base_dir}/build/tmp/zkdata"
-        java -cp "$CLASSPATH" org.apache.zookeeper.server.ZooKeeperServerMain $ZOOPORT "${base_dir}/build/tmp/zkdata" 3000 $ZKMAXCNXNS &> "${base_dir}/build/tmp/zk.log" &
+	tmpdir="${base_dir}/build/tmp"
+        mkdir -p "${tmpdir}/zkdata"
+        rm -f "${tmpdir}/zkdata/myid" && echo 1 > "${tmpdir}/zkdata/myid"
+
+        sed "s#TMPDIR#${tmpdir}#g" ${base_dir}/zookeeper-client/zookeeper-client-c/tests/zoo.cfg > "${tmpdir}/zoo.cfg"
+
+        java -cp "$CLASSPATH" org.apache.zookeeper.server.ZooKeeperServerMain ${tmpdir}/zoo.cfg &> "${base_dir}/build/tmp/zk.log" &
         pid=$!
         echo -n $pid > "${base_dir}/build/tmp/zk.pid"
     fi
