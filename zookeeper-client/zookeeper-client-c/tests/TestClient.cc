@@ -210,6 +210,9 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
 #ifdef ZOO_IPV6_ENABLED
     CPPUNIT_TEST(testIPV6);
 #endif
+#ifdef HAVE_OPENSSL_H
+    CPPUNIT_TEST(testSSL);
+#endif
     CPPUNIT_TEST(testCreate);
     CPPUNIT_TEST(testPath);
     CPPUNIT_TEST(testPathValidation);
@@ -261,6 +264,13 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
 
     zhandle_t *createClient(const char *hp, watchctx_t *ctx) {
         zhandle_t *zk = zookeeper_init(hp, watcher, 10000, 0, ctx, 0);
+        ctx->zh = zk;
+        sleep(1);
+        return zk;
+    }
+
+    zhandle_t *createSSLClient(const char *hp, const char *cert, watchctx_t *ctx) {
+        zhandle_t *zk = zookeeper_init_ssl(hp, cert, watcher, 30000, 0, ctx, 0);
         ctx->zh = zk;
         sleep(1);
         return zk;
@@ -361,7 +371,7 @@ public:
         sleep(1);
         zh->io_count = 0;
         //close socket
-        close(zh->fd);
+        close_zsock(zh->fd);
         sleep(1);
         //Check that doIo isn't spinning
         CPPUNIT_ASSERT(zh->io_count < 2);
@@ -748,6 +758,16 @@ public:
         CPPUNIT_ASSERT(zk);
         int rc = 0;
         rc = zoo_create(zk, "/ipv6", NULL, -1,
+                        &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+    }
+
+    void testSSL() {
+        watchctx_t ctx;
+        zhandle_t *zk = createSSLClient("127.0.0.1:22281", "../ssl/server.crt,../ssl/client.crt,../ssl/clientkey.pem,testpass", &ctx);
+        CPPUNIT_ASSERT(zk);
+        int rc = 0;
+        rc = zoo_create(zk, "/ssl", NULL, -1,
                         &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
     }

@@ -557,7 +557,7 @@ zk_hashtable *child_result_checker(zhandle_t *zh, int rc)
     return rc==ZOK ? zh->active_child_watchers : 0;
 }
 
-static void close_zsock(zsock_t *fd)
+void close_zsock(zsock_t *fd)
 {
     if (fd->sock != -1) {
 #ifdef HAVE_OPENSSL_H
