@@ -2265,9 +2265,7 @@ static socket_t zookeeper_connect(zhandle_t *zh,
         SSL *ssl = NULL;
         const SSL_METHOD *method;
 
-        SSL_library_init();
-        SSL_load_error_strings();
-        OpenSSL_add_all_algorithms();
+        OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
         method = TLS_client_method();
         ctx = SSL_CTX_new(method);
 
