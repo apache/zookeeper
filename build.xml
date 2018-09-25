@@ -43,7 +43,8 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
     <property name="mockito.version" value="1.8.5"/>
     <property name="checkstyle.version" value="6.1.1"/>
     <property name="commons-collections.version" value="3.2.2"/>
-    <property name="commons-io.version" value="2.4"/>
+    <property name="commons-io.version" value="2.6"/>
+    <property name="kerby.version" value="1.1.0"/>
 
     <property name="apache-directory-server.version" value="2.0.0-M15"/>
     <property name="apache-directory-api.version" value="1.0.0-M20"/>

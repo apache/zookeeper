@@ -18,14 +18,15 @@
 package org.apache.zookeeper.server.quorum.auth;
 
 import org.apache.commons.io.FileUtils;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
-import org.apache.zookeeper.server.quorum.auth.QuorumAuthTestBase;
 
 /*
  * This code is originally from HDFS, see the similarly named file there
@@ -45,8 +46,8 @@ import org.apache.zookeeper.server.quorum.auth.QuorumAuthTestBase;
  * using the default settings, or override functions getTestDir() and
  * createMiniKdcConf() to provide new settings.
  */
-public class KerberosSecurityTestcase extends QuorumAuthTestBase {
-    private static MiniKdc kdc;
+public class ApacheDSKerberosSecurityTestcase extends QuorumAuthTestBase {
+    private static ApacheDSMiniKdc kdc;
     private static File workDir;
     private static Properties conf;
 
@@ -65,7 +66,7 @@ public class KerberosSecurityTestcase extends QuorumAuthTestBase {
         createTestDir();
         createMiniKdcConf();
 
-        kdc = new MiniKdc(conf, workDir);
+        kdc = new ApacheDSMiniKdc(conf, workDir);
         kdc.start();
     }
 
@@ -96,7 +97,7 @@ public class KerberosSecurityTestcase extends QuorumAuthTestBase {
      * Create a Kdc configuration
      */
     public static void createMiniKdcConf() {
-        conf = MiniKdc.createConf();
+        conf = ApacheDSMiniKdc.createConf();
     }
 
     public static void stopMiniKdc() {
@@ -105,7 +106,7 @@ public class KerberosSecurityTestcase extends QuorumAuthTestBase {
         }
     }
 
-    public static MiniKdc getKdc() {
+    public static ApacheDSMiniKdc getKdc() {
         return kdc;
     }
 

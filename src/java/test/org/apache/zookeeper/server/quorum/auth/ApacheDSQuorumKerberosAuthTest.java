@@ -28,20 +28,16 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase.MainThread;
-import org.apache.zookeeper.server.quorum.auth.KerberosTestUtils;
-import org.apache.zookeeper.server.quorum.auth.QuorumAuth;
-import static org.apache.zookeeper.server.quorum.auth.QuorumAuthTestBase.cleanupJaasConfig;
-import static org.apache.zookeeper.server.quorum.auth.QuorumAuthTestBase.setupJaasConfig;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.After;
 import org.junit.AfterClass;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class QuorumKerberosAuthTest extends KerberosSecurityTestcase {
+public class ApacheDSQuorumKerberosAuthTest extends ApacheDSKerberosSecurityTestcase {
     private static File keytabFile;
     static {
         String keytabFilePath = FilenameUtils.normalize(KerberosTestUtils.getKeytabFile(), true);
@@ -52,7 +48,9 @@ public class QuorumKerberosAuthTest extends KerberosSecurityTestcase {
                 + "       keyTab=\"" + keytabFilePath + "\"\n"
                 + "       storeKey=true\n"
                 + "       useTicketCache=false\n"
-                + "       debug=false\n"
+                + "       debug=true\n"
+                + "       doNotPrompt=true\n"
+                + "       refreshKrb5Config=true\n"
                 + "       principal=\"" + KerberosTestUtils.getServerPrincipal() + "\";\n" + "};\n"
                 + "QuorumLearner {\n"
                 + "       com.sun.security.auth.module.Krb5LoginModule required\n"
@@ -60,18 +58,21 @@ public class QuorumKerberosAuthTest extends KerberosSecurityTestcase {
                 + "       keyTab=\"" + keytabFilePath + "\"\n"
                 + "       storeKey=true\n"
                 + "       useTicketCache=false\n"
-                + "       debug=false\n"
+                + "       debug=true\n"
+                + "       doNotPrompt=true\n"
+                + "       refreshKrb5Config=true\n"
+                + "       isInitiator=true\n"
                 + "       principal=\"" + KerberosTestUtils.getLearnerPrincipal() + "\";\n" + "};\n");
         setupJaasConfig(jaasEntries);
     }
-    
+
     @BeforeClass
-    public static void notOnJdk6() throws Exception {
+    public static void onlyJdk6() throws Exception {
         String specsVersion = System.getProperty("java.specification.version", "1.6");
         System.out.println("java.specification.version="+specsVersion);
-        assumeFalse("Skipping test as Java Major version is "+specsVersion, "1.6".equals(specsVersion));
+        assumeTrue("Skipping test as Java Major version is "+specsVersion, "1.6".equals(specsVersion));
     }
-
+    
     @Before
     public void setUp() throws Exception {
         // create keytab
@@ -111,7 +112,7 @@ public class QuorumKerberosAuthTest extends KerberosSecurityTestcase {
         authConfigs.put(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED, "true");
         authConfigs.put(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED, "true");
         authConfigs.put(QuorumAuth.QUORUM_KERBEROS_SERVICE_PRINCIPAL, serverPrincipal);
-        String connectStr = startQuorum(3, authConfigs, 3, false);
+        String connectStr = startQuorum(3, authConfigs, 3, true);
         CountdownWatcher watcher = new CountdownWatcher();
         ZooKeeper zk = new ZooKeeper(connectStr, ClientBase.CONNECTION_TIMEOUT, watcher);
         watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
