@@ -56,7 +56,7 @@ option(WANT_CPPUNIT "Enables CppUnit and tests" ${DEFAULT_WANT_CPPUNIT})
 # SOCK_CLOEXEC
 option(WANT_SOCK_CLOEXEC "Enables SOCK_CLOEXEC on sockets" OFF)
 include(CheckSymbolExists)
-check_symbol_exists(zktest_runnerSOCK_CLOEXEC sys/socket.h HAVE_SOCK_CLOEXEC)
+check_symbol_exists(SOCK_CLOEXEC sys/socket.h HAVE_SOCK_CLOEXEC)
 if(WANT_SOCK_CLOEXEC AND HAVE_SOCK_CLOEXEC)
   set(SOCK_CLOEXEC_ENABLED 1)
 endif()
