@@ -2539,8 +2539,9 @@ static int check_events(zhandle_t *zh, int events)
 
         int err = SSL_get_error(zh->fd->ssl_sock, SSL_connect(zh->fd->ssl_sock));
         if (err != SSL_ERROR_NONE)
-            return handle_socket_error_msg(zh,__LINE__,err,
-                                           "ssl handshaking...");
+            return ZSSLCONNECTIONERROR;
+            /*return handle_socket_error_msg(zh,__LINE__,err,
+                                           "ssl handshaking...");*/
 
     }
 #endif
