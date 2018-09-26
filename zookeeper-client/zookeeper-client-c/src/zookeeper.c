@@ -1798,7 +1798,10 @@ static int is_connected(zhandle_t* zh)
 
 static void cleanup(zhandle_t *zh,int rc)
 {
-    close_zsock(zh->fd);
+    if (rc != 2) {
+        close_zsock(zh->fd);
+    }
+
     if (is_unrecoverable(zh)) {
         LOG_DEBUG(LOGCALLBACK(zh), "Calling a watcher for a ZOO_SESSION_EVENT and the state=%s",
                 state2String(zh->state));
@@ -2259,70 +2262,6 @@ static socket_t zookeeper_connect(zhandle_t *zh,
     LOG_DEBUG(LOGCALLBACK(zh), "[zk] connect()\n");
     rc = connect(fd, (struct sockaddr *)addr, addr_len);
 
-#ifdef HAVE_OPENSSL_H
-    if (zh->fd->cert != NULL) {
-        SSL_CTX *ctx = NULL;
-        SSL *ssl = NULL;
-        const SSL_METHOD *method;
-
-        OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
-        method = TLS_client_method();
-        ctx = SSL_CTX_new(method);
-
-        SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, 0);
-
-        /*SERVER CA FILE*/
-        if (SSL_CTX_load_verify_locations(ctx, zh->fd->cert->ca, 0) != 1) {
-            SSL_CTX_free(ctx);
-            printf("Failed to load CA file %s", zh->fd->cert->ca);
-            exit(1);
-        }
-        if (SSL_CTX_set_default_verify_paths(ctx) != 1) {
-            SSL_CTX_free(ctx);
-            printf("Call to SSL_CTX_set_default_verify_paths failed");
-            exit(1);
-        }
-        /*CLIENT CA FILE*/
-        if (SSL_CTX_use_certificate_file(ctx, zh->fd->cert->cert, SSL_FILETYPE_PEM) != 1) {
-            SSL_CTX_free(ctx);
-            printf("Failed to load client certificate from %s", zh->fd->cert->cert);
-            exit(1);
-        }
-        /*CLIENT PRIVATE KEY*/
-        SSL_CTX_set_default_passwd_cb_userdata(ctx, zh->fd->cert->passwd);
-        if (SSL_CTX_use_PrivateKey_file(ctx, zh->fd->cert->key, SSL_FILETYPE_PEM) != 1) {
-            SSL_CTX_free(ctx);
-            printf("Failed to load client private key from %s", zh->fd->cert->key);
-            exit(1);
-        }
-        /*CHECK*/
-        if (SSL_CTX_check_private_key(ctx) != 1) {
-            SSL_CTX_free(ctx);
-            printf("SSL_CTX_check_private_key failed");
-            exit(1);
-        }
-        /*MULTIPLE HANDSHAKE*/
-        SSL_CTX_set_mode(ctx, SSL_MODE_AUTO_RETRY);
-
-        ssl = SSL_new(ctx);
-        if (ssl == NULL) {
-            printf("SSL_new error.\n");
-        }
-        SSL_set_fd(ssl, fd);
-
-        int err = SSL_ERROR_NONE;
-        do {
-            err = SSL_get_error(ssl, SSL_connect(ssl));
-        } while (err != SSL_ERROR_NONE);
-
-        zh->fd->ssl_sock = ssl;
-        zh->fd->ssl_ctx = ctx;
-        if (errno == SSL_ERROR_NONE) {
-            errno = EWOULDBLOCK;
-        }
-    }
-#endif
-
 #ifdef _WIN32
     errno = GetLastError();
 
@@ -2544,6 +2483,68 @@ static int check_events(zhandle_t *zh, int events)
 {
     if (zh->fd->sock == -1)
         return ZINVALIDSTATE;
+#ifdef HAVE_OPENSSL_H
+    if (!is_connected(zh) && zh->fd->cert != NULL) {
+        if (!zh->fd->ssl_sock) {
+            const SSL_METHOD *method;
+
+            OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
+            method = TLS_client_method();
+            zh->fd->ssl_ctx = SSL_CTX_new(method);
+
+            SSL_CTX **ctx = &zh->fd->ssl_ctx;
+
+            SSL_CTX_set_verify(*ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, 0);
+
+            /*SERVER CA FILE*/
+            if (SSL_CTX_load_verify_locations(*ctx, zh->fd->cert->ca, 0) != 1) {
+                SSL_CTX_free(*ctx);
+                printf("Failed to load CA file %s", zh->fd->cert->ca);
+                exit(1);
+            }
+            if (SSL_CTX_set_default_verify_paths(*ctx) != 1) {
+                SSL_CTX_free(*ctx);
+                printf("Call to SSL_CTX_set_default_verify_paths failed");
+                exit(1);
+            }
+            /*CLIENT CA FILE*/
+            if (SSL_CTX_use_certificate_file(*ctx, zh->fd->cert->cert, SSL_FILETYPE_PEM) != 1) {
+                SSL_CTX_free(*ctx);
+                printf("Failed to load client certificate from %s", zh->fd->cert->cert);
+                exit(1);
+            }
+            /*CLIENT PRIVATE KEY*/
+            SSL_CTX_set_default_passwd_cb_userdata(*ctx, zh->fd->cert->passwd);
+            if (SSL_CTX_use_PrivateKey_file(*ctx, zh->fd->cert->key, SSL_FILETYPE_PEM) != 1) {
+                SSL_CTX_free(*ctx);
+                printf("Failed to load client private key from %s", zh->fd->cert->key);
+                exit(1);
+            }
+            /*CHECK*/
+            if (SSL_CTX_check_private_key(*ctx) != 1) {
+                SSL_CTX_free(*ctx);
+                printf("SSL_CTX_check_private_key failed");
+                exit(1);
+            }
+            /*MULTIPLE HANDSHAKE*/
+            SSL_CTX_set_mode(*ctx, SSL_MODE_AUTO_RETRY);
+
+            zh->fd->ssl_sock = SSL_new(*ctx);
+            if (zh->fd->ssl_sock == NULL) {
+                return handle_socket_error_msg(zh,__LINE__,ZSSLCONNECTIONERROR,
+                                               "error creating ssl context");
+            }
+            SSL_set_fd(zh->fd->ssl_sock, zh->fd->sock);
+        }
+
+        int err = SSL_get_error(zh->fd->ssl_sock, SSL_connect(zh->fd->ssl_sock));
+        if (err != SSL_ERROR_NONE)
+            return handle_socket_error_msg(zh,__LINE__,err,
+                                           "ssl handshaking...");
+
+    }
+#endif
+
     if ((events&ZOOKEEPER_WRITE)&&(zh->state == ZOO_CONNECTING_STATE)) {
         int rc, error;
         socklen_t len = sizeof(error);
@@ -2564,6 +2565,7 @@ static int check_events(zhandle_t *zh, int events)
         LOG_INFO(LOGCALLBACK(zh), "initiated connection to server %s", format_endpoint_info(&zh->addr_cur));
         return ZOK;
     }
+
     if (zh->to_send.head && (events&ZOOKEEPER_WRITE)) {
         /* make the flush call non-blocking by specifying a 0 timeout */
         int rc=flush_send_queue(zh,0);

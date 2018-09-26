@@ -110,6 +110,7 @@ enum ZOO_ERRORS {
   ZRECONFIGINPROGRESS = -14, /*!< Reconfiguration requested while another
                                   reconfiguration is currently in progress. This
                                   is currently not supported. Please retry. */
+  ZSSLCONNECTIONERROR = -15,
 
   /** API errors.
    * This is never thrown by the server, it shouldn't be used other than
