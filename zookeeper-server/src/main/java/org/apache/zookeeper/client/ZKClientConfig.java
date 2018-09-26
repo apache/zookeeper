@@ -33,6 +33,9 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 public class ZKClientConfig extends ZKConfig {
     public static final String ZK_SASL_CLIENT_USERNAME = "zookeeper.sasl.client.username";
     public static final String ZK_SASL_CLIENT_USERNAME_DEFAULT = "zookeeper";
+    public static final String ZK_SASL_CLIENT_CANONICALIZE_HOSTNAME =
+        "zookeeper.sasl.client.canonicalize.hostname";
+    public static final String ZK_SASL_CLIENT_CANONICALIZE_HOSTNAME_DEFAULT = "true";
     @SuppressWarnings("deprecation")
     public static final String LOGIN_CONTEXT_NAME_KEY = ZooKeeperSaslClient.LOGIN_CONTEXT_NAME_KEY;;
     public static final String LOGIN_CONTEXT_NAME_KEY_DEFAULT = "Client";
