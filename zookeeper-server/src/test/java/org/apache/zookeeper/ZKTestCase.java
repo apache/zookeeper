@@ -97,7 +97,7 @@ public class ZKTestCase {
             if (condition.evaluate()) {
                 return;
             }
-            Thread.sleep(1000);
+            Thread.sleep(100);
         }
         Assert.fail(msg);
     }

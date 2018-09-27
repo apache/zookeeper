@@ -257,7 +257,7 @@ public class Learner {
 
         for (int tries = 0; tries < 5; tries++) {
             try {
-                // recalculate the init limit time because retries sleep for 500 milliseconds
+                // recalculate the init limit time because retries sleep for 1000 milliseconds
                 remainingInitLimitTime = initLimitTime - (int)((nanoTime() - startNanoTime) / 1000000);
                 if (remainingInitLimitTime <= 0) {
                     LOG.error("initLimit exceeded on retries.");

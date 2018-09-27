@@ -23,6 +23,13 @@ import org.apache.zookeeper.server.RequestProcessor;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
+/**
+ * Allows the blocking of the request processor queue on a ZooKeeperServer.
+ *
+ * This is used to simulate arbitrary length delays or to produce delays
+ * in request processing that are maximally inconvenient for a given feature
+ * for the purposes of testing it.
+ */
 public class DelayRequestProcessor implements RequestProcessor {
 
     private boolean blocking;
@@ -59,13 +66,6 @@ public class DelayRequestProcessor implements RequestProcessor {
             }
             blocking = false;
         }
-    }
-
-    public static DelayRequestProcessor injectDelayRequestProcessor(LeaderZooKeeperServer zooKeeperServer) {
-        RequestProcessor finalRequestProcessor = zooKeeperServer.commitProcessor.nextProcessor;
-        DelayRequestProcessor delayRequestProcessor = new DelayRequestProcessor(finalRequestProcessor);
-        zooKeeperServer.commitProcessor.nextProcessor = delayRequestProcessor;
-        return delayRequestProcessor;
     }
 
     public static DelayRequestProcessor injectDelayRequestProcessor(FollowerZooKeeperServer zooKeeperServer) {

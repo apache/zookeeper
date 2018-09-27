@@ -1248,8 +1248,8 @@ public class Leader implements LearnerMaster {
 
     @Override
     public void waitForStartup() throws InterruptedException {
-        synchronized(zk){
-            while(!zk.isRunning() && !Thread.currentThread().isInterrupted()){
+        synchronized(zk) {
+            while(!zk.isRunning() && !Thread.currentThread().isInterrupted()) {
                 zk.wait(20);
             }
         }
@@ -1629,9 +1629,7 @@ public class Leader implements LearnerMaster {
         boolean valid = zk.checkIfValidGlobalSession(id, to);
         if (valid) {
             try {
-                //set the session owner
-                // as the follower that
-                // owns the session
+                // set the session owner as the follower that owns the session
                 zk.setOwner(id, learnerHandler);
             } catch (KeeperException.SessionExpiredException e) {
                 LOG.error("Somehow session " + Long.toHexString(id) + " expired right after being renewed! (impossible)", e);

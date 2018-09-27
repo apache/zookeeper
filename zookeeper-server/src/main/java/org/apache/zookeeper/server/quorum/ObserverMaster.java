@@ -266,6 +266,7 @@ public class ObserverMaster implements LearnerMaster, Runnable {
         }
         itr.remove();
         LearnerHandler learnerHandler = revalidation.handler;
+        // create a copy here as the qp object is reused by the Follower and may be mutated
         QuorumPacket deepCopy = new QuorumPacket(qp.getType(), qp.getZxid(),
                 Arrays.copyOf(qp.getData(), qp.getData().length),
                 qp.getAuthinfo() == null ? null : new ArrayList<>(qp.getAuthinfo()));

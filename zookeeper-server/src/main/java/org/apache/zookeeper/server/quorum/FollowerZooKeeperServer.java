@@ -116,7 +116,7 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
     }
 
     synchronized public void sync(){
-        if(pendingSyncs.size() == 0){
+        if(pendingSyncs.size() == 0) {
             LOG.warn("Not expecting a sync.");
             return;
         }

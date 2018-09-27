@@ -2038,7 +2038,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         return useObserverMasters() ? nextObserverMaster() : leader;
     }
 
-
     /**
      * Vet a given learner master's information.
      * Allows specification by server id, ip  only, or ip and port
