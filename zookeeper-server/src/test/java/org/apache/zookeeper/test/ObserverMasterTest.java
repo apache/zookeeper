@@ -71,7 +71,7 @@ import javax.management.RuntimeMBeanException;
 
 @RunWith(Parameterized.class)
 public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher{
-    protected static final Logger LOG = LoggerFactory.getLogger(ObserverTest.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(ObserverMasterTest.class);
 
     public ObserverMasterTest(Boolean testObserverMaster) {
         this.testObserverMaster = testObserverMaster;
@@ -504,6 +504,13 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher{
                 ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_OBS,
                         CONNECTION_TIMEOUT));
 
+        // Assert that commands are getting forwarded correctly
+        zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_OBS,
+                ClientBase.CONNECTION_TIMEOUT, this);
+        zk.create("/obstest", "test".getBytes(),Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        Assert.assertEquals(new String(zk.getData("/obstest", null, null)), "test");
+
         // test stats collection
         final Map<String, String> emptyMap = Collections.emptyMap();
         Map<String, Object> stats = Commands.runCommand("mntr", q3.getQuorumPeer().getActiveServer(), emptyMap).toMap();
@@ -513,25 +520,18 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher{
         Assert.assertFalse("observer not following leader", !testObserverMaster && learnerMasterId != leaderId);
 
         stats = Commands.runCommand("mntr", q1.getQuorumPeer().getActiveServer(), emptyMap).toMap();
-        Assert.assertEquals("server not emitting synced_observers", testObserverMaster && leaderId != 1,
+        Assert.assertEquals("server not emitting synced_observers", testObserverMaster || leaderId == 1,
                 stats.containsKey("synced_observers"));
         if (stats.containsKey("synced_observers")) {
             Assert.assertEquals(learnerMasterId == 1 ? new Integer(1) : new Integer(0), stats.get("synced_observers"));
         }
 
         stats = Commands.runCommand("mntr", q2.getQuorumPeer().getActiveServer(), emptyMap).toMap();
-        Assert.assertEquals("server not emitting synced_observers", testObserverMaster && leaderId != 2,
+        Assert.assertEquals("server not emitting synced_observers", testObserverMaster || leaderId == 2,
                 stats.containsKey("synced_observers"));
         if (stats.containsKey("synced_observers")) {
             Assert.assertEquals(learnerMasterId == 2 ? new Integer(1) : new Integer(0), stats.get("synced_observers"));
         }
-
-        // Assert that commands are getting forwarded correctly
-        zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_OBS,
-                ClientBase.CONNECTION_TIMEOUT, this);
-        zk.create("/obstest", "test".getBytes(),Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
-        Assert.assertEquals(new String(zk.getData("/obstest", null, null)), "test");
 
         // test admin commands for disconnection
         ObjectName connBean = null;
