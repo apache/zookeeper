@@ -20,9 +20,11 @@ package org.apache.zookeeper.test;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException.NoNodeException;
+import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
@@ -38,10 +40,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.io.StreamCorruptedException;
+import java.nio.channels.FileChannel;
+import java.util.List;
 
 public class LoadFromLogTest extends ClientBase {
     private static final int NUM_MESSAGES = 300;
+    private static final String HOST = "127.0.0.1:";
     protected static final Logger LOG = LoggerFactory.getLogger(LoadFromLogTest.class);
 
     // setting up the quorum has a transaction overhead for creating and closing the session
@@ -306,5 +314,105 @@ public class LoadFromLogTest extends ClientBase {
         stopServer();
 
         startServer();
+    }
+
+    /**
+     * Verify that FileTxnIterator doesn't throw an EOFException when the
+     * transaction log header is incomplete.
+     */
+    @Test
+    public void testIncompleteHeader() throws Exception {
+        ClientBase.setupTestEnv();
+        File dataDir = ClientBase.createTmpDir();
+        loadDatabase(dataDir, NUM_MESSAGES);
+
+        File logDir = new File(dataDir, FileTxnSnapLog.version +
+                                        FileTxnSnapLog.VERSION);
+        FileTxnLog.FileTxnIterator fileItr = new FileTxnLog.FileTxnIterator(logDir, 0);
+        List<File> logFiles = fileItr.getStoredFiles();
+        int numTransactions = 0;
+        while (fileItr.next()) {
+            numTransactions++;
+        }
+        Assert.assertTrue("Verify the number of log files",
+                          logFiles.size() > 0);
+        Assert.assertTrue("Verify the number of transactions",
+                          numTransactions >= NUM_MESSAGES);
+
+        // Truncate the last log file.
+        File lastLogFile = logFiles.get(logFiles.size() - 1);
+        FileChannel channel = new FileOutputStream(lastLogFile).getChannel();
+        channel.truncate(0);
+        channel.close();
+
+        // This shouldn't thow Exception.
+        fileItr = new FileTxnLog.FileTxnIterator(logDir, 0);
+        logFiles = fileItr.getStoredFiles();
+        numTransactions = 0;
+        while (fileItr.next()) {
+        }
+
+        // Verify that the truncated log file does not exist anymore.
+        Assert.assertFalse("Verify truncated log file has been deleted",
+                           lastLogFile.exists());
+    }
+
+    /**
+     * Verifies that FileTxnIterator throws CorruptedStreamException if the
+     * magic number is corrupted.
+     */
+    @Test(expected = StreamCorruptedException.class)
+    public void testCorruptMagicNumber() throws Exception {
+        ClientBase.setupTestEnv();
+        File dataDir = ClientBase.createTmpDir();
+        loadDatabase(dataDir, NUM_MESSAGES);
+
+        File logDir = new File(dataDir, FileTxnSnapLog.version +
+                                        FileTxnSnapLog.VERSION);
+        FileTxnLog.FileTxnIterator fileItr = new FileTxnLog.FileTxnIterator(logDir, 0);
+        List<File> logFiles = fileItr.getStoredFiles();
+        Assert.assertTrue("Verify the number of log files",
+                          logFiles.size() > 0);
+
+        // Corrupt the magic number.
+        File lastLogFile = logFiles.get(logFiles.size() - 1);
+        RandomAccessFile file = new RandomAccessFile(lastLogFile, "rw");
+        file.seek(0);
+        file.writeByte(123);
+        file.close();
+
+        // This should throw CorruptedStreamException.
+        while (fileItr.next()) {
+        }
+    }
+
+    /**
+     * Starts a standalone server and create znodes.
+     */
+    public void loadDatabase(File dataDir, int numEntries) throws Exception {
+        final String hostPort = HOST + PortAssignment.unique();
+        // setup a single server cluster
+        ZooKeeperServer zks = new ZooKeeperServer(dataDir, dataDir, 3000);
+        SyncRequestProcessor.setSnapCount(100);
+        final int PORT = Integer.parseInt(hostPort.split(":")[1]);
+        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
+        f.startup(zks);
+        Assert.assertTrue("waiting for server being up ",
+                ClientBase.waitForServerUp(hostPort,CONNECTION_TIMEOUT));
+        ZooKeeper zk = ClientBase.createZKClient(hostPort);
+
+        // Generate some transactions that will get logged.
+        try {
+            for (int i = 0; i < numEntries; i++) {
+                zk.create("/load-database-" + i, new byte[0],
+                          Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            }
+        } finally {
+            zk.close();
+        }
+        f.shutdown();
+        zks.shutdown();
+        Assert.assertTrue("waiting for server to shutdown",
+                ClientBase.waitForServerDown(hostPort, CONNECTION_TIMEOUT));
     }
 }
