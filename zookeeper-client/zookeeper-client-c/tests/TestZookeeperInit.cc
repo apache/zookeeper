@@ -102,7 +102,7 @@ public:
                 &cid,(void*)1,0);
 
         CPPUNIT_ASSERT(zh != NULL);
-        CPPUNIT_ASSERT(zh->fd == -1);
+        CPPUNIT_ASSERT(zh->fd->sock == -1);
         CPPUNIT_ASSERT(zh->hostname != NULL);
         CPPUNIT_ASSERT_EQUAL(EXPECTED_ADDRS_COUNT,zh->addrs.count);
         CPPUNIT_ASSERT_EQUAL(EXPECTED_HOST,string(zh->hostname));

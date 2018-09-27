@@ -528,7 +528,7 @@ void forceConnected(zhandle_t* zh){
     zh->state=ZOO_CONNECTED_STATE;
 
     // Simulate we're connected to the first host in our host list
-    zh->fd=ZookeeperServer::FD;
+    zh->fd->sock=ZookeeperServer::FD;
     assert(zh->addrs.count > 0);
     zh->addr_cur = zh->addrs.data[0];
     zh->addrs.next++;

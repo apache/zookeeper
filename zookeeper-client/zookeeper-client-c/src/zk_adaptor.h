@@ -185,11 +185,8 @@ typedef struct _auth_list_head {
  * This structure represents the connection to zookeeper.
  */
 struct _zhandle {
-#ifdef WIN32
-    SOCKET fd;                          // the descriptor used to talk to zookeeper
-#else
-    int fd;                             // the descriptor used to talk to zookeeper
-#endif
+
+    zsock_t *fd;
 
     // Hostlist and list of addresses
     char *hostname;                     // hostname contains list of zookeeper servers to connect to
