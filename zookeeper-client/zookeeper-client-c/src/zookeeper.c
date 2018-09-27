@@ -2479,70 +2479,75 @@ int zookeeper_interest(zhandle_t *zh, socket_t *fd, int *interest,
     return api_epilog(zh,ZOK);
 }
 
+#ifdef HAVE_OPENSSL_H
+static int init_ssl(zhandle_t *zh)
+{
+    if (!zh->fd->ssl_sock) {
+        const SSL_METHOD *method;
+
+        OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
+        method = TLS_client_method();
+        zh->fd->ssl_ctx = SSL_CTX_new(method);
+
+        SSL_CTX **ctx = &zh->fd->ssl_ctx;
+
+        SSL_CTX_set_verify(*ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, 0);
+
+        /*SERVER CA FILE*/
+        if (SSL_CTX_load_verify_locations(*ctx, zh->fd->cert->ca, 0) != 1) {
+            SSL_CTX_free(*ctx);
+            printf("Failed to load CA file %s", zh->fd->cert->ca);
+            exit(1);
+        }
+        if (SSL_CTX_set_default_verify_paths(*ctx) != 1) {
+            SSL_CTX_free(*ctx);
+            printf("Call to SSL_CTX_set_default_verify_paths failed");
+            exit(1);
+        }
+        /*CLIENT CA FILE*/
+        if (SSL_CTX_use_certificate_file(*ctx, zh->fd->cert->cert, SSL_FILETYPE_PEM) != 1) {
+            SSL_CTX_free(*ctx);
+            printf("Failed to load client certificate from %s", zh->fd->cert->cert);
+            exit(1);
+        }
+        /*CLIENT PRIVATE KEY*/
+        SSL_CTX_set_default_passwd_cb_userdata(*ctx, zh->fd->cert->passwd);
+        if (SSL_CTX_use_PrivateKey_file(*ctx, zh->fd->cert->key, SSL_FILETYPE_PEM) != 1) {
+            SSL_CTX_free(*ctx);
+            printf("Failed to load client private key from %s", zh->fd->cert->key);
+            exit(1);
+        }
+        /*CHECK*/
+        if (SSL_CTX_check_private_key(*ctx) != 1) {
+            SSL_CTX_free(*ctx);
+            printf("SSL_CTX_check_private_key failed");
+            exit(1);
+        }
+        /*MULTIPLE HANDSHAKE*/
+        SSL_CTX_set_mode(*ctx, SSL_MODE_AUTO_RETRY);
+
+        zh->fd->ssl_sock = SSL_new(*ctx);
+        if (zh->fd->ssl_sock == NULL) {
+            return handle_socket_error_msg(zh,__LINE__,ZSSLCONNECTIONERROR,
+                                           "error creating ssl context");
+        }
+        SSL_set_fd(zh->fd->ssl_sock, zh->fd->sock);
+    }
+
+    return SSL_get_error(zh->fd->ssl_sock, SSL_connect(zh->fd->ssl_sock));
+}
+#endif
+
 static int check_events(zhandle_t *zh, int events)
 {
     if (zh->fd->sock == -1)
         return ZINVALIDSTATE;
+
 #ifdef HAVE_OPENSSL_H
     if (!is_connected(zh) && zh->fd->cert != NULL) {
-        if (!zh->fd->ssl_sock) {
-            const SSL_METHOD *method;
-
-            OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
-            method = TLS_client_method();
-            zh->fd->ssl_ctx = SSL_CTX_new(method);
-
-            SSL_CTX **ctx = &zh->fd->ssl_ctx;
-
-            SSL_CTX_set_verify(*ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, 0);
-
-            /*SERVER CA FILE*/
-            if (SSL_CTX_load_verify_locations(*ctx, zh->fd->cert->ca, 0) != 1) {
-                SSL_CTX_free(*ctx);
-                printf("Failed to load CA file %s", zh->fd->cert->ca);
-                exit(1);
-            }
-            if (SSL_CTX_set_default_verify_paths(*ctx) != 1) {
-                SSL_CTX_free(*ctx);
-                printf("Call to SSL_CTX_set_default_verify_paths failed");
-                exit(1);
-            }
-            /*CLIENT CA FILE*/
-            if (SSL_CTX_use_certificate_file(*ctx, zh->fd->cert->cert, SSL_FILETYPE_PEM) != 1) {
-                SSL_CTX_free(*ctx);
-                printf("Failed to load client certificate from %s", zh->fd->cert->cert);
-                exit(1);
-            }
-            /*CLIENT PRIVATE KEY*/
-            SSL_CTX_set_default_passwd_cb_userdata(*ctx, zh->fd->cert->passwd);
-            if (SSL_CTX_use_PrivateKey_file(*ctx, zh->fd->cert->key, SSL_FILETYPE_PEM) != 1) {
-                SSL_CTX_free(*ctx);
-                printf("Failed to load client private key from %s", zh->fd->cert->key);
-                exit(1);
-            }
-            /*CHECK*/
-            if (SSL_CTX_check_private_key(*ctx) != 1) {
-                SSL_CTX_free(*ctx);
-                printf("SSL_CTX_check_private_key failed");
-                exit(1);
-            }
-            /*MULTIPLE HANDSHAKE*/
-            SSL_CTX_set_mode(*ctx, SSL_MODE_AUTO_RETRY);
-
-            zh->fd->ssl_sock = SSL_new(*ctx);
-            if (zh->fd->ssl_sock == NULL) {
-                return handle_socket_error_msg(zh,__LINE__,ZSSLCONNECTIONERROR,
-                                               "error creating ssl context");
-            }
-            SSL_set_fd(zh->fd->ssl_sock, zh->fd->sock);
-        }
-
-        int err = SSL_get_error(zh->fd->ssl_sock, SSL_connect(zh->fd->ssl_sock));
-        if (err != SSL_ERROR_NONE)
+        if (init_ssl(zh) != SSL_ERROR_NONE) {
             return ZSSLCONNECTIONERROR;
-            /*return handle_socket_error_msg(zh,__LINE__,err,
-                                           "ssl handshaking...");*/
-
+        }
     }
 #endif
 
