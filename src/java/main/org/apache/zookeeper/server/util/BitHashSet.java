@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.server.watch;
+package org.apache.zookeeper.server.util;
 
 import java.util.BitSet;
 import java.util.Set;
@@ -24,15 +24,13 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.lang.Iterable;
 
-import org.apache.zookeeper.server.util.BitMap;
-
 /**
  * Using BitSet to store all the elements, and use HashSet to cache limited
  * number of elements to find a balance between memory and time complexity.
  *
- * Without HashSet, we need to to use O(N) time to get the elements, N is
+ * Without HashSet, we need to use O(N) time to get the elements, N is
  * the bit numbers in elementBits. But we need to keep the size small to make
- * sure it doesn't cost too much in memory, there is a tradeoff between
+ * sure it doesn't cost too much in memory, there is a trade off between
  * memory and time complexity.
  *
  * Previously, was deciding to dynamically switch between SparseBitSet and
@@ -43,14 +41,19 @@ import org.apache.zookeeper.server.util.BitMap;
  */
 public class BitHashSet implements Iterable<Integer> {
 
-    static final long serialVersionUID = 6382565447128283568L;
-
     /**
      * Change to SparseBitSet if we we want to optimize more, the number of
      * elements on a single server is usually limited, so BitSet should be
      * fine.
      */
     private final BitSet elementBits = new BitSet();
+
+    /**
+     * HashSet is used to optimize the iterating, if there is a single 
+     * element in this BitHashSet, but the bit is very large, without 
+     * HashSet we need to go through all the words before return that 
+     * element, which is not efficient.
+     */
     private final Set<Integer> cache = new HashSet<Integer>();
 
     private final int cacheSize;

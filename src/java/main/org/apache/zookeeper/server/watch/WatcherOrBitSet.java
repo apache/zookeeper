@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.watch;
 
 import java.util.Set;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.server.util.BitHashSet;
 
 public class WatcherOrBitSet {
 

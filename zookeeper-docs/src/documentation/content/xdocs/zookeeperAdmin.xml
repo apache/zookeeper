@@ -1031,12 +1031,12 @@ server.3=zoo3:2888:3888</programlisting>
 
             <listitem>
               <para>(Java system property only: <emphasis
-                    role="bold">zookeeper.watchManaggerName</emphasis>)</para>
+                    role="bold">zookeeper.watchManagerName</emphasis>)</para>
 
               <para><emphasis role="bold">New in 3.6.0:</emphasis> Added in
                 <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1179">ZOOKEEPER-1179</ulink> New watcher
                 manager WatchManagerOptimized is added to optimize the memory overhead in heavy watch use cases. This
-                config is used define which watch manager to be used. Currently, we only support WatchManager and
+                config is used to define which watcher manager to be used. Currently, we only support WatchManager and
                 WatchManagerOptimized.</para>
             </listitem>
           </varlistentry>
@@ -1052,7 +1052,7 @@ server.3=zoo3:2888:3888</programlisting>
                 <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1179">ZOOKEEPER-1179</ulink> The new watcher
                 manager WatchManagerOptimized will clean up the dead watchers lazily, this config is used to decide how
                 many thread is used in the WatcherCleaner. More thread usually means larger clean up throughput. The
-                default value is 2, which is good enough even for heavy and continuous session closing/receating cases.</para>
+                default value is 2, which is good enough even for heavy and continuous session closing/recreating cases.</para>
             </listitem>
           </varlistentry>
 
@@ -1114,9 +1114,9 @@ server.3=zoo3:2888:3888</programlisting>
 
               <para><emphasis role="bold">New 3.6.0:</emphasis> Added in
                 <ulink url="https://issues.apache.org/jira/browse/ZOOKEEPER-1179">ZOOKEEPER-1179</ulink> This is the
-                settin used to decide the HashSet cache size in the BitHashSet implementation. Without HashSet, we
-                need to to use O(N) time to get the elements, N is the bit numbers in elementBits. But we need to
-                keep the size small to make sure it doesn't cost too much in memory, there is a tradeoff between memory
+                setting used to decide the HashSet cache size in the BitHashSet implementation. Without HashSet, we
+                need to use O(N) time to get the elements, N is the bit numbers in elementBits. But we need to
+                keep the size small to make sure it doesn't cost too much in memory, there is a trade off between memory
                 and time complexity. The default value is 10, which seems a relatively reasonable cache size.</para>
             </listitem>
           </varlistentry>

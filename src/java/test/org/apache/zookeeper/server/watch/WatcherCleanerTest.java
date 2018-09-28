@@ -28,7 +28,7 @@ import org.junit.Assert;
 
 public class WatcherCleanerTest extends ZKTestCase {
 
-    public static class MyDeadWatcherListener implements DeadWatcherListener {
+    public static class MyDeadWatcherListener implements IDeadWatcherListener {
 
         private CountDownLatch latch;
         private int delayMs;

@@ -21,6 +21,7 @@ import java.util.HashSet;
 
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.server.DumbWatcher;
+import org.apache.zookeeper.server.util.BitHashSet;
 
 import org.apache.zookeeper.ZKTestCase;
 import org.junit.Test;

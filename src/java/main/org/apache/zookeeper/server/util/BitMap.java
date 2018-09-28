@@ -38,6 +38,13 @@ public class BitMap<T> {
     private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 
     public Integer add(T value) {
+        /*
+         * Optimized for code which will add the same value again and again,
+         * more specifically this is used to add new bit for watcher, and
+         * the same watcher may watching thousands or even millions of nodes,
+         * which will call add the same value of this function, check exist
+         * using read lock will optimize the performance here.
+         */
         Integer bit = getBit(value);
         if (bit != null) {
             return bit;
@@ -83,6 +90,10 @@ public class BitMap<T> {
     }
 
     public int remove(T value) {
+        /*
+         * remove only called once when the session is closed, so use write 
+         * lock directly without checking read lock.
+         */
         rwLock.writeLock().lock();
         try {
             Integer bit = value2Bit.get(value);

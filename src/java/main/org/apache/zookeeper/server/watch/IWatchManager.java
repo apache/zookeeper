@@ -19,19 +19,9 @@
 package org.apache.zookeeper.server.watch;
 
 import java.io.PrintWriter;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
-import org.apache.zookeeper.server.ServerCnxn;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public interface IWatchManager {
 
@@ -46,7 +36,7 @@ public interface IWatchManager {
     public boolean addWatch(String path, Watcher watcher);
 
     /**
-     * Checks the specified watcher exists for the given path
+     * Checks the specified watcher exists for the given path.
      *
      * @param path znode path
      * @param watcher watcher object reference
@@ -56,7 +46,7 @@ public interface IWatchManager {
     public boolean containsWatcher(String path, Watcher watcher);
 
     /**
-     * Removes the specified watcher for the given path
+     * Removes the specified watcher for the given path.
      *
      * @param path znode path
      * @param watcher watcher object reference
@@ -84,16 +74,16 @@ public interface IWatchManager {
 
     /**
      * Distribute the watch event for the given path, but ignore those
-     * supressed ones.
+     * suppressed ones.
      *
      * @param path znode path
      * @param type the watch event type
-     * @param supress the supressed watcher set
+     * @param suppress the suppressed watcher set
      *
      * @return the watchers have been notified
      */
     public WatcherOrBitSet triggerWatch(
-            String path, EventType type, WatcherOrBitSet supress);
+            String path, EventType type, WatcherOrBitSet suppress);
 
     /**
      * Get the size of watchers.

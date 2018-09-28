@@ -54,13 +54,13 @@ public class WatcherCleaner extends Thread {
     private final WorkerService cleaners;
 
     private final Set<Integer> deadWatchers;
-    private final DeadWatcherListener listener;
+    private final IDeadWatcherListener listener;
     private final int watcherCleanThreshold;
     private final int watcherCleanIntervalInSeconds;
     private final int maxInProcessingDeadWatchers;
     private final AtomicInteger totalDeadWatchers = new AtomicInteger();
 
-    public WatcherCleaner(DeadWatcherListener listener) {
+    public WatcherCleaner(IDeadWatcherListener listener) {
         this(listener,
             Integer.getInteger("zookeeper.watcherCleanThreshold", 1000),
             Integer.getInteger("zookeeper.watcherCleanIntervalInSeconds", 600),
@@ -68,7 +68,7 @@ public class WatcherCleaner extends Thread {
             Integer.getInteger("zookeeper.maxInProcessingDeadWatchers", -1));
     }
 
-    public WatcherCleaner(DeadWatcherListener listener,
+    public WatcherCleaner(IDeadWatcherListener listener,
             int watcherCleanThreshold, int watcherCleanIntervalInSeconds,
             int watcherCleanThreadsNum, int maxInProcessingDeadWatchers) {
         this.listener = listener;
@@ -127,6 +127,8 @@ public class WatcherCleaner extends Thread {
         while (!stopped) {
             synchronized (cleanEvent) {
                 try {
+                    // add some jitter to avoid cleaning dead watchers at the
+                    // same time in the quorum
                     if (deadWatchers.size() < watcherCleanThreshold) {
                         int maxWaitMs = (watcherCleanIntervalInSeconds +
                             r.nextInt(watcherCleanIntervalInSeconds / 2 + 1)) * 1000;
@@ -144,12 +146,16 @@ public class WatcherCleaner extends Thread {
             }
 
             synchronized (this) {
-                // Snapshot of the current dead watchers
+                // Clean the dead watchers need to go through all the current 
+                // watches, which is pretty heavy and may take a second if 
+                // there are millions of watches, that's why we're doing lazily 
+                // batch clean up in a separate thread with a snapshot of the 
+                // current dead watchers.
                 final Set<Integer> snapshot = new HashSet<Integer>(deadWatchers);
                 deadWatchers.clear();
                 int total = snapshot.size();
                 LOG.info("Processing {} dead watchers", total);
-						    cleaners.schedule(new WorkRequest() {
+                cleaners.schedule(new WorkRequest() {
                     @Override
                     public void doWork() throws Exception {
                         long startTime = Time.currentElapsedTime();

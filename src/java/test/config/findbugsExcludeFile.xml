@@ -108,7 +108,7 @@
   <!-- The iterate function is non-thread safe, the caller will synchronize
        on the BitHHashSet object -->
   <Match>
-    <Class name="org.apache.zookeeper.server.watch.BitHashSet" />
+    <Class name="org.apache.zookeeper.server.util.BitHashSet" />
     <Field name="elementCount" />
     <Bug code="IS" />
   </Match>

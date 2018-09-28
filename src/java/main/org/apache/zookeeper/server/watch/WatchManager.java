@@ -141,9 +141,6 @@ public class WatchManager implements IWatchManager {
         return new WatcherOrBitSet(watchers);
     }
 
-    /**
-     * Brief description of this object.
-     */
     @Override
     public synchronized String toString() {
         StringBuilder sb = new StringBuilder();
@@ -183,15 +180,6 @@ public class WatchManager implements IWatchManager {
         }
     }
 
-    /**
-     * Checks the specified watcher exists for the given path
-     *
-     * @param path
-     *            znode path
-     * @param watcher
-     *            watcher object reference
-     * @return true if the watcher exists, false otherwise
-     */
     @Override
     public synchronized boolean containsWatcher(String path, Watcher watcher) {
         Set<String> paths = watch2Paths.get(watcher);
@@ -201,15 +189,6 @@ public class WatchManager implements IWatchManager {
         return true;
     }
 
-    /**
-     * Removes the specified watcher for the given path
-     *
-     * @param path
-     *            znode path
-     * @param watcher
-     *            watcher object reference
-     * @return true if the watcher successfully removed, false otherwise
-     */
     @Override
     public synchronized boolean removeWatcher(String path, Watcher watcher) {
         Set<String> paths = watch2Paths.get(watcher);

@@ -24,14 +24,13 @@ import java.nio.ByteBuffer;
 import java.security.cert.Certificate;
 
 import org.apache.jute.Record;
-import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerStats;
 
 /**
- * A empthy watcher implementation used in bench and unit test.
+ * A empty watcher implementation used in bench and unit test.
  */
 public class DumbWatcher extends ServerCnxn {
 
