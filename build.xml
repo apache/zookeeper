@@ -91,6 +91,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="src.dir" value="${basedir}/src" />
     <property name="java.src.dir" value="${src.dir}/java/main" />
     <property name="jute.src.dir" value="${basedir}/zookeeper-jute/src/main/java" />
+    <property name="java.test.dir" value="${src.dir}/test/java"/>
 
     <property name="lib.dir" value="${src.dir}/java/lib" />
     <property name="lib.dir.includes" value="**/*.jar" />
@@ -121,6 +122,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="test.src.dir" value="${src.dir}/java/test"/>
     <property name="jute.test.src.dir" value="${basedir}/zookeeper-jute/src/test/java" />
     <property name="systest.src.dir" value="${src.dir}/java/systest"/>
+    <property name="bench.src.dir" value="${java.test.dir}/bench"/>
     <property name="test.log.dir" value="${test.java.build.dir}/logs" />
     <property name="test.data.dir" value="${test.java.build.dir}/data" />
     <property name="test.data.invalid.dir" value="${test.data.dir}/invalidsnap" />
@@ -233,6 +235,8 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
 
     <property name="hamcrest.version" value="1.3"/>
+
+    <property name="jmh.version" value="1.19"/>
 
     <!-- ====================================================== -->
     <!-- Macro definitions                                      -->
@@ -509,6 +513,10 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <javac srcdir="${systest.src.dir}" destdir="${test.java.classes}" includeantruntime="false"
              target="${javac.target}" source="${javac.source}" debug="on" encoding="${build.encoding}">
         <classpath refid="test.java.classpath"/>
+      </javac>
+      <javac srcdir="${bench.src.dir}" destdir="${test.java.classes}" includeantruntime="false"
+             target="${javac.target}" source="${javac.source}" debug="on" encoding="${build.encoding}">
+          <classpath refid="test.java.classpath"/>
       </javac>
     </target>
 
@@ -1967,7 +1975,9 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
                    output="${build.dir.eclipse-test-classes}" />
            <source path="${systest.src.dir}"
                    output="${build.dir.eclipse-test-classes}" />
-
+           <source path="${bench.src.dir}"
+                   output="${build.dir.eclipse-test-classes}" />
+                   
            <output path="${build.dir.eclipse-main-classes}" />
            <library pathref="default.path.id" exported="true" />
            <library pathref="junit.path.id" exported="false" />

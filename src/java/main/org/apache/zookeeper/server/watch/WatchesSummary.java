@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.server;
+package org.apache.zookeeper.server.watch;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

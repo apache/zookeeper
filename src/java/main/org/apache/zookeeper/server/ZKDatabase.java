@@ -138,6 +138,7 @@ public class ZKDatabase {
         /* to be safe we just create a new
          * datatree.
          */
+        dataTree.shutdownWatcher();
         dataTree = createDataTree();
         sessionsWithTimeouts.clear();
         WriteLock lock = logLock.writeLock();

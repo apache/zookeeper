@@ -39,6 +39,12 @@ import org.apache.zookeeper.common.PathTrie;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.data.StatPersisted;
+import org.apache.zookeeper.server.watch.IWatchManager;
+import org.apache.zookeeper.server.watch.WatchManagerFactory;
+import org.apache.zookeeper.server.watch.WatcherOrBitSet;
+import org.apache.zookeeper.server.watch.WatchesPathReport;
+import org.apache.zookeeper.server.watch.WatchesReport;
+import org.apache.zookeeper.server.watch.WatchesSummary;
 import org.apache.zookeeper.txn.CheckVersionTxn;
 import org.apache.zookeeper.txn.CreateContainerTxn;
 import org.apache.zookeeper.txn.CreateTTLTxn;
@@ -87,9 +93,9 @@ public class DataTree {
     private final ConcurrentHashMap<String, DataNode> nodes =
         new ConcurrentHashMap<String, DataNode>();
 
-    private final WatchManager dataWatches = new WatchManager();
+    private IWatchManager dataWatches;
 
-    private final WatchManager childWatches = new WatchManager();
+    private IWatchManager childWatches;
 
     /** cached total size of paths and data for all DataNodes */
     private final AtomicLong nodeDataSize = new AtomicLong(0);
@@ -253,6 +259,14 @@ public class DataTree {
         addConfigNode();
 
         nodeDataSize.set(approximateDataSize());
+        try {
+            dataWatches = WatchManagerFactory.createWatchManager();
+            childWatches = WatchManagerFactory.createWatchManager();
+        } catch (Exception e) {
+            LOG.error("Unexpected exception when creating WatchManager, " +
+                    "exiting abnormally", e);
+            System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
+        }
     }
 
     /**
@@ -611,7 +625,7 @@ public class DataTree {
             ZooTrace.logTraceMessage(LOG, ZooTrace.EVENT_DELIVERY_TRACE_MASK,
                     "childWatches.triggerWatch " + parentName);
         }
-        Set<Watcher> processed = dataWatches.triggerWatch(path,
+        WatcherOrBitSet processed = dataWatches.triggerWatch(path,
                 EventType.NodeDeleted);
         childWatches.triggerWatch(path, EventType.NodeDeleted, processed);
         childWatches.triggerWatch("".equals(parentName) ? "/" : parentName,
@@ -1359,6 +1373,11 @@ public class DataTree {
                 }
             }
         }
+    }
+
+    public void shutdownWatcher() {
+        dataWatches.shutdown();
+        childWatches.shutdown();
     }
 
     /**

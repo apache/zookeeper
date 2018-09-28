@@ -54,7 +54,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
     // (aka owned by) this class
     final public static Object me = new Object();
     private static final Logger LOG = LoggerFactory.getLogger(ServerCnxn.class);
-    
+
     private Set<Id> authInfo = Collections.newSetFromMap(new ConcurrentHashMap<Id, Boolean>());
 
     private static final byte[] fourBytes = new byte[4];
@@ -65,6 +65,8 @@ public abstract class ServerCnxn implements Stats, Watcher {
      * results in TCP RST packet, i.e. "connection reset by peer".
      */
     boolean isOldClient = true;
+
+    private volatile boolean stale = false;
 
     abstract int getSessionTimeout();
 
@@ -143,6 +145,14 @@ public abstract class ServerCnxn implements Stats, Watcher {
         }
     }
 
+    public boolean isStale() {
+        return stale;
+    }
+
+    public void setStale() {
+        stale = true;
+    }
+
     protected void packetReceived(long bytes) {
         incrPacketsReceived();
         ServerStats serverStats = serverStats();
@@ -196,7 +206,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
     protected long incrPacketsReceived() {
         return packetsReceived.incrementAndGet();
     }
-    
+
     protected void incrOutstandingRequests(RequestHeader h) {
     }
 
@@ -293,7 +303,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
     public abstract boolean isSecure();
     public abstract Certificate[] getClientCertificateChain();
     public abstract void setClientCertificateChain(Certificate[] chain);
-    
+
     /**
      * Print information about the connection.
      * @param brief iff true prints brief details, otw full detail

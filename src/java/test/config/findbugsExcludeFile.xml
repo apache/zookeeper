@@ -53,7 +53,13 @@
     <Method name="run" />
     <Bug pattern="DM_EXIT" />
   </Match>
-  
+
+   <!-- Failed to create watch manager is a unrecoverable error -->
+   <Match>
+     <Class name="org.apache.zookeeper.server.DataTree" />
+     <Bug pattern="DM_EXIT" />
+   </Match>
+
   <Match>
     <Package name="org.apache.jute.compiler.generated" />
   </Match>
@@ -85,7 +91,7 @@
 
   <Match>
     <Class name="org.apache.zookeeper.server.DataNode"/>
-      <Field name="children"/> 
+      <Field name="children"/>
       <Bug code="IS"/>
   </Match>
  <Match>
@@ -98,6 +104,15 @@
     <Field name="serverStats"/>
     <Bug code="IS"/>
   </Match>
+
+  <!-- The iterate function is non-thread safe, the caller will synchronize
+       on the BitHHashSet object -->
+  <Match>
+    <Class name="org.apache.zookeeper.server.util.BitHashSet" />
+    <Field name="elementCount" />
+    <Bug code="IS" />
+  </Match>
+
   <Match>
      <Class name="org.apache.zookeeper.server.quorum.LearnerSessionTracker"/>
        <Bug code="UrF"/>
@@ -111,7 +126,7 @@
   <!-- these are old classes just for upgrading and should go away -->
   <Match>
     <Class name="org.apache.zookeeper.server.upgrade.DataNodeV1"/>
-  </Match> 
+  </Match>
 
   <Match>
     <Class name="org.apache.zookeeper.server.upgrade.DataTreeV1"/>
@@ -133,6 +148,23 @@
       <Method name="run" />
     </Or>
   </Match>
+
+  <!-- Synchronize on the AtomicInteger to do wait/notify, but not relying
+       on the synchronization to control the AtomicInteger value update,
+       so it's not a problem -->
+  <Match>
+    <Class name="org.apache.zookeeper.server.watch.WatcherCleaner" />
+    <Bug code="JLM" />
+    <Method name="addDeadWatcher" />
+  </Match>
+
+  <Match>
+    <Class name="org.apache.zookeeper.server.watch.WatcherCleaner$1" />
+    <Bug code="JLM" />
+    <Method name="doWork" />
+  </Match>
+
+
 
   <Match>
     <Class name="org.apache.zookeeper.server.quorum.QuorumPeer"/>
