@@ -137,6 +137,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         public String hostname;
         
         public LearnerType type = LearnerType.PARTICIPANT;
+
+        public boolean isClientAddrFromStatic = false;
         
         private List<InetSocketAddress> myAddrs;
 
@@ -306,7 +308,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             }           
             if (type == LearnerType.OBSERVER) sw.append(":observer");
             else if (type == LearnerType.PARTICIPANT) sw.append(":participant");            
-            if (clientAddr!=null){
+            if (clientAddr!=null && !isClientAddrFromStatic){
                 sw.append(";");
                 sw.append(delimitedHostString(clientAddr));
                 sw.append(":");
@@ -1602,7 +1604,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     private boolean needEraseClientInfoFromStaticConfig() {
         QuorumServer server = quorumVerifier.getAllMembers().get(getId());
-        return (server != null && server.clientAddr != null);
+        return (server != null && server.clientAddr != null && !server.isClientAddrFromStatic);
     }
 
     /**
