@@ -566,4 +566,25 @@ public class ZooKeeperTest extends ClientBase {
             Assert.assertEquals(KeeperException.Code.NONODE, ((KeeperException)e.getCause()).code());
         }
     }
+
+    public void testSetAclRecursive() throws Exception {
+        final ZooKeeper zk = createClient();
+        final byte[] EMPTY = new byte[0];
+
+        zk.setData("/", EMPTY, -1);
+        zk.create("/a", EMPTY, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/a/b", EMPTY, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/a/b/c", EMPTY, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/a/d", EMPTY, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        ZooKeeperMain zkMain = new ZooKeeperMain(zk);
+        String setAclCommand = "setAcl -R /a world:anyone:r";
+        zkMain.cl.parseCommand(setAclCommand);
+        Assert.assertFalse(zkMain.processZKCmd(zkMain.cl));
+
+        Assert.assertEquals(zk.getACL("/a", new Stat()), Ids.READ_ACL_UNSAFE);
+        Assert.assertEquals(zk.getACL("/a/b", new Stat()), Ids.READ_ACL_UNSAFE);
+        Assert.assertEquals(zk.getACL("/a/b/c", new Stat()), Ids.READ_ACL_UNSAFE);
+        Assert.assertEquals(zk.getACL("/a/d", new Stat()), Ids.READ_ACL_UNSAFE);
+    }
 }
