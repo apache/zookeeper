@@ -70,15 +70,14 @@ public class EphemeralTypeTest {
 
     @Test
     public void testServerIds() {
-        for ( int i = 0; i < 255; ++i ) {
-            Assert.assertEquals(EphemeralType.NORMAL, EphemeralType.get(SessionTrackerImpl.initializeNextSession(i)));
+        for ( int i = 0; i <= EphemeralType.MAX_EXTENDED_SERVER_ID; ++i ) {
+            EphemeralType.validateServerId(i);
         }
         try {
-            Assert.assertEquals(EphemeralType.TTL, EphemeralType.get(SessionTrackerImpl.initializeNextSession(255)));
-            Assert.fail("Should have thrown IllegalArgumentException");
-        } catch (IllegalArgumentException e) {
+            EphemeralType.validateServerId(EphemeralType.MAX_EXTENDED_SERVER_ID + 1);
+            Assert.fail("Should have thrown RuntimeException");
+        } catch (RuntimeException e) {
             // expected
         }
-        Assert.assertEquals(EphemeralType.NORMAL, EphemeralType.get(SessionTrackerImpl.initializeNextSession(EphemeralType.MAX_EXTENDED_SERVER_ID)));
     }
 }
