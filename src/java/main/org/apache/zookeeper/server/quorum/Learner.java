@@ -247,7 +247,7 @@ public class Learner {
      * @throws InterruptedException
      */
     protected void connectToLeader(InetSocketAddress addr, String hostname)
-    throws IOException, InterruptedException, X509Exception {
+            throws IOException, InterruptedException, X509Exception {
         this.sock = createSocket();
 
         int initLimitTime = self.tickTime * self.initLimit;

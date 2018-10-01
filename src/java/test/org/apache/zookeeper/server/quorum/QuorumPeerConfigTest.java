@@ -27,8 +27,6 @@ import java.io.IOException;
 import java.util.Properties;
 
 import org.apache.zookeeper.common.ClientX509Util;
-import org.apache.zookeeper.common.X509Util;
-import org.apache.zookeeper.common.ZKConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.junit.Test;
 

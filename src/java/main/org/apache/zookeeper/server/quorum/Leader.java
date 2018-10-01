@@ -255,7 +255,7 @@ public class Leader {
                 ss.bind(self.getQuorumAddress());
             }
         } catch (X509Exception e) {
-            LOG.error("failed to setup ssl server socket", e);
+            LOG.error("Failed to setup ssl server socket", e);
             throw e;
         } catch (BindException e) {
             if (self.getQuorumListenOnAllIPs()) {

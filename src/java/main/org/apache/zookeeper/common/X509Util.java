@@ -195,7 +195,8 @@ public abstract class X509Util {
 
         boolean sslCrlEnabled = config.getBoolean(this.sslCrlEnabledProperty);
         boolean sslOcspEnabled = config.getBoolean(this.sslOcspEnabledProperty);
-        boolean sslServerHostnameVerificationEnabled = config.getBoolean(this.getSslHostnameVerificationEnabledProperty(), true);
+        boolean sslServerHostnameVerificationEnabled =
+                config.getBoolean(this.getSslHostnameVerificationEnabledProperty(),true);
         boolean sslClientHostnameVerificationEnabled = sslServerHostnameVerificationEnabled && shouldVerifyClientHostname();
 
         if (trustStoreLocationProp == null) {
@@ -278,7 +279,6 @@ public abstract class X509Util {
                 if (ocspEnabled) {
                     Security.setProperty("ocsp.enable", "true");
                 }
-
             } else {
                 pbParams.setRevocationEnabled(false);
             }
@@ -323,12 +323,10 @@ public abstract class X509Util {
     }
 
     private void configureSSLSocket(SSLSocket sslSocket) {
-        if (cipherSuites != null) {
-            SSLParameters sslParameters = sslSocket.getSSLParameters();
-            LOG.debug("Setup cipher suites for client socket: {}", Arrays.toString(cipherSuites));
-            sslParameters.setCipherSuites(cipherSuites);
-            sslSocket.setSSLParameters(sslParameters);
-        }
+        SSLParameters sslParameters = sslSocket.getSSLParameters();
+        LOG.debug("Setup cipher suites for client socket: {}", Arrays.toString(cipherSuites));
+        sslParameters.setCipherSuites(cipherSuites);
+        sslSocket.setSSLParameters(sslParameters);
     }
 
     public SSLServerSocket createSSLServerSocket() throws X509Exception, IOException {
@@ -348,11 +346,8 @@ public abstract class X509Util {
     private void configureSSLServerSocket(SSLServerSocket sslServerSocket) {
         SSLParameters sslParameters = sslServerSocket.getSSLParameters();
         sslParameters.setNeedClientAuth(true);
-        if (cipherSuites != null) {
-            LOG.debug("Setup cipher suites for server socket: {}", Arrays.toString(cipherSuites));
-            sslParameters.setCipherSuites(cipherSuites);
-        }
-
+        LOG.debug("Setup cipher suites for server socket: {}", Arrays.toString(cipherSuites));
+        sslParameters.setCipherSuites(cipherSuites);
         sslServerSocket.setSSLParameters(sslParameters);
     }
 

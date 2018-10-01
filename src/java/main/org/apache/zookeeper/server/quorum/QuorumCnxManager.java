@@ -547,6 +547,7 @@ public class QuorumCnxManager {
             closeSocket(sock);
             return;
         }
+
         // do authenticating learner
         authServer.authenticate(sock, din);
         //If wins the challenge, then close the new connection.
@@ -639,49 +640,50 @@ public class QuorumCnxManager {
 
         Socket sock = null;
         try {
-             LOG.debug("Opening channel to server " + sid);
-             if (self.isSslQuorum()) {
-                 SSLSocket sslSock = x509Util.createSSLSocket();
-                 setSockOpts(sslSock);
-                 sslSock.connect(electionAddr, cnxTO);
-                 sslSock.startHandshake();
-                 sock = sslSock;
-             } else {
-                 sock = new Socket();
-                 setSockOpts(sock);
-                 sock.connect(electionAddr, cnxTO);
-
-             }
-             LOG.debug("Connected to server " + sid);
+            LOG.debug("Opening channel to server " + sid);
+            if (self.isSslQuorum()) {
+                SSLSocket sslSock = x509Util.createSSLSocket();
+                setSockOpts(sslSock);
+                sslSock.connect(electionAddr, cnxTO);
+                sslSock.startHandshake();
+                sock = sslSock;
+            } else {
+                sock = new Socket();
+                setSockOpts(sock);
+                sock.connect(electionAddr, cnxTO);
+            }
+            LOG.debug("Connected to server " + sid);
             // Sends connection request asynchronously if the quorum
             // sasl authentication is enabled. This is required because
             // sasl server authentication process may take few seconds to
             // finish, this may delay next peer connection requests.
             if (quorumSaslAuthEnabled) {
                 initiateConnectionAsync(sock, sid);
-            } else { initiateConnection(sock, sid);
-            } return true;
-         } catch (UnresolvedAddressException e) {
-             // Sun doesn't include the address that causes this
-             // exception to be thrown, also UAE cannot be wrapped cleanly
-             // so we log the exception in order to capture this critical
-             // detail.
-             LOG.warn("Cannot open channel to " + sid
-                     + " at election address " + electionAddr, e);
-             closeSocket(sock);
-             throw e;} catch (X509Exception e) {
+            } else {
+                initiateConnection(sock, sid);
+            }
+            return true;
+        } catch (UnresolvedAddressException e) {
+            // Sun doesn't include the address that causes this
+            // exception to be thrown, also UAE cannot be wrapped cleanly
+            // so we log the exception in order to capture this critical
+            // detail.
+            LOG.warn("Cannot open channel to " + sid
+                    + " at election address " + electionAddr, e);
+            closeSocket(sock);
+            throw e;
+        } catch (X509Exception e) {
             LOG.warn("Cannot open secure channel to " + sid
-              + " at election address " + electionAddr, e);
+                    + " at election address " + electionAddr, e);
             closeSocket(sock);
             return false;
-         } catch (IOException e) {
-             LOG.warn("Cannot open channel to " + sid
-                     + " at election address " + electionAddr,
-                     e);
-             closeSocket(sock);
-             return false;
-         }
-   
+        } catch (IOException e) {
+            LOG.warn("Cannot open channel to " + sid
+                            + " at election address " + electionAddr,
+                    e);
+            closeSocket(sock);
+            return false;
+        }
     }
     
     /**
