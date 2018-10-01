@@ -80,6 +80,7 @@ import org.bouncycastle.util.io.pem.PemWriter;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
@@ -441,6 +442,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         Assert.assertFalse(ClientBase.waitForServerUp("127.0.0.1:" + clientPortQp3, CONNECTION_TIMEOUT));
     }
 
+    @Ignore("portUnification is currently broken and disabled")
     @Test
     public void testRollingUpgrade() throws Exception {
         // Form a quorum without ssl

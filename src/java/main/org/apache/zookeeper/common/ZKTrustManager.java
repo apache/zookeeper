@@ -52,11 +52,8 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
      * @param x509ExtendedTrustManager The trustmanager to use for checkClientTrusted/checkServerTrusted logic
      * @param serverHostnameVerificationEnabled  If true, this TrustManager should verify hostnames of servers that this
      *                                 instance connects to.
-     * @param clientHostnameVerificationEnabled  If true, and verifySSLServerHostname is true, the hostname of a client
-     *                                 connecting to this machine will be verified in addition to the servers that this
-     *                                 instance connects to. If false, and verifySSLServerHostname is true, only
-     *                                 the hostnames of servers that this instance connects to will be verified. If
-     *                                 verifySSLServerHostname is false, this argument is ignored.
+     * @param clientHostnameVerificationEnabled  If true, the hostname of a client connecting to this machine will be
+     *                                           verified.
      */
     ZKTrustManager(X509ExtendedTrustManager x509ExtendedTrustManager, boolean serverHostnameVerificationEnabled,
                    boolean clientHostnameVerificationEnabled) {
