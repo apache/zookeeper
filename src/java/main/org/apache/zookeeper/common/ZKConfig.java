@@ -50,6 +50,7 @@ public class ZKConfig {
     public static final String SSL_TRUSTSTORE_LOCATION = X509Util.SSL_TRUSTSTORE_LOCATION;
     @SuppressWarnings("deprecation")
     public static final String SSL_TRUSTSTORE_PASSWD = X509Util.SSL_TRUSTSTORE_PASSWD;
+    public static final String SSL_CLIENT_CONTEXT = "zookeeper.ssl.client.context";
     @SuppressWarnings("deprecation")
     public static final String SSL_AUTHPROVIDER = X509Util.SSL_AUTHPROVIDER;
     public static final String JUTE_MAXBUFFER = "jute.maxbuffer";

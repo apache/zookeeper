@@ -85,60 +85,73 @@ public class X509Util {
     }
 
     public static SSLContext createSSLContext(ZKConfig config) throws SSLContextException {
-        KeyManager[] keyManagers = null;
-        TrustManager[] trustManagers = null;
-
-        String keyStoreLocationProp = config.getProperty(ZKConfig.SSL_KEYSTORE_LOCATION);
-        String keyStorePasswordProp = config.getProperty(ZKConfig.SSL_KEYSTORE_PASSWD);
-
-        // There are legal states in some use cases for null KeyManager or TrustManager.
-        // But if a user wanna specify one, location and password are required.
-
-        if (keyStoreLocationProp == null && keyStorePasswordProp == null) {
-            LOG.warn("keystore not specified for client connection");
-        } else {
-            if (keyStoreLocationProp == null) {
-                throw new SSLContextException("keystore location not specified for client connection");
-            }
-            if (keyStorePasswordProp == null) {
-                throw new SSLContextException("keystore password not specified for client connection");
-            }
+        if (config.getProperty(ZKConfig.SSL_CLIENT_CONTEXT) != null) {
+            LOG.debug("Loading SSLContext from property '" + ZKConfig.SSL_CLIENT_CONTEXT + "'");
+            String sslClientContextClass = config.getProperty(ZKConfig.SSL_CLIENT_CONTEXT);
             try {
-                keyManagers = new KeyManager[]{
-                        createKeyManager(keyStoreLocationProp, keyStorePasswordProp)};
-            } catch (KeyManagerException e) {
-                throw new SSLContextException("Failed to create KeyManager", e);
+                Class<?> sslContextClass = Class.forName(sslClientContextClass);
+                ZKClientSSLContext sslContext = (ZKClientSSLContext) sslContextClass.newInstance();
+                return sslContext.getSSLContext();
+            } catch (ClassNotFoundException | ClassCastException | InstantiationException | IllegalAccessException e) {
+                throw new SSLContextException("Could not retrieve the SSLContext from source '" + sslClientContextClass +
+                        "' provided in the property '" + ZKConfig.SSL_CLIENT_CONTEXT + "'", e);
             }
-        }
-
-        String trustStoreLocationProp = config.getProperty(ZKConfig.SSL_TRUSTSTORE_LOCATION);
-        String trustStorePasswordProp = config.getProperty(ZKConfig.SSL_TRUSTSTORE_PASSWD);
-
-        if (trustStoreLocationProp == null && trustStorePasswordProp == null) {
-            LOG.warn("Truststore not specified for client connection");
         } else {
-            if (trustStoreLocationProp == null) {
-                throw new SSLContextException("Truststore location not specified for client connection");
-            }
-            if (trustStorePasswordProp == null) {
-                throw new SSLContextException("Truststore password not specified for client connection");
-            }
-            try {
-                trustManagers = new TrustManager[]{
-                        createTrustManager(trustStoreLocationProp, trustStorePasswordProp)};
-            } catch (TrustManagerException e) {
-                throw new SSLContextException("Failed to create TrustManager", e);
-            }
-        }
+            KeyManager[] keyManagers = null;
+            TrustManager[] trustManagers = null;
 
-        SSLContext sslContext = null;
-        try {
-            sslContext = SSLContext.getInstance("TLSv1");
-            sslContext.init(keyManagers, trustManagers, null);
-        } catch (Exception e) {
-            throw new SSLContextException(e);
+            String keyStoreLocationProp = config.getProperty(ZKConfig.SSL_KEYSTORE_LOCATION);
+            String keyStorePasswordProp = config.getProperty(ZKConfig.SSL_KEYSTORE_PASSWD);
+
+            // There are legal states in some use cases for null KeyManager or TrustManager.
+            // But if a user wanna specify one, location and password are required.
+
+            if (keyStoreLocationProp == null && keyStorePasswordProp == null) {
+                LOG.warn("keystore not specified for client connection");
+            } else {
+                if (keyStoreLocationProp == null) {
+                    throw new SSLContextException("keystore location not specified for client connection");
+                }
+                if (keyStorePasswordProp == null) {
+                    throw new SSLContextException("keystore password not specified for client connection");
+                }
+                try {
+                    keyManagers = new KeyManager[]{
+                            createKeyManager(keyStoreLocationProp, keyStorePasswordProp)};
+                } catch (KeyManagerException e) {
+                    throw new SSLContextException("Failed to create KeyManager", e);
+                }
+            }
+
+            String trustStoreLocationProp = config.getProperty(ZKConfig.SSL_TRUSTSTORE_LOCATION);
+            String trustStorePasswordProp = config.getProperty(ZKConfig.SSL_TRUSTSTORE_PASSWD);
+
+            if (trustStoreLocationProp == null && trustStorePasswordProp == null) {
+                LOG.warn("Truststore not specified for client connection");
+            } else {
+                if (trustStoreLocationProp == null) {
+                    throw new SSLContextException("Truststore location not specified for client connection");
+                }
+                if (trustStorePasswordProp == null) {
+                    throw new SSLContextException("Truststore password not specified for client connection");
+                }
+                try {
+                    trustManagers = new TrustManager[]{
+                            createTrustManager(trustStoreLocationProp, trustStorePasswordProp)};
+                } catch (TrustManagerException e) {
+                    throw new SSLContextException("Failed to create TrustManager", e);
+                }
+            }
+
+            SSLContext sslContext = null;
+            try {
+                sslContext = SSLContext.getInstance("TLSv1");
+                sslContext.init(keyManagers, trustManagers, null);
+            } catch (Exception e) {
+                throw new SSLContextException(e);
+            }
+            return sslContext;
         }
-        return sslContext;
     }
 
     public static X509KeyManager createKeyManager(String keyStoreLocation, String keyStorePassword)
