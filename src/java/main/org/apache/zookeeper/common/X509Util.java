@@ -28,6 +28,7 @@ import javax.net.ssl.X509TrustManager;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.security.KeyStore;
 
 import org.slf4j.Logger;
@@ -90,9 +91,10 @@ public class X509Util {
             String sslClientContextClass = config.getProperty(ZKConfig.SSL_CLIENT_CONTEXT);
             try {
                 Class<?> sslContextClass = Class.forName(sslClientContextClass);
-                ZKClientSSLContext sslContext = (ZKClientSSLContext) sslContextClass.newInstance();
+                ZKClientSSLContext sslContext = (ZKClientSSLContext) sslContextClass.getConstructor().newInstance();
                 return sslContext.getSSLContext();
-            } catch (ClassNotFoundException | ClassCastException | InstantiationException | IllegalAccessException e) {
+            } catch (ClassNotFoundException | ClassCastException | NoSuchMethodException | InvocationTargetException |
+                    InstantiationException | IllegalAccessException e) {
                 throw new SSLContextException("Could not retrieve the SSLContext from source '" + sslClientContextClass +
                         "' provided in the property '" + ZKConfig.SSL_CLIENT_CONTEXT + "'", e);
             }
