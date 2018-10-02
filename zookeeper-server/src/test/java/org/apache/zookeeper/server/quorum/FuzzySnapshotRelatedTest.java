@@ -28,9 +28,11 @@ import javax.security.sasl.SaslException;
 import org.apache.jute.OutputArchive;
 
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException.ConnectionLossException;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.Op;
+import org.apache.zookeeper.RetryRule;
 
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs.Ids;
@@ -47,6 +49,7 @@ import org.apache.zookeeper.test.ClientBase;
 import org.junit.Assert;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,6 +60,9 @@ import org.slf4j.LoggerFactory;
 public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
 
     private static final Logger LOG = LoggerFactory.getLogger(FuzzySnapshotRelatedTest.class);
+
+    @Rule
+    public RetryRule retry = new RetryRule(3, ConnectionLossException.class.getName());
 
     MainThread[] mt = null;
     ZooKeeper[] zk = null;
