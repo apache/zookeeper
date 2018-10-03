@@ -26,7 +26,10 @@ import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 
 /**
- * setAcl command for cli
+ * setAcl command for cli.
+ * Available options are s for printing znode's stats, v for set version of znode(s), R for
+ * recursive setting. User can combine v and R options together, but not s and R considering the
+ * number of znodes could be large.
  */
 public class SetAclCommand extends CliCommand {
 
@@ -75,9 +78,9 @@ public class SetAclCommand extends CliCommand {
             if (cl.hasOption("R")) {
                 ZKUtil.visitSubTreeDFS(zk, path, false, new StringCallback() {
                     @Override
-                    public void processResult(int rc, String path, Object ctx, String name) {
+                    public void processResult(int rc, String p, Object ctx, String name) {
                         try {
-                            zk.setACL(path, acl, version);
+                            zk.setACL(p, acl, version);
                         } catch (KeeperException | InterruptedException e) {
                             out.print(e.getMessage());
                         }
