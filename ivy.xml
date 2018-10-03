@@ -63,10 +63,6 @@
       <artifact name="netty" type="jar" conf="default"/>
     </dependency>
 
-    <dependency org="org.apache.httpcomponents" name="httpclient" rev="${httpcomponents.version}">
-      <artifact name="httpclient" type="jar" conf="default" />
-    </dependency>
-
     <dependency org="junit" name="junit" rev="${junit.version}" conf="test->default"/>
 	<dependency org="org.mockito" name="mockito-all" rev="${mockito.version}"
                conf="test->default"/>

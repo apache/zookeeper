@@ -17,7 +17,6 @@
  */
 package org.apache.zookeeper.common;
 
-import org.apache.http.conn.ssl.DefaultHostnameVerifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +43,7 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
     private boolean serverHostnameVerificationEnabled;
     private boolean clientHostnameVerificationEnabled;
 
-    private DefaultHostnameVerifier hostnameVerifier;
+    private ZKHostnameVerifier hostnameVerifier;
 
     /**
      * Instantiate a new ZKTrustManager.
@@ -60,7 +59,7 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
         this.x509ExtendedTrustManager = x509ExtendedTrustManager;
         this.serverHostnameVerificationEnabled = serverHostnameVerificationEnabled;
         this.clientHostnameVerificationEnabled = clientHostnameVerificationEnabled;
-        hostnameVerifier = new DefaultHostnameVerifier();
+        hostnameVerifier = new ZKHostnameVerifier();
     }
 
     @Override
