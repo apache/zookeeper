@@ -24,6 +24,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+
 public class EphemeralTypeTest {
     @Before
     public void setUp() {
@@ -79,5 +81,19 @@ public class EphemeralTypeTest {
         } catch (RuntimeException e) {
             // expected
         }
+    }
+
+    @Test
+    public void testEphemeralOwner_extendedFeature_TTL() {
+        // 0xff = Extended feature is ON
+        // 0x0000 = Extended type id TTL (0)
+        Assert.assertThat(EphemeralType.get(0xff00000000000000L), equalTo(EphemeralType.TTL));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testEphemeralOwner_extendedFeature_extendedTypeUnsupported() {
+        // 0xff = Extended feature is ON
+        // 0x0001 = Unsupported extended type id (1)
+        EphemeralType.get(0xff00010000000000L);
     }
 }
