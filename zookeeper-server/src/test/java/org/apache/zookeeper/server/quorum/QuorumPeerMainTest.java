@@ -1432,7 +1432,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     @Test
     public void testLeaderElectionWithDisloyalVoter_stillHasMajority()
             throws IOException {
-        testLeaderElection(5, 5, 3000, 2000);
+        testLeaderElection(5, 5, 3000, 20000);
     }
 
     void testLeaderElection(int totalServers, int serversToStart,
