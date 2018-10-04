@@ -47,7 +47,7 @@
       <fileset dir="${zk.root}/build/test/classes"/>
       <zipgroupfileset dir="${zk.root}/build/lib" includes="*.jar" />
       <zipgroupfileset dir="${zk.root}/build/test/lib" includes="*.jar" />
-      <zipgroupfileset dir="${zk.root}/src/java/lib" includes="*.jar" />
+      <zipgroupfileset dir="${zk.root}/zookeeper-common/src/main/resources/lib" includes="*.jar" />
     </jar>
   </target>
 

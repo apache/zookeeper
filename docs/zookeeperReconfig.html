@@ -992,7 +992,7 @@ String configStr = new String(config);
 System.out.println(configStr);</pre>
 <p>There is also an asynchronous API, and an API accepting comma
           separated Strings instead of List&lt;String&gt;. See
-          src/java/main/org/apache/zookeeper/ZooKeeper.java.</p>
+          zookeeper-common/src/main/java/org/apache/zookeeper/ZooKeeper.java.</p>
 <a name="sc_reconfig_nonincremental"></a>
 <h4>Non-incremental mode</h4>
 <p>The second mode of reconfiguration is non-incremental, whereby a
@@ -1023,7 +1023,7 @@ System.out.println(configStr);</pre>
 <p>There is also an asynchronous API, and an API accepting comma
           separated String containing the new members instead of
           List&lt;String&gt;. See
-          src/java/main/org/apache/zookeeper/ZooKeeper.java.</p>
+          zookeeper-common/src/main/java/org/apache/zookeeper/ZooKeeper.java.</p>
 <a name="sc_reconfig_conditional"></a>
 <h4>Conditional reconfig</h4>
 <p>Sometimes (especially in non-incremental mode) a new proposed

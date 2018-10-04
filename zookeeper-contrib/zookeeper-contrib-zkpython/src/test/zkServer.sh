@@ -47,7 +47,7 @@ do
     CLASSPATH="$CLASSPATH:$i"
 done
 
-for i in "${zk_base}"/src/java/lib/*.jar
+for i in "${zk_base}"/zookeeper-common/src/main/resource/lib/*.jar
 do
     CLASSPATH="$CLASSPATH:$i"
 done
