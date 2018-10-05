@@ -49,6 +49,7 @@ import org.apache.zookeeper.KeeperException.BadArgumentsException;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
 import org.apache.zookeeper.server.ServerCnxnFactory;
@@ -254,7 +255,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 throw new ConfigException("Address unresolved: " + serverParts[0] + ":" + serverParts[1]);
             }
             try {
-                electionAddr = new InetSocketAddress(serverParts[0], 
+                electionAddr = new InetSocketAddress(serverParts[0],
                         Integer.parseInt(serverParts[2]));
             } catch (NumberFormatException e) {
                 throw new ConfigException("Address unresolved: " + serverParts[0] + ":" + serverParts[2]);
@@ -479,6 +480,17 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     // VisibleForTesting
     void setId(long id) {
         this.myid = id;
+    }
+
+    private boolean sslQuorum;
+    private boolean shouldUsePortUnification;
+
+    public boolean isSslQuorum() {
+        return sslQuorum;
+    }
+
+    public boolean shouldUsePortUnification() {
+        return shouldUsePortUnification;
     }
 
     /**
@@ -1033,7 +1045,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         return new Follower(this, new FollowerZooKeeperServer(logFactory, this, this.zkDb));
     }
 
-    protected Leader makeLeader(FileTxnSnapLog logFactory) throws IOException {
+    protected Leader makeLeader(FileTxnSnapLog logFactory) throws IOException, X509Exception {
         return new Leader(this, new LeaderZooKeeperServer(logFactory, this, this.zkDb));
     }
 
@@ -1714,6 +1726,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     public void setSecureCnxnFactory(ServerCnxnFactory secureCnxnFactory) {
         this.secureCnxnFactory = secureCnxnFactory;
+    }
+
+    public void setSslQuorum(boolean sslQuorum) {
+        this.sslQuorum = sslQuorum;
+    }
+
+    public void setUsePortUnification(boolean shouldUsePortUnification) {
+        this.shouldUsePortUnification = shouldUsePortUnification;
     }
 
     private void startServerCnxnFactory() {

@@ -41,7 +41,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import javax.security.sasl.SaslException;
 
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.common.QuorumX509Util;
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
@@ -225,19 +227,36 @@ public class Leader {
     
     private final ServerSocket ss;
 
-    Leader(QuorumPeer self,LeaderZooKeeperServer zk) throws IOException {
+    Leader(QuorumPeer self,LeaderZooKeeperServer zk) throws IOException, X509Exception {
         this.self = self;
         this.proposalStats = new BufferStats();
         try {
-            if (self.getQuorumListenOnAllIPs()) {
-                ss = new ServerSocket(self.getQuorumAddress().getPort());
+            if (self.shouldUsePortUnification()) {
+                if (self.getQuorumListenOnAllIPs()) {
+                    ss = new UnifiedServerSocket(new QuorumX509Util(), self.getQuorumAddress().getPort());
+                } else {
+                    ss = new UnifiedServerSocket(new QuorumX509Util());
+                }
+            } else if (self.isSslQuorum()) {
+                if (self.getQuorumListenOnAllIPs()) {
+                    ss = new QuorumX509Util().createSSLServerSocket(self.getQuorumAddress().getPort());
+                } else {
+                    ss = new QuorumX509Util().createSSLServerSocket();
+                }
             } else {
-                ss = new ServerSocket();
+                if (self.getQuorumListenOnAllIPs()) {
+                    ss = new ServerSocket(self.getQuorumAddress().getPort());
+                } else {
+                    ss = new ServerSocket();
+                }
             }
             ss.setReuseAddress(true);
             if (!self.getQuorumListenOnAllIPs()) {
                 ss.bind(self.getQuorumAddress());
             }
+        } catch (X509Exception e) {
+            LOG.error("Failed to setup ssl server socket", e);
+            throw e;
         } catch (BindException e) {
             if (self.getQuorumListenOnAllIPs()) {
                 LOG.error("Couldn't bind to port " + self.getQuorumAddress().getPort(), e);
@@ -373,6 +392,7 @@ public class Leader {
                 while (!stop) {
                     try{
                         Socket s = ss.accept();
+
                         // start with the initLimit, once the ack is processed
                         // in LearnerHandler switch to the syncLimit
                         s.setSoTimeout(self.tickTime * self.initLimit);

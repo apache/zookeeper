@@ -27,6 +27,7 @@ import java.nio.ByteBuffer;
 
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.PrepRequestProcessor;
 import org.apache.zookeeper.server.Request;
@@ -182,7 +183,7 @@ public class RaceConditionTest extends QuorumPeerTestBase {
         }
 
         @Override
-        protected Leader makeLeader(FileTxnSnapLog logFactory) throws IOException {
+        protected Leader makeLeader(FileTxnSnapLog logFactory) throws IOException, X509Exception {
             LeaderZooKeeperServer zk = new LeaderZooKeeperServer(logFactory, this, this.getZkDb()) {
                 @Override
                 protected void setupRequestProcessors() {

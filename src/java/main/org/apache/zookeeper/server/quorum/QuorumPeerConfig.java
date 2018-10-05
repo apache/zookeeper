@@ -37,8 +37,8 @@ import java.util.Properties;
 import java.util.Map.Entry;
 
 import org.apache.yetus.audience.InterfaceAudience;
+import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.common.StringUtils;
-import org.apache.zookeeper.common.ZKConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -66,6 +66,8 @@ public class QuorumPeerConfig {
 
     protected InetSocketAddress clientPortAddress;
     protected InetSocketAddress secureClientPortAddress;
+    protected boolean sslQuorum = false;
+    protected boolean shouldUsePortUnification = false;
     protected File dataDir;
     protected File dataLogDir;
     protected String dynamicConfigFileStr = null;
@@ -303,6 +305,11 @@ public class QuorumPeerConfig {
                 } else {
                     throw new ConfigException("Invalid option " + value + " for reconfigEnabled flag. Choose 'true' or 'false.'");
                 }
+            } else if (key.equals("sslQuorum")){
+                sslQuorum = Boolean.parseBoolean(value);
+// TODO: UnifiedServerSocket is currently buggy, will be fixed when @ivmaykov's PRs are merged. Disable port unification until then.
+//            } else if (key.equals("portUnification")){
+//                shouldUsePortUnification = Boolean.parseBoolean(value);
             } else if ((key.startsWith("server.") || key.startsWith("group") || key.startsWith("weight")) && zkProp.containsKey("dynamicConfigFile")) {
                 throw new ConfigException("parameter: " + key + " must be in a separate dynamic config file");
             } else if (key.equals(QuorumAuth.QUORUM_SASL_AUTH_ENABLED)) {
@@ -425,14 +432,15 @@ public class QuorumPeerConfig {
      *             provider is not configured.
      */
     private void configureSSLAuth() throws ConfigException {
-        String sslAuthProp = "zookeeper.authProvider." + System.getProperty(ZKConfig.SSL_AUTHPROVIDER, "x509");
+        ClientX509Util clientX509Util = new ClientX509Util();
+        String sslAuthProp = "zookeeper.authProvider." + System.getProperty(clientX509Util.getSslAuthProviderProperty(), "x509");
         if (System.getProperty(sslAuthProp) == null) {
             if ("zookeeper.authProvider.x509".equals(sslAuthProp)) {
                 System.setProperty("zookeeper.authProvider.x509",
                         "org.apache.zookeeper.server.auth.X509AuthenticationProvider");
             } else {
                 throw new ConfigException("No auth provider configured for the SSL authentication scheme '"
-                        + System.getProperty(ZKConfig.SSL_AUTHPROVIDER) + "'.");
+                        + System.getProperty(clientX509Util.getSslAuthProviderProperty()) + "'.");
             }
         }
     }
@@ -736,6 +744,13 @@ public class QuorumPeerConfig {
     public boolean areLocalSessionsEnabled() { return localSessionsEnabled; }
     public boolean isLocalSessionsUpgradingEnabled() {
         return localSessionsUpgradingEnabled;
+    }
+    public boolean isSslQuorum() {
+        return sslQuorum;
+    }
+
+    public boolean shouldUsePortUnification() {
+        return shouldUsePortUnification;
     }
 
     public int getInitLimit() { return initLimit; }
