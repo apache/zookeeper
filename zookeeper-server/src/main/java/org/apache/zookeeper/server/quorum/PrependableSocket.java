@@ -18,40 +18,32 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import org.apache.zookeeper.jmx.ZKMBeanInfo;
-import org.apache.zookeeper.server.quorum.QuorumPeer;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.SequenceInputStream;
+import java.net.Socket;
+import java.net.SocketImpl;
 
-public class QuorumBean implements QuorumMXBean, ZKMBeanInfo {
-    private final QuorumPeer peer;
-    private final String name;
-    
-    public QuorumBean(QuorumPeer peer){
-        this.peer = peer;
-        name = "ReplicatedServer_id" + peer.getId();
+public class PrependableSocket extends Socket {
+
+  private SequenceInputStream sequenceInputStream;
+
+  public PrependableSocket(SocketImpl base) throws IOException {
+    super(base);
+  }
+
+  @Override
+  public InputStream getInputStream() throws IOException {
+    if (sequenceInputStream == null) {
+      return super.getInputStream();
     }
 
-    @Override
-    public String getName() {
-        return name;
-    }
+    return sequenceInputStream;
+  }
 
-    @Override
-    public boolean isHidden() {
-        return false;
-    }
+  public void prependToInputStream(byte[] bytes) throws IOException {
+    sequenceInputStream = new SequenceInputStream(new ByteArrayInputStream(bytes), getInputStream());
+  }
 
-    @Override
-    public int getQuorumSize() {
-        return peer.getQuorumSize();
-    }
-
-    @Override
-    public boolean isSslQuorum() {
-        return peer.isSslQuorum();
-    }
-
-    @Override
-    public boolean isPortUnification() {
-        return peer.shouldUsePortUnification();
-    }
 }

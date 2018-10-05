@@ -57,6 +57,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.metrics.BaseTestMetricsProvider;
 import org.apache.zookeeper.metrics.impl.NullMetricsProvider;
@@ -1945,7 +1946,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         }
 
         @Override
-        protected Leader makeLeader(FileTxnSnapLog logFactory) throws IOException {
+        protected Leader makeLeader(FileTxnSnapLog logFactory) throws IOException, X509Exception {
             return new Leader(this, new LeaderZooKeeperServer(logFactory,
                     this, this.getZkDb())) {
                 @Override

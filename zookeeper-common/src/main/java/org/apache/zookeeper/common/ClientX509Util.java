@@ -16,42 +16,23 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.server.quorum;
+package org.apache.zookeeper.common;
 
-import org.apache.zookeeper.jmx.ZKMBeanInfo;
-import org.apache.zookeeper.server.quorum.QuorumPeer;
+public class ClientX509Util extends X509Util {
 
-public class QuorumBean implements QuorumMXBean, ZKMBeanInfo {
-    private final QuorumPeer peer;
-    private final String name;
-    
-    public QuorumBean(QuorumPeer peer){
-        this.peer = peer;
-        name = "ReplicatedServer_id" + peer.getId();
+    private final String sslAuthProviderProperty = getConfigPrefix() + "authProvider";
+
+    @Override
+    protected String getConfigPrefix() {
+        return "zookeeper.ssl.";
     }
 
     @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public boolean isHidden() {
+    protected boolean shouldVerifyClientHostname() {
         return false;
     }
 
-    @Override
-    public int getQuorumSize() {
-        return peer.getQuorumSize();
-    }
-
-    @Override
-    public boolean isSslQuorum() {
-        return peer.isSslQuorum();
-    }
-
-    @Override
-    public boolean isPortUnification() {
-        return peer.shouldUsePortUnification();
+    public String getSslAuthProviderProperty() {
+        return sslAuthProviderProperty;
     }
 }

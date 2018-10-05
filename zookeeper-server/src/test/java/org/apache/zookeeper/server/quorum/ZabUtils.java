@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server.quorum;
 
 import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZKDatabase;
@@ -76,13 +77,13 @@ public class ZabUtils {
     }
 
     public static Leader createLeader(File tmpDir, QuorumPeer peer)
-            throws IOException, NoSuchFieldException, IllegalAccessException {
+            throws IOException, NoSuchFieldException, IllegalAccessException, X509Exception {
         LeaderZooKeeperServer zk = prepareLeader(tmpDir, peer);
         return new Leader(peer, zk);
     }
 
     public static Leader createMockLeader(File tmpDir, QuorumPeer peer)
-            throws IOException, NoSuchFieldException, IllegalAccessException {
+            throws IOException, NoSuchFieldException, IllegalAccessException, X509Exception {
         LeaderZooKeeperServer zk = prepareLeader(tmpDir, peer);
         return new MockLeader(peer, zk);
     }
@@ -148,7 +149,7 @@ public class ZabUtils {
     public static final class MockLeader extends Leader {
 
         MockLeader(QuorumPeer qp, LeaderZooKeeperServer zk)
-                throws IOException {
+                throws IOException, X509Exception {
             super(qp, zk);
         }
 

@@ -31,4 +31,14 @@ public interface QuorumMXBean {
      * @return configured number of peers in the quorum
      */
     public int getQuorumSize();
+
+    /**
+     * @return SSL communication between quorum members required
+     */
+    public boolean isSslQuorum();
+
+    /**
+     * @return SSL communication between quorum members enabled
+     */
+    public boolean isPortUnification();
 }
