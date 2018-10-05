@@ -204,7 +204,7 @@
 
 This distribution bundles jline 0.9.94, which is available under the
 2-clause BSD License. For details, see a copy of the license in
-lib/jline-0.9.94.LICENSE.txt
+zookeeper-server/src/main/resources/jline-0.9.94.LICENSE.txt
 
 This distribution bundles SLF4J 1.6.1, which is available under the MIT
 License. For details, see a copy of the license in
