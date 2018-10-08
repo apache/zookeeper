@@ -27,7 +27,7 @@
 #endif
 #endif
 #include "zookeeper.h"
-#include "zk_hashtable.h"
+#include "zk_hashtable/zk_hashtable.h"
 #include "addrvec.h"
 
 /* predefined xid's values recognized as special by the server */
