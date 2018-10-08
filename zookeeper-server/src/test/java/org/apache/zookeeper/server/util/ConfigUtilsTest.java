@@ -20,33 +20,53 @@ package org.apache.zookeeper.server.util;
 
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 
 public class ConfigUtilsTest {
 
     @Test
-    public void testSplitServerConfig() throws ConfigException {
+    public void testGetHostAndPortWithIPv6() throws ConfigException {
         String[] nsa = ConfigUtils.getHostAndPort("[2001:db8:85a3:8d3:1319:8a2e:370:7348]:443");
-        System.out.println(nsa[0]);
         assertEquals(nsa[0], "2001:db8:85a3:8d3:1319:8a2e:370:7348");
         assertEquals(nsa[1], "443");
+        
+        nsa = ConfigUtils.getHostAndPort("[2001:db8:1::242:ac11:2]:2888:3888");
+        assertEquals(nsa[0], "2001:db8:1::242:ac11:2");
+        assertEquals(nsa[1], "2888");
+        assertEquals(nsa[2], "3888");
     }
 
     @Test
-    public void testSplitServerConfig2() throws ConfigException {
+    public void testGetHostAndPortWithIPv4() throws ConfigException {
         String[] nsa = ConfigUtils.getHostAndPort("127.0.0.1:443");
-        assertEquals(nsa.length, 2, 0);
+        assertEquals(nsa[0], "127.0.0.1");
+        assertEquals(nsa[1], "443");
+        
+        nsa = ConfigUtils.getHostAndPort("127.0.0.1:2888:3888");
+        assertEquals(nsa[0], "127.0.0.1");
+        assertEquals(nsa[1], "2888");
+        assertEquals(nsa[2], "3888");
     }
 
     @Test(expected = ConfigException.class)
-    public void testSplitServerConfig3() throws ConfigException {
+    public void testGetHostAndPortWithoutBracket() throws ConfigException {
         String[] nsa = ConfigUtils.getHostAndPort("[2001:db8:85a3:8d3:1319:8a2e:370:7348");
     }
-
-    @Test
-    public void testSplitServerConfig4() throws ConfigException {
-        String[] nsa = ConfigUtils.getHostAndPort("2001:db8:85a3:8d3:1319:8a2e:370:7348:443");
-        assertFalse(nsa.length == 2);
+    
+    @Test(expected = ConfigException.class)
+    public void testGetHostAndPortWithoutPortAfterColon() throws ConfigException {
+        String[] nsa = ConfigUtils.getHostAndPort("[2001:db8:1::242:ac11:2]:");
     }
+    
+    @Test
+    public void testGetHostAndPortWithoutPort() throws ConfigException {
+    	String[] nsa = ConfigUtils.getHostAndPort("127.0.0.1");
+    	assertEquals(nsa[0], "127.0.0.1");
+    	assertEquals(nsa.length, 1);
+    	
+    	nsa = ConfigUtils.getHostAndPort("[2001:db8:1::242:ac11:2]");
+    	assertEquals(nsa[0], "2001:db8:1::242:ac11:2");
+    	assertEquals(nsa.length, 1);
+    }
+
 }

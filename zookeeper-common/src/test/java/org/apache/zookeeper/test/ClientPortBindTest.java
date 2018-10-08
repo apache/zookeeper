@@ -21,6 +21,7 @@ package org.apache.zookeeper.test;
 import static org.apache.zookeeper.test.ClientBase.CONNECTION_TIMEOUT;
 
 import java.io.File;
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
@@ -59,6 +60,9 @@ public class ClientPortBindTest extends ZKTestCase{
                     InetAddress a = addrs.nextElement();
                     if(a.isLoopbackAddress()) {
                       bindAddress = a.getHostAddress();
+                      if (a instanceof Inet6Address) {
+                          bindAddress = "[" + bindAddress + "]";
+                      }
                       break;
                     }
                   }
