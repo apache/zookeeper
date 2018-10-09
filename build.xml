@@ -505,7 +505,14 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
                     pattern="${ivy.lib}/[artifact]-[revision].[ext]"/>
       <ivy:cachepath pathid="mvn-ant-task-classpath" conf="mvn-ant-task"/>
     </target>
-    <target name="compile" depends="ivy-retrieve,clover,build-generated">
+
+    <target name="mvn-install-new" description="Call maven install to build and install maven subprojects">
+        <exec dir="${basedir}" executable="mvn" failonerror="true">
+            <arg line="install" />
+        </exec>
+    </target>
+
+    <target name="compile" depends="mvn-install-new,ivy-retrieve,clover,build-generated">
         <javac destdir="${build.classes}" includeantruntime="false"
                target="${javac.target}" source="${javac.source}" debug="on" encoding="${build.encoding}">
             <src path="${java.server.src.dir}"/>
@@ -906,8 +913,11 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       </copy>
 
       <copy todir="${dist.dir}/docs">
-        <fileset dir="${docs.dir}" />
-        <fileset dir="${build.docs}"/>
+          <fileset dir="zookeeper-docs/src/main/resources/markdown/" includes="**">
+              <exclude name="html/**" />
+          </fileset>
+          <fileset dir="zookeeper-docs/target/html/" includes="**" />
+          <fileset dir="${build.docs}"/>
       </copy>
 
       <copy todir="${dist.dir}">
@@ -1031,8 +1041,11 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       </copy>
 
       <copy todir="${dist.dir}/docs">
-        <fileset dir="${docs.dir}" />
-        <fileset dir="${build.docs}"/>
+          <fileset dir="zookeeper-docs/src/main/resources/markdown/" includes="**">
+              <exclude name="html/**" />
+          </fileset>
+          <fileset dir="zookeeper-docs/target/html/" includes="**" />
+          <fileset dir="${build.docs}" />
       </copy>
 
       <copy todir="${dist.dir}">
@@ -1217,7 +1230,13 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <!-- ====================================================== -->
     <!-- Clean.  Delete the build files, and their directories  -->
     <!-- ====================================================== -->
-    <target name="clean" depends="clean-contrib,clean-recipes"
+    <target name="mvn-clean" description="Call maven clean to clean up target directories.">
+        <exec dir="${basedir}" executable="mvn" failonerror="true">
+            <arg line="clean" />
+        </exec>
+    </target>
+
+    <target name="clean" depends="mvn-clean,clean-contrib,clean-recipes"
             description="Clean.  Delete the build files, and their directories">
       <delete dir="${build.dir}"/>
       <delete dir="${docs.src}/build"/>
