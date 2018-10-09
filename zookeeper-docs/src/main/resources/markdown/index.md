@@ -36,7 +36,7 @@ archives.
     + [Release Notes](releasenotes.html) - new developer and user facing features, improvements, and incompatibilities
 + **Developers**
     Documents for Developers using the ZooKeeper Client API
-    + [API Docs](index.html) - the technical reference to ZooKeeper Client APIs
+    + [API Docs](api/index.html) - the technical reference to ZooKeeper Client APIs
     + [Programmer's Guide](zookeeperProgrammers.html) - a client application developer's guide to ZooKeeper
     + [ZooKeeper Java Example](javaExample.html) - a simple Zookeeper client appplication, written in Java
     + [Barrier and Queue Tutorial](zookeeperTutorial.html) - sample implementations of barriers and queues

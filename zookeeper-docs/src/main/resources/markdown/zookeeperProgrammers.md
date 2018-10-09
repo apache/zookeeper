@@ -135,7 +135,7 @@ the version it supplies doesn't match the actual version of the data,
 the update will fail. (This behavior can be overridden. For more
 information see... )_[tbd...]_
 
-######Note
+###### Note
 
 >In distributed application engineering, the word
 _node_ can refer to a generic host machine, a
@@ -762,7 +762,7 @@ authenticate itself using the “_foo_” scheme
 and create an ephemeral node “/xyz” with create-only
 permissions.
 
-######Note
+###### Note
 >This is a very simple example which is intended to show
 how to interact with ZooKeeper ACLs
 specifically. See *.../trunk/zookeeper-client/zookeeper-client-c/src/cli.c*
@@ -970,7 +970,7 @@ revocable locks solely at the ZooKeeper client (no additions needed to
 ZooKeeper). See [Recipes and Solutions](recipes.html)
 for more details.
 
-######Note
+###### Note
 
 >Sometimes developers mistakenly assume one other guarantee that
 ZooKeeper does _not_ in fact make. This is:
@@ -1106,7 +1106,7 @@ project source package downloaded from apache, skip to step **3**.
   * `--disable-shared`
     Do not build shared libraries. (Enabled by
     default.)
-######Note
+###### Note
 >See INSTALL for general information about running **configure**.
 5. Run `make` or `make
   install` to build the libraries and install them.
@@ -1131,7 +1131,7 @@ you have to remember to
   single-threaded client, do not compile with `-DTHREADED`, and be
   sure to link against the_zookeeper_st_library.
 
-######Note
+###### Note
 >See *.../trunk/zookeeper-client/zookeeper-client-c/src/cli.c*
 for an example of a C client implementation
 

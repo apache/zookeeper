@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 //-->
 
-#BookKeeper overview
+# BookKeeper overview
 
 * [BookKeeper overview](#bk_Overview)
     * [BookKeeper introduction](#bk_Intro)
@@ -26,10 +26,10 @@ limitations under the License.
   
 <a name="bk_Overview"></a>
 
-##BookKeeper overview
+## BookKeeper overview
 
 <a name="bk_Intro"></a>
-###BookKeeper introduction
+### BookKeeper introduction
 BookKeeper is a replicated service to reliably log streams of records. In BookKeeper, 
 servers are "bookies", log streams are "ledgers", and each unit of a log (aka record) is a 
 "ledger entry". BookKeeper is designed to be reliable; bookies, the servers that store 
@@ -51,7 +51,7 @@ sets of bookies, and there are a few advantages in having such a service:
 
 <a name="bk_moreDetail"></a>
 
-###In slightly more detail...
+### In slightly more detail...
 BookKeeper implements highly available logs, and it has been designed with write-ahead logging in mind. Besides high availability
 due to the replicated nature of the service, it provides high throughput due to striping. As we write entries in a subset of bookies of an
 ensemble and rotate writes across available quorums, we are able to increase throughput with the number of servers for both reads and writes. 
@@ -72,7 +72,7 @@ for the ledger.
 
 <a name="bk_basicComponents"></a>
 
-###Bookkeeper elements and concepts 
+### Bookkeeper elements and concepts 
 BookKeeper uses four basic elements:
 
 * **Ledger**: A ledger is a sequence of entries, and each entry is a sequence of bytes. Entries are
@@ -88,7 +88,7 @@ to ledgers and available bookies. We currently use ZooKeeper for such a task.
 
 <a name="bk_initialDesign"></a>
 
-###Bookkeeper initial design
+### Bookkeeper initial design
 A set of bookies implements BookKeeper, and we use a quorum-based protocol to replicate data across the bookies. 
 There are basically two operations to an existing ledger: read and append. Here is the complete API list 
 (mode detail [here](bookkeeperProgrammer.html)):
@@ -119,7 +119,7 @@ start a new one for its use.
 
 A client library takes care of communicating with bookies and managing entry numbers. An entry has the following fields:
 
-#####Entry fields
+##### Entry fields
 | Field         | Type | Description                        |
 |---------------|------|------------------------------------|
 | Ledger number | long | The id of the ledger of this entry |
@@ -151,7 +151,7 @@ as long as enough bookies are up we are guaranteed to eventually be able to read
 
 <a name="bk_metadata"></a>
 
-###Bookkeeper metadata management
+### Bookkeeper metadata management
 There are some meta data that needs to be made available to BookKeeper clients:
 
 * The available bookies;
@@ -165,7 +165,7 @@ were used to store the ledger. Bookies also watch the ledger list so that they c
 
 <a name="bk_closingOut"></a>
 
-###Closing out ledgers
+### Closing out ledgers
 The process of closing out the ledger and finding the last ledger is difficult due to the durability guarantees of BookKeeper:
 * If an entry has been successfully recorded, it must be readable.
 * If an entry is read once, it must always be available to be read. 

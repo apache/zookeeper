@@ -276,7 +276,7 @@ application is called a _quorum_, and in replicated
 mode, all servers in the quorum have copies of the same configuration
 file.
 
-######Note
+###### Note
 >For replicated mode, a minimum of three servers are required,
 and it is strongly recommended that you have an odd number of
 servers. If you only have two servers, then you are in a
@@ -326,7 +326,7 @@ port. Because the default leader election also uses TCP, we
 currently require another port for leader election. This is the
 second port in the server entry.
 
-######Note
+###### Note
 >If you want to test multiple servers on a single
 machine, specify the servername
 as _localhost_ with unique quorum &

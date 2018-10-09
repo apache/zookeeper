@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 //-->
 
-#BookKeeper Getting Started Guide
+# BookKeeper Getting Started Guide
 
 * [Getting Started: Setting up BookKeeper to write logs.](#bk_GettingStarted)
     * [Pre-requisites](#bk_Prerequisites)
@@ -26,7 +26,7 @@ limitations under the License.
 
 <a name="bk_GettingStarted"></a>
 
-##Getting Started: Setting up BookKeeper to write logs.
+## Getting Started: Setting up BookKeeper to write logs.
 This document contains information to get you started quickly with
 BookKeeper. It is aimed primarily at developers willing to try it out, and
 contains simple installation instructions for a simple BookKeeper installation
@@ -35,19 +35,19 @@ and a simple programming example. For further programming detail, please refer t
 
 <a name="bk_Prerequisites"></a>
 
-###Pre-requisites
+### Pre-requisites
 See [System Requirements](bookkeeperConfig.html#bk_sysReq) in the Admin guide.
 
 <a name="bk_Download"></a>
 
-###Download
+### Download
 BookKeeper is distributed along with ZooKeeper. To get a ZooKeeper distribution, 
 download a recent [stable](http://zookeeper.apache.org/releases.html)
 release from one of the Apache Download Mirrors.
 
 <a name="bk_localBK"></a>
 
-###LocalBookKeeper
+### LocalBookKeeper
 Under `org.apache.bookkeeper.util`, you'll find a java program
 called LocalBookKeeper.java that sets you up to run BookKeeper on a 
 single machine. This is far from ideal from a performance perspective,
@@ -55,7 +55,7 @@ but the program is useful for both test and educational purposes.
 
 <a name="bk_setupBookies"></a>
 
-###Setting up bookies
+### Setting up bookies
 If you're bold and you want more than just running things locally, then
 you'll need to run bookies in different servers. You'll need at least three bookies
 to start with.  
@@ -76,7 +76,7 @@ values corresponding to them.
 
 <a name="bk_setupZK"></a>
 
-###Setting up ZooKeeper
+### Setting up ZooKeeper
 ZooKeeper stores metadata on behalf of BookKeeper clients and bookies. To get a minimal 
 ZooKeeper installation to work with BookKeeper, we can set up one server running in
 standalone mode. Once we have the server running, we need to create a few znodes:
@@ -90,7 +90,7 @@ standalone mode. Once we have the server running, we need to create a few znodes
 
 <a name="bk_example"></a>
 
-###Example
+### Example
 In the following excerpt of code, we:
 
 1. Create a ledger;

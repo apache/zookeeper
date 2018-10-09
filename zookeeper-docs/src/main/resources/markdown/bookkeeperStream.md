@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 //-->
 
-#Streaming with BookKeeper
+# Streaming with BookKeeper
 
 * [Summary](#bk_StreamSummary)
 * [Writing a stream of bytes](#bk_LedgerOutputStream)
@@ -22,7 +22,7 @@ limitations under the License.
 
 <a name="bk_StreamSummary"></a>
 
-##Summary
+## Summary
 
 When using the BookKeeper API, an application has to split the data to write into entries, each
 entry being a byte array. This is natural for many applications. For example, when using BookKeeper
@@ -36,7 +36,7 @@ The stream API is implemented in the package `Streaming`, and it contains two ma
 
 <a name="bk_LedgerOutputStream"></a>
 
-##Writing a stream of bytes
+## Writing a stream of bytes
 
 Class `LedgerOutputStream` implements two constructors and five public methods:
 
@@ -89,7 +89,7 @@ where:
 
 <a name="bk_LedgerInputStream"></a>
 
-##Reading a stream of bytes
+## Reading a stream of bytes
 
 Class `LedgerOutputStream` implements two constructors and four public methods:
 
