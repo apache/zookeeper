@@ -87,13 +87,17 @@ public class Learner {
     
     protected static final Logger LOG = LoggerFactory.getLogger(Learner.class);
 
+    /**
+     * Time to wait after connection attempt with the Leader or LearnerMaster before this
+     * Learner tries to connect again.
+     */
     private static final int leaderConnectDelayDuringRetryMs =
             Integer.getInteger("zookeeper.leaderConnectDelayDuringRetryMs", 100);
 
     static final private boolean nodelay = System.getProperty("follower.nodelay", "true").equals("true");
     static {
-        LOG.info("leaderConnectDelayDuringRetryMs: " + leaderConnectDelayDuringRetryMs);
-        LOG.info("TCP NoDelay set to: " + nodelay);
+        LOG.info("leaderConnectDelayDuringRetryMs: {}", leaderConnectDelayDuringRetryMs);
+        LOG.info("TCP NoDelay set to: {}", nodelay);
     }   
     
     final ConcurrentHashMap<Long, ServerCnxn> pendingRevalidations =
