@@ -112,6 +112,8 @@ public class NettyServerCnxn extends ServerCnxn {
                         + Long.toHexString(sessionId));
             }
 
+            factory.removeCnxnFromSessionMap(this);
+
             synchronized (factory.ipMap) {
                 Set<NettyServerCnxn> s =
                     factory.ipMap.get(((InetSocketAddress)channel
@@ -198,6 +200,7 @@ public class NettyServerCnxn extends ServerCnxn {
     @Override
     public void setSessionId(long sessionId) {
         this.sessionId = sessionId;
+        factory.addSession(sessionId, this);
     }
 
     @Override

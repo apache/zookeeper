@@ -417,24 +417,6 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     }
 
     @Override
-    public boolean closeSession(long sessionId) {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("closeSession sessionid:0x" + sessionId);
-        }
-        for (ServerCnxn cnxn : cnxns) {
-            if (cnxn.getSessionId() == sessionId) {
-                try {
-                    cnxn.close();
-                } catch (Exception e) {
-                    LOG.warn("exception during session close", e);
-                }
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Override
     public void configure(InetSocketAddress addr, int maxClientCnxns, boolean secure)
             throws IOException
     {

@@ -604,9 +604,6 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         return directBufferBytes > 0 ? directBuffer.get() : null;
     }
 
-    // sessionMap is used by closeSession()
-    private final ConcurrentHashMap<Long, NIOServerCnxn> sessionMap =
-        new ConcurrentHashMap<Long, NIOServerCnxn>();
     // ipMap is used to limit connections per IP
     private final ConcurrentHashMap<InetAddress, Set<NIOServerCnxn>> ipMap =
         new ConcurrentHashMap<InetAddress, Set<NIOServerCnxn>>( );
@@ -787,10 +784,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         }
         cnxnExpiryQueue.remove(cnxn);
 
-        long sessionId = cnxn.getSessionId();
-        if (sessionId != 0) {
-            sessionMap.remove(sessionId);
-        }
+        removeCnxnFromSessionMap(cnxn);
 
         InetAddress addr = cnxn.getSocketAddress();
         if (addr != null) {
@@ -920,20 +914,6 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         if (zkServer != null) {
             zkServer.shutdown();
         }
-    }
-
-    public void addSession(long sessionId, NIOServerCnxn cnxn) {
-        sessionMap.put(sessionId, cnxn);
-    }
-
-    @Override
-    public boolean closeSession(long sessionId) {
-        NIOServerCnxn cnxn = sessionMap.remove(sessionId);
-        if (cnxn != null) {
-            cnxn.close();
-            return true;
-        }
-        return false;
     }
 
     @Override
