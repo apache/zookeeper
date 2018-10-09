@@ -168,6 +168,10 @@ public class DataTree {
     // The maximum number of tree digests that we will keep in our history
     public static final int DIGEST_LOG_LIMIT = 1024;
 
+    // Dump digest every 128 txns, in hex it's 80, which will make it easier 
+    // to align and compare between servers.
+    public static final int DIGEST_LOG_INTERVAL = 128;
+
     // If this is not null, we are actively looking for a target zxid that we
     // want to validate the digest for
     private ZxidDigest digestFromLoadedSnapshot;
@@ -1614,7 +1618,7 @@ public class DataTree {
     private void logZxidDigest(long zxid, long digest) {
         ZxidDigest zxidDigest = new ZxidDigest(zxid, DigestCalculator.DIGEST_VERSION, digest);
         lastProcessedZxidDigest = zxidDigest;
-        if (zxidDigest.zxid % 128 == 0) {
+        if (zxidDigest.zxid % DIGEST_LOG_INTERVAL == 0) {
             synchronized (digestLog) {
                 digestLog.add(zxidDigest);
                 if (digestLog.size() > DIGEST_LOG_LIMIT) {
@@ -1632,7 +1636,7 @@ public class DataTree {
      * @param oa the output stream to write to 
      * @return true if the digest is serialized successfully
      */
-    public Boolean serializeZxidDigest(OutputArchive oa) throws IOException {
+    public boolean serializeZxidDigest(OutputArchive oa) throws IOException {
         if (!DigestCalculator.digestEnabled()) {
             return false;
         }
@@ -1653,7 +1657,7 @@ public class DataTree {
      * @param ia the input stream to read from
      * @return the true if it deserialized successfully
      */
-    public Boolean deserializeZxidDigest(InputArchive ia) throws IOException {
+    public boolean deserializeZxidDigest(InputArchive ia) throws IOException {
         if (!DigestCalculator.digestEnabled()) {
             return false;
         }
