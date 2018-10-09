@@ -380,7 +380,7 @@ ZOOAPI int zkr_lock_lock(zkr_lock_mutex_t *mutex) {
         }
     }
     pthread_mutex_unlock(&(mutex->pmutex));
-    return zkr_lock_isowner(mutex);
+    return 0;
 }
 
                     
