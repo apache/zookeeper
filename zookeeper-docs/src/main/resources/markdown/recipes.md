@@ -181,7 +181,7 @@ the list obtained from the first **getChildren(
 )** call. If there are are no children in the queue node, the
 reader waits for a watch notification to check the queue again.
 
-######Note
+###### Note
 >There now exists a Queue implementation in ZooKeeper
 recipes directory. This is distributed with the release --
 zookeeper-recipes/zookeeper-recipes-queue directory of the release artifact.
@@ -208,7 +208,7 @@ any snapshot in time no two clients think they hold the same lock. These
 can be implemented using ZooKeeeper. As with priority queues, first define
 a lock node.
 
-######Note
+###### Note
 >There now exists a Lock implementation in ZooKeeper
 recipes directory. This is distributed with the release --
 zookeeper-recipes/zookeeper-recipes-lock directory of the release artifact.
