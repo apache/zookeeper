@@ -515,22 +515,37 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher{
         final Map<String, String> emptyMap = Collections.emptyMap();
         Map<String, Object> stats = Commands.runCommand("mntr", q3.getQuorumPeer().getActiveServer(), emptyMap).toMap();
         Assert.assertTrue("observer not emitting observer_master_id", stats.containsKey("observer_master_id"));
-        final Long learnerMasterId = (Long)stats.get("observer_master_id");
-        final long leaderId = q1.getQuorumPeer().leader == null ? 2 : 1;
-        Assert.assertFalse("observer not following leader", !testObserverMaster && learnerMasterId != leaderId);
 
+        // check the stats for the first peer
         stats = Commands.runCommand("mntr", q1.getQuorumPeer().getActiveServer(), emptyMap).toMap();
-        Assert.assertEquals("server not emitting synced_observers", testObserverMaster || leaderId == 1,
-                stats.containsKey("synced_observers"));
-        if (stats.containsKey("synced_observers")) {
-            Assert.assertEquals(learnerMasterId == 1 ? new Integer(1) : new Integer(0), stats.get("synced_observers"));
+        if (testObserverMaster) {
+            if (q1.getQuorumPeer().leader == null) {
+                Assert.assertEquals(1, stats.get("synced_observers"));
+            } else {
+                Assert.assertEquals(0, stats.get("synced_observers"));
+            }
+        } else {
+            if (q1.getQuorumPeer().leader == null) {
+                Assert.assertNull(stats.get("synced_observers"));
+            } else {
+                Assert.assertEquals(1, stats.get("synced_observers"));
+            }
         }
 
+        // check the stats for the second peer
         stats = Commands.runCommand("mntr", q2.getQuorumPeer().getActiveServer(), emptyMap).toMap();
-        Assert.assertEquals("server not emitting synced_observers", testObserverMaster || leaderId == 2,
-                stats.containsKey("synced_observers"));
-        if (stats.containsKey("synced_observers")) {
-            Assert.assertEquals(learnerMasterId == 2 ? new Integer(1) : new Integer(0), stats.get("synced_observers"));
+        if (testObserverMaster) {
+            if (q2.getQuorumPeer().leader == null) {
+                Assert.assertEquals(1, stats.get("synced_observers"));
+            } else {
+                Assert.assertEquals(0, stats.get("synced_observers"));
+            }
+        } else {
+            if (q2.getQuorumPeer().leader == null) {
+                Assert.assertNull(stats.get("synced_observers"));
+            } else {
+                Assert.assertEquals(1, stats.get("synced_observers"));
+            }
         }
 
         // test admin commands for disconnection
@@ -571,6 +586,7 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher{
                             CONNECTION_TIMEOUT));
         } else {
             // show we get an error
+            final long leaderId = q1.getQuorumPeer().leader == null ? 2 : 1;
             try {
                 JMXEnv.conn().setAttribute(obsBean, new Attribute("LearnerMaster", Long.toString(3 - leaderId)));
                 Assert.fail("should have seen an exception on previous command");
