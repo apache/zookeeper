@@ -19,12 +19,17 @@ package org.apache.zookeeper.cli;
 
 import java.util.List;
 import org.apache.commons.cli.*;
+import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.ZKUtil;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 
 /**
- * setAcl command for cli
+ * setAcl command for cli.
+ * Available options are s for printing znode's stats, v for set version of znode(s), R for
+ * recursive setting. User can combine v and R options together, but not s and R considering the
+ * number of znodes could be large.
  */
 public class SetAclCommand extends CliCommand {
 
@@ -35,6 +40,7 @@ public class SetAclCommand extends CliCommand {
     {
         options.addOption("s", false, "stats");
         options.addOption("v", true, "version");
+        options.addOption("R", false, "recursive");
     }
 
     public SetAclCommand() {
@@ -69,9 +75,22 @@ public class SetAclCommand extends CliCommand {
             version = -1;
         }
         try {
-            Stat stat = zk.setACL(path, acl, version);
-            if (cl.hasOption("s")) {
-                new StatPrinter(out).print(stat);
+            if (cl.hasOption("R")) {
+                ZKUtil.visitSubTreeDFS(zk, path, false, new StringCallback() {
+                    @Override
+                    public void processResult(int rc, String p, Object ctx, String name) {
+                        try {
+                            zk.setACL(p, acl, version);
+                        } catch (KeeperException | InterruptedException e) {
+                            out.print(e.getMessage());
+                        }
+                    }
+                });
+            } else {
+                Stat stat = zk.setACL(path, acl, version);
+                if (cl.hasOption("s")) {
+                    new StatPrinter(out).print(stat);
+                }
             }
         } catch (KeeperException|InterruptedException ex) {
             throw new CliWrapperException(ex);
