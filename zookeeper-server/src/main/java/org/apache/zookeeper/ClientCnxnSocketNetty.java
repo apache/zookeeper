@@ -146,13 +146,13 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
                     } else {
                         needSasl.set(false);
                     }
-
+                    
                     // we need to wake up on first connect to avoid timeout.
-                    wakeupCnxn();
-                    firstConnect.countDown();
+                    wakeupCnxn();                
                     LOG.info("channel is connected: {}", channelFuture.getChannel());
                 } finally {
                     connectLock.unlock();
+                    firstConnect.countDown();
                 }
             }
         });
