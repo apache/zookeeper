@@ -470,13 +470,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
         <ivy:report conf="*" todir="${build.dir}/dependency-report"/>
     </target>
 
-    <target name="mvn-install-new" description="Call maven install to build and install maven subprojects">
-        <exec dir="${basedir}" executable="mvn" failonerror="true">
-            <arg line="install" />
-        </exec>
-    </target>
-
-    <target name="compile" depends="mvn-install-new,ivy-retrieve,clover,build-generated">
+    <target name="compile" depends="ivy-retrieve,clover,build-generated">
         <javac destdir="${build.classes}" includeantruntime="false"
                target="${javac.target}" source="${javac.source}" debug="on">
             <src path="${java.server.src.dir}"/>
@@ -868,7 +862,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
           <fileset dir="zookeeper-docs/src/main/resources/markdown/" includes="**">
               <exclude name="html/**" />
           </fileset>
-          <fileset dir="zookeeper-docs/target/html/" includes="**" />
           <fileset dir="${build.docs}"/>
       </copy>
 
@@ -998,7 +991,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
           <fileset dir="zookeeper-docs/src/main/resources/markdown/" includes="**">
               <exclude name="html/**" />
           </fileset>
-          <fileset dir="zookeeper-docs/target/html/" includes="**" />
           <fileset dir="${build.docs}" />
       </copy>
 
@@ -1339,13 +1331,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
     <!-- ====================================================== -->
     <!-- Clean.  Delete the build files, and their directories  -->
     <!-- ====================================================== -->
-    <target name="mvn-clean" description="Call maven clean to clean up target directories.">
-        <exec dir="${basedir}" executable="mvn" failonerror="true">
-            <arg line="clean" />
-        </exec>
-    </target>
-
-    <target name="clean" depends="mvn-clean,clean-contrib,clean-recipes"
+    <target name="clean" depends="clean-contrib,clean-recipes"
             description="Clean.  Delete the build files, and their directories">
       <delete dir="${build.dir}"/>
       <delete dir="${docs.src}/build"/>
