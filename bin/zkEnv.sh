@@ -87,7 +87,7 @@ fi
 #add the zoocfg dir to classpath
 CLASSPATH="$ZOOCFGDIR:$CLASSPATH"
 
-for i in "$ZOOBINDIR"/../src/java/lib/*.jar
+for i in "$ZOOBINDIR"/../zookeeper-common/src/main/resources/lib/*.jar
 do
     CLASSPATH="$i:$CLASSPATH"
 done

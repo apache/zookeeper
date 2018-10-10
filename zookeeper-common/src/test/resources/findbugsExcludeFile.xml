@@ -1,0 +1,171 @@
+<FindBugsFilter>
+  <!-- Allow command line utilities, which follow pattern *Main.java, to call
+       system exit -->
+  <Match>
+    <Class name="~org\.apache\.zookeeper\..*Main" />
+    <Bug pattern="DM_EXIT" />
+  </Match>
+
+  <!-- This is too complicated to resolve/ingrained into the architecture
+       In particular we want to make sure we exit if this occurs
+       Also notice logged as fatal error -->
+  <Match>
+    <Class name="org.apache.zookeeper.server.ZooKeeperCriticalThread" />
+    <Method name="handleException" />
+    <Bug pattern="DM_EXIT" />
+  </Match>
+
+  <!-- In particular we want to make sure we exit if this occurs, unrecoverable.
+       Also notice logged as fatal error -->
+  <Match>
+    <Class name="org.apache.zookeeper.server.ZooKeeperServer" />
+    <Method name="takeSnapshot" />
+    <Bug pattern="DM_EXIT" />
+  </Match>
+
+
+  <!-- We want to catch all exceptions and cleanup, regardless of source
+       (incl runtime) -->
+  <Match>
+    <Class name="org.apache.zookeeper.ClientCnxn$SendThread" />
+    <Method name="run" />
+    <Bug pattern="REC_CATCH_EXCEPTION" />
+  </Match>
+
+   <!-- If we cannot open a socket to elect a leader, then we should
+            simply exit -->
+   <Match>
+     <Class name="org.apache.zookeeper.server.quorum.LeaderElection" />
+       <Method name="lookForLeader" />
+       <Bug pattern="DM_EXIT" />
+   </Match>
+
+   <!-- Committing out of order is an unrecoverable error, so we should
+              really exit  -->
+   <Match>
+     <Class name="org.apache.zookeeper.server.quorum.FollowerZooKeeperServer" />
+       <Method name="commit" />
+       <Bug pattern="DM_EXIT" />
+     </Match>
+
+   <!-- Two unrecoverable errors while following the leader  -->
+   <Match>
+     <Class name="org.apache.zookeeper.server.quorum.Learner" />
+       <Method name="syncWithLeader" />
+       <Bug pattern="DM_EXIT" />
+   </Match>
+
+  <Match>
+    <Package name="org.apache.jute.compiler.generated" />
+  </Match>
+
+  <Match>
+    <Package name="~org\.apache\.zookeeper\.(proto|data|txn)" />
+    <Bug code="EI, EI2" />
+  </Match>
+
+  <Match>
+    <Class name="org.apache.zookeeper.server.DataNode" />
+      <Bug code="EI2"/>
+  </Match>
+
+  <Match>
+    <Class name="org.apache.zookeeper.server.quorum.QuorumPacket" />
+       <Bug code="EI2, EI" />
+  </Match>
+
+  <Match>
+      <Class name="org.apache.zookeeper.server.quorum.QuorumAuthPacket" />
+      <Bug code="EI2, EI" />
+  </Match>
+
+  <Match>
+    <Class name="org.apache.zookeeper.ClientCnxn"/>
+      <Bug code="EI, EI2" />
+  </Match>
+
+  <Match>
+    <Class name="org.apache.zookeeper.server.DataNode"/>
+      <Field name="children"/> 
+      <Bug code="IS"/>
+  </Match>
+ <Match>
+   <Class name="org.apache.zookeeper.server.quorum.Leader"/>
+     <Field name="lastProposed"/>
+     <Bug code="IS"/>
+  </Match>
+  <Match>
+    <Class name="org.apache.zookeeper.server.persistence.FileTxnLog"/>
+    <Field name="serverStats"/>
+    <Bug code="IS"/>
+  </Match>
+  <Match>
+     <Class name="org.apache.zookeeper.server.quorum.LearnerSessionTracker"/>
+       <Bug code="UrF"/>
+  </Match>
+  <Match>
+    <Class name="org.apache.zookeeper.server.quorum.AuthFastLeaderElection$Messenger$WorkerSender"/>
+    <Method name="process"/>
+    <Bug code="RV"/>
+  </Match>
+
+  <!-- these are old classes just for upgrading and should go away -->
+  <Match>
+    <Class name="org.apache.zookeeper.server.upgrade.DataNodeV1"/>
+  </Match> 
+
+  <Match>
+    <Class name="org.apache.zookeeper.server.upgrade.DataTreeV1"/>
+  </Match>
+
+  <!-- References code in a generated file that may or maynot be null -->
+  <Match>
+    <Class name="org.apache.zookeeper.Version" />
+    <Method name="getVersion" />
+    <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NULL_VALUE" />
+  </Match>
+
+  <!-- sync'd object is also being used to protect the isrunning flag, this is ok -->
+  <Match>
+    <Class name="org.apache.zookeeper.ClientCnxn$EventThread"/>
+    <Bug code="JLM"/>
+    <Or>
+      <Method name="queuePacket" />
+      <Method name="run" />
+    </Or>
+  </Match>
+
+  <Match>
+    <Class name="org.apache.zookeeper.server.quorum.QuorumPeer"/>
+    <Bug pattern="OS_OPEN_STREAM" />
+    <Method name="writeLongToFile" />
+  </Match>
+
+  <!-- this is a helper routine to wakeup the main thread with the
+  state change happening in the routines that call it -->
+  <Match>
+    <Class name="org.apache.zookeeper.server.quorum.CommitProcessor"/>
+    <Bug pattern="NN_NAKED_NOTIFY" />
+    <Method name="wakeup" />
+  </Match>
+
+  <!-- Disable encoding warnings -->
+  <Match>
+    <Bug pattern="DM_DEFAULT_ENCODING" />
+  </Match>
+
+  <!-- Disable 'Malicious code vulnerability warnings' due to mutable collection types in interface.
+       Undo this when ZOOKEEPER-1362 is done. -->
+  <Match>
+    <Class name="org.apache.zookeeper.ZooDefs$Ids"/>
+      <Bug pattern="MS_MUTABLE_COLLECTION" />
+  </Match>
+
+  <!-- Disable 'Return value of method without side effect is ignored' for EphemeralType. The default
+       version just returns 0 which triggers the warning. Findbugs can't seem to find the override in
+       the TTL value of the enum however -->
+  <Match>
+    <Class name="org.apache.zookeeper.server.EphemeralType"/>
+      <Bug pattern="RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT" />
+  </Match>
+</FindBugsFilter>

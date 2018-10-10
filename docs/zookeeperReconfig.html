@@ -589,6 +589,10 @@ server.3=125.23.63.25:2782:2785:participant</pre>
               from ZooKeeper class, and use of this API requires ACL setup and user
               authentication (see <a href="#sc_reconfig_access_control">Security</a> for more information.).
             </p>
+<p>Note: for temporary backward compatibility, the reconfig() APIs will remain in ZooKeeper.java
+              where they were for a few alpha versions of 3.5.x. However, these APIs are deprecated and users
+              should move to the reconfigure() APIs in ZooKeeperAdmin.java.
+            </p>
 </dd>
 
         
@@ -855,6 +859,10 @@ zk.getConfig(watcher, callback, context);</pre>
         
 </div>
 </div>
+<p>If the configuration of existing servers changes or they become unavailable
+          before the joiner succeeds to connect and learn obout configuration changes, the
+          joiner may need to be restarted with an updated configuration file in order to be
+          able to connect.</p>
 <p>Finally, note that once connected to the leader, a joiner adopts
           the last committed configuration, in which it is absent (the initial
           config of the joiner is backed up before being rewritten). If the
@@ -988,7 +996,7 @@ String configStr = new String(config);
 System.out.println(configStr);</pre>
 <p>There is also an asynchronous API, and an API accepting comma
           separated Strings instead of List&lt;String&gt;. See
-          src/java/main/org/apache/zookeeper/ZooKeeper.java.</p>
+          zookeeper-common/src/main/java/org/apache/zookeeper/ZooKeeper.java.</p>
 <a name="sc_reconfig_nonincremental"></a>
 <h4>Non-incremental mode</h4>
 <p>The second mode of reconfiguration is non-incremental, whereby a
@@ -1019,7 +1027,7 @@ System.out.println(configStr);</pre>
 <p>There is also an asynchronous API, and an API accepting comma
           separated String containing the new members instead of
           List&lt;String&gt;. See
-          src/java/main/org/apache/zookeeper/ZooKeeper.java.</p>
+          zookeeper-common/src/main/java/org/apache/zookeeper/ZooKeeper.java.</p>
 <a name="sc_reconfig_conditional"></a>
 <h4>Conditional reconfig</h4>
 <p>Sometimes (especially in non-incremental mode) a new proposed
@@ -1232,7 +1240,7 @@ document.write("Last Published: " + document.lastModified);
 </div>
 <div class="copyright">
         Copyright &copy;
-         2008-2013 <a href="http://www.apache.org/licenses/">The Apache Software Foundation.</a>
+          <a href="http://www.apache.org/licenses/">The Apache Software Foundation.</a>
 </div>
 <!--+
     |end bottomstrip
