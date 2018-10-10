@@ -44,7 +44,7 @@ public class SetAclCommand extends CliCommand {
     }
 
     public SetAclCommand() {
-        super("setAcl", "[-s] [-v version] path acl");
+        super("setAcl", "[-s] [-v version] [-R] path acl");
     }
 
     @Override
