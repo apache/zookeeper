@@ -66,8 +66,8 @@ zookeeper-client/zookeeper-client-c/*.lo
 zookeeper-client/zookeeper-client-c/*.o
 zookeeper-client/zookeeper-client-c/generated/
 src/java/generated/
-src/java/lib/ant-eclipse-*
-src/java/lib/ivy-*
+zookeeper-common/src/main/resources/lib/ant-eclipse-*
+zookeeper-common/src/main/resources/lib/ivy-*
 zookeeper-client/zookeeper-client-c/Makefile.in
 zookeeper-client/zookeeper-client-c/aclocal.m4
 zookeeper-client/zookeeper-client-c/autom4te.cache/
