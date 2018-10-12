@@ -92,14 +92,6 @@ public class ClientRequestTimeoutTest extends QuorumPeerTestBase {
             assertEquals(KeeperException.Code.REQUESTTIMEOUT.intValue(),
                     exception.code().intValue());
         }
-        // reset the error behavior
-        dropPacket = false;
-        watch1.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
-
-        String path = "/clientHang3";
-        String create = zk.create(path, data.getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
-        assertEquals(path, create);
 
         // do cleanup
         zk.close();
