@@ -24,14 +24,21 @@ EXTRA_DIST=LICENSE
 HASHTABLE_SRC = src/hashtable/hashtable_itr.h src/hashtable/hashtable_itr.c \
     src/hashtable/hashtable_private.h src/hashtable/hashtable.h src/hashtable/hashtable.c
 
-noinst_LTLIBRARIES = libhashtable.la
-libhashtable_la_SOURCES = $(HASHTABLE_SRC)
+ZKHASHTABLE_SRC = src/zk_hashtable/zk_hashtable.h src/zk_hashtable/zk_hashtable.c
+
+noinst_LTLIBRARIES = libhashtablest.la
+libhashtablest_la_SOURCES = $(HASHTABLE_SRC) $(ZKHASHTABLE_SRC)
+
+if WANT_SYNCAPI
+noinst_LTLIBRARIES += libhashtablemt.la
+libhashtablemt_la_SOURCES = $(HASHTABLE_SRC) $(ZKHASHTABLE_SRC)
+libhashtablemt_la_CFLAGS = -DTHREADED
+endif
 
 COMMON_SRC = src/zookeeper.c include/zookeeper.h include/zookeeper_version.h include/zookeeper_log.h\
     src/recordio.c include/recordio.h include/proto.h \
     src/zk_adaptor.h generated/zookeeper.jute.c \
-    src/zk_log.c src/zk_hashtable.h src/zk_hashtable.c \
-	src/addrvec.h src/addrvec.c
+    src/zk_log.c src/addrvec.h src/addrvec.c
 
 # These are the symbols (classes, mostly) we want to export from our library.
 EXPORT_SYMBOLS = '(zoo_|zookeeper_|zhandle|Z|format_log_message|log_message|logLevel|deallocate_|allocate_|zerror|is_unrecoverable)'
@@ -41,8 +48,8 @@ libzkst_la_LIBADD = -lm $(CLOCK_GETTIME_LIBS)
 
 lib_LTLIBRARIES = libzookeeper_st.la
 libzookeeper_st_la_SOURCES =
-libzookeeper_st_la_LIBADD=libzkst.la libhashtable.la
-libzookeeper_st_la_DEPENDENCIES=libzkst.la libhashtable.la
+libzookeeper_st_la_LIBADD=libzkst.la libhashtablest.la
+libzookeeper_st_la_DEPENDENCIES=libzkst.la libhashtablest.la
 libzookeeper_st_la_LDFLAGS = $(LIB_LDFLAGS) -export-symbols-regex $(EXPORT_SYMBOLS)
 
 if WANT_SYNCAPI
@@ -53,8 +60,8 @@ libzkmt_la_LIBADD = -lm $(CLOCK_GETTIME_LIBS)
 
 lib_LTLIBRARIES += libzookeeper_mt.la
 libzookeeper_mt_la_SOURCES =
-libzookeeper_mt_la_LIBADD=libzkmt.la libhashtable.la -lpthread
-libzookeeper_mt_la_DEPENDENCIES=libzkmt.la libhashtable.la
+libzookeeper_mt_la_LIBADD=libzkmt.la libhashtablemt.la -lpthread
+libzookeeper_mt_la_DEPENDENCIES=libzkmt.la libhashtablemt.la
 libzookeeper_mt_la_LDFLAGS = $(LIB_LDFLAGS) -export-symbols-regex $(EXPORT_SYMBOLS)
 endif
 
@@ -120,14 +127,14 @@ check_PROGRAMS = zktest-st
 TESTS_ENVIRONMENT = ZKROOT=${srcdir}/../.. \
                     CLASSPATH=$$CLASSPATH:$$CLOVER_HOME/lib/clover.jar
 nodist_zktest_st_SOURCES = $(TEST_SOURCES)
-zktest_st_LDADD = libzkst.la libhashtable.la $(CPPUNIT_LIBS)
+zktest_st_LDADD = libzkst.la libhashtablest.la $(CPPUNIT_LIBS)
 zktest_st_CXXFLAGS = -DUSE_STATIC_LIB $(CPPUNIT_CFLAGS) $(USEIPV6) $(SOLARIS_CPPFLAGS)
 zktest_st_LDFLAGS = -shared $(SYMBOL_WRAPPERS) $(SOLARIS_LIB_LDFLAGS)
 
 if WANT_SYNCAPI
   check_PROGRAMS += zktest-mt
   nodist_zktest_mt_SOURCES = $(TEST_SOURCES) tests/PthreadMocks.cc
-  zktest_mt_LDADD = libzkmt.la libhashtable.la -lpthread $(CPPUNIT_LIBS)
+  zktest_mt_LDADD = libzkmt.la libhashtablemt.la -lpthread $(CPPUNIT_LIBS)
   zktest_mt_CXXFLAGS = -DUSE_STATIC_LIB -DTHREADED $(CPPUNIT_CFLAGS) $(USEIPV6)
 if SOLARIS
   SHELL_SYMBOL_WRAPPERS_MT = cat ${srcdir}/tests/wrappers-mt.opt

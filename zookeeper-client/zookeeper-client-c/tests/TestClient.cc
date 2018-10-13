@@ -40,6 +40,7 @@ using namespace std;
 #include <recordio.h>
 #include "Util.h"
 #include "ZKMocks.h"
+#include "../src/zk_hashtable/zk_hashtable.h"
 
 struct buff_struct_2 {
     int32_t len;
@@ -1373,10 +1374,10 @@ public:
 			rc = zoo_set(zk, path, "nowatch", 7, -1);
       CPPUNIT_ASSERT(count == 0);
 			
-      /* remove a specific watcher before it's added (should fail) */
+      /* remove a specific watcher before it's added */
       rc = zoo_remove_watches(zk, path, ZWATCHTYPE_DATA,
                                watcher_rw, NULL, 0);
-      CPPUNIT_ASSERT_EQUAL((int)ZNOWATCHER, rc);
+      CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
 
       /* now add a specific watcher and then remove it */
       rc = zoo_wget(zk, path, watcher_rw, NULL,
@@ -1399,14 +1400,26 @@ public:
                                watcher_rw, NULL, 0);
       CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
 
+      /* add a watch and remove it with local=1 */
+      rc = zoo_wget(zk, "/something", watcher_rw, NULL,
+                    buf, &blen, NULL);
+      CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+      CPPUNIT_ASSERT_EQUAL(1, pathHasWatcher(zk, "/something", ZWATCHTYPE_ANY, watcher_rw, NULL));
+      rc = zoo_remove_watches(zk, "/something", ZWATCHTYPE_DATA,
+                               watcher_rw, NULL, 1);
+      CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
+      CPPUNIT_ASSERT_EQUAL(0, pathHasWatcher(zk, "/something", ZWATCHTYPE_ANY, watcher_rw, NULL));
+
       /* add a watch, stop the server, and have remove fail */
       rc = zoo_wget(zk, path, watcher_rw, NULL,
                     buf, &blen, NULL);
       CPPUNIT_ASSERT_EQUAL((int)ZOK, rc);
       stopServer();
       ctx.waitForDisconnected(zk);
+      CPPUNIT_ASSERT_EQUAL(1, pathHasWatcher(zk, "/something", ZWATCHTYPE_ANY, watcher_rw, NULL));
       rc = zoo_remove_watches(zk, path, ZWATCHTYPE_DATA,
                                watcher_rw, NULL, 0);
+      CPPUNIT_ASSERT_EQUAL(1, pathHasWatcher(zk, "/something", ZWATCHTYPE_ANY, watcher_rw, NULL));
       CPPUNIT_ASSERT_EQUAL((int)ZCONNECTIONLOSS, rc);
 
       /* bring the server back */
@@ -1434,9 +1447,13 @@ public:
                                     watcher_rw, ctx1, 1);
       CPPUNIT_ASSERT_EQUAL((int)ZNOWATCHER, rc);
 
+      CPPUNIT_ASSERT_EQUAL(1, pathHasWatcher(zk, "/something", ZWATCHTYPE_ANY, watcher_rw, NULL));
       rc = zoo_remove_watches(zk, "/something2", ZWATCHTYPE_DATA,
                                           watcher_rw, ctx2, 1);
-      CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
+      CPPUNIT_ASSERT_EQUAL(0, pathHasWatcher(zk, "/something", ZWATCHTYPE_ANY, watcher_rw, NULL));
+      CPPUNIT_ASSERT_EQUAL((int)ZCONNECTIONLOSS, rc);
+
+      startServer();
     }
 };
 

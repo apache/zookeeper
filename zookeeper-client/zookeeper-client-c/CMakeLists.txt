@@ -162,7 +162,7 @@ set(zookeeper_sources
   src/recordio.c
   generated/zookeeper.jute.c
   src/zk_log.c
-  src/zk_hashtable.c
+  src/zk_hashtable/zk_hashtable.c
   src/addrvec.c)
 
 if(WANT_SYNCAPI)

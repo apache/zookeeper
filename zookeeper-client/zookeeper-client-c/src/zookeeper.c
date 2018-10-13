@@ -30,7 +30,7 @@
 #include <proto.h>
 #include "zk_adaptor.h"
 #include "zookeeper_log.h"
-#include "zk_hashtable.h"
+#include "zk_hashtable/zk_hashtable.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -4045,18 +4045,8 @@ static int aremove_watches(
         goto done;
     }
 
-    if (!pathHasWatcher(zh, server_path, wtype, watcher, watcherCtx)) {
-        rc = ZNOWATCHER;
-        goto done;
-    }
-
     if (local) {
         removeWatchers(zh, server_path, wtype, watcher, watcherCtx);
-#ifdef THREADED
-        notify_sync_completion((struct sync_completion *)data);
-#endif
-        rc = ZOK;
-        goto done;
     }
 
     oa = create_buffer_oarchive();

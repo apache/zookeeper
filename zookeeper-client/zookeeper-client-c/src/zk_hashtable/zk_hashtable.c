@@ -17,9 +17,9 @@
  */
 
 #include "zk_hashtable.h"
-#include "zk_adaptor.h"
-#include "hashtable/hashtable.h"
-#include "hashtable/hashtable_itr.h"
+#include "../zk_adaptor.h"
+#include "../hashtable/hashtable.h"
+#include "../hashtable/hashtable_itr.h"
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
