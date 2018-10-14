@@ -41,11 +41,11 @@ import org.apache.zookeeper.data.StatPersisted;
 public class DataNode implements Record {
 
     // the digest value of this node, calculated from path, data and stat
-    private long digest;
+    private volatile long digest;
 
     // indicate if the digest of this node is up to date or not, used to 
     // optimize the performance.
-    boolean digestCached;
+    volatile boolean digestCached;
 
     /** the data for this datanode */
     byte data[];

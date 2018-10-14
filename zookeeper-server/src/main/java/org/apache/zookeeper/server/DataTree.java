@@ -1736,8 +1736,9 @@ public class DataTree {
     /**
      * Return all the digests in the historical digest list.
      */
-    public LinkedList<ZxidDigest> getDigestLog() {
+    public List<ZxidDigest> getDigestLog() {
         synchronized (digestLog) {
+            // Return a copy of current digest log
             return new LinkedList<ZxidDigest>(digestLog);
         }
     }

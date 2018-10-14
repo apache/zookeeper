@@ -35,14 +35,10 @@ public class NodeHashMapImpl implements NodeHashMap {
 
     private static final Logger LOG = LoggerFactory.getLogger(NodeHashMap.class);
 
-    private final ConcurrentHashMap<String, DataNode> nodes;
+    private final ConcurrentHashMap<String, DataNode> nodes = 
+            new ConcurrentHashMap<String, DataNode>();
 
-    private AdHash hash;
-
-    public NodeHashMapImpl() {
-        nodes = new ConcurrentHashMap<String, DataNode>();
-        hash = new AdHash();
-    }
+    private AdHash hash = new AdHash();
 
     @Override
     public DataNode put(String path, DataNode node) {
