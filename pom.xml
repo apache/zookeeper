@@ -59,7 +59,9 @@
     <module>zookeeper-docs</module>
     <module>zookeeper-jute</module>
     <module>zookeeper-common</module>
+    <module>zookeeper-client</module>
     <module>zookeeper-server</module>
+
   </modules>
   <scm>
     <connection>scm:git:git://git.apache.org/zookeeper.git</connection>
@@ -247,6 +249,8 @@
     <junit.version>4.12</junit.version>
     <commons-cli.version>1.2</commons-cli.version>
     <netty.version>3.10.6.Final</netty.version>
+    <jetty.version>9.4.10.v20180503</jetty.version>
+    <jackson.version>2.9.5</jackson.version>
   </properties>
 
   <dependencyManagement>
@@ -281,7 +285,34 @@
         <artifactId>netty</artifactId>
         <version>${netty.version}</version>
       </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-server</artifactId>
+        <version>${jetty.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-servlet</artifactId>
+        <version>${jetty.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.8.0</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
 
 </project>

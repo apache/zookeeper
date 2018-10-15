@@ -62,8 +62,8 @@
   <build>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>2.3.2</version>
         <executions>
           <execution>
             <id>pre-compile-vergen</id>
@@ -71,6 +71,18 @@
             <configuration>
               <includes>
                 <include>org/apache/zookeeper/version/**/*.java</include>
+              </includes>
+            </configuration>
+            <goals>
+              <goal>compile</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>pre-compile-Info.java</id>
+            <phase>generate-resources</phase>
+            <configuration>
+              <includes>
+                <include>${project.build.directory}/classes/org/apache/zookeeper/version/Info.java</include>
               </includes>
             </configuration>
             <goals>
@@ -102,24 +114,6 @@
                 <argument>01/01/2018 11:11</argument>
               </arguments>
             </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>2.3.2</version>
-        <executions>
-          <execution>
-            <id>pre-compile-Info.java</id>
-            <phase>generate-sources</phase>
-            <configuration>
-              <includes>
-                <include>${project.build.directory}/classes/org/apache/zookeeper/version/Info.java</include>
-              </includes>
-            </configuration>
-            <goals>
-              <goal>compile</goal>
-            </goals>
           </execution>
         </executions>
       </plugin>
