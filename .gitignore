@@ -80,3 +80,4 @@ zookeeper-client/zookeeper-client-c/depcomp
 zookeeper-client/zookeeper-client-c/install-sh
 zookeeper-client/zookeeper-client-c/ltmain.sh
 zookeeper-client/zookeeper-client-c/missing
+zookeeper-common/src/main/java/org/apache/zookeeper/version/Info.java

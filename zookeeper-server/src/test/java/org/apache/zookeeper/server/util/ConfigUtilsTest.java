@@ -20,7 +20,7 @@ package org.apache.zookeeper.server.util;
 
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+import org.apache.zookeeper.server.quorum.ConfigException;
 
 public class ConfigUtilsTest {
 

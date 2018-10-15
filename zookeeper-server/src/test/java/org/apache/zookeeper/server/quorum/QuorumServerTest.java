@@ -20,7 +20,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+import org.apache.zookeeper.server.quorum.ConfigException;
 import org.junit.Assert;
 import org.junit.Test;
 

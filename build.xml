@@ -409,6 +409,22 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
             </classpath>
         </java>
     </target>
+
+  <target name="maven-version-info">
+    <tstamp>
+      <format property="build.time" pattern="MM/dd/yyyy HH:mm zz" timezone="GMT"/>
+    </tstamp>
+
+    <java classname="org.apache.zookeeper.version.util.VerGen" fork="true"
+          dir="${src_generated.dir}">
+      <arg value="${version}" />
+      <arg value="${lastRevision}" />
+      <arg value="${build.time}" />
+      <classpath>
+        <pathelement path="${build.classes}" />
+      </classpath>
+    </java>
+  </target>
     
     <target name="build-generated" depends="compile_jute,version-info,process-template,ivy-retrieve" >
         <javac srcdir="${src_generated.dir}" destdir="${build.classes}" includeantruntime="false"
