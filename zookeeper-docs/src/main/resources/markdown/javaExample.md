@@ -237,7 +237,7 @@ sets a watch, and passes a reference to itself (`this`)
 as the completion callback object. In this sense, it kicks things off, since the
 real processing happens when the watch is triggered.
 
-######Note
+###### Note
 
 >Don't confuse the completion callback with the watch callback. The `ZooKeeper.exists()`
 completion callback, which happens to be the method `StatCallback.processResult()` implemented
