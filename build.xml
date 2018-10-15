@@ -859,8 +859,10 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
       </copy>
 
       <copy todir="${dist.dir}/docs">
-        <fileset dir="${docs.dir}" />
-        <fileset dir="${build.docs}"/>
+          <fileset dir="zookeeper-docs/src/main/resources/markdown/" includes="**">
+              <exclude name="html/**" />
+          </fileset>
+          <fileset dir="${build.docs}"/>
       </copy>
 
       <copy todir="${dist.dir}">
@@ -986,8 +988,10 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
       </copy>
 
       <copy todir="${dist.dir}/docs">
-        <fileset dir="${docs.dir}" />
-        <fileset dir="${build.docs}"/>
+          <fileset dir="zookeeper-docs/src/main/resources/markdown/" includes="**">
+              <exclude name="html/**" />
+          </fileset>
+          <fileset dir="${build.docs}" />
       </copy>
 
       <copy todir="${dist.dir}">

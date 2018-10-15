@@ -138,7 +138,7 @@ only handle the failure of a single machine; if two machines fail, the
 remaining two machines do not constitute a majority. However, with five
 machines ZooKeeper can handle the failure of two machines.
 
-######Note
+###### Note
 >As mentioned in the
 [ZooKeeper Getting Started Guide](zookeeperStarted.html)
 , a minimum of three servers are required for a fault tolerant
@@ -1143,7 +1143,7 @@ proceed somewhat independently in ZooKeeper. See the
 this document for more details on setting a retention policy
 and maintenance of ZooKeeper storage.
 
-######Note
+###### Note
 >The data stored in these files is not encrypted. In the case of
 storing sensitive data in ZooKeeper, necessary measures need to be
 taken to prevent unauthorized access. Such measures are external to
@@ -1152,7 +1152,7 @@ individual settings in which it is being deployed.
 
 <a name="Recovery+-+TxnLogToolkit"></a>
 
-####Recovery - TxnLogToolkit
+#### Recovery - TxnLogToolkit
 
 TxnLogToolkit is a command line tool shipped with ZooKeeper which
 is capable of recovering transaction log entries with broken CRC.

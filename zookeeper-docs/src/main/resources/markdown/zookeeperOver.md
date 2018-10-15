@@ -282,7 +282,7 @@ service. Approximately 30 other servers were used to simulate
 the clients. The ZooKeeper ensemble was configured such that
 leaders do not allow connections from clients.
 
-######Note
+###### Note
 >In version 3.2 r/w performance improved by ~2x compared to
  the [previous 3.1 release](http://zookeeper.apache.org/docs/r3.1.1/zookeeperOver.html#Performance).
 

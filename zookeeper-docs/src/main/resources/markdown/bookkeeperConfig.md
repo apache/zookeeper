@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 //-->
 
-#BookKeeper Administrator's Guide
-###Setup Guide
+# BookKeeper Administrator's Guide
+### Setup Guide
 * [Deployment](#bk_deployment)
     * [System requirements](#bk_sysReq)
     * [Running bookies](#bk_runningBookies)
@@ -23,7 +23,7 @@ limitations under the License.
 
 <a name="bk_deployment"></a>
 
-##Deployment
+## Deployment
 This section contains information about deploying BookKeeper and
 covers these topics:</p>
 
@@ -37,7 +37,7 @@ respect to ZooKeeper.
      
 <a name="bk_sysReq"></a>
 
-###System requirements
+### System requirements
 A typical BookKeeper installation comprises a set of bookies and a set of ZooKeeper replicas. The exact number of bookies
 depends on the quorum mode, desired throughput, and number of clients using this installation simultaneously. The minimum number of
 bookies is three for self-verifying (stores a message authentication code along with each entry) and four for generic (does not
@@ -54,7 +54,7 @@ replicas
 
 <a name="bk_runningBookies"></a>
 
-###Running bookies
+### Running bookies
 To run a bookie, we execute the following command:
 
     java -cp .:./zookeeper-&lt;version&gt;-bookkeeper.jar:./zookeeper-&lt;version&gt;.jar\
@@ -73,7 +73,7 @@ Ideally, `/path_to_log_device/` and `/path_to_ledger_device/` are each in a diff
 
 <a name="bk_zkMetadata"></a>
 
-###ZooKeeper Metadata
+### ZooKeeper Metadata
 For BookKeeper, we require a ZooKeeper installation to store metadata, and to pass the list
 of ZooKeeper servers as parameter to the constructor of the BookKeeper class (`org.apache.bookkeeper.client,BookKeeper`).
 To setup ZooKeeper, please check the [ZooKeeper documentation](index.html)

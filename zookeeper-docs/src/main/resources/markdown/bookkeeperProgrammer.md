@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 //-->
 
-#BookKeeper Getting Started Guide
+# BookKeeper Getting Started Guide
 
 * [Programming with BookKeeper](#bk_GettingStarted)
     * [Instantiating BookKeeper](#bk_instance)
@@ -27,7 +27,7 @@ limitations under the License.
   
 <a name="bk_GettingStarted"></a>
 
-##Programming with BookKeeper
+## Programming with BookKeeper
 
 * [Instantiating BookKeeper](#bk_instance)
 * [Creating a ledger](#bk_createLedger)
@@ -39,7 +39,7 @@ limitations under the License.
     
 <a name="bk_instance"></a>
 
-###Instantiating BookKeeper
+### Instantiating BookKeeper
 The first step to use BookKeeper is to instantiate a BookKeeper object:
 
     org.apache.bookkeeper.BookKeeper
@@ -74,7 +74,7 @@ the application also using ZooKeeper and wants to have a single instance of ZooK
 
 <a name="bk_createLedger"></a>
 
-###Creating a ledger
+### Creating a ledger
 
 Before writing entries to BookKeeper, it is necessary to create a ledger. 
 With the current BookKeeper API, it is possible to create a ledger both synchronously
@@ -129,7 +129,7 @@ is the one same returned in the callback.
 
 <a name="bk_writeLedger"></a>
 
-###Adding entries to a ledger
+### Adding entries to a ledger
 
 Once we have a ledger handle `lh` obtained through a call to create a ledger, we
 can start writing entries. As with creating ledgers, we can write both synchronously and 
@@ -168,7 +168,7 @@ where:
 
 <a name="bk_closeLedger"></a>
 
-###Closing a ledger
+### Closing a ledger
 
 
 Once a client is done writing, it closes the ledger. The following methods belong
@@ -201,7 +201,7 @@ where:
 
 <a name="bk_openLedger"></a>
 
-###Opening a ledger
+### Opening a ledger
 
 To read from a ledger, a client must open it first. The following methods belong
 to `org.apache.bookkeeper.client.BookKeeper`.
@@ -235,7 +235,7 @@ where:
 
 <a name="bk_readLedger"></a>
 
-###Reading from ledger
+### Reading from ledger
 
 Read calls may request one or more consecutive entries. The following methods belong
 to `org.apache.bookkeeper.client.LedgerHandle`.
@@ -270,7 +270,7 @@ where:
 
 <a name="bk_deleteLedger"></a>
 
-###Deleting a ledger
+### Deleting a ledger
 
 Once a client is done with a ledger and is sure that nobody will ever need to read from it again, they can delete the ledger.
 The following methods belong to `org.apache.bookkeeper.client.BookKeeper`.
