@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.server.util;
+package org.apache.zookeeper.util;
 
 import java.io.File;
 

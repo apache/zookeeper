@@ -53,7 +53,7 @@ import org.apache.zookeeper.server.quorum.auth.QuorumAuth;
 import org.apache.zookeeper.server.quorum.flexible.QuorumHierarchical;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
-import org.apache.zookeeper.server.util.VerifyingFileFactory;
+import org.apache.zookeeper.util.VerifyingFileFactory;
 
 import static org.apache.zookeeper.common.NetUtils.formatInetAddr;
 import org.apache.zookeeper.metrics.impl.NullMetricsProvider;
@@ -115,16 +115,6 @@ public class QuorumPeerConfig {
      * @see org.apache.zookeeper.server.PurgeTxnLog#purge(File, File, int)
      */
     private final int MIN_SNAP_RETAIN_COUNT = 3;
-
-    @SuppressWarnings("serial")
-    public static class ConfigException extends Exception {
-        public ConfigException(String msg) {
-            super(msg);
-        }
-        public ConfigException(String msg, Exception e) {
-            super(msg, e);
-        }
-    }
 
     /**
      * Parse a ZooKeeper configuration file

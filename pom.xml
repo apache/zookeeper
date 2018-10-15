@@ -246,6 +246,7 @@
     <audience-annotations.version>0.5.0</audience-annotations.version>
     <junit.version>4.12</junit.version>
     <commons-cli.version>1.2</commons-cli.version>
+    <netty.version>3.10.6.Final</netty.version>
   </properties>
 
   <dependencyManagement>
@@ -274,6 +275,11 @@
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
         <version>${junit.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty</artifactId>
+        <version>${netty.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

@@ -96,7 +96,7 @@
         <version>2.3.2</version>
         <executions>
           <execution>
-            <id>pre-compile</id>
+            <id>pre-compile-jute</id>
             <phase>generate-sources</phase>
             <goals>
               <goal>compile</goal>

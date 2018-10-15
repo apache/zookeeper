@@ -26,7 +26,7 @@ import java.util.Map.Entry;
 
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+import org.apache.zookeeper.server.quorum.ConfigException;
 
 /**
  * This class implements a validator for majority quorums. The implementation is

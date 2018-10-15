@@ -27,8 +27,8 @@ import java.util.Map.Entry;
 import java.util.Properties;
 
 import org.apache.zookeeper.Environment;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
-import org.apache.zookeeper.server.util.VerifyingFileFactory;
+import org.apache.zookeeper.server.quorum.ConfigException;
+import org.apache.zookeeper.util.VerifyingFileFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

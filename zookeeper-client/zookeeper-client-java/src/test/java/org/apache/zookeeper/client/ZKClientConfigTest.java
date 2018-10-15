@@ -40,7 +40,7 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.zookeeper.common.ZKConfig;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+import org.apache.zookeeper.server.quorum.ConfigException;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
