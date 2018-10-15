@@ -506,6 +506,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
                     pattern="${ivy.lib}/[artifact]-[revision].[ext]"/>
       <ivy:cachepath pathid="mvn-ant-task-classpath" conf="mvn-ant-task"/>
     </target>
+
     <target name="compile" depends="ivy-retrieve,clover,build-generated">
         <javac destdir="${build.classes}" includeantruntime="false"
                target="${javac.target}" source="${javac.source}" debug="on" encoding="${build.encoding}">
@@ -911,8 +912,10 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       </copy>
 
       <copy todir="${dist.dir}/docs">
-        <fileset dir="${docs.dir}" />
-        <fileset dir="${build.docs}"/>
+          <fileset dir="zookeeper-docs/src/main/resources/markdown/" includes="**">
+              <exclude name="html/**" />
+          </fileset>
+          <fileset dir="${build.docs}"/>
       </copy>
 
       <copy todir="${dist.dir}">
@@ -1036,8 +1039,10 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       </copy>
 
       <copy todir="${dist.dir}/docs">
-        <fileset dir="${docs.dir}" />
-        <fileset dir="${build.docs}"/>
+          <fileset dir="zookeeper-docs/src/main/resources/markdown/" includes="**">
+              <exclude name="html/**" />
+          </fileset>
+          <fileset dir="${build.docs}" />
       </copy>
 
       <copy todir="${dist.dir}">
