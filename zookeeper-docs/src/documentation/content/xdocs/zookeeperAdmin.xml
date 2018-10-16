@@ -896,7 +896,13 @@ server.3=zoo3:2888:3888</programlisting>
               only value that limits transaction log size. When enabled
               Zookeeper will roll the log when either of the limit is hit.
               Please note that actual log size can exceed this value by the size
-              of the serialized transaction.</para>
+              of the serialized transaction. On the other hand, if this value is
+              set too close to (or smaller than) <emphasis>preAllocSize</emphasis>,
+              it can cause Zookeeper to roll the log for every tranasaction. While
+              this is not a correctness issue, this may cause severly degraded
+              performance. To avoid this and to get most out of this feature, it is
+              recommended to set the value to N * <emphasis>preAllocSize</emphasis>
+              where N >= 2.</para>
             </listitem>
           </varlistentry>
 
