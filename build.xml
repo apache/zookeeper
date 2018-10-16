@@ -556,24 +556,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <!-- ====================================================== -->
     <!-- Documentation                                          -->
     <!-- ====================================================== -->
-    <target name="docs" depends="forrest.check" description="Generate forrest-based documentation. To use, specify -Dforrest.home=&lt;base of Apache Forrest installation&gt; on the command line." if="forrest.home">
-      <condition property="forrest.exec" value="forrest.bat" else="forrest">
-      	<os family="windows"/>
-      </condition>
-      <exec dir="${docs.src}" executable="${forrest.home}/bin/${forrest.exec}"
-            failonerror="true">
-      </exec>
-      <copy todir="${docs.dir}">
-        <fileset dir="${docs.src}/build/site/" />
-      </copy>
-      <style basedir="${conf.dir}" destdir="${docs.dir}"
-             includes="zookeeper-default.xml" style="conf/configuration.xsl"/>
-    </target>
-
-    <target name="forrest.check" unless="forrest.home">
-      <fail message="'forrest.home' is not defined. Please pass -Dforrest.home=&lt;base of Apache Forrest installation&gt; to Ant on the command-line." />
-    </target>
-
     <!-- Javadoc -->
     <target name="javadoc-dev" depends="jar"
             description="Generate javadoc for zookeeper developers">
@@ -1818,7 +1800,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 		to Ant on the command-line." />
     </target>
 
-    <target name="test-patch" depends="patch.check,findbugs.check,forrest.check">
+    <target name="test-patch" depends="patch.check,findbugs.check">
   	<exec executable="bash" failonerror="true">
     		<arg value="${test_patch_sh}"/>
     		<arg value="DEVELOPER"/>
@@ -1828,13 +1810,12 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     		<arg value="${grep.cmd}"/>
     		<arg value="${patch.cmd}"/>
     		<arg value="${findbugs.home}"/>
-    		<arg value="${forrest.home}"/>
     		<arg value="${basedir}"/>
     		<arg value="${java5.home}"/>
   	</exec>
     </target>
 
-    <target name="hudson-test-patch" depends="findbugs.check,forrest.check">
+    <target name="hudson-test-patch" depends="findbugs.check">
   	<exec executable="bash" failonerror="true">
     		<arg value="${test_patch_sh}"/>
     		<arg value="HUDSON"/>
@@ -1846,7 +1827,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     		<arg value="${grep.cmd}"/>
     		<arg value="${patch.cmd}"/>
     		<arg value="${findbugs.home}"/>
-    		<arg value="${forrest.home}"/>
     		<arg value="${basedir}"/>
     		<arg value="${jira.passwd}"/>
     		<arg value="${java5.home}"/>
@@ -1855,7 +1835,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     	</exec>
      </target>
 
-     <target name="qa-test-pullrequest" depends="findbugs.check,forrest.check">
+     <target name="qa-test-pullrequest" depends="findbugs.check">
         <exec executable="bash" failonerror="true">
                 <arg value="${test_pullrequest_sh}"/>
                 <arg value="QABUILD"/>
@@ -1867,7 +1847,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
                 <arg value="${grep.cmd}"/>
                 <arg value="${patch.cmd}"/>
                 <arg value="${findbugs.home}"/>
-                <arg value="${forrest.home}"/>
                 <arg value="${basedir}"/>
                 <arg value="${jira.passwd}"/>
                 <arg value="${java5.home}"/>
@@ -1876,7 +1855,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
      </target>
 
      <!-- this target runs the hudson trunk build -->
-     <target name="hudson-test-trunk" depends="docs,tar,findbugs"/>
+     <target name="hudson-test-trunk" depends="tar,findbugs"/>
 
      <target name="api-xml" depends="ivy-retrieve-jdiff, javadoc, write-null">
        <javadoc>

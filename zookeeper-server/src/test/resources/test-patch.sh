@@ -25,8 +25,8 @@ parseArgs() {
     HUDSON)
       ### Set HUDSON to true to indicate that this script is being run by Hudson
       HUDSON=true
-      if [[ $# != 15 ]] ; then
-        echo "ERROR: usage $0 HUDSON <PATCH_DIR> <PS_CMD> <WGET_CMD> <JIRACLI> <GIT_CMD> <GREP_CMD> <PATCH_CMD> <FINDBUGS_HOME> <FORREST_HOME> <WORKSPACE_BASEDIR> <JIRA_PASSWD> <JAVA5_HOME> <CURL_CMD> <DEFECT> "
+      if [[ $# != 14 ]] ; then
+        echo "ERROR: usage $0 HUDSON <PATCH_DIR> <PS_CMD> <WGET_CMD> <JIRACLI> <GIT_CMD> <GREP_CMD> <PATCH_CMD> <FINDBUGS_HOME> <WORKSPACE_BASEDIR> <JIRA_PASSWD> <JAVA5_HOME> <CURL_CMD> <DEFECT> "
         cleanupAndExit 0
       fi
       PATCH_DIR=$2
@@ -37,12 +37,11 @@ parseArgs() {
       GREP=$7
       PATCH=$8
       FINDBUGS_HOME=$9
-      FORREST_HOME=${10}
-      BASEDIR=${11}
-      JIRA_PASSWD=${12}
-      JAVA5_HOME=${13}
-      CURL=${14}
-      defect=${15}
+      BASEDIR=${10}
+      JIRA_PASSWD=${11}
+      JAVA5_HOME=${12}
+      CURL=${13}
+      defect=${14}
 		
       ### Retrieve the defect number
       if [ -z "$defect" ] ; then
@@ -58,8 +57,8 @@ parseArgs() {
     DEVELOPER)
       ### Set HUDSON to false to indicate that this script is being run by a developer
       HUDSON=false
-      if [[ $# != 10 ]] ; then
-        echo "ERROR: usage $0 DEVELOPER <PATCH_FILE> <SCRATCH_DIR> <GIT_CMD> <GREP_CMD> <PATCH_CMD> <FINDBUGS_HOME> <FORREST_HOME> <WORKSPACE_BASEDIR> <JAVA5_HOME>"
+      if [[ $# != 9 ]] ; then
+        echo "ERROR: usage $0 DEVELOPER <PATCH_FILE> <SCRATCH_DIR> <GIT_CMD> <GREP_CMD> <PATCH_CMD> <FINDBUGS_HOME> <WORKSPACE_BASEDIR> <JAVA5_HOME>"
         cleanupAndExit 0
       fi
       ### PATCH_FILE contains the location of the patchfile
@@ -83,9 +82,8 @@ parseArgs() {
       GREP=$5
       PATCH=$6
       FINDBUGS_HOME=$7
-      FORREST_HOME=$8
-      BASEDIR=$9
-      JAVA5_HOME=${10}
+      BASEDIR=$8
+      JAVA5_HOME=${9}
       ### Obtain the patch filename to append it to the version number
       defect=`basename $PATCH_FILE` 
       ;;
@@ -183,8 +181,8 @@ setup () {
   echo "======================================================================"
   echo ""
   echo ""
-  echo "$ANT_HOME/bin/ant  -Djavac.args="-Xlint -Xmaxwarns 1000" -Djava5.home=${JAVA5_HOME} -Dforrest.home=${FORREST_HOME} -DZookeeperPatchProcess= clean tar > $PATCH_DIR/trunkJavacWarnings.txt 2>&1"
- $ANT_HOME/bin/ant -Djavac.args="-Xlint -Xmaxwarns 1000" -Djava5.home=${JAVA5_HOME} -Dforrest.home=${FORREST_HOME} -DZookeeperPatchProcess= clean tar > $PATCH_DIR/trunkJavacWarnings.txt 2>&1
+  echo "$ANT_HOME/bin/ant  -Djavac.args="-Xlint -Xmaxwarns 1000" -Djava5.home=${JAVA5_HOME} -DZookeeperPatchProcess= clean tar > $PATCH_DIR/trunkJavacWarnings.txt 2>&1"
+ $ANT_HOME/bin/ant -Djavac.args="-Xlint -Xmaxwarns 1000" -Djava5.home=${JAVA5_HOME} -DZookeeperPatchProcess= clean tar > $PATCH_DIR/trunkJavacWarnings.txt 2>&1
   if [[ $? != 0 ]] ; then
     echo "Trunk compilation is broken?"
     cleanupAndExit 1
@@ -322,8 +320,8 @@ checkJavacWarnings () {
   echo "======================================================================"
   echo ""
   echo ""
-  echo "$ANT_HOME/bin/ant -Djavac.args="-Xlint -Xmaxwarns 1000" -Djava5.home=${JAVA5_HOME} -Dforrest.home=${FORREST_HOME} -DZookeeperPatchProcess= clean tar > $PATCH_DIR/patchJavacWarnings.txt 2>&1"
-  $ANT_HOME/bin/ant -Djavac.args="-Xlint -Xmaxwarns 1000" -Djava5.home=${JAVA5_HOME} -Dforrest.home=${FORREST_HOME} -DZookeeperPatchProcess= clean tar > $PATCH_DIR/patchJavacWarnings.txt 2>&1
+  echo "$ANT_HOME/bin/ant -Djavac.args="-Xlint -Xmaxwarns 1000" -Djava5.home=${JAVA5_HOME} -DZookeeperPatchProcess= clean tar > $PATCH_DIR/patchJavacWarnings.txt 2>&1"
+  $ANT_HOME/bin/ant -Djavac.args="-Xlint -Xmaxwarns 1000" -Djava5.home=${JAVA5_HOME} -DZookeeperPatchProcess= clean tar > $PATCH_DIR/patchJavacWarnings.txt 2>&1
   if [[ $? != 0 ]] ; then
     JIRA_COMMENT="$JIRA_COMMENT
 
@@ -362,8 +360,8 @@ checkReleaseAuditWarnings () {
   echo "======================================================================"
   echo ""
   echo ""
-  echo "$ANT_HOME/bin/ant -Djava5.home=${JAVA5_HOME} -Dforrest.home=${FORREST_HOME} -DZookeeperPatchProcess= releaseaudit > $PATCH_DIR/patchReleaseAuditWarnings.txt 2>&1"
-  $ANT_HOME/bin/ant -Djava5.home=${JAVA5_HOME} -Dforrest.home=${FORREST_HOME} -DZookeeperPatchProcess= releaseaudit > $PATCH_DIR/patchReleaseAuditWarnings.txt 2>&1
+  echo "$ANT_HOME/bin/ant -Djava5.home=${JAVA5_HOME} -DZookeeperPatchProcess= releaseaudit > $PATCH_DIR/patchReleaseAuditWarnings.txt 2>&1"
+  $ANT_HOME/bin/ant -Djava5.home=${JAVA5_HOME} -DZookeeperPatchProcess= releaseaudit > $PATCH_DIR/patchReleaseAuditWarnings.txt 2>&1
 
   ### Compare trunk and patch release audit warning numbers
   if [[ -f $PATCH_DIR/patchReleaseAuditWarnings.txt ]] ; then
@@ -436,8 +434,8 @@ checkFindbugsWarnings () {
   echo "======================================================================"
   echo ""
   echo ""
-  echo "$ANT_HOME/bin/ant -Dfindbugs.home=$FINDBUGS_HOME -Djava5.home=${JAVA5_HOME} -Dforrest.home=${FORREST_HOME} -DZookeeperPatchProcess= findbugs"
-  $ANT_HOME/bin/ant -Dfindbugs.home=$FINDBUGS_HOME -Djava5.home=${JAVA5_HOME} -Dforrest.home=${FORREST_HOME} -DZookeeperPatchProcess= findbugs
+  echo "$ANT_HOME/bin/ant -Dfindbugs.home=$FINDBUGS_HOME -Djava5.home=${JAVA5_HOME} -DZookeeperPatchProcess= findbugs"
+  $ANT_HOME/bin/ant -Dfindbugs.home=$FINDBUGS_HOME -Djava5.home=${JAVA5_HOME} -DZookeeperPatchProcess= findbugs
   if [ $? != 0 ] ; then
     JIRA_COMMENT="$JIRA_COMMENT
 
@@ -487,8 +485,8 @@ runCoreTests () {
   ### Kill any rogue build processes from the last attempt
   $PS auxwww | $GREP ZookeeperPatchProcess | /usr/bin/nawk '{print $2}' | /usr/bin/xargs -t -I {} /bin/kill -9 {} > /dev/null
 
-  echo "$ANT_HOME/bin/ant -DZookeeperPatchProcess= -Dtest.junit.output.format=xml -Dtest.output=yes -Dtest.junit.threads=8 -Dcompile.c++=yes -Dforrest.home=$FORREST_HOME -Djava5.home=$JAVA5_HOME test-core"
-  $ANT_HOME/bin/ant -DZookeeperPatchProcess= -Dtest.junit.output.format=xml -Dtest.output=yes -Dtest.junit.threads=8 -Dcompile.c++=yes -Dforrest.home=$FORREST_HOME -Djava5.home=$JAVA5_HOME test-core
+  echo "$ANT_HOME/bin/ant -DZookeeperPatchProcess= -Dtest.junit.output.format=xml -Dtest.output=yes -Dtest.junit.threads=8 -Dcompile.c++=yes -Djava5.home=$JAVA5_HOME test-core"
+  $ANT_HOME/bin/ant -DZookeeperPatchProcess= -Dtest.junit.output.format=xml -Dtest.output=yes -Dtest.junit.threads=8 -Dcompile.c++=yes -Djava5.home=$JAVA5_HOME test-core
   if [[ $? != 0 ]] ; then
     JIRA_COMMENT="$JIRA_COMMENT
 
