@@ -38,6 +38,9 @@ import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
+import org.apache.zookeeper.common.QuorumX509Util;
+import org.apache.zookeeper.common.X509Exception;
+import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.server.ExitCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +54,8 @@ import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnHeader;
+
+import javax.net.ssl.SSLSocket;
 
 /**
  * This class is the superclass of two of the three main actors in a ZK
@@ -68,6 +73,8 @@ public class Learner {
     protected BufferedOutputStream bufferedOutput;
     
     protected Socket sock;
+
+    protected X509Util x509Util;
     
     /**
      * Socket getter
@@ -241,9 +248,8 @@ public class Learner {
      * @throws InterruptedException
      */
     protected void connectToLeader(InetSocketAddress addr, String hostname)
-    throws IOException, ConnectException, InterruptedException {
-        sock = new Socket();        
-        sock.setSoTimeout(self.tickTime * self.initLimit);
+            throws IOException, InterruptedException, X509Exception {
+        this.sock = createSocket();
 
         int initLimitTime = self.tickTime * self.initLimit;
         int remainingInitLimitTime = initLimitTime;
@@ -259,6 +265,9 @@ public class Learner {
                 }
 
                 sockConnect(sock, addr, Math.min(self.tickTime * self.syncLimit, remainingInitLimitTime));
+                if (self.isSslQuorum())  {
+                    ((SSLSocket) sock).startHandshake();
+                }
                 sock.setTcpNoDelay(nodelay);
                 break;
             } catch (IOException e) {
@@ -278,8 +287,7 @@ public class Learner {
                     LOG.warn("Unexpected exception, tries=" + tries +
                             ", remaining init limit=" + remainingInitLimitTime +
                             ", connecting to " + addr,e);
-                    sock = new Socket();
-                    sock.setSoTimeout(self.tickTime * self.initLimit);
+                    this.sock = createSocket();
                 }
             }
             Thread.sleep(1000);
@@ -291,8 +299,22 @@ public class Learner {
                 sock.getInputStream()));
         bufferedOutput = new BufferedOutputStream(sock.getOutputStream());
         leaderOs = BinaryOutputArchive.getArchive(bufferedOutput);
-    }   
-    
+    }
+
+    private Socket createSocket() throws X509Exception, IOException {
+        Socket sock;
+        if (self.isSslQuorum()) {
+            if (x509Util == null) {
+                x509Util = new QuorumX509Util();
+            }
+            sock = x509Util.createSSLSocket();
+        } else {
+            sock = new Socket();
+        }
+        sock.setSoTimeout(self.tickTime * self.initLimit);
+        return sock;
+    }
+
     /**
      * Once connected to the leader, perform the handshake protocol to
      * establish a following / observing connection. 

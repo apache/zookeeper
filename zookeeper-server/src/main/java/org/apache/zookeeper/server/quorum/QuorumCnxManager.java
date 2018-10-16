@@ -47,6 +47,9 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.zookeeper.common.QuorumX509Util;
+import org.apache.zookeeper.common.X509Exception;
+import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.server.util.ConfigUtils;
@@ -57,6 +60,7 @@ import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLSocket;
 import static org.apache.zookeeper.common.NetUtils.formatInetAddr;
 
 /**
@@ -172,6 +176,8 @@ public class QuorumCnxManager {
     private final boolean tcpKeepAlive = Boolean.getBoolean("zookeeper.tcpKeepAlive");
 
 
+    private X509Util x509Util;
+
     static public class Message {
         Message(ByteBuffer buffer, long sid) {
             this.buffer = buffer;
@@ -285,6 +291,8 @@ public class QuorumCnxManager {
         // Starts listener thread that waits for connection requests
         listener = new Listener();
         listener.setName("QuorumPeerListener");
+
+        x509Util = new QuorumX509Util();
     }
 
     private void initializeAuth(final long mySid,
@@ -548,14 +556,13 @@ public class QuorumCnxManager {
                 LOG.info("Setting arbitrary identifier to observer: " + sid);
             }
         } catch (IOException e) {
+            LOG.warn("Exception reading or writing challenge: {}", e);
             closeSocket(sock);
-            LOG.warn("Exception reading or writing challenge: {}", e.toString());
             return;
         }
 
         // do authenticating learner
         authServer.authenticate(sock, din);
-
         //If wins the challenge, then close the new connection.
         if (sid < self.getId()) {
             /*
@@ -646,11 +653,19 @@ public class QuorumCnxManager {
 
         Socket sock = null;
         try {
-             LOG.debug("Opening channel to server " + sid);
-             sock = new Socket();
-             setSockOpts(sock);
-             sock.connect(electionAddr, cnxTO);
-             LOG.debug("Connected to server " + sid);
+            LOG.debug("Opening channel to server " + sid);
+            if (self.isSslQuorum()) {
+                SSLSocket sslSock = x509Util.createSSLSocket();
+                setSockOpts(sslSock);
+                sslSock.connect(electionAddr, cnxTO);
+                sslSock.startHandshake();
+                sock = sslSock;
+            } else {
+                sock = new Socket();
+                setSockOpts(sock);
+                sock.connect(electionAddr, cnxTO);
+            }
+            LOG.debug("Connected to server " + sid);
             // Sends connection request asynchronously if the quorum
             // sasl authentication is enabled. This is required because
             // sasl server authentication process may take few seconds to
@@ -660,24 +675,28 @@ public class QuorumCnxManager {
             } else {
                 initiateConnection(sock, sid);
             }
-             return true;
-         } catch (UnresolvedAddressException e) {
-             // Sun doesn't include the address that causes this
-             // exception to be thrown, also UAE cannot be wrapped cleanly
-             // so we log the exception in order to capture this critical
-             // detail.
-             LOG.warn("Cannot open channel to " + sid
-                     + " at election address " + electionAddr, e);
-             closeSocket(sock);
-             throw e;
-         } catch (IOException e) {
-             LOG.warn("Cannot open channel to " + sid
-                     + " at election address " + electionAddr,
-                     e);
-             closeSocket(sock);
-             return false;
-         }
-
+            return true;
+        } catch (UnresolvedAddressException e) {
+            // Sun doesn't include the address that causes this
+            // exception to be thrown, also UAE cannot be wrapped cleanly
+            // so we log the exception in order to capture this critical
+            // detail.
+            LOG.warn("Cannot open channel to " + sid
+                    + " at election address " + electionAddr, e);
+            closeSocket(sock);
+            throw e;
+        } catch (X509Exception e) {
+            LOG.warn("Cannot open secure channel to " + sid
+                    + " at election address " + electionAddr, e);
+            closeSocket(sock);
+            return false;
+        } catch (IOException e) {
+            LOG.warn("Cannot open channel to " + sid
+                            + " at election address " + electionAddr,
+                    e);
+            closeSocket(sock);
+            return false;
+        }
     }
 
     /**
@@ -853,11 +872,19 @@ public class QuorumCnxManager {
             int numRetries = 0;
             InetSocketAddress addr;
             Socket client = null;
-            IOException exitException = null;
+            Exception exitException = null;
             while((!shutdown) && (numRetries < 3)){
                 try {
-                    ss = new ServerSocket();
+                    if (self.shouldUsePortUnification()) {
+                        ss = new UnifiedServerSocket(x509Util);
+                    } else if (self.isSslQuorum()) {
+                        ss = x509Util.createSSLServerSocket();
+                    } else {
+                        ss = new ServerSocket();
+                    }
+
                     ss.setReuseAddress(true);
+
                     if (self.getQuorumListenOnAllIPs()) {
                         int port = self.getElectionAddress().getPort();
                         addr = new InetSocketAddress(port);
@@ -893,7 +920,7 @@ public class QuorumCnxManager {
                                      + "see ZOOKEEPER-2836");
                         }
                     }
-                } catch (IOException e) {
+                } catch (IOException|X509Exception e) {
                     if (shutdown) {
                         break;
                     }
