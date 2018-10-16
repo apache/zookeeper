@@ -105,7 +105,7 @@ public class X509UtilTest extends ZKTestCase {
     }
 
     private void writeKeystore(X509Certificate certificate, KeyPair keyPair, String path) throws Exception {
-        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        KeyStore keyStore = KeyStore.getInstance("JKS");
         keyStore.load(null, PASSWORD);
         keyStore.setKeyEntry("alias", keyPair.getPrivate(), PASSWORD, new Certificate[] { certificate });
         FileOutputStream outputStream = new FileOutputStream(path);
@@ -115,7 +115,7 @@ public class X509UtilTest extends ZKTestCase {
     }
 
     private void writeTrustStore(char[] password) throws Exception {
-        KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        KeyStore trustStore = KeyStore.getInstance("JKS");
         trustStore.load(null, password);
         trustStore.setCertificateEntry(rootCertificate.getSubjectDN().toString(), rootCertificate);
         FileOutputStream outputStream = new FileOutputStream(truststorePath);
