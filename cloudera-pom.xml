@@ -146,6 +146,9 @@
                       <arg value="-Dcdh.maven=true"/>
                       <arg value="-Divy.cache.dir=${ivy.cache.dir}"/>
                       <arg value="-Dtest.junit.output.format=xml" />
+                      <arg value="-Dtest.output=yes" />
+                      <arg value="-Dtest.junit.threads=1" />
+                      <arg value="-Dtest.junit.maxmem=2g" />
                     </exec>
                   </target>
                 </configuration>
