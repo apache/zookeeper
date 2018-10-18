@@ -30,7 +30,7 @@
   <property name="src.dir"  location="${root}/src/main/java"/>
   <property name="src.test" location="${root}/src/test"/>
 
-  <property name="lib.dir"  location="${zk.root}/src/java/lib"/>
+  <property name="lib.dir"  location="${zk.root}/zookeeper-common/src/main/resources/lib"/>
 
   <property name="build.dir" location="${zk.root}/build/contrib/${name}"/>
   <property name="build.classes" location="${build.dir}/classes"/>
@@ -83,7 +83,7 @@
     <fileset dir="${ivy.test.lib}">
       <include name="**/*.jar" />
     </fileset>
-    <fileset dir="${zk.root}/src/java/lib">
+    <fileset dir="${zk.root}/zookeeper-common/src/main/resources/lib">
       <include name="**/*.jar" />
     </fileset>
     <fileset dir="${ant.home}/lib">
