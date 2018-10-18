@@ -29,6 +29,8 @@ import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+
 public class Emulate353TTLTest extends ClientBase {
     private TestableZooKeeper zk;
 
@@ -81,6 +83,16 @@ public class Emulate353TTLTest extends ClientBase {
         fakeElapsed.set(1000);
         containerManager.checkContainers();
         Assert.assertNull("Ttl node should have been deleted", zk.exists("/foo", false));
+    }
+
+    @Test
+    public void testEphemeralOwner_emulationTTL() {
+        Assert.assertThat(EphemeralType.get(-1), equalTo(EphemeralType.TTL));
+    }
+
+    @Test
+    public void testEphemeralOwner_emulationContainer() {
+        Assert.assertThat(EphemeralType.get(EphemeralType.CONTAINER_EPHEMERAL_OWNER), equalTo(EphemeralType.CONTAINER));
     }
 
     private ContainerManager newContainerManager(final AtomicLong fakeElapsed) {
