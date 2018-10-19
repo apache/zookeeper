@@ -72,7 +72,7 @@
     <fileset dir="${zk.root}/build/test/lib">
       <include name="**/*.jar"/>
     </fileset>
-    <fileset dir="${zk.root}/zookeeper-common/src/main/resources/lib">
+    <fileset dir="${zk.root}/zookeeper-server/src/main/resources/lib">
       <include name="**/*.jar" />
     </fileset>
   </path>
