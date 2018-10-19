@@ -61,23 +61,16 @@ public class NettyServerCnxn extends ServerCnxn {
     ByteBuffer bbLen = ByteBuffer.allocate(4);
     long sessionId;
     int sessionTimeout;
-    AtomicLong outstandingCount = new AtomicLong();
     Certificate[] clientChain;
     volatile boolean closingChannel;
-
-    /** The ZooKeeperServer for this connection. May be null if the server
-     * is not currently serving requests (for example if the server is not
-     * an active quorum participant.
-     */
-    private volatile ZooKeeperServer zkServer;
 
     NettyServerCnxnFactory factory;
     boolean initialized;
 
     NettyServerCnxn(Channel channel, ZooKeeperServer zks, NettyServerCnxnFactory factory) {
+        super(zks);
         this.channel = channel;
         this.closingChannel = false;
-        this.zkServer = zks;
         this.factory = factory;
         if (this.factory.login != null) {
             this.zooKeeperSaslServer = new ZooKeeperSaslServer(factory.login);
@@ -187,12 +180,7 @@ public class NettyServerCnxn extends ServerCnxn {
             return;
         }
         super.sendResponse(h, r, tag);
-        if (h.getXid() > 0) {
-            // zks cannot be null otherwise we would not have gotten here!
-            if (!zkServer.shouldThrottle(outstandingCount.decrementAndGet())) {
-                enableRecv();
-            }
-        }
+        decrOutstandingAndCheckThrottle(h);
     }
 
     @Override
@@ -352,10 +340,6 @@ public class NettyServerCnxn extends ServerCnxn {
                         }
                         if (initialized) {
                             zks.processPacket(this, bb);
-
-                            if (zks.shouldThrottle(outstandingCount.incrementAndGet())) {
-                                disableRecvNoWait();
-                            }
                         } else {
                             LOG.debug("got conn req request from "
                                     + getRemoteSocketAddress());
@@ -417,21 +401,16 @@ public class NettyServerCnxn extends ServerCnxn {
     }
 
     @Override
-    public void disableRecv() {
-        disableRecvNoWait().awaitUninterruptibly();
-    }
-
-    private ChannelFuture disableRecvNoWait() {
+    public void disableRecv(boolean waitDisableRecv) {
         throttled = true;
         if (LOG.isDebugEnabled()) {
             LOG.debug("Throttling - disabling recv " + this);
         }
-        return channel.setReadable(false);
-    }
+        ChannelFuture cf = channel.setReadable(false);
 
-    @Override
-    public long getOutstandingRequests() {
-        return outstandingCount.longValue();
+        if (waitDisableRecv) {
+            cf.awaitUninterruptibly();
+        }
     }
 
     @Override

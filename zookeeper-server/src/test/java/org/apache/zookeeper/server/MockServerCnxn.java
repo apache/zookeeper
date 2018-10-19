@@ -29,6 +29,10 @@ public class MockServerCnxn extends ServerCnxn {
     public Certificate[] clientChain;
     public boolean secure;
 
+    public MockServerCnxn() {
+        super(null);
+    }
+
     @Override
     int getSessionTimeout() {
         return 0;
@@ -84,7 +88,7 @@ public class MockServerCnxn extends ServerCnxn {
     }
 
     @Override
-    void disableRecv() {
+    void disableRecv(boolean waitDisableRecv) {
     }
 
     @Override

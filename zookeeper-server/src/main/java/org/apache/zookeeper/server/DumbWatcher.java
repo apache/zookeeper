@@ -41,6 +41,7 @@ public class DumbWatcher extends ServerCnxn {
     }
 
     public DumbWatcher(long sessionId) {
+        super(null);
         this.sessionId = sessionId;
     }
 
@@ -75,7 +76,7 @@ public class DumbWatcher extends ServerCnxn {
     void enableRecv() { }
 
     @Override
-    void disableRecv() { }
+    void disableRecv(boolean waitDisableRecv) { }
 
     @Override
     protected ServerStats serverStats() { return null; }

@@ -68,7 +68,38 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     private volatile boolean stale = false;
 
+    AtomicLong outstandingCount = new AtomicLong();
+
+    /** The ZooKeeperServer for this connection. May be null if the server
+     * is not currently serving requests (for example if the server is not
+     * an active quorum participant.
+     */
+    final ZooKeeperServer zkServer;
+
+    public ServerCnxn(final ZooKeeperServer zkServer) {
+        this.zkServer = zkServer;
+    }
+
     abstract int getSessionTimeout();
+
+    public void incrOutstandingAndCheckThrottle(RequestHeader h) {
+        if (h.getXid() <= 0) {
+            return;
+        }
+        if (zkServer.shouldThrottle(outstandingCount.incrementAndGet())) {
+            disableRecv(false);
+        }
+    }
+
+    // will be called from zkServer.processPacket
+    public void decrOutstandingAndCheckThrottle(ReplyHeader h) {
+        if (h.getXid() <= 0) {
+            return;
+        }
+        if (!zkServer.shouldThrottle(outstandingCount.decrementAndGet())) {
+            enableRecv();
+        }
+    }
 
     abstract void close();
 
@@ -119,8 +150,12 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     abstract void enableRecv();
 
-    abstract void disableRecv();
+    void disableRecv() {
+        disableRecv(true);
+    }
 
+    abstract void disableRecv(boolean waitDisableRecv);
+    
     abstract void setSessionTimeout(int sessionTimeout);
 
     protected ZooKeeperSaslServer zooKeeperSaslServer = null;
@@ -207,9 +242,6 @@ public abstract class ServerCnxn implements Stats, Watcher {
         return packetsReceived.incrementAndGet();
     }
 
-    protected void incrOutstandingRequests(RequestHeader h) {
-    }
-
     protected long incrPacketsSent() {
         return packetsSent.incrementAndGet();
     }
@@ -241,7 +273,9 @@ public abstract class ServerCnxn implements Stats, Watcher {
         return (Date)established.clone();
     }
 
-    public abstract long getOutstandingRequests();
+    public long getOutstandingRequests() {
+        return outstandingCount.longValue();
+    }
 
     public long getPacketsReceived() {
         return packetsReceived.longValue();
