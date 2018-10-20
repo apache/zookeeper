@@ -881,32 +881,6 @@ server.3=zoo3:2888:3888</programlisting>
           </varlistentry>
 
           <varlistentry>
-            <term>txnLogSizeLimitInKb</term>
-
-            <listitem>
-              <para>(Java system property: <emphasis
-              role="bold">zookeeper.txnLogSizeLimitInKb</emphasis>)</para>
-
-              <para>Zookeeper transaction log file can also be controlled more
-              directly using txnLogSizeLimitInKb. Larger txn logs can lead to
-              slower follower syncs when sync is done using transaction log.
-              This is because leader has to scan through the appropriate log
-              file on disk to find the transaction to start sync from.
-              This feature is turned off by this default and snapCount is the
-              only value that limits transaction log size. When enabled
-              Zookeeper will roll the log when either of the limit is hit.
-              Please note that actual log size can exceed this value by the size
-              of the serialized transaction. On the other hand, if this value is
-              set too close to (or smaller than) <emphasis>preAllocSize</emphasis>,
-              it can cause Zookeeper to roll the log for every tranasaction. While
-              this is not a correctness issue, this may cause severly degraded
-              performance. To avoid this and to get most out of this feature, it is
-              recommended to set the value to N * <emphasis>preAllocSize</emphasis>
-              where N >= 2.</para>
-            </listitem>
-          </varlistentry>
-
-          <varlistentry>
             <term>maxClientCnxns</term>
             <listitem>
               <para>(No Java system property)</para>

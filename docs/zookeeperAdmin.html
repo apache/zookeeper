@@ -264,9 +264,6 @@ document.write("Last Published: " + document.lastModified);
 <a href="#sc_troubleshooting">Troubleshooting</a>
 </li>
 <li>
-<a href="#sc_exitcodes">Exit Codes</a>
-</li>
-<li>
 <a href="#sc_configuration">Configuration Parameters</a>
 <ul class="minitoc">
 <li>
@@ -672,12 +669,12 @@ server.3=zoo3:2888:3888</pre>
               org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.cfg
           </span>
 </p>
-
+          
           
 <p>QuorumPeerMain starts a ZooKeeper server,
             <a href="http://java.sun.com/javase/technologies/core/mntr-mgmt/javamanagement/">JMX</a>
             management beans are also registered which allows
-            management through a JMX management console.
+            management through a JMX management console. 
             The <a href="zookeeperJMX.html">ZooKeeper JMX
             document</a> contains details on managing ZooKeeper with JMX.
           </p>
@@ -808,15 +805,6 @@ server.3=zoo3:2888:3888</pre>
           
 <p>
 <a href="#sc_troubleshooting">Troubleshooting</a>
-</p>
-        
-</li>
-
-        
-<li>
-          
-<p>
-<a href="#sc_exitcodes">Exit Codes</a>
 </p>
         
 </li>
@@ -1066,7 +1054,7 @@ server.3=zoo3:2888:3888</pre>
 <p>For more information about SLF4J, see
       <a href="http://www.slf4j.org/manual.html">its manual</a>.</p>
 <p>For more information about LOG4J, see
-      <a href="http://logging.apache.org/log4j/1.2/manual.html#defaultInit">Log4j Default Initialization Procedure</a>
+      <a href="http://logging.apache.org/log4j/1.2/manual.html#defaultInit">Log4j Default Initialization Procedure</a> 
       of the log4j manual.</p>
 <a name="sc_troubleshooting"></a>
 <h3 class="h4">Troubleshooting</h3>
@@ -1076,10 +1064,10 @@ server.3=zoo3:2888:3888</pre>
 <term> Server not coming up because of file corruption</term>
 </dt>
 <dd>
-<p>A server might not be able to read its database and fail to come up because of
+<p>A server might not be able to read its database and fail to come up because of 
 		some file corruption in the transaction logs of the ZooKeeper server. You will
 		see some IOException on loading ZooKeeper database. In such a case,
-		make sure all the other servers in your ensemble are up and  working. Use "stat"
+		make sure all the other servers in your ensemble are up and  working. Use "stat" 
 		command on the command port to see if they are in good health. After you have verified that
 		all the other servers of the ensemble are up, you can go ahead and clean the database
 		of the corrupt server. Delete all the files in datadir/version-2 and datalogdir/version-2/.
@@ -1088,65 +1076,6 @@ server.3=zoo3:2888:3888</pre>
 </dd>
 		
 </dl>
-<a name="sc_exitcodes"></a>
-<h3 class="h4">Exit Codes</h3>
-<p> ZooKeeper has several exit codes. From 3.6.0, these codes will be gathered in ExitCode (excluding contrib projects).
-      As the codes themselves were not changed to keep backward compatibility, some codes may overlap.
-      A good example is error code 1 and 2. They can both indicate invalid arguments passed to ZooKeeper or other
-      runtime errors.
-      </p>
-<ul>
-        
-<li>
-          
-<p>1: Unexpected errors like IO Exceptions</p>
-        
-</li>
-        
-<li>
-          
-<p>2: Invalid arguments during invocations</p>
-        
-</li>
-        
-<li>
-          
-<p>3: Cannot access datadir when trying to replicate server</p>
-        
-</li>
-        
-<li>
-          
-<p>4: Unable to start admin server at ZooKeeper startup</p>
-        
-</li>
-        
-<li>
-          
-<p>10: Severe error during snapshot IO</p>
-        
-</li>
-        
-<li>
-          
-<p>12: zxid from COMMIT does not match the one from pendingTxns queue</p>
-        
-</li>
-        
-<li>
-          
-<p>13: Unexpected packet from leader, or unable to truncate log on Leader.TRUNC</p>
-        
-</li>
-        
-<li>
-          
-<p>14: After listener thread tried to bind to election port 3 times, it will exit -
-            leaving the server unable to join the quorum</p>
-        
-</li>
-      
-</ul>
 <a name="sc_configuration"></a>
 <h3 class="h4">Configuration Parameters</h3>
 <p>ZooKeeper's behavior is governed by the ZooKeeper configuration
@@ -1302,32 +1231,8 @@ server.3=zoo3:2888:3888</pre>
               by snapCount. In order to prevent all of the machines in the quorum
               from taking a snapshot at the same time, each ZooKeeper server
               will take a snapshot when the number of transactions in the transaction log
-              reaches a runtime generated random value in the [snapCount/2+1, snapCount]
+              reaches a runtime generated random value in the [snapCount/2+1, snapCount] 
               range.The default snapCount is 100,000.</p>
-</dd>
-
-          
-<dt>
-<term>txnLogSizeLimitInKb</term>
-</dt>
-<dd>
-<p>(Java system property: <strong>zookeeper.txnLogSizeLimitInKb</strong>)</p>
-<p>Zookeeper transaction log file can also be controlled more
-              directly using txnLogSizeLimitInKb. Larger txn logs can lead to
-              slower follower syncs when sync is done using transaction log.
-              This is because leader has to scan through the appropriate log
-              file on disk to find the transaction to start sync from.
-              This feature is turned off by this default and snapCount is the
-              only value that limits transaction log size. When enabled
-              Zookeeper will roll the log when either of the limit is hit.
-              Please note that actual log size can exceed this value by the size
-              of the serialized transaction. On the other hand, if this value is
-              set too close to (or smaller than) <em>preAllocSize</em>,
-              it can cause Zookeeper to roll the log for every tranasaction. While
-              this is not a correctness issue, this may cause severly degraded
-              performance. To avoid this and to get most out of this feature, it is
-              recommended to set the value to N * <em>preAllocSize</em>
-              where N &gt;= 2.</p>
 </dd>
 
           
@@ -1336,10 +1241,10 @@ server.3=zoo3:2888:3888</pre>
 </dt>
 <dd>
 <p>(No Java system property)</p>
-<p>Limits the number of concurrent connections (at the socket
+<p>Limits the number of concurrent connections (at the socket 
               level) that a single client, identified by IP address, may make
-              to a single member of the ZooKeeper ensemble. This is used to
-              prevent certain classes of DoS attacks, including file
+              to a single member of the ZooKeeper ensemble. This is used to 
+              prevent certain classes of DoS attacks, including file 
               descriptor exhaustion. The default is 60. Setting this to 0
               entirely removes the limit on concurrent connections.</p>
 </dd>
@@ -1384,7 +1289,7 @@ server.3=zoo3:2888:3888</pre>
               will allow the client to negotiate. Defaults to 20 times
               the <strong>tickTime</strong>.</p>
 </dd>
-
+           
            
 <dt>
 <term>fsync.warningthresholdms</term>
@@ -1407,14 +1312,14 @@ server.3=zoo3:2888:3888</pre>
 <dd>
 <p>(No Java system property)</p>
 <p>
-<strong>New in 3.4.0:</strong>
+<strong>New in 3.4.0:</strong> 
               When enabled, ZooKeeper auto purge feature retains
               the <strong>autopurge.snapRetainCount</strong> most
-              recent snapshots and the corresponding transaction logs in the
+              recent snapshots and the corresponding transaction logs in the 
               <strong>dataDir</strong> and <strong>dataLogDir</strong> respectively and deletes the rest.
               Defaults to 3. Minimum value is 3.</p>
 </dd>
-
+          
           
 <dt>
 <term>autopurge.purgeInterval</term>
@@ -1473,96 +1378,6 @@ server.3=zoo3:2888:3888</pre>
                 than what was allowed in 3.5.3 (1152921504606846975)</p>
 </dd>
 
-
-          
-<dt>
-<term>watchManaggerName</term>
-</dt>
-<dd>
-<p>(Java system property only: <strong>zookeeper.watchManagerName</strong>)</p>
-<p>
-<strong>New in 3.6.0:</strong> Added in
-                <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1179">ZOOKEEPER-1179</a> New watcher
-                manager WatchManagerOptimized is added to optimize the memory overhead in heavy watch use cases. This
-                config is used to define which watcher manager to be used. Currently, we only support WatchManager and
-                WatchManagerOptimized.</p>
-</dd>
-
-          
-<dt>
-<term>watcherCleanThreadsNum</term>
-</dt>
-<dd>
-<p>(Java system property only: <strong>zookeeper.watcherCleanThreadsNum</strong>)</p>
-<p>
-<strong>New in 3.6.0:</strong> Added in
-                <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1179">ZOOKEEPER-1179</a> The new watcher
-                manager WatchManagerOptimized will clean up the dead watchers lazily, this config is used to decide how
-                many thread is used in the WatcherCleaner. More thread usually means larger clean up throughput. The
-                default value is 2, which is good enough even for heavy and continuous session closing/recreating cases.</p>
-</dd>
-
-          
-<dt>
-<term>watcherCleanThreshold</term>
-</dt>
-<dd>
-<p>(Java system property only: <strong>zookeeper.watcherCleanThreshold</strong>)</p>
-<p>
-<strong>New in 3.6.0:</strong> Added in
-                <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1179">ZOOKEEPER-1179</a> The new watcher
-                manager WatchManagerOptimized will clean up the dead watchers lazily, the clean up process is relatively
-                heavy, batch processing will reduce the cost and improve the performance. This setting is used to decide
-                the batch size. The default one is 1000, we don't need to change it if there is no memory or clean up
-                speed issue.</p>
-</dd>
-
-          
-<dt>
-<term>watcherCleanIntervalInSeconds</term>
-</dt>
-<dd>
-<p>(Java system property only: <strong>zookeeper.watcherCleanIntervalInSeconds</strong>)</p>
-<p>
-<strong>New in 3.6.0:</strong> Added in
-                <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1179">ZOOKEEPER-1179</a> The new watcher
-                manager WatchManagerOptimized will clean up the dead watchers lazily, the clean up process is relatively
-                heavy, batch processing will reduce the cost and improve the performance. Besides watcherCleanThreshold,
-                this setting is used to clean up the dead watchers after certain time even the dead watchers are not larger
-                than watcherCleanThreshold, so that we won't leave the dead watchers there for too long. The default setting
-                is 10 minutes, which usually don't need to be changed.</p>
-</dd>
-
-          
-<dt>
-<term>maxInProcessingDeadWatchers</term>
-</dt>
-<dd>
-<p>(Java system property only: <strong>zookeeper.maxInProcessingDeadWatchers</strong>)</p>
-<p>
-<strong>New in 3.6.0:</strong> Added in
-                <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1179">ZOOKEEPER-1179</a> This is used
-                to control how many backlog can we have in the WatcherCleaner, when it reaches this number, it will
-                slow down adding the dead watcher to WatcherCleaner, which will in turn slow down adding and closing
-                watchers, so that we can avoid OOM issue. By default there is no limit, you can set it to values like
-                watcherCleanThreshold * 1000.</p>
-</dd>
-
-          
-<dt>
-<term>bitHashCacheSize</term>
-</dt>
-<dd>
-<p>(Java system property only: <strong>zookeeper.bitHashCacheSize</strong>)</p>
-<p>
-<strong>New 3.6.0:</strong> Added in
-                <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1179">ZOOKEEPER-1179</a> This is the
-                setting used to decide the HashSet cache size in the BitHashSet implementation. Without HashSet, we
-                need to use O(N) time to get the elements, N is the bit numbers in elementBits. But we need to
-                keep the size small to make sure it doesn't cost too much in memory, there is a trade off between memory
-                and time complexity. The default value is 10, which seems a relatively reasonable cache size.</p>
-</dd>
-
         
 </dl>
 <a name="sc_clusterOptions"></a>
@@ -1587,33 +1402,12 @@ server.3=zoo3:2888:3888</pre>
               
 <p> The implementations of leader election 1, and 2 are now
               <strong> deprecated </strong>. We have the intention
-              of removing them in the next release, at which point only the
-              FastLeaderElection will be available.
+              of removing them in the next release, at which point only the 
+              FastLeaderElection will be available. 
               </p>
               
 </div>
 </div>
-</dd>
-
-          
-<dt>
-<term>maxTimeToWaitForEpoch</term>
-</dt>
-<dd>
-<p>(Java system property: zookeeper.leader.<strong>maxTimeToWaitForEpoch</strong>)</p>
-<p>
-<strong>New in 3.6.0:</strong>
-                The maximum time to wait for epoch from voters when activating
-                leader. If leader received a LOOKING notification from one of
-                it's voters, and it hasn't received epoch packets from majority
-                within maxTimeToWaitForEpoch, then it will goto LOOKING and
-                elect leader again.
-
-                This can be tuned to reduce the quorum or server unavailable
-                time, it can be set to be much smaller than initLimit * tickTime.
-                In cross datacenter environment, it can be set to something
-                like 2s.
-              </p>
 </dd>
 
           
@@ -1662,15 +1456,11 @@ server.3=zoo3:2888:3888</pre>
               contains the server number, in ASCII, and it should match
               <strong>x</strong> in <strong>server.x</strong> in the left hand side of this
               setting.</p>
-<p>
-<strong>hostname</strong> can also be configured
-              with IPv4/IPv6 address.Notice when use IPv6 address which should be
-              surrounded by brackets([])</p>
 <p>The list of servers that make up ZooKeeper servers that is
               used by the clients must match the list of ZooKeeper servers
               that each ZooKeeper server has.</p>
-<p>There are two port numbers <strong>nnnnn</strong>.
-              The first followers use to connect to the leader, and the second is for
+<p>There are two port numbers <strong>nnnnn</strong>. 
+              The first followers use to connect to the leader, and the second is for 
               leader election. If you want to test multiple servers on a single machine, then
               different ports can be used for each server.</p>
 </dd>
@@ -1693,7 +1483,7 @@ server.3=zoo3:2888:3888</pre>
 <dd>
 <p>(No Java system property)</p>
 <p>Enables a hierarchical quorum construction."x" is a group identifier
-              and the numbers following the "=" sign correspond to server identifiers.
+              and the numbers following the "=" sign correspond to server identifiers. 
               The left-hand side of the assignment is a colon-separated list of server
               identifiers. Note that groups must be disjoint and the union of all groups
               must be the ZooKeeper ensemble. </p>
@@ -1713,21 +1503,21 @@ server.3=zoo3:2888:3888</pre>
               when voting. There are a few parts of ZooKeeper that require voting
               such as leader election and the atomic broadcast protocol. By default
               the weight of server is 1. If the configuration defines groups, but not
-              weights, then a value of 1 will be assigned to all servers.
+              weights, then a value of 1 will be assigned to all servers.  
               </p>
 <p> You will find an example <a href="zookeeperHierarchicalQuorums.html">here</a>
               
 </p>
 </dd>
-
+          
           
 <dt>
 <term>cnxTimeout</term>
 </dt>
 <dd>
 <p>(Java system property: zookeeper.<strong>cnxTimeout</strong>)</p>
-<p>Sets the timeout value for opening connections for leader election notifications.
-              Only applicable if you are using electionAlg 3.
+<p>Sets the timeout value for opening connections for leader election notifications. 
+              Only applicable if you are using electionAlg 3. 
               </p>
 <div class="note">
 <div class="label">Note</div>
@@ -1899,7 +1689,7 @@ server.3=zoo3:2888:3888</pre>
 <dd>
 <p>(Java system property: <strong>zookeeper.superUser</strong>)</p>
 <p>Similar to <strong>zookeeper.X509AuthenticationProvider.superUser</strong>
-              but is generic for SASL based logins. It stores the name of
+              but is generic for SASL based logins. It stores the name of 
               a user that can access the znode hierarchy as a "super" user.
               </p>
 </dd>
@@ -2026,10 +1816,10 @@ server.3=zoo3:2888:3888</pre>
 <term>quorumListenOnAllIPs</term>
 </dt>
 <dd>
-<p>When set to true the ZooKeeper server will listen
+<p>When set to true the ZooKeeper server will listen  
               for connections from its peers on all available IP addresses,
               and not only the address configured in the server list of the
-              configuration file. It affects the connections handling the
+              configuration file. It affects the connections handling the 
               ZAB protocol and the Fast Leader Election protocol. Default
               value is <strong>false</strong>.</p>
 </dd>
@@ -2265,7 +2055,7 @@ server.3=zoo3:2888:3888</pre>
 </dt>
 <dd>
 <p>(Java system property: <strong>zookeeper.admin.idleTimeout</strong>)</p>
-<p>Set the maximum idle time in milliseconds that a connection can wait
+<p>Set the maximum idle time in milliseconds that a connection can wait 
                           before sending or receiving data. Defaults to 30000 ms.</p>
 </dd>
 
@@ -2449,7 +2239,7 @@ server.3=zoo3:2888:3888</pre>
 </dt>
 <dd>
 <p>
-<strong>New in 3.4.0:</strong> Outputs a list
+<strong>New in 3.4.0:</strong> Outputs a list 
               of variables that could be used for monitoring the health of the cluster.</p>
 <pre class="code">$ echo mntr | nc localhost 2185
 
@@ -2475,7 +2265,7 @@ server.3=zoo3:2888:3888</pre>
               zk_min_proposal_size 23
               zk_max_proposal_size 64
               </pre>
-<p>The output is compatible with java properties format and the content
+<p>The output is compatible with java properties format and the content 
               may change over time (new keys added). Your scripts should expect changes.</p>
 <p>ATTENTION: Some of the keys are platform specific and some of the keys are only exported by the Leader. </p>
 <p>The output contains multiple lines with the following format:</p>
@@ -2737,7 +2527,8 @@ server.3=zoo3:2888:3888</pre>
 <p>Using older log and snapshot files, you can look at the previous
         state of ZooKeeper servers and even restore that state. The
         LogFormatter class allows an administrator to look at the transactions
-        in a log.</p>
+        in a log. The LogChopper class allows an administrator to create
+         truncated versions of transaction logs.</p>
 <p>The ZooKeeper server creates snapshot and log files, but
         never deletes them. The retention policy of the data and log
         files is implemented outside of the ZooKeeper server. The
@@ -2773,7 +2564,7 @@ server.3=zoo3:2888:3888</pre>
           $ bin/zkTxnLogToolkit.sh
 
           usage: TxnLogToolkit [-dhrv] txn_log_file_name
-          -d,--dump      Dump mode. Dump all entries of the log file with printing the content of a nodepath (default)
+          -d,--dump      Dump mode. Dump all entries of the log file. (this is the default)
           -h,--help      Print help message
           -r,--recover   Recovery mode. Re-calculate CRC for broken entries.
           -v,--verbose   Be verbose in recovery mode: print all entries, not just fixed ones.
