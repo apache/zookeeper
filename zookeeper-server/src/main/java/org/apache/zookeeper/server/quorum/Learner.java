@@ -244,8 +244,9 @@ public class Learner {
 
     /**
      * Establish a connection with the LearnerMaster found by findLearnerMaster.
+     * Followers only connect to Leaders, Observers can connect to any active LearnerMaster.
      * Retries until either initLimit time has elapsed or 5 tries have happened.
-     * @param addr - the address of the Leader to connect to.
+     * @param addr - the address of the Peer to connect to.
      * @throws IOException - if the socket connection fails on the 5th attempt
      * <li>if there is an authentication failure while connecting to leader</li>
      * @throws ConnectException
@@ -317,8 +318,8 @@ public class Learner {
     }
 
     /**
-     * Once connected to the leader, perform the handshake protocol to
-     * establish a following / observing connection. 
+     * Once connected to the leader or learner master, perform the handshake
+     * protocol to establish a following / observing connection.
      * @param pktType
      * @return the zxid the Leader sends for synchronization purposes.
      * @throws IOException
@@ -377,7 +378,8 @@ public class Learner {
     } 
     
     /**
-     * Finally, synchronize our history with the Leader. 
+     * Finally, synchronize our history with the Leader (if Follower)
+     * or the LearnerMaster (if Observer).
      * @param newLeaderZxid
      * @throws IOException
      * @throws InterruptedException
