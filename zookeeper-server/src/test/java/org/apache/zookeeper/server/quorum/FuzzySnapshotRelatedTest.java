@@ -375,7 +375,7 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
         }
 
         @Override
-        protected QuorumPeer getQuorumPeer() throws SaslException {
+        protected QuorumPeer initQuorumPeer() throws SaslException {
             return new QuorumPeer() {
                 @Override
                 public void setZKDatabase(ZKDatabase database) {

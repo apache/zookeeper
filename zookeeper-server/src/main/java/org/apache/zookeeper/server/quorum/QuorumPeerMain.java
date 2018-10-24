@@ -172,7 +172,7 @@ public class QuorumPeerMain {
                       true);
           }
 
-          quorumPeer = getQuorumPeer();
+          quorumPeer = initQuorumPeer();
           quorumPeer.setRootMetricsContext(metricsProvider.getRootContext());
           quorumPeer.setTxnFactory(new FileTxnSnapLog(
                       config.getDataLogDir(),
@@ -232,7 +232,7 @@ public class QuorumPeerMain {
     }
 
     // @VisibleForTesting
-    protected QuorumPeer getQuorumPeer() throws SaslException {
+    protected QuorumPeer initQuorumPeer() throws SaslException {
         return new QuorumPeer();
     }
 }

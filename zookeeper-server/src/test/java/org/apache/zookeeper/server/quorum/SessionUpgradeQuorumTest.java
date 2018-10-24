@@ -217,7 +217,7 @@ public class SessionUpgradeQuorumTest extends QuorumPeerTestBase {
         }
 
         @Override
-        protected QuorumPeer getQuorumPeer() throws SaslException {
+        protected QuorumPeer initQuorumPeer() throws SaslException {
             return new QuorumPeer() {
 
                 @Override

@@ -1018,7 +1018,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             qpMain.runFromConfig(configMock);
 
             // Assert
-            FileTxnSnapLog txnFactory = qpMain.getQuorumPeer().getTxnFactory();
+            FileTxnSnapLog txnFactory = qpMain.initQuorumPeer().getTxnFactory();
             Assert.assertEquals(Paths.get(dataLogDir.getAbsolutePath(), "version-2").toString(), txnFactory.getDataDir().getAbsolutePath());
             Assert.assertEquals(Paths.get(dataDir.getAbsolutePath(), "version-2").toString(), txnFactory.getSnapDir().getAbsolutePath());
         } finally {
@@ -1035,7 +1035,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         }
 
         @Override
-        protected QuorumPeer getQuorumPeer() {
+        protected QuorumPeer initQuorumPeer() {
             return qp;
         }
     }
@@ -1745,7 +1745,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         }
 
         @Override
-        protected QuorumPeer getQuorumPeer() throws SaslException {
+        protected QuorumPeer initQuorumPeer() throws SaslException {
             return new CustomQuorumPeer(context);
         }
     }
