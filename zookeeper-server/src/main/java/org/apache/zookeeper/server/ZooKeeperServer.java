@@ -1107,9 +1107,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         // there might be a race condition that it enabled recv after
         // processing request and then disabled when check throttling.
         //
-        // It changes the semantic a bit, since when check throttling it's
-        // now actually checking the global outstanding request before this
-        // request.
+        // Be aware that we're actually checking the global outstanding 
+        // request before this request.
         //
         // It's fine if the IOException thrown before we decrease the count
         // in cnxn, since it will close the cnxn anyway.
