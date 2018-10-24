@@ -54,6 +54,38 @@ public abstract class ServerCnxnFactory {
      */
     static final ByteBuffer closeConn = ByteBuffer.allocate(0);
 
+    // sessionMap is used by closeSession()
+    final ConcurrentHashMap<Long, ServerCnxn> sessionMap =
+        new ConcurrentHashMap<Long, ServerCnxn>();
+
+    public void addSession(long sessionId, ServerCnxn cnxn) {
+        sessionMap.put(sessionId, cnxn);
+    }
+
+    public void removeCnxnFromSessionMap(ServerCnxn cnxn) {
+        long sessionId = cnxn.getSessionId();
+        if (sessionId != 0) {
+            sessionMap.remove(sessionId);
+        }
+    }
+
+    /**
+     * @return true if the cnxn that contains the sessionId exists in this ServerCnxnFactory
+     *         and it's closed. Otherwise false.
+     */
+    public boolean closeSession(long sessionId) {
+        ServerCnxn cnxn = sessionMap.remove(sessionId);
+        if (cnxn != null) {
+            try {
+                cnxn.close();
+            } catch (Exception e) {
+                LOG.warn("exception during session close", e);
+            }
+            return true;
+        }
+        return false;
+    }
+
     public abstract int getLocalPort();
     
     public abstract Iterable<ServerCnxn> getConnections();
@@ -65,12 +97,6 @@ public abstract class ServerCnxnFactory {
     public ZooKeeperServer getZooKeeperServer() {
         return zkServer;
     }
-
-    /**
-     * @return true if the cnxn that contains the sessionId exists in this ServerCnxnFactory
-     *         and it's closed. Otherwise false.
-     */
-    public abstract boolean closeSession(long sessionId);
 
     public void configure(InetSocketAddress addr, int maxcc) throws IOException {
         configure(addr, maxcc, false);
