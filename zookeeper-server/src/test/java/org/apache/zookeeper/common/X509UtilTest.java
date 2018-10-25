@@ -17,150 +17,78 @@
  */
 package org.apache.zookeeper.common;
 
-import org.apache.zookeeper.PortAssignment;
-import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.client.ZKClientConfig;
-import org.apache.zookeeper.server.ServerCnxnFactory;
-import org.bouncycastle.asn1.x500.X500NameBuilder;
-import org.bouncycastle.asn1.x500.style.BCStyle;
-import org.bouncycastle.asn1.x509.BasicConstraints;
-import org.bouncycastle.asn1.x509.Extension;
-import org.bouncycastle.asn1.x509.KeyUsage;
-import org.bouncycastle.cert.X509v3CertificateBuilder;
-import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
-import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.operator.ContentSigner;
-import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import java.security.Security;
+import java.util.Collection;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLSocket;
-import java.io.FileOutputStream;
-import java.math.BigInteger;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.KeyStore;
-import java.security.Security;
-import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Random;
+import javax.net.ssl.X509KeyManager;
+import javax.net.ssl.X509TrustManager;
 
-import static org.apache.zookeeper.test.ClientBase.createTmpDir;
+import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.client.ZKClientConfig;
+import org.apache.zookeeper.server.ServerCnxnFactory;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
-public class X509UtilTest extends ZKTestCase {
-
-    private static final char[] PASSWORD = "password".toCharArray();
-    private X509Certificate rootCertificate;
-
-    private String truststorePath;
-    private String keystorePath;
-    private static KeyPair rootKeyPair;
-
+@RunWith(Parameterized.class)
+public class X509UtilTest extends BaseX509ParameterizedTestCase {
     private X509Util x509Util;
-    private String[] customCipherSuites = new String[]{"SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA", "SSL_DH_anon_EXPORT_WITH_DES40_CBC_SHA"};
+    private static final String[] customCipherSuites = new String[]{
+            "SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA",
+            "SSL_DH_anon_EXPORT_WITH_DES40_CBC_SHA"};
 
-    @BeforeClass
-    public static void createKeyPair() throws Exception {
-        Security.addProvider(new BouncyCastleProvider());
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA", BouncyCastleProvider.PROVIDER_NAME);
-        keyPairGenerator.initialize(4096);
-        rootKeyPair = keyPairGenerator.genKeyPair();
+    @Parameterized.Parameters
+    public static Collection<Object[]> params() {
+        return BaseX509ParameterizedTestCase.defaultParams();
     }
 
-    @AfterClass
-    public static void removeBouncyCastleProvider() throws Exception {
-        Security.removeProvider("BC");
+    public X509UtilTest(
+            X509KeyType caKeyType,
+            X509KeyType certKeyType,
+            String keyPassword,
+            Integer paramIndex) {
+        super(paramIndex, () -> {
+            try {
+                return X509TestContext.newBuilder()
+                        .setTempDir(tempDir)
+                        .setKeyStorePassword(keyPassword)
+                        .setKeyStoreKeyType(certKeyType)
+                        .setTrustStorePassword(keyPassword)
+                        .setTrustStoreKeyType(caKeyType)
+                        .build();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     @Before
     public void setUp() throws Exception {
-        rootCertificate = createSelfSignedCertifcate(rootKeyPair);
-
-        String tmpDir = createTmpDir().getAbsolutePath();
-        truststorePath = tmpDir + "/truststore.jks";
-        keystorePath = tmpDir + "/keystore.jks";
-
-        x509Util = new ClientX509Util();
-
-        writeKeystore(rootCertificate, rootKeyPair, keystorePath);
-
+        x509TestContext.setSystemProperties(new ClientX509Util(), KeyStoreFileType.JKS, KeyStoreFileType.JKS);
         System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
         System.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
-        System.setProperty(x509Util.getSslKeystoreLocationProperty(), keystorePath);
-        System.setProperty(x509Util.getSslKeystorePasswdProperty(), new String(PASSWORD));
-        System.setProperty(x509Util.getSslTruststoreLocationProperty(), truststorePath);
-        System.setProperty(x509Util.getSslTruststorePasswdProperty(), new String(PASSWORD));
-        System.setProperty(x509Util.getSslHostnameVerificationEnabledProperty(), "false");
-
-        writeTrustStore(PASSWORD);
-    }
-
-    private void writeKeystore(X509Certificate certificate, KeyPair keyPair, String path) throws Exception {
-        KeyStore keyStore = KeyStore.getInstance("JKS");
-        keyStore.load(null, PASSWORD);
-        keyStore.setKeyEntry("alias", keyPair.getPrivate(), PASSWORD, new Certificate[] { certificate });
-        FileOutputStream outputStream = new FileOutputStream(path);
-        keyStore.store(outputStream, PASSWORD);
-        outputStream.flush();
-        outputStream.close();
-    }
-
-    private void writeTrustStore(char[] password) throws Exception {
-        KeyStore trustStore = KeyStore.getInstance("JKS");
-        trustStore.load(null, password);
-        trustStore.setCertificateEntry(rootCertificate.getSubjectDN().toString(), rootCertificate);
-        FileOutputStream outputStream = new FileOutputStream(truststorePath);
-        if (password == null) {
-            trustStore.store(outputStream, new char[0]);
-        } else {
-            trustStore.store(outputStream, password);
-        }
-        outputStream.flush();
-        outputStream.close();
-    }
-
-    private X509Certificate createSelfSignedCertifcate(KeyPair keyPair) throws Exception {
-        X500NameBuilder nameBuilder = new X500NameBuilder(BCStyle.INSTANCE);
-        nameBuilder.addRDN(BCStyle.CN, "localhost");
-        Date notBefore = new Date();
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(notBefore);
-        cal.add(Calendar.YEAR, 1);
-        Date notAfter = cal.getTime();
-        BigInteger serialNumber = new BigInteger(128, new Random());
-
-        X509v3CertificateBuilder certificateBuilder =
-                new JcaX509v3CertificateBuilder(nameBuilder.build(), serialNumber, notBefore, notAfter, nameBuilder.build(), keyPair.getPublic())
-                        .addExtension(Extension.basicConstraints, true, new BasicConstraints(0))
-                        .addExtension(Extension.keyUsage, true, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyCertSign | KeyUsage.cRLSign));
-
-        ContentSigner contentSigner = new JcaContentSignerBuilder("SHA256WithRSAEncryption").build(keyPair.getPrivate());
-
-        return new JcaX509CertificateConverter().getCertificate(certificateBuilder.build(contentSigner));
+        x509Util = new ClientX509Util();
     }
 
     @After
-    public void cleanUp() throws Exception {
-        System.clearProperty(x509Util.getSslKeystoreLocationProperty());
-        System.clearProperty(x509Util.getSslKeystorePasswdProperty());
-        System.clearProperty(x509Util.getSslTruststoreLocationProperty());
-        System.clearProperty(x509Util.getSslTruststorePasswdProperty());
-        System.clearProperty(x509Util.getSslHostnameVerificationEnabledProperty());
+    public void cleanUp() {
+        x509TestContext.clearSystemProperties(x509Util);
         System.clearProperty(x509Util.getSslOcspEnabledProperty());
         System.clearProperty(x509Util.getSslCrlEnabledProperty());
         System.clearProperty(x509Util.getCipherSuitesProperty());
+        System.clearProperty(x509Util.getSslProtocolProperty());
         System.clearProperty("com.sun.net.ssl.checkRevocation");
         System.clearProperty("com.sun.security.enableCRLDP");
-        Security.setProperty("com.sun.security.enableCRLDP", "false");
+        Security.setProperty("ocsp.enable", Boolean.FALSE.toString());
+        Security.setProperty("com.sun.security.enableCRLDP", Boolean.FALSE.toString());
+        System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
+        System.clearProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET);
     }
 
     @Test(timeout = 5000)
@@ -178,13 +106,6 @@ public class X509UtilTest extends ZKTestCase {
     }
 
     @Test(timeout = 5000)
-    public void testCreateSSLContextWithoutTrustStorePassword() throws Exception {
-        writeTrustStore(null);
-        System.clearProperty(x509Util.getSslTruststorePasswdProperty());
-        x509Util.getDefaultSSLContext();
-    }
-
-    @Test(timeout = 5000, expected = X509Exception.SSLContextException.class)
     public void testCreateSSLContextWithoutKeyStoreLocation() throws Exception {
         System.clearProperty(x509Util.getSslKeystoreLocationProperty());
         x509Util.getDefaultSSLContext();
@@ -192,6 +113,9 @@ public class X509UtilTest extends ZKTestCase {
 
     @Test(timeout = 5000, expected = X509Exception.SSLContextException.class)
     public void testCreateSSLContextWithoutKeyStorePassword() throws Exception {
+        if (!x509TestContext.isKeyStoreEncrypted()) {
+            throw new X509Exception.SSLContextException("");
+        }
         System.clearProperty(x509Util.getSslKeystorePasswdProperty());
         x509Util.getDefaultSSLContext();
     }
@@ -254,6 +178,182 @@ public class X509UtilTest extends ZKTestCase {
         Assert.assertEquals(sslServerSocket.getLocalPort(), port);
         Assert.assertArrayEquals(customCipherSuites, sslServerSocket.getEnabledCipherSuites());
         Assert.assertTrue(sslServerSocket.getNeedClientAuth());
+    }
+
+    @Test
+    public void testLoadPEMKeyStore() throws Exception {
+        // Make sure we can instantiate a key manager from the PEM file on disk
+        X509KeyManager km = X509Util.createKeyManager(
+                x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM).getAbsolutePath(),
+                x509TestContext.getKeyStorePassword(),
+                KeyStoreFileType.PEM.getPropertyValue());
+    }
+
+    @Test
+    public void testLoadPEMKeyStoreNullPassword() throws Exception {
+        if (!x509TestContext.getKeyStorePassword().isEmpty()) {
+            return;
+        }
+        // Make sure that empty password and null password are treated the same
+        X509KeyManager km = X509Util.createKeyManager(
+                x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM).getAbsolutePath(),
+                null,
+                KeyStoreFileType.PEM.getPropertyValue());
+    }
+
+    @Test
+    public void testLoadPEMKeyStoreAutodetectStoreFileType() throws Exception {
+        // Make sure we can instantiate a key manager from the PEM file on disk
+        X509KeyManager km = X509Util.createKeyManager(
+                x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM).getAbsolutePath(),
+                x509TestContext.getKeyStorePassword(),
+                null /* null StoreFileType means 'autodetect from file extension' */);
+    }
+
+    @Test(expected = X509Exception.KeyManagerException.class)
+    public void testLoadPEMKeyStoreWithWrongPassword() throws Exception {
+        // Attempting to load with the wrong key password should fail
+        X509KeyManager km = X509Util.createKeyManager(
+                x509TestContext.getKeyStoreFile(KeyStoreFileType.PEM).getAbsolutePath(),
+                "wrong password", // intentionally use the wrong password
+                KeyStoreFileType.PEM.getPropertyValue());
+    }
+
+    @Test
+    public void testLoadPEMTrustStore() throws Exception {
+        // Make sure we can instantiate a trust manager from the PEM file on disk
+        X509TrustManager tm = X509Util.createTrustManager(
+                x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM).getAbsolutePath(),
+                x509TestContext.getTrustStorePassword(),
+                KeyStoreFileType.PEM.getPropertyValue(),
+                false,
+                false,
+                true,
+                true);
+    }
+
+    @Test
+    public void testLoadPEMTrustStoreNullPassword() throws Exception {
+        if (!x509TestContext.getTrustStorePassword().isEmpty()) {
+            return;
+        }
+        // Make sure that empty password and null password are treated the same
+        X509TrustManager tm = X509Util.createTrustManager(
+                x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM).getAbsolutePath(),
+                null,
+                KeyStoreFileType.PEM.getPropertyValue(),
+                false,
+                false,
+                true,
+                true);
+
+    }
+
+    @Test
+    public void testLoadPEMTrustStoreAutodetectStoreFileType() throws Exception {
+        // Make sure we can instantiate a trust manager from the PEM file on disk
+        X509TrustManager tm = X509Util.createTrustManager(
+                x509TestContext.getTrustStoreFile(KeyStoreFileType.PEM).getAbsolutePath(),
+                x509TestContext.getTrustStorePassword(),
+                null,  // null StoreFileType means 'autodetect from file extension'
+                false,
+                false,
+                true,
+                true);
+    }
+
+    @Test
+    public void testLoadJKSKeyStore() throws Exception {
+        // Make sure we can instantiate a key manager from the JKS file on disk
+        X509KeyManager km = X509Util.createKeyManager(
+                x509TestContext.getKeyStoreFile(KeyStoreFileType.JKS).getAbsolutePath(),
+                x509TestContext.getKeyStorePassword(),
+                KeyStoreFileType.JKS.getPropertyValue());
+    }
+
+    @Test
+    public void testLoadJKSKeyStoreNullPassword() throws Exception {
+        if (!x509TestContext.getKeyStorePassword().isEmpty()) {
+            return;
+        }
+        // Make sure that empty password and null password are treated the same
+        X509KeyManager km = X509Util.createKeyManager(
+                x509TestContext.getKeyStoreFile(KeyStoreFileType.JKS).getAbsolutePath(),
+                null,
+                KeyStoreFileType.JKS.getPropertyValue());
+    }
+
+    @Test
+    public void testLoadJKSKeyStoreAutodetectStoreFileType() throws Exception {
+        // Make sure we can instantiate a key manager from the JKS file on disk
+        X509KeyManager km = X509Util.createKeyManager(
+                x509TestContext.getKeyStoreFile(KeyStoreFileType.JKS).getAbsolutePath(),
+                x509TestContext.getKeyStorePassword(),
+                null /* null StoreFileType means 'autodetect from file extension' */);
+    }
+
+    @Test(expected = X509Exception.KeyManagerException.class)
+    public void testLoadJKSKeyStoreWithWrongPassword() throws Exception {
+        // Attempting to load with the wrong key password should fail
+        X509KeyManager km = X509Util.createKeyManager(
+                x509TestContext.getKeyStoreFile(KeyStoreFileType.JKS).getAbsolutePath(),
+                "wrong password",
+                KeyStoreFileType.JKS.getPropertyValue());
+    }
+
+    @Test
+    public void testLoadJKSTrustStore() throws Exception {
+        // Make sure we can instantiate a trust manager from the JKS file on disk
+        X509TrustManager tm = X509Util.createTrustManager(
+                x509TestContext.getTrustStoreFile(KeyStoreFileType.JKS).getAbsolutePath(),
+                x509TestContext.getTrustStorePassword(),
+                KeyStoreFileType.JKS.getPropertyValue(),
+                true,
+                true,
+                true,
+                true);
+    }
+
+    @Test
+    public void testLoadJKSTrustStoreNullPassword() throws Exception {
+        if (!x509TestContext.getTrustStorePassword().isEmpty()) {
+            return;
+        }
+        // Make sure that empty password and null password are treated the same
+        X509TrustManager tm = X509Util.createTrustManager(
+                x509TestContext.getTrustStoreFile(KeyStoreFileType.JKS).getAbsolutePath(),
+                null,
+                KeyStoreFileType.JKS.getPropertyValue(),
+                false,
+                false,
+                true,
+                true);
+    }
+
+    @Test
+    public void testLoadJKSTrustStoreAutodetectStoreFileType() throws Exception {
+        // Make sure we can instantiate a trust manager from the JKS file on disk
+        X509TrustManager tm = X509Util.createTrustManager(
+                x509TestContext.getTrustStoreFile(KeyStoreFileType.JKS).getAbsolutePath(),
+                x509TestContext.getTrustStorePassword(),
+                null,  // null StoreFileType means 'autodetect from file extension'
+                true,
+                true,
+                true,
+                true);
+    }
+
+    @Test(expected = X509Exception.TrustManagerException.class)
+    public void testLoadJKSTrustStoreWithWrongPassword() throws Exception {
+        // Attempting to load with the wrong key password should fail
+        X509TrustManager tm = X509Util.createTrustManager(
+                x509TestContext.getTrustStoreFile(KeyStoreFileType.JKS).getAbsolutePath(),
+                "wrong password",
+                KeyStoreFileType.JKS.getPropertyValue(),
+                true,
+                true,
+                true,
+                true);
     }
 
     // Warning: this will reset the x509Util

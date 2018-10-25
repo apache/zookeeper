@@ -18,8 +18,17 @@
 package org.apache.zookeeper.common;
 
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.IOException;
+import java.net.Socket;
+import java.security.GeneralSecurityException;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
+import java.security.Security;
+import java.security.cert.PKIXBuilderParameters;
+import java.security.cert.X509CertSelector;
+import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.net.ssl.CertPathTrustManagerParameters;
 import javax.net.ssl.KeyManager;
@@ -33,26 +42,12 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509ExtendedTrustManager;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.net.Socket;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.KeyManagementException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.Security;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
-import java.security.cert.PKIXBuilderParameters;
-import java.security.cert.X509CertSelector;
-import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.zookeeper.common.X509Exception.KeyManagerException;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
 import org.apache.zookeeper.common.X509Exception.TrustManagerException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility code for X509 handling
@@ -83,8 +78,10 @@ public abstract class X509Util {
     private String cipherSuitesProperty = getConfigPrefix() + "ciphersuites";
     private String sslKeystoreLocationProperty = getConfigPrefix() + "keyStore.location";
     private String sslKeystorePasswdProperty = getConfigPrefix() + "keyStore.password";
+    private String sslKeystoreTypeProperty = getConfigPrefix() + "keyStore.type";
     private String sslTruststoreLocationProperty = getConfigPrefix() + "trustStore.location";
     private String sslTruststorePasswdProperty = getConfigPrefix() + "trustStore.password";
+    private String sslTruststoreTypeProperty = getConfigPrefix() + "trustStore.type";
     private String sslHostnameVerificationEnabledProperty = getConfigPrefix() + "hostnameVerification";
     private String sslCrlEnabledProperty = getConfigPrefix() + "crl";
     private String sslOcspEnabledProperty = getConfigPrefix() + "ocsp";
@@ -121,12 +118,20 @@ public abstract class X509Util {
         return sslKeystorePasswdProperty;
     }
 
+    public String getSslKeystoreTypeProperty() {
+        return sslKeystoreTypeProperty;
+    }
+
     public String getSslTruststoreLocationProperty() {
         return sslTruststoreLocationProperty;
     }
 
     public String getSslTruststorePasswdProperty() {
         return sslTruststorePasswdProperty;
+    }
+
+    public String getSslTruststoreTypeProperty() {
+        return sslTruststoreTypeProperty;
     }
 
     public String getSslHostnameVerificationEnabledProperty() {
@@ -167,47 +172,49 @@ public abstract class X509Util {
         KeyManager[] keyManagers = null;
         TrustManager[] trustManagers = null;
 
-        String keyStoreLocationProp = config.getProperty(sslKeystoreLocationProperty);
-        String keyStorePasswordProp = config.getProperty(sslKeystorePasswdProperty);
+        String keyStoreLocationProp = config.getProperty(sslKeystoreLocationProperty, "");
+        String keyStorePasswordProp = config.getProperty(sslKeystorePasswdProperty, "");
+        String keyStoreTypeProp = config.getProperty(sslKeystoreTypeProperty);
 
         // There are legal states in some use cases for null KeyManager or TrustManager.
-        // But if a user wanna specify one, location and password are required.
+        // But if a user wanna specify one, location is required. Password defaults to empty string if it is not
+        // specified by the user.
 
-        if (keyStoreLocationProp == null && keyStorePasswordProp == null) {
+        if (keyStoreLocationProp.isEmpty()) {
             LOG.warn(getSslKeystoreLocationProperty() + " not specified");
         } else {
-            if (keyStoreLocationProp == null) {
-                throw new SSLContextException(getSslKeystoreLocationProperty() + " not specified");
-            }
-            if (keyStorePasswordProp == null) {
-                throw new SSLContextException(getSslKeystorePasswdProperty() + " not specified");
-            }
             try {
                 keyManagers = new KeyManager[]{
-                        createKeyManager(keyStoreLocationProp, keyStorePasswordProp)};
+                        createKeyManager(keyStoreLocationProp, keyStorePasswordProp, keyStoreTypeProp)};
             } catch (KeyManagerException keyManagerException) {
                 throw new SSLContextException("Failed to create KeyManager", keyManagerException);
+            } catch (IllegalArgumentException e) {
+                throw new SSLContextException("Bad value for " + sslKeystoreTypeProperty + ": " + keyStoreTypeProp, e);
             }
         }
 
-        String trustStoreLocationProp = config.getProperty(sslTruststoreLocationProperty);
-        String trustStorePasswordProp = config.getProperty(sslTruststorePasswdProperty);
+        String trustStoreLocationProp = config.getProperty(sslTruststoreLocationProperty, "");
+        String trustStorePasswordProp = config.getProperty(sslTruststorePasswdProperty, "");
+        String trustStoreTypeProp = config.getProperty(sslTruststoreTypeProperty);
 
         boolean sslCrlEnabled = config.getBoolean(this.sslCrlEnabledProperty);
         boolean sslOcspEnabled = config.getBoolean(this.sslOcspEnabledProperty);
         boolean sslServerHostnameVerificationEnabled =
-                config.getBoolean(this.getSslHostnameVerificationEnabledProperty(),true);
-        boolean sslClientHostnameVerificationEnabled = sslServerHostnameVerificationEnabled && shouldVerifyClientHostname();
+                config.getBoolean(this.getSslHostnameVerificationEnabledProperty(), true);
+        boolean sslClientHostnameVerificationEnabled =
+                sslServerHostnameVerificationEnabled && shouldVerifyClientHostname();
 
-        if (trustStoreLocationProp == null) {
+        if (trustStoreLocationProp.isEmpty()) {
             LOG.warn(getSslTruststoreLocationProperty() + " not specified");
         } else {
             try {
                 trustManagers = new TrustManager[]{
-                        createTrustManager(trustStoreLocationProp, trustStorePasswordProp, sslCrlEnabled, sslOcspEnabled,
+                        createTrustManager(trustStoreLocationProp, trustStorePasswordProp, trustStoreTypeProp, sslCrlEnabled, sslOcspEnabled,
                                 sslServerHostnameVerificationEnabled, sslClientHostnameVerificationEnabled)};
             } catch (TrustManagerException trustManagerException) {
                 throw new SSLContextException("Failed to create TrustManager", trustManagerException);
+            } catch (IllegalArgumentException e) {
+                throw new SSLContextException("Bad value for " + sslTruststoreTypeProperty + ": " + trustStoreTypeProp, e);
             }
         }
 
@@ -221,17 +228,38 @@ public abstract class X509Util {
         }
     }
 
-    public static X509KeyManager createKeyManager(String keyStoreLocation, String keyStorePassword)
+    /**
+     * Creates a key manager by loading the key store from the given file of
+     * the given type, optionally decrypting it using the given password.
+     * @param keyStoreLocation the location of the key store file.
+     * @param keyStorePassword optional password to decrypt the key store. If
+     *                         empty, assumes the key store is not encrypted.
+     * @param keyStoreTypeProp must be JKS, PEM, or null. If null, attempts to
+     *                         autodetect the key store type from the file
+     *                         extension (.jks / .pem).
+     * @return the key manager.
+     * @throws KeyManagerException if something goes wrong.
+     */
+    public static X509KeyManager createKeyManager(
+            String keyStoreLocation,
+            String keyStorePassword,
+            String keyStoreTypeProp)
             throws KeyManagerException {
-        FileInputStream inputStream = null;
+        if (keyStorePassword == null) {
+            keyStorePassword = "";
+        }
         try {
-            char[] keyStorePasswordChars = keyStorePassword.toCharArray();
-            File keyStoreFile = new File(keyStoreLocation);
-            KeyStore ks = KeyStore.getInstance("JKS");
-            inputStream = new FileInputStream(keyStoreFile);
-            ks.load(inputStream, keyStorePasswordChars);
+            KeyStoreFileType storeFileType =
+                    KeyStoreFileType.fromPropertyValueOrFileName(
+                            keyStoreTypeProp, keyStoreLocation);
+            KeyStore ks = FileKeyStoreLoaderBuilderProvider
+                    .getBuilderForKeyStoreFileType(storeFileType)
+                    .setKeyStorePath(keyStoreLocation)
+                    .setKeyStorePassword(keyStorePassword)
+                    .build()
+                    .loadKeyStore();
             KeyManagerFactory kmf = KeyManagerFactory.getInstance("PKIX");
-            kmf.init(ks, keyStorePasswordChars);
+            kmf.init(ks, keyStorePassword.toCharArray());
 
             for (KeyManager km : kmf.getKeyManagers()) {
                 if (km instanceof X509KeyManager) {
@@ -239,38 +267,58 @@ public abstract class X509Util {
                 }
             }
             throw new KeyManagerException("Couldn't find X509KeyManager");
-
-        } catch (IOException|CertificateException|UnrecoverableKeyException|NoSuchAlgorithmException|KeyStoreException
-                keyManagerCreationException) {
-            throw new KeyManagerException(keyManagerCreationException);
-        } finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (IOException ioException) {
-                    LOG.info("Failed to close key store input stream", ioException);
-                }
-            }
+        } catch (IOException | GeneralSecurityException | IllegalArgumentException e) {
+            throw new KeyManagerException(e);
         }
     }
 
-    public static X509TrustManager createTrustManager(String trustStoreLocation, String trustStorePassword,
-                                                      boolean crlEnabled, boolean ocspEnabled,
-                                                      final boolean serverHostnameVerificationEnabled,
-                                                      final boolean clientHostnameVerificationEnabled)
+    /**
+     * Creates a trust manager by loading the trust store from the given file
+     * of the given type, optionally decrypting it using the given password.
+     * @param trustStoreLocation the location of the trust store file.
+     * @param trustStorePassword optional password to decrypt the trust store
+     *                           (only applies to JKS trust stores). If empty,
+     *                           assumes the trust store is not encrypted.
+     * @param trustStoreTypeProp must be JKS, PEM, or null. If null, attempts
+     *                           to autodetect the trust store type from the
+     *                           file extension (.jks / .pem).
+     * @param crlEnabled enable CRL (certificate revocation list) checks.
+     * @param ocspEnabled enable OCSP (online certificate status protocol)
+     *                    checks.
+     * @param serverHostnameVerificationEnabled if true, verify hostnames of
+     *                                          remote servers that client
+     *                                          sockets created by this
+     *                                          X509Util connect to.
+     * @param clientHostnameVerificationEnabled if true, verify hostnames of
+     *                                          remote clients that server
+     *                                          sockets created by this
+     *                                          X509Util accept connections
+     *                                          from.
+     * @return the trust manager.
+     * @throws TrustManagerException if something goes wrong.
+     */
+    public static X509TrustManager createTrustManager(
+            String trustStoreLocation,
+            String trustStorePassword,
+            String trustStoreTypeProp,
+            boolean crlEnabled,
+            boolean ocspEnabled,
+            final boolean serverHostnameVerificationEnabled,
+            final boolean clientHostnameVerificationEnabled)
             throws TrustManagerException {
-        FileInputStream inputStream = null;
+        if (trustStorePassword == null) {
+            trustStorePassword = "";
+        }
         try {
-            File trustStoreFile = new File(trustStoreLocation);
-            KeyStore ts = KeyStore.getInstance("JKS");
-            inputStream = new FileInputStream(trustStoreFile);
-            if (trustStorePassword != null) {
-                char[] trustStorePasswordChars = trustStorePassword.toCharArray();
-                ts.load(inputStream, trustStorePasswordChars);
-            } else {
-                ts.load(inputStream, null);
-            }
-
+            KeyStoreFileType storeFileType =
+                    KeyStoreFileType.fromPropertyValueOrFileName(
+                            trustStoreTypeProp, trustStoreLocation);
+            KeyStore ts = FileKeyStoreLoaderBuilderProvider
+                    .getBuilderForKeyStoreFileType(storeFileType)
+                    .setTrustStorePath(trustStoreLocation)
+                    .setTrustStorePassword(trustStorePassword)
+                    .build()
+                    .loadTrustStore();
             PKIXBuilderParameters pbParams = new PKIXBuilderParameters(ts, new X509CertSelector());
             if (crlEnabled || ocspEnabled) {
                 pbParams.setRevocationEnabled(true);
@@ -294,17 +342,8 @@ public abstract class X509Util {
                 }
             }
             throw new TrustManagerException("Couldn't find X509TrustManager");
-        } catch (IOException|CertificateException|NoSuchAlgorithmException|InvalidAlgorithmParameterException|KeyStoreException
-                 trustManagerCreationException) {
-            throw new TrustManagerException(trustManagerCreationException);
-        } finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (IOException ioException) {
-                    LOG.info("failed to close TrustStore input stream", ioException);
-                }
-            }
+        } catch (IOException | GeneralSecurityException | IllegalArgumentException e) {
+            throw new TrustManagerException(e);
         }
     }
 
