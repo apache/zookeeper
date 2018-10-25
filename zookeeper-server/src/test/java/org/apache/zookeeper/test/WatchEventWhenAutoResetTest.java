@@ -32,6 +32,7 @@ import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.apache.zookeeper.ZKTestCase;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,6 +96,7 @@ public class WatchEventWhenAutoResetTest extends ZKTestCase {
     }
 
     @Test
+    @Ignore("ZOOKEEPER-3182")
     public void testNodeDataChanged() throws Exception {
         QuorumUtil qu = new QuorumUtil(1);
         qu.startAll();
