@@ -47,9 +47,7 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.zookeeper.common.QuorumX509Util;
 import org.apache.zookeeper.common.X509Exception;
-import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.server.util.ConfigUtils;
@@ -175,9 +173,6 @@ public class QuorumCnxManager {
      */
     private final boolean tcpKeepAlive = Boolean.getBoolean("zookeeper.tcpKeepAlive");
 
-
-    private X509Util x509Util;
-
     static public class Message {
         Message(ByteBuffer buffer, long sid) {
             this.buffer = buffer;
@@ -291,8 +286,6 @@ public class QuorumCnxManager {
         // Starts listener thread that waits for connection requests
         listener = new Listener();
         listener.setName("QuorumPeerListener");
-
-        x509Util = new QuorumX509Util();
     }
 
     private void initializeAuth(final long mySid,
@@ -655,17 +648,18 @@ public class QuorumCnxManager {
         try {
             LOG.debug("Opening channel to server " + sid);
             if (self.isSslQuorum()) {
-                SSLSocket sslSock = x509Util.createSSLSocket();
-                setSockOpts(sslSock);
-                sslSock.connect(electionAddr, cnxTO);
-                sslSock.startHandshake();
-                sock = sslSock;
-            } else {
-                sock = new Socket();
-                setSockOpts(sock);
-                sock.connect(electionAddr, cnxTO);
-            }
-            LOG.debug("Connected to server " + sid);
+                 SSLSocket sslSock = self.getX509Util().createSSLSocket();
+                 setSockOpts(sslSock);
+                 sslSock.connect(electionAddr, cnxTO);
+                 sslSock.startHandshake();
+                 sock = sslSock;
+             } else {
+                 sock = new Socket();
+                 setSockOpts(sock);
+                 sock.connect(electionAddr, cnxTO);
+
+             }
+             LOG.debug("Connected to server " + sid);
             // Sends connection request asynchronously if the quorum
             // sasl authentication is enabled. This is required because
             // sasl server authentication process may take few seconds to
@@ -876,9 +870,9 @@ public class QuorumCnxManager {
             while((!shutdown) && (numRetries < 3)){
                 try {
                     if (self.shouldUsePortUnification()) {
-                        ss = new UnifiedServerSocket(x509Util);
+                        ss = new UnifiedServerSocket(self.getX509Util(), true);
                     } else if (self.isSslQuorum()) {
-                        ss = x509Util.createSSLServerSocket();
+                        ss = self.getX509Util().createSSLServerSocket();
                     } else {
                         ss = new ServerSocket();
                     }

@@ -18,16 +18,15 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.SequenceInputStream;
+import java.io.PushbackInputStream;
 import java.net.Socket;
 import java.net.SocketImpl;
 
 public class PrependableSocket extends Socket {
 
-  private SequenceInputStream sequenceInputStream;
+  private PushbackInputStream pushbackInputStream;
 
   public PrependableSocket(SocketImpl base) throws IOException {
     super(base);
@@ -35,15 +34,31 @@ public class PrependableSocket extends Socket {
 
   @Override
   public InputStream getInputStream() throws IOException {
-    if (sequenceInputStream == null) {
+    if (pushbackInputStream == null) {
       return super.getInputStream();
     }
 
-    return sequenceInputStream;
+    return pushbackInputStream;
   }
 
-  public void prependToInputStream(byte[] bytes) throws IOException {
-    sequenceInputStream = new SequenceInputStream(new ByteArrayInputStream(bytes), getInputStream());
+  /**
+   * Prepend some bytes that have already been read back to the socket's input stream. Note that this method can be
+   * called at most once with a non-0 length per socket instance.
+   * @param bytes the bytes to prepend.
+   * @param offset offset in the byte array to start at.
+   * @param length number of bytes to prepend.
+   * @throws IOException if this method was already called on the socket instance, or if super.getInputStream() throws.
+   */
+  public void prependToInputStream(byte[] bytes, int offset, int length) throws IOException {
+    if (length == 0) {
+      return; // nothing to prepend
+    }
+    if (pushbackInputStream != null) {
+      throw new IOException("prependToInputStream() called more than once");
+    }
+    PushbackInputStream pushbackInputStream = new PushbackInputStream(getInputStream(), length);
+    pushbackInputStream.unread(bytes, offset, length);
+    this.pushbackInputStream = pushbackInputStream;
   }
 
 }

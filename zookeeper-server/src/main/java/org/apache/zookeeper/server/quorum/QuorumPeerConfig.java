@@ -315,9 +315,8 @@ public class QuorumPeerConfig {
                 }
             } else if (key.equals("sslQuorum")){
                 sslQuorum = Boolean.parseBoolean(value);
-// TODO: UnifiedServerSocket is currently buggy, will be fixed when @ivmaykov's PRs are merged. Disable port unification until then.
-//            } else if (key.equals("portUnification")){
-//                shouldUsePortUnification = Boolean.parseBoolean(value);
+            } else if (key.equals("portUnification")){
+                shouldUsePortUnification = Boolean.parseBoolean(value);
             } else if ((key.startsWith("server.") || key.startsWith("group") || key.startsWith("weight")) && zkProp.containsKey("dynamicConfigFile")) {
                 throw new ConfigException("parameter: " + key + " must be in a separate dynamic config file");
             } else if (key.equals(QuorumAuth.QUORUM_SASL_AUTH_ENABLED)) {
