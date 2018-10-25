@@ -39,7 +39,7 @@ import org.junit.runner.JUnitCore;
 @Ignore("No tests in this class.")
 public class BaseSysTest {
     private static final File testData = new File(
-            System.getProperty("test.data.dir", "build/test/data"));
+            System.getProperty("test.data.dir", "src/test/resources/data"));
     private static int fakeBasePort = 33222;
     private static String zkHostPort;
     protected String prefix = "/sysTest";
