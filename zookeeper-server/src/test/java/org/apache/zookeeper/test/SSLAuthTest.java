@@ -24,7 +24,6 @@ import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.ClientX509Util;
-import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.junit.After;
 import org.junit.Assert;
@@ -33,10 +32,11 @@ import org.junit.Test;
 
 public class SSLAuthTest extends ClientBase {
     
-    private ClientX509Util clientX509Util = new ClientX509Util();
+    private ClientX509Util clientX509Util;
     
     @Before
     public void setUp() throws Exception {
+        clientX509Util = new ClientX509Util();
         String testDataPath = System.getProperty("test.data.dir", "build/test/data");
         System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
         System.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
@@ -71,6 +71,7 @@ public class SSLAuthTest extends ClientBase {
         System.clearProperty(clientX509Util.getSslTruststorePasswdProperty());
         System.clearProperty("javax.net.debug");
         System.clearProperty("zookeeper.authProvider.x509");
+        clientX509Util.close();
     }
 
     @Test

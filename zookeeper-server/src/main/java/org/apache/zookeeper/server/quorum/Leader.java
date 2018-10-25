@@ -247,21 +247,16 @@ public class Leader implements LearnerMaster {
 
     private final ServerSocket ss;
 
-    Leader(QuorumPeer self,LeaderZooKeeperServer zk) throws IOException, X509Exception {
+    Leader(QuorumPeer self,LeaderZooKeeperServer zk) throws IOException {
         this.self = self;
         this.proposalStats = new BufferStats();
         try {
-            if (self.shouldUsePortUnification()) {
+            if (self.shouldUsePortUnification() || self.isSslQuorum()) {
+                boolean allowInsecureConnection = self.shouldUsePortUnification();
                 if (self.getQuorumListenOnAllIPs()) {
-                    ss = new UnifiedServerSocket(self.getX509Util(), true, self.getQuorumAddress().getPort());
+                    ss = new UnifiedServerSocket(self.getX509Util(), allowInsecureConnection, self.getQuorumAddress().getPort());
                 } else {
-                    ss = new UnifiedServerSocket(self.getX509Util(), true);
-                }
-            } else if (self.isSslQuorum()) {
-                if (self.getQuorumListenOnAllIPs()) {
-                    ss = self.getX509Util().createSSLServerSocket(self.getQuorumAddress().getPort());
-                } else {
-                    ss = self.getX509Util().createSSLServerSocket();
+                    ss = new UnifiedServerSocket(self.getX509Util(), allowInsecureConnection);
                 }
             } else {
                 if (self.getQuorumListenOnAllIPs()) {
@@ -274,9 +269,6 @@ public class Leader implements LearnerMaster {
             if (!self.getQuorumListenOnAllIPs()) {
                 ss.bind(self.getQuorumAddress());
             }
-        } catch (X509Exception e) {
-            LOG.error("Failed to setup ssl server socket", e);
-            throw e;
         } catch (BindException e) {
             if (self.getQuorumListenOnAllIPs()) {
                 LOG.error("Couldn't bind to port " + self.getQuorumAddress().getPort(), e);

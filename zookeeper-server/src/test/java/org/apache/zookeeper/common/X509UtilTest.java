@@ -70,7 +70,9 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
 
     @Before
     public void setUp() throws Exception {
-        x509TestContext.setSystemProperties(new ClientX509Util(), KeyStoreFileType.JKS, KeyStoreFileType.JKS);
+        try (X509Util x509util = new ClientX509Util()) {
+            x509TestContext.setSystemProperties(x509util, KeyStoreFileType.JKS, KeyStoreFileType.JKS);
+        }
         System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
         System.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
         x509Util = new ClientX509Util();
@@ -83,12 +85,14 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         System.clearProperty(x509Util.getSslCrlEnabledProperty());
         System.clearProperty(x509Util.getCipherSuitesProperty());
         System.clearProperty(x509Util.getSslProtocolProperty());
+        System.clearProperty(x509Util.getSslHandshakeDetectionTimeoutMillisProperty());
         System.clearProperty("com.sun.net.ssl.checkRevocation");
         System.clearProperty("com.sun.security.enableCRLDP");
         Security.setProperty("ocsp.enable", Boolean.FALSE.toString());
         Security.setProperty("com.sun.security.enableCRLDP", Boolean.FALSE.toString());
         System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
         System.clearProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET);
+        x509Util.close();
     }
 
     @Test(timeout = 5000)
@@ -358,35 +362,37 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
 
     @Test
     public void testGetSslHandshakeDetectionTimeoutMillisProperty() {
-        X509Util x509Util = new ClientX509Util();
         Assert.assertEquals(
                 X509Util.DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS,
                 x509Util.getSslHandshakeTimeoutMillis());
-        try {
-            String newPropertyString = Integer.toString(X509Util.DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS + 1);
-            System.setProperty(x509Util.getSslHandshakeDetectionTimeoutMillisProperty(), newPropertyString);
-            // Note: need to create a new ClientX509Util to pick up modified property value
+        // Note: need to create a new ClientX509Util each time to pick up modified property value
+        String newPropertyString = Integer.toString(X509Util.DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS + 1);
+        System.setProperty(x509Util.getSslHandshakeDetectionTimeoutMillisProperty(), newPropertyString);
+        try (X509Util tempX509Util = new ClientX509Util()) {
             Assert.assertEquals(
                     X509Util.DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS + 1,
-                    new ClientX509Util().getSslHandshakeTimeoutMillis());
-            // 0 value not allowed, will return the default
-            System.setProperty(x509Util.getSslHandshakeDetectionTimeoutMillisProperty(), "0");
+                    tempX509Util.getSslHandshakeTimeoutMillis());
+        }
+        // 0 value not allowed, will return the default
+        System.setProperty(x509Util.getSslHandshakeDetectionTimeoutMillisProperty(), "0");
+        try (X509Util tempX509Util = new ClientX509Util()) {
             Assert.assertEquals(
                     X509Util.DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS,
-                    new ClientX509Util().getSslHandshakeTimeoutMillis());
-            // Negative value not allowed, will return the default
-            System.setProperty(x509Util.getSslHandshakeDetectionTimeoutMillisProperty(), "-1");
+                    tempX509Util.getSslHandshakeTimeoutMillis());
+        }
+        // Negative value not allowed, will return the default
+        System.setProperty(x509Util.getSslHandshakeDetectionTimeoutMillisProperty(), "-1");
+        try (X509Util tempX509Util = new ClientX509Util()) {
             Assert.assertEquals(
                     X509Util.DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS,
-                    new ClientX509Util().getSslHandshakeTimeoutMillis());
-        } finally {
-            System.clearProperty(x509Util.getSslHandshakeDetectionTimeoutMillisProperty());
+                    tempX509Util.getSslHandshakeTimeoutMillis());
         }
     }
 
     // Warning: this will reset the x509Util
     private void setCustomCipherSuites() {
         System.setProperty(x509Util.getCipherSuitesProperty(), customCipherSuites[0] + "," + customCipherSuites[1]);
+        x509Util.close(); // remember to close old instance before replacing it
         x509Util = new ClientX509Util();
     }
 }

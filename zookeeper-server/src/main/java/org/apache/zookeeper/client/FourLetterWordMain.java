@@ -34,6 +34,7 @@ import javax.net.ssl.SSLSocketFactory;
 import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
+import org.apache.zookeeper.common.X509Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,12 +91,14 @@ public class FourLetterWordMain {
             new InetSocketAddress(InetAddress.getByName(null), port);
         if (secure) {
             LOG.info("using secure socket");
-            SSLContext sslContext = new ClientX509Util().getDefaultSSLContext();
-            SSLSocketFactory socketFactory = sslContext.getSocketFactory();
-            SSLSocket sslSock = (SSLSocket) socketFactory.createSocket();
-            sslSock.connect(hostaddress, timeout);
-            sslSock.startHandshake();
-            sock = sslSock;
+            try (X509Util x509Util = new ClientX509Util()) {
+                SSLContext sslContext = x509Util.getDefaultSSLContext();
+                SSLSocketFactory socketFactory = sslContext.getSocketFactory();
+                SSLSocket sslSock = (SSLSocket) socketFactory.createSocket();
+                sslSock.connect(hostaddress, timeout);
+                sslSock.startHandshake();
+                sock = sslSock;
+            }
         } else {
             sock = new Socket();
             sock.connect(hostaddress, timeout);
