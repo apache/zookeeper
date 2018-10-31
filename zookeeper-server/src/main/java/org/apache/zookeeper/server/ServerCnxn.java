@@ -37,9 +37,11 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
+import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.data.Id;
+import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
 import org.slf4j.Logger;
@@ -103,25 +105,64 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     abstract void close();
 
+    public abstract void sendResponse(ReplyHeader h, Record r,
+            String tag, String cacheKey, Stat stat) throws IOException;
+
     public void sendResponse(ReplyHeader h, Record r, String tag) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        // Make space for length
+        sendResponse(h, r, tag, null, null);
+    }
+
+    protected byte[] serializeRecord(Record record) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream(
+            ZooKeeperServer.intBufferStartingSizeBytes);
         BinaryOutputArchive bos = BinaryOutputArchive.getArchive(baos);
-        try {
-            baos.write(fourBytes);
-            bos.writeRecord(h, "header");
-            if (r != null) {
-                bos.writeRecord(r, tag);
+        bos.writeRecord(record, null);
+        return baos.toByteArray();
+    }
+
+    protected ByteBuffer[] serialize(ReplyHeader h, Record r, String tag,
+            String cacheKey, Stat stat) throws IOException {
+        byte[] header = serializeRecord(h);
+        byte[] data = null;
+        if (r != null) {
+            ResponseCache cache = zkServer.getReadResponseCache();
+            if (cache != null && stat != null && cacheKey != null &&
+                    !cacheKey.endsWith(Quotas.statNode)) {
+                // Use cache to get serialized data.
+                //
+                // NB: Tag is ignored both during cache lookup and serialization,
+                // since is is not used in read responses, which are being cached.
+                data = cache.get(cacheKey, stat);
+                if (data == null) {
+                    // Cache miss, serialize the response and put it in cache.
+                    data = serializeRecord(r);
+                    cache.put(cacheKey, data, stat);
+                    ServerMetrics.RESPONSE_PACKET_CACHE_MISSING.add(1);
+                } else {
+                    ServerMetrics.RESPONSE_PACKET_CACHE_HITS.add(1);
+                }
+            } else {
+                data = serializeRecord(r);
             }
-            baos.close();
-        } catch (IOException e) {
-            LOG.error("Error serializing response");
         }
-        byte b[] = baos.toByteArray();
-        serverStats().updateClientResponseSize(b.length - 4);
-        ByteBuffer bb = ByteBuffer.wrap(b);
-        bb.putInt(b.length - 4).rewind();
-        sendBuffer(bb);
+        int dataLength = data == null ? 0 : data.length;
+        int packetLength = header.length + dataLength;
+        ServerStats serverStats = serverStats();
+        if (serverStats != null) {
+            serverStats.updateClientResponseSize(packetLength);
+        }
+        ByteBuffer lengthBuffer = ByteBuffer.allocate(4).putInt(packetLength);
+        lengthBuffer.rewind();
+
+        int bufferLen = data != null ? 3 : 2;
+        ByteBuffer[] buffers = new ByteBuffer[bufferLen];
+
+        buffers[0] = lengthBuffer;
+        buffers[1] = ByteBuffer.wrap(header);
+        if (data != null) {
+            buffers[2] = ByteBuffer.wrap(data);
+        }
+        return buffers;
     }
 
     /* notify the client the session is closing and close/cleanup socket */
@@ -146,7 +187,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
         return authInfo.remove(id);
     }
 
-    abstract void sendBuffer(ByteBuffer closeConn);
+    abstract void sendBuffer(ByteBuffer... buffers);
 
     abstract void enableRecv();
 

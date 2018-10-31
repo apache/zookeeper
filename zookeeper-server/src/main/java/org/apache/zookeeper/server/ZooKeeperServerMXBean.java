@@ -95,6 +95,9 @@ public interface ZooKeeperServerMXBean {
      */
     public void setMaxSessionTimeout(int max);
 
+    public boolean getResponseCachingEnabled();
+    public void setResponseCachingEnabled(boolean isEnabled);
+
     /**
      * Reset packet and latency statistics 
      */

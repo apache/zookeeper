@@ -106,10 +106,12 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected SessionTracker sessionTracker;
     private FileTxnSnapLog txnLogFactory = null;
     private ZKDatabase zkDb;
+    private ResponseCache readResponseCache;
     private final AtomicLong hzxid = new AtomicLong(0);
     public final static Exception ok = new Exception("No prob");
     protected RequestProcessor firstProcessor;
     protected volatile State state = State.INITIAL;
+    private boolean isResponseCachingEnabled = true;
 
     protected enum State {
         INITIAL, RUNNING, SHUTDOWN, ERROR
@@ -137,6 +139,30 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     private MetricsContext rootMetricsContext = NullMetricsProvider.NullMetricsContext.INSTANCE;
     private ZooKeeperServerShutdownHandler zkShutdownHandler;
     private volatile int createSessionTrackerServerId = 1;
+
+    /**
+     * Starting size of read and write ByteArroyOuputBuffers. Default is 32 bytes.
+     * Flag not used for small transfers like connectResponses.
+     */
+    public static final String INT_BUFFER_STARTING_SIZE_BYTES =
+            "zookeeper.intBufferStartingSizeBytes";
+    public static final int DEFAULT_STARTING_BUFFER_SIZE = 1024;
+    public static final int intBufferStartingSizeBytes;
+
+    static {
+        intBufferStartingSizeBytes = Integer.getInteger(
+                INT_BUFFER_STARTING_SIZE_BYTES,
+                DEFAULT_STARTING_BUFFER_SIZE);
+
+        if (intBufferStartingSizeBytes < 32) {
+            String msg = "Buffer starting size must be greater than 0." +
+                    "Configure with \"-Dzookeeper.intBufferStartingSizeBytes=<size>\" ";
+            LOG.error(msg);
+            throw new IllegalArgumentException(msg);
+        }
+
+        LOG.info(INT_BUFFER_STARTING_SIZE_BYTES + " = " + intBufferStartingSizeBytes);
+    }
 
     void removeCnxn(ServerCnxn cnxn) {
         zkDb.removeCnxn(cnxn);
@@ -170,6 +196,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         setMinSessionTimeout(minSessionTimeout);
         setMaxSessionTimeout(maxSessionTimeout);
         listener = new ZooKeeperServerListenerImpl(this);
+        readResponseCache = new ResponseCache();
         LOG.info("Created server with tickTime " + tickTime
                 + " minSessionTimeout " + getMinSessionTimeout()
                 + " maxSessionTimeout " + getMaxSessionTimeout()
@@ -1281,5 +1308,17 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      */
     void registerServerShutdownHandler(ZooKeeperServerShutdownHandler zkShutdownHandler) {
         this.zkShutdownHandler = zkShutdownHandler;
+    }
+
+    public boolean isResponseCachingEnabled() {
+        return isResponseCachingEnabled;
+    }
+
+    public void setResponseCachingEnabled(boolean isEnabled) {
+        isResponseCachingEnabled = isEnabled;
+    }
+
+    public ResponseCache getReadResponseCache() {
+        return isResponseCachingEnabled ? readResponseCache : null;
     }
 }
