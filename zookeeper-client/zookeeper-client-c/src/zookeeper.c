@@ -1920,6 +1920,12 @@ static void free_key_list(char **list, int count)
 static int send_set_watches(zhandle_t *zh)
 {
     int rc;
+    int data_watch_index;
+    int exist_watch_index;
+    int child_watch_index;
+    int batch_length;
+    struct oarchive *oa;
+    struct RequestHeader h = {SET_WATCHES_XID, ZOO_SETWATCHES_OP};
     int data_watch_count, exist_watch_count, child_watch_count;
     char** data_watch_data = collect_keys(zh->active_node_watchers, &data_watch_count);
     char** exist_watch_data = collect_keys(zh->active_exist_watchers, &exist_watch_count);
@@ -1933,11 +1939,12 @@ static int send_set_watches(zhandle_t *zh)
         return ZOK;
     }
 
-    int data_watch_index = 0, exist_watch_index = 0, child_watch_index = 0;
+    data_watch_index = 0;
+    exist_watch_index = 0;
+    child_watch_index = 0;
     while (data_watch_index < data_watch_count
       || exist_watch_index < exist_watch_count
       || child_watch_index < child_watch_count) {
-        struct RequestHeader h = { STRUCT_INITIALIZER(xid , SET_WATCHES_XID), STRUCT_INITIALIZER(type , ZOO_SETWATCHES_OP)};
         struct SetWatches req;
         req.relativeZxid = zh->last_zxid;
         req.dataWatches.count = 0;
@@ -1946,7 +1953,7 @@ static int send_set_watches(zhandle_t *zh)
         req.dataWatches.data = data_watch_data + data_watch_index;
         req.existWatches.data = exist_watch_data + exist_watch_index;
         req.childWatches.data = child_watch_data + child_watch_index;
-        int batch_length = 0;
+        batch_length = 0;
         while (batch_length < SET_WATCHES_MAX_LENGTH) {
             int length = 0;
             if (data_watch_index < data_watch_count) {
@@ -1966,7 +1973,6 @@ static int send_set_watches(zhandle_t *zh)
             }
             batch_length += length;
         }
-        struct oarchive *oa;
         oa = create_buffer_oarchive();
         rc = serialize_RequestHeader(oa, "header", &h);
         rc = rc < 0 ? rc : serialize_SetWatches(oa, "req", &req);
@@ -1974,7 +1980,7 @@ static int send_set_watches(zhandle_t *zh)
         rc = rc < 0 ? rc : queue_front_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
         close_buffer_oarchive(&oa, 0);
-        LOG_DEBUG(("Sending set watches request to %s",format_current_endpoint_info(zh)));
+        LOG_DEBUG(LOGCALLBACK(zh), "Sending set watches request to %s",format_current_endpoint_info(zh));
         if (rc < 0) {
             free_key_list(data_watch_data, data_watch_count);
             free_key_list(exist_watch_data, exist_watch_count);
