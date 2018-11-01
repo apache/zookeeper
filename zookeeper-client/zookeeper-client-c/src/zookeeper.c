@@ -1980,7 +1980,7 @@ static int send_set_watches(zhandle_t *zh)
         rc = rc < 0 ? rc : queue_front_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
         close_buffer_oarchive(&oa, 0);
-        LOG_DEBUG(LOGCALLBACK(zh), "Sending set watches request to %s",format_current_endpoint_info(zh));
+        LOG_DEBUG(LOGCALLBACK(zh), "Sending set watches request to %s",zoo_get_current_server(zh));
         if (rc < 0) {
             free_key_list(data_watch_data, data_watch_count);
             free_key_list(exist_watch_data, exist_watch_count);
