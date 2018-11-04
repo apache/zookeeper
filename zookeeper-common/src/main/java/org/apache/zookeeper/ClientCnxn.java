@@ -594,6 +594,14 @@ public class ClientCnxn {
                       } else {
                           cb.processResult(rc, clientPath, p.ctx, null);
                       }
+                  } else if (p.response instanceof GetAllChildrenNumberResponse) {
+                      AllChildrenNumberCallback cb = (AllChildrenNumberCallback) p.cb;
+                      GetAllChildrenNumberResponse rsp = (GetAllChildrenNumberResponse) p.response;
+                      if(rc == 0) {
+                          cb.processResult(rc, clientPath, p.ctx, rsp.getTotalNumber());
+                      } else {
+                          cb.processResult(rc, clientPath, p.ctx, 0);
+                      }
                   } else if (p.response instanceof GetChildren2Response) {
                       Children2Callback cb = (Children2Callback) p.cb;
                       GetChildren2Response rsp = (GetChildren2Response) p.response;

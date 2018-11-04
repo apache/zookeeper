@@ -1544,6 +1544,9 @@ public class ZooKeeper {
         return response.getChildren();
     }
 
+
+
+
     /**
      * Return the list of the children of the node of the given path.
      * <p>
@@ -1738,6 +1741,33 @@ public class ZooKeeper {
     {
         getChildren(path, watch ? watchManager.defaultWatcher : null, cb, ctx);
     }
+
+    /*
+    *  Get all children number of one node
+    * */
+    public int getAllChildrenNumber(final String path)
+            throws KeeperException, InterruptedException {
+        int totalNumber = 0;
+        final String clientPath = path;
+        PathUtils.validatePath(clientPath);
+
+        // the watch contains the un-chroot path
+        WatchRegistration wcb = null;
+        final String serverPath = prependChroot(clientPath);
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.getAllChildrenNumber);
+        GetAllChildrenNumberRequest request = new GetAllChildrenNumberRequest();
+        request.setPath(serverPath);
+        GetAllChildrenNumberResponse response = new GetAllChildrenNumberResponse();
+        ReplyHeader r = cnxn.submitRequest(h, request, response, wcb);
+        if (r.getErr() != 0) {
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()),
+                    clientPath);
+        }
+        return response.getTotalNumber();
+    }
+
 
     /**
      * Asynchronous sync. Flushes channel between process and leader.

@@ -298,8 +298,8 @@ public class FinalRequestProcessor implements RequestProcessor {
                 request.request.rewind();
                 ByteBufferInputStream.byteBuffer2Record(request.request, setWatches);
                 long relativeZxid = setWatches.getRelativeZxid();
-                zks.getZKDatabase().setWatches(relativeZxid, 
-                        setWatches.getDataWatches(), 
+                zks.getZKDatabase().setWatches(relativeZxid,
+                        setWatches.getDataWatches(),
                         setWatches.getExistWatches(),
                         setWatches.getChildWatches(), cnxn);
                 break;
@@ -310,7 +310,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 ByteBufferInputStream.byteBuffer2Record(request.request,
                         getACLRequest);
                 Stat stat = new Stat();
-                List<ACL> acl = 
+                List<ACL> acl =
                     zks.getZKDatabase().getACL(getACLRequest.getPath(), stat);
                 rsp = new GetACLResponse(acl, stat);
                 break;
@@ -331,6 +331,25 @@ public class FinalRequestProcessor implements RequestProcessor {
                         getChildrenRequest.getPath(), null, getChildrenRequest
                                 .getWatch() ? cnxn : null);
                 rsp = new GetChildrenResponse(children);
+                break;
+            }
+            case OpCode.getAllChildrenNumber: {
+                lastOp = "GETACN";
+                GetAllChildrenNumberRequest getAllChildrenNumberRequest = new
+                     GetAllChildrenNumberRequest();
+                ByteBufferInputStream.byteBuffer2Record(request.request,
+                     getAllChildrenNumberRequest);
+
+                DataNode n = zks.getZKDatabase().getNode(getAllChildrenNumberRequest.getPath());
+                Long aclG;
+                synchronized(n) {
+                    aclG = n.acl;
+                }
+                PrepRequestProcessor.checkACL(zks, zks.getZKDatabase().convertLong(aclG),
+                      ZooDefs.Perms.READ,
+                      request.authInfo);
+                int number = zks.getZKDatabase().getAllChildrenNumber(getAllChildrenNumberRequest.getPath());
+                rsp = new GetAllChildrenNumberResponse(number);
                 break;
             }
             case OpCode.getChildren2: {

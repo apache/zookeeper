@@ -139,6 +139,9 @@ module org.apache.zookeeper.proto {
         ustring path;
         boolean watch;
     }
+    class GetAllChildrenNumberRequest {
+        ustring path;
+    }
     class GetChildren2Request {
         ustring path;
         boolean watch;
@@ -198,6 +201,9 @@ module org.apache.zookeeper.proto {
     }
     class GetChildrenResponse {
         vector<ustring> children;
+    }
+    class GetAllChildrenNumberResponse {
+        int totalNumber;
     }
     class GetChildren2Response {
         vector<ustring> children;

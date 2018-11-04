@@ -605,6 +605,16 @@ public class DataTree {
         }
     }
 
+    public int getAllChildrenNumber(String path) {
+        int number = 0;
+        for(Map.Entry<String, DataNode> entry : nodes.entrySet()) {
+            String key = entry.getKey();
+            if(key.contains(path))
+                number++;
+        }
+        return number;
+    }
+
     public Stat setACL(String path, List<ACL> acl, int version)
             throws KeeperException.NoNodeException {
         Stat stat = new Stat();
