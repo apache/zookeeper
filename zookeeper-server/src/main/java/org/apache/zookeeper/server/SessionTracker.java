@@ -64,6 +64,10 @@ public interface SessionTracker {
      */
     void shutdown();
 
+    long getSessionStartTime();
+
+    void setSessionStartTime(long sessionStartTime);
+
     /**
      * @param sessionId
      */

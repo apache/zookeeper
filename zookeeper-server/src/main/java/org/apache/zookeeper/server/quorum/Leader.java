@@ -262,6 +262,11 @@ public class Leader {
      * This message is used by the follow to ack a proposed epoch.
      */
     public static final int ACKEPOCH = 18;
+
+    /*
+    * When the cluster finishs reselection, it sends the timepoint to follower. （the approximate time point of the roll over）
+    * */
+    public static final int SESSIONTIME = 30;
     
     /**
      * This message type is sent to a leader to request and mutation operation.

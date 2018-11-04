@@ -50,6 +50,7 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
     ConcurrentHashMap<Long, Integer> sessionsWithTimeout;
     long nextSessionId = 0;
     long nextExpirationTime;
+    long sessionStartTime = 0;
 
     int expirationInterval;
 
@@ -84,6 +85,14 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
         HashSet<SessionImpl> sessions = new HashSet<SessionImpl>();
     }
 
+    public long getSessionStartTime() {
+        return sessionStartTime;
+    }
+
+    public void setSessionStartTime(long sessionStartTime) {
+        this.sessionStartTime = sessionStartTime;
+    }
+
     SessionExpirer expirer;
 
     private long roundToInterval(long time) {
@@ -101,6 +110,7 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
         this.sessionsWithTimeout = sessionsWithTimeout;
         nextExpirationTime = roundToInterval(Time.currentElapsedTime());
         this.nextSessionId = initializeNextSession(sid);
+        sessionStartTime = System.currentTimeMillis();
         for (Entry<Long, Integer> e : sessionsWithTimeout.entrySet()) {
             addSession(e.getKey(), e.getValue());
         }

@@ -36,6 +36,7 @@ public class LearnerSessionTracker implements SessionTracker {
     HashMap<Long, Integer> touchTable = new HashMap<Long, Integer>();
     long serverId = 1;
     long nextSessionId=0;
+    long sessionStartTime = 0;
     
     private ConcurrentHashMap<Long, Integer> sessionsWithTimeouts;
 
@@ -55,6 +56,14 @@ public class LearnerSessionTracker implements SessionTracker {
     }
 
     public void shutdown() {
+    }
+
+    public long getSessionStartTime() {
+        return sessionStartTime;
+    }
+
+    public void setSessionStartTime(long sessionStartTime) {
+        this.sessionStartTime = sessionStartTime;
     }
 
     synchronized public void addSession(long sessionId, int sessionTimeout) {

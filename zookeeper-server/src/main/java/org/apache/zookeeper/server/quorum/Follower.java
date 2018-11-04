@@ -109,6 +109,10 @@ public class Follower extends Learner{
      */
     protected void processPacket(QuorumPacket qp) throws IOException{
         switch (qp.getType()) {
+        case Leader.SESSIONTIME:
+            byte[] sessionStartTimeByte = qp.getData();
+            long sessionStartTime = TransformUtil.byteArrayToLong(sessionStartTimeByte);
+            zk.getSessionTracker().setSessionStartTime(sessionStartTime);
         case Leader.PING:            
             ping(qp);            
             break;

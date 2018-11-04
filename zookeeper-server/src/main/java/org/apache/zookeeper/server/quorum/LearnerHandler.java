@@ -704,6 +704,16 @@ public class LearnerHandler extends ZooKeeperThread {
         }
     }
 
+    /**
+     *  send sessionStartTime
+     */
+    public void sendSessionStartTime() {
+        long sessionStartTime = leader.zk.getSessionTracker().getSessionStartTime();
+        byte[] sessionStartTimeByte = TransformUtil.longToByteArray(sessionStartTime);
+        QuorumPacket session = new QuorumPacket(Leader.SESSIONTIME, -1, sessionStartTimeByte, null);
+        queuePacket(session);
+    }
+
     void queuePacket(QuorumPacket p) {
         queuedPackets.add(p);
     }

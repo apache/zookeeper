@@ -65,6 +65,11 @@ public class Learner {
     protected BufferedOutputStream bufferedOutput;
     
     protected Socket sock;
+
+    /*
+    * This variable is the time point when zookeeper cluster rolls over.
+    * */
+    volatile long sessionStartTime = 0;
     
     /**
      * Socket getter
@@ -103,24 +108,30 @@ public class Learner {
      * @return
      * @throws IOException
      */
+
     void validateSession(ServerCnxn cnxn, long clientId, int timeout)
             throws IOException {
         LOG.info("Revalidating client: 0x" + Long.toHexString(clientId));
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        DataOutputStream dos = new DataOutputStream(baos);
-        dos.writeLong(clientId);
-        dos.writeInt(timeout);
-        dos.close();
-        QuorumPacket qp = new QuorumPacket(Leader.REVALIDATE, -1, baos
-                .toByteArray(), null);
-        pendingRevalidations.put(clientId, cnxn);
-        if (LOG.isTraceEnabled()) {
-            ZooTrace.logTraceMessage(LOG,
-                                     ZooTrace.SESSION_TRACE_MASK,
-                                     "To validate session 0x"
-                                     + Long.toHexString(clientId));
+        long currentTime = System.currentTimeMillis();
+        if(sessionStartTime==0||currentTime-sessionStartTime>=timeout*1000) {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            DataOutputStream dos = new DataOutputStream(baos);
+            dos.writeLong(clientId);
+            dos.writeInt(timeout);
+            dos.close();
+            QuorumPacket qp = new QuorumPacket(Leader.REVALIDATE, -1, baos
+                    .toByteArray(), null);
+            pendingRevalidations.put(clientId, cnxn);
+            if (LOG.isTraceEnabled()) {
+                ZooTrace.logTraceMessage(LOG,
+                        ZooTrace.SESSION_TRACE_MASK,
+                        "To validate session 0x"
+                                + Long.toHexString(clientId));
+            }
+            writePacket(qp, true);
+        } else {
+            zk.getSessionTracker().touchSession(clientId, timeout);
         }
-        writePacket(qp, true);
     }     
     
     /**

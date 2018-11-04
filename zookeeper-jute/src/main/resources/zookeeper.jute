@@ -225,6 +225,9 @@ module org.apache.zookeeper.server.quorum {
         int status;
         buffer token;
     }
+    class SessionStartTimePacket {
+        long sessionStartTime;
+    }
 }
 
 module org.apache.zookeeper.server.persistence {
