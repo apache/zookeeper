@@ -110,15 +110,17 @@ public class WatcherCleaner extends Thread {
                         "queue size");
             }
         }
-        synchronized (this) {
-            if (deadWatchers.add(watcherBit)) {
-                totalDeadWatchers.incrementAndGet();
-                if (deadWatchers.size() >= watcherCleanThreshold) {
-                    synchronized (cleanEvent) {
-                        cleanEvent.notifyAll();
+        if(!stopped) {
+        	synchronized (this) {
+                if (!stopped && deadWatchers.add(watcherBit)) {
+                    totalDeadWatchers.incrementAndGet();
+                    if (deadWatchers.size() >= watcherCleanThreshold) {
+                        synchronized (cleanEvent) {
+                            cleanEvent.notifyAll();
+                        }
                     }
                 }
-            }
+            }	
         }
     }
 
@@ -177,6 +179,12 @@ public class WatcherCleaner extends Thread {
         stopped = true;
         deadWatchers.clear();
         cleaners.stop();
+        synchronized(totalDeadWatchers) {
+            totalDeadWatchers.notifyAll();
+        }
+        synchronized(cleanEvent) {
+        	cleanEvent.notifyAll();
+        }
     }
 
 }
