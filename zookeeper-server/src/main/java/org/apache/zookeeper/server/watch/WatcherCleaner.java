@@ -50,6 +50,8 @@ public class WatcherCleaner extends Thread {
 
     private volatile boolean stopped = false;
     private final Object cleanEvent = new Object();
+    private final Object produserAndConsumerLock = new Object();
+    
     private final Random r = new Random(System.nanoTime());
     private final WorkerService cleaners;
 
@@ -102,10 +104,10 @@ public class WatcherCleaner extends Thread {
                 totalDeadWatchers.get() >= maxInProcessingDeadWatchers) {
             try {
                 RATE_LOGGER.rateLimitLog("Waiting for dead watchers cleaning");
-                synchronized(totalDeadWatchers) {
+                synchronized(produserAndConsumerLock) {
                 	if (maxInProcessingDeadWatchers > 0 && !stopped &&
                             totalDeadWatchers.get() >= maxInProcessingDeadWatchers) {
-                		totalDeadWatchers.wait(100);
+                		produserAndConsumerLock.wait(100);
                 	}
                 }
             } catch (InterruptedException e) {
@@ -168,8 +170,8 @@ public class WatcherCleaner extends Thread {
                         long latency = Time.currentElapsedTime() - startTime;
                         LOG.info("Takes {} to process {} watches", latency, total);
                         totalDeadWatchers.addAndGet(-total);
-                        synchronized(totalDeadWatchers) {
-                            totalDeadWatchers.notifyAll();
+                        synchronized(produserAndConsumerLock) {
+                        	produserAndConsumerLock.notifyAll();
                         }
                     }
                 });
@@ -182,8 +184,8 @@ public class WatcherCleaner extends Thread {
         stopped = true;
         deadWatchers.clear();
         cleaners.stop();
-        synchronized(totalDeadWatchers) {
-            totalDeadWatchers.notifyAll();
+        synchronized(produserAndConsumerLock) {
+        	produserAndConsumerLock.notifyAll();
         }
         synchronized(cleanEvent) {
         	cleanEvent.notifyAll();
