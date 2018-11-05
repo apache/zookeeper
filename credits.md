@@ -53,6 +53,7 @@ ZooKeeper's active committers are
 |arshad|Mohammad Arshad|Huawei|+5:30|
 |afine|Abraham Fine|IFTTT|-8|
 |andor|Andor Molnar|Cloudera Inc.|+2|
+|fangmin|Fangmin Lyu|Facebook|-8|
 
 ## Contributors
 
