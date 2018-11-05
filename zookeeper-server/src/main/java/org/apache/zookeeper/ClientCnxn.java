@@ -793,7 +793,7 @@ public class ClientCnxn {
             super(msg);
         }
     }
-    
+
     /**
      * This class services the outgoing request queue and generates the heart
      * beats. It also spawns the ReadThread.
@@ -1080,7 +1080,8 @@ public class ClientCnxn {
                     if (zooKeeperSaslClient != null) {
                         zooKeeperSaslClient.shutdown();
                     }
-                    zooKeeperSaslClient = new ZooKeeperSaslClient(getServerPrincipal(addr), clientConfig);
+                    zooKeeperSaslClient = new ZooKeeperSaslClient(SaslServerPrincipal.getServerPrincipal(addr, clientConfig),
+                        clientConfig);
                 } catch (LoginException e) {
                     // An authentication error occurred when the SASL client tried to initialize:
                     // for Kerberos this means that the client failed to authenticate with the KDC.
@@ -1097,13 +1098,6 @@ public class ClientCnxn {
             logStartConnect(addr);
 
             clientCnxnSocket.connect(addr);
-        }
-
-        private String getServerPrincipal(InetSocketAddress addr) {
-            String principalUserName = clientConfig.getProperty(ZKClientConfig.ZK_SASL_CLIENT_USERNAME,
-                    ZKClientConfig.ZK_SASL_CLIENT_USERNAME_DEFAULT);
-            String serverPrincipal = principalUserName + "/" + addr.getHostString();
-            return serverPrincipal;
         }
 
         private void logStartConnect(InetSocketAddress addr) {
