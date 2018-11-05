@@ -103,22 +103,27 @@ public class WatcherCleaner extends Thread {
             try {
                 RATE_LOGGER.rateLimitLog("Waiting for dead watchers cleaning");
                 synchronized(totalDeadWatchers) {
-                    totalDeadWatchers.wait(100);
+                	if (maxInProcessingDeadWatchers > 0 && !stopped &&
+                            totalDeadWatchers.get() >= maxInProcessingDeadWatchers) {
+                		totalDeadWatchers.wait(100);
+                	}
                 }
             } catch (InterruptedException e) {
                 LOG.info("Got interrupted while waiting for dead watches " +
                         "queue size");
             }
         }
-        synchronized (this) {
-            if (deadWatchers.add(watcherBit)) {
-                totalDeadWatchers.incrementAndGet();
-                if (deadWatchers.size() >= watcherCleanThreshold) {
-                    synchronized (cleanEvent) {
-                        cleanEvent.notifyAll();
+        if(!stopped) {
+        	synchronized (this) {
+                if (!stopped && deadWatchers.add(watcherBit)) {
+                    totalDeadWatchers.incrementAndGet();
+                    if (deadWatchers.size() >= watcherCleanThreshold) {
+                        synchronized (cleanEvent) {
+                            cleanEvent.notifyAll();
+                        }
                     }
                 }
-            }
+            }	
         }
     }
 
@@ -129,7 +134,7 @@ public class WatcherCleaner extends Thread {
                 try {
                     // add some jitter to avoid cleaning dead watchers at the
                     // same time in the quorum
-                    if (deadWatchers.size() < watcherCleanThreshold) {
+                    if (!stopped && deadWatchers.size() < watcherCleanThreshold) {
                         int maxWaitMs = (watcherCleanIntervalInSeconds +
                             r.nextInt(watcherCleanIntervalInSeconds / 2 + 1)) * 1000;
                         cleanEvent.wait(maxWaitMs);
@@ -177,6 +182,12 @@ public class WatcherCleaner extends Thread {
         stopped = true;
         deadWatchers.clear();
         cleaners.stop();
+        synchronized(totalDeadWatchers) {
+            totalDeadWatchers.notifyAll();
+        }
+        synchronized(cleanEvent) {
+        	cleanEvent.notifyAll();
+        }
     }
 
 }
