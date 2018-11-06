@@ -89,8 +89,7 @@ public class Leader {
         LOG.info(MAX_CONCURRENT_SNAPSHOT_TIMEOUT + " = " + maxConcurrentSnapshotTimeout);
     }
 
-    private final LearnerSnapshotThrottler learnerSnapshotThrottler = 
-        new LearnerSnapshotThrottler(maxConcurrentSnapshots, maxConcurrentSnapshotTimeout);
+    private final LearnerSnapshotThrottler learnerSnapshotThrottler;
 
     final LeaderZooKeeperServer zk;
 
@@ -110,6 +109,12 @@ public class Leader {
 
     public BufferStats getProposalStats() {
         return proposalStats;
+    }
+
+    public LearnerSnapshotThrottler createLearnerSnapshotThrottler(
+            int maxConcurrentSnapshots, long maxConcurrentSnapshotTimeout) {
+        return new LearnerSnapshotThrottler(
+                maxConcurrentSnapshots, maxConcurrentSnapshotTimeout);
     }
 
     /**
@@ -266,6 +271,8 @@ public class Leader {
             throw e;
         }
         this.zk = zk;
+        this.learnerSnapshotThrottler = createLearnerSnapshotThrottler(
+                maxConcurrentSnapshots, maxConcurrentSnapshotTimeout);
     }
 
     /**
