@@ -116,10 +116,14 @@ public class ZKConfig {
                 System.getProperty(x509Util.getSslKeystoreLocationProperty()));
         properties.put(x509Util.getSslKeystorePasswdProperty(),
                 System.getProperty(x509Util.getSslKeystorePasswdProperty()));
+        properties.put(x509Util.getSslKeystoreTypeProperty(),
+                System.getProperty(x509Util.getSslKeystoreTypeProperty()));
         properties.put(x509Util.getSslTruststoreLocationProperty(),
                 System.getProperty(x509Util.getSslTruststoreLocationProperty()));
         properties.put(x509Util.getSslTruststorePasswdProperty(),
                 System.getProperty(x509Util.getSslTruststorePasswdProperty()));
+        properties.put(x509Util.getSslTruststoreTypeProperty(),
+                System.getProperty(x509Util.getSslTruststoreTypeProperty()));
         properties.put(x509Util.getSslHostnameVerificationEnabledProperty(),
                 System.getProperty(x509Util.getSslHostnameVerificationEnabledProperty()));
         properties.put(x509Util.getSslCrlEnabledProperty(),
