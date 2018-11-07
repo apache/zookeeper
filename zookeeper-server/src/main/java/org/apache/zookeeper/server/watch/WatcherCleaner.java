@@ -105,19 +105,16 @@ public class WatcherCleaner extends Thread {
             try {
                 RATE_LOGGER.rateLimitLog("Waiting for dead watchers cleaning");
                 synchronized(produserAndConsumerLock) {
-                	if (maxInProcessingDeadWatchers > 0 && !stopped &&
-                            totalDeadWatchers.get() >= maxInProcessingDeadWatchers) {
-                		produserAndConsumerLock.wait(100);
-                	}
+                	produserAndConsumerLock.wait(100);
                 }
             } catch (InterruptedException e) {
                 LOG.info("Got interrupted while waiting for dead watches " +
                         "queue size");
+                break;
             }
         }
-        if(!stopped) {
         	synchronized (this) {
-                if (!stopped && deadWatchers.add(watcherBit)) {
+                if (deadWatchers.add(watcherBit)) {
                     totalDeadWatchers.incrementAndGet();
                     if (deadWatchers.size() >= watcherCleanThreshold) {
                         synchronized (cleanEvent) {
@@ -126,7 +123,6 @@ public class WatcherCleaner extends Thread {
                     }
                 }
             }	
-        }
     }
 
     @Override
@@ -184,12 +180,7 @@ public class WatcherCleaner extends Thread {
         stopped = true;
         deadWatchers.clear();
         cleaners.stop();
-        synchronized(produserAndConsumerLock) {
-        	produserAndConsumerLock.notifyAll();
-        }
-        synchronized(cleanEvent) {
-        	cleanEvent.notifyAll();
-        }
+        super.interrupt();
     }
 
 }
