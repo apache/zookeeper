@@ -1,7 +1,3 @@
----
-layout: page
-title: Releases
----
 # Apache ZooKeeper&trade; Releases
 
 The Apache ZooKeeper system for distributed coordination is a high-performance service for building distributed applications.
@@ -10,7 +6,8 @@ The Apache ZooKeeper system for distributed coordination is a high-performance s
 * [Release Notes](#releasenotes)
 * [News](#news)
 
-## Download {#download}
+<a name="download"></a>
+## Download
 
 Active releases may be downloaded from Apache mirrors: [Download](https://www.apache.org/dyn/closer.cgi/zookeeper/)
 
@@ -20,11 +17,13 @@ Older releases are available in the [archive](https://archive.apache.org/dist/zo
 
 You can verify the integrity of a downloaded release using the PGP signatures and hashes (MD5 or SHA1) hosted at the main [Apache distro site](https://apache.org/dist/zookeeper/).  For additional information, refer to the Apache documentation for [verifying the integrity of Apache project releases](https://www.apache.org/dyn/closer.cgi#verify).
 
-## Release Notes {#releasenotes}
+<a name="releasenotes"></a>
+## Release Notes
 
 Release notes for Apache Zookeeper releases are available in Jira: [Browse release notes](https://issues.apache.org/jira/browse/ZOOKEEPER?report=com.atlassian.jira.plugin.system.project:changelog-panel)
 
-## News {#news}
+<a name="news"></a>
+## News
 
 ### 15 July, 2018: release 3.4.13 available
 

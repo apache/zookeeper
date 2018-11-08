@@ -1,7 +1,3 @@
----
-layout: page
-title: Documentation
----
 # Documentation
 
 Setup instructions, programming guides, and other documentation are available for each stable version of ZooKeeper below:

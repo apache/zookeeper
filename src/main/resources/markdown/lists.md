@@ -1,7 +1,3 @@
----
-layout: page
-title: Mailing Lists
----
 # ZooKeeper Mailing Lists
 
 ## Users

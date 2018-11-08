@@ -1,7 +1,3 @@
----
-layout: page
-title: Project Bylaws
----
 # Apache ZooKeeper Project Bylaws
 
 This is version 1 of the bylaws.

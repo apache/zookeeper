@@ -1,12 +1,18 @@
----
-layout: page
-title: Security
----
 # ZooKeeper Security
 
-The Apache Software Foundation takes security issues very seriously. Due to the infrastructure nature of the Apache ZooKeeper project specifically, we haven't had many reports over time, but it doesn't mean that we haven't had concerns over some bugs and vulnerabilities. If you have any concern or believe you have uncovered a vulnerability, we suggest that you get in touch via the e-mail address <a href="mailto:security@zookeeper.apache.org?Subject=[SECURITY] My security issue" target="_top">security@zookeeper.apache.org</a>. In the message, try to provide a description of the issue and ideally a way of reproducing it. Note that this security address should be used only for undisclosed vulnerabilities. Dealing with known issues should be handled regularly via jira and the mailing lists. **Please report any security problems to the project security address before disclosing it publicly.**  
+The Apache Software Foundation takes security issues very seriously. Due to the infrastructure
+nature of the Apache ZooKeeper project specifically, we haven't had many reports over time, but
+it doesn't mean that we haven't had concerns over some bugs and vulnerabilities. If you have any
+concern or believe you have uncovered a vulnerability, we suggest that you get in touch via the 
+e-mail address <a href="mailto:security@zookeeper.apache.org?Subject=[SECURITY] My security issue"
+target="_top">security@zookeeper.apache.org</a>. In the message, try to provide a description of
+the issue and ideally a way of reproducing it. Note that this security address should be used
+only for undisclosed vulnerabilities. Dealing with known issues should be handled regularly 
+via jira and the mailing lists. **Please report any security problems to the project security
+address before disclosing it publicly.**  
 
-The ASF Security team maintains a page with a description of how vulnerabilities are handled, check their <a href="https://www.apache.org/security/">Web page</a> for more information.
+The ASF Security team maintains a page with a description of how vulnerabilities are handled, check
+their <a href="https://www.apache.org/security/">Web page</a> for more information.
 
 ## Vulnerability reports
 
@@ -15,7 +21,7 @@ The ASF Security team maintains a page with a description of how vulnerabilities
 * [CVE-2016-5017: Buffer overflow vulnerability in ZooKeeper C cli shell](#CVE-2016-5017)
 
 
-
+<a name="CVE-2018-8012"></a>
 ### CVE-2018-8012: Apache ZooKeeper Quorum Peer mutual authentication
 
 Severity: Critical
@@ -29,12 +35,15 @@ ZooKeeper 3.5.0-alpha through 3.5.3-beta
 The unsupported ZooKeeper 1.x through 3.3.x versions may be also affected
 
 Description:
-No authentication/authorization is enforced when a server attempts to join a quorum. As a result an arbitrary end point could join the cluster and begin propagating counterfeit changes to the leader.
+No authentication/authorization is enforced when a server attempts to join a quorum. As a result an
+arbitrary end point could join the cluster and begin propagating counterfeit changes to the leader.
 
 Mitigation:
-Upgrade to 3.4.10 or later (3.5.4-beta or later if on the 3.5 branch) and enable Quorum Peer mutual authentication.
+Upgrade to 3.4.10 or later (3.5.4-beta or later if on the 3.5 branch) and enable Quorum Peer mutual
+authentication.
 
-Alternately ensure the ensemble election/quorum communication is protected by a firewall as this will mitigate the issue.
+Alternately ensure the ensemble election/quorum communication is protected by a firewall as this
+will mitigate the issue.
 
 See the documentation for more details on correct cluster administration.
 
@@ -47,7 +56,7 @@ https://cwiki.apache.org/confluence/display/ZOOKEEPER/Server-Server+mutual+authe
 http://zookeeper.apache.org/doc/current/zookeeperAdmin.html
 
 
-
+<a name="CVE-2017-5637"></a>
 ### CVE-2017-5637: DOS attack on wchp/wchc four letter words (4lw) {#CVE-2017-5637}
 
 Severity: moderate
@@ -63,12 +72,16 @@ The unsupported ZooKeeper 1.x through 3.3.x versions may be also affected
 Note: The 3.5 branch is still beta at this time.
 
 Description:
-Two four letter word commands “wchp/wchc” are CPU intensive and could cause spike of CPU utilization on ZooKeeper server if abused,
-which leads to the server unable to serve legitimate client requests. There is no known compromise which takes advantage of this vulnerability.
+Two four letter word commands “wchp/wchc” are CPU intensive and could cause spike of CPU utilization
+on ZooKeeper server if abused,
+which leads to the server unable to serve legitimate client requests. There is no known compromise
+which takes advantage of this vulnerability.
 
 Mitigation:
-This affects ZooKeeper ensembles whose client port is publicly accessible, so it is recommended to protect ZooKeeper ensemble with firewall.
-Documentation has also been updated to clarify on this point. In addition, a patch (ZOOKEEPER-2693) is provided to disable "wchp/wchc” commands
+This affects ZooKeeper ensembles whose client port is publicly accessible, so it is recommended to
+protect ZooKeeper ensemble with firewall.
+Documentation has also been updated to clarify on this point. In addition, a patch (ZOOKEEPER-2693)
+is provided to disable "wchp/wchc” commands
 by default.
 - ZooKeeper 3.4.x users should upgrade to 3.4.10 or apply the patch.
 - ZooKeeper 3.5.x users should upgrade to 3.5.3 or apply the patch.
@@ -77,7 +90,7 @@ References
 [1] https://issues.apache.org/jira/browse/ZOOKEEPER-2693
 
 
-
+<a name="CVE-2016-5017"></a>
 ### CVE-2016-5017: Buffer overflow vulnerability in ZooKeeper C cli shell {#CVE-2016-5017}
 
 Severity: moderate
@@ -107,7 +120,8 @@ Mitigation:
 It is important to use the fully featured/supported Java cli shell rather
 than the C cli shell independent of version.
 
-- ZooKeeper 3.4.x users should upgrade to 3.4.9 or apply this [patch](https://git-wip-us.apache.org/repos/asf?p=zookeeper.git;a=commitdiff;h=27ecf981a15554dc8e64a28630af7a5c9e2bdf4f)
+- ZooKeeper 3.4.x users should upgrade to 3.4.9 or apply this
+[patch](https://git-wip-us.apache.org/repos/asf?p=zookeeper.git;a=commitdiff;h=27ecf981a15554dc8e64a28630af7a5c9e2bdf4f)
 
 - ZooKeeper 3.5.x users should upgrade to 3.5.3 when released or apply
 this [patch](https://git-wip-us.apache.org/repos/asf?p=zookeeper.git;a=commitdiff;h=f09154d6648eeb4ec5e1ac8a2bacbd2f8c87c14a)
