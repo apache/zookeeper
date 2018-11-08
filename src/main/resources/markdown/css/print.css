@@ -19,5 +19,5 @@
 
 /* $Id$ */
 
-#banner, #footer, #leftcol, #breadcrumbs, .docs #toc, .docs .courtesylinks, #leftColumn, #navColumn {display: none !important;}
+#footer, .docs #toc, .docs .courtesylinks, #leftColumn, #navColumn {display: none !important;}
 #bodyColumn, body.docs div.docs {margin: 0 !important;border: none !important}

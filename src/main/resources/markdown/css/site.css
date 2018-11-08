@@ -40,64 +40,10 @@ footer {
   clear: both;
 }
 footer {
-  background-color: #e5e5e5;
+  background-color: #f8f9fa!important;
 }
-footer .row, footer p, footer .pull-right {
+footer .row, footer p {
   margin: 5px;
-}
-.pull-left {
-    margin-top: 32px;
-}
-div#search-form.navbar-search.pull-right {
-  width: 290px;
-  margin-right: 0;
-  margin-top: 0px;
-  margin-left: 0;
-  position: initial;
-}
-li#publishDate.pull-right {
-  list-style: none;
-}
-.container,
-.navbar-static-top .container,
-.navbar-fixed-top .container,
-.navbar-fixed-bottom .container,
-.navbar-inner {
-  width: initial;
-}
-/* Change the color and effect when clicking in menus */
-.dropdown-menu>li>a:hover,
-.dropdown-menu>li>a:focus,
-.dropdown-submenu:hover>a,
-.dropdown-submenu:focus>a {
-  background-color: #e5e5e5;
-  background-image: none;
-  color: #000;
-  font-weight: bolder;
-}
-
-.dropdown-backdrop {
-  position: static;
-}
-
-@media only screen and (max-width: 979px) {
-  body {
-    padding-left: 0;
-    padding-right: 0;
-    width: initial;
-    margin: 0;
-  }
-  /* Without this rule, drop-down divs are a fixed height
-   * the first time they are expanded */
-  .collapse.in {
-      height: auto !important;
-  }
-  div#search-form.navbar-search.pull-right {
-    padding: 0;
-    margin-left: ;
-    width: initial;
-    clear: both;
-  }
 }
 
 a {
@@ -118,24 +64,4 @@ table th, td {
     text-align: left;
     vertical-align: top;
     border-top: 1px solid #ddd;
-}
-
-/* Fix Google Custom Search results on very narrow screens */
-@media(max-width: 480px) {
-    .gsc-overflow-hidden .nav-collapse {
-        -webkit-transform: none;
-    }
-}
-
-/* Override weird body padding thing that causes scrolling */
-@media (max-width: 767px)
-body {
-    padding-right: 0;
-    padding-left: 0;
-}
-
-@media (max-width: 767px)
-.navbar-fixed-top, .navbar-fixed-bottom, .navbar-static-top {
-  margin-left: 0;
-  margin-right: 0;
 }
