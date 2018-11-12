@@ -176,7 +176,7 @@ public class ClientCnxn {
      * operation)
      */
     private volatile boolean closing = false;
-    
+
     /**
      * A set of ZooKeeper hosts this client could connect to.
      */
@@ -616,6 +616,14 @@ public class ClientCnxn {
                       } else {
                           cb.processResult(rc, clientPath, p.ctx, null);
                       }
+                  } else if (p.response instanceof GetAllChildrenNumberResponse) {
+                      AllChildrenNumberCallback cb = (AllChildrenNumberCallback) p.cb;
+                      GetAllChildrenNumberResponse rsp = (GetAllChildrenNumberResponse) p.response;
+                      if (rc == 0) {
+                          cb.processResult(rc, clientPath, p.ctx, rsp.getTotalNumber());
+                      } else {
+                          cb.processResult(rc, clientPath, p.ctx, 0);
+                      }
                   } else if (p.response instanceof GetChildren2Response) {
                       Children2Callback cb = (Children2Callback) p.cb;
                       GetChildren2Response rsp = (GetChildren2Response) p.response;
@@ -648,7 +656,7 @@ public class ClientCnxn {
                                     .substring(chrootPath.length())), rsp.getStat());
                       } else {
                           cb.processResult(rc, clientPath, p.ctx, null, null);
-                      }                   
+                      }
                   } else if (p.response instanceof MultiResponse) {
                 	  MultiCallback cb = (MultiCallback) p.cb;
                 	  MultiResponse rsp = (MultiResponse) p.response;
@@ -763,7 +771,7 @@ public class ClientCnxn {
         public EndOfStreamException(String msg) {
             super(msg);
         }
-        
+
         @Override
         public String toString() {
             return "EndOfStreamException: " + getMessage();
@@ -777,7 +785,7 @@ public class ClientCnxn {
             super(msg);
         }
     }
-    
+
     private static class SessionExpiredException extends IOException {
         private static final long serialVersionUID = -1388816932076193249L;
 
@@ -793,7 +801,7 @@ public class ClientCnxn {
             super(msg);
         }
     }
-    
+
     /**
      * This class services the outgoing request queue and generates the heart
      * beats. It also spawns the ReadThread.
@@ -825,8 +833,8 @@ public class ClientCnxn {
             if (replyHdr.getXid() == -4) {
                 // -4 is the xid for AuthPacket               
                 if(replyHdr.getErr() == KeeperException.Code.AUTHFAILED.intValue()) {
-                    state = States.AUTH_FAILED;                    
-                    eventThread.queueEvent( new WatchedEvent(Watcher.Event.EventType.None, 
+                    state = States.AUTH_FAILED;
+                    eventThread.queueEvent( new WatchedEvent(Watcher.Event.EventType.None,
                             Watcher.Event.KeeperState.AuthFailed, null) );
                     eventThread.queueEventOfDeath();
                 }
@@ -937,7 +945,7 @@ public class ClientCnxn {
         // Runnable
         /**
          * Used by ClientCnxnSocket
-         * 
+         *
          * @return
          */
         ZooKeeper.States getZkState() {
@@ -1181,7 +1189,7 @@ public class ClientCnxn {
                     } else {
                         to = connectTimeout - clientCnxnSocket.getIdleRecv();
                     }
-                    
+
                     if (to <= 0) {
                         String warnInfo;
                         warnInfo = "Client session timed out, have not heard from server in "
@@ -1194,8 +1202,8 @@ public class ClientCnxn {
                     }
                     if (state.isConnected()) {
                     	//1000(1 second) is to prevent race condition missing to send the second ping
-                    	//also make sure not to send too many pings when readTimeout is small 
-                        int timeToNextPing = readTimeout / 2 - clientCnxnSocket.getIdleSend() - 
+                    	//also make sure not to send too many pings when readTimeout is small
+                        int timeToNextPing = readTimeout / 2 - clientCnxnSocket.getIdleSend() -
                         		((clientCnxnSocket.getIdleSend() > 1000) ? 1000 : 0);
                         //send a ping request either time is due or no packet sent out within MAX_SEND_PING_INTERVAL
                         if (timeToNextPing <= 0 || clientCnxnSocket.getIdleSend() > MAX_SEND_PING_INTERVAL) {
@@ -1358,7 +1366,7 @@ public class ClientCnxn {
         /**
          * Callback invoked by the ClientCnxnSocket once a connection has been
          * established.
-         * 
+         *
          * @param _negotiatedSessionTimeout
          * @param _sessionId
          * @param _sessionPasswd

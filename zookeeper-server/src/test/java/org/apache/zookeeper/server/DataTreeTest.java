@@ -144,12 +144,12 @@ public class DataTreeTest extends ZKTestCase {
         DataNode zk = dt.getNode("/test");
         int prevCversion = zk.stat.getCversion();
         long prevPzxid = zk.stat.getPzxid();
-        dt.setCversionPzxid("/test/",  prevCversion + 1, prevPzxid + 1);
+        dt.setCversionPzxid("/test/", prevCversion + 1, prevPzxid + 1);
         int newCversion = zk.stat.getCversion();
         long newPzxid = zk.stat.getPzxid();
         Assert.assertTrue("<cversion, pzxid> verification failed. Expected: <" +
-                (prevCversion + 1) + ", " + (prevPzxid + 1) + ">, found: <" +
-                newCversion + ", " + newPzxid + ">",
+                        (prevCversion + 1) + ", " + (prevPzxid + 1) + ">, found: <" +
+                        newCversion + ", " + newPzxid + ">",
                 (newCversion == prevCversion + 1 && newPzxid == prevPzxid + 1));
     }
 
@@ -300,5 +300,20 @@ public class DataTreeTest extends ZKTestCase {
         // delete a node
         dt.deleteNode("/testApproximateDataSize", -1);
         Assert.assertEquals(dt.cachedApproximateDataSize(), dt.approximateDataSize());
+    }
+
+    @Test
+    public void testGetAllChildrenNumber() throws Exception {
+        DataTree dt = new DataTree();
+
+        // create a node
+        dt.createNode("/all_children_test", new byte[20], null, -1, 1, 1, 1);
+        dt.createNode("/all_children_test/nodes", new byte[20], null, -1, 1, 1, 1);
+        dt.createNode("/all_children_test/nodes/node1", new byte[20], null, -1, 1, 1, 1);
+        dt.createNode("/all_children_test/nodes/node2", new byte[20], null, -1, 1, 1, 1);
+        dt.createNode("/all_children_test/nodes/node3", new byte[20], null, -1, 1, 1, 1);
+
+        Assert.assertEquals(5, dt.getAllChildrenNumber("/all_children_test"));
+        Assert.assertEquals(4, dt.getAllChildrenNumber("/all_children_test/nodes"));
     }
 }

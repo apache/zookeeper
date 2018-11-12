@@ -68,6 +68,16 @@ public interface AsyncCallback {
         public void processResult(int rc, String path, Object ctx, Stat stat);
     }
 
+    /*
+    *  This callback is used to get all children node number of the node.
+    * */
+    @InterfaceAudience.Public
+    interface AllChildrenNumberCallback extends AsyncCallback {
+
+        public void processResult(int rc, String path, Object ctx,
+                                  int number);
+    }
+
     /**
      * This callback is used to retrieve the data and stat of the node.
      */

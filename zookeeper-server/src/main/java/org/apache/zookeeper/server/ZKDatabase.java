@@ -516,6 +516,14 @@ public class ZKDatabase {
         return dataTree.getChildren(path, stat, watcher);
     }
 
+    /*
+    * get all sub-children number of this node
+    * */
+    public int getAllChildrenNumber(String path)
+            throws KeeperException.NoNodeException {
+        return dataTree.getAllChildrenNumber(path);
+    }
+
     /**
      * check if the path is special or not
      * @param path the input path
