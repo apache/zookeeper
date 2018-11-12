@@ -52,7 +52,7 @@
 
 	<target name="compile-test" depends="compile">
   		<property name="target.jdk" value="${ant.java.version}" />	
-		<property name="src.test.local" location="${basedir}/test" />
+		<property name="src.test.local" location="${basedir}/src/test/java" />
 		<mkdir dir="${build.test}"/>
 		<javac srcdir="${src.test.local}" 
 			destdir="${build.test}" 
