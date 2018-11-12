@@ -618,6 +618,25 @@ property, when available, is noted below.
     reaches a runtime generated random value in the \[snapCount/2+1, snapCount]
     range.The default snapCount is 100,000.
 
+* *txnLogSizeLimitInKb* :
+    (Java system property: **zookeeper.txnLogSizeLimitInKb**)
+    Zookeeper transaction log file can also be controlled more
+    directly using txnLogSizeLimitInKb. Larger txn logs can lead to
+    slower follower syncs when sync is done using transaction log.
+    This is because leader has to scan through the appropriate log
+    file on disk to find the transaction to start sync from.
+    This feature is turned off by this default and snapCount is the
+    only value that limits transaction log size. When enabled
+    Zookeeper will roll the log when either of the limit is hit.
+    Please note that actual log size can exceed this value by the size
+    of the serialized transaction. On the other hand, if this value is
+    set too close to (or smaller than) **preAllocSize**,
+    it can cause Zookeeper to roll the log for every tranasaction. While
+    this is not a correctness issue, this may cause severly degraded
+    performance. To avoid this and to get most out of this feature, it is
+    recommended to set the value to N * **preAllocSize**
+    where N >= 2.
+
 * *maxClientCnxns* :
     (No Java system property)
     Limits the number of concurrent connections (at the socket
