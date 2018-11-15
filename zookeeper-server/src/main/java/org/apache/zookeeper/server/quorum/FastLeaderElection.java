@@ -71,14 +71,6 @@ public class FastLeaderElection implements Election {
     final static int maxNotificationInterval = 60000;
     
     /**
-     * This value is passed to the methods that check the quorum
-     * majority of an established ensemble for those values that
-     * should not be taken into account in the comparison 
-     * (electionEpoch and zxid). 
-     */
-    final static int IGNOREVALUE = -1;
-
-    /**
      * Connection manager. Fast leader election uses TCP for
      * communication between peers, and QuorumCnxManager manages
      * such connections.
@@ -732,7 +724,7 @@ public class FastLeaderElection implements Election {
      * @param vote
      *            Identifier of the vote received last
      */
-    private boolean termPredicate(HashMap<Long, Vote> votes, Vote vote) {
+    protected boolean termPredicate(Map<Long, Vote> votes, Vote vote) {
         SyncedLearnerTracker voteSet = new SyncedLearnerTracker();
         voteSet.addQuorumVerifier(self.getQuorumVerifier());
         if (self.getLastSeenQuorumVerifier() != null
@@ -765,8 +757,8 @@ public class FastLeaderElection implements Election {
      * @param   leader  leader id
      * @param   electionEpoch   epoch id
      */
-    private boolean checkLeader(
-            HashMap<Long, Vote> votes,
+    protected boolean checkLeader(
+            Map<Long, Vote> votes,
             long leader,
             long electionEpoch){
 
@@ -966,6 +958,7 @@ public class FastLeaderElection implements Election {
                                     ", proposed election epoch=0x" + Long.toHexString(n.electionEpoch));
                         }
 
+                        // don't care about the version if it's in LOOKING state
                         recvset.put(n.sid, new Vote(n.leader, n.zxid, n.electionEpoch, n.peerEpoch));
 
                         if (termPredicate(recvset,
@@ -989,9 +982,9 @@ public class FastLeaderElection implements Election {
                             if (n == null) {
                                 self.setPeerState((proposedLeader == self.getId()) ?
                                         ServerState.LEADING: learningState());
-
                                 Vote endVote = new Vote(proposedLeader,
-                                        proposedZxid, proposedEpoch);
+                                        proposedZxid, logicalclock.get(), 
+                                        proposedEpoch);
                                 leaveInstance(endVote);
                                 return endVote;
                             }
@@ -1008,13 +1001,13 @@ public class FastLeaderElection implements Election {
                          */
                         if(n.electionEpoch == logicalclock.get()){
                             recvset.put(n.sid, new Vote(n.leader, n.zxid, n.electionEpoch, n.peerEpoch));
-                            if(termPredicate(recvset, new Vote(n.leader,
+                            if(termPredicate(recvset, new Vote(n.version, n.leader,
                                             n.zxid, n.electionEpoch, n.peerEpoch, n.state))
                                             && checkLeader(outofelection, n.leader, n.electionEpoch)) {
                                 self.setPeerState((n.leader == self.getId()) ?
                                         ServerState.LEADING: learningState());
-
-                                Vote endVote = new Vote(n.leader, n.zxid, n.peerEpoch);
+                                Vote endVote = new Vote(n.leader, 
+                                        n.zxid, n.electionEpoch, n.peerEpoch);
                                 leaveInstance(endVote);
                                 return endVote;
                             }
@@ -1023,28 +1016,19 @@ public class FastLeaderElection implements Election {
                         /*
                          * Before joining an established ensemble, verify that
                          * a majority are following the same leader.
-                         * Only peer epoch is used to check that the votes come
-                         * from the same ensemble. This is because there is at
-                         * least one corner case in which the ensemble can be
-                         * created with inconsistent zxid and election epoch
-                         * info. However, given that only one ensemble can be
-                         * running at a single point in time and that each 
-                         * epoch is used only once, using only the epoch to 
-                         * compare the votes is sufficient.
-                         * 
-                         * @see https://issues.apache.org/jira/browse/ZOOKEEPER-1732
                          */
-                        outofelection.put(n.sid, new Vote(n.leader, 
-                                IGNOREVALUE, IGNOREVALUE, n.peerEpoch, n.state));
-                        if (termPredicate(outofelection, new Vote(n.leader,
-                                IGNOREVALUE, IGNOREVALUE, n.peerEpoch, n.state))
-                                && checkLeader(outofelection, n.leader, IGNOREVALUE)) {
+                        outofelection.put(n.sid, new Vote(n.version, n.leader, 
+                                n.zxid, n.electionEpoch, n.peerEpoch, n.state));
+                        if (termPredicate(outofelection, new Vote(n.version, n.leader,
+                                n.zxid, n.electionEpoch, n.peerEpoch, n.state))
+                                && checkLeader(outofelection, n.leader, n.electionEpoch)) {
                             synchronized(this){
                                 logicalclock.set(n.electionEpoch);
                                 self.setPeerState((n.leader == self.getId()) ?
                                         ServerState.LEADING: learningState());
                             }
-                            Vote endVote = new Vote(n.leader, n.zxid, n.peerEpoch);
+                            Vote endVote = new Vote(n.leader, n.zxid, 
+                                    n.electionEpoch, n.peerEpoch);
                             leaveInstance(endVote);
                             return endVote;
                         }
