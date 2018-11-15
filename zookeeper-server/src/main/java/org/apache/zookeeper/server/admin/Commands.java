@@ -217,7 +217,7 @@ public class Commands {
      * Information on session expirations and ephemerals. Returned map contains:
      *   - "expiry_time_to_session_ids": Map<Long, Set<Long>>
      *                                   time -> sessions IDs of sessions that expire at time
-     *   - "sesssion_id_to_ephemeral_paths": Map<Long, Set<String>>
+     *   - "session_id_to_ephemeral_paths": Map<Long, Set<String>>
      *                                       session ID -> ephemeral paths created by that session
      * @see ZooKeeperServer#getSessionExpiryMap()
      * @see ZooKeeperServer#getEphemerals()
@@ -306,7 +306,7 @@ public class Commands {
      *   - "ephemerals_count": Integer
      *   - "approximate_data_size": Long
      *   - "open_file_descriptor_count": Long (unix only)
-     *   - "max_file_descritpor_count": Long (unix only)
+     *   - "max_file_descriptor_count": Long (unix only)
      *   - "fsync_threshold_exceed_count": Long
      *   - "followers": Integer (leader only)
      *   - "synced_followers": Integer (leader only)

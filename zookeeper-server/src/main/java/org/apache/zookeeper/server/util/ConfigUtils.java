@@ -62,7 +62,7 @@ public class ConfigUtils {
     }
 
     /**
-     * Gets host and port by spliting server config
+     * Gets host and port by splitting server config
      * with support for IPv6 literals
      * @return String[] first element being the
      *  IP address and the next being the port

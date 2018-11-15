@@ -117,7 +117,7 @@ public class QuorumHierarchical implements QuorumVerifier {
        return true;
    }
     /**
-     * This contructor requires the quorum configuration
+     * This constructor requires the quorum configuration
      * to be declared in a separate file, and it takes the
      * file as an input parameter.
      */
@@ -146,7 +146,7 @@ public class QuorumHierarchical implements QuorumVerifier {
     }
     
     /**
-     * Reads a configration file. Called from the constructor
+     * Reads a configuration file. Called from the constructor
      * that takes a file as an input.
      */
     private void readConfigFile(String filename)
