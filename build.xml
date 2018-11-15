@@ -93,12 +93,9 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="src.dir" value="${basedir}/src" />
     <property name="java.server.src.dir" value="${basedir}/zookeeper-server/src/main/java" />
     <property name="java.server.resources.dir" value="${basedir}/zookeeper-server/src/main/resources" />
-    <property name="java.common.src.dir" value="${basedir}/zookeeper-common/src/main/java" />
-    <property name="java.common.resources.dir" value="${basedir}/zookeeper-common/src/main/resources" />
-    <property name="java.client.src.dir" value="${basedir}/zookeeper-client/zookeeper-client-java/src/main/java" />
     <property name="jute.src.dir" value="${basedir}/zookeeper-jute/src/main/java" />
 
-    <property name="lib.dir" value="${java.common.resources.dir}/lib" />
+    <property name="lib.dir" value="${java.server.resources.dir}/lib" />
     <property name="lib.dir.includes" value="**/*.jar" />
     <property name="lib.dir.excludes" value="**/excluded/" />
 
@@ -125,9 +122,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="test.java.build.dir" value="${build.dir}/test"/>
     <property name="test.java.classes" value="${test.java.build.dir}/classes"/>
     <property name="java.server.test.dir" value="${basedir}/zookeeper-server/src/test/java"/>
-    <property name="java.common.test.dir" value="${basedir}/zookeeper-common/src/test/java"/>
-    <property name="java.client.test.dir" value="${basedir}/zookeeper-client/zookeeper-client-java/src/test/java"/>
-    <property name="common.test.resource.dir" value="${basedir}/zookeeper-common/src/test/resources"/>
+    <property name="server.test.resource.dir" value="${basedir}/zookeeper-server/src/test/resources"/>
     <property name="jute.test.src.dir" value="${basedir}/zookeeper-jute/src/test/java" />
     <property name="systest.src.dir" value="${basedir}/zookeeper-it/src/test/java"/>
     <property name="bench.src.dir" value="${basedir}/zookeeper-it/src/test/bench"/>
@@ -155,12 +150,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="javadoc.link.java"
               value="http://docs.oracle.com/javase/6/docs/api/" />
     <property name="javadoc.packages" value="org.apache.*" />
-
-    <path id="java.src.dir">
-      <pathelement path="${java.server.src.dir}"/>
-      <pathelement path="${java.common.src.dir}"/>
-      <pathelement path="${java.client.src.dir}"/>
-    </path>
 
     <property name="dist.dir" value="${build.dir}/${final.name}"/>
     <property name="dist.maven.dir" value="${dist.dir}/dist-maven"/>
@@ -208,8 +197,8 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="grep.cmd" value="grep"/>
     <property name="patch.cmd" value="patch"/>
     <property name="make.cmd" value="make"/>
-    <property name="test_patch_sh" value="${common.test.resource.dir}/test-patch.sh"/>
-    <property name="test_pullrequest_sh" value="${common.test.resource.dir}/test-github-pr.sh"/>
+    <property name="test_patch_sh" value="${server.test.resource.dir}/test-patch.sh"/>
+    <property name="test_pullrequest_sh" value="${server.test.resource.dir}/test-github-pr.sh"/>
 
 	<!-- jdiff.home property set -->
     <property name="jdiff.home" value="${ivy.jdiff.lib}"/>
@@ -377,7 +366,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
             target="${javac.target}" source="${javac.source}"
             includes="org/apache/zookeeper/version/util/**" debug="on" encoding="${build.encoding}">
             <src path="${java.server.src.dir}" />
-            <src path="${java.common.src.dir}" />
         </javac>
     </target>
     
@@ -510,8 +498,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <javac destdir="${build.classes}" includeantruntime="false"
                target="${javac.target}" source="${javac.source}" debug="on" encoding="${build.encoding}">
             <src path="${java.server.src.dir}"/>
-            <src path="${java.common.src.dir}"/>
-            <src path="${java.client.src.dir}"/>
             <src path="${jute.src.dir}"/>
             <classpath refid="java.classpath"/>
             <compilerarg value="-Xlint:all"/>
@@ -524,8 +510,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <javac destdir="${test.java.classes}" includeantruntime="false"
              target="${javac.target}" source="${javac.source}" debug="on" encoding="${build.encoding}">
           <src path="${java.server.test.dir}"/>
-          <src path="${java.common.test.dir}"/>
-          <src path="${java.client.test.dir}"/>
         <src path="${jute.test.src.dir}"/>
         <classpath refid="test.java.classpath"/>
       </javac>
@@ -565,24 +549,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <!-- ====================================================== -->
     <!-- Documentation                                          -->
     <!-- ====================================================== -->
-    <target name="docs" depends="forrest.check" description="Generate forrest-based documentation. To use, specify -Dforrest.home=&lt;base of Apache Forrest installation&gt; on the command line." if="forrest.home">
-      <condition property="forrest.exec" value="forrest.bat" else="forrest">
-      	<os family="windows"/>
-      </condition>
-      <exec dir="${docs.src}" executable="${forrest.home}/bin/${forrest.exec}"
-            failonerror="true">
-      </exec>
-      <copy todir="${docs.dir}">
-        <fileset dir="${docs.src}/build/site/" />
-      </copy>
-      <style basedir="${conf.dir}" destdir="${docs.dir}"
-             includes="zookeeper-default.xml" style="conf/configuration.xsl"/>
-    </target>
-
-    <target name="forrest.check" unless="forrest.home">
-      <fail message="'forrest.home' is not defined. Please pass -Dforrest.home=&lt;base of Apache Forrest installation&gt; to Ant on the command-line." />
-    </target>
-
     <!-- Javadoc -->
     <target name="javadoc-dev" depends="jar"
             description="Generate javadoc for zookeeper developers">
@@ -602,12 +568,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
           <include name="org/apache/**"/>
           <exclude name="org/apache/jute/**"/>
     	</packageset>
-        <packageset dir="${java.common.src.dir}">
-          <include name="org/apache/**"/>
-        </packageset>
-        <packageset dir="${java.client.src.dir}">
-          <include name="org/apache/**"/>
-        </packageset>
     	<packageset dir="${src_generated.dir}"/>
         <link href="${javadoc.link.java}"/>
         <classpath refid="java.classpath"/>
@@ -642,14 +602,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
           <include name="org/apache/**"/>
           <exclude name="org/apache/zookeeper/server/**"/>
     	</packageset>
-        <packageset dir="${java.common.src.dir}">
-          <include name="org/apache/**"/>
-          <exclude name="org/apache/zookeeper/server/**"/>
-        </packageset>
-        <packageset dir="${java.client.src.dir}">
-          <include name="org/apache/**"/>
-          <exclude name="org/apache/zookeeper/server/**"/>
-        </packageset>
         <packageset dir="${jute.src.dir}">
           <include name="org/apache/**"/>
         </packageset>
@@ -699,8 +651,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
             <fileset file="LICENSE.txt" />
             <fileset dir="${build.classes}" excludes="**/.generated"/>
             <fileset dir="${java.server.src.dir}"/>
-            <fileset dir="${java.common.src.dir}"/>
-            <fileset dir="${java.client.src.dir}"/>
             <fileset dir="${jute.src.dir}"/>
             <fileset dir="${src_generated.dir}" excludes="**/.generated"/>
             <manifest>
@@ -776,8 +726,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <jar jarfile="${build.dir}/${final.name}-sources.jar">
             <fileset file="LICENSE.txt" />
             <fileset dir="${java.server.src.dir}"/>
-            <fileset dir="${java.common.src.dir}"/>
-            <fileset dir="${java.client.src.dir}"/>
             <fileset dir="${jute.src.dir}"/>
             <fileset dir="${src_generated.dir}" excludes="**/.generated"/>
             <manifest>
@@ -931,7 +879,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
           <include name="zookeeper-contrib/**"/>
           <include name="zookeeper-client/**"/>
           <include name="zookeeper-jute/**"/>
-          <include name="zookeeper-common/**"/>
           <include name="zookeeper-server/**"/>
         </fileset>
         <fileset file="${java.server.resources.dir}/pom.template"/>
@@ -1267,19 +1214,19 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <mkdir dir="${test.data.dir}" />
         <mkdir dir="${test.data.invalid.dir}" />
         <copy todir="${test.data.invalid.dir}">
-            <fileset dir="${common.test.resource.dir}/data/invalidsnap"/>
+            <fileset dir="${server.test.resource.dir}/data/invalidsnap"/>
         </copy>
         <mkdir dir="${test.data.buffersize.dir}" />
         <copy todir="${test.data.buffersize.dir}">
-            <fileset dir="${common.test.resource.dir}/data/buffersize"/>
+            <fileset dir="${server.test.resource.dir}/data/buffersize"/>
         </copy>
         <mkdir dir="${test.data.ssl.dir}" />
         <copy todir="${test.data.ssl.dir}">
-            <fileset dir="${common.test.resource.dir}/data/ssl"/>
+            <fileset dir="${server.test.resource.dir}/data/ssl"/>
         </copy>
         <mkdir dir="${test.data.kerberos.dir}" />
         <copy todir="${test.data.kerberos.dir}">
-            <fileset dir="${common.test.resource.dir}/data/kerberos"/>
+            <fileset dir="${server.test.resource.dir}/data/kerberos"/>
         </copy>
     </target>
 
@@ -1324,37 +1271,17 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <path refid="test.java.classpath" />
         <pathelement path="${test.java.classes}" />
       </path>
-      <fileset id="quicktest.files.common" dir="${java.common.test.dir}">
-        <include name="**/*${test.category}Test.java" />
-        <exclude name="**/*HammerTest.java" />
-      </fileset>
-      <fileset id="quicktest.files.server" dir="${java.server.test.dir}">
-        <include name="**/*${test.category}Test.java" />
-        <exclude name="**/*HammerTest.java" />
-      </fileset>
-      <fileset id="quicktest.files.client" dir="${java.client.test.dir}">
+      <fileset id="quicktest.files" dir="${java.server.test.dir}">
         <include name="**/*${test.category}Test.java" />
         <exclude name="**/*HammerTest.java" />
       </fileset>
       <fileset id="jutetest.files" dir="${jute.test.src.dir}">
         <include name="**/*${test.category}Test.java" />
       </fileset>
-      <fileset id="fulltest.files.common" dir="${java.common.test.dir}">
+      <fileset id="fulltest.files" dir="${java.server.test.dir}">
         <include name="**/*${test.category}Test.java" />
       </fileset>
-      <fileset id="fulltest.files.server" dir="${java.server.test.dir}">
-        <include name="**/*${test.category}Test.java" />
-      </fileset>
-      <fileset id="fulltest.files.client" dir="${java.client.test.dir}">
-        <include name="**/*${test.category}Test.java" />
-      </fileset>
-      <fileset id="testcase.files.common" dir="${java.common.test.dir}">
-        <include name="**/${testcase}.java" />
-      </fileset>
-      <fileset id="testcase.files.server" dir="${java.server.test.dir}">
-        <include name="**/${testcase}.java" />
-      </fileset>
-      <fileset id="testcase.files.client" dir="${java.client.test.dir}">
+      <fileset id="testcase.files" dir="${java.server.test.dir}">
         <include name="**/${testcase}.java" />
       </fileset>
     </target>
@@ -1377,21 +1304,15 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
           <classpath refid="junit.classpath" />
           <formatter type="${test.junit.output.format}" />
           <batchtest todir="${test.log.dir}" if="quicktest">
-            <fileset refid="quicktest.files.common" />
-            <fileset refid="quicktest.files.server" />
-            <fileset refid="quicktest.files.client" />
+            <fileset refid="quicktest.files" />
             <fileset refid="jutetest.files" />
           </batchtest>
           <batchtest todir="${test.log.dir}" if="fulltest">
-            <fileset refid="fulltest.files.common" />
-            <fileset refid="fulltest.files.server" />
-            <fileset refid="fulltest.files.client" />
+            <fileset refid="fulltest.files" />
             <fileset refid="jutetest.files" />
           </batchtest>
           <batchtest todir="${test.log.dir}" if="testcase">
-            <fileset refid="testcase.files.common" />
-            <fileset refid="testcase.files.server" />
-            <fileset refid="testcase.files.client" />
+            <fileset refid="testcase.files" />
           </batchtest>
         </junit>
         <antcall target="fail.build.on.test.failure"/>
@@ -1415,21 +1336,15 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
           <classpath refid="junit.classpath" />
           <formatter type="${test.junit.output.format}" />
           <batchtest todir="${test.log.dir}" if="quicktest">
-            <fileset refid="quicktest.files.common" />
-            <fileset refid="quicktest.files.server" />
-            <fileset refid="quicktest.files.client" />
+            <fileset refid="quicktest.files" />
             <fileset refid="jutetest.files" />
           </batchtest>
           <batchtest todir="${test.log.dir}" if="fulltest">
-            <fileset refid="fulltest.files.common" />
-            <fileset refid="fulltest.files.server" />
-            <fileset refid="fulltest.files.client" />
+            <fileset refid="fulltest.files" />
             <fileset refid="jutetest.files" />
           </batchtest>
           <batchtest todir="${test.log.dir}" if="testcase">
-            <fileset refid="testcase.files.common" />
-            <fileset refid="testcase.files.server" />
-            <fileset refid="testcase.files.client" />
+            <fileset refid="testcase.files" />
           </batchtest>
         </junit>
         <antcall target="fail.build.on.test.failure"/>
@@ -1596,25 +1511,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
                  includes="org/apache/zookeeper/**/*"
                  excludes="org/apache/zookeeper/version/**/*">
         </fileset>
-        <fileset dir="${java.common.src.dir}"
-               includes="org/apache/zookeeper/**/*"
-               excludes="org/apache/zookeeper/version/**/*">
-        </fileset>
-        <fileset dir="${java.client.src.dir}"
-               includes="org/apache/zookeeper/**/*"
-               excludes="org/apache/zookeeper/version/**/*">
-        </fileset>
         <testsources dir="${java.server.test.dir}">
-          <testclass package="org.apache.zookeeper.*" name=".*Test">
-              <testmethod annotation="Test"/>
-          </testclass>
-        </testsources>
-        <testsources dir="${java.common.test.dir}">
-          <testclass package="org.apache.zookeeper.*" name=".*Test">
-              <testmethod annotation="Test"/>
-          </testclass>
-        </testsources>
-        <testsources dir="${java.client.test.dir}">
           <testclass package="org.apache.zookeeper.*" name=".*Test">
               <testmethod annotation="Test"/>
           </testclass>
@@ -1665,7 +1562,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="findbugs.home" value="" />
     <target name="findbugs" depends="check-for-findbugs, jar" if="findbugs.present">
         <property name="findbugs.out.dir" value="${test.java.build.dir}/findbugs" />
-        <property name="findbugs.exclude.file" value="${common.test.resource.dir}/findbugsExcludeFile.xml" />
+        <property name="findbugs.exclude.file" value="${server.test.resource.dir}/findbugsExcludeFile.xml" />
         <property name="findbugs.report.htmlfile" value="${findbugs.out.dir}/zookeeper-findbugs-report.html" />
         <property name="findbugs.report.xmlfile" value="${findbugs.out.dir}/zookeeper-findbugs-report.xml" />
         <taskdef name="findbugs" classname="edu.umd.cs.findbugs.anttask.FindBugsTask" 
@@ -1679,8 +1576,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
                 </fileset>
             </auxClasspath>
             <sourcePath path="${java.server.src.dir}" />
-            <sourcePath path="${java.common.src.dir}" />
-            <sourcePath path="${java.client.src.dir}" />
             <class location="${build.dir}/${final.name}.jar" />
         </findbugs>
         <xslt style="${findbugs.home}/src/xsl/default.xsl" in="${findbugs.report.xmlfile}" 
@@ -1746,17 +1641,11 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
             <formatter type="${test.junit.output.format}" />
             <batchtest todir="${test.log.dir}" unless="testcase">
-                <fileset dir="${java.common.test.dir}"
-                         includes="**/*Test.java"/>
                 <fileset dir="${java.server.test.dir}"
-                         includes="**/*Test.java"/>
-                <fileset dir="${java.client.test.dir}"
                          includes="**/*Test.java"/>
             </batchtest>
             <batchtest todir="${test.log.dir}" if="testcase">
-                <fileset dir="${java.common.test.dir}" includes="**/${testcase}.java"/>
                 <fileset dir="${java.server.test.dir}" includes="**/${testcase}.java"/>
-                <fileset dir="${java.client.test.dir}" includes="**/${testcase}.java"/>
             </batchtest>
         </junit>
         <antcall target="fail.build.on.test.failure"/>
@@ -1766,12 +1655,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <cobertura-report format="${test.cobertura.output.format}"
                           destdir="${coveragereport.dir}" >
             <fileset dir="${java.server.src.dir}">
-                <include name="**/*.java" />
-            </fileset>
-            <fileset dir="${java.common.src.dir}">
-                <include name="**/*.java" />
-            </fileset>
-            <fileset dir="${java.client.src.dir}">
                 <include name="**/*.java" />
             </fileset>
             <fileset dir="${src_generated.dir}">
@@ -1787,13 +1670,11 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         </classpath>
       </taskdef>
       <mkdir dir="${test.java.build.dir}"/>
-      <cs:checkstyle config="${common.test.resource.dir}/checkstyle.xml" failOnViolation="false">
-        <fileset dir="${basedir}/zookeeper-common" includes="**/*.java" excludes="**/generated/**"/>
-        <fileset dir="${basedir}/zookeeper-client" includes="**/*.java" excludes="**/generated/**"/>
+      <cs:checkstyle config="${server.test.resource.dir}/checkstyle.xml" failOnViolation="false">
         <fileset dir="${basedir}/zookeeper-server" includes="**/*.java" excludes="**/generated/**"/>
         <formatter type="xml" toFile="${test.java.build.dir}/checkstyle-errors.xml"/>
       </cs:checkstyle>
-      <xslt style="${common.test.resource.dir}/checkstyle-noframes-sorted.xsl" in="${test.java.build.dir}/checkstyle-errors.xml"
+      <xslt style="${server.test.resource.dir}/checkstyle-noframes-sorted.xsl" in="${test.java.build.dir}/checkstyle-errors.xml"
             out="${test.java.build.dir}/checkstyle-errors.html"/>
     </target>
 
@@ -1892,9 +1773,9 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
           <exclude name="src/zookeeper-contrib/zookeeper-contrib-zooinspector/src/main/java/com/nitido/utils/toaster/Toaster.java"/>
           <exclude name="src/zookeeper-contrib/zookeeper-contrib-fatjar/src/main/resources/mainClasses"/>
           <exclude name="src/zookeeper-jute/target/main/java/.generated/"/>
-          <exclude name="src/zookeeper-common/src/test/resources/checkstyle*.xml"/>
-          <exclude name="src/zookeeper-common/src/test/resources/checkstyle*.xsl"/>
-          <exclude name="src/zookeeper-common/src/test/resources/findbugs*.xml"/>
+          <exclude name="src/zookeeper-server/src/test/resources/checkstyle*.xml"/>
+          <exclude name="src/zookeeper-server/src/test/resources/checkstyle*.xsl"/>
+          <exclude name="src/zookeeper-server/src/test/resources/findbugs*.xml"/>
           <exclude name="src/**/*.vcproj"/>
           <exclude name="src/**/*.vcxproj*"/>
           <exclude name="src/**/*.sln"/>
@@ -1912,7 +1793,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 		to Ant on the command-line." />
     </target>
 
-    <target name="test-patch" depends="patch.check,findbugs.check,forrest.check">
+    <target name="test-patch" depends="patch.check,findbugs.check">
   	<exec executable="bash" failonerror="true">
     		<arg value="${test_patch_sh}"/>
     		<arg value="DEVELOPER"/>
@@ -1922,13 +1803,12 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     		<arg value="${grep.cmd}"/>
     		<arg value="${patch.cmd}"/>
     		<arg value="${findbugs.home}"/>
-    		<arg value="${forrest.home}"/>
     		<arg value="${basedir}"/>
     		<arg value="${java5.home}"/>
   	</exec>
     </target>
 
-    <target name="hudson-test-patch" depends="findbugs.check,forrest.check">
+    <target name="hudson-test-patch" depends="findbugs.check">
   	<exec executable="bash" failonerror="true">
     		<arg value="${test_patch_sh}"/>
     		<arg value="HUDSON"/>
@@ -1940,7 +1820,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     		<arg value="${grep.cmd}"/>
     		<arg value="${patch.cmd}"/>
     		<arg value="${findbugs.home}"/>
-    		<arg value="${forrest.home}"/>
     		<arg value="${basedir}"/>
     		<arg value="${jira.passwd}"/>
     		<arg value="${java5.home}"/>
@@ -1949,7 +1828,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     	</exec>
      </target>
 
-   <target name="qa-test-pullrequest" depends="findbugs.check,forrest.check">
+     <target name="qa-test-pullrequest" depends="findbugs.check">
         <exec executable="bash" failonerror="true">
                 <arg value="${test_pullrequest_sh}"/>
                 <arg value="QABUILD"/>
@@ -1961,7 +1840,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
                 <arg value="${grep.cmd}"/>
                 <arg value="${patch.cmd}"/>
                 <arg value="${findbugs.home}"/>
-                <arg value="${forrest.home}"/>
                 <arg value="${basedir}"/>
                 <arg value="${jira.passwd}"/>
                 <arg value="${java5.home}"/>
@@ -1971,7 +1849,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
 
      <!-- this target runs the hudson trunk build -->
-     <target name="hudson-test-trunk" depends="docs,tar,findbugs"/>
+     <target name="hudson-test-trunk" depends="tar,findbugs"/>
 
      <target name="api-xml" depends="ivy-retrieve-jdiff, javadoc, write-null">
        <javadoc>
@@ -1983,12 +1861,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
          <packageset dir="${java.server.src.dir}">
            <include name="org/apache/zookeeper"/>
            <exclude name="org/apache/jute"/>
-         </packageset>
-         <packageset dir="${java.common.src.dir}">
-           <include name="org/apache/zookeeper"/>
-         </packageset>
-         <packageset dir="${java.client.src.dir}">
-           <include name="org/apache/zookeeper"/>
          </packageset>
          <classpath>
            <pathelement location="${build.classes}"/>
@@ -2015,8 +1887,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
                 excludepackagenames="org.apache.jute"	
                 sourceFiles="${jdiff.home}/Null.java">
          <fileset dir="${java.server.src.dir}"/>
-         <fileset dir="${java.common.src.dir}"/>
-         <fileset dir="${java.client.src.dir}"/>
          <doclet name="jdiff.JDiff"
                  path="${ivy.jdiff.lib}/jdiff-1.0.9.jar:${ivy.jdiff.lib}/xerces-1.4.4.jar">
            <param name="-oldapi" value="${name} ${jdiff.stable}"/>
@@ -2046,19 +1916,19 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
      <target name="ant-eclipse-download" unless="ant-eclipse.jar.exists">
        <get src="https://downloads.sourceforge.net/project/ant-eclipse/ant-eclipse/1.0/ant-eclipse-1.0.bin.tar.bz2"
-            dest="${java.common.resources.dir}/ant-eclipse-1.0.bin.tar.bz2" usetimestamp="false" />
+            dest="${java.server.resources.dir}/ant-eclipse-1.0.bin.tar.bz2" usetimestamp="false" />
 
-       <bunzip2 src="${java.common.resources.dir}/ant-eclipse-1.0.bin.tar.bz2"/>
+       <bunzip2 src="${java.server.resources.dir}/ant-eclipse-1.0.bin.tar.bz2"/>
 
-       <untar src="${java.common.resources.dir}/ant-eclipse-1.0.bin.tar"
-              dest="${java.common.resources.dir}">
+       <untar src="${java.server.resources.dir}/ant-eclipse-1.0.bin.tar"
+              dest="${java.server.resources.dir}">
          <patternset>
            <include name="lib/ant-eclipse-1.0-jvm1.2.jar"/>
          </patternset>
        </untar>
 
-       <delete file="${java.common.resources.dir}/ant-eclipse-1.0.bin.tar" />
-       <delete file="${java.common.resources.dir}/ant-eclipse-1.0.bin.tar.bz2" />
+       <delete file="${java.server.resources.dir}/ant-eclipse-1.0.bin.tar" />
+       <delete file="${java.server.resources.dir}/ant-eclipse-1.0.bin.tar.bz2" />
      </target>
 
      <target name="eclipse"
@@ -2079,19 +1949,11 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
          <classpath>
            <source path="${java.server.src.dir}"
                    output="${build.dir.eclipse-main-classes}" />
-           <source path="${java.common.src.dir}"
-                   output="${build.dir.eclipse-main-classes}" />
-           <source path="${java.client.src.dir}"
-                   output="${build.dir.eclipse-main-classes}" />
            <source path="${jute.src.dir}"
                    output="${build.dir.eclipse-main-classes}" />
            <source path="${src_generated.dir}"
                    output="${build.dir.eclipse-main-classes}" />
-           <source path="${java.common.test.dir}"
-                   output="${build.dir.eclipse-test-classes}" />
            <source path="${java.server.test.dir}"
-                   output="${build.dir.eclipse-test-classes}" />
-           <source path="${java.client.test.dir}"
                    output="${build.dir.eclipse-test-classes}" />
            <source path="${systest.src.dir}"
                    output="${build.dir.eclipse-test-classes}" />
