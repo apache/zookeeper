@@ -188,6 +188,11 @@ public class LearnerHandler extends ZooKeeperThread {
         this.leader = leader;
         this.bufferedInput = bufferedInput;
 
+        if (Boolean.getBoolean(FORCE_SNAP_SYNC)) {
+            forceSnapSync = true;
+            LOG.info("Forcing snapshot sync is enabled");
+        }
+
         try {
             if (leader.self != null) {
                 leader.self.authServer.authenticate(sock,
@@ -445,22 +450,6 @@ public class LearnerHandler extends ZooKeeperThread {
             // startForwarding() will be called in all cases
             boolean needSnap = syncFollower(peerLastZxid, leader.zk.getZKDatabase(), leader);
             
-            LOG.debug("Sending NEWLEADER message to " + sid);
-            // the version of this quorumVerifier will be set by leader.lead() in case
-            // the leader is just being established. waitForEpochAck makes sure that readyToStart is true if
-            // we got here, so the version was set
-            if (getVersion() < 0x10000) {
-                QuorumPacket newLeaderQP = new QuorumPacket(Leader.NEWLEADER,
-                        newLeaderZxid, null, null);
-                oa.writeRecord(newLeaderQP, "packet");
-            } else {
-                QuorumPacket newLeaderQP = new QuorumPacket(Leader.NEWLEADER,
-                        newLeaderZxid, leader.self.getLastSeenQuorumVerifier()
-                                .toString().getBytes(), null);
-                queuedPackets.add(newLeaderQP);
-            }
-            bufferedOutput.flush();
-
             /* if we are not truncating or sending a diff just send a snapshot */
             if (needSnap) {
                 boolean exemptFromThrottle = getLearnerType() != LearnerType.OBSERVER;
@@ -487,6 +476,22 @@ public class LearnerHandler extends ZooKeeperThread {
                     snapshot.close();
                 }
             }
+
+            LOG.debug("Sending NEWLEADER message to " + sid);
+            // the version of this quorumVerifier will be set by leader.lead() in case
+            // the leader is just being established. waitForEpochAck makes sure that readyToStart is true if
+            // we got here, so the version was set
+            if (getVersion() < 0x10000) {
+                QuorumPacket newLeaderQP = new QuorumPacket(Leader.NEWLEADER,
+                        newLeaderZxid, null, null);
+                oa.writeRecord(newLeaderQP, "packet");
+            } else {
+                QuorumPacket newLeaderQP = new QuorumPacket(Leader.NEWLEADER,
+                        newLeaderZxid, leader.self.getLastSeenQuorumVerifier()
+                                .toString().getBytes(), null);
+                queuedPackets.add(newLeaderQP);
+            }
+            bufferedOutput.flush();
 
             // Start thread that blast packets in the queue to learner
             startSendingPackets();

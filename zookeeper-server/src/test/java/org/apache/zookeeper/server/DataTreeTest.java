@@ -153,6 +153,31 @@ public class DataTreeTest extends ZKTestCase {
                 (newCversion == prevCversion + 1 && newPzxid == prevPzxid + 1));
     }
 
+    @Test
+    public void testPzxidUpdatedWhenDeletingNonExistNode() throws Exception {
+        DataNode root = dt.getNode("/");
+        long currentPzxid = root.stat.getPzxid();
+
+        // pzxid updated with deleteNode on higher zxid
+        long zxid = currentPzxid + 1;
+        try {
+            dt.deleteNode("/testPzxidUpdatedWhenDeletingNonExistNode", zxid);
+        } catch (NoNodeException e) { /* expected */ }
+        root = dt.getNode("/");
+        currentPzxid = root.stat.getPzxid();
+        Assert.assertEquals(currentPzxid, zxid);
+
+        // pzxid not updated with smaller zxid
+        long prevPzxid = currentPzxid;
+        zxid = prevPzxid - 1;
+        try {
+            dt.deleteNode("/testPzxidUpdatedWhenDeletingNonExistNode", zxid);
+        } catch (NoNodeException e) { /* expected */ }
+        root = dt.getNode("/");
+        currentPzxid = root.stat.getPzxid();
+        Assert.assertEquals(currentPzxid, prevPzxid);
+    }
+
     @Test(timeout = 60000)
     public void testPathTrieClearOnDeserialize() throws Exception {
 

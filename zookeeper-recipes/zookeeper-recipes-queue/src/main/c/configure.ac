@@ -48,8 +48,8 @@ DX_PS_FEATURE(OFF)
 DX_INIT_DOXYGEN([zookeeper-queues],[c-doc.Doxyfile],[docs])
 
   
-ZOOKEEPER_PATH=${BUILD_PATH}/../../../../zookeeper-client/zookeeper-client-c
-ZOOKEEPER_LD=-L${BUILD_PATH}/../../../../zookeeper-client/zookeeper-client-c\ -lzookeeper_mt
+ZOOKEEPER_PATH=${BUILD_PATH}/../../../../../zookeeper-client/zookeeper-client-c
+ZOOKEEPER_LD=-L${BUILD_PATH}/../../../../../zookeeper-client/zookeeper-client-c\ -lzookeeper_mt
 
 AC_SUBST(ZOOKEEPER_PATH)
 AC_SUBST(ZOOKEEPER_LD)

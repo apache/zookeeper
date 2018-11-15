@@ -527,6 +527,24 @@ public class DataTree {
         int lastSlash = path.lastIndexOf('/');
         String parentName = path.substring(0, lastSlash);
         String childName = path.substring(lastSlash + 1);
+
+        // The child might already be deleted during taking fuzzy snapshot,
+        // but we still need to update the pzxid here before throw exception
+        // for no such child
+        DataNode parent = nodes.get(parentName);
+        if (parent == null) {
+            throw new KeeperException.NoNodeException();
+        }
+        synchronized (parent) {
+            parent.removeChild(childName);
+            // Only update pzxid when the zxid is larger than the current pzxid,
+            // otherwise we might override higher pzxid set by a following create 
+            // Txn, which could cause the cversion and pzxid inconsistent
+            if (zxid > parent.stat.getPzxid()) {
+                parent.stat.setPzxid(zxid);
+            }
+        }
+
         DataNode node = nodes.get(path);
         if (node == null) {
             throw new KeeperException.NoNodeException();
@@ -535,13 +553,11 @@ public class DataTree {
         synchronized (node) {
             aclCache.removeUsage(node.acl);
         }
-        DataNode parent = nodes.get(parentName);
-        if (parent == null) {
-            throw new KeeperException.NoNodeException();
-        }
+
+        // Synchronized to sync the containers and ttls change, probably
+        // only need to sync on containers and ttls, will update it in a
+        // separate patch.
         synchronized (parent) {
-            parent.removeChild(childName);
-            parent.stat.setPzxid(zxid);
             long eowner = node.stat.getEphemeralOwner();
             EphemeralType ephemeralType = EphemeralType.get(eowner);
             if (ephemeralType == EphemeralType.CONTAINER) {
@@ -557,6 +573,7 @@ public class DataTree {
                 }
             }
         }
+
         if (parentName.startsWith(procZookeeper) && Quotas.limitNode.equals(childName)) {
             // delete the node in the trie.
             // we need to update the trie as well
@@ -1178,8 +1195,7 @@ public class DataTree {
             Set<String> childs = node.getChildren();
             children = childs.toArray(new String[childs.size()]);
         }
-        oa.writeString(pathString, "path");
-        oa.writeRecord(nodeCopy, "node");
+        serializeNodeData(oa, pathString, nodeCopy);
         path.append('/');
         int off = path.length();
         for (String child : children) {
@@ -1190,6 +1206,12 @@ public class DataTree {
             path.append(child);
             serializeNode(oa, path);
         }
+    }
+
+    // visiable for test
+    public void serializeNodeData(OutputArchive oa, String path, DataNode node) throws IOException {
+        oa.writeString(path, "path");
+        oa.writeRecord(node, "node");
     }
 
     public void serialize(OutputArchive oa, String tag) throws IOException {
