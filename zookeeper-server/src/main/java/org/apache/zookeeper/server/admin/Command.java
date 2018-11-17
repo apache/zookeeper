@@ -45,7 +45,7 @@ public interface Command {
     String getPrimaryName();
 
     /**
-     * A string documentating this command (e.g., what it does, any arguments it
+     * A string documenting this command (e.g., what it does, any arguments it
      * takes).
      */
     String getDoc();
