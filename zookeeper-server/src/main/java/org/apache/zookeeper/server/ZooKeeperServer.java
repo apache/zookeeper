@@ -86,10 +86,16 @@ import org.slf4j.LoggerFactory;
 public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected static final Logger LOG;
 
+    public static final String GLOBAL_OUTSTANDING_LIMIT = "zookeeper.globalOutstandingLimit";
+    protected static int globalOutstandingLimit = 1000;
+
     static {
         LOG = LoggerFactory.getLogger(ZooKeeperServer.class);
 
         Environment.logEnv("Server environment:", LOG);
+
+        globalOutstandingLimit = Integer.getInteger(GLOBAL_OUTSTANDING_LIMIT, 1000);
+        LOG.info("{} = {}", GLOBAL_OUTSTANDING_LIMIT, globalOutstandingLimit);
     }
 
     protected ZooKeeperServerBean jmxServerBean;
@@ -858,17 +864,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
     }
 
-    public int getGlobalOutstandingLimit() {
-        String sc = System.getProperty("zookeeper.globalOutstandingLimit");
-        int limit;
-        try {
-            limit = Integer.parseInt(sc);
-        } catch (Exception e) {
-            limit = 1000;
-        }
-        return limit;
-    }
-
     public void setServerCnxnFactory(ServerCnxnFactory factory) {
         serverCnxnFactory = factory;
     }
@@ -1095,7 +1090,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public boolean shouldThrottle(long outStandingCount) {
-        if (getGlobalOutstandingLimit() < getInProcess()) {
+        if (globalOutstandingLimit < getInProcess()) {
             return outStandingCount > 0;
         }
         return false;
@@ -1107,6 +1102,18 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         BinaryInputArchive bia = BinaryInputArchive.getArchive(bais);
         RequestHeader h = new RequestHeader();
         h.deserialize(bia, "header");
+
+        // Need to increase the outstanding request count first, otherwise
+        // there might be a race condition that it enabled recv after
+        // processing request and then disabled when check throttling.
+        //
+        // Be aware that we're actually checking the global outstanding 
+        // request before this request.
+        //
+        // It's fine if the IOException thrown before we decrease the count
+        // in cnxn, since it will close the cnxn anyway.
+        cnxn.incrOutstandingAndCheckThrottle(h);
+
         // Through the magic of byte buffers, txn will not be
         // pointing
         // to the start of the txn
@@ -1157,7 +1164,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             cnxn.sendResponse(rh,rsp, "response"); // not sure about 3rd arg..what is it?
             return;
         } else {
-            cnxn.incrOutstandingRequests(h);
             Request si = new Request(cnxn, cnxn.getSessionId(), h.getXid(),
               h.getType(), incomingBuffer, cnxn.getAuthInfo());
             si.setOwner(ServerCnxn.me);
