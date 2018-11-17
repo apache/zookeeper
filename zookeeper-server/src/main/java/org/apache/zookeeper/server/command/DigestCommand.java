@@ -27,9 +27,9 @@ import org.apache.zookeeper.server.ServerCnxn;
 /**
  * Command used to dump the latest digest histories.
  */
-public class HashCommand extends AbstractFourLetterCommand {
+public class DigestCommand extends AbstractFourLetterCommand {
 
-    public HashCommand(PrintWriter pw, ServerCnxn serverCnxn) {
+    public DigestCommand(PrintWriter pw, ServerCnxn serverCnxn) {
         super(pw, serverCnxn);
     }
 

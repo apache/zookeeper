@@ -75,7 +75,7 @@ public class CommandExecutor {
         } else if (commandCode == FourLetterCommands.isroCmd) {
             command = new IsroCommand(pwriter, serverCnxn);
         } else if (commandCode == FourLetterCommands.hashCmd) {
-            command = new HashCommand(pwriter, serverCnxn);
+            command = new DigestCommand(pwriter, serverCnxn);
         }
 
         return command;

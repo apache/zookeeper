@@ -128,7 +128,7 @@ public class Commands {
         registerCommand(new EnvCommand());
         registerCommand(new GetTraceMaskCommand());
         registerCommand(new InitialConfigurationCommand());
-        registerCommand(new HashCommand());
+        registerCommand(new DigestCommand());
         registerCommand(new IsroCommand());
         registerCommand(new LastSnapshotCommand());
         registerCommand(new LeaderCommand());
@@ -272,8 +272,8 @@ public class Commands {
     /**
      * Digest histories for every specific number of txns.
      */
-    public static class HashCommand extends CommandBase {
-        public HashCommand() {
+    public static class DigestCommand extends CommandBase {
+        public DigestCommand() {
             super(Arrays.asList("hash"));
         }
 

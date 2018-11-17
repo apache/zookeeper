@@ -180,7 +180,7 @@ public class DataTree {
     private volatile ZxidDigest lastProcessedZxidDigest;
 
     // Will be notified when digest mismatch event triggered.
-    private List<DigestWatcher> digestWatchers = new ArrayList<>();
+    private final List<DigestWatcher> digestWatchers = new ArrayList<>();
 
     // The historical digests list.
     private LinkedList<ZxidDigest> digestLog = new LinkedList<>();
