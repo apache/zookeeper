@@ -50,7 +50,7 @@ public class WatcherCleaner extends Thread {
 
     private volatile boolean stopped = false;
     private final Object cleanEvent = new Object();
-    private final Object produserAndConsumerLock = new Object();
+    private final Object processingCompletedEvent = new Object();
     
     private final Random r = new Random(System.nanoTime());
     private final WorkerService cleaners;
@@ -104,25 +104,24 @@ public class WatcherCleaner extends Thread {
                 totalDeadWatchers.get() >= maxInProcessingDeadWatchers) {
             try {
                 RATE_LOGGER.rateLimitLog("Waiting for dead watchers cleaning");
-                synchronized(produserAndConsumerLock) {
-                	produserAndConsumerLock.wait(100);
-                }
-            } catch (InterruptedException e) {
-                LOG.info("Got interrupted while waiting for dead watches " +
-                        "queue size");
-                break;
-            }
+				synchronized (processingCompletedEvent) {
+					processingCompletedEvent.wait(100);
+				}
+			} catch (InterruptedException e) {
+				LOG.info("Got interrupted while waiting for dead watches " + "queue size");
+				break;
+			}
         }
-        	synchronized (this) {
-                if (deadWatchers.add(watcherBit)) {
-                    totalDeadWatchers.incrementAndGet();
-                    if (deadWatchers.size() >= watcherCleanThreshold) {
-                        synchronized (cleanEvent) {
-                            cleanEvent.notifyAll();
-                        }
-                    }
-                }
-            }	
+		synchronized (this) {
+			if (deadWatchers.add(watcherBit)) {
+				totalDeadWatchers.incrementAndGet();
+				if (deadWatchers.size() >= watcherCleanThreshold) {
+					synchronized (cleanEvent) {
+						cleanEvent.notifyAll();
+					}
+				}
+			}
+		}
     }
 
     @Override
@@ -132,11 +131,11 @@ public class WatcherCleaner extends Thread {
                 try {
                     // add some jitter to avoid cleaning dead watchers at the
                     // same time in the quorum
-                    if (!stopped && deadWatchers.size() < watcherCleanThreshold) {
-                        int maxWaitMs = (watcherCleanIntervalInSeconds +
-                            r.nextInt(watcherCleanIntervalInSeconds / 2 + 1)) * 1000;
-                        cleanEvent.wait(maxWaitMs);
-                    }
+					if (!stopped && deadWatchers.size() < watcherCleanThreshold) {
+						int maxWaitMs = (watcherCleanIntervalInSeconds
+								+ r.nextInt(watcherCleanIntervalInSeconds / 2 + 1)) * 1000;
+						cleanEvent.wait(maxWaitMs);
+					}
                 } catch (InterruptedException e) {
                     LOG.info("Received InterruptedException while " +
                             "waiting for cleanEvent");
@@ -166,9 +165,9 @@ public class WatcherCleaner extends Thread {
                         long latency = Time.currentElapsedTime() - startTime;
                         LOG.info("Takes {} to process {} watches", latency, total);
                         totalDeadWatchers.addAndGet(-total);
-                        synchronized(produserAndConsumerLock) {
-                        	produserAndConsumerLock.notifyAll();
-                        }
+						synchronized (processingCompletedEvent) {
+							processingCompletedEvent.notifyAll();
+						}
                     }
                 });
             }
@@ -180,7 +179,7 @@ public class WatcherCleaner extends Thread {
         stopped = true;
         deadWatchers.clear();
         cleaners.stop();
-        super.interrupt();
+        this.interrupt();
     }
 
 }
