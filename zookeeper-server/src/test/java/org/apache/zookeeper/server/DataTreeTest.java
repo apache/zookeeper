@@ -206,6 +206,26 @@ public class DataTreeTest extends ZKTestCase {
         Assert.assertEquals(currentPzxid, prevPzxid);
     }
 
+    @Test
+    public void testDigestUpdatedWhenReplayCreateTxnForExistNode() {
+        try {
+            CRC32DigestCalculator.setDigestEnabled(true);
+            dt.processTxn(new TxnHeader(13, 1000, 1, 30, ZooDefs.OpCode.create),
+                    new CreateTxn("/foo", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 1), null);
+
+            // create the same node with a higher cversion to simulate the
+            // scenario when replaying a create txn for an existing node due
+            // to fuzzy snapshot
+            dt.processTxn(new TxnHeader(13, 1000, 1, 30, ZooDefs.OpCode.create),
+                    new CreateTxn("/foo", "".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 2), null);
+
+            // check the current digest value
+            Assert.assertEquals(Long.toHexString(dt.getDigestValue()), dt.getCurrentZxidDigest().digest);
+        } finally {
+            CRC32DigestCalculator.setDigestEnabled(false);
+        }
+    }
+
     @Test(timeout = 60000)
     public void testPathTrieClearOnDeserialize() throws Exception {
 

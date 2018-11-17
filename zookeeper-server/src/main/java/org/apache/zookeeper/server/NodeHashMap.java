@@ -28,12 +28,20 @@ import java.util.Set;
 public interface NodeHashMap {
 
     /**
-     * Add the node into the map.
+     * Add the node into the map and update the digest with the new node.
      *
      * @param path the path of the node
      * @param node the actual node associated with this path
      */
     public DataNode put(String path, DataNode node);
+
+    /**
+     * Add the node into the map without update the digest.
+     *
+     * @param path the path of the node
+     * @param node the actual node associated with this path
+     */
+    public DataNode putWithoutDigest(String path, DataNode node);
 
     /**
      * Return the data node associated with the path.

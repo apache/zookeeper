@@ -51,6 +51,11 @@ public class NodeHashMapImpl implements NodeHashMap {
     }
 
     @Override
+    public DataNode putWithoutDigest(String path, DataNode node) {
+        return nodes.put(path, node);
+    }
+
+    @Override
     public DataNode get(String path) {
         return nodes.get(path);
     }

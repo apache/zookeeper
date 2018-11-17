@@ -278,7 +278,7 @@ public class DataTree {
     public DataTree() {
         /* Rather than fight it, let root have an alias */
         nodes.put("", root);
-        nodes.put(rootZookeeper, root);
+        nodes.putWithoutDigest(rootZookeeper, root);
 
         /** add the proc node and quota node */
         root.addChild(procChildZookeeper);
@@ -1042,6 +1042,39 @@ public class DataTree {
             }
         }
 
+        /*
+         * Snapshots are taken lazily. It can happen that the child
+         * znodes of a parent are created after the parent
+         * is serialized. Therefore, while replaying logs during restore, a
+         * create might fail because the node was already
+         * created.
+         *
+         * After seeing this failure, we should increment
+         * the cversion of the parent znode since the parent was serialized
+         * before its children.
+         *
+         * Note, such failures on DT should be seen only during
+         * restore.
+         */
+        if (header.getType() == OpCode.create &&
+                rc.err == Code.NODEEXISTS.intValue()) {
+            LOG.debug("Adjusting parent cversion for Txn: " + header.getType() +
+                    " path:" + rc.path + " err: " + rc.err);
+            int lastSlash = rc.path.lastIndexOf('/');
+            String parentName = rc.path.substring(0, lastSlash);
+            CreateTxn cTxn = (CreateTxn)txn;
+            try {
+                setCversionPzxid(parentName, cTxn.getParentCVersion(),
+                        header.getZxid());
+            } catch (KeeperException.NoNodeException e) {
+                LOG.error("Failed to set parent cversion for: " +
+                      parentName, e);
+                rc.err = e.code().intValue();
+            }
+        } else if (rc.err != Code.OK.intValue()) {
+            LOG.debug("Ignoring processTxn failure hdr: " + header.getType() +
+                  " : error: " + rc.err);
+        }
 
         /*
          * Things we can only update after the whole txn is applied to data
@@ -1085,39 +1118,6 @@ public class DataTree {
             }
         }
 
-        /*
-         * Snapshots are taken lazily. It can happen that the child
-         * znodes of a parent are created after the parent
-         * is serialized. Therefore, while replaying logs during restore, a
-         * create might fail because the node was already
-         * created.
-         *
-         * After seeing this failure, we should increment
-         * the cversion of the parent znode since the parent was serialized
-         * before its children.
-         *
-         * Note, such failures on DT should be seen only during
-         * restore.
-         */
-        if (header.getType() == OpCode.create &&
-                rc.err == Code.NODEEXISTS.intValue()) {
-            LOG.debug("Adjusting parent cversion for Txn: " + header.getType() +
-                    " path:" + rc.path + " err: " + rc.err);
-            int lastSlash = rc.path.lastIndexOf('/');
-            String parentName = rc.path.substring(0, lastSlash);
-            CreateTxn cTxn = (CreateTxn)txn;
-            try {
-                setCversionPzxid(parentName, cTxn.getParentCVersion(),
-                        header.getZxid());
-            } catch (KeeperException.NoNodeException e) {
-                LOG.error("Failed to set parent cversion for: " +
-                      parentName, e);
-                rc.err = e.code().intValue();
-            }
-        } else if (rc.err != Code.OK.intValue()) {
-            LOG.debug("Ignoring processTxn failure hdr: " + header.getType() +
-                  " : error: " + rc.err);
-        }
         return rc;
     }
 
@@ -1360,7 +1360,9 @@ public class DataTree {
             }
             path = ia.readString("path");
         }
-        nodes.put("/", root);
+        // have counted digest for root node with "", ignore here to avoid
+        // counting twice for root node
+        nodes.putWithoutDigest("/", root);
 
         nodeDataSize.set(approximateDataSize());
 
@@ -1755,7 +1757,9 @@ public class DataTree {
         // the version when the digest was calculated
         int digestVersion;
 
-        ZxidDigest() { }
+        ZxidDigest() {
+            this(0, DigestCalculator.DIGEST_VERSION, 0); 
+        }
 
         ZxidDigest(long zxid, int digestVersion, long digest) {
             this.zxid = zxid;
@@ -1772,7 +1776,15 @@ public class DataTree {
         public void deserialize(InputArchive ia) throws IOException {
             zxid = ia.readLong("zxid");
             digestVersion = ia.readInt("digestVersion");
-            digest = ia.readLong("digest");
+            // the old version is using hex string as the digest
+            if (digestVersion < 2) {
+                String d = ia.readString("digest");
+                if (d != null) {
+                    digest = Long.parseLong(d);
+                }
+            } else {
+                digest = ia.readLong("digest");
+            }
         }
 
         public long getZxid() {
