@@ -10,7 +10,7 @@ compiled directories and files. `target` should not be committed to git as it is
 You can generate the static ZooKeeper website by running:
 
 1. `mvn clean install` in this directory.
-2. `cp -RP _released_docs _target/html` - this will include the documentation (see "sub-dir" section below) in the generated site.
+2. `cp -RP _released_docs target/html` - this will include the documentation (see "sub-dir" section below) in the generated site.
 
 At this point the contents of `target` are "staged" and can be reviewed prior to updating the ZooKeeper
 production website.
