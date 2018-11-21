@@ -49,6 +49,7 @@ import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.common.ZookeeperServerStabilizerConfig;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.StatPersisted;
@@ -87,15 +88,13 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected static final Logger LOG;
 
     public static final String GLOBAL_OUTSTANDING_LIMIT = "zookeeper.globalOutstandingLimit";
-    protected static int globalOutstandingLimit = 1000;
+    
+    public static final ZookeeperServerStabilizerConfig zookeeperServerStabilizerConfig = new ZookeeperServerStabilizerConfig();
+    
 
     static {
         LOG = LoggerFactory.getLogger(ZooKeeperServer.class);
-
         Environment.logEnv("Server environment:", LOG);
-
-        globalOutstandingLimit = Integer.getInteger(GLOBAL_OUTSTANDING_LIMIT, 1000);
-        LOG.info("{} = {}", GLOBAL_OUTSTANDING_LIMIT, globalOutstandingLimit);
     }
 
     protected ZooKeeperServerBean jmxServerBean;
@@ -1090,7 +1089,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public boolean shouldThrottle(long outStandingCount) {
-        if (globalOutstandingLimit < getInProcess()) {
+        if (zookeeperServerStabilizerConfig.getGlobalOutstandingLimit() < getInProcess()) {
             return outStandingCount > 0;
         }
         return false;

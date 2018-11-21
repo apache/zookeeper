@@ -62,8 +62,8 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
         this.pendingSyncs = new ConcurrentLinkedQueue<Request>();
 
         int divisor = self.getQuorumSize() > 2 ? self.getQuorumSize() - 1 : 1;
-        globalOutstandingLimit = Integer.getInteger(GLOBAL_OUTSTANDING_LIMIT, 1000) / divisor;
-        LOG.info("Override {} to {}", GLOBAL_OUTSTANDING_LIMIT, globalOutstandingLimit);
+        zookeeperServerStabilizerConfig.setGlobalOutstandingLimit(Integer.getInteger(GLOBAL_OUTSTANDING_LIMIT, 1000) / divisor);
+        LOG.info("Override {} to {}", GLOBAL_OUTSTANDING_LIMIT, zookeeperServerStabilizerConfig.getGlobalOutstandingLimit());
     }
 
     public Follower getFollower(){
