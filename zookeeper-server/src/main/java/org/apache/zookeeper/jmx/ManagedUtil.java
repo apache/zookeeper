@@ -71,10 +71,7 @@ public class ManagedUtil {
                 // org.apache.log4j.jmx.HierarchyDynamicMBean hdm = new org.apache.log4j.jmx.HierarchyDynamicMBean();
                 Object hdm = Class.forName("org.apache.log4j.jmx.HierarchyDynamicMBean").getConstructor().newInstance();
 
-                String mbean = System.getenv("zookeeper.jmx.log4j.mbean");
-                if (mbean == null || mbean.trim().length() == 0) {
-                    mbean = "log4j:hierarchy=default";
-                }
+                String mbean = System.getProperty("zookeeper.jmx.log4j.mbean", "log4j:hierarchy=default");
                 ObjectName mbo = new ObjectName(mbean);
                 mbs.registerMBean(hdm, mbo);
 
