@@ -769,10 +769,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         }
     }
 
-    InetSocketAddress getQuorumAddress(){
+    private AddressTuple getAddrs(){
         AddressTuple addrs = myAddrs.get();
         if (addrs != null) {
-            return addrs.quorumAddr;
+            return addrs;
         }
         try {
             synchronized (QV_LOCK) {
@@ -781,35 +781,23 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                     QV_LOCK.wait();
                     addrs = myAddrs.get();
                 }
+                return addrs;
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
-        return addrs.quorumAddr;
-    }
-    
-    InetSocketAddress getElectionAddress(){
-        AddressTuple addrs = myAddrs.get();
-        if (addrs != null) {
-            return addrs.electionAddr;
-        }
-        try {
-            synchronized (QV_LOCK) {
-                addrs = myAddrs.get();
-                while (addrs == null) {
-                    QV_LOCK.wait();
-                    addrs = myAddrs.get();
-                }
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
-        }
-        return addrs.electionAddr;
     }
 
-    private InetSocketAddress getClientAddress(){
+    public InetSocketAddress getQuorumAddress(){
+        return getAddrs().quorumAddr;
+    }
+    
+    public InetSocketAddress getElectionAddress(){
+        return getAddrs().electionAddr;
+    }
+
+    public InetSocketAddress getClientAddress(){
         final AddressTuple addrs = myAddrs.get();
         return (addrs == null) ? null : addrs.clientAddr;
     }
@@ -1584,6 +1572,21 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         return configFilename + QuorumPeerConfig.nextDynamicConfigFileSuffix;
     }
     
+    // On entry to this method, qcm must be non-null and the locks on both qcm and QV_LOCK
+    // must be held.  We don't want quorumVerifier/lastSeenQuorumVerifier to change out from
+    // under us, so we have to hold QV_LOCK; and since the call to qcm.connectOne() will take
+    // the lock on qcm (and take QV_LOCK again inside that), the caller needs to have taken
+    // qcm outside QV_LOCK to avoid a deadlock against other callers of qcm.connectOne().
+    private void connectNewPeers(QuorumCnxManager qcm){
+        if (quorumVerifier != null && lastSeenQuorumVerifier != null) {
+            Map<Long, QuorumServer> committedView = quorumVerifier.getAllMembers();
+            for (Entry<Long, QuorumServer> e : lastSeenQuorumVerifier.getAllMembers().entrySet()) {
+                if (e.getKey() != getId() && !committedView.containsKey(e.getKey()))
+                    qcm.connectOne(e.getKey());
+            }
+        }
+    }
+
     public void setLastSeenQuorumVerifier(QuorumVerifier qv, boolean writeToDisk){
         // If qcm is non-null, we may call qcm.connectOne(), which will take the lock on qcm
         // and then take QV_LOCK.  Take the locks in the same order to ensure that we don't
@@ -1607,13 +1610,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                     return;
                 }
                 lastSeenQuorumVerifier = qv;
-
-                if (qcm != null && quorumVerifier != null && lastSeenQuorumVerifier != null) {
-                    Map<Long, QuorumServer> committedView = quorumVerifier.getAllMembers();
-                    for (Entry<Long, QuorumServer> e : lastSeenQuorumVerifier.getAllMembers().entrySet()) {
-                        if (e.getKey() != getId() && !committedView.containsKey(e.getKey()))
-                            qcm.connectOne(e.getKey());
-                    }
+                if (qcm != null) {
+                    connectNewPeers(qcm);
                 }
 
                 if (writeToDisk) {
