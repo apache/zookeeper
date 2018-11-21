@@ -43,7 +43,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="checkstyle.version" value="7.1.2"/>
     <property name="commons-collections.version" value="3.2.2"/>
 
-    <property name="bouncycastle.version" value="1.56"/>
+    <property name="bouncycastle.version" value="1.60"/>
 
     <property name="jdiff.version" value="1.0.9"/>
     <property name="xerces.version" value="1.4.4"/>
@@ -53,8 +53,8 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
     <property name="javacc.version" value="5.0"/>
 
-    <property name="jetty.version" value="9.4.10.v20180503"/>
-    <property name="jackson.version" value="2.9.5"/>
+    <property name="jetty.version" value="9.4.14.v20181114"/>
+    <property name="jackson.version" value="2.9.7"/>
     <property name="dependency-check-ant.version" value="3.2.1"/>
 
     <property name="commons-io.version" value="2.6"/>
@@ -998,17 +998,9 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <fileset file="${java.server.resources.dir}/LICENSE.txt"/>
       </copy>
 
-      <copy todir="${dist.dir}/src" includeEmptyDirs="true">
-        <fileset dir="src" excludes="**/*.template **/docs/build/**/* **/ivy*.jar"/>
-        <fileset file="${java.server.resources.dir}/pom.template"/>
-      </copy>
-  	  
       <chmod perm="ugo+x" type="file" parallel="false">
         <fileset dir="${dist.dir}/bin"/>
         <fileset dir="${dist.dir}/sbin"/>
-        <fileset dir="${dist.dir}/src/zookeeper-contrib/">
-          <include name="*/bin/*" />
-        </fileset>
       </chmod>
     </target>
 
