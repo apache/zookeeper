@@ -1162,10 +1162,12 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                         };
                         try {
                             roZkMgr.start();
-                            reconfigFlagClear();
-                            if (shuttingDownLE) {
-                                shuttingDownLE = false;
-                                startLeaderElection();
+                            synchronized (this) {
+                                reconfigFlagClear();
+                                if (shuttingDownLE) {
+                                    shuttingDownLE = false;
+                                    startLeaderElection();
+                                }
                             }
                             setCurrentVote(makeLEStrategy().lookForLeader());
                         } catch (Exception e) {
@@ -1179,11 +1181,13 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                         }
                     } else {
                         try {
-                           reconfigFlagClear();
-                            if (shuttingDownLE) {
-                               shuttingDownLE = false;
-                               startLeaderElection();
-                               }
+                            synchronized (this) {
+                                reconfigFlagClear();
+                                if (shuttingDownLE) {
+                                    shuttingDownLE = false;
+                                    startLeaderElection();
+                                }
+                            }
                             setCurrentVote(makeLEStrategy().lookForLeader());
                         } catch (Exception e) {
                             LOG.warn("Unexpected exception", e);
