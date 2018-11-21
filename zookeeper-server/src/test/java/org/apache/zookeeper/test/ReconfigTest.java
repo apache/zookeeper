@@ -844,7 +844,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         testNormalOperation(zkArr[4], zkArr[5]);
 
         for (int i = 1; i <= 5; i++) {
-            if (!(qu.getPeer(i).peer.quorumVerifier instanceof QuorumHierarchical))
+            if (!(qu.getPeer(i).peer.getQuorumVerifier() instanceof QuorumHierarchical))
                 Assert.fail("peer " + i
                         + " doesn't think the quorum system is Hieararchical!");
         }
@@ -881,7 +881,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         testNormalOperation(zkArr[1], zkArr[2]);
 
         for (int i = 1; i <= 2; i++) {
-            if (!(qu.getPeer(i).peer.quorumVerifier instanceof QuorumMaj))
+            if (!(qu.getPeer(i).peer.getQuorumVerifier() instanceof QuorumMaj))
                 Assert.fail("peer "
                         + i
                         + " doesn't think the quorum system is a majority quorum system!");
