@@ -770,31 +770,43 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     InetSocketAddress getQuorumAddress(){
+        AddressTuple addrs = myAddrs.get();
+        if (addrs != null) {
+            return addrs.quorumAddr;
+        }
         try {
             synchronized (QV_LOCK) {
-                while (myAddrs.get() == null) {
+                addrs = myAddrs.get();
+                while (addrs == null) {
                     QV_LOCK.wait();
+                    addrs = myAddrs.get();
                 }
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
-        return myAddrs.get().quorumAddr;
+        return addrs.quorumAddr;
     }
     
     InetSocketAddress getElectionAddress(){
+        AddressTuple addrs = myAddrs.get();
+        if (addrs != null) {
+            return addrs.electionAddr;
+        }
         try {
             synchronized (QV_LOCK) {
-                while (myAddrs.get() == null) {
+                addrs = myAddrs.get();
+                while (addrs == null) {
                     QV_LOCK.wait();
+                    addrs = myAddrs.get();
                 }
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
-        return myAddrs.get().electionAddr;
+        return addrs.electionAddr;
     }
 
     private InetSocketAddress getClientAddress(){
