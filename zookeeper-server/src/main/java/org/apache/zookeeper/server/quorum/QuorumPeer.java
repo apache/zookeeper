@@ -126,7 +126,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      */
     private ZKDatabase zkDb;
 
-    public static class AddressTuple {
+    public static final class AddressTuple {
         public final InetSocketAddress quorumAddr;
         public final InetSocketAddress electionAddr;
         public final InetSocketAddress clientAddr;
@@ -1088,7 +1088,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             break;
         case 3:
             QuorumCnxManager qcm = createCnxnManager();
-            qcmRef.set(qcm);
+            if (!qcmRef.compareAndSet(null, qcm)) {
+                LOG.warn("Clobbering already-set QuorumCnxManager (restarting leader election?)");
+                qcmRef.set(qcm);
+            }
             QuorumCnxManager.Listener listener = qcm.listener;
             if(listener != null){
                 listener.start();
