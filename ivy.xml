@@ -63,6 +63,7 @@
       <artifact name="netty" type="jar" conf="default"/>
     </dependency>
 
+    <dependency org="org.apache.ant" name="ant-junit" rev="${ant-junit.version}" conf="test->default"/>
     <dependency org="junit" name="junit" rev="${junit.version}" conf="test->default"/>
 	<dependency org="org.mockito" name="mockito-all" rev="${mockito.version}"
                conf="test->default"/>

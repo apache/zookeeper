@@ -38,6 +38,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
     <property name="netty.version" value="3.10.6.Final"/>
 
+    <property name="ant-junit.version" value="1.10.5"/>
     <property name="junit.version" value="4.12"/>
     <property name="mockito.version" value="1.8.5"/>
     <property name="checkstyle.version" value="7.1.2"/>
@@ -1299,7 +1300,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
           <syspropertyset refid="junit.sys.properties" />
           <sysproperty key="test.junit.threads" value="${test.junit.threads}" />
           <classpath refid="junit.classpath" />
-          <formatter type="${test.junit.output.format}" />
+          <formatter classname="com.undefined.testing.OneLinerFormatter" usefile="false" />
           <batchtest todir="${test.log.dir}" if="quicktest">
             <fileset refid="quicktest.files" />
             <fileset refid="jutetest.files" />
