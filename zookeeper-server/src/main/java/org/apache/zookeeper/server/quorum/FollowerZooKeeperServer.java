@@ -60,17 +60,9 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
         super(logFactory, self.tickTime, self.minSessionTimeout,
                 self.maxSessionTimeout, zkDb, self);
         this.pendingSyncs = new ConcurrentLinkedQueue<Request>();
-<<<<<<< .mine
-
         int divisor = self.getQuorumSize() > 2 ? self.getQuorumSize() - 1 : 1;
         zookeeperServerStabilizerConfig.setGlobalOutstandingLimit(Integer.getInteger(GLOBAL_OUTSTANDING_LIMIT, 1000) / divisor);
         LOG.info("Override {} to {}", GLOBAL_OUTSTANDING_LIMIT, zookeeperServerStabilizerConfig.getGlobalOutstandingLimit());
-=======
-
-
-
-
->>>>>>> .theirs
     }
 
     public Follower getFollower(){
@@ -131,14 +123,6 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
 
         Request r = pendingSyncs.remove();
 		commitProcessor.commit(r);
-    }
-
-    @Override
-    public int getGlobalOutstandingLimit() {
-        int divisor = self.getQuorumSize() > 2 ? self.getQuorumSize() - 1 : 1;
-        int globalOutstandingLimit = super.getGlobalOutstandingLimit() / divisor;
-        LOG.info("Override {} to {}", GLOBAL_OUTSTANDING_LIMIT, globalOutstandingLimit);
-        return globalOutstandingLimit;
     }
 
     @Override

@@ -88,15 +88,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected static final Logger LOG;
 
     public static final String GLOBAL_OUTSTANDING_LIMIT = "zookeeper.globalOutstandingLimit";
-<<<<<<< .mine
     
     public static final ZookeeperServerStabilizerConfig zookeeperServerStabilizerConfig = new ZookeeperServerStabilizerConfig();
-    
-=======
-
-
-
->>>>>>> .theirs
 
     static {
         LOG = LoggerFactory.getLogger(ZooKeeperServer.class);
@@ -869,17 +862,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
     }
 
-    public int getGlobalOutstandingLimit() {
-        String sc = System.getProperty(GLOBAL_OUTSTANDING_LIMIT);
-        int limit;
-        try {
-            limit = Integer.parseInt(sc);
-        } catch (Exception e) {
-            limit = 1000;
-        }
-        return limit;
-    }
-
     public void setServerCnxnFactory(ServerCnxnFactory factory) {
         serverCnxnFactory = factory;
     }
@@ -1106,11 +1088,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public boolean shouldThrottle(long outStandingCount) {
-<<<<<<< .mine
         if (zookeeperServerStabilizerConfig.getGlobalOutstandingLimit() < getInProcess()) {
-=======
-        if (getGlobalOutstandingLimit() < getInProcess()) {
->>>>>>> .theirs
             return outStandingCount > 0;
         }
         return false;

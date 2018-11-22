@@ -54,18 +54,12 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
      * @throws IOException
      */
     LeaderZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self, ZKDatabase zkDb) throws IOException {
-        super(logFactory, self.tickTime, self.minSessionTimeout, self.maxSessionTimeout, zkDb, self);
-<<<<<<< .mine
-
-        int divisor = self.getQuorumSize() > 2 ? self.getQuorumSize() - 1 : 1;
-        zookeeperServerStabilizerConfig.setGlobalOutstandingLimit(Integer.getInteger(GLOBAL_OUTSTANDING_LIMIT, 1000) / divisor);
-        LOG.info("Override {} to {}", GLOBAL_OUTSTANDING_LIMIT, zookeeperServerStabilizerConfig.getGlobalOutstandingLimit());
-=======
-
-
-
-
->>>>>>> .theirs
+		super(logFactory, self.tickTime, self.minSessionTimeout, self.maxSessionTimeout, zkDb, self);
+		int divisor = self.getQuorumSize() > 2 ? self.getQuorumSize() - 1 : 1;
+		zookeeperServerStabilizerConfig
+				.setGlobalOutstandingLimit(Integer.getInteger(GLOBAL_OUTSTANDING_LIMIT, 1000) / divisor);
+		LOG.info("Override {} to {}", GLOBAL_OUTSTANDING_LIMIT,
+				zookeeperServerStabilizerConfig.getGlobalOutstandingLimit());
     }
 
     public Leader getLeader(){
@@ -111,14 +105,6 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
             containerManager.stop();
         }
         super.shutdown();
-    }
-
-    @Override
-    public int getGlobalOutstandingLimit() {
-        int divisor = self.getQuorumSize() > 2 ? self.getQuorumSize() - 1 : 1;
-        int globalOutstandingLimit = super.getGlobalOutstandingLimit() / divisor;
-        LOG.info("Override {} to {}", GLOBAL_OUTSTANDING_LIMIT, globalOutstandingLimit);
-        return globalOutstandingLimit;
     }
 
     @Override
