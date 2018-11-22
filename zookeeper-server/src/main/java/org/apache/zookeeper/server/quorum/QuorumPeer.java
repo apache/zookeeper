@@ -1088,9 +1088,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             break;
         case 3:
             QuorumCnxManager qcm = createCnxnManager();
-            if (!qcmRef.compareAndSet(null, qcm)) {
+            QuorumCnxManager oldQcm = qcmRef.getAndSet(qcm);
+            if (oldQcm != null) {
                 LOG.warn("Clobbering already-set QuorumCnxManager (restarting leader election?)");
-                qcmRef.set(qcm);
+                oldQcm.halt();
             }
             QuorumCnxManager.Listener listener = qcm.listener;
             if(listener != null){
