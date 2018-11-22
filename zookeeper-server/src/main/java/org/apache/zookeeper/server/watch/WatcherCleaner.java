@@ -176,13 +176,13 @@ public class WatcherCleaner extends Thread {
     }
 
     public void shutdown() {
-        if (LOG.isInfoEnabled()) {
-            LOG.info("WatcherCleaner thread shutdown is initiated");
-        }
         stopped = true;
         deadWatchers.clear();
         cleaners.stop();
         this.interrupt();
+        if (LOG.isInfoEnabled()) {
+            LOG.info("WatcherCleaner thread shutdown is initiated");
+        }
     }
 
 }
