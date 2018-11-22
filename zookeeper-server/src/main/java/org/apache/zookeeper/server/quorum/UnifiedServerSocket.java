@@ -31,10 +31,10 @@ import java.nio.channels.SocketChannel;
 
 import javax.net.ssl.SSLSocket;
 
+import io.netty.buffer.Unpooled;
+import io.netty.handler.ssl.SslHandler;
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.common.X509Util;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -262,7 +262,7 @@ public class UnifiedServerSocket extends ServerSocket {
                 bytesRead = 0;
             }
 
-            if (bytesRead == litmus.length && SslHandler.isEncrypted(ChannelBuffers.wrappedBuffer(litmus))) {
+            if (bytesRead == 5 && SslHandler.isEncrypted(Unpooled.wrappedBuffer(litmus))) {
                 try {
                     sslSocket = x509Util.createSSLSocket(prependableSocket, litmus);
                 } catch (X509Exception e) {
