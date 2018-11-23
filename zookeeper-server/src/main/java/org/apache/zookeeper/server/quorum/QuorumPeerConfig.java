@@ -658,7 +658,7 @@ public class QuorumPeerConfig {
              */            
            if (eAlg != 0) {
                for (QuorumServer s : qv.getVotingMembers().values()) {
-                   if (s.electionAddr == null)
+                   if (s.electionAddr.isEmpty())
                        throw new IllegalArgumentException(
                                "Missing election port for server: " + s.id);
                }

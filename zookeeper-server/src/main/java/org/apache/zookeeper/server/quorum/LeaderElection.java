@@ -184,7 +184,7 @@ public class LeaderElection implements Election  {
                 for (QuorumServer server : self.getVotingView().values()) {
                     LOG.info("Server address: " + server.addr);
                     try {
-                        requestPacket.setSocketAddress(server.addr);
+                        requestPacket.setSocketAddress(server.addr.getValidAddress());
                     } catch (IllegalArgumentException e) {
                         // Sun doesn't include the address that causes this
                         // exception to be thrown, so we wrap the exception

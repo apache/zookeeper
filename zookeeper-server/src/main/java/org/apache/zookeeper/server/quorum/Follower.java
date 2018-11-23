@@ -19,7 +19,8 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
+import java.io.InterruptedIOException;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
 
 import org.apache.jute.Record;
@@ -71,40 +72,48 @@ public class Follower extends Learner{
         self.start_fle = 0;
         self.end_fle = 0;
         fzk.registerJMX(new FollowerBean(this, zk), self.jmxLocalPeerBean);
-        try {
-            QuorumServer leaderServer = findLeader();            
+        boolean reconnect = true;
+        while (reconnect) {
             try {
-                connectToLeader(leaderServer.addr, leaderServer.hostname);
-                long newEpochZxid = registerWithLeader(Leader.FOLLOWERINFO);
-                if (self.isReconfigStateChange())
-                   throw new Exception("learned about role change");
-                //check to see if the leader zxid is lower than ours
-                //this should never happen but is just a safety check
-                long newEpoch = ZxidUtils.getEpochFromZxid(newEpochZxid);
-                if (newEpoch < self.getAcceptedEpoch()) {
-                    LOG.error("Proposed leader epoch " + ZxidUtils.zxidToString(newEpochZxid)
-                            + " is less than our accepted epoch " + ZxidUtils.zxidToString(self.getAcceptedEpoch()));
-                    throw new IOException("Error: Epoch of leader is lower");
-                }
-                syncWithLeader(newEpochZxid);                
-                QuorumPacket qp = new QuorumPacket();
-                while (this.isRunning()) {
-                    readPacket(qp);
-                    processPacket(qp);
-                }
-            } catch (Exception e) {
-                LOG.warn("Exception when following the leader", e);
+                QuorumServer leaderServer = findLeader();
                 try {
-                    sock.close();
-                } catch (IOException e1) {
-                    e1.printStackTrace();
+                    connectToLeader(leaderServer.addr, leaderServer.hostname);
+                    long newEpochZxid = registerWithLeader(Leader.FOLLOWERINFO);
+                    if (self.isReconfigStateChange())
+                        throw new Exception("learned about role change");
+                    //check to see if the leader zxid is lower than ours
+                    //this should never happen but is just a safety check
+                    long newEpoch = ZxidUtils.getEpochFromZxid(newEpochZxid);
+                    if (newEpoch < self.getAcceptedEpoch()) {
+                        LOG.error("Proposed leader epoch " + ZxidUtils.zxidToString(newEpochZxid)
+                                + " is less than our accepted epoch " + ZxidUtils.zxidToString(self.getAcceptedEpoch()));
+                        throw new IOException("Error: Epoch of leader is lower");
+                    }
+                    syncWithLeader(newEpochZxid);
+                    QuorumPacket qp = new QuorumPacket();
+                    while (this.isRunning()) {
+                        readPacket(qp);
+                        processPacket(qp);
+                    }
+                    reconnect = false;
+                } catch (SocketException | InterruptedIOException ignored) {
+                    zk.unregisterJMX();
+                    LOG.warn("Error when following the leader, reconnecting");
+                } catch (Exception e) {
+                    reconnect = false;
+                    LOG.warn("Exception when following the leader", e);
+                    try {
+                        sock.close();
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                    }
+
+                    // clear pending revalidations
+                    pendingRevalidations.clear();
                 }
-    
-                // clear pending revalidations
-                pendingRevalidations.clear();
+            } finally {
+                zk.unregisterJMX((Learner) this);
             }
-        } finally {
-            zk.unregisterJMX((Learner)this);
         }
     }
 

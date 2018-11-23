@@ -42,8 +42,6 @@ import org.slf4j.LoggerFactory;
 
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.ZooKeeperThread;
-import org.apache.zookeeper.server.quorum.Election;
-import org.apache.zookeeper.server.quorum.Vote;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 
@@ -728,8 +726,7 @@ public class AuthFastLeaderElection implements Election {
             }
 
             for (QuorumServer server : self.getVotingView().values()) {
-                InetSocketAddress saddr = new InetSocketAddress(server.addr
-                        .getAddress(), port);
+                InetSocketAddress saddr = new InetSocketAddress(server.addr.getValidAddress().getAddress(), port);
                 addrChallengeMap.put(saddr, new ConcurrentHashMap<Long, Long>());
             }
 
@@ -759,7 +756,7 @@ public class AuthFastLeaderElection implements Election {
 
     private void starter(QuorumPeer self) {
         this.self = self;
-        port = self.getVotingView().get(self.getId()).electionAddr.getPort();
+        port = self.getVotingView().get(self.getId()).electionAddr.getAllPorts().get(0);
         proposedLeader = -1;
         proposedZxid = -1;
 
@@ -782,11 +779,10 @@ public class AuthFastLeaderElection implements Election {
 
     private void sendNotifications() {
         for (QuorumServer server : self.getView().values()) {
-
             ToSend notmsg = new ToSend(ToSend.mType.notification,
                     AuthFastLeaderElection.sequencer++, proposedLeader,
                     proposedZxid, logicalclock.get(), QuorumPeer.ServerState.LOOKING,
-                    self.getView().get(server.id).electionAddr);
+                    self.getView().get(server.id).electionAddr.getValidAddress());
 
             sendqueue.offer(notmsg);
         }

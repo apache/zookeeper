@@ -18,11 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -30,20 +26,12 @@ import java.net.SocketException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.UnresolvedAddressException;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.NoSuchElementException;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.zookeeper.common.QuorumX509Util;
 import org.apache.zookeeper.common.X509Exception;
@@ -328,7 +316,7 @@ public class QuorumCnxManager {
         LOG.debug("Opening channel to server " + sid);
         Socket sock = new Socket();
         setSockOpts(sock);
-        sock.connect(self.getVotingView().get(sid).electionAddr, cnxTO);
+        sock.connect(self.getVotingView().get(sid).electionAddr.getValidAddress(), cnxTO);
         initiateConnection(sock, sid);
     }
 
@@ -410,7 +398,8 @@ public class QuorumCnxManager {
             // represents protocol version (in other words - message type)
             dout.writeLong(PROTOCOL_VERSION);
             dout.writeLong(self.getId());
-            String addr = self.getElectionAddress().getHostString() + ":" + self.getElectionAddress().getPort();
+            InetSocketAddress address = self.getElectionAddress().getValidAddress();
+            String addr = address.getHostString() + ":" + address.getPort();
             byte[] addr_bytes = addr.getBytes();
             dout.writeInt(addr_bytes.length);
             dout.write(addr_bytes);
@@ -478,7 +467,7 @@ public class QuorumCnxManager {
             LOG.error("Exception handling connection, addr: {}, closing server connection",
                     sock.getRemoteSocketAddress());
             closeSocket(sock);
-        }
+}
     }
 
     /**
@@ -706,14 +695,14 @@ public class QuorumCnxManager {
             Map<Long, QuorumPeer.QuorumServer> lastProposedView = lastSeenQV.getAllMembers();
             if (lastCommittedView.containsKey(sid)) {
                 knownId = true;
-                if (connectOne(sid, lastCommittedView.get(sid).electionAddr))
+                if (connectOne(sid, lastCommittedView.get(sid).electionAddr.getValidAddress()))
                     return;
             }
             if (lastSeenQV != null && lastProposedView.containsKey(sid)
                     && (!knownId || (lastProposedView.get(sid).electionAddr !=
                     lastCommittedView.get(sid).electionAddr))) {
                 knownId = true;
-                if (connectOne(sid, lastProposedView.get(sid).electionAddr))
+                if (connectOne(sid, lastProposedView.get(sid).electionAddr.getValidAddress()))
                     return;
             }
             if (!knownId) {
@@ -843,7 +832,7 @@ public class QuorumCnxManager {
      */
     public class Listener extends ZooKeeperThread {
 
-        volatile ServerSocket ss = null;
+        List<ListenerHandler> listenerHandlers;
 
         public Listener() {
             // During startup of thread, thread name will be overridden to
@@ -851,88 +840,51 @@ public class QuorumCnxManager {
             super("ListenerThread");
         }
 
-        /**
-         * Sleeps on accept().
-         */
+
         @Override
         public void run() {
-            int numRetries = 0;
-            InetSocketAddress addr;
-            Socket client = null;
-            while((!shutdown) && (numRetries < 3)){
+            while(!shutdown) {
+                Stream<InetSocketAddress> addresses;
+
+                if (self.getQuorumListenOnAllIPs())
+                    addresses = self.getElectionAddress().getAllAddressesForAllPorts().stream();
+                else
+                    addresses = self.getElectionAddress().getAllAddresses().stream();
+
+                listenerHandlers = addresses
+                        .map(addr -> new ListenerHandler(addr, self.shouldUsePortUnification(), self.isSslQuorum()))
+                        .collect(Collectors.toList());
+
+                ExecutorService threadPool = Executors.newCachedThreadPool();
+                listenerHandlers.forEach(threadPool::submit);
+                threadPool.shutdown();
+
                 try {
-                    if (self.shouldUsePortUnification()) {
-                        ss = new UnifiedServerSocket(x509Util);
-                    } else if (self.isSslQuorum()) {
-                        ss = x509Util.createSSLServerSocket();
-                    } else {
-                        ss = new ServerSocket();
-                    }
-
-                    ss.setReuseAddress(true);
-
-                    if (self.getQuorumListenOnAllIPs()) {
-                        int port = self.getElectionAddress().getPort();
-                        addr = new InetSocketAddress(port);
-                    } else {
-                        // Resolve hostname for this server in case the
-                        // underlying ip address has changed.
-                        self.recreateSocketAddresses(self.getId());
-                        addr = self.getElectionAddress();
-                    }
-                    LOG.info("My election bind port: " + addr.toString());
-                    setName(addr.toString());
-                    ss.bind(addr);
-                    while (!shutdown) {
-                        client = ss.accept();
-
-                        setSockOpts(client);
-                        LOG.info("Received connection request "
-                                + client.getRemoteSocketAddress());
-                        // Receive and handle the connection request
-                        // asynchronously if the quorum sasl authentication is
-                        // enabled. This is required because sasl server
-                        // authentication process may take few seconds to finish,
-                        // this may delay next peer connection requests.
-                        if (quorumSaslAuthEnabled) {
-                            receiveConnectionAsync(client);
-                        } else {
-                            receiveConnection(client);
-                        }
-                        numRetries = 0;
-                    }
-                } catch (IOException|X509Exception e) {
-                    if (shutdown) {
-                        break;
-                    }
-                    LOG.error("Exception while listening", e);
-                    numRetries++;
-                    try {
-                        ss.close();
-                        Thread.sleep(1000);
-                    } catch (IOException ie) {
-                        LOG.error("Error closing server socket", ie);
-                    } catch (InterruptedException ie) {
-                        LOG.error("Interrupted while sleeping. " +
+                    while (!shutdown)
+                        if (threadPool.awaitTermination(10, TimeUnit.MILLISECONDS))
+                            break;
+                } catch (InterruptedException ie) {
+                    LOG.error("Interrupted while sleeping. " +
                             "Ignoring exception", ie);
-                    }
-                    closeSocket(client);
                 }
+
             }
+
             LOG.info("Leaving listener");
             if (!shutdown) {
                 LOG.error("As I'm leaving the listener thread, "
                         + "I won't be able to participate in leader "
                         + "election any longer: "
-                        + self.getElectionAddress());
-            } else if (ss != null) {
+                        + self.getElectionAddress().getAllAddresses());
+            } else if (listenerHandlers != null) {
                 // Clean up for shutdown.
-                try {
-                    ss.close();
-                } catch (IOException ie) {
-                    // Don't log an error for shutdown.
-                    LOG.debug("Error closing server socket", ie);
-                }
+                for (ListenerHandler handler : listenerHandlers)
+                    try {
+                        handler.close();
+                    } catch (IOException ie) {
+                        // Don't log an error for shutdown.
+                        LOG.debug("Error closing server socket", ie);
+                    }
             }
         }
 
@@ -940,16 +892,110 @@ public class QuorumCnxManager {
          * Halts this listener thread.
          */
         void halt(){
-            try{
-                LOG.debug("Trying to close listener: " + ss);
+            LOG.debug("Trying to close listeners");
+            if (listenerHandlers != null) {
+                LOG.debug("Closing listener: "
+                        + QuorumCnxManager.this.mySid);
+                for (ListenerHandler handler : listenerHandlers)
+                    try {
+                        handler.close();
+                    } catch (IOException e) {
+                        LOG.warn("Exception when shutting down listener: " + e);
+                    }
+            }
+        }
+
+        class ListenerHandler implements Runnable, Closeable {
+            private final Logger LOG = LoggerFactory.getLogger(ListenerHandler.class);
+            private final static int ATTEMPTS_AMOUNT = 3;
+
+            private ServerSocket ss;
+            private InetSocketAddress address;
+            private boolean portUnification;
+            private boolean sslQuorum;
+
+            ListenerHandler(InetSocketAddress address, boolean portUnification, boolean sslQuorum) {
+                this.address = address;
+                this.portUnification = portUnification;
+                this.sslQuorum = sslQuorum;
+            }
+
+            /**
+             * Sleeps on accept().
+             */
+            @Override
+            public void run() {
+                Thread.currentThread().setName("ListenerHandler-" + address);
+
+                int numRetries = 0;
+                Socket client = null;
+
+                while((!shutdown) && (numRetries < ATTEMPTS_AMOUNT)){
+                    try {
+                        ss = createNewServerSocket();
+                        LOG.info("My election bind port: " + address.toString());
+                        while (!shutdown) {
+                            client = ss.accept();
+                            setSockOpts(client);
+                            LOG.info("Received connection request "
+                                    + client.getRemoteSocketAddress());
+                            // Receive and handle the connection request
+                            // asynchronously if the quorum sasl authentication is
+                            // enabled. This is required because sasl server
+                            // authentication process may take few seconds to finish,
+                            // this may delay next peer connection requests.
+                            if (quorumSaslAuthEnabled) {
+                                receiveConnectionAsync(client);
+                            } else {
+                                receiveConnection(client);
+                            }
+                            numRetries = 0;
+                        }
+                    } catch (IOException|X509Exception e) {
+                        if (shutdown) {
+                            break;
+                        }
+                        LOG.error("Exception while listening", e);
+                        numRetries++;
+                        try {
+                            ss.close();
+                            Thread.sleep(1000);
+                        } catch (IOException ie) {
+                            LOG.error("Error closing server socket", ie);
+                        } catch (InterruptedException ie) {
+                            LOG.error("Interrupted while sleeping. " +
+                                    "Ignoring exception", ie);
+                        }
+                        closeSocket(client);
+                    }
+                }
+            }
+
+            @Override
+            public void close() throws IOException {
                 if(ss != null) {
-                    LOG.debug("Closing listener: "
-                              + QuorumCnxManager.this.mySid);
+                    LOG.debug("Trying to close listeners: " + ss);
                     ss.close();
                 }
-            } catch (IOException e){
-                LOG.warn("Exception when shutting down listener: " + e);
             }
+
+            private ServerSocket createNewServerSocket() throws IOException, X509Exception {
+                ServerSocket temp;
+
+                if (portUnification) {
+                    temp = new UnifiedServerSocket(x509Util);
+                } else if (sslQuorum) {
+                    temp = x509Util.createSSLServerSocket();
+                } else {
+                    temp = new ServerSocket();
+                }
+
+                temp.setReuseAddress(true);
+                temp.bind(address);
+
+                return temp;
+            }
+
         }
     }
 

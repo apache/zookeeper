@@ -20,22 +20,10 @@ package org.apache.zookeeper.server.quorum;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.net.BindException;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketAddress;
-import java.net.SocketException;
+import java.net.*;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentMap;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.security.sasl.SaslException;
@@ -230,49 +218,47 @@ public class Leader {
        return qv.containsQuorum(ids);
     }
     
-    private final ServerSocket ss;
+    private List<ServerSocket> ss = Collections.synchronizedList(new LinkedList<>());
 
     Leader(QuorumPeer self,LeaderZooKeeperServer zk) throws IOException, X509Exception {
         this.self = self;
         this.proposalStats = new BufferStats();
+
+        List<InetSocketAddress> addresses;
+        if (self.getQuorumListenOnAllIPs())
+            addresses = self.getQuorumAddress().getAllAddressesForAllPorts();
+        else
+            addresses = self.getQuorumAddress().getAllAddresses();
+
+        for(InetSocketAddress addr : addresses)
+            ss.add(createServerSocket(addr, self.shouldUsePortUnification(), self.isSslQuorum()));
+
+        this.zk = zk;
+        this.learnerSnapshotThrottler = createLearnerSnapshotThrottler(
+                maxConcurrentSnapshots, maxConcurrentSnapshotTimeout);
+    }
+
+    ServerSocket createServerSocket(InetSocketAddress addr, boolean portUnification, boolean sslQuorum) throws IOException, X509Exception {
+        ServerSocket temp;
         try {
-            if (self.shouldUsePortUnification()) {
-                if (self.getQuorumListenOnAllIPs()) {
-                    ss = new UnifiedServerSocket(new QuorumX509Util(), self.getQuorumAddress().getPort());
-                } else {
-                    ss = new UnifiedServerSocket(new QuorumX509Util());
-                }
-            } else if (self.isSslQuorum()) {
-                if (self.getQuorumListenOnAllIPs()) {
-                    ss = new QuorumX509Util().createSSLServerSocket(self.getQuorumAddress().getPort());
-                } else {
-                    ss = new QuorumX509Util().createSSLServerSocket();
-                }
+            if (portUnification) {
+                temp = new UnifiedServerSocket(new QuorumX509Util());
+            } else if (sslQuorum) {
+                temp = new QuorumX509Util().createSSLServerSocket();
             } else {
-                if (self.getQuorumListenOnAllIPs()) {
-                    ss = new ServerSocket(self.getQuorumAddress().getPort());
-                } else {
-                    ss = new ServerSocket();
-                }
+                temp = new ServerSocket();
             }
-            ss.setReuseAddress(true);
-            if (!self.getQuorumListenOnAllIPs()) {
-                ss.bind(self.getQuorumAddress());
-            }
+
+            temp.setReuseAddress(true);
+            temp.bind(addr);
+            return temp;
         } catch (X509Exception e) {
             LOG.error("Failed to setup ssl server socket", e);
             throw e;
         } catch (BindException e) {
-            if (self.getQuorumListenOnAllIPs()) {
-                LOG.error("Couldn't bind to port " + self.getQuorumAddress().getPort(), e);
-            } else {
-                LOG.error("Couldn't bind to " + self.getQuorumAddress(), e);
-            }
+            LOG.error("Couldn't bind to " + self.getQuorumAddress(), e);
             throw e;
         }
-        this.zk = zk;
-        this.learnerSnapshotThrottler = createLearnerSnapshotThrottler(
-                maxConcurrentSnapshots, maxConcurrentSnapshotTimeout);
     }
 
     /**
@@ -389,15 +375,41 @@ public class Leader {
         private volatile boolean stop = false;
 
         public LearnerCnxAcceptor() {
-            super("LearnerCnxAcceptor-" + ss.getLocalSocketAddress(), zk
+            super("LearnerCnxAcceptor-" + ss, zk
                     .getZooKeeperServerListener());
         }
 
         @Override
         public void run() {
             try {
+                if(!stop) {
+                    ExecutorService threadPool = Executors.newCachedThreadPool();
+                    ss.forEach(ssTemp -> threadPool.submit(new Handler(ssTemp)));
+                    threadPool.shutdown();
+                }
+            } catch (Exception e) {
+                LOG.warn("Exception while accepting follower", e.getMessage());
+                handleException(this.getName(), e);
+            }
+        }
+
+        public void halt() {
+            stop = true;
+        }
+
+        class Handler implements Runnable {
+
+            private ServerSocket ss;
+
+            public Handler(ServerSocket ss) {
+                this.ss = ss;
+            }
+
+            @Override
+            public void run() {
+                Thread.currentThread().setName("LeaderHandler-" + ss.getInetAddress());
                 while (!stop) {
-                    try{
+                    try {
                         Socket s = ss.accept();
 
                         // start with the initLimit, once the ack is processed
@@ -411,28 +423,20 @@ public class Leader {
                         fh.start();
                     } catch (SocketException e) {
                         if (stop) {
-                            LOG.info("exception while shutting down acceptor: "
-                                    + e);
-
-                            // When Leader.shutdown() calls ss.close(),
-                            // the call to accept throws an exception.
-                            // We catch and set stop to true.
-                            stop = true;
+                            LOG.info("exception while shutting down acceptor: " + e);
                         } else {
-                            throw e;
+                            LOG.warn("Exception while accepting follower", e.getMessage());
+                            handleException(getName(), e);
                         }
-                    } catch (SaslException e){
+                    } catch (SaslException e) {
                         LOG.error("Exception while connecting to quorum learner", e);
+                    } catch (Exception e) {
+                        LOG.warn("Exception while accepting follower", e.getMessage());
+                        handleException(getName(), e);
                     }
                 }
-            } catch (Exception e) {
-                LOG.warn("Exception while accepting follower", e.getMessage());
-                handleException(this.getName(), e);
             }
-        }
 
-        public void halt() {
-            stop = true;
         }
     }
 
@@ -682,11 +686,12 @@ public class Leader {
         // NIO should not accept conenctions
         self.setZooKeeperServer(null);
         self.adminServer.setZooKeeperServer(null);
-        try {
-            ss.close();
-        } catch (IOException e) {
-            LOG.warn("Ignoring unexpected exception during close",e);
-        }
+        for(ServerSocket temp : ss)
+            try {
+                temp.close();
+            } catch (IOException e) {
+                LOG.warn("Ignoring unexpected exception during close",e);
+            }
         self.closeAllConnections();
         // shutdown the previous zk
         if (zk != null) {

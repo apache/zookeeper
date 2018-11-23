@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server.quorum;
 
 
+import java.util.stream.Collectors;
 
 /**
  * Implementation of the local peer MBean interface.
@@ -79,8 +80,9 @@ public class LocalPeerBean extends ServerBean implements LocalPeerMXBean {
     }
 
     public String getElectionAddress() {
-        return peer.getElectionAddress().getHostString() + ":" +
-            peer.getElectionAddress().getPort();
+        return peer.getElectionAddress().getAllAddresses().stream()
+                .map(address -> String.format("%s:%d", address.getHostString(), address.getPort()))
+                .collect(Collectors.joining(","));
     }
 
     public String getClientAddress() {

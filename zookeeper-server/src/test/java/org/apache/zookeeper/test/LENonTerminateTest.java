@@ -101,7 +101,7 @@ public class LENonTerminateTest extends ZKTestCase {
                 {
                     LOG.info("Server address: " + server.addr);
                     try {
-                        requestPacket.setSocketAddress(server.addr);
+                        requestPacket.setSocketAddress(server.addr.getValidAddress());
                     } catch (IllegalArgumentException e) {
                         // Sun doesn't include the address that causes this
                         // exception to be thrown, so we wrap the exception
@@ -355,8 +355,8 @@ public class LENonTerminateTest extends ZKTestCase {
         byte b[] = new byte[36];
         ByteBuffer responseBuffer = ByteBuffer.wrap(b);
         DatagramPacket packet = new DatagramPacket(b, b.length);
-        QuorumServer server = peers.get(Long.valueOf(2));
-        DatagramSocket udpSocket = new DatagramSocket(server.addr.getPort());
+        QuorumServer server = peers.get(2L);
+        DatagramSocket udpSocket = new DatagramSocket(server.addr.getAllPorts().get(0));
         LOG.info("In MockServer");
         mockLatch.countDown();
         Vote current = new Vote(2, 1);
