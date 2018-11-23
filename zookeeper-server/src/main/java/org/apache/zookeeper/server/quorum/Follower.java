@@ -19,8 +19,10 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
+import java.io.InterruptedIOException;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.jute.Record;
 import org.apache.zookeeper.ZooDefs.OpCode;
@@ -42,11 +44,13 @@ public class Follower extends Learner{
     private long lastQueued;
     // This is the same object as this.zk, but we cache the downcast op
     final FollowerZooKeeperServer fzk;
-    
+    private AtomicBoolean reconnect;
+
     Follower(QuorumPeer self,FollowerZooKeeperServer zk) {
         this.self = self;
         this.zk=zk;
         this.fzk = zk;
+        reconnect = new AtomicBoolean();
     }
 
     @Override
@@ -57,6 +61,10 @@ public class Follower extends Learner{
         sb.append(" pendingRevalidationCount:")
             .append(pendingRevalidations.size());
         return sb.toString();
+    }
+
+    public void disableReconnect() {
+        reconnect.set(false);
     }
 
     /**
@@ -74,46 +82,53 @@ public class Follower extends Learner{
         self.start_fle = 0;
         self.end_fle = 0;
         fzk.registerJMX(new FollowerBean(this, zk), self.jmxLocalPeerBean);
+        reconnect.set(true);
+
         try {
             QuorumServer leaderServer = findLeader();
-            try {
-                connectToLeader(leaderServer.addr, leaderServer.hostname);
-                long newEpochZxid = registerWithLeader(Leader.FOLLOWERINFO);
-                if (self.isReconfigStateChange())
-                   throw new Exception("learned about role change");
-                //check to see if the leader zxid is lower than ours
-                //this should never happen but is just a safety check
-                long newEpoch = ZxidUtils.getEpochFromZxid(newEpochZxid);
-                if (newEpoch < self.getAcceptedEpoch()) {
-                    LOG.error("Proposed leader epoch " + ZxidUtils.zxidToString(newEpochZxid)
-                            + " is less than our accepted epoch " + ZxidUtils.zxidToString(self.getAcceptedEpoch()));
-                    throw new IOException("Error: Epoch of leader is lower");
-                }
-                long startTime = Time.currentElapsedTime();
+            while (reconnect.get()) {
                 try {
-                    syncWithLeader(newEpochZxid);
-                } finally {
-                    long syncTime = Time.currentElapsedTime() - startTime;
-                    ServerMetrics.FOLLOWER_SYNC_TIME.add(syncTime);
+                    connectToLeader(leaderServer.addr, leaderServer.hostname);
+                    long newEpochZxid = registerWithLeader(Leader.FOLLOWERINFO);
+                    if (self.isReconfigStateChange())
+                        throw new Exception("learned about role change");
+                    //check to see if the leader zxid is lower than ours
+                    //this should never happen but is just a safety check
+                    long newEpoch = ZxidUtils.getEpochFromZxid(newEpochZxid);
+                    if (newEpoch < self.getAcceptedEpoch()) {
+                        LOG.error("Proposed leader epoch " + ZxidUtils.zxidToString(newEpochZxid)
+                                + " is less than our accepted epoch " + ZxidUtils.zxidToString(self.getAcceptedEpoch()));
+                        throw new IOException("Error: Epoch of leader is lower");
+                    }
+                    long startTime = Time.currentElapsedTime();
+                    try {syncWithLeader(newEpochZxid);} finally {
+                        long syncTime = Time.currentElapsedTime() - startTime;
+                        ServerMetrics.FOLLOWER_SYNC_TIME.add(syncTime);
+                    }
+                    QuorumPacket qp = new QuorumPacket();
+                    while (this.isRunning()) {
+                        readPacket(qp);
+                        processPacket(qp);
+                    }
+                    reconnect.set(false);
+                } catch (SocketException | InterruptedIOException ignored) {
+                    zk.unregisterJMX();
+                    LOG.warn("Error when following the leader, reconnecting");
+                } catch (Exception e) {
+                    reconnect.set(false);
+                    LOG.warn("Exception when following the leader", e);
+                    try {
+                        sock.close();
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                    }
+
+                    // clear pending revalidations
+                    pendingRevalidations.clear();
                 }
-                QuorumPacket qp = new QuorumPacket();
-                while (this.isRunning()) {
-                    readPacket(qp);
-                    processPacket(qp);
-                }
-            } catch (Exception e) {
-                LOG.warn("Exception when following the leader", e);
-                try {
-                    sock.close();
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-    
-                // clear pending revalidations
-                pendingRevalidations.clear();
             }
         } finally {
-            zk.unregisterJMX((Learner)this);
+            zk.unregisterJMX((Learner) this);
         }
     }
 

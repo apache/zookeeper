@@ -39,6 +39,7 @@ import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.common.X509Exception;
+import org.apache.zookeeper.server.quorum.exception.RuntimeLearnerException;
 import org.apache.zookeeper.server.ExitCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -243,51 +244,63 @@ public class Learner {
      * @throws ConnectException
      * @throws InterruptedException
      */
-    protected void connectToLeader(InetSocketAddress addr, String hostname)
-            throws IOException, InterruptedException, X509Exception {
+    protected void connectToLeader(MultipleAddresses addr, String hostname)
+            throws IOException, ConnectException, InterruptedException, X509Exception {
         this.sock = createSocket();
 
         int initLimitTime = self.tickTime * self.initLimit;
         int remainingInitLimitTime = initLimitTime;
         long startNanoTime = nanoTime();
 
+        boolean connected = false;
+
         for (int tries = 0; tries < 5; tries++) {
-            try {
-                // recalculate the init limit time because retries sleep for 1000 milliseconds
-                remainingInitLimitTime = initLimitTime - (int)((nanoTime() - startNanoTime) / 1000000);
-                if (remainingInitLimitTime <= 0) {
-                    LOG.error("initLimit exceeded on retries.");
-                    throw new IOException("initLimit exceeded on retries.");
-                }
+            for (InetSocketAddress address : addr.getAllAddresses()) {
+                try {
+                    // recalculate the init limit time because retries sleep for 1000 milliseconds
+                    remainingInitLimitTime = initLimitTime - (int) ((nanoTime() - startNanoTime) / 1000000);
+                    if (remainingInitLimitTime <= 0) {
+                        LOG.error("initLimit exceeded on retries.");
+                        throw new IOException("initLimit exceeded on retries.");
+                    }
+                    if (address.getAddress().isReachable(100)) {
+                        sockConnect(sock, address, Math.min(self.tickTime * self.syncLimit, remainingInitLimitTime));
+                        if (self.isSslQuorum()) {
+                            ((SSLSocket) sock).startHandshake();
+                        }
+                        sock.setTcpNoDelay(nodelay);
+                        connected = true;
+                        break;
+                    }
+                } catch (IOException e) {
+                    remainingInitLimitTime = initLimitTime - (int) ((nanoTime() - startNanoTime) / 1000000);
 
-                sockConnect(sock, addr, Math.min(self.tickTime * self.syncLimit, remainingInitLimitTime));
-                if (self.isSslQuorum())  {
-                    ((SSLSocket) sock).startHandshake();
-                }
-                sock.setTcpNoDelay(nodelay);
-                break;
-            } catch (IOException e) {
-                remainingInitLimitTime = initLimitTime - (int)((nanoTime() - startNanoTime) / 1000000);
-
-                if (remainingInitLimitTime <= 1000) {
-                    LOG.error("Unexpected exception, initLimit exceeded. tries=" + tries +
-                             ", remaining init limit=" + remainingInitLimitTime +
-                             ", connecting to " + addr,e);
-                    throw e;
-                } else if (tries >= 4) {
-                    LOG.error("Unexpected exception, retries exceeded. tries=" + tries +
-                             ", remaining init limit=" + remainingInitLimitTime +
-                             ", connecting to " + addr,e);
-                    throw e;
-                } else {
-                    LOG.warn("Unexpected exception, tries=" + tries +
-                            ", remaining init limit=" + remainingInitLimitTime +
-                            ", connecting to " + addr,e);
-                    this.sock = createSocket();
+                    if (remainingInitLimitTime <= 1000) {
+                        LOG.error("Unexpected exception, initLimit exceeded. tries=" + tries +
+                                ", remaining init limit=" + remainingInitLimitTime +
+                                ", connecting to " + address, e);
+                        throw new RuntimeLearnerException(e);
+                    } else if (tries >= 4) {
+                        LOG.error("Unexpected exception, retries exceeded. tries=" + tries +
+                                ", remaining init limit=" + remainingInitLimitTime +
+                                ", connecting to " + address, e);
+                        throw new RuntimeLearnerException(e);
+                    } else {
+                        LOG.warn("Unexpected exception, tries=" + tries +
+                                ", remaining init limit=" + remainingInitLimitTime +
+                                ", connecting to " + address, e);
+                        this.sock = createSocket();
+                    }
                 }
             }
+            if (connected)
+                break;
+
             Thread.sleep(1000);
         }
+
+        if (!connected)
+            throw new RuntimeException("Failed connect to " + addr);
 
         self.authLearner.authenticate(sock, hostname);
 

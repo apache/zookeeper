@@ -35,6 +35,7 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.quorum.exception.RuntimeLearnerException;
 import org.apache.zookeeper.test.TestUtils;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.TxnHeader;
@@ -98,7 +99,7 @@ public class LearnerTest extends ZKTestCase {
         }
     }
 
-    @Test(expected=IOException.class)
+    @Test(expected= RuntimeLearnerException.class)
     public void connectionRetryTimeoutTest() throws Exception {
         Learner learner = new TimeoutLearner();
         learner.self = new QuorumPeer();
@@ -110,7 +111,7 @@ public class LearnerTest extends ZKTestCase {
         InetSocketAddress addr = new InetSocketAddress(1111);
 
         // we expect this to throw an IOException since we're faking socket connect errors every time
-        learner.connectToLeader(addr, "");
+        learner.connectToLeader(new MultipleAddresses(addr), "");
     }
     @Test
     public void connectionInitLimitTimeoutTest() throws Exception {
@@ -130,9 +131,9 @@ public class LearnerTest extends ZKTestCase {
 
         // we expect this to throw an IOException since we're faking socket connect errors every time
         try {
-            learner.connectToLeader(addr, "");
+            learner.connectToLeader(new MultipleAddresses(addr), "");
             Assert.fail("should have thrown IOException!");
-        } catch (IOException e) {
+        } catch (RuntimeLearnerException e) {
             //good, wanted to see that, let's make sure we ran out of time
             Assert.assertTrue(learner.nanoTime() > 2000*5*1000000);
             Assert.assertEquals(3, learner.getSockConnectAttempt());
