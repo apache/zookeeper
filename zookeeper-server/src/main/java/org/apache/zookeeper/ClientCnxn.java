@@ -50,6 +50,7 @@ import org.apache.jute.Record;
 import org.apache.zookeeper.AsyncCallback.ACLCallback;
 import org.apache.zookeeper.AsyncCallback.Children2Callback;
 import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
+import org.apache.zookeeper.AsyncCallback.AllChildrenNumberCallback;
 import org.apache.zookeeper.AsyncCallback.Create2Callback;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.AsyncCallback.MultiCallback;
@@ -75,6 +76,7 @@ import org.apache.zookeeper.proto.CreateResponse;
 import org.apache.zookeeper.proto.ExistsResponse;
 import org.apache.zookeeper.proto.GetACLResponse;
 import org.apache.zookeeper.proto.GetChildren2Response;
+import org.apache.zookeeper.proto.GetAllChildrenNumberResponse;
 import org.apache.zookeeper.proto.GetChildrenResponse;
 import org.apache.zookeeper.proto.GetDataResponse;
 import org.apache.zookeeper.proto.GetSASLRequest;
@@ -615,6 +617,14 @@ public class ClientCnxn {
                                   .getChildren());
                       } else {
                           cb.processResult(rc, clientPath, p.ctx, null);
+                      }
+                  } else if (p.response instanceof GetAllChildrenNumberResponse) {
+                      AllChildrenNumberCallback cb = (AllChildrenNumberCallback) p.cb;
+                      GetAllChildrenNumberResponse rsp = (GetAllChildrenNumberResponse) p.response;
+                      if (rc == 0) {
+                          cb.processResult(rc, clientPath, p.ctx, rsp.getTotalNumber());
+                      } else {
+                          cb.processResult(rc, clientPath, p.ctx, 0);
                       }
                   } else if (p.response instanceof GetChildren2Response) {
                       Children2Callback cb = (Children2Callback) p.cb;
