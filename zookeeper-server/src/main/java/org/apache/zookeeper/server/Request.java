@@ -145,6 +145,7 @@ public class Request {
         case OpCode.exists:
         case OpCode.getACL:
         case OpCode.getChildren:
+        case OpCode.getAllChildrenNumber:
         case OpCode.getChildren2:
         case OpCode.getData:
         case OpCode.multi:
@@ -167,6 +168,7 @@ public class Request {
         case OpCode.exists:
         case OpCode.getACL:
         case OpCode.getChildren:
+        case OpCode.getAllChildrenNumber:
         case OpCode.getChildren2:
         case OpCode.getData:
             return false;
@@ -227,6 +229,8 @@ public class Request {
             return "setACL";
         case OpCode.getChildren:
             return "getChildren";
+        case OpCode.getAllChildrenNumber:
+            return "getAllChildrenNumber";
         case OpCode.getChildren2:
             return "getChildren2";
         case OpCode.ping:
