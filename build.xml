@@ -526,6 +526,9 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <env key="ACLOCAL" value="aclocal -I ${cppunit.m4}"/>
       </exec>
       <mkdir dir="${build.dir}/c" />
+      <condition property="enable.ipv6.arg" value="--without-ipv6" else="--with-ipv6">
+        <equals arg1="${disable.ipv6}" arg2="true"/>
+      </condition>
       <condition property="enable.gcov.arg" value="--enable-gcov" else="">
         <equals arg1="${enable.gcov}" arg2="true"/>
       </condition>
@@ -534,6 +537,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <env key="base_dir" value="${basedir}"/>
         <env key="CALLER" value="ANT"/>
         <arg value="--prefix=${build.dir}/c/build/${package.prefix}"/>
+        <arg line="${enable.ipv6.arg}"/>
         <arg line="${enable.gcov.arg}"/>
       </exec>
       <property name="c.build" value="${build.dir}/c/build"/>
@@ -1399,17 +1403,20 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <antcall target="create-cppunit-configure">
         <param name="cppunit" value="true"/>
       </antcall>
-    	<mkdir dir="${test.cppunit.dir}"/>
-        <condition property="enable.gcov.arg" value="--enable-gcov" else="">
-          <equals arg1="${enable.gcov}" arg2="true"/>
-        </condition>
-    	<exec executable="${c.src.dir}/configure" dir="${test.cppunit.dir}"
-          	failonerror="yes">
-                <env key="base_dir" value="${basedir}"/>
-                <env key="CALLER" value="ANT"/>
-      		<arg value="--prefix=${test.cppunit.dir}"/>
-            <arg line="${enable.gcov.arg}"/>
-    	</exec>
+      <mkdir dir="${test.cppunit.dir}"/>
+      <condition property="enable.ipv6.arg" value="--without-ipv6" else="--with-ipv6">
+        <equals arg1="${disable.ipv6}" arg2="true"/>
+      </condition>
+      <condition property="enable.gcov.arg" value="--enable-gcov" else="">
+        <equals arg1="${enable.gcov}" arg2="true"/>
+      </condition>
+      <exec executable="${c.src.dir}/configure" dir="${test.cppunit.dir}" failonerror="yes">
+        <env key="base_dir" value="${basedir}"/>
+        <env key="CALLER" value="ANT"/>
+        <arg value="--prefix=${test.cppunit.dir}"/>
+        <arg line="${enable.ipv6.arg}"/>
+        <arg line="${enable.gcov.arg}"/>
+      </exec>
     </target>
 
     <target name="call-test-cppunit" description="to execute cppunit tests">

@@ -99,6 +99,10 @@ AC_ARG_WITH([syncapi],
  [AS_HELP_STRING([--with-syncapi],[build with support for SyncAPI [default=yes]])],
  [],[with_syncapi=yes])
 
+AC_ARG_WITH([ipv6],
+ [AS_HELP_STRING([--with-ipv6],[build with support for IPv6 [default=yes]])],
+ [],[with_ipv6=yes])
+
 # Checks for libraries.
 AC_CHECK_LIB([pthread], [pthread_mutex_lock],[have_pthread=yes],[have_pthread=no])
 
@@ -127,7 +131,7 @@ AC_CHECK_TYPE([nfds_t],
     [AC_DEFINE([POLL_NFDS_TYPE],[unsigned int],[poll() second argument type])],
     [#include <poll.h>])
 
-AC_MSG_CHECKING([whether to enable ipv6])
+AC_MSG_CHECKING([whether IPv6 support is available])
 
 AC_TRY_RUN([ /* is AF_INET6 available? */
 #include <sys/types.h>
@@ -140,13 +144,23 @@ main()
    exit(0);
 }
 ], AC_MSG_RESULT(yes)
-   ipv6=yes,
+   have_ipv6=yes,
    AC_MSG_RESULT(no)
-   ipv6=no,
+   have_ipv6=no,
    AC_MSG_RESULT(no)
-   ipv6=no)
+   have_ipv6=no)
 
-if test x"$ipv6" = xyes; then
+if test "x$with_ipv6" != xno && test "x$have_ipv6" = xno; then
+    AC_MSG_WARN([cannot build with IPv6 support -- IPv6 not found])
+    with_ipv6=no
+fi
+if test "x$with_ipv6" != xno; then
+    AC_MSG_NOTICE([building with IPv6 support])
+else
+    AC_MSG_NOTICE([building without IPv6 support])
+fi
+
+if test x"$with_ipv6" = xyes; then
   USEIPV6="-DZOO_IPV6_ENABLED"
   AC_SUBST(USEIPV6)
 fi
