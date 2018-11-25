@@ -537,6 +537,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <env key="base_dir" value="${basedir}"/>
         <env key="CALLER" value="ANT"/>
         <arg value="--prefix=${build.dir}/c/build/${package.prefix}"/>
+        <arg value="--with-sock-cloexec"/>
         <arg line="${enable.ipv6.arg}"/>
         <arg line="${enable.gcov.arg}"/>
       </exec>
@@ -1414,6 +1415,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <env key="base_dir" value="${basedir}"/>
         <env key="CALLER" value="ANT"/>
         <arg value="--prefix=${test.cppunit.dir}"/>
+        <arg value="--with-sock-cloexec"/>
         <arg line="${enable.ipv6.arg}"/>
         <arg line="${enable.gcov.arg}"/>
       </exec>
