@@ -57,7 +57,8 @@ public class DisconnectedWatcherTest extends ClientBase {
     
     @Test
     public void testChildWatcherAutoResetWithChroot() throws Exception {
-        ZooKeeper zk1 = createClient();
+        CountdownWatcher watcher1 = new CountdownWatcher();
+        ZooKeeper zk1 = createClient(watcher1);
 
         zk1.create("/ch1", null, Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT);
@@ -85,6 +86,7 @@ public class DisconnectedWatcherTest extends ClientBase {
         watcher.waitForDisconnected(3000);
         startServer();
         watcher.waitForConnected(3000);
+        watcher1.waitForConnected(3000);
 
         // this should trigger the watch
         zk1.create("/ch1/youshouldmatter2", null, Ids.OPEN_ACL_UNSAFE,
@@ -97,7 +99,8 @@ public class DisconnectedWatcherTest extends ClientBase {
     
     @Test
     public void testDefaultWatcherAutoResetWithChroot() throws Exception {
-        ZooKeeper zk1 = createClient();
+        CountdownWatcher watcher1 = new CountdownWatcher();
+        ZooKeeper zk1 = createClient(watcher1);
 
         zk1.create("/ch1", null, Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT);
@@ -124,6 +127,7 @@ public class DisconnectedWatcherTest extends ClientBase {
         watcher.waitForDisconnected(3000);
         startServer();
         watcher.waitForConnected(3000);
+        watcher1.waitForConnected(3000);
 
         // this should trigger the watch
         zk1.create("/ch1/youshouldmatter2", null, Ids.OPEN_ACL_UNSAFE,
@@ -136,7 +140,8 @@ public class DisconnectedWatcherTest extends ClientBase {
     
     @Test
     public void testDeepChildWatcherAutoResetWithChroot() throws Exception {
-        ZooKeeper zk1 = createClient();
+        CountdownWatcher watcher1 = new CountdownWatcher();
+        ZooKeeper zk1 = createClient(watcher1);
 
         zk1.create("/ch1", null, Ids.OPEN_ACL_UNSAFE,
                 CreateMode.PERSISTENT);
@@ -166,6 +171,7 @@ public class DisconnectedWatcherTest extends ClientBase {
         watcher.waitForDisconnected(3000);
         startServer();
         watcher.waitForConnected(3000);
+        watcher1.waitForConnected(3000);
 
         // this should trigger the watch
         zk1.create("/ch1/here/we/are/again", null, Ids.OPEN_ACL_UNSAFE,
@@ -180,7 +186,8 @@ public class DisconnectedWatcherTest extends ClientBase {
     // watches which require multiple SetWatches calls.
     @Test(timeout = 840000)
     public void testManyChildWatchersAutoReset() throws Exception {
-        ZooKeeper zk1 = createClient();
+        CountdownWatcher watcher1 = new CountdownWatcher();
+        ZooKeeper zk1 = createClient(watcher1);
 
         MyWatcher watcher = new MyWatcher();
         ZooKeeper zk2 = createClient(watcher);
@@ -221,6 +228,7 @@ public class DisconnectedWatcherTest extends ClientBase {
         watcher.waitForDisconnected(30000);
         startServer();
         watcher.waitForConnected(30000);
+        watcher1.waitForConnected(30000);
 
         // Trigger the watches and ensure they properly propagate to the client
         i = 0;
