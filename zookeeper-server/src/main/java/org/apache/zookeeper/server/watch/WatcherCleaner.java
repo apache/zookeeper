@@ -104,7 +104,7 @@ public class WatcherCleaner extends Thread {
             try {
                 RATE_LOGGER.rateLimitLog("Waiting for dead watchers cleaning");
                 synchronized(processingCompletedEvent) {
-                	processingCompletedEvent.wait(100);
+                    processingCompletedEvent.wait(100);
                 }
             } catch (InterruptedException e) {
                 LOG.info("Got interrupted while waiting for dead watches " +
@@ -166,7 +166,7 @@ public class WatcherCleaner extends Thread {
                         LOG.info("Takes {} to process {} watches", latency, total);
                         totalDeadWatchers.addAndGet(-total);
                         synchronized(processingCompletedEvent) {
-                        	processingCompletedEvent.notifyAll();
+                            processingCompletedEvent.notifyAll();
                         }
                     }
                 });
