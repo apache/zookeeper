@@ -107,7 +107,7 @@ public class WatcherCleaner extends Thread {
                     processingCompletedEvent.wait(100);
                 }
             } catch (InterruptedException e) {
-                LOG.info("Got interrupted while waiting for dead watches " +
+                LOG.info("Got interrupted while waiting for dead watchers " +
                         "queue size");
                 break;
             }
@@ -163,7 +163,7 @@ public class WatcherCleaner extends Thread {
                         long startTime = Time.currentElapsedTime();
                         listener.processDeadWatchers(snapshot);
                         long latency = Time.currentElapsedTime() - startTime;
-                        LOG.info("Takes {} to process {} watches", latency, total);
+                        LOG.info("Takes {} to process {} watchers", latency, total);
                         totalDeadWatchers.addAndGet(-total);
                         synchronized(processingCompletedEvent) {
                             processingCompletedEvent.notifyAll();
