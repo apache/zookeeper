@@ -65,3 +65,38 @@ table th, td {
     vertical-align: top;
     border-top: 1px solid #ddd;
 }
+
+nav, footer {
+  margin-right: auto;
+  margin-left: auto;
+}
+
+@media (min-width: 576px) {
+  nav, footer {
+    max-width: 540px;
+  }
+}
+
+@media (min-width: 768px) {
+  nav, footer {
+    max-width: 720px;
+  }
+}
+
+@media (min-width: 992px) {
+  nav, footer {
+    max-width: 960px;
+  }
+}
+
+@media (min-width: 1200px) {
+  nav, footer {
+    max-width: 1140px;
+  }
+}
+
+@media (min-width: 1920px) {
+  nav, footer, .container {
+    max-width: 1820px;
+  }
+}
