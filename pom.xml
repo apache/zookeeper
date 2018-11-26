@@ -33,7 +33,7 @@
             <plugin>
                 <groupId>com.ruleoftech</groupId>
                 <artifactId>markdown-page-generator-plugin</artifactId>
-                <version>0.10</version>
+                <version>2.1.0</version>
                 <executions>
                     <execution>
                         <phase>process-sources</phase>
@@ -46,6 +46,9 @@
                     <headerHtmlFile>${project.basedir}/src/main/resources/markdown/html/header.html</headerHtmlFile>
                     <footerHtmlFile>${project.basedir}/src/main/resources/markdown/html/footer.html</footerHtmlFile>
                     <copyDirectories>images,css,js</copyDirectories>
+                    <attributes>
+                        <attribute>TableBlock|class=table table-striped table-bordered</attribute>
+                    </attributes>
                 </configuration>
             </plugin>
             <plugin>
