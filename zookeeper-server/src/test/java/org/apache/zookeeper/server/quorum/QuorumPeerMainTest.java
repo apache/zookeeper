@@ -562,7 +562,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     /**
      * Verify handling of bad quorum address
      */
-    @Test
+    @Test(timeout = 90000)
     public void testBadPeerAddressInQuorum() throws Exception {
         ClientBase.setupTestEnv();
 
