@@ -44,15 +44,15 @@
 
   <dependencies>
     <dependency org="org.slf4j" name="slf4j-api" rev="${slf4j.version}"/>
-    <dependency org="org.slf4j" name="slf4j-log4j12" rev="${slf4j.version}" transitive="false"/>
+    <dependency org="org.apache.logging.log4j" name="log4j-slf4j-impl" rev="${log4j2.version}"/>
+    <dependency org="org.apache.logging.log4j" name="log4j-api" rev="${log4j2.version}"/>
+    <dependency org="org.apache.logging.log4j" name="log4j-core" rev="${log4j2.version}"/>
     <dependency org="commons-cli" name="commons-cli" rev="${commons-cli.version}" />
 
     <dependency org="org.apache.maven.wagon" name="wagon-http" rev="${wagon-http.version}"
                 conf="mvn-ant-task->default"/>
     <dependency org="org.apache.maven" name="maven-ant-tasks" rev="${maven-ant-tasks.version}"
                 conf="mvn-ant-task->master"/>
-    <!-- transitive false turns off dependency checking, log4j deps seem borked -->
-    <dependency org="log4j" name="log4j" rev="${log4j.version}" transitive="false"/>
     <dependency org="jline" name="jline" rev="${jline.version}" transitive="false"
                 conf="optional->default"/>
 
@@ -105,7 +105,9 @@
 
     <dependency org="org.apache.kerby" name="kerby-config" rev="${kerby.version}" conf="test->default">
           <exclude org="org.slf4j" module="slf4j-api"/>
-          <exclude org="org.slf4j" module="slf4j-log4j12"/>
+          <exclude org="org.apache.logging.log4j" module="log4j-slf4j-impl"/>
+          <exclude org="org.apache.logging.log4j" module="log4j-api"/>
+          <exclude org="org.apache.logging.log4j" module="log4j-core"/>
     </dependency>
     <dependency org="org.apache.kerby" name="kerb-simplekdc" rev="${kerby.version}" conf="test->default">
         <exclude org="org.slf4j" module="slf4j-api"/>

@@ -31,7 +31,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
     <property name="wagon-http.version" value="2.4"/>
     <property name="maven-ant-tasks.version" value="2.1.3"/>
-    <property name="log4j.version" value="1.2.17"/>
+    <property name="log4j2.version" value="2.11.1"/>
     <property name="jline.version" value="2.11"/>
 
     <property name="audience-annotations.version" value="0.5.0" />
@@ -1251,8 +1251,8 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       </condition>
       <property name="build.test.dir" value="${test.tmp.dir}" />
       <property name="test.data.dir" value="${test.data.dir}" />
-      <property name="log4j.configuration"
-                value="file:${basedir}/conf/log4j.properties" />
+      <property name="log4j2.configurationFile"
+                value="file:${basedir}/conf/log4j2.xml" />
       <!-- superDigest is used by the tests/main code. If this is not set
            as part of starting the jvm there is no guarantee that the static
            initializers in the java code will see this (esp when running
@@ -1262,7 +1262,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <propertyset id="junit.sys.properties">
         <propertyref name="build.test.dir" />
         <propertyref name="test.data.dir" />
-        <propertyref name="log4j.configuration" />
+        <propertyref name="log4j2.configurationFile" />
         <propertyref name="zookeeper.DigestAuthenticationProvider.superDigest" />
         <propertyref name="test.method" />
       </propertyset>
@@ -1619,8 +1619,8 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
                errorProperty="tests.failed" failureProperty="tests.failed">
             <sysproperty key="build.test.dir" value="${test.tmp.dir}" />
             <sysproperty key="test.data.dir" value="${test.data.dir}" />
-            <sysproperty key="log4j.configuration"
-                         value="file:${basedir}/conf/log4j.properties" />
+            <sysproperty key="log4j2.configurationFile"
+                         value="file:${basedir}/conf/log4j2.xml" />
             <classpath>
                 <pathelement path="${build.dir}/cobertura" />
                 <pathelement path="${lib.dir}/cobertura/cobertura.jar" />
@@ -1729,7 +1729,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
           <exclude name="**/compile"/>
           <exclude name="**/depcomp"/>
           <exclude name="**/install-sh"/>
-          <exclude name="**/log4j.properties"/>
+          <exclude name="**/log4j2.xml"/>
           <exclude name="**/ltmain.sh"/>
           <exclude name="**/missing"/>
           <exclude name="**/wrappers*.opt"/>

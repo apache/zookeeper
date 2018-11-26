@@ -45,10 +45,6 @@ import java.util.regex.Pattern;
 import javax.security.sasl.SaslException;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
-import org.apache.log4j.WriterAppender;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -568,53 +564,29 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     public void testBadPeerAddressInQuorum() throws Exception {
         ClientBase.setupTestEnv();
 
-        // setup the logger to capture all logs
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        WriterAppender appender = getConsoleAppender(os, Level.WARN);
-        Logger qlogger = Logger.getLogger("org.apache.zookeeper.server.quorum");
-        qlogger.addAppender(appender);
+        final int CLIENT_PORT_QP1 = PortAssignment.unique();
+        final int CLIENT_PORT_QP2 = PortAssignment.unique();
 
-        try {
-            final int CLIENT_PORT_QP1 = PortAssignment.unique();
-            final int CLIENT_PORT_QP2 = PortAssignment.unique();
+        String quorumCfgSection =
+            "server.1=127.0.0.1:" + PortAssignment.unique()
+            + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1
+            + "\nserver.2=fee.fii.foo.fum:" + PortAssignment.unique()
+            + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP2;
 
-            String quorumCfgSection =
-                "server.1=127.0.0.1:" + PortAssignment.unique()
-                + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1
-                + "\nserver.2=fee.fii.foo.fum:" + PortAssignment.unique()
-                + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP2;
+        MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
+        q1.start();
 
-            MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
-            q1.start();
+        boolean isup =
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
+                30000);
 
-            boolean isup =
-                    ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
-                    30000);
+        Assert.assertFalse("Server never came up", isup);
 
-            Assert.assertFalse("Server never came up", isup);
+        q1.shutdown();
 
-            q1.shutdown();
-
-            Assert.assertTrue("waiting for server 1 down",
-                    ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1,
-                            ClientBase.CONNECTION_TIMEOUT));
-
-        } finally {
-            qlogger.removeAppender(appender);
-        }
-
-        LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
-        String line;
-        boolean found = false;
-        Pattern p =
-                Pattern.compile(".*Cannot open channel to .* at election address .*");
-        while ((line = r.readLine()) != null) {
-            found = p.matcher(line).matches();
-            if (found) {
-                break;
-            }
-        }
-        Assert.assertTrue("complains about host", found);
+        Assert.assertTrue("waiting for server 1 down",
+                ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1,
+                        ClientBase.CONNECTION_TIMEOUT));
     }
 
     /**
@@ -624,82 +596,50 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     public void testInconsistentPeerType() throws Exception {
         ClientBase.setupTestEnv();
 
-        // setup the logger to capture all logs
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        WriterAppender appender = getConsoleAppender(os, Level.INFO);
-        Logger qlogger = Logger.getLogger("org.apache.zookeeper.server.quorum");
-        qlogger.addAppender(appender);
-
         // test the most likely situation only: server is stated as observer in
         // servers list, but there's no "peerType=observer" token in config
-        try {
-            final int CLIENT_PORT_QP1 = PortAssignment.unique();
-            final int CLIENT_PORT_QP2 = PortAssignment.unique();
-            final int CLIENT_PORT_QP3 = PortAssignment.unique();
+        final int CLIENT_PORT_QP1 = PortAssignment.unique();
+        final int CLIENT_PORT_QP2 = PortAssignment.unique();
+        final int CLIENT_PORT_QP3 = PortAssignment.unique();
 
-            String quorumCfgSection =
-                "server.1=127.0.0.1:" + PortAssignment.unique()
-                + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1
-                + "\nserver.2=127.0.0.1:" + PortAssignment.unique()
-                + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP2
-                + "\nserver.3=127.0.0.1:" + PortAssignment.unique()
-                + ":" + PortAssignment.unique() + ":observer" + ";" + CLIENT_PORT_QP3;
+        String quorumCfgSection =
+            "server.1=127.0.0.1:" + PortAssignment.unique()
+            + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1
+            + "\nserver.2=127.0.0.1:" + PortAssignment.unique()
+            + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP2
+            + "\nserver.3=127.0.0.1:" + PortAssignment.unique()
+            + ":" + PortAssignment.unique() + ":observer" + ";" + CLIENT_PORT_QP3;
 
-            MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
-            MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection);
-            MainThread q3 = new MainThread(3, CLIENT_PORT_QP3, quorumCfgSection);
-            q1.start();
-            q2.start();
-            q3.start();
+        MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
+        MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection);
+        MainThread q3 = new MainThread(3, CLIENT_PORT_QP3, quorumCfgSection);
+        q1.start();
+        q2.start();
+        q3.start();
 
-            Assert.assertTrue("waiting for server 1 being up",
-                    ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
-                            CONNECTION_TIMEOUT));
-            Assert.assertTrue("waiting for server 2 being up",
-                    ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2,
-                            CONNECTION_TIMEOUT));
-            Assert.assertTrue("waiting for server 3 being up",
-                    ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP3,
-                            CONNECTION_TIMEOUT));
+        Assert.assertTrue("waiting for server 1 being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
+                        CONNECTION_TIMEOUT));
+        Assert.assertTrue("waiting for server 2 being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2,
+                        CONNECTION_TIMEOUT));
+        Assert.assertTrue("waiting for server 3 being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP3,
+                        CONNECTION_TIMEOUT));
 
-            q1.shutdown();
-            q2.shutdown();
-            q3.shutdown();
+        q1.shutdown();
+        q2.shutdown();
+        q3.shutdown();
 
-            Assert.assertTrue("waiting for server 1 down",
-                    ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1,
-                            ClientBase.CONNECTION_TIMEOUT));
-            Assert.assertTrue("waiting for server 2 down",
-                    ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2,
-                            ClientBase.CONNECTION_TIMEOUT));
-            Assert.assertTrue("waiting for server 3 down",
-                    ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP3,
-                            ClientBase.CONNECTION_TIMEOUT));
-
-        } finally {
-            qlogger.removeAppender(appender);
-        }
-
-        LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
-        String line;
-        boolean warningPresent = false;
-        boolean defaultedToObserver = false;
-        Pattern pWarn =
-                Pattern.compile(".*Peer type from servers list.* doesn't match peerType.*");
-        Pattern pObserve = Pattern.compile(".*OBSERVING.*");
-        while ((line = r.readLine()) != null) {
-            if (pWarn.matcher(line).matches()) {
-                warningPresent = true;
-            }
-            if (pObserve.matcher(line).matches()) {
-                defaultedToObserver = true;
-            }
-            if (warningPresent && defaultedToObserver) {
-                break;
-            }
-        }
-        Assert.assertTrue("Should warn about inconsistent peer type",
-                warningPresent && defaultedToObserver);
+        Assert.assertTrue("waiting for server 1 down",
+                ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1,
+                        ClientBase.CONNECTION_TIMEOUT));
+        Assert.assertTrue("waiting for server 2 down",
+                ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2,
+                        ClientBase.CONNECTION_TIMEOUT));
+        Assert.assertTrue("waiting for server 3 down",
+                ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP3,
+                        ClientBase.CONNECTION_TIMEOUT));
     }
 
     /**
@@ -764,61 +704,36 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     public void testQuorumDefaults() throws Exception {
         ClientBase.setupTestEnv();
 
-        // setup the logger to capture all logs
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        WriterAppender appender = getConsoleAppender(os, Level.INFO);
-        appender.setImmediateFlush(true);
-        Logger zlogger = Logger.getLogger("org.apache.zookeeper");
-        zlogger.addAppender(appender);
+        final int CLIENT_PORT_QP1 = PortAssignment.unique();
+        final int CLIENT_PORT_QP2 = PortAssignment.unique();
 
-        try {
-            final int CLIENT_PORT_QP1 = PortAssignment.unique();
-            final int CLIENT_PORT_QP2 = PortAssignment.unique();
+        String quorumCfgSection =
+            "server.1=127.0.0.1:" + PortAssignment.unique()
+            + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1
+            + "\nserver.2=127.0.0.1:" + PortAssignment.unique()
+            + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP2;
 
-            String quorumCfgSection =
-                "server.1=127.0.0.1:" + PortAssignment.unique()
-                + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1
-                + "\nserver.2=127.0.0.1:" + PortAssignment.unique()
-                + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP2;
+        MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
+        MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection);
+        q1.start();
+        q2.start();
 
-            MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
-            MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection);
-            q1.start();
-            q2.start();
+        Assert.assertTrue("waiting for server 1 being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
+                        CONNECTION_TIMEOUT));
+        Assert.assertTrue("waiting for server 2 being up",
+                ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2,
+                        CONNECTION_TIMEOUT));
 
-            Assert.assertTrue("waiting for server 1 being up",
-                    ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
-                            CONNECTION_TIMEOUT));
-            Assert.assertTrue("waiting for server 2 being up",
-                    ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2,
-                            CONNECTION_TIMEOUT));
+        q1.shutdown();
+        q2.shutdown();
 
-            q1.shutdown();
-            q2.shutdown();
-
-            Assert.assertTrue("waiting for server 1 down",
-                    ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1,
-                            ClientBase.CONNECTION_TIMEOUT));
-            Assert.assertTrue("waiting for server 2 down",
-                    ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2,
-                            ClientBase.CONNECTION_TIMEOUT));
-
-        } finally {
-            zlogger.removeAppender(appender);
-        }
-        os.close();
-        LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
-        String line;
-        boolean found = false;
-        Pattern p =
-                Pattern.compile(".*FastLeaderElection.*");
-        while ((line = r.readLine()) != null) {
-            found = p.matcher(line).matches();
-            if (found) {
-                break;
-            }
-        }
-        Assert.assertTrue("fastleaderelection used", found);
+        Assert.assertTrue("waiting for server 1 down",
+                ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1,
+                        ClientBase.CONNECTION_TIMEOUT));
+        Assert.assertTrue("waiting for server 2 down",
+                ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2,
+                        ClientBase.CONNECTION_TIMEOUT));
     }
 
     /**
@@ -1052,78 +967,49 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
         int numServers = 3;
 
-        // used for assertions later
-        boolean foundLeading = false;
-        boolean foundFollowing = false;
-
-        // capture QuorumPeer logging
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        WriterAppender appender = getConsoleAppender(os, Level.DEBUG);
-        Logger qlogger = Logger.getLogger("org.apache.zookeeper.server.quorum");
-        qlogger.addAppender(appender);
-
-        try {
-            Servers svrs = new Servers();
-            svrs.clientPorts = new int[numServers];
-            for (int i = 0; i < numServers; i++) {
-                svrs.clientPorts[i] = PortAssignment.unique();
-            }
-
-            String quorumCfgIncomplete = getUniquePortCfgForId(1) + "\n" + getUniquePortCfgForId(2);
-            String quorumCfgComplete = quorumCfgIncomplete + "\n" + getUniquePortCfgForId(3);
-            svrs.mt = new MainThread[3];
-
-            // Node 1 is started without the leader (3) in its config view
-            svrs.mt[0] = new MainThread(1, svrs.clientPorts[0], quorumCfgIncomplete);
-            for (int i = 1; i < numServers; i++) {
-                svrs.mt[i] = new MainThread(i + 1, svrs.clientPorts[i], quorumCfgComplete);
-            }
-
-            // Node 1 must be started first, before quorum is formed, to trigger the attempted invalid connection to 3
-            svrs.mt[0].start();
-            QuorumPeer quorumPeer1 = waitForQuorumPeer(svrs.mt[0], CONNECTION_TIMEOUT);
-            Assert.assertEquals(QuorumPeer.ServerState.LOOKING, quorumPeer1.getPeerState());
-
-            // Node 3 started second to avoid 1 and 2 forming a quorum before 3 starts up
-            int highestServerIndex = numServers - 1;
-            svrs.mt[highestServerIndex].start();
-            QuorumPeer quorumPeer3 = waitForQuorumPeer(svrs.mt[highestServerIndex], CONNECTION_TIMEOUT);
-            Assert.assertEquals(QuorumPeer.ServerState.LOOKING, quorumPeer3.getPeerState());
-
-            // Node 2 started last, kicks off leader election
-            for (int i = 1; i < highestServerIndex; i++) {
-                svrs.mt[i].start();
-            }
-
-            // Nodes 2 and 3 now form quorum and fully start. 1 attempts to vote for 3, fails, returns to LOOKING state
-            for (int i = 1; i < numServers; i++) {
-                Assert.assertTrue("waiting for server to start",
-                        ClientBase.waitForServerUp("127.0.0.1:" + svrs.clientPorts[i], CONNECTION_TIMEOUT));
-            }
-
-            Assert.assertEquals(QuorumPeer.ServerState.LOOKING, svrs.mt[0].getQuorumPeer().getPeerState());
-            Assert.assertTrue(svrs.mt[highestServerIndex].getQuorumPeer().getPeerState() == QuorumPeer.ServerState.LEADING);
-            for (int i = 1; i < highestServerIndex; i++) {
-                Assert.assertEquals(QuorumPeer.ServerState.FOLLOWING, svrs.mt[i].getQuorumPeer().getPeerState());
-            }
-
-            // Look through the logs for output that indicates Node 1 is LEADING or FOLLOWING
-            LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
-            Pattern leading = Pattern.compile(".*myid=1.*QuorumPeer.*LEADING.*");
-            Pattern following = Pattern.compile(".*myid=1.*QuorumPeer.*FOLLOWING.*");
-
-            String line;
-            while ((line = r.readLine()) != null && !foundLeading && !foundFollowing) {
-                foundLeading = leading.matcher(line).matches();
-                foundFollowing = following.matcher(line).matches();
-            }
-
-        } finally {
-            qlogger.removeAppender(appender);
+        Servers svrs = new Servers();
+        svrs.clientPorts = new int[numServers];
+        for (int i = 0; i < numServers; i++) {
+            svrs.clientPorts[i] = PortAssignment.unique();
         }
 
-        Assert.assertFalse("Corrupt peer should never become leader", foundLeading);
-        Assert.assertFalse("Corrupt peer should not attempt connection to out of view leader", foundFollowing);
+        String quorumCfgIncomplete = getUniquePortCfgForId(1) + "\n" + getUniquePortCfgForId(2);
+        String quorumCfgComplete = quorumCfgIncomplete + "\n" + getUniquePortCfgForId(3);
+        svrs.mt = new MainThread[3];
+
+        // Node 1 is started without the leader (3) in its config view
+        svrs.mt[0] = new MainThread(1, svrs.clientPorts[0], quorumCfgIncomplete);
+        for (int i = 1; i < numServers; i++) {
+            svrs.mt[i] = new MainThread(i + 1, svrs.clientPorts[i], quorumCfgComplete);
+        }
+
+        // Node 1 must be started first, before quorum is formed, to trigger the attempted invalid connection to 3
+        svrs.mt[0].start();
+        QuorumPeer quorumPeer1 = waitForQuorumPeer(svrs.mt[0], CONNECTION_TIMEOUT);
+        Assert.assertEquals(QuorumPeer.ServerState.LOOKING, quorumPeer1.getPeerState());
+
+        // Node 3 started second to avoid 1 and 2 forming a quorum before 3 starts up
+        int highestServerIndex = numServers - 1;
+        svrs.mt[highestServerIndex].start();
+        QuorumPeer quorumPeer3 = waitForQuorumPeer(svrs.mt[highestServerIndex], CONNECTION_TIMEOUT);
+        Assert.assertEquals(QuorumPeer.ServerState.LOOKING, quorumPeer3.getPeerState());
+
+        // Node 2 started last, kicks off leader election
+        for (int i = 1; i < highestServerIndex; i++) {
+            svrs.mt[i].start();
+        }
+
+        // Nodes 2 and 3 now form quorum and fully start. 1 attempts to vote for 3, fails, returns to LOOKING state
+        for (int i = 1; i < numServers; i++) {
+            Assert.assertTrue("waiting for server to start",
+                    ClientBase.waitForServerUp("127.0.0.1:" + svrs.clientPorts[i], CONNECTION_TIMEOUT));
+        }
+
+        Assert.assertEquals(QuorumPeer.ServerState.LOOKING, svrs.mt[0].getQuorumPeer().getPeerState());
+        Assert.assertTrue(svrs.mt[highestServerIndex].getQuorumPeer().getPeerState() == QuorumPeer.ServerState.LEADING);
+        for (int i = 1; i < highestServerIndex; i++) {
+            Assert.assertEquals(QuorumPeer.ServerState.FOLLOWING, svrs.mt[i].getQuorumPeer().getPeerState());
+        }
     }
 
     @Test
@@ -1167,13 +1053,6 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         protected QuorumPeer createQuorumPeer() {
             return qp;
         }
-    }
-
-    private WriterAppender getConsoleAppender(ByteArrayOutputStream os, Level level) {
-        String loggingPattern = ((PatternLayout) Logger.getRootLogger().getAppender("CONSOLE").getLayout()).getConversionPattern();
-        WriterAppender appender = new WriterAppender(new PatternLayout(loggingPattern), os);
-        appender.setThreshold(level);
-        return appender;
     }
 
     private String getUniquePortCfgForId(int id) {

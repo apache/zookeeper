@@ -24,7 +24,6 @@ import java.io.PrintWriter;
 import java.util.List;
 import java.util.LinkedList;
 
-import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.WatchedEvent;
@@ -39,13 +38,15 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** If snapshots are corrupted to the empty file or deleted, Zookeeper should 
  *  not proceed to read its transactiong log files
  *  Test that zxid == -1 in the presence of emptied/deleted snapshots
  */
 public class EmptiedSnapshotRecoveryTest extends ZKTestCase implements  Watcher {
-    private static final Logger LOG = Logger.getLogger(RestoreCommittedLogTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(EmptiedSnapshotRecoveryTest.class);
     private static String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
     private static final int CONNECTION_TIMEOUT = 3000;
     private static final int N_TRANSACTIONS = 150;
