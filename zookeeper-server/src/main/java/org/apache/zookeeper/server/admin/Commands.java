@@ -369,6 +369,7 @@ public class Commands {
 
                 response.put("learners", leader.getLearners().size());
                 response.put("synced_followers", leader.getForwardingFollowers().size());
+                response.put("synced_non_voting_followers", leader.getNonVotingFollowers().size());
                 response.put("synced_observers", leader.getObservingLearners().size());
                 response.put("pending_syncs", leader.getNumPendingSyncs());
                 response.put("leader_uptime", leader.getUptime());

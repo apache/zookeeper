@@ -52,6 +52,15 @@ public class LeaderBean extends ZooKeeperServerBean implements LeaderMXBean {
     }
 
     @Override
+    public String nonVotingFollowerInfo() {
+        StringBuilder sb = new StringBuilder();
+        for (LearnerHandler handler : leader.getNonVotingFollowers()) {
+            sb.append(handler.toString()).append("\n");
+        }
+        return sb.toString();
+    }
+
+    @Override
     public long getElectionTimeTaken() {
         return leader.self.getElectionTimeTaken();
     }

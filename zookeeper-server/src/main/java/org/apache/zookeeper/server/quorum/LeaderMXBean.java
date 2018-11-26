@@ -35,6 +35,11 @@ public interface LeaderMXBean extends ZooKeeperServerMXBean {
     public String followerInfo();
 
     /**
+     * @return information about current non-voting followers
+     */
+    public String nonVotingFollowerInfo();
+
+    /**
      * @return time taken for leader election in milliseconds.
      */
     public long getElectionTimeTaken();
