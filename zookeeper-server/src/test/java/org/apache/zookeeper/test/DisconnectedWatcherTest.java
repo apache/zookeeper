@@ -62,6 +62,7 @@ public class DisconnectedWatcherTest extends ClientBase {
 
     @Before
     public void setUp() throws Exception {
+        super.setUp();
         watcher1 = new CountdownWatcher();
         zk1 = createClient(watcher1);
         watcher2 = new MyWatcher();
@@ -75,6 +76,7 @@ public class DisconnectedWatcherTest extends ClientBase {
         if (zk1 != null) {
             zk1.close();
         }
+        super.tearDown();
     }
 
     // @see jira issue ZOOKEEPER-961
