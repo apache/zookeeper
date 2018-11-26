@@ -21,8 +21,9 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-
+import java.io.InputStream;
 
 // TODO: introduce JuteTestCase as in ZKTestCase
 public class BinaryInputArchiveTest {
@@ -40,5 +41,137 @@ public class BinaryInputArchiveTest {
             Assert.assertTrue("Not 'Unreasonable length' exception: " + e,
                     e.getMessage().startsWith(BinaryInputArchive.UNREASONBLE_LENGTH));
         }
+    }
+
+    public interface TestWriter {
+        void write(OutputArchive oa) throws IOException;
+    }
+
+    public interface TestReader {
+        void read(InputArchive ia) throws IOException;
+    }
+
+    void checkWriterAndReader(TestWriter writer, TestReader reader) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        BinaryOutputArchive oa = BinaryOutputArchive.getArchive(baos);
+        try {
+            writer.write(oa);
+        } catch (IOException e) {
+            Assert.fail("Should not throw IOException");
+        }
+        InputStream is = new ByteArrayInputStream(baos.toByteArray());
+        BinaryInputArchive ia = BinaryInputArchive.getArchive(is);
+        try {
+            reader.read(ia);
+        } catch (IOException e) {
+            Assert.fail("Should not throw IOException while reading back");
+        }
+    }
+
+    @Test
+    public void testWriteInt() {
+        final int expected = 4;
+        final String tag = "tag1";
+        checkWriterAndReader(
+                new TestWriter() {
+                    @Override
+                    public void write(OutputArchive oa) throws IOException {
+                        oa.writeInt(expected, tag);
+                    }
+                },
+                new TestReader() {
+                    @Override
+                    public void read(InputArchive ia) throws IOException {
+                        int actual = ia.readInt(tag);
+                        Assert.assertEquals(expected, actual);
+                    }
+                }
+        );
+    }
+
+    @Test
+    public void testWriteBool() {
+        final boolean expected = false;
+        final String tag = "tag1";
+        checkWriterAndReader(
+                new TestWriter() {
+                    @Override
+                    public void write(OutputArchive oa) throws IOException {
+                        oa.writeBool(expected, tag);
+                    }
+                },
+                new TestReader() {
+                    @Override
+                    public void read(InputArchive ia) throws IOException {
+                        boolean actual = ia.readBool(tag);
+                        Assert.assertEquals(expected, actual);
+                    }
+                }
+        );
+    }
+
+    @Test
+    public void testWriteString() {
+        final String expected = "hello";
+        final String tag = "tag1";
+        checkWriterAndReader(
+                new TestWriter() {
+                    @Override
+                    public void write(OutputArchive oa) throws IOException {
+                        oa.writeString(expected, tag);
+                    }
+                },
+                new TestReader() {
+                    @Override
+                    public void read(InputArchive ia) throws IOException {
+                        String actual = ia.readString(tag);
+                        Assert.assertEquals(expected, actual);
+                    }
+                }
+        );
+    }
+
+    @Test
+    public void testWriteFloat() {
+        final float expected = 3.14159f;
+        final String tag = "tag1";
+        final float delta = 1e-10f;
+        checkWriterAndReader(
+                new TestWriter() {
+                    @Override
+                    public void write(OutputArchive oa) throws IOException {
+                        oa.writeFloat(expected, tag);
+                    }
+                },
+                new TestReader() {
+                    @Override
+                    public void read(InputArchive ia) throws IOException {
+                        float actual = ia.readFloat(tag);
+                        Assert.assertEquals(expected, actual, delta);
+                    }
+                }
+        );
+    }
+
+    @Test
+    public void testWriteDouble() {
+        final double expected = 3.14159f;
+        final String tag = "tag1";
+        final float delta = 1e-20f;
+        checkWriterAndReader(
+                new TestWriter() {
+                    @Override
+                    public void write(OutputArchive oa) throws IOException {
+                        oa.writeDouble(expected, tag);
+                    }
+                },
+                new TestReader() {
+                    @Override
+                    public void read(InputArchive ia) throws IOException {
+                        double actual = ia.readDouble(tag);
+                        Assert.assertEquals(expected, actual, delta);
+                    }
+                }
+        );
     }
 }
