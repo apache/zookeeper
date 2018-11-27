@@ -8,10 +8,11 @@ import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.text.NumberFormat;
+import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
+import java.util.stream.Collectors;
 import junit.framework.AssertionFailedError;
 import junit.framework.Test;
 
@@ -128,12 +129,21 @@ public class OneLinerFormatter implements JUnitResultFormatter {
         sb.append(StringUtils.LINE_SEP);
         sb.append("Testsuite: ");
         sb.append(suite.getName());
-        sb.append("In process: ");
+        sb.append(" In process: ");
         sb.append(ManagementFactory.getRuntimeMXBean().getName());
         sb.append(StringUtils.LINE_SEP);
         output.write(sb.toString());
         output.flush();
     }
+
+    public String prefixLines(String prefix, String buffer) {
+        String lines[] = buffer.split("\\r?\\n");
+        return Arrays.asList(lines)
+                .stream()
+                .map(l -> prefix + l)
+                .collect(Collectors.joining("\n"));
+    }
+
 
     /**
      * The whole testsuite ended.
@@ -141,7 +151,7 @@ public class OneLinerFormatter implements JUnitResultFormatter {
      */
     public void endTestSuite(JUnitTest suite) {
         StringBuffer sb = new StringBuffer("Tests run: ");
-        String runtimeName = ManagementFactory.getRuntimeMXBean().getName();
+        String runtimeName = " [" + ManagementFactory.getRuntimeMXBean().getName() + "] ";
         sb.append(suite.runCount());
         sb.append(", Failures: ");
         sb.append(suite.failureCount());
@@ -150,7 +160,7 @@ public class OneLinerFormatter implements JUnitResultFormatter {
         sb.append(", Time elapsed: ");
         sb.append(numberFormat.format(suite.getRunTime() / 1000.0));
         sb.append(" sec");
-        sb.append("In process: ");
+        sb.append(" In process: ");
         sb.append(ManagementFactory.getRuntimeMXBean().getName());
         sb.append(StringUtils.LINE_SEP);
         sb.append(StringUtils.LINE_SEP);
@@ -160,7 +170,8 @@ public class OneLinerFormatter implements JUnitResultFormatter {
             sb.append(runtimeName)
                     .append("------------- Standard Output ---------------")
                     .append(StringUtils.LINE_SEP)
-                    .append(systemOutput)
+                    .append(prefixLines(runtimeName, systemOutput))
+                    .append(StringUtils.LINE_SEP)
                     .append(runtimeName)
                     .append("------------- ---------------- ---------------")
                     .append(StringUtils.LINE_SEP);
@@ -170,7 +181,8 @@ public class OneLinerFormatter implements JUnitResultFormatter {
             sb.append(runtimeName)
                     .append("------------- Standard Error -----------------")
                     .append(StringUtils.LINE_SEP)
-                    .append(systemError)
+                    .append(prefixLines(runtimeName, systemError))
+                    .append(StringUtils.LINE_SEP)
                     .append(runtimeName)
                     .append("------------- ---------------- ---------------")
                     .append(StringUtils.LINE_SEP);
