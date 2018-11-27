@@ -47,6 +47,7 @@ import javax.security.sasl.SaslException;
 import org.apache.zookeeper.KeeperException.BadArgumentsException;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
+import org.apache.zookeeper.common.QuorumX509Util;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.jmx.MBeanRegistry;
@@ -479,6 +480,12 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         return shouldUsePortUnification;
     }
 
+    private final QuorumX509Util x509Util;
+
+    QuorumX509Util getX509Util() {
+        return x509Util;
+    }
+
     /**
      * This is who I think the leader currently is.
      */
@@ -801,6 +808,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         quorumStats = new QuorumStats(this);
         jmxRemotePeerBean = new HashMap<Long, RemotePeerBean>();
         adminServer = AdminServerFactory.createAdminServer();
+        x509Util = new QuorumX509Util();
         initialize();
     }
 
