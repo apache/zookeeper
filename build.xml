@@ -136,7 +136,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="test.cppunit.dir" value="${test.java.build.dir}/test-cppunit"/>
     <property name="test.tmp.dir" value="${test.java.build.dir}/tmp" />
     <property name="test.output" value="no" />
-    <property name="test.timeout" value="900000" />
+    <property name="test.timeout" value="3600000" />
     <property name="test.junit.output.format" value="plain" />
     <property name="test.junit.fork.mode" value="perTest" />
     <property name="test.junit.threads" value="1" />
