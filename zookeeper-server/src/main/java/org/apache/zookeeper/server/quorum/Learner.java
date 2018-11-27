@@ -33,17 +33,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.net.ssl.SSLSocket;
+
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
-import org.apache.zookeeper.common.QuorumX509Util;
-import org.apache.zookeeper.common.X509Exception;
-import org.apache.zookeeper.common.X509Util;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ZooTrace;
@@ -53,8 +51,8 @@ import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnHeader;
-
-import javax.net.ssl.SSLSocket;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class is the superclass of two of the three main actors in a ZK
@@ -73,8 +71,6 @@ public class Learner {
     
     protected Socket sock;
 
-    protected X509Util x509Util;
-    
     /**
      * Socket getter
      * @return 
@@ -303,10 +299,7 @@ public class Learner {
     private Socket createSocket() throws X509Exception, IOException {
         Socket sock;
         if (self.isSslQuorum()) {
-            if (x509Util == null) {
-                x509Util = new QuorumX509Util();
-            }
-            sock = x509Util.createSSLSocket();
+            sock = self.getX509Util().createSSLSocket();
         } else {
             sock = new Socket();
         }

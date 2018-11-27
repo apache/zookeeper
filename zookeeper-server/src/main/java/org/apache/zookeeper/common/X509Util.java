@@ -18,6 +18,7 @@
 package org.apache.zookeeper.common;
 
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.security.GeneralSecurityException;
@@ -74,6 +75,8 @@ public abstract class X509Util {
             "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256"
     };
 
+    public static final int DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS = 5000;
+
     private String sslProtocolProperty = getConfigPrefix() + "protocol";
     private String cipherSuitesProperty = getConfigPrefix() + "ciphersuites";
     private String sslKeystoreLocationProperty = getConfigPrefix() + "keyStore.location";
@@ -85,6 +88,7 @@ public abstract class X509Util {
     private String sslHostnameVerificationEnabledProperty = getConfigPrefix() + "hostnameVerification";
     private String sslCrlEnabledProperty = getConfigPrefix() + "crl";
     private String sslOcspEnabledProperty = getConfigPrefix() + "ocsp";
+    private String sslHandshakeDetectionTimeoutMillisProperty = getConfigPrefix() + "handshakeDetectionTimeoutMillis";
 
     private String[] cipherSuites;
 
@@ -146,6 +150,16 @@ public abstract class X509Util {
         return sslOcspEnabledProperty;
     }
 
+    /**
+     * Returns the config property key that controls the amount of time, in milliseconds, that the first
+     * UnifiedServerSocket read operation will block for when trying to detect the client mode (TLS or PLAINTEXT).
+     *
+     * @return the config property key.
+     */
+    public String getSslHandshakeDetectionTimeoutMillisProperty() {
+        return sslHandshakeDetectionTimeoutMillisProperty;
+    }
+
     public SSLContext getDefaultSSLContext() throws X509Exception.SSLContextException {
         SSLContext result = defaultSSLContext.get();
         if (result == null) {
@@ -166,6 +180,31 @@ public abstract class X509Util {
          */
         ZKConfig config=new ZKConfig();
         return createSSLContext(config);
+    }
+
+    /**
+     * Returns the max amount of time, in milliseconds, that the first UnifiedServerSocket read() operation should
+     * block for when trying to detect the client mode (TLS or PLAINTEXT).
+     * Defaults to {@link X509Util#DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS}.
+     *
+     * @return the handshake detection timeout, in milliseconds.
+     */
+    public int getSslHandshakeTimeoutMillis() {
+        String propertyString = System.getProperty(getSslHandshakeDetectionTimeoutMillisProperty());
+        int result;
+        if (propertyString == null) {
+            result = DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS;
+        } else {
+            result = Integer.parseInt(propertyString);
+            if (result < 1) {
+                // Timeout of 0 is not allowed, since an infinite timeout can permanently lock up an
+                // accept() thread.
+                LOG.warn("Invalid value for " + getSslHandshakeDetectionTimeoutMillisProperty() + ": " + result +
+                        ", using the default value of " + DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS);
+                result = DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS;
+            }
+        }
+        return result;
     }
 
     public SSLContext createSSLContext(ZKConfig config) throws SSLContextException {
@@ -350,14 +389,22 @@ public abstract class X509Util {
     public SSLSocket createSSLSocket() throws X509Exception, IOException {
         SSLSocket sslSocket = (SSLSocket) getDefaultSSLContext().getSocketFactory().createSocket();
         configureSSLSocket(sslSocket);
-
+        sslSocket.setUseClientMode(true);
         return sslSocket;
     }
 
-    public SSLSocket createSSLSocket(Socket socket) throws X509Exception, IOException {
-        SSLSocket sslSocket = (SSLSocket) getDefaultSSLContext().getSocketFactory().createSocket(socket, null, socket.getPort(), true);
+    public SSLSocket createSSLSocket(Socket socket, byte[] pushbackBytes) throws X509Exception, IOException {
+        SSLSocket sslSocket;
+        if (pushbackBytes != null && pushbackBytes.length > 0) {
+            sslSocket = (SSLSocket) getDefaultSSLContext().getSocketFactory().createSocket(
+                    socket, new ByteArrayInputStream(pushbackBytes), true);
+        } else {
+            sslSocket = (SSLSocket) getDefaultSSLContext().getSocketFactory().createSocket(
+                    socket, null, socket.getPort(), true);
+        }
         configureSSLSocket(sslSocket);
-
+        sslSocket.setUseClientMode(false);
+        sslSocket.setNeedClientAuth(true);
         return sslSocket;
     }
 
