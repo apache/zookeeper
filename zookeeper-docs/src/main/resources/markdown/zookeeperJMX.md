@@ -84,7 +84,10 @@ interest is the ability to dynamically change the logging levels
 used by editing the appender and root thresholds. Log4j MBean
 registration can be disabled by passing
 _-Dzookeeper.jmx.log4j.disable=true_ to the JVM
-when starting ZooKeeper.
+when starting ZooKeeper. In addition, we can specify the name of
+the MBean with the _-Dzookeeper.jmx.log4j.mbean=log4j:hierarchy=default_
+option, in case we need to upgrade an integrated system
+using the old MBean name (`log4j:hiearchy = default`).
 
 <a name="ch_reference"></a>
 
