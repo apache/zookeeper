@@ -294,8 +294,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         public QuorumServer(long id, InetSocketAddress addr,
                 InetSocketAddress electionAddr, InetSocketAddress clientAddr, LearnerType type) {
             this.id = id;
-            this.addr.addAddress(addr);
-            this.electionAddr.addAddress(electionAddr);
+            if(addr != null)
+                this.addr.addAddress(addr);
+            if(electionAddr != null)
+                this.electionAddr.addAddress(electionAddr);
             this.type = type;
             this.clientAddr = clientAddr;
 
@@ -728,8 +730,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     DatagramSocket udpSocket;
 
-    private MultipleAddresses myQuorumAddr;
-    private MultipleAddresses myElectionAddr = null;
+    private MultipleAddresses myQuorumAddr  = new MultipleAddresses();
+    private MultipleAddresses myElectionAddr = new MultipleAddresses();
     private InetSocketAddress myClientAddr = null;
 
     /**

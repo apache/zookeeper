@@ -12,4 +12,8 @@ public class RuntimeLearnerException extends RuntimeException {
         super(cause);
     }
 
+    public RuntimeLearnerException(String message) {
+        super(message);
+    }
+
 }

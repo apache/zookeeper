@@ -39,6 +39,7 @@ import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.server.ZooKeeperThread;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthLearner;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthServer;
+import org.apache.zookeeper.server.quorum.exception.RuntimeNoReachableHostException;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -558,7 +559,7 @@ public class QuorumCnxManager {
             closeSocket(sock);
 
             if (electionAddr != null) {
-                connectOne(sid, electionAddr);
+                connectOne(sid, new MultipleAddresses(electionAddr));
             } else {
                 connectOne(sid);
             }
@@ -621,7 +622,7 @@ public class QuorumCnxManager {
      *  @param sid  server id
      *  @return boolean success indication
      */
-    synchronized private boolean connectOne(long sid, InetSocketAddress electionAddr){
+    synchronized private boolean connectOne(long sid, MultipleAddresses electionAddr){
         if (senderWorkerMap.get(sid) != null) {
             LOG.debug("There is a connection already for server " + sid);
             return true;
@@ -630,16 +631,17 @@ public class QuorumCnxManager {
         Socket sock = null;
         try {
             LOG.debug("Opening channel to server " + sid);
+            InetSocketAddress address = electionAddr.getValidAddress();
             if (self.isSslQuorum()) {
                 SSLSocket sslSock = x509Util.createSSLSocket();
                 setSockOpts(sslSock);
-                sslSock.connect(electionAddr, cnxTO);
+                sslSock.connect(address, cnxTO);
                 sslSock.startHandshake();
                 sock = sslSock;
             } else {
                 sock = new Socket();
                 setSockOpts(sock);
-                sock.connect(electionAddr, cnxTO);
+                sock.connect(address, cnxTO);
             }
             LOG.debug("Connected to server " + sid);
             // Sends connection request asynchronously if the quorum
@@ -652,7 +654,7 @@ public class QuorumCnxManager {
                 initiateConnection(sock, sid);
             }
             return true;
-        } catch (UnresolvedAddressException e) {
+        } catch (RuntimeNoReachableHostException e) {
             // Sun doesn't include the address that causes this
             // exception to be thrown, also UAE cannot be wrapped cleanly
             // so we log the exception in order to capture this critical
@@ -695,14 +697,14 @@ public class QuorumCnxManager {
             Map<Long, QuorumPeer.QuorumServer> lastProposedView = lastSeenQV.getAllMembers();
             if (lastCommittedView.containsKey(sid)) {
                 knownId = true;
-                if (connectOne(sid, lastCommittedView.get(sid).electionAddr.getValidAddress()))
+                if (connectOne(sid, lastCommittedView.get(sid).electionAddr))
                     return;
             }
             if (lastSeenQV != null && lastProposedView.containsKey(sid)
                     && (!knownId || (lastProposedView.get(sid).electionAddr !=
                     lastCommittedView.get(sid).electionAddr))) {
                 knownId = true;
-                if (connectOne(sid, lastProposedView.get(sid).electionAddr.getValidAddress()))
+                if (connectOne(sid, lastProposedView.get(sid).electionAddr))
                     return;
             }
             if (!knownId) {

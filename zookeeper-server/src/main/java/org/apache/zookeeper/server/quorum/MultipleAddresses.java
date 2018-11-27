@@ -60,13 +60,20 @@ public class MultipleAddresses {
     }
 
     public InetSocketAddress getValidAddress() {
+        //InetSocketAddress wrongAddress = null;
+
         for(InetSocketAddress addr : addresses) {
             try {
-                if(addr.getAddress().isReachable(100))
+                if (addr.getAddress().isReachable(100))
                     return addr;
+            } catch (NullPointerException e) {
+                //wrongAddress = addr;
             } catch (IOException ignored) {
             }
         }
+
+//        if(wrongAddress != null)
+//            return wrongAddress;
 
         throw new RuntimeNoReachableHostException("No valid address among " + addresses);
     }
