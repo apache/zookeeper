@@ -33,13 +33,13 @@ import org.slf4j.LoggerFactory;
 public class ManagedUtil {
     private static final Logger LOG = LoggerFactory.getLogger(ManagedUtil.class);
 
-    private static final boolean isLog4jJmxEnabled() {
+    private static boolean isLog4jJmxEnabled() {
         boolean enabled = false;
 
         try {
             Class.forName("org.apache.log4j.spi.LoggerRepository");
 
-            if (Boolean.getBoolean("zookeeper.jmx.log4j.disable") == true) {
+            if (Boolean.getBoolean("zookeeper.jmx.log4j.disable")) {
                 LOG.info("Log4j found but jmx support is disabled.");
             } else {
                 enabled = true;
@@ -69,9 +69,10 @@ public class ManagedUtil {
             try {
                 // Create and Register the top level Log4J MBean
                 // org.apache.log4j.jmx.HierarchyDynamicMBean hdm = new org.apache.log4j.jmx.HierarchyDynamicMBean();
-                Object hdm = Class.forName("org.apache.log4j.jmx.HierarchyDynamicMBean").getDeclaredConstructor().newInstance();
+                Object hdm = Class.forName("org.apache.log4j.jmx.HierarchyDynamicMBean").getConstructor().newInstance();
 
-                ObjectName mbo = new ObjectName("log4j:hiearchy=default");
+                String mbean = System.getProperty("zookeeper.jmx.log4j.mbean", "log4j:hierarchy=default");
+                ObjectName mbo = new ObjectName(mbean);
                 mbs.registerMBean(hdm, mbo);
 
                 // Add the root logger to the Hierarchy MBean
