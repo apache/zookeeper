@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -17,7 +17,10 @@
  */
 package org.apache.jute;
 
-import org.junit.Assert;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import static org.junit.Assert.assertArrayEquals;
+
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
@@ -26,28 +29,29 @@ import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 public class XmlInputArchiveTest {
 
-    void checkWriterAndReader(TestWriter writer, TestReader reader) {
+    private void checkWriterAndReader(TestWriter writer, TestReader reader) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
             XmlOutputArchive oa = XmlOutputArchive.getArchive(baos);
             writer.write(oa);
         } catch (IOException e) {
-            Assert.fail("Should not throw IOException");
+            fail("Should not throw IOException");
         }
         InputStream is = new ByteArrayInputStream(baos.toByteArray());
         try {
             XmlInputArchive ia = XmlInputArchive.getArchive(is);
             reader.read(ia);
         } catch (ParserConfigurationException e) {
-            Assert.fail("Should not throw ParserConfigurationException while reading back");
+            fail("Should not throw ParserConfigurationException while reading back");
         } catch (SAXException e) {
-            Assert.fail("Should not throw SAXException while reading back");
+            fail("Should not throw SAXException while reading back");
         }  catch (IOException e) {
-            Assert.fail("Should not throw IOException while reading back");
+            fail("Should not throw IOException while reading back");
         }
     }
 
@@ -59,7 +63,7 @@ public class XmlInputArchiveTest {
                 (oa) -> oa.writeInt(expected, tag),
                 (ia) -> {
                     int actual = ia.readInt(tag);
-                    Assert.assertEquals(expected, actual);
+                    assertEquals(expected, actual);
                 }
         );
     }
@@ -72,7 +76,7 @@ public class XmlInputArchiveTest {
                 (oa) -> oa.writeBool(expected, tag),
                 (ia) -> {
                     boolean actual = ia.readBool(tag);
-                    Assert.assertEquals(expected, actual);
+                    assertEquals(expected, actual);
                 }
         );
     }
@@ -85,7 +89,7 @@ public class XmlInputArchiveTest {
                 (oa) -> oa.writeString(expected, tag),
                 (ia) -> {
                     String actual = ia.readString(tag);
-                    Assert.assertEquals(expected, actual);
+                    assertEquals(expected, actual);
                 }
         );
     }
@@ -99,7 +103,7 @@ public class XmlInputArchiveTest {
                 (oa) -> oa.writeFloat(expected, tag),
                 (ia) -> {
                     float actual = ia.readFloat(tag);
-                    Assert.assertEquals(expected, actual, delta);
+                    assertEquals(expected, actual, delta);
                 }
         );
     }
@@ -113,8 +117,22 @@ public class XmlInputArchiveTest {
                 (oa) -> oa.writeDouble(expected, tag),
                 (ia) -> {
                     double actual = ia.readDouble(tag);
-                    Assert.assertEquals(expected, actual, delta);
+                    assertEquals(expected, actual, delta);
                 }
         );
     }
+
+    @Test
+    public void testBuffer() {
+        final byte[] expected = "hello-world".getBytes(StandardCharsets.UTF_8);
+        final String tag = "tag1";
+        checkWriterAndReader(
+                (oa) -> oa.writeBuffer(expected, tag),
+                (ia) -> {
+                    byte [] actual = ia.readBuffer(tag);
+                    assertArrayEquals(expected, actual);
+                }
+        );
+    }
+
 }

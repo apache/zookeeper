@@ -17,8 +17,11 @@
  */
 package org.apache.jute;
 
-import org.junit.Assert;
 import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertArrayEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -37,9 +40,9 @@ public class BinaryInputArchiveTest {
         BinaryInputArchive ia = BinaryInputArchive.getArchive(is);
         try {
             ia.readString("");
-            Assert.fail("Should have thrown an IOException");
+            fail("Should have thrown an IOException");
         } catch (IOException e) {
-            Assert.assertTrue("Not 'Unreasonable length' exception: " + e,
+            assertTrue("Not 'Unreasonable length' exception: " + e,
                     e.getMessage().startsWith(BinaryInputArchive.UNREASONBLE_LENGTH));
         }
     }
@@ -50,14 +53,14 @@ public class BinaryInputArchiveTest {
         try {
             writer.write(oa);
         } catch (IOException e) {
-            Assert.fail("Should not throw IOException");
+            fail("Should not throw IOException");
         }
         InputStream is = new ByteArrayInputStream(baos.toByteArray());
         BinaryInputArchive ia = BinaryInputArchive.getArchive(is);
         try {
             reader.read(ia);
         } catch (IOException e) {
-            Assert.fail("Should not throw IOException while reading back");
+            fail("Should not throw IOException while reading back");
         }
     }
 
@@ -69,7 +72,7 @@ public class BinaryInputArchiveTest {
             (oa) -> oa.writeInt(expected, tag),
             (ia) -> {
                 int actual = ia.readInt(tag);
-                Assert.assertEquals(expected, actual);
+                assertEquals(expected, actual);
             }
         );
     }
@@ -82,7 +85,7 @@ public class BinaryInputArchiveTest {
             (oa) -> oa.writeBool(expected, tag),
             (ia) -> {
                     boolean actual = ia.readBool(tag);
-                    Assert.assertEquals(expected, actual);
+                    assertEquals(expected, actual);
             }
         );
     }
@@ -95,7 +98,7 @@ public class BinaryInputArchiveTest {
             (oa) -> oa.writeString(expected, tag),
             (ia) -> {
                 String actual = ia.readString(tag);
-                Assert.assertEquals(expected, actual);
+                assertEquals(expected, actual);
             }
         );
     }
@@ -109,7 +112,7 @@ public class BinaryInputArchiveTest {
             (oa) -> oa.writeFloat(expected, tag),
             (ia) -> {
                     float actual = ia.readFloat(tag);
-                    Assert.assertEquals(expected, actual, delta);
+                    assertEquals(expected, actual, delta);
             }
         );
     }
@@ -123,7 +126,7 @@ public class BinaryInputArchiveTest {
             (oa) -> oa.writeDouble(expected, tag),
             (ia) -> {
                     double actual = ia.readDouble(tag);
-                    Assert.assertEquals(expected, actual, delta);
+                    assertEquals(expected, actual, delta);
             }
         );
     }
@@ -136,7 +139,7 @@ public class BinaryInputArchiveTest {
                 (oa) -> oa.writeBuffer(expected, tag),
                 (ia) -> {
                     byte [] actual = ia.readBuffer(tag);
-                    Assert.assertArrayEquals(expected, actual);
+                    assertArrayEquals(expected, actual);
                 }
         );
     }
