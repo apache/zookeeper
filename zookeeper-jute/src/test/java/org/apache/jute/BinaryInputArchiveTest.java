@@ -73,18 +73,10 @@ public class BinaryInputArchiveTest {
         final int expected = 4;
         final String tag = "tag1";
         checkWriterAndReader(
-                new TestWriter() {
-                    @Override
-                    public void write(OutputArchive oa) throws IOException {
-                        oa.writeInt(expected, tag);
-                    }
-                },
-                new TestReader() {
-                    @Override
-                    public void read(InputArchive ia) throws IOException {
-                        int actual = ia.readInt(tag);
-                        Assert.assertEquals(expected, actual);
-                    }
+                (oa) -> { oa.writeInt(expected, tag); },
+                (ia) -> {
+                    int actual = ia.readInt(tag);
+                    Assert.assertEquals(expected, actual);
                 }
         );
     }
@@ -94,18 +86,12 @@ public class BinaryInputArchiveTest {
         final boolean expected = false;
         final String tag = "tag1";
         checkWriterAndReader(
-                new TestWriter() {
-                    @Override
-                    public void write(OutputArchive oa) throws IOException {
+                (oa) -> {
                         oa.writeBool(expected, tag);
-                    }
                 },
-                new TestReader() {
-                    @Override
-                    public void read(InputArchive ia) throws IOException {
+                (ia) -> {
                         boolean actual = ia.readBool(tag);
                         Assert.assertEquals(expected, actual);
-                    }
                 }
         );
     }
@@ -115,18 +101,10 @@ public class BinaryInputArchiveTest {
         final String expected = "hello";
         final String tag = "tag1";
         checkWriterAndReader(
-                new TestWriter() {
-                    @Override
-                    public void write(OutputArchive oa) throws IOException {
-                        oa.writeString(expected, tag);
-                    }
-                },
-                new TestReader() {
-                    @Override
-                    public void read(InputArchive ia) throws IOException {
-                        String actual = ia.readString(tag);
-                        Assert.assertEquals(expected, actual);
-                    }
+                (oa) -> { oa.writeString(expected, tag); },
+                (ia) -> {
+                    String actual = ia.readString(tag);
+                    Assert.assertEquals(expected, actual);
                 }
         );
     }
@@ -137,18 +115,12 @@ public class BinaryInputArchiveTest {
         final String tag = "tag1";
         final float delta = 1e-10f;
         checkWriterAndReader(
-                new TestWriter() {
-                    @Override
-                    public void write(OutputArchive oa) throws IOException {
+                (oa) -> {
                         oa.writeFloat(expected, tag);
-                    }
                 },
-                new TestReader() {
-                    @Override
-                    public void read(InputArchive ia) throws IOException {
+                (ia) -> {
                         float actual = ia.readFloat(tag);
                         Assert.assertEquals(expected, actual, delta);
-                    }
                 }
         );
     }
@@ -159,18 +131,12 @@ public class BinaryInputArchiveTest {
         final String tag = "tag1";
         final float delta = 1e-20f;
         checkWriterAndReader(
-                new TestWriter() {
-                    @Override
-                    public void write(OutputArchive oa) throws IOException {
+                (oa) -> {
                         oa.writeDouble(expected, tag);
-                    }
                 },
-                new TestReader() {
-                    @Override
-                    public void read(InputArchive ia) throws IOException {
+                (ia) -> {
                         double actual = ia.readDouble(tag);
                         Assert.assertEquals(expected, actual, delta);
-                    }
                 }
         );
     }
