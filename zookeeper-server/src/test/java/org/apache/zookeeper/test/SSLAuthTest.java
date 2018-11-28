@@ -60,7 +60,8 @@ public class SSLAuthTest extends ClientBase {
     }
 
     @After
-    public void teardown() throws Exception {
+    public void tearDown() throws Exception {
+        super.tearDown();
         System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
         System.clearProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET);
         System.clearProperty(ZKClientConfig.SECURE_CLIENT);

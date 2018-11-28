@@ -39,7 +39,7 @@ public class AtomicFileWritingIdiomTest extends ZKTestCase {
     private static File tmpdir;
 
     @BeforeClass
-    public static void createTmpDir() {
+    public static void createTmpDir() throws Exception {
         tmpdir = new File("build/test/tmp");
         tmpdir.mkdirs();
     }

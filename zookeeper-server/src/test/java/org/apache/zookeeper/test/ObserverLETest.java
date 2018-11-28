@@ -33,7 +33,7 @@ public class ObserverLETest extends ZKTestCase {
     final ClientTest ct = new ClientTest();
 
     @Before
-    public void establishThreeParticipantOneObserverEnsemble() throws Exception {
+    public void setUp() throws Exception {
         qb.setUp(true);
         ct.hostPort = qb.hostPort;
         ct.setUpAll();
@@ -41,7 +41,7 @@ public class ObserverLETest extends ZKTestCase {
     }
 
     @After
-    public void shutdownQuorum() throws Exception {
+    public void tearDown() throws Exception {
         ct.tearDownAll();
         qb.tearDown();
     }

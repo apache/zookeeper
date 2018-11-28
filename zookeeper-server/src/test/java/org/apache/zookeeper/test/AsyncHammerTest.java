@@ -48,7 +48,7 @@ public class AsyncHammerTest extends ZKTestCase
 
     private volatile boolean bang;
 
-    public void setUp(boolean withObservers) throws Exception {
+    public void prepareTest(boolean withObservers) throws Exception {
         qb.setUp(withObservers);
     }
 
@@ -167,7 +167,7 @@ public class AsyncHammerTest extends ZKTestCase
 
     @Test
     public void testHammer() throws Exception {
-        setUp(false);
+        prepareTest(false);
         bang = true;
         LOG.info("Starting hammers");
         HammerThread[] hammers = new HammerThread[100];
@@ -199,7 +199,7 @@ public class AsyncHammerTest extends ZKTestCase
 
     @Test
     public void testObserversHammer() throws Exception {
-        setUp(true);
+        prepareTest(true);
         bang = true;
         Thread[] hammers = new Thread[100];
         for (int i = 0; i < hammers.length; i++) {

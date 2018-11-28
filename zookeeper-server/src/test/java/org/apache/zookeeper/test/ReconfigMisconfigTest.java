@@ -44,7 +44,7 @@ public class ReconfigMisconfigTest extends ZKTestCase {
             "user's password on server side first.";
 
     @Before
-    public void setup() throws InterruptedException {
+    public void setUp() throws Exception {
         QuorumPeerConfig.setReconfigEnabled(true);
         // Get a three server quorum.
         qu = new QuorumUtil(1);

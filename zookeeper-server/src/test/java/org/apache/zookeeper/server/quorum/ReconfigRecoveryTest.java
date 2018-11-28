@@ -33,7 +33,7 @@ import org.junit.Test;
 
 public class ReconfigRecoveryTest extends QuorumPeerTestBase {
     @Before
-    public void setup() {
+    public void setUp() throws Exception {
         QuorumPeerConfig.setReconfigEnabled(true);
     }
 

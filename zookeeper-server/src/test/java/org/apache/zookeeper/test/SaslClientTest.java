@@ -32,13 +32,13 @@ public class SaslClientTest extends ZKTestCase {
     private String existingPropertyValue = null;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         existingPropertyValue = System
                 .getProperty(ZKClientConfig.ENABLE_CLIENT_SASL_KEY);
     }
 
     @After
-    public void tearDown() {
+    public void tearDown() throws Exception {
         // Restore the System property if it was set previously
         if (existingPropertyValue != null) {
             System.setProperty(ZKClientConfig.ENABLE_CLIENT_SASL_KEY,

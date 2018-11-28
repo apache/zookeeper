@@ -65,7 +65,8 @@ public class PrepRequestProcessorTest extends ClientBase {
     private Request outcome;
 
     @Before
-    public void setup() throws Exception {
+    public void setUp() throws Exception {
+        super.setUp();
         File tmpDir = ClientBase.createTmpDir();
         ClientBase.setupTestEnv();
         zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
@@ -80,13 +81,14 @@ public class PrepRequestProcessorTest extends ClientBase {
     }
 
     @After
-    public void teardown() throws Exception {
+    public void tearDown() throws Exception {
         if (servcnxnf != null) {
             servcnxnf.shutdown();
         }
         if (zks != null) {
             zks.shutdown();
         }
+        super.tearDown();
     }
 
     @Test

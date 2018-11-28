@@ -61,7 +61,7 @@ public class LeaderWithObserverTest {
     }
 
     @After
-    public void tearDown(){
+    public void tearDown() throws Exception {
         leader.shutdown("end of test");
         tmpDir.delete();
     }

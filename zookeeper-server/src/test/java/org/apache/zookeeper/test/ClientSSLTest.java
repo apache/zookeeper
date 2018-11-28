@@ -40,7 +40,7 @@ public class ClientSSLTest extends QuorumPeerTestBase {
     private ClientX509Util clientX509Util = new ClientX509Util();
 
     @Before
-    public void setup() {
+    public void setUp() throws Exception {
         String testDataPath = System.getProperty("test.data.dir", "build/test/data");
         System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
         System.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
@@ -52,7 +52,7 @@ public class ClientSSLTest extends QuorumPeerTestBase {
     }
 
     @After
-    public void teardown() throws Exception {
+    public void tearDown() throws Exception {
         System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
         System.clearProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET);
         System.clearProperty(ZKClientConfig.SECURE_CLIENT);

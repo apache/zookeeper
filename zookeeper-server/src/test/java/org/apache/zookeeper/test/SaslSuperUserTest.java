@@ -46,7 +46,7 @@ public class SaslSuperUserTest extends ClientBase {
     private static String oldSuperUser;
 
     @BeforeClass
-    public static void setupStatic() throws Exception {
+    public static void setUpSaslJaas() throws Exception {
         oldAuthProvider = System.setProperty("zookeeper.authProvider.1","org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
 
         File tmpDir = createTmpDir();
@@ -70,7 +70,7 @@ public class SaslSuperUserTest extends ClientBase {
     }
 
     @AfterClass
-    public static void cleanupStatic() {
+    public static void tearDownSaslJaas() throws Exception {
         if (oldAuthProvider != null) {
             System.setProperty("zookeeper.authProvider.1", oldAuthProvider);
 	} else {

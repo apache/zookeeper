@@ -52,7 +52,7 @@ public class ZKClientConfigTest {
     public Timeout timeout = new Timeout(10, TimeUnit.SECONDS);
 
     @BeforeClass
-    public static void init() {
+    public static void setUpTestDir() throws Exception {
         if (!testData.exists()) {
             testData.mkdirs();
         }

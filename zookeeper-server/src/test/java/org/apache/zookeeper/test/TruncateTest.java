@@ -54,14 +54,14 @@ public class TruncateTest extends ZKTestCase {
     File dataDir1, dataDir2, dataDir3;
     
     @Before
-    public void setUp() throws IOException {
+    public void setUp() throws Exception {
         dataDir1 = ClientBase.createTmpDir();
         dataDir2 = ClientBase.createTmpDir();
         dataDir3 = ClientBase.createTmpDir();
     }
     
     @After
-    public void tearDown() {
+    public void tearDown() throws Exception {
         ClientBase.recursiveDelete(dataDir1);
         ClientBase.recursiveDelete(dataDir2);
         ClientBase.recursiveDelete(dataDir3);

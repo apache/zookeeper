@@ -30,13 +30,13 @@ import org.junit.runners.Suite.SuiteClasses;
 public class RestTestSuite {
 
     @BeforeClass
-    public static void setUp() {
+    public static void setUpSuite() throws Exception {
         // suite setup
     }
 
     @AfterClass
-    public static void tearDown() {
-        // suite setup
+    public static void tearDownSuite() throws Exception {
+        // suite teardown
     }
 
 }

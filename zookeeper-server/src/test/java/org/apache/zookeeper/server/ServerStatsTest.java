@@ -33,7 +33,7 @@ public class ServerStatsTest extends ZKTestCase {
     private ServerStats.Provider providerMock;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         providerMock = mock(ServerStats.Provider.class);
     }
 

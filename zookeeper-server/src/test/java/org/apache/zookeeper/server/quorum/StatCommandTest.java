@@ -43,7 +43,7 @@ public class StatCommandTest {
     private ServerStats.Provider providerMock;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         outputWriter = new StringWriter();
         ServerCnxn serverCnxnMock = mock(ServerCnxn.class);
 

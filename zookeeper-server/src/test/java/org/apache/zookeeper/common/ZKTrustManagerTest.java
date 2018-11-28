@@ -83,7 +83,7 @@ public class ZKTrustManagerTest extends ZKTestCase {
     }
 
     @Before
-    public void setup() throws Exception {
+    public void setUp() throws Exception {
         mockX509ExtendedTrustManager = mock(X509ExtendedTrustManager.class);
 
         mockInetAddress = mock(InetAddress.class);

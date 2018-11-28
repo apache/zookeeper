@@ -79,7 +79,7 @@ public class QuorumKerberosAuthTest extends KerberosSecurityTestcase {
     }
 
     @AfterClass
-    public static void cleanup() {
+    public static void tearDownJaas() throws Exception {
         if(keytabFile != null){
             FileUtils.deleteQuietly(keytabFile);
         }

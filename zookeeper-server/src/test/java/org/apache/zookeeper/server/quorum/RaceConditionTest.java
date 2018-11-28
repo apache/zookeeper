@@ -89,7 +89,7 @@ public class RaceConditionTest extends QuorumPeerTestBase {
     }
 
     @After
-    public void tearDown() {
+    public void tearDown() throws Exception {
         // stop all severs
         if (null != mt) {
             for (int i = 0; i < SERVER_COUNT; i++) {

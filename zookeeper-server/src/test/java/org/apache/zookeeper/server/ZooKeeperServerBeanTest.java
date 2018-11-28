@@ -37,13 +37,13 @@ import org.junit.Test;
 
 public class ZooKeeperServerBeanTest {
     @Before
-    public void setup() {
+    public void setUp() throws Exception {
         System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY,
                 "org.apache.zookeeper.server.NettyServerCnxnFactory");
     }
 
     @After
-    public void teardown() throws Exception {
+    public void tearDown() throws Exception {
         System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
     }
 

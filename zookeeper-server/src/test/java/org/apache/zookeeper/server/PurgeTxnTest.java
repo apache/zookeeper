@@ -57,7 +57,7 @@ public class PurgeTxnTest extends ZKTestCase {
     private File tmpDir;
 
     @After
-    public void teardown() {
+    public void tearDown() throws Exception {
         if (null != tmpDir) {
             ClientBase.recursiveDelete(tmpDir);
         }

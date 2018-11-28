@@ -65,7 +65,7 @@ public class QuorumDigestAuthTest extends QuorumAuthTestBase {
     }
 
     @AfterClass
-    public static void cleanup(){
+    public static void tearDownJaas() throws Exception {
         cleanupJaasConfig();
     }
 

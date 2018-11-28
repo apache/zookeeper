@@ -156,7 +156,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
             .withLookingForStuckThread(true).build();
 
     @Before
-    public void setup() throws Exception {
+    public void setUp() throws Exception {
         ClientBase.setupTestEnv();
 
         tmpDir = createTmpDir().getAbsolutePath();
@@ -394,7 +394,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
     }
 
     @After
-    public void cleanUp() throws Exception {
+    public void tearDown() throws Exception {
         clearSSLSystemProperties();
         if (q1 != null) {
             q1.shutdown();

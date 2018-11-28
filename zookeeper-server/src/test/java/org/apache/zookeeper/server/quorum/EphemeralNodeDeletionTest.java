@@ -166,7 +166,7 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
     }
 
     @After
-    public void tearDown() {
+    public void tearDown() throws Exception {
         // stop all severs
         for (int i = 0; i < mt.length; i++) {
             try {

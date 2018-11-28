@@ -50,7 +50,7 @@ public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
     private MainThread[] mt;
 
     @Before
-    public void setup() {
+    public void setUp() throws Exception {
         System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest",
                 "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);
         QuorumPeerConfig.setReconfigEnabled(true);
@@ -191,7 +191,7 @@ public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
     }
 
     @After
-    public void tearDown() {
+    public void tearDown() throws Exception {
         // stop all severs
         if (null != mt) {
             for (int i = 0; i < mt.length; i++) {

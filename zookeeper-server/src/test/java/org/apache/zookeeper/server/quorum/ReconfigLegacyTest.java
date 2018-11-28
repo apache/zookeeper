@@ -43,7 +43,7 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
     private static final int SERVER_COUNT = 3;
 
     @Before
-    public void setup() {
+    public void setUp() throws Exception {
         ClientBase.setupTestEnv();
         QuorumPeerConfig.setReconfigEnabled(true);
         System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest",

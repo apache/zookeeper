@@ -77,7 +77,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     }
 
     @After
-    public void cleanUp() {
+    public void tearDown() throws Exception {
         x509TestContext.clearSystemProperties(x509Util);
         System.clearProperty(x509Util.getSslOcspEnabledProperty());
         System.clearProperty(x509Util.getSslCrlEnabledProperty());

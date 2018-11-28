@@ -33,7 +33,7 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 public class NettyNettySuiteBase {
     @BeforeClass
-    public static void setUp() {
+    public static void setUpNetty() throws Exception {
         System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY,
                 NettyServerCnxnFactory.class.getName());
         System.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET,
@@ -42,7 +42,7 @@ public class NettyNettySuiteBase {
     }
 
     @AfterClass
-    public static void tearDown() {
+    public static void tearDownNetty() throws Exception {
         System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
         System.clearProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET);
     }

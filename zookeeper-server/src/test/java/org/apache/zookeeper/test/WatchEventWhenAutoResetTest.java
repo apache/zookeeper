@@ -90,7 +90,7 @@ public class WatchEventWhenAutoResetTest extends ZKTestCase {
     }
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         System.setProperty("zookeeper.admin.enableServer", "false");
     }
 

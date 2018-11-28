@@ -66,7 +66,7 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
     int followerA;
 
     @Before
-    public void setup() throws Exception {
+    public void setUp() throws Exception {
         LOG.info("Start up a 3 server quorum");
         final int ENSEMBLE_SERVERS = 3;
         final int clientPorts[] = new int[ENSEMBLE_SERVERS];

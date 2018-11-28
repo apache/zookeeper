@@ -41,7 +41,8 @@ public class BufferSizeTest extends ClientBase {
     private ZooKeeper zk;
 
     @Before
-    public void setMaxBuffer() throws IOException, InterruptedException {
+    public void setUp() throws Exception {
+        super.setUp();
         System.setProperty("jute.maxbuffer", "" + TEST_MAXBUFFER);
         assertEquals("Can't set jute.maxbuffer!", TEST_MAXBUFFER, BinaryInputArchive.maxBuffer);
         zk = createClient();

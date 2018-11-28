@@ -33,14 +33,14 @@ public class NIOServerCnxnFactoryTest {
     private NIOServerCnxnFactory factory;
 
     @Before
-    public void setUp() throws IOException {
+    public void setUp() throws Exception {
         listenAddress = new InetSocketAddress(PortAssignment.unique());
         factory = new NIOServerCnxnFactory();
         factory.configure(listenAddress, 100);
     }
 
     @After
-    public void tearDown() {
+    public void tearDown() throws Exception {
         if (factory != null) {
             factory.shutdown();
         }

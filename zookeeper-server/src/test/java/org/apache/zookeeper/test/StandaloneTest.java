@@ -44,12 +44,12 @@ import org.junit.Test;
 /**
  * Standalone server tests.
  */
-public class StandaloneTest extends QuorumPeerTestBase implements Watcher{
+public class StandaloneTest extends QuorumPeerTestBase implements Watcher {
     protected static final Logger LOG =
         LoggerFactory.getLogger(StandaloneTest.class);
 
     @Before
-    public void setup() {
+    public void setUp() throws Exception {
         System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest",
                 "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);
         QuorumPeerConfig.setReconfigEnabled(true);

@@ -27,16 +27,19 @@ import static org.junit.Assert.assertEquals;
 public class CommandResponseTest extends ZKTestCase {
     private CommandResponse r;
 
-    @Before public void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         r = new CommandResponse("makemeasandwich", "makeityourself");
     }
 
-    @Test public void testGetters() {
+    @Test
+    public void testGetters() {
         assertEquals("makemeasandwich", r.getCommand());
         assertEquals("makeityourself", r.getError());
     }
 
-    @Test public void testMap() {
+    @Test
+    public void testMap() {
         r.put("missing", "sudo");
         Map<String, Object> m = new HashMap<String, Object>();
         m.put("origin", "xkcd");

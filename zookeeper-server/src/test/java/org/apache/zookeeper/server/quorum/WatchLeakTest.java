@@ -83,7 +83,7 @@ public class WatchLeakTest {
     private final boolean sessionTimedout;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         System.setProperty("zookeeper.admin.enableServer", "false");
     }
 

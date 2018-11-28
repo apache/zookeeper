@@ -58,9 +58,9 @@ public class CnxManagerTest extends ZKTestCase {
     File peerTmpdir[];
     int peerQuorumPort[];
     int peerClientPort[];
+
     @Before
     public void setUp() throws Exception {
-
         this.count = 3;
         this.peers = new HashMap<Long,QuorumServer>(count);
         peerTmpdir = new File[count];

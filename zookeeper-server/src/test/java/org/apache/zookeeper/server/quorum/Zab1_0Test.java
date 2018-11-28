@@ -81,7 +81,7 @@ public class Zab1_0Test extends ZKTestCase {
             System.getProperty("test.data.dir", "build/test/data"));
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         System.setProperty("zookeeper.admin.enableServer", "false");
     }
 

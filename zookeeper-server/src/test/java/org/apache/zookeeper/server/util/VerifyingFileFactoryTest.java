@@ -33,7 +33,7 @@ public class VerifyingFileFactoryTest extends ZKTestCase {
     private Logger log;
 
     @Before
-    public void setUp(){
+    public void setUp() throws Exception {
         log = LoggerFactory.getLogger("TODO: Mock Logging");
     }
 

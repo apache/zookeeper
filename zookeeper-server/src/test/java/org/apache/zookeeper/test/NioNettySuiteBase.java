@@ -31,14 +31,14 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 public class NioNettySuiteBase {
     @BeforeClass
-    public static void setUp() {
+    public static void setUpNetty() throws Exception {
         System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY,
                 NettyServerCnxnFactory.class.getName());
         System.setProperty("zookeeper.admin.enableServer", "false");
     }
 
     @AfterClass
-    public static void tearDown() {
+    public static void tearDownNetty() throws Exception {
         System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
     }
 }

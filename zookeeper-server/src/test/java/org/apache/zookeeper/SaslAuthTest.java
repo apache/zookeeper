@@ -43,7 +43,7 @@ import org.junit.Test;
 
 public class SaslAuthTest extends ClientBase {
     @BeforeClass
-    public static void init() {
+    public static void setUpSasl() throws Exception {
         System.setProperty("zookeeper.authProvider.1",
                 "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
         try {
@@ -85,7 +85,7 @@ public class SaslAuthTest extends ClientBase {
     }
 
     @AfterClass
-    public static void clean() {
+    public static void tearDownSasl() throws Exception {
         System.clearProperty("zookeeper.authProvider.1");
         System.clearProperty("java.security.auth.login.config");
     }

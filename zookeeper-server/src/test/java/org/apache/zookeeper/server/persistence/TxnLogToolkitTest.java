@@ -48,7 +48,7 @@ public class TxnLogToolkitTest {
     private File mySnapDir;
 
     @Before
-    public void setUp() throws IOException {
+    public void setUp() throws Exception {
         System.setOut(new PrintStream(outContent));
         System.setErr(new PrintStream(errContent));
         File snapDir = new File(testData, "invalidsnap");
@@ -57,7 +57,7 @@ public class TxnLogToolkitTest {
     }
 
     @After
-    public void tearDown() throws IOException {
+    public void tearDown() throws Exception {
         System.setOut(System.out);
         System.setErr(System.err);
         mySnapDir.setWritable(true);

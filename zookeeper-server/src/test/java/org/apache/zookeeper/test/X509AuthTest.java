@@ -54,7 +54,7 @@ public class X509AuthTest extends ZKTestCase {
     private static TestCertificate unknownCert;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         System.setProperty("zookeeper.X509AuthenticationProvider.superUser",
                 "CN=SUPER");
         System.setProperty("zookeeper.ssl.keyManager",

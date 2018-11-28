@@ -80,7 +80,7 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
     }
 
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUpPrincipals() throws Exception {
         // create keytab
         keytabFile = new File(KerberosTestUtils.getKeytabFile());
 
@@ -104,7 +104,7 @@ public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
     }
 
     @AfterClass
-    public static void cleanup() {
+    public static void tearDownJaas() throws Exception {
         if(keytabFile != null){
             FileUtils.deleteQuietly(keytabFile);
         }

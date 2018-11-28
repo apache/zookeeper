@@ -28,12 +28,12 @@ import static org.hamcrest.CoreMatchers.equalTo;
 
 public class EphemeralTypeTest {
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         System.setProperty(EphemeralType.EXTENDED_TYPES_ENABLED_PROPERTY, "true");
     }
 
     @After
-    public void tearDown() {
+    public void tearDown() throws Exception {
         System.clearProperty(EphemeralType.EXTENDED_TYPES_ENABLED_PROPERTY);
     }
 

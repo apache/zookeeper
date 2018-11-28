@@ -43,7 +43,7 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
     private QuorumUtil qu;
 
     @Before
-    public void setup() {
+    public void setUp() throws Exception {
         QuorumPeerConfig.setReconfigEnabled(true);
         System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest",
                 "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);

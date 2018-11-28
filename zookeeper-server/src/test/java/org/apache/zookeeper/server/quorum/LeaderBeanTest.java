@@ -60,7 +60,7 @@ public class LeaderBeanTest {
     private QuorumPeer qp;
 
     @Before
-    public void setUp() throws IOException, X509Exception {
+    public void setUp() throws Exception {
         qp = new QuorumPeer();
         long myId = qp.getId();
 
@@ -89,7 +89,7 @@ public class LeaderBeanTest {
     }
 
     @After
-    public void tearDown() throws IOException {
+    public void tearDown() throws Exception {
         fileTxnSnapLog.close();
     }
 

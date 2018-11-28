@@ -36,14 +36,14 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class JettyAdminServerTest extends ZKTestCase{
+public class JettyAdminServerTest extends ZKTestCase {
     protected static final Logger LOG = LoggerFactory.getLogger(JettyAdminServerTest.class);
 
     private static final String URL_FORMAT = "http://localhost:%d/commands";
     private static final int jettyAdminPort = PortAssignment.unique();
 
     @Before
-    public void enableServer() {
+    public void setUp() throws Exception {
         // Override setting in ZKTestCase
         System.setProperty("zookeeper.admin.enableServer", "true");
         System.setProperty("zookeeper.admin.serverPort", "" + jettyAdminPort);

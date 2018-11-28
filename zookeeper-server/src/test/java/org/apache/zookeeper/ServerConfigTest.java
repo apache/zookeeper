@@ -33,7 +33,7 @@ public class ServerConfigTest {
     private ServerConfig serverConfig;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         serverConfig = new ServerConfig();
     }
 

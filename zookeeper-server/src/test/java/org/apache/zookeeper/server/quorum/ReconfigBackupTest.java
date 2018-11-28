@@ -60,7 +60,7 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
     }
 
     @Before
-    public void setup() {
+    public void setUp() throws Exception {
         ClientBase.setupTestEnv();
         System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest",
                 "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);

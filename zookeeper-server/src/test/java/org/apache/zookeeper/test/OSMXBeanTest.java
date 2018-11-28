@@ -35,7 +35,7 @@ public class OSMXBeanTest extends ZKTestCase {
     protected static final Logger LOG = LoggerFactory.getLogger(OSMXBeanTest.class);
 
     @Before
-    public void initialize() {
+    public void setUp() throws Exception {
         this.osMbean = new OSMXBean();
         Assert.assertNotNull("Could not initialize OSMXBean object!", osMbean);
     }

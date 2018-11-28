@@ -55,14 +55,14 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ReconfigTest extends ZKTestCase implements DataCallback{
+public class ReconfigTest extends ZKTestCase implements DataCallback {
     private static final Logger LOG = LoggerFactory
             .getLogger(ReconfigTest.class);
 
     private QuorumUtil qu;
 
     @Before
-    public void setup() {
+    public void setUp() throws Exception {
         System.setProperty("zookeeper.DigestAuthenticationProvider.superDigest",
                 "super:D/InIHSb7yEEbrWz8b9l71RjZJU="/* password is 'test'*/);
         QuorumPeerConfig.setReconfigEnabled(true);

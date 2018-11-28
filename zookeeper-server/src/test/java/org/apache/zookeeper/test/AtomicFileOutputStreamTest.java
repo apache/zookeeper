@@ -42,12 +42,12 @@ public class AtomicFileOutputStreamTest extends ZKTestCase {
     private File dstFile;
 
     @Before
-    public void setupTestDir() throws IOException {
+    public void setUp() throws Exception {
         testDir = ClientBase.createEmptyTestDir();
         dstFile = new File(testDir, "test.txt");
     }
     @After
-    public void cleanupTestDir() throws IOException {
+    public void tearDown() throws Exception {
         ClientBase.recursiveDelete(testDir);
     }
 

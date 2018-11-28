@@ -83,7 +83,7 @@ public class CommitProcessorTest extends ZKTestCase {
     ArrayList<TestClientThread> testClients =
         new ArrayList<TestClientThread>();
 
-    public void setUp(int numCommitThreads, int numClientThreads)
+    public void prepareTest(int numCommitThreads, int numClientThreads)
             throws Exception {
         System.setProperty(
             CommitProcessor.ZOOKEEPER_COMMIT_PROC_NUM_WORKER_THREADS,
@@ -169,7 +169,7 @@ public class CommitProcessorTest extends ZKTestCase {
 
     @Test
     public void testNoCommitWorkers() throws Exception {
-        setUp(0, 10);
+        prepareTest(0, 10);
         synchronized(this) {
             wait(5000);
         }
@@ -179,7 +179,7 @@ public class CommitProcessorTest extends ZKTestCase {
 
     @Test
     public void testOneCommitWorker() throws Exception {
-        setUp(1, 10);
+        prepareTest(1, 10);
         synchronized(this) {
             wait(5000);
         }
@@ -189,7 +189,7 @@ public class CommitProcessorTest extends ZKTestCase {
 
     @Test
     public void testManyCommitWorkers() throws Exception {
-        setUp(10, 10);
+        prepareTest(10, 10);
         synchronized(this) {
             wait(5000);
         }

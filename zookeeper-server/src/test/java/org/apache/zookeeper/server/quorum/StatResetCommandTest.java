@@ -42,7 +42,7 @@ public class StatResetCommandTest {
     private ServerStats serverStats;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         outputWriter = new StringWriter();
         ServerCnxn serverCnxnMock = mock(ServerCnxn.class);
 
