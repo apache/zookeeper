@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.jute.Record;
 import org.apache.zookeeper.ZooDefs.OpCode;
@@ -41,11 +42,13 @@ public class Follower extends Learner{
     private long lastQueued;
     // This is the same object as this.zk, but we cache the downcast op
     final FollowerZooKeeperServer fzk;
-    
+    private AtomicBoolean reconnect;
+
     Follower(QuorumPeer self,FollowerZooKeeperServer zk) {
         this.self = self;
         this.zk=zk;
         this.fzk = zk;
+        reconnect = new AtomicBoolean();
     }
 
     @Override
@@ -56,6 +59,10 @@ public class Follower extends Learner{
         sb.append(" pendingRevalidationCount:")
             .append(pendingRevalidations.size());
         return sb.toString();
+    }
+
+    public void disableReconnect() {
+        reconnect.set(false);
     }
 
     /**
@@ -72,10 +79,11 @@ public class Follower extends Learner{
         self.start_fle = 0;
         self.end_fle = 0;
         fzk.registerJMX(new FollowerBean(this, zk), self.jmxLocalPeerBean);
-        boolean reconnect = true;
-        while (reconnect) {
-            try {
-                QuorumServer leaderServer = findLeader();
+        reconnect.set(true);
+
+        try {
+            QuorumServer leaderServer = findLeader();
+            while (reconnect.get()) {
                 try {
                     connectToLeader(leaderServer.addr, leaderServer.hostname);
                     long newEpochZxid = registerWithLeader(Leader.FOLLOWERINFO);
@@ -95,12 +103,12 @@ public class Follower extends Learner{
                         readPacket(qp);
                         processPacket(qp);
                     }
-                    reconnect = false;
+                    reconnect.set(false);
                 } catch (SocketException | InterruptedIOException ignored) {
                     zk.unregisterJMX();
                     LOG.warn("Error when following the leader, reconnecting");
                 } catch (Exception e) {
-                    reconnect = false;
+                    reconnect.set(false);
                     LOG.warn("Exception when following the leader", e);
                     try {
                         sock.close();
@@ -111,9 +119,9 @@ public class Follower extends Learner{
                     // clear pending revalidations
                     pendingRevalidations.clear();
                 }
-            } finally {
-                zk.unregisterJMX((Learner) this);
             }
+        } finally {
+            zk.unregisterJMX((Learner) this);
         }
     }
 

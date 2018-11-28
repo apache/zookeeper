@@ -6,27 +6,24 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class MultipleAddresses {
 
-    private List<InetSocketAddress> addresses;
+    private Set<InetSocketAddress> addresses;
 
     public MultipleAddresses() {
-        addresses = new LinkedList<>();
+        addresses = new HashSet<>();
     }
 
     public MultipleAddresses(List<InetSocketAddress> addresses) {
-        addresses = new LinkedList<>();
+        this.addresses = new HashSet<>();
         this.addresses.addAll(addresses);
     }
 
     public MultipleAddresses(InetSocketAddress address) {
-        addresses = new LinkedList<>();
+        addresses = new HashSet<>();
         addresses.add(address);
     }
 
@@ -60,26 +57,20 @@ public class MultipleAddresses {
     }
 
     public InetSocketAddress getValidAddress() {
-        //InetSocketAddress wrongAddress = null;
 
         for(InetSocketAddress addr : addresses) {
             try {
                 if (addr.getAddress().isReachable(100))
                     return addr;
-            } catch (NullPointerException e) {
-                //wrongAddress = addr;
-            } catch (IOException ignored) {
+            } catch (NullPointerException | IOException e) {
             }
         }
-
-//        if(wrongAddress != null)
-//            return wrongAddress;
 
         throw new RuntimeNoReachableHostException("No valid address among " + addresses);
     }
 
     public void recreateSocketAddresses() {
-        List<InetSocketAddress> temp = new LinkedList<>();
+        Set<InetSocketAddress> temp = new HashSet<>();
 
         for(InetSocketAddress addr : addresses) {
             try {

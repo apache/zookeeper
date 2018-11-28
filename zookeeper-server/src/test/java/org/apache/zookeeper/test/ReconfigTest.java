@@ -138,12 +138,13 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         String configStr = new String(config);
         if (joiningServers != null) {
             for (String joiner : joiningServers) {
-               Assert.assertTrue(configStr.contains(joiner));
+                Assert.assertTrue("Config:<" + configStr + ">\n" + joiner, configStr.contains(joiner));
             }
         }
         if (leavingServers != null) {
             for (String leaving : leavingServers)
-                Assert.assertFalse(configStr.contains("server.".concat(leaving)));
+                Assert.assertFalse("Config:<" + configStr + ">\n" + leaving,
+                        configStr.contains("server.".concat(leaving)));
         }
 
         return configStr;
