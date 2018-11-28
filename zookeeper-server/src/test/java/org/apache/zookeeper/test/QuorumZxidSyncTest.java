@@ -36,6 +36,7 @@ public class QuorumZxidSyncTest extends ZKTestCase {
 
     @Before
     public void setUp() throws Exception {
+        System.out.println("QuorumZxidSyncTest#setUp()");
         qb.setUp();
     }
 
@@ -44,6 +45,7 @@ public class QuorumZxidSyncTest extends ZKTestCase {
      */
     @Test
     public void testBehindLeader() throws Exception {
+        System.out.println("QuorumZxidSyncTest#testBehindLeader() - start");
         // crank up the epoch numbers
         ClientBase.waitForServerUp(qb.hostPort, 10000);
         ClientBase.waitForServerUp(qb.hostPort, 10000);
@@ -53,9 +55,11 @@ public class QuorumZxidSyncTest extends ZKTestCase {
         zk.create("/0", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.close();
         qb.shutdownServers();
+        System.out.println("QuorumZxidSyncTest#testBehindLeader() - shutdown #1");
         qb.startServers();
         ClientBase.waitForServerUp(qb.hostPort, 10000);
         qb.shutdownServers();
+        System.out.println("QuorumZxidSyncTest#testBehindLeader() - shutdown #2");
         qb.startServers();
         ClientBase.waitForServerUp(qb.hostPort, 10000);
         zk = new ZooKeeper(qb.hostPort, 10000, new Watcher() {
@@ -64,6 +68,7 @@ public class QuorumZxidSyncTest extends ZKTestCase {
         zk.create("/1", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.close();
         qb.shutdownServers();
+        System.out.println("QuorumZxidSyncTest#testBehindLeader() - shutdown #3");
         qb.startServers();
         ClientBase.waitForServerUp(qb.hostPort, 10000);
         qb.shutdownServers();
@@ -75,6 +80,7 @@ public class QuorumZxidSyncTest extends ZKTestCase {
         zk.create("/2", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.close();
         qb.shutdownServers();
+        System.out.println("QuorumZxidSyncTest#testBehindLeader() - shutdown #4");
         deleteFiles(qb.s1dir);
         deleteFiles(qb.s2dir);
         deleteFiles(qb.s3dir);
@@ -89,6 +95,7 @@ public class QuorumZxidSyncTest extends ZKTestCase {
         String hostPort = "127.0.0.1:" + qb.s5.getClientPort();
         Assert.assertFalse("Servers came up, but shouldn't have since it's ahead of leader",
                 ClientBase.waitForServerUp(hostPort, 10000));
+        System.out.println("QuorumZxidSyncTest#testBehindLeader() - stop");
     }
 
     private void deleteFiles(File f) {
@@ -104,6 +111,7 @@ public class QuorumZxidSyncTest extends ZKTestCase {
      */
     @Test
     public void testLateLogs() throws Exception {
+        System.out.println("QuorumZxidSyncTest#testLateLogs() - start");
         // crank up the epoch numbers
         ClientBase.waitForServerUp(qb.hostPort, 10000);
         ClientBase.waitForServerUp(qb.hostPort, 10000);
@@ -113,9 +121,11 @@ public class QuorumZxidSyncTest extends ZKTestCase {
         zk.create("/0", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.close();
         qb.shutdownServers();
+        System.out.println("QuorumZxidSyncTest#testLateLogs() - shutdown #1");
         qb.startServers();
         ClientBase.waitForServerUp(qb.hostPort, 10000);
         qb.shutdownServers();
+        System.out.println("QuorumZxidSyncTest#testLateLogs() - shutdown #2");
         qb.startServers();
         ClientBase.waitForServerUp(qb.hostPort, 10000);
         zk = new ZooKeeper(qb.hostPort, 10000, new Watcher() {
@@ -124,9 +134,11 @@ public class QuorumZxidSyncTest extends ZKTestCase {
         zk.create("/1", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.close();
         qb.shutdownServers();
+        System.out.println("QuorumZxidSyncTest#testLateLogs() - shutdown #3");
         qb.startServers();
         ClientBase.waitForServerUp(qb.hostPort, 10000);
         qb.shutdownServers();
+        System.out.println("QuorumZxidSyncTest#testLateLogs() - shutdown #4");
         deleteLogs(qb.s1dir);
         deleteLogs(qb.s2dir);
         deleteLogs(qb.s3dir);
@@ -140,6 +152,7 @@ public class QuorumZxidSyncTest extends ZKTestCase {
         zk.create("/2", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.close();
         qb.shutdownServers();
+        System.out.println("QuorumZxidSyncTest#testLateLogs() - shutdown #5");
         qb.startServers();
         ClientBase.waitForServerUp(qb.hostPort, 10000);
         zk = new ZooKeeper(qb.hostPort, 10000, new Watcher() {
@@ -153,6 +166,7 @@ public class QuorumZxidSyncTest extends ZKTestCase {
         }
         zk.close();
         Assert.assertTrue("Didn't see /2 (went back in time)", saw2);
+        System.out.println("QuorumZxidSyncTest#testLateLogs() - start");
     }
 
     private void deleteLogs(File f) {
@@ -166,6 +180,8 @@ public class QuorumZxidSyncTest extends ZKTestCase {
 
     @After
     public void tearDown() throws Exception {
+        System.out.println("QuorumZxidSyncTest#tearDown() - start");
         qb.tearDown();
+        System.out.println("QuorumZxidSyncTest#tearDown() - stop");
     }
 }
