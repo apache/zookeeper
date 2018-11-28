@@ -1300,7 +1300,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
           <syspropertyset refid="junit.sys.properties" />
           <sysproperty key="test.junit.threads" value="${test.junit.threads}" />
           <classpath refid="junit.classpath" />
-          <formatter type="brief" usefile="false" />
+          <formatter classname="com.undefined.testing.OneLinerFormatter" usefile="false" />
           <batchtest todir="${test.log.dir}" if="quicktest">
             <fileset refid="quicktest.files" />
             <fileset refid="jutetest.files" />
