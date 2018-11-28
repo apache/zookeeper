@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -24,6 +24,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 
 // TODO: introduce JuteTestCase as in ZKTestCase
 public class BinaryInputArchiveTest {
@@ -43,7 +45,7 @@ public class BinaryInputArchiveTest {
         }
     }
 
-    void checkWriterAndReader(TestWriter writer, TestReader reader) {
+    private void checkWriterAndReader(TestWriter writer, TestReader reader) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         BinaryOutputArchive oa = BinaryOutputArchive.getArchive(baos);
         try {
@@ -129,19 +131,15 @@ public class BinaryInputArchiveTest {
 
     @Test
     public void testBuffer() {
-        try {
-            final byte[] expected = "hello-world".getBytes("UTF-8");
-            final String tag = "tag1";
-            checkWriterAndReader(
-                    (oa) -> oa.writeBuffer(expected, tag),
-                    (ia) -> {
-                        byte [] actual = ia.readBuffer(tag);
-                        Assert.assertArrayEquals(expected, actual);
-                    }
-            );
-        } catch (UnsupportedEncodingException e) {
-            Assert.fail("utf-8 encoding not supported " + e.getMessage());
-        }
+        final byte[] expected = "hello-world".getBytes(StandardCharsets.UTF_8);
+        final String tag = "tag1";
+        checkWriterAndReader(
+                (oa) -> oa.writeBuffer(expected, tag),
+                (ia) -> {
+                    byte [] actual = ia.readBuffer(tag);
+                    Assert.assertArrayEquals(expected, actual);
+                }
+        );
     }
 
 }
