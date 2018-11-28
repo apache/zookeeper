@@ -701,11 +701,6 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     public void reconfigure(InetSocketAddress addr) {
         ServerSocketChannel oldSS = ss;        
         try {
-            this.ss = ServerSocketChannel.open();
-            ss.socket().setReuseAddress(true);
-            LOG.info("binding to port " + addr);
-            ss.socket().bind(addr);
-            ss.configureBlocking(false);
             acceptThread.setReconfiguring();
             tryClose(oldSS);
             acceptThread.wakeupSelector();
@@ -716,6 +711,11 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                             e.getMessage());
                 Thread.currentThread().interrupt();
             }
+            this.ss = ServerSocketChannel.open();
+            ss.socket().setReuseAddress(true);
+            LOG.info("binding to port " + addr);
+            ss.socket().bind(addr);
+            ss.configureBlocking(false);
             acceptThread = new AcceptThread(ss, addr, selectorThreads);
             acceptThread.start();
         } catch(IOException e) {
@@ -884,13 +884,21 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         }
 
         if (acceptThread != null) {
-            acceptThread.wakeupSelector();
+            if (acceptThread.isAlive()) {
+                acceptThread.wakeupSelector();
+            } else {
+                acceptThread.closeSelector();
+            }
         }
         if (expirerThread != null) {
             expirerThread.interrupt();
         }
         for (SelectorThread thread : selectorThreads) {
-            thread.wakeupSelector();
+            if (thread.isAlive()) {
+                thread.wakeupSelector();
+            } else {
+                thread.closeSelector();
+            }
         }
         if (workerPool != null) {
             workerPool.stop();

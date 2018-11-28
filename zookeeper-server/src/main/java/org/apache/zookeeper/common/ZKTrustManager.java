@@ -85,7 +85,7 @@ public class ZKTrustManager extends X509ExtendedTrustManager {
 
     @Override
     public void checkClientTrusted(X509Certificate[] chain, String authType, SSLEngine engine) throws CertificateException {
-        x509ExtendedTrustManager.checkServerTrusted(chain, authType, engine);
+        x509ExtendedTrustManager.checkClientTrusted(chain, authType, engine);
         if (clientHostnameVerificationEnabled) {
             try {
                 performHostVerification(InetAddress.getByName(engine.getPeerHost()), chain[0]);
