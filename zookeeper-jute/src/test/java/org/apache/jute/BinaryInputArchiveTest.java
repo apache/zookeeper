@@ -20,10 +20,7 @@ package org.apache.jute;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 
 // TODO: introduce JuteTestCase as in ZKTestCase
 public class BinaryInputArchiveTest {
@@ -61,7 +58,7 @@ public class BinaryInputArchiveTest {
     }
 
     @Test
-    public void testWriteInt() {
+    public void testInt() {
         final int expected = 4;
         final String tag = "tag1";
         checkWriterAndReader(
@@ -74,7 +71,7 @@ public class BinaryInputArchiveTest {
     }
 
     @Test
-    public void testWriteBool() {
+    public void testBool() {
         final boolean expected = false;
         final String tag = "tag1";
         checkWriterAndReader(
@@ -87,7 +84,7 @@ public class BinaryInputArchiveTest {
     }
 
     @Test
-    public void testWriteString() {
+    public void testString() {
         final String expected = "hello";
         final String tag = "tag1";
         checkWriterAndReader(
@@ -100,7 +97,7 @@ public class BinaryInputArchiveTest {
     }
 
     @Test
-    public void testWriteFloat() {
+    public void testFloat() {
         final float expected = 3.14159f;
         final String tag = "tag1";
         final float delta = 1e-10f;
@@ -114,7 +111,7 @@ public class BinaryInputArchiveTest {
     }
 
     @Test
-    public void testWriteDouble() {
+    public void testDouble() {
         final double expected = 3.14159f;
         final String tag = "tag1";
         final float delta = 1e-20f;
@@ -126,4 +123,22 @@ public class BinaryInputArchiveTest {
             }
         );
     }
+
+    @Test
+    public void testBuffer() {
+        try {
+            final byte[] expected = "hello-world".getBytes("UTF-8");
+            final String tag = "tag1";
+            checkWriterAndReader(
+                    (oa) -> oa.writeBuffer(expected, tag),
+                    (ia) -> {
+                        byte [] actual = ia.readBuffer(tag);
+                        Assert.assertArrayEquals(expected, actual);
+                    }
+            );
+        } catch (UnsupportedEncodingException e) {
+            Assert.fail("utf-8 encoding not supported");
+        }
+    }
+
 }
