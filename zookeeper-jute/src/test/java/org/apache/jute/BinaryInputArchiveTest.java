@@ -73,11 +73,11 @@ public class BinaryInputArchiveTest {
         final int expected = 4;
         final String tag = "tag1";
         checkWriterAndReader(
-                (oa) -> { oa.writeInt(expected, tag); },
-                (ia) -> {
-                    int actual = ia.readInt(tag);
-                    Assert.assertEquals(expected, actual);
-                }
+            (oa) -> oa.writeInt(expected, tag),
+            (ia) -> {
+                int actual = ia.readInt(tag);
+                Assert.assertEquals(expected, actual);
+            }
         );
     }
 
@@ -86,13 +86,11 @@ public class BinaryInputArchiveTest {
         final boolean expected = false;
         final String tag = "tag1";
         checkWriterAndReader(
-                (oa) -> {
-                        oa.writeBool(expected, tag);
-                },
-                (ia) -> {
-                        boolean actual = ia.readBool(tag);
-                        Assert.assertEquals(expected, actual);
-                }
+            (oa) -> oa.writeBool(expected, tag),
+            (ia) -> {
+                    boolean actual = ia.readBool(tag);
+                    Assert.assertEquals(expected, actual);
+            }
         );
     }
 
@@ -101,11 +99,11 @@ public class BinaryInputArchiveTest {
         final String expected = "hello";
         final String tag = "tag1";
         checkWriterAndReader(
-                (oa) -> { oa.writeString(expected, tag); },
-                (ia) -> {
-                    String actual = ia.readString(tag);
-                    Assert.assertEquals(expected, actual);
-                }
+            (oa) -> oa.writeString(expected, tag),
+            (ia) -> {
+                String actual = ia.readString(tag);
+                Assert.assertEquals(expected, actual);
+            }
         );
     }
 
@@ -115,13 +113,11 @@ public class BinaryInputArchiveTest {
         final String tag = "tag1";
         final float delta = 1e-10f;
         checkWriterAndReader(
-                (oa) -> {
-                        oa.writeFloat(expected, tag);
-                },
-                (ia) -> {
-                        float actual = ia.readFloat(tag);
-                        Assert.assertEquals(expected, actual, delta);
-                }
+            (oa) -> oa.writeFloat(expected, tag),
+            (ia) -> {
+                    float actual = ia.readFloat(tag);
+                    Assert.assertEquals(expected, actual, delta);
+            }
         );
     }
 
@@ -131,13 +127,11 @@ public class BinaryInputArchiveTest {
         final String tag = "tag1";
         final float delta = 1e-20f;
         checkWriterAndReader(
-                (oa) -> {
-                        oa.writeDouble(expected, tag);
-                },
-                (ia) -> {
-                        double actual = ia.readDouble(tag);
-                        Assert.assertEquals(expected, actual, delta);
-                }
+            (oa) -> oa.writeDouble(expected, tag),
+            (ia) -> {
+                    double actual = ia.readDouble(tag);
+                    Assert.assertEquals(expected, actual, delta);
+            }
         );
     }
 }
