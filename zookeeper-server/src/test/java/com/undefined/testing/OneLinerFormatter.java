@@ -125,6 +125,8 @@ public class OneLinerFormatter implements JUnitResultFormatter {
             return; // Quick return - no output do nothing.
         }
         StringBuffer sb = new StringBuffer(StringUtils.LINE_SEP);
+        sb.append("USING ONELINERTESTFORMATTER");
+        sb.append(StringUtils.LINE_SEP);
         sb.append("----------------------------------------------------------");
         sb.append(StringUtils.LINE_SEP);
         sb.append("Testsuite: ");
