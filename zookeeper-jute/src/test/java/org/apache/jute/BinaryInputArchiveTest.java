@@ -20,7 +20,10 @@ package org.apache.jute;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 // TODO: introduce JuteTestCase as in ZKTestCase
 public class BinaryInputArchiveTest {
@@ -137,7 +140,7 @@ public class BinaryInputArchiveTest {
                     }
             );
         } catch (UnsupportedEncodingException e) {
-            Assert.fail("utf-8 encoding not supported");
+            Assert.fail("utf-8 encoding not supported " + e.getMessage());
         }
     }
 
