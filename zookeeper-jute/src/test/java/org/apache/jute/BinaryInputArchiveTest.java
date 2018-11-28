@@ -43,14 +43,6 @@ public class BinaryInputArchiveTest {
         }
     }
 
-    public interface TestWriter {
-        void write(OutputArchive oa) throws IOException;
-    }
-
-    public interface TestReader {
-        void read(InputArchive ia) throws IOException;
-    }
-
     void checkWriterAndReader(TestWriter writer, TestReader reader) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         BinaryOutputArchive oa = BinaryOutputArchive.getArchive(baos);
