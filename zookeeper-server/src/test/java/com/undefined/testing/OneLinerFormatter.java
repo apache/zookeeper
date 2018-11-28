@@ -35,11 +35,12 @@ import org.apache.tools.ant.util.StringUtils;
 
 public class OneLinerFormatter implements JUnitResultFormatter {
 
-    private final String TAB_STR = "    ";
+    private final static String TAB_STR = "    ";
 
-    private final boolean showCausesLines = true;
     // (\w+\.)+(\w+)\((\w+).(?:\w+):(\d+)\)
-    private final Pattern traceLinePattern = Pattern.compile("(\\w+\\.)+(\\w+)\\((\\w+).(?:\\w+):(\\d+)\\)");
+    private final static Pattern traceLinePattern = Pattern.compile("(\\w+\\.)+(\\w+)\\((\\w+).(?:\\w+):(\\d+)\\)");
+
+    private final static boolean showCausesLines = true;
 
     /**
      * Where to write the log to.
@@ -97,7 +98,7 @@ public class OneLinerFormatter implements JUnitResultFormatter {
      * Sets the stream the formatter is supposed to write its results to.
      * @param out the output stream to write to
      */
-    public void setOutput(OutputStream out) {
+    public synchronized void setOutput(OutputStream out) {
         this.out = out;
         output = new PrintWriter(out);
     }
@@ -105,14 +106,14 @@ public class OneLinerFormatter implements JUnitResultFormatter {
     /**
      * @see JUnitResultFormatter#setSystemOutput(String)
      */
-    public void setSystemOutput(String out) {
+    public synchronized void setSystemOutput(String out) {
         systemOutput = out;
     }
 
     /**
      * @see JUnitResultFormatter#setSystemError(String)
      */
-    public void setSystemError(String err) {
+    public synchronized void setSystemError(String err) {
         systemError = err;
     }
 
@@ -120,7 +121,7 @@ public class OneLinerFormatter implements JUnitResultFormatter {
      * The whole testsuite started.
      * @param suite the test suite
      */
-    public void startTestSuite(JUnitTest suite) {
+    public synchronized void startTestSuite(JUnitTest suite) {
         if (output == null) {
             return; // Quick return - no output do nothing.
         }
@@ -138,7 +139,7 @@ public class OneLinerFormatter implements JUnitResultFormatter {
         output.flush();
     }
 
-    public String prefixLines(String prefix, String buffer) {
+    public final static String prefixLines(String prefix, String buffer) {
         String lines[] = buffer.split("\\r?\\n");
         return Arrays.asList(lines)
                 .stream()
@@ -151,7 +152,7 @@ public class OneLinerFormatter implements JUnitResultFormatter {
      * The whole testsuite ended.
      * @param suite the test suite
      */
-    public void endTestSuite(JUnitTest suite) {
+    public synchronized void endTestSuite(JUnitTest suite) {
         StringBuffer sb = new StringBuffer("Tests run: ");
         String runtimeName = " [" + ManagementFactory.getRuntimeMXBean().getName() + "] ";
         sb.append(suite.runCount());
@@ -208,7 +209,7 @@ public class OneLinerFormatter implements JUnitResultFormatter {
      * A test started.
      * @param test a test
      */
-    public void startTest(Test test) {
+    public synchronized void startTest(Test test) {
         testStarts.put(test, new Long(System.currentTimeMillis()));
     }
 
@@ -216,7 +217,7 @@ public class OneLinerFormatter implements JUnitResultFormatter {
      * A test ended.
      * @param test a test
      */
-    public void endTest(Test test) {
+    public synchronized void endTest(Test test) {
         // Fix for bug #5637 - if a junit.extensions.TestSetup is
         // used and throws an exception during setUp then startTest
         // would never have been called
@@ -228,22 +229,13 @@ public class OneLinerFormatter implements JUnitResultFormatter {
 
         Long l = (Long) testStarts.get(test);
 
+        String runtimeName = " [" + ManagementFactory.getRuntimeMXBean().getName() + "] ";
+        output.write(runtimeName);
         output.write("Ran [");
         output.write(((System.currentTimeMillis() - l.longValue()) / 1000.0) + "] ");
         output.write(getTestName(test) + " ... " + (failed ? "FAILED" : "OK"));
         output.write(StringUtils.LINE_SEP);
         output.flush();
-    }
-
-    /**
-     * Interface TestListener for JUnit &lt;= 3.4.
-     *
-     * <p>A Test failed.
-     * @param test a test
-     * @param t    the exception thrown by the test
-     */
-    public void addFailure(Test test, Throwable t) {
-        formatError("\tFAILED", test, t);
     }
 
     /**
@@ -253,8 +245,8 @@ public class OneLinerFormatter implements JUnitResultFormatter {
      * @param test a test
      * @param t    the assertion failed by the test
      */
-    public void addFailure(Test test, AssertionFailedError t) {
-        addFailure(test, (Throwable) t);
+    public synchronized void addFailure(Test test, AssertionFailedError t) {
+        formatError("\tFAILED", test, (Throwable) t);
     }
 
     /**
@@ -262,7 +254,7 @@ public class OneLinerFormatter implements JUnitResultFormatter {
      * @param test  a test
      * @param error the error thrown by the test
      */
-    public void addError(Test test, Throwable error) {
+    public synchronized void addError(Test test, Throwable error) {
         formatError("\tCaused an ERROR", test, error);
     }
 
@@ -272,7 +264,7 @@ public class OneLinerFormatter implements JUnitResultFormatter {
      * @param test a test
      * @return test name
      */
-    protected String getTestName(Test test) {
+    private final static String getTestName(Test test) {
         if (test == null) {
             return "null";
         } else {
@@ -287,7 +279,7 @@ public class OneLinerFormatter implements JUnitResultFormatter {
      * @param test a test
      * @return test full class name
      */
-    protected String getTestCaseClassName(Test test) {
+    private final static String getTestCaseClassName(Test test) {
         if (test == null) {
             return "null";
         } else {
@@ -300,7 +292,7 @@ public class OneLinerFormatter implements JUnitResultFormatter {
      * @param test a test
      * @return the formatted testname
      */
-    protected String formatTest(Test test) {
+    private final static String formatTest(Test test) {
         if (test == null) {
             return "Null Test: ";
         } else {
@@ -314,7 +306,7 @@ public class OneLinerFormatter implements JUnitResultFormatter {
      * @param test the test that failed
      * @param error the exception that the test threw
      */
-    protected synchronized void formatError(String type, Test test,
+    private final void formatError(String type, Test test,
                                             Throwable error) {
         if (test != null) {
             failedTests.put(test, test);
@@ -337,17 +329,18 @@ public class OneLinerFormatter implements JUnitResultFormatter {
         resultWriter.println(); */
     }
 
-    protected String filterErrorTrace(Test test, Throwable error) {
+    private final static String filterErrorTrace(Test test, Throwable error) {
         String trace = StringUtils.getStackTrace(error);
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
         StringReader sr = new StringReader(trace);
         BufferedReader br = new BufferedReader(sr);
 
+        String testCaseClassName = getTestCaseClassName(test);
         String line;
         try {
             while ((line = br.readLine()) != null) {
-                if (line.indexOf(getTestCaseClassName(test)) != -1) {
+                if (line.indexOf(testCaseClassName) != -1) {
                     Matcher matcher = traceLinePattern.matcher(line);
                     // pw.println(matcher + ": " + matcher.find());
                     if (matcher.find()) {
