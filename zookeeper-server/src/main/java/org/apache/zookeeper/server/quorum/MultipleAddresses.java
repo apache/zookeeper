@@ -80,7 +80,7 @@ public class MultipleAddresses {
             }
         }
 
-        addresses = temp;
+        addresses.addAll(temp);
     }
 
     private List<InetSocketAddress> resolveFqdnToAddress(InetSocketAddress addr) throws UnknownHostException {
