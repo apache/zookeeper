@@ -215,8 +215,8 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
         // just make sure that we actually did get it in process at the
         // leader
-        Assert.assertTrue(outstanding.size() == 1);
-        Assert.assertTrue(((Proposal) outstanding.values().iterator().next()).request.getHdr().getType() == OpCode.create);
+        Assert.assertEquals(1, outstanding.size());
+        Assert.assertEquals(OpCode.create, ((Proposal) outstanding.values().iterator().next()).request.getHdr().getType());
         // make sure it has a chance to write it to disk
         Thread.sleep(1000);
         mt[leader].shutdown();
@@ -241,9 +241,9 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         for (int i = 0; i < SERVER_COUNT; i++) {
             for (int j = 0; j < SERVER_COUNT; j++) {
                 if (i == leader) {
-                    Assert.assertTrue((j == leader ? ("Leader (" + leader + ")") : ("Follower " + j)) + " should not have /zk" + i, zk[j].exists("/zk" + i, false) == null);
+                    Assert.assertNull((j == leader ? ("Leader (" + leader + ")") : ("Follower " + j)) + " should not have /zk" + i, zk[j].exists("/zk" + i, false));
                 } else {
-                    Assert.assertTrue((j == leader ? ("Leader (" + leader + ")") : ("Follower " + j)) + " does not have /zk" + i, zk[j].exists("/zk" + i, false) != null);
+                    Assert.assertNotNull((j == leader ? ("Leader (" + leader + ")") : ("Follower " + j)) + " does not have /zk" + i, zk[j].exists("/zk" + i, false));
                 }
             }
         }
@@ -378,7 +378,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
           // find a follower
           int falseLeader = (trueLeader + 1) % numServers;
-          Assert.assertTrue("All servers should join the quorum", servers.mt[falseLeader].main.quorumPeer.follower != null);
+          Assert.assertNotNull("All servers should join the quorum", servers.mt[falseLeader].main.quorumPeer.follower);
 
           // to keep the quorum peer running and force it to go into the looking state, we kill leader election
           // and close the connection to the leader
@@ -405,7 +405,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
           waitForOne(servers.zk[falseLeader], States.CONNECTED);
 
           // and ensure trueLeader is still the leader
-          Assert.assertTrue(servers.mt[trueLeader].main.quorumPeer.leader != null);
+          Assert.assertNotNull(servers.mt[trueLeader].main.quorumPeer.leader);
 
           // Look through the logs for output that indicates the falseLeader is LEADING, then LOOKING, then FOLLOWING
           LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
@@ -1074,13 +1074,13 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             // Node 1 must be started first, before quorum is formed, to trigger the attempted invalid connection to 3
             svrs.mt[0].start();
             QuorumPeer quorumPeer1 = waitForQuorumPeer(svrs.mt[0], CONNECTION_TIMEOUT);
-            Assert.assertTrue(quorumPeer1.getPeerState() == QuorumPeer.ServerState.LOOKING);
+            Assert.assertEquals(QuorumPeer.ServerState.LOOKING, quorumPeer1.getPeerState());
 
             // Node 3 started second to avoid 1 and 2 forming a quorum before 3 starts up
             int highestServerIndex = numServers - 1;
             svrs.mt[highestServerIndex].start();
             QuorumPeer quorumPeer3 = waitForQuorumPeer(svrs.mt[highestServerIndex], CONNECTION_TIMEOUT);
-            Assert.assertTrue(quorumPeer3.getPeerState() == QuorumPeer.ServerState.LOOKING);
+            Assert.assertEquals(QuorumPeer.ServerState.LOOKING, quorumPeer3.getPeerState());
 
             // Node 2 started last, kicks off leader election
             for (int i = 1; i < highestServerIndex; i++) {
@@ -1093,10 +1093,10 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                         ClientBase.waitForServerUp("127.0.0.1:" + svrs.clientPorts[i], CONNECTION_TIMEOUT));
             }
 
-            Assert.assertTrue(svrs.mt[0].getQuorumPeer().getPeerState() == QuorumPeer.ServerState.LOOKING);
+            Assert.assertEquals(QuorumPeer.ServerState.LOOKING, svrs.mt[0].getQuorumPeer().getPeerState());
             Assert.assertTrue(svrs.mt[highestServerIndex].getQuorumPeer().getPeerState() == QuorumPeer.ServerState.LEADING);
             for (int i = 1; i < highestServerIndex; i++) {
-                Assert.assertTrue(svrs.mt[i].getQuorumPeer().getPeerState() == QuorumPeer.ServerState.FOLLOWING);
+                Assert.assertEquals(QuorumPeer.ServerState.FOLLOWING, svrs.mt[i].getQuorumPeer().getPeerState());
             }
 
             // Look through the logs for output that indicates Node 1 is LEADING or FOLLOWING
