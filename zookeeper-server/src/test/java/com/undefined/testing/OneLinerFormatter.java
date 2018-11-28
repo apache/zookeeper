@@ -168,6 +168,10 @@ public class OneLinerFormatter implements JUnitResultFormatter {
         sb.append(StringUtils.LINE_SEP);
         sb.append(StringUtils.LINE_SEP);
 
+        output.write(sb.toString());
+        output.flush();
+        sb = new StringBuffer();
+
         // append the err and output streams to the log
         if (systemOutput != null && systemOutput.length() > 0) {
             sb.append(runtimeName)
@@ -178,6 +182,10 @@ public class OneLinerFormatter implements JUnitResultFormatter {
                     .append(runtimeName)
                     .append("------------- ---------------- ---------------")
                     .append(StringUtils.LINE_SEP);
+
+            output.write(sb.toString());
+            output.flush();
+            sb = new StringBuffer();
         }
 
         if (systemError != null && systemError.length() > 0) {
@@ -189,6 +197,10 @@ public class OneLinerFormatter implements JUnitResultFormatter {
                     .append(runtimeName)
                     .append("------------- ---------------- ---------------")
                     .append(StringUtils.LINE_SEP);
+
+            output.write(sb.toString());
+            output.flush();
+            sb = new StringBuffer();
         }
 
         if (output != null) {
