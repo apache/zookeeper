@@ -1221,7 +1221,12 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                                     startLeaderElection();
                                 }
                             }
-                            setCurrentVote(makeLEStrategy().lookForLeader());
+                            Vote vote = makeLEStrategy().lookForLeader();
+                            setCurrentVote(vote);
+                            if (vote == null) {
+                                // Upper-bound retry delay to 2 seconds
+                                sleep(Math.min(2000, tickTime));
+                            }
                         } catch (Exception e) {
                             LOG.warn("Unexpected exception", e);
                             setPeerState(ServerState.LOOKING);
@@ -1240,7 +1245,12 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                                     startLeaderElection();
                                 }
                             }
-                            setCurrentVote(makeLEStrategy().lookForLeader());
+                            Vote vote = makeLEStrategy().lookForLeader();
+                            setCurrentVote(vote);
+                            if (vote == null) {
+                                // Upper-bound retry delay to 2 seconds
+                                sleep(Math.min(2000, tickTime));
+                            }
                         } catch (Exception e) {
                             LOG.warn("Unexpected exception", e);
                             setPeerState(ServerState.LOOKING);
