@@ -31,15 +31,6 @@ public class MultipleAddresses {
         return addresses.isEmpty();
     }
 
-    public boolean isReachable() {
-        try {
-            getValidAddress();
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
     public List<InetSocketAddress> getAllAddresses() {
         return new LinkedList<>(addresses);
     }
@@ -74,21 +65,14 @@ public class MultipleAddresses {
 
         for(InetSocketAddress addr : addresses) {
             try {
-                temp.addAll(resolveFqdnToAddress(addr));
+                temp.add(new InetSocketAddress(InetAddress.getByName(addr.getHostString()), addr.getPort()));
             } catch (UnknownHostException e) {
                 temp.add(addr);
             }
         }
 
+        addresses.clear();
         addresses.addAll(temp);
-    }
-
-    private List<InetSocketAddress> resolveFqdnToAddress(InetSocketAddress addr) throws UnknownHostException {
-        String host = addr.getHostString();
-        int port = addr.getPort();
-
-        return Arrays.stream(InetAddress.getAllByName(host))
-                .map(address -> new InetSocketAddress(address, port)).collect(Collectors.toList());
     }
 
     @Override
