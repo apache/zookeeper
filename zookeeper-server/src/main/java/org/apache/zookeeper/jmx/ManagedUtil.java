@@ -71,7 +71,7 @@ public class ManagedUtil {
                 // org.apache.log4j.jmx.HierarchyDynamicMBean hdm = new org.apache.log4j.jmx.HierarchyDynamicMBean();
                 Object hdm = Class.forName("org.apache.log4j.jmx.HierarchyDynamicMBean").getDeclaredConstructor().newInstance();
 
-                ObjectName mbo = new ObjectName("log4j:hiearchy=default");
+                ObjectName mbo = new ObjectName("log4j:hierarchy=default");
                 mbs.registerMBean(hdm, mbo);
 
                 // Add the root logger to the Hierarchy MBean
