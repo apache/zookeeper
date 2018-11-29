@@ -413,6 +413,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
           servers.mt[falseLeader].main.quorumPeer.startLeaderElection();
 
           // The previous client connection to falseLeader likely closed, create a new one
+          servers.zk[falseLeader].close();
           servers.zk[falseLeader] = new ZooKeeper("127.0.0.1:" + servers.mt[falseLeader].getClientPort(), ClientBase.CONNECTION_TIMEOUT, this);
 
           // Wait for falseLeader to rejoin the quorum
