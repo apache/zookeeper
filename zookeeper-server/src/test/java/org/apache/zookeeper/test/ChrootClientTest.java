@@ -32,11 +32,7 @@ public class ChrootClientTest extends ClientTest {
     public void setUp() throws Exception {
         String hp = hostPort;
         hostPort = hostPort + "/chrootclienttest";
-
-        System.out.println(hostPort);
         super.setUp();
-
-        LOG.info("STARTING " + getTestName());
 
         ZooKeeper zk = createClient(hp);
         try {
@@ -45,10 +41,5 @@ public class ChrootClientTest extends ClientTest {
         } finally {
             zk.close();
         }
-    }
-    
-    @Test
-    public void testPing() throws Exception {
-        // not necessary to repeat this, expensive and not chroot related
     }
 }
