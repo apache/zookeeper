@@ -7,6 +7,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class MultipleAddresses {
@@ -14,16 +15,16 @@ public class MultipleAddresses {
     private Set<InetSocketAddress> addresses;
 
     public MultipleAddresses() {
-        addresses = new HashSet<>();
+        addresses = Collections.newSetFromMap(new ConcurrentHashMap<>());
     }
 
     public MultipleAddresses(List<InetSocketAddress> addresses) {
-        this.addresses = new HashSet<>();
+        this.addresses = Collections.newSetFromMap(new ConcurrentHashMap<>());
         this.addresses.addAll(addresses);
     }
 
     public MultipleAddresses(InetSocketAddress address) {
-        addresses = new HashSet<>();
+        addresses = Collections.newSetFromMap(new ConcurrentHashMap<>());
         addresses.add(address);
     }
 
