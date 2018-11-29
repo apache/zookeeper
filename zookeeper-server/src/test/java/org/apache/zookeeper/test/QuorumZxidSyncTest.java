@@ -166,7 +166,7 @@ public class QuorumZxidSyncTest extends ZKTestCase {
         }
         zk.close();
         Assert.assertTrue("Didn't see /2 (went back in time)", saw2);
-        System.out.println("QuorumZxidSyncTest#testLateLogs() - start");
+        System.out.println("QuorumZxidSyncTest#testLateLogs() - stop");
     }
 
     private void deleteLogs(File f) {
