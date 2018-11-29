@@ -280,7 +280,7 @@ public class OneLinerFormatter implements JUnitResultFormatter {
         if (test == null) {
             return "null";
         } else {
-            return /* JUnitVersionHelper.getTestCaseClassName(test) + ": " + */
+            return JUnitVersionHelper.getTestCaseClassName(test) + ":" +
                 JUnitVersionHelper.getTestCaseName(test);
         }
     }
