@@ -92,7 +92,9 @@ public:
                                        ZOO_READONLY);
         watch.zh = zh;
         CPPUNIT_ASSERT(zh != 0);
-        sleep(1);
+
+        CPPUNIT_ASSERT(watch.waitForConnected(zh));
+
         int len = 1024;
         char buf[len];
         int res = zoo_get(zh, "/", 0, buf, &len, 0);
