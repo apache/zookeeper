@@ -82,6 +82,9 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             return;
         }
         for (int i = 0; i < numServers; i++) {
+            if (i < servers.zk.length) {
+                servers.zk[i].close();
+            }
             if (i < servers.mt.length) {
                 servers.mt[i].shutdown();
             }
@@ -109,40 +112,42 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         q1.start();
         q2.start();
 
-        Assert.assertTrue("waiting for server 1 being up",
-                        ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
-                        CONNECTION_TIMEOUT));
-        Assert.assertTrue("waiting for server 2 being up",
-                        ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2,
-                        CONNECTION_TIMEOUT));
-        QuorumPeer quorumPeer = q1.main.quorumPeer;
+        try {
+            Assert.assertTrue("waiting for server 1 being up",
+                            ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
+                            CONNECTION_TIMEOUT));
+            Assert.assertTrue("waiting for server 2 being up",
+                            ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2,
+                            CONNECTION_TIMEOUT));
+            QuorumPeer quorumPeer = q1.main.quorumPeer;
 
-        int tickTime = quorumPeer.getTickTime();
-        Assert.assertEquals(
-                "Default value of minimumSessionTimeOut is not considered",
-                tickTime * 2, quorumPeer.getMinSessionTimeout());
-        Assert.assertEquals(
-                "Default value of maximumSessionTimeOut is not considered",
-                tickTime * 20, quorumPeer.getMaxSessionTimeout());
+            int tickTime = quorumPeer.getTickTime();
+            Assert.assertEquals(
+                    "Default value of minimumSessionTimeOut is not considered",
+                    tickTime * 2, quorumPeer.getMinSessionTimeout());
+            Assert.assertEquals(
+                    "Default value of maximumSessionTimeOut is not considered",
+                    tickTime * 20, quorumPeer.getMaxSessionTimeout());
 
-        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_QP1,
-                ClientBase.CONNECTION_TIMEOUT, this);
-        waitForOne(zk, States.CONNECTED);
-        zk.create("/foo_q1", "foobar1".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
-        Assert.assertEquals(new String(zk.getData("/foo_q1", null, null)), "foobar1");
-        zk.close();
+            ZooKeeper zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_QP1,
+                    ClientBase.CONNECTION_TIMEOUT, this);
+            waitForOne(zk, States.CONNECTED);
+            zk.create("/foo_q1", "foobar1".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT);
+            Assert.assertEquals(new String(zk.getData("/foo_q1", null, null)), "foobar1");
+            zk.close();
 
-        zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_QP2,
-                ClientBase.CONNECTION_TIMEOUT, this);
-        waitForOne(zk, States.CONNECTED);
-        zk.create("/foo_q2", "foobar2".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
-        Assert.assertEquals(new String(zk.getData("/foo_q2", null, null)), "foobar2");
-        zk.close();
-
-        q1.shutdown();
-        q2.shutdown();
+            zk = new ZooKeeper("127.0.0.1:" + CLIENT_PORT_QP2,
+                    ClientBase.CONNECTION_TIMEOUT, this);
+            waitForOne(zk, States.CONNECTED);
+            zk.create("/foo_q2", "foobar2".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT);
+            Assert.assertEquals(new String(zk.getData("/foo_q2", null, null)), "foobar2");
+            zk.close();
+        } finally {
+            q1.shutdown();
+            q2.shutdown();
+        }
 
         Assert.assertTrue("waiting for server 1 down",
                 ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP1,
@@ -175,83 +180,91 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i], ClientBase.CONNECTION_TIMEOUT, this);
         }
 
-        waitForAll(zk, States.CONNECTED);
-
-        // we need to shutdown and start back up to make sure that the create session isn't the first transaction since
-        // that is rather innocuous.
-        for (int i = 0; i < SERVER_COUNT; i++) {
-            mt[i].shutdown();
-        }
-
-        waitForAll(zk, States.CONNECTING);
-
-        for (int i = 0; i < SERVER_COUNT; i++) {
-            mt[i].start();
-            // Recreate a client session since the previous session was not persisted.
-            zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i], ClientBase.CONNECTION_TIMEOUT, this);
-         }
-
-        waitForAll(zk, States.CONNECTED);
-
-
-        // ok lets find the leader and kill everything else, we have a few
-        // seconds, so it should be plenty of time
-        int leader = -1;
-        Map<Long, Proposal> outstanding = null;
-        for (int i = 0; i < SERVER_COUNT; i++) {
-            if (mt[i].main.quorumPeer.leader == null) {
-                mt[i].shutdown();
-            } else {
-                leader = i;
-                outstanding = mt[leader].main.quorumPeer.leader.outstandingProposals;
-            }
-        }
-
         try {
-            zk[leader].create("/zk" + leader, "zk".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PERSISTENT);
-            Assert.fail("create /zk" + leader + " should have failed");
-        } catch (KeeperException e) {}
+            waitForAll(zk, States.CONNECTED);
 
-        // just make sure that we actually did get it in process at the
-        // leader
-        Assert.assertEquals(1, outstanding.size());
-        Assert.assertEquals(OpCode.create, ((Proposal) outstanding.values().iterator().next()).request.getHdr().getType());
-        // make sure it has a chance to write it to disk
-        Thread.sleep(1000);
-        mt[leader].shutdown();
-        waitForAll(zk, States.CONNECTING);
-        for (int i = 0; i < SERVER_COUNT; i++) {
-            if (i != leader) {
-                mt[i].start();
+            // we need to shutdown and start back up to make sure that the create session isn't the first transaction since
+            // that is rather innocuous.
+            for (int i = 0; i < SERVER_COUNT; i++) {
+                mt[i].shutdown();
             }
-        }
-        for (int i = 0; i < SERVER_COUNT; i++) {
-            if (i != leader) {
+
+            waitForAll(zk, States.CONNECTING);
+
+            for (int i = 0; i < SERVER_COUNT; i++) {
+                zk[i].close();
+                mt[i].start();
                 // Recreate a client session since the previous session was not persisted.
                 zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i], ClientBase.CONNECTION_TIMEOUT, this);
-                waitForOne(zk[i], States.CONNECTED);
-                zk[i].create("/zk" + i, "zk".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
-        }
 
-        mt[leader].start();
-        waitForAll(zk, States.CONNECTED);
-        // make sure everything is consistent
-        for (int i = 0; i < SERVER_COUNT; i++) {
-            for (int j = 0; j < SERVER_COUNT; j++) {
-                if (i == leader) {
-                    Assert.assertNull((j == leader ? ("Leader (" + leader + ")") : ("Follower " + j)) + " should not have /zk" + i, zk[j].exists("/zk" + i, false));
+            waitForAll(zk, States.CONNECTED);
+
+            // ok lets find the leader and kill everything else, we have a few
+            // seconds, so it should be plenty of time
+            int leader = -1;
+            Map<Long, Proposal> outstanding = null;
+            for (int i = 0; i < SERVER_COUNT; i++) {
+                if (mt[i].main.quorumPeer.leader == null) {
+                    mt[i].shutdown();
                 } else {
-                    Assert.assertNotNull((j == leader ? ("Leader (" + leader + ")") : ("Follower " + j)) + " does not have /zk" + i, zk[j].exists("/zk" + i, false));
+                    leader = i;
+                    outstanding = mt[leader].main.quorumPeer.leader.outstandingProposals;
                 }
             }
-        }
-        for (int i = 0; i < SERVER_COUNT; i++) {
-            zk[i].close();
-        }
-        for (int i = 0; i < SERVER_COUNT; i++) {
-            mt[i].shutdown();
+
+            try {
+                zk[leader].create("/zk" + leader, "zk".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                        CreateMode.PERSISTENT);
+                Assert.fail("create /zk" + leader + " should have failed");
+            } catch (KeeperException e) {}
+
+            // just make sure that we actually did get it in process at the
+            // leader
+            Assert.assertEquals(1, outstanding.size());
+            Assert.assertEquals(OpCode.create, ((Proposal) outstanding.values().iterator().next()).request.getHdr().getType());
+            // make sure it has a chance to write it to disk
+            Thread.sleep(1000);
+            mt[leader].shutdown();
+
+            waitForAll(zk, States.CONNECTING);
+
+            for (int i = 0; i < SERVER_COUNT; i++) {
+                if (i != leader) {
+                    zk[i].close();
+                    mt[i].start();
+                }
+            }
+            for (int i = 0; i < SERVER_COUNT; i++) {
+                if (i != leader) {
+                    // Recreate a client session since the previous session was not persisted.
+                    zk[i] = new ZooKeeper("127.0.0.1:" + clientPorts[i], ClientBase.CONNECTION_TIMEOUT, this);
+                    waitForOne(zk[i], States.CONNECTED);
+                    zk[i].create("/zk" + i, "zk".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                }
+            }
+
+            mt[leader].start();
+
+            waitForAll(zk, States.CONNECTED);
+
+            // make sure everything is consistent
+            for (int i = 0; i < SERVER_COUNT; i++) {
+                for (int j = 0; j < SERVER_COUNT; j++) {
+                    if (i == leader) {
+                        Assert.assertNull((j == leader ? ("Leader (" + leader + ")") : ("Follower " + j)) + " should not have /zk" + i, zk[j].exists("/zk" + i, false));
+                    } else {
+                        Assert.assertNotNull((j == leader ? ("Leader (" + leader + ")") : ("Follower " + j)) + " does not have /zk" + i, zk[j].exists("/zk" + i, false));
+                    }
+                }
+            }
+        } finally {
+            for (int i = 0; i < SERVER_COUNT; i++) {
+                zk[i].close();
+            }
+            for (int i = 0; i < SERVER_COUNT; i++) {
+                mt[i].shutdown();
+            }
         }
     }
 
@@ -264,6 +277,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     public void testHighestZxidJoinLate() throws Exception {
         numServers = 3;
         servers = LaunchServers(numServers);
+
         String path = "/hzxidtest";
         int leader = servers.findLeader();
 
@@ -885,6 +899,9 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                 minSessionTimeOut, quorumPeer.getMinSessionTimeout());
         Assert.assertEquals("maximumSessionTimeOut is not considered",
                 maxSessionTimeOut, quorumPeer.getMaxSessionTimeout());
+
+        q1.shutdown();
+        q2.shutdown();
     }
 
     /**
@@ -927,6 +944,9 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                 minSessionTimeOut, quorumPeer.getMinSessionTimeout());
         Assert.assertEquals("maximumSessionTimeOut is wrong",
                 maxSessionTimeOut, quorumPeer.getMaxSessionTimeout());
+
+        q1.shutdown();
+        q2.shutdown();
     }
 
     @Test
@@ -1242,8 +1262,8 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
         // start servers
         MainThread[] mt = new MainThread[ENSEMBLE_SERVERS];
-        ZooKeeper zk[] = new ZooKeeper[ENSEMBLE_SERVERS];
-        Context contexts[] = new Context[ENSEMBLE_SERVERS];
+        ZooKeeper[] zk = new ZooKeeper[ENSEMBLE_SERVERS];
+        Context[] contexts = new Context[ENSEMBLE_SERVERS];
         for (int i = 0; i < ENSEMBLE_SERVERS; i++) {
             final Context context = new Context();
             contexts[i] = context;
@@ -1383,8 +1403,8 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         } finally {
             System.clearProperty(LearnerHandler.FORCE_SNAP_SYNC);
             for (int i = 0; i < ENSEMBLE_SERVERS; i++) {
-                mt[i].shutdown();
                 zk[i].close();
+                mt[i].shutdown();
             }
         }
     }
