@@ -903,6 +903,9 @@ public class ReconfigTest extends ZKTestCase implements DataCallback {
             long version = qv.getVersion();
             Assert.assertTrue(version == 0x100000000L);
         }
+        for (ZooKeeper zk : zkArr)
+            if (zk != null)
+                zk.close();
     }
 
     /**
