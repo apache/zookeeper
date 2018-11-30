@@ -13,6 +13,7 @@ import java.util.Hashtable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import junit.framework.AssertionFailedError;
 import junit.framework.Test;
 
@@ -126,7 +127,6 @@ public class OneLinerFormatter implements JUnitResultFormatter {
             return; // Quick return - no output do nothing.
         }
         StringBuffer sb = new StringBuffer(StringUtils.LINE_SEP);
-        sb.append("USING ONELINERTESTFORMATTER");
         sb.append(StringUtils.LINE_SEP);
         sb.append("----------------------------------------------------------");
         sb.append(StringUtils.LINE_SEP);
@@ -139,12 +139,12 @@ public class OneLinerFormatter implements JUnitResultFormatter {
         output.flush();
     }
 
-    public final static String prefixLines(String prefix, String buffer) {
+    public final static void prefixLines(StringBuffer sb, String prefix, String buffer) {
         String lines[] = buffer.split("\\r?\\n");
-        return Arrays.asList(lines)
-                .stream()
-                .map(l -> prefix + l)
-                .collect(Collectors.joining("\n"));
+        for(int i = 0; i < lines.length; i++) {
+            sb.append(prefix)
+                .append(lines[i]);
+        }
     }
 
 
@@ -176,9 +176,11 @@ public class OneLinerFormatter implements JUnitResultFormatter {
         if (systemOutput != null && systemOutput.length() > 0) {
             sb.append(runtimeName)
                     .append("------------- Standard Output ---------------")
-                    .append(StringUtils.LINE_SEP)
-                    .append(prefixLines(runtimeName, systemOutput))
-                    .append(StringUtils.LINE_SEP)
+                    .append(StringUtils.LINE_SEP);
+
+            prefixLines(sb, runtimeName, systemOutput);
+
+            sb.append(StringUtils.LINE_SEP)
                     .append(runtimeName)
                     .append("------------- ---------------- ---------------")
                     .append(StringUtils.LINE_SEP);
@@ -191,9 +193,11 @@ public class OneLinerFormatter implements JUnitResultFormatter {
         if (systemError != null && systemError.length() > 0) {
             sb.append(runtimeName)
                     .append("------------- Standard Error -----------------")
-                    .append(StringUtils.LINE_SEP)
-                    .append(prefixLines(runtimeName, systemError))
-                    .append(StringUtils.LINE_SEP)
+                    .append(StringUtils.LINE_SEP);
+
+            prefixLines(sb, runtimeName, systemError);
+
+            sb.append(StringUtils.LINE_SEP)
                     .append(runtimeName)
                     .append("------------- ---------------- ---------------")
                     .append(StringUtils.LINE_SEP);
