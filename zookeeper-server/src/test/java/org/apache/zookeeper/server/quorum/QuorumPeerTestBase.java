@@ -58,10 +58,11 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
     }
 
     public static class TestQPMain extends QuorumPeerMain {
-        public void shutdown() {
+        synchronized public void shutdown() {
             // ensure it closes - in particular wait for thread to exit
-            if (quorumPeer != null) {
-                QuorumBase.shutdown(quorumPeer);
+            QuorumPeer myPeer = quorumPeer;
+            if (myPeer != null) {
+                QuorumBase.shutdown(myPeer);
             }
         }
     }
@@ -300,7 +301,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             this(myid, clientPort, quorumCfgSection, otherConfigs, 4000);
         }
 
-        Thread currentThread;
+        volatile Thread currentThread;
 
         synchronized public void start() {
             main = getTestQPMain();
@@ -325,22 +326,22 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             }
         }
 
-        public void shutdown() throws InterruptedException {
+        synchronized public void shutdown() throws InterruptedException {
             Thread t = currentThread;
             if (t != null && t.isAlive()) {
                 main.shutdown();
-                t.join(500);
+                t.join(2000);
             }
         }
 
-        public void join(long timeout) throws InterruptedException {
+        synchronized public void join(long timeout) throws InterruptedException {
             Thread t = currentThread;
             if (t != null) {
                 t.join(timeout);
             }
         }
 
-        public boolean isAlive() {
+        synchronized public boolean isAlive() {
             Thread t = currentThread;
             return t != null && t.isAlive();
         }
