@@ -1227,9 +1227,16 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                                 // Upper-bound retry delay to 2 seconds
                                 sleep(Math.min(2000, tickTime));
                             }
+                        } catch (InterruptedException e) {
+                            LOG.warn("Interrupted by exception", e);
                         } catch (Exception e) {
                             LOG.warn("Unexpected exception", e);
                             setPeerState(ServerState.LOOKING);
+                            try {
+                                sleep(Math.min(2000, tickTime));
+                            } catch (InterruptedException ie) {
+                                LOG.warn("Interrupted by exception", ie);
+                            }
                         } finally {
                             // If the thread is in the the grace period, interrupt
                             // to come out of waiting.
@@ -1251,9 +1258,16 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                                 // Upper-bound retry delay to 2 seconds
                                 sleep(Math.min(2000, tickTime));
                             }
+                        } catch (InterruptedException e) {
+                            LOG.warn("Interrupted by exception", e);
                         } catch (Exception e) {
                             LOG.warn("Unexpected exception", e);
                             setPeerState(ServerState.LOOKING);
+                            try {
+                                sleep(Math.min(2000, tickTime));
+                            } catch (InterruptedException ie) {
+                                LOG.warn("Interrupted by exception", ie);
+                            }
                         }                        
                     }
                     break;
@@ -1261,26 +1275,48 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                     try {
                         LOG.info("OBSERVING");
                         setObserver(makeObserver(logFactory));
-                        observer.observeLeader();
+                        boolean succeeded = observer.observeLeader();
+                        if (!succeeded) {
+                            LOG.warn("Failed to observe the leader");
+                            sleep(Math.min(2000, tickTime));
+                        }
+                    } catch (InterruptedException e) {
+                        LOG.warn("Interrupted by exception", e);
                     } catch (Exception e) {
-                        LOG.warn("Unexpected exception",e );
+                        LOG.warn("Unexpected exception", e);
+                        try {
+                            sleep(Math.min(2000, tickTime));
+                        } catch (InterruptedException ie) {
+                            LOG.warn("Interrupted by exception", ie);
+                        }
                     } finally {
                         observer.shutdown();
                         setObserver(null);  
-                       updateServerState();
+                        updateServerState();
                     }
                     break;
                 case FOLLOWING:
                     try {
-                       LOG.info("FOLLOWING");
+                        LOG.info("FOLLOWING");
                         setFollower(makeFollower(logFactory));
-                        follower.followLeader();
+                        boolean succeeded = follower.followLeader();
+                        if (!succeeded) {
+                            LOG.warn("Failed to follow the leader");
+                            sleep(Math.min(2000, tickTime));
+                        }
+                    } catch (InterruptedException e) {
+                        LOG.warn("Interrupted by exception", e);
                     } catch (Exception e) {
-                       LOG.warn("Unexpected exception",e);
+                        LOG.warn("Unexpected exception", e);
+                        try {
+                            sleep(Math.min(2000, tickTime));
+                        } catch (InterruptedException ie) {
+                            LOG.warn("Interrupted by exception", ie);
+                        }
                     } finally {
-                       follower.shutdown();
-                       setFollower(null);
-                       updateServerState();
+                        follower.shutdown();
+                        setFollower(null);
+                        updateServerState();
                     }
                     break;
                 case LEADING:
@@ -1289,8 +1325,15 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                         setLeader(makeLeader(logFactory));
                         leader.lead();
                         setLeader(null);
+                    } catch (InterruptedException e) {
+                        LOG.warn("Interrupted by exception", e);
                     } catch (Exception e) {
-                        LOG.warn("Unexpected exception",e);
+                        LOG.warn("Unexpected exception", e);
+                        try {
+                            sleep(Math.min(2000, tickTime));
+                        } catch (InterruptedException ie) {
+                            LOG.warn("Interrupted by exception", ie);
+                        }
                     } finally {
                         if (leader != null) {
                             leader.shutdown("Forcing shutdown");

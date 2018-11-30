@@ -60,9 +60,10 @@ public class Follower extends Learner{
     /**
      * the main method called by the follower to follow the leader
      *
+     * @return true if it ran to completion, false otherwise
      * @throws InterruptedException
      */
-    void followLeader() throws InterruptedException {
+    boolean followLeader() throws InterruptedException {
         self.end_fle = Time.currentElapsedTime();
         long electionTimeTaken = self.end_fle - self.start_fle;
         self.setElectionTimeTaken(electionTimeTaken);
@@ -102,10 +103,12 @@ public class Follower extends Learner{
     
                 // clear pending revalidations
                 pendingRevalidations.clear();
+                return false;
             }
         } finally {
             zk.unregisterJMX((Learner)this);
         }
+        return true;
     }
 
     /**

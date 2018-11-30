@@ -57,9 +57,11 @@ public class Observer extends Learner{
 
     /**
      * the main method called by the observer to observe the leader
+     *
+     * @return true if it ran to completion, false otherwise
      * @throws Exception 
      */
-    void observeLeader() throws Exception {
+    boolean observeLeader() throws Exception {
         zk.registerJMX(new ObserverBean(this, zk), self.jmxLocalPeerBean);
 
         try {
@@ -87,10 +89,12 @@ public class Observer extends Learner{
 
                 // clear pending revalidations
                 pendingRevalidations.clear();
+                return false;
             }
         } finally {
             zk.unregisterJMX(this);
         }
+        return true;
     }
 
     /**
