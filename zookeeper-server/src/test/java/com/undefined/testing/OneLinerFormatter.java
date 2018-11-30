@@ -143,7 +143,8 @@ public class OneLinerFormatter implements JUnitResultFormatter {
         String lines[] = buffer.split("\\r?\\n");
         for(int i = 0; i < lines.length; i++) {
             sb.append(prefix)
-                .append(lines[i]);
+                .append(lines[i])
+                .append(StringUtils.LINE_SEP);
         }
     }
 
