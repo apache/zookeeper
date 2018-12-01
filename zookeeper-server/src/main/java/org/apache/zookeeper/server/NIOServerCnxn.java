@@ -77,7 +77,7 @@ public class NIOServerCnxn extends ServerCnxn {
 
     private int sessionTimeout;
 
-    private final ZooKeeperServer zkServer;
+    private volatile ZooKeeperServer zkServer;
 
     /**
      * The number of requests that have been submitted but not yet responded to.
@@ -95,11 +95,11 @@ public class NIOServerCnxn extends ServerCnxn {
     public NIOServerCnxn(ZooKeeperServer zk, SocketChannel sock,
                          SelectionKey sk, NIOServerCnxnFactory factory,
                          SelectorThread selectorThread) throws IOException {
-        this.zkServer = zk;
         this.sock = sock;
         this.sk = sk;
         this.factory = factory;
         this.selectorThread = selectorThread;
+        this.sessionTimeout = factory.sessionlessCnxnTimeout;
         if (this.factory.login != null) {
             this.zooKeeperSaslServer = new ZooKeeperSaslServer(factory.login);
         }
@@ -114,7 +114,10 @@ public class NIOServerCnxn extends ServerCnxn {
         InetAddress addr = ((InetSocketAddress) sock.socket()
                 .getRemoteSocketAddress()).getAddress();
         authInfo.add(new Id("ip", addr.getHostAddress()));
-        this.sessionTimeout = factory.sessionlessCnxnTimeout;
+        /* This write to a volatile member forces visibility of all of the
+         * above to other threads.
+         */
+        this.zkServer = zk;
     }
 
     /* Send close connection packet to the client, doIO will eventually
@@ -377,7 +380,10 @@ public class NIOServerCnxn extends ServerCnxn {
     }
 
     private void readRequest() throws IOException {
-        zkServer.processPacket(this, incomingBuffer);
+        ZooKeeperServer server = zkServer;
+        if (server != null) {
+            server.processPacket(this, incomingBuffer);
+        }
     }
 
     // Only called as callback from zkServer.processPacket()
@@ -563,7 +569,11 @@ public class NIOServerCnxn extends ServerCnxn {
      * @return true if the server is running, false otherwise.
      */
     boolean isZKServerRunning() {
-        return zkServer != null && zkServer.isRunning();
+        ZooKeeperServer server = zkServer;
+        if (server == null) {
+            return false;
+        }
+        return server.isRunning();
     }
 
     public long getOutstandingRequests() {
@@ -593,13 +603,14 @@ public class NIOServerCnxn extends ServerCnxn {
      * Close the cnxn and remove it from the factory cnxns list.
      */
     @Override
-    public void close() {
+    synchronized public void close() {
         if (!factory.removeCnxn(this)) {
             return;
         }
 
-        if (zkServer != null) {
-            zkServer.removeCnxn(this);
+        ZooKeeperServer server = zkServer;
+        if (server != null) {
+            server.removeCnxn(this);
         }
 
         if (sk != null) {
@@ -775,10 +786,11 @@ public class NIOServerCnxn extends ServerCnxn {
 
     @Override
     protected ServerStats serverStats() {
-        if (zkServer == null) {
+        ZooKeeperServer server = zkServer;
+        if (server == null) {
             return null;
         }
-        return zkServer.serverStats();
+        return server.serverStats();
     }
 
     @Override

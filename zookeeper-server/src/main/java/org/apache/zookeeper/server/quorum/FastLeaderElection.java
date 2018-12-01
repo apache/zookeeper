@@ -495,13 +495,11 @@ public class FastLeaderElection implements Election {
 
             this.wsThread = new Thread(this.ws,
                     "WorkerSender[myid=" + self.getId() + "]");
-            this.wsThread.setDaemon(true);
 
             this.wr = new WorkerReceiver(manager);
 
             this.wrThread = new Thread(this.wr,
                     "WorkerReceiver[myid=" + self.getId() + "]");
-            this.wrThread.setDaemon(true);
         }
 
         /**
@@ -518,6 +516,13 @@ public class FastLeaderElection implements Election {
         void halt(){
             this.ws.stop = true;
             this.wr.stop = true;
+            try {
+                this.wsThread.join();
+                this.wrThread.join();
+            } catch (InterruptedException e) {
+                LOG.warn("Interrupted Exception while waiting for thread to stop: " +
+                        e.toString());
+            }
         }
 
     }

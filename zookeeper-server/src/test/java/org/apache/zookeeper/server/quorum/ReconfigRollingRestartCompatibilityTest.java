@@ -121,6 +121,12 @@ public class ReconfigRollingRestartCompatibilityTest extends QuorumPeerTestBase 
         for (int i = 0; i < serverCount; i++) {
             mt[i].shutdown();
         }
+
+        for (int i = 0; i < serverCount; ++i) {
+            Assert.assertTrue("waiting for server " + i + " being down",
+                    ClientBase.waitForServerDown("127.0.0.1:" + clientPorts.get(i),
+                            CONNECTION_TIMEOUT));
+        }
     }
 
     @Test(timeout = 60000)
@@ -141,9 +147,13 @@ public class ReconfigRollingRestartCompatibilityTest extends QuorumPeerTestBase 
         }
 
         for (int i = 0; i < serverCount; ++i) {
-            Assert.assertTrue("waiting for server " + i + " being up",
-                    ClientBase.waitForServerUp("127.0.0.1:" + clientPorts.get(i),
-                            CONNECTION_TIMEOUT));
+            while (mt[i].main == null || mt[i].main.quorumPeer == null) {
+                Thread.sleep(200);
+            }
+            Assert.assertTrue("waiting for server " + i + " being leader or follower",
+                    ClientBase.waitForServerState(mt[i].main.quorumPeer,
+                            CONNECTION_TIMEOUT,
+                            QuorumStats.Provider.LEADING_STATE, QuorumStats.Provider.FOLLOWING_STATE));
         }
 
         for (int i = 0; i < serverCount; ++i) {
@@ -155,6 +165,12 @@ public class ReconfigRollingRestartCompatibilityTest extends QuorumPeerTestBase 
 
         for (int i = 0; i < serverCount; i++) {
             mt[i].shutdown();
+        }
+
+        for (int i = 0; i < serverCount; ++i) {
+            Assert.assertTrue("waiting for server " + i + " being down",
+                    ClientBase.waitForServerDown("127.0.0.1:" + clientPorts.get(i),
+                            CONNECTION_TIMEOUT));
         }
     }
 
@@ -220,8 +236,14 @@ public class ReconfigRollingRestartCompatibilityTest extends QuorumPeerTestBase 
             verifyQuorumMembers(mt[i], expectedConfigs);
         }
 
-        for (int i = 0; i < serverCount; ++i) {
+        for (int i = 0; i < 5; ++i) {
             mt[i].shutdown();
+        }
+
+        for (int i = 0; i < 5; ++i) {
+            Assert.assertTrue("waiting for server " + i + " being down",
+                    ClientBase.waitForServerDown("127.0.0.1:" + clientPorts.get(i),
+                            CONNECTION_TIMEOUT));
         }
     }
 

@@ -109,7 +109,7 @@ public abstract class ServerCnxnFactory {
 
     public abstract void start();
 
-    protected ZooKeeperServer zkServer;
+    protected volatile ZooKeeperServer zkServer;
     final public void setZooKeeperServer(ZooKeeperServer zks) {
         this.zkServer = zks;
         if (zks != null) {

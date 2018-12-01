@@ -1386,13 +1386,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     
     public void shutdown() {
         running = false;
-        if (leader != null) {
-            leader.shutdown("quorum Peer shutdown");
-        }
-        if (follower != null) {
-            follower.shutdown();
-        }
+
         shutdownServerCnxnFactory();
+
         if(udpSocket != null) {
             udpSocket.close();
         }
@@ -1407,6 +1403,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             this.interrupt();
             getElectionAlg().shutdown();
         }
+
+        if (leader != null) {
+            leader.shutdown("quorum Peer shutdown");
+        }
+        if (follower != null) {
+            follower.shutdown();
+        }
+
         try {
             zkDb.close();
         } catch (IOException ie) {

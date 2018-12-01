@@ -229,7 +229,7 @@ public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
         LOG.info("Restarting server myid=" + index);
         MainThread m = shutdown(index);
         startServer(m, authConfigs);
-        Assert.assertTrue("waiting for server" + index + "being up",
+        Assert.assertTrue("waiting for server " + index + " being up",
                 ClientBase.waitForServerUp("127.0.0.1:" + m.getClientPort(),
                         ClientBase.CONNECTION_TIMEOUT));
         watcher.waitForConnected(ClientTest.CONNECTION_TIMEOUT);

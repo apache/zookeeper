@@ -330,7 +330,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             Thread t = currentThread;
             if (t != null && t.isAlive()) {
                 main.shutdown();
-                t.join(2000);
+                t.join(10000);
             }
         }
 
