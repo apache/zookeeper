@@ -210,11 +210,13 @@ public class FastLeaderElection implements Election {
         class WorkerReceiver extends ZooKeeperThread  {
             volatile boolean stop;
             QuorumCnxManager manager;
+            volatile boolean halted;
 
             WorkerReceiver(QuorumCnxManager manager) {
                 super("WorkerReceiver");
                 this.stop = false;
                 this.manager = manager;
+                this.halted = false;
             }
 
             public void run() {
@@ -223,7 +225,7 @@ public class FastLeaderElection implements Election {
                 while (!stop) {
                     // Sleeps on receive
                     try {
-                        response = manager.pollRecvQueue(3000, TimeUnit.MILLISECONDS);
+                        response = manager.pollRecvQueue(500, TimeUnit.MILLISECONDS);
                         if(response == null) continue;
 
                         // The current protocol and two previous generations all send at least 28 bytes
@@ -291,6 +293,7 @@ public class FastLeaderElection implements Election {
                                             if (!rqv.equals(curQV)) {
                                                 LOG.info("restarting leader election");
                                                 self.shuttingDownLE = true;
+                                                halted = true;
                                                 self.getElectionAlg().shutdown();
 
                                                 break;
@@ -426,8 +429,10 @@ public class FastLeaderElection implements Election {
                     } catch (InterruptedException e) {
                         LOG.warn("Interrupted Exception while waiting for new message" +
                                 e.toString());
+                        break;
                     }
                 }
+                halted = true;
                 LOG.info("WorkerReceiver is down");
             }
         }
@@ -450,7 +455,7 @@ public class FastLeaderElection implements Election {
             public void run() {
                 while (!stop) {
                     try {
-                        ToSend m = sendqueue.poll(3000, TimeUnit.MILLISECONDS);
+                        ToSend m = sendqueue.poll(500, TimeUnit.MILLISECONDS);
                         if(m == null) continue;
 
                         process(m);
@@ -483,6 +488,7 @@ public class FastLeaderElection implements Election {
         WorkerReceiver wr;
         Thread wsThread = null;
         Thread wrThread = null;
+        boolean halted = false;
 
         /**
          * Constructor of class Messenger.
@@ -500,12 +506,13 @@ public class FastLeaderElection implements Election {
 
             this.wrThread = new Thread(this.wr,
                     "WorkerReceiver[myid=" + self.getId() + "]");
+            this.wrThread.setDaemon(true);
         }
 
         /**
          * Starts instances of WorkerSender and WorkerReceiver
          */
-        void start(){
+        void start() {
             this.wsThread.start();
             this.wrThread.start();
         }
@@ -513,18 +520,29 @@ public class FastLeaderElection implements Election {
         /**
          * Stops instances of WorkerSender and WorkerReceiver
          */
-        void halt(){
-            this.ws.stop = true;
-            this.wr.stop = true;
-            try {
-                this.wsThread.join();
-                this.wrThread.join();
-            } catch (InterruptedException e) {
-                LOG.warn("Interrupted Exception while waiting for thread to stop: " +
-                        e.toString());
+        void halt() {
+            synchronized (this) {
+                if (halted) {
+                    return;
+                }
+                this.ws.stop = true;
+                this.wr.stop = true;
+                try {
+                    this.wsThread.join();
+                    // Don't attempt to join wrThread, since we might be in wrThread itself
+                    // via its call to FastLeaderElection.shutdown().  Instead, verify that
+                    // the WorkerReceiver has marked itself "halted", which will already be
+                    // true on entry in the case where we're in wrThread itself.
+                    while (!this.wr.halted) {
+                        Thread.sleep(100);
+                    }
+                } catch (InterruptedException e) {
+                    LOG.warn("Interrupted Exception while waiting for thread to stop: " +
+                            e.toString());
+                }
+                halted = true;
             }
         }
-
     }
 
     QuorumPeer self;
