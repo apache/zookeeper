@@ -146,18 +146,19 @@ public class Vote {
              *    in time and that each epoch is used only once, using only id and 
              *    epoch to compare the votes is sufficient.
              *
+             *    {@see https://issues.apache.org/jira/browse/ZOOKEEPER-1805}
+             *
              * 2. skip comparing peerEpoch if if we're running with mixed ensemble 
              *    with (version > 0x0) and without the change (version = 0x0) 
              *    introduced in ZOOKEEPER-1732.
+             *
+             *    {@see https://issues.apache.org/jira/browse/ZOOKEEPER-1732}
              *
              *    The server running with and without ZOOKEEPER-1732 will return 
              *    different peerEpoch. During rolling upgrades, it's possible
              *    that 2/5 servers are returning epoch 1, while the other 2/5
              *    are returning epoch 2, the other server need to ignore the 
              *    peerEpoch to be able to join it.
-             *
-             * {@see https://issues.apache.org/jira/browse/ZOOKEEPER-1732}
-             * {@see https://issues.apache.org/jira/browse/ZOOKEEPER-1805}
              */
             if ((version > 0x0) ^ (other.version > 0x0)) {
                 return id == other.id;

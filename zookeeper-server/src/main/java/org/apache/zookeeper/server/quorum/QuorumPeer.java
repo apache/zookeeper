@@ -2022,7 +2022,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * around by skipping comparing the zxid and electionEpoch when counting for 
      * votes for out of election servers during looking for leader.
      * 
-     * @see https://issues.apache.org/jira/browse/ZOOKEEPER-1732
+     * {@see https://issues.apache.org/jira/browse/ZOOKEEPER-1732}
      */
     protected void updateElectionVote(long newEpoch) {
         Vote currentVote = getCurrentVote();
