@@ -31,15 +31,8 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -324,20 +317,28 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
         public String toString(){
             StringWriter sw = new StringWriter();
-            //addr should never be null, but just to make sure
+
             List<InetSocketAddress> addrList = addr.getAllAddresses();
             List<InetSocketAddress> electionAddrList = electionAddr.getAllAddresses();
-            sw.append(IntStream.range(0, addrList.size()).mapToObj(i -> String.format("%s:%d:%d",
-                    delimitedHostString(addrList.get(i)), addrList.get(i).getPort(), electionAddrList.get(i).getPort()))
-                    .collect(Collectors.joining(",")));
+
+            if(addrList.size() > 0 && electionAddrList.size() > 0) {
+                addrList.sort(Comparator.comparing(InetSocketAddress::getHostString));
+                electionAddrList.sort(Comparator.comparing(InetSocketAddress::getHostString));
+                sw.append(IntStream.range(0, addrList.size()).mapToObj(i -> String.format("%s:%d:%d",
+                        delimitedHostString(addrList.get(i)), addrList.get(i).getPort(), electionAddrList.get(i).getPort()))
+                        .collect(Collectors.joining(",")));
+            }
+
             if (type == LearnerType.OBSERVER) sw.append(":observer");
-            else if (type == LearnerType.PARTICIPANT) sw.append(":participant");            
+            else if (type == LearnerType.PARTICIPANT) sw.append(":participant");
+
             if (clientAddr!=null){
                 sw.append(";");
                 sw.append(delimitedHostString(clientAddr));
                 sw.append(":");
                 sw.append(String.valueOf(clientAddr.getPort()));
             }
+
             return sw.toString();       
         }
 
