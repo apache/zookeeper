@@ -46,7 +46,7 @@
     <dependency org="org.slf4j" name="slf4j-api" rev="${slf4j.version}"/>
     <dependency org="org.slf4j" name="slf4j-log4j12" rev="${slf4j.version}" transitive="false"/>
     <dependency org="commons-cli" name="commons-cli" rev="${commons-cli.version}" />
-  
+
     <dependency org="org.apache.maven.wagon" name="wagon-http" rev="${wagon-http.version}"
                 conf="mvn-ant-task->default"/>
     <dependency org="org.apache.maven" name="maven-ant-tasks" rev="${maven-ant-tasks.version}"
@@ -66,8 +66,12 @@
     <dependency org="org.apache.ant" name="ant-junit" rev="${ant-junit.version}" conf="test->default"/>
     <dependency org="org.apache.ant" name="ant-junit4" rev="${ant-junit.version}" conf="test->default"/>
     <dependency org="junit" name="junit" rev="${junit.version}" conf="test->default"/>
-	<dependency org="org.mockito" name="mockito-core" rev="${mockito.version}"
-               conf="test->default"/>
+    <dependency org="org.mockito" name="mockito-core" rev="${mockito.version}"
+                conf="test->default"/>
+    <dependency org="net.bytebuddy" name="byte-buddy" rev="${bytebuddy.version}" conf="test->default" />
+    <dependency org="net.bytebuddy" name="byte-buddy-agent" rev="${bytebuddy.version}" conf="test->default" />
+    <dependency org="org.objenesis" name="objenesis" rev="${objenesis.version}" conf="test->default" />
+
     <dependency org="com.puppycrawl.tools" name="checkstyle" rev="${checkstyle.version}"
                 conf="test->default">
         <exclude org="commons-collections" module="commons-collections"/>
