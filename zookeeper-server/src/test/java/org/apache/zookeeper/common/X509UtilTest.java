@@ -17,6 +17,10 @@
  */
 package org.apache.zookeeper.common;
 
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.security.Security;
 import java.util.Collection;
 
@@ -382,6 +386,27 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         } finally {
             System.clearProperty(x509Util.getSslHandshakeDetectionTimeoutMillisProperty());
         }
+    }
+
+    @Test
+    public void testCreateSSLContext_invalidCustomSSLContextClass() {
+        ZKConfig zkConfig = new ZKConfig();
+        ClientX509Util clientX509Util = new ClientX509Util();
+        zkConfig.setProperty(clientX509Util.getSslClientContextProperty(), String.class.getCanonicalName());
+        try {
+            clientX509Util.createSSLContext(zkConfig);
+            fail("SSLContextException expected.");
+        } catch (X509Exception.SSLContextException e) {
+            assertTrue(e.getMessage().contains(clientX509Util.getSslClientContextProperty()));
+        }
+    }
+    @Test
+    public void testCreateSSLContext_validCustomSSLContextClass() throws X509Exception.SSLContextException {
+        ZKConfig zkConfig = new ZKConfig();
+        ClientX509Util clientX509Util = new ClientX509Util();
+        zkConfig.setProperty(clientX509Util.getSslClientContextProperty(), ZKTestClientSSLContext.class.getCanonicalName());
+        final SSLContext sslContext = clientX509Util.createSSLContext(zkConfig);
+        assertNull(sslContext);
     }
 
     // Warning: this will reset the x509Util

@@ -17,19 +17,11 @@
  */
 package org.apache.zookeeper.common;
 
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.net.Socket;
-import java.security.GeneralSecurityException;
-import java.security.KeyManagementException;
-import java.security.KeyStore;
-import java.security.NoSuchAlgorithmException;
-import java.security.Security;
-import java.security.cert.PKIXBuilderParameters;
-import java.security.cert.X509CertSelector;
-import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicReference;
+import org.apache.zookeeper.common.X509Exception.KeyManagerException;
+import org.apache.zookeeper.common.X509Exception.SSLContextException;
+import org.apache.zookeeper.common.X509Exception.TrustManagerException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.CertPathTrustManagerParameters;
 import javax.net.ssl.KeyManager;
@@ -43,12 +35,19 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509ExtendedTrustManager;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
-
-import org.apache.zookeeper.common.X509Exception.KeyManagerException;
-import org.apache.zookeeper.common.X509Exception.SSLContextException;
-import org.apache.zookeeper.common.X509Exception.TrustManagerException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.net.Socket;
+import java.security.GeneralSecurityException;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
+import java.security.Security;
+import java.security.cert.PKIXBuilderParameters;
+import java.security.cert.X509CertSelector;
+import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Utility code for X509 handling
@@ -85,6 +84,7 @@ public abstract class X509Util {
     private String sslTruststoreLocationProperty = getConfigPrefix() + "trustStore.location";
     private String sslTruststorePasswdProperty = getConfigPrefix() + "trustStore.password";
     private String sslTruststoreTypeProperty = getConfigPrefix() + "trustStore.type";
+    private String sslClientContextProperty = getConfigPrefix() + "client.context";
     private String sslHostnameVerificationEnabledProperty = getConfigPrefix() + "hostnameVerification";
     private String sslCrlEnabledProperty = getConfigPrefix() + "crl";
     private String sslOcspEnabledProperty = getConfigPrefix() + "ocsp";
@@ -136,6 +136,10 @@ public abstract class X509Util {
 
     public String getSslTruststoreTypeProperty() {
         return sslTruststoreTypeProperty;
+    }
+
+    public String getSslClientContextProperty() {
+        return sslClientContextProperty;
     }
 
     public String getSslHostnameVerificationEnabledProperty() {
@@ -208,62 +212,76 @@ public abstract class X509Util {
     }
 
     public SSLContext createSSLContext(ZKConfig config) throws SSLContextException {
-        KeyManager[] keyManagers = null;
-        TrustManager[] trustManagers = null;
-
-        String keyStoreLocationProp = config.getProperty(sslKeystoreLocationProperty, "");
-        String keyStorePasswordProp = config.getProperty(sslKeystorePasswdProperty, "");
-        String keyStoreTypeProp = config.getProperty(sslKeystoreTypeProperty);
-
-        // There are legal states in some use cases for null KeyManager or TrustManager.
-        // But if a user wanna specify one, location is required. Password defaults to empty string if it is not
-        // specified by the user.
-
-        if (keyStoreLocationProp.isEmpty()) {
-            LOG.warn(getSslKeystoreLocationProperty() + " not specified");
-        } else {
+        if (config.getProperty(sslClientContextProperty) != null) {
+            LOG.debug("Loading SSLContext from property '" + sslClientContextProperty + "'");
+            String sslClientContextClass = config.getProperty(sslClientContextProperty);
             try {
-                keyManagers = new KeyManager[]{
-                        createKeyManager(keyStoreLocationProp, keyStorePasswordProp, keyStoreTypeProp)};
-            } catch (KeyManagerException keyManagerException) {
-                throw new SSLContextException("Failed to create KeyManager", keyManagerException);
-            } catch (IllegalArgumentException e) {
-                throw new SSLContextException("Bad value for " + sslKeystoreTypeProperty + ": " + keyStoreTypeProp, e);
+                Class<?> sslContextClass = Class.forName(sslClientContextClass);
+                ZKClientSSLContext sslContext = (ZKClientSSLContext) sslContextClass.getConstructor().newInstance();
+                return sslContext.getSSLContext();
+            } catch (ClassNotFoundException | ClassCastException | NoSuchMethodException | InvocationTargetException |
+                    InstantiationException | IllegalAccessException e) {
+                throw new SSLContextException("Could not retrieve the SSLContext from source '" + sslClientContextClass +
+                        "' provided in the property '" + sslClientContextProperty + "'", e);
             }
-        }
-
-        String trustStoreLocationProp = config.getProperty(sslTruststoreLocationProperty, "");
-        String trustStorePasswordProp = config.getProperty(sslTruststorePasswdProperty, "");
-        String trustStoreTypeProp = config.getProperty(sslTruststoreTypeProperty);
-
-        boolean sslCrlEnabled = config.getBoolean(this.sslCrlEnabledProperty);
-        boolean sslOcspEnabled = config.getBoolean(this.sslOcspEnabledProperty);
-        boolean sslServerHostnameVerificationEnabled =
-                config.getBoolean(this.getSslHostnameVerificationEnabledProperty(), true);
-        boolean sslClientHostnameVerificationEnabled =
-                sslServerHostnameVerificationEnabled && shouldVerifyClientHostname();
-
-        if (trustStoreLocationProp.isEmpty()) {
-            LOG.warn(getSslTruststoreLocationProperty() + " not specified");
         } else {
-            try {
-                trustManagers = new TrustManager[]{
-                        createTrustManager(trustStoreLocationProp, trustStorePasswordProp, trustStoreTypeProp, sslCrlEnabled, sslOcspEnabled,
-                                sslServerHostnameVerificationEnabled, sslClientHostnameVerificationEnabled)};
-            } catch (TrustManagerException trustManagerException) {
-                throw new SSLContextException("Failed to create TrustManager", trustManagerException);
-            } catch (IllegalArgumentException e) {
-                throw new SSLContextException("Bad value for " + sslTruststoreTypeProperty + ": " + trustStoreTypeProp, e);
-            }
-        }
+            KeyManager[] keyManagers = null;
+            TrustManager[] trustManagers = null;
 
-        String protocol = System.getProperty(sslProtocolProperty, DEFAULT_PROTOCOL);
-        try {
-            SSLContext sslContext = SSLContext.getInstance(protocol);
-            sslContext.init(keyManagers, trustManagers, null);
-            return sslContext;
-        } catch (NoSuchAlgorithmException|KeyManagementException sslContextInitException) {
-            throw new SSLContextException(sslContextInitException);
+            String keyStoreLocationProp = config.getProperty(sslKeystoreLocationProperty, "");
+            String keyStorePasswordProp = config.getProperty(sslKeystorePasswdProperty, "");
+            String keyStoreTypeProp = config.getProperty(sslKeystoreTypeProperty);
+
+            // There are legal states in some use cases for null KeyManager or TrustManager.
+            // But if a user wanna specify one, location is required. Password defaults to empty string if it is not
+            // specified by the user.
+
+            if (keyStoreLocationProp.isEmpty()) {
+                LOG.warn(getSslKeystoreLocationProperty() + " not specified");
+            } else {
+                try {
+                    keyManagers = new KeyManager[]{
+                            createKeyManager(keyStoreLocationProp, keyStorePasswordProp, keyStoreTypeProp)};
+                } catch (KeyManagerException keyManagerException) {
+                    throw new SSLContextException("Failed to create KeyManager", keyManagerException);
+                } catch (IllegalArgumentException e) {
+                    throw new SSLContextException("Bad value for " + sslKeystoreTypeProperty + ": " + keyStoreTypeProp, e);
+                }
+            }
+
+            String trustStoreLocationProp = config.getProperty(sslTruststoreLocationProperty, "");
+            String trustStorePasswordProp = config.getProperty(sslTruststorePasswdProperty, "");
+            String trustStoreTypeProp = config.getProperty(sslTruststoreTypeProperty);
+
+            boolean sslCrlEnabled = config.getBoolean(this.sslCrlEnabledProperty);
+            boolean sslOcspEnabled = config.getBoolean(this.sslOcspEnabledProperty);
+            boolean sslServerHostnameVerificationEnabled =
+                    config.getBoolean(this.getSslHostnameVerificationEnabledProperty(), true);
+            boolean sslClientHostnameVerificationEnabled =
+                    sslServerHostnameVerificationEnabled && shouldVerifyClientHostname();
+
+            if (trustStoreLocationProp.isEmpty()) {
+                LOG.warn(getSslTruststoreLocationProperty() + " not specified");
+            } else {
+                try {
+                    trustManagers = new TrustManager[]{
+                            createTrustManager(trustStoreLocationProp, trustStorePasswordProp, trustStoreTypeProp, sslCrlEnabled, sslOcspEnabled,
+                                    sslServerHostnameVerificationEnabled, sslClientHostnameVerificationEnabled)};
+                } catch (TrustManagerException trustManagerException) {
+                    throw new SSLContextException("Failed to create TrustManager", trustManagerException);
+                } catch (IllegalArgumentException e) {
+                    throw new SSLContextException("Bad value for " + sslTruststoreTypeProperty + ": " + trustStoreTypeProp, e);
+                }
+            }
+
+            String protocol = System.getProperty(sslProtocolProperty, DEFAULT_PROTOCOL);
+            try {
+                SSLContext sslContext = SSLContext.getInstance(protocol);
+                sslContext.init(keyManagers, trustManagers, null);
+                return sslContext;
+            } catch (NoSuchAlgorithmException | KeyManagementException sslContextInitException) {
+                throw new SSLContextException(sslContextInitException);
+            }
         }
     }
 
