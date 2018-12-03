@@ -372,93 +372,56 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
      */
     @Test
     public void testElectionFraud() throws IOException, InterruptedException {
-        // capture QuorumPeer logging
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        WriterAppender appender = getConsoleAppender(os, Level.INFO);
-        Logger qlogger = Logger.getLogger(QuorumPeer.class);
-        qlogger.addAppender(appender);
-
         numServers = 3;
 
-        // used for assertions later
-        boolean foundLeading = false;
-        boolean foundLooking = false;
-        boolean foundFollowing = false;
+        // spin up a quorum, we use a small ticktime to make the test run faster
+        servers = LaunchServers(numServers, 500);
 
-        try {
-          // spin up a quorum, we use a small ticktime to make the test run faster
-          servers = LaunchServers(numServers, 500);
+        // find the leader
+        int trueLeader = servers.findLeader();
+        Assert.assertTrue("There should be a leader", trueLeader >= 0);
 
-          // find the leader
-          int trueLeader = servers.findLeader();
-          Assert.assertTrue("There should be a leader", trueLeader >= 0);
+        // find a follower
+        int falseLeader = (trueLeader + 1) % numServers;
+        Assert.assertNotNull("All servers should join the quorum", servers.mt[falseLeader].getQuorumPeer().follower);
 
-          // find a follower
-          int falseLeader = (trueLeader + 1) % numServers;
-          Assert.assertNotNull("All servers should join the quorum", servers.mt[falseLeader].getQuorumPeer().follower);
+        // to keep the quorum peer running and force it to go into the looking state, we kill leader election
+        // and close the connection to the leader
+        servers.mt[falseLeader].getQuorumPeer().electionAlg.shutdown();
+        servers.mt[falseLeader].getQuorumPeer().follower.getSocket().close();
 
-          // to keep the quorum peer running and force it to go into the looking state, we kill leader election
-          // and close the connection to the leader
-          servers.mt[falseLeader].getQuorumPeer().electionAlg.shutdown();
-          servers.mt[falseLeader].getQuorumPeer().follower.getSocket().close();
+        // wait for the falseLeader to disconnect
+        waitForOne(servers.zk[falseLeader], States.CONNECTING);
+        waitForPeerState(servers.mt[falseLeader], QuorumPeer.ServerState.LOOKING);
 
-          // wait for the falseLeader to disconnect
-          waitForOne(servers.zk[falseLeader], States.CONNECTING);
-          waitForPeerState(servers.mt[falseLeader], QuorumPeer.ServerState.LOOKING);
+        // Attach a spy to the PeerStateObserver hook of the QuorumPeer of the false leader
+        QuorumPeer.PeerStateObserver observer = spy(new QuorumPeer.PeerStateObserver());
+        servers.mt[falseLeader].getQuorumPeer().setPeerStateObserver(observer);
 
-          // Attach a spy to the PeerStateObserver hook of the QuorumPeer of the false leader
-          QuorumPeer.PeerStateObserver observer = spy(new QuorumPeer.PeerStateObserver());
-          servers.mt[falseLeader].getQuorumPeer().setPeerStateObserver(observer);
+        // convince falseLeader that it is the leader
+        servers.mt[falseLeader].getQuorumPeer().setPeerState(QuorumPeer.ServerState.LEADING);
 
-          // convince falseLeader that it is the leader
-          servers.mt[falseLeader].getQuorumPeer().setPeerState(QuorumPeer.ServerState.LEADING);
+        // provide time for the falseleader to realize no followers have connected
+        // (this is twice the timeout used in Leader#getEpochToPropose)
+        Thread.sleep(2 * servers.mt[falseLeader].getQuorumPeer().initLimit * servers.mt[falseLeader].getQuorumPeer().tickTime);
 
-          // provide time for the falseleader to realize no followers have connected
-          // (this is twice the timeout used in Leader#getEpochToPropose)
-          Thread.sleep(2 * servers.mt[falseLeader].getQuorumPeer().initLimit * servers.mt[falseLeader].getQuorumPeer().tickTime);
+        // Restart leader election
+        servers.mt[falseLeader].getQuorumPeer().startLeaderElection();
+        LOG.info("restarted leader election");
 
-          // Restart leader election
-          servers.mt[falseLeader].getQuorumPeer().startLeaderElection();
-          LOG.info("restarted leader election");
+        // The previous client connection to falseLeader likely closed, create a new one
+        servers.zk[falseLeader].close();
+        servers.zk[falseLeader] = new ZooKeeper("127.0.0.1:" + servers.mt[falseLeader].getClientPort(), ClientBase.CONNECTION_TIMEOUT, this);
 
-          // The previous client connection to falseLeader likely closed, create a new one
-          servers.zk[falseLeader].close();
-          servers.zk[falseLeader] = new ZooKeeper("127.0.0.1:" + servers.mt[falseLeader].getClientPort(), ClientBase.CONNECTION_TIMEOUT, this);
+        // Wait for falseLeader to rejoin the quorum
+        waitForOne(servers.zk[falseLeader], States.CONNECTED);
 
-          // Wait for falseLeader to rejoin the quorum
-          waitForOne(servers.zk[falseLeader], States.CONNECTED);
+        // and ensure trueLeader is still the leader
+        Assert.assertNotNull(servers.mt[trueLeader].getQuorumPeer().leader);
 
-          // and ensure trueLeader is still the leader
-          Assert.assertNotNull(servers.mt[trueLeader].getQuorumPeer().leader);
-
-          verify(observer).observe(ServerState.LOOKING, ServerState.LEADING);
-          verify(observer).observe(ServerState.LEADING, ServerState.LOOKING);
-          verify(observer).observe(ServerState.LOOKING, ServerState.FOLLOWING);
-
-          // Look through the logs for output that indicates the falseLeader is LEADING, then LOOKING, then FOLLOWING
-          LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
-          Pattern leading = Pattern.compile(".*myid=" + falseLeader + ".*LEADING.*");
-          Pattern looking = Pattern.compile(".*myid=" + falseLeader + ".*LOOKING.*");
-          Pattern following = Pattern.compile(".*myid=" + falseLeader + ".*FOLLOWING.*");
-
-          String line;
-          while ((line = r.readLine()) != null) {
-            if (!foundLeading) {
-              foundLeading = leading.matcher(line).matches();
-            } else if(!foundLooking) {
-              foundLooking = looking.matcher(line).matches();
-            } else if (following.matcher(line).matches()){
-              foundFollowing = true;
-              break;
-            }
-          }
-        } finally {
-          qlogger.removeAppender(appender);
-        }
-
-        Assert.assertTrue("falseLeader never attempts to become leader", foundLeading);
-        Assert.assertTrue("falseLeader never gives up on leadership", foundLooking);
-        Assert.assertTrue("falseLeader never rejoins the quorum", foundFollowing);
+        verify(observer).observe(ServerState.LOOKING, ServerState.LEADING);
+        verify(observer).observe(ServerState.LEADING, ServerState.LOOKING);
+        verify(observer).observe(ServerState.LOOKING, ServerState.FOLLOWING);
     }
 
     public static void waitForPeerState(MainThread mt, QuorumPeer.ServerState state) throws InterruptedException {
