@@ -862,7 +862,7 @@ public class QuorumCnxManager {
                 threadPool.shutdown();
 
                 try {
-                    while (!shutdown)
+                    while (true)
                         if (threadPool.awaitTermination(10, TimeUnit.MILLISECONDS))
                             break;
                 } catch (InterruptedException ie) {

@@ -24,6 +24,7 @@ import java.net.*;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.security.sasl.SaslException;
@@ -372,67 +373,98 @@ public class Leader {
     protected final Proposal newLeaderProposal = new Proposal();
 
     class LearnerCnxAcceptor extends ZooKeeperCriticalThread {
-        private volatile boolean stop = false;
+        private AtomicBoolean stop;
+        private AtomicBoolean fail;
 
         public LearnerCnxAcceptor() {
             super("LearnerCnxAcceptor-" + ss, zk
                     .getZooKeeperServerListener());
+            stop = new AtomicBoolean(false);
+            fail = new AtomicBoolean(false);
         }
 
         @Override
         public void run() {
+            ExecutorService threadPool = Executors.newCachedThreadPool();
+
+            if (!stop.get()) {
+                ss.forEach(ssTemp -> threadPool.submit(new LearnerCnxAcceptorHandler(ssTemp)));
+                threadPool.shutdown();
+            }
+
             try {
-                if(!stop) {
-                    ExecutorService threadPool = Executors.newCachedThreadPool();
-                    ss.forEach(ssTemp -> threadPool.submit(new Handler(ssTemp)));
-                    threadPool.shutdown();
-                }
-            } catch (Exception e) {
-                LOG.warn("Exception while accepting follower", e.getMessage());
-                handleException(this.getName(), e);
+                while (true)
+                    if (threadPool.awaitTermination(10, TimeUnit.MILLISECONDS))
+                        break;
+            } catch (InterruptedException ie) {
+                LOG.error("Interrupted while sleeping. " +
+                        "Ignoring exception", ie);
             }
         }
 
         public void halt() {
-            stop = true;
+            stop.set(true);
+            closeSockets();
         }
 
-        class Handler implements Runnable {
+        class LearnerCnxAcceptorHandler implements Runnable {
 
             private ServerSocket ss;
 
-            public Handler(ServerSocket ss) {
+            public LearnerCnxAcceptorHandler(ServerSocket ss) {
                 this.ss = ss;
             }
 
             @Override
             public void run() {
                 Thread.currentThread().setName("LeaderHandler-" + ss.getInetAddress());
-                while (!stop) {
-                    try {
-                        Socket s = ss.accept();
+                try {
+                    while (!stop.get()) {
+                        Socket s = null;
+                        boolean error = false;
+                        try {
+                            s = ss.accept();
 
-                        // start with the initLimit, once the ack is processed
-                        // in LearnerHandler switch to the syncLimit
-                        s.setSoTimeout(self.tickTime * self.initLimit);
-                        s.setTcpNoDelay(nodelay);
+                            // start with the initLimit, once the ack is processed
+                            // in LearnerHandler switch to the syncLimit
+                            s.setSoTimeout(self.tickTime * self.initLimit);
+                            s.setTcpNoDelay(nodelay);
 
-                        BufferedInputStream is = new BufferedInputStream(
-                                s.getInputStream());
-                        LearnerHandler fh = new LearnerHandler(s, is, Leader.this);
-                        fh.start();
-                    } catch (SocketException e) {
-                        if (stop) {
-                            LOG.info("exception while shutting down acceptor: " + e);
-                        } else {
-                            LOG.warn("Exception while accepting follower", e.getMessage());
-                            handleException(getName(), e);
+                            BufferedInputStream is = new BufferedInputStream(
+                                    s.getInputStream());
+                            LearnerHandler fh = new LearnerHandler(s, is, Leader.this);
+                            fh.start();
+                        } catch (SocketException e) {
+                            error = true;
+                            if (stop.get()) {
+                                LOG.info("exception while shutting down acceptor: "
+                                        + e);
+                            } else {
+                                throw e;
+                            }
+                        } catch (SaslException e){
+                            LOG.error("Exception while connecting to quorum learner", e);
+                            error = true;
+                        } catch (Exception e) {
+                            error = true;
+                            throw e;
+                        } finally {
+                            // Don't leak sockets on errors
+                            if (error && s != null && !s.isClosed()) {
+                                try {
+                                    s.close();
+                                } catch (IOException e) {
+                                    LOG.warn("Error closing socket", e);
+                                }
+                            }
                         }
-                    } catch (SaslException e) {
-                        LOG.error("Exception while connecting to quorum learner", e);
-                    } catch (Exception e) {
-                        LOG.warn("Exception while accepting follower", e.getMessage());
+                    }
+                } catch (Exception e) {
+                    LOG.warn("Exception while accepting follower", e.getMessage());
+                    if(!fail.get()) {
                         handleException(getName(), e);
+                        fail.set(true);
+                        halt();
                     }
                 }
             }
@@ -681,17 +713,13 @@ public class Leader {
 
         if (cnxAcceptor != null) {
             cnxAcceptor.halt();
+        } else {
+            closeSockets();
         }
 
         // NIO should not accept conenctions
         self.setZooKeeperServer(null);
         self.adminServer.setZooKeeperServer(null);
-        for(ServerSocket temp : ss)
-            try {
-                temp.close();
-            } catch (IOException e) {
-                LOG.warn("Ignoring unexpected exception during close",e);
-            }
         self.closeAllConnections();
         // shutdown the previous zk
         if (zk != null) {
@@ -706,6 +734,18 @@ public class Leader {
             }
         }
         isShutdown = true;
+    }
+
+    void closeSockets() {
+        for (ServerSocket tempSocket : ss) {
+            if (!tempSocket.isClosed())
+                if (!tempSocket.isClosed())
+                    try {
+                        tempSocket.close();
+                    } catch (IOException e) {
+                        LOG.warn("Ignoring unexpected exception during close" + tempSocket, e);
+                    }
+        }
     }
 
     /** In a reconfig operation, this method attempts to find the best leader for next configuration.
