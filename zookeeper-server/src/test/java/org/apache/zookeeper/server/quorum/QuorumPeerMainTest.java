@@ -23,6 +23,8 @@ import static org.apache.zookeeper.test.ClientBase.createEmptyTestDir;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
@@ -104,7 +106,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         String quorumCfgSection =
             "server.1=127.0.0.1:" + PortAssignment.unique()
             + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP1
-            + "\nserver.2=127.0.0.1:" + PortAssignment.unique() 
+            + "\nserver.2=127.0.0.1:" + PortAssignment.unique()
             + ":" + PortAssignment.unique() + ";" + CLIENT_PORT_QP2;
 
         MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
@@ -394,6 +396,9 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
           int falseLeader = (trueLeader + 1) % numServers;
           Assert.assertNotNull("All servers should join the quorum", servers.mt[falseLeader].main.quorumPeer.follower);
 
+          // Attach a spy to the QuorumPeer of the false leader
+          servers.mt[falseLeader].main.setQuorumPeer(spy(servers.mt[falseLeader].main.quorumPeer));
+
           // to keep the quorum peer running and force it to go into the looking state, we kill leader election
           // and close the connection to the leader
           servers.mt[falseLeader].main.quorumPeer.electionAlg.shutdown();
@@ -413,7 +418,6 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
           servers.mt[falseLeader].main.quorumPeer.startLeaderElection();
 
           // The previous client connection to falseLeader likely closed, create a new one
-          servers.zk[falseLeader].close();
           servers.zk[falseLeader] = new ZooKeeper("127.0.0.1:" + servers.mt[falseLeader].getClientPort(), ClientBase.CONNECTION_TIMEOUT, this);
 
           // Wait for falseLeader to rejoin the quorum
@@ -421,6 +425,10 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
           // and ensure trueLeader is still the leader
           Assert.assertNotNull(servers.mt[trueLeader].main.quorumPeer.leader);
+
+          verify(servers.mt[falseLeader].main.quorumPeer).setPeerState(ServerState.LEADING);
+          verify(servers.mt[falseLeader].main.quorumPeer).setPeerState(ServerState.LOOKING);
+          verify(servers.mt[falseLeader].main.quorumPeer).setPeerState(ServerState.FOLLOWING);
 
           // Look through the logs for output that indicates the falseLeader is LEADING, then LOOKING, then FOLLOWING
           LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
@@ -1213,7 +1221,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             }
         }
     }
-    
+
     private Proposal findProposalOfType(Map<Long, Proposal> proposals, int type) {
         for (Proposal proposal : proposals.values()) {
             if (proposal.request.getHdr().getType() == type) {

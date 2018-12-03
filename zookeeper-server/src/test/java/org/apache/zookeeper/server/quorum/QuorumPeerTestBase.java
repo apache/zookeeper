@@ -65,6 +65,11 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
                 QuorumBase.shutdown(myPeer);
             }
         }
+
+
+        public void setQuorumPeer(QuorumPeer newPeer) {
+            this.quorumPeer = newPeer;
+        }
     }
     
     public static class MainThread implements Runnable {

@@ -66,7 +66,7 @@
     <dependency org="org.apache.ant" name="ant-junit" rev="${ant-junit.version}" conf="test->default"/>
     <dependency org="org.apache.ant" name="ant-junit4" rev="${ant-junit.version}" conf="test->default"/>
     <dependency org="junit" name="junit" rev="${junit.version}" conf="test->default"/>
-	<dependency org="org.mockito" name="mockito-all" rev="${mockito.version}"
+	<dependency org="org.mockito" name="mockito-core" rev="${mockito.version}"
                conf="test->default"/>
     <dependency org="com.puppycrawl.tools" name="checkstyle" rev="${checkstyle.version}"
                 conf="test->default">
@@ -74,7 +74,7 @@
         <exclude org="commons-cli" module="commons-cli"/>
     </dependency>
     <!-- force the tests to pull the latest commons-collections jar -->
-    <dependency org="commons-collections" name="commons-collections" 
+    <dependency org="commons-collections" name="commons-collections"
                 rev="${commons-collections.version}" conf="test->default"/>
 
     <dependency org="org.bouncycastle" name="bcprov-jdk15on" rev="${bouncycastle.version}" conf="test->default"/>
@@ -85,13 +85,13 @@
     <dependency org="xerces" name="xerces" rev="${xerces.version}"
                 conf="jdiff->default"/>
 
-    <dependency org="org.apache.rat" name="apache-rat-tasks" 
+    <dependency org="org.apache.rat" name="apache-rat-tasks"
                 rev="${apache-rat-tasks.version}" conf="releaseaudit->default">
         <exclude org="commons-collections" module="commons-collections"/>
     </dependency>
-    <dependency org="commons-lang" name="commons-lang" 
+    <dependency org="commons-lang" name="commons-lang"
                 rev="${commons-lang.version}" conf="releaseaudit->default"/>
-    <dependency org="commons-collections" name="commons-collections" 
+    <dependency org="commons-collections" name="commons-collections"
                 rev="${commons-collections.version}" conf="releaseaudit->default"/>
     <dependency org="org.owasp" name="dependency-check-ant"
                 rev="${dependency-check-ant.version}" conf="owasp->default"/>
