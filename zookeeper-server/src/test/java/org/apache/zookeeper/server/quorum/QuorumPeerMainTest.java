@@ -122,7 +122,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             Assert.assertTrue("waiting for server 2 being up",
                             ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2,
                             CONNECTION_TIMEOUT));
-            QuorumPeer quorumPeer = q1.main.quorumPeer;
+            QuorumPeer quorumPeer = q1.getQuorumPeer();
 
             int tickTime = quorumPeer.getTickTime();
             Assert.assertEquals(
@@ -208,11 +208,11 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             int leader = -1;
             Map<Long, Proposal> outstanding = null;
             for (int i = 0; i < SERVER_COUNT; i++) {
-                if (mt[i].main.quorumPeer.leader == null) {
+                if (mt[i].getQuorumPeer().leader == null) {
                     mt[i].shutdown();
                 } else {
                     leader = i;
-                    outstanding = mt[leader].main.quorumPeer.leader.outstandingProposals;
+                    outstanding = mt[leader].getQuorumPeer().leader.outstandingProposals;
                 }
             }
 
@@ -395,32 +395,31 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
           // find a follower
           int falseLeader = (trueLeader + 1) % numServers;
-          Assert.assertTrue("Waiting for falseLeader to become a follower",
-                            ClientBase.waitForServerState(servers.mt[falseLeader].main.quorumPeer,
-                                                          CONNECTION_TIMEOUT,
-                                                          QuorumStats.Provider.LEADING_STATE, QuorumStats.Provider.FOLLOWING_STATE));
-          // Assert.assertNotNull("All servers should join the quorum", servers.mt[falseLeader].main.quorumPeer.follower);
-
-          // Attach a spy to the QuorumPeer of the false leader
-          servers.mt[falseLeader].main.setQuorumPeer(spy(servers.mt[falseLeader].main.quorumPeer));
+          Assert.assertNotNull("All servers should join the quorum", servers.mt[falseLeader].getQuorumPeer().follower);
 
           // to keep the quorum peer running and force it to go into the looking state, we kill leader election
           // and close the connection to the leader
-          servers.mt[falseLeader].main.quorumPeer.electionAlg.shutdown();
-          servers.mt[falseLeader].main.quorumPeer.follower.getSocket().close();
+          servers.mt[falseLeader].getQuorumPeer().electionAlg.shutdown();
+          servers.mt[falseLeader].getQuorumPeer().follower.getSocket().close();
 
           // wait for the falseLeader to disconnect
           waitForOne(servers.zk[falseLeader], States.CONNECTING);
+          waitForPeerState(servers.mt[falseLeader], QuorumPeer.ServerState.LOOKING);
+
+          // Attach a spy to the PeerStateObserver hook of the QuorumPeer of the false leader
+          QuorumPeer.PeerStateObserver observer = spy(new QuorumPeer.PeerStateObserver());
+          servers.mt[falseLeader].getQuorumPeer().setPeerStateObserver(observer);
 
           // convince falseLeader that it is the leader
-          servers.mt[falseLeader].main.quorumPeer.setPeerState(QuorumPeer.ServerState.LEADING);
+          servers.mt[falseLeader].getQuorumPeer().setPeerState(QuorumPeer.ServerState.LEADING);
 
           // provide time for the falseleader to realize no followers have connected
           // (this is twice the timeout used in Leader#getEpochToPropose)
-          Thread.sleep(2 * servers.mt[falseLeader].main.quorumPeer.initLimit * servers.mt[falseLeader].main.quorumPeer.tickTime);
+          Thread.sleep(2 * servers.mt[falseLeader].getQuorumPeer().initLimit * servers.mt[falseLeader].getQuorumPeer().tickTime);
 
           // Restart leader election
-          servers.mt[falseLeader].main.quorumPeer.startLeaderElection();
+          servers.mt[falseLeader].getQuorumPeer().startLeaderElection();
+          LOG.info("restarted leader election");
 
           // The previous client connection to falseLeader likely closed, create a new one
           servers.zk[falseLeader].close();
@@ -430,11 +429,11 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
           waitForOne(servers.zk[falseLeader], States.CONNECTED);
 
           // and ensure trueLeader is still the leader
-          Assert.assertNotNull(servers.mt[trueLeader].main.quorumPeer.leader);
+          Assert.assertNotNull(servers.mt[trueLeader].getQuorumPeer().leader);
 
-          verify(servers.mt[falseLeader].main.quorumPeer).setPeerState(ServerState.LEADING);
-          verify(servers.mt[falseLeader].main.quorumPeer).setPeerState(ServerState.LOOKING);
-          verify(servers.mt[falseLeader].main.quorumPeer).setPeerState(ServerState.FOLLOWING);
+          verify(observer).observe(ServerState.LOOKING, ServerState.LEADING);
+          verify(observer).observe(ServerState.LEADING, ServerState.LOOKING);
+          verify(observer).observe(ServerState.LOOKING, ServerState.FOLLOWING);
 
           // Look through the logs for output that indicates the falseLeader is LEADING, then LOOKING, then FOLLOWING
           LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
@@ -460,6 +459,17 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         Assert.assertTrue("falseLeader never attempts to become leader", foundLeading);
         Assert.assertTrue("falseLeader never gives up on leadership", foundLooking);
         Assert.assertTrue("falseLeader never rejoins the quorum", foundFollowing);
+    }
+
+    public static void waitForPeerState(MainThread mt, QuorumPeer.ServerState state) throws InterruptedException {
+        int iterations = ClientBase.CONNECTION_TIMEOUT / 500;
+        while (mt.getQuorumPeer().getPeerState() != state) {
+            if (iterations-- == 0) {
+                throw new RuntimeException("Waiting too long " + mt.getQuorumPeer().getPeerState() + " != " + state);
+            }
+            LOG.info("still waiting for peer to reach " + mt.getQuorumPeer().getPeerState());
+            Thread.sleep(500);
+        }
     }
 
     public static void waitForOne(ZooKeeper zk, States state) throws InterruptedException {
@@ -538,7 +548,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
         public int findLeader() {
             for (int i = 0; i < mt.length; i++) {
-                if (mt[i].main.quorumPeer.leader != null) {
+                if (mt[i].getQuorumPeer().leader != null) {
                     return i;
                 }
             }
@@ -908,7 +918,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                 .waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2,
                         CONNECTION_TIMEOUT));
 
-        QuorumPeer quorumPeer = q1.main.quorumPeer;
+        QuorumPeer quorumPeer = q1.getQuorumPeer();
 
         Assert.assertEquals("minimumSessionTimeOut is not considered",
                 minSessionTimeOut, quorumPeer.getMinSessionTimeout());
@@ -952,7 +962,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                 .waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP2,
                         CONNECTION_TIMEOUT));
 
-        QuorumPeer quorumPeer = q1.main.quorumPeer;
+        QuorumPeer quorumPeer = q1.getQuorumPeer();
         final int maxSessionTimeOut = quorumPeer.tickTime * 20;
 
         Assert.assertEquals("minimumSessionTimeOut is not considered",
@@ -983,9 +993,9 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
         // 2. kill all followers
         int leader = servers.findLeader();
-        Map<Long, Proposal> outstanding =  servers.mt[leader].main.quorumPeer.leader.outstandingProposals;
+        Map<Long, Proposal> outstanding =  servers.mt[leader].getQuorumPeer().leader.outstandingProposals;
         // increase the tick time to delay the leader going to looking
-        servers.mt[leader].main.quorumPeer.tickTime = LEADER_TIMEOUT_MS;
+        servers.mt[leader].getQuorumPeer().tickTime = LEADER_TIMEOUT_MS;
         LOG.warn("LEADER {}", leader);
 
         for (int i = 0; i < SERVER_COUNT; i++) {
@@ -1042,14 +1052,14 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         // 6. wait for the leader to quit due to not enough followers and come back up as a part of the new quorum
         LOG.info("Waiting for leader {} to timeout followers", leader);
         sleepTime = 0;
-        Follower f = servers.mt[leader].main.quorumPeer.follower;
+        Follower f = servers.mt[leader].getQuorumPeer().follower;
         while (f == null || !f.isRunning()) {
             if (sleepTime > LEADER_TIMEOUT_MS * 2) {
-                Assert.fail("Took too long for old leader to time out " + servers.mt[leader].main.quorumPeer.getPeerState());
+                Assert.fail("Took too long for old leader to time out " + servers.mt[leader].getQuorumPeer().getPeerState());
             }
             Thread.sleep(100);
             sleepTime += 100;
-            f = servers.mt[leader].main.quorumPeer.follower;
+            f = servers.mt[leader].getQuorumPeer().follower;
         }
 
         int newLeader = servers.findLeader();
@@ -1174,7 +1184,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             qpMain.runFromConfig(configMock);
 
             // Assert
-            FileTxnSnapLog txnFactory = qpMain.getQuorumPeer().getTxnFactory();
+            FileTxnSnapLog txnFactory = qpMain.createQuorumPeer().getTxnFactory();
             Assert.assertEquals(Paths.get(dataLogDir.getAbsolutePath(), "version-2").toString(), txnFactory.getDataDir().getAbsolutePath());
             Assert.assertEquals(Paths.get(dataDir.getAbsolutePath(), "version-2").toString(), txnFactory.getSnapDir().getAbsolutePath());
         } finally {
@@ -1191,7 +1201,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         }
 
         @Override
-        protected QuorumPeer getQuorumPeer() {
+        protected QuorumPeer createQuorumPeer() {
             return qp;
         }
     }
@@ -1301,7 +1311,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         int leaderId = -1;
         int followerA = -1;
         for (int i = 0; i < ENSEMBLE_SERVERS; i++) {
-            if (mt[i].main.quorumPeer.leader != null) {
+            if (mt[i].getQuorumPeer().leader != null) {
                 leaderId = i;
             } else if (followerA == -1) {
                 followerA = i;
@@ -1324,7 +1334,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             LOG.info("created node {} with value {}", nodePath, initialValue);
 
             CustomQuorumPeer leaderQuorumPeer =
-                    (CustomQuorumPeer) mt[leaderId].main.quorumPeer;
+                    (CustomQuorumPeer) mt[leaderId].getQuorumPeer();
 
             // 4. on the customized leader catch the startForwarding call
             //    (without synchronized), set the node to value v1, then
@@ -1375,7 +1385,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
             // 6. exit follower A after taking snapshot
             CustomQuorumPeer followerAQuorumPeer =
-                    ((CustomQuorumPeer) mt[followerA].main.quorumPeer);
+                    ((CustomQuorumPeer) mt[followerA].getQuorumPeer());
             LOG.info("set exit when ack new leader packet on {}", followerA);
             contexts[followerA].exitWhenAckNewLeader = true;
             CountDownLatch latch = new CountDownLatch(1);
@@ -1451,7 +1461,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         }
 
         @Override
-        protected QuorumPeer getQuorumPeer() throws SaslException {
+        protected QuorumPeer createQuorumPeer() throws SaslException {
             return new CustomQuorumPeer(context);
         }
     }

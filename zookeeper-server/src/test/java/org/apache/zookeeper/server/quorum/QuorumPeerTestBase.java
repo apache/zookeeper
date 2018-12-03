@@ -66,9 +66,12 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             }
         }
 
+        public QuorumPeer getQuorumPeer() {
+            return quorumPeer;
+        }
 
         public void setQuorumPeer(QuorumPeer newPeer) {
-            this.quorumPeer = newPeer;
+            quorumPeer = newPeer;
         }
     }
     
@@ -352,12 +355,12 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         }
 
         public void clean() {
-            ClientBase.recursiveDelete(main.quorumPeer.getTxnFactory()
+            ClientBase.recursiveDelete(main.getQuorumPeer().getTxnFactory()
                     .getDataDir());
         }
 
         public boolean isQuorumPeerRunning() {
-            return main.quorumPeer != null;
+            return main.getQuorumPeer() != null;
         }
 
         public String getPropFromStaticFile(String key) throws IOException {
@@ -367,7 +370,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
         }
 
         public QuorumPeer getQuorumPeer() {
-            return main.quorumPeer;
+            return main.getQuorumPeer();
         }
 
 

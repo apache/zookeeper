@@ -228,7 +228,7 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
 
     static class MockTestQPMain extends TestQPMain {
         @Override
-        protected QuorumPeer getQuorumPeer() throws SaslException {
+        protected QuorumPeer createQuorumPeer() throws SaslException {
             return new CustomQuorumPeer();
         }
     }

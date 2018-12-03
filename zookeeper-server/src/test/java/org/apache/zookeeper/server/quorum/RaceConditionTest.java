@@ -245,7 +245,7 @@ public class RaceConditionTest extends QuorumPeerTestBase {
     private static class MockTestQPMain extends TestQPMain {
 
         @Override
-        protected QuorumPeer getQuorumPeer() throws SaslException {
+        protected QuorumPeer createQuorumPeer() throws SaslException {
             return new CustomQuorumPeer();
         }
     }

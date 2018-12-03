@@ -126,6 +126,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      */
     private ZKDatabase zkDb;
 
+    public static class PeerStateObserver {
+        public void observe(ServerState oldState, ServerState newState) {}
+    }
+
     public static final class AddressTuple {
         public final InetSocketAddress quorumAddr;
         public final InetSocketAddress electionAddr;
@@ -719,10 +723,18 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     private ServerState state = ServerState.LOOKING;
+    private PeerStateObserver stateObserver = null;
     
     private boolean reconfigFlag = false; // indicates that a reconfig just committed
 
+    public synchronized void setPeerStateObserver(PeerStateObserver observer) {
+        stateObserver = observer;
+    }
+
     public synchronized void setPeerState(ServerState newState){
+        if (stateObserver != null) {
+            stateObserver.observe(state, newState);
+        }
         state=newState;
     }
     public synchronized void reconfigFlagSet(){

@@ -157,7 +157,7 @@ public class QuorumPeerMain {
                       true);
           }
 
-          quorumPeer = getQuorumPeer();
+          quorumPeer = createQuorumPeer();
           quorumPeer.setTxnFactory(new FileTxnSnapLog(
                       config.getDataLogDir(),
                       config.getDataDir()));
@@ -208,7 +208,7 @@ public class QuorumPeerMain {
     }
 
     // @VisibleForTesting
-    protected QuorumPeer getQuorumPeer() throws SaslException {
+    protected QuorumPeer createQuorumPeer() throws SaslException {
         return new QuorumPeer();
     }
 }
