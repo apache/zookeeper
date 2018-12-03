@@ -74,11 +74,7 @@ ZOOAPI int zkr_lock_init_cb(zkr_lock_mutex_t *mutex, zhandle_t* zh,
     return 0;
 }
 
-/**
- * unlock the mutex
- */
-ZOOAPI int zkr_lock_unlock(zkr_lock_mutex_t *mutex) {
-    pthread_mutex_lock(&(mutex->pmutex));
+static int _zkr_lock_unlock_nolock(zkr_lock_mutex_t *mutex) {
     zhandle_t *zh = mutex->zh;
     if (mutex->id != NULL) {
         int len = strlen(mutex->path) + strlen(mutex->id) + 2;
@@ -106,15 +102,23 @@ ZOOAPI int zkr_lock_unlock(zkr_lock_mutex_t *mutex) {
 
             free(mutex->id);
             mutex->id = NULL;
-            pthread_mutex_unlock(&(mutex->pmutex));
             return 0;
         }
         LOG_WARN(LOGCALLBACK(zh), ("not able to connect to server - giving up"));
-        pthread_mutex_unlock(&(mutex->pmutex));
         return ZCONNECTIONLOSS;
     }
+
+	return ZSYSTEMERROR;
+}
+/**
+ * unlock the mutex
+ */
+ZOOAPI int zkr_lock_unlock(zkr_lock_mutex_t *mutex) {
+	int ret = 0;
+    pthread_mutex_lock(&(mutex->pmutex));
+    ret = _zkr_lock_unlock_nolock(mutex);
     pthread_mutex_unlock(&(mutex->pmutex));
-    return ZSYSTEMERROR;
+    return ret;
 }
 
 static void free_String_vector(struct String_vector *v) {
@@ -128,10 +132,14 @@ static void free_String_vector(struct String_vector *v) {
     }
 }
 
+static int strcmp_suffix(const char *str1, const char *str2) {
+    return strcmp(strrchr(str1, '-')+1, strrchr(str2, '-')+1);
+}
+
 static int vstrcmp(const void* str1, const void* str2) {
     const char **a = (const char**)str1;
     const char **b = (const char**) str2;
-    return strcmp(strrchr(*a, '-')+1, strrchr(*b, '-')+1); 
+    return strcmp_suffix(*a, *b);
 } 
 
 static void sort_children(struct String_vector *vector) {
@@ -140,12 +148,24 @@ static void sort_children(struct String_vector *vector) {
         
 static char* child_floor(char **sorted_data, int len, char *element) {
     char* ret = NULL;
-    int i =0;
-    for (i=0; i < len; i++) {
-        if (strcmp(sorted_data[i], element) < 0) {
-            ret = sorted_data[i];
-        }
-    }
+    int targetpos = -1, s = 0, e = len -1;
+
+    while ( targetpos < 0 && s <= e ) {
+		int const i = s + (e - s) / 2;
+		int const cmp = strcmp_suffix(sorted_data[i], element);
+		if (cmp < 0) {
+			s = i + 1;
+		} else if (cmp == 0) {
+			targetpos = i;
+		} else {
+			e = i - 1;
+		}
+	}
+
+	if (targetpos > 0) {
+		ret = sorted_data[targetpos - 1];
+	}
+
     return ret;
 }
 
@@ -267,7 +287,7 @@ static int zkr_lock_operation(zkr_lock_mutex_t *mutex, struct timespec *ts) {
             // do not want to retry the create since 
             // we would end up creating more than one child
             if (ret != ZOK) {
-                LOG_WARN(LOGCALLBACK(zh), ("could not create zoo node %s", buf));
+                LOG_WARN(LOGCALLBACK(zh), "could not create zoo node %s", buf);
                 return ret;
             }
             mutex->id = getName(retbuf);
@@ -300,11 +320,11 @@ static int zkr_lock_operation(zkr_lock_mutex_t *mutex, struct timespec *ts) {
                 if (ret != ZOK) {
                     free_String_vector(vector);
                     LOG_WARN(LOGCALLBACK(zh), ("unable to watch my predecessor"));
-                    ret = zkr_lock_unlock(mutex);
+                    ret = _zkr_lock_unlock_nolock(mutex);
                     while (ret == 0) {
                         //we have to give up our leadership
                         // since we cannot watch out predecessor
-                        ret = zkr_lock_unlock(mutex);
+                        ret = _zkr_lock_unlock_nolock(mutex);
                     }
                     return ret;
                 }
@@ -315,7 +335,7 @@ static int zkr_lock_operation(zkr_lock_mutex_t *mutex, struct timespec *ts) {
                 // this is the case when we are the owner 
                 // of the lock
                 if (strcmp(mutex->id, owner_id) == 0) {
-                    LOG_DEBUG(LOGCALLBACK(zh), ("got the zoo lock owner - %s", mutex->id));
+                    LOG_DEBUG(LOGCALLBACK(zh), "got the zoo lock owner - %s", mutex->id);
                     mutex->isOwner = 1;
                     if (mutex->completion != NULL) {
                         mutex->completion(0, mutex->cbdata);
@@ -364,7 +384,7 @@ ZOOAPI int zkr_lock_lock(zkr_lock_mutex_t *mutex) {
         }
     }
     pthread_mutex_unlock(&(mutex->pmutex));
-    return zkr_lock_isowner(mutex);
+    return 0;
 }
 
                     

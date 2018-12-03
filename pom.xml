@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<!--
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+-->
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.apache</groupId>
+    <artifactId>apache</artifactId>
+    <version>18</version>
+    <relativePath/>
+    <!-- no parent resolution -->
+  </parent>
+  <groupId>org.apache.zookeeper</groupId>
+  <artifactId>zookeeper</artifactId>
+  <packaging>pom</packaging>
+  <version>3.6.0-SNAPSHOT</version>
+  <name>Apache ZooKeeper</name>
+  <description>
+    ZooKeeper is a centralized service for maintaining configuration information, naming,
+    providing distributed synchronization, and providing group services. All of these kinds
+    of services are used in some form or another by distributed applications. Each time they
+    are implemented there is a lot of work that goes into fixing the bugs and race conditions
+    that are inevitable. Because of the difficulty of implementing these kinds of services,
+    applications initially usually skimp on them ,which make them brittle in the presence of
+    change and difficult to manage. Even when done correctly, different implementations of
+    these services lead to management complexity when the applications are deployed.
+  </description>
+  <url>http://zookeeper.apache.org</url>
+  <inceptionYear>2008</inceptionYear>
+  <!-- Set here so we can consistently use the correct name, even on branches with
+       an ASF parent pom older than v15. Also uses the url from v18.
+    -->
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <modules>
+    <module>zookeeper-docs</module>
+  </modules>
+  <scm>
+    <connection>scm:git:git://git.apache.org/zookeeper.git</connection>
+    <developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/zookeeper.git</developerConnection>
+    <url>https://git-wip-us.apache.org/repos/asf?p=zookeeper.git</url>
+  </scm>
+  <issueManagement>
+    <system>JIRA</system>
+    <url>http://issues.apache.org/jira/browse/ZOOKEEPER</url>
+  </issueManagement>
+  <ciManagement>
+    <system>hudson</system>
+    <url>http://hudson.zones.apache.org/hudson/view/ZooKeeper/job/ZooKeeper-TRUNK/</url>
+  </ciManagement>
+  <mailingLists>
+    <mailingList>
+      <name>User List</name>
+      <subscribe>user-subscribe@zookeeper.apache.org</subscribe>
+      <unsubscribe>user-unsubscribe@zookeeper.apache.org</unsubscribe>
+      <post>user@zookeeper.apache.org</post>
+      <archive>http://mail-archives.apache.org/mod_mbox/zookeeper-user/</archive>
+    </mailingList>
+    <mailingList>
+      <name>Developer List</name>
+      <subscribe>dev-subscribe@zookeeper.apache.org</subscribe>
+      <unsubscribe>dev-unsubscribe@zookeeper.apache.org</unsubscribe>
+      <post>dev@zookeeper.apache.org</post>
+      <archive>http://mail-archives.apache.org/mod_mbox/zookeeper-dev/</archive>
+    </mailingList>
+    <mailingList>
+      <name>Commits List</name>
+      <subscribe>commits-subscribe@zookeeper.apache.org</subscribe>
+      <unsubscribe>commits-unsubscribe@zookeeper.apache.org</unsubscribe>
+      <archive>http://mail-archives.apache.org/mod_mbox/zookeeper-commits/</archive>
+    </mailingList>
+    <mailingList>
+      <name>Issues List</name>
+      <subscribe>issues-subscribe@zookeeper.apache.org</subscribe>
+      <unsubscribe>issues-unsubscribe@zookeeper.apache.org</unsubscribe>
+      <archive>http://mail-archives.apache.org/mod_mbox/zookeeper-issues/</archive>
+    </mailingList>
+    <mailingList>
+      <name>Builds List</name>
+      <subscribe>builds-subscribe@zookeeper.apache.org</subscribe>
+      <unsubscribe>builds-unsubscribe@zookeeper.apache.org</unsubscribe>
+      <archive>http://mail-archives.apache.org/mod_mbox/zookeeper-builds/</archive>
+    </mailingList>
+  </mailingLists>
+  <developers>
+    <developer>
+      <id>tdunning</id>
+      <name>Ted Dunning	</name>
+      <email>tdunning@apache.org</email>
+      <timezone>-8</timezone>
+    </developer>
+    <developer>
+      <id>camille</id>
+      <name>Camille Fournier</name>
+      <email>camille@apache.org</email>
+      <timezone>-5</timezone>
+    </developer>
+    <developer>
+      <id>phunt</id>
+      <name>Patrick Hunt</name>
+      <email>phunt@apache.org</email>
+      <timezone>-8</timezone>
+    </developer>
+    <developer>
+      <id>fpj</id>
+      <name>Flavio Junqueira</name>
+      <email>fpj@apache.org</email>
+      <timezone>+0</timezone>
+    </developer>
+    <developer>
+      <id>ivank</id>
+      <name>Ivan Kelly</name>
+      <email>ivank@apache.org</email>
+      <timezone>+2</timezone>
+    </developer>
+    <developer>
+      <id>mahadev</id>
+      <name>Mahadev Konar</name>
+      <email>mahadev@apache.org</email>
+      <timezone>-8</timezone>
+    </developer>
+    <developer>
+      <id>michim</id>
+      <name>Michi Mutsuzaki</name>
+      <email>michim@apache.org</email>
+      <timezone>-8</timezone>
+    </developer>
+    <developer>
+      <id>cnauroth</id>
+      <name>Chris Nauroth</name>
+      <email>cnauroth@apache.org</email>
+      <timezone>-8</timezone>
+    </developer>
+    <developer>
+      <id>breed</id>
+      <name>Benjamin Reed</name>
+      <email>breed@apache.org</email>
+      <timezone>-8</timezone>
+    </developer>
+    <developer>
+      <id>henry</id>
+      <name>Henry Robinson</name>
+      <email>henry@apache.org</email>
+      <timezone>-8</timezone>
+    </developer>
+    <developer>
+      <id>rgs</id>
+      <name>Raul Gutierrez Segales</name>
+      <email>rgs@apache.org</email>
+      <timezone>-8</timezone>
+    </developer>
+    <developer>
+      <id>rakeshr</id>
+      <name>Rakesh Radhakrishnan</name>
+      <email>rakeshr@apache.org</email>
+      <timezone>+5:30</timezone>
+    </developer>
+    <developer>
+      <id>hanm</id>
+      <name>Michael Han</name>
+      <email>hanm@apache.org</email>
+      <timezone>-8</timezone>
+    </developer>
+    <developer>
+      <id>gkesavan</id>
+      <name>Giridharan Kesavan</name>
+      <email>gkesavan@apache.org</email>
+      <timezone>-8</timezone>
+    </developer>
+    <developer>
+      <id>akornev</id>
+      <name>Andrew Kornev</name>
+      <email>akornev@apache.org</email>
+    </developer>
+    <developer>
+      <id>shralex</id>
+      <name>Alex Shraer</name>
+      <email>shralex@apache.org</email>
+      <timezone>-8</timezone>
+    </developer>
+    <developer>
+      <id>thawan</id>
+      <name>Thawan Kooburat</name>
+      <email>thawan@apache.org</email>
+      <timezone>-8</timezone>
+    </developer>
+    <developer>
+      <id>hdeng</id>
+      <name>Hongchao Deng</name>
+      <email>hdeng@apache.org</email>
+      <timezone>-8</timezone>
+    </developer>
+    <developer>
+      <id>arshad</id>
+      <name>Mohammad Arshad</name>
+      <email>arshad@apache.org</email>
+      <timezone>+5:30</timezone>
+    </developer>
+    <developer>
+      <id>afine</id>
+      <name>Abraham Fine</name>
+      <email>afine@apache.org</email>
+      <timezone>-8</timezone>
+    </developer>
+    <developer>
+      <id>andor</id>
+      <name>Andor Molnar</name>
+      <email>andor@apache.org</email>
+      <timezone>+1</timezone>
+    </developer>
+  </developers>
+
+</project>
