@@ -133,7 +133,7 @@ public class LearnerHandlerTest extends ZKTestCase {
                         Matchers.anyLong())).thenAnswer(new Answer() {
             public Object answer(InvocationOnMock invocation) {
                 currentZxid = (Long) invocation.getArguments()[1];
-                return 0;
+                return new Long(0);
             }
         });
 
