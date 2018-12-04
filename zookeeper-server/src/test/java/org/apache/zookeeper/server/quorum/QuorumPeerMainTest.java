@@ -59,6 +59,7 @@ import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.quorum.FastLeaderElection;
 import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
 import org.apache.zookeeper.test.ClientBase;
@@ -735,6 +736,9 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         Assert.assertTrue("waiting for server 2 down",
                 ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP2,
                         ClientBase.CONNECTION_TIMEOUT));
+
+        Assert.assertTrue("expected FastLeaderElection algorithm",
+                q1.getQuorumPeer().getElectionAlg() instanceof FastLeaderElection);
     }
 
     /**
