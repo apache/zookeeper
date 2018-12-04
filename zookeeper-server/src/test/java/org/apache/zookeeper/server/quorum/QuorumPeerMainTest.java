@@ -615,9 +615,14 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
         MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection);
         MainThread q3 = new MainThread(3, CLIENT_PORT_QP3, quorumCfgSection);
+
+        q3.start();
+        // Attach a spy to the PeerStateObserver hook of the QuorumPeer of the node with inconsistent peerType
+        QuorumPeer.PeerStateObserver observer = spy(new QuorumPeer.PeerStateObserver());
+        q3.getQuorumPeer().setPeerStateObserver(observer);
+
         q1.start();
         q2.start();
-        q3.start();
 
         Assert.assertTrue("waiting for server 1 being up",
                 ClientBase.waitForServerUp("127.0.0.1:" + CLIENT_PORT_QP1,
@@ -642,6 +647,9 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         Assert.assertTrue("waiting for server 3 down",
                 ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT_QP3,
                         ClientBase.CONNECTION_TIMEOUT));
+
+        // Verify that ":observer" in servers list preempts missing "peerType=observer"
+        verify(observer).observe(ServerState.LOOKING, ServerState.OBSERVING);
     }
 
     /**
