@@ -292,6 +292,7 @@ public class Learner {
             Thread.sleep(1000);
         }
 
+        self.onConnection(addr);
         self.authLearner.authenticate(sock, hostname);
 
         leaderIs = BinaryInputArchive.getArchive(new BufferedInputStream(

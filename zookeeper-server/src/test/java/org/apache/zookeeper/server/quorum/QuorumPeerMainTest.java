@@ -973,6 +973,15 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
     /**
      * Verify that a node without the leader in its view will not attempt to connect to the leader.
+     *
+     * Note that this test was originally written to verify that node 1 never entered the FOLLOWING
+     * state (or the LEADING state).  That's not correct; it's possible for node 2 to make contact
+     * with node 1 first, send a vote for itself to node 1, and *then* make contact with node 3 and
+     * update its vote to be for node 3 -- which node 1 will ignore, because node 3 is not in its
+     * configuration.  Node 1 will then (after a timeout) decide that node 2's vote for itself, plus
+     * node 1's vote for node 2, form a quorum in favor of node 2 as the new leader, and enter the
+     * FOLLOWING state.  (It will attempt to follow node 2, which will not enter LEADING, and thus
+     * it will never actually succeed in connecting to the node it thinks is the leader.)
      */
     @Test
     public void testLeaderOutOfView() throws Exception {
@@ -1002,9 +1011,9 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         QuorumPeer quorumPeer1 = waitForQuorumPeer(svrs.mt[0], CONNECTION_TIMEOUT);
         Assert.assertEquals(QuorumPeer.ServerState.LOOKING, quorumPeer1.getPeerState());
 
-        // Attach a spy to the PeerStateObserver hook of the QuorumPeer of the node detached from the leader
-        QuorumPeer.PeerStateObserver observer = spy(new QuorumPeer.PeerStateObserver());
-        svrs.mt[0].getQuorumPeer().setPeerStateObserver(observer);
+        // Attach a spy to the ConnectionObserver hook of the QuorumPeer of node 1
+        QuorumPeer.ConnectionObserver observer = spy(new QuorumPeer.ConnectionObserver());
+        svrs.mt[0].getQuorumPeer().setConnectionObserver(observer);
 
         // Node 3 started second to avoid 1 and 2 forming a quorum before 3 starts up
         int highestServerIndex = numServers - 1;
@@ -1017,20 +1026,21 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             svrs.mt[i].start();
         }
 
-        // Nodes 2 and 3 now form quorum and fully start. 1 attempts to vote for 3, fails, returns to LOOKING state
+        // Nodes 2 and 3 now form quorum and fully start. 1 attempts to vote for 2,
+        // fails (but see test method comment!), returns to LOOKING state
         for (int i = 1; i < numServers; i++) {
             Assert.assertTrue("waiting for server to start",
                     ClientBase.waitForServerUp("127.0.0.1:" + svrs.clientPorts[i], CONNECTION_TIMEOUT));
         }
 
-        Assert.assertEquals(QuorumPeer.ServerState.LOOKING, svrs.mt[0].getQuorumPeer().getPeerState());
-        Assert.assertTrue(svrs.mt[highestServerIndex].getQuorumPeer().getPeerState() == QuorumPeer.ServerState.LEADING);
+        waitForPeerState(svrs.mt[highestServerIndex], QuorumPeer.ServerState.LEADING);
         for (int i = 1; i < highestServerIndex; i++) {
-            Assert.assertEquals(QuorumPeer.ServerState.FOLLOWING, svrs.mt[i].getQuorumPeer().getPeerState());
+            waitForPeerState(svrs.mt[i], QuorumPeer.ServerState.FOLLOWING);
         }
+        waitForPeerState(svrs.mt[0], QuorumPeer.ServerState.LOOKING);
 
-        verify(observer, never()).observe(ServerState.LOOKING, ServerState.LEADING);
-        verify(observer, never()).observe(ServerState.LOOKING, ServerState.FOLLOWING);
+        Thread.sleep(3000);
+        verify(observer, never()).observe(any(InetSocketAddress.class));
     }
 
     @Test
