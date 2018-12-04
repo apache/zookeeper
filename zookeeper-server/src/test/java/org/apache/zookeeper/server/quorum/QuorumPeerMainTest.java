@@ -23,9 +23,10 @@ import static org.apache.zookeeper.test.ClientBase.createEmptyTestDir;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.spy;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -979,6 +980,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
 
         // Node 1 is started without the leader (3) in its config view
         svrs.mt[0] = new MainThread(1, svrs.clientPorts[0], quorumCfgIncomplete);
+
         for (int i = 1; i < numServers; i++) {
             svrs.mt[i] = new MainThread(i + 1, svrs.clientPorts[i], quorumCfgComplete);
         }
@@ -987,6 +989,10 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         svrs.mt[0].start();
         QuorumPeer quorumPeer1 = waitForQuorumPeer(svrs.mt[0], CONNECTION_TIMEOUT);
         Assert.assertEquals(QuorumPeer.ServerState.LOOKING, quorumPeer1.getPeerState());
+
+        // Attach a spy to the PeerStateObserver hook of the QuorumPeer of the node detached from the leader
+        QuorumPeer.PeerStateObserver observer = spy(new QuorumPeer.PeerStateObserver());
+        svrs.mt[0].getQuorumPeer().setPeerStateObserver(observer);
 
         // Node 3 started second to avoid 1 and 2 forming a quorum before 3 starts up
         int highestServerIndex = numServers - 1;
@@ -1010,6 +1016,9 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         for (int i = 1; i < highestServerIndex; i++) {
             Assert.assertEquals(QuorumPeer.ServerState.FOLLOWING, svrs.mt[i].getQuorumPeer().getPeerState());
         }
+
+        verify(observer, never()).observe(ServerState.LOOKING, ServerState.LEADING);
+        verify(observer, never()).observe(ServerState.LOOKING, ServerState.FOLLOWING);
     }
 
     @Test
