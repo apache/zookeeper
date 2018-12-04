@@ -126,7 +126,7 @@ public class FLEOutOfElectionTest {
         // Set the logical clock to 1 on fle instance of server 3.
         fle.logicalclock.set(0x1);
 
-        Assert.assertTrue("Termination predicate failed", 
+        Assert.assertTrue("Quorum check failed", 
                 fle.getVoteTracker(outofelection, new Vote(n.version, n.leader, 
                         n.zxid, n.electionEpoch, n.peerEpoch, n.state)).hasAllQuorums());
 
