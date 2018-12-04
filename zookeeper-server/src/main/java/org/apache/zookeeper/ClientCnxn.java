@@ -397,7 +397,7 @@ public class ClientCnxn {
         readTimeout = sessionTimeout * 2 / 3;
         readOnly = canBeReadOnly;
 
-        sendThread = new SendThread(clientCnxnSocket);
+        sendThread = new SendThread(this, clientCnxnSocket);
         eventThread = new EventThread();
         this.clientConfig=zooKeeper.getClientConfig();
         initRequestTimeout();
@@ -794,12 +794,23 @@ public class ClientCnxn {
         }
     }
 
+    private volatile InetSocketAddress observedRWServerAddress;
+
+    public InetSocketAddress getObservedRWServerAddress() {
+        return observedRWServerAddress;
+    }
+
+    public void observeRWServerAddress(InetSocketAddress addr) {
+        observedRWServerAddress = addr;
+    }
+
     /**
      * This class services the outgoing request queue and generates the heart
      * beats. It also spawns the ReadThread.
      */
     class SendThread extends ZooKeeperThread {
         private long lastPingSentNs;
+        private final ClientCnxn clientCnxn;
         private final ClientCnxnSocket clientCnxnSocket;
         private Random r = new Random();
         private boolean isFirstConnect = true;
@@ -924,9 +935,10 @@ public class ClientCnxn {
             }
         }
 
-        SendThread(ClientCnxnSocket clientCnxnSocket) {
+        SendThread(ClientCnxn clientCnxn, ClientCnxnSocket clientCnxnSocket) {
             super(makeThreadName("-SendThread()"));
             state = States.CONNECTING;
+            this.clientCnxn = clientCnxn;
             this.clientCnxnSocket = clientCnxnSocket;
             setDaemon(true);
         }
@@ -1049,6 +1061,11 @@ public class ClientCnxn {
         }
 
         private InetSocketAddress rwServerAddress = null;
+
+        public void setRWServerAddress(InetSocketAddress addr) {
+            clientCnxn.observeRWServerAddress(addr);
+            rwServerAddress = addr;
+        }
 
         private final static int minPingRwTimeout = 100;
 
@@ -1324,7 +1341,7 @@ public class ClientCnxn {
                 pingRwTimeout = minPingRwTimeout;
                 // save the found address so that it's used during the next
                 // connection attempt
-                rwServerAddress = addr;
+                setRWServerAddress(addr);
                 throw new RWServerFoundException("Majority server found at "
                         + addr.getHostString() + ":" + addr.getPort());
             }

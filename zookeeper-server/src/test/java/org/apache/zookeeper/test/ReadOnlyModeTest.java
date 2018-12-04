@@ -19,17 +19,18 @@
 package org.apache.zookeeper.test;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.StringReader;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
 
-import org.apache.log4j.Layout;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.WriterAppender;
+import org.apache.zookeeper.ClientCnxn;
+import org.apache.zookeeper.ClientCnxnSocket;
+import org.apache.zookeeper.ClientWatchManager;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NotReadOnlyException;
@@ -41,6 +42,7 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
+import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.After;
@@ -65,6 +67,25 @@ public class ReadOnlyModeTest extends ZKTestCase {
     public void tearDown() throws Exception {
         System.setProperty("readonlymode.enabled", "false");
         qu.tearDown();
+    }
+
+    public static class CustomZooKeeper extends ZooKeeper {
+        public CustomZooKeeper(String connectString, int sessionTimeout,
+                Watcher watcher, boolean canBeReadOnly) throws IOException {
+            super(connectString, sessionTimeout, watcher, canBeReadOnly);
+        }
+
+        public volatile ClientCnxn myCnxn;
+
+        @Override
+        protected ClientCnxn createConnection(String chrootPath,
+                HostProvider hostProvider, int sessionTimeout,
+                ZooKeeper zooKeeper, ClientWatchManager watcher,
+                ClientCnxnSocket clientCnxnSocket, boolean canBeReadOnly)
+                        throws IOException {
+            myCnxn = super.createConnection(chrootPath, hostProvider, sessionTimeout, zooKeeper, watcher, clientCnxnSocket, canBeReadOnly);
+            return myCnxn;
+        }
     }
 
     /**
@@ -254,56 +275,36 @@ public class ReadOnlyModeTest extends ZKTestCase {
     @SuppressWarnings("deprecation")
     @Test(timeout = 90000)
     public void testSeekForRwServer() throws Exception {
-        // setup the logger to capture all logs
-        Layout layout = Logger.getRootLogger().getAppender("CONSOLE")
-                .getLayout();
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        WriterAppender appender = new WriterAppender(layout, os);
-        appender.setImmediateFlush(true);
-        appender.setThreshold(Level.INFO);
-        Logger zlogger = Logger.getLogger("org.apache.zookeeper");
-        zlogger.addAppender(appender);
+        qu.shutdown(2);
+        CountdownWatcher watcher = new CountdownWatcher();
+        CustomZooKeeper zk = new CustomZooKeeper(qu.getConnString(),
+                CONNECTION_TIMEOUT, watcher, true);
+        watcher.waitForConnected(CONNECTION_TIMEOUT);
 
-        try {
-            qu.shutdown(2);
-            CountdownWatcher watcher = new CountdownWatcher();
-            ZooKeeper zk = new ZooKeeper(qu.getConnString(),
-                    CONNECTION_TIMEOUT, watcher, true);
-            watcher.waitForConnected(CONNECTION_TIMEOUT);
+        // if we don't suspend a peer it will rejoin a quorum
+        qu.getPeer(1).peer.suspend();
 
-            // if we don't suspend a peer it will rejoin a quorum
-            qu.getPeer(1).peer.suspend();
+        // start two servers to form a quorum; client should detect this and
+        // connect to one of them
+        watcher.reset();
+        qu.start(2);
+        qu.start(3);
+        ClientBase.waitForServerUp(qu.getConnString(), 2000);
+        watcher.waitForConnected(CONNECTION_TIMEOUT);
+        zk.create("/test", "test".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
 
-            // start two servers to form a quorum; client should detect this and
-            // connect to one of them
-            watcher.reset();
-            qu.start(2);
-            qu.start(3);
-            ClientBase.waitForServerUp(qu.getConnString(), 2000);
-            watcher.waitForConnected(CONNECTION_TIMEOUT);
-            zk.create("/test", "test".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PERSISTENT);
+        // resume poor fellow
+        qu.getPeer(1).peer.resume();
 
-            // resume poor fellow
-            qu.getPeer(1).peer.resume();
-        } finally {
-            zlogger.removeAppender(appender);
-        }
-
-        os.close();
-        LineNumberReader r = new LineNumberReader(new StringReader(os
-                .toString()));
-        String line;
-        Pattern p = Pattern.compile(".*Majority server found.*");
-        boolean found = false;
-        while ((line = r.readLine()) != null) {
-            if (p.matcher(line).matches()) {
-                found = true;
+        int iterations = ClientBase.CONNECTION_TIMEOUT / 500;
+        while (zk.myCnxn.getObservedRWServerAddress() == null) {
+            if (iterations-- == 0) {
                 break;
             }
+            LOG.info("still waiting for client to observe a read/write server");
+            Thread.sleep(500);
         }
-        Assert.assertTrue(
-                "Majority server wasn't found while connected to r/o server",
-                found);
+        Assert.assertNotNull(zk.myCnxn.getObservedRWServerAddress());
     }
 }
