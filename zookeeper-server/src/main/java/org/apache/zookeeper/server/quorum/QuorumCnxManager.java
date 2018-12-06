@@ -404,8 +404,7 @@ public class QuorumCnxManager {
             // represents protocol version (in other words - message type)
             dout.writeLong(PROTOCOL_VERSION);
             dout.writeLong(self.getId());
-            InetSocketAddress address = self.getElectionAddress().getValidAddress();
-            String addr = address.getHostString() + ":" + address.getPort();
+            String addr = formatInetAddr(self.getElectionAddress().getValidAddress());
             byte[] addr_bytes = addr.getBytes();
             dout.writeInt(addr_bytes.length);
             dout.write(addr_bytes);
