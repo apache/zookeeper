@@ -1997,8 +1997,40 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     /**
      * Updates leader election info to avoid inconsistencies when
      * a new server tries to join the ensemble.
+     *
+     * Here is the inconsistency scenario we try to solve by updating the peer 
+     * epoch after following leader:
+     *
+     * Let's say we have an ensemble with 3 servers z1, z2 and z3.
+     *
+     * 1. z1, z2 were following z3 with peerEpoch to be 0xb8, the new epoch is 
+     *    0xb9, aka current accepted epoch on disk.
+     * 2. z2 get restarted, which will use 0xb9 as it's peer epoch when loading
+     *    the current accept epoch from disk.
+     * 3. z2 received notification from z1 and z3, which is following z3 with 
+     *    epoch 0xb8, so it started following z3 again with peer epoch 0xb8.
+     * 4. before z2 successfully connected to z3, z3 get restarted with new 
+     *    epoch 0xb9.
+     * 5. z2 will retry around a few round (default 5s) before giving up, 
+     *    meanwhile it will report z3 as leader.
+     * 6. z1 restarted, and looking with peer epoch 0xb9.
+     * 7. z1 voted z3, and z3 was elected as leader again with peer epoch 0xb9.
+     * 8. z2 successfully connected to z3 before giving up, but with peer 
+     *    epoch 0xb8.
+     * 9. z1 get restarted, looking for leader with peer epoch 0xba, but cannot 
+     *    join, because z2 is reporting peer epoch 0xb8, while z3 is reporting 
+     *    0xb9.
+     *
+     * By updating the election vote after actually following leader, we can 
+     * avoid this kind of stuck happened.
+     *
+     * Btw, the zxid and electionEpoch could be inconsistent because of the same 
+     * reason, it's better to update these as well after syncing with leader, but 
+     * that required protocol change which is non trivial. This problem is worked 
+     * around by skipping comparing the zxid and electionEpoch when counting for 
+     * votes for out of election servers during looking for leader.
      * 
-     * @see https://issues.apache.org/jira/browse/ZOOKEEPER-1732
+     * {@see https://issues.apache.org/jira/browse/ZOOKEEPER-1732}
      */
     protected void updateElectionVote(long newEpoch) {
         Vote currentVote = getCurrentVote();
