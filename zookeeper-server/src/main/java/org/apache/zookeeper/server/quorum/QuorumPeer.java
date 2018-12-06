@@ -29,7 +29,6 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.Map.Entry;
@@ -202,6 +201,25 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             LearnerType newType = null;
             String serverClientParts[] = addressStr.split(";");
             String serverAddresses[] = serverClientParts[0].split(",");
+
+            if (serverClientParts.length == 2) {
+                //LOG.warn("ClientParts: " + serverClientParts[1]);
+                String clientParts[] = ConfigUtils.getHostAndPort(serverClientParts[1]);
+                if (clientParts.length > 2) {
+                    throw new ConfigException(addressStr + wrongFormat);
+                }
+
+                // is client_config a host:port or just a port
+                hostname = (clientParts.length == 2) ? clientParts[0] : "0.0.0.0";
+                try {
+                    clientAddr = new InetSocketAddress(hostname,
+                            Integer.parseInt(clientParts[clientParts.length - 1]));
+                    //LOG.warn("Set clientAddr to " + clientAddr);
+                } catch (NumberFormatException e) {
+                    throw new ConfigException("Address unresolved: " + hostname + ":" + clientParts[clientParts.length - 1]);
+                }
+            }
+
             for(String serverAddress : serverAddresses) {
                 String serverParts[] = ConfigUtils.getHostAndPort(serverAddress);
                 if ((serverClientParts.length > 2) || (serverParts.length < 3)
@@ -209,37 +227,17 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                     throw new ConfigException(addressStr + wrongFormat);
                 }
 
-                if (serverClientParts.length == 2) {
-                    //LOG.warn("ClientParts: " + serverClientParts[1]);
-                    String clientParts[] = ConfigUtils.getHostAndPort(serverClientParts[1]);
-                    if (clientParts.length > 2) {
-                        throw new ConfigException(addressStr + wrongFormat);
-                    }
-
-                    // is client_config a host:port or just a port
-                    hostname = (clientParts.length == 2) ? clientParts[0] : "0.0.0.0";
-                    try {
-                        clientAddr = new InetSocketAddress(hostname,
-                                Integer.parseInt(clientParts[clientParts.length - 1]));
-                        //LOG.warn("Set clientAddr to " + clientAddr);
-                    } catch (NumberFormatException e) {
-                        throw new ConfigException("Address unresolved: " + hostname + ":" + clientParts[clientParts.length - 1]);
-                    }
-                }
-
                 // server_config should be either host:port:port or host:port:port:type
                 InetSocketAddress tempAddress;
                 InetSocketAddress tempElectionAddress;
                 try {
-                    tempAddress = new InetSocketAddress(serverParts[0],
-                            Integer.parseInt(serverParts[1]));
+                    tempAddress = new InetSocketAddress(serverParts[0], Integer.parseInt(serverParts[1]));
                     addr.addAddress(tempAddress);
                 } catch (NumberFormatException e) {
                     throw new ConfigException("Address unresolved: " + serverParts[0] + ":" + serverParts[1]);
                 }
                 try {
-                    tempElectionAddress = new InetSocketAddress(serverParts[0],
-                            Integer.parseInt(serverParts[2]));
+                    tempElectionAddress = new InetSocketAddress(serverParts[0], Integer.parseInt(serverParts[2]));
                     electionAddr.addAddress(tempElectionAddress);
                 } catch (NumberFormatException e) {
                     throw new ConfigException("Address unresolved: " + serverParts[0] + ":" + serverParts[2]);

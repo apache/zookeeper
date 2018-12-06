@@ -91,11 +91,6 @@ public class MultipleAddresses {
 
     @Override
     public String toString() {
-        StringBuilder result = new StringBuilder();
-
-        addresses.forEach(addr -> result.append(String.format("%s.", addr)));
-        result.deleteCharAt(result.length() - 1);
-
-        return result.toString();
+        return addresses.stream().map(InetSocketAddress::toString).collect(Collectors.joining(","));
     }
 }
