@@ -1,7 +1,17 @@
----
-layout: page
-title: Releases
----
+<!--
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+//-->
+
 # Apache ZooKeeper&trade; Releases
 
 The Apache ZooKeeper system for distributed coordination is a high-performance service for building distributed applications.
@@ -10,7 +20,8 @@ The Apache ZooKeeper system for distributed coordination is a high-performance s
 * [Release Notes](#releasenotes)
 * [News](#news)
 
-## Download {#download}
+<a name="download"></a>
+## Download
 
 Active releases may be downloaded from Apache mirrors: [Download](https://www.apache.org/dyn/closer.cgi/zookeeper/)
 
@@ -20,11 +31,13 @@ Older releases are available in the [archive](https://archive.apache.org/dist/zo
 
 You can verify the integrity of a downloaded release using the PGP signatures and hashes (MD5 or SHA1) hosted at the main [Apache distro site](https://apache.org/dist/zookeeper/).  For additional information, refer to the Apache documentation for [verifying the integrity of Apache project releases](https://www.apache.org/dyn/closer.cgi#verify).
 
-## Release Notes {#releasenotes}
+<a name="releasenotes"></a>
+## Release Notes
 
 Release notes for Apache Zookeeper releases are available in Jira: [Browse release notes](https://issues.apache.org/jira/browse/ZOOKEEPER?report=com.atlassian.jira.plugin.system.project:changelog-panel)
 
-## News {#news}
+<a name="news"></a>
+## News
 
 ### 15 July, 2018: release 3.4.13 available
 

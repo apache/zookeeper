@@ -1,49 +1,51 @@
 ## Generating the static Apache ZooKeeper website
 
-In this directory you will find text files formatted using Markdown, with an `.md` suffix.
+In the `src/main/resources/markdown` directory you will find text files formatted using Markdown, with an `.md` suffix.
 
-Building the site requires [Jekyll](http://jekyllrb.com/docs) 3.6.2 or newer. 
-The easiest way to install jekyll is via a Ruby Gem. Jekyll will create a directory called `_site` 
-containing `index.html` as well as the rest of the compiled directories and files. _site should not
-be committed to git as this is the generated content.
-
-To install Jekyll and its required dependencies, execute `sudo gem install jekyll pygments.rb` 
-and `sudo pip install Pygments`. See the Jekyll installation page for more details.
+Building the site requires [Maven](http://maven.apache.org/) 3.5.0 or newer. 
+The easiest way to [install Maven](http://maven.apache.org/install.html) depends on your OS.
+The build process will create a directory called `target/html` containing `index.html` as well as the rest of the
+compiled directories and files. `target` should not be committed to git as it is generated content.
 
 You can generate the static ZooKeeper website by running:
 
-1. `jekyll build` in this directory.
-2. `cp -RP _released_docs _site/doc` - this will include the documentation (see "sub-dir" section below) in the generated site.
+1. `mvn clean install` in this directory.
+2. `cp -RP _released_docs target/html/doc` - this will include the documentation (see "sub-dir" section below) in the generated site.
 
-At this point the contents of _site are "staged" and can be reviewed prior to updating the ZooKeeper
+At this point the contents of `target` are "staged" and can be reviewed prior to updating the ZooKeeper
 production website.
-
-During development it may be useful to include the `--watch` flag when building to have jekyll recompile
-your files as you save changes. In addition to generating the site as HTML from the markdown files,
-jekyll can serve the site via a web server. To build the site and run a web server use the command
-`jekyll serve` which runs the web server on port 4000, then visit the site at http://localhost:4000.
-
 
 ## Docs sub-dir
 
-The product documentation is not generated as part of the website. They are built separately for each release 
+The product documentation creation is not part of the website generation process. They are built separately for each release 
 of ZooKeeper from the ZooKeeper source repository.
 
 Typically during a release the versioned documentation will be recreated and should be copied, and committed,
-under the "_released_docs" directory here.
+under the `_released_docs` directory here.
 
+## Steps to update the website
+1. `git clone -b website https://git-wip-us.apache.org/repos/asf/zookeeper.git`
+2. update the appropriate pages, typically a markdown file e.g. credits.md, etc...
+3.  `mvn clean install`
+4. `cp -RP _released_docs target/html/doc` These are the static release docs, not generated in this process.
 
-## Pygments
+At this point verify that the generated files render properly (open target/html/index.html in a browser).
+If you are happy with the results move on to the next step, otherwise go to step 2 above.
 
-We also use [pygments](http://pygments.org) for syntax highlighting in documentation markdown pages.
+5. `git status` should show modified files for the markdown that you changed
+6. `git add <the changed files>`
+7. `git commit -m "<appropriate commit message>"`
+8. `git push origin website`
 
-To mark a block of code in your markdown to be syntax highlighted by `jekyll` during the 
-compile phase, use the following syntax:
+The source for the site is committed, now we need to push the generated files to the live site.
 
-    {% highlight java %}
-    // Your code goes here, you can replace java with many other
-    // supported languages too.
-    {% endhighlight %}
+9. `git checkout asf-site`
+10. `rm -fr content`
+11. `mv target/html content`
+12. `git add content`
 
- You probably don't need to install that unless you want to regenerate the pygments CSS file. 
- It requires Python, and can be installed by running `sudo easy_install Pygments`.
+Verify that content/index.html and other generated files are proper, e.g. open them in a browser
+
+13. `git status` should show modified files for the markdown that you changed
+14. `git commit -m "<appropriate commit message>"`
+15. `git push origin asf-site`
