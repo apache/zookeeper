@@ -244,6 +244,8 @@
 
     <revision>3.6.0-SNAPSHOT</revision>
 
+    <surefire-forkcount>1</surefire-forkcount>
+
     <!-- dependency versions -->
     <slf4j.version>1.7.25</slf4j.version>
     <audience-annotations.version>0.5.0</audience-annotations.version>
@@ -407,6 +409,11 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.22.1</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-antrun-plugin</artifactId>
+          <version>1.8</version>
         </plugin>
         <plugin>
           <groupId>org.codehaus.mojo</groupId>

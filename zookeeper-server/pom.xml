@@ -26,7 +26,9 @@
     <version>${revision}</version>
   </parent>
 
+  <groupId>org.apache.zookeeper</groupId>
   <artifactId>zookeeper-server</artifactId>
+  <packaging>jar</packaging>
   <name>Apache ZooKeeper - Server</name>
   <description>ZooKeeper server</description>
 
@@ -209,11 +211,16 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <forkCount>1</forkCount>
+          <includes>
+            <include>**/*Test.java</include>
+          </includes>
+          <forkCount>${surefire-forkcount}</forkCount>
           <reuseForks>false</reuseForks>
           <argLine>-Xmx512m</argLine>
           <basedir>${project.basedir}</basedir>
+          <redirectTestOutputToFile>true</redirectTestOutputToFile>
           <systemPropertyVariables>
+            <build.test.dir>${project.build.directory}/surefire</build.test.dir>
             <zookeeper.DigestAuthenticationProvider.superDigest>super:D/InIHSb7yEEbrWz8b9l71RjZJU=</zookeeper.DigestAuthenticationProvider.superDigest>
           </systemPropertyVariables>
         </configuration>
