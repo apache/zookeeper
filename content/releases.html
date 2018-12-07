@@ -1,297 +1,213 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE html>
 <html>
-  <head>
-	<link href="css/site.css" rel="stylesheet" type="text/css">
-	<link href="css/type-settings.css" rel="stylesheet" type="text/css">
-
-	<title>Apache ZooKeeper - Releases</title>
-
-	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta http-equiv="Content-Language" content="en" />
+	<title>Apache ZooKeeper</title>
+	<link rel="stylesheet" href="css/bootstrap.min.css" />
+	<script src="js/jquery-3.3.1.slim.min.js"></script>
+	<script src="js/popper.min.js"></script>
+	<script src="js/bootstrap.min.js"></script>
+	<link rel="stylesheet" href="css/site.css" />
+	<link rel="stylesheet" href="css/print.css" media="print" />
+	<link rel="shortcut icon" href="images/favicon.ico">
 </head>
+<body class="topBarEnabled">
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+	<a class="navbar-brand" href="index.html"><img src="images/zookeeper_small.gif" height="55px"/>Apache ZooKeeper&trade;</a>
+	<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+		<span class="navbar-toggler-icon"></span>
+	</button>
 
-  <body>
-    <div class="white_box">
-      <div class="content">
-        <div class="content_l">
-          <div class="content_r">
-            <div>
-              <div id="header_background">
-	            <div id="zookeeper_logo">
-		          <a href="/"><img src="images/zookeeper_small.gif"/></a> <b><font size=+4 color=white>Apache ZooKeeper&trade;</font></b> <a href="https://apache.org"><img src="images/feather_small.gif"/></a>
-	            </div>
-              </div>
-              
-              <table border="0">
-                <tbody>
-                  <tr>
-                    <td style="overflow: hidden;" valign="top" width="100%">
-                      <div class="wiki-content">
-                        <h1 id="apache-zookeeper-releases">Apache ZooKeeper&#8482; Releases</h1>
+	<div class="collapse navbar-collapse" id="navbarSupportedContent">
+		<ul class="navbar-nav mr-auto">
+			<li class="nav-item dropdown">
+				<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+					Project
+				</a>
+				<div class="dropdown-menu" aria-labelledby="navbarDropdown">
+					<a class="dropdown-item" href="releases.html#news">News</a>
+					<a class="dropdown-item" href="releases.html">Releases</a>
+					<a class="dropdown-item" href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/Index">Wiki</a>
+					<a class="dropdown-item" href="credits.html">Credits</a>
+					<a class="dropdown-item" href="bylaws.html">Bylaws</a>
+					<a class="dropdown-item" href="https://www.apache.org/licenses/">License</a>
+					<a class="dropdown-item" href="privacy.html">Privacy Policy</a>
+					<a class="dropdown-item" href="security.html">Security</a>
+					<a class="dropdown-item" href="https://www.apache.org/foundation/thanks.html">Thanks</a>
+				</div>
+			</li>
+			<li class="nav-item dropdown">
+				<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+					Documentation
+				</a>
+				<div class="dropdown-menu" aria-labelledby="navbarDropdown">
+					<a class="dropdown-item" href="doc/r3.5.4-beta">Release 3.5.4-beta</a>
+					<a class="dropdown-item" href="doc/r3.4.13">Release 3.4.13</a>
+					<a class="dropdown-item" href="documentation.html">Older Versions</a>
+				</div>
+			</li>
+			<li class="nav-item dropdown">
+				<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+					Developers
+				</a>
+				<div class="dropdown-menu" aria-labelledby="navbarDropdown">
+					<a class="dropdown-item" href="lists.html">Mailing Lists</a>
+					<a class="dropdown-item" href="irc.html">IRC Channel</a>
+					<a class="dropdown-item" href="git.html">Version Control</a>
+					<a class="dropdown-item" href="https://issues.apache.org/jira/browse/ZOOKEEPER">Issue Tracker</a>
+					<a class="dropdown-item" href="events.html">Events</a>
+				</div>
+			</li>
+			<li class="nav-item dropdown">
+				<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+					ASF
+				</a>
+				<div class="dropdown-menu" aria-labelledby="navbarDropdown">
+					<a class="dropdown-item" href="http://www.apache.org/foundation/" target="_blank" title="Apache Software Foundation">Apache Software Foundation</a>
+					<a class="dropdown-item" href="http://www.apache.org/foundation/how-it-works.html" target="_blank" title="How Apache Works">How Apache Works</a>
+					<a class="dropdown-item" href="http://www.apache.org/foundation/sponsorship.html" target="_blank" title="Sponsoring Apache">Sponsoring Apache</a>
+				</div>
+			</li>
+		</ul>
+		<form class="form-inline my-2 my-lg-0" action="http://search-hadoop.com/zookeeper" method="get">
+			<input name="q" id="query" size="25" class="form-control mr-sm-2" type="search" placeholder="Search with Apache Solr" aria-label="Search with Apache Solr">
+			<button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+		</form>
+	</div>
+</nav>
 
+<div class="container">
+<!--
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+//-->
+<h1>Apache ZooKeeper™ Releases</h1>
 <p>The Apache ZooKeeper system for distributed coordination is a high-performance service for building distributed applications.</p>
-
 <ul>
-  <li><a href="#download">Download</a></li>
-  <li><a href="#releasenotes">Release Notes</a></li>
-  <li><a href="#news">News</a></li>
+<li><a href="#download">Download</a></li>
+<li><a href="#releasenotes">Release Notes</a></li>
+<li><a href="#news">News</a></li>
 </ul>
-
-<h2 id="download">Download</h2>
-
+<p><a name="download"></a></p>
+<h2>Download</h2>
 <p>Active releases may be downloaded from Apache mirrors: <a href="https://www.apache.org/dyn/closer.cgi/zookeeper/">Download</a></p>
-
 <p>On the mirror, all recent releases are available.</p>
-
 <p>Older releases are available in the <a href="https://archive.apache.org/dist/zookeeper/">archive</a>.</p>
-
 <p>You can verify the integrity of a downloaded release using the PGP signatures and hashes (MD5 or SHA1) hosted at the main <a href="https://apache.org/dist/zookeeper/">Apache distro site</a>.  For additional information, refer to the Apache documentation for <a href="https://www.apache.org/dyn/closer.cgi#verify">verifying the integrity of Apache project releases</a>.</p>
-
-<h2 id="releasenotes">Release Notes</h2>
-
+<p><a name="releasenotes"></a></p>
+<h2>Release Notes</h2>
 <p>Release notes for Apache Zookeeper releases are available in Jira: <a href="https://issues.apache.org/jira/browse/ZOOKEEPER?report=com.atlassian.jira.plugin.system.project:changelog-panel">Browse release notes</a></p>
-
-<h2 id="news">News</h2>
-
-<h3 id="15-july-2018-release-3413-available">15 July, 2018: release 3.4.13 available</h3>
-
+<p><a name="news"></a></p>
+<h2>News</h2>
+<h3>15 July, 2018: release 3.4.13 available</h3>
 <p>This is a bugfix release. It fixes 17 issues, including issues such as ZOOKEEPER-2959 that could cause data loss when observer is used, and ZOOKEEPER-2184 that prevents ZooKeeper Java clients working in dynamic IP (container / cloud) environment. See <a href="https://zookeeper.apache.org/doc/r3.4.13/releasenotes.html">ZooKeeper 3.4.13 Release Notes</a> for details.</p>
-
-<h3 id="17-may-2018-release-354-beta-available">17 May, 2018: release 3.5.4-beta available</h3>
-
+<h3>17 May, 2018: release 3.5.4-beta available</h3>
 <p>3.5.4-beta is the second beta in the planned 3.5 release line leading up to a stable 3.5 release. It comprises 113 bug fixes and improvements.</p>
-
-<p>Release 3.5.3 added a new feature ZOOKEEPER-2169 &#8220;Enable creation of nodes with TTLs&#8221;. There was a major oversight when TTL nodes were implemented. The session ID generator for each server is seeded with the configured Server ID in the high byte. TTL Nodes were using the highest bit to denote a TTL node when used in the ephemeral owner. This meant that Server IDs &gt; 127 that created ephemeral nodes would have those nodes always considered TTL nodes (with the TTL being essentially a random number). ZOOKEEPER-2901 fixes the issue. By default TTL is disabled and must now be enabled in zoo.cfg. When TTL Nodes are enabled, the max Server ID changes from 255 to 254. See the documentation for TTL in the administrator guide (or the referenced JIRAs) for more details.</p>
-
-<h3 id="1-may-2018-release-3412-available">1 May, 2018: release 3.4.12 available</h3>
-
+<p>Release 3.5.3 added a new feature ZOOKEEPER-2169 &quot;Enable creation of nodes with TTLs&quot;. There was a major oversight when TTL nodes were implemented. The session ID generator for each server is seeded with the configured Server ID in the high byte. TTL Nodes were using the highest bit to denote a TTL node when used in the ephemeral owner. This meant that Server IDs &gt; 127 that created ephemeral nodes would have those nodes always considered TTL nodes (with the TTL being essentially a random number). ZOOKEEPER-2901 fixes the issue. By default TTL is disabled and must now be enabled in zoo.cfg. When TTL Nodes are enabled, the max Server ID changes from 255 to 254. See the documentation for TTL in the administrator guide (or the referenced JIRAs) for more details.</p>
+<h3>1 May, 2018: release 3.4.12 available</h3>
 <p>This release fixes 22 issues, including issues that affect incorrect handling of the dataDir and the dataLogDir.  See <a href="https://zookeeper.apache.org/doc/r3.4.12/releasenotes.html">ZooKeeper 3.4.12 Release Notes</a> for details.</p>
-
-<h3 id="9-november-2017-release-3411-available">9 November, 2017: release 3.4.11 available</h3>
-
+<h3>9 November, 2017: release 3.4.11 available</h3>
 <p>This release fixes 53 issues, it includes support for Java 9 and other critical bug fixes.  See <a href="https://zookeeper.apache.org/doc/r3.4.11/releasenotes.html">ZooKeeper 3.4.11 Release Notes</a> for details.</p>
-
 <p><strong>WARNING</strong>: <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-2960">ZOOKEEPER-2960</a> was recently identified as a regression in 3.4.11 affecting the specification of separate dataDir and dataLogDir configuration parameters (vs the default which is a single directory for both). It will be addressed in 3.4.12.</p>
-
-<h3 id="17-april-2017-release-353-beta-available">17 April, 2017: release 3.5.3-beta available</h3>
-
+<h3>17 April, 2017: release 3.5.3-beta available</h3>
 <p>3.5.3-beta is the first beta in the planned 3.5 release line leading up to a stable 3.5 release. It comprises 76 bug fixes and improvements. This release includes important security fix around dynamic reconfigure API, improvements on test infrastructure, and new features such as TTL node.</p>
-
-<h3 id="30-march-2017-release-3410-available">30 March, 2017: release 3.4.10 available</h3>
-
+<h3>30 March, 2017: release 3.4.10 available</h3>
 <p>This release fixes 43 issues, including security feature QuorumPeer mutual authentication via SASL and other critical bugs. See <a href="https://zookeeper.apache.org/doc/r3.4.10/releasenotes.html">ZooKeeper 3.4.10 Release Notes</a> for details.</p>
-
-<h3 id="03-september-2016-release-349-available">03 September, 2016: release 3.4.9 available</h3>
-
+<h3>03 September, 2016: release 3.4.9 available</h3>
 <p>This release fixes many critical bugs and improvements. See <a href="https://zookeeper.apache.org/doc/r3.4.9/releasenotes.html">ZooKeeper 3.4.9 Release Notes</a> for details.</p>
-
-<h3 id="20-july-2016-release-352-alpha-available">20 July, 2016: release 3.5.2-alpha available</h3>
-
+<h3>20 July, 2016: release 3.5.2-alpha available</h3>
 <p>This is an alpha quality release that contains many bug fixes and improvements.</p>
-
-<h3 id="20-february-2016-release-348-available">20 February, 2016: release 3.4.8 available</h3>
-
+<h3>20 February, 2016: release 3.4.8 available</h3>
 <p>This release fixes 9 issues, most notably a deadlock when shutting down ZooKeeper. See <a href="https://zookeeper.apache.org/doc/r3.4.8/releasenotes.html">ZooKeeper 3.4.8 Release Notes</a> for details.</p>
-
-<h3 id="31-august-2015-release-351-alpha-available">31 August, 2015: release 3.5.1-alpha available</h3>
-
+<h3>31 August, 2015: release 3.5.1-alpha available</h3>
 <p>This is an alpha quality release that contains many bug fixes and improvements. It also introduces a few new features, including container znodes and SSL support for client-server communication.</p>
-
 <p>See the <a href="https://zookeeper.apache.org/doc/r3.5.1-alpha/releasenotes.html">ZooKeeper 3.5.1-alpha Release Notes</a> for details.</p>
-
-<h3 id="6-august-2014-release-350-alpha-available">6 August, 2014: release 3.5.0-alpha available</h3>
-
+<h3>6 August, 2014: release 3.5.0-alpha available</h3>
 <p>This release is alpha quality and contains many improvements, new features, bug fixes and optimizations.</p>
-
 <p>See the <a href="https://zookeeper.apache.org/doc/r3.5.0-alpha/releasenotes.html">ZooKeeper 3.5.0-alpha Release Notes</a> for details. Alternatively, you can look at the <a href="https://issues.apache.org/jira/browse/ZOOKEEPER?report=com.atlassian.jira.plugin.system.project:changelog-panel">Jira</a> issue log for all releases.</p>
-
-<h3 id="10-march-2014-release-346-available">10 March, 2014: release 3.4.6 available</h3>
-
-<p>The release fixes a critical bug that could prevent a server from joining an established ensemble. See
-<a href="https://zookeeper.apache.org/doc/r3.4.6/releasenotes.html">ZooKeeper 3.4.6 Release Notes</a> for details.</p>
-
-<h3 id="18-november-2012-release-345-available">18 November, 2012: release 3.4.5 available</h3>
-
-<p>The release fixes a critical bug that could cause client connection issues. See
-<a href="https://zookeeper.apache.org/doc/r3.4.5/releasenotes.html">ZooKeeper 3.4.5 Release Notes</a> for details.</p>
-
-<h3 id="23-september-2012-release-344-available">23 September, 2012: release 3.4.4 available</h3>
-
-<p>The release fixes a critical bug that could cause data inconsistency. See
-<a href="https://zookeeper.apache.org/doc/r3.4.4/releasenotes.html">ZooKeeper 3.4.4 Release Notes</a> for details.</p>
-
-<h3 id="02-august-2012-release-336-available">02 August, 2012: release 3.3.6 available</h3>
-
-<p>The release fixes a critical bug that could cause data loss. See
-<a href="https://zookeeper.apache.org/doc/r3.3.6/releasenotes.html">ZooKeeper 3.3.6 Release Notes</a> for details.</p>
-
-<h3 id="20-march-2012-release-335-available">20 March, 2012: release 3.3.5 available</h3>
-
-<p>The release fixes a critical bug that could cause data corruption. See
-<a href="https://zookeeper.apache.org/doc/r3.3.5/releasenotes.html">ZooKeeper 3.3.5 Release Notes</a> for details.</p>
-
-<h3 id="13-feb-2012-release-343-available">13 Feb, 2012: release 3.4.3 available</h3>
-
-<p>This release fixes  critical bugs in 3.4.2. See
-<a href="https://zookeeper.apache.org/doc/r3.4.3/releasenotes.html">ZooKeeper 3.4.3 Release Notes</a> for details.</p>
-
+<h3>10 March, 2014: release 3.4.6 available</h3>
+<p>The release fixes a critical bug that could prevent a server from joining an established ensemble. See <a href="https://zookeeper.apache.org/doc/r3.4.6/releasenotes.html">ZooKeeper 3.4.6 Release Notes</a> for details.</p>
+<h3>18 November, 2012: release 3.4.5 available</h3>
+<p>The release fixes a critical bug that could cause client connection issues. See <a href="https://zookeeper.apache.org/doc/r3.4.5/releasenotes.html">ZooKeeper 3.4.5 Release Notes</a> for details.</p>
+<h3>23 September, 2012: release 3.4.4 available</h3>
+<p>The release fixes a critical bug that could cause data inconsistency. See <a href="https://zookeeper.apache.org/doc/r3.4.4/releasenotes.html">ZooKeeper 3.4.4 Release Notes</a> for details.</p>
+<h3>02 August, 2012: release 3.3.6 available</h3>
+<p>The release fixes a critical bug that could cause data loss. See <a href="https://zookeeper.apache.org/doc/r3.3.6/releasenotes.html">ZooKeeper 3.3.6 Release Notes</a> for details.</p>
+<h3>20 March, 2012: release 3.3.5 available</h3>
+<p>The release fixes a critical bug that could cause data corruption. See <a href="https://zookeeper.apache.org/doc/r3.3.5/releasenotes.html">ZooKeeper 3.3.5 Release Notes</a> for details.</p>
+<h3>13 Feb, 2012: release 3.4.3 available</h3>
+<p>This release fixes  critical bugs in 3.4.2. See <a href="https://zookeeper.apache.org/doc/r3.4.3/releasenotes.html">ZooKeeper 3.4.3 Release Notes</a> for details.</p>
 <p>We are now upgrading this release to a beta release given that we have had quite a few bug fixes to 3.4 branch and 3.4 releases have been out for some time now.</p>
-
-<h3 id="29-dec-2011-release-342-available">29 Dec, 2011: release 3.4.2 available</h3>
-
-<p>This release fixes a critical bug in 3.4.1. See
-<a href="https://zookeeper.apache.org/doc/r3.4.2/releasenotes.html">ZooKeeper 3.4.2 Release Notes</a> for details.</p>
-
+<h3>29 Dec, 2011: release 3.4.2 available</h3>
+<p>This release fixes a critical bug in 3.4.1. See <a href="https://zookeeper.apache.org/doc/r3.4.2/releasenotes.html">ZooKeeper 3.4.2 Release Notes</a> for details.</p>
 <p>Please note that this is still an alpha release and we do not recommend this for production. Please use the stable release line 3.3.* for production use.</p>
-
-<h3 id="16-dec-2011-release-341-available">16 Dec, 2011: release 3.4.1 available</h3>
-
-<p>This release fixes a critical bug with data loss in 3.4.0. See
-<a href="https://zookeeper.apache.org/doc/r3.4.1/releasenotes.html">ZooKeeper 3.4.1 Release Notes</a> for details.
-In case you are already using 3.4.0 release please upgrade ASAP.</p>
-
+<h3>16 Dec, 2011: release 3.4.1 available</h3>
+<p>This release fixes a critical bug with data loss in 3.4.0. See <a href="https://zookeeper.apache.org/doc/r3.4.1/releasenotes.html">ZooKeeper 3.4.1 Release Notes</a> for details. In case you are already using 3.4.0 release please upgrade ASAP.</p>
 <p>Please note that this is an alpha release and not ready for production as of now.</p>
-
-<h3 id="26-nov-2011-release-334-available">26 Nov, 2011: release 3.3.4 available</h3>
-
-<p>The release fixes a number of critical bugs that could cause data corruption. See
-<a href="https://zookeeper.apache.org/doc/r3.3.4/releasenotes.html">ZooKeeper 3.3.4 Release Notes</a> for details.</p>
-
-<h3 id="22-nov-2011-release-340-available">22 Nov, 2011: release 3.4.0 available</h3>
-
+<h3>26 Nov, 2011: release 3.3.4 available</h3>
+<p>The release fixes a number of critical bugs that could cause data corruption. See <a href="https://zookeeper.apache.org/doc/r3.3.4/releasenotes.html">ZooKeeper 3.3.4 Release Notes</a> for details.</p>
+<h3>22 Nov, 2011: release 3.4.0 available</h3>
 <p>Due to data loss issues, this release has been removed from the downloads page. Release 3.4.1 is now available.</p>
-
-<h3 id="27-feb-2011-release-333-available">27 Feb, 2011: release 3.3.3 available</h3>
-
-<p>The release fixes two critical bugs that could cause data corruption. It also addresses 12 other issues. See
-<a href="https://zookeeper.apache.org/doc/r3.3.3/releasenotes.html">ZooKeeper 3.3.3 Release Notes</a> for details.</p>
-
-<h3 id="11-nov-2010-release-332-available">11 Nov, 2010: release 3.3.2 available</h3>
-
+<h3>27 Feb, 2011: release 3.3.3 available</h3>
+<p>The release fixes two critical bugs that could cause data corruption. It also addresses 12 other issues. See <a href="https://zookeeper.apache.org/doc/r3.3.3/releasenotes.html">ZooKeeper 3.3.3 Release Notes</a> for details.</p>
+<h3>11 Nov, 2010: release 3.3.2 available</h3>
 <p>This release contains a number of critical bug fixes.</p>
-
 <p>See the <a href="https://zookeeper.apache.org/doc/r3.3.2/releasenotes.html">ZooKeeper 3.3.2 Release Notes</a> for details. Alternatively, you can look at the <a href="https://issues.apache.org/jira/browse/ZOOKEEPER?report=com.atlassian.jira.plugin.system.project:changelog-panel">Jira</a> issue log for all releases.</p>
-
-<h3 id="17-may-2010-release-331-available">17 May, 2010: release 3.3.1 available</h3>
-
+<h3>17 May, 2010: release 3.3.1 available</h3>
 <p>This release contains a number of critical bug fixes.</p>
-
 <p>See the <a href="https://zookeeper.apache.org/doc/r3.3.1/releasenotes.html">ZooKeeper 3.3.1 Release Notes</a> for details. Alternatively, you can look at the <a href="https://issues.apache.org/jira/browse/ZOOKEEPER?report=com.atlassian.jira.plugin.system.project:changelog-panel">Jira</a> issue log for all releases.</p>
-
-<h3 id="25-march-2010-release-330-available">25 March, 2010: release 3.3.0 available</h3>
-
+<h3>25 March, 2010: release 3.3.0 available</h3>
 <p>This release contains many improvements, new features, bug fixes and optimizations.</p>
-
 <p>See the <a href="https://zookeeper.apache.org/doc/r3.3.0/releasenotes.html">ZooKeeper 3.3.0 Release Notes</a> for details. Alternatively, you can look at the <a href="https://issues.apache.org/jira/browse/ZOOKEEPER?report=com.atlassian.jira.plugin.system.project:changelog-panel">Jira</a> issue log for all releases.</p>
-
-<h3 id="14-december-2009-release-322-available">14 December, 2009: release 3.2.2 available</h3>
-
+<h3>14 December, 2009: release 3.2.2 available</h3>
 <p>This release contains a number of critical bug fixes.</p>
-
 <p>See the <a href="https://zookeeper.apache.org/doc/r3.2.2/releasenotes.html">ZooKeeper 3.2.2 Release Notes</a> for details. Alternatively, you can look at the <a href="https://issues.apache.org/jira/browse/ZOOKEEPER?report=com.atlassian.jira.plugin.system.project:changelog-panel">Jira</a> issue log for all releases.</p>
-
-<h3 id="14-december-2009-release-312-available">14 December, 2009: release 3.1.2 available</h3>
-
+<h3>14 December, 2009: release 3.1.2 available</h3>
 <p>This release contains a number of critical bug fixes.</p>
-
 <p>See the <a href="https://zookeeper.apache.org/doc/r3.1.2/releasenotes.html">ZooKeeper 3.1.2 Release Notes</a> for details. Alternatively, you can look at the <a href="https://issues.apache.org/jira/browse/ZOOKEEPER?report=com.atlassian.jira.plugin.system.project:changelog-panel">Jira</a> issue log for all releases.</p>
-
-<h3 id="4-september-2009-release-321-available">4 September, 2009: release 3.2.1 available</h3>
-
+<h3>4 September, 2009: release 3.2.1 available</h3>
 <p>This release contains a number of critical bug fixes.</p>
-
 <p>See the <a href="https://zookeeper.apache.org/doc/r3.2.1/releasenotes.html">ZooKeeper 3.2.1 Release Notes</a> for details. Alternatively, you can look at the <a href="https://issues.apache.org/jira/browse/ZOOKEEPER?report=com.atlassian.jira.plugin.system.project:changelog-panel">Jira</a> issue log for all releases.</p>
-
-<h3 id="8-july-2009-release-320-available">8 July, 2009: release 3.2.0 available</h3>
-
+<h3>8 July, 2009: release 3.2.0 available</h3>
 <p>This release contains many improvements, new features, bug fixes and optimizations.</p>
-
 <p>See the <a href="https://zookeeper.apache.org/doc/r3.2.0/releasenotes.html">ZooKeeper 3.2.0 Release Notes</a> for details. Alternatively, you can look at the <a href="https://issues.apache.org/jira/browse/ZOOKEEPER?report=com.atlassian.jira.plugin.system.project:changelog-panel">Jira</a> issue log for all releases.</p>
-
-<h3 id="27-march-2009-release-311-available">27 March, 2009: release 3.1.1 available</h3>
-
+<h3>27 March, 2009: release 3.1.1 available</h3>
 <p>This release contains a small number of bug fixes.</p>
-
 <p>See the <a href="https://zookeeper.apache.org/doc/r3.1.1/releasenotes.html">ZooKeeper 3.1.1 Release Notes</a> for details. Alternatively, you can look at the <a href="https://issues.apache.org/jira/browse/ZOOKEEPER?report=com.atlassian.jira.plugin.system.project:changelog-panel">Jira</a> issue log for all releases.</p>
-
-<h3 id="13-february-2009-release-310-available">13 February, 2009: release 3.1.0 available</h3>
-
+<h3>13 February, 2009: release 3.1.0 available</h3>
 <p>This release contains many improvements, new features, bug fixes and optimizations.</p>
-
 <p>See the ZooKeeper 3.1.0 Release Notes for details. Alternatively, you can look at the <a href="https://issues.apache.org/jira/browse/ZOOKEEPER?report=com.atlassian.jira.plugin.system.project:changelog-panel">Jira</a> issue log for all releases.</p>
-
-<h3 id="4-december-2008-release-301-available">4 December, 2008: release 3.0.1 available</h3>
-
+<h3>4 December, 2008: release 3.0.1 available</h3>
 <p>This release contains many improvements, new features, bug fixes and optimizations.</p>
-
 <p>See the ZooKeeper 3.0.1 Release Notes for details. Alternatively, you can look at the <a href="https://issues.apache.org/jira/browse/ZOOKEEPER?report=com.atlassian.jira.plugin.system.project:changelog-panel">Jira</a> issue log for all releases.</p>
-
-<h3 id="27-october-2008-release-300-available">27 October, 2008: release 3.0.0 available</h3>
-
+<h3>27 October, 2008: release 3.0.0 available</h3>
 <p>This release contains many improvements, new features, bug fixes and optimizations.</p>
-
 <p>See the ZooKeeper 3.0.0 Release Notes for details. Alternatively, you can look at the <a href="https://issues.apache.org/jira/browse/ZOOKEEPER?report=com.atlassian.jira.plugin.system.project:changelog-panel">Jira</a> issue log for all releases.</p>
-
-
-                      </div>
-                    </td>
-                    <td valign="top">
-                      <div class="navigation">
-                        <div class="navigation_top">
-                          <div class="searchbox"> 
-<form action="http://search-hadoop.com/zookeeper" method="get"> 
-<input onFocus="getBlank (this, 'Search with Apache Solr');" size="25" name="q" id="query" type="text" value="Search with Apache Solr">&nbsp;
-		  <input value="Search" type="submit"> 
-</form> 
-</div> 
-
-                          <div class="navigation_bottom"> 
-                            
-                            <h3 id="project">Project</h3>
-
-<ul>
-  <li><a href="releases.html#news">News</a></li>
-  <li><a href="releases.html">Releases</a></li>
-  <li><a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/Index">Wiki</a></li>
-  <li><a href="credits.html">Credits</a></li>
-  <li><a href="bylaws.html">Bylaws</a></li>
-  <li><a href="https://www.apache.org/licenses/">License</a></li>
-  <li><a href="privacy.html">Privacy Policy</a></li>
-  <li><a href="https://www.apache.org/foundation/sponsorship.html">Sponsorship</a></li>
-  <li><a href="security.html">Security</a></li>
-  <li><a href="https://www.apache.org/foundation/thanks.html">Thanks</a></li>
-</ul>
-
-<h3 id="documentation">Documentation</h3>
-
-<ul>
-  <li><a href="doc/r3.5.4-beta">Release 3.5.4-beta</a></li>
-  <li><a href="doc/r3.4.13">Release 3.4.13</a></li>
-  <li><a href="documentation.html">Older Versions</a></li>
-</ul>
-
-<h3 id="developers">Developers</h3>
-
-<ul>
-  <li><a href="lists.html">Mailing Lists</a></li>
-  <li><a href="irc.html">IRC Channel</a></li>
-  <li><a href="git.html">Version Control</a></li>
-  <li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER">Issue Tracker</a></li>
-</ul>
-
-                          </div>
-                        </div>   
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="copyright_footer">
-<p>Copyright &copy; 2010-2017 The Apache Software Foundation, Licensed under the <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.<br>Apache ZooKeeper, ZooKeeper, Apache, the Apache feather logo, and the Apache ZooKeeper project logo are trademarks of The Apache Software Foundation.</p>
 </div>
 
-  </body>
+<footer>
+    <div class="row">
+        <div class="col">Copyright &copy; 2010-2018
+            <a href="https://www.apache.org/">The Apache Software Foundation</a>, Licensed under the <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.<br>
+            Apache ZooKeeper, ZooKeeper, Apache, the Apache feather logo, and the Apache ZooKeeper project logo are trademarks of The Apache Software Foundation.
+        </div>
+        <div class="col-sm-2">
+            <a href="https://apache.org" id="bannerRight">
+                <img src="images/asf-logo-with-feather.png" height="83px"/>
+            </a>
+        </div>
+    </div>
+</footer>
+</body>
 </html>

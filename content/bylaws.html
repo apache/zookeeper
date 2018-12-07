@@ -1,393 +1,196 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE html>
 <html>
-  <head>
-	<link href="css/site.css" rel="stylesheet" type="text/css">
-	<link href="css/type-settings.css" rel="stylesheet" type="text/css">
-
-	<title>Apache ZooKeeper - Project Bylaws</title>
-
-	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta http-equiv="Content-Language" content="en" />
+	<title>Apache ZooKeeper</title>
+	<link rel="stylesheet" href="css/bootstrap.min.css" />
+	<script src="js/jquery-3.3.1.slim.min.js"></script>
+	<script src="js/popper.min.js"></script>
+	<script src="js/bootstrap.min.js"></script>
+	<link rel="stylesheet" href="css/site.css" />
+	<link rel="stylesheet" href="css/print.css" media="print" />
+	<link rel="shortcut icon" href="images/favicon.ico">
 </head>
+<body class="topBarEnabled">
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+	<a class="navbar-brand" href="index.html"><img src="images/zookeeper_small.gif" height="55px"/>Apache ZooKeeper&trade;</a>
+	<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+		<span class="navbar-toggler-icon"></span>
+	</button>
 
-  <body>
-    <div class="white_box">
-      <div class="content">
-        <div class="content_l">
-          <div class="content_r">
-            <div>
-              <div id="header_background">
-	            <div id="zookeeper_logo">
-		          <a href="/"><img src="images/zookeeper_small.gif"/></a> <b><font size=+4 color=white>Apache ZooKeeper&trade;</font></b> <a href="https://apache.org"><img src="images/feather_small.gif"/></a>
-	            </div>
-              </div>
-              
-              <table border="0">
-                <tbody>
-                  <tr>
-                    <td style="overflow: hidden;" valign="top" width="100%">
-                      <div class="wiki-content">
-                        <h1 id="apache-zookeeper-project-bylaws">Apache ZooKeeper Project Bylaws</h1>
+	<div class="collapse navbar-collapse" id="navbarSupportedContent">
+		<ul class="navbar-nav mr-auto">
+			<li class="nav-item dropdown">
+				<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+					Project
+				</a>
+				<div class="dropdown-menu" aria-labelledby="navbarDropdown">
+					<a class="dropdown-item" href="releases.html#news">News</a>
+					<a class="dropdown-item" href="releases.html">Releases</a>
+					<a class="dropdown-item" href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/Index">Wiki</a>
+					<a class="dropdown-item" href="credits.html">Credits</a>
+					<a class="dropdown-item" href="bylaws.html">Bylaws</a>
+					<a class="dropdown-item" href="https://www.apache.org/licenses/">License</a>
+					<a class="dropdown-item" href="privacy.html">Privacy Policy</a>
+					<a class="dropdown-item" href="security.html">Security</a>
+					<a class="dropdown-item" href="https://www.apache.org/foundation/thanks.html">Thanks</a>
+				</div>
+			</li>
+			<li class="nav-item dropdown">
+				<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+					Documentation
+				</a>
+				<div class="dropdown-menu" aria-labelledby="navbarDropdown">
+					<a class="dropdown-item" href="doc/r3.5.4-beta">Release 3.5.4-beta</a>
+					<a class="dropdown-item" href="doc/r3.4.13">Release 3.4.13</a>
+					<a class="dropdown-item" href="documentation.html">Older Versions</a>
+				</div>
+			</li>
+			<li class="nav-item dropdown">
+				<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+					Developers
+				</a>
+				<div class="dropdown-menu" aria-labelledby="navbarDropdown">
+					<a class="dropdown-item" href="lists.html">Mailing Lists</a>
+					<a class="dropdown-item" href="irc.html">IRC Channel</a>
+					<a class="dropdown-item" href="git.html">Version Control</a>
+					<a class="dropdown-item" href="https://issues.apache.org/jira/browse/ZOOKEEPER">Issue Tracker</a>
+					<a class="dropdown-item" href="events.html">Events</a>
+				</div>
+			</li>
+			<li class="nav-item dropdown">
+				<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+					ASF
+				</a>
+				<div class="dropdown-menu" aria-labelledby="navbarDropdown">
+					<a class="dropdown-item" href="http://www.apache.org/foundation/" target="_blank" title="Apache Software Foundation">Apache Software Foundation</a>
+					<a class="dropdown-item" href="http://www.apache.org/foundation/how-it-works.html" target="_blank" title="How Apache Works">How Apache Works</a>
+					<a class="dropdown-item" href="http://www.apache.org/foundation/sponsorship.html" target="_blank" title="Sponsoring Apache">Sponsoring Apache</a>
+				</div>
+			</li>
+		</ul>
+		<form class="form-inline my-2 my-lg-0" action="http://search-hadoop.com/zookeeper" method="get">
+			<input name="q" id="query" size="25" class="form-control mr-sm-2" type="search" placeholder="Search with Apache Solr" aria-label="Search with Apache Solr">
+			<button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+		</form>
+	</div>
+</nav>
 
+<div class="container">
+<!--
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+//-->
+<h1>Apache ZooKeeper Project Bylaws</h1>
 <p>This is version 1 of the bylaws.</p>
-
-<h1 id="introduction">Introduction</h1>
-
-<p>This document defines the bylaws under which the Apache ZooKeeper 
-project operates. It defines the roles and responsibilities of the 
-project, who may vote, how voting works, how conflicts are resolved, etc.</p>
-
-<p>ZooKeeper is a project of the <a href="https://www.apache.org/foundation/">Apache Software Foundation</a> The foundation 
-holds the copyright on Apache code including the code in the ZooKeeper 
-codebase. The <a href="https://www.apache.org/foundation/faq.html">foundation FAQ</a> explains the operation and background of 
-the foundation.</p>
-
-<p>ZooKeeper is typical of Apache projects in that it operates under a set 
-of principles, known collectively as the Apache Way. If you are new to 
-Apache development, please refer to the <a href="https://incubator.apache.org/">Incubator project</a> for more 
-information on how Apache projects operate.</p>
-
-<h1 id="roles-and-responsibilities">Roles and Responsibilities</h1>
-
-<p>Apache projects define a set of roles with associated rights and 
-responsibilities. These roles govern what tasks an individual may 
-perform within the project. The roles are defined in the following sections.</p>
-
-<h2 id="users">Users</h2>
-
-<p>The most important participants in the project are people who use our 
-software. The majority of our contributors start out as users and guide 
-their development efforts from the user&#8217;s perspective.</p>
-
-<p>Users contribute to the Apache projects by providing feedback to 
-contributors in the form of bug reports and feature suggestions. As 
-well, users participate in the Apache community by helping other users 
-on mailing lists and user support forums.</p>
-
-<h2 id="contributors">Contributors</h2>
-
-<p>All of the volunteers who are contributing time, code, documentation, or 
-resources to the ZooKeeper Project. A contributor that makes sustained, 
-welcome contributions to the project may be invited to become a 
-committer, though the exact timing of such invitations depends on many 
-factors.</p>
-
-<h2 id="committers">Committers</h2>
-
-<p>The project&#8217;s committers are responsible for the project&#8217;s technical 
-management. Committers have access to a specified set of subproject&#8217;s 
-repositories. Committers on subprojects may cast binding 
-votes on any technical discussion regarding that subproject.</p>
-
-<p>Committer access is by invitation only and must be approved by lazy 
-consensus of the active PMC members. A Committer is considered emeritus 
-by his or her own declaration or by not reviewing patches or commiting 
-patches to the project for over six months. An emeritus committer may 
-request reinstatement of commit access from the PMC which must be 
-approved by lazy consensus of the active PMC members.</p>
-
-<p>Commit access can be revoked by a unanimous vote of all the active PMC 
-members (except the committer in question if he or she is also a PMC 
-member).</p>
-
-<p>All Apache committers are required to have a signed <a href="https://www.apache.org/licenses/icla.txt">Contributor License Agreement (CLA)</a>
- on file with the Apache Software Foundation. There is a 
-<a href="https://www.apache.org/dev/committers.html">Committer FAQ</a> which provides more details on the requirements for 
-committers.</p>
-
-<p>A committer who makes a sustained contribution to the project may be 
-invited to become a member of the PMC. The form of contribution is not 
-limited to code. It can also include code review, helping out users on 
-the mailing lists, documentation, etc.</p>
-
-<h2 id="project-management-committee">Project Management Committee</h2>
-
-<p>The PMC is responsible to the board and the ASF for the management and 
-oversight of the Apache ZooKeeper codebase. The responsibilities of the 
-PMC include:</p>
-
+<h1>Introduction</h1>
+<p>This document defines the bylaws under which the Apache ZooKeeper project operates. It defines the roles and responsibilities of the project, who may vote, how voting works, how conflicts are resolved, etc.</p>
+<p>ZooKeeper is a project of the <a href="https://www.apache.org/foundation/">Apache Software Foundation</a> The foundation holds the copyright on Apache code including the code in the ZooKeeper codebase. The <a href="https://www.apache.org/foundation/faq.html">foundation FAQ</a> explains the operation and background of the foundation.</p>
+<p>ZooKeeper is typical of Apache projects in that it operates under a set of principles, known collectively as the Apache Way. If you are new to Apache development, please refer to the <a href="https://incubator.apache.org/">Incubator project</a> for more information on how Apache projects operate.</p>
+<h1>Roles and Responsibilities</h1>
+<p>Apache projects define a set of roles with associated rights and responsibilities. These roles govern what tasks an individual may perform within the project. The roles are defined in the following sections.</p>
+<h2>Users</h2>
+<p>The most important participants in the project are people who use our software. The majority of our contributors start out as users and guide their development efforts from the user's perspective.</p>
+<p>Users contribute to the Apache projects by providing feedback to contributors in the form of bug reports and feature suggestions. As well, users participate in the Apache community by helping other users on mailing lists and user support forums.</p>
+<h2>Contributors</h2>
+<p>All of the volunteers who are contributing time, code, documentation, or resources to the ZooKeeper Project. A contributor that makes sustained, welcome contributions to the project may be invited to become a committer, though the exact timing of such invitations depends on many factors.</p>
+<h2>Committers</h2>
+<p>The project's committers are responsible for the project's technical management. Committers have access to a specified set of subproject's repositories. Committers on subprojects may cast binding votes on any technical discussion regarding that subproject.</p>
+<p>Committer access is by invitation only and must be approved by lazy consensus of the active PMC members. A Committer is considered emeritus by his or her own declaration or by not reviewing patches or commiting patches to the project for over six months. An emeritus committer may request reinstatement of commit access from the PMC which must be approved by lazy consensus of the active PMC members.</p>
+<p>Commit access can be revoked by a unanimous vote of all the active PMC members (except the committer in question if he or she is also a PMC member).</p>
+<p>All Apache committers are required to have a signed <a href="https://www.apache.org/licenses/icla.txt">Contributor License Agreement (CLA)</a> on file with the Apache Software Foundation. There is a <a href="https://www.apache.org/dev/committers.html">Committer FAQ</a> which provides more details on the requirements for committers.</p>
+<p>A committer who makes a sustained contribution to the project may be invited to become a member of the PMC. The form of contribution is not limited to code. It can also include code review, helping out users on the mailing lists, documentation, etc.</p>
+<h2>Project Management Committee</h2>
+<p>The PMC is responsible to the board and the ASF for the management and oversight of the Apache ZooKeeper codebase. The responsibilities of the PMC include:</p>
 <ul>
-  <li>Deciding what is distributed as products of the Apache ZooKeeper 
-project. In particular all releases must be approved by the PMC.</li>
-  <li>Maintaining the project&#8217;s shared resources, including the codebase 
-repository, mailing lists, websites.</li>
-  <li>Speaking on behalf of the project.</li>
-  <li>Resolving license disputes regarding products of the project.</li>
-  <li>Nominating new PMC members and committers.</li>
-  <li>Maintaining these bylaws and other guidelines of the project.</li>
-  <li>Membership of the PMC is by invitation only and must be approved by a 
-lazy consensus of active PMC members. A PMC member is considered 
-emeritus by his or her own declaration or by not contributing in any 
-form to the project for over six months. An emeritus member may request 
-reinstatement to the PMC, which must be approved by a lazy consensus of 
-active PMC members.</li>
+<li>Deciding what is distributed as products of the Apache ZooKeeper project. In particular all releases must be approved by the PMC.</li>
+<li>Maintaining the project's shared resources, including the codebase repository, mailing lists, websites.</li>
+<li>Speaking on behalf of the project.</li>
+<li>Resolving license disputes regarding products of the project.</li>
+<li>Nominating new PMC members and committers.</li>
+<li>Maintaining these bylaws and other guidelines of the project.</li>
+<li>Membership of the PMC is by invitation only and must be approved by a lazy consensus of active PMC members. A PMC member is considered emeritus by his or her own declaration or by not contributing in any form to the project for over six months. An emeritus member may request reinstatement to the PMC, which must be approved by a lazy consensus of active PMC members.</li>
 </ul>
-
-<p>Membership of the PMC can be revoked by an unanimous vote of all the 
-active PMC members other than the member in question.</p>
-
-<p>The chair of the PMC is appointed by the ASF board. The chair is an 
-office holder of the Apache Software Foundation (Vice President, Apache 
-ZooKeeper) and has primary responsibility to the board for the 
-management of the projects within the scope of the ZooKeeper PMC. The 
-chair reports to the board quarterly on developments within the 
-ZooKeeper project.</p>
-
-<p>When the current chair of the PMC resigns, the PMC votes to recommend a 
-new chair using lazy consensus, but the decision must be ratified by the 
-Apache board.</p>
-
-<h1 id="decision-making">Decision Making</h1>
-
-<p>Within the ZooKeeper project, different types of decisions require 
-different forms of approval. For example, the previous section describes 
-several decisions which require &#8216;lazy consensus&#8217; approval. This section 
-defines how voting is performed, the types of approvals, and which types 
-of decision require which type of approval.</p>
-
-<h2 id="voting">Voting</h2>
-
-<p>Decisions regarding the project are made by votes on the primary project 
-development mailing list dev@zookeeper.apache.org. Where necessary, PMC 
-voting may take place on the private ZooKeeper PMC mailing list 
-private@zookeeper.apache.org. Votes are clearly indicated by subject 
-line starting with [VOTE]. Votes may contain multiple items for approval 
-and these should be clearly separated. Voting is carried out by replying 
-to the vote mail. Voting may take four flavors.</p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Vote</th>
-      <th>Meaning</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>+1</td>
-      <td>&#8216;Yes,&#8217; &#8216;Agree,&#8217; or &#8216;the action should be performed.&#8217; In general, this vote also indicates a willingness on the behalf of the voter in &#8216;making it happen&#8217;.</td>
-    </tr>
-    <tr>
-      <td>+0</td>
-      <td>This vote indicates a willingness for the action under consideration to go ahead. The voter, however will not be able to help.</td>
-    </tr>
-    <tr>
-      <td>-0</td>
-      <td>This vote indicates that the voter does not, in general, agree with the proposed action but is not concerned enough to prevent the action going ahead.</td>
-    </tr>
-    <tr>
-      <td>-1</td>
-      <td>This is a negative vote. On issues where consensus is required, this vote counts as a veto. All vetoes must contain an explanation of why the veto is appropriate. Vetoes with no explanation are void. It may also be appropriate for a -1 vote to include an alternative course of action.</td>
-    </tr>
-  </tbody>
+<p>Membership of the PMC can be revoked by an unanimous vote of all the active PMC members other than the member in question.</p>
+<p>The chair of the PMC is appointed by the ASF board. The chair is an office holder of the Apache Software Foundation (Vice President, Apache ZooKeeper) and has primary responsibility to the board for the management of the projects within the scope of the ZooKeeper PMC. The chair reports to the board quarterly on developments within the ZooKeeper project.</p>
+<p>When the current chair of the PMC resigns, the PMC votes to recommend a new chair using lazy consensus, but the decision must be ratified by the Apache board.</p>
+<h1>Decision Making</h1>
+<p>Within the ZooKeeper project, different types of decisions require different forms of approval. For example, the previous section describes several decisions which require 'lazy consensus' approval. This section defines how voting is performed, the types of approvals, and which types of decision require which type of approval.</p>
+<h2>Voting</h2>
+<p>Decisions regarding the project are made by votes on the primary project development mailing list dev@zookeeper.apache.org. Where necessary, PMC voting may take place on the private ZooKeeper PMC mailing list private@zookeeper.apache.org. Votes are clearly indicated by subject line starting with [VOTE]. Votes may contain multiple items for approval and these should be clearly separated. Voting is carried out by replying to the vote mail. Voting may take four flavors.</p>
+<table class="table table-striped table-bordered">
+<thead>
+<tr><th>Vote</th><th>Meaning</th></tr>
+</thead>
+<tbody>
+<tr><td> +1 </td><td>'Yes,' 'Agree,' or 'the action should be performed.' In general, this vote also indicates a willingness on the behalf of the voter in 'making it happen'.</td></tr>
+<tr><td> +0 </td><td>This vote indicates a willingness for the action under consideration to go ahead. The voter, however will not be able to help.</td></tr>
+<tr><td> -0 </td><td>This vote indicates that the voter does not, in general, agree with the proposed action but is not concerned enough to prevent the action going ahead.</td></tr>
+<tr><td> -1 </td><td>This is a negative vote. On issues where consensus is required, this vote counts as a veto. All vetoes must contain an explanation of why the veto is appropriate. Vetoes with no explanation are void. It may also be appropriate for a -1 vote to include an alternative course of action.</td></tr>
+</tbody>
 </table>
-
-<p>All participants in the ZooKeeper project are encouraged to show their 
-agreement with or against a particular action by voting. For technical 
-decisions, only the votes of active committers are binding. Non binding 
-votes are still useful for those with binding votes to understand the 
-perception of an action in the wider ZooKeeper community. For PMC 
-decisions, only the votes of PMC members are binding.</p>
-
-<p>Voting can also be applied to changes already made to the ZooKeeper 
-codebase. These typically take the form of a veto (-1) in reply to the 
-commit message sent when the commit is made. Note that this should be a 
-rare occurrence. All efforts should be made to discuss issues when they 
-are still patches before the code is committed.</p>
-
-<h2 id="approvals">Approvals</h2>
-
-<p>There are the types of approvals that can be sought. Different actions 
-require different types of approvals.</p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Approval Type</th>
-      <th>Definition</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Consensus</td>
-      <td>For this to pass, all voters with binding votes must vote and there can be no binding vetoes (-1). Consensus votes are rarely required due to the impracticality of getting all eligible voters to cast a vote.</td>
-    </tr>
-    <tr>
-      <td>Lazy Consensus</td>
-      <td>Lazy consensus requires 3 binding +1 votes and no binding vetoes.</td>
-    </tr>
-    <tr>
-      <td>Lazy Majority</td>
-      <td>A lazy majority vote requires 3 binding +1 votes and more binding +1 votes that -1 votes.</td>
-    </tr>
-    <tr>
-      <td>Lazy Approval</td>
-      <td>An action with lazy approval is implicitly allowed unless a -1 vote is received, at which time, depending on the type of action, either lazy majority or lazy consensus approval must be obtained.</td>
-    </tr>
-    <tr>
-      <td>2/3 Majority</td>
-      <td>Some actions require a 2/3 majority of active committers or PMC members to pass. Such actions typically affect the foundation of the project (e.g. adopting a new codebase to replace an existing product). The higher threshold is designed to ensure such changes are strongly supported. To pass this vote requires at least 2/3 of binding vote holders to vote +1.</td>
-    </tr>
-  </tbody>
+<p>All participants in the ZooKeeper project are encouraged to show their agreement with or against a particular action by voting. For technical decisions, only the votes of active committers are binding. Non binding votes are still useful for those with binding votes to understand the perception of an action in the wider ZooKeeper community. For PMC decisions, only the votes of PMC members are binding.</p>
+<p>Voting can also be applied to changes already made to the ZooKeeper codebase. These typically take the form of a veto (-1) in reply to the commit message sent when the commit is made. Note that this should be a rare occurrence. All efforts should be made to discuss issues when they are still patches before the code is committed.</p>
+<h2>Approvals</h2>
+<p>There are the types of approvals that can be sought. Different actions require different types of approvals.</p>
+<table class="table table-striped table-bordered">
+<thead>
+<tr><th>Approval Type</th><th>Definition</th></tr>
+</thead>
+<tbody>
+<tr><td>Consensus </td><td>For this to pass, all voters with binding votes must vote and there can be no binding vetoes (-1). Consensus votes are rarely required due to the impracticality of getting all eligible voters to cast a vote.</td></tr>
+<tr><td>Lazy Consensus </td><td>Lazy consensus requires 3 binding +1 votes and no binding vetoes.</td></tr>
+<tr><td>Lazy Majority </td><td>A lazy majority vote requires 3 binding +1 votes and more binding +1 votes that -1 votes.</td></tr>
+<tr><td>Lazy Approval </td><td>An action with lazy approval is implicitly allowed unless a -1 vote is received, at which time, depending on the type of action, either lazy majority or lazy consensus approval must be obtained.</td></tr>
+<tr><td>2/3 Majority </td><td>Some actions require a 2/3 majority of active committers or PMC members to pass. Such actions typically affect the foundation of the project (e.g. adopting a new codebase to replace an existing product). The higher threshold is designed to ensure such changes are strongly supported. To pass this vote requires at least 2/3 of binding vote holders to vote +1.</td></tr>
+</tbody>
 </table>
-
-<h2 id="vetoes">Vetoes</h2>
-
-<p>A valid, binding veto cannot be overruled. If a veto is cast, it must
-be accompanied by a valid reason explaining the reasons for the
-veto. The validity of a veto, if challenged, can be confirmed by
-anyone who has a binding vote. This does not necessarily signify
-agreement with the veto - merely that the veto is valid.</p>
-
-<p>If you disagree with a valid veto, you must lobby the person casting the 
-veto to withdraw his or her veto. If a veto is not withdrawn, the action 
-that has been vetoed must be reversed in a timely manner.</p>
-
-<h2 id="actions">Actions</h2>
-
-<p>This section describes the various actions which are undertaken within 
-the project, the corresponding approval required for that action and 
-those who have binding votes over the action. It also specifies the 
-minimum length of time that a vote must remain open, measured in 
-business days. In general votes should not be called at times when it is 
-known that interested members of the project will be unavailable.</p>
-
-<table>
-  <thead>
-    <tr>
-      <th>Action</th>
-      <th>Description</th>
-      <th>Approval</th>
-      <th>Binding Votes</th>
-      <th>Minimum Length (days)</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Code Change</td>
-      <td>A change made to a codebase of the project and committed by a committer. This includes source code, documentation, website content, etc.</td>
-      <td>Lazy approval (not counting the vote of the contributor), moving to lazy majority if a -1 is received</td>
-      <td>Active committers</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <td>Release Plan</td>
-      <td>Defines the timetable and actions for a release. The plan also nominates a Release Manager.</td>
-      <td>Lazy majority</td>
-      <td>Active committers</td>
-      <td>3</td>
-    </tr>
-    <tr>
-      <td>Product Release</td>
-      <td>When a release of one of the project&#8217;s products is ready, a vote is required to accept the release as an official release of the project.</td>
-      <td>Lazy Majority</td>
-      <td>Active PMC members</td>
-      <td>3</td>
-    </tr>
-    <tr>
-      <td>Adoption of New Codebase</td>
-      <td>When the codebase for an existing, released product is to be replaced with an alternative codebase. If such a vote fails to gain approval, the existing code base will continue. This also covers the creation of new sub-projects within the project.</td>
-      <td>2/3 majority</td>
-      <td>Active PMC members</td>
-      <td>6</td>
-    </tr>
-    <tr>
-      <td>New Committer or reinstatement</td>
-      <td>When a new committer is proposed for the project.</td>
-      <td>Lazy consensus</td>
-      <td>Active PMC members</td>
-      <td>3</td>
-    </tr>
-    <tr>
-      <td>New PMC Member or reinstatement</td>
-      <td>When a committer is proposed for the PMC.</td>
-      <td>Lazy consensus</td>
-      <td>Active PMC members</td>
-      <td>3</td>
-    </tr>
-    <tr>
-      <td>Committer Removal</td>
-      <td>When removal of commit privileges is sought. Note: Such actions will also be referred to the ASF board by the PMC chair.</td>
-      <td>Consensus</td>
-      <td>Active PMC members (excluding the committer in question if a member of the PMC).</td>
-      <td>6</td>
-    </tr>
-    <tr>
-      <td>PMC Member Removal</td>
-      <td>When removal of a PMC member is sought. Note: Such actions will also be referred to the ASF board by the PMC chair.</td>
-      <td>Consensus</td>
-      <td>Active PMC members (excluding the member in question).</td>
-      <td>6</td>
-    </tr>
-    <tr>
-      <td>Modifying Bylaws</td>
-      <td>Modifying this document.</td>
-      <td>2/3 majority</td>
-      <td>Active PMC members</td>
-      <td>6</td>
-    </tr>
-  </tbody>
+<h2>Vetoes</h2>
+<p>A valid, binding veto cannot be overruled. If a veto is cast, it must be accompanied by a valid reason explaining the reasons for the veto. The validity of a veto, if challenged, can be confirmed by anyone who has a binding vote. This does not necessarily signify agreement with the veto - merely that the veto is valid.</p>
+<p>If you disagree with a valid veto, you must lobby the person casting the veto to withdraw his or her veto. If a veto is not withdrawn, the action that has been vetoed must be reversed in a timely manner.</p>
+<h2>Actions</h2>
+<p>This section describes the various actions which are undertaken within the project, the corresponding approval required for that action and those who have binding votes over the action. It also specifies the minimum length of time that a vote must remain open, measured in business days. In general votes should not be called at times when it is known that interested members of the project will be unavailable.</p>
+<table class="table table-striped table-bordered">
+<thead>
+<tr><th>Action</th><th>Description</th><th>Approval</th><th>Binding Votes</th><th>Minimum Length (days)</th></tr>
+</thead>
+<tbody>
+<tr><td>Code Change </td><td>A change made to a codebase of the project and committed by a committer. This includes source code, documentation, website content, etc. </td><td>Lazy approval (not counting the vote of the contributor), moving to lazy majority if a -1 is received </td><td>Active committers </td><td>1</td></tr>
+<tr><td>Release Plan </td><td>Defines the timetable and actions for a release. The plan also nominates a Release Manager. </td><td>Lazy majority </td><td>Active committers </td><td>3</td></tr>
+<tr><td>Product Release </td><td>When a release of one of the project's products is ready, a vote is required to accept the release as an official release of the project. </td><td>Lazy Majority </td><td>Active PMC members </td><td>3</td></tr>
+<tr><td>Adoption of New Codebase </td><td>When the codebase for an existing, released product is to be replaced with an alternative codebase. If such a vote fails to gain approval, the existing code base will continue. This also covers the creation of new sub-projects within the project. </td><td>2/3 majority </td><td>Active PMC members</td><td> 6</td></tr>
+<tr><td>New Committer or reinstatement </td><td>When a new committer is proposed for the project. </td><td>Lazy consensus </td><td>Active PMC members </td><td>3</td></tr>
+<tr><td>New PMC Member or reinstatement </td><td>When a committer is proposed for the PMC. </td><td>Lazy consensus </td><td>Active PMC members </td><td>3</td></tr>
+<tr><td>Committer Removal </td><td>When removal of commit privileges is sought. Note: Such actions will also be referred to the ASF board by the PMC chair. </td><td>Consensus </td><td>Active PMC members (excluding the committer in question if a member of the PMC). </td><td>6</td></tr>
+<tr><td>PMC Member Removal </td><td>When removal of a PMC member is sought. Note: Such actions will also be referred to the ASF board by the PMC chair. </td><td>Consensus </td><td>Active PMC members (excluding the member in question). </td><td>6</td></tr>
+<tr><td>Modifying Bylaws </td><td>Modifying this document. </td><td>2/3 majority </td><td>Active PMC members </td><td>6</td></tr>
+</tbody>
 </table>
-
-                      </div>
-                    </td>
-                    <td valign="top">
-                      <div class="navigation">
-                        <div class="navigation_top">
-                          <div class="searchbox"> 
-<form action="http://search-hadoop.com/zookeeper" method="get"> 
-<input onFocus="getBlank (this, 'Search with Apache Solr');" size="25" name="q" id="query" type="text" value="Search with Apache Solr">&nbsp;
-		  <input value="Search" type="submit"> 
-</form> 
-</div> 
-
-                          <div class="navigation_bottom"> 
-                            
-                            <h3 id="project">Project</h3>
-
-<ul>
-  <li><a href="releases.html#news">News</a></li>
-  <li><a href="releases.html">Releases</a></li>
-  <li><a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/Index">Wiki</a></li>
-  <li><a href="credits.html">Credits</a></li>
-  <li><a href="bylaws.html">Bylaws</a></li>
-  <li><a href="https://www.apache.org/licenses/">License</a></li>
-  <li><a href="privacy.html">Privacy Policy</a></li>
-  <li><a href="https://www.apache.org/foundation/sponsorship.html">Sponsorship</a></li>
-  <li><a href="security.html">Security</a></li>
-  <li><a href="https://www.apache.org/foundation/thanks.html">Thanks</a></li>
-</ul>
-
-<h3 id="documentation">Documentation</h3>
-
-<ul>
-  <li><a href="doc/r3.5.4-beta">Release 3.5.4-beta</a></li>
-  <li><a href="doc/r3.4.13">Release 3.4.13</a></li>
-  <li><a href="documentation.html">Older Versions</a></li>
-</ul>
-
-<h3 id="developers">Developers</h3>
-
-<ul>
-  <li><a href="lists.html">Mailing Lists</a></li>
-  <li><a href="irc.html">IRC Channel</a></li>
-  <li><a href="git.html">Version Control</a></li>
-  <li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER">Issue Tracker</a></li>
-</ul>
-
-                          </div>
-                        </div>   
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="copyright_footer">
-<p>Copyright &copy; 2010-2017 The Apache Software Foundation, Licensed under the <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.<br>Apache ZooKeeper, ZooKeeper, Apache, the Apache feather logo, and the Apache ZooKeeper project logo are trademarks of The Apache Software Foundation.</p>
 </div>
 
-  </body>
+<footer>
+    <div class="row">
+        <div class="col">Copyright &copy; 2010-2018
+            <a href="https://www.apache.org/">The Apache Software Foundation</a>, Licensed under the <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.<br>
+            Apache ZooKeeper, ZooKeeper, Apache, the Apache feather logo, and the Apache ZooKeeper project logo are trademarks of The Apache Software Foundation.
+        </div>
+        <div class="col-sm-2">
+            <a href="https://apache.org" id="bannerRight">
+                <img src="images/asf-logo-with-feather.png" height="83px"/>
+            </a>
+        </div>
+    </div>
+</footer>
+</body>
 </html>

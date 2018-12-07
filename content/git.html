@@ -1,100 +1,114 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE html>
 <html>
-  <head>
-	<link href="css/site.css" rel="stylesheet" type="text/css">
-	<link href="css/type-settings.css" rel="stylesheet" type="text/css">
-
-	<title>Apache ZooKeeper - Version Control</title>
-
-	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta http-equiv="Content-Language" content="en" />
+	<title>Apache ZooKeeper</title>
+	<link rel="stylesheet" href="css/bootstrap.min.css" />
+	<script src="js/jquery-3.3.1.slim.min.js"></script>
+	<script src="js/popper.min.js"></script>
+	<script src="js/bootstrap.min.js"></script>
+	<link rel="stylesheet" href="css/site.css" />
+	<link rel="stylesheet" href="css/print.css" media="print" />
+	<link rel="shortcut icon" href="images/favicon.ico">
 </head>
+<body class="topBarEnabled">
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+	<a class="navbar-brand" href="index.html"><img src="images/zookeeper_small.gif" height="55px"/>Apache ZooKeeper&trade;</a>
+	<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+		<span class="navbar-toggler-icon"></span>
+	</button>
 
-  <body>
-    <div class="white_box">
-      <div class="content">
-        <div class="content_l">
-          <div class="content_r">
-            <div>
-              <div id="header_background">
-	            <div id="zookeeper_logo">
-		          <a href="/"><img src="images/zookeeper_small.gif"/></a> <b><font size=+4 color=white>Apache ZooKeeper&trade;</font></b> <a href="https://apache.org"><img src="images/feather_small.gif"/></a>
-	            </div>
-              </div>
-              
-              <table border="0">
-                <tbody>
-                  <tr>
-                    <td style="overflow: hidden;" valign="top" width="100%">
-                      <div class="wiki-content">
-                        <h1 id="zookeeper-version-control-system">ZooKeeper Version Control System</h1>
+	<div class="collapse navbar-collapse" id="navbarSupportedContent">
+		<ul class="navbar-nav mr-auto">
+			<li class="nav-item dropdown">
+				<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+					Project
+				</a>
+				<div class="dropdown-menu" aria-labelledby="navbarDropdown">
+					<a class="dropdown-item" href="releases.html#news">News</a>
+					<a class="dropdown-item" href="releases.html">Releases</a>
+					<a class="dropdown-item" href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/Index">Wiki</a>
+					<a class="dropdown-item" href="credits.html">Credits</a>
+					<a class="dropdown-item" href="bylaws.html">Bylaws</a>
+					<a class="dropdown-item" href="https://www.apache.org/licenses/">License</a>
+					<a class="dropdown-item" href="privacy.html">Privacy Policy</a>
+					<a class="dropdown-item" href="security.html">Security</a>
+					<a class="dropdown-item" href="https://www.apache.org/foundation/thanks.html">Thanks</a>
+				</div>
+			</li>
+			<li class="nav-item dropdown">
+				<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+					Documentation
+				</a>
+				<div class="dropdown-menu" aria-labelledby="navbarDropdown">
+					<a class="dropdown-item" href="doc/r3.5.4-beta">Release 3.5.4-beta</a>
+					<a class="dropdown-item" href="doc/r3.4.13">Release 3.4.13</a>
+					<a class="dropdown-item" href="documentation.html">Older Versions</a>
+				</div>
+			</li>
+			<li class="nav-item dropdown">
+				<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+					Developers
+				</a>
+				<div class="dropdown-menu" aria-labelledby="navbarDropdown">
+					<a class="dropdown-item" href="lists.html">Mailing Lists</a>
+					<a class="dropdown-item" href="irc.html">IRC Channel</a>
+					<a class="dropdown-item" href="git.html">Version Control</a>
+					<a class="dropdown-item" href="https://issues.apache.org/jira/browse/ZOOKEEPER">Issue Tracker</a>
+					<a class="dropdown-item" href="events.html">Events</a>
+				</div>
+			</li>
+			<li class="nav-item dropdown">
+				<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+					ASF
+				</a>
+				<div class="dropdown-menu" aria-labelledby="navbarDropdown">
+					<a class="dropdown-item" href="http://www.apache.org/foundation/" target="_blank" title="Apache Software Foundation">Apache Software Foundation</a>
+					<a class="dropdown-item" href="http://www.apache.org/foundation/how-it-works.html" target="_blank" title="How Apache Works">How Apache Works</a>
+					<a class="dropdown-item" href="http://www.apache.org/foundation/sponsorship.html" target="_blank" title="Sponsoring Apache">Sponsoring Apache</a>
+				</div>
+			</li>
+		</ul>
+		<form class="form-inline my-2 my-lg-0" action="http://search-hadoop.com/zookeeper" method="get">
+			<input name="q" id="query" size="25" class="form-control mr-sm-2" type="search" placeholder="Search with Apache Solr" aria-label="Search with Apache Solr">
+			<button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+		</form>
+	</div>
+</nav>
 
-<p>The ZooKeeper source code resides in the Apache Git repository:
-<a href="https://git-wip-us.apache.org/repos/asf/zookeeper.git">https://git-wip-us.apache.org/repos/asf/zookeeper.git</a>
-All commits and releases are done on this repository.</p>
+<div class="container">
+<!--
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-<p>There is also a github mirror at:
-<a href="https://github.com/apache/zookeeper">https://github.com/apache/zookeeper</a></p>
+http://www.apache.org/licenses/LICENSE-2.0
 
-                      </div>
-                    </td>
-                    <td valign="top">
-                      <div class="navigation">
-                        <div class="navigation_top">
-                          <div class="searchbox"> 
-<form action="http://search-hadoop.com/zookeeper" method="get"> 
-<input onFocus="getBlank (this, 'Search with Apache Solr');" size="25" name="q" id="query" type="text" value="Search with Apache Solr">&nbsp;
-		  <input value="Search" type="submit"> 
-</form> 
-</div> 
-
-                          <div class="navigation_bottom"> 
-                            
-                            <h3 id="project">Project</h3>
-
-<ul>
-  <li><a href="releases.html#news">News</a></li>
-  <li><a href="releases.html">Releases</a></li>
-  <li><a href="https://cwiki.apache.org/confluence/display/ZOOKEEPER/Index">Wiki</a></li>
-  <li><a href="credits.html">Credits</a></li>
-  <li><a href="bylaws.html">Bylaws</a></li>
-  <li><a href="https://www.apache.org/licenses/">License</a></li>
-  <li><a href="privacy.html">Privacy Policy</a></li>
-  <li><a href="https://www.apache.org/foundation/sponsorship.html">Sponsorship</a></li>
-  <li><a href="security.html">Security</a></li>
-  <li><a href="https://www.apache.org/foundation/thanks.html">Thanks</a></li>
-</ul>
-
-<h3 id="documentation">Documentation</h3>
-
-<ul>
-  <li><a href="doc/r3.5.4-beta">Release 3.5.4-beta</a></li>
-  <li><a href="doc/r3.4.13">Release 3.4.13</a></li>
-  <li><a href="documentation.html">Older Versions</a></li>
-</ul>
-
-<h3 id="developers">Developers</h3>
-
-<ul>
-  <li><a href="lists.html">Mailing Lists</a></li>
-  <li><a href="irc.html">IRC Channel</a></li>
-  <li><a href="git.html">Version Control</a></li>
-  <li><a href="https://issues.apache.org/jira/browse/ZOOKEEPER">Issue Tracker</a></li>
-</ul>
-
-                          </div>
-                        </div>   
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="copyright_footer">
-<p>Copyright &copy; 2010-2017 The Apache Software Foundation, Licensed under the <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.<br>Apache ZooKeeper, ZooKeeper, Apache, the Apache feather logo, and the Apache ZooKeeper project logo are trademarks of The Apache Software Foundation.</p>
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+//-->
+<h1>ZooKeeper Version Control System</h1>
+<p>The ZooKeeper source code resides in the Apache Git repository: <a href="https://git-wip-us.apache.org/repos/asf/zookeeper.git">https://git-wip-us.apache.org/repos/asf/zookeeper.git</a> All commits and releases are done on this repository.</p>
+<p>There is also a github mirror at: <a href="https://github.com/apache/zookeeper">https://github.com/apache/zookeeper</a></p>
 </div>
 
-  </body>
+<footer>
+    <div class="row">
+        <div class="col">Copyright &copy; 2010-2018
+            <a href="https://www.apache.org/">The Apache Software Foundation</a>, Licensed under the <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.<br>
+            Apache ZooKeeper, ZooKeeper, Apache, the Apache feather logo, and the Apache ZooKeeper project logo are trademarks of The Apache Software Foundation.
+        </div>
+        <div class="col-sm-2">
+            <a href="https://apache.org" id="bannerRight">
+                <img src="images/asf-logo-with-feather.png" height="83px"/>
+            </a>
+        </div>
+    </div>
+</footer>
+</body>
 </html>
