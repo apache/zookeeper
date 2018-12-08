@@ -434,10 +434,25 @@ public class ObserverMaster implements LearnerMaster, Runnable {
             return;
         }
         listenerRunning = true;
-        if (self.getQuorumListenOnAllIPs()) {
-            ss = new ServerSocket(port, 10 /* dog science */);
+        int backlog = 10; // dog science
+        if (self.shouldUsePortUnification() || self.isSslQuorum()) {
+            boolean allowInsecureConnection = self.shouldUsePortUnification();
+            if (self.getQuorumListenOnAllIPs()) {
+                ss = new UnifiedServerSocket(self.getX509Util(), allowInsecureConnection, port, backlog);
+            } else {
+                ss = new UnifiedServerSocket(
+                        self.getX509Util(),
+                        allowInsecureConnection,
+                        port,
+                        backlog,
+                        self.getQuorumAddress().getAddress());
+            }
         } else {
-            ss = new ServerSocket(port, 10 /* dog science */, self.getQuorumAddress().getAddress());
+            if (self.getQuorumListenOnAllIPs()) {
+                ss = new ServerSocket(port, backlog);
+            } else {
+                ss = new ServerSocket(port, backlog, self.getQuorumAddress().getAddress());
+            }
         }
         thread = new Thread(this, "ObserverMaster");
         thread.start();
@@ -449,6 +464,9 @@ public class ObserverMaster implements LearnerMaster, Runnable {
         while (listenerRunning) {
             try {
                 Socket s = ss.accept();
+                // start with the initLimit, once the ack is processed
+                // in LearnerHandler switch to the syncLimit
+                s.setSoTimeout(self.tickTime * self.initLimit);
                 BufferedInputStream is = new BufferedInputStream(s.getInputStream());
                 LearnerHandler lh = new LearnerHandler(s, is, this);
                 lh.start();
