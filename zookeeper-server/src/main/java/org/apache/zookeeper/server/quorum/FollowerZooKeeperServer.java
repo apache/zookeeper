@@ -23,6 +23,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.jute.Record;
+import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.server.ExitCode;
@@ -33,6 +34,8 @@ import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.txn.TxnHeader;
+
+import javax.management.JMException;
 
 /**
  * Just like the standard ZooKeeperServer. We just replace the request
@@ -113,13 +116,17 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
     }
 
     synchronized public void sync(){
-        if(pendingSyncs.size() ==0){
+        if(pendingSyncs.size() == 0) {
             LOG.warn("Not expecting a sync.");
             return;
         }
 
         Request r = pendingSyncs.remove();
-		commitProcessor.commit(r);
+        if (r instanceof LearnerSyncRequest) {
+            LearnerSyncRequest lsr = (LearnerSyncRequest)r;
+            lsr.fh.queuePacket(new QuorumPacket(Leader.SYNC, 0, null, null));
+        }
+        commitProcessor.commit(r);
     }
 
     @Override
@@ -138,5 +145,26 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
     @Override
     public Learner getLearner() {
         return getFollower();
+    }
+
+    /**
+     * Process a request received from external Learner through the LearnerMaster
+     * These requests have already passed through validation and checks for
+     * session upgrade and can be injected into the middle of the pipeline.
+     *
+     * @param request received from external Learner
+     */
+    void processObserverRequest(Request request) {
+        ((FollowerRequestProcessor)firstProcessor).processRequest(request, false);
+    }
+
+    boolean registerJMX(LearnerHandlerBean handlerBean) {
+        try {
+            MBeanRegistry.getInstance().register(handlerBean, jmxServerBean);
+            return true;
+        } catch (JMException e) {
+            LOG.warn("Could not register connection", e);
+        }
+        return false;
     }
 }

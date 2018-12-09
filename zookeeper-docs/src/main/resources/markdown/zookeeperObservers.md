@@ -81,6 +81,38 @@ specified in every config file. You should see a command line prompt
 through which you can issue commands like _ls_ to query
 the ZooKeeper service.
 
+<a name="ch_ObserverMasters"></a>
+
+## How to use Observer Masters
+
+Observers function simple as non-voting members of the ensemble, sharing
+the Learner interface with Followers and holding only a slightly difference
+internal pipeline. Both maintain connections along the quorum port with the
+Leader by which they learn of all new proposals on the ensemble.
+
+By default, Observers connect to the Leader of the quorum along its
+quorum port and this is how they learn of all new proposals on the
+ensemble. There are benefits to allowing Observers to connect to the
+Followers instead as a means of plugging in to the commit stream in place
+of connecting to the Leader. It shifts the burden of supporting Observers
+off the Leader and allow it to focus on coordinating the commit of writes.
+This means better performance when the Leader is under high load,
+particularly high network load such as can happen after a leader election
+when many Learners need to sync. It reduces the total network connections
+maintained on the Leader when there are a high number of observers.
+Activating Followers to support Observers allow the overall number of
+Observers to scale into the hundreds. One the other end, Observer
+availability is improved since it will take shorter time for a high
+number of Observers to finish syncing and start serving client traffic.
+
+This feature can be activated by letting all members of the ensemble know
+which port will be used by the Followers to listen for Observer
+connections. The following entry, when added to the server config file,
+will instruct Observers to connect to peers (Leaders and Followers) on
+port 2191 and instruct Followers to create an ObserverMaster thread to
+listen and serve on that port.
+
+    observerMasterPort=2191
 <a name="ch_UseCases"></a>
 
 ## Example use cases

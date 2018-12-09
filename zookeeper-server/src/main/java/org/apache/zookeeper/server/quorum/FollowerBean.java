@@ -52,4 +52,14 @@ public class FollowerBean extends ZooKeeperServerBean implements FollowerMXBean 
     public long getElectionTimeTaken() {
         return follower.self.getElectionTimeTaken();
     }
+
+    @Override
+    public int getObserverMasterPacketSizeLimit() {
+        return follower.om == null ? -1 : follower.om.getPktsSizeLimit();
+    }
+
+    @Override
+    public void setObserverMasterPacketSizeLimit(int sizeLimit) {
+        ObserverMaster.setPktsSizeLimit(sizeLimit);
+    }
 }
