@@ -2594,6 +2594,17 @@ completion_list_t *dequeue_completion(completion_head_t *list)
     return cptr;
 }
 
+// cleanup completion list of a failed multi request
+static void cleanup_failed_multi(zhandle_t *zh, int xid, int rc, completion_list_t *cptr) {
+    completion_list_t *entry;
+    completion_head_t *clist = &cptr->c.clist;
+    while ((entry = dequeue_completion(clist)) != NULL) {
+        // Fake failed response for all sub-requests
+        deserialize_response(zh, entry->c.type, xid, 1, rc, entry, NULL);
+        destroy_completion_entry(entry);
+    }
+}
+
 static int deserialize_multi(zhandle_t *zh, int xid, completion_list_t *cptr, struct iarchive *ia)
 {
     int rc = 0;
@@ -2723,8 +2734,12 @@ static void deserialize_response(zhandle_t *zh, int type, int xid, int failed, i
     case COMPLETION_MULTI:
         LOG_DEBUG(LOGCALLBACK(zh), "Calling COMPLETION_MULTI for xid=%#x failed=%d rc=%d",
                     cptr->xid, failed, rc);
-        rc = deserialize_multi(zh, xid, cptr, ia);
         assert(cptr->c.void_result);
+        if (failed) {
+            cleanup_failed_multi(zh, xid, rc, cptr);
+        } else {
+            rc = deserialize_multi(zh, xid, cptr, ia);
+        }
         cptr->c.void_result(rc, cptr->data);
         break;
     default:
