@@ -18,19 +18,18 @@
 
 package org.apache.zookeeper.test;
 
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
+import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooKeeper;
+import org.junit.Assert;
+import org.junit.Test;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.TestableZooKeeper;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.Watcher.Event.KeeperState;
-import org.apache.zookeeper.ZooDefs.Ids;
-import org.junit.Test;
-import org.junit.Assert;
+import java.util.concurrent.CountDownLatch;
 
 public class SaslAuthFailTest extends ClientBase {
     static {
@@ -59,18 +58,37 @@ public class SaslAuthFailTest extends ClientBase {
             // could not create tmp directory to hold JAAS conf file.
         }
     }
+
+    private CountDownLatch authFailed = new CountDownLatch(1);
+
+    private class MyWatcher extends CountdownWatcher {
+        @Override
+        public synchronized void process(WatchedEvent event) {
+            if (event.getState() == KeeperState.AuthFailed) {
+                authFailed.countDown();
+            }
+            else {
+                super.process(event);
+            }
+        }
+    }
     
     @Test
-    public void testAuthFail() throws Exception {
-        ZooKeeper zk = createClient();
-        try {
+    public void testAuthFail() {
+        try (ZooKeeper zk = createClient()) {
             zk.create("/path1", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
             Assert.fail("Should have gotten exception.");
-        } catch(Exception e ) {
+        } catch (Exception e) {
             // ok, exception as expected.
             LOG.info("Got exception as expected: " + e);
-        } finally {
-            zk.close();
+        }
+    }
+
+    @Test
+    public void testBadSaslAuthNotifiesWatch() throws Exception {
+        try (ZooKeeper ignored = createClient(new MyWatcher(), hostPort)) {
+            // wait for authFailed event from client's EventThread.
+            authFailed.await();
         }
     }
 }
