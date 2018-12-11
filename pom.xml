@@ -57,7 +57,7 @@
                 <version>1.0</version>
                 <executions>
                     <execution>
-                        <id>copy-file</id>
+                        <id>copy-htaccess</id>
                         <phase>generate-sources</phase>
                         <goals>
                             <goal>copy</goal>
@@ -65,6 +65,17 @@
                         <configuration>
                             <sourceFile>${project.basedir}/src/main/resources/.htaccess</sourceFile>
                             <destinationFile>target/html/.htaccess</destinationFile>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-doap</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <sourceFile>${project.basedir}/src/main/resources/doap.rdf</sourceFile>
+                            <destinationFile>target/html/doap.rdf</destinationFile>
                         </configuration>
                     </execution>
                 </executions>
