@@ -225,63 +225,67 @@ public abstract class X509Util {
                         "' provided in the property '" + sslClientContextProperty + "'", e);
             }
         } else {
-            KeyManager[] keyManagers = null;
-            TrustManager[] trustManagers = null;
+            return createSSLContextFromConfig(config);
+        }
+    }
 
-            String keyStoreLocationProp = config.getProperty(sslKeystoreLocationProperty, "");
-            String keyStorePasswordProp = config.getProperty(sslKeystorePasswdProperty, "");
-            String keyStoreTypeProp = config.getProperty(sslKeystoreTypeProperty);
+    private SSLContext createSSLContextFromConfig(ZKConfig config) throws SSLContextException {
+        KeyManager[] keyManagers = null;
+        TrustManager[] trustManagers = null;
 
-            // There are legal states in some use cases for null KeyManager or TrustManager.
-            // But if a user wanna specify one, location is required. Password defaults to empty string if it is not
-            // specified by the user.
+        String keyStoreLocationProp = config.getProperty(sslKeystoreLocationProperty, "");
+        String keyStorePasswordProp = config.getProperty(sslKeystorePasswdProperty, "");
+        String keyStoreTypeProp = config.getProperty(sslKeystoreTypeProperty);
 
-            if (keyStoreLocationProp.isEmpty()) {
-                LOG.warn(getSslKeystoreLocationProperty() + " not specified");
-            } else {
-                try {
-                    keyManagers = new KeyManager[]{
-                            createKeyManager(keyStoreLocationProp, keyStorePasswordProp, keyStoreTypeProp)};
-                } catch (KeyManagerException keyManagerException) {
-                    throw new SSLContextException("Failed to create KeyManager", keyManagerException);
-                } catch (IllegalArgumentException e) {
-                    throw new SSLContextException("Bad value for " + sslKeystoreTypeProperty + ": " + keyStoreTypeProp, e);
-                }
-            }
+        // There are legal states in some use cases for null KeyManager or TrustManager.
+        // But if a user wanna specify one, location is required. Password defaults to empty string if it is not
+        // specified by the user.
 
-            String trustStoreLocationProp = config.getProperty(sslTruststoreLocationProperty, "");
-            String trustStorePasswordProp = config.getProperty(sslTruststorePasswdProperty, "");
-            String trustStoreTypeProp = config.getProperty(sslTruststoreTypeProperty);
-
-            boolean sslCrlEnabled = config.getBoolean(this.sslCrlEnabledProperty);
-            boolean sslOcspEnabled = config.getBoolean(this.sslOcspEnabledProperty);
-            boolean sslServerHostnameVerificationEnabled =
-                    config.getBoolean(this.getSslHostnameVerificationEnabledProperty(), true);
-            boolean sslClientHostnameVerificationEnabled =
-                    sslServerHostnameVerificationEnabled && shouldVerifyClientHostname();
-
-            if (trustStoreLocationProp.isEmpty()) {
-                LOG.warn(getSslTruststoreLocationProperty() + " not specified");
-            } else {
-                try {
-                    trustManagers = new TrustManager[]{
-                            createTrustManager(trustStoreLocationProp, trustStorePasswordProp, trustStoreTypeProp, sslCrlEnabled, sslOcspEnabled,
-                                    sslServerHostnameVerificationEnabled, sslClientHostnameVerificationEnabled)};
-                } catch (TrustManagerException trustManagerException) {
-                    throw new SSLContextException("Failed to create TrustManager", trustManagerException);
-                } catch (IllegalArgumentException e) {
-                    throw new SSLContextException("Bad value for " + sslTruststoreTypeProperty + ": " + trustStoreTypeProp, e);
-                }
-            }
-
-            String protocol = System.getProperty(sslProtocolProperty, DEFAULT_PROTOCOL);
+        if (keyStoreLocationProp.isEmpty()) {
+            LOG.warn(getSslKeystoreLocationProperty() + " not specified");
+        } else {
             try {
-                SSLContext sslContext = SSLContext.getInstance(protocol);
-                sslContext.init(keyManagers, trustManagers, null);
-                return sslContext;
-            } catch (NoSuchAlgorithmException | KeyManagementException sslContextInitException) {
-                throw new SSLContextException(sslContextInitException);
+                keyManagers = new KeyManager[]{
+                        createKeyManager(keyStoreLocationProp, keyStorePasswordProp, keyStoreTypeProp)};
+            } catch (KeyManagerException keyManagerException) {
+                throw new SSLContextException("Failed to create KeyManager", keyManagerException);
+            } catch (IllegalArgumentException e) {
+                throw new SSLContextException("Bad value for " + sslKeystoreTypeProperty + ": " + keyStoreTypeProp, e);
             }
+        }
+
+        String trustStoreLocationProp = config.getProperty(sslTruststoreLocationProperty, "");
+        String trustStorePasswordProp = config.getProperty(sslTruststorePasswdProperty, "");
+        String trustStoreTypeProp = config.getProperty(sslTruststoreTypeProperty);
+
+        boolean sslCrlEnabled = config.getBoolean(this.sslCrlEnabledProperty);
+        boolean sslOcspEnabled = config.getBoolean(this.sslOcspEnabledProperty);
+        boolean sslServerHostnameVerificationEnabled =
+                config.getBoolean(this.getSslHostnameVerificationEnabledProperty(), true);
+        boolean sslClientHostnameVerificationEnabled =
+                sslServerHostnameVerificationEnabled && shouldVerifyClientHostname();
+
+        if (trustStoreLocationProp.isEmpty()) {
+            LOG.warn(getSslTruststoreLocationProperty() + " not specified");
+        } else {
+            try {
+                trustManagers = new TrustManager[]{
+                        createTrustManager(trustStoreLocationProp, trustStorePasswordProp, trustStoreTypeProp, sslCrlEnabled, sslOcspEnabled,
+                                sslServerHostnameVerificationEnabled, sslClientHostnameVerificationEnabled)};
+            } catch (TrustManagerException trustManagerException) {
+                throw new SSLContextException("Failed to create TrustManager", trustManagerException);
+            } catch (IllegalArgumentException e) {
+                throw new SSLContextException("Bad value for " + sslTruststoreTypeProperty + ": " + trustStoreTypeProp, e);
+            }
+        }
+
+        String protocol = System.getProperty(sslProtocolProperty, DEFAULT_PROTOCOL);
+        try {
+            SSLContext sslContext = SSLContext.getInstance(protocol);
+            sslContext.init(keyManagers, trustManagers, null);
+            return sslContext;
+        } catch (NoSuchAlgorithmException | KeyManagementException sslContextInitException) {
+            throw new SSLContextException(sslContextInitException);
         }
     }
 
