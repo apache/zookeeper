@@ -38,7 +38,7 @@ else
 fi
 
 if test "$CALLER" = "ANT" ; then
-CPPUNIT_CFLAGS="$CPPUNIT_CFLAGS -DZKSERVER_CMD=\"\\\"${base_dir}/tests/zkServer.sh\\\"\""
+CPPUNIT_CFLAGS="$CPPUNIT_CFLAGS -DZKSERVER_CMD=\"\\\"${base_dir}/zookeeper-client/zookeeper-client-c/tests/zkServer.sh\\\"\""
 else
 CPPUNIT_CFLAGS="$CPPUNIT_CFLAGS -DZKSERVER_CMD=\"\\\"./tests/zkServer.sh\\\"\""
 AC_CHECK_FILES([$srcdir/generated/zookeeper.jute.c $srcdir/generated/zookeeper.jute.h],[],

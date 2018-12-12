@@ -56,21 +56,7 @@
                 <configuration>
                   <target>
                     <ant antfile="${project.basedir}/build.xml">
-                      <target name="compile-native"/>
-                    </ant>
-                  </target>
-                </configuration>
-              </execution>
-              <execution>
-                <id>testrun-native-c</id>
-                <phase>test</phase>
-                <goals>
-                  <goal>run</goal>
-                </goals>
-                <configuration>
-                  <target>
-                    <ant antfile="${project.basedir}/build.xml">
-                      <target name="test-cppunit"/>
+                      <target name="call-test-cppunit"/>
                     </ant>
                   </target>
                 </configuration>

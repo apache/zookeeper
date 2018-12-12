@@ -116,8 +116,16 @@ do
    CLASSPATH="$d:$CLASSPATH"
 done
 
+for d in "$ZOOBINDIR"/../zookeeper-server/target/lib/*.jar
+do
+   CLASSPATH="$d:$CLASSPATH"
+done
+
 #make it work for developers
 CLASSPATH="$ZOOBINDIR/../build/classes:$CLASSPATH"
+
+#make it work for developers
+CLASSPATH="$ZOOBINDIR/../zookeeper-server/target/classes:$CLASSPATH"
 
 case "`uname`" in
     CYGWIN*) cygwin=true ;;

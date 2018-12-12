@@ -17,7 +17,7 @@
    limitations under the License.
 -->
 
-<project name="ZooKeeper-client-c" default="compile-native" >
+<project name="ZooKeeper-client-c" default="call-test-cppunit" >
 
   <property name="cppunit.lib" value="/usr/lib"/>
   <property name="cppunit.m4" value="/usr/share/aclocal"/>
@@ -25,48 +25,86 @@
   <property name="c.build" value="${build.dir}/c/build"/>
   <property environment="env" />
 
-  <target name="compile-native" description="Make C binding">
+  <target name="check-cppunit-configure" >
+    <condition property="need.cppunit.configure">
+      <not> <available file="${basedir}/configure"/> </not>
+    </condition>
+  </target>
+
+  <target name="create-cppunit-configure" depends="check-cppunit-configure"
+          if="need.cppunit.configure">
     <exec executable="autoreconf" dir="${basedir}" searchpath="yes"
           failonerror="yes">
       <arg value="-if"/>
       <env key="ACLOCAL" value="aclocal -I ${cppunit.m4}"/>
     </exec>
+  </target>
 
-    <mkdir dir="${build.dir}/c" />
-
+  <target name="create-cppunit-makefile" depends="check-cppunit-makefile"
+          if="need.cppunit.makefile">
+    <antcall target="create-cppunit-configure">
+      <param name="cppunit" value="true"/>
+    </antcall>
+    <mkdir dir="${build.dir}/c"/>
     <condition property="enable.gcov.arg" value="--enable-gcov" else="">
       <equals arg1="${enable.gcov}" arg2="true"/>
     </condition>
-
     <exec executable="${basedir}/configure" dir="${build.dir}/c"
           failonerror="yes">
-      <env key="base_dir" value="${basedir}"/>
+      <env key="base_dir" value="${basedir}/../.."/>
       <env key="CALLER" value="ANT"/>
-      <arg value="--prefix=${build.dir}/c/build/${package.prefix}"/>
+      <arg value="--prefix=${build.dir}/c"/>
       <arg line="${enable.gcov.arg}"/>
-    </exec>
-
-    <exec dir="${build.dir}/c" executable="make" searchpath="yes"
-          failonerror="true">
-      <arg value="install"/>
-      <env key="LD_LIBRARY_PATH" value="${env.LD_LIBRARY_PATH};${c.build}"/>
-      <env key="PATH" path="${env.PATH};${basedir}"/>
-      <env key="CALLER" value="ANT"/>
-      <env key="base_dir" value="${basedir}"/>
     </exec>
   </target>
 
+  <target name="call-test-cppunit" description="to execute cppunit tests">
+    <antcall target="create-cppunit-makefile"/>
+    <antcall target="test-cppunit">
+      <param name="cppunit" value="true"/>
+    </antcall>
+  </target>
+
   <target name="test-cppunit"
+          depends="create-cppunit-makefile"
+          if="cppunit"
           description="to run cppunit test cases">
-    <exec dir="${build.dir}/c" executable="make" searchpath="yes"
-          failonerror="true">
+    <exec dir="${build.dir}/c" executable="make" failonerror="true">
       <env key="LD_LIBRARY_PATH" value="${env.LD_LIBRARY_PATH};${cppunit.lib}"/>
       <env key="PATH" path="${env.PATH};${basedir};"/>
       <env key="CALLER" value="ANT"/>
       <env key="CLOVER_HOME" value="${clover.home}"/>
-      <env key="base_dir" value="${basedir}"/>
+      <env key="base_dir" value="${basedir}/../.."/>
       <arg line="clean check"/>
     </exec>
+  </target>
+
+  <target name="check-cppunit-makefile" depends="verify-cppunit-makefile-gcov,delete-cppunit-makefile" >
+    <condition property="need.cppunit.makefile">
+      <not> <available file="${build.dir}/c/Makefile"/> </not>
+    </condition>
+  </target>
+
+  <target name="verify-cppunit-makefile-gcov">
+    <fileset id="fileset.makefile.gcov.enabled" dir="${build.dir}/c" erroronmissingdir="false">
+      <include name="Makefile"/>
+      <containsregexp expression="^[^#]+-ftest-coverage.*$"/>
+    </fileset>
+    <condition property="makefile.gcov.enabled">
+      <resourcecount when="greater" count="0" refid="fileset.makefile.gcov.enabled"/>
+    </condition>
+    <echo message="makefile.gcov.enabled = ${makefile.gcov.enabled}"/>
+    <condition property="delete.cppunit.makefile">
+      <and>
+        <isset property="makefile.gcov.enabled"/>
+        <not><equals arg1="${enable.gcov}" arg2="true"/></not>
+      </and>
+    </condition>
+    <echo message="delete.cppunit.makefile = ${delete.cppunit.makefile}"/>
+  </target>
+
+  <target name="delete-cppunit-makefile" if="delete.cppunit.makefile">
+    <delete file="${build.dir}/c/Makefile"/>
   </target>
 
 </project>
