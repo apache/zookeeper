@@ -38,7 +38,7 @@
     <jar destfile="${jarname}">
       <fileset file="${zk.root}/LICENSE.txt" />
       <fileset dir="${build.classes}" />
-      <fileset dir="src/main/webapp"/>
+      <fileset dir="src/main/resources/webapp"/>
       <manifest>
         <attribute name="Built-By" value="${user.name}"/>
         <attribute name="Built-At" value="${build.time}"/>
