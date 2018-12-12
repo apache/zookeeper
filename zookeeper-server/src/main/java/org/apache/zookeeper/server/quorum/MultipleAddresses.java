@@ -13,19 +13,39 @@ import java.util.stream.Collectors;
 public class MultipleAddresses {
 
     private Set<InetSocketAddress> addresses;
+    private int timeout;
 
     public MultipleAddresses() {
         addresses = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        timeout = 100;
     }
 
     public MultipleAddresses(List<InetSocketAddress> addresses) {
-        this.addresses = Collections.newSetFromMap(new ConcurrentHashMap<>());
-        this.addresses.addAll(addresses);
+        this(addresses, 100);
     }
 
     public MultipleAddresses(InetSocketAddress address) {
+        this(address, 100);
+    }
+
+    public MultipleAddresses(List<InetSocketAddress> addresses, int timeout) {
+        this.addresses = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        this.addresses.addAll(addresses);
+        this.timeout = timeout;
+    }
+
+    public MultipleAddresses(InetSocketAddress address,  int timeout) {
         addresses = Collections.newSetFromMap(new ConcurrentHashMap<>());
         addresses.add(address);
+        this.timeout = timeout;
+    }
+
+    public int getTimeout() {
+        return timeout;
+    }
+
+    public void setTimeout(int timeout) {
+        this.timeout = timeout;
     }
 
     public boolean isEmpty() {
@@ -41,7 +61,7 @@ public class MultipleAddresses {
     }
 
     public List<Integer> getAllPorts() {
-        return addresses.stream().map(InetSocketAddress::getPort).collect(Collectors.toList());
+        return addresses.stream().map(InetSocketAddress::getPort).distinct().collect(Collectors.toList());
     }
 
     public void addAddress(InetSocketAddress address) {
@@ -50,11 +70,17 @@ public class MultipleAddresses {
 
     public InetSocketAddress getValidAddress() {
 
-        for(InetSocketAddress addr : addresses) {
+        for(int i = 0; i < 3; i++) {
+            for (InetSocketAddress addr : addresses) {
+                try {
+                    if (addr.getAddress().isReachable(timeout))
+                        return addr;
+                } catch (NullPointerException | IOException ignored) {
+                }
+            }
             try {
-                if (addr.getAddress().isReachable(100))
-                    return addr;
-            } catch (NullPointerException | IOException e) {
+                Thread.sleep(200);
+            } catch (InterruptedException ignored) {
             }
         }
 

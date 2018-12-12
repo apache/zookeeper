@@ -50,7 +50,7 @@ public class Follower extends Learner{
         this.self = self;
         this.zk=zk;
         this.fzk = zk;
-        reconnect = new AtomicBoolean();
+        reconnect = new AtomicBoolean(true);
     }
 
     @Override
@@ -82,11 +82,10 @@ public class Follower extends Learner{
         self.start_fle = 0;
         self.end_fle = 0;
         fzk.registerJMX(new FollowerBean(this, zk), self.jmxLocalPeerBean);
-        reconnect.set(true);
 
         try {
             QuorumServer leaderServer = findLeader();
-            while (reconnect.get()) {
+            do {
                 try {
                     connectToLeader(leaderServer.addr, leaderServer.hostname);
                     long newEpochZxid = registerWithLeader(Leader.FOLLOWERINFO);
@@ -126,7 +125,7 @@ public class Follower extends Learner{
                     // clear pending revalidations
                     pendingRevalidations.clear();
                 }
-            }
+            } while (reconnect.get());
         } finally {
             zk.unregisterJMX((Learner) this);
         }

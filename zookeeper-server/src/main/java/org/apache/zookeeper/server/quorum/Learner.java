@@ -29,6 +29,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
@@ -254,36 +255,35 @@ public class Learner {
 
         boolean connected = false;
 
+        List<InetSocketAddress> addresses = addr.getAllAddresses();
         for (int tries = 0; tries < 5; tries++) {
-            for (InetSocketAddress address : addr.getAllAddresses()) {
+            for (InetSocketAddress address : addresses) {
                 try {
                     // recalculate the init limit time because retries sleep for 1000 milliseconds
                     remainingInitLimitTime = initLimitTime - (int) ((nanoTime() - startNanoTime) / 1000000);
                     if (remainingInitLimitTime <= 0) {
                         LOG.error("initLimit exceeded on retries.");
-                        throw new IOException("initLimit exceeded on retries.");
+                        throw new RuntimeLearnerException("initLimit exceeded on retries.");
                     }
-                    if (address.getAddress().isReachable(100)) {
-                        sockConnect(sock, address, Math.min(self.tickTime * self.syncLimit, remainingInitLimitTime));
-                        if (self.isSslQuorum()) {
-                            ((SSLSocket) sock).startHandshake();
-                        }
-                        sock.setTcpNoDelay(nodelay);
-                        connected = true;
-                        break;
+                    sockConnect(sock, address, Math.min(self.tickTime * self.syncLimit, remainingInitLimitTime));
+                    if (self.isSslQuorum()) {
+                        ((SSLSocket) sock).startHandshake();
                     }
+                    sock.setTcpNoDelay(nodelay);
+                    connected = true;
+                    break;
                 } catch (IOException e) {
                     remainingInitLimitTime = initLimitTime - (int) ((nanoTime() - startNanoTime) / 1000000);
 
-                    if (remainingInitLimitTime <= 1000) {
+                    if (remainingInitLimitTime <= 1000 / addresses.size()) {
                         LOG.error("Unexpected exception, initLimit exceeded. tries=" + tries +
                                 ", remaining init limit=" + remainingInitLimitTime +
-                                ", connecting to " + address, e);
+                                ", connecting to " + addr, e);
                         throw new RuntimeLearnerException(e);
                     } else if (tries >= 4) {
                         LOG.error("Unexpected exception, retries exceeded. tries=" + tries +
                                 ", remaining init limit=" + remainingInitLimitTime +
-                                ", connecting to " + address, e);
+                                ", connecting to " + addr, e);
                         throw new RuntimeLearnerException(e);
                     } else {
                         LOG.warn("Unexpected exception, tries=" + tries +
@@ -296,7 +296,7 @@ public class Learner {
             if (connected)
                 break;
 
-            Thread.sleep(1000);
+            Thread.sleep(1000 / addresses.size());
         }
 
         if (!connected)
