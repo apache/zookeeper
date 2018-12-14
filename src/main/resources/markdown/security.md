@@ -135,10 +135,10 @@ It is important to use the fully featured/supported Java cli shell rather
 than the C cli shell independent of version.
 
 - ZooKeeper 3.4.x users should upgrade to 3.4.9 or apply this
-[patch](https://git-wip-us.apache.org/repos/asf?p=zookeeper.git;a=commitdiff;h=27ecf981a15554dc8e64a28630af7a5c9e2bdf4f)
+[patch](https://gitbox.apache.org/repos/asf?p=zookeeper.git;a=commitdiff;h=27ecf981a15554dc8e64a28630af7a5c9e2bdf4f)
 
 - ZooKeeper 3.5.x users should upgrade to 3.5.3 when released or apply
-this [patch](https://git-wip-us.apache.org/repos/asf?p=zookeeper.git;a=commitdiff;h=f09154d6648eeb4ec5e1ac8a2bacbd2f8c87c14a)
+this [patch](https://gitbox.apache.org/repos/asf?p=zookeeper.git;a=commitdiff;h=f09154d6648eeb4ec5e1ac8a2bacbd2f8c87c14a)
 
 The patch solves the problem reported here, but it does not make the
 client ready for production use. The community has no plan to make

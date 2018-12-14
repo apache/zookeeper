@@ -24,7 +24,7 @@ Typically during a release the versioned documentation will be recreated and sho
 under the `_released_docs` directory here.
 
 ## Steps to update the website
-1. `git clone -b website https://git-wip-us.apache.org/repos/asf/zookeeper.git`
+1. `git clone -b website https://gitbox.apache.org/repos/asf/zookeeper.git`
 2. update the appropriate pages, typically a markdown file e.g. credits.md, etc...
 3.  `mvn clean install`
 4. `cp -RP _released_docs target/html/doc` These are the static release docs, not generated in this process.
