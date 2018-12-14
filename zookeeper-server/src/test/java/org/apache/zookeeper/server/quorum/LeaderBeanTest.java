@@ -21,11 +21,13 @@ package org.apache.zookeeper.server.quorum;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.common.X509Exception;
+import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
+import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.txn.TxnHeader;
@@ -37,6 +39,10 @@ import org.mockito.stubbing.Answer;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -56,7 +62,20 @@ public class LeaderBeanTest {
     @Before
     public void setUp() throws IOException, X509Exception {
         qp = new QuorumPeer();
+        long myId = qp.getId();
+
+        int clientPort = PortAssignment.unique();
+        Map<Long, QuorumServer> peersView = new HashMap<Long, QuorumServer>();
+        InetAddress clientIP = InetAddress.getLoopbackAddress();
+
+        peersView.put(Long.valueOf(myId),
+                new QuorumServer(myId, new InetSocketAddress(clientIP, PortAssignment.unique()),
+                        new InetSocketAddress(clientIP, PortAssignment.unique()),
+                        new InetSocketAddress(clientIP, clientPort), LearnerType.PARTICIPANT));
+
         QuorumVerifier quorumVerifierMock = mock(QuorumVerifier.class);
+        when(quorumVerifierMock.getAllMembers()).thenReturn(peersView);
+
         qp.setQuorumVerifier(quorumVerifierMock, false);
         File tmpDir = ClientBase.createEmptyTestDir();
         fileTxnSnapLog = new FileTxnSnapLog(new File(tmpDir, "data"),

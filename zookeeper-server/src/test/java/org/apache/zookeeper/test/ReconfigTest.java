@@ -82,20 +82,22 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
                                   List<String> leavingServers, List<String> newMembers, long fromConfig)
             throws KeeperException, InterruptedException {
         byte[] config = null;
+        String failure = null;
         for (int j = 0; j < 30; j++) {
             try {
                 config = zkAdmin.reconfigure(joiningServers, leavingServers,
                         newMembers, fromConfig, new Stat());
+                failure = null;
                 break;
             } catch (KeeperException.ConnectionLossException e) {
-                if (j < 29) {
-                    Thread.sleep(1000);
-                } else {
-                    // test fails if we still can't connect to the quorum after
-                    // 30 seconds.
-                    Assert.fail("client could not connect to reestablished quorum: giving up after 30+ seconds.");
-                }
+                failure = "client could not connect to reestablished quorum: giving up after 30+ seconds.";
+            } catch (KeeperException.ReconfigInProgress e) {
+                failure = "reconfig still in progress: giving up after 30+ seconds.";
             }
+            Thread.sleep(1000);
+        }
+        if (failure != null) {
+            Assert.fail(failure);
         }
 
         String configStr = new String(config);
@@ -837,7 +839,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         testNormalOperation(zkArr[4], zkArr[5]);
 
         for (int i = 1; i <= 5; i++) {
-            if (!(qu.getPeer(i).peer.quorumVerifier instanceof QuorumHierarchical))
+            if (!(qu.getPeer(i).peer.getQuorumVerifier() instanceof QuorumHierarchical))
                 Assert.fail("peer " + i
                         + " doesn't think the quorum system is Hieararchical!");
         }
@@ -874,7 +876,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         testNormalOperation(zkArr[1], zkArr[2]);
 
         for (int i = 1; i <= 2; i++) {
-            if (!(qu.getPeer(i).peer.quorumVerifier instanceof QuorumMaj))
+            if (!(qu.getPeer(i).peer.getQuorumVerifier() instanceof QuorumMaj))
                 Assert.fail("peer "
                         + i
                         + " doesn't think the quorum system is a majority quorum system!");

@@ -15,35 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.server.quorum;
 
-import org.apache.zookeeper.server.ZooKeeperServerMXBean;
-
 /**
- * Observer MX Bean interface, implemented by ObserverBean
- *
+ * This MBean represents a server connection for a learner.
  */
-public interface ObserverMXBean extends ZooKeeperServerMXBean {
+public interface LearnerHandlerMXBean {
     /**
-     * @return count of pending revalidations
+     * Terminate the connection. The learner will attempt to reconnect to
+     * the leader or to the next ObserverMaster if that feature is enabled
      */
-    public int getPendingRevalidationCount();
-    
-    /**
-     * @return socket address
-     */
-    public String getQuorumAddress();
-
-    /**
-     * @return address of the current learner master
-     */
-    public String getLearnerMaster();
-
-    /**
-     * requests the Observer switch to a new learner master
-     *
-     * @param learnerMaster address of the desired learner master
-     */
-    public void setLearnerMaster(String learnerMaster);
+    public void terminateConnection();
 }

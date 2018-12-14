@@ -46,6 +46,8 @@ public class Follower extends Learner{
     final FollowerZooKeeperServer fzk;
     private AtomicBoolean reconnect;
 
+    ObserverMaster om;
+
     Follower(QuorumPeer self,FollowerZooKeeperServer zk) {
         this.self = self;
         this.zk=zk;
@@ -100,10 +102,21 @@ public class Follower extends Learner{
                         throw new IOException("Error: Epoch of leader is lower");
                     }
                     long startTime = Time.currentElapsedTime();
-                    try {syncWithLeader(newEpochZxid);} finally {
+                    try {
+                        syncWithLeader(newEpochZxid);
+                    } finally {
                         long syncTime = Time.currentElapsedTime() - startTime;
                         ServerMetrics.FOLLOWER_SYNC_TIME.add(syncTime);
                     }
+                    if (self.getObserverMasterPort() > 0) {
+                        LOG.info("Starting ObserverMaster");
+
+                        om = new ObserverMaster(self, fzk, self.getObserverMasterPort());
+                        om.start();
+                    } else {
+                        om = null;
+                    }
+                    // create a reusable packet to reduce gc impact
                     QuorumPacket qp = new QuorumPacket();
                     while (this.isRunning()) {
                         readPacket(qp);
@@ -127,6 +140,9 @@ public class Follower extends Learner{
                 }
             } while (reconnect.get());
         } finally {
+            if (om != null) {
+                om.stop();
+            }
             zk.unregisterJMX((Learner) this);
         }
     }
@@ -159,9 +175,16 @@ public class Follower extends Learner{
             }
             
             fzk.logRequest(hdr, txn);
+
+            if (om != null) {
+                om.proposalReceived(qp);
+            }
             break;
         case Leader.COMMIT:
             fzk.commit(qp.getZxid());
+            if (om != null) {
+                om.proposalCommitted(qp.getZxid());
+            }
             break;
             
         case Leader.COMMITANDACTIVATE:
@@ -173,11 +196,16 @@ public class Follower extends Learner{
            // get new designated leader from (current) leader's message
            ByteBuffer buffer = ByteBuffer.wrap(qp.getData());    
            long suggestedLeaderId = buffer.getLong();
-            boolean majorChange = 
-                   self.processReconfig(qv, suggestedLeaderId, qp.getZxid(), true);
-           // commit (writes the new config to ZK tree (/zookeeper/config)                     
-           fzk.commit(qp.getZxid());
-            if (majorChange) {
+           final long zxid = qp.getZxid();
+           boolean majorChange =
+                   self.processReconfig(qv, suggestedLeaderId, zxid, true);
+           // commit (writes the new config to ZK tree (/zookeeper/config)
+           fzk.commit(zxid);
+
+           if (om != null) {
+               om.informAndActivate(zxid, suggestedLeaderId);
+           }
+           if (majorChange) {
                throw new Exception("changes proposed in reconfig");
            }
            break;
@@ -185,7 +213,9 @@ public class Follower extends Learner{
             LOG.error("Received an UPTODATE message after Follower started");
             break;
         case Leader.REVALIDATE:
-            revalidate(qp);
+            if (om == null || !om.revalidateLearnerSession(qp)) {
+                revalidate(qp);
+            }
             break;
         case Leader.SYNC:
             fzk.sync();
@@ -217,6 +247,10 @@ public class Follower extends Learner{
      */
     protected long getLastQueued() {
         return lastQueued;
+    }
+
+    public Integer getSyncedObserverSize() {
+        return  om == null ? null : om.getNumActiveObservers();
     }
 
     @Override
