@@ -101,7 +101,7 @@ do
     CLASSPATH="$CLASSPATH:$i"
 done
 
-CLASSPATH="$CLASSPATH:${CLOVER_HOME}/lib/clover.jar"
+CLASSPATH="$CLASSPATH:${CLOVER_HOME}/lib/clover*.jar"
 
 if $cygwin
 then

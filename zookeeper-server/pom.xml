@@ -23,7 +23,8 @@
   <parent>
     <groupId>org.apache.zookeeper</groupId>
     <artifactId>zookeeper</artifactId>
-    <version>${revision}</version>
+    <version>3.6.0-SNAPSHOT</version>
+    <relativePath>..</relativePath>
   </parent>
 
   <groupId>org.apache.zookeeper</groupId>
@@ -46,7 +47,7 @@
     <dependency>
       <groupId>org.apache.zookeeper</groupId>
       <artifactId>zookeeper-jute</artifactId>
-      <version>${revision}</version>
+      <version>3.6.0-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>commons-cli</groupId>
@@ -198,7 +199,7 @@
                 <argument>-classpath</argument>
                 <classpath />
                 <argument>org.apache.zookeeper.version.util.VerGen</argument>
-                <argument>${revision}</argument>
+                <argument>${project.version}</argument>
                 <argument>${git.commit.id.describe}</argument>
                 <argument>${build.time}</argument>
               </arguments>

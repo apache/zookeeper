@@ -23,7 +23,8 @@
   <parent>
     <groupId>org.apache.zookeeper</groupId>
     <artifactId>zookeeper-client</artifactId>
-    <version>${revision}</version>
+    <version>3.6.0-SNAPSHOT</version>
+    <relativePath>..</relativePath>
   </parent>
 
   <groupId>org.apache.zookeeper</groupId>
@@ -52,7 +53,7 @@
                 <phase>generate-sources</phase>
                 <configuration>
                   <tasks>
-                    <mkdir dir="target/c"/>
+                    <mkdir dir="target/c" />
                   </tasks>
                 </configuration>
                 <goals>
@@ -65,12 +66,12 @@
                 <configuration>
                   <tasks>
                     <exec dir="${basedir}/target/c" executable="make" failonerror="true">
-                      <env key="LD_LIBRARY_PATH" value="${env.LD_LIBRARY_PATH};/usr/lib"/>
-                      <env key="PATH" path="${env.PATH};${basedir};"/>
-                      <env key="CALLER" value="ANT"/>
-                      <env key="CLOVER_HOME" value="${clover.home}"/>
-                      <env key="base_dir" value="${basedir}/../.."/>
-                      <arg line="clean check"/>
+                      <env key="LD_LIBRARY_PATH" value="${env.LD_LIBRARY_PATH};/usr/lib" />
+                      <env key="PATH" path="${env.PATH};${basedir};" />
+                      <env key="CALLER" value="ANT" />
+                      <env key="CLOVER_HOME" value="${basedir}/../../zookeeper-server/target" />
+                      <env key="base_dir" value="${basedir}/../.." />
+                      <arg line="clean check" />
                     </exec>
                   </tasks>
                 </configuration>

@@ -24,13 +24,14 @@
     <groupId>org.apache</groupId>
     <artifactId>apache</artifactId>
     <version>18</version>
-    <relativePath/>
+    <relativePath />
     <!-- no parent resolution -->
   </parent>
   <groupId>org.apache.zookeeper</groupId>
   <artifactId>zookeeper</artifactId>
   <packaging>pom</packaging>
-  <version>${revision}</version>
+  <!-- to change version: mvn -\-batch-mode release:update-versions -DdevelopmentVersion=3.6.0-SNAPSHOT -->
+  <version>3.6.0-SNAPSHOT</version>
   <name>Apache ZooKeeper</name>
   <description>
     ZooKeeper is a centralized service for maintaining configuration information, naming,
@@ -241,8 +242,6 @@
     <!-- maven properties -->
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
-
-    <revision>3.6.0-SNAPSHOT</revision>
 
     <surefire-forkcount>8</surefire-forkcount>
 
