@@ -40,6 +40,10 @@ nbdist/
 .cproject
 .buildpath
 
+# vscode
+classes
+.vscode
+
 # Other
 *~
 logs/
