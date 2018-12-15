@@ -29,7 +29,7 @@
 
     <repository>
       <GitRepository>
-        <location rdf:resource="https://git-wip-us.apache.org/repos/asf/zookeeper.git"/>
+        <location rdf:resource="https://gitbox.apache.org/repos/asf/zookeeper.git"/>
         <browse rdf:resource="https://github.com/apache/zookeeper"/>
       </GitRepository>
     </repository>
