@@ -84,10 +84,16 @@ fi
 
 CLASSPATH="$CLASSPATH:${zk_base}/build/classes"
 CLASSPATH="$CLASSPATH:${zk_base}/conf"
+CLASSPATH="$CLASSPATH:${zk_base}/zookeeper-server/target/classes"
 
 for i in "${zk_base}"/build/lib/*.jar
 do
     CLASSPATH="$CLASSPATH:$i"
+done
+
+for d in "${zk_base}"/zookeeper-server/target/lib/*.jar
+do
+    CLASSPATH="$d:$CLASSPATH"
 done
 
 for i in "${zk_base}"/zookeeper-server/src/main/resource/lib/*.jar

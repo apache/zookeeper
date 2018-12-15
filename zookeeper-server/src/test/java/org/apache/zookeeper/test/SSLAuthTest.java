@@ -37,7 +37,7 @@ public class SSLAuthTest extends ClientBase {
     @Before
     public void setUp() throws Exception {
         clientX509Util = new ClientX509Util();
-        String testDataPath = System.getProperty("test.data.dir", ""src/test/resources/data");
+        String testDataPath = System.getProperty("test.data.dir", "src/test/resources/data");
         System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
         System.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
         System.setProperty(ZKClientConfig.SECURE_CLIENT, "true");
