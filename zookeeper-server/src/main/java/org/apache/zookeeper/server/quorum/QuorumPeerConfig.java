@@ -72,6 +72,7 @@ public class QuorumPeerConfig {
     protected boolean sslQuorum = false;
     protected boolean shouldUsePortUnification = false;
     protected int observerMasterPort;
+    protected boolean sslQuorumReloadCertFiles = false;
     protected File dataDir;
     protected File dataLogDir;
     protected String dynamicConfigFileStr = null;
@@ -321,6 +322,8 @@ public class QuorumPeerConfig {
                 sslQuorum = Boolean.parseBoolean(value);
             } else if (key.equals("portUnification")){
                 shouldUsePortUnification = Boolean.parseBoolean(value);
+            } else if (key.equals("sslQuorumReloadCertFiles")) {
+                sslQuorumReloadCertFiles = Boolean.parseBoolean(value);
             } else if ((key.startsWith("server.") || key.startsWith("group") || key.startsWith("weight")) && zkProp.containsKey("dynamicConfigFile")) {
                 throw new ConfigException("parameter: " + key + " must be in a separate dynamic config file");
             } else if (key.equals(QuorumAuth.QUORUM_SASL_AUTH_ENABLED)) {
@@ -462,15 +465,16 @@ public class QuorumPeerConfig {
      *             provider is not configured.
      */
     private void configureSSLAuth() throws ConfigException {
-        ClientX509Util clientX509Util = new ClientX509Util();
-        String sslAuthProp = "zookeeper.authProvider." + System.getProperty(clientX509Util.getSslAuthProviderProperty(), "x509");
-        if (System.getProperty(sslAuthProp) == null) {
-            if ("zookeeper.authProvider.x509".equals(sslAuthProp)) {
-                System.setProperty("zookeeper.authProvider.x509",
-                        "org.apache.zookeeper.server.auth.X509AuthenticationProvider");
-            } else {
-                throw new ConfigException("No auth provider configured for the SSL authentication scheme '"
-                        + System.getProperty(clientX509Util.getSslAuthProviderProperty()) + "'.");
+        try (ClientX509Util clientX509Util = new ClientX509Util()) {
+            String sslAuthProp = "zookeeper.authProvider." + System.getProperty(clientX509Util.getSslAuthProviderProperty(), "x509");
+            if (System.getProperty(sslAuthProp) == null) {
+                if ("zookeeper.authProvider.x509".equals(sslAuthProp)) {
+                    System.setProperty("zookeeper.authProvider.x509",
+                            "org.apache.zookeeper.server.auth.X509AuthenticationProvider");
+                } else {
+                    throw new ConfigException("No auth provider configured for the SSL authentication scheme '"
+                            + System.getProperty(clientX509Util.getSslAuthProviderProperty()) + "'.");
+                }
             }
         }
     }
