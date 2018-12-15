@@ -64,8 +64,8 @@
 
   <scm>
     <connection>scm:git:git://git.apache.org/zookeeper.git</connection>
-    <developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/zookeeper.git</developerConnection>
-    <url>https://git-wip-us.apache.org/repos/asf?p=zookeeper.git</url>
+    <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/zookeeper.git</developerConnection>
+    <url>https://gitbox.apache.org/repos/asf/zookeeper.git</url>
   </scm>
   <issueManagement>
     <system>JIRA</system>
