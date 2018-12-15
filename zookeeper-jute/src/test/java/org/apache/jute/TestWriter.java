@@ -19,7 +19,11 @@ package org.apache.jute;
 
 import java.io.IOException;
 
-public interface TestWriter {
-    void write(OutputArchive oa) throws IOException;
 
+public interface TestWriter {
+
+    /**
+     * Write to the given output archive.
+     */
+    void write(OutputArchive oa) throws IOException;
 }
