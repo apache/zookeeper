@@ -560,13 +560,13 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     /**
      * The number of ticks that the initial synchronization phase can take
      */
-    protected int initLimit;
+    protected volatile int initLimit;;
 
     /**
      * The number of ticks that can pass between sending a request and getting
      * an acknowledgment
      */
-    protected int syncLimit;
+    protected volatile int syncLimit;
     
     /**
      * Enables/Disables sync request processor. This option is enabled
@@ -1700,6 +1700,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * Set the synclimit
      */
     public void setSyncLimit(int syncLimit) {
+        LOG.info("syncLimit set to " + syncLimit);
         this.syncLimit = syncLimit;
     }
     
