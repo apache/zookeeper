@@ -25,6 +25,9 @@ import java.io.OutputStream;
 
 import static org.junit.Assert.fail;
 
+/**
+ * TestOutputArchive creates an output archive from a given outputstream.
+ */
 interface TestOutputArchive {
 
     OutputArchive getArchive(OutputStream os) throws IOException;
