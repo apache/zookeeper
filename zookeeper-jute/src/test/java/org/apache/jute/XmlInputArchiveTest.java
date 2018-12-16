@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,41 +18,30 @@
 package org.apache.jute;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 import static org.junit.Assert.assertArrayEquals;
 
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.ByteArrayOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.io.IOException;
 
 public class XmlInputArchiveTest {
 
     private void checkWriterAndReader(TestWriter writer, TestReader reader) {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
-        try {
-            XmlOutputArchive oa = XmlOutputArchive.getArchive(baos);
-            writer.write(oa);
-        } catch (IOException e) {
-            fail("Should not throw IOException");
-        }
-        InputStream is = new ByteArrayInputStream(baos.toByteArray());
-        try {
-            XmlInputArchive ia = XmlInputArchive.getArchive(is);
-            reader.read(ia);
-        } catch (ParserConfigurationException e) {
-            fail("Should not throw ParserConfigurationException while reading back");
-        } catch (SAXException e) {
-            fail("Should not throw SAXException while reading back");
-        }  catch (IOException e) {
-            fail("Should not throw IOException while reading back");
-        }
+        TestCheckWriterReader.checkWriterAndReader(
+                XmlOutputArchive::getArchive,
+                (is) -> {
+                    try {
+                        return XmlInputArchive.getArchive(is);
+                    } catch (ParserConfigurationException|SAXException e) {
+                        throw new IOException(e);
+                    }
+                },
+                writer,
+                reader
+        );
     }
 
     @Test

@@ -25,9 +25,7 @@ import static org.junit.Assert.assertArrayEquals;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 // TODO: introduce JuteTestCase as in ZKTestCase
@@ -49,20 +47,12 @@ public class BinaryInputArchiveTest {
     }
 
     private void checkWriterAndReader(TestWriter writer, TestReader reader) {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        BinaryOutputArchive oa = BinaryOutputArchive.getArchive(baos);
-        try {
-            writer.write(oa);
-        } catch (IOException e) {
-            fail("Should not throw IOException");
-        }
-        InputStream is = new ByteArrayInputStream(baos.toByteArray());
-        BinaryInputArchive ia = BinaryInputArchive.getArchive(is);
-        try {
-            reader.read(ia);
-        } catch (IOException e) {
-            fail("Should not throw IOException while reading back");
-        }
+        TestCheckWriterReader.checkWriterAndReader(
+                BinaryOutputArchive::getArchive,
+                BinaryInputArchive::getArchive,
+                writer,
+                reader
+        );
     }
 
     @Test
