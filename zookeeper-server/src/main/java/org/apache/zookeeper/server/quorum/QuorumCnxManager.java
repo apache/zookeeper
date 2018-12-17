@@ -999,7 +999,7 @@ public class QuorumCnxManager {
                                         + "see ZOOKEEPER-2836");
                             }
                         }
-                    } catch (IOException | X509Exception e) {
+                    } catch (IOException e) {
                         if (shutdown) {
                             break;
                         }
@@ -1024,13 +1024,13 @@ public class QuorumCnxManager {
                 }
             }
 
-            private ServerSocket createNewServerSocket() throws IOException, X509Exception {
+            private ServerSocket createNewServerSocket() throws IOException {
                 ServerSocket socket;
 
                 if (portUnification) {
                     socket = new UnifiedServerSocket(self.getX509Util(), true);
                 } else if (sslQuorum) {
-                    socket = self.getX509Util().createSSLServerSocket();
+                    socket = new UnifiedServerSocket(self.getX509Util(), false);
                 } else {
                     socket = new ServerSocket();
                 }

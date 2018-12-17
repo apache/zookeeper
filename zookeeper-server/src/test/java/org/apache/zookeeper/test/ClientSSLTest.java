@@ -37,10 +37,11 @@ import org.junit.Test;
 
 public class ClientSSLTest extends QuorumPeerTestBase {
 
-    private ClientX509Util clientX509Util = new ClientX509Util();
+    private ClientX509Util clientX509Util;
 
     @Before
     public void setup() {
+        clientX509Util = new ClientX509Util();
         String testDataPath = System.getProperty("test.data.dir", "build/test/data");
         System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
         System.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
@@ -60,6 +61,7 @@ public class ClientSSLTest extends QuorumPeerTestBase {
         System.clearProperty(clientX509Util.getSslKeystorePasswdProperty());
         System.clearProperty(clientX509Util.getSslTruststoreLocationProperty());
         System.clearProperty(clientX509Util.getSslTruststorePasswdProperty());
+        clientX509Util.close();
     }
 
     /**

@@ -233,10 +233,10 @@ public class Leader implements LearnerMaster {
        }
        return qv.containsQuorum(ids);
     }
-    
+
     private List<ServerSocket> serverSockets;
 
-    Leader(QuorumPeer self,LeaderZooKeeperServer zk) throws IOException, X509Exception {
+    Leader(QuorumPeer self,LeaderZooKeeperServer zk) throws IOException {
         this.self = self;
         this.proposalStats = new BufferStats();
 
@@ -256,13 +256,11 @@ public class Leader implements LearnerMaster {
     }
 
     ServerSocket createServerSocket(InetSocketAddress address, boolean portUnification, boolean sslQuorum)
-            throws IOException, X509Exception {
+            throws IOException {
         ServerSocket serverSocket;
         try {
-            if (portUnification) {
-                serverSocket = new UnifiedServerSocket(self.getX509Util(), true);
-            } else if (sslQuorum) {
-                serverSocket = self.getX509Util().createSSLServerSocket();
+            if (portUnification || sslQuorum) {
+                serverSocket = new UnifiedServerSocket(self.getX509Util(), portUnification);
             } else {
                 serverSocket = new ServerSocket();
             }
@@ -270,9 +268,6 @@ public class Leader implements LearnerMaster {
             serverSocket.setReuseAddress(true);
             serverSocket.bind(address);
             return serverSocket;
-        } catch (X509Exception e) {
-            LOG.error("Failed to setup ssl server socket", e);
-            throw e;
         } catch (BindException e) {
             LOG.error("Couldn't bind to " + self.getQuorumAddress(), e);
             throw e;
