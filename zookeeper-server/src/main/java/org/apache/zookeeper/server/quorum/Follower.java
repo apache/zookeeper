@@ -126,6 +126,11 @@ public class Follower extends Learner{
                 } catch (SocketException | InterruptedIOException ignored) {
                     zk.unregisterJMX();
                     LOG.warn("Error when following the leader, reconnecting");
+                    try {
+                        sock.close();
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                    }
                 } catch (Exception e) {
                     reconnect.set(false);
                     LOG.warn("Exception when following the leader", e);
@@ -134,7 +139,6 @@ public class Follower extends Learner{
                     } catch (IOException e1) {
                         e1.printStackTrace();
                     }
-
                     // clear pending revalidations
                     pendingRevalidations.clear();
                 }

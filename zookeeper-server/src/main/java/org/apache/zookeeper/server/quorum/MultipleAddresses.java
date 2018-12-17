@@ -88,7 +88,7 @@ public class MultipleAddresses {
     }
 
     public void recreateSocketAddresses() {
-        Set<InetSocketAddress> temp = new HashSet<>();
+        Set<InetSocketAddress> temp = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
         for(InetSocketAddress addr : addresses) {
             try {
@@ -98,8 +98,7 @@ public class MultipleAddresses {
             }
         }
 
-        addresses.clear();
-        addresses.addAll(temp);
+        addresses = temp;
     }
 
     @Override
