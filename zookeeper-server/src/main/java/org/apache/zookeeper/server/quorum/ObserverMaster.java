@@ -445,13 +445,13 @@ public class ObserverMaster implements LearnerMaster, Runnable {
                         allowInsecureConnection,
                         port,
                         backlog,
-                        self.getQuorumAddress().getAddress());
+                        self.getQuorumAddress().getValidAddress().getAddress());
             }
         } else {
             if (self.getQuorumListenOnAllIPs()) {
                 ss = new ServerSocket(port, backlog);
             } else {
-                ss = new ServerSocket(port, backlog, self.getQuorumAddress().getAddress());
+                ss = new ServerSocket(port, backlog, self.getQuorumAddress().getValidAddress().getAddress());
             }
         }
         thread = new Thread(this, "ObserverMaster");
