@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.2.xsd">
+   <suppress>
+      <!-- ZOOKEEPER-3217 -->
+      <cve>CVE-2018-8088</cve>
+   </suppress>
+</suppressions>
