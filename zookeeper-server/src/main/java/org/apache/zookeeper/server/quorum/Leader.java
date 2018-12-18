@@ -242,7 +242,7 @@ public class Leader implements LearnerMaster {
 
         List<InetSocketAddress> addresses;
         if (self.getQuorumListenOnAllIPs())
-            addresses = self.getQuorumAddress().getAllAddressesForAllPorts();
+            addresses = self.getQuorumAddress().getWildcardAddresses();
         else
             addresses = self.getQuorumAddress().getAllAddresses();
 

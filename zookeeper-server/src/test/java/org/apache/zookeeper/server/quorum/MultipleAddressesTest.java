@@ -50,16 +50,16 @@ public class MultipleAddressesTest {
     }
 
     @Test
-    public void testGetAllAddressesForAllPorts() {
+    public void testGetWildcardAddresses() {
         List<Integer> ports = getPortList();
         List<InetSocketAddress> addresses = getAddressList(ports);
         MultipleAddresses multipleAddresses = new MultipleAddresses(addresses);
         List<InetSocketAddress> allAddresses = ports.stream().map(InetSocketAddress::new).collect(Collectors.toList());
 
-        Assert.assertTrue(CollectionUtils.isEqualCollection(allAddresses, multipleAddresses.getAllAddressesForAllPorts()));
+        Assert.assertTrue(CollectionUtils.isEqualCollection(allAddresses, multipleAddresses.getWildcardAddresses()));
 
         multipleAddresses.addAddress(new InetSocketAddress("localhost", ports.get(ports.size() - 1)));
-        Assert.assertTrue(CollectionUtils.isEqualCollection(allAddresses, multipleAddresses.getAllAddressesForAllPorts()));
+        Assert.assertTrue(CollectionUtils.isEqualCollection(allAddresses, multipleAddresses.getWildcardAddresses()));
     }
 
     @Test

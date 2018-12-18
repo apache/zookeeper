@@ -857,7 +857,7 @@ public class QuorumCnxManager {
                 List<InetSocketAddress> addresses;
 
                 if (self.getQuorumListenOnAllIPs())
-                    addresses = self.getElectionAddress().getAllAddressesForAllPorts();
+                    addresses = self.getElectionAddress().getWildcardAddresses();
                 else
                     addresses = self.getElectionAddress().getAllAddresses();
 

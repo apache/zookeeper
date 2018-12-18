@@ -10,6 +10,11 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+/**
+ * This class allows to store several quorum and electing addresses.
+ *
+ * See ZOOKEEPER-3188 for a discussion of this feature.
+ */
 public class MultipleAddresses {
 
     private Set<InetSocketAddress> addresses;
@@ -52,14 +57,29 @@ public class MultipleAddresses {
         return addresses.isEmpty();
     }
 
+    /**
+     * Returns all addresses.
+     *
+     * @return list of all InetSocketAddress
+     */
     public List<InetSocketAddress> getAllAddresses() {
         return new LinkedList<>(addresses);
     }
 
-    public List<InetSocketAddress> getAllAddressesForAllPorts() {
+    /**
+     * Returns wildcard addresses for all ports
+     *
+     * @return list of InetSocketAddress with wildcards for all ports
+     */
+    public List<InetSocketAddress> getWildcardAddresses() {
        return addresses.stream().map(a -> new InetSocketAddress(a.getPort())).distinct().collect(Collectors.toList());
     }
 
+    /**
+     * Returns all ports
+     *
+     * @return list of all ports
+     */
     public List<Integer> getAllPorts() {
         return addresses.stream().map(InetSocketAddress::getPort).distinct().collect(Collectors.toList());
     }
@@ -68,6 +88,11 @@ public class MultipleAddresses {
         addresses.add(address);
     }
 
+    /**
+     * Returns reachable address. If none is reachable than throws exception.
+     *
+     * @return address which is reachable.
+     */
     public InetSocketAddress getValidAddress() {
 
         for(int i = 0; i < 3; i++) {
@@ -87,6 +112,11 @@ public class MultipleAddresses {
         throw new RuntimeNoReachableHostException("No valid address among " + addresses);
     }
 
+    /**
+     * Performs a DNS lookup for addresses.
+     *
+     * If the DNS lookup fails, than address remain unmodified.
+     */
     public void recreateSocketAddresses() {
         Set<InetSocketAddress> temp = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
