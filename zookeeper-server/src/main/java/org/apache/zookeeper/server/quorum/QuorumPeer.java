@@ -1337,6 +1337,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     
     public void shutdown() {
         running = false;
+        x509Util.close();
         if (leader != null) {
             leader.shutdown("quorum Peer shutdown");
         }

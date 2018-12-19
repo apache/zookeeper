@@ -859,7 +859,7 @@ public class QuorumCnxManager {
                     if (self.shouldUsePortUnification()) {
                         ss = new UnifiedServerSocket(self.getX509Util(), true);
                     } else if (self.isSslQuorum()) {
-                        ss = self.getX509Util().createSSLServerSocket();
+                        ss = new UnifiedServerSocket(self.getX509Util(), false);
                     } else {
                         ss = new ServerSocket();
                     }
@@ -896,7 +896,7 @@ public class QuorumCnxManager {
                         }
                         numRetries = 0;
                     }
-                } catch (IOException|X509Exception e) {
+                } catch (IOException e) {
                     if (shutdown) {
                         break;
                     }

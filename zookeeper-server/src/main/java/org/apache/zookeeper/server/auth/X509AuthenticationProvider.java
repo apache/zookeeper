@@ -68,46 +68,46 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
      */
     public X509AuthenticationProvider() throws X509Exception {
         ZKConfig config = new ZKConfig();
-        X509Util x509Util = new ClientX509Util();
+        try (X509Util x509Util = new ClientX509Util()) {
+            String keyStoreLocation = config.getProperty(x509Util.getSslKeystoreLocationProperty(), "");
+            String keyStorePassword = config.getProperty(x509Util.getSslKeystorePasswdProperty(), "");
+            String keyStoreTypeProp = config.getProperty(x509Util.getSslKeystoreTypeProperty());
 
-        String keyStoreLocation = config.getProperty(x509Util.getSslKeystoreLocationProperty(), "");
-        String keyStorePassword = config.getProperty(x509Util.getSslKeystorePasswdProperty(), "");
-        String keyStoreTypeProp = config.getProperty(x509Util.getSslKeystoreTypeProperty());
+            boolean crlEnabled = Boolean.parseBoolean(config.getProperty(x509Util.getSslCrlEnabledProperty()));
+            boolean ocspEnabled = Boolean.parseBoolean(config.getProperty(x509Util.getSslOcspEnabledProperty()));
+            boolean hostnameVerificationEnabled = Boolean.parseBoolean(
+                    config.getProperty(x509Util.getSslHostnameVerificationEnabledProperty()));
 
-        boolean crlEnabled = Boolean.parseBoolean(config.getProperty(x509Util.getSslCrlEnabledProperty()));
-        boolean ocspEnabled = Boolean.parseBoolean(config.getProperty(x509Util.getSslOcspEnabledProperty()));
-        boolean hostnameVerificationEnabled = Boolean.parseBoolean(
-                config.getProperty(x509Util.getSslHostnameVerificationEnabledProperty()));
-
-        X509KeyManager km = null;
-        X509TrustManager tm = null;
-        if (keyStoreLocation.isEmpty()) {
-            LOG.warn("keystore not specified for client connection");
-        } else {
-            try {
-                km = X509Util.createKeyManager(keyStoreLocation, keyStorePassword, keyStoreTypeProp);
-            } catch (KeyManagerException e) {
-                LOG.error("Failed to create key manager", e);
+            X509KeyManager km = null;
+            X509TrustManager tm = null;
+            if (keyStoreLocation.isEmpty()) {
+                LOG.warn("keystore not specified for client connection");
+            } else {
+                try {
+                    km = X509Util.createKeyManager(keyStoreLocation, keyStorePassword, keyStoreTypeProp);
+                } catch (KeyManagerException e) {
+                    LOG.error("Failed to create key manager", e);
+                }
             }
-        }
-        
-        String trustStoreLocation = config.getProperty(x509Util.getSslTruststoreLocationProperty(), "");
-        String trustStorePassword = config.getProperty(x509Util.getSslTruststorePasswdProperty(), "");
-        String trustStoreTypeProp = config.getProperty(x509Util.getSslTruststoreTypeProperty());
 
-        if (trustStoreLocation.isEmpty()) {
-            LOG.warn("Truststore not specified for client connection");
-        } else {
-            try {
-                tm = X509Util.createTrustManager(
-                        trustStoreLocation, trustStorePassword, trustStoreTypeProp, crlEnabled, ocspEnabled,
-                        hostnameVerificationEnabled, false);
-            } catch (TrustManagerException e) {
-                LOG.error("Failed to create trust manager", e);
+            String trustStoreLocation = config.getProperty(x509Util.getSslTruststoreLocationProperty(), "");
+            String trustStorePassword = config.getProperty(x509Util.getSslTruststorePasswdProperty(), "");
+            String trustStoreTypeProp = config.getProperty(x509Util.getSslTruststoreTypeProperty());
+
+            if (trustStoreLocation.isEmpty()) {
+                LOG.warn("Truststore not specified for client connection");
+            } else {
+                try {
+                    tm = X509Util.createTrustManager(
+                            trustStoreLocation, trustStorePassword, trustStoreTypeProp, crlEnabled, ocspEnabled,
+                            hostnameVerificationEnabled, false);
+                } catch (TrustManagerException e) {
+                    LOG.error("Failed to create trust manager", e);
+                }
             }
+            this.keyManager = km;
+            this.trustManager = tm;
         }
-        this.keyManager = km;
-        this.trustManager = tm;
     }
 
     /**

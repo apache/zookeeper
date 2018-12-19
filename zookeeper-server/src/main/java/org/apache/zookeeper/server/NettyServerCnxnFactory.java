@@ -461,6 +461,9 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     @Override
     public void shutdown() {
         LOG.info("shutdown called " + localAddress);
+
+        x509Util.close();
+
         if (login != null) {
             login.shutdown();
         }
