@@ -53,4 +53,24 @@ public interface FollowerMXBean extends ZooKeeperServerMXBean {
      * set the size limit in bytes for the observer master commit packet queue
      */
     public void setObserverMasterPacketSizeLimit(int sizeLimit);
+
+    /**
+     * @return Number of concurrent snapshots permitted to send to observers
+     */
+    public int getMaxConcurrentSnapSyncs();
+
+    /**
+     * @param maxConcurrentSnapSyncs Number of concurrent snapshots permitted to send to observers
+     */
+    public void setMaxConcurrentSnapSyncs(int maxConcurrentSnapSyncs);
+
+    /**
+     * @return Number of concurrent diff syncs permitted to send to observers
+     */
+    public int getMaxConcurrentDiffSyncs();
+
+    /**
+     * @param maxConcurrentDiffSyncs Number of concurrent diff syncs permitted to send to observers
+     */
+    public void setMaxConcurrentDiffSyncs(int maxConcurrentDiffSyncs);
 }
