@@ -212,7 +212,8 @@ public enum EphemeralType {
      */
     public static void validateTTL(CreateMode mode, long ttl) {
         if (mode.isTTL()) {
-            TTL.toEphemeralOwner(ttl);
+            // nothing to do in 3.5 was:
+            // TTL.toEphemeralOwner(ttl);
         } else if (ttl >= 0) {
             throw new IllegalArgumentException("ttl not valid for mode: " + mode);
         }

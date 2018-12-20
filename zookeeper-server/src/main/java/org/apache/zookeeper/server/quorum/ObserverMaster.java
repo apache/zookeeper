@@ -463,7 +463,10 @@ public class ObserverMaster implements LearnerMaster, Runnable {
     public void run() {
         while (listenerRunning) {
             try {
-                Socket s = ss.accept();
+                Socket s;
+                synchronized(this) {
+                    s = ss.accept();
+                }
                 // start with the initLimit, once the ack is processed
                 // in LearnerHandler switch to the syncLimit
                 s.setSoTimeout(self.tickTime * self.initLimit);

@@ -60,7 +60,7 @@ public class BitMap<T> {
             if (bit > -1) {
                 freedBitSet.clear(bit);
             } else {
-                bit = nextBit++;
+                bit = nextBit;
             }
 
             value2Bit.put(value, bit);
