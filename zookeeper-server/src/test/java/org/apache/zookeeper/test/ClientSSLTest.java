@@ -42,7 +42,7 @@ public class ClientSSLTest extends QuorumPeerTestBase {
     @Before
     public void setup() {
         clientX509Util = new ClientX509Util();
-        String testDataPath = System.getProperty("test.data.dir", "build/test/data");
+        String testDataPath = System.getProperty("test.data.dir", "src/test/resources/data");
         System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
         System.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
         System.setProperty(ZKClientConfig.SECURE_CLIENT, "true");

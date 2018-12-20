@@ -1,5 +1,6 @@
 # Java
 hs_err_pid*
+zookeeper-server/version-2/*
 
 # Git
 *.orij
@@ -65,7 +66,6 @@ zookeeper-client/zookeeper-client-c/*.la
 zookeeper-client/zookeeper-client-c/*.lo
 zookeeper-client/zookeeper-client-c/*.o
 zookeeper-client/zookeeper-client-c/generated/
-src/java/generated/
 zookeeper-server/src/main/resources/lib/ant-eclipse-*
 zookeeper-server/src/main/resources/lib/ivy-*
 zookeeper-client/zookeeper-client-c/Makefile.in
@@ -80,3 +80,5 @@ zookeeper-client/zookeeper-client-c/depcomp
 zookeeper-client/zookeeper-client-c/install-sh
 zookeeper-client/zookeeper-client-c/ltmain.sh
 zookeeper-client/zookeeper-client-c/missing
+zookeeper-server/src/main/java/org/apache/zookeeper/version/Info.java
+zookeeper-server/src/test/resources/
