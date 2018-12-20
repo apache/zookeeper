@@ -24,17 +24,11 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.ServerMetrics;
-import org.apache.zookeeper.server.ZooKeeperServerMXBean;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.management.JMX;
-import javax.management.MBeanServerConnection;
-import javax.management.ObjectName;
 
 public class ResponseCacheTest extends ClientBase {
     protected static final Logger LOG =
@@ -42,14 +36,11 @@ public class ResponseCacheTest extends ClientBase {
 
     @Test
     public void testResponseCache() throws Exception {
-        ObjectName bean = JMXEnv.getServerBean();
-        MBeanServerConnection mbsc = JMXEnv.conn();
-        ZooKeeperServerMXBean zkBean = JMX.newMBeanProxy(mbsc, bean, ZooKeeperServerMXBean.class);
         ZooKeeper zk = createClient();
 
         try {
-            performCacheTest(zk, zkBean, "/cache", true);
-            performCacheTest(zk, zkBean, "/nocache", false);
+            performCacheTest(zk, "/cache", true);
+            performCacheTest(zk, "/nocache", false);
         }
         finally {
             zk.close();
@@ -62,7 +53,7 @@ public class ResponseCacheTest extends ClientBase {
         Assert.assertEquals((Long) expectedMisses, metrics.get("response_packet_cache_misses"));
     }
 
-    public void performCacheTest(ZooKeeper zk, ZooKeeperServerMXBean zkBean, String path, boolean useCache) throws Exception {
+    public void performCacheTest(ZooKeeper zk, String path, boolean useCache) throws Exception {
         ServerMetrics.resetAll();
         Stat writeStat = new Stat();
         Stat readStat = new Stat();
@@ -71,8 +62,8 @@ public class ResponseCacheTest extends ClientBase {
         long expectedHits = 0;
         long expectedMisses = 0;
 
-        zkBean.setResponseCachingEnabled(useCache);
-        System.out.println("caching: " + zkBean.getResponseCachingEnabled());
+        getServer(serverFactory).setResponseCachingEnabled(useCache);
+        LOG.info("caching: {}", useCache);
 
         byte[] writeData = "test1".getBytes();
         zk.create(path, writeData, ZooDefs.Ids.OPEN_ACL_UNSAFE,

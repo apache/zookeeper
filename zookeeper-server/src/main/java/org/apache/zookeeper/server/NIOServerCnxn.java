@@ -664,7 +664,7 @@ public class NIOServerCnxn extends ServerCnxn {
      * Serializes client response parts and enqueues them into outgoing queue.
      *
      * If both cache key and last modified zxid are provided, the serialized
-     * reponse is caсhed under the provided key, the last modified zxid is
+     * response is caсhed under the provided key, the last modified zxid is
      * stored along with the value. A cache entry is invalidated if the
      * provided last modified zxid is more recent than the stored one.
      *
