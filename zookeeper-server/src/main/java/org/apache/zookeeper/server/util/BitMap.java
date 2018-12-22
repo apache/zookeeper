@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.util;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.BitSet;
@@ -37,6 +38,8 @@ public class BitMap<T> {
 
     private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 
+    @SuppressFBWarnings(value = "DLS_DEAD_LOCAL_STORE",
+            justification = "SpotBugs false positive")
     public Integer add(T value) {
         /*
          * Optimized for code which will add the same value again and again,
