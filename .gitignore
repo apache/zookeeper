@@ -39,6 +39,8 @@ nbdist/
 .ndb-gradle/
 .cproject
 .buildpath
+nb-configuration.xml
+nbactions.xml
 
 # Other
 *~
