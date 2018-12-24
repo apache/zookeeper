@@ -36,7 +36,6 @@ import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
-import org.apache.zookeeper.server.quorum.exception.RuntimeLearnerException;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.After;
 import org.junit.Assert;
@@ -175,7 +174,7 @@ public class RaceConditionTest extends QuorumPeerTestBase {
                 protected void processPacket(QuorumPacket qp) throws Exception {
                     if (stopPing && qp.getType() == Leader.PING) {
                         LOG.info("Follower skipped ping");
-                        throw new RuntimeLearnerException("Socket time out while sending the ping response");
+                        throw new SocketException("Socket time out while sending the ping response");
                     } else {
                         super.processPacket(qp);
                     }

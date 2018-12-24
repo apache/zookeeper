@@ -19,10 +19,7 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.net.SocketException;
 import java.nio.ByteBuffer;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.jute.Record;
 import org.apache.zookeeper.ZooDefs.OpCode;
@@ -44,7 +41,6 @@ public class Follower extends Learner{
     private long lastQueued;
     // This is the same object as this.zk, but we cache the downcast op
     final FollowerZooKeeperServer fzk;
-    private AtomicBoolean reconnect;
 
     ObserverMaster om;
 
@@ -52,7 +48,6 @@ public class Follower extends Learner{
         this.self = self;
         this.zk=zk;
         this.fzk = zk;
-        reconnect = new AtomicBoolean(true);
     }
 
     @Override
@@ -63,10 +58,6 @@ public class Follower extends Learner{
         sb.append(" pendingRevalidationCount:")
             .append(pendingRevalidations.size());
         return sb.toString();
-    }
-
-    public void disableReconnect() {
-        reconnect.set(false);
     }
 
     /**
@@ -87,62 +78,50 @@ public class Follower extends Learner{
 
         try {
             QuorumServer leaderServer = findLeader();
-            do {
-                try {
-                    connectToLeader(leaderServer.addr, leaderServer.hostname);
-                    long newEpochZxid = registerWithLeader(Leader.FOLLOWERINFO);
-                    if (self.isReconfigStateChange())
-                        throw new Exception("learned about role change");
-                    //check to see if the leader zxid is lower than ours
-                    //this should never happen but is just a safety check
-                    long newEpoch = ZxidUtils.getEpochFromZxid(newEpochZxid);
-                    if (newEpoch < self.getAcceptedEpoch()) {
-                        LOG.error("Proposed leader epoch " + ZxidUtils.zxidToString(newEpochZxid)
-                                + " is less than our accepted epoch " + ZxidUtils.zxidToString(self.getAcceptedEpoch()));
-                        throw new IOException("Error: Epoch of leader is lower");
-                    }
-                    long startTime = Time.currentElapsedTime();
-                    try {
-                        syncWithLeader(newEpochZxid);
-                    } finally {
-                        long syncTime = Time.currentElapsedTime() - startTime;
-                        ServerMetrics.FOLLOWER_SYNC_TIME.add(syncTime);
-                    }
-                    if (self.getObserverMasterPort() > 0) {
-                        LOG.info("Starting ObserverMaster");
-
-                        om = new ObserverMaster(self, fzk, self.getObserverMasterPort());
-                        om.start();
-                    } else {
-                        om = null;
-                    }
-                    // create a reusable packet to reduce gc impact
-                    QuorumPacket qp = new QuorumPacket();
-                    while (this.isRunning()) {
-                        readPacket(qp);
-                        processPacket(qp);
-                    }
-                    reconnect.set(false);
-                } catch (SocketException | InterruptedIOException ignored) {
-                    zk.unregisterJMX();
-                    LOG.warn("Error when following the leader, reconnecting");
-                    try {
-                        sock.close();
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
-                    }
-                } catch (Exception e) {
-                    reconnect.set(false);
-                    LOG.warn("Exception when following the leader", e);
-                    try {
-                        sock.close();
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
-                    }
-                    // clear pending revalidations
-                    pendingRevalidations.clear();
+            try {
+                connectToLeader(leaderServer.addr, leaderServer.hostname);
+                long newEpochZxid = registerWithLeader(Leader.FOLLOWERINFO);
+                if (self.isReconfigStateChange())
+                    throw new Exception("learned about role change");
+                //check to see if the leader zxid is lower than ours
+                //this should never happen but is just a safety check
+                long newEpoch = ZxidUtils.getEpochFromZxid(newEpochZxid);
+                if (newEpoch < self.getAcceptedEpoch()) {
+                    LOG.error("Proposed leader epoch " + ZxidUtils.zxidToString(newEpochZxid)
+                            + " is less than our accepted epoch " + ZxidUtils.zxidToString(self.getAcceptedEpoch()));
+                    throw new IOException("Error: Epoch of leader is lower");
                 }
-            } while (reconnect.get());
+                long startTime = Time.currentElapsedTime();
+                try {
+                    syncWithLeader(newEpochZxid);
+                } finally {
+                    long syncTime = Time.currentElapsedTime() - startTime;
+                    ServerMetrics.FOLLOWER_SYNC_TIME.add(syncTime);
+                }
+                if (self.getObserverMasterPort() > 0) {
+                    LOG.info("Starting ObserverMaster");
+
+                    om = new ObserverMaster(self, fzk, self.getObserverMasterPort());
+                    om.start();
+                } else {
+                    om = null;
+                }
+                // create a reusable packet to reduce gc impact
+                QuorumPacket qp = new QuorumPacket();
+                while (this.isRunning()) {
+                    readPacket(qp);
+                    processPacket(qp);
+                }
+            } catch (Exception e) {
+                LOG.warn("Exception when following the leader", e);
+                try {
+                    sock.close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+                // clear pending revalidations
+                pendingRevalidations.clear();
+            }
         } finally {
             if (om != null) {
                 om.stop();

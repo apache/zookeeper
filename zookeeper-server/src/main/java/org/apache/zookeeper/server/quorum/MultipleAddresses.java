@@ -1,14 +1,15 @@
 package org.apache.zookeeper.server.quorum;
 
 import org.apache.zookeeper.server.quorum.exception.RuntimeNoReachableHostException;
-
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * This class allows to store several quorum and electing addresses.
@@ -94,22 +95,27 @@ public class MultipleAddresses {
      * @return address which is reachable.
      */
     public InetSocketAddress getValidAddress() {
+        AtomicReference<InetSocketAddress> address = new AtomicReference<>(null);
+        getInetSocketAddressStream().forEach(addr -> checkIfAddressIsReachableAndSet(addr, address));
 
-        for(int i = 0; i < 3; i++) {
-            for (InetSocketAddress addr : addresses) {
-                try {
-                    if (addr.getAddress().isReachable(timeout))
-                        return addr;
-                } catch (NullPointerException | IOException ignored) {
-                }
-            }
+        if(address.get() != null)
+            return address.get();
+        else
+            throw new RuntimeNoReachableHostException("No valid address among " + addresses);
+    }
+
+    private void checkIfAddressIsReachableAndSet(InetSocketAddress address,
+                                              AtomicReference<InetSocketAddress> reachableAddress) {
+        for(int i = 0; i < 5 && reachableAddress.get() == null; i++) {
             try {
-                Thread.sleep(200);
-            } catch (InterruptedException ignored) {
+                if(address.getAddress().isReachable((i + 1) * timeout)) {
+                    reachableAddress.compareAndSet(null, address);
+                    break;
+                }
+                Thread.sleep(timeout);
+            } catch (NullPointerException | IOException | InterruptedException ignored) {
             }
         }
-
-        throw new RuntimeNoReachableHostException("No valid address among " + addresses);
     }
 
     /**
@@ -119,16 +125,23 @@ public class MultipleAddresses {
      */
     public void recreateSocketAddresses() {
         Set<InetSocketAddress> temp = Collections.newSetFromMap(new ConcurrentHashMap<>());
-
-        for(InetSocketAddress addr : addresses) {
-            try {
-                temp.add(new InetSocketAddress(InetAddress.getByName(addr.getHostString()), addr.getPort()));
-            } catch (UnknownHostException e) {
-                temp.add(addr);
-            }
-        }
-
+        temp.addAll(getInetSocketAddressStream().map(this::recreateSocketAddress).collect(Collectors.toSet()));
         addresses = temp;
+    }
+
+    private InetSocketAddress recreateSocketAddress(InetSocketAddress address) {
+        try {
+            return new InetSocketAddress(InetAddress.getByName(address.getHostString()), address.getPort());
+        } catch (UnknownHostException e) {
+            return address;
+        }
+    }
+
+    private Stream<InetSocketAddress> getInetSocketAddressStream() {
+        if(addresses.size() > 1)
+            return addresses.parallelStream();
+        else
+            return addresses.stream();
     }
 
     @Override

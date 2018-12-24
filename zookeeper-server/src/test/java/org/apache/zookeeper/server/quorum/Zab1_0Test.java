@@ -451,7 +451,6 @@ public class Zab1_0Test extends ZKTestCase {
             conversation.converseWithFollower(ia, oa, follower);
         } finally {
             if (follower != null) {
-                follower.disableReconnect();
                 follower.shutdown();
             }
             if (followerThread != null) {
