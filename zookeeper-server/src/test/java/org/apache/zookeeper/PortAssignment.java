@@ -63,7 +63,9 @@ public final class PortAssignment {
      */
     public synchronized static int unique() {
         if (portRange == null) {
+            Integer threadId = Integer.getInteger("zookeeper.junit.threadid");
             portRange = setupPortRange(System.getProperty("test.junit.threads"),
+                    threadId != null ? "threadid=" + threadId :
                     System.getProperty("sun.java.command"));
             nextPort = portRange.getMinimum();
         }

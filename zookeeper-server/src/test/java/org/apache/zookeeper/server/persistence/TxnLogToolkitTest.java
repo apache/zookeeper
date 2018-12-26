@@ -41,7 +41,7 @@ import static org.junit.Assert.assertTrue;
 
 public class TxnLogToolkitTest {
     private static final File testData = new File(
-            System.getProperty("test.data.dir", "build/test/data"));
+            System.getProperty("test.data.dir", "src/test/resources/data"));
 
     private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
     private final ByteArrayOutputStream errContent = new ByteArrayOutputStream();

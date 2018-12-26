@@ -48,12 +48,23 @@ public interface LocalPeerMXBean extends ServerMXBean {
      * @return the number of ticks that the initial sync phase can take
      */
     public int getInitLimit();
-    
+
     /**
      * @return the number of ticks that can pass between sending a request
      * and getting a acknowledgment
      */
     public int getSyncLimit();
+
+    /**
+     * Set the number of ticks that the initial sync phase can take
+     */
+    public void setInitLimit(int initLimit);
+
+    /**
+     * Set the number of ticks that can pass between sending a request
+     * and getting a acknowledgment
+     */
+    public void setSyncLimit(int syncLimit);
     
     /**
      * @return the current tick

@@ -39,7 +39,7 @@ import org.apache.zookeeper.test.TestUtils;
 class QuorumPeerInstance implements Instance {
     final private static Logger LOG = LoggerFactory.getLogger(QuorumPeerInstance.class);
     private static final File testData = new File(
-        System.getProperty("test.data.dir", "build/test/data"));
+        System.getProperty("test.data.dir", "src/test/resources/data"));
 
     private static final int syncLimit = 3;
     private static final int initLimit = 3;
