@@ -45,8 +45,8 @@ public class SimpleCounter implements Metric {
     }
 
     @Override
-    public Map<String, Long> values() {
-        Map<String, Long> m = new LinkedHashMap<String, Long>();
+    public Map<String, Object> values() {
+        Map<String, Object> m = new LinkedHashMap<String, Object>();
         m.put(name, this.getCount());
         return m;
     }
