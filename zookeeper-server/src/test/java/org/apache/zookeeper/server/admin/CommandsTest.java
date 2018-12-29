@@ -171,7 +171,7 @@ public class CommandsTest extends ClientBase {
     public void testMonitor() throws IOException, InterruptedException {
         ArrayList<Field> fields = new ArrayList<>(Arrays.asList(
                 new Field("version", String.class),
-                new Field("avg_latency", Long.class),
+                new Field("avg_latency", Double.class),
                 new Field("max_latency", Long.class),
                 new Field("min_latency", Long.class),
                 new Field("packets_received", Long.class),
@@ -193,7 +193,11 @@ public class CommandsTest extends ClientBase {
                 new Field("local_sessions", Long.class)
         ));
         for (String metric : ServerMetrics.getAllValues().keySet()) {
-            fields.add(new Field(metric, Long.class));
+            if (metric.startsWith("avg_")) {
+                fields.add(new Field(metric, Double.class));  
+            } else {
+                fields.add(new Field(metric, Long.class));
+            }
         }
         Field fieldsArray[] = fields.toArray(new Field[0]);
         testCommand("monitor", fieldsArray);
