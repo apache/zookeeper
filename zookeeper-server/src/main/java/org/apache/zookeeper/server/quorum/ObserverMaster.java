@@ -26,9 +26,7 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketAddress;
+import java.net.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -435,23 +433,24 @@ public class ObserverMaster implements LearnerMaster, Runnable {
         }
         listenerRunning = true;
         int backlog = 10; // dog science
+        InetAddress address;
+        try {
+            address = self.getQuorumAddress().getValidAddress().getAddress();
+        } catch (NoRouteToHostException e) {
+            address = self.getQuorumAddress().getOne().getAddress();
+        }
         if (self.shouldUsePortUnification() || self.isSslQuorum()) {
             boolean allowInsecureConnection = self.shouldUsePortUnification();
             if (self.getQuorumListenOnAllIPs()) {
                 ss = new UnifiedServerSocket(self.getX509Util(), allowInsecureConnection, port, backlog);
             } else {
-                ss = new UnifiedServerSocket(
-                        self.getX509Util(),
-                        allowInsecureConnection,
-                        port,
-                        backlog,
-                        self.getQuorumAddress().getValidAddress().getAddress());
+                ss = new UnifiedServerSocket(self.getX509Util(), allowInsecureConnection, port, backlog, address);
             }
         } else {
             if (self.getQuorumListenOnAllIPs()) {
                 ss = new ServerSocket(port, backlog);
             } else {
-                ss = new ServerSocket(port, backlog, self.getQuorumAddress().getValidAddress().getAddress());
+                ss = new ServerSocket(port, backlog, address);
             }
         }
         thread = new Thread(this, "ObserverMaster");

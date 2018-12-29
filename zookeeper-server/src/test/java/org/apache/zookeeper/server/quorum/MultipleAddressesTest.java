@@ -20,12 +20,12 @@ package org.apache.zookeeper.server.quorum;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.zookeeper.PortAssignment;
-import org.apache.zookeeper.server.quorum.exception.RuntimeNoReachableHostException;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.NoRouteToHostException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.List;
@@ -81,15 +81,15 @@ public class MultipleAddressesTest {
     }
 
     @Test
-    public void testGetValidAddress() {
+    public void testGetValidAddress() throws NoRouteToHostException {
         List<InetSocketAddress> addresses = getAddressList();
         MultipleAddresses multipleAddresses = new MultipleAddresses(addresses);
 
         Assert.assertTrue(addresses.contains(multipleAddresses.getValidAddress()));
     }
 
-    @Test(expected = RuntimeNoReachableHostException.class)
-    public void testGetValidAddressWithNotValid() {
+    @Test(expected = NoRouteToHostException.class)
+    public void testGetValidAddressWithNotValid() throws NoRouteToHostException {
         MultipleAddresses multipleAddresses = new MultipleAddresses(new InetSocketAddress("10.0.0.1", 22));
         multipleAddresses.getValidAddress();
     }

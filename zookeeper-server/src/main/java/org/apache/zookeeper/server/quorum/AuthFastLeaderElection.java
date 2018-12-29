@@ -19,10 +19,7 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetSocketAddress;
-import java.net.SocketException;
+import java.net.*;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Collections;
@@ -727,7 +724,13 @@ public class AuthFastLeaderElection implements Election {
             }
 
             for (QuorumServer server : self.getVotingView().values()) {
-                InetSocketAddress saddr = new InetSocketAddress(server.addr.getValidAddress().getAddress(), port);
+                InetAddress address;
+                try {
+                    address = server.addr.getValidAddress().getAddress();
+                } catch (NoRouteToHostException e) {
+                    address = server.addr.getOne().getAddress();
+                }
+                InetSocketAddress saddr = new InetSocketAddress(address, port);
                 addrChallengeMap.put(saddr, new ConcurrentHashMap<Long, Long>());
             }
 
@@ -780,10 +783,15 @@ public class AuthFastLeaderElection implements Election {
 
     private void sendNotifications() {
         for (QuorumServer server : self.getView().values()) {
+            InetSocketAddress address;
+            try {
+                address = self.getView().get(server.id).electionAddr.getValidAddress();
+            } catch (NoRouteToHostException e) {
+                address = self.getView().get(server.id).electionAddr.getOne();
+            }
             ToSend notmsg = new ToSend(ToSend.mType.notification,
                     AuthFastLeaderElection.sequencer++, proposedLeader,
-                    proposedZxid, logicalclock.get(), QuorumPeer.ServerState.LOOKING,
-                    self.getView().get(server.id).electionAddr.getValidAddress());
+                    proposedZxid, logicalclock.get(), QuorumPeer.ServerState.LOOKING, address);
 
             sendqueue.offer(notmsg);
         }

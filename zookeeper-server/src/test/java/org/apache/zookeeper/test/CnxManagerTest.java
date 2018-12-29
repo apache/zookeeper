@@ -24,19 +24,18 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.net.InetSocketAddress;
+import java.net.NoRouteToHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.net.Socket;
 
 import org.apache.zookeeper.common.Time;
-import org.apache.zookeeper.server.quorum.exception.RuntimeNoReachableHostException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
@@ -186,16 +185,15 @@ public class CnxManagerTest extends ZKTestCase {
         Assert.assertFalse(cnxManager.listener.isAlive());
     }
 
-    @Test(expected = RuntimeNoReachableHostException.class)
+    @Test
     public void testCnxManagerTimeout() throws Exception {
-        Random rand = new Random();
         int address = ThreadLocalRandom.current().nextInt(1, 255);
         int deadPort = PortAssignment.unique();
         String deadAddress = "10.1.1." + address;
 
         LOG.info("This is the dead address I'm trying: " + deadAddress);
 
-        peers.put(Long.valueOf(2),
+        peers.put(2L,
                 new QuorumServer(2,
                         new InetSocketAddress(deadAddress, deadPort),
                         new InetSocketAddress(deadAddress, PortAssignment.unique()),
@@ -215,7 +213,7 @@ public class CnxManagerTest extends ZKTestCase {
         cnxManager.toSend(2L, createMsg(ServerState.LOOKING.ordinal(), 1, -1, 1));
         long end = Time.currentElapsedTime();
 
-        if((end - begin) > 6000) Assert.fail("Waited more than necessary");
+        if((end - begin) > 10000) Assert.fail("Waited more than necessary");
         cnxManager.halt();
         Assert.assertFalse(cnxManager.listener.isAlive());
     }
@@ -238,7 +236,12 @@ public class CnxManagerTest extends ZKTestCase {
         } else {
             LOG.error("Null listener when initializing cnx manager");
         }
-        InetSocketAddress address = peers.get(peer.getId()).electionAddr.getValidAddress();
+        InetSocketAddress address;
+        try {
+            address = peers.get(peer.getId()).electionAddr.getValidAddress();
+        } catch (NoRouteToHostException e) {
+            address = peers.get(peer.getId()).electionAddr.getOne();
+        }
         LOG.info("Election port: " + address.getPort());
 
         Thread.sleep(1000);
@@ -246,7 +249,13 @@ public class CnxManagerTest extends ZKTestCase {
         SocketChannel sc = SocketChannel.open();
         sc.socket().connect(address, 5000);
 
-        InetSocketAddress otherAddr = peers.get(2L).electionAddr.getValidAddress();
+        InetSocketAddress otherAddr;
+        try {
+            otherAddr = peers.get(2L).electionAddr.getValidAddress();
+        } catch (NoRouteToHostException e) {
+            otherAddr = peers.get(2L).electionAddr.getOne();
+        }
+
         DataOutputStream dout = new DataOutputStream(sc.socket().getOutputStream());
         dout.writeLong(QuorumCnxManager.PROTOCOL_VERSION);
         dout.writeLong(2L);
@@ -302,7 +311,14 @@ public class CnxManagerTest extends ZKTestCase {
         } else {
             LOG.error("Null listener when initializing cnx manager");
         }
-        InetSocketAddress address = peers.get(peer.getId()).electionAddr.getValidAddress();
+
+        InetSocketAddress address;
+        try {
+            address = peers.get(peer.getId()).electionAddr.getValidAddress();
+        } catch (NoRouteToHostException e) {
+            address = peers.get(peer.getId()).electionAddr.getOne();
+        }
+
         LOG.info("Election port: " + address.getPort());
 
         Thread.sleep(1000);
@@ -349,7 +365,14 @@ public class CnxManagerTest extends ZKTestCase {
         } else {
             LOG.error("Null listener when initializing cnx manager");
         }
-        InetSocketAddress address = peers.get(peer.getId()).electionAddr.getValidAddress();
+
+        InetSocketAddress address;
+        try {
+            address = peers.get(peer.getId()).electionAddr.getValidAddress();
+        } catch (NoRouteToHostException e) {
+            address = peers.get(peer.getId()).electionAddr.getOne();
+        }
+
         LOG.info("Election port: " + address.getPort());
         Thread.sleep(1000);
 

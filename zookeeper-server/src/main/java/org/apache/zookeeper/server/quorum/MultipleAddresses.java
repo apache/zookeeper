@@ -18,10 +18,10 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import org.apache.zookeeper.server.quorum.exception.RuntimeNoReachableHostException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.NoRouteToHostException;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -111,29 +111,16 @@ public class MultipleAddresses {
      * Returns reachable address. If none is reachable than throws exception.
      *
      * @return address which is reachable.
+     * @throws NoRouteToHostException if none address is reachable
      */
-    public InetSocketAddress getValidAddress() {
+    public InetSocketAddress getValidAddress() throws NoRouteToHostException {
         AtomicReference<InetSocketAddress> address = new AtomicReference<>(null);
         getInetSocketAddressStream().forEach(addr -> checkIfAddressIsReachableAndSet(addr, address));
 
         if(address.get() != null)
             return address.get();
         else
-            throw new RuntimeNoReachableHostException("No valid address among " + addresses);
-    }
-
-    private void checkIfAddressIsReachableAndSet(InetSocketAddress address,
-                                              AtomicReference<InetSocketAddress> reachableAddress) {
-        for(int i = 0; i < 5 && reachableAddress.get() == null; i++) {
-            try {
-                if(address.getAddress().isReachable((i + 1) * timeout)) {
-                    reachableAddress.compareAndSet(null, address);
-                    break;
-                }
-                Thread.sleep(timeout);
-            } catch (NullPointerException | IOException | InterruptedException ignored) {
-            }
-        }
+            throw new NoRouteToHostException("No valid address among " + addresses);
     }
 
     /**
@@ -145,6 +132,24 @@ public class MultipleAddresses {
         Set<InetSocketAddress> temp = Collections.newSetFromMap(new ConcurrentHashMap<>());
         temp.addAll(getInetSocketAddressStream().map(this::recreateSocketAddress).collect(Collectors.toSet()));
         addresses = temp;
+    }
+
+    public InetSocketAddress getOne() {
+        return addresses.iterator().next();
+    }
+
+    private void checkIfAddressIsReachableAndSet(InetSocketAddress address,
+                                                 AtomicReference<InetSocketAddress> reachableAddress) {
+        for(int i = 0; i < 5 && reachableAddress.get() == null; i++) {
+            try {
+                if(address.getAddress().isReachable((i + 1) * timeout)) {
+                    reachableAddress.compareAndSet(null, address);
+                    break;
+                }
+                Thread.sleep(timeout);
+            } catch (NullPointerException | IOException | InterruptedException ignored) {
+            }
+        }
     }
 
     private InetSocketAddress recreateSocketAddress(InetSocketAddress address) {

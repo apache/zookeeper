@@ -19,12 +19,7 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.*;
-import java.net.BindException;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
+import java.net.*;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -42,7 +37,6 @@ import org.apache.zookeeper.server.util.ConfigUtils;
 import org.apache.zookeeper.server.ZooKeeperThread;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthLearner;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthServer;
-import org.apache.zookeeper.server.quorum.exception.RuntimeNoReachableHostException;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -321,7 +315,13 @@ public class QuorumCnxManager {
         LOG.debug("Opening channel to server " + sid);
         Socket sock = new Socket();
         setSockOpts(sock);
-        sock.connect(self.getVotingView().get(sid).electionAddr.getValidAddress(), cnxTO);
+        InetSocketAddress address;
+        try {
+            address = self.getVotingView().get(sid).electionAddr.getValidAddress();
+        } catch (NoRouteToHostException e) {
+            address = self.getVotingView().get(sid).electionAddr.getOne();
+        }
+        sock.connect(address, cnxTO);
         initiateConnection(sock, sid);
     }
 
@@ -404,7 +404,13 @@ public class QuorumCnxManager {
             // represents protocol version (in other words - message type)
             dout.writeLong(PROTOCOL_VERSION);
             dout.writeLong(self.getId());
-            String addr = formatInetAddr(self.getElectionAddress().getValidAddress());
+            InetSocketAddress address;
+            try {
+                address = self.getElectionAddress().getValidAddress();
+            } catch (NoRouteToHostException e) {
+                address = self.getElectionAddress().getOne();
+            }
+            String addr = formatInetAddr(address);
             byte[] addr_bytes = addr.getBytes();
             dout.writeInt(addr_bytes.length);
             dout.write(addr_bytes);
@@ -636,20 +642,26 @@ public class QuorumCnxManager {
         Socket sock = null;
         try {
             LOG.debug("Opening channel to server " + sid);
-            InetSocketAddress address = electionAddr.getValidAddress();
-            if (self.isSslQuorum()) {
-                 SSLSocket sslSock = self.getX509Util().createSSLSocket();
-                 setSockOpts(sslSock);
-                 sslSock.connect(address, cnxTO);
-                 sslSock.startHandshake();
-                 sock = sslSock;
-             } else {
-                 sock = new Socket();
-                 setSockOpts(sock);
-                 sock.connect(address, cnxTO);
+            InetSocketAddress address;
+            try {
+                address = electionAddr.getValidAddress();
+            } catch (NoRouteToHostException e) {
+                address = electionAddr.getOne();
+            }
 
-             }
-             LOG.debug("Connected to server " + sid);
+            if (self.isSslQuorum()) {
+                SSLSocket sslSock = self.getX509Util().createSSLSocket();
+                setSockOpts(sslSock);
+                sslSock.connect(address, cnxTO);
+                sslSock.startHandshake();
+                sock = sslSock;
+            } else {
+                sock = new Socket();
+                setSockOpts(sock);
+                sock.connect(address, cnxTO);
+
+            }
+            LOG.debug("Connected to server " + sid);
             // Sends connection request asynchronously if the quorum
             // sasl authentication is enabled. This is required because
             // sasl server authentication process may take few seconds to
@@ -660,15 +672,6 @@ public class QuorumCnxManager {
                 initiateConnection(sock, sid);
             }
             return true;
-        } catch (RuntimeNoReachableHostException e) {
-            // Sun doesn't include the address that causes this
-            // exception to be thrown, also UAE cannot be wrapped cleanly
-            // so we log the exception in order to capture this critical
-            // detail.
-            LOG.warn("Cannot open channel to " + sid
-                    + " at election address " + electionAddr, e);
-            closeSocket(sock);
-            throw e;
         } catch (X509Exception e) {
             LOG.warn("Cannot open secure channel to " + sid
                     + " at election address " + electionAddr, e);
