@@ -18,107 +18,96 @@
 package org.apache.jute;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertArrayEquals;
 
 import org.junit.Test;
+import org.xml.sax.SAXException;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
+import javax.xml.parsers.ParserConfigurationException;
 import java.nio.charset.StandardCharsets;
+import java.io.IOException;
 
-// TODO: introduce JuteTestCase as in ZKTestCase
-public class BinaryInputArchiveTest {
-
-    @Test
-    public void testReadStringCheckLength() {
-        byte[] buf = new byte[]{
-                Byte.MAX_VALUE, Byte.MAX_VALUE, Byte.MAX_VALUE, Byte.MAX_VALUE};
-        ByteArrayInputStream is = new ByteArrayInputStream(buf);
-        BinaryInputArchive ia = BinaryInputArchive.getArchive(is);
-        try {
-            ia.readString("");
-            fail("Should have thrown an IOException");
-        } catch (IOException e) {
-            assertTrue("Not 'Unreasonable length' exception: " + e,
-                    e.getMessage().startsWith(BinaryInputArchive.UNREASONBLE_LENGTH));
-        }
-    }
+public class XmlInputArchiveTest {
 
     private void checkWriterAndReader(TestWriter writer, TestReader reader) {
         TestCheckWriterReader.checkWriterAndReader(
-                BinaryOutputArchive::getArchive,
-                BinaryInputArchive::getArchive,
+                XmlOutputArchive::getArchive,
+                (is) -> {
+                    try {
+                        return XmlInputArchive.getArchive(is);
+                    } catch (ParserConfigurationException|SAXException e) {
+                        throw new IOException(e);
+                    }
+                },
                 writer,
                 reader
         );
     }
 
     @Test
-    public void testInt() {
+    public void testWriteInt() {
         final int expected = 4;
         final String tag = "tag1";
         checkWriterAndReader(
-            (oa) -> oa.writeInt(expected, tag),
-            (ia) -> {
-                int actual = ia.readInt(tag);
-                assertEquals(expected, actual);
-            }
+                (oa) -> oa.writeInt(expected, tag),
+                (ia) -> {
+                    int actual = ia.readInt(tag);
+                    assertEquals(expected, actual);
+                }
         );
     }
 
     @Test
-    public void testBool() {
+    public void testWriteBool() {
         final boolean expected = false;
         final String tag = "tag1";
         checkWriterAndReader(
-            (oa) -> oa.writeBool(expected, tag),
-            (ia) -> {
+                (oa) -> oa.writeBool(expected, tag),
+                (ia) -> {
                     boolean actual = ia.readBool(tag);
                     assertEquals(expected, actual);
-            }
+                }
         );
     }
 
     @Test
-    public void testString() {
+    public void testWriteString() {
         final String expected = "hello";
         final String tag = "tag1";
         checkWriterAndReader(
-            (oa) -> oa.writeString(expected, tag),
-            (ia) -> {
-                String actual = ia.readString(tag);
-                assertEquals(expected, actual);
-            }
+                (oa) -> oa.writeString(expected, tag),
+                (ia) -> {
+                    String actual = ia.readString(tag);
+                    assertEquals(expected, actual);
+                }
         );
     }
 
     @Test
-    public void testFloat() {
+    public void testWriteFloat() {
         final float expected = 3.14159f;
         final String tag = "tag1";
         final float delta = 1e-10f;
         checkWriterAndReader(
-            (oa) -> oa.writeFloat(expected, tag),
-            (ia) -> {
+                (oa) -> oa.writeFloat(expected, tag),
+                (ia) -> {
                     float actual = ia.readFloat(tag);
                     assertEquals(expected, actual, delta);
-            }
+                }
         );
     }
 
     @Test
-    public void testDouble() {
+    public void testWriteDouble() {
         final double expected = 3.14159f;
         final String tag = "tag1";
         final float delta = 1e-20f;
         checkWriterAndReader(
-            (oa) -> oa.writeDouble(expected, tag),
-            (ia) -> {
+                (oa) -> oa.writeDouble(expected, tag),
+                (ia) -> {
                     double actual = ia.readDouble(tag);
                     assertEquals(expected, actual, delta);
-            }
+                }
         );
     }
 

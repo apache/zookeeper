@@ -43,6 +43,10 @@ nbdist/
 nb-configuration.xml
 nbactions.xml
 
+# vscode
+classes
+.vscode
+
 # Other
 *~
 logs/
