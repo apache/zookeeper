@@ -1,0 +1,16 @@
+language: java
+sudo: false
+
+cache:
+  directories:
+  - "$HOME/.m2"
+
+jobs:
+  include:
+  - stage: test
+    jdk: openjdk11
+    script: mvn verify -Dmaven.test.redirectTestOutputToFile=true
+
+branches:
+  only:
+  - master
