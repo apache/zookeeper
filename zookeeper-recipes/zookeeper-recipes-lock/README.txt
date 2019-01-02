@@ -19,7 +19,7 @@
 mentioned in ../../docs/recipes.[html,pdf].
 
 2) To compile the lock java recipe you can just run ant jar from 
-this directory. For compiling the c libarary go to src/main/c and read
+this directory. For compiling the c libarary go to zookeeper-client/zookeeper-client-c and read
 the INSTALLATION instructions. 
 Please report any bugs on the jira 
 
