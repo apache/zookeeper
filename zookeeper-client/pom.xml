@@ -33,8 +33,19 @@
   <name>Apache ZooKeeper - Client</name>
   <description>ZooKeeper client</description>
 
-  <modules>
-    <module>zookeeper-client-c</module>
-  </modules>
+
+
+  <profiles>
+    <profile>
+      <id>full-build</id>
+      <modules>
+        <module>zookeeper-client-c</module>
+      </modules>
+    </profile>
+    <profile>
+      <id>java-build</id>
+      <modules />
+    </profile>
+  </profiles>
 
 </project>
