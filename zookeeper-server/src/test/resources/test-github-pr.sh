@@ -450,8 +450,8 @@ runCoreTests () {
   ### Kill any rogue build processes from the last attempt
   $PS auxwww | $GREP ZookeeperPatchProcess | /usr/bin/nawk '{print $2}' | /usr/bin/xargs -t -I {} /bin/kill -9 {} > /dev/null
 
-  echo "$ANT_HOME/bin/ant -DZookeeperPatchProcess= -Dtest.junit.output.format=xml -Dtest.output=yes -Dtest.junit.threads=8 -Dcompile.c++=yes -Djava5.home=$JAVA5_HOME test-core"
-  $ANT_HOME/bin/ant -DZookeeperPatchProcess= -Dtest.junit.output.format=xml -Dtest.output=yes -Dtest.junit.threads=8 -Dcompile.c++=yes -Djava5.home=$JAVA5_HOME test-core
+  echo "$ANT_HOME/bin/ant -DZookeeperPatchProcess= -Dtest.junit.output.format=xml -Dtest.output=no -Dtest.junit.threads=4 -Dcompile.c++=yes -Djava5.home=$JAVA5_HOME test-core"
+  $ANT_HOME/bin/ant -DZookeeperPatchProcess= -Dtest.junit.output.format=xml -Dtest.output=no -Dtest.junit.threads=4 -Dcompile.c++=yes -Djava5.home=$JAVA5_HOME test-core
   if [[ $? != 0 ]] ; then
     JIRA_COMMENT="$JIRA_COMMENT
 
@@ -480,8 +480,8 @@ runContribTests () {
   ### Kill any rogue build processes from the last attempt
   $PS auxwww | $GREP ZookeeperPatchProcess | /usr/bin/nawk '{print $2}' | /usr/bin/xargs -t -I {} /bin/kill -9 {} > /dev/null
 
-  echo "$ANT_HOME/bin/ant -DZookeeperPatchProcess= -Dtest.junit.output.format=xml -Dtest.output=yes test-contrib"
-  $ANT_HOME/bin/ant -DZookeeperPatchProcess= -Dtest.junit.output.format=xml -Dtest.output=yes test-contrib
+  echo "$ANT_HOME/bin/ant -DZookeeperPatchProcess= -Dtest.junit.output.format=xml -Dtest.output=no test-contrib"
+  $ANT_HOME/bin/ant -DZookeeperPatchProcess= -Dtest.junit.output.format=xml -Dtest.output=no test-contrib
   if [[ $? != 0 ]] ; then
     JIRA_COMMENT="$JIRA_COMMENT
 
