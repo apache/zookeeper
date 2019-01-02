@@ -61,6 +61,8 @@
     <module>zookeeper-jute</module>
     <module>zookeeper-server</module>
     <module>zookeeper-client</module>
+    <module>zookeeper-recipes</module>
+    <module>zookeeper-contrib</module>
   </modules>
 
   <scm>
@@ -416,6 +418,11 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.8.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>3.1.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
