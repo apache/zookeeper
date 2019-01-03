@@ -116,8 +116,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     /**
-     * This is the secret that we use to generate passwords, for the moment it
-     * is more of a sanity check.
+     * This is the secret that we use to generate passwords. For the moment,
+     * it's more of a checksum that's used in reconnection, which carries no
+     * security weight, and is treated internally as if it carries no
+     * security weight.
      */
     static final private long superSecret = 0XB3415C00L;
 
