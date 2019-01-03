@@ -35,7 +35,7 @@ import org.junit.Test;
 public class BufferSizeTest extends ClientBase {
     public static final int TEST_MAXBUFFER = 100;
     private static final File TEST_DATA = new File(
-            System.getProperty("test.data.dir", "build/test/data"),
+            System.getProperty("test.data.dir", "src/test/resources/data"),
             "buffersize");
     
     private ZooKeeper zk;

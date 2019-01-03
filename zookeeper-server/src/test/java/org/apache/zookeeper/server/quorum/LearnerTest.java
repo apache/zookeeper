@@ -43,7 +43,7 @@ import org.junit.Test;
 
 public class LearnerTest extends ZKTestCase {
     private static final File testData = new File(
-        System.getProperty("test.data.dir", "build/test/data"));
+        System.getProperty("test.data.dir", "src/test/resources/data"));
 
     static class SimpleLearnerZooKeeperServer extends LearnerZooKeeperServer {
 

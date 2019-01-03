@@ -47,7 +47,7 @@ import org.junit.Test;
 import org.junit.rules.Timeout;
 
 public class ZKClientConfigTest {
-    private static final File testData = new File(System.getProperty("test.data.dir", "build/test/data"));
+    private static final File testData = new File(System.getProperty("test.data.dir", "src/test/resources/data"));
     @Rule
     public Timeout timeout = new Timeout(10, TimeUnit.SECONDS);
 

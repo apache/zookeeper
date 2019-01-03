@@ -30,6 +30,7 @@ import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 
+import javax.management.JMException;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
@@ -184,6 +185,16 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
             LOG.warn("Failed to register with JMX", e);
             jmxServerBean = null;
         }
+    }
+
+    boolean registerJMX(LearnerHandlerBean handlerBean) {
+        try {
+            MBeanRegistry.getInstance().register(handlerBean, jmxServerBean);
+            return true;
+        } catch (JMException e) {
+            LOG.warn("Could not register connection", e);
+        }
+        return false;
     }
 
     @Override

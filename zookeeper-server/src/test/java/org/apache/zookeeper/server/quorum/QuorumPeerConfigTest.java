@@ -91,17 +91,18 @@ public class QuorumPeerConfigTest {
      * https://issues.apache.org/jira/browse/ZOOKEEPER-2297
      */
     @Test
-    public void testCustomSSLAuth()
-            throws IOException{
-        System.setProperty(new ClientX509Util().getSslAuthProviderProperty(), "y509");
-        QuorumPeerConfig quorumPeerConfig = new QuorumPeerConfig();
-        try {
-            Properties zkProp = getDefaultZKProperties();
-            zkProp.setProperty("secureClientPort", "12345");
-            quorumPeerConfig.parseProperties(zkProp);
-            fail("ConfigException is expected");
-        } catch (ConfigException e) {
-            assertNotNull(e.getMessage());
+    public void testCustomSSLAuth() throws IOException {
+        try (ClientX509Util x509Util = new ClientX509Util()) {
+            System.setProperty(x509Util.getSslAuthProviderProperty(), "y509");
+            QuorumPeerConfig quorumPeerConfig = new QuorumPeerConfig();
+            try {
+                Properties zkProp = getDefaultZKProperties();
+                zkProp.setProperty("secureClientPort", "12345");
+                quorumPeerConfig.parseProperties(zkProp);
+                fail("ConfigException is expected");
+            } catch (ConfigException e) {
+                assertNotNull(e.getMessage());
+            }
         }
     }
 

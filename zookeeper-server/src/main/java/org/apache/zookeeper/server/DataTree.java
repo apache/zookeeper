@@ -569,7 +569,12 @@ public class DataTree {
         }
         synchronized (parent) {
             parent.removeChild(childName);
-            parent.stat.setPzxid(zxid);
+            // Only update pzxid when the zxid is larger than the current pzxid,
+            // otherwise we might override some higher pzxid set by a create
+            // Txn, which could cause the cversion and pzxid inconsistent
+            if (zxid > parent.stat.getPzxid()) {
+                parent.stat.setPzxid(zxid);
+            }
         }
 
         DataNode node = nodes.get(path);

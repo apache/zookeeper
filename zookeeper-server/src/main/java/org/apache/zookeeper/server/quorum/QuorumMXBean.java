@@ -33,6 +33,26 @@ public interface QuorumMXBean {
     public int getQuorumSize();
 
     /**
+     * @return the number of ticks that the initial synchronization phase can take
+     */
+    public int getInitLimit();
+
+    /**
+     * @return the number of ticks that can pass between sending a request and getting an acknowledgment
+     */
+    public int getSyncLimit();
+
+    /**
+     * @param the number of ticks that the initial synchronization phase can take
+     */
+    public void setInitLimit(int initLimit);
+
+    /**
+     * @param the number of ticks that can pass between sending a request and getting an acknowledgment
+     */
+    public void setSyncLimit(int syncLimit);
+
+    /**
      * @return SSL communication between quorum members required
      */
     public boolean isSslQuorum();

@@ -152,7 +152,7 @@ public class X509TestHelpers {
                 certPublicKey);
         builder.addExtension(Extension.basicConstraints, true, new BasicConstraints(false)); // not a CA
         builder.addExtension(
-                Extension.keyUsage, true, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyAgreement));
+                Extension.keyUsage, true, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyEncipherment));
         builder.addExtension(
                 Extension.extendedKeyUsage,
                 true,

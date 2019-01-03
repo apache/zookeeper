@@ -16,9 +16,6 @@
  * limitations under the License.
  */
 
-/**
- * 
- */
 package org.apache.zookeeper.server.util;
 
 import java.io.IOException;
@@ -29,6 +26,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -95,9 +94,10 @@ public class PortForwarder extends Thread {
         private final OutputStream out;
         private final Socket toClose;
         private final Socket toClose2;
+        private boolean isFinished = false;
 
         PortForwardWorker(Socket toClose, Socket toClose2, InputStream in,
-                OutputStream out) throws IOException {
+                OutputStream out) {
             this.toClose = toClose;
             this.toClose2 = toClose2;
             this.in = in;
@@ -118,50 +118,57 @@ public class PortForwarder extends Thread {
                                 this.out.write(buf, 0, read);
                             } catch (IOException e) {
                                 LOG.warn("exception during write", e);
-                                try {
-                                    toClose.close();
-                                } catch (IOException ex) {
-                                    // ignore
-                                }
-                                try {
-                                    toClose2.close();
-                                } catch (IOException ex) {
-                                    // ignore
-                                }
                                 break;
                             }
+                        } else if (read < 0) {
+                            throw new IOException("read " + read);
                         }
                     } catch (SocketTimeoutException e) {
                         LOG.error("socket timeout", e);
                     }
-                    Thread.sleep(1);
                 }
+                Thread.sleep(1);
             } catch (InterruptedException e) {
                 LOG.warn("Interrupted", e);
-                try {
-                    toClose.close();
-                } catch (IOException ex) {
-                    // ignore
-                }
-                try {
-                    toClose2.close();
-                } catch (IOException ex) {
-                    // ignore silently
-                }
             } catch (SocketException e) {
                 if (!"Socket closed".equals(e.getMessage())) {
                     LOG.error("Unexpected exception", e);
                 }
             } catch (IOException e) {
                 LOG.error("Unexpected exception", e);
+            } finally {
+                shutdown();
             }
             LOG.info("Shutting down forward for " + toClose);
+            isFinished = true;
         }
 
+        boolean waitForShutdown(long timeoutMs) throws InterruptedException {
+            synchronized (this) {
+                if (!isFinished) {
+                   this.wait(timeoutMs);
+                }
+            }
+            return isFinished;
+        }
+
+        public void shutdown() {
+            try {
+                toClose.close();
+            } catch (IOException ex) {
+                // ignore
+            }
+            try {
+                toClose2.close();
+            } catch (IOException ex) {
+                // ignore silently
+            }
+        }
     }
 
     private volatile boolean stopped = false;
-    private ExecutorService workers = Executors.newCachedThreadPool();
+    private ExecutorService workerExecutor = Executors.newCachedThreadPool();
+    private List<PortForwardWorker> workers = new ArrayList<>();
     private ServerSocket serverSocket;
     private final int to;
 
@@ -207,30 +214,31 @@ public class PortForwarder extends Thread {
                             + " to:" + to);
                     sock.setSoTimeout(30000);
                     target.setSoTimeout(30000);
-                    this.workers.execute(new PortForwardWorker(sock, target,
+
+
+                    workers.add(new PortForwardWorker(sock, target,
                             sock.getInputStream(), target.getOutputStream()));
-                    this.workers.execute(new PortForwardWorker(target, sock,
+                    workers.add(new PortForwardWorker(target, sock,
                             target.getInputStream(), sock.getOutputStream()));
-                } catch (SocketTimeoutException e) {               	
-                    LOG.warn("socket timed out local:" 
-                            + (sock != null ? sock.getLocalPort(): "")
-                            + " from:" + (sock != null ? sock.getPort(): "")
-                            + " to:" + to, e);
+                    for (PortForwardWorker worker: workers) {
+                        workerExecutor.submit(worker);
+                    }
+                } catch (SocketTimeoutException e) {
+                    LOG.warn("socket timed out", e);
                 } catch (ConnectException e) {
-                    LOG.warn("connection exception local:"
-                            + (sock != null ? sock.getLocalPort(): "")
-                            + " from:" + (sock != null ? sock.getPort(): "")
+                    LOG.warn("connection exception local:" + sock.getLocalPort()
+                            + " from:" + sock.getPort()
                             + " to:" + to, e);
                     sock.close();
                 } catch (IOException e) {
                     if (!"Socket closed".equals(e.getMessage())) {
-                        LOG.warn("unexpected exception local:" 
-                        		+ (sock != null ? sock.getLocalPort(): "")
-                                + " from:" + (sock != null ? sock.getPort(): "")
-                                + " to:" + to, e);
+                        LOG.warn("unexpected exception local:" + sock.getLocalPort()
+                            + " from:" + sock.getPort()
+                            + " to:" + to, e);
                         throw e;
                     }
                 }
+
             }
         } catch (IOException e) {
             LOG.error("Unexpected exception to:" + to, e);
@@ -242,15 +250,16 @@ public class PortForwarder extends Thread {
     public void shutdown() throws Exception {
         this.stopped = true;
         this.serverSocket.close();
-        this.workers.shutdownNow();
-        try {
-            if (!this.workers.awaitTermination(5, TimeUnit.SECONDS)) {
-                throw new Exception(
-                        "Failed to stop forwarding within 5 seconds");
-            }
-        } catch (InterruptedException e) {
-            throw new Exception("Failed to stop forwarding");
-        }
         this.join();
+        this.workerExecutor.shutdownNow();
+        for (PortForwardWorker worker: workers) {
+            worker.shutdown();
+        }
+
+        for (PortForwardWorker worker: workers) {
+            if (!worker.waitForShutdown(5000)) {
+                throw new Exception("Failed to stop forwarding within 5 seconds");
+            }
+        }
     }
 }

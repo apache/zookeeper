@@ -124,7 +124,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
     private static final char[] PASSWORD = "testpass".toCharArray();
     private static final String HOSTNAME = "localhost";
 
-    private QuorumX509Util quorumX509Util = new QuorumX509Util();
+    private QuorumX509Util quorumX509Util;
 
     private MainThread q1;
     private MainThread q2;
@@ -156,6 +156,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
 
     @Before
     public void setup() throws Exception {
+        quorumX509Util = new QuorumX509Util();
         ClientBase.setupTestEnv();
 
         tmpDir = createTmpDir().getAbsolutePath();
@@ -406,6 +407,7 @@ public class QuorumSSLTest extends QuorumPeerTestBase {
         }
 
         Security.removeProvider("BC");
+        quorumX509Util.close();
     }
 
     private void clearSSLSystemProperties() {

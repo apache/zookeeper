@@ -36,9 +36,14 @@ import javax.net.ssl.X509ExtendedTrustManager;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 import java.io.ByteArrayInputStream;
+import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardWatchEventKinds;
+import java.nio.file.WatchEvent;
 import java.security.GeneralSecurityException;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
@@ -57,7 +62,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *   Performance testing done by Facebook engineers shows that on Intel x86_64 machines, Java9 performs better with
  *   GCM and Java8 performs better with CBC, so these seem like reasonable defaults.
  */
-public abstract class X509Util {
+public abstract class X509Util implements Closeable, AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(X509Util.class);
 
     static final String DEFAULT_PROTOCOL = "TLSv1.2";
@@ -93,6 +98,8 @@ public abstract class X509Util {
     private String[] cipherSuites;
 
     private AtomicReference<SSLContext> defaultSSLContext = new AtomicReference<>(null);
+    private FileChangeWatcher keyStoreFileWatcher;
+    private FileChangeWatcher trustStoreFileWatcher;
 
     public X509Util() {
         String cipherSuitesInput = System.getProperty(cipherSuitesProperty);
@@ -174,6 +181,11 @@ public abstract class X509Util {
             }
         }
         return result;
+    }
+
+    private void resetDefaultSSLContext() throws X509Exception.SSLContextException {
+        SSLContext newContext = createSSLContext();
+        defaultSSLContext.set(newContext);
     }
 
     private SSLContext createSSLContext() throws SSLContextException {
@@ -467,5 +479,106 @@ public abstract class X509Util {
         }
         LOG.debug("Using Java8-optimized cipher suites for Java version {}", javaVersion);
         return DEFAULT_CIPHERS_JAVA8;
+    }
+
+    private FileChangeWatcher newFileChangeWatcher(String fileLocation) throws IOException {
+        if (fileLocation == null || fileLocation.isEmpty()) {
+            return null;
+        }
+        final Path filePath = Paths.get(fileLocation).toAbsolutePath();
+        Path parentPath = filePath.getParent();
+        if (parentPath == null) {
+            throw new IOException(
+                    "Key/trust store path does not have a parent: " + filePath);
+        }
+        return new FileChangeWatcher(
+                parentPath,
+                watchEvent -> {
+                    handleWatchEvent(filePath, watchEvent);
+                });
+    }
+
+    /**
+     * Enables automatic reloading of the trust store and key store files when they change on disk.
+     *
+     * @throws IOException if creating the FileChangeWatcher objects fails.
+     */
+    public void enableCertFileReloading() throws IOException {
+        LOG.info("enabling cert file reloading");
+        ZKConfig config = new ZKConfig();
+        FileChangeWatcher newKeyStoreFileWatcher =
+                newFileChangeWatcher(config.getProperty(sslKeystoreLocationProperty));
+        if (newKeyStoreFileWatcher != null) {
+            // stop old watcher if there is one
+            if (keyStoreFileWatcher != null) {
+                keyStoreFileWatcher.stop();
+            }
+            keyStoreFileWatcher = newKeyStoreFileWatcher;
+            keyStoreFileWatcher.start();
+        }
+        FileChangeWatcher newTrustStoreFileWatcher =
+                newFileChangeWatcher(config.getProperty(sslTruststoreLocationProperty));
+        if (newTrustStoreFileWatcher != null) {
+            // stop old watcher if there is one
+            if (trustStoreFileWatcher != null) {
+                trustStoreFileWatcher.stop();
+            }
+            trustStoreFileWatcher = newTrustStoreFileWatcher;
+            trustStoreFileWatcher.start();
+        }
+    }
+
+    /**
+     * Disables automatic reloading of the trust store and key store files when they change on disk.
+     * Stops background threads and closes WatchService instances.
+     */
+    @Override
+    public void close() {
+        if (keyStoreFileWatcher != null) {
+            keyStoreFileWatcher.stop();
+            keyStoreFileWatcher = null;
+        }
+        if (trustStoreFileWatcher != null) {
+            trustStoreFileWatcher.stop();
+            trustStoreFileWatcher = null;
+        }
+    }
+
+    /**
+     * Handler for watch events that let us know a file we may care about has changed on disk.
+     *
+     * @param filePath the path to the file we are watching for changes.
+     * @param event    the WatchEvent.
+     */
+    private void handleWatchEvent(Path filePath, WatchEvent<?> event) {
+        boolean shouldResetContext = false;
+        Path dirPath = filePath.getParent();
+        if (event.kind().equals(StandardWatchEventKinds.OVERFLOW)) {
+            // If we get notified about possibly missed events, reload the key store / trust store just to be sure.
+            shouldResetContext = true;
+        } else if (event.kind().equals(StandardWatchEventKinds.ENTRY_MODIFY) ||
+                event.kind().equals(StandardWatchEventKinds.ENTRY_CREATE)) {
+            Path eventFilePath = dirPath.resolve((Path) event.context());
+            if (filePath.equals(eventFilePath)) {
+                shouldResetContext = true;
+            }
+        }
+        // Note: we don't care about delete events
+        if (shouldResetContext) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Attempting to reset default SSL context after receiving watch event: " +
+                        event.kind() + " with context: " + event.context());
+            }
+            try {
+                this.resetDefaultSSLContext();
+            } catch (SSLContextException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Ignoring watch event and keeping previous default SSL context. Event kind: " +
+                        event.kind() + " with context: " + event.context());
+            }
+        }
     }
 }

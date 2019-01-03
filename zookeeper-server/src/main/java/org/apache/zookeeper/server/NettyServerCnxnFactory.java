@@ -408,6 +408,8 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         }
         LOG.info("shutdown called {}", localAddress);
 
+        x509Util.close();
+
         if (login != null) {
             login.shutdown();
         }

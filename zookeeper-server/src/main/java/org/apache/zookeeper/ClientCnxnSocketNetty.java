@@ -54,6 +54,7 @@ import org.apache.zookeeper.ClientCnxn.Packet;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.common.NettyUtils;
+import org.apache.zookeeper.common.X509Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -436,9 +437,11 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         // Basically we only need to create it once.
         private synchronized void initSSL(ChannelPipeline pipeline) throws SSLContextException {
             if (sslContext == null || sslEngine == null) {
-                sslContext = new ClientX509Util().createSSLContext(clientConfig);
-                sslEngine = sslContext.createSSLEngine(host,port);
-                sslEngine.setUseClientMode(true);
+                try (X509Util x509Util = new ClientX509Util()) {
+                    sslContext = x509Util.createSSLContext(clientConfig);
+                    sslEngine = sslContext.createSSLEngine(host, port);
+                    sslEngine.setUseClientMode(true);
+                }
             }
             pipeline.addLast("ssl", new SslHandler(sslEngine));
             LOG.info("SSL handler added for channel: {}", pipeline.channel());

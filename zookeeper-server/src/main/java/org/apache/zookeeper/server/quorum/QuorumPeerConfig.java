@@ -71,6 +71,8 @@ public class QuorumPeerConfig {
     protected InetSocketAddress secureClientPortAddress;
     protected boolean sslQuorum = false;
     protected boolean shouldUsePortUnification = false;
+    protected int observerMasterPort;
+    protected boolean sslQuorumReloadCertFiles = false;
     protected File dataDir;
     protected File dataLogDir;
     protected String dynamicConfigFileStr = null;
@@ -239,6 +241,7 @@ public class QuorumPeerConfig {
     throws IOException, ConfigException {
         int clientPort = 0;
         int secureClientPort = 0;
+        int observerMasterPort = 0;
         String clientPortAddress = null;
         String secureClientPortAddress = null;
         VerifyingFileFactory vff = new VerifyingFileFactory.Builder(LOG).warnForRelativePath().build();
@@ -261,6 +264,8 @@ public class QuorumPeerConfig {
                 secureClientPort = Integer.parseInt(value);
             } else if (key.equals("secureClientPortAddress")){
                 secureClientPortAddress = value.trim();
+            } else if (key.equals("observerMasterPort")) {
+                observerMasterPort = Integer.parseInt(value);
             } else if (key.equals("tickTime")) {
                 tickTime = Integer.parseInt(value);
             } else if (key.equals("maxClientCnxns")) {
@@ -317,6 +322,8 @@ public class QuorumPeerConfig {
                 sslQuorum = Boolean.parseBoolean(value);
             } else if (key.equals("portUnification")){
                 shouldUsePortUnification = Boolean.parseBoolean(value);
+            } else if (key.equals("sslQuorumReloadCertFiles")) {
+                sslQuorumReloadCertFiles = Boolean.parseBoolean(value);
             } else if ((key.startsWith("server.") || key.startsWith("group") || key.startsWith("weight")) && zkProp.containsKey("dynamicConfigFile")) {
                 throw new ConfigException("parameter: " + key + " must be in a separate dynamic config file");
             } else if (key.equals(QuorumAuth.QUORUM_SASL_AUTH_ENABLED)) {
@@ -412,6 +419,13 @@ public class QuorumPeerConfig {
             configureSSLAuth();
         }
 
+        if (observerMasterPort <= 0) {
+            LOG.info("observerMasterPort is not set");
+        } else {
+            this.observerMasterPort = observerMasterPort;
+            LOG.info("observerMasterPort is {}", observerMasterPort);
+        }
+
         if (tickTime == 0) {
             throw new IllegalArgumentException("tickTime is not set");
         }
@@ -451,15 +465,16 @@ public class QuorumPeerConfig {
      *             provider is not configured.
      */
     private void configureSSLAuth() throws ConfigException {
-        ClientX509Util clientX509Util = new ClientX509Util();
-        String sslAuthProp = "zookeeper.authProvider." + System.getProperty(clientX509Util.getSslAuthProviderProperty(), "x509");
-        if (System.getProperty(sslAuthProp) == null) {
-            if ("zookeeper.authProvider.x509".equals(sslAuthProp)) {
-                System.setProperty("zookeeper.authProvider.x509",
-                        "org.apache.zookeeper.server.auth.X509AuthenticationProvider");
-            } else {
-                throw new ConfigException("No auth provider configured for the SSL authentication scheme '"
-                        + System.getProperty(clientX509Util.getSslAuthProviderProperty()) + "'.");
+        try (ClientX509Util clientX509Util = new ClientX509Util()) {
+            String sslAuthProp = "zookeeper.authProvider." + System.getProperty(clientX509Util.getSslAuthProviderProperty(), "x509");
+            if (System.getProperty(sslAuthProp) == null) {
+                if ("zookeeper.authProvider.x509".equals(sslAuthProp)) {
+                    System.setProperty("zookeeper.authProvider.x509",
+                            "org.apache.zookeeper.server.auth.X509AuthenticationProvider");
+                } else {
+                    throw new ConfigException("No auth provider configured for the SSL authentication scheme '"
+                            + System.getProperty(clientX509Util.getSslAuthProviderProperty()) + "'.");
+                }
             }
         }
     }
@@ -754,6 +769,7 @@ public class QuorumPeerConfig {
 
     public InetSocketAddress getClientPortAddress() { return clientPortAddress; }
     public InetSocketAddress getSecureClientPortAddress() { return secureClientPortAddress; }
+    public int getObserverMasterPort() { return observerMasterPort; }
     public File getDataDir() { return dataDir; }
     public File getDataLogDir() { return dataLogDir; }
     public int getTickTime() { return tickTime; }
