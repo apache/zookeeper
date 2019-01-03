@@ -1698,6 +1698,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
                           reportoutputdirectory="${owasp.out.dir}"
                           reportformat="ALL"
                           failBuildOnCVSS="0">
+            <suppressionfile path="${basedir}/owaspSuppressions.xml" />
 
             <fileset dir="${ivy.lib}">
                 <include name="**/*.jar"/>
