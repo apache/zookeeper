@@ -246,5 +246,5 @@ if(WANT_CPPUNIT)
   add_test(NAME zktest_runner COMMAND zktest)
   set_property(TEST zktest_runner PROPERTY ENVIRONMENT
     "ZKROOT=${CMAKE_CURRENT_SOURCE_DIR}/../.."
-    "CLASSPATH=$CLASSPATH:$CLOVER_HOME/lib/clover.jar")
+    "CLASSPATH=$CLASSPATH:$CLOVER_HOME/lib/clover*.jar")
 endif()

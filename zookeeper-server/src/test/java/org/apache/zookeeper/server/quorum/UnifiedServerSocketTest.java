@@ -114,6 +114,7 @@ public class UnifiedServerSocketTest extends BaseX509ParameterizedTestCase {
     @After
     public void tearDown() throws Exception {
         x509TestContext.clearSystemProperties(x509Util);
+        x509Util.close();
     }
 
     private static void forceClose(Socket s) {

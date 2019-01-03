@@ -171,6 +171,7 @@ public class UnifiedServerSocketModeDetectionTest extends ZKTestCase {
         forceClose(clientSocket);
         workerPool.shutdown();
         workerPool.awaitTermination(1000, TimeUnit.MILLISECONDS);
+        x509Util.close();
     }
 
     @Test

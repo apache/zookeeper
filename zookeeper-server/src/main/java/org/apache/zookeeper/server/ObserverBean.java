@@ -20,6 +20,7 @@ package org.apache.zookeeper.server;
 
 import org.apache.zookeeper.server.quorum.Observer;
 import org.apache.zookeeper.server.quorum.ObserverMXBean;
+import org.apache.zookeeper.server.quorum.QuorumPeer;
 
 /**
  * ObserverBean
@@ -46,4 +47,17 @@ public class ObserverBean extends ZooKeeperServerBean implements ObserverMXBean{
         return observer.getSocket().toString();
     }
 
+    public String getLearnerMaster() {
+        QuorumPeer.QuorumServer learnerMaster = observer.getCurrentLearnerMaster();
+        if (learnerMaster == null || learnerMaster.addr == null) {
+            return "Unknown";
+        }
+        return learnerMaster.addr.getAddress().getHostAddress() + ":" + learnerMaster.addr.getPort();
+    }
+
+    public void setLearnerMaster(String learnerMaster) {
+        if (!observer.setLearnerMaster(learnerMaster)) {
+            throw new IllegalArgumentException("Not a valid learner master");
+        }
+    }
 }

@@ -43,4 +43,14 @@ public interface FollowerMXBean extends ZooKeeperServerMXBean {
      * @return time taken for leader election in milliseconds.
      */
     public long getElectionTimeTaken();
+
+    /**
+     * @return the size limit in bytes for the observer master commit packet queue
+     */
+    public int getObserverMasterPacketSizeLimit();
+
+    /**
+     * set the size limit in bytes for the observer master commit packet queue
+     */
+    public void setObserverMasterPacketSizeLimit(int sizeLimit);
 }

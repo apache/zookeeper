@@ -87,9 +87,17 @@ public class Learner {
     
     protected static final Logger LOG = LoggerFactory.getLogger(Learner.class);
 
+    /**
+     * Time to wait after connection attempt with the Leader or LearnerMaster before this
+     * Learner tries to connect again.
+     */
+    private static final int leaderConnectDelayDuringRetryMs =
+            Integer.getInteger("zookeeper.leaderConnectDelayDuringRetryMs", 100);
+
     static final private boolean nodelay = System.getProperty("follower.nodelay", "true").equals("true");
     static {
-        LOG.info("TCP NoDelay set to: " + nodelay);
+        LOG.info("leaderConnectDelayDuringRetryMs: {}", leaderConnectDelayDuringRetryMs);
+        LOG.info("TCP NoDelay set to: {}", nodelay);
     }   
     
     final ConcurrentHashMap<Long, ServerCnxn> pendingRevalidations =
@@ -235,9 +243,10 @@ public class Learner {
     }
 
     /**
-     * Establish a connection with the Leader found by findLeader. Retries
-     * until either initLimit time has elapsed or 5 tries have happened. 
-     * @param addr - the address of the Leader to connect to.
+     * Establish a connection with the LearnerMaster found by findLearnerMaster.
+     * Followers only connect to Leaders, Observers can connect to any active LearnerMaster.
+     * Retries until either initLimit time has elapsed or 5 tries have happened.
+     * @param addr - the address of the Peer to connect to.
      * @throws IOException - if the socket connection fails on the 5th attempt
      * <li>if there is an authentication failure while connecting to leader</li>
      * @throws ConnectException
@@ -248,7 +257,7 @@ public class Learner {
         this.sock = createSocket();
 
         int initLimitTime = self.tickTime * self.initLimit;
-        int remainingInitLimitTime = initLimitTime;
+        int remainingInitLimitTime;
         long startNanoTime = nanoTime();
 
         for (int tries = 0; tries < 5; tries++) {
@@ -286,7 +295,7 @@ public class Learner {
                     this.sock = createSocket();
                 }
             }
-            Thread.sleep(1000);
+            Thread.sleep(leaderConnectDelayDuringRetryMs);
         }
 
         self.authLearner.authenticate(sock, hostname);
@@ -309,8 +318,8 @@ public class Learner {
     }
 
     /**
-     * Once connected to the leader, perform the handshake protocol to
-     * establish a following / observing connection. 
+     * Once connected to the leader or learner master, perform the handshake
+     * protocol to establish a following / observing connection.
      * @param pktType
      * @return the zxid the Leader sends for synchronization purposes.
      * @throws IOException
@@ -369,7 +378,8 @@ public class Learner {
     } 
     
     /**
-     * Finally, synchronize our history with the Leader. 
+     * Finally, synchronize our history with the Leader (if Follower)
+     * or the LearnerMaster (if Observer).
      * @param newLeaderZxid
      * @throws IOException
      * @throws InterruptedException

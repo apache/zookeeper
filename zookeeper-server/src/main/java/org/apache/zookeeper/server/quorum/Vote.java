@@ -125,11 +125,48 @@ public class Vote {
             return false;
         }
         Vote other = (Vote) o;
-        return (id == other.id
+
+        if ((state == ServerState.LOOKING) ||
+                (other.state == ServerState.LOOKING)) {
+            return (id == other.id
                     && zxid == other.zxid
                     && electionEpoch == other.electionEpoch
                     && peerEpoch == other.peerEpoch);
-
+        } else {
+            /*
+             * There are two things going on in the logic below:
+             * 
+             * 1. skip comparing the zxid and electionEpoch for votes for servers 
+             *    out of election. 
+             *    
+             *    Need to skip those because they can be inconsistent due to  
+             *    scenarios described in QuorumPeer.updateElectionVote. 
+             *
+             *    And given that only one ensemble can be running at a single point 
+             *    in time and that each epoch is used only once, using only id and 
+             *    epoch to compare the votes is sufficient.
+             *
+             *    {@see https://issues.apache.org/jira/browse/ZOOKEEPER-1805}
+             *
+             * 2. skip comparing peerEpoch if if we're running with mixed ensemble 
+             *    with (version > 0x0) and without the change (version = 0x0) 
+             *    introduced in ZOOKEEPER-1732.
+             *
+             *    {@see https://issues.apache.org/jira/browse/ZOOKEEPER-1732}
+             *
+             *    The server running with and without ZOOKEEPER-1732 will return 
+             *    different peerEpoch. During rolling upgrades, it's possible
+             *    that 2/5 servers are returning epoch 1, while the other 2/5
+             *    are returning epoch 2, the other server need to ignore the 
+             *    peerEpoch to be able to join it.
+             */
+            if ((version > 0x0) ^ (other.version > 0x0)) {
+                return id == other.id;
+            } else {
+                return (id == other.id
+                        && peerEpoch == other.peerEpoch);
+            }
+        }
     }
 
     @Override
