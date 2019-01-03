@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.zookeeper.CreateMode;
 
 import java.util.Collections;
@@ -210,10 +211,11 @@ public enum EphemeralType {
      * @param ttl  ttl
      * @throws IllegalArgumentException if the ttl is not valid for the mode
      */
+    @SuppressFBWarnings(value = "RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT",
+            justification = "toEphemeralOwner may throw IllegalArgumentException")
     public static void validateTTL(CreateMode mode, long ttl) {
         if (mode.isTTL()) {
-            // nothing to do in 3.5 was:
-            // TTL.toEphemeralOwner(ttl);
+            TTL.toEphemeralOwner(ttl);
         } else if (ttl >= 0) {
             throw new IllegalArgumentException("ttl not valid for mode: " + mode);
         }
