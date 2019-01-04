@@ -262,7 +262,7 @@ public class UnifiedServerSocket extends ServerSocket {
                 bytesRead = 0;
             }
 
-            if (bytesRead == 5 && SslHandler.isEncrypted(Unpooled.wrappedBuffer(litmus))) {
+            if (bytesRead == litmus.length && SslHandler.isEncrypted(Unpooled.wrappedBuffer(litmus))) {
                 try {
                     sslSocket = x509Util.createSSLSocket(prependableSocket, litmus);
                 } catch (X509Exception e) {
