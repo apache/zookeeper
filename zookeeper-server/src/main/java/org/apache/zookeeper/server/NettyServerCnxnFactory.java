@@ -104,17 +104,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                 LOG.trace("Channel active {}", ctx.channel());
             }
 
-            final Channel channel = ctx.channel();
-            InetAddress addr = ((InetSocketAddress) channel.remoteAddress())
-                    .getAddress();
-            if (maxClientCnxns > 0 && getClientCnxnCount(addr) >= maxClientCnxns) {
-                LOG.warn("Too many connections from {} - max is {}", addr,
-                        maxClientCnxns);
-                channel.close();
-                return;
-            }
-
-            NettyServerCnxn cnxn = new NettyServerCnxn(channel,
+            NettyServerCnxn cnxn = new NettyServerCnxn(ctx.channel(),
                     zkServer, NettyServerCnxnFactory.this);
             ctx.channel().attr(CONNECTION_ATTRIBUTE).set(cnxn);
 
@@ -540,14 +530,6 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                         remoteAddress,
                         cnxn);
             }
-        }
-    }
-
-    private int getClientCnxnCount(InetAddress addr) {
-        synchronized (ipMap) {
-            Set<NettyServerCnxn> s = ipMap.get(addr);
-            if (s == null) return 0;
-            return s.size();
         }
     }
 

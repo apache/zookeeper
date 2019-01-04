@@ -537,6 +537,11 @@ public class NettyServerCnxn extends ServerCnxn {
     }
 
     @Override
+    public long getOutstandingRequests() {
+        return outstandingCount.longValue();
+    }
+
+    @Override
     public void setSessionTimeout(int sessionTimeout) {
         this.sessionTimeout = sessionTimeout;
     }
@@ -578,11 +583,6 @@ public class NettyServerCnxn extends ServerCnxn {
             return null;
         }
         return zkServer.serverStats();
-    }
-
-    @Override
-    public long getOutstandingRequests() {
-        return outstandingCount.longValue();
     }
 
     @Override
