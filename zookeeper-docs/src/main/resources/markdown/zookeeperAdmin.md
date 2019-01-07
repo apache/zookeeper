@@ -1270,7 +1270,7 @@ Moving forward, Four Letter Words will be deprecated, please use
 
     $ echo mntr | nc localhost 2185
                   zk_version  3.4.0
-                  zk_avg_latency  0
+                  zk_avg_latency  0.7561              - be account to four decimal places
                   zk_max_latency  0
                   zk_min_latency  0
                   zk_packets_received 70

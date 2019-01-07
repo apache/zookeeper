@@ -83,12 +83,12 @@ public enum ServerMetrics {
         metric.reset();
     }
 
-    Map<String, Long> getValues() {
+    Map<String, Object> getValues() {
         return metric.values();
     }
 
-    static public Map<String, Long> getAllValues() {
-        LinkedHashMap<String, Long> m = new LinkedHashMap<>();
+    static public Map<String, Object> getAllValues() {
+        LinkedHashMap<String, Object> m = new LinkedHashMap<>();
         for (ServerMetrics metric : ServerMetrics.values()) {
             m.putAll(metric.getValues());
         }

@@ -84,6 +84,10 @@ public class MonitorCommand extends AbstractFourLetterCommand {
     private void print(String key, long number) {
         print(key, "" + number);
     }
+    
+    private void print(String key, double number) {
+        print(key, "" + number);
+    }
 
     private void print(String key, String value) {
         pw.print("zk_");

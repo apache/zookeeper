@@ -23,5 +23,5 @@ import java.util.Map;
 public interface Metric {
     void add(long value);
     void reset();
-    Map<String, Long> values();
+    Map<String, Object> values();
 }
