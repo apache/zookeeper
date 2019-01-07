@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
@@ -36,6 +37,7 @@ import org.apache.zookeeper.data.StatPersisted;
  * array of ACLs, a stat object, and a set of its children's paths.
  * 
  */
+@SuppressFBWarnings("EI_EXPOSE_REP2")
 public class DataNode implements Record {
     /** the data for this datanode */
     byte data[];

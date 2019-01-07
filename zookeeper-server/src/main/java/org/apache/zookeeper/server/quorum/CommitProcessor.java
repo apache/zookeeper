@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -316,6 +317,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
         }
     }
 
+    @SuppressFBWarnings("NN_NAKED_NOTIFY")
     synchronized private void wakeup() {
         notifyAll();
     }
@@ -333,6 +335,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
         }
     }
 
+    @Override
     public void processRequest(Request request) {
         if (stopped) {
             return;

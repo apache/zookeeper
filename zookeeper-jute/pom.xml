@@ -145,6 +145,14 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <!-- spotbugs does not make sense for generated code -->
+        <groupId>com.github.spotbugs</groupId>
+        <artifactId>spotbugs-maven-plugin</artifactId>
+        <configuration>
+            <skip>true</skip>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 
