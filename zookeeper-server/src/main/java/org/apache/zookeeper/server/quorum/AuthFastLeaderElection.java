@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -460,6 +461,8 @@ public class AuthFastLeaderElection implements Election {
                 }
             }
 
+            @SuppressFBWarnings(value = "RV_RETURN_VALUE_IGNORED",
+                    justification = "tryAcquire result not chacked, but it is not an issue")
             private void process(ToSend m) {
                 int attempts = 0;
                 byte zeroes[];

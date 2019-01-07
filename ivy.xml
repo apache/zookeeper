@@ -46,6 +46,7 @@
     <dependency org="org.slf4j" name="slf4j-api" rev="${slf4j.version}"/>
     <dependency org="org.slf4j" name="slf4j-log4j12" rev="${slf4j.version}" transitive="false"/>
     <dependency org="commons-cli" name="commons-cli" rev="${commons-cli.version}" />
+    <dependency org="com.github.spotbugs" name="spotbugs-annotations" rev="${spotbugsannotations.version}" />
   
     <dependency org="org.apache.maven.wagon" name="wagon-http" rev="${wagon-http.version}"
                 conf="mvn-ant-task->default"/>
