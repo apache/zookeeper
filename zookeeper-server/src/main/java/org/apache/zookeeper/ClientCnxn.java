@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -89,6 +90,7 @@ import org.slf4j.LoggerFactory;
  * connected to as needed.
  *
  */
+@SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
 public class ClientCnxn {
     private static final Logger LOG = LoggerFactory.getLogger(ClientCnxn.class);
 
@@ -477,6 +479,7 @@ public class ClientCnxn {
             waitingEvents.add(pair);
         }
 
+       @SuppressFBWarnings("JLM_JSR166_UTILCONCURRENT_MONITORENTER")
        public void queuePacket(Packet packet) {
           if (wasKilled) {
              synchronized (waitingEvents) {
@@ -493,6 +496,7 @@ public class ClientCnxn {
         }
 
         @Override
+        @SuppressFBWarnings("JLM_JSR166_UTILCONCURRENT_MONITORENTER")
         public void run() {
            try {
               isRunning = true;
