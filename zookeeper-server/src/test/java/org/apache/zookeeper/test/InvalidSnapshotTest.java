@@ -41,7 +41,7 @@ public class InvalidSnapshotTest extends ZKTestCase{
             "127.0.0.1:" + PortAssignment.unique();
 
     private static final File testData = new File(
-            System.getProperty("test.data.dir", "build/test/data"));
+            System.getProperty("test.data.dir", "src/test/resources/data"));
 
     /**
      * Verify the LogFormatter by running it on a known file.
