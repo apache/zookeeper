@@ -237,6 +237,18 @@
     </developer>
   </developers>
 
+  <profiles>
+    <profile>
+      <id>full-build</id>
+    </profile>
+    <profile>
+      <id>java-build</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+    </profile>
+  </profiles>
+
   <properties>
     <!-- maven properties -->
     <maven.compiler.source>1.8</maven.compiler.source>
