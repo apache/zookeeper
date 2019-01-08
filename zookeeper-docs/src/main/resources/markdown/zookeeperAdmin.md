@@ -709,6 +709,24 @@ property, when available, is noted below.
     of the observers on restart. Set to "false" to disable this
     feature. Default is "true"
 
+* *fastleader.minNotificationInterval* :
+    (Java system property: **zookeeper.fastleader.minNotificationInterval**)
+    Lower bound for length of time between two consecutive notification
+    checks on the leader election. This interval determines how long a
+    peer waits to check the set of election votes and effects how
+    quickly an election can resolve. The interval follows a backoff
+    strategy from the configured minimum (this) and the configured maximum
+    (fastleader.maxNotificationInterval) for long elections.
+
+* *fastleader.maxNotificationInterval* :
+    (Java system property: **zookeeper.fastleader.maxNotificationInterval**)
+    Upper bound for length of time between two consecutive notification
+    checks on the leader election. This interval determines how long a
+    peer waits to check the set of election votes and effects how
+    quickly an election can resolve. The interval follows a backoff
+    strategy from the configured minimum (fastleader.minNotificationInterval)
+    and the configured maximum (this) for long elections.
+
 <a name="sc_clusterOptions"></a>
 
 #### Cluster Options
