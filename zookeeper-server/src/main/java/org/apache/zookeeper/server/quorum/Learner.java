@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -175,11 +176,11 @@ public class Learner {
         oa.writeInt(request.cxid);
         oa.writeInt(request.type);
         if (request.request != null) {
-            request.request.rewind();
+            ((Buffer)request.request).rewind();
             int len = request.request.remaining();
             byte b[] = new byte[len];
             request.request.get(b);
-            request.request.rewind();
+            ((Buffer)request.request).rewind();
             oa.write(b);
         }
         oa.close();

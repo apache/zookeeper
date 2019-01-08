@@ -26,6 +26,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.nio.Buffer;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.UnresolvedAddressException;
@@ -515,7 +516,7 @@ public class QuorumCnxManager {
          * If sending message to myself, then simply enqueue it (loopback).
          */
         if (this.mySid == sid) {
-             b.position(0);
+            ((Buffer)b).position(0);
              addToRecvQueue(new Message(b.duplicate(), sid));
             /*
              * Otherwise send to the corresponding thread to send.
@@ -877,7 +878,7 @@ public class QuorumCnxManager {
         synchronized void send(ByteBuffer b) throws IOException {
             byte[] msgBytes = new byte[b.capacity()];
             try {
-                b.position(0);
+                ((Buffer)b).position(0);
                 b.get(msgBytes);
             } catch (BufferUnderflowException be) {
                 LOG.error("BufferUnderflowException ", be);

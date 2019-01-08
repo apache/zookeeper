@@ -20,6 +20,7 @@ package org.apache.zookeeper.server;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
 import org.apache.jute.BinaryInputArchive;
@@ -68,7 +69,7 @@ public class ByteBufferInputStream extends InputStream {
         if (newPos > bb.remaining()) {
             n = bb.remaining();
         }
-        bb.position(bb.position() + (int) n);
+        ((Buffer)bb).position(bb.position() + (int) n);
         return n;
     }
 

@@ -21,6 +21,7 @@ package org.apache.zookeeper.server.quorum;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.net.InetSocketAddress;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
@@ -225,12 +226,12 @@ public class CnxManagerTest extends ZKTestCase {
         byte[] msgBytes = new byte[8];
         ByteBuffer msgBuffer = ByteBuffer.wrap(msgBytes);
         msgBuffer.putLong(new Long(2));
-        msgBuffer.position(0);
+        ((Buffer)msgBuffer).position(0);
         sc.write(msgBuffer);
         
         msgBuffer = ByteBuffer.wrap(new byte[4]);
         msgBuffer.putInt(-20);
-        msgBuffer.position(0);
+        ((Buffer)msgBuffer).position(0);
         sc.write(msgBuffer);
         
         Thread.sleep(1000);
@@ -241,7 +242,7 @@ public class CnxManagerTest extends ZKTestCase {
              * detects that the socket is broken.
              */
             for(int i = 0; i < 100; i++){
-                msgBuffer.position(0);
+                ((Buffer)msgBuffer).position(0);
                 sc.write(msgBuffer);
             }
             Assert.fail("Socket has not been closed");

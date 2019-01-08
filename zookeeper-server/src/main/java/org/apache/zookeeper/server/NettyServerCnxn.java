@@ -28,6 +28,7 @@ import java.io.Writer;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.AbstractSet;
 import java.util.HashSet;
@@ -173,7 +174,7 @@ public class NettyServerCnxn extends ServerCnxn {
         }
         byte b[] = baos.toByteArray();
         ByteBuffer bb = ByteBuffer.wrap(b);
-        bb.putInt(b.length - 4).rewind();
+        ((Buffer)bb.putInt(b.length - 4)).rewind();
         sendBuffer(bb);
         if (h.getXid() > 0) {
             // zks cannot be null otherwise we would not have gotten here!
@@ -740,7 +741,7 @@ public class NettyServerCnxn extends ServerCnxn {
                         LOG.trace("message readable " + message.readableBytes()
                                 + " bb len " + bb.remaining() + " " + bb);
                         ByteBuffer dat = bb.duplicate();
-                        dat.flip();
+                        ((Buffer)dat).flip();
                         LOG.trace(Long.toHexString(sessionId)
                                 + " bb 0x"
                                 + ChannelBuffers.hexDump(
@@ -749,17 +750,17 @@ public class NettyServerCnxn extends ServerCnxn {
 
                     if (bb.remaining() > message.readableBytes()) {
                         int newLimit = bb.position() + message.readableBytes();
-                        bb.limit(newLimit);
+                        ((Buffer)bb).limit(newLimit);
                     }
                     message.readBytes(bb);
-                    bb.limit(bb.capacity());
+                    ((Buffer)bb).limit(bb.capacity());
 
                     if (LOG.isTraceEnabled()) {
                         LOG.trace("after readBytes message readable "
                                 + message.readableBytes()
                                 + " bb len " + bb.remaining() + " " + bb);
                         ByteBuffer dat = bb.duplicate();
-                        dat.flip();
+                        ((Buffer)dat).flip();
                         LOG.trace("after readbytes "
                                 + Long.toHexString(sessionId)
                                 + " bb 0x"
@@ -768,7 +769,7 @@ public class NettyServerCnxn extends ServerCnxn {
                     }
                     if (bb.remaining() == 0) {
                         packetReceived();
-                        bb.flip();
+                        ((Buffer)bb).flip();
 
                         ZooKeeperServer zks = this.zkServer;
                         if (zks == null || !zks.isRunning()) {
@@ -794,7 +795,7 @@ public class NettyServerCnxn extends ServerCnxn {
                                 + message.readableBytes()
                                 + " bblenrem " + bbLen.remaining());
                         ByteBuffer dat = bbLen.duplicate();
-                        dat.flip();
+                        ((Buffer)dat).flip();
                         LOG.trace(Long.toHexString(sessionId)
                                 + " bbLen 0x"
                                 + ChannelBuffers.hexDump(
@@ -802,12 +803,12 @@ public class NettyServerCnxn extends ServerCnxn {
                     }
 
                     if (message.readableBytes() < bbLen.remaining()) {
-                        bbLen.limit(bbLen.position() + message.readableBytes());
+                        ((Buffer)bbLen).limit(bbLen.position() + message.readableBytes());
                     }
                     message.readBytes(bbLen);
-                    bbLen.limit(bbLen.capacity());
+                    ((Buffer)bbLen).limit(bbLen.capacity());
                     if (bbLen.remaining() == 0) {
-                        bbLen.flip();
+                        ((Buffer)bbLen).flip();
 
                         if (LOG.isTraceEnabled()) {
                             LOG.trace(Long.toHexString(sessionId)
@@ -821,7 +822,7 @@ public class NettyServerCnxn extends ServerCnxn {
                                     + " bbLen len is " + len);
                         }
 
-                        bbLen.clear();
+                        ((Buffer)bbLen).clear();
                         if (!initialized) {
                             if (checkFourLetterWord(channel, message, len)) {
                                 return;

@@ -23,6 +23,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.HashMap;
@@ -179,7 +180,7 @@ public class LeaderElection implements Election  {
                 HashMap<InetSocketAddress, Vote> votes =
                     new HashMap<InetSocketAddress, Vote>(self.getVotingView().size());
 
-                requestBuffer.clear();
+                ((Buffer)requestBuffer).clear();
                 requestBuffer.putInt(xid);
                 requestPacket.setLength(4);
                 HashSet<Long> heardFrom = new HashSet<Long>();
@@ -206,7 +207,7 @@ public class LeaderElection implements Election  {
                                     + responsePacket.getLength());
                             continue;
                         }
-                        responseBuffer.clear();
+                        ((Buffer)responseBuffer).clear();
                         int recvedXid = responseBuffer.getInt();
                         if (recvedXid != xid) {
                             LOG.error("Got bad xid: expected " + xid

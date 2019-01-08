@@ -22,6 +22,7 @@ import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.TreeMap;
@@ -74,12 +75,12 @@ public class BinaryOutputArchive implements OutputArchive {
      * @return utf8 byte sequence.
      */
     final private ByteBuffer stringToByteBuffer(CharSequence s) {
-        bb.clear();
+        ((Buffer)bb).clear();
         final int len = s.length();
         for (int i = 0; i < len; i++) {
             if (bb.remaining() < 3) {
                 ByteBuffer n = ByteBuffer.allocate(bb.capacity() << 1);
-                bb.flip();
+                ((Buffer)bb).flip();
                 n.put(bb);
                 bb = n;
             }
@@ -95,7 +96,7 @@ public class BinaryOutputArchive implements OutputArchive {
                 bb.put((byte) (0x80 | (c & 0x3f)));
             }
         }
-        bb.flip();
+        ((Buffer)bb).flip();
         return bb;
     }
 

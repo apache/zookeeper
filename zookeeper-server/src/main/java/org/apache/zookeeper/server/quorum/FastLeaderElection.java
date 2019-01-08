@@ -20,6 +20,7 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -147,7 +148,7 @@ public class FastLeaderElection implements Election {
          * Building notification packet to send 
          */
 
-        requestBuffer.clear();
+        ((Buffer)requestBuffer).clear();
         requestBuffer.putInt(state);
         requestBuffer.putLong(leader);
         requestBuffer.putLong(zxid);
@@ -284,7 +285,7 @@ public class FastLeaderElection implements Election {
                                 continue;
                             }
                             boolean backCompatibility = (response.buffer.capacity() == 28);
-                            response.buffer.clear();
+                            ((Buffer)response.buffer).clear();
 
                             // Instantiate Notification and set its attributes
                             Notification n = new Notification();

@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -224,7 +225,7 @@ public class Request {
             try {
                 // make sure we don't mess with request itself
                 ByteBuffer rbuf = request.asReadOnlyBuffer();
-                rbuf.clear();
+                ((Buffer)rbuf).clear();
                 int pathLen = rbuf.getInt();
                 // sanity check
                 if (pathLen >= 0

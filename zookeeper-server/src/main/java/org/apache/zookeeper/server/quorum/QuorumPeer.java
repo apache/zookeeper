@@ -30,6 +30,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -484,7 +485,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                         LOG.warn("Got more than just an xid! Len = "
                                 + packet.getLength());
                     } else {
-                        responseBuffer.clear();
+                        ((Buffer)responseBuffer).clear();
                         responseBuffer.getInt(); // Skip the xid
                         responseBuffer.putLong(myid);
                         Vote current = getCurrentVote();

@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.persistence;
 
+import java.nio.Buffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,7 +76,7 @@ public class FilePadding {
     long padFile(FileChannel fileChannel) throws IOException {
         long newFileSize = calculateFileSizeWithPadding(fileChannel.position(), currentSize, preAllocSize);
         if (currentSize != newFileSize) {
-            fileChannel.write((ByteBuffer) fill.position(0), newFileSize - fill.remaining());
+            fileChannel.write((ByteBuffer) ((Buffer)fill).position(0), newFileSize - fill.remaining());
             currentSize = newFileSize;
         }
         return currentSize;

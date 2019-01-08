@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper;
 
+import java.nio.Buffer;
 import junit.framework.TestCase;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
@@ -58,7 +59,7 @@ public class MultiTransactionRecordTest extends TestCase {
         request.serialize(boa, "request");
         baos.close();
         ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
-        bb.rewind();
+        ((Buffer)bb).rewind();
 
         BinaryInputArchive bia = BinaryInputArchive.getArchive(new ByteBufferInputStream(bb));
         MultiTransactionRecord decodedRequest = new MultiTransactionRecord();

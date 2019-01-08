@@ -28,6 +28,7 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -308,7 +309,7 @@ public class ClientCnxn {
                 baos.close();
                 this.bb = ByteBuffer.wrap(baos.toByteArray());
                 this.bb.putInt(this.bb.capacity() - 4);
-                this.bb.rewind();
+                ((Buffer)this.bb).rewind();
             } catch (IOException e) {
                 LOG.warn("Ignoring unexpected exception", e);
             }

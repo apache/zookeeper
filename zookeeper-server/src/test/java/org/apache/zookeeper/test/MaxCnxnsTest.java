@@ -21,6 +21,7 @@ package org.apache.zookeeper.test;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -71,7 +72,7 @@ public class MaxCnxnsTest extends ClientBase {
                 baos.close();
                 ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
                 bb.putInt(bb.capacity() - 4);
-                bb.rewind();
+                ((Buffer)bb).rewind();
 
                 /* Send a connect request. Any socket that has been closed (or at least
                  * not added to the cnxn list on the server) will not have any bytes to

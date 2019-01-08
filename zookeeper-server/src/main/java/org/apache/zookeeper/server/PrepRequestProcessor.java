@@ -20,6 +20,7 @@ package org.apache.zookeeper.server;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -453,10 +454,10 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 addChangeRecord(nodeRecord);
                 break;
             case OpCode.createSession:
-                request.request.rewind();
+                ((Buffer)request.request).rewind();
                 int to = request.request.getInt();
                 request.txn = new CreateSessionTxn(to);
-                request.request.rewind();
+                ((Buffer)request.request).rewind();
                 zks.sessionTracker.addSession(request.sessionId, to);
                 zks.setOwner(request.sessionId, request.getOwner());
                 break;
@@ -663,7 +664,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
             StringBuilder sb = new StringBuilder();
             ByteBuffer bb = request.request;
             if(bb != null){
-                bb.rewind();
+                ((Buffer)bb).rewind();
                 while (bb.hasRemaining()) {
                     sb.append(Integer.toHexString(bb.get() & 0xff));
                 }

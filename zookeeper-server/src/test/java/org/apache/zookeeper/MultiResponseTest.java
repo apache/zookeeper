@@ -17,6 +17,7 @@
 
 package org.apache.zookeeper;
 
+import java.nio.Buffer;
 import junit.framework.TestCase;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
@@ -61,7 +62,7 @@ public class MultiResponseTest extends TestCase {
         request.serialize(boa, "result");
         baos.close();
         ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
-        bb.rewind();
+        ((Buffer)bb).rewind();
 
         BinaryInputArchive bia = BinaryInputArchive.getArchive(new ByteBufferInputStream(bb));
         MultiResponse decodedRequest = new MultiResponse();

@@ -25,6 +25,7 @@ import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.CancelledKeyException;
 import java.nio.channels.SelectionKey;
@@ -204,13 +205,13 @@ public class NIOServerCnxn extends ServerCnxn {
 
         if (incomingBuffer.remaining() == 0) { // have we read length bytes?
             packetReceived();
-            incomingBuffer.flip();
+            ((Buffer)incomingBuffer).flip();
             if (!initialized) {
                 readConnectRequest();
             } else {
                 readRequest();
             }
-            lenBuffer.clear();
+            ((Buffer)lenBuffer).clear();
             incomingBuffer = lenBuffer;
         }
     }
@@ -253,9 +254,9 @@ public class NIOServerCnxn extends ServerCnxn {
                 if (incomingBuffer.remaining() == 0) {
                     boolean isPayload;
                     if (incomingBuffer == lenBuffer) { // start of next request
-                        incomingBuffer.flip();
+                        ((Buffer)incomingBuffer).flip();
                         isPayload = readLength(k);
-                        incomingBuffer.clear();
+                        ((Buffer)incomingBuffer).clear();
                     } else {
                         // continuation
                         isPayload = true;
@@ -288,7 +289,7 @@ public class NIOServerCnxn extends ServerCnxn {
                      * send.
                      */
                     ByteBuffer directBuffer = factory.directBuffer;
-                    directBuffer.clear();
+                    ((Buffer)directBuffer).clear();
 
                     for (ByteBuffer b : outgoingBuffers) {
                         if (directBuffer.remaining() < b.remaining()) {
@@ -297,7 +298,7 @@ public class NIOServerCnxn extends ServerCnxn {
                              * small to hold everything, nothing will be copied,
                              * so we've got to slice the buffer if it's too big.
                              */
-                            b = (ByteBuffer) b.slice().limit(
+                            b = (ByteBuffer) ((Buffer)b.slice()).limit(
                                     directBuffer.remaining());
                         }
                         /*
@@ -309,7 +310,7 @@ public class NIOServerCnxn extends ServerCnxn {
                          */
                         int p = b.position();
                         directBuffer.put(b);
-                        b.position(p);
+                        ((Buffer)b).position(p);
                         if (directBuffer.remaining() == 0) {
                             break;
                         }
@@ -318,7 +319,7 @@ public class NIOServerCnxn extends ServerCnxn {
                      * Do the flip: limit becomes position, position gets set to
                      * 0. This sets us up for the write.
                      */
-                    directBuffer.flip();
+                    ((Buffer)directBuffer).flip();
 
                     int sent = sock.write(directBuffer);
                     ByteBuffer bb;
@@ -335,7 +336,7 @@ public class NIOServerCnxn extends ServerCnxn {
                              * We only partially sent this buffer, so we update
                              * the position and exit the loop.
                              */
-                            bb.position(bb.position() + sent);
+                            ((Buffer)bb).position(bb.position() + sent);
                             break;
                         }
                         packetSent();
@@ -923,7 +924,7 @@ public class NIOServerCnxn extends ServerCnxn {
                 throw new IOException("Read error");
             }
 
-            incomingBuffer.flip();
+            ((Buffer)incomingBuffer).flip();
             long traceMask = incomingBuffer.getLong();
             ZooTrace.setTextTraceLevel(traceMask);
             SetTraceMaskCommand setMask = new SetTraceMaskCommand(pwriter, traceMask);
@@ -1126,7 +1127,7 @@ public class NIOServerCnxn extends ServerCnxn {
             }
             byte b[] = baos.toByteArray();
             ByteBuffer bb = ByteBuffer.wrap(b);
-            bb.putInt(b.length - 4).rewind();
+            ((Buffer)bb.putInt(b.length - 4)).rewind();
             sendBuffer(bb);
             if (h.getXid() > 0) {
                 synchronized(this){

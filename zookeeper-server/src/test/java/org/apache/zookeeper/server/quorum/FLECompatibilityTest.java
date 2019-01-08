@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.quorum;
 
 import java.io.File;
 import java.net.InetSocketAddress;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -163,7 +164,7 @@ public class FLECompatibilityTest extends ZKTestCase {
                                 continue;
                             }
                             boolean backCompatibility = (response.buffer.capacity() == 28);
-                            response.buffer.clear();
+                            ((Buffer)response.buffer).clear();
 
                             // State of peer that sent this message
                             QuorumPeer.ServerState ackstate = QuorumPeer.ServerState.LOOKING;
@@ -333,10 +334,10 @@ public class FLECompatibilityTest extends ZKTestCase {
         MockFLEMessengerForward fle = new MockFLEMessengerForward(peer, mng);
         ByteBuffer notBuffer = FastLeaderElection.buildMsg(ServerState.LOOKING.ordinal(), 2, 0x1, 1, 1);
         ByteBuffer buffer = ByteBuffer.allocate( notBuffer.capacity() + 8 );
-        notBuffer.flip();
+        ((Buffer)notBuffer).flip();
         buffer.put(notBuffer);
         buffer.putLong( Long.MAX_VALUE );
-        buffer.flip();
+        ((Buffer)buffer).flip();
         
         fle.manager.recvQueue.add(new Message(buffer, 2));
         Notification n = fle.recvqueue.take();

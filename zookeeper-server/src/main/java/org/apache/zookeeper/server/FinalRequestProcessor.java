@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server;
 
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -295,7 +296,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 lastOp = "SETW";
                 SetWatches setWatches = new SetWatches();
                 // XXX We really should NOT need this!!!!
-                request.request.rewind();
+                ((Buffer)request.request).rewind();
                 ByteBufferInputStream.byteBuffer2Record(request.request, setWatches);
                 long relativeZxid = setWatches.getRelativeZxid();
                 zks.getZKDatabase().setWatches(relativeZxid, 
@@ -372,7 +373,7 @@ public class FinalRequestProcessor implements RequestProcessor {
             LOG.error("Failed to process " + request, e);
             StringBuilder sb = new StringBuilder();
             ByteBuffer bb = request.request;
-            bb.rewind();
+            ((Buffer)bb).rewind();
             while (bb.hasRemaining()) {
                 sb.append(Integer.toHexString(bb.get() & 0xff));
             }

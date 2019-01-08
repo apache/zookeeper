@@ -21,6 +21,7 @@ package org.apache.zookeeper;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -73,7 +74,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
                                 + ", likely server has closed socket");
             }
             if (!incomingBuffer.hasRemaining()) {
-                incomingBuffer.flip();
+                ((Buffer)incomingBuffer).flip();
                 if (incomingBuffer == lenBuffer) {
                     recvCount++;
                     readLength();
@@ -86,13 +87,13 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
                         // outgoing packets waiting in the outgoingQueue can now be sent.
                         enableWrite();
                     }
-                    lenBuffer.clear();
+                    ((Buffer)lenBuffer).clear();
                     incomingBuffer = lenBuffer;
                     updateLastHeard();
                     initialized = true;
                 } else {
                     sendThread.readResponse(incomingBuffer);
-                    lenBuffer.clear();
+                    ((Buffer)lenBuffer).clear();
                     incomingBuffer = lenBuffer;
                     updateLastHeard();
                 }
@@ -295,7 +296,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
         /*
          * Reset incomingBuffer
          */
-        lenBuffer.clear();
+        ((Buffer)lenBuffer).clear();
         incomingBuffer = lenBuffer;
     }
 

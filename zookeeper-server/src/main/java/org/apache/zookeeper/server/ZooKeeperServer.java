@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -680,7 +681,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             }
             baos.close();
             ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
-            bb.putInt(bb.remaining() - 4).rewind();
+            ((Buffer)bb.putInt(bb.remaining() - 4)).rewind();
             cnxn.sendBuffer(bb);    
 
             if (!valid) {
