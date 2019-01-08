@@ -75,7 +75,7 @@ public class Zab1_0Test {
     private static final Logger LOG = LoggerFactory.getLogger(Zab1_0Test.class);
 
     private static final File testData = new File(
-            System.getProperty("test.data.dir", "build/test/data"));
+            System.getProperty("test.data.dir", "src/test/resources/data"));
 
     private static final class LeadThread extends Thread {
         private final Leader leader;
