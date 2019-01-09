@@ -769,6 +769,11 @@
       zoo_exists() on a node that doesn't exist, there is no
       permission to check.)</para>
 
+      <para><emphasis>ADMIN</emphasis> permission also has a special role in terms of ACLs:
+      in order to retrieve ACLs of a znode user has to have <emphasis>READ</emphasis> 
+      or <emphasis>ADMIN</emphasis> permission, but without <emphasis>ADMIN</emphasis> permission, 
+      digest hash values will be masked out.</para>
+
     <section id="sc_BuiltinACLSchemes">
       <title>Builtin ACL Schemes</title>
 
@@ -885,7 +890,9 @@
             *acl, <emphasis>struct</emphasis> Stat *stat);</para>
       </listitem></itemizedlist>
 
-      <para>This operation returns a node’s ACL info.</para>
+      <para>This operation returns a node’s ACL info. 
+      The node must have READ or ADMIN permission set. 
+      Without ADMIN permission, the digest hash values will be masked out.</para>
 
       <itemizedlist><listitem>
           <para><emphasis>int</emphasis> <emphasis>zoo_set_acl</emphasis>
