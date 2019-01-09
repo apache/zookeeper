@@ -18,7 +18,16 @@
 
 package org.apache.zookeeper.server;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.jute.Record;
+import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.data.Id;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.KeeperException.SessionMovedException;
@@ -32,7 +41,6 @@ import org.apache.zookeeper.OpResult.SetDataResult;
 import org.apache.zookeeper.Watcher.WatcherType;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.OpCode;
-import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.CheckWatchesRequest;
@@ -346,10 +354,35 @@ public class FinalRequestProcessor implements RequestProcessor {
                 GetACLRequest getACLRequest = new GetACLRequest();
                 ByteBufferInputStream.byteBuffer2Record(request.request,
                         getACLRequest);
+                DataNode n = zks.getZKDatabase().getNode(getACLRequest.getPath());
+                if (n == null) {
+                    throw new KeeperException.NoNodeException();
+                }
+                PrepRequestProcessor.checkACL(zks, zks.getZKDatabase().aclForNode(n),
+                        ZooDefs.Perms.READ | ZooDefs.Perms.ADMIN,
+                        request.authInfo);
+
                 Stat stat = new Stat();
                 List<ACL> acl =
-                    zks.getZKDatabase().getACL(getACLRequest.getPath(), stat);
-                rsp = new GetACLResponse(acl, stat);
+                        zks.getZKDatabase().getACL(getACLRequest.getPath(), stat);
+                try {
+                    PrepRequestProcessor.checkACL(zks, zks.getZKDatabase().aclForNode(n),
+                            ZooDefs.Perms.ADMIN,
+                            request.authInfo);
+                    rsp = new GetACLResponse(acl, stat);
+                } catch (KeeperException.NoAuthException e) {
+                    List<ACL> acl1 = new ArrayList<ACL>(acl.size());
+                    for (ACL a : acl) {
+                        if ("digest".equals(a.getId().getScheme())) {
+                            Id id = a.getId();
+                            Id id1 = new Id(id.getScheme(), id.getId().replaceAll(":.*", ":x"));
+                            acl1.add(new ACL(a.getPerms(), id1));
+                        } else {
+                            acl1.add(a);
+                        }
+                    }
+                    rsp = new GetACLResponse(acl1, stat);
+                }
                 break;
             }
             case OpCode.getChildren: {
