@@ -103,7 +103,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
         }
     }
 
-    abstract void close();
+    public abstract void close();
 
     public abstract void sendResponse(ReplyHeader h, Record r,
             String tag, String cacheKey, Stat stat) throws IOException;

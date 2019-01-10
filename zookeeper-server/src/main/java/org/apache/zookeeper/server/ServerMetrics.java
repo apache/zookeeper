@@ -70,7 +70,22 @@ public enum ServerMetrics {
     BYTES_RECEIVED_COUNT(new SimpleCounter("bytes_received_count")),
 
     RESPONSE_PACKET_CACHE_HITS(new SimpleCounter("response_packet_cache_hits")),
-    RESPONSE_PACKET_CACHE_MISSING(new SimpleCounter("response_packet_cache_misses"));
+    RESPONSE_PACKET_CACHE_MISSING(new SimpleCounter("response_packet_cache_misses")),
+    
+    /*
+     * Number of successful matches of expected ensemble name in EnsembleAuthenticationProvider.
+     */
+    ENSEMBLE_AUTH_SUCCESS(new SimpleCounter("ensemble_auth_success")),
+
+    /*
+     * Number of unsuccessful matches of expected ensemble name in EnsembleAuthenticationProvider.
+     */
+    ENSEMBLE_AUTH_FAIL(new SimpleCounter("ensemble_auth_fail")),
+
+    /*
+     * Number of client auth requests with no ensemble set in EnsembleAuthenticationProvider.
+     */
+    ENSEMBLE_AUTH_SKIP(new SimpleCounter("ensemble_auth_skip"));
 
     private final Metric metric;
 
