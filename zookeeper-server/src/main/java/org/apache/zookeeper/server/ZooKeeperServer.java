@@ -946,6 +946,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return limit;
     }
 
+    public static long getSnapSize() {
+        return Long.getLong("zookeeper.snapSize", 4294967296L); // 4GB by default
+    }
+
     public void setServerCnxnFactory(ServerCnxnFactory factory) {
         serverCnxnFactory = factory;
     }
