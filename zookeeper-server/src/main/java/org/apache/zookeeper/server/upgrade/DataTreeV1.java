@@ -521,7 +521,9 @@ public class DataTreeV1 {
             } else {
                 String parentPath = path.substring(0, lastSlash);
                 node.parent = nodes.get(parentPath);
-                node.parent.children.add(path.substring(lastSlash + 1));
+                synchronized(node.parent) {
+                    node.parent.children.add(path.substring(lastSlash + 1));
+                }
                 long eowner = node.stat.getEphemeralOwner();
                 if (eowner != 0) {
                     HashSet<String> list = ephemerals.get(eowner);

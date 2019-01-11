@@ -284,8 +284,11 @@ public class UpgradeSnapShotV1 implements UpgradeSnapShot {
     private void recurseThroughDataTree(DataTree dataTree, String path) {
         if (path == null)
             return;
+        HashSet<String> children;        
         DataNodeV1 oldDataNode = oldDataTree.getNode(path);
-        HashSet<String> children = oldDataNode.children;
+        synchronized (oldDataNode) {
+            children = oldDataNode.children;
+        }
         DataNode parent = null;
         if ("".equals(path)) {
             parent = null;

@@ -704,6 +704,9 @@ public class AuthFastLeaderElection implements Election {
                         LOG.warn("Exception while sending ack: ", e);
                     }
                     break;
+                default:
+                    LOG.warn("unknown type " + m.type);
+                    break;
                 }
             }
         }

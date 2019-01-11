@@ -57,7 +57,7 @@ public class DataNodeV1 implements Record {
      * fully
      * @param children
      */
-    public void setChildren(HashSet<String> children) {
+    public synchronized void setChildren(HashSet<String> children) {
         this.children = children;
     }
     
@@ -65,7 +65,7 @@ public class DataNodeV1 implements Record {
      * convenience methods to get the children
      * @return the children of this datanode
      */
-    public HashSet<String> getChildren() {
+    public synchronized HashSet<String> getChildren() {
         return this.children;
     }
     
