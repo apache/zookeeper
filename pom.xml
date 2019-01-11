@@ -718,7 +718,7 @@
           <artifactId>maven-install-plugin</artifactId>
           <version>3.0.0-M1</version>
         </plugin>
-        </plugin>
+        <plugin>
           <groupId>com.github.spotbugs</groupId>
           <artifactId>spotbugs-maven-plugin</artifactId>
           <version>3.1.8</version>

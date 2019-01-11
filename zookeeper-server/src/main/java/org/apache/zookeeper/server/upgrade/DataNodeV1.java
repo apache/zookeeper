@@ -79,7 +79,7 @@ public class DataNodeV1 implements Record {
 
     HashSet<String> children = new HashSet<String>();
 
-    public void copyStat(Stat to) {
+    public synchronized void copyStat(Stat to) {
         to.setAversion(stat.getAversion());
         to.setCtime(stat.getCtime());
         to.setCversion(stat.getCversion());
@@ -92,7 +92,7 @@ public class DataNodeV1 implements Record {
         to.setNumChildren(children.size());
     }
 
-    public void deserialize(InputArchive archive, String tag)
+    public synchronized void deserialize(InputArchive archive, String tag)
             throws IOException {
         archive.startRecord("node");
         data = archive.readBuffer("data");

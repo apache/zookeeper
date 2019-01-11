@@ -414,7 +414,9 @@ public class DataTreeV1 {
                 killSession(header.getClientId());
                 break;
             case OpCode.error:
-                ErrorTxn errTxn = (ErrorTxn) txn;
+                break;
+            default:
+                debug = "Unknown code " + header.getType();
                 break;
             }
         } catch (KeeperException e) {
@@ -539,10 +541,10 @@ public class DataTreeV1 {
         Set<Long> keys = ephemerals.keySet();
         StringBuilder sb = new StringBuilder("Sessions with Ephemerals ("
                 + keys.size() + "):\n");
-        for (long k : keys) {
-            sb.append("0x" + Long.toHexString(k));
+        for (Map.Entry<Long, HashSet<String>> entry : ephemerals.entrySet()) {
+            sb.append("0x" + Long.toHexString(entry.getKey()));
             sb.append(":\n");
-            HashSet<String> tmp = ephemerals.get(k);
+            HashSet<String> tmp = entry.getValue();
             synchronized(tmp) {
                 for (String path : tmp) {
                     sb.append("\t" + path + "\n");
