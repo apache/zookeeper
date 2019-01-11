@@ -48,9 +48,9 @@ public class ResponseCacheTest extends ClientBase {
     }
 
     private void checkCacheStatus(long expectedHits, long expectedMisses) {
-        Map<String, Long> metrics = ServerMetrics.getAllValues();
-        Assert.assertEquals((Long) expectedHits, metrics.get("response_packet_cache_hits"));
-        Assert.assertEquals((Long) expectedMisses, metrics.get("response_packet_cache_misses"));
+        Map<String, Object> metrics = ServerMetrics.getAllValues();
+        Assert.assertEquals(expectedHits, metrics.get("response_packet_cache_hits"));
+        Assert.assertEquals(expectedMisses, metrics.get("response_packet_cache_misses"));
     }
 
     public void performCacheTest(ZooKeeper zk, String path, boolean useCache) throws Exception {
