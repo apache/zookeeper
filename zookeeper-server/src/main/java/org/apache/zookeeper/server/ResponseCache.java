@@ -22,11 +22,11 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.apache.jute.Record;
 import org.apache.zookeeper.data.Stat;
 
 @SuppressWarnings("serial")
 public class ResponseCache {
+    // Magic number chosen to be "big enough but not too big"
     private static final int DEFAULT_RESPONSE_CACHE_SIZE = 400;
 
     private static class Entry {
@@ -62,18 +62,18 @@ public class ResponseCache {
     }
 
     private static int getResponseCacheSize() {
-        String value = System.getProperty("zookeeper.maxResponseCacheSize");
-        return value == null ? DEFAULT_RESPONSE_CACHE_SIZE : Integer.parseInt(value);
+        return Integer.getInteger("zookeeper.maxResponseCacheSize", DEFAULT_RESPONSE_CACHE_SIZE);
     }
 
     public static boolean isEnabled() {
-        return getResponseCacheSize() != 0;
+        return getResponseCacheSize() > 0;
     }
 
     private static class LRUCache<K, V> extends LinkedHashMap<K, V> {
         private int cacheSize;
 
-        public LRUCache(int cacheSize) {
+        LRUCache(int cacheSize) {
+            super(cacheSize/4);
             this.cacheSize = cacheSize;
         }
 
