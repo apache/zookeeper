@@ -275,6 +275,7 @@
     <kerby.version>1.1.0</kerby.version>
     <bouncycastle.version>1.56</bouncycastle.version>
     <commons-collections.version>3.2.2</commons-collections.version>
+    <spotbugsannotations.version>3.1.8</spotbugsannotations.version>
   </properties>
 
   <dependencyManagement>
@@ -407,6 +408,13 @@
         <artifactId>jline</artifactId>
         <version>${jline.version}</version>
       </dependency>
+      <dependency>
+         <groupId>com.github.spotbugs</groupId>
+         <artifactId>spotbugs-annotations</artifactId>
+         <version>${spotbugsannotations.version}</version>
+         <scope>provided</scope>
+         <optional>true</optional>
+        </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -458,6 +466,14 @@
           <artifactId>clover-maven-plugin</artifactId>
           <version>4.3.1</version>
         </plugin>
+        <plugin>
+          <groupId>com.github.spotbugs</groupId>
+          <artifactId>spotbugs-maven-plugin</artifactId>
+          <version>3.1.8</version>
+          <configuration>
+            <excludeFilterFile>excludeFindBugsFilter.xml</excludeFilterFile>
+          </configuration>
+        </plugin>
       </plugins>
     </pluginManagement>
 
@@ -485,7 +501,11 @@
           </execution>
         </executions>
       </plugin>
-    </plugins>
+      <plugin>
+        <groupId>com.github.spotbugs</groupId>
+        <artifactId>spotbugs-maven-plugin</artifactId>
+      </plugin>
+      </plugins>
   </build>
 
   <reporting>
