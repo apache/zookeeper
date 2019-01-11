@@ -164,6 +164,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         LOG.info(INT_BUFFER_STARTING_SIZE_BYTES + " = " + intBufferStartingSizeBytes);
     }
 
+    // Connection throttling
+    private BlueThrottle connThrottle;
+
     void removeCnxn(ServerCnxn cnxn) {
         zkDb.removeCnxn(cnxn);
     }
@@ -196,12 +199,48 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         setMinSessionTimeout(minSessionTimeout);
         setMaxSessionTimeout(maxSessionTimeout);
         listener = new ZooKeeperServerListenerImpl(this);
+
         readResponseCache = new ResponseCache();
+
+        connThrottle = new BlueThrottle();
+        connThrottle.setMaxTokens(
+            Integer.getInteger("zookeeper.connection_throttle_tokens", 0)
+        );
+        connThrottle.setFillTime(
+            Integer.getInteger("zookeeper.connection_throttle_fill_time", 1)
+        );
+        connThrottle.setFillCount(
+            Integer.getInteger("zookeeper.connection_throttle_fill_count", 1)
+        );
+        connThrottle.setFreezeTime(
+            Integer.getInteger("zookeeper.connection_throttle_freeze_time", -1)
+        );
+        connThrottle.setDropIncrease(
+            getDoubleProp("zookeeper.connection_throttle_drop_increase", 0.02)
+        );
+        connThrottle.setDropDecrease(
+            getDoubleProp("zookeeper.connection_throttle_drop_decrease", 0.002)
+        );
+        connThrottle.setDecreasePoint(
+            getDoubleProp("zookeeper.connection_throttle_decrease_ratio", 0)
+        );
+
         LOG.info("Created server with tickTime " + tickTime
                 + " minSessionTimeout " + getMinSessionTimeout()
                 + " maxSessionTimeout " + getMaxSessionTimeout()
                 + " datadir " + txnLogFactory.getDataDir()
                 + " snapdir " + txnLogFactory.getSnapDir());
+    }
+
+    /* Varation of Integer.getInteger for real number properties */
+    double getDoubleProp(String name, double def) {
+        String val = System.getProperty(name);
+        if(val != null) {
+            return Double.parseDouble(val);
+        }
+        else {
+            return def;
+        }
     }
 
     /**
@@ -217,6 +256,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     public ServerStats serverStats() {
         return serverStats;
+    }
+
+    public BlueThrottle connThrottle() {
+        return connThrottle;
     }
 
     public void dumpConf(PrintWriter pwriter) {
@@ -1043,7 +1086,18 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return zkDb.getEphemerals();
     }
 
-    public void processConnectRequest(ServerCnxn cnxn, ByteBuffer incomingBuffer) throws IOException {
+    public double getConnectionDropChance() {
+        return connThrottle.getDropChance();
+    }
+
+    public void processConnectRequest(ServerCnxn cnxn, ByteBuffer incomingBuffer)
+        throws IOException, ClientCnxnLimitException {
+
+        if (connThrottle.checkLimit(1) == false) {
+            throw new ClientCnxnLimitException();
+        }
+        ServerMetrics.CONNECTION_TOKEN_DEFICIT.add(connThrottle.getDeficit());
+
         BinaryInputArchive bia = BinaryInputArchive.getArchive(new ByteBufferInputStream(incomingBuffer));
         ConnectRequest connReq = new ConnectRequest();
         connReq.deserialize(bia, "connect");
