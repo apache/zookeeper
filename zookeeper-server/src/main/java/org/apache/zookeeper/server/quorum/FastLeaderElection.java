@@ -91,10 +91,10 @@ public class FastLeaderElection implements Election {
     static {
         minNotificationInterval = Integer.getInteger(MIN_NOTIFICATION_INTERVAL,
                 minNotificationInterval);
-        LOG.info(MIN_NOTIFICATION_INTERVAL + "=" + minNotificationInterval);
+        LOG.info("{}={}", MIN_NOTIFICATION_INTERVAL, minNotificationInterval);
         maxNotificationInterval = Integer.getInteger(MAX_NOTIFICATION_INTERVAL,
                 maxNotificationInterval);
-        LOG.info(MAX_NOTIFICATION_INTERVAL + "=" + maxNotificationInterval);
+        LOG.info("{}={}", MAX_NOTIFICATION_INTERVAL, maxNotificationInterval);
     }
 
     /**
