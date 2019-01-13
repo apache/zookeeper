@@ -34,6 +34,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -90,9 +91,12 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                     PortAssignment.unique(),
                     PortAssignment.unique(),
                     CLIENT_PORT_QP2);
-
-        MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection);
-        MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection);
+        Map<String, String> otherConfigs1 = new HashMap<>();
+        otherConfigs1.put("myid", "1");
+        MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection, otherConfigs1);
+        Map<String, String> otherConfigs2 = new HashMap<String, String>();
+        otherConfigs2.put("myid", "2");
+        MainThread q2 = new MainThread(2, CLIENT_PORT_QP2, quorumCfgSection, otherConfigs2);
         q1.start();
         q2.start();
 
@@ -721,6 +725,34 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         }
     }
 
+    /**
+     * test when myid in the zoo.cfg is inconsistent with the id in the myid file under the dateDir
+     * @throws Exception
+     */
+    @Test
+    public void testInconsistentMyId() throws Exception {
+        ClientBase.setupTestEnv();
+        
+        final int CLIENT_PORT_QP1 = PortAssignment.unique();
+        final String configs = "myid = 12\n";
+        String quorumCfgSection = "server.1=127.0.0.1:"
+                + PortAssignment.unique() + ":" + PortAssignment.unique()
+                + "\nserver.2=127.0.0.1:" + PortAssignment.unique() + ":"
+                + PortAssignment.unique();
+        
+        MainThread q1 = new MainThread(1, CLIENT_PORT_QP1, quorumCfgSection,
+                configs);
+        String args[] = new String[1];
+        args[0] = q1.confFile.toString();
+        try {
+            q1.start();
+            q1.main.initializeAndRun(args);
+            Assert.fail("Must throw exception when the server.id in the zoo.cfg is inconsistent with the id in the myid file");
+        } catch (QuorumPeerConfig.ConfigException iae) {
+            // expected
+        }
+    }
+    
     /**
      * Test verifies that the server is able to redefine the min/max session
      * timeouts

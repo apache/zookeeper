@@ -185,7 +185,7 @@ ensemble:
 
 4. Create a configuration file. This file can be called anything.
   Use the following settings as a starting point:
-
+        myid=1
         tickTime=2000
         dataDir=/var/lib/zookeeper/
         clientPort=2181
@@ -200,21 +200,25 @@ ensemble:
   though about a few here:
   Every machine that is part of the ZooKeeper ensemble should know
   about every other machine in the ensemble. You accomplish this with
-  the series of lines of the form **server.id=host:port:port**. The parameters **host** and **port** are straightforward. You attribute the
+  the series of lines of the form **myid=host:port:port**. The parameters **host** and **port** are straightforward.
+  To keep backwards compatibility, you can still attribute the
   server id to each machine by creating a file named
   *myid*, one for each server, which resides in
   that server's data directory, as specified by the configuration file
-  parameter **dataDir**.
-
+  parameter **dataDir**. **IMPORTANT:** In the release of branch 3.5+, we use a new property *myid* in the **zoo.cfg** to
+  substitute for *myid* file. If the unique id is both set in the zoo.cfg and myid file,they must be the same value.
+  this property:myid is a static config,don't change it during runtime.
+  
 5. The myid file
   consists of a single line containing only the text of that machine's
   id. So *myid* of server 1 would contain the text
   "1" and nothing else. The id must be unique within the
   ensemble and should have a value between 1 and 255.
   **IMPORTANT:** if you enable extended features such
-   as TTL Nodes (see below) the id must be between 1
-   and 254 due to internal limitations.
-
+   as TTL Nodes (see below) the id must be between 1 
+   and 254 due to internal limitations. **IMPORTANT:** In the release of branch 3.5+, we use a new property *myid* in the **zoo.cfg** to
+   substitute for *myid* file
+  
 6. Create an initialization marker file *initialize*
   in the same directory as *myid*. This file indicates
   that an empty data directory is expected. When present, an empty data base
@@ -860,7 +864,8 @@ of servers -- that is, when deploying clusters of servers.
     file *myid* in the data directory. That file
     contains the server number, in ASCII, and it should match
     **x** in **server.x** in the left hand side of this
-    setting.
+    setting. **IMPORTANT:** In the release of branch 3.5+, we use a new property *myid* in the **zoo.cfg** to
+    substitute for *myid* file.
     The list of servers that make up ZooKeeper servers that is
     used by the clients must match the list of ZooKeeper servers
     that each ZooKeeper server has.
@@ -1517,7 +1522,7 @@ on a dedicated log devices.
 This directory has two or three files in it:
 
 * *myid* - contains a single integer in
-  human readable ASCII text that represents the server id.
+  human readable ASCII text that represents the server id. **IMPORTANT:** *myid* file is deprecated in the release of branch 3.5+.
 * *initialize* - presence indicates lack of
   data tree is expected. Cleaned up once data tree is created.
 * *snapshot.<zxid>* - holds the fuzzy
@@ -1531,7 +1536,8 @@ the contact information for each server identified by its server id.
 When a ZooKeeper server instance starts, it reads its id from the
 *myid* file and then, using that id, reads from the
 configuration file, looking up the port on which it should
-listen.
+listen. **IMPORTANT:** In the release of branch 3.5+, we use a new property *myid* in the **zoo.cfg** to
+substitute for *myid* file.
 
 The *snapshot* files stored in the data
 directory are fuzzy snapshots in the sense that during the time the

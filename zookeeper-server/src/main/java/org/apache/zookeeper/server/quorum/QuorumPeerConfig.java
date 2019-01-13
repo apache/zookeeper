@@ -250,7 +250,9 @@ public class QuorumPeerConfig {
         for (Entry<Object, Object> entry : zkProp.entrySet()) {
             String key = entry.getKey().toString().trim();
             String value = entry.getValue().toString().trim();
-            if (key.equals("dataDir")) {
+            if (key.equals("myid")) {
+                serverId = Integer.parseInt(value);
+            } else if (key.equals("dataDir")) {
                 dataDir = vff.create(value);
             } else if (key.equals("dataLogDir")) {
                 dataLogDir = vff.create(value);
@@ -701,12 +703,19 @@ public class QuorumPeerConfig {
         return qv;
     }
 
-    private void setupMyId() throws IOException {
+    private void setupMyId() throws IOException, ConfigException {
         File myIdFile = new File(dataDir, "myid");
-        // standalone server doesn't need myid file.
         if (!myIdFile.isFile()) {
+            // only set the myid in the zoo.cfg
+            if (serverId != UNSET_SERVERID) {
+                MDC.put("myid", String.valueOf(serverId));
+                return;
+            }
+            // standalone server doesn't need myid file.
             return;
         }
+        
+        //for backwards compatibility
         BufferedReader br = new BufferedReader(new FileReader(myIdFile));
         String myIdString;
         try {
@@ -714,13 +723,18 @@ public class QuorumPeerConfig {
         } finally {
             br.close();
         }
+        long myid;
         try {
-            serverId = Long.parseLong(myIdString);
-            MDC.put("myid", myIdString);
+            myid = Long.parseLong(myIdString);
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("serverid " + myIdString
                     + " is not a number");
         }
+        if (serverId != UNSET_SERVERID && myid != serverId) {
+            throw new ConfigException("the myid in the zoo.cfg is inconsistent with the id in the myid file");
+        }
+        serverId = myid;
+        MDC.put("myid", myIdString);
     }
 
     private void setupClientPort() throws ConfigException {

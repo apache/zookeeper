@@ -324,7 +324,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
                 ClientBase.waitForServerDown("127.0.0.1:" + CLIENT_PORT,
                         ClientBase.CONNECTION_TIMEOUT));
     }
-
+    
     /**
      * Test verifies that the server shouldn't allow minsessiontimeout >
      * maxsessiontimeout
