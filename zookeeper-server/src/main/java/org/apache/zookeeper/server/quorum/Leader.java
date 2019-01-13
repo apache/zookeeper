@@ -59,6 +59,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthServer;
+import org.apache.zookeeper.server.quorum.QuorumPeer.ZabState;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.server.util.ZxidUtils;
@@ -92,11 +93,16 @@ public class Leader implements LearnerMaster {
     private static final int maxConcurrentSnapshots;
     private static final String MAX_CONCURRENT_SNAPSHOT_TIMEOUT = "zookeeper.leader.maxConcurrentSnapshotTimeout";
     private static final long maxConcurrentSnapshotTimeout;
+    // log ack latency if zxid is a multiple of ackLoggingFrequency. If <=0, disable logging.
+    private static final String ACK_LOGGING_FREQUENCY = "zookeeper.leader.ackLoggingFrequency";
+    private static final int ackLoggingFrequency;
     static {
         maxConcurrentSnapshots = Integer.getInteger(MAX_CONCURRENT_SNAPSHOTS, 10);
         LOG.info(MAX_CONCURRENT_SNAPSHOTS + " = " + maxConcurrentSnapshots);
         maxConcurrentSnapshotTimeout = Long.getLong(MAX_CONCURRENT_SNAPSHOT_TIMEOUT, 5);
         LOG.info(MAX_CONCURRENT_SNAPSHOT_TIMEOUT + " = " + maxConcurrentSnapshotTimeout);
+        ackLoggingFrequency = Integer.getInteger(ACK_LOGGING_FREQUENCY, 1000);
+        LOG.info(ACK_LOGGING_FREQUENCY + " = " + ackLoggingFrequency);
     }
 
     private final LearnerSnapshotThrottler learnerSnapshotThrottler;
@@ -511,6 +517,7 @@ public class Leader implements LearnerMaster {
         zk.registerJMX(new LeaderBean(this, zk), self.jmxLocalPeerBean);
 
         try {
+            self.setZabState(ZabState.DISCOVERY);
             self.tick.set(0);
             zk.loadData();
 
@@ -580,6 +587,7 @@ public class Leader implements LearnerMaster {
 
              waitForEpochAck(self.getId(), leaderStateSummary);
              self.setCurrentEpoch(epoch);
+             self.setZabState(ZabState.SYNCHRONIZATION);
 
              try {
                  waitForNewLeaderAck(self.getId(), zk.getZxid());
@@ -631,6 +639,7 @@ public class Leader implements LearnerMaster {
                 self.setZooKeeperServer(zk);
             }
 
+            self.setZabState(ZabState.BROADCAST);
             self.adminServer.setZooKeeperServer(zk);
 
             // Everything is a go, simply start counting the ticks
@@ -863,6 +872,7 @@ public class Leader implements LearnerMaster {
             informAndActivate(p, designatedLeader);
             //turnOffFollowers();
         } else {
+            p.request.logLatency(ServerMetrics.QUORUM_ACK_LATENCY, null);
             commit(zxid);
             inform(p);
         }
@@ -929,6 +939,10 @@ public class Leader implements LearnerMaster {
             return;
         }
 
+        if (ackLoggingFrequency > 0 && (zxid % ackLoggingFrequency == 0)) {
+            p.request.logLatency(ServerMetrics.ACK_LATENCY, Long.toString(sid));
+        }
+
         p.addAck(sid);
         /*if (LOG.isDebugEnabled()) {
             LOG.debug("Count for zxid: 0x{} is {}",
@@ -939,11 +953,11 @@ public class Leader implements LearnerMaster {
 
         // If p is a reconfiguration, multiple other operations may be ready to be committed,
         // since operations wait for different sets of acks.
-       // Currently we only permit one outstanding reconfiguration at a time
-       // such that the reconfiguration and subsequent outstanding ops proposed while the reconfig is
-       // pending all wait for a quorum of old and new config, so its not possible to get enough acks
-       // for an operation without getting enough acks for preceding ops. But in the future if multiple
-       // concurrent reconfigs are allowed, this can happen and then we need to check whether some pending
+        // Currently we only permit one outstanding reconfiguration at a time
+        // such that the reconfiguration and subsequent outstanding ops proposed while the reconfig is
+        // pending all wait for a quorum of old and new config, so its not possible to get enough acks
+        // for an operation without getting enough acks for preceding ops. But in the future if multiple
+        // concurrent reconfigs are allowed, this can happen and then we need to check whether some pending
         // ops may already have enough acks and can be committed, which is what this code does.
 
         if (hasCommitted && p.request!=null && p.request.getHdr().getType() == OpCode.reconfig){
@@ -1169,6 +1183,7 @@ public class Leader implements LearnerMaster {
             outstandingProposals.put(lastProposed, p);
             sendPacket(pp);
         }
+        ServerMetrics.PROPOSAL_COUNT.add(1);
         return p;
     }
 
@@ -1295,6 +1310,7 @@ public class Leader implements LearnerMaster {
             quitWaitForEpoch = true;
             connectingFollowers.notifyAll();
         }
+        ServerMetrics.QUIT_LEADING_DUE_TO_DISLOYAL_VOTER.add(1);
         LOG.info("Quit leading due to voter changed mind.");
     }
 

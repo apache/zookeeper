@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.lang.Override;
 import java.net.Socket;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -60,6 +61,11 @@ public class LearnerHandlerTest extends ZKTestCase {
 
         protected void startSendingPackets() {
             threadStarted = true;
+        }
+
+        @Override
+        protected boolean shouldSendMarkerPacketForLogging() {
+            return false;
         }
     }
 

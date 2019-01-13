@@ -21,15 +21,19 @@ package org.apache.zookeeper.server.quorum;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import javax.management.JMException;
 
 import org.apache.jute.Record;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -112,6 +116,7 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
             System.exit(ExitCode.UNMATCHED_TXN_COMMIT.getValue());
         }
         Request request = pendingTxns.remove();
+        request.logLatency(ServerMetrics.COMMIT_PROPAGATION_LATENCY, null);
         commitProcessor.commit(request);
     }
 

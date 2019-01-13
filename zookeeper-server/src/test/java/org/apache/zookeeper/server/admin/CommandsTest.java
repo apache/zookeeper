@@ -188,13 +188,52 @@ public class CommandsTest extends ClientBase {
                 new Field("last_client_response_size", Integer.class),
                 new Field("max_client_response_size", Integer.class),
                 new Field("min_client_response_size", Integer.class),
-                new Field("uptime", Long.class),
+                new Field("peer_uptime", Long.class),
                 new Field("global_sessions", Long.class),
-                new Field("local_sessions", Long.class)
+                new Field("local_sessions", Long.class),
+                new Field("data_watch_count", Integer.class),
+                new Field("child_watch_count", Integer.class),
+
+                new Field("request_all_queued", Long.class),
+                new Field("request_all_issued", Long.class),
+                new Field("request_all_complete", Long.class),
+                new Field("request_all_dropped", Long.class),
+                new Field("request_create_session_queued", Long.class),
+                new Field("request_create_session_issued", Long.class),
+                new Field("request_create_session_complete", Long.class),
+                new Field("request_create_session_dropped", Long.class),
+                new Field("request_close_session_queued", Long.class),
+                new Field("request_close_session_issued", Long.class),
+                new Field("request_close_session_complete", Long.class),
+                new Field("request_close_session_dropped", Long.class),
+                new Field("request_write_queued", Long.class),
+                new Field("request_write_issued", Long.class),
+                new Field("request_write_complete", Long.class),
+                new Field("request_write_dropped", Long.class),
+                new Field("request_set_watches_queued", Long.class),
+                new Field("request_set_watches_issued", Long.class),
+                new Field("request_set_watches_complete", Long.class),
+                new Field("request_set_watches_dropped", Long.class),
+                new Field("request_read_queued", Long.class),
+                new Field("request_read_issued", Long.class),
+                new Field("request_read_complete", Long.class),
+                new Field("request_read_dropped", Long.class),
+                new Field("request_sync_queued", Long.class),
+                new Field("request_sync_issued", Long.class),
+                new Field("request_sync_complete", Long.class),
+                new Field("request_sync_dropped", Long.class),
+                new Field("request_auth_queued", Long.class),
+                new Field("request_auth_issued", Long.class),
+                new Field("request_auth_complete", Long.class),
+                new Field("request_auth_dropped", Long.class),
+                new Field("request_other_queued", Long.class),
+                new Field("request_other_issued", Long.class),
+                new Field("request_other_complete", Long.class),
+                new Field("request_other_dropped", Long.class)
         ));
         for (String metric : ServerMetrics.getAllValues().keySet()) {
             if (metric.startsWith("avg_")) {
-                fields.add(new Field(metric, Double.class));  
+                fields.add(new Field(metric, Double.class));
             } else {
                 fields.add(new Field(metric, Long.class));
             }

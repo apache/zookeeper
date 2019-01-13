@@ -59,6 +59,7 @@ import org.apache.zookeeper.proto.SetWatches;
 import org.apache.zookeeper.proto.SyncRequest;
 import org.apache.zookeeper.proto.SyncResponse;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
+import org.apache.zookeeper.server.ServerStats.RequestState;
 import org.apache.zookeeper.server.ZooKeeperServer.ChangeRecord;
 import org.apache.zookeeper.server.quorum.QuorumZooKeeperServer;
 import org.apache.zookeeper.txn.ErrorTxn;
@@ -116,6 +117,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 while (!zks.outstandingChanges.isEmpty()
                        && zks.outstandingChanges.peek().zxid <= zxid) {
                     ChangeRecord cr = zks.outstandingChanges.remove();
+                    ServerMetrics.OUTSTANDING_CHANGES_REMOVED.add(1);
                     if (cr.zxid < zxid) {
                         LOG.warn("Zxid outstanding " + cr.zxid
                                  + " is less than current " + zxid);
@@ -146,21 +148,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 return;
             }
         }
-
-        if (request.getHdr() != null) {
-            /*
-             * Request header is created only by the leader, so this must be
-             * a quorum request. Since we're comparing timestamps across hosts,
-             * this metric may be incorrect. However, it's still a very useful
-             * metric to track in the happy case. If there is clock drift,
-             * the latency can go negative. Note: headers use wall time, not
-             * CLOCK_MONOTONIC.
-             */
-            long propagationLatency = Time.currentWallTime() - request.getHdr().getTime();
-            if (propagationLatency > 0) {
-                ServerMetrics.PROPAGATION_LATENCY.add(propagationLatency);
-            }
-        }
+        request.logLatency(ServerMetrics.PROPAGATION_LATENCY, null);
 
         if (request.cnxn == null) {
             return;
@@ -170,6 +158,7 @@ public class FinalRequestProcessor implements RequestProcessor {
         long lastZxid = zks.getZKDatabase().getDataTreeLastProcessedZxid();
 
         String lastOp = "NA";
+        zks.serverStats().incrementRequestState(request, RequestState.COMPLETE);
         zks.decInProcess();
         Code err = Code.OK;
         Record rsp = null;
@@ -496,8 +485,6 @@ public class FinalRequestProcessor implements RequestProcessor {
         ReplyHeader hdr =
             new ReplyHeader(request.cxid, lastZxid, err.intValue());
 
-        updateStats(request, lastOp, lastZxid);
-
         try {
             if (request.type == OpCode.getData && path != null && rsp != null) {
                 // Serialized read responses could be cached by the connection object.
@@ -518,6 +505,8 @@ public class FinalRequestProcessor implements RequestProcessor {
         } catch (IOException e) {
             LOG.error("FIXMSG",e);
         }
+
+        updateStats(request, lastOp, lastZxid);
     }
 
     private boolean closeSession(ServerCnxnFactory serverCnxnFactory, long sessionId) {

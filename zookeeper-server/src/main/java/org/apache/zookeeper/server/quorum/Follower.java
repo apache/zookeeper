@@ -27,6 +27,7 @@ import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerMetrics;
+import org.apache.zookeeper.server.quorum.QuorumPeer.ZabState;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.util.SerializeUtils;
@@ -77,6 +78,7 @@ public class Follower extends Learner{
         self.end_fle = 0;
         fzk.registerJMX(new FollowerBean(this, zk), self.jmxLocalPeerBean);
         try {
+            self.setZabState(ZabState.DISCOVERY);
             QuorumServer leaderServer = findLeader();
             try {
                 connectToLeader(leaderServer.addr, leaderServer.hostname);
@@ -93,7 +95,9 @@ public class Follower extends Learner{
                 }
                 long startTime = Time.currentElapsedTime();
                 try {
+                    self.setZabState(ZabState.SYNCHRONIZATION);
                     syncWithLeader(newEpochZxid);
+                    self.setZabState(ZabState.BROADCAST);
                 } finally {
                     long syncTime = Time.currentElapsedTime() - startTime;
                     ServerMetrics.FOLLOWER_SYNC_TIME.add(syncTime);
@@ -119,7 +123,7 @@ public class Follower extends Learner{
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
-    
+
                 // clear pending revalidations
                 pendingRevalidations.clear();
             }
@@ -138,10 +142,11 @@ public class Follower extends Learner{
      */
     protected void processPacket(QuorumPacket qp) throws Exception{
         switch (qp.getType()) {
-        case Leader.PING:            
-            ping(qp);            
+        case Leader.PING:
+            ping(qp);
             break;
-        case Leader.PROPOSAL:           
+        case Leader.PROPOSAL:
+            ServerMetrics.LEARNER_PROPOSAL_RECEIVED_COUNT.add(1);
             TxnHeader hdr = new TxnHeader();
             Record txn = SerializeUtils.deserializeTxn(qp.getData(), hdr);
             if (hdr.getZxid() != lastQueued + 1) {
@@ -151,34 +156,47 @@ public class Follower extends Learner{
                         + Long.toHexString(lastQueued + 1));
             }
             lastQueued = hdr.getZxid();
-            
+
             if (hdr.getType() == OpCode.reconfig){
-               SetDataTxn setDataTxn = (SetDataTxn) txn;       
+               SetDataTxn setDataTxn = (SetDataTxn) txn;
                QuorumVerifier qv = self.configFromString(new String(setDataTxn.getData()));
-               self.setLastSeenQuorumVerifier(qv, true);                               
+               self.setLastSeenQuorumVerifier(qv, true);
             }
-            
+
             fzk.logRequest(hdr, txn);
+            if (hdr != null) {
+                /*
+                 * Request header is created only by the leader, so this is only set
+                 * for quorum packets. If there is a clock drift, the latency may be
+                 * negative. Headers use wall time, not CLOCK_MONOTONIC.
+                 */
+                long now = Time.currentWallTime();
+                long latency = now - hdr.getTime();
+                if (latency > 0) {
+                    ServerMetrics.PROPOSAL_LATENCY.add(latency);
+                }
+            }
 
             if (om != null) {
                 om.proposalReceived(qp);
             }
             break;
         case Leader.COMMIT:
+            ServerMetrics.LEARNER_COMMIT_RECEIVED_COUNT.add(1);
             fzk.commit(qp.getZxid());
             if (om != null) {
                 om.proposalCommitted(qp.getZxid());
             }
             break;
-            
+
         case Leader.COMMITANDACTIVATE:
            // get the new configuration from the request
            Request request = fzk.pendingTxns.element();
-           SetDataTxn setDataTxn = (SetDataTxn) request.getTxn();                                                                                                      
-           QuorumVerifier qv = self.configFromString(new String(setDataTxn.getData()));                                
- 
+           SetDataTxn setDataTxn = (SetDataTxn) request.getTxn();
+           QuorumVerifier qv = self.configFromString(new String(setDataTxn.getData()));
+
            // get new designated leader from (current) leader's message
-           ByteBuffer buffer = ByteBuffer.wrap(qp.getData());    
+           ByteBuffer buffer = ByteBuffer.wrap(qp.getData());
            long suggestedLeaderId = buffer.getLong();
            final long zxid = qp.getZxid();
            boolean majorChange =
@@ -224,7 +242,7 @@ public class Follower extends Learner{
         }
         return -1;
     }
-    
+
     /**
      * The zxid of the last operation queued
      * @return zxid
@@ -238,7 +256,7 @@ public class Follower extends Learner{
     }
 
     @Override
-    public void shutdown() {    
+    public void shutdown() {
         LOG.info("shutdown called", new Exception("shutdown Follower"));
         super.shutdown();
     }

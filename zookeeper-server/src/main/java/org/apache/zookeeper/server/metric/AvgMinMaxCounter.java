@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Generic long counter that keep track of min/max/avg. The counter is
  * thread-safe
  */
-public class AvgMinMaxCounter implements Metric {
+public class AvgMinMaxCounter extends Metric {
     private String name;
     private AtomicLong total = new AtomicLong();
     private AtomicLong min = new AtomicLong(Long.MAX_VALUE);
@@ -111,6 +111,8 @@ public class AvgMinMaxCounter implements Metric {
         m.put("min_" + name, this.getMin());
         m.put("max_" + name, this.getMax());
         m.put("cnt_" + name, this.getCount());
+        m.put("sum_" + name, this.getTotal());
         return m;
     }
+
 }

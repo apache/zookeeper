@@ -253,6 +253,10 @@ public abstract class ServerCnxn implements Stats, Watcher {
     protected final AtomicLong packetsReceived = new AtomicLong();
     protected final AtomicLong packetsSent = new AtomicLong();
 
+    private final AtomicLong writeRequests = new AtomicLong();
+    private final AtomicLong readRequests = new AtomicLong();
+    private final AtomicLong watchesFired = new AtomicLong();
+
     protected long minLatency;
     protected long maxLatency;
     protected String lastOp;
@@ -267,6 +271,9 @@ public abstract class ServerCnxn implements Stats, Watcher {
     public synchronized void resetStats() {
         packetsReceived.set(0);
         packetsSent.set(0);
+        writeRequests.set(0);
+        readRequests.set(0);
+        watchesFired.set(0);
         minLatency = Long.MAX_VALUE;
         maxLatency = 0;
         lastOp = "NA";
@@ -285,6 +292,18 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     protected long incrPacketsSent() {
         return packetsSent.incrementAndGet();
+    }
+
+    void updateRequestMetrics(Request request) {
+        if (request.isQuorum()) {
+            writeRequests.incrementAndGet();
+        } else {
+            readRequests.incrementAndGet();
+        }
+    }
+
+    void incrWatchesFired(WatchedEvent eventType) {
+        watchesFired.incrementAndGet();
     }
 
     protected synchronized void updateStatsForResponse(long cxid, long zxid,
@@ -325,6 +344,12 @@ public abstract class ServerCnxn implements Stats, Watcher {
     public long getPacketsSent() {
         return packetsSent.longValue();
     }
+
+    public long getReadRequests() { return readRequests.longValue(); }
+
+    public long getWriteRequests() { return writeRequests.longValue(); }
+
+    public long getWatchesFired() { return watchesFired.longValue(); }
 
     public synchronized long getMinLatency() {
         return minLatency == Long.MAX_VALUE ? 0 : minLatency;
@@ -426,6 +451,12 @@ public abstract class ServerCnxn implements Stats, Watcher {
                 pwriter.print(getAvgLatency());
                 pwriter.print(",maxlat=");
                 pwriter.print(getMaxLatency());
+                pwriter.print(",writes=");
+                pwriter.print(getWriteRequests());
+                pwriter.print(",reads=");
+                pwriter.print(getReadRequests());
+                pwriter.print(",watches_fired=");
+                pwriter.print(getWatchesFired());
             }
         }
         pwriter.print(")");
@@ -450,6 +481,9 @@ public abstract class ServerCnxn implements Stats, Watcher {
             info.put("min_latency", getMinLatency());
             info.put("avg_latency", getAvgLatency());
             info.put("max_latency", getMaxLatency());
+            info.put("reads", getReadRequests());
+            info.put("writes", getWriteRequests());
+            info.put("watches_fired", getWatchesFired());
         }
         return info;
     }

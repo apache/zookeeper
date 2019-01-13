@@ -19,14 +19,17 @@
 package org.apache.zookeeper.server;
 
 
-
+import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.server.metric.AvgMinMaxCounter;
 import org.apache.zookeeper.server.quorum.BufferStats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicLongArray;
 
 /**
  * Basic Server Statistics
@@ -43,8 +46,48 @@ public class ServerStats {
 
     private final BufferStats clientResponseStats = new BufferStats();
 
+    // Request state counters
+    public enum RequestState {
+        QUEUED(0, "queued"),
+        ISSUED(1, "issued"),
+        COMPLETE(2, "complete"),
+        DROPPED(3, "dropped");
+
+        public int code;
+        public String name;
+
+        RequestState(int code, String name) {
+            this.code = code;
+            this.name = name;
+        }
+    };
+
+    public enum RequestType {
+        ALL(0, "all"),
+        CREATE_SESSION(1, "create_session"),
+        CLOSE_SESSION(2, "close_session"),
+        WRITE(3, "write"),
+        SET_WATCHES(4, "set_watches"),
+        READ(5, "read"),
+        SYNC(6, "sync"),
+        AUTH(7, "auth"),
+        OTHER(8, "other");
+
+        public int code;
+        public String name;
+
+        RequestType(int code, String name) {
+            this.code = code;
+            this.name = name;
+        }
+    };
+
+    public final AtomicLongArray requestStates =
+        new AtomicLongArray(RequestState.values().length * RequestType.values().length);
+
     private final Provider provider;
     private final long startTime = Time.currentElapsedTime();
+    private final AtomicLong authFailed = new AtomicLong();
 
     public interface Provider {
         public long getOutstandingRequests();
@@ -165,9 +208,72 @@ public class ServerStats {
         packetsSent.incrementAndGet();
     }
 
+    private int requestStateIndex(RequestState state, RequestType type) {
+        return (type.code * RequestState.values().length) + state.code;
+    }
+
+    public void incrementRequestState(Request request, RequestState state) {
+        RequestType type;
+        switch (request.type) {
+            case OpCode.createSession:
+                type = RequestType.CREATE_SESSION;
+                break;
+            case OpCode.closeSession:
+                type = RequestType.CLOSE_SESSION;
+                break;
+            case OpCode.multi:
+            case OpCode.create:
+            case OpCode.create2:
+            case OpCode.delete:
+            case OpCode.setData:
+            case OpCode.setACL:
+                type = RequestType.WRITE;
+                break;
+            case OpCode.setWatches:
+                type = RequestType.SET_WATCHES;
+                break;
+            case OpCode.getData:
+            case OpCode.getChildren:
+            case OpCode.getChildren2:
+            case OpCode.exists:
+                type = RequestType.READ;
+                break;
+            case OpCode.sync:
+                type = RequestType.SYNC;
+                break;
+            case OpCode.auth:
+                type = RequestType.AUTH;
+                break;
+            default:
+                type = RequestType.OTHER;
+        }
+        requestStates.incrementAndGet(requestStateIndex(state, RequestType.ALL));
+        requestStates.incrementAndGet(requestStateIndex(state, type));
+    }
+
+    public Map<String, Long> getRequestStates() {
+        LinkedHashMap<String, Long> m = new LinkedHashMap<>();
+        for (RequestType type : RequestType.values()) {
+            for (RequestState state : RequestState.values()) {
+                m.put("request_" + type.name + "_" + state.name,
+                        requestStates.get(requestStateIndex(state, type)));
+            }
+        }
+        return m;
+    }
+
     public void resetRequestCounters(){
         packetsReceived.set(0);
         packetsSent.set(0);
+        authFailed.set(0);
+
+        for (int idx = 0; idx < requestStates.length(); ++idx) {
+            requestStates.set(idx, 0);
+        }
+    }
+
+    public void incrementAuthFailed() {
+        authFailed.incrementAndGet();
     }
 
     public long getFsyncThresholdExceedCount() {
@@ -182,7 +288,7 @@ public class ServerStats {
         fsyncThresholdExceedCount.set(0);
     }
 
-    public void reset() {
+    synchronized public void reset() {
         resetLatency();
         resetRequestCounters();
         clientResponseStats.reset();

@@ -65,6 +65,7 @@ import org.apache.zookeeper.proto.SetSASLResponse;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
 import org.apache.zookeeper.server.RequestProcessor.RequestProcessorException;
 import org.apache.zookeeper.server.ServerCnxn.CloseRequestException;
+import org.apache.zookeeper.server.ServerStats.RequestState;
 import org.apache.zookeeper.server.SessionTracker.Session;
 import org.apache.zookeeper.server.SessionTracker.SessionExpirer;
 import org.apache.zookeeper.server.auth.AuthenticationProvider;
@@ -858,18 +859,22 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             if (validpacket) {
                 firstProcessor.processRequest(si);
                 if (si.cnxn != null) {
+                    serverStats.incrementRequestState(si, RequestState.ISSUED);
                     incInProcess();
                 }
             } else {
                 LOG.warn("Received packet at server of unknown type " + si.type);
+                serverStats.incrementRequestState(si, RequestState.DROPPED);
                 new UnimplementedRequestProcessor().processRequest(si);
             }
         } catch (MissingSessionException e) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Dropping request: " + e.getMessage());
             }
+            serverStats.incrementRequestState(si, RequestState.DROPPED);
         } catch (RequestProcessorException e) {
             LOG.error("Unable to process request:" + e.getMessage(), e);
+            serverStats.incrementRequestState(si, RequestState.DROPPED);
         }
     }
 
@@ -1122,6 +1127,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             }
             cnxn.setSessionId(sessionId);
             reopenSession(cnxn, sessionId, passwd, sessionTimeout);
+            ServerMetrics.CONNECTION_REVALIDATE_COUNT.add(1);
         }
     }
 
@@ -1202,6 +1208,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         } else {
             Request si = new Request(cnxn, cnxn.getSessionId(), h.getXid(),
               h.getType(), incomingBuffer, cnxn.getAuthInfo());
+            cnxn.updateRequestMetrics(si);
             si.setOwner(ServerCnxn.me);
             // Always treat packet from the client as a possible
             // local request.

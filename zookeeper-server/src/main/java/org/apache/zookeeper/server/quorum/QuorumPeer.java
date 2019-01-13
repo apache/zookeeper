@@ -412,6 +412,22 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         LOOKING, FOLLOWING, LEADING, OBSERVING;
     }
 
+    /**
+     * (Used for monitoring) When peer is in non-LOOKING phase, this shows the
+     * current phase of Zab protocol that peer is running.
+     */
+    public enum ZabState {
+        NONE, DISCOVERY, SYNCHRONIZATION, BROADCAST;
+    }
+
+    /**
+     * (Used for monitoring) When peer is in synchronization phase, this shows
+     * which synchronization mechanism is being used
+     */
+    public enum SyncMode {
+        NONE, DIFF, SNAP, TRUNC;
+    }
+
     /*
      * A peer can either be participating, which implies that it is willing to
      * both vote in instances of consensus and to elect or become a Leader, or
@@ -437,6 +453,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      */
     public long start_fle, end_fle; // fle = fast leader election
     public static final String FLE_TIME_UNIT = "MS";
+    protected long unavailableStartTime;
 
     /*
      * Default value of peer is participant
@@ -722,12 +739,56 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     private ServerState state = ServerState.LOOKING;
-    
+
+    private AtomicReference<ZabState> zabState = new AtomicReference<ZabState>(ZabState.NONE);
+    private AtomicReference<SyncMode> syncMode = new AtomicReference<SyncMode>(SyncMode.NONE);
+
     private boolean reconfigFlag = false; // indicates that a reconfig just committed
 
-    public synchronized void setPeerState(ServerState newState){
-        state=newState;
+    public synchronized void setPeerState(ServerState newState) {
+        state = newState;
+        if (newState == ServerState.LOOKING) {
+            setZabState(ZabState.NONE);
+        }
+        else {
+            LOG.info("Peer state changed: " + getDetailedPeerState());
+        }
     }
+
+    public void setZabState(ZabState zabState) {
+        if ((zabState == ZabState.BROADCAST) && (unavailableStartTime != 0)) {
+            long unavailableTime = Time.currentElapsedTime() - unavailableStartTime;
+            ServerMetrics.UNAVAILABLE_TIME.add(unavailableTime);
+            if (getPeerState() == ServerState.LEADING) {
+                ServerMetrics.LEADER_UNAVAILABLE_TIME.add(unavailableTime);
+            }
+            unavailableStartTime = 0;
+        }
+        this.zabState.set(zabState);
+        LOG.info("Peer state changed: " + getDetailedPeerState());
+    }
+
+    public void setSyncMode(SyncMode syncMode) {
+        this.syncMode.set(syncMode);
+        LOG.info("Peer state changed: " + getDetailedPeerState());
+    }
+
+    public ZabState getZabState() {
+        return zabState.get();
+    }
+
+    public SyncMode getSyncMode() {
+        return syncMode.get();
+    }
+
+    public String getDetailedPeerState() {
+        return getPeerState().toString().toLowerCase()
+               + ((getZabState() != ZabState.NONE) ?
+                       " - " + getZabState().toString().toLowerCase() : "")
+               + ((getSyncMode() != SyncMode.NONE) ?
+                       " - " + getSyncMode().toString().toLowerCase() : "");
+    }
+
     public synchronized void reconfigFlagSet(){
        reconfigFlag = true;
     }
@@ -1168,6 +1229,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
              * Main loop
              */
             while (running) {
+                if (unavailableStartTime == 0) {
+                    unavailableStartTime = Time.currentElapsedTime();
+                }
                 switch (getPeerState()) {
                 case LOOKING:
                     LOG.info("LOOKING");

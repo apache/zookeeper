@@ -77,13 +77,20 @@ public class Request {
     public final List<Id> authInfo;
 
     public final long createTime = Time.currentElapsedTime();
+    public long prepQueueStartTime= -1;
+    public long syncQueueStartTime;
+    public long requestThrottleQueueTime;
+
+    public long commitProcQueueStartTime = -1;
+
+    public long commitRecvTime = -1;
 
     private Object owner;
 
     private KeeperException e;
 
     public QuorumVerifier qv = null;
-    
+
     /**
      * If this is a create or close request for a local-only session.
      */
@@ -301,4 +308,27 @@ public class Request {
     public KeeperException getException() {
         return e;
     }
+
+    public void logLatency(ServerMetrics metric, String key, long currentTime) {
+        if (hdr != null) {
+            /* Request header is created by leader. If there is clock drift
+             * latency might be negative. Headers use wall time, not
+             * CLOCK_MONOTONIC.
+             */
+            long latency = currentTime - hdr.getTime();
+            if (latency > 0) {
+                if (key != null) {
+                    metric.add(key, latency);
+                } else {
+                    metric.add(latency);
+                }
+            }
+        }
+    }
+
+    public void logLatency(ServerMetrics metric, String key) {
+        logLatency(metric, key, Time.currentWallTime());
+    }
+
+
 }

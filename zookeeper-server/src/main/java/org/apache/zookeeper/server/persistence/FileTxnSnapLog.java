@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.zookeeper.common.Time;
 import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
@@ -34,6 +35,7 @@ import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerStats;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
 import org.apache.zookeeper.txn.CreateSessionTxn;
@@ -211,7 +213,10 @@ public class FileTxnSnapLog {
      */
     public long restore(DataTree dt, Map<Long, Integer> sessions,
                         PlayBackListener listener) throws IOException {
+        long snapLoadingStartTime = Time.currentElapsedTime();
         long deserializeResult = snapLog.deserialize(dt, sessions);
+        ServerMetrics.STARTUP_SNAP_LOAD_TIME.add(
+                Time.currentElapsedTime() - snapLoadingStartTime);
         FileTxnLog txnLog = new FileTxnLog(dataDir);
         boolean trustEmptyDB;
         File initFile = new File(dataDir.getParent(), "initialize");
@@ -263,6 +268,8 @@ public class FileTxnSnapLog {
         TxnIterator itr = txnLog.read(dt.lastProcessedZxid+1);
         long highestZxid = dt.lastProcessedZxid;
         TxnHeader hdr;
+        int txnLoaded = 0;
+        long startTime = Time.currentElapsedTime();
         try {
             while (true) {
                 // iterator points to
@@ -293,6 +300,12 @@ public class FileTxnSnapLog {
                 itr.close();
             }
         }
+
+        long loadTime = Time.currentElapsedTime() - startTime;
+        LOG.info("{} txns loaded in {} ms", txnLoaded, loadTime);
+        ServerMetrics.STARTUP_TXNS_LOADED.add(txnLoaded);
+        ServerMetrics.STARTUP_TXNS_LOAD_TIME.add(loadTime);
+
         return highestZxid;
     }
 
@@ -322,7 +335,7 @@ public class FileTxnSnapLog {
         FileTxnLog txnLog = new FileTxnLog(dataDir);
         return txnLog.read(zxid, fastForward);
     }
-    
+
     /**
      * process the transaction on the datatree
      * @param hdr the hdr of the transaction
@@ -442,7 +455,7 @@ public class FileTxnSnapLog {
         truncLog.close();
 
         // re-open the txnLog and snapLog
-        // I'd rather just close/reopen this object itself, however that 
+        // I'd rather just close/reopen this object itself, however that
         // would have a big impact outside ZKDatabase as there are other
         // objects holding a reference to this object.
         txnLog = new FileTxnLog(dataDir);

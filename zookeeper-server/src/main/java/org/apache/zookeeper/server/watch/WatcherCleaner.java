@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.server.RateLogger;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.WorkerService;
 import org.apache.zookeeper.server.WorkerService.WorkRequest;
 
@@ -106,6 +107,7 @@ public class WatcherCleaner extends Thread {
                 synchronized(processingCompletedEvent) {
                     processingCompletedEvent.wait(100);
                 }
+                ServerMetrics.ADD_DEAD_WATCHER_STALL_TIME.add(100);
             } catch (InterruptedException e) {
                 LOG.info("Got interrupted while waiting for dead watches " +
                         "queue size");
@@ -115,6 +117,7 @@ public class WatcherCleaner extends Thread {
         synchronized (this) {
             if (deadWatchers.add(watcherBit)) {
                 totalDeadWatchers.incrementAndGet();
+                ServerMetrics.DEAD_WATCHERS_QUEUED.add(1);
                 if (deadWatchers.size() >= watcherCleanThreshold) {
                     synchronized (cleanEvent) {
                         cleanEvent.notifyAll();
@@ -148,10 +151,10 @@ public class WatcherCleaner extends Thread {
             }
 
             synchronized (this) {
-                // Clean the dead watchers need to go through all the current 
-                // watches, which is pretty heavy and may take a second if 
-                // there are millions of watches, that's why we're doing lazily 
-                // batch clean up in a separate thread with a snapshot of the 
+                // Clean the dead watchers need to go through all the current
+                // watches, which is pretty heavy and may take a second if
+                // there are millions of watches, that's why we're doing lazily
+                // batch clean up in a separate thread with a snapshot of the
                 // current dead watchers.
                 final Set<Integer> snapshot = new HashSet<Integer>(deadWatchers);
                 deadWatchers.clear();
@@ -164,6 +167,8 @@ public class WatcherCleaner extends Thread {
                         listener.processDeadWatchers(snapshot);
                         long latency = Time.currentElapsedTime() - startTime;
                         LOG.info("Takes {} to process {} watches", latency, total);
+                        ServerMetrics.DEAD_WATCHERS_CLEANER_LATENCY.add(latency);
+                        ServerMetrics.DEAD_WATCHERS_CLEARED.add(total);
                         totalDeadWatchers.addAndGet(-total);
                         synchronized(processingCompletedEvent) {
                             processingCompletedEvent.notifyAll();

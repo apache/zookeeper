@@ -147,6 +147,8 @@ public class NettyServerCnxn extends ServerCnxn {
                                      + " through " + this);
         }
 
+        incrWatchesFired(event);
+
         // Convert WatchedEvent to a type that can be sent over the wire
         WatcherEvent e = event.getWrapper();
 

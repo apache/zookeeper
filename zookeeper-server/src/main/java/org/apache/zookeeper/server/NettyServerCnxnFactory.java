@@ -267,7 +267,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             }
         }
     }
-    
+
     CnxnChannelHandler channelHandler = new CnxnChannelHandler();
 
     private ServerBootstrap configureBootstrapAllocator(ServerBootstrap bootstrap) {
@@ -448,7 +448,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             notifyAll();
         }
     }
-    
+
     @Override
     public void start() {
         LOG.info("binding to port {}", localAddress);
@@ -458,7 +458,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         localAddress = (InetSocketAddress) parentChannel.localAddress();
         LOG.info("bound to port " + getLocalPort());
     }
-    
+
     public void reconfigure(InetSocketAddress addr) {
        Channel oldChannel = parentChannel;
        try {
@@ -474,7 +474,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
            oldChannel.close();
        }
     }
-    
+
     @Override
     public void startup(ZooKeeperServer zks, boolean startServer)
             throws IOException, InterruptedException {

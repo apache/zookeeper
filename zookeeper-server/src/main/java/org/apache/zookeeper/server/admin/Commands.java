@@ -338,12 +338,15 @@ public class Commands {
             response.put("num_alive_connections", stats.getNumAliveClientConnections());
 
             response.put("outstanding_requests", stats.getOutstandingRequests());
-            response.put("uptime", stats.getUptime());
+            response.put("peer_uptime", stats.getUptime());
 
             response.put("server_state", stats.getServerState());
             response.put("znode_count", zkdb.getNodeCount());
 
             response.put("watch_count", zkdb.getDataTree().getWatchCount());
+            response.put("data_watch_count", zkdb.getDataTree().getDataWatchCount());
+            response.put("child_watch_count", zkdb.getDataTree().getChildWatchCount());
+
             response.put("ephemerals_count", zkdb.getDataTree().getEphemeralsCount());
             response.put("approximate_data_size", zkdb.getDataTree().cachedApproximateDataSize());
 
@@ -362,6 +365,7 @@ public class Commands {
             if (zkServer instanceof QuorumZooKeeperServer) {
                 QuorumPeer peer = ((QuorumZooKeeperServer) zkServer).self;
                 response.put("quorum_size", peer.getQuorumSize());
+                response.put("peer_state", peer.getDetailedPeerState());
             }
 
             if (zkServer instanceof LeaderZooKeeperServer) {
@@ -392,6 +396,7 @@ public class Commands {
             }
 
             response.putAll(ServerMetrics.getAllValues());
+            response.putAll(zkServer.serverStats().getRequestStates());
 
             return response;
 

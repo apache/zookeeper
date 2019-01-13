@@ -26,6 +26,8 @@ import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
+import org.apache.zookeeper.server.quorum.QuorumPeer;
+import org.apache.zookeeper.server.quorum.QuorumZooKeeperServer;
 import org.apache.zookeeper.server.util.OSMXBean;
 
 public class MonitorCommand extends AbstractFourLetterCommand {
@@ -56,9 +58,16 @@ public class MonitorCommand extends AbstractFourLetterCommand {
         print("outstanding_requests", stats.getOutstandingRequests());
 
         print("server_state", stats.getServerState());
+        if (zkServer instanceof QuorumZooKeeperServer) {
+            QuorumPeer peer = ((QuorumZooKeeperServer) zkServer).self;
+            print("peer_state", peer.getDetailedPeerState());
+        }
         print("znode_count", zkdb.getNodeCount());
 
         print("watch_count", zkdb.getDataTree().getWatchCount());
+        print("data_watch_count", zkdb.getDataTree().getDataWatchCount());
+        print("child_watch_count", zkdb.getDataTree().getChildWatchCount());
+
         print("ephemerals_count", zkdb.getDataTree().getEphemeralsCount());
         print("approximate_data_size", zkdb.getDataTree().cachedApproximateDataSize());
 
