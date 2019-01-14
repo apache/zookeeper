@@ -95,6 +95,10 @@ public class ClientSSLTest extends QuorumPeerTestBase {
             mt[i].start();
         }
 
+        // Add some timing margin for the quorum to elect a leader
+        // (without this margin, timeouts have been observed in parallel test runs)
+        ClientBase.waitForServerUp("127.0.0.1:" + clientPorts[0], 2 * TIMEOUT);
+
         // Servers have been set up. Now go test if secure connection is successful.
         for (int i = 0; i < SERVER_COUNT; i++) {
             Assert.assertTrue("waiting for server " + i + " being up",
