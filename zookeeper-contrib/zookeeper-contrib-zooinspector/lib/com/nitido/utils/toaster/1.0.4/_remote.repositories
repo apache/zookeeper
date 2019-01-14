@@ -1,0 +1,4 @@
+#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
+#Mon Jan 14 12:22:09 CET 2019
+toaster-1.0.4.jar>=
+toaster-1.0.4.pom>=
