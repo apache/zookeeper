@@ -38,7 +38,15 @@
     <rat.version>0.6</rat.version>
     <commons-lang.version>2.4</commons-lang.version>
     <guava.version>18.0</guava.version>
+    <toaster.version>1.0.4</toaster.version>
   </properties>
+
+  <repositories>
+    <repository>
+      <id>local-contrib-repo</id>
+      <url>file://${basedir}/lib</url>
+    </repository>
+  </repositories>
 
   <dependencies>
     <dependency>
@@ -97,32 +105,8 @@
     <dependency>
       <groupId>com.nitido.utils</groupId>
       <artifactId>toaster</artifactId>
-      <version>1.0.4</version>
+      <version>${toaster.version}</version>
     </dependency>
   </dependencies>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-install-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>initialize</phase>
-            <goals>
-              <goal>install-file</goal>
-            </goals>
-            <configuration>
-              <groupId>com.nitido.utils</groupId>
-              <artifactId>toaster</artifactId>
-              <version>1.0.4</version>
-              <packaging>jar</packaging>
-              <file>${basedir}/lib/jtoaster-1.0.4.jar</file>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
 
 </project>
