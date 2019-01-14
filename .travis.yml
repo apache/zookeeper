@@ -9,7 +9,7 @@ jobs:
   include:
   - stage: test
     jdk: openjdk11
-    script: mvn verify -Dmaven.test.redirectTestOutputToFile=true
+    script: mvn verify -Dmaven.test.redirectTestOutputToFile=true -Dsurefire-forkcount=true -Dzookeeper.forceSync=no
 
 branches:
   only:
