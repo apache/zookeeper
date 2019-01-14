@@ -62,7 +62,6 @@
     <module>zookeeper-server</module>
     <module>zookeeper-client</module>
     <module>zookeeper-recipes</module>
-    <module>zookeeper-contrib</module>
   </modules>
 
   <scm>
@@ -243,6 +242,9 @@
   <profiles>
     <profile>
       <id>full-build</id>
+      <modules>
+        <module>zookeeper-contrib</module>
+      </modules>
     </profile>
     <profile>
       <id>java-build</id>
