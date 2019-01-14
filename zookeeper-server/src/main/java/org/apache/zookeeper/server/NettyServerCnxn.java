@@ -39,6 +39,7 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.util.ReferenceCountUtil;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.Record;
+import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.WatcherEvent;
@@ -160,12 +161,14 @@ public class NettyServerCnxn extends ServerCnxn {
     }
 
     @Override
-    public void sendResponse(ReplyHeader h, Record r, String tag)
-            throws IOException {
+    public void sendResponse(ReplyHeader h, Record r, String tag,
+                             String cacheKey, Stat stat) throws IOException {
+        // cacheKey and stat are used in caching, which is not
+        // implemented here. Implementation example can be found in NIOServerCnxn.
         if (closingChannel || !channel.isOpen()) {
             return;
         }
-        super.sendResponse(h, r, tag);
+        sendBuffer(serialize(h, r, tag, cacheKey, stat));
         decrOutstandingAndCheckThrottle(h);
     }
 
@@ -176,12 +179,12 @@ public class NettyServerCnxn extends ServerCnxn {
     }
 
     @Override
-    public void sendBuffer(ByteBuffer sendBuffer) {
-        if (sendBuffer == ServerCnxnFactory.closeConn) {
+    public void sendBuffer(ByteBuffer... buffers) {
+        if (buffers.length == 1 && buffers[0] == ServerCnxnFactory.closeConn) {
             close();
             return;
         }
-        channel.writeAndFlush(Unpooled.wrappedBuffer(sendBuffer)).addListener(f -> {
+        channel.writeAndFlush(Unpooled.wrappedBuffer(buffers)).addListener(f -> {
             if (f.isSuccess()) {
                 packetSent();
             }

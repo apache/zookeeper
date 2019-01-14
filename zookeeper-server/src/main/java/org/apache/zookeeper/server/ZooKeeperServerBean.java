@@ -197,4 +197,14 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
     public int getMaxClientResponseSize() {
         return zks.serverStats().getClientResponseStats().getMaxBufferSize();
     }
+
+    @Override
+    public boolean getResponseCachingEnabled() {
+        return zks.isResponseCachingEnabled();
+    }
+
+    @Override
+    public void setResponseCachingEnabled(boolean isEnabled) {
+        zks.setResponseCachingEnabled(isEnabled);
+    }
 }
