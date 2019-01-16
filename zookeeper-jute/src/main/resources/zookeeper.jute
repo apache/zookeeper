@@ -222,6 +222,14 @@ module org.apache.zookeeper.proto {
         ustring path;
         int type;
     }
+
+    class GetEphemeralsRequest {
+        ustring prefixPath;
+    }
+
+    class GetEphemeralsResponse {
+        vector<ustring> ephemerals;
+    }
 }
 
 module org.apache.zookeeper.server.quorum {

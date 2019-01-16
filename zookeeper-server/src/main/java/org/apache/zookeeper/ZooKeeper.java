@@ -57,6 +57,9 @@ import org.apache.zookeeper.proto.GetChildrenRequest;
 import org.apache.zookeeper.proto.GetChildrenResponse;
 import org.apache.zookeeper.proto.GetDataRequest;
 import org.apache.zookeeper.proto.GetDataResponse;
+import org.apache.zookeeper.proto.GetEphemeralsRequest;
+import org.apache.zookeeper.proto.GetEphemeralsResponse;
+import org.apache.zookeeper.proto.ReconfigRequest;
 import org.apache.zookeeper.proto.RemoveWatchesRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
@@ -2663,6 +2666,68 @@ public class ZooKeeper implements AutoCloseable {
             Object ctx)
     {
         getChildren(path, watch ? watchManager.defaultWatcher : null, cb, ctx);
+    }
+
+    /**
+     * Synchronously gets all the ephemeral nodes  created by this session.
+     *
+     * @since 3.6.0
+     *
+     */
+    public List<String> getEphemerals()
+        throws KeeperException, InterruptedException {
+        return getEphemerals("/");
+    }
+
+    /**
+     * Synchronously gets all the ephemeral nodes matching prefixPath
+     * created by this session.  If prefixPath is "/" then it returns all
+     * ephemerals
+     *
+     * @since 3.6.0
+     *
+     */
+    public List<String> getEphemerals(String prefixPath)
+        throws KeeperException, InterruptedException {
+        PathUtils.validatePath(prefixPath);
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.getEphemerals);
+        GetEphemeralsRequest request = new GetEphemeralsRequest(prefixPath);
+        GetEphemeralsResponse response = new GetEphemeralsResponse();
+        ReplyHeader r = cnxn.submitRequest(h, request, response, null);
+        if (r.getErr() != 0) {
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()));
+        }
+        return response.getEphemerals();
+    }
+
+    /**
+     * Asynchronously gets all the ephemeral nodes matching prefixPath
+     * created by this session.  If prefixPath is "/" then it returns all
+     * ephemerals
+     *
+     * @since 3.6.0
+     *
+     */
+    public void getEphemerals(String prefixPath, AsyncCallback.EphemeralsCallback cb, Object ctx) {
+        PathUtils.validatePath(prefixPath);
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.getEphemerals);
+        GetEphemeralsRequest request = new GetEphemeralsRequest(prefixPath);
+        GetEphemeralsResponse response = new GetEphemeralsResponse();
+        cnxn.queuePacket(h, new ReplyHeader(), request, response, cb,
+            null, null, ctx, null);
+    }
+
+    /**
+     * Asynchronously gets all the ephemeral nodes created by this session.
+     * ephemerals
+     *
+     * @since 3.6.0
+     *
+     */
+    public void getEphemerals(AsyncCallback.EphemeralsCallback cb, Object ctx) {
+        getEphemerals("/", cb, ctx);
     }
 
     /**

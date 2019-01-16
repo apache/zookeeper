@@ -147,6 +147,7 @@ public class Request {
         case OpCode.getChildren:
         case OpCode.getChildren2:
         case OpCode.getData:
+        case OpCode.getEphemerals:
         case OpCode.multi:
         case OpCode.ping:
         case OpCode.reconfig:
@@ -169,6 +170,7 @@ public class Request {
         case OpCode.getChildren:
         case OpCode.getChildren2:
         case OpCode.getData:
+        case OpCode.getEphemerals:
             return false;
         case OpCode.create:
         case OpCode.create2:
@@ -229,6 +231,8 @@ public class Request {
             return "getChildren";
         case OpCode.getChildren2:
             return "getChildren2";
+        case OpCode.getEphemerals:
+            return "getEphemerals";
         case OpCode.ping:
             return "ping";
         case OpCode.createSession:
