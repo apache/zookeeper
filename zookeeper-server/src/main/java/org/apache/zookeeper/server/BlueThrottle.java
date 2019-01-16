@@ -162,11 +162,11 @@ public class BlueThrottle {
         return decreasePoint;
     }
 
-    public double getDropChance() {
+    public synchronized double getDropChance() {
         return drop;
     }
 
-    public int getDeficit() {
+    public synchronized int getDeficit() {
         return maxTokens - tokens;
     }
 
@@ -199,7 +199,7 @@ public class BlueThrottle {
         return true;
     }
 
-    public boolean checkBlue(long now) {
+    public synchronized boolean checkBlue(long now) {
         int length = maxTokens - tokens;
         int limit = maxTokens;
         long diff = now - lastFreeze;
