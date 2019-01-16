@@ -456,9 +456,9 @@ public class FinalRequestProcessor implements RequestProcessor {
                 if (StringUtils.isBlank(prefixPath) || "/".equals(prefixPath.trim())) {
                     ephemerals.addAll(allEphems);
                 } else {
-                    for (String path: allEphems) {
-                        if(path.startsWith(prefixPath)) {
-                            ephemerals.add(path);
+                    for (String p: allEphems) {
+                        if(p.startsWith(prefixPath)) {
+                            ephemerals.add(p);
                         }
                     }
                 }
