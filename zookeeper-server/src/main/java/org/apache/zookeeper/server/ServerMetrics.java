@@ -67,7 +67,10 @@ public enum ServerMetrics {
     SNAP_COUNT(new SimpleCounter("snap_count")),
     COMMIT_COUNT(new SimpleCounter("commit_count")),
     CONNECTION_REQUEST_COUNT(new SimpleCounter("connection_request_count")),
-    BYTES_RECEIVED_COUNT(new SimpleCounter("bytes_received_count"));
+    BYTES_RECEIVED_COUNT(new SimpleCounter("bytes_received_count")),
+
+    RESPONSE_PACKET_CACHE_HITS(new SimpleCounter("response_packet_cache_hits")),
+    RESPONSE_PACKET_CACHE_MISSING(new SimpleCounter("response_packet_cache_misses"));
 
     private final Metric metric;
 
@@ -83,12 +86,12 @@ public enum ServerMetrics {
         metric.reset();
     }
 
-    Map<String, Long> getValues() {
+    Map<String, Object> getValues() {
         return metric.values();
     }
 
-    static public Map<String, Long> getAllValues() {
-        LinkedHashMap<String, Long> m = new LinkedHashMap<>();
+    static public Map<String, Object> getAllValues() {
+        LinkedHashMap<String, Object> m = new LinkedHashMap<>();
         for (ServerMetrics metric : ServerMetrics.values()) {
             m.putAll(metric.getValues());
         }

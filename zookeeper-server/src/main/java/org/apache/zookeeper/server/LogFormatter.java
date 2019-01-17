@@ -31,6 +31,7 @@ import org.apache.jute.Record;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.zookeeper.ZKUtil;
 import org.apache.zookeeper.server.persistence.FileHeader;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.util.SerializeUtils;
@@ -48,6 +49,13 @@ public class LogFormatter {
             System.err.println("USAGE: LogFormatter log_file");
             System.exit(ExitCode.INVALID_INVOCATION.getValue());
         }
+        
+        String error = ZKUtil.validateFileInput(args[0]);
+        if (null != error) {
+            System.err.println(error);
+            System.exit(ExitCode.INVALID_INVOCATION.getValue());
+        }
+        
         FileInputStream fis = new FileInputStream(args[0]);
         BinaryInputArchive logStream = BinaryInputArchive.getArchive(fis);
         FileHeader fhdr = new FileHeader();

@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -52,6 +53,7 @@ import org.apache.zookeeper.AsyncCallback.Children2Callback;
 import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
 import org.apache.zookeeper.AsyncCallback.Create2Callback;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
+import org.apache.zookeeper.AsyncCallback.EphemeralsCallback;
 import org.apache.zookeeper.AsyncCallback.MultiCallback;
 import org.apache.zookeeper.AsyncCallback.StatCallback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
@@ -77,6 +79,7 @@ import org.apache.zookeeper.proto.GetACLResponse;
 import org.apache.zookeeper.proto.GetChildren2Response;
 import org.apache.zookeeper.proto.GetChildrenResponse;
 import org.apache.zookeeper.proto.GetDataResponse;
+import org.apache.zookeeper.proto.GetEphemeralsResponse;
 import org.apache.zookeeper.proto.GetSASLRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
@@ -97,6 +100,7 @@ import org.slf4j.MDC;
  * connected to as needed.
  *
  */
+@SuppressFBWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
 public class ClientCnxn {
     private static final Logger LOG = LoggerFactory.getLogger(ClientCnxn.class);
 
@@ -479,6 +483,7 @@ public class ClientCnxn {
             waitingEvents.add(new LocalCallback(cb, rc, path, ctx));
         }
 
+       @SuppressFBWarnings("JLM_JSR166_UTILCONCURRENT_MONITORENTER")
        public void queuePacket(Packet packet) {
           if (wasKilled) {
              synchronized (waitingEvents) {
@@ -495,6 +500,7 @@ public class ClientCnxn {
         }
 
         @Override
+        @SuppressFBWarnings("JLM_JSR166_UTILCONCURRENT_MONITORENTER")
         public void run() {
            try {
               isRunning = true;
@@ -553,6 +559,9 @@ public class ClientCnxn {
                     } else if (lcb.cb instanceof StringCallback) {
                         ((StringCallback) lcb.cb).processResult(lcb.rc,
                                 lcb.path, lcb.ctx, null);
+                    } else if (lcb.cb instanceof AsyncCallback.EphemeralsCallback) {
+                        ((AsyncCallback.EphemeralsCallback) lcb.cb).processResult(lcb.rc,
+                              lcb.ctx, null);
                     } else {
                         ((VoidCallback) lcb.cb).processResult(lcb.rc, lcb.path,
                                 lcb.ctx);
@@ -666,7 +675,16 @@ public class ClientCnxn {
                 	  } else {
                 		  cb.processResult(rc, clientPath, p.ctx, null);
                 	  }
-                  }  else if (p.cb instanceof VoidCallback) {
+                  } else if (p.response instanceof GetEphemeralsResponse) {
+                    EphemeralsCallback cb = (EphemeralsCallback) p.cb;
+                    GetEphemeralsResponse rsp = (GetEphemeralsResponse) p.response;
+                    if (rc == 0) {
+                      cb.processResult(rc, p.ctx, rsp.getEphemerals());
+                    } else {
+                      cb.processResult(rc, p.ctx, null);
+                    }
+                  }
+                  else if (p.cb instanceof VoidCallback) {
                       VoidCallback cb = (VoidCallback) p.cb;
                       cb.processResult(rc, clientPath, p.ctx);
                   }

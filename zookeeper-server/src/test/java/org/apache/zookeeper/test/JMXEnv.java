@@ -19,9 +19,12 @@
 package org.apache.zookeeper.test;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import javax.management.MBeanServer;
 import javax.management.MBeanServerConnection;
@@ -318,5 +321,47 @@ public class JMXEnv {
             return true;
         }
         return false;
+    }
+
+    static Pattern standaloneRegEx = Pattern.compile(
+            "^org.apache.ZooKeeperService:name0=StandaloneServer_port-?\\d+$"
+    );
+    static Pattern instanceRegEx = Pattern.compile(
+            "^org.apache.ZooKeeperService:name0=ReplicatedServer_id(\\d+)" +
+            ",name1=replica.(\\d+),name2=(Follower|Leader)$"
+    );
+    static Pattern observerRegEx = Pattern.compile(
+            "^org.apache.ZooKeeperService:name0=ReplicatedServer_id(-?\\d+)" +
+            ",name1=replica.(-?\\d+),name2=(StandaloneServer_port-?\\d+)$"
+    );
+    static List<Pattern> beanPatterns = Arrays.asList(standaloneRegEx, instanceRegEx, observerRegEx);
+
+    public static List<ObjectName> getServerBeans() throws IOException {
+        ArrayList<ObjectName> serverBeans = new ArrayList<>();
+        Set<ObjectName> beans;
+        try {
+            beans = conn().queryNames(
+                    new ObjectName(CommonNames.DOMAIN + ":*"), null);
+        } catch (MalformedObjectNameException e) {
+            throw new RuntimeException(e);
+        }
+        for (ObjectName bean : beans) {
+            String name = bean.toString();
+            LOG.info("bean:" + name);
+            for (Pattern pattern : beanPatterns) {
+                if (pattern.matcher(name).find()) {
+                    serverBeans.add(bean);
+                }
+            }
+        }
+        return serverBeans;
+    }
+
+    public static ObjectName getServerBean() throws Exception {
+        List<ObjectName> serverBeans = getServerBeans();
+        if (serverBeans.size() != 1) {
+            throw new RuntimeException("Unable to find one and only one server bean");
+        }
+        return serverBeans.get(0);
     }
 }

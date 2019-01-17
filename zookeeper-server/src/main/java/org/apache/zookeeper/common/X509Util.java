@@ -65,6 +65,21 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class X509Util implements Closeable, AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(X509Util.class);
 
+    private static final String REJECT_CLIENT_RENEGOTIATION_PROPERTY =
+            "jdk.tls.rejectClientInitiatedRenegotiation";
+    static {
+        // Client-initiated renegotiation in TLS is unsafe and
+        // allows MITM attacks, so we should disable it unless
+        // it was explicitly enabled by the user.
+        // A brief summary of the issue can be found at
+        // https://www.ietf.org/proceedings/76/slides/tls-7.pdf
+        if (System.getProperty(REJECT_CLIENT_RENEGOTIATION_PROPERTY) == null) {
+            LOG.info("Setting -D {}=true to disable client-initiated TLS renegotiation",
+                    REJECT_CLIENT_RENEGOTIATION_PROPERTY);
+            System.setProperty(REJECT_CLIENT_RENEGOTIATION_PROPERTY, Boolean.TRUE.toString());
+        }
+    }
+
     static final String DEFAULT_PROTOCOL = "TLSv1.2";
     private static final String[] DEFAULT_CIPHERS_JAVA8 = {
             "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",

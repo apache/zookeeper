@@ -17,19 +17,6 @@
  */
 package org.apache.zookeeper.common;
 
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.security.Security;
-import java.util.Collection;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLServerSocket;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.X509KeyManager;
-import javax.net.ssl.X509TrustManager;
-
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.server.ServerCnxnFactory;
@@ -39,6 +26,32 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+
+import javax.net.ssl.HandshakeCompletedEvent;
+import javax.net.ssl.HandshakeCompletedListener;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.X509KeyManager;
+import javax.net.ssl.X509TrustManager;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.security.Security;
+import java.util.Collection;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 @RunWith(Parameterized.class)
 public class X509UtilTest extends BaseX509ParameterizedTestCase {
@@ -405,6 +418,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             assertTrue(e.getMessage().contains(clientX509Util.getSslClientContextProperty()));
         }
     }
+
     @Test
     public void testCreateSSLContext_validCustomSSLContextClass() throws X509Exception.SSLContextException {
         ZKConfig zkConfig = new ZKConfig();
@@ -412,6 +426,85 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         zkConfig.setProperty(clientX509Util.getSslClientContextProperty(), ZKTestClientSSLContext.class.getCanonicalName());
         final SSLContext sslContext = clientX509Util.createSSLContext(zkConfig);
         assertNull(sslContext);
+    }
+
+    private static void forceClose(Socket s) {
+        if (s == null || s.isClosed()) {
+            return;
+        }
+        try {
+            s.close();
+        } catch (IOException e) {
+        }
+    }
+
+    private static void forceClose(ServerSocket s) {
+        if (s == null || s.isClosed()) {
+            return;
+        }
+        try {
+            s.close();
+        } catch (IOException e) {
+        }
+    }
+
+    // This test makes sure that client-initiated TLS renegotiation does not
+    // succeed. We explicitly disable it at the top of X509Util.java.
+    @Test(expected = SSLHandshakeException.class)
+    public void testClientRenegotiationFails() throws Throwable {
+        int port = PortAssignment.unique();
+        ExecutorService workerPool = Executors.newCachedThreadPool();
+        final SSLServerSocket listeningSocket = x509Util.createSSLServerSocket();
+        SSLSocket clientSocket = null;
+        SSLSocket serverSocket = null;
+        final AtomicInteger handshakesCompleted = new AtomicInteger(0);
+        try {
+            InetSocketAddress localServerAddress = new InetSocketAddress(
+                    InetAddress.getLoopbackAddress(), port);
+            listeningSocket.bind(localServerAddress);
+            Future<SSLSocket> acceptFuture;
+            acceptFuture = workerPool.submit(new Callable<SSLSocket>() {
+                @Override
+                public SSLSocket call() throws Exception {
+                    SSLSocket sslSocket = (SSLSocket) listeningSocket.accept();
+                    sslSocket.addHandshakeCompletedListener(new HandshakeCompletedListener() {
+                        @Override
+                        public void handshakeCompleted(HandshakeCompletedEvent handshakeCompletedEvent) {
+                            handshakesCompleted.getAndIncrement();
+                        }
+                    });
+                    Assert.assertEquals(1, sslSocket.getInputStream().read());
+                    try {
+                        // 2nd read is after the renegotiation attempt and will fail
+                        sslSocket.getInputStream().read();
+                        return sslSocket;
+                    } catch (Exception e) {
+                        forceClose(sslSocket);
+                        throw e;
+                    }
+                }
+            });
+            clientSocket = x509Util.createSSLSocket();
+            clientSocket.connect(localServerAddress);
+            clientSocket.getOutputStream().write(1);
+            // Attempt to renegotiate after establishing the connection
+            clientSocket.startHandshake();
+            clientSocket.getOutputStream().write(1);
+            // The exception is thrown on the server side, we need to unwrap it
+            try {
+                serverSocket = acceptFuture.get();
+            } catch (ExecutionException e) {
+                throw e.getCause();
+            }
+        } finally {
+            forceClose(serverSocket);
+            forceClose(clientSocket);
+            forceClose(listeningSocket);
+            workerPool.shutdown();
+            // Make sure the first handshake completed and only the second
+            // one failed.
+            Assert.assertEquals(1, handshakesCompleted.get());
+        }
     }
 
     // Warning: this will reset the x509Util

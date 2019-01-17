@@ -34,6 +34,7 @@ import java.util.zip.CheckedInputStream;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.yetus.audience.InterfaceAudience;
+import org.apache.zookeeper.ZKUtil;
 import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.server.persistence.FileSnap;
 import org.apache.zookeeper.server.persistence.Util;
@@ -78,7 +79,13 @@ public class SnapshotFormatter {
             System.err.println("       -json dump znode info in json format");
             System.exit(ExitCode.INVALID_INVOCATION.getValue());
         }
-
+        
+        String error = ZKUtil.validateFileInput(snapshotFile);
+        if (null != error) {
+            System.err.println(error);
+            System.exit(ExitCode.INVALID_INVOCATION.getValue());
+        }
+        
         if (dumpData && dumpJson) {
             System.err.println("Cannot specify both data dump (-d) and json mode (-json) in same call");
             System.exit(ExitCode.INVALID_INVOCATION.getValue());

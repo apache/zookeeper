@@ -41,7 +41,7 @@ public interface ZooKeeperServerMXBean {
     /**
      * @return average request latency in ms
      */
-    public long getAvgRequestLatency();
+    public double getAvgRequestLatency();
     /**
      * @return max request latency in ms
      */
@@ -94,6 +94,9 @@ public interface ZooKeeperServerMXBean {
      * Set maxSessionTimeout of server in milliseconds
      */
     public void setMaxSessionTimeout(int max);
+
+    public boolean getResponseCachingEnabled();
+    public void setResponseCachingEnabled(boolean isEnabled);
 
     /**
      * Reset packet and latency statistics 
