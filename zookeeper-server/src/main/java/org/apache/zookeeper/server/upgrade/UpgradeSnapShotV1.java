@@ -266,13 +266,11 @@ public class UpgradeSnapShotV1 implements UpgradeSnapShot {
      */
     private DataNode convertDataNode(DataTree dt, DataNode parent, 
             DataNodeV1 oldDataNode) {
-        synchronized (oldDataNode) {
-            StatPersisted stat = convertStat(oldDataNode.stat);
-            DataNode dataNode =  new DataNode(parent, oldDataNode.data,
-                    dt.getACL(oldDataNode), stat);
-            dataNode.setChildren(oldDataNode.children);
-            return dataNode;
-        }
+        StatPersisted stat = convertStat(oldDataNode.stat);
+        DataNode dataNode =  new DataNode(parent, oldDataNode.data,
+                dt.getACL(oldDataNode), stat);
+        dataNode.setChildren(oldDataNode.children);
+        return dataNode;
     }
     
     /**
@@ -284,11 +282,8 @@ public class UpgradeSnapShotV1 implements UpgradeSnapShot {
     private void recurseThroughDataTree(DataTree dataTree, String path) {
         if (path == null)
             return;
-        HashSet<String> children;        
         DataNodeV1 oldDataNode = oldDataTree.getNode(path);
-        synchronized (oldDataNode) {
-            children = oldDataNode.children;
-        }
+        HashSet<String> children = oldDataNode.children;
         DataNode parent = null;
         if ("".equals(path)) {
             parent = null;
