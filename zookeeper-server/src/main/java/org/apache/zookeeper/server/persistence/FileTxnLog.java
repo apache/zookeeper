@@ -212,7 +212,7 @@ public class FileTxnLog implements TxnLog {
         prevLogsRunningTotal = size;
     }
 
-    public long getTotalLogSize() {
+    public synchronized long getTotalLogSize() {
         return prevLogsRunningTotal + getCurrentLogSize();
     }
 
