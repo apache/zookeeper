@@ -53,6 +53,7 @@ import java.security.cert.PKIXBuilderParameters;
 import java.security.cert.X509CertSelector;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 /**
  * Utility code for X509 handling
@@ -104,7 +105,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     private String sslTruststoreLocationProperty = getConfigPrefix() + "trustStore.location";
     private String sslTruststorePasswdProperty = getConfigPrefix() + "trustStore.password";
     private String sslTruststoreTypeProperty = getConfigPrefix() + "trustStore.type";
-    private String sslClientContextProperty = getConfigPrefix() + "client.context";
+    private String sslContextSupplierClassProperty = getConfigPrefix() + "context.supplier.class";
     private String sslHostnameVerificationEnabledProperty = getConfigPrefix() + "hostnameVerification";
     private String sslCrlEnabledProperty = getConfigPrefix() + "crl";
     private String sslOcspEnabledProperty = getConfigPrefix() + "ocsp";
@@ -160,8 +161,8 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         return sslTruststoreTypeProperty;
     }
 
-    public String getSslClientContextProperty() {
-        return sslClientContextProperty;
+    public String getSslContextSupplierClassProperty() {
+        return sslContextSupplierClassProperty;
     }
 
     public String getSslHostnameVerificationEnabledProperty() {
@@ -238,18 +239,19 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         return result;
     }
 
+    @SuppressWarnings("unchecked")
     public SSLContext createSSLContext(ZKConfig config) throws SSLContextException {
-        if (config.getProperty(sslClientContextProperty) != null) {
-            LOG.debug("Loading SSLContext from property '" + sslClientContextProperty + "'");
-            String sslClientContextClass = config.getProperty(sslClientContextProperty);
+        if (config.getProperty(sslContextSupplierClassProperty) != null) {
+            LOG.debug("Loading SSLContext supplier from property '" + sslContextSupplierClassProperty + "'");
+            String supplierContextClassName = config.getProperty(sslContextSupplierClassProperty);
             try {
-                Class<?> sslContextClass = Class.forName(sslClientContextClass);
-                ZKClientSSLContext sslContext = (ZKClientSSLContext) sslContextClass.getConstructor().newInstance();
-                return sslContext.getSSLContext();
+                Class<?> sslContextClass = Class.forName(supplierContextClassName);
+                Supplier<SSLContext> sslContextSupplier = (Supplier<SSLContext>) sslContextClass.getConstructor().newInstance();
+                return sslContextSupplier.get();
             } catch (ClassNotFoundException | ClassCastException | NoSuchMethodException | InvocationTargetException |
                     InstantiationException | IllegalAccessException e) {
-                throw new SSLContextException("Could not retrieve the SSLContext from source '" + sslClientContextClass +
-                        "' provided in the property '" + sslClientContextProperty + "'", e);
+                throw new SSLContextException("Could not retrieve the SSLContext from supplier source '" + supplierContextClassName +
+                        "' provided in the property '" + sslContextSupplierClassProperty + "'", e);
             }
         } else {
             return createSSLContextFromConfig(config);

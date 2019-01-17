@@ -40,6 +40,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.util.Collection;
 import java.util.concurrent.Callable;
@@ -48,10 +49,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 @RunWith(Parameterized.class)
 public class X509UtilTest extends BaseX509ParameterizedTestCase {
@@ -406,26 +407,30 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         }
     }
 
-    @Test
-    public void testCreateSSLContext_invalidCustomSSLContextClass() {
+    @Test(expected = X509Exception.SSLContextException.class)
+    public void testCreateSSLContext_invalidCustomSSLContextClass() throws Exception {
         ZKConfig zkConfig = new ZKConfig();
         ClientX509Util clientX509Util = new ClientX509Util();
-        zkConfig.setProperty(clientX509Util.getSslClientContextProperty(), String.class.getCanonicalName());
-        try {
-            clientX509Util.createSSLContext(zkConfig);
-            fail("SSLContextException expected.");
-        } catch (X509Exception.SSLContextException e) {
-            assertTrue(e.getMessage().contains(clientX509Util.getSslClientContextProperty()));
-        }
+        zkConfig.setProperty(clientX509Util.getSslContextSupplierClassProperty(), String.class.getCanonicalName());
+        clientX509Util.createSSLContext(zkConfig);
+    }
+
+    @Test
+    public void testCreateSSLContext_validNullCustomSSLContextClass() throws X509Exception.SSLContextException {
+        ZKConfig zkConfig = new ZKConfig();
+        ClientX509Util clientX509Util = new ClientX509Util();
+        zkConfig.setProperty(clientX509Util.getSslContextSupplierClassProperty(), X509UtilTest.class.getCanonicalName() + "$" + NullSslContextSupplier.class.getSimpleName());
+        final SSLContext sslContext = clientX509Util.createSSLContext(zkConfig);
+        assertNull(sslContext);
     }
 
     @Test
     public void testCreateSSLContext_validCustomSSLContextClass() throws X509Exception.SSLContextException {
         ZKConfig zkConfig = new ZKConfig();
         ClientX509Util clientX509Util = new ClientX509Util();
-        zkConfig.setProperty(clientX509Util.getSslClientContextProperty(), ZKTestClientSSLContext.class.getCanonicalName());
+        zkConfig.setProperty(clientX509Util.getSslContextSupplierClassProperty(), X509UtilTest.class.getCanonicalName() + "$" + SslContextSupplier.class.getSimpleName());
         final SSLContext sslContext = clientX509Util.createSSLContext(zkConfig);
-        assertNull(sslContext);
+        assertNotNull(sslContext);
     }
 
     private static void forceClose(Socket s) {
@@ -513,4 +518,27 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         x509Util.close(); // remember to close old instance before replacing it
         x509Util = new ClientX509Util();
     }
+
+    public static class NullSslContextSupplier implements Supplier<SSLContext> {
+
+        @Override
+        public SSLContext get() {
+            return null;
+        }
+
+    }
+
+    public static class SslContextSupplier implements Supplier<SSLContext> {
+
+        @Override
+        public SSLContext get() {
+            try {
+                return SSLContext.getDefault();
+            } catch (NoSuchAlgorithmException e) {
+                return null;
+            }
+        }
+
+    }
+
 }

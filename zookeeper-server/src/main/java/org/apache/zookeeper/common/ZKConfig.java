@@ -18,6 +18,12 @@
 
 package org.apache.zookeeper.common;
 
+import org.apache.zookeeper.Environment;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+import org.apache.zookeeper.server.util.VerifyingFileFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -25,12 +31,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
-
-import org.apache.zookeeper.Environment;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
-import org.apache.zookeeper.server.util.VerifyingFileFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This class is a base class for the configurations of both client and server.
@@ -127,8 +127,8 @@ public class ZKConfig {
                 System.getProperty(x509Util.getSslTruststorePasswdProperty()));
         properties.put(x509Util.getSslTruststoreTypeProperty(),
                 System.getProperty(x509Util.getSslTruststoreTypeProperty()));
-        properties.put(x509Util.getSslClientContextProperty(),
-                System.getProperty(x509Util.getSslClientContextProperty()));
+        properties.put(x509Util.getSslContextSupplierClassProperty(),
+                System.getProperty(x509Util.getSslContextSupplierClassProperty()));
         properties.put(x509Util.getSslHostnameVerificationEnabledProperty(),
                 System.getProperty(x509Util.getSslHostnameVerificationEnabledProperty()));
         properties.put(x509Util.getSslCrlEnabledProperty(),
