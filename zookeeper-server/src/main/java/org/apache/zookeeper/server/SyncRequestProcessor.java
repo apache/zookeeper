@@ -119,11 +119,12 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
                 if (si == requestOfDeath) {
                     break;
                 }
-                long startProcessTime = Time.currentElapsedTime();
-                ServerMetrics.SYNC_PROCESSOR_REAL_QUEUE_TIME.add(
-                        startProcessTime - si.syncQueueStartTime);
 
                 if (si != null) {
+                    long startProcessTime = Time.currentElapsedTime();
+                    ServerMetrics.SYNC_PROCESSOR_REAL_QUEUE_TIME.add(
+                            startProcessTime - si.syncQueueStartTime);
+
                     // track the number of records written to the log
                     if (zks.getZKDatabase().append(si)) {
                         logCount++;
@@ -165,9 +166,10 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
                     if (toFlush.size() > 1000) {
                         flush(toFlush);
                     }
+                    ServerMetrics.SYNC_PROCESS_TIME.add(
+                            Time.currentElapsedTime() - startProcessTime);
                 }
-                ServerMetrics.SYNC_PROCESS_TIME.add(
-                        Time.currentElapsedTime() - startProcessTime);
+
             }
         } catch (Throwable t) {
             handleException(this.getName(), t);

@@ -163,11 +163,23 @@ public class LearnerHandler extends ZooKeeperThread {
         }
     };
 
-    private class MarkerQuorumPacket extends QuorumPacket {
+    private static class MarkerQuorumPacket extends QuorumPacket {
         long time;
         MarkerQuorumPacket(long time) {
             this.time = time;
         }
+
+        @Override
+        public boolean equals(Object peer_) {
+            return super.equals(peer_);
+        }
+
+        @Override
+        public int hashCode() {
+            return super.hashCode();
+        }
+
+
     };
 
     private SyncLimitCheck syncLimitCheck = new SyncLimitCheck();

@@ -53,8 +53,8 @@ public class ServerStats {
         COMPLETE(2, "complete"),
         DROPPED(3, "dropped");
 
-        public int code;
-        public String name;
+        private final int code;
+        private final String name;
 
         RequestState(int code, String name) {
             this.code = code;
@@ -73,8 +73,8 @@ public class ServerStats {
         AUTH(7, "auth"),
         OTHER(8, "other");
 
-        public int code;
-        public String name;
+        private final int code;
+        private final String name;
 
         RequestType(int code, String name) {
             this.code = code;

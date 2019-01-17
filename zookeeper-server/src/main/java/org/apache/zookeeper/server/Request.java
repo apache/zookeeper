@@ -79,7 +79,6 @@ public class Request {
     public final long createTime = Time.currentElapsedTime();
     public long prepQueueStartTime= -1;
     public long syncQueueStartTime;
-    public long requestThrottleQueueTime;
 
     public long commitProcQueueStartTime = -1;
 
