@@ -61,6 +61,8 @@ public class TraceFormatter {
             return "getChildren";
         case OpCode.getChildren2:
             return "getChildren2";
+        case OpCode.getEphemerals:
+            return "getEphemerals";
         case OpCode.ping:
             return "ping";
         case OpCode.createSession:

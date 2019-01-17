@@ -64,7 +64,7 @@ public class ServerStats {
         return requestLatency.getMin();
     }
 
-    public long getAvgLatency() {
+    public double getAvgLatency() {
         return requestLatency.getAvg();
     }
 

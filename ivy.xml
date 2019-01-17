@@ -46,6 +46,7 @@
     <dependency org="org.slf4j" name="slf4j-api" rev="${slf4j.version}"/>
     <dependency org="org.slf4j" name="slf4j-log4j12" rev="${slf4j.version}" transitive="false"/>
     <dependency org="commons-cli" name="commons-cli" rev="${commons-cli.version}" />
+    <dependency org="com.github.spotbugs" name="spotbugs-annotations" rev="${spotbugsannotations.version}" />
   
     <dependency org="org.apache.maven.wagon" name="wagon-http" rev="${wagon-http.version}"
                 conf="mvn-ant-task->default"/>
@@ -90,8 +91,8 @@
                 rev="${apache-rat-tasks.version}" conf="releaseaudit->default">
         <exclude org="commons-collections" module="commons-collections"/>
     </dependency>
-    <dependency org="commons-lang" name="commons-lang" 
-                rev="${commons-lang.version}" conf="releaseaudit->default"/>
+    <dependency org="commons-lang" name="commons-lang"
+                rev="${commons-lang.version}"/>
     <dependency org="commons-collections" name="commons-collections" 
                 rev="${commons-collections.version}" conf="releaseaudit->default"/>
     <dependency org="org.owasp" name="dependency-check-ant"

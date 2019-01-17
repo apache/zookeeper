@@ -59,7 +59,7 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
         return Version.getFullVersion();
     }
     
-    public long getAvgRequestLatency() {
+    public double getAvgRequestLatency() {
         return zks.serverStats().getAvgLatency();
     }
     
@@ -196,5 +196,15 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
     @Override
     public int getMaxClientResponseSize() {
         return zks.serverStats().getClientResponseStats().getMaxBufferSize();
+    }
+
+    @Override
+    public boolean getResponseCachingEnabled() {
+        return zks.isResponseCachingEnabled();
+    }
+
+    @Override
+    public void setResponseCachingEnabled(boolean isEnabled) {
+        zks.setResponseCachingEnabled(isEnabled);
     }
 }

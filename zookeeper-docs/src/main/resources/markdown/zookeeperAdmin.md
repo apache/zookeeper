@@ -685,6 +685,17 @@ property, when available, is noted below.
     defaults to 1000. This value can only be set as a
     system property.
 
+* *maxResponseCacheSize* :
+    (Java system property: **zookeeper.maxResponseCacheSize**)
+    When set to a positive integer, it determines the size
+    of the cache that stores the serialized form of recently
+    read records. Helps save the serialization cost on
+    popular znodes. The metrics **response_packet_cache_hits**
+    and **response_packet_cache_misses** can be used to tune
+    this value to a given workload. The feature is turned on
+    by default with a value of 400, set to 0 or a negative
+    integer to turn the feature off.
+
 * *autopurge.snapRetainCount* :
     (No Java system property)
     **New in 3.4.0:**
@@ -1270,7 +1281,7 @@ Moving forward, Four Letter Words will be deprecated, please use
 
     $ echo mntr | nc localhost 2185
                   zk_version  3.4.0
-                  zk_avg_latency  0
+                  zk_avg_latency  0.7561              - be account to four decimal places
                   zk_max_latency  0
                   zk_min_latency  0
                   zk_packets_received 70

@@ -17,6 +17,7 @@
  */
 package org.apache.zookeeper;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
@@ -87,6 +88,24 @@ public class ZKUtil {
             //Delete the leaves first and eventually get rid of the root
             zk.delete(tree.get(i), -1, cb, ctx); //Delete all versions of the node with -1.
         }
+    }
+    
+    /**
+     * @param filePath the file path to be validated
+     * @return Returns null if valid otherwise error message
+     */
+    public static String validateFileInput(String filePath) {
+        File file = new File(filePath);
+        if (!file.exists()) {
+            return "File '" + file.getAbsolutePath() + "' does not exist.";
+        }
+        if (!file.canRead()) {
+            return "Read permission is denied on the file '" + file.getAbsolutePath() + "'";
+        }
+        if (file.isDirectory()) {
+            return "'" + file.getAbsolutePath() + "' is a direcory. it must be a file.";
+        }
+        return null;
     }
 
     /**

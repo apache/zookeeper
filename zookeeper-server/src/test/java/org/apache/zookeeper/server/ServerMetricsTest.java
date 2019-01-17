@@ -65,19 +65,19 @@ public class ServerMetricsTest extends ZKTestCase {
         long expectedMax = Arrays.stream(values).max().orElse(0);
         long expectedSum = Arrays.stream(values).sum();
         long expectedCnt = values.length;
-        long expectedAvg = expectedSum / Math.max(1, expectedCnt);
+        double expectedAvg = expectedSum / Math.max(1, expectedCnt);
 
-        Assert.assertEquals(expectedAvg, metric.getAvg());
+        Assert.assertEquals(expectedAvg, metric.getAvg(), (double)200);
         Assert.assertEquals(expectedMin, metric.getMin());
         Assert.assertEquals(expectedMax, metric.getMax());
         Assert.assertEquals(expectedCnt, metric.getCount());
         Assert.assertEquals(expectedSum, metric.getTotal());
 
-        final Map<String, Long> results = metric.values();
+        final Map<String, Object> results = metric.values();
         Assert.assertEquals(expectedMax, (long)results.get("max_test"));
         Assert.assertEquals(expectedMin, (long)results.get("min_test"));
         Assert.assertEquals(expectedCnt, (long)results.get("cnt_test"));
-        Assert.assertEquals(expectedAvg, (long)results.get("avg_test"));
+        Assert.assertEquals(expectedAvg, (double)results.get("avg_test"), (double)200);
 
         metric.reset();
     }
@@ -101,7 +101,7 @@ public class ServerMetricsTest extends ZKTestCase {
         long expectedCount = Arrays.stream(values).sum();
         Assert.assertEquals(expectedCount, metric.getCount());
 
-        final Map<String, Long> results = metric.values();
+        final Map<String, Object> results = metric.values();
         Assert.assertEquals(expectedCount, (long)results.get("test"));
 
         metric.reset();
