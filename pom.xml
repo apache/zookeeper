@@ -281,7 +281,7 @@
     <commons-lang.version>2.4</commons-lang.version>
     <apache-directory-server.version>2.0.0-M15</apache-directory-server.version>
     <apache-directory-api.version>1.0.0-M20</apache-directory-api.version>
-    <spotbugsannotations.version>3.1.8</spotbugsannotations.version>
+    <spotbugsannotations.version>3.1.9</spotbugsannotations.version>
   </properties>
 
   <dependencyManagement>
@@ -721,7 +721,7 @@
         <plugin>
           <groupId>com.github.spotbugs</groupId>
           <artifactId>spotbugs-maven-plugin</artifactId>
-          <version>3.1.8</version>
+          <version>3.1.9</version>
           <configuration>
             <excludeFilterFile>excludeFindBugsFilter.xml</excludeFilterFile>
           </configuration>

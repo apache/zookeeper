@@ -27,7 +27,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
     <!-- Dependency versions                                    -->
     <!-- ====================================================== -->
     <property name="slf4j.version" value="1.7.25"/>
-    <property name="spotbugsannotations.version" value="3.1.8"/>
+    <property name="spotbugsannotations.version" value="3.1.9"/>
 
     <property name="wagon-http.version" value="2.4"/>
     <property name="maven-ant-tasks.version" value="2.1.3"/>
