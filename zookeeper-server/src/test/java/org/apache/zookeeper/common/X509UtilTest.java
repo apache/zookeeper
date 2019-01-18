@@ -51,7 +51,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 @RunWith(Parameterized.class)
@@ -419,18 +419,18 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     public void testCreateSSLContext_validNullCustomSSLContextClass() throws X509Exception.SSLContextException {
         ZKConfig zkConfig = new ZKConfig();
         ClientX509Util clientX509Util = new ClientX509Util();
-        zkConfig.setProperty(clientX509Util.getSslContextSupplierClassProperty(), X509UtilTest.class.getCanonicalName() + "$" + NullSslContextSupplier.class.getSimpleName());
+        zkConfig.setProperty(clientX509Util.getSslContextSupplierClassProperty(), NullSslContextSupplier.class.getName());
         final SSLContext sslContext = clientX509Util.createSSLContext(zkConfig);
         assertNull(sslContext);
     }
 
     @Test
-    public void testCreateSSLContext_validCustomSSLContextClass() throws X509Exception.SSLContextException {
+    public void testCreateSSLContext_validCustomSSLContextClass() throws Exception {
         ZKConfig zkConfig = new ZKConfig();
         ClientX509Util clientX509Util = new ClientX509Util();
-        zkConfig.setProperty(clientX509Util.getSslContextSupplierClassProperty(), X509UtilTest.class.getCanonicalName() + "$" + SslContextSupplier.class.getSimpleName());
+        zkConfig.setProperty(clientX509Util.getSslContextSupplierClassProperty(), SslContextSupplier.class.getName());
         final SSLContext sslContext = clientX509Util.createSSLContext(zkConfig);
-        assertNotNull(sslContext);
+        assertEquals(SSLContext.getDefault(), sslContext);
     }
 
     private static void forceClose(Socket s) {
@@ -535,7 +535,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
             try {
                 return SSLContext.getDefault();
             } catch (NoSuchAlgorithmException e) {
-                return null;
+                throw new RuntimeException(e);
             }
         }
 

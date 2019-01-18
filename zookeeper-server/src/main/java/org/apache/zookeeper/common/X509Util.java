@@ -241,9 +241,11 @@ public abstract class X509Util implements Closeable, AutoCloseable {
 
     @SuppressWarnings("unchecked")
     public SSLContext createSSLContext(ZKConfig config) throws SSLContextException {
-        if (config.getProperty(sslContextSupplierClassProperty) != null) {
-            LOG.debug("Loading SSLContext supplier from property '" + sslContextSupplierClassProperty + "'");
-            String supplierContextClassName = config.getProperty(sslContextSupplierClassProperty);
+        final String supplierContextClassName = config.getProperty(sslContextSupplierClassProperty);
+        if (supplierContextClassName != null) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Loading SSLContext supplier from property '{}'", sslContextSupplierClassProperty);
+            }
             try {
                 Class<?> sslContextClass = Class.forName(supplierContextClassName);
                 Supplier<SSLContext> sslContextSupplier = (Supplier<SSLContext>) sslContextClass.getConstructor().newInstance();
