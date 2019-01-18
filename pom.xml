@@ -469,13 +469,12 @@
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-gpg-plugin</artifactId>
-          <version>1.6</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-release-plugin</artifactId>
           <version>2.5.3</version>
+          <configuration>
+            <releaseProfiles>apache-release</releaseProfiles>
+            <arguments>-Dmaven.test.skip.exec ${arguments}</arguments>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -606,56 +605,19 @@
         <artifactId>maven-assembly-plugin</artifactId>
         <executions>
           <execution>
-            <id>jar</id>
+            <id>source-package</id>
             <phase>package</phase>
             <goals>
-              <goal>single</goal>
+              <goal>
+                single
+              </goal>
             </goals>
             <configuration>
               <descriptors>
-                <descriptor>${project.basedir}/src/assembly/jar.xml</descriptor>
+                <descriptor>${project.basedir}/src/assembly/source-package.xml</descriptor>
               </descriptors>
               <finalName>zookeeper-${project.version}</finalName>
-              <tarLongFileMode>posix</tarLongFileMode>
-              <archive>
-                <manifest>
-                  <mainClass>org.apache.zookeeper.server.quorum.QuorumPeerMain</mainClass>
-                </manifest>
-                <manifestEntries>
-                  <Built-By>${user.name}</Built-By>
-                  <Built-At>${maven.build.timestamp}</Built-At>
-                  <Built-On>${host.name}</Built-On>
-                  <Implementation-Title>org.apache.zookeeper</Implementation-Title>
-                  <Implementation-Version>${project.version}</Implementation-Version>
-                  <Implementation-Vendor>The Apache Software Foundation</Implementation-Vendor>
-                  <!-- The following are OSGi manifest headers -->
-                  <!-- currently hardcoded, when things get more complicated we could use BND
-                  http://www.aqute.biz/Code/Bnd to generate them -->
-                  <Bundle-Vendor>The Apache Software Foundation</Bundle-Vendor>
-                  <Bundle-Name>ZooKeeper Bundle</Bundle-Name>
-                  <Bundle-SymbolicName>org.apache.hadoop.zookeeper</Bundle-SymbolicName>
-                  <Bundle-ManifestVersion>2</Bundle-ManifestVersion>
-                  <Bundle-Version>${project.version}</Bundle-Version>
-                  <Bundle-License>http://www.apache.org/licenses/LICENSE-2.0.txt</Bundle-License>
-                  <Bundle-DocURL>http://hadoop.apache.org/zookeeper</Bundle-DocURL>
-                  <Import-Package>javax.management;resolution:=optional,javax.security.auth.callback,javax.security.auth.login,javax.security.sasl,org.slf4j;version="[1.6,2)",org.jboss.netty.buffer;resolution:=optional;version="[3.2,4)",org.jboss.netty.channel;resolution:=optional;version="[3.2,4)",org.jboss.netty.channel.group;resolution:=optional;version="[3.2,4)",org.jboss.netty.channel.socket.nio;resolution:=optional;version="[3.2,4)",org.osgi.framework;resolution:=optional;version="[1.5,2)",org.osgi.util.tracker;resolution:=optional;version="[1.4,2)",org.ietf.jgss</Import-Package>
-                  <Export-Package>org.apache.zookeeper;version="${project.version}",org.apache.zookeeper.client;version="${project.version}",org.apache.zookeeper.data;version="${project.version}",org.apache.zookeeper.version;version="${project.version}",org.apache.zookeeper.server;version="${project.version}",org.apache.zookeeper.server.auth;version="${project.version}",org.apache.zookeeper.server.persistence;version="${project.version}",org.apache.zookeeper.server.quorum;version="${project.version}",org.apache.zookeeper.common;version="${project.version}"</Export-Package>
-                </manifestEntries>
-              </archive>
-            </configuration>
-          </execution>
-          <execution>
-            <id>tarball</id>
-            <phase>package</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-            <configuration>
-              <descriptors>
-                <descriptor>${project.basedir}/src/assembly/tarball.xml</descriptor>
-              </descriptors>
-              <finalName>zookeeper-${project.version}</finalName>
-              <tarLongFileMode>posix</tarLongFileMode>
+              <tarLongFileMode>gnu</tarLongFileMode>
             </configuration>
           </execution>
         </executions>
@@ -665,8 +627,6 @@
         <groupId>com.github.spotbugs</groupId>
         <artifactId>spotbugs-maven-plugin</artifactId>
       </plugin>
-
-      <plugin>
          <groupId>org.owasp</groupId>
          <artifactId>dependency-check-maven</artifactId>
          <configuration>
