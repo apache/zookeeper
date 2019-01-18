@@ -711,16 +711,12 @@ public class FastLeaderElection implements Election {
         }
     }
 
-    private void printNotification(Notification n){
-        LOG.info("Notification: "
-                + Long.toHexString(n.version) + " (message format version), "
-                + n.leader + " (n.leader), 0x"
-                + Long.toHexString(n.zxid) + " (n.zxid), 0x"
-                + Long.toHexString(n.electionEpoch) + " (n.round), " + n.state
-                + " (n.state), " + n.sid + " (n.sid), 0x"
-                + Long.toHexString(n.peerEpoch) + " (n.peerEPoch), "
-                + self.getPeerState() + " (my state)"
-                + (n.qv!=null ? (Long.toHexString(n.qv.getVersion()) + " (n.config version)"):""));
+    private void printNotification(Notification n) {
+        LOG.info("Notification: my state:{}; n.sid:{}, n.state:{}, n.leader:{}, n.round:0x{}, " +
+                        "n.peerEpoch:0x{}, n.zxid:0x{}, message format version:0x{}, n.config version:0x{}",
+                self.getPeerState(), n.sid, n.state, n.leader, Long.toHexString(n.electionEpoch),
+                Long.toHexString(n.peerEpoch), Long.toHexString(n.zxid), Long.toHexString(n.version),
+                (n.qv != null ? (Long.toHexString(n.qv.getVersion())) : "0"));
     }
 
 
