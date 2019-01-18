@@ -19,6 +19,9 @@
 package org.apache.zookeeper.server;
 
 import org.apache.zookeeper.server.metric.AvgMinMaxCounter;
+import org.apache.zookeeper.server.metric.AvgMinMaxCounterSet;
+import org.apache.zookeeper.server.metric.AvgMinMaxPercentileCounter;
+import org.apache.zookeeper.server.metric.AvgMinMaxPercentileCounterSet;
 import org.apache.zookeeper.server.metric.Metric;
 import org.apache.zookeeper.server.metric.SimpleCounter;
 
@@ -45,20 +48,20 @@ public enum ServerMetrics {
      * Stats for read request. The timing start from when the server see the
      * request until it leave final request processor.
      */
-    READ_LATENCY(new AvgMinMaxCounter("readlatency")),
+    READ_LATENCY(new AvgMinMaxPercentileCounter("readlatency")),
 
     /**
      * Stats for request that need quorum voting. Timing is the same as read
      * request. We only keep track of stats for request that originated from
      * this machine only.
      */
-    UPDATE_LATENCY(new AvgMinMaxCounter("updatelatency")),
+    UPDATE_LATENCY(new AvgMinMaxPercentileCounter("updatelatency")),
 
     /**
      * Stats for all quorum request. The timing start from when the leader
      * see the request until it reach the learner.
      */
-    PROPAGATION_LATENCY(new AvgMinMaxCounter("propagation_latency")),
+    PROPAGATION_LATENCY(new AvgMinMaxPercentileCounter("propagation_latency")),
 
     FOLLOWER_SYNC_TIME(new AvgMinMaxCounter("follower_sync_time")),
     ELECTION_TIME(new AvgMinMaxCounter("election_time")),
@@ -80,6 +83,14 @@ public enum ServerMetrics {
 
     public void add(long value) {
         metric.add(value);
+    }
+
+    public void add(int key, long value) {
+        metric.add(key, value);
+    }
+
+    public void add(String key, long value) {
+        metric.add(key, value);
     }
 
     public void reset() {
