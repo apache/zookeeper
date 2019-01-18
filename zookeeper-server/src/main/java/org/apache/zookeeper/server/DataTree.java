@@ -494,8 +494,15 @@ public class DataTree {
                 parentCVersion = parent.stat.getCversion();
                 parentCVersion++;
             }
-            parent.stat.setCversion(parentCVersion);
-            parent.stat.setPzxid(zxid);
+            // There is possibility that we'll replay txns for a node which
+            // was created and then deleted in the fuzzy range, and it's not
+            // exist in the snapshot, so replay the creation might revert the
+            // cversion and pzxid, need to check and only update when it's
+            // larger.
+            if (parentCVersion > parent.stat.getCversion()) {
+                parent.stat.setCversion(parentCVersion);
+                parent.stat.setPzxid(zxid);
+            }
             Long longval = aclCache.convertAcls(acl);
             DataNode child = new DataNode(data, longval, stat);
             parent.addChild(childName);
