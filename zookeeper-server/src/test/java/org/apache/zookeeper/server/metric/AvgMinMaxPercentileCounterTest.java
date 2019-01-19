@@ -17,13 +17,14 @@
  */
 package org.apache.zookeeper.server.metric;
 
+import org.apache.zookeeper.ZKTestCase;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Map;
 
-public class AvgMinMaxPercentileCounterTest {
+public class AvgMinMaxPercentileCounterTest extends ZKTestCase {
 
     private AvgMinMaxPercentileCounter testCounter;
 
