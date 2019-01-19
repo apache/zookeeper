@@ -207,10 +207,10 @@ public class BlueThrottle {
 
         if (diff > freezeTime) {
             if((length == limit) && (drop < 1)) {
-                drop += dropIncrease;
+                drop = Math.min(drop + dropIncrease, 1);
             }
-            else if ((length <= threshold) && (drop >= dropDecrease)) {
-                drop -= dropDecrease;
+            else if ((length <= threshold) && (drop > 0)) {
+                drop = Math.max(drop - dropDecrease, 0);
             }
             lastFreeze = now;
         }
