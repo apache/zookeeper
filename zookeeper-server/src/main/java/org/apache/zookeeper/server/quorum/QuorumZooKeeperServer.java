@@ -43,10 +43,10 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
     protected UpgradeableSessionTracker upgradeableSessionTracker;
 
     protected QuorumZooKeeperServer(FileTxnSnapLog logFactory, int tickTime,
-            int minSessionTimeout, int maxSessionTimeout,
+            int minSessionTimeout, int maxSessionTimeout, int listenBacklog,
             ZKDatabase zkDb, QuorumPeer self)
     {
-        super(logFactory, tickTime, minSessionTimeout, maxSessionTimeout, zkDb);
+        super(logFactory, tickTime, minSessionTimeout, maxSessionTimeout, listenBacklog, zkDb);
         this.self = self;
     }
 

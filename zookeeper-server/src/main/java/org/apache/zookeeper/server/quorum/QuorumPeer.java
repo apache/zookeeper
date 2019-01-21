@@ -558,6 +558,13 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     protected int maxSessionTimeout = -1;
 
     /**
+     * The ZooKeeper server's socket backlog length. The number of connections
+     * that will be queued to be read before new connections are dropped. A
+     * value of one indicates the default backlog will be used.
+     */
+    protected int clientPortListenBacklog = -1;
+
+    /**
      * The number of ticks that the initial synchronization phase can take
      */
     protected volatile int initLimit;;
@@ -1507,6 +1514,16 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     public void setMaxSessionTimeout(int max) {
         LOG.info("maxSessionTimeout set to " + max);
         this.maxSessionTimeout = max;
+    }
+
+    /** The server socket's listen backlog length */
+    public int getClientPortListenBacklog() {
+        return this.clientPortListenBacklog;
+    }
+
+    /** Sets the server socket's listen backlog length. */
+    public void setClientPortListenBacklog(int backlog) {
+        this.clientPortListenBacklog = backlog;
     }
 
     /**

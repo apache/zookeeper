@@ -42,11 +42,12 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
     protected SyncRequestProcessor syncProcessor;
 
     public LearnerZooKeeperServer(FileTxnSnapLog logFactory, int tickTime,
-            int minSessionTimeout, int maxSessionTimeout,
+            int minSessionTimeout, int maxSessionTimeout, int listenBacklog,
             ZKDatabase zkDb, QuorumPeer self)
         throws IOException
     {
-        super(logFactory, tickTime, minSessionTimeout, maxSessionTimeout, zkDb, self);
+        super(logFactory, tickTime, minSessionTimeout, maxSessionTimeout,
+            listenBacklog, zkDb, self);
     }
 
     /**

@@ -162,14 +162,14 @@ public class QuorumPeerMain {
               cnxnFactory = ServerCnxnFactory.createFactory();
               cnxnFactory.configure(config.getClientPortAddress(),
                       config.getMaxClientCnxns(),
-                      false);
+                      config.getClientPortListenBacklog(), false);
           }
 
           if (config.getSecureClientPortAddress() != null) {
               secureCnxnFactory = ServerCnxnFactory.createFactory();
               secureCnxnFactory.configure(config.getSecureClientPortAddress(),
                       config.getMaxClientCnxns(),
-                      true);
+                      config.getClientPortListenBacklog(), true);
           }
 
           quorumPeer = getQuorumPeer();
@@ -190,6 +190,7 @@ public class QuorumPeerMain {
           quorumPeer.setSyncLimit(config.getSyncLimit());
           quorumPeer.setObserverMasterPort(config.getObserverMasterPort());
           quorumPeer.setConfigFileName(config.getConfigFilename());
+          quorumPeer.setClientPortListenBacklog(config.getClientPortListenBacklog());
           quorumPeer.setZKDatabase(new ZKDatabase(quorumPeer.getTxnFactory()));
           quorumPeer.setQuorumVerifier(config.getQuorumVerifier(), false);
           if (config.getLastSeenQuorumVerifier()!=null) {
