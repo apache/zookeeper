@@ -152,10 +152,10 @@ public class FileTxnLog implements TxnLog {
      * Setter for ServerStats to monitor fsync threshold exceed
      * @param serverStats used to update fsyncThresholdExceedCount
      */
-     @Override
-     public void setServerStats(ServerStats serverStats) {
-         this.serverStats = serverStats;
-     }
+    @Override
+    public synchronized void setServerStats(ServerStats serverStats) {
+        this.serverStats = serverStats;
+    }
 
     /**
      * creates a checksum algorithm to be used

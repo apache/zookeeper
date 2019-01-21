@@ -17,6 +17,7 @@
  */
 package org.apache.zookeeper.server.quorum;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -1381,6 +1382,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 	 * @param value the long value to write to the named file
 	 * @throws IOException if the file cannot be written atomically
 	 */
+    @SuppressFBWarnings(value = "OS_OPEN_STREAM",
+            justification = "Stream will be eventually closed in abort()")
     private void writeLongToFile(String name, long value) throws IOException {
         File file = new File(logFactory.getSnapDir(), name);
         AtomicFileOutputStream out = new AtomicFileOutputStream(file);

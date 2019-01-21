@@ -31,7 +31,6 @@ import org.apache.zookeeper.server.ZooKeeperServerListener;
  * to be forwarded to the Leader using a PING.
  */
 public class LearnerSessionTracker implements SessionTracker {
-    SessionExpirer expirer;
 
     HashMap<Long, Integer> touchTable = new HashMap<Long, Integer>();
     long serverId = 1;
@@ -42,7 +41,6 @@ public class LearnerSessionTracker implements SessionTracker {
     public LearnerSessionTracker(SessionExpirer expirer,
             ConcurrentHashMap<Long, Integer> sessionsWithTimeouts, long id,
             ZooKeeperServerListener listener) {
-        this.expirer = expirer;
         this.sessionsWithTimeouts = sessionsWithTimeouts;
         this.serverId = id;
         nextSessionId = SessionTrackerImpl.initializeNextSession(this.serverId);

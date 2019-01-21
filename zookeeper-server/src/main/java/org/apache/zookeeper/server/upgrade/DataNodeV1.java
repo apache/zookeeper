@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.upgrade;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -71,6 +72,7 @@ public class DataNodeV1 implements Record {
     
     DataNodeV1 parent;
 
+    @SuppressFBWarnings(value="IS2_INCONSISTENT_SYNC")
     byte data[];
 
     public List<ACL> acl;

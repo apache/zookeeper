@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<FindBugsFilter>
+    <!-- this work work on JDK11  https://github.com/spotbugs/spotbugs-maven-plugin/issues/92 -->
+    <Bug pattern="RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"/>
+
+    <!-- this problem is to be addressed in ZOOKEEPER-3227 -->
+    <Bug pattern="DM_DEFAULT_ENCODING"/>
+
+    <!-- not really a problem -->
+    <Bug pattern="DM_EXIT"/>
+
+</FindBugsFilter>
+

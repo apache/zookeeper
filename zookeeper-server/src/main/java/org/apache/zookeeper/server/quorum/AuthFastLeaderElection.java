@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -51,6 +52,8 @@ import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
  * @deprecated This class has been deprecated as of release 3.4.0. 
  */
 @Deprecated
+@SuppressFBWarnings(value = "VO_VOLATILE_INCREMENT",
+        justification = "This class is deprecated, no need to fix this warning")
 public class AuthFastLeaderElection implements Election {
     private static final Logger LOG = LoggerFactory.getLogger(AuthFastLeaderElection.class);
 
@@ -276,6 +279,8 @@ public class AuthFastLeaderElection implements Election {
                     case 2:
                         ackstate = QuorumPeer.ServerState.FOLLOWING;
                         break;
+                    default:
+                        throw new IllegalStateException("bad state "+responseBuffer.getInt());
                     }
 
                     Vote current = self.getCurrentVote();
@@ -454,6 +459,8 @@ public class AuthFastLeaderElection implements Election {
                 }
             }
 
+            @SuppressFBWarnings(value = "RV_RETURN_VALUE_IGNORED",
+                    justification = "tryAcquire result not chacked, but it is not an issue")
             private void process(ToSend m) {
                 int attempts = 0;
                 byte zeroes[];
@@ -696,6 +703,9 @@ public class AuthFastLeaderElection implements Election {
                     } catch (IOException e) {
                         LOG.warn("Exception while sending ack: ", e);
                     }
+                    break;
+                default:
+                    LOG.warn("unknown type " + m.type);
                     break;
                 }
             }
