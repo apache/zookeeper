@@ -34,7 +34,21 @@
   <description>
     Contrib projects to Apache ZooKeeper
   </description>
-
+  <build>
+    <pluginManagement>
+       <plugins>
+          <plugin>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-maven-plugin</artifactId>
+            <version>3.1.9</version>
+            <configuration>
+                <!-- No spotbugs for contri modules -->
+                <skip>true</skip>
+            </configuration>
+          </plugin>
+        </plugins>
+      </pluginManagement>
+  </build>
   <modules>
     <module>zookeeper-contrib-loggraph</module>
     <module>zookeeper-contrib-rest</module>
