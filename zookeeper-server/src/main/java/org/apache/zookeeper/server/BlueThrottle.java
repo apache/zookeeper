@@ -215,7 +215,7 @@ public class BlueThrottle {
             lastFreeze = now;
         }
 
-        if (rng.nextDouble() <= drop) {
+        if (rng.nextDouble() < drop) {
             return false;
         }
         return true;

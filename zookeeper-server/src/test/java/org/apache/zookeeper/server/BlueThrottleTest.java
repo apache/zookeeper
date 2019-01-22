@@ -19,12 +19,41 @@ package org.apache.zookeeper.server;
 
 import org.apache.zookeeper.ZKTestCase;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Random;
+
 public class BlueThrottleTest extends ZKTestCase {
     private static final Logger LOG = LoggerFactory.getLogger(BlueThrottleTest.class);
+
+    class MockRandom extends Random {
+        int flag = 0;
+        BlueThrottle throttle;
+
+        public MockRandom(BlueThrottle bt) {
+            this.throttle = bt;
+        }
+
+        @Override
+        public double nextDouble() {
+            if (throttle.getDropChance() > 0) {
+                flag = 1 - flag;
+                return flag;
+            } else {
+                return 1;
+            }
+        }
+    }
+
+    class BlueThrottleWithMockRandom extends BlueThrottle {
+        public BlueThrottleWithMockRandom() {
+            super();
+            this.rng = new MockRandom(this);
+        }
+    }
 
     @Test
     public void testThrottleDisabled() {
@@ -56,8 +85,8 @@ public class BlueThrottleTest extends ZKTestCase {
 
     @Test
     public void testThrottleWithoutRandomDropping() throws InterruptedException {
-        int maxTokens = 10;
-        BlueThrottle throttler = new BlueThrottle();
+        int maxTokens = 5;
+        BlueThrottle throttler = new BlueThrottleWithMockRandom();
         throttler.setMaxTokens(maxTokens);
         throttler.setFillCount(maxTokens);
         throttler.setFillTime(1000);
@@ -85,8 +114,8 @@ public class BlueThrottleTest extends ZKTestCase {
 
     @Test
     public void testThrottleWithRandomDropping() throws InterruptedException {
-        int maxTokens = 10;
-        BlueThrottle throttler = new BlueThrottle();
+        int maxTokens = 5;
+        BlueThrottle throttler = new BlueThrottleWithMockRandom();
         throttler.setMaxTokens(maxTokens);
         throttler.setFillCount(maxTokens);
         throttler.setFillTime(1000);
@@ -97,14 +126,14 @@ public class BlueThrottleTest extends ZKTestCase {
             throttler.checkLimit(1);
         Assert.assertEquals("All tokens should be used up by now", throttler.getMaxTokens(), throttler.getDeficit());
 
-        Thread.sleep(110);
+        Thread.sleep(120);
         //this will trigger dropping probability being increased
         throttler.checkLimit(1);
         Assert.assertTrue("Dropping probability should be increased", throttler.getDropChance()>0);
         LOG.info("Dropping probability is {}", throttler.getDropChance());
 
         //allow bucket to be refilled
-        Thread.sleep(1500);
+        Thread.sleep(1100);
         LOG.info("Bucket is refilled with {} tokens.", maxTokens);
 
         int accepted = 0;
