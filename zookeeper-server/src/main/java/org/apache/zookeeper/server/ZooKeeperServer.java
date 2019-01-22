@@ -203,44 +203,12 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         readResponseCache = new ResponseCache();
 
         connThrottle = new BlueThrottle();
-        connThrottle.setMaxTokens(
-            Integer.getInteger("zookeeper.connection_throttle_tokens", 0)
-        );
-        connThrottle.setFillTime(
-            Integer.getInteger("zookeeper.connection_throttle_fill_time", 1)
-        );
-        connThrottle.setFillCount(
-            Integer.getInteger("zookeeper.connection_throttle_fill_count", 1)
-        );
-        connThrottle.setFreezeTime(
-            Integer.getInteger("zookeeper.connection_throttle_freeze_time", -1)
-        );
-        connThrottle.setDropIncrease(
-            getDoubleProp("zookeeper.connection_throttle_drop_increase", 0.02)
-        );
-        connThrottle.setDropDecrease(
-            getDoubleProp("zookeeper.connection_throttle_drop_decrease", 0.002)
-        );
-        connThrottle.setDecreasePoint(
-            getDoubleProp("zookeeper.connection_throttle_decrease_ratio", 0)
-        );
 
         LOG.info("Created server with tickTime " + tickTime
                 + " minSessionTimeout " + getMinSessionTimeout()
                 + " maxSessionTimeout " + getMaxSessionTimeout()
                 + " datadir " + txnLogFactory.getDataDir()
                 + " snapdir " + txnLogFactory.getSnapDir());
-    }
-
-    /* Varation of Integer.getInteger for real number properties */
-    double getDoubleProp(String name, double def) {
-        String val = System.getProperty(name);
-        if(val != null) {
-            return Double.parseDouble(val);
-        }
-        else {
-            return def;
-        }
     }
 
     /**

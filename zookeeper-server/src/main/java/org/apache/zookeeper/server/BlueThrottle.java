@@ -85,20 +85,65 @@ public class BlueThrottle {
 
     Random rng;
 
+    public static final String CONNECTION_THROTTLE_TOKENS = "zookeeper.connection_throttle_tokens";
+    public static final int DEFAULT_CONNECTION_THROTTLE_TOKENS;
+
+    public static final String CONNECTION_THROTTLE_FILL_TIME = "zookeeper.connection_throttle_fill_time";
+    public static final int DEFAULT_CONNECTION_THROTTLE_FILL_TIME;
+
+    public static final String CONNECTION_THROTTLE_FILL_COUNT = "zookeeper.connection_throttle_fill_count";
+    public static final int DEFAULT_CONNECTION_THROTTLE_FILL_COUNT;
+
+    public static final String CONNECTION_THROTTLE_FREEZE_TIME = "zookeeper.connection_throttle_freeze_time";
+    public static final int DEFAULT_CONNECTION_THROTTLE_FREEZE_TIME;
+
+    public static final String CONNECTION_THROTTLE_DROP_INCREASE = "zookeeper.connection_throttle_drop_increase";
+    public static final double DEFAULT_CONNECTION_THROTTLE_DROP_INCREASE;
+
+    public static final String CONNECTION_THROTTLE_DROP_DECREASE = "zookeeper.connection_throttle_drop_decrease";
+    public static final double DEFAULT_CONNECTION_THROTTLE_DROP_DECREASE;
+
+    public static final String CONNECTION_THROTTLE_DECREASE_RATIO = "zookeeper.connection_throttle_decrease_ratio";
+    public static final double DEFAULT_CONNECTION_THROTTLE_DECREASE_RATIO;
+
+
+    static {
+        DEFAULT_CONNECTION_THROTTLE_TOKENS = Integer.getInteger(CONNECTION_THROTTLE_TOKENS, 0);
+        DEFAULT_CONNECTION_THROTTLE_FILL_TIME = Integer.getInteger(CONNECTION_THROTTLE_FILL_TIME, 1);
+        DEFAULT_CONNECTION_THROTTLE_FILL_COUNT = Integer.getInteger(CONNECTION_THROTTLE_FILL_COUNT, 1);
+
+        DEFAULT_CONNECTION_THROTTLE_FREEZE_TIME = Integer.getInteger(CONNECTION_THROTTLE_FREEZE_TIME, -1);
+        DEFAULT_CONNECTION_THROTTLE_DROP_INCREASE = getDoubleProp(CONNECTION_THROTTLE_DROP_INCREASE, 0.02);
+        DEFAULT_CONNECTION_THROTTLE_DROP_DECREASE = getDoubleProp(CONNECTION_THROTTLE_DROP_DECREASE, 0.002);
+        DEFAULT_CONNECTION_THROTTLE_DECREASE_RATIO = getDoubleProp(CONNECTION_THROTTLE_DECREASE_RATIO, 0);
+    }
+
+    /* Varation of Integer.getInteger for real number properties */
+    private static double getDoubleProp(String name, double def) {
+        String val = System.getProperty(name);
+        if(val != null) {
+            return Double.parseDouble(val);
+        }
+        else {
+            return def;
+        }
+    }
+
+
     public BlueThrottle() {
         // Disable throttling by default (maxTokens = 0)
-        this.maxTokens = 0;
-        this.fillTime  = 1;
-        this.fillCount = 1;
+        this.maxTokens = DEFAULT_CONNECTION_THROTTLE_TOKENS;
+        this.fillTime  = DEFAULT_CONNECTION_THROTTLE_FILL_TIME;
+        this.fillCount = DEFAULT_CONNECTION_THROTTLE_FILL_COUNT;
         this.tokens = maxTokens;
         this.lastTime = Time.currentElapsedTime();
 
         // Disable BLUE throttling by default (freezeTime = -1)
-        this.freezeTime = -1;
+        this.freezeTime = DEFAULT_CONNECTION_THROTTLE_FREEZE_TIME;
         this.lastFreeze = Time.currentElapsedTime();
-        this.dropIncrease = 0.02;
-        this.dropDecrease = 0.002;
-        this.decreasePoint = 0;
+        this.dropIncrease = DEFAULT_CONNECTION_THROTTLE_DROP_INCREASE;
+        this.dropDecrease = DEFAULT_CONNECTION_THROTTLE_DROP_DECREASE;
+        this.decreasePoint = DEFAULT_CONNECTION_THROTTLE_DECREASE_RATIO;
         this.drop = 0;
 
         this.rng = new Random();

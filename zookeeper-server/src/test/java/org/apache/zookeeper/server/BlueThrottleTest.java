@@ -33,10 +33,6 @@ public class BlueThrottleTest extends ZKTestCase {
         int flag = 0;
         BlueThrottle throttle;
 
-        public MockRandom(BlueThrottle bt) {
-            this.throttle = bt;
-        }
-
         @Override
         public double nextDouble() {
             if (throttle.getDropChance() > 0) {
@@ -49,9 +45,10 @@ public class BlueThrottleTest extends ZKTestCase {
     }
 
     class BlueThrottleWithMockRandom extends BlueThrottle {
-        public BlueThrottleWithMockRandom() {
+        public BlueThrottleWithMockRandom(MockRandom random) {
             super();
-            this.rng = new MockRandom(this);
+            this.rng = random;
+            random.throttle = this;
         }
     }
 
@@ -86,7 +83,7 @@ public class BlueThrottleTest extends ZKTestCase {
     @Test
     public void testThrottleWithoutRandomDropping() throws InterruptedException {
         int maxTokens = 5;
-        BlueThrottle throttler = new BlueThrottleWithMockRandom();
+        BlueThrottle throttler = new BlueThrottleWithMockRandom(new MockRandom());
         throttler.setMaxTokens(maxTokens);
         throttler.setFillCount(maxTokens);
         throttler.setFillTime(1000);
@@ -115,7 +112,7 @@ public class BlueThrottleTest extends ZKTestCase {
     @Test
     public void testThrottleWithRandomDropping() throws InterruptedException {
         int maxTokens = 5;
-        BlueThrottle throttler = new BlueThrottleWithMockRandom();
+        BlueThrottle throttler = new BlueThrottleWithMockRandom(new MockRandom());
         throttler.setMaxTokens(maxTokens);
         throttler.setFillCount(maxTokens);
         throttler.setFillTime(1000);
@@ -157,5 +154,4 @@ public class BlueThrottleTest extends ZKTestCase {
         LOG.info("Send another {} requests, {} are accepted", maxTokens, accepted);
         Assert.assertTrue("Later requests should have a chance", accepted > 0);
     }
-
 }
