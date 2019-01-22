@@ -212,7 +212,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         LOG.info("Created server with tickTime " + tickTime
                 + " minSessionTimeout " + getMinSessionTimeout()
                 + " maxSessionTimeout " + getMaxSessionTimeout()
-                + " clientPortListenBacklog " + getClientPortBacklog()
+                + " clientPortListenBacklog " + getClientPortListenBacklog()
                 + " datadir " + txnLogFactory.getDataDir()
                 + " snapdir " + txnLogFactory.getSnapDir());
     }
@@ -258,7 +258,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         pwriter.print("maxSessionTimeout=");
         pwriter.println(getMaxSessionTimeout());
         pwriter.print("clientPortListenBacklog=");
-        pwriter.println(getClientPortBacklog());
+        pwriter.println(getClientPortListenBacklog());
 
         pwriter.print("serverId=");
         pwriter.println(getServerId());
@@ -273,7 +273,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
              serverCnxnFactory.getMaxClientCnxnsPerHost(),
              getMinSessionTimeout(),
              getMaxSessionTimeout(),
-             getServerId());
+             getServerId(),
+             getClientPortListenBacklog());
     }
 
     /**
@@ -1016,7 +1017,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         LOG.info("maxSessionTimeout set to {}", this.maxSessionTimeout);
     }
 
-    public int getClientPortBacklog() {
+    public int getClientPortListenBacklog() {
         return listenBacklog;
     }
 
