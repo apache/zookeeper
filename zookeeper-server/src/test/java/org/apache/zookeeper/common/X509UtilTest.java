@@ -17,24 +17,6 @@
  */
 package org.apache.zookeeper.common;
 
-import org.apache.zookeeper.PortAssignment;
-import org.apache.zookeeper.client.ZKClientConfig;
-import org.apache.zookeeper.server.ServerCnxnFactory;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-
-import javax.net.ssl.HandshakeCompletedEvent;
-import javax.net.ssl.HandshakeCompletedListener;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLHandshakeException;
-import javax.net.ssl.SSLServerSocket;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.X509KeyManager;
-import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -51,8 +33,24 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import javax.net.ssl.HandshakeCompletedEvent;
+import javax.net.ssl.HandshakeCompletedListener;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.X509KeyManager;
+import javax.net.ssl.X509TrustManager;
+
+import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.client.ZKClientConfig;
+import org.apache.zookeeper.server.ServerCnxnFactory;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
 public class X509UtilTest extends BaseX509ParameterizedTestCase {
@@ -421,7 +419,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         ClientX509Util clientX509Util = new ClientX509Util();
         zkConfig.setProperty(clientX509Util.getSslContextSupplierClassProperty(), NullSslContextSupplier.class.getName());
         final SSLContext sslContext = clientX509Util.createSSLContext(zkConfig);
-        assertNull(sslContext);
+        Assert.assertNull(sslContext);
     }
 
     @Test
@@ -430,7 +428,7 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         ClientX509Util clientX509Util = new ClientX509Util();
         zkConfig.setProperty(clientX509Util.getSslContextSupplierClassProperty(), SslContextSupplier.class.getName());
         final SSLContext sslContext = clientX509Util.createSSLContext(zkConfig);
-        assertEquals(SSLContext.getDefault(), sslContext);
+        Assert.assertEquals(SSLContext.getDefault(), sslContext);
     }
 
     private static void forceClose(Socket s) {
