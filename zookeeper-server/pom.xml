@@ -23,12 +23,13 @@
   <parent>
     <groupId>org.apache.zookeeper</groupId>
     <artifactId>zookeeper</artifactId>
-    <version>3.6.0-SNAPSHOT</version>
+    <version>\</version>
     <relativePath>..</relativePath>
   </parent>
 
   <groupId>org.apache.zookeeper</groupId>
   <artifactId>zookeeper-server</artifactId>
+  <version>3.6.0</version>
   <packaging>jar</packaging>
   <name>Apache ZooKeeper - Server</name>
   <description>ZooKeeper server</description>
@@ -53,7 +54,7 @@
     <dependency>
       <groupId>org.apache.zookeeper</groupId>
       <artifactId>zookeeper-jute</artifactId>
-      <version>3.6.0-SNAPSHOT</version>
+      <version>3.6.0</version>
     </dependency>
     <dependency>
       <groupId>commons-cli</groupId>
