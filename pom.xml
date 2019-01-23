@@ -278,7 +278,8 @@
     <kerby.version>1.1.0</kerby.version>
     <bouncycastle.version>1.56</bouncycastle.version>
     <commons-collections.version>3.2.2</commons-collections.version>
-    <spotbugsannotations.version>3.1.8</spotbugsannotations.version>
+    <commons-lang.version>2.6</commons-lang.version>
+    <spotbugsannotations.version>3.1.9</spotbugsannotations.version>
   </properties>
 
   <dependencyManagement>
@@ -292,6 +293,11 @@
         <groupId>commons-collections</groupId>
         <artifactId>commons-collections</artifactId>
         <version>${commons-collections.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-lang</groupId>
+        <artifactId>commons-lang</artifactId>
+        <version>${commons-lang.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.yetus</groupId>
@@ -472,7 +478,7 @@
         <plugin>
           <groupId>com.github.spotbugs</groupId>
           <artifactId>spotbugs-maven-plugin</artifactId>
-          <version>3.1.8</version>
+          <version>3.1.9</version>
           <configuration>
             <excludeFilterFile>excludeFindBugsFilter.xml</excludeFilterFile>
           </configuration>

@@ -17,6 +17,7 @@
  */
 package org.apache.zookeeper.recipes.lock;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException;
@@ -85,7 +86,7 @@ public class WriteLock extends ProtocolSupport {
      * return the current locklistener
      * @return the locklistener
      */
-    public LockListener getLockListener() {
+    public synchronized LockListener getLockListener() {
         return this.callback;
     }
     
@@ -93,7 +94,7 @@ public class WriteLock extends ProtocolSupport {
      * register a different call back listener
      * @param callback the call back instance
      */
-    public void setLockListener(LockListener callback) {
+    public synchronized void setLockListener(LockListener callback) {
         this.callback = callback;
     }
 
@@ -133,8 +134,9 @@ public class WriteLock extends ProtocolSupport {
                     initCause(e);
             }
             finally {
-                if (callback != null) {
-                    callback.lockReleased();
+                LockListener lockListener = getLockListener();
+                if (lockListener != null) {
+                    lockListener.lockReleased();
                 }
                 id = null;
             }
@@ -201,6 +203,8 @@ public class WriteLock extends ProtocolSupport {
          * obtaining the lock
          * @return if the command was successful or not
          */
+        @SuppressFBWarnings(value = "NP_NULL_PARAM_DEREF_NONVIRTUAL",
+                justification = "findPrefixInChildren will assign a value to this.id")
         public boolean execute() throws KeeperException, InterruptedException {
             do {
                 if (id == null) {
@@ -211,41 +215,40 @@ public class WriteLock extends ProtocolSupport {
                     findPrefixInChildren(prefix, zookeeper, dir);
                     idName = new ZNodeName(id);
                 }
-                if (id != null) {
-                    List<String> names = zookeeper.getChildren(dir, false);
-                    if (names.isEmpty()) {
-                        LOG.warn("No children in: " + dir + " when we've just " +
-                        "created one! Lets recreate it...");
-                        // lets force the recreation of the id
-                        id = null;
-                    } else {
-                        // lets sort them explicitly (though they do seem to come back in order ususally :)
-                        SortedSet<ZNodeName> sortedNames = new TreeSet<ZNodeName>();
-                        for (String name : names) {
-                            sortedNames.add(new ZNodeName(dir + "/" + name));
+                List<String> names = zookeeper.getChildren(dir, false);
+                if (names.isEmpty()) {
+                    LOG.warn("No children in: " + dir + " when we've just " +
+                    "created one! Lets recreate it...");
+                    // lets force the recreation of the id
+                    id = null;
+                } else {
+                    // lets sort them explicitly (though they do seem to come back in order ususally :)
+                    SortedSet<ZNodeName> sortedNames = new TreeSet<ZNodeName>();
+                    for (String name : names) {
+                        sortedNames.add(new ZNodeName(dir + "/" + name));
+                    }
+                    ownerId = sortedNames.first().getName();
+                    SortedSet<ZNodeName> lessThanMe = sortedNames.headSet(idName);
+                    if (!lessThanMe.isEmpty()) {
+                        ZNodeName lastChildName = lessThanMe.last();
+                        lastChildId = lastChildName.getName();
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("watching less than me node: " + lastChildId);
                         }
-                        ownerId = sortedNames.first().getName();
-                        SortedSet<ZNodeName> lessThanMe = sortedNames.headSet(idName);
-                        if (!lessThanMe.isEmpty()) {
-                            ZNodeName lastChildName = lessThanMe.last();
-                            lastChildId = lastChildName.getName();
-                            if (LOG.isDebugEnabled()) {
-                                LOG.debug("watching less than me node: " + lastChildId);
-                            }
-                            Stat stat = zookeeper.exists(lastChildId, new LockWatcher());
-                            if (stat != null) {
-                                return Boolean.FALSE;
-                            } else {
-                                LOG.warn("Could not find the" +
-                                		" stats for less than me: " + lastChildName.getName());
-                            }
+                        Stat stat = zookeeper.exists(lastChildId, new LockWatcher());
+                        if (stat != null) {
+                            return Boolean.FALSE;
                         } else {
-                            if (isOwner()) {
-                                if (callback != null) {
-                                    callback.lockAcquired();
-                                }
-                                return Boolean.TRUE;
+                            LOG.warn("Could not find the" +
+                                            " stats for less than me: " + lastChildName.getName());
+                        }
+                    } else {
+                        if (isOwner()) {
+                            LockListener lockListener = getLockListener();
+                            if (lockListener != null) {
+                                lockListener.lockAcquired();
                             }
+                            return Boolean.TRUE;
                         }
                     }
                 }
