@@ -738,6 +738,74 @@ property, when available, is noted below.
     strategy from the configured minimum (fastleader.minNotificationInterval)
     and the configured maximum (this) for long elections.
 
+* *connectionMaxTokens* :
+    (Java system property: **zookeeper.connection_throttle_tokens**)
+    **New in 3.6.0:**
+    This is one of the parameters to tune the server-side connection throttler,
+    which is a token-based rate limiting mechanism with optional probabilistic
+    dropping.
+    This parameter defines the maximum number of tokens in the token-bucket.
+    When set to 0, throttling is disabled. Default is 0.
+
+* *connectionTokenFillTime* :
+    (Java system property: **zookeeper.connection_throttle_fill_time**)
+    **New in 3.6.0:**
+    This is one of the parameters to tune the server-side connection throttler,
+    which is a token-based rate limiting mechanism with optional probabilistic
+    dropping.
+    This parameter defines the interval in milliseconds when the token bucket is re-filled with
+    *connectionTokenFillCount* tokens. Default is 1.
+
+* *connectionTokenFillCount* :
+    (Java system property: **zookeeper.connection_throttle_fill_count**)
+    **New in 3.6.0:**
+    This is one of the parameters to tune the server-side connection throttler,
+    which is a token-based rate limiting mechanism with optional probabilistic
+    dropping.
+    This parameter defines the number of tokens to add to the token bucket every
+    *connectionTokenFillTime* milliseconds. Default is 1.
+
+* *connectionFreezeTime* :
+    (Java system property: **zookeeper.connection_throttle_freeze_time**)
+    **New in 3.6.0:**
+    This is one of the parameters to tune the server-side connection throttler,
+    which is a token-based rate limiting mechanism with optional probabilistic
+    dropping.
+    This parameter defines the interval in milliseconds when the dropping
+    probability is adjusted. When set to -1, probabilistic dropping is disabled.
+    Default is -1.     
+
+* *connectionDropIncrease* :
+    (Java system property: **zookeeper.connection_throttle_drop_increase**)
+    **New in 3.6.0:**
+    This is one of the parameters to tune the server-side connection throttler,
+    which is a token-based rate limiting mechanism with optional probabilistic
+    dropping.
+    This parameter defines the dropping probability to increase. The throttler
+    checks every *connectionFreezeTime* milliseconds and if the token bucket is
+    empty, the dropping probability will be increased by *connectionDropIncrease*.
+    The default is 0.02.
+
+* *connectionDropDecrease* :
+    (Java system property: **zookeeper.connection_throttle_drop_decrease**)
+    **New in 3.6.0:**
+    This is one of the parameters to tune the server-side connection throttler,
+    which is a token-based rate limiting mechanism with optional probabilistic
+    dropping.
+    This parameter defines the dropping probability to decrease. The throttler
+    checks every *connectionFreezeTime* milliseconds and if the token bucket has
+    more tokens than a threshold, the dropping probability will be decreased by
+    *connectionDropDecrease*. The threshold is *connectionMaxTokens* \*
+    *connectionDecreaseRatio*. The default is 0.002.
+
+* *connectionDecreaseRatio* :
+    (Java system property: **zookeeper.connection_throttle_decrease_ratio**)
+    **New in 3.6.0:**
+    This is one of the parameters to tune the server-side connection throttler,
+    which is a token-based rate limiting mechanism with optional probabilistic
+    dropping. This parameter defines the threshold to decrease the dropping
+    probability. The default is 0.
+
 <a name="sc_clusterOptions"></a>
 
 #### Cluster Options
