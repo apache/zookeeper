@@ -333,16 +333,19 @@ public class DataTree {
     }
 
     /**
-     * update the count of this stat datanode
+     * update the count/count of bytes of this stat datanode
      *
      * @param lastPrefix
      *            the path of the node that is quotaed.
-     * @param diff
+     * @param bytesDiff
+     *            the diff to be added to number of bytes
+     * @param countDiff
      *            the diff to be added to the count
      */
-    public void updateCount(String lastPrefix, int diff) {
+    public void updateCountBytes(String lastPrefix, long bytesDiff, int countDiff) {
         String statNode = Quotas.statPath(lastPrefix);
         DataNode node = nodes.get(statNode);
+
         StatsTrack updatedStat = null;
         if (node == null) {
             // should not happen
@@ -351,7 +354,8 @@ public class DataTree {
         }
         synchronized (node) {
             updatedStat = new StatsTrack(new String(node.data));
-            updatedStat.setCount(updatedStat.getCount() + diff);
+            updatedStat.setCount(updatedStat.getCount() + countDiff);
+            updatedStat.setBytes(updatedStat.getBytes() + bytesDiff);
             node.data = updatedStat.toString().getBytes();
         }
         // now check if the counts match the quota
@@ -364,57 +368,16 @@ public class DataTree {
             return;
         }
         synchronized (node) {
+            // todo nixon?
             thisStats = new StatsTrack(new String(node.data));
         }
         if (thisStats.getCount() > -1 && (thisStats.getCount() < updatedStat.getCount())) {
-            LOG
-            .warn("Quota exceeded: " + lastPrefix + " count="
+            LOG.warn("Quota exceeded: " + lastPrefix + " count="
                     + updatedStat.getCount() + " limit="
                     + thisStats.getCount());
         }
-    }
-
-    /**
-     * update the count of bytes of this stat datanode
-     *
-     * @param lastPrefix
-     *            the path of the node that is quotaed
-     * @param diff
-     *            the diff to added to number of bytes
-     * @throws IOException
-     *             if path is not found
-     */
-    public void updateBytes(String lastPrefix, long diff) {
-        String statNode = Quotas.statPath(lastPrefix);
-        DataNode node = nodes.get(statNode);
-        if (node == null) {
-            // should never be null but just to make
-            // findbugs happy
-            LOG.error("Missing stat node for bytes " + statNode);
-            return;
-        }
-        StatsTrack updatedStat = null;
-        synchronized (node) {
-            updatedStat = new StatsTrack(new String(node.data));
-            updatedStat.setBytes(updatedStat.getBytes() + diff);
-            node.data = updatedStat.toString().getBytes();
-        }
-        // now check if the bytes match the quota
-        String quotaNode = Quotas.quotaPath(lastPrefix);
-        node = nodes.get(quotaNode);
-        if (node == null) {
-            // should never be null but just to make
-            // findbugs happy
-            LOG.error("Missing quota node for bytes " + quotaNode);
-            return;
-        }
-        StatsTrack thisStats = null;
-        synchronized (node) {
-            thisStats = new StatsTrack(new String(node.data));
-        }
         if (thisStats.getBytes() > -1 && (thisStats.getBytes() < updatedStat.getBytes())) {
-            LOG
-            .warn("Quota exceeded: " + lastPrefix + " bytes="
+            LOG.warn("Quota exceeded: " + lastPrefix + " bytes="
                     + updatedStat.getBytes() + " limit="
                     + thisStats.getBytes());
         }
@@ -535,10 +498,10 @@ public class DataTree {
         }
         // also check to update the quotas for this node
         String lastPrefix = getMaxPrefixWithQuota(path);
+        long bytes = data == null ? 0 : data.length;
         if(lastPrefix != null) {
             // ok we have some match and need to update
-            updateCount(lastPrefix, 1);
-            updateBytes(lastPrefix, data == null ? 0 : data.length);
+            updateCountBytes(lastPrefix, bytes, 1);
         }
         dataWatches.triggerWatch(path, Event.EventType.NodeCreated);
         childWatches.triggerWatch(parentName.equals("") ? "/" : parentName,
@@ -617,12 +580,11 @@ public class DataTree {
         String lastPrefix = getMaxPrefixWithQuota(path);
         if(lastPrefix != null) {
             // ok we have some match and need to update
-            updateCount(lastPrefix, -1);
             int bytes = 0;
             synchronized (node) {
                 bytes = (node.data == null ? 0 : -(node.data.length));
             }
-            updateBytes(lastPrefix, bytes);
+            updateCountBytes(lastPrefix, bytes,-1);
         }
         if (LOG.isTraceEnabled()) {
             ZooTrace.logTraceMessage(LOG, ZooTrace.EVENT_DELIVERY_TRACE_MASK,
@@ -656,8 +618,9 @@ public class DataTree {
         // now update if the path is in a quota subtree.
         String lastPrefix = getMaxPrefixWithQuota(path);
         if(lastPrefix != null) {
-          this.updateBytes(lastPrefix, (data == null ? 0 : data.length)
-              - (lastdata == null ? 0 : lastdata.length));
+            long dataBytes = data == null ? 0 : data.length;
+            this.updateCountBytes(lastPrefix, dataBytes
+                    - (lastdata == null ? 0 : lastdata.length), 0);
         }
         nodeDataSize.addAndGet(getNodeSize(path, data) - getNodeSize(path, lastdata));
         dataWatches.triggerWatch(path, EventType.NodeDataChanged);
