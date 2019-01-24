@@ -48,6 +48,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.ZookeeperBanner;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
@@ -90,6 +91,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     static {
         LOG = LoggerFactory.getLogger(ZooKeeperServer.class);
+
+        ZookeeperBanner.printBanner(LOG);
 
         Environment.logEnv("Server environment:", LOG);
     }
