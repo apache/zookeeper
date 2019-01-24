@@ -34,6 +34,7 @@ import java.security.Security;
 import java.security.cert.PKIXBuilderParameters;
 import java.security.cert.X509CertSelector;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.net.ssl.CertPathTrustManagerParameters;
@@ -97,7 +98,38 @@ public abstract class X509Util implements Closeable, AutoCloseable {
 
     public static final int DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS = 5000;
 
+    /**
+     * Enum specifying the client auth requirement of server-side TLS sockets created by this X509Util.
+     * <ul>
+     *     <li>NONE - do not request a client certificate.</li>
+     *     <li>WANT - request a client certificate, but allow anonymous clients to connect.</li>
+     *     <li>NEED - require a client certificate, disconnect anonymous clients.</li>
+     * </ul>
+     *
+     * If the config property is not set, the default value is NEED.
+     */
+    public enum ClientAuth {
+        NONE,
+        WANT,
+        NEED;
+
+        /**
+         * Converts a property value to a ClientAuth enum. If the input string is empty or null, returns
+         * <code>ClientAuth.NEED</code>.
+         * @param prop the property string.
+         * @return the ClientAuth.
+         * @throws IllegalArgumentException if the property value is not "NONE", "WANT", "NEED", or empty/null.
+         */
+        public static ClientAuth fromPropertyValue(String prop) {
+            if (prop == null || prop.length() == 0) {
+                return NEED;
+            }
+            return ClientAuth.valueOf(prop.toUpperCase());
+        }
+    }
+
     private String sslProtocolProperty = getConfigPrefix() + "protocol";
+    private String sslEnabledProtocolsProperty = getConfigPrefix() + "enabledProtocols";
     private String cipherSuitesProperty = getConfigPrefix() + "ciphersuites";
     private String sslKeystoreLocationProperty = getConfigPrefix() + "keyStore.location";
     private String sslKeystorePasswdProperty = getConfigPrefix() + "keyStore.password";
@@ -108,28 +140,34 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     private String sslHostnameVerificationEnabledProperty = getConfigPrefix() + "hostnameVerification";
     private String sslCrlEnabledProperty = getConfigPrefix() + "crl";
     private String sslOcspEnabledProperty = getConfigPrefix() + "ocsp";
+    private String sslClientAuthProperty = getConfigPrefix() + "clientAuth";
     private String sslHandshakeDetectionTimeoutMillisProperty = getConfigPrefix() + "handshakeDetectionTimeoutMillis";
 
-    private String[] cipherSuites;
+    private ZKConfig zkConfig;
+    private AtomicReference<SSLContextAndOptions> defaultSSLContextAndOptions = new AtomicReference<>(null);
 
-    private AtomicReference<SSLContext> defaultSSLContext = new AtomicReference<>(null);
     private FileChangeWatcher keyStoreFileWatcher;
     private FileChangeWatcher trustStoreFileWatcher;
 
     public X509Util() {
-        String cipherSuitesInput = System.getProperty(cipherSuitesProperty);
-        if (cipherSuitesInput == null) {
-            cipherSuites = getDefaultCipherSuites();
-        } else {
-            cipherSuites = cipherSuitesInput.split(",");
-        }
+        this(null);
+    }
+
+    public X509Util(ZKConfig zkConfig) {
+        this.zkConfig = zkConfig;
+        keyStoreFileWatcher = trustStoreFileWatcher = null;
     }
 
     protected abstract String getConfigPrefix();
+
     protected abstract boolean shouldVerifyClientHostname();
 
     public String getSslProtocolProperty() {
         return sslProtocolProperty;
+    }
+
+    public String getSslEnabledProtocolsProperty() {
+        return sslEnabledProtocolsProperty;
     }
 
     public String getCipherSuitesProperty() {
@@ -138,6 +176,10 @@ public abstract class X509Util implements Closeable, AutoCloseable {
 
     public String getSslKeystoreLocationProperty() {
         return sslKeystoreLocationProperty;
+    }
+
+    public String getSslCipherSuitesProperty() {
+        return cipherSuitesProperty;
     }
 
     public String getSslKeystorePasswdProperty() {
@@ -172,6 +214,10 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         return sslOcspEnabledProperty;
     }
 
+    public String getSslClientAuthProperty() {
+        return sslClientAuthProperty;
+    }
+
     /**
      * Returns the config property key that controls the amount of time, in milliseconds, that the first
      * UnifiedServerSocket read operation will block for when trying to detect the client mode (TLS or PLAINTEXT).
@@ -183,30 +229,37 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     }
 
     public SSLContext getDefaultSSLContext() throws X509Exception.SSLContextException {
-        SSLContext result = defaultSSLContext.get();
+        return getDefaultSSLContextAndOptions().getSSLContext();
+    }
+
+    public SSLContext createSSLContext(ZKConfig config) throws SSLContextException {
+        return createSSLContextAndOptions(config).getSSLContext();
+    }
+
+    public SSLContextAndOptions getDefaultSSLContextAndOptions() throws X509Exception.SSLContextException {
+        SSLContextAndOptions result = defaultSSLContextAndOptions.get();
         if (result == null) {
-            result = createSSLContext();
-            if (!defaultSSLContext.compareAndSet(null, result)) {
+            result = createSSLContextAndOptions();
+            if (!defaultSSLContextAndOptions.compareAndSet(null, result)) {
                 // lost the race, another thread already set the value
-                result = defaultSSLContext.get();
+                result = defaultSSLContextAndOptions.get();
             }
         }
         return result;
     }
 
-    private void resetDefaultSSLContext() throws X509Exception.SSLContextException {
-        SSLContext newContext = createSSLContext();
-        defaultSSLContext.set(newContext);
+    private void resetDefaultSSLContextAndOptions() throws X509Exception.SSLContextException {
+        SSLContextAndOptions newContext = createSSLContextAndOptions();
+        defaultSSLContextAndOptions.set(newContext);
     }
 
-    private SSLContext createSSLContext() throws SSLContextException {
+    private SSLContextAndOptions createSSLContextAndOptions() throws SSLContextException {
         /*
          * Since Configuration initializes the key store and trust store related
          * configuration from system property. Reading property from
          * configuration will be same reading from system property
          */
-        ZKConfig config=new ZKConfig();
-        return createSSLContext(config);
+        return createSSLContextAndOptions(zkConfig == null ? new ZKConfig() : zkConfig);
     }
 
     /**
@@ -217,24 +270,19 @@ public abstract class X509Util implements Closeable, AutoCloseable {
      * @return the handshake detection timeout, in milliseconds.
      */
     public int getSslHandshakeTimeoutMillis() {
-        String propertyString = System.getProperty(getSslHandshakeDetectionTimeoutMillisProperty());
-        int result;
-        if (propertyString == null) {
-            result = DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS;
-        } else {
-            result = Integer.parseInt(propertyString);
-            if (result < 1) {
-                // Timeout of 0 is not allowed, since an infinite timeout can permanently lock up an
-                // accept() thread.
-                LOG.warn("Invalid value for " + getSslHandshakeDetectionTimeoutMillisProperty() + ": " + result +
-                        ", using the default value of " + DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS);
-                result = DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS;
-            }
+        try {
+            SSLContextAndOptions ctx = getDefaultSSLContextAndOptions();
+            return ctx.getHandshakeDetectionTimeoutMillis();
+        } catch (SSLContextException e) {
+            LOG.error("Error creating SSL context and options", e);
+            return DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS;
+        } catch (Exception e) {
+            LOG.error("Error parsing config property " + getSslHandshakeDetectionTimeoutMillisProperty(), e);
+            return DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS;
         }
-        return result;
     }
 
-    public SSLContext createSSLContext(ZKConfig config) throws SSLContextException {
+    public SSLContextAndOptions createSSLContextAndOptions(ZKConfig config) throws SSLContextException {
         KeyManager[] keyManagers = null;
         TrustManager[] trustManagers = null;
 
@@ -284,12 +332,12 @@ public abstract class X509Util implements Closeable, AutoCloseable {
             }
         }
 
-        String protocol = System.getProperty(sslProtocolProperty, DEFAULT_PROTOCOL);
+        String protocol = config.getProperty(sslProtocolProperty, DEFAULT_PROTOCOL);
         try {
             SSLContext sslContext = SSLContext.getInstance(protocol);
             sslContext.init(keyManagers, trustManagers, null);
-            return sslContext;
-        } catch (NoSuchAlgorithmException|KeyManagementException sslContextInitException) {
+            return new SSLContextAndOptions(this, config, sslContext);
+        } catch (NoSuchAlgorithmException | KeyManagementException sslContextInitException) {
             throw new SSLContextException(sslContextInitException);
         }
     }
@@ -414,64 +462,40 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     }
 
     public SSLSocket createSSLSocket() throws X509Exception, IOException {
-        SSLSocket sslSocket = (SSLSocket) getDefaultSSLContext().getSocketFactory().createSocket();
-        configureSSLSocket(sslSocket);
-        sslSocket.setUseClientMode(true);
-        return sslSocket;
+        return getDefaultSSLContextAndOptions().createSSLSocket();
     }
 
     public SSLSocket createSSLSocket(Socket socket, byte[] pushbackBytes) throws X509Exception, IOException {
-        SSLSocket sslSocket;
-        if (pushbackBytes != null && pushbackBytes.length > 0) {
-            sslSocket = (SSLSocket) getDefaultSSLContext().getSocketFactory().createSocket(
-                    socket, new ByteArrayInputStream(pushbackBytes), true);
-        } else {
-            sslSocket = (SSLSocket) getDefaultSSLContext().getSocketFactory().createSocket(
-                    socket, null, socket.getPort(), true);
-        }
-        configureSSLSocket(sslSocket);
-        sslSocket.setUseClientMode(false);
-        sslSocket.setNeedClientAuth(true);
-        return sslSocket;
-    }
-
-    private void configureSSLSocket(SSLSocket sslSocket) {
-        SSLParameters sslParameters = sslSocket.getSSLParameters();
-        LOG.debug("Setup cipher suites for client socket: {}", Arrays.toString(cipherSuites));
-        sslParameters.setCipherSuites(cipherSuites);
-        sslSocket.setSSLParameters(sslParameters);
+        return getDefaultSSLContextAndOptions().createSSLSocket(socket, pushbackBytes);
     }
 
     public SSLServerSocket createSSLServerSocket() throws X509Exception, IOException {
-        SSLServerSocket sslServerSocket = (SSLServerSocket) getDefaultSSLContext().getServerSocketFactory().createServerSocket();
-        configureSSLServerSocket(sslServerSocket);
-
-        return sslServerSocket;
+        return getDefaultSSLContextAndOptions().createSSLServerSocket();
     }
 
     public SSLServerSocket createSSLServerSocket(int port) throws X509Exception, IOException {
-        SSLServerSocket sslServerSocket = (SSLServerSocket) getDefaultSSLContext().getServerSocketFactory().createServerSocket(port);
-        configureSSLServerSocket(sslServerSocket);
-
-        return sslServerSocket;
+        return getDefaultSSLContextAndOptions().createSSLServerSocket(port);
     }
 
-    private void configureSSLServerSocket(SSLServerSocket sslServerSocket) {
-        SSLParameters sslParameters = sslServerSocket.getSSLParameters();
-        sslParameters.setNeedClientAuth(true);
-        LOG.debug("Setup cipher suites for server socket: {}", Arrays.toString(cipherSuites));
-        sslParameters.setCipherSuites(cipherSuites);
-        sslServerSocket.setSSLParameters(sslParameters);
+    static String[] getDefaultCipherSuites() {
+        return getDefaultCipherSuitesForJavaVersion(System.getProperty("java.specification.version"));
     }
 
-    private String[] getDefaultCipherSuites() {
-        String javaVersion = System.getProperty("java.specification.version");
-        if ("9".equals(javaVersion)) {
-            LOG.debug("Using Java9-optimized cipher suites for Java version {}", javaVersion);
+    static String[] getDefaultCipherSuitesForJavaVersion(String javaVersion) {
+        Objects.requireNonNull(javaVersion);
+        if (javaVersion.matches("\\d+")) {
+            // Must be Java 9 or later
+            LOG.debug("Using Java9+ optimized cipher suites for Java version {}", javaVersion);
             return DEFAULT_CIPHERS_JAVA9;
+        } else if (javaVersion.startsWith("1.")) {
+            // Must be Java 1.8 or earlier
+            LOG.debug("Using Java8 optimized cipher suites for Java version {}", javaVersion);
+            return DEFAULT_CIPHERS_JAVA8;
+        } else {
+            LOG.debug("Could not parse java version {}, using Java8 optimized cipher suites",
+                    javaVersion);
+            return DEFAULT_CIPHERS_JAVA8;
         }
-        LOG.debug("Using Java8-optimized cipher suites for Java version {}", javaVersion);
-        return DEFAULT_CIPHERS_JAVA8;
     }
 
     private FileChangeWatcher newFileChangeWatcher(String fileLocation) throws IOException {
@@ -498,7 +522,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
      */
     public void enableCertFileReloading() throws IOException {
         LOG.info("enabling cert file reloading");
-        ZKConfig config = new ZKConfig();
+        ZKConfig config = zkConfig == null ? new ZKConfig() : zkConfig;
         FileChangeWatcher newKeyStoreFileWatcher =
                 newFileChangeWatcher(config.getProperty(sslKeystoreLocationProperty));
         if (newKeyStoreFileWatcher != null) {
@@ -563,7 +587,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
                         event.kind() + " with context: " + event.context());
             }
             try {
-                this.resetDefaultSSLContext();
+                this.resetDefaultSSLContextAndOptions();
             } catch (SSLContextException e) {
                 throw new RuntimeException(e);
             }
