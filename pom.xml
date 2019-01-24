@@ -443,6 +443,11 @@
     <pluginManagement>
       <plugins>
         <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>properties-maven-plugin</artifactId>
+          <version>1.0.0</version>
+        </plugin>
+        <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.8.0</version>
@@ -500,6 +505,7 @@
           <groupId>pl.project13.maven</groupId>
           <artifactId>git-commit-id-plugin</artifactId>
           <version>2.2.5</version>
+          <inherited>false</inherited>
         </plugin>
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
@@ -528,6 +534,35 @@
     </pluginManagement>
 
     <plugins>
+      <plugin>
+        <groupId>pl.project13.maven</groupId>
+        <artifactId>git-commit-id-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>find-current-git-revision</id>
+            <goals>
+              <goal>revision</goal>
+            </goals>
+            <phase>validate</phase>
+          </execution>
+        </executions>
+        <configuration>
+          <skipPoms>false</skipPoms>
+          <runOnlyOnce>true</runOnlyOnce>
+          <failOnNoGitDirectory>false</failOnNoGitDirectory>
+          <dotGitDirectory>${project.basedir}/.git</dotGitDirectory>
+          <prefix>git</prefix>
+          <verbose>false</verbose>
+          <generateGitPropertiesFile>true</generateGitPropertiesFile>
+          <generateGitPropertiesFilename>${project.basedir}/zookeeper-server/src/main/resources/git.properties</generateGitPropertiesFilename>
+          <format>properties</format>
+          <gitDescribe>
+            <skip>false</skip>
+            <always>false</always>
+            <dirty>-dirty</dirty>
+          </gitDescribe>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.openclover</groupId>
         <artifactId>clover-maven-plugin</artifactId>
@@ -566,7 +601,6 @@
               <target>
                 <property environment="env"/>
                 <exec executable="hostname" outputproperty="host.name"/>
-
               </target>
             </configuration>
           </execution>
