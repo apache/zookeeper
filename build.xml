@@ -79,7 +79,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="version-minor" value="5" />
     <property name="version-patch" value="5" />
     <property name="version-base" value="${version-major}.${version-minor}.${version-patch}" />
-    <property name="version-suffix" value="beta-SNAPSHOT" />
+    <property name="version-suffix" value="SNAPSHOT" />
     <property name="version" value="${version-base}-${version-suffix}" />
 
     <property name="final.name" value="${name}-${version}"/>
