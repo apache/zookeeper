@@ -482,6 +482,46 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         }
     }
 
+    @Test
+    public void testGetDefaultCipherSuitesJava8() {
+        String[] cipherSuites = X509Util.getDefaultCipherSuitesForJavaVersion("1.8");
+        // Java 8 default should have the CBC suites first
+        Assert.assertTrue(cipherSuites[0].contains("CBC"));
+    }
+
+    @Test
+    public void testGetDefaultCipherSuitesJava9() {
+        String[] cipherSuites = X509Util.getDefaultCipherSuitesForJavaVersion("9");
+        // Java 9+ default should have the GCM suites first
+        Assert.assertTrue(cipherSuites[0].contains("GCM"));
+    }
+
+    @Test
+    public void testGetDefaultCipherSuitesJava10() {
+        String[] cipherSuites = X509Util.getDefaultCipherSuitesForJavaVersion("10");
+        // Java 9+ default should have the GCM suites first
+        Assert.assertTrue(cipherSuites[0].contains("GCM"));
+    }
+
+    @Test
+    public void testGetDefaultCipherSuitesJava11() {
+        String[] cipherSuites = X509Util.getDefaultCipherSuitesForJavaVersion("11");
+        // Java 9+ default should have the GCM suites first
+        Assert.assertTrue(cipherSuites[0].contains("GCM"));
+    }
+
+    @Test
+    public void testGetDefaultCipherSuitesUnknownVersion() {
+        String[] cipherSuites = X509Util.getDefaultCipherSuitesForJavaVersion("notaversion");
+        // If version can't be parsed, use the more conservative Java 8 default
+        Assert.assertTrue(cipherSuites[0].contains("CBC"));
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testGetDefaultCipherSuitesNullVersion() {
+        X509Util.getDefaultCipherSuitesForJavaVersion(null);
+    }
+
     // Warning: this will reset the x509Util
     private void setCustomCipherSuites() {
         System.setProperty(x509Util.getCipherSuitesProperty(), customCipherSuites[0] + "," + customCipherSuites[1]);
