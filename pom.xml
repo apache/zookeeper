@@ -648,7 +648,7 @@
             </goals>
             <configuration>
               <descriptors>
-                <descriptor>${project.basedir}/src/assembly/source-package.xml</descriptor>
+                <descriptor>${project.basedir}/source-package.xml</descriptor>
               </descriptors>
               <finalName>zookeeper-${project.version}</finalName>
               <tarLongFileMode>gnu</tarLongFileMode>
