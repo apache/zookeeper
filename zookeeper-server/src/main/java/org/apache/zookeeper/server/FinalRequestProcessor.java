@@ -505,7 +505,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 // so these values are passed along with the response.
                 GetDataResponse getDataResponse = (GetDataResponse)rsp;
                 Stat stat = null;
-                if (getDataResponse != null && getDataResponse.getStat() != null) {
+                if (getDataResponse.getStat() != null) {
                     stat = getDataResponse.getStat();
                 }
                 cnxn.sendResponse(hdr, rsp, "response", path, stat);

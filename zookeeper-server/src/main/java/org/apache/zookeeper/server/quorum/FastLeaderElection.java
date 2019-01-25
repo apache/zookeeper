@@ -68,7 +68,34 @@ public class FastLeaderElection implements Election {
      * the system up again after long partitions. Currently 60 seconds.
      */
 
-    final static int maxNotificationInterval = 60000;
+    private static int maxNotificationInterval = 60000;
+
+    /**
+     * Lower bound for notification check. The observer don't need to use
+     * the same lower bound as participant members
+     */
+    private static int minNotificationInterval = finalizeWait;
+
+    /**
+     * Minimum notification interval, default is equal to finalizeWait
+     */
+    public static final String MIN_NOTIFICATION_INTERVAL =
+            "zookeeper.fastleader.minNotificationInterval";
+
+    /**
+     * Maximum notification interval, default is 60s
+     */
+    public static final String MAX_NOTIFICATION_INTERVAL =
+            "zookeeper.fastleader.maxNotificationInterval";
+
+    static {
+        minNotificationInterval = Integer.getInteger(MIN_NOTIFICATION_INTERVAL,
+                minNotificationInterval);
+        LOG.info("{}={}", MIN_NOTIFICATION_INTERVAL, minNotificationInterval);
+        maxNotificationInterval = Integer.getInteger(MAX_NOTIFICATION_INTERVAL,
+                maxNotificationInterval);
+        LOG.info("{}={}", MAX_NOTIFICATION_INTERVAL, maxNotificationInterval);
+    }
 
     /**
      * Connection manager. Fast leader election uses TCP for
@@ -684,16 +711,12 @@ public class FastLeaderElection implements Election {
         }
     }
 
-    private void printNotification(Notification n){
-        LOG.info("Notification: "
-                + Long.toHexString(n.version) + " (message format version), "
-                + n.leader + " (n.leader), 0x"
-                + Long.toHexString(n.zxid) + " (n.zxid), 0x"
-                + Long.toHexString(n.electionEpoch) + " (n.round), " + n.state
-                + " (n.state), " + n.sid + " (n.sid), 0x"
-                + Long.toHexString(n.peerEpoch) + " (n.peerEPoch), "
-                + self.getPeerState() + " (my state)"
-                + (n.qv!=null ? (Long.toHexString(n.qv.getVersion()) + " (n.config version)"):""));
+    private void printNotification(Notification n) {
+        LOG.info("Notification: my state:{}; n.sid:{}, n.state:{}, n.leader:{}, n.round:0x{}, " +
+                        "n.peerEpoch:0x{}, n.zxid:0x{}, message format version:0x{}, n.config version:0x{}",
+                self.getPeerState(), n.sid, n.state, n.leader, Long.toHexString(n.electionEpoch),
+                Long.toHexString(n.peerEpoch), Long.toHexString(n.zxid), Long.toHexString(n.version),
+                (n.qv != null ? (Long.toHexString(n.qv.getVersion())) : "0"));
     }
 
 
@@ -898,7 +921,7 @@ public class FastLeaderElection implements Election {
 
             Map<Long, Vote> outofelection = new HashMap<Long, Vote>();
 
-            int notTimeout = finalizeWait;
+            int notTimeout = minNotificationInterval;
 
             synchronized(this){
                 logicalclock.incrementAndGet();

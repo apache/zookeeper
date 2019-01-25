@@ -190,7 +190,8 @@ public class CommandsTest extends ClientBase {
                 new Field("min_client_response_size", Integer.class),
                 new Field("uptime", Long.class),
                 new Field("global_sessions", Long.class),
-                new Field("local_sessions", Long.class)
+                new Field("local_sessions", Long.class),
+                new Field("connection_drop_probability", Double.class)
         ));
         for (String metric : ServerMetrics.getAllValues().keySet()) {
             if (metric.startsWith("avg_")) {

@@ -414,15 +414,6 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     }
 
     @Test
-    public void testCreateSSLContext_validNullCustomSSLContextClass() throws X509Exception.SSLContextException {
-        ZKConfig zkConfig = new ZKConfig();
-        ClientX509Util clientX509Util = new ClientX509Util();
-        zkConfig.setProperty(clientX509Util.getSslContextSupplierClassProperty(), NullSslContextSupplier.class.getName());
-        final SSLContext sslContext = clientX509Util.createSSLContext(zkConfig);
-        Assert.assertNull(sslContext);
-    }
-
-    @Test
     public void testCreateSSLContext_validCustomSSLContextClass() throws Exception {
         ZKConfig zkConfig = new ZKConfig();
         ClientX509Util clientX509Util = new ClientX509Util();
@@ -510,20 +501,51 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         }
     }
 
+    @Test
+    public void testGetDefaultCipherSuitesJava8() {
+        String[] cipherSuites = X509Util.getDefaultCipherSuitesForJavaVersion("1.8");
+        // Java 8 default should have the CBC suites first
+        Assert.assertTrue(cipherSuites[0].contains("CBC"));
+    }
+
+    @Test
+    public void testGetDefaultCipherSuitesJava9() {
+        String[] cipherSuites = X509Util.getDefaultCipherSuitesForJavaVersion("9");
+        // Java 9+ default should have the GCM suites first
+        Assert.assertTrue(cipherSuites[0].contains("GCM"));
+    }
+
+    @Test
+    public void testGetDefaultCipherSuitesJava10() {
+        String[] cipherSuites = X509Util.getDefaultCipherSuitesForJavaVersion("10");
+        // Java 9+ default should have the GCM suites first
+        Assert.assertTrue(cipherSuites[0].contains("GCM"));
+    }
+
+    @Test
+    public void testGetDefaultCipherSuitesJava11() {
+        String[] cipherSuites = X509Util.getDefaultCipherSuitesForJavaVersion("11");
+        // Java 9+ default should have the GCM suites first
+        Assert.assertTrue(cipherSuites[0].contains("GCM"));
+    }
+
+    @Test
+    public void testGetDefaultCipherSuitesUnknownVersion() {
+        String[] cipherSuites = X509Util.getDefaultCipherSuitesForJavaVersion("notaversion");
+        // If version can't be parsed, use the more conservative Java 8 default
+        Assert.assertTrue(cipherSuites[0].contains("CBC"));
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testGetDefaultCipherSuitesNullVersion() {
+        X509Util.getDefaultCipherSuitesForJavaVersion(null);
+    }
+
     // Warning: this will reset the x509Util
     private void setCustomCipherSuites() {
         System.setProperty(x509Util.getCipherSuitesProperty(), customCipherSuites[0] + "," + customCipherSuites[1]);
         x509Util.close(); // remember to close old instance before replacing it
         x509Util = new ClientX509Util();
-    }
-
-    public static class NullSslContextSupplier implements Supplier<SSLContext> {
-
-        @Override
-        public SSLContext get() {
-            return null;
-        }
-
     }
 
     public static class SslContextSupplier implements Supplier<SSLContext> {

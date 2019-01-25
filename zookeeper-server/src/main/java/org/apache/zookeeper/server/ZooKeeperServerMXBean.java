@@ -98,6 +98,28 @@ public interface ZooKeeperServerMXBean {
     public boolean getResponseCachingEnabled();
     public void setResponseCachingEnabled(boolean isEnabled);
 
+    /* Connection throttling settings */
+    public int getConnectionMaxTokens();
+    public void setConnectionMaxTokens(int val);
+
+    public int getConnectionTokenFillTime();
+    public void setConnectionTokenFillTime(int val);
+
+    public int getConnectionTokenFillCount();
+    public void setConnectionTokenFillCount(int val);
+
+    public int getConnectionFreezeTime();
+    public void setConnectionFreezeTime(int val);
+
+    public double getConnectionDropIncrease();
+    public void setConnectionDropIncrease(double val);
+
+    public double getConnectionDropDecrease();
+    public void setConnectionDropDecrease(double val);
+
+    public double getConnectionDecreaseRatio();
+    public void setConnectionDecreaseRatio(double val);
+
     /**
      * Reset packet and latency statistics 
      */
