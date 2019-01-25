@@ -17,10 +17,9 @@
  */
 package org.apache.zookeeper.common;
 
-
-import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -33,15 +32,14 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.security.cert.PKIXBuilderParameters;
 import java.security.cert.X509CertSelector;
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import javax.net.ssl.CertPathTrustManagerParameters;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.TrustManager;
@@ -137,6 +135,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
     private String sslTruststoreLocationProperty = getConfigPrefix() + "trustStore.location";
     private String sslTruststorePasswdProperty = getConfigPrefix() + "trustStore.password";
     private String sslTruststoreTypeProperty = getConfigPrefix() + "trustStore.type";
+    private String sslContextSupplierClassProperty = getConfigPrefix() + "context.supplier.class";
     private String sslHostnameVerificationEnabledProperty = getConfigPrefix() + "hostnameVerification";
     private String sslCrlEnabledProperty = getConfigPrefix() + "crl";
     private String sslOcspEnabledProperty = getConfigPrefix() + "ocsp";
@@ -200,6 +199,10 @@ public abstract class X509Util implements Closeable, AutoCloseable {
 
     public String getSslTruststoreTypeProperty() {
         return sslTruststoreTypeProperty;
+    }
+
+    public String getSslContextSupplierClassProperty() {
+        return sslContextSupplierClassProperty;
     }
 
     public String getSslHostnameVerificationEnabledProperty() {
@@ -282,7 +285,28 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public SSLContextAndOptions createSSLContextAndOptions(ZKConfig config) throws SSLContextException {
+        final String supplierContextClassName = config.getProperty(sslContextSupplierClassProperty);
+        if (supplierContextClassName != null) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Loading SSLContext supplier from property '{}'", sslContextSupplierClassProperty);
+            }
+            try {
+                Class<?> sslContextClass = Class.forName(supplierContextClassName);
+                Supplier<SSLContext> sslContextSupplier = (Supplier<SSLContext>) sslContextClass.getConstructor().newInstance();
+                return new SSLContextAndOptions(this, config, sslContextSupplier.get());
+            } catch (ClassNotFoundException | ClassCastException | NoSuchMethodException | InvocationTargetException |
+                    InstantiationException | IllegalAccessException e) {
+                throw new SSLContextException("Could not retrieve the SSLContext from supplier source '" + supplierContextClassName +
+                        "' provided in the property '" + sslContextSupplierClassProperty + "'", e);
+            }
+        } else {
+            return createSSLContextAndOptionsFromConfig(config);
+        }
+    }
+
+    public SSLContextAndOptions createSSLContextAndOptionsFromConfig(ZKConfig config) throws SSLContextException {
         KeyManager[] keyManagers = null;
         TrustManager[] trustManagers = null;
 

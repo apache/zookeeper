@@ -22,6 +22,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.util.Collection;
 import java.util.concurrent.Callable;
@@ -30,6 +31,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 import javax.net.ssl.HandshakeCompletedEvent;
 import javax.net.ssl.HandshakeCompletedListener;
@@ -403,6 +405,23 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         }
     }
 
+    @Test(expected = X509Exception.SSLContextException.class)
+    public void testCreateSSLContext_invalidCustomSSLContextClass() throws Exception {
+        ZKConfig zkConfig = new ZKConfig();
+        ClientX509Util clientX509Util = new ClientX509Util();
+        zkConfig.setProperty(clientX509Util.getSslContextSupplierClassProperty(), String.class.getCanonicalName());
+        clientX509Util.createSSLContext(zkConfig);
+    }
+
+    @Test
+    public void testCreateSSLContext_validCustomSSLContextClass() throws Exception {
+        ZKConfig zkConfig = new ZKConfig();
+        ClientX509Util clientX509Util = new ClientX509Util();
+        zkConfig.setProperty(clientX509Util.getSslContextSupplierClassProperty(), SslContextSupplier.class.getName());
+        final SSLContext sslContext = clientX509Util.createSSLContext(zkConfig);
+        Assert.assertEquals(SSLContext.getDefault(), sslContext);
+    }
+
     private static void forceClose(Socket s) {
         if (s == null || s.isClosed()) {
             return;
@@ -528,4 +547,18 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         x509Util.close(); // remember to close old instance before replacing it
         x509Util = new ClientX509Util();
     }
+
+    public static class SslContextSupplier implements Supplier<SSLContext> {
+
+        @Override
+        public SSLContext get() {
+            try {
+                return SSLContext.getDefault();
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+    }
+
 }
