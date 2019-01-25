@@ -164,6 +164,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         LOG.info(INT_BUFFER_STARTING_SIZE_BYTES + " = " + intBufferStartingSizeBytes);
     }
 
+    // Connection throttling
+    private BlueThrottle connThrottle;
+
     void removeCnxn(ServerCnxn cnxn) {
         zkDb.removeCnxn(cnxn);
     }
@@ -196,7 +199,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         setMinSessionTimeout(minSessionTimeout);
         setMaxSessionTimeout(maxSessionTimeout);
         listener = new ZooKeeperServerListenerImpl(this);
+
         readResponseCache = new ResponseCache();
+
+        connThrottle = new BlueThrottle();
+
         LOG.info("Created server with tickTime " + tickTime
                 + " minSessionTimeout " + getMinSessionTimeout()
                 + " maxSessionTimeout " + getMaxSessionTimeout()
@@ -217,6 +224,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     public ServerStats serverStats() {
         return serverStats;
+    }
+
+    public BlueThrottle connThrottle() {
+        return connThrottle;
     }
 
     public void dumpConf(PrintWriter pwriter) {
@@ -1043,7 +1054,18 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return zkDb.getEphemerals();
     }
 
-    public void processConnectRequest(ServerCnxn cnxn, ByteBuffer incomingBuffer) throws IOException {
+    public double getConnectionDropChance() {
+        return connThrottle.getDropChance();
+    }
+
+    public void processConnectRequest(ServerCnxn cnxn, ByteBuffer incomingBuffer)
+        throws IOException, ClientCnxnLimitException {
+
+        if (connThrottle.checkLimit(1) == false) {
+            throw new ClientCnxnLimitException();
+        }
+        ServerMetrics.CONNECTION_TOKEN_DEFICIT.add(connThrottle.getDeficit());
+
         BinaryInputArchive bia = BinaryInputArchive.getArchive(new ByteBufferInputStream(incomingBuffer));
         ConnectRequest connReq = new ConnectRequest();
         connReq.deserialize(bia, "connect");

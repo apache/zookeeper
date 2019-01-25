@@ -151,7 +151,7 @@ public class NIOServerCnxn extends ServerCnxn {
     }
 
     /** Read the request payload (everything following the length prefix) */
-    private void readPayload() throws IOException, InterruptedException {
+    private void readPayload() throws IOException, InterruptedException, ClientCnxnLimitException {
         if (incomingBuffer.remaining() != 0) { // have we read length bytes?
             int rc = sock.read(incomingBuffer); // sock is non-blocking, so ok
             if (rc < 0) {
@@ -360,6 +360,14 @@ public class NIOServerCnxn extends ServerCnxn {
             LOG.warn(e.getMessage());
             // expecting close to log session closure
             close();
+        } catch (ClientCnxnLimitException e) {
+            // Common case exception, print at debug level
+            ServerMetrics.CONNECTION_REJECTED.add(1);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Exception causing close of session 0x"
+                          + Long.toHexString(sessionId) + ": " + e.getMessage());
+            }
+            close();
         } catch (IOException e) {
             LOG.warn("Exception causing close of session 0x"
                      + Long.toHexString(sessionId) + ": " + e.getMessage());
@@ -407,7 +415,7 @@ public class NIOServerCnxn extends ServerCnxn {
         }
     }
 
-    private void readConnectRequest() throws IOException, InterruptedException {
+    private void readConnectRequest() throws IOException, InterruptedException, ClientCnxnLimitException {
         if (!isZKServerRunning()) {
             throw new IOException("ZooKeeperServer not running");
         }

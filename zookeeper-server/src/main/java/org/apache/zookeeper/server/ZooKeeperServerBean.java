@@ -167,7 +167,7 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
     public String getSecureClientAddress() {
         if (zks.secureServerCnxnFactory != null) {
             return String.format("%s:%d", zks.secureServerCnxnFactory
-                    .getLocalAddress().getHostString(),
+                            .getLocalAddress().getHostString(),
                     zks.secureServerCnxnFactory.getLocalPort());
         }
         return "";
@@ -206,5 +206,76 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
     @Override
     public void setResponseCachingEnabled(boolean isEnabled) {
         zks.setResponseCachingEnabled(isEnabled);
+    }
+    
+    // Connection throttling settings
+    ///////////////////////////////////////////////////////////////////////////
+
+    public int getConnectionMaxTokens() {
+        return zks.connThrottle().getMaxTokens();
+    }
+
+    public void setConnectionMaxTokens(int val) {
+        zks.connThrottle().setMaxTokens(val);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    public int getConnectionTokenFillTime() {
+        return zks.connThrottle().getFillTime();
+    }
+
+    public void setConnectionTokenFillTime(int val) {
+        zks.connThrottle().setFillTime(val);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    public int getConnectionTokenFillCount() {
+        return zks.connThrottle().getFillCount();
+    }
+
+    public void setConnectionTokenFillCount(int val) {
+        zks.connThrottle().setFillCount(val);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    public int getConnectionFreezeTime() {
+        return zks.connThrottle().getFreezeTime();
+    }
+
+    public void setConnectionFreezeTime(int val) {
+        zks.connThrottle().setFreezeTime(val);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    public double getConnectionDropIncrease() {
+        return zks.connThrottle().getDropIncrease();
+    }
+
+    public void setConnectionDropIncrease(double val) {
+        zks.connThrottle().setDropIncrease(val);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    public double getConnectionDropDecrease() {
+        return zks.connThrottle().getDropDecrease();
+    }
+
+    public void setConnectionDropDecrease(double val) {
+        zks.connThrottle().setDropDecrease(val);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    public double getConnectionDecreaseRatio() {
+        return zks.connThrottle().getDecreasePoint();
+    }
+
+    public void setConnectionDecreaseRatio(double val) {
+        zks.connThrottle().setDecreasePoint(val);
     }
 }

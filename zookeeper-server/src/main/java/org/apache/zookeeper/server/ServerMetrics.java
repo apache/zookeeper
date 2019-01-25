@@ -67,6 +67,10 @@ public enum ServerMetrics {
     SNAP_COUNT(new SimpleCounter("snap_count")),
     COMMIT_COUNT(new SimpleCounter("commit_count")),
     CONNECTION_REQUEST_COUNT(new SimpleCounter("connection_request_count")),
+    // Connection throttling related
+    CONNECTION_TOKEN_DEFICIT(new AvgMinMaxCounter("connection_token_deficit")),
+    CONNECTION_REJECTED(new SimpleCounter("connection_rejected")),
+
     BYTES_RECEIVED_COUNT(new SimpleCounter("bytes_received_count")),
 
     RESPONSE_PACKET_CACHE_HITS(new SimpleCounter("response_packet_cache_hits")),

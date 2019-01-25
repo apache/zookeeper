@@ -354,6 +354,7 @@ public class Commands {
             OSMXBean osMbean = new OSMXBean();
             response.put("open_file_descriptor_count", osMbean.getOpenFileDescriptorCount());
             response.put("max_file_descriptor_count", osMbean.getMaxFileDescriptorCount());
+            response.put("connection_drop_probability", zkServer.getConnectionDropChance());
 
             response.put("last_client_response_size", stats.getClientResponseStats().getLastBufferSize());
             response.put("max_client_response_size", stats.getClientResponseStats().getMaxBufferSize());
