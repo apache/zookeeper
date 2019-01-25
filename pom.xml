@@ -466,6 +466,10 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>3.0.1</version>
+          <configuration>
+            <additionalOptions>-Xdoclint:none</additionalOptions>
+            <additionalJOption>-Xdoclint:none</additionalJOption>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -608,6 +612,25 @@
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>Jar Tests Package</id>
+            <phase>package</phase>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+            <configuration>
+              <includes>
+                <include>org/**</include>
+                <include>META_INF/**</include>
+              </includes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
         <executions>
           <execution>
@@ -627,10 +650,6 @@
             <goals>
               <goal>jar</goal>
             </goals>
-            <configuration>
-              <!-- lot of javadoc error maven doesn't like -->
-              <skip>true</skip>
-            </configuration>
           </execution>
         </executions>
       </plugin>
@@ -661,17 +680,27 @@
         <groupId>com.github.spotbugs</groupId>
         <artifactId>spotbugs-maven-plugin</artifactId>
       </plugin>
-         <groupId>org.owasp</groupId>
-         <artifactId>dependency-check-maven</artifactId>
-         <configuration>
-            <format>ALL</format>
-            <failBuildOnCVSS>0</failBuildOnCVSS>
-            <suppressionFiles>
-              <suppressionsFile>owaspSuppressions.xml</suppressionsFile>
-            </suppressionFiles>
-         </configuration>
-       </plugin>
-      </plugins>
+      <plugin>
+        <groupId>org.owasp</groupId>
+        <artifactId>dependency-check-maven</artifactId>
+        <configuration>
+          <format>ALL</format>
+          <failBuildOnCVSS>0</failBuildOnCVSS>
+          <suppressionFiles>
+            <suppressionsFile>owaspSuppressions.xml</suppressionsFile>
+          </suppressionFiles>
+        </configuration>
+      </plugin>
+    </plugins>
+
+    <resources>
+      <resource>
+        <directory>${project.basedir}src/main/java/resources</directory>
+        <excludes>
+          <exclude>**/*.*</exclude>
+        </excludes>
+      </resource>
+    </resources>
   </build>
 
   <reporting>
