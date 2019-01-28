@@ -368,7 +368,6 @@ public class DataTree {
             return;
         }
         synchronized (node) {
-            // todo nixon?
             thisStats = new StatsTrack(new String(node.data));
         }
         if (thisStats.getCount() > -1 && (thisStats.getCount() < updatedStat.getCount())) {
