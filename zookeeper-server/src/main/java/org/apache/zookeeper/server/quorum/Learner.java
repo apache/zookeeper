@@ -658,6 +658,7 @@ public class Learner {
         self.setZooKeeperServer(null);
         self.closeAllConnections();
         self.adminServer.setZooKeeperServer(null);
+        closeSocket();
         // shutdown previous zookeeper
         if (zk != null) {
             zk.shutdown();
@@ -666,5 +667,15 @@ public class Learner {
 
     boolean isRunning() {
         return self.isRunning() && zk.isRunning();
+    }
+
+    void closeSocket() {
+        try {
+            if (sock != null && !sock.isClosed()) {
+                sock.close();
+            }
+        } catch (IOException e) {
+            LOG.warn("Ignoring error closing connection to leader", e);
+        }
     }
 }
