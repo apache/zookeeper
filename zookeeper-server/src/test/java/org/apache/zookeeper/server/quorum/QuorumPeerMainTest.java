@@ -726,7 +726,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     }
 
     /**
-     * test when myid in the zoo.cfg is inconsistent with the id in the myid file under the dateDir
+     * test when myid in the zoo.cfg is inconsistent with the id in the myid file under the dataDir
      * @throws Exception
      */
     @Test
