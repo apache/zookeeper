@@ -726,6 +726,11 @@
             <excludeFilterFile>excludeFindBugsFilter.xml</excludeFilterFile>
           </configuration>
         </plugin>
+        <plugin>
+          <groupId>org.owasp</groupId>
+          <artifactId>dependency-check-maven</artifactId>
+          <version>4.0.2</version>
+        </plugin>
       </plugins>
     </pluginManagement>
 
@@ -757,6 +762,17 @@
         <groupId>com.github.spotbugs</groupId>
         <artifactId>spotbugs-maven-plugin</artifactId>
       </plugin>
+      <plugin>
+         <groupId>org.owasp</groupId>
+         <artifactId>dependency-check-maven</artifactId>
+         <configuration>
+            <format>ALL</format>
+            <failBuildOnCVSS>0</failBuildOnCVSS>
+            <suppressionFiles>
+              <suppressionsFile>owaspSuppressions.xml</suppressionsFile>
+            </suppressionFiles>
+         </configuration>
+       </plugin>
       </plugins>
   </build>
 
