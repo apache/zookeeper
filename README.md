@@ -12,7 +12,26 @@ and our wiki, at:
 Full documentation for this release can also be found in docs/index.html
 
 ---------------------------
-Packaging/release artifacts
+Packaging/release artifacts - Maven
+
+    To make a release of ZooKeeper (upload artifacts to maven central, update versions in pom.xml)
+    (See http://maven.apache.org/maven-release/maven-release-plugin/usage.html)
+
+        First, you might want to do a dryrun:
+            mvn release:prepare -DdryRun=true (-Dusername=your_scm_username)
+        Than run mvn release:clean
+
+        If you just want to update the version:
+            mvn --batch-mode release:update-versions -DdevelopmentVersion=X.X.X
+
+        To do the release simply run
+            mvn release:perform
+        For more info see http://maven.apache.org/maven-release/maven-release-plugin/examples/perform-release.html
+
+    To create the tarball with the buildabel source files in zookeeper/target directory, just run:
+        mvn clean (-DskipTests) package
+
+Packaging/release artifacts - Ant
 
 The release artifact contains the following jar file at the top level:
 
