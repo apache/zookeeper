@@ -227,7 +227,7 @@ Clients wishing to obtain a lock do the following:
 1. The client calls **exists( )** with
   the watch flag set on the path in the lock directory with the next
   lowest sequence number.
-1. if **exists( )** returns false, go
+1. if **exists( )** returns null, go
   to step **2**. Otherwise, wait for a
   notification for the pathname from the previous step before going to
   step **2**.
