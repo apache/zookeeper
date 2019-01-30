@@ -171,18 +171,18 @@ ensemble:
 1. Install the Java JDK. You can use the native packaging system
   for your system, or download the JDK from:
   [http://java.sun.com/javase/downloads/index.jsp](http://java.sun.com/javase/downloads/index.jsp)
-  
+
 2. Set the Java heap size. This is very important to avoid
   swapping, which will seriously degrade ZooKeeper performance. To
   determine the correct value, use load tests, and make sure you are
   well below the usage limit that would cause you to swap. Be
   conservative - use a maximum heap size of 3GB for a 4GB
   machine.
-  
+
 3. Install the ZooKeeper Server Package. It can be downloaded
   from:
   [http://zookeeper.apache.org/releases.html](http://zookeeper.apache.org/releases.html)
-  
+
 4. Create a configuration file. This file can be called anything.
   Use the following settings as a starting point:
 
@@ -205,16 +205,16 @@ ensemble:
   *myid*, one for each server, which resides in
   that server's data directory, as specified by the configuration file
   parameter **dataDir**.
-  
+
 5. The myid file
   consists of a single line containing only the text of that machine's
   id. So *myid* of server 1 would contain the text
   "1" and nothing else. The id must be unique within the
   ensemble and should have a value between 1 and 255.
   **IMPORTANT:** if you enable extended features such
-   as TTL Nodes (see below) the id must be between 1 
+   as TTL Nodes (see below) the id must be between 1
    and 254 due to internal limitations.
-  
+
 6. Create an initialization marker file *initialize*
   in the same directory as *myid*. This file indicates
   that an empty data directory is expected. When present, an empty data base
@@ -223,13 +223,13 @@ ensemble:
   populate the data directory until it communicates with an active leader.
   Intended use is to only create this file when bringing up a new
   ensemble.
-  
+
 7. If your configuration file is set up, you can start a
   ZooKeeper server:
-  
+
         $ java -cp zookeeper.jar:lib/slf4j-api-1.7.5.jar:lib/slf4j-log4j12-1.7.5.jar:lib/log4j-1.2.17.jar:conf \\
         org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.cfg
-       
+
   QuorumPeerMain starts a ZooKeeper server,
   [JMX](http://java.sun.com/javase/technologies/core/mntr-mgmt/javamanagement/)
   management beans are also registered which allows
@@ -242,7 +242,7 @@ ensemble:
 8. Test your deployment by connecting to the hosts:
   In Java, you can run the following command to execute
   simple operations:
-  
+
         $ bin/zkCli.sh -server 127.0.0.1:2181
 
 <a name="sc_singleAndDevSetup"></a>
@@ -805,6 +805,15 @@ property, when available, is noted below.
     which is a token-based rate limiting mechanism with optional probabilistic
     dropping. This parameter defines the threshold to decrease the dropping
     probability. The default is 0.
+
+ * *clientPortListenBacklog* :
+    **New in 3.4.14, 3.5.5, 3.6.0:**
+    The socket backlog length for the ZooKeeper server socket. This controls
+    the number of requests that will be queued server-side to be processed
+    by the ZooKeeper server. Connections that exceed this length will receive
+    a network timeout (30s) which may cause ZooKeeper session expiry issues.
+    By default, this value is unset (`-1`) which, on Linux, uses a backlog of
+    `50`. This value must be a positive number.
 
 <a name="sc_clusterOptions"></a>
 
@@ -1411,7 +1420,7 @@ The output contains multiple lines with the following format:
     `TRACE` level first in order to see trace logging
     messages.  The bits of the trace mask correspond to the following
     trace logging categories.
-    
+
     | Trace Mask Bit Values |                     |
     |-----------------------|---------------------|
     | 0b0000000000 | Unused, reserved for future use. |
@@ -1594,7 +1603,7 @@ Running it without any command line parameters or with the `-h,--help` argument,
     -r,--recover   Recovery mode. Re-calculate CRC for broken entries.
     -v,--verbose   Be verbose in recovery mode: print all entries, not just fixed ones.
     -y,--yes       Non-interactive mode: repair all CRC errors without asking
-    
+
 The default behaviour is safe: it dumps the entries of the given
 transaction log file to the screen: (same as using `-d,--dump` parameter)
 
@@ -1694,5 +1703,3 @@ For multi-tenant installations see the [section](zookeeperProgrammers.html#ch_zk
 detailing ZooKeeper "chroot" support, this can be very useful
 when deploying many applications/services interfacing to a
 single ZooKeeper cluster.
-
-
