@@ -459,7 +459,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     
     @Override
     public void start() {
-        if (listenBacklog > 0) {
+        if (listenBacklog != -1) {
             bootstrap.option(ChannelOption.SO_BACKLOG, listenBacklog);
         }
         LOG.info("binding to port {}", localAddress);

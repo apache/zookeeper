@@ -1022,8 +1022,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public void setClientPortListenBacklog(int backlog) {
-        LOG.info("clientPortListenBacklog set to " + backlog);
         this.listenBacklog = backlog;
+        LOG.info("clientPortListenBacklog set to " + backlog);
     }
 
     public int getClientPort() {
