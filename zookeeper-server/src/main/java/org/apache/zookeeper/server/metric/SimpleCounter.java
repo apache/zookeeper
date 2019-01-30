@@ -18,11 +18,12 @@
 
 package org.apache.zookeeper.server.metric;
 
+import java.lang.Override;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class SimpleCounter implements Metric {
+public class SimpleCounter extends Metric {
     private final String name;
     private final AtomicLong counter = new AtomicLong();
 
