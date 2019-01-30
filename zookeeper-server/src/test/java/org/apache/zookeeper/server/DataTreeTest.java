@@ -154,6 +154,22 @@ public class DataTreeTest extends ZKTestCase {
     }
 
     @Test
+    public void testNoCversionRevert() throws Exception {
+        DataNode parent = dt.getNode("/");
+        dt.createNode("/test", new byte[0], null, 0, parent.stat.getCversion() + 1, 1, 1);
+        int currentCversion = parent.stat.getCversion();
+        long currentPzxid = parent.stat.getPzxid();
+        dt.createNode("/test1", new byte[0], null, 0, currentCversion - 1, 1, 1);
+        parent = dt.getNode("/");
+        int newCversion = parent.stat.getCversion();
+        long newPzxid = parent.stat.getPzxid();
+        Assert.assertTrue("<cversion, pzxid> verification failed. Expected: <" +
+                currentCversion + ", " + currentPzxid + ">, found: <" +
+                newCversion + ", " + newPzxid + ">",
+                (newCversion >= currentCversion && newPzxid >= currentPzxid));
+    }
+
+    @Test
     public void testPzxidUpdatedWhenDeletingNonExistNode() throws Exception {
         DataNode root = dt.getNode("/");
         long currentPzxid = root.stat.getPzxid();
