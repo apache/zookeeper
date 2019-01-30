@@ -53,6 +53,8 @@ import org.apache.zookeeper.proto.GetACLRequest;
 import org.apache.zookeeper.proto.GetACLResponse;
 import org.apache.zookeeper.proto.GetChildren2Request;
 import org.apache.zookeeper.proto.GetChildren2Response;
+import org.apache.zookeeper.proto.GetAllChildrenNumberRequest;
+import org.apache.zookeeper.proto.GetAllChildrenNumberResponse;
 import org.apache.zookeeper.proto.GetChildrenRequest;
 import org.apache.zookeeper.proto.GetChildrenResponse;
 import org.apache.zookeeper.proto.GetDataRequest;
@@ -2667,6 +2669,62 @@ public class ZooKeeper implements AutoCloseable {
     {
         getChildren(path, watch ? watchManager.defaultWatcher : null, cb, ctx);
     }
+
+    /**
+     * Synchronously gets all numbers of children nodes under a specific path
+     *
+     * @since 3.6.0
+     * @param path
+     * @return
+     * @throws KeeperException
+     * @throws InterruptedException
+     */
+    public int getAllChildrenNumber(final String path)
+            throws KeeperException, InterruptedException {
+
+        final String clientPath = path;
+        PathUtils.validatePath(clientPath);
+
+        final String serverPath = prependChroot(clientPath);
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.getAllChildrenNumber);
+        GetAllChildrenNumberRequest request = new GetAllChildrenNumberRequest(serverPath);
+        GetAllChildrenNumberResponse response = new GetAllChildrenNumberResponse();
+
+        ReplyHeader r = cnxn.submitRequest(h, request, response, null);
+        if (r.getErr() != 0) {
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()),
+                    clientPath);
+        }
+        return response.getTotalNumber();
+    }
+
+    /**
+     * Asynchronously gets all numbers of children nodes under a specific path
+     *
+     * @since 3.6.0
+     * @param path
+     * @return
+     * @throws KeeperException
+     * @throws InterruptedException
+     */
+    public void getAllChildrenNumber(final String path, AsyncCallback.AllChildrenNumberCallback cb, Object ctx) {
+
+        final String clientPath = path;
+        PathUtils.validatePath(clientPath);
+
+        final String serverPath = prependChroot(clientPath);
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.getAllChildrenNumber);
+        GetAllChildrenNumberRequest request = new GetAllChildrenNumberRequest(serverPath);
+        GetAllChildrenNumberResponse response = new GetAllChildrenNumberResponse();
+
+        cnxn.queuePacket(h, new ReplyHeader(), request, response, cb,
+                clientPath, serverPath, ctx, null);
+    }
+
 
     /**
      * Synchronously gets all the ephemeral nodes  created by this session.

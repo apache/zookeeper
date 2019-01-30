@@ -145,6 +145,7 @@ public class Request {
         case OpCode.exists:
         case OpCode.getACL:
         case OpCode.getChildren:
+        case OpCode.getAllChildrenNumber:
         case OpCode.getChildren2:
         case OpCode.getData:
         case OpCode.getEphemerals:
@@ -168,6 +169,7 @@ public class Request {
         case OpCode.exists:
         case OpCode.getACL:
         case OpCode.getChildren:
+        case OpCode.getAllChildrenNumber:
         case OpCode.getChildren2:
         case OpCode.getData:
         case OpCode.getEphemerals:
@@ -229,6 +231,8 @@ public class Request {
             return "setACL";
         case OpCode.getChildren:
             return "getChildren";
+        case OpCode.getAllChildrenNumber:
+            return "getAllChildrenNumber";
         case OpCode.getChildren2:
             return "getChildren2";
         case OpCode.getEphemerals:

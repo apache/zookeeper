@@ -734,6 +734,15 @@ public class DataTree {
         }
     }
 
+    public int getAllChildrenNumber(String path) {
+        //cull out these two keys:"", "/"
+        if ("/".equals(path)) {
+            return nodes.size() - 2;
+        }
+
+        return (int)nodes.keySet().parallelStream().filter(key -> key.startsWith(path + "/")).count();
+    }
+
     public Stat setACL(String path, List<ACL> acl, int version)
             throws KeeperException.NoNodeException {
         Stat stat = new Stat();
