@@ -114,7 +114,11 @@ public class Follower extends Learner{
                 }
             } catch (Exception e) {
                 LOG.warn("Exception when following the leader", e);
-                closeSocket();
+                try {
+                    sock.close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
     
                 // clear pending revalidations
                 pendingRevalidations.clear();
