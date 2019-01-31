@@ -108,6 +108,10 @@
       <artifactId>jline</artifactId>
     </dependency>
     <dependency>
+       <groupId>io.dropwizard.metrics</groupId>
+       <artifactId>metrics-core</artifactId>
+    </dependency>
+    <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
     </dependency>
