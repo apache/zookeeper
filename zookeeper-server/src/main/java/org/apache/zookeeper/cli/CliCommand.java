@@ -45,7 +45,7 @@ abstract public class CliCommand {
     }
 
     /**
-     * Set out printStream (useable for testing)
+     * Set out printStream (usable for testing)
      * @param out 
      */
     public void setOut(PrintStream out) {
@@ -53,7 +53,7 @@ abstract public class CliCommand {
     }
 
     /**
-     * Set err printStream (useable for testing)
+     * Set err printStream (usable for testing)
      * @param err 
      */
     public void setErr(PrintStream err) {
@@ -61,7 +61,7 @@ abstract public class CliCommand {
     }
 
     /**
-     * set the zookeper instance
+     * set the zookeeper instance
      * @param zk the ZooKeeper instance.
      */
     public void setZk(ZooKeeper zk) {

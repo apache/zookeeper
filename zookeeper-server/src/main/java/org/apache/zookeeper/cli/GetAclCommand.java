@@ -36,7 +36,7 @@ public class GetAclCommand extends CliCommand {
     private String args[];
     private CommandLine cl;
 
-    {
+    static {
         options.addOption("s", false, "stats");
     }
 

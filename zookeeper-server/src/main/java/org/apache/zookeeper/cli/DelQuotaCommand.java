@@ -71,7 +71,7 @@ public class DelQuotaCommand extends CliCommand {
             } else if (cl.hasOption("n")) {
                 delQuota(zk, path, false, true);
             } else if (args.length == 2) {
-                // we dont have an option specified.
+                // we don't have an option specified.
                 // just delete whole quota node
                 delQuota(zk, path, true, true);
             }
@@ -139,7 +139,7 @@ public class DelQuotaCommand extends CliCommand {
      * @param zk the zookeeper client
      * @param path the path to start from and go up and see if their is any
      * unwanted parent in the path.
-     * @return true if sucessful
+     * @return true if successful
      * @throws KeeperException
      * @throws IOException
      * @throws InterruptedException

@@ -109,7 +109,7 @@ public class SetQuotaCommand extends CliCommand {
 
         String quotaPath = Quotas.quotaZookeeper;
         // check for more than 2 children --
-        // if zookeeper_stats and zookeeper_qutoas
+        // if zookeeper_stats and zookeeper_quotas
         // are not the children then this path
         // is an ancestor of some path that
         // already has quota
@@ -148,7 +148,7 @@ public class SetQuotaCommand extends CliCommand {
         StringBuilder sb = new StringBuilder();
         sb.append(quotaPath);
         for (int i = 1; i < splits.length; i++) {
-            sb.append("/" + splits[i]);
+            sb.append("/").append(splits[i]);
             quotaPath = sb.toString();
             try {
                 zk.create(quotaPath, null, ZooDefs.Ids.OPEN_ACL_UNSAFE,
