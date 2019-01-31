@@ -85,7 +85,7 @@ public final class StaticHostProvider implements HostProvider {
      */
     public StaticHostProvider(Collection<InetSocketAddress> serverAddresses) {
         init(serverAddresses,
-                System.currentTimeMillis() ^ this.hashCode(),
+                System.nanoTime() ^ this.hashCode(),
                 new Resolver() {
             @Override
             public InetAddress[] getAllByName(String name) throws UnknownHostException {
