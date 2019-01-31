@@ -237,6 +237,12 @@
       <email>andor@apache.org</email>
       <timezone>+1</timezone>
     </developer>
+    <developer>
+      <id>lvfangmin</id>
+      <name>Allan Lyu</name>
+      <email>fangmin@apache.org</email>
+      <timezone>-8</timezone>
+    </developer>
   </developers>
 
   <profiles>
