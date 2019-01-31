@@ -31,7 +31,7 @@ public class GetConfigCommand extends CliCommand {
     private String args[];
     private CommandLine cl;
 
-    {
+    static {
         options.addOption("s", false, "stats");
         options.addOption("w", false, "watch");
         options.addOption("c", false, "client connection string");

@@ -24,7 +24,7 @@ import org.apache.zookeeper.StatsTrack;
 import org.apache.zookeeper.data.Stat;
 
 /**
- * listQuta command for cli
+ * listQuota command for cli
  */
 public class ListQuotaCommand extends CliCommand {
 

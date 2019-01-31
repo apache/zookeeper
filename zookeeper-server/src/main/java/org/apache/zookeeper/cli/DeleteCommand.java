@@ -29,7 +29,7 @@ public class DeleteCommand extends CliCommand {
     private String[] args;
     private CommandLine cl;
 
-    {
+    static {
         options.addOption("v", true, "version");
     }
 
