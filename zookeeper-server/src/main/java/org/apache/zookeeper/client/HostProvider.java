@@ -21,7 +21,6 @@ package org.apache.zookeeper.client;
 import org.apache.yetus.audience.InterfaceAudience;
 
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.util.Collection;
 
 /**
