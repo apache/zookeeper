@@ -1166,7 +1166,7 @@ public class ClientCnxn {
                                 }
                             }
 
-                            if (sendAuthEvent == true) {
+                            if (sendAuthEvent) {
                                 eventThread.queueEvent(new WatchedEvent(
                                       Watcher.Event.EventType.None,
                                       authState,null));
@@ -1419,7 +1419,7 @@ public class ClientCnxn {
             }
 
             // 2. SASL login failed.
-            if (saslLoginFailed == true) {
+            if (saslLoginFailed) {
                 return false;
             }
 

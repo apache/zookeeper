@@ -332,7 +332,7 @@ public class ZooKeeperSaslClient {
                     // TODO: introspect about e: look for GSS information.
                     final String UNKNOWN_SERVER_ERROR_TEXT =
                       "(Mechanism level: Server not found in Kerberos database (7) - UNKNOWN_SERVER)";
-                    if (e.toString().indexOf(UNKNOWN_SERVER_ERROR_TEXT) > -1) {
+                    if (e.toString().contains(UNKNOWN_SERVER_ERROR_TEXT)) {
                         error += " This may be caused by Java's being unable to resolve the Zookeeper Quorum Member's" +
                           " hostname correctly. You may want to try to adding" +
                           " '-Dsun.net.spi.nameservice.provider.1=dns,sun' to your client's JVMFLAGS environment.";
@@ -438,18 +438,15 @@ public class ZooKeeperSaslClient {
                 // authentication is either in progress, successful, or failed.
 
                 // 1. Authentication hasn't finished yet: we must wait for it to do so.
-                if ((isComplete() == false) &&
-                    (isFailed() == false)) {
+                if (!isComplete() && !isFailed()) {
                     return true;
                 }
 
                 // 2. SASL authentication has succeeded or failed..
-                if (isComplete() || isFailed()) {
-                    if (gotLastPacket == false) {
-                        // ..but still in progress, because there is a final SASL
-                        // message from server which must be received.
+                if (!gotLastPacket) {
+                    // ..but still in progress, because there is a final SASL
+                    // message from server which must be received.
                     return true;
-                    }
                 }
             }
             // Either client is not configured to use a tunnelled authentication
@@ -459,7 +456,7 @@ public class ZooKeeperSaslClient {
         } catch (SecurityException e) {
             // Thrown if the caller does not have permission to retrieve the Configuration.
             // In this case, simply returning false is correct.
-            if (LOG.isDebugEnabled() == true) {
+            if (LOG.isDebugEnabled()) {
                 LOG.debug("Could not retrieve login configuration: " + e);
             }
             return false;
