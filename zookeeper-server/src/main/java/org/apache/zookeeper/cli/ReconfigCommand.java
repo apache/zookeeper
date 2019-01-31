@@ -52,12 +52,12 @@ public class ReconfigCommand extends CliCommand {
     private String members;
 
     /* version - version of config from which we want to reconfigure - if current config is different
-     * reconfiguration will fail. Should be ommitted from the CLI to disable this option.
+     * reconfiguration will fail. Should be committed from the CLI to disable this option.
      */
     long version = -1;
     private CommandLine cl;
 
-    {
+    static {
         options.addOption("s", false, "stats");
         options.addOption("v", true, "required current config version");
         options.addOption("file", true, "path of config file to parse for membership");
@@ -106,8 +106,7 @@ public class ReconfigCommand extends CliCommand {
             throw new CliParseException("Can't use -file or -members together with -add or -remove (mixing incremental" +
             		" and non-incremental modes is not allowed)");
         }
-        if (cl.hasOption("file") && cl.hasOption("members"))
-        {
+        if (cl.hasOption("file") && cl.hasOption("members")) {
             throw new CliParseException("Can't use -file and -members together (conflicting non-incremental modes)");
         }
 
@@ -122,13 +121,10 @@ public class ReconfigCommand extends CliCommand {
            members = cl.getOptionValue("members").toLowerCase();
         }
         if (cl.hasOption("file")) {
-            try {           
-                FileInputStream inConfig = new FileInputStream(cl.getOptionValue("file"));
+            try {
                 Properties dynamicCfg = new Properties();
-                try {
+                try (FileInputStream inConfig = new FileInputStream(cl.getOptionValue("file"))) {
                     dynamicCfg.load(inConfig);
-                } finally {
-                    inConfig.close();
                 }
                 //check that membership makes sense; leader will make these checks again
                 //don't check for leader election ports since 
