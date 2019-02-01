@@ -14,30 +14,9 @@ Full documentation for this release can also be found in docs/index.html
 ---------------------------
 Packaging/release artifacts - Maven
 
-    To create the tarball with the buildabel source files in zookeeper/target directory, just run:
-        mvn clean (-DskipTests) package
+    A buildable tarball is located under zookeeper/target/ directory
 
-    To upload the artifacts to maven central, see Apache guidelines:
-    https://www.apache.org/dev/publishing-maven-artifacts.html
-
-    Having the Apache pom as parent, when doing the build for release, apache-release profile should be activated
-        mvn clean install -Papache-release
-
-    Staging the release
-    https://www.apache.org/dev/publishing-maven-artifacts.html#staging-maven
-
-        Do a dryrun
-            mvn release:prepare -DdryRun=true -DautoVersionSubmodules=true
-
-        Publish snapshot
-            mvn deploy
-
-        Prepare the release
-            mvn release:clean
-            mvn release:prepare
-
-        Stage the release for a vote
-            mvn release:perform
+    The artifacts for the modules are uploaded to maven central.
 
 
 Packaging/release artifacts - Ant
