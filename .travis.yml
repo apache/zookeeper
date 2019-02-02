@@ -16,7 +16,7 @@ jobs:
   include:
   - stage: test
     jdk: openjdk11
-    script: travis_wait mvn verify -Dmaven.test.redirectTestOutputToFile=true -Dsurefire-forkcount=4
+    script: travis_wait 30 mvn verify -Dmaven.test.redirectTestOutputToFile=true -Dsurefire-forkcount=4
 
 branches:
   only:
