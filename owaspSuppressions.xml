@@ -22,4 +22,17 @@
       <!-- ZOOKEEPER-3217 -->
       <cve>CVE-2018-8088</cve>
    </suppress>
+   <suppress>
+      <!-- ZOOKEEPER-3262 -->
+      <cve>CVE-2018-8012</cve>
+   </suppress>
+   <suppress>
+      <!-- ZOOKEEPER-3262 -->
+      <cve>CVE-2016-5017</cve>
+   </suppress>
+   <suppress>
+      <!-- https://github.com/jeremylong/DependencyCheck/issues/1653
+           False positive on Netty 4.x-->
+      <cve>CVE-2018-12056</cve>
+   </suppress>
 </suppressions>
