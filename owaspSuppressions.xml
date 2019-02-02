@@ -22,4 +22,8 @@
       <!-- ZOOKEEPER-3217 -->
       <cve>CVE-2018-8088</cve>
    </suppress>
+   <suppress>
+      <!-- ZOOKEEPER-3262 -->
+      <cve>CVE-2018-8012</cve>
+   </suppress>
 </suppressions>
