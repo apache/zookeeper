@@ -25,11 +25,9 @@ class ZooKeeperTestable implements Testable {
     private static final Logger LOG = LoggerFactory
             .getLogger(ZooKeeperTestable.class);
 
-    private final ZooKeeper zooKeeper;
     private final ClientCnxn clientCnxn;
 
-    ZooKeeperTestable(ZooKeeper zooKeeper, ClientCnxn clientCnxn) {
-        this.zooKeeper = zooKeeper;
+    ZooKeeperTestable(ClientCnxn clientCnxn) {
         this.clientCnxn = clientCnxn;
     }
 
@@ -43,5 +41,11 @@ class ZooKeeperTestable implements Testable {
         clientCnxn.eventThread.queueEventOfDeath();
         clientCnxn.state = ZooKeeper.States.CLOSED;
         clientCnxn.sendThread.getClientCnxnSocket().onClosing();
+    }
+
+    @Override
+    public void queueEvent(WatchedEvent event) {
+        LOG.info("queueEvent() called: {}", event);
+        clientCnxn.eventThread.queueEvent(event);
     }
 }
