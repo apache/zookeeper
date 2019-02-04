@@ -80,6 +80,10 @@ public class Request {
 
     public long prepQueueStartTime= -1;
 
+    public long commitProcQueueStartTime = -1;
+
+    public long commitRecvTime = -1;
+
     private Object owner;
 
     private KeeperException e;

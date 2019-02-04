@@ -24,13 +24,14 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.WorkerService;
@@ -41,7 +42,7 @@ import org.apache.zookeeper.server.ZooKeeperServerListener;
  * This RequestProcessor matches the incoming committed requests with the
  * locally submitted requests. The trick is that locally submitted requests that
  * change the state of the system will come back as incoming committed requests,
- * so we need to match them up. Instead of just waiting for the committed requests, 
+ * so we need to match them up. Instead of just waiting for the committed requests,
  * we process the uncommitted requests that belong to other sessions.
  *
  * The CommitProcessor is multi-threaded. Communication between threads is
@@ -89,6 +90,16 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
         new LinkedBlockingQueue<Request>();
 
     /**
+     * The number of read requests currently held in all session queues
+     */
+    private AtomicInteger numReadQueuedRequests = new AtomicInteger(0);
+
+    /**
+     * The number of quorum requests currently held in all session queued
+     */
+    private AtomicInteger numWriteQueuedRequests = new AtomicInteger(0);
+
+    /**
      * Requests that have been committed.
      */
     protected final LinkedBlockingQueue<Request> committedRequests =
@@ -108,7 +119,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
 
     /** For testing purposes, we use a separated stopping condition for the
      * outer loop.*/
-    protected volatile boolean stoppedMainLoop = true; 
+    protected volatile boolean stoppedMainLoop = true;
     protected volatile boolean stopped = true;
     private long workerShutdownTimeoutMS;
     protected WorkerService workerPool;
@@ -146,7 +157,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
             case OpCode.setACL:
                 return true;
             case OpCode.sync:
-                return matchSyncs;    
+                return matchSyncs;
             case OpCode.createSession:
             case OpCode.closeSession:
                 return !request.isLocalSession();
@@ -189,6 +200,13 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
                         }
                     }
                 }
+
+                ServerMetrics.getMetrics().READS_QUEUED_IN_COMMIT_PROCESSOR.add(numReadQueuedRequests.get());
+                ServerMetrics.getMetrics().WRITES_QUEUED_IN_COMMIT_PROCESSOR.add(numWriteQueuedRequests.get());
+                ServerMetrics.getMetrics().COMMITS_QUEUED_IN_COMMIT_PROCESSOR.add(committedRequests.size());
+
+                long time = Time.currentElapsedTime();
+
                 /*
                  * Processing up to requestsToProcess requests from the incoming
                  * queue (queuedRequests), possibly less if a committed request
@@ -203,10 +221,11 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
                             || pendingRequests.containsKey(request.sessionId)) {
                         // Add request to pending
                         pendingRequests
-                            .computeIfAbsent(request.sessionId, sid -> new ArrayDeque<>())
-                            .add(request);
-                    }
-                    else {
+                                .computeIfAbsent(request.sessionId, sid -> new ArrayDeque<>())
+                                .add(request);
+                        ServerMetrics.getMetrics().REQUESTS_IN_SESSION_QUEUE.add(pendingRequests.get(request.sessionId).size());
+                    } else {
+                        numReadQueuedRequests.decrementAndGet();
                         sendToNextProcessor(request);
                     }
                     /*
@@ -296,6 +315,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
                             topPending.setHdr(request.getHdr());
                             topPending.setTxn(request.getTxn());
                             topPending.zxid = request.zxid;
+                            topPending.commitRecvTime = request.commitRecvTime;
                             request = topPending;
                         }
                     }
@@ -311,6 +331,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
                     if (sessionQueue != null) {
                         while (!stopped && !sessionQueue.isEmpty()
                                 && !needCommit(sessionQueue.peek())) {
+                            numReadQueuedRequests.decrementAndGet();
                             sendToNextProcessor(sessionQueue.poll());
                         }
                         // Remove empty queues
@@ -319,6 +340,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
                         }
                     }
                 }
+                ServerMetrics.getMetrics().COMMIT_PROCESS_TIME.add(Time.currentElapsedTime() - time);
             } while (!stoppedMainLoop);
         } catch (Throwable e) {
             handleException(this.getName(), e);
@@ -385,8 +407,40 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
 
         public void doWork() throws RequestProcessorException {
             try {
+                if (needCommit(request)) {
+                    if (request.commitProcQueueStartTime != -1 &&
+                            request.commitRecvTime != -1) {
+                        // Locally issued writes.
+                        long currentTime = Time.currentElapsedTime();
+                        ServerMetrics.getMetrics().WRITE_COMMITPROC_TIME.add(currentTime -
+                                request.commitProcQueueStartTime);
+                        ServerMetrics.getMetrics().LOCAL_WRITE_COMMITTED_TIME.add(currentTime -
+                                request.commitRecvTime);
+                    } else if (request.commitRecvTime != -1) {
+                        // Writes issued by other servers.
+                        ServerMetrics.getMetrics().SERVER_WRITE_COMMITTED_TIME.add(
+                                Time.currentElapsedTime() - request.commitRecvTime);
+                    }
+                } else {
+                    if (request.commitProcQueueStartTime != -1) {
+                        ServerMetrics.getMetrics().READ_COMMITPROC_TIME.add(
+                                Time.currentElapsedTime() -
+                                        request.commitProcQueueStartTime);
+                    }
+                }
+
+                long timeBeforeFinalProc = Time.currentElapsedTime();
                 nextProcessor.processRequest(request);
+                if (needCommit(request)) {
+                    ServerMetrics.getMetrics().WRITE_FINAL_PROC_TIME.add(
+                            Time.currentElapsedTime() - timeBeforeFinalProc);
+                } else {
+                    ServerMetrics.getMetrics().READ_FINAL_PROC_TIME.add(
+                            Time.currentElapsedTime() - timeBeforeFinalProc);
+                }
+
             } finally {
+
                 if (numRequestsProcessing.decrementAndGet() == 0){
                     wakeupOnEmpty();
                 }
@@ -404,7 +458,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
             emptyPoolSync.notifyAll();
         }
     }
-    
+
     public void commit(Request request) {
         if (stopped || request == null) {
             return;
@@ -412,6 +466,8 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
         if (LOG.isDebugEnabled()) {
             LOG.debug("Committing request:: " + request);
         }
+        request.commitRecvTime = Time.currentElapsedTime();
+        ServerMetrics.getMetrics().COMMITS_QUEUED.add(1);
         committedRequests.add(request);
         wakeup();
     }
@@ -424,6 +480,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
         if (LOG.isDebugEnabled()) {
             LOG.debug("Processing request:: " + request);
         }
+        request.commitProcQueueStartTime = Time.currentElapsedTime();
         queuedRequests.add(request);
         wakeup();
     }
