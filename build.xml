@@ -1014,8 +1014,9 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <chmod perm="ugo+x" type="file" parallel="false">
         <fileset dir="${dist.dir}/bin"/>
         <fileset dir="${dist.dir}/sbin"/>
-        <fileset dir="${dist.dir}/src/zookeeper-contrib/">
-          <include name="*/bin/*" />
+        <fileset dir="${dist.dir}/contrib/">
+          <include name="**/*.sh" />
+          <include name="**/*.py" />
         </fileset>
       </chmod>
     </target>
