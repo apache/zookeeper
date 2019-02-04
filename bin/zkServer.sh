@@ -22,7 +22,7 @@
 #
 
 
-# use POSTIX interface, symlink is followed automatically
+# use POSIX interface, symlink is followed automatically
 ZOOBIN="${BASH_SOURCE-$0}"
 ZOOBIN="$(dirname "${ZOOBIN}")"
 ZOOBINDIR="$(cd "${ZOOBIN}"; pwd)"
