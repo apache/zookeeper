@@ -18,7 +18,12 @@
 
 package org.apache.zookeeper.test;
 
-import org.apache.zookeeper.*;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.TestableZooKeeper;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooDefs;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
