@@ -508,6 +508,9 @@ public class NettyServerCnxn extends ServerCnxn {
         ENABLE
     }
 
+    /**
+     * Note that both disableRecv() and disableRecvNoWait() are asynchronous in the netty implementation.
+     */
     @Override
     public void disableRecv() {
         if (throttled.compareAndSet(false, true)) {
@@ -518,10 +521,6 @@ public class NettyServerCnxn extends ServerCnxn {
         }
     }
 
-    /**
-     * Note that the netty implementation ignores the <code>waitDisableRecv</code>
-     * parameter and is always asynchronous.
-     */
     private void disableRecvNoWait() {
         disableRecv();
     }

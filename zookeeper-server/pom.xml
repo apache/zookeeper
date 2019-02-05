@@ -69,7 +69,7 @@
     </dependency>
     <dependency>
       <groupId>io.netty</groupId>
-      <artifactId>netty</artifactId>
+      <artifactId>netty-all</artifactId>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>

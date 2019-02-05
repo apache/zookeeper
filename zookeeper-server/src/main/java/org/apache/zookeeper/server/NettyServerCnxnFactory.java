@@ -151,7 +151,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                 if (evt == NettyServerCnxn.AutoReadEvent.ENABLE) {
                     LOG.debug("Received AutoReadEvent.ENABLE");
                     NettyServerCnxn cnxn = ctx.channel().attr(CONNECTION_ATTRIBUTE).get();
-                    // TODO(ilyam): Not sure if cnxn can be null here. It becomes null if channelInactive()
+                    // TODO(ivmaykov): Not sure if cnxn can be null here. It becomes null if channelInactive()
                     // or exceptionCaught() trigger, but it's unclear to me if userEventTriggered() can run
                     // after either of those. Check for null just to be safe ...
                     if (cnxn != null) {
