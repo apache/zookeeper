@@ -24,15 +24,12 @@ import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.data.Stat;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -77,6 +74,28 @@ public class SessionTimeoutTest extends ClientBase {
             gotException = true;
         }
         Assert.assertTrue(gotException);
+    }
+
+    @Test
+    public void testQueueEvent() throws InterruptedException,
+            KeeperException {
+        final CountDownLatch eventLatch = new CountDownLatch(1);
+        Watcher watcher = new Watcher() {
+            @Override
+            public void process(WatchedEvent event) {
+                if ( event.getType() == Event.EventType.NodeDataChanged ) {
+                    if ( event.getPath().equals("/foo/bar") ) {
+                        eventLatch.countDown();
+                    }
+                }
+            }
+        };
+        zk.exists("/foo/bar", watcher);
+
+        WatchedEvent event = new WatchedEvent(Watcher.Event.EventType.NodeDataChanged,
+                Watcher.Event.KeeperState.SyncConnected, "/foo/bar");
+        zk.getTestable().queueEvent(event);
+        Assert.assertTrue(eventLatch.await(5, TimeUnit.SECONDS));
     }
 
     /**

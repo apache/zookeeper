@@ -1236,7 +1236,7 @@ public class ZooKeeper implements AutoCloseable {
 
     // VisibleForTesting
     public Testable getTestable() {
-        return new ZooKeeperTestable(this, cnxn);
+        return new ZooKeeperTestable(cnxn);
     }
 
     /* Useful for testing watch handling behavior */
