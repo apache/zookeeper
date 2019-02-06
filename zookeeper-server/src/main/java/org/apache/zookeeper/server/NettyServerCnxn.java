@@ -28,7 +28,6 @@ import java.nio.channels.SelectionKey;
 import java.security.cert.Certificate;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
@@ -36,7 +35,8 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
-import io.netty.util.ReferenceCountUtil;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.data.Stat;
@@ -178,17 +178,20 @@ public class NettyServerCnxn extends ServerCnxn {
         factory.addSession(sessionId, this);
     }
 
+    // Use a single listener instance to reduce GC
+    private final GenericFutureListener<Future<Void>> onSendBufferDoneListener = f -> {
+        if (f.isSuccess()) {
+            packetSent();
+        }
+    };
+
     @Override
     public void sendBuffer(ByteBuffer... buffers) {
         if (buffers.length == 1 && buffers[0] == ServerCnxnFactory.closeConn) {
             close();
             return;
         }
-        channel.writeAndFlush(Unpooled.wrappedBuffer(buffers)).addListener(f -> {
-            if (f.isSuccess()) {
-                packetSent();
-            }
-        });
+        channel.writeAndFlush(Unpooled.wrappedBuffer(buffers)).addListener(onSendBufferDoneListener);
     }
 
     /**
@@ -277,12 +280,27 @@ public class NettyServerCnxn extends ServerCnxn {
     }
 
     /**
+     * Helper that throws an IllegalStateException if the current thread is not
+     * executing in the channel's event loop thread.
+     * @param callerMethodName the name of the calling method to add to the exception message.
+     */
+    private void checkIsInEventLoop(String callerMethodName) {
+        if (!channel.eventLoop().inEventLoop()) {
+            throw new IllegalStateException(
+                    callerMethodName + "() called from non-EventLoop thread");
+        }
+    }
+
+    /**
      * Process incoming message. This should only be called from the event
      * loop thread.
+     * Note that this method does not call <code>buf.release()</code>. The caller
+     * is responsible for making sure the buf is released after this method
+     * returns.
      * @param buf the message bytes to process.
      */
     void processMessage(ByteBuf buf) {
-        assert channel.eventLoop().inEventLoop();
+        checkIsInEventLoop("processMessage");
         if (LOG.isDebugEnabled()) {
             LOG.debug("0x{} queuedBuffer: {}",
                     Long.toHexString(sessionId),
@@ -341,7 +359,7 @@ public class NettyServerCnxn extends ServerCnxn {
      * from the event loop thread.
      */
     void processQueuedBuffer() {
-        assert channel.eventLoop().inEventLoop();
+        checkIsInEventLoop("processQueuedBuffer");
         if (queuedBuffer != null) {
             if (LOG.isTraceEnabled()) {
                 LOG.trace("processing queue 0x{} queuedBuffer {}",
@@ -357,6 +375,9 @@ public class NettyServerCnxn extends ServerCnxn {
                 releaseQueuedBuffer();
             } else {
                 LOG.debug("Processed queue - bytes remaining");
+                // Possibly reduce memory consumption by freeing up buffer space
+                // which is no longer needed.
+                queuedBuffer.discardSomeReadBytes();
             }
         } else {
             LOG.debug("queue empty");
@@ -368,9 +389,9 @@ public class NettyServerCnxn extends ServerCnxn {
      * called from the event loop thread.
      */
     private void releaseQueuedBuffer() {
-        assert channel.eventLoop().inEventLoop();
+        checkIsInEventLoop("releaseQueuedBuffer");
         if (queuedBuffer != null) {
-            ReferenceCountUtil.release(queuedBuffer);
+            queuedBuffer.release();
             queuedBuffer = null;
         }
     }
@@ -379,10 +400,13 @@ public class NettyServerCnxn extends ServerCnxn {
      * Receive a message, which can come from the queued buffer or from a new
      * buffer coming in over the channel. This should only be called from the
      * event loop thread.
+     * Note that this method does not call <code>message.release()</code>. The
+     * caller is responsible for making sure the message is released after this
+     * method returns.
      * @param message the message bytes to process.
      */
     private void receiveMessage(ByteBuf message) {
-        assert channel.eventLoop().inEventLoop();
+        checkIsInEventLoop("receiveMessage");
         try {
             while(message.isReadable() && !throttled.get()) {
                 if (bb != null) {

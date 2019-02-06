@@ -203,13 +203,15 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             }
         }
 
+        // Use a single listener instance to reduce GC
+        private final GenericFutureListener<Future<Void>> onWriteCompletedListener = (f) -> {
+            LOG.trace("write {}", f.isSuccess() ? "complete" : "failed");
+        };
+
         @Override
         public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
             if (LOG.isTraceEnabled()) {
-                promise.addListener((future) -> {
-                    LOG.trace("write {}",
-                            future.isSuccess() ? "complete" : "failed");
-                });
+                promise.addListener(onWriteCompletedListener);
             }
             super.write(ctx, msg, promise);
         }
@@ -285,7 +287,8 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     NettyServerCnxnFactory() {
         x509Util = new ClientX509Util();
 
-        EventLoopGroup bossGroup = NettyUtils.newNioOrEpollEventLoopGroup();
+        EventLoopGroup bossGroup = NettyUtils.newNioOrEpollEventLoopGroup(
+                NettyUtils.getClientReachableLocalInetAddressCount());
         EventLoopGroup workerGroup = NettyUtils.newNioOrEpollEventLoopGroup();
         ServerBootstrap bootstrap = new ServerBootstrap()
                 .group(bossGroup, workerGroup)
@@ -519,13 +522,14 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                 if (s.isEmpty()) {
                     ipMap.remove(remoteAddress);
                 }
-            } else {
-                LOG.error(
-                        "Unexpected null set for remote address {} when removing cnxn {}",
-                        remoteAddress,
-                        cnxn);
+                return;
             }
         }
+        // Fallthrough and log errors outside the synchronized block
+        LOG.error(
+                "Unexpected null set for remote address {} when removing cnxn {}",
+                remoteAddress,
+                cnxn);
     }
 
     private int getClientCnxnCount(InetAddress addr) {
