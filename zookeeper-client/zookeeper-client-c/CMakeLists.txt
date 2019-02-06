@@ -16,7 +16,7 @@
 
 cmake_minimum_required(VERSION 3.6)
 
-project(zookeeper VERSION 3.4.13)
+project(zookeeper VERSION 3.4.14)
 set(email user@zookeeper.apache.org)
 set(description "zookeeper C client")
 
