@@ -855,6 +855,7 @@ public class ClientTest extends ClientBase {
         // Sending a nonexisting opcode should cause the server to disconnect
         Assert.assertTrue("failed to disconnect",
                 clientDisconnected.await(5000, TimeUnit.MILLISECONDS));
+        zk.close();
     }
 
     @Test

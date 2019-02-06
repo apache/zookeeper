@@ -25,6 +25,7 @@ import java.nio.ByteBuffer;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.zookeeper.ClientCnxn.Packet;
@@ -59,8 +60,8 @@ abstract class ClientCnxnSocket {
      * readLength() to receive the full message.
      */
     protected ByteBuffer incomingBuffer = lenBuffer;
-    protected long sentCount = 0;
-    protected long recvCount = 0;
+    protected final AtomicLong sentCount = new AtomicLong(0L);
+    protected final AtomicLong recvCount = new AtomicLong(0L);
     protected long lastHeard;
     protected long lastSend;
     protected long now;
@@ -95,11 +96,11 @@ abstract class ClientCnxnSocket {
     }
 
     long getSentCount() {
-        return sentCount;
+        return sentCount.get();
     }
 
     long getRecvCount() {
-        return recvCount;
+        return recvCount.get();
     }
 
     void updateLastHeard() {
