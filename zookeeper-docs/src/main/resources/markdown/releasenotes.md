@@ -14,6 +14,48 @@ See the License for the specific language governing permissions and
 limitations under the License.
 //-->
 
+# Release Notes - ZooKeeper - Version 3.4.14
+
+## Task
+* [ZOOKEEPER-3062](https://issues.apache.org/jira/browse/ZOOKEEPER-3062) - introduce fsync.warningthresholdms constant for FileTxnLog LOG.warn message
+* [ZOOKEEPER-3120](https://issues.apache.org/jira/browse/ZOOKEEPER-3120) - add NetBeans nbproject directory to .gitignore
+* [ZOOKEEPER-925](https://issues.apache.org/jira/browse/ZOOKEEPER-925) - Consider maven site generation to replace our forrest site and documentation generation
+* [ZOOKEEPER-3230](https://issues.apache.org/jira/browse/ZOOKEEPER-3230) - Add Apache NetBeans Maven project files to .gitignore
+
+## Sub-task
+* [ZOOKEEPER-3155](https://issues.apache.org/jira/browse/ZOOKEEPER-3155) - ZOOKEEPER-925 Remove Forrest XMLs and their build process from the project
+* [ZOOKEEPER-3154](https://issues.apache.org/jira/browse/ZOOKEEPER-3154) - ZOOKEEPER-925 Update release process to use the MarkDown solution
+* [ZOOKEEPER-3153](https://issues.apache.org/jira/browse/ZOOKEEPER-3153) - ZOOKEEPER-925 Create MarkDown files and build process for them
+* [ZOOKEEPER-3022](https://issues.apache.org/jira/browse/ZOOKEEPER-3022) - ZOOKEEPER-3021 Step 1.1 - Create docs and it maven structure
+* [ZOOKEEPER-3033](https://issues.apache.org/jira/browse/ZOOKEEPER-3033) - ZOOKEEPER-3021 Step 1.2 - Create zk-recipes maven structure
+* [ZOOKEEPER-3030](https://issues.apache.org/jira/browse/ZOOKEEPER-3030) - ZOOKEEPER-3021 Step 1.3 - Create zk-contrib maven structure
+* [ZOOKEEPER-3031](https://issues.apache.org/jira/browse/ZOOKEEPER-3031) - ZOOKEEPER-3021 Step 1.4 - Create zk-client maven structure
+* [ZOOKEEPER-3080](https://issues.apache.org/jira/browse/ZOOKEEPER-3080) - ZOOKEEPER-3021 Step 1.5 - Separate jute structure
+* [ZOOKEEPER-3032](https://issues.apache.org/jira/browse/ZOOKEEPER-3032) - ZOOKEEPER-3021 Step 1.6 - Create zk-server maven structure
+* [ZOOKEEPER-3223](https://issues.apache.org/jira/browse/ZOOKEEPER-3223) - ZOOKEEPER-3021 Configure Spotbugs
+* [ZOOKEEPER-3256](https://issues.apache.org/jira/browse/ZOOKEEPER-3256) - ZOOKEEPER-3021 Enable OWASP checks to Maven build
+* [ZOOKEEPER-3029](https://issues.apache.org/jira/browse/ZOOKEEPER-3029) - ZOOKEEPER-3021 Create pom files for jute, server and client
+* [ZOOKEEPER-3225](https://issues.apache.org/jira/browse/ZOOKEEPER-3225) - ZOOKEEPER-3021 Create code coverage analysis with maven build
+* [ZOOKEEPER-3226](https://issues.apache.org/jira/browse/ZOOKEEPER-3226) - ZOOKEEPER-3021 Activate C Client with a profile, disabled by default
+* [ZOOKEEPER-3171](https://issues.apache.org/jira/browse/ZOOKEEPER-3171) - ZOOKEEPER-3021 Create pom.xml for recipes and contrib
+* [ZOOKEEPER-3122](https://issues.apache.org/jira/browse/ZOOKEEPER-3122) - ZOOKEEPER-3021 Verify build after maven migration and the end artifact
+
+## Improvement
+* [ZOOKEEPER-3262](https://issues.apache.org/jira/browse/ZOOKEEPER-3262) - Update dependencies flagged by OWASP report
+* [ZOOKEEPER-3021](https://issues.apache.org/jira/browse/ZOOKEEPER-3021) - Umbrella: Migrate project structure to Maven build
+* [ZOOKEEPER-3094](https://issues.apache.org/jira/browse/ZOOKEEPER-3094) - Make BufferSizeTest reliable
+* [ZOOKEEPER-3077](https://issues.apache.org/jira/browse/ZOOKEEPER-3077) - Build native C library outside of source directory
+
+## Bug
+* [ZOOKEEPER-3217](https://issues.apache.org/jira/browse/ZOOKEEPER-3217) - owasp job flagging slf4j on trunk
+* [ZOOKEEPER-3156](https://issues.apache.org/jira/browse/ZOOKEEPER-3156) - ZOOKEEPER-2184 causes kerberos principal to not have resolved host name
+* [ZOOKEEPER-3210](https://issues.apache.org/jira/browse/ZOOKEEPER-3210) - Typo in zookeeperInternals doc
+* [ZOOKEEPER-1392](https://issues.apache.org/jira/browse/ZOOKEEPER-1392) - Should not allow to read ACL when not authorized to read node
+* [ZOOKEEPER-3009](https://issues.apache.org/jira/browse/ZOOKEEPER-3009) - Potential NPE in NIOServerCnxnFactory
+* [ZOOKEEPER-3148](https://issues.apache.org/jira/browse/ZOOKEEPER-3148) - Fix Kerberos tests on branch 3.4 and JDK11
+* [ZOOKEEPER-3265](https://issues.apache.org/jira/browse/ZOOKEEPER-3265) - Build failure on branch-3.4
+* [ZOOKEEPER-3162](https://issues.apache.org/jira/browse/ZOOKEEPER-3162) - Broken lock semantics in C client lock-recipe
+
 # Release Notes - ZooKeeper - Version 3.4.13
 
 ## Sub-task
