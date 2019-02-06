@@ -56,7 +56,7 @@ public class NettyServerCnxnTest extends ClientBase {
      * servercnxnfactory should remove all channel references to avoid
      * duplicate channel closure. Duplicate closure may result in indefinite
      * hanging due to netty open issue.
-     * 
+     *
      * @see <a href="https://issues.jboss.org/browse/NETTY-412">NETTY-412</a>
      */
     @Test(timeout = 40000)
@@ -66,13 +66,16 @@ public class NettyServerCnxnTest extends ClientBase {
                 serverFactory instanceof NettyServerCnxnFactory);
 
         final ZooKeeper zk = createClient();
+        final ZooKeeperServer zkServer = getServer(serverFactory);
         final String path = "/a";
         try {
             // make sure zkclient works
             zk.create(path, "test".getBytes(), Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT);
+            // set on watch
             Assert.assertNotNull("Didn't create znode:" + path,
-                    zk.exists(path, false));
+                    zk.exists(path, true));
+            Assert.assertEquals(1, zkServer.getZKDatabase().getDataTree().getWatchCount());
             Iterable<ServerCnxn> connections = serverFactory.getConnections();
             Assert.assertEquals("Mismatch in number of live connections!", 1,
                     serverFactory.getNumAliveConnections());
@@ -88,6 +91,8 @@ public class NettyServerCnxnTest extends ClientBase {
                     Assert.fail("The number of live connections should be 0");
                 }
             }
+            // make sure the watch is removed when the connection closed
+            Assert.assertEquals(0, zkServer.getZKDatabase().getDataTree().getWatchCount());
         } finally {
             zk.close();
         }

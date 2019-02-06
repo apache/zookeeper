@@ -73,7 +73,7 @@ public class NettyServerCnxn extends ServerCnxn {
 
     NettyServerCnxnFactory factory;
     boolean initialized;
-    
+
     NettyServerCnxn(Channel channel, ZooKeeperServer zks, NettyServerCnxnFactory factory) {
         this.channel = channel;
         this.closingChannel = false;
@@ -83,11 +83,11 @@ public class NettyServerCnxn extends ServerCnxn {
             this.zooKeeperSaslServer = new ZooKeeperSaslServer(factory.login);
         }
     }
-    
+
     @Override
     public void close() {
         closingChannel = true;
-        
+
         if (LOG.isDebugEnabled()) {
             LOG.debug("close called for sessionid:0x"
                     + Long.toHexString(sessionId));
@@ -117,6 +117,10 @@ public class NettyServerCnxn extends ServerCnxn {
                             .getRemoteAddress()).getAddress());
                 s.remove(this);
             }
+        }
+
+        if (zkServer != null) {
+            zkServer.removeCnxn(this);
         }
 
         if (channel.isOpen()) {
@@ -174,7 +178,7 @@ public class NettyServerCnxn extends ServerCnxn {
         @Override
         public ChannelFuture getFuture() {return null;}
     };
-    
+
     @Override
     public void sendResponse(ReplyHeader h, Record r, String tag)
             throws IOException {
@@ -226,7 +230,7 @@ public class NettyServerCnxn extends ServerCnxn {
      */
     private class SendBufferWriter extends Writer {
         private StringBuffer sb = new StringBuffer();
-        
+
         /**
          * Check if we are ready to send another chunk.
          * @param force force sending, even if not a full chunk
@@ -415,7 +419,7 @@ public class NettyServerCnxn extends ServerCnxn {
     public void disableRecv() {
         disableRecvNoWait().awaitUninterruptibly();
     }
-    
+
     private ChannelFuture disableRecvNoWait() {
         throttled = true;
         if (LOG.isDebugEnabled()) {
@@ -423,7 +427,7 @@ public class NettyServerCnxn extends ServerCnxn {
         }
         return channel.setReadable(false);
     }
-    
+
     @Override
     public long getOutstandingRequests() {
         return outstandingCount.longValue();
