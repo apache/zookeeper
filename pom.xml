@@ -630,6 +630,7 @@
                 <include>org/**</include>
                 <include>META_INF/**</include>
               </includes>
+              <skipIfEmpty>true</skipIfEmpty>
             </configuration>
           </execution>
         </executions>
