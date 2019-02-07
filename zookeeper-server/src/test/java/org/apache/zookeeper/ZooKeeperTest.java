@@ -591,4 +591,34 @@ public class ZooKeeperTest extends ClientBase {
         // /e is unset, its acl should remain the same.
         Assert.assertEquals(Ids.OPEN_ACL_UNSAFE, zk.getACL("/e", new Stat()));
     }
+
+    @Test
+    public void testGetChildrenNumber() throws Exception {
+        String name = "/foo";
+        zk.create(name, name.getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        String childname = name + "/bar";
+        zk.create(childname, childname.getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        String subname1 = childname + "/child1";
+        String subname1 = childname + "/child2";
+        String subname1 = childname + "/child3";
+        zk.create(subname1, subname1.getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        zk.create(childname, childname.getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        zk.create(childname, childname.getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        Stat stat = new Stat();
+        int foo_number = zk.getAllChildrenNumber(name);
+        int bar_number = zk.getAllChildrenNumber(childname);
+        int sub_number1 = zk.getAllChildrenNumber(subname1);
+        int sub_number2 = zk.getAllChildrenNumber(subname2);
+        int sub_number3 = zk.getAllChildrenNumber(subname3);
+        Assert.assertEquals(5, foo_number);
+        Assert.assertEquals(4, bar_number);
+        Assert.assertEquals(1, sub_number1);
+        Assert.assertEquals(1, sub_number2);
+        Assert.assertEquals(1, sub_number3);
+    }
 }
