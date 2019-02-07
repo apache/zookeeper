@@ -53,6 +53,8 @@ import org.apache.zookeeper.proto.GetACLRequest;
 import org.apache.zookeeper.proto.GetACLResponse;
 import org.apache.zookeeper.proto.GetChildren2Request;
 import org.apache.zookeeper.proto.GetChildren2Response;
+import org.apache.zookeeper.proto.GetAllChildrenNumberRequest;
+import org.apache.zookeeper.proto.GetAllChildrenNumberResponse;
 import org.apache.zookeeper.proto.GetChildrenRequest;
 import org.apache.zookeeper.proto.GetChildrenResponse;
 import org.apache.zookeeper.proto.GetDataRequest;
@@ -427,6 +429,24 @@ public class FinalRequestProcessor implements RequestProcessor {
                 rsp = new GetChildrenResponse(children);
                 break;
             }
+            case OpCode.getAllChildrenNumber: {
+                lastOp = "GETACN";
+                GetAllChildrenNumberRequest getAllChildrenNumberRequest = new
+                        GetAllChildrenNumberRequest();
+                ByteBufferInputStream.byteBuffer2Record(request.request,
+                        getAllChildrenNumberRequest);
+                path = getAllChildrenNumberRequest.getPath();
+                DataNode n = zks.getZKDatabase().getNode(path);
+                if (n == null) {
+                    throw new KeeperException.NoNodeException();
+                }
+                PrepRequestProcessor.checkACL(zks, request.cnxn, zks.getZKDatabase().aclForNode(n),
+                        ZooDefs.Perms.READ,
+                        request.authInfo, path, null);
+                int number = zks.getZKDatabase().getAllChildrenNumber(path);
+                rsp = new GetAllChildrenNumberResponse(number);
+                break;
+             }
             case OpCode.getChildren2: {
                 lastOp = "GETC";
                 GetChildren2Request getChildren2Request = new GetChildren2Request();
