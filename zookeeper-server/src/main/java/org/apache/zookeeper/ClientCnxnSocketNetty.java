@@ -84,6 +84,8 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
 
     ClientCnxnSocketNetty(ZKClientConfig clientConfig) throws IOException {
         this.clientConfig = clientConfig;
+        // Client only has 1 outgoing socket, so the event loop group only needs
+        // a single thread.
         eventLoopGroup = NettyUtils.newNioOrEpollEventLoopGroup(1 /* nThreads */);
         initProperties();
     }

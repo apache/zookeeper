@@ -46,6 +46,8 @@ import org.slf4j.LoggerFactory;
 public class NettyUtils {
     private static final Logger LOG = LoggerFactory.getLogger(NettyUtils.class);
 
+    private static final int DEFAULT_INET_ADDRESS_COUNT = 1;
+
     /**
      * If {@link Epoll#isAvailable()} <code>== true</code>, returns a new
      * {@link EpollEventLoopGroup}, otherwise returns a new
@@ -104,8 +106,6 @@ public class NettyUtils {
         }
     }
 
-    private static final int DEFAULT_INET_ADDRESS_COUNT = 1;
-
     /**
      * Attempts to detect and return the number of local network addresses that could be
      * used by a client to reach this server. This means we exclude the following address types:
@@ -131,12 +131,21 @@ public class NettyUtils {
             for (NetworkInterface networkInterface : Collections.list(allNetworkInterfaces)) {
                 for (InetAddress inetAddress : Collections.list(networkInterface.getInetAddresses())) {
                     if (inetAddress.isLinkLocalAddress()) {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Ignoring link-local InetAddress {}", inetAddress);
+                        }
                         continue;
                     }
                     if (inetAddress.isMulticastAddress()) {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Ignoring multicast InetAddress {}", inetAddress);
+                        }
                         continue;
                     }
                     if (inetAddress.isLoopbackAddress()) {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Ignoring loopback InetAddress {}", inetAddress);
+                        }
                         continue;
                     }
                     validInetAddresses.add(inetAddress);
