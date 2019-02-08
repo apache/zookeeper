@@ -793,8 +793,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
             description="Build distribution">
       <mkdir dir="${dist.dir}"/>
       <mkdir dir="${dist.dir}/lib"/>
-      <mkdir dir="${dist.dir}/contrib"/>
-      <mkdir dir="${dist.dir}/recipes"/>
       <mkdir dir="${dist.dir}/bin"/>
       <mkdir dir="${dist.dir}/docs"/>
       <mkdir dir="${dist.dir}/docs/jdiff"/>
@@ -862,7 +860,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <fileset dir="${conf.dir}" excludes="**/*.template"/>
       </copy>
 
-      <copy todir="${dist.dir}/docs">
+      <copy todir="${dist.dir}/zookeeper-docs">
           <fileset dir="zookeeper-docs/src/main/resources/markdown/" includes="**">
               <exclude name="html/**" />
           </fileset>
@@ -880,7 +878,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <fileset file="${java.server.resources.dir}/LICENSE.txt"/>
       </copy>
 
-      <copy todir="${dist.dir}/src" includeEmptyDirs="true">
+      <copy todir="${dist.dir}" includeEmptyDirs="true">
         <fileset dir="${basedir}" excludes="**/*.template **/docs/build/**/* **/ivy*.jar">
           <include name="zookeeper-recipes/**"/>
           <include name="zookeeper-docs/**"/>
@@ -888,13 +886,14 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
           <include name="zookeeper-client/**"/>
           <include name="zookeeper-jute/**"/>
           <include name="zookeeper-server/**"/>
+          <include name="zookeeper-it/**"/>
         </fileset>
         <fileset file="${java.server.resources.dir}/pom.template"/>
       </copy>
   	  
       <chmod perm="ugo+x" type="file" parallel="false">
         <fileset dir="${dist.dir}/bin"/>
-        <fileset dir="${dist.dir}/src/zookeeper-contrib/">
+        <fileset dir="${dist.dir}/zookeeper-contrib/">
           <include name="*/bin/*" />
         </fileset>
       </chmod>
