@@ -157,20 +157,21 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>pl.project13.maven</groupId>
-        <artifactId>git-commit-id-plugin</artifactId>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>properties-maven-plugin</artifactId>
         <executions>
           <execution>
-            <id>find-current-git-revision</id>
+            <phase>initialize</phase>
             <goals>
-              <goal>revision</goal>
+              <goal>read-project-properties</goal>
             </goals>
-            <phase>validate</phase>
+            <configuration>
+              <files>
+                <file>${basedir}/src/main/resources/git.properties</file>
+              </files>
+            </configuration>
           </execution>
         </executions>
-        <configuration>
-          <dotGitDirectory>${project.basedir}/.git</dotGitDirectory>
-        </configuration>
       </plugin>
       <plugin> <!-- ${maven.build.timestamp} does not support timezone :( -->
         <groupId>org.codehaus.mojo</groupId>
@@ -226,23 +227,10 @@
                 <classpath />
                 <argument>org.apache.zookeeper.version.util.VerGen</argument>
                 <argument>${project.version}</argument>
-                <argument>${git.commit.id.describe}</argument>
+                <argument>${git.commit.id}</argument>
                 <argument>${build.time}</argument>
               </arguments>
             </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>Jar Tests Package</id>
-            <phase>package</phase>
-            <goals>
-              <goal>test-jar</goal>
-            </goals>
           </execution>
         </executions>
       </plugin>
@@ -283,6 +271,23 @@
             <zookeeper.DigestAuthenticationProvider.superDigest>super:D/InIHSb7yEEbrWz8b9l71RjZJU=</zookeeper.DigestAuthenticationProvider.superDigest>
           </systemPropertyVariables>
         </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>source-package</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <skipAssembly>true</skipAssembly>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
