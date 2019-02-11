@@ -27,33 +27,49 @@
         <relativePath>..</relativePath>
     </parent>
 
-    <groupId>org.apache.zookeeper</groupId>
-    <artifactId>zookeeper-docs</artifactId>
-    <version>3.5.5-SNAPSHOT</version>
-    <name>Apache ZooKeeper - Documentation</name>
-    <description>Documentation</description>
+  <groupId>org.apache.zookeeper</groupId>
+  <artifactId>zookeeper-docs</artifactId>
+  <version>3.5.5-SNAPSHOT</version>
+  <name>Apache ZooKeeper - Documentation</name>
+  <description>Documentation</description>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>com.ruleoftech</groupId>
-                <artifactId>markdown-page-generator-plugin</artifactId>
-                <version>0.10</version>
-                <executions>
-                    <execution>
-                        <phase>process-sources</phase>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <headerHtmlFile>${project.basedir}/src/main/resources/markdown/html/header.html</headerHtmlFile>
-                    <footerHtmlFile>${project.basedir}/src/main/resources/markdown/html/footer.html</footerHtmlFile>
-                    <copyDirectories>images,skin</copyDirectories>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.ruleoftech</groupId>
+        <artifactId>markdown-page-generator-plugin</artifactId>
+        <version>0.10</version>
+        <executions>
+          <execution>
+            <phase>process-sources</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <headerHtmlFile>${project.basedir}/src/main/resources/markdown/html/header.html</headerHtmlFile>
+          <footerHtmlFile>${project.basedir}/src/main/resources/markdown/html/footer.html</footerHtmlFile>
+          <copyDirectories>images,skin</copyDirectories>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>source-package</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <skipAssembly>true</skipAssembly>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 
 </project>
