@@ -2675,7 +2675,7 @@ public class ZooKeeper implements AutoCloseable {
      *
      * @since 3.6.0
      * @param path
-     * @return
+     * @return Children nodes count under path
      * @throws KeeperException
      * @throws InterruptedException
      */
@@ -2705,7 +2705,6 @@ public class ZooKeeper implements AutoCloseable {
      *
      * @since 3.6.0
      * @param path
-     * @return
      * @throws KeeperException
      * @throws InterruptedException
      */
