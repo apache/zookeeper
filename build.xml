@@ -794,9 +794,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <mkdir dir="${dist.dir}"/>
       <mkdir dir="${dist.dir}/lib"/>
       <mkdir dir="${dist.dir}/bin"/>
-      <mkdir dir="${dist.dir}/docs"/>
-      <mkdir dir="${dist.dir}/docs/jdiff"/>
-      <mkdir dir="${dist.dir}/docs/api"/>
 
       <copy todir="${dist.dir}/lib" includeEmptyDirs="false">
         <fileset dir="${lib.dir}">
@@ -909,9 +906,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <mkdir dir="${dist.dir}/share/zookeeper/contrib"/>
       <mkdir dir="${dist.dir}/share/zookeeper/recipes"/>
       <mkdir dir="${dist.dir}/bin"/>
-      <mkdir dir="${dist.dir}/docs"/>
-      <mkdir dir="${dist.dir}/docs/jdiff"/>
-      <mkdir dir="${dist.dir}/docs/api"/>
       <mkdir dir="${dist.dir}/share/zookeeper/templates/conf"/>
       <mkdir dir="${dist.dir}/sbin"/>
 
