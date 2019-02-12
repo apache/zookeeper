@@ -12,7 +12,14 @@ and our wiki, at:
 Full documentation for this release can also be found in docs/index.html
 
 ---------------------------
-Packaging/release artifacts
+Packaging/release artifacts - Maven
+
+    A buildable tarball is located under zookeeper/target/ directory
+
+    The artifacts for the modules are uploaded to maven central.
+
+
+Packaging/release artifacts - Ant
 
 The release artifact contains the following jar file at the top level:
 

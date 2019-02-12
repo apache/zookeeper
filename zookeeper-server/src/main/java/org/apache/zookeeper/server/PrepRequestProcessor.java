@@ -375,7 +375,6 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
             case OpCode.deleteContainer: {
                 String path = new String(request.request.array());
                 String parentPath = getParentPathAndValidate(path);
-                ChangeRecord parentRecord = getRecordForPath(parentPath);
                 ChangeRecord nodeRecord = getRecordForPath(path);
                 if (nodeRecord.childCount > 0) {
                     throw new KeeperException.NotEmptyException(path);
@@ -383,6 +382,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 if (EphemeralType.get(nodeRecord.stat.getEphemeralOwner()) == EphemeralType.NORMAL) {
                     throw new KeeperException.BadVersionException(path);
                 }
+                ChangeRecord parentRecord = getRecordForPath(parentPath);
                 request.setTxn(new DeleteTxn(path));
                 parentRecord = parentRecord.duplicate(request.getHdr().getZxid());
                 parentRecord.childCount--;
@@ -398,8 +398,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 String path = deleteRequest.getPath();
                 String parentPath = getParentPathAndValidate(path);
                 ChangeRecord parentRecord = getRecordForPath(parentPath);
-                ChangeRecord nodeRecord = getRecordForPath(path);
                 checkACL(zks, request.cnxn, parentRecord.acl, ZooDefs.Perms.DELETE, request.authInfo, path, null);
+                ChangeRecord nodeRecord = getRecordForPath(path);
                 checkAndIncVersion(nodeRecord.stat.getVersion(), deleteRequest.getVersion(), path);
                 if (nodeRecord.childCount > 0) {
                     throw new KeeperException.NotEmptyException(path);
@@ -436,7 +436,6 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 }
 
                 zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
-                ReconfigRequest reconfigRequest = (ReconfigRequest)record;
                 LeaderZooKeeperServer lzks;
                 try {
                     lzks = (LeaderZooKeeperServer)zks;
@@ -449,6 +448,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 if (lastSeenQV.getVersion()!=lzks.self.getQuorumVerifier().getVersion()) {
                        throw new KeeperException.ReconfigInProgress();
                 }
+                ReconfigRequest reconfigRequest = (ReconfigRequest)record;
                 long configId = reconfigRequest.getCurConfigId();
 
                 if (configId != -1 && configId!=lzks.self.getLastSeenQuorumVerifier().getVersion()){
@@ -825,12 +825,12 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                     //FIXME: I don't want to have to serialize it here and then
                     //       immediately deserialize in next processor. But I'm
                     //       not sure how else to get the txn stored into our list.
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
-                    txn.serialize(boa, "request") ;
-                    ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
-
-                    txns.add(new Txn(type, bb.array()));
+                    try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
+                        txn.serialize(boa, "request");
+                        ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
+                        txns.add(new Txn(type, bb.array()));
+                    }
                 }
 
                 request.setHdr(new TxnHeader(request.sessionId, request.cxid, zxid,
@@ -854,6 +854,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
             case OpCode.getData:
             case OpCode.getACL:
             case OpCode.getChildren:
+            case OpCode.getAllChildrenNumber:
             case OpCode.getChildren2:
             case OpCode.ping:
             case OpCode.setWatches:
@@ -956,10 +957,10 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
         // check for well formed ACLs
         // This resolves https://issues.apache.org/jira/browse/ZOOKEEPER-1877
         List<ACL> uniqacls = removeDuplicates(acls);
-        List<ACL> rv = new LinkedList<ACL>();
         if (uniqacls == null || uniqacls.size() == 0) {
             throw new KeeperException.InvalidACLException(path);
         }
+        List<ACL> rv = new LinkedList<ACL>();
         for (ACL a: uniqacls) {
             LOG.debug("Processing ACL: {}", a);
             if (a == null) {

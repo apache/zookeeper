@@ -153,6 +153,7 @@ From the shell, type `help` to get a listing of commands that can be executed fr
         set path data [version]
         delquota [-n|-b] path
         quit
+        getAllChildrenNumber path
         printwatches on|off
         create path data acl
         stat path [watch]
