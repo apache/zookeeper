@@ -1000,11 +1000,19 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <fileset file="${java.server.resources.dir}/LICENSE.txt"/>
       </copy>
 
-      <copy todir="${dist.dir}/src" includeEmptyDirs="true">
-        <fileset dir="src" excludes="**/*.template **/docs/build/**/* **/ivy*.jar"/>
+      <copy todir="${dist.dir}" includeEmptyDirs="true">
+        <fileset dir="${basedir}" excludes="**/*.template **/docs/build/**/* **/ivy*.jar">
+          <include name="zookeeper-recipes/**"/>
+          <include name="zookeeper-docs/**"/>
+          <include name="zookeeper-contrib/**"/>
+          <include name="zookeeper-client/**"/>
+          <include name="zookeeper-jute/**"/>
+          <include name="zookeeper-server/**"/>
+          <include name="zookeeper-it/**"/>
+        </fileset>
         <fileset file="${java.server.resources.dir}/pom.template"/>
       </copy>
-  	  
+
       <chmod perm="ugo+x" type="file" parallel="false">
         <fileset dir="${dist.dir}/bin"/>
         <fileset dir="${dist.dir}/sbin"/>
