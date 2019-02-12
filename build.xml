@@ -873,6 +873,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <fileset file="ivysettings.xml"/>
         <fileset file="${java.server.resources.dir}/NOTICE.txt"/>
         <fileset file="${java.server.resources.dir}/LICENSE.txt"/>
+        <fileset file="pom.xml"/>
       </copy>
 
       <copy todir="${dist.dir}" includeEmptyDirs="true">
@@ -1007,7 +1008,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <chmod perm="ugo+x" type="file" parallel="false">
         <fileset dir="${dist.dir}/bin"/>
         <fileset dir="${dist.dir}/sbin"/>
-        <fileset dir="${dist.dir}/contrib/">
+        <fileset dir="${dist.dir}/zookeeper-contrib/">
           <include name="**/*.sh" />
           <include name="**/*.py" />
         </fileset>
@@ -1024,7 +1025,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
                however that's the only way ant currently supports afaik -->
           <tarfileset dir="${build.dir}" mode="664">
             <exclude name="${final.name}/bin/*" />
-            <exclude name="${final.name}/contrib/*/bin/*" />
+            <exclude name="${final.name}/zookeeper-contrib/*/bin/*" />
 
             <exclude name="${final.name}/**/compile" />
             <exclude name="${final.name}/**/config.guess" />
@@ -1042,7 +1043,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
           <tarfileset dir="${build.dir}" mode="755">
             <!-- be sure to add to exclude list above if you add here -->
             <include name="${final.name}/bin/*" />
-            <include name="${final.name}/contrib/*/bin/*" />
+            <include name="${final.name}/zookeeper-contrib/*/bin/*" />
 
             <!-- autotools related commands -->
             <include name="${final.name}/**/compile" />
