@@ -793,12 +793,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
             description="Build distribution">
       <mkdir dir="${dist.dir}"/>
       <mkdir dir="${dist.dir}/lib"/>
-      <mkdir dir="${dist.dir}/contrib"/>
-      <mkdir dir="${dist.dir}/recipes"/>
       <mkdir dir="${dist.dir}/bin"/>
-      <mkdir dir="${dist.dir}/docs"/>
-      <mkdir dir="${dist.dir}/docs/jdiff"/>
-      <mkdir dir="${dist.dir}/docs/api"/>
 
       <copy todir="${dist.dir}/lib" includeEmptyDirs="false">
         <fileset dir="${lib.dir}">
@@ -862,7 +857,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <fileset dir="${conf.dir}" excludes="**/*.template"/>
       </copy>
 
-      <copy todir="${dist.dir}/docs">
+      <copy todir="${dist.dir}/zookeeper-docs">
           <fileset dir="zookeeper-docs/src/main/resources/markdown/" includes="**">
               <exclude name="html/**" />
           </fileset>
@@ -878,9 +873,10 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <fileset file="ivysettings.xml"/>
         <fileset file="${java.server.resources.dir}/NOTICE.txt"/>
         <fileset file="${java.server.resources.dir}/LICENSE.txt"/>
+        <fileset file="pom.xml"/>
       </copy>
 
-      <copy todir="${dist.dir}/src" includeEmptyDirs="true">
+      <copy todir="${dist.dir}" includeEmptyDirs="true">
         <fileset dir="${basedir}" excludes="**/*.template **/docs/build/**/* **/ivy*.jar">
           <include name="zookeeper-recipes/**"/>
           <include name="zookeeper-docs/**"/>
@@ -888,13 +884,14 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
           <include name="zookeeper-client/**"/>
           <include name="zookeeper-jute/**"/>
           <include name="zookeeper-server/**"/>
+          <include name="zookeeper-it/**"/>
         </fileset>
         <fileset file="${java.server.resources.dir}/pom.template"/>
       </copy>
   	  
       <chmod perm="ugo+x" type="file" parallel="false">
         <fileset dir="${dist.dir}/bin"/>
-        <fileset dir="${dist.dir}/src/zookeeper-contrib/">
+        <fileset dir="${dist.dir}/zookeeper-contrib/">
           <include name="*/bin/*" />
         </fileset>
       </chmod>
@@ -910,9 +907,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <mkdir dir="${dist.dir}/share/zookeeper/contrib"/>
       <mkdir dir="${dist.dir}/share/zookeeper/recipes"/>
       <mkdir dir="${dist.dir}/bin"/>
-      <mkdir dir="${dist.dir}/docs"/>
-      <mkdir dir="${dist.dir}/docs/jdiff"/>
-      <mkdir dir="${dist.dir}/docs/api"/>
       <mkdir dir="${dist.dir}/share/zookeeper/templates/conf"/>
       <mkdir dir="${dist.dir}/sbin"/>
 
@@ -1006,15 +1000,23 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <fileset file="${java.server.resources.dir}/LICENSE.txt"/>
       </copy>
 
-      <copy todir="${dist.dir}/src" includeEmptyDirs="true">
-        <fileset dir="src" excludes="**/*.template **/docs/build/**/* **/ivy*.jar"/>
+      <copy todir="${dist.dir}" includeEmptyDirs="true">
+        <fileset dir="${basedir}" excludes="**/*.template **/docs/build/**/* **/ivy*.jar">
+          <include name="zookeeper-recipes/**"/>
+          <include name="zookeeper-docs/**"/>
+          <include name="zookeeper-contrib/**"/>
+          <include name="zookeeper-client/**"/>
+          <include name="zookeeper-jute/**"/>
+          <include name="zookeeper-server/**"/>
+          <include name="zookeeper-it/**"/>
+        </fileset>
         <fileset file="${java.server.resources.dir}/pom.template"/>
       </copy>
-  	  
+
       <chmod perm="ugo+x" type="file" parallel="false">
         <fileset dir="${dist.dir}/bin"/>
         <fileset dir="${dist.dir}/sbin"/>
-        <fileset dir="${dist.dir}/contrib/">
+        <fileset dir="${dist.dir}/zookeeper-contrib/">
           <include name="**/*.sh" />
           <include name="**/*.py" />
         </fileset>
@@ -1031,7 +1033,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
                however that's the only way ant currently supports afaik -->
           <tarfileset dir="${build.dir}" mode="664">
             <exclude name="${final.name}/bin/*" />
-            <exclude name="${final.name}/contrib/*/bin/*" />
+            <exclude name="${final.name}/zookeeper-contrib/*/bin/*" />
 
             <exclude name="${final.name}/**/compile" />
             <exclude name="${final.name}/**/config.guess" />
@@ -1049,7 +1051,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
           <tarfileset dir="${build.dir}" mode="755">
             <!-- be sure to add to exclude list above if you add here -->
             <include name="${final.name}/bin/*" />
-            <include name="${final.name}/contrib/*/bin/*" />
+            <include name="${final.name}/zookeeper-contrib/*/bin/*" />
 
             <!-- autotools related commands -->
             <include name="${final.name}/**/compile" />
@@ -1747,48 +1749,46 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
           <exclude name="**/VERSION"/>
           <exclude name="**/ChangeLog"/>
           <exclude name="**/Changes"/>
-          <exclude name="**/contrib/zkperl/MANIFEST"/>
           <exclude name="**/zookeeper-contrib/zookeeper-contrib-zkperl/MANIFEST"/>
           <exclude name="**/conf/*"/>
-          <exclude name="**/docs/"/>
           <exclude name="**/zookeeper-docs/"/>
           <exclude name="**/lib/jdiff/"/>
-          <exclude name="contrib/ZooInspector/src/main/java/com/nitido/utils/toaster/Toaster.java"/>
-          <exclude name="src/zookeeper-client/zookeeper-client-c/*.la"/>
-          <exclude name="src/zookeeper-client/zookeeper-client-c/*.lo"/>
-          <exclude name="src/zookeeper-client/zookeeper-client-c/.libs/"/>
-          <exclude name="src/zookeeper-client/zookeeper-client-c/autom4te.cache/**"/>
-          <exclude name="src/zookeeper-client/zookeeper-client-c/config**"/>
-          <exclude name="src/zookeeper-client/zookeeper-client-c/include/winstdint.h"/>
-          <exclude name="src/zookeeper-client/zookeeper-client-c/src/hashtable/"/>
-          <exclude name="src/zookeeper-client/zookeeper-client-c/test-driver"/>
-          <exclude name="src/zookeeper-client/zookeeper-client-c/tests/quorum.cfg"/>
-          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/resources/webapp/org/apache/zookeeper/graph/resources/date.format.js"/>
-          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/resources/webapp/org/apache/zookeeper/graph/resources/g.bar.js"/>
-          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/resources/webapp/org/apache/zookeeper/graph/resources/g.dot.js"/>
-          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/resources/webapp/org/apache/zookeeper/graph/resources/g.line.js"/>
-          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/resources/webapp/org/apache/zookeeper/graph/resources/g.pie.js"/>
-          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/resources/webapp/org/apache/zookeeper/graph/resources/g.raphael.js"/>
-          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/resources/webapp/org/apache/zookeeper/graph/resources/raphael.js"/>
-          <exclude name="src/zookeeper-contrib/zookeeper-contrib-loggraph/src/main/resources/webapp/org/apache/zookeeper/graph/resources/yui-min.js"/>
-          <exclude name="contrib/loggraph/src/resources/webapp/org/apache/zookeeper/graph/resources/date.format.js"/>
-          <exclude name="contrib/loggraph/src/resources/webapp/org/apache/zookeeper/graph/resources/g.bar.js"/>
-          <exclude name="contrib/loggraph/src/resources/webapp/org/apache/zookeeper/graph/resources/g.dot.js"/>
-          <exclude name="contrib/loggraph/src/resources/webapp/org/apache/zookeeper/graph/resources/g.line.js"/>
-          <exclude name="contrib/loggraph/src/resources/webapp/org/apache/zookeeper/graph/resources/g.pie.js"/>
-          <exclude name="contrib/loggraph/src/resources/webapp/org/apache/zookeeper/graph/resources/g.raphael.js"/>
-          <exclude name="contrib/loggraph/src/resources/webapp/org/apache/zookeeper/graph/resources/raphael.js"/>
-          <exclude name="contrib/loggraph/src/resources/webapp/org/apache/zookeeper/graph/resources/yui-min.js"/>
-          <exclude name="src/zookeeper-contrib/zookeeper-contrib-monitoring/JMX-RESOURCES"/>
-          <exclude name="src/zookeeper-contrib/zookeeper-contrib-zooinspector/src/main/java/com/nitido/utils/toaster/Toaster.java"/>
-          <exclude name="src/zookeeper-contrib/zookeeper-contrib-fatjar/src/main/resources/mainClasses"/>
-          <exclude name="src/zookeeper-jute/target/main/java/.generated/"/>
-          <exclude name="src/zookeeper-server/src/test/resources/checkstyle*.xml"/>
-          <exclude name="src/zookeeper-server/src/test/resources/checkstyle*.xsl"/>
-          <exclude name="src/zookeeper-server/src/test/resources/findbugs*.xml"/>
-          <exclude name="src/**/*.vcproj"/>
-          <exclude name="src/**/*.vcxproj*"/>
-          <exclude name="src/**/*.sln"/>
+          <exclude name="zookeeper-contrib/zookeeper-contrib-ZooInspector/src/main/java/com/nitido/utils/toaster/Toaster.java"/>
+          <exclude name="zookeeper-client/zookeeper-client-c/*.la"/>
+          <exclude name="zookeeper-client/zookeeper-client-c/*.lo"/>
+          <exclude name="zookeeper-client/zookeeper-client-c/.libs/"/>
+          <exclude name="zookeeper-client/zookeeper-client-c/autom4te.cache/**"/>
+          <exclude name="zookeeper-client/zookeeper-client-c/config**"/>
+          <exclude name="zookeeper-client/zookeeper-client-c/include/winstdint.h"/>
+          <exclude name="zookeeper-client/zookeeper-client-c/src/hashtable/"/>
+          <exclude name="zookeeper-client/zookeeper-client-c/test-driver"/>
+          <exclude name="zookeeper-client/zookeeper-client-c/tests/quorum.cfg"/>
+          <exclude name="zookeeper-contrib/zookeeper-contrib-loggraph/src/main/resources/webapp/org/apache/zookeeper/graph/resources/date.format.js"/>
+          <exclude name="zookeeper-contrib/zookeeper-contrib-loggraph/src/main/resources/webapp/org/apache/zookeeper/graph/resources/g.bar.js"/>
+          <exclude name="zookeeper-contrib/zookeeper-contrib-loggraph/src/main/resources/webapp/org/apache/zookeeper/graph/resources/g.dot.js"/>
+          <exclude name="zookeeper-contrib/zookeeper-contrib-loggraph/src/main/resources/webapp/org/apache/zookeeper/graph/resources/g.line.js"/>
+          <exclude name="zookeeper-contrib/zookeeper-contrib-loggraph/src/main/resources/webapp/org/apache/zookeeper/graph/resources/g.pie.js"/>
+          <exclude name="zookeeper-contrib/zookeeper-contrib-loggraph/src/main/resources/webapp/org/apache/zookeeper/graph/resources/g.raphael.js"/>
+          <exclude name="zookeeper-contrib/zookeeper-contrib-loggraph/src/main/resources/webapp/org/apache/zookeeper/graph/resources/raphael.js"/>
+          <exclude name="zookeeper-contrib/zookeeper-contrib-loggraph/src/main/resources/webapp/org/apache/zookeeper/graph/resources/yui-min.js"/>
+          <exclude name="zookeeper-contrib/zookeeper-contrib-loggraph/src/resources/webapp/org/apache/zookeeper/graph/resources/date.format.js"/>
+          <exclude name="zookeeper-contrib/zookeeper-contrib-loggraph/src/resources/webapp/org/apache/zookeeper/graph/resources/g.bar.js"/>
+          <exclude name="zookeeper-contrib/zookeeper-contrib-loggraph/src/resources/webapp/org/apache/zookeeper/graph/resources/g.dot.js"/>
+          <exclude name="zookeeper-contrib/zookeeper-contrib-loggraph/src/resources/webapp/org/apache/zookeeper/graph/resources/g.line.js"/>
+          <exclude name="zookeeper-contrib/zookeeper-contrib-loggraph/src/resources/webapp/org/apache/zookeeper/graph/resources/g.pie.js"/>
+          <exclude name="zookeeper-contrib/zookeeper-contrib-loggraph/src/resources/webapp/org/apache/zookeeper/graph/resources/g.raphael.js"/>
+          <exclude name="zookeeper-contrib/zookeeper-contrib-loggraph/src/resources/webapp/org/apache/zookeeper/graph/resources/raphael.js"/>
+          <exclude name="zookeeper-contrib/zookeeper-contrib-loggraph/src/resources/webapp/org/apache/zookeeper/graph/resources/yui-min.js"/>
+          <exclude name="zookeeper-contrib/zookeeper-contrib-monitoring/JMX-RESOURCES"/>
+          <exclude name="zookeeper-contrib/zookeeper-contrib-zooinspector/src/main/java/com/nitido/utils/toaster/Toaster.java"/>
+          <exclude name="zookeeper-contrib/zookeeper-contrib-fatjar/src/main/resources/mainClasses"/>
+          <exclude name="zookeeper-jute/target/main/java/.generated/"/>
+          <exclude name="zookeeper-server/src/test/resources/checkstyle*.xml"/>
+          <exclude name="zookeeper-server/src/test/resources/checkstyle*.xsl"/>
+          <exclude name="zookeeper-server/src/test/resources/findbugs*.xml"/>
+          <exclude name="**/*.vcproj"/>
+          <exclude name="**/*.vcxproj*"/>
+          <exclude name="**/*.sln"/>
         </fileset>
       </rat:report>
     </target>
