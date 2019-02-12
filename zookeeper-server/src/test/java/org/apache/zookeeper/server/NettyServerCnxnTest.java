@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -81,7 +82,7 @@ public class NettyServerCnxnTest extends ClientBase {
         final String path = "/a";
         try {
             // make sure zkclient works
-            zk.create(path, "test".getBytes(), Ids.OPEN_ACL_UNSAFE,
+            zk.create(path, "test".getBytes(StandardCharsets.UTF_8), Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT);
             // set on watch
             Assert.assertNotNull("Didn't create znode:" + path,
@@ -116,14 +117,14 @@ public class NettyServerCnxnTest extends ClientBase {
             assertThat("Last client response size should be initialized with INIT_VALUE",
                     clientResponseStats.getLastBufferSize(), equalTo(BufferStats.INIT_VALUE));
 
-            zk.create("/a", "test".getBytes(), Ids.OPEN_ACL_UNSAFE,
+            zk.create("/a", "test".getBytes(StandardCharsets.UTF_8), Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT);
 
             assertThat("Last client response size should be greater than 0 after client request was performed",
                     clientResponseStats.getLastBufferSize(), greaterThan(0));
 
             byte[] contents = zk.getData("/a", null, null);
-            assertArrayEquals("unexpected data", "test".getBytes(), contents);
+            assertArrayEquals("unexpected data", "test".getBytes(StandardCharsets.UTF_8), contents);
         }
     }
 
@@ -134,7 +135,7 @@ public class NettyServerCnxnTest extends ClientBase {
             assertThat("Last client response size should be initialized with INIT_VALUE",
                     clientResponseStats.getLastBufferSize(), equalTo(BufferStats.INIT_VALUE));
 
-            zk.create("/a", "test".getBytes(), Ids.OPEN_ACL_UNSAFE,
+            zk.create("/a", "test".getBytes(StandardCharsets.UTF_8), Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT);
 
             assertThat("Last client response size should be greater than 0 after client request was performed",
@@ -162,7 +163,7 @@ public class NettyServerCnxnTest extends ClientBase {
             }
 
             byte[] contents = zk.getData("/a", null, null);
-            assertArrayEquals("unexpected data", "test".getBytes(), contents);
+            assertArrayEquals("unexpected data", "test".getBytes(StandardCharsets.UTF_8), contents);
 
             // As above, but don't do the throttled read. Make the request bytes wait in the socket
             // input buffer until after throttling is turned off. Need to make sure both modes work.
@@ -180,7 +181,7 @@ public class NettyServerCnxnTest extends ClientBase {
             }
 
             contents = zk.getData("/a", null, null);
-            assertArrayEquals("unexpected data", "test".getBytes(), contents);
+            assertArrayEquals("unexpected data", "test".getBytes(StandardCharsets.UTF_8), contents);
         }
     }
 }

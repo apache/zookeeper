@@ -49,6 +49,8 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import org.apache.zookeeper.ClientCnxn.EndOfStreamException;
 import org.apache.zookeeper.ClientCnxn.Packet;
 import org.apache.zookeeper.client.ZKClientConfig;
@@ -82,7 +84,9 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
 
     ClientCnxnSocketNetty(ZKClientConfig clientConfig) throws IOException {
         this.clientConfig = clientConfig;
-        eventLoopGroup = NettyUtils.newNioOrEpollEventLoopGroup();
+        // Client only has 1 outgoing socket, so the event loop group only needs
+        // a single thread.
+        eventLoopGroup = NettyUtils.newNioOrEpollEventLoopGroup(1 /* nThreads */);
         initProperties();
     }
 
@@ -143,6 +147,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
                 @Override
                 public void operationComplete(ChannelFuture channelFuture) throws Exception {
                     // this lock guarantees that channel won't be assigned after cleanup().
+                    boolean connected = false;
                     connectLock.lock();
                     try {
                         if (!channelFuture.isSuccess()) {
@@ -175,10 +180,13 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
                         } else {
                             needSasl.set(false);
                         }
-                        LOG.info("channel is connected: {}", channelFuture.channel());
+                        connected = true;
                     } finally {
                         connectFuture = null;
                         connectLock.unlock();
+                        if (connected) {
+                            LOG.info("channel is connected: {}", channelFuture.channel());
+                        }
                         // need to wake on connect success or failure to avoid
                         // timing out ClientCnxn.SendThread which may be
                         // blocked waiting for first connect in doTransport().
@@ -218,9 +226,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
 
     @Override
     void close() {
-        if (!eventLoopGroup.isShuttingDown()) {
-            eventLoopGroup.shutdownGracefully();
-        }
+        eventLoopGroup.shutdownGracefully();
     }
 
     @Override
@@ -318,20 +324,23 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         return sendPkt(p, false);
     }
 
+    // Use a single listener instance to reduce GC
+    private final GenericFutureListener<Future<Void>> onSendPktDoneListener = f -> {
+        if (f.isSuccess()) {
+            sentCount.getAndIncrement();
+        }
+    };
+
     private ChannelFuture sendPkt(Packet p, boolean doFlush) {
         // Assuming the packet will be sent out successfully. Because if it fails,
         // the channel will close and clean up queues.
         p.createBB();
         updateLastSend();
-        ChannelFuture result = channel.write(Unpooled.wrappedBuffer(p.bb));
-        result.addListener(f -> {
-            if (f.isSuccess()) {
-                sentCount.getAndIncrement();
-            }
-        });
-        if (doFlush) {
-            channel.flush();
-        }
+        final ByteBuf writeBuffer = Unpooled.wrappedBuffer(p.bb);
+        final ChannelFuture result = doFlush
+                ? channel.writeAndFlush(writeBuffer)
+                : channel.write(writeBuffer);
+        result.addListener(onSendPktDoneListener);
         return result;
     }
 
@@ -345,6 +354,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
      */
     private void doWrite(List<Packet> pendingQueue, Packet p, ClientCnxn cnxn) {
         updateNow();
+        boolean anyPacketsSent = false;
         while (true) {
             if (p != WakeupPacket.getInstance()) {
                 if ((p.requestHeader != null) &&
@@ -356,6 +366,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
                     }
                 }
                 sendPktOnly(p);
+                anyPacketsSent = true;
             }
             if (outgoingQueue.isEmpty()) {
                 break;
@@ -364,7 +375,9 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
         }
         // TODO: maybe we should flush in the loop above every N packets/bytes?
         // But, how do we determine the right value for N ...
-        channel.flush();
+        if (anyPacketsSent) {
+            channel.flush();
+        }
     }
 
     @Override
