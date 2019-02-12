@@ -87,8 +87,8 @@
         <arg line="${version}" />
       </exec>
 
-      <mkdir dir="${dist.dir}/contrib/${name}"/>
-      <copy todir="${dist.dir}/contrib/${name}">
+      <mkdir dir="${dist.dir}/zookeeper-contrib/zookeeper-contrib-${name}"/>
+      <copy todir="${dist.dir}/zookeeper-contrib/zookeeper-contrib-${name}">
         <fileset dir="${build.dir}">
           <exclude name="**/temp*"/>
         </fileset>
