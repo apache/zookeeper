@@ -192,8 +192,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
 
     @Test(timeout = 5000)
     public void testCreateSSLServerSocketWithPort() throws Exception {
-        int port = PortAssignment.unique();
         setCustomCipherSuites();
+        int port = PortAssignment.unique();
         SSLServerSocket sslServerSocket = x509Util.createSSLServerSocket(port);
         Assert.assertEquals(sslServerSocket.getLocalPort(), port);
         Assert.assertArrayEquals(customCipherSuites, sslServerSocket.getEnabledCipherSuites());
