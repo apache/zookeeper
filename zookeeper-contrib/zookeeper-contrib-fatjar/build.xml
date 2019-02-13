@@ -54,15 +54,15 @@
   <target name="package" depends="jar, zookeeperbuildcontrib.package"
           unless="skip.contrib">
 
-    <copy file="${basedir}/build.xml" todir="${dist.dir}/contrib/${name}"/>
+    <copy file="${basedir}/build.xml" todir="${dist.dir}/zookeeper-contrib/zookeeper-contrib-${name}"/>
 
-    <mkdir dir="${dist.dir}/contrib/${name}/conf"/>
-    <copy todir="${dist.dir}/contrib/${name}/conf">
+    <mkdir dir="${dist.dir}/zookeeper-contrib/zookeeper-contrib-${name}/conf"/>
+    <copy todir="${dist.dir}/zookeeper-contrib/zookeeper-contrib-${name}/conf">
       <fileset dir="${basedir}/src/main/resources"/>
     </copy>
 
-    <mkdir dir="${dist.dir}/contrib/${name}/src"/>
-    <copy todir="${dist.dir}/contrib/${name}/src">
+    <mkdir dir="${dist.dir}/zookeeper-contrib/zookeeper-contrib-${name}/src"/>
+    <copy todir="${dist.dir}/zookeeper-contrib/zookeeper-contrib-${name}/src">
       <fileset dir="${basedir}/src"/>
     </copy>
   </target>
