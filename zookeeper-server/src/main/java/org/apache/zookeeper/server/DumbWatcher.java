@@ -54,7 +54,7 @@ public class DumbWatcher extends ServerCnxn {
     int getSessionTimeout() { return 0; }
 
     @Override
-    void close() { }
+    public void close() { }
 
     @Override
     public void sendResponse(ReplyHeader h, Record r, String tag, String cacheKey, Stat stat) throws IOException { }

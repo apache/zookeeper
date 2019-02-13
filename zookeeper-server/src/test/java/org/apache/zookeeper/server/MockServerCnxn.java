@@ -40,7 +40,7 @@ public class MockServerCnxn extends ServerCnxn {
     }
 
     @Override
-    void close() {
+    public void close() {
     }
 
     @Override

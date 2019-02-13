@@ -1044,6 +1044,15 @@ encryption/authentication/authorization performed by the service.
     Then set this property **zookeeper.ssl.authProvider=[scheme]** and that provider
     will be used for secure authentication.
 
+* *zookeeper.ensembleAuthName* :
+    (Java system property only: **zookeeper.ensembleAuthName**)
+    **New in 3.6.0:**
+    Specify a list of comma-separated valid names/aliases of an ensemble. A client
+    can provide the ensemble name it intends to connect as the credential for scheme "ensemble". The EnsembleAuthenticationProvider will check the credential against
+    the list of names/aliases of the ensemble that receives the connection request.
+    If the credential is not in the list, the connection request will be refused.
+    This prevents a client accidentally connecting to a wrong ensemble.
+
 <a name="Experimental+Options%2FFeatures"></a>
 
 #### Experimental Options/Features
