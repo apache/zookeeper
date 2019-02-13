@@ -52,7 +52,7 @@ public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
         new ConcurrentLinkedQueue<Request>();
 
     ObserverZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self, ZKDatabase zkDb) throws IOException {
-        super(logFactory, self.tickTime, self.minSessionTimeout, self.maxSessionTimeout, zkDb, self);
+        super(logFactory, self.tickTime, self.minSessionTimeout, self.maxSessionTimeout, self.clientPortListenBacklog, zkDb, self);
         LOG.info("syncEnabled =" + syncRequestProcessorEnabled);
     }
     

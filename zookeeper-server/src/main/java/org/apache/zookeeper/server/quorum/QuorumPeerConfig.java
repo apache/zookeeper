@@ -87,6 +87,8 @@ public class QuorumPeerConfig {
     protected Properties metricsProviderConfiguration = new Properties();
     protected boolean localSessionsEnabled = false;
     protected boolean localSessionsUpgradingEnabled = false;
+    /** defaults to -1 if not set explicitly */
+    protected int clientPortListenBacklog = -1;
 
     protected int initLimit;
     protected int syncLimit;
@@ -266,6 +268,8 @@ public class QuorumPeerConfig {
                 secureClientPortAddress = value.trim();
             } else if (key.equals("observerMasterPort")) {
                 observerMasterPort = Integer.parseInt(value);
+            } else if (key.equals("clientPortListenBacklog")) {
+                clientPortListenBacklog = Integer.parseInt(value);
             } else if (key.equals("tickTime")) {
                 tickTime = Integer.parseInt(value);
             } else if (key.equals("maxClientCnxns")) {
@@ -789,6 +793,7 @@ public class QuorumPeerConfig {
     public boolean shouldUsePortUnification() {
         return shouldUsePortUnification;
     }
+    public int getClientPortListenBacklog() { return clientPortListenBacklog; }
 
     public int getInitLimit() { return initLimit; }
     public int getSyncLimit() { return syncLimit; }

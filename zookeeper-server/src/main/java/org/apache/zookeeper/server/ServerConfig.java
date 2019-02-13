@@ -52,6 +52,8 @@ public class ServerConfig {
     protected int maxSessionTimeout = -1;
     protected String metricsProviderClassName = NullMetricsProvider.class.getName();
     protected Properties metricsProviderConfiguration = new Properties();
+    /** defaults to -1 if not set explicitly */
+    protected int listenBacklog = -1;
 
     /**
      * Parse arguments for server configuration
@@ -105,6 +107,7 @@ public class ServerConfig {
         maxSessionTimeout = config.getMaxSessionTimeout();
         metricsProviderClassName = config.getMetricsProviderClassName();
         metricsProviderConfiguration = config.getMetricsProviderConfiguration();
+        listenBacklog = config.getClientPortListenBacklog();
     }
 
     public InetSocketAddress getClientPortAddress() {
@@ -123,5 +126,6 @@ public class ServerConfig {
     public int getMaxSessionTimeout() { return maxSessionTimeout; }
     public String getMetricsProviderClassName() { return metricsProviderClassName; }
     public Properties getMetricsProviderConfiguration() { return metricsProviderConfiguration; }
-
+    /** Maximum number of pending socket connections to read, -1 if unset */
+    public int getClientPortListenBacklog() { return listenBacklog; }
 }

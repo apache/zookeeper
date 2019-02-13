@@ -82,6 +82,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     private final Map<InetAddress, Set<NettyServerCnxn>> ipMap = new HashMap<>();
     private InetSocketAddress localAddress;
     private int maxClientCnxns = 60;
+    int listenBacklog = -1;
     private final ClientX509Util x509Util;
 
     private static final AttributeKey<NettyServerCnxn> CONNECTION_ATTRIBUTE =
@@ -368,13 +369,14 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     }
 
     @Override
-    public void configure(InetSocketAddress addr, int maxClientCnxns, boolean secure)
+    public void configure(InetSocketAddress addr, int maxClientCnxns, int backlog, boolean secure)
             throws IOException
     {
         configureSaslLogin();
         localAddress = addr;
         this.maxClientCnxns = maxClientCnxns;
         this.secure = secure;
+        this.listenBacklog = backlog;
     }
 
     /** {@inheritDoc} */
@@ -385,6 +387,11 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     /** {@inheritDoc} */
     public void setMaxClientCnxnsPerHost(int max) {
         maxClientCnxns = max;
+    }
+
+    /** {@inheritDoc} */
+    public int getSocketListenBacklog() {
+        return listenBacklog;
     }
 
     @Override
@@ -455,6 +462,9 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     
     @Override
     public void start() {
+        if (listenBacklog != -1) {
+            bootstrap.option(ChannelOption.SO_BACKLOG, listenBacklog);
+        }
         LOG.info("binding to port {}", localAddress);
         parentChannel = bootstrap.bind(localAddress).syncUninterruptibly().channel();
         // Port changes after bind() if the original port was 0, update

@@ -109,7 +109,8 @@ public class CommandsTest extends ClientBase {
                     new Field("max_client_cnxns", Integer.class),
                     new Field("min_session_timeout", Integer.class),
                     new Field("max_session_timeout", Integer.class),
-                    new Field("server_id", Long.class));
+                    new Field("server_id", Long.class),
+                    new Field("client_port_listen_backlog", Integer.class));
     }
 
     @Test

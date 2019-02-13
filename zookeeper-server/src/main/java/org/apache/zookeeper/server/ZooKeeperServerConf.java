@@ -60,6 +60,12 @@ public class ZooKeeperServerConf {
      * The key in the map returned by {@link #toMap()} for the server ID.
      */
     public static final String KEY_SERVER_ID = "server_id";
+    /**
+     * The key in the map returned by {@link #toMap()} for the server socket
+     * listen backlog.
+     */
+    public static final String KEY_CLIENT_PORT_LISTEN_BACKLOG
+            = "client_port_listen_backlog";
 
     private final int clientPort;
     private final String dataDir;
@@ -69,6 +75,7 @@ public class ZooKeeperServerConf {
     private final int minSessionTimeout;
     private final int maxSessionTimeout;
     private final long serverId;
+    private final int clientPortListenBacklog;
 
     /**
      * Creates a new configuration.
@@ -85,7 +92,7 @@ public class ZooKeeperServerConf {
     ZooKeeperServerConf(int clientPort, String dataDir, String dataLogDir,
                         int tickTime, int maxClientCnxnsPerHost,
                         int minSessionTimeout, int maxSessionTimeout,
-                        long serverId) {
+                        long serverId, int clientPortListenBacklog) {
         this.clientPort = clientPort;
         this.dataDir = dataDir;
         this.dataLogDir = dataLogDir;
@@ -94,6 +101,7 @@ public class ZooKeeperServerConf {
         this.minSessionTimeout = minSessionTimeout;
         this.maxSessionTimeout = maxSessionTimeout;
         this.serverId = serverId;
+        this.clientPortListenBacklog = clientPortListenBacklog;
     }
 
     /**
@@ -169,6 +177,13 @@ public class ZooKeeperServerConf {
     }
 
     /**
+     * Returns the server socket listen backlog length.
+     */
+    public int getClientPortListenBacklog() {
+        return clientPortListenBacklog;
+    }
+
+    /**
      * Converts this configuration to a map. The returned map is mutable, and
      * changes to it do not reflect back into this configuration.
      *
@@ -184,6 +199,7 @@ public class ZooKeeperServerConf {
         conf.put(KEY_MIN_SESSION_TIMEOUT, minSessionTimeout);
         conf.put(KEY_MAX_SESSION_TIMEOUT, maxSessionTimeout);
         conf.put(KEY_SERVER_ID, serverId);
+        conf.put(KEY_CLIENT_PORT_LISTEN_BACKLOG, clientPortListenBacklog);
         return conf;
     }
 }
