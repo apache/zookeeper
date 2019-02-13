@@ -86,7 +86,9 @@ public class ZKDatabase {
     public static final double DEFAULT_SNAPSHOT_SIZE_FACTOR = 0.33;
     private double snapshotSizeFactor;
 
-    public static final int commitLogCount = 500;
+    public static final String COMMIT_LOG_COUNT = "zookeeper.commitLogCount";
+    public static final int DEFAULT_COMMIT_LOG_COUNT = 500;
+    public int commitLogCount;
     protected static int commitLogBuffer = 700;
     protected Queue<Proposal> committedLog = new ArrayDeque<>();
     protected ReentrantReadWriteLock logLock = new ReentrantReadWriteLock();
@@ -124,6 +126,24 @@ public class ZKDatabase {
             snapshotSizeFactor = DEFAULT_SNAPSHOT_SIZE_FACTOR;
         }
         LOG.info("{} = {}", SNAPSHOT_SIZE_FACTOR, snapshotSizeFactor);
+
+        try {
+            commitLogCount = Integer.parseInt(
+                    System.getProperty(COMMIT_LOG_COUNT,
+                            Integer.toString(DEFAULT_COMMIT_LOG_COUNT)));
+            if (commitLogCount < DEFAULT_COMMIT_LOG_COUNT) {
+                commitLogCount = DEFAULT_COMMIT_LOG_COUNT;
+                LOG.warn("The configured " + COMMIT_LOG_COUNT
+                        + " is less than the recommended "
+                        + DEFAULT_COMMIT_LOG_COUNT
+                        + ", going to use the recommended one");
+            }
+        } catch (NumberFormatException e) {
+            LOG.error("Error parsing " + COMMIT_LOG_COUNT
+                    + " - use default value " + DEFAULT_COMMIT_LOG_COUNT);
+            commitLogCount = DEFAULT_COMMIT_LOG_COUNT;
+        }
+        LOG.info(COMMIT_LOG_COUNT + "=" + commitLogCount);
     }
 
     /**
