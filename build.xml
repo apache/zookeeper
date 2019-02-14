@@ -1015,6 +1015,10 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         </fileset>
       </copy>
 
+      <copy todir="${dist.dir}/zookeeper-server/src/main/resources">
+        <fileset file="${java.server.resources.dir}/pom.template"/>
+      </copy>
+
       <chmod perm="ugo+x" type="file" parallel="false">
         <fileset dir="${dist.dir}/bin"/>
         <fileset dir="${dist.dir}/sbin"/>
