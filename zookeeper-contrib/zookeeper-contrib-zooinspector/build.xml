@@ -15,7 +15,7 @@
    limitations under the License.
 -->
 
-<project name="ZooInspector" default="jar">
+<project name="zooinspector" default="jar">
 	<import file="../build-contrib.xml" />
 
 
