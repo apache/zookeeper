@@ -879,6 +879,9 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
           <include name="zookeeper-server/**"/>
           <include name="zookeeper-it/**"/>
         </fileset>
+      </copy>
+
+      <copy todir="${dist.dir}/zookeeper-server/src/main/resources">
         <fileset file="${java.server.resources.dir}/pom.template"/>
       </copy>
   	  
@@ -1003,6 +1006,9 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
           <include name="zookeeper-server/**"/>
           <include name="zookeeper-it/**"/>
         </fileset>
+      </copy>
+
+      <copy todir="${dist.dir}/zookeeper-server/src/main/resources">
         <fileset file="${java.server.resources.dir}/pom.template"/>
       </copy>
 
