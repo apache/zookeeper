@@ -205,15 +205,17 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         }
 
         // Use a single listener instance to reduce GC
-        private final GenericFutureListener<Future<Void>> onWriteCompletedListener = (f) -> {
-            if (LOG.isTraceEnabled()) {
-                LOG.trace("write {}", f.isSuccess() ? "complete" : "failed");
-            }
+        // Note: this listener is only added when LOG.isTraceEnabled() is true,
+        // so it should not do any work other than trace logging.
+        private final GenericFutureListener<Future<Void>> onWriteCompletedTracer = (f) -> {
+            LOG.trace("write {}", f.isSuccess() ? "complete" : "failed");
         };
 
         @Override
         public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-            promise.addListener(onWriteCompletedListener);
+            if (LOG.isTraceEnabled()) {
+                promise.addListener(onWriteCompletedTracer);
+            }
             super.write(ctx, msg, promise);
         }
 
