@@ -84,6 +84,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * through the hashtable. The tree is traversed only when serializing to disk.
  */
 public class DataTree {
+    //TODO: I think this is where the majority of our changes will take place, the nodes in this class are the data that we need to move in and out of memory
     private static final Logger LOG = LoggerFactory.getLogger(DataTree.class);
 
     /**
