@@ -52,7 +52,7 @@
 
 	<target name="compile-test" depends="compile">
   		<property name="target.jdk" value="${ant.java.version}" />	
-		<property name="src.test.local" location="${basedir}/test" />
+		<property name="src.test.local" location="${basedir}/src/test/java" />
 		<mkdir dir="${build.test}"/>
 		<javac srcdir="${src.test.local}" 
 			destdir="${build.test}" 
@@ -112,18 +112,18 @@
   <target name="package" depends="jar, zookeeperbuildrecipes.package"
           unless="skip.recipes">
 
-    <copy file="${basedir}/build.xml" todir="${dist.dir}${package.share}/recipes/${name}"/>
+    <copy file="${basedir}/build.xml" todir="${dist.dir}${package.share}/zookeeper-recipes/zookeeper-recipes-${name}"/>
 
-    <mkdir dir="${dist.dir}${package.share}/recipes/${name}/src/test/java"/>
-    <copy todir="${dist.dir}${package.share}/recipes/${name}/src/test/java">
+    <mkdir dir="${dist.dir}${package.share}/zookeeper-recipes/zookeeper-recipes-${name}/src/test/java"/>
+    <copy todir="${dist.dir}${package.share}/zookeeper-recipes/zookeeper-recipes-${name}/src/test/java">
       <fileset dir="${basedir}/src/test/java"/>
     </copy>
-    <mkdir dir="${dist.dir}${package.share}/recipes/${name}/src/main/java"/>
-    <copy todir="${dist.dir}${package.share}/recipes/${name}/src/main/java">
+    <mkdir dir="${dist.dir}${package.share}/zookeeper-recipes/zookeeper-recipes-${name}/src/main/java"/>
+    <copy todir="${dist.dir}${package.share}/zookeeper-recipes/zookeeper-recipes-${name}/src/main/java">
       <fileset dir="${basedir}/src/main/java"/>
     </copy>
-    <mkdir dir="${dist.dir}${package.share}/recipes/${name}/src/main/c"/>
-    <copy todir="${dist.dir}${package.share}/recipes/${name}/src/main/c">
+    <mkdir dir="${dist.dir}${package.share}/zookeeper-recipes/zookeeper-recipes-${name}/src/main/c"/>
+    <copy todir="${dist.dir}${package.share}/zookeeper-recipes/zookeeper-recipes-${name}/src/main/c">
       <fileset dir="${basedir}/src/main/c"/>
     </copy>
   </target>

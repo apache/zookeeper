@@ -72,7 +72,7 @@
     <fileset dir="${zk.root}/build/test/lib">
       <include name="**/*.jar"/>
     </fileset>
-    <fileset dir="${zk.root}/src/java/lib">
+    <fileset dir="${zk.root}/zookeeper-server/src/main/resources/lib">
       <include name="**/*.jar" />
     </fileset>
   </path>
@@ -122,8 +122,8 @@
   <target name="package" depends="jar" unless="skip.recipes"> 
     <echo message="recipes: ${name}"/>
 
-    <mkdir dir="${dist.dir}${package.share}/recipes/${name}"/>
-    <copy todir="${dist.dir}${package.share}/recipes/${name}" includeEmptyDirs="false"
+    <mkdir dir="${dist.dir}${package.share}/zookeeper-recipes/zookeeper-recipes-${name}"/>
+    <copy todir="${dist.dir}${package.share}/zookeeper-recipes/zookeeper-recipes-${name}" includeEmptyDirs="false"
           flatten="true">
       <fileset dir="${build.dir}">
         <include name="zookeeper-${version}-recipes-${name}.jar" />

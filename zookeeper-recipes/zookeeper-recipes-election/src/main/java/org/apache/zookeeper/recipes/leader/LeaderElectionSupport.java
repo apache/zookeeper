@@ -180,16 +180,23 @@ public class LeaderElectionSupport implements Watcher {
     state = State.OFFER;
     dispatchEvent(EventType.OFFER_START);
 
-    leaderOffer = new LeaderOffer();
-
-    leaderOffer.setHostName(hostName);
-    leaderOffer.setNodePath(zooKeeper.create(rootNodeName + "/" + "n_",
-        hostName.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+    LeaderOffer newLeaderOffer = new LeaderOffer();
+    byte[] hostnameBytes;
+    synchronized (this) {
+        newLeaderOffer.setHostName(hostName);
+        hostnameBytes = hostName.getBytes();
+        newLeaderOffer.setNodePath(zooKeeper.create(rootNodeName + "/" + "n_",
+        hostnameBytes, ZooDefs.Ids.OPEN_ACL_UNSAFE,
         CreateMode.EPHEMERAL_SEQUENTIAL));
-
+        leaderOffer = newLeaderOffer;
+    }
     logger.debug("Created leader offer {}", leaderOffer);
 
     dispatchEvent(EventType.OFFER_COMPLETE);
+  }
+
+  private synchronized LeaderOffer getLeaderOffer() {
+      return leaderOffer;
   }
 
   private void determineElectionStatus() throws KeeperException,
@@ -198,9 +205,11 @@ public class LeaderElectionSupport implements Watcher {
     state = State.DETERMINE;
     dispatchEvent(EventType.DETERMINE_START);
 
-    String[] components = leaderOffer.getNodePath().split("/");
+    LeaderOffer currentLeaderOffer = getLeaderOffer();
 
-    leaderOffer.setId(Integer.valueOf(components[components.length - 1]
+    String[] components = currentLeaderOffer.getNodePath().split("/");
+
+    currentLeaderOffer.setId(Integer.valueOf(components[components.length - 1]
         .substring("n_".length())));
 
     List<LeaderOffer> leaderOffers = toLeaderOffers(zooKeeper.getChildren(
@@ -215,7 +224,7 @@ public class LeaderElectionSupport implements Watcher {
     for (int i = 0; i < leaderOffers.size(); i++) {
       LeaderOffer leaderOffer = leaderOffers.get(i);
 
-      if (leaderOffer.getId().equals(this.leaderOffer.getId())) {
+      if (leaderOffer.getId().equals(currentLeaderOffer.getId())) {
         logger.debug("There are {} leader offers. I am {} in line.",
             leaderOffers.size(), i);
 
@@ -237,7 +246,7 @@ public class LeaderElectionSupport implements Watcher {
       throws KeeperException, InterruptedException {
 
     logger.info("{} not elected leader. Watching node:{}",
-        leaderOffer.getNodePath(), neighborLeaderOffer.getNodePath());
+        getLeaderOffer().getNodePath(), neighborLeaderOffer.getNodePath());
 
     /*
      * Make sure to pass an explicit Watcher because we could be sharing this
@@ -270,7 +279,7 @@ public class LeaderElectionSupport implements Watcher {
     state = State.ELECTED;
     dispatchEvent(EventType.ELECTED_START);
 
-    logger.info("Becoming leader with node:{}", leaderOffer.getNodePath());
+    logger.info("Becoming leader with node:{}", getLeaderOffer().getNodePath());
 
     dispatchEvent(EventType.ELECTED_COMPLETE);
   }
@@ -336,7 +345,7 @@ public class LeaderElectionSupport implements Watcher {
   @Override
   public void process(WatchedEvent event) {
     if (event.getType().equals(Watcher.Event.EventType.NodeDeleted)) {
-      if (!event.getPath().equals(leaderOffer.getNodePath())
+      if (!event.getPath().equals(getLeaderOffer().getNodePath())
           && state != State.STOP) {
         logger.debug(
             "Node {} deleted. Need to run through the election process.",
@@ -384,8 +393,8 @@ public class LeaderElectionSupport implements Watcher {
 
   @Override
   public String toString() {
-    return "{ state:" + state + " leaderOffer:" + leaderOffer + " zooKeeper:"
-        + zooKeeper + " hostName:" + hostName + " listeners:" + listeners
+    return "{ state:" + state + " leaderOffer:" + getLeaderOffer() + " zooKeeper:"
+        + zooKeeper + " hostName:" + getHostName() + " listeners:" + listeners
         + " }";
   }
 
@@ -437,11 +446,11 @@ public class LeaderElectionSupport implements Watcher {
    * The hostname of this process. Mostly used as a convenience for logging and
    * to respond to {@link #getLeaderHostName()} requests.
    */
-  public String getHostName() {
+  public synchronized String getHostName() {
     return hostName;
   }
 
-  public void setHostName(String hostName) {
+  public synchronized void setHostName(String hostName) {
     this.hostName = hostName;
   }
 

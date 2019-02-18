@@ -1,5 +1,6 @@
 # Java
 hs_err_pid*
+zookeeper-server/version-2/*
 
 # Git
 *.orij
@@ -8,6 +9,7 @@ hs_err_pid*
 # SVN
 .svn
 .revision
+git.properties
 
 # Eclipse
 .metadata
@@ -39,6 +41,12 @@ nbdist/
 .ndb-gradle/
 .cproject
 .buildpath
+nb-configuration.xml
+nbactions.xml
+
+# vscode
+classes
+.vscode
 
 # Other
 *~
@@ -65,9 +73,8 @@ zookeeper-client/zookeeper-client-c/*.la
 zookeeper-client/zookeeper-client-c/*.lo
 zookeeper-client/zookeeper-client-c/*.o
 zookeeper-client/zookeeper-client-c/generated/
-src/java/generated/
-src/java/lib/ant-eclipse-*
-src/java/lib/ivy-*
+zookeeper-server/src/main/resources/lib/ant-eclipse-*
+zookeeper-server/src/main/resources/lib/ivy-*
 zookeeper-client/zookeeper-client-c/Makefile.in
 zookeeper-client/zookeeper-client-c/aclocal.m4
 zookeeper-client/zookeeper-client-c/autom4te.cache/
@@ -80,3 +87,5 @@ zookeeper-client/zookeeper-client-c/depcomp
 zookeeper-client/zookeeper-client-c/install-sh
 zookeeper-client/zookeeper-client-c/ltmain.sh
 zookeeper-client/zookeeper-client-c/missing
+zookeeper-server/src/main/java/org/apache/zookeeper/version/Info.java
+zookeeper-server/src/test/resources/

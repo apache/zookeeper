@@ -84,18 +84,24 @@ fi
 
 CLASSPATH="$CLASSPATH:${zk_base}/build/classes"
 CLASSPATH="$CLASSPATH:${zk_base}/conf"
+CLASSPATH="$CLASSPATH:${zk_base}/zookeeper-server/target/classes"
 
 for i in "${zk_base}"/build/lib/*.jar
 do
     CLASSPATH="$CLASSPATH:$i"
 done
 
-for i in "${zk_base}"/src/java/lib/*.jar
+for d in "${zk_base}"/zookeeper-server/target/lib/*.jar
+do
+    CLASSPATH="$d:$CLASSPATH"
+done
+
+for i in "${zk_base}"/zookeeper-server/src/main/resource/lib/*.jar
 do
     CLASSPATH="$CLASSPATH:$i"
 done
 
-CLASSPATH="$CLASSPATH:${CLOVER_HOME}/lib/clover.jar"
+CLASSPATH="$CLASSPATH:${CLOVER_HOME}/lib/clover*.jar"
 
 if $cygwin
 then
