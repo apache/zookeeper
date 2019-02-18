@@ -524,7 +524,7 @@ layouts are the same. If servers use different configuration files, care
 must be taken to ensure that the list of servers in all of the different
 configuration files match.
 
-######Note
+###### Note
 >In 3.5.0 and later, some of these parameters should be placed in
 a dynamic configuration file. If they are placed in the static
 configuration file, ZooKeeper will automatically move them over to the
@@ -561,7 +561,7 @@ in the configuration file:
     the location where ZooKeeper will store the in-memory
     database snapshots and, unless specified otherwise, the
     transaction log of updates to the database.
-    ######Note
+    ###### Note
     >Be careful where you put the transaction log. A
     dedicated transaction log device is key to consistent good
     performance. Putting the log on a busy device will adversely
@@ -589,7 +589,7 @@ property, when available, is noted below.
     transaction log to the **dataLogDir** rather than the **dataDir**. This allows a dedicated log
     device to be used, and helps avoid competition between logging
     and snapshots.
-    ######Note
+    ###### Note
     >Having a dedicated log device has a large impact on
     throughput and stable latencies. It is highly recommended to
     dedicate a log device and set **dataLogDir** to point to a directory on
@@ -829,7 +829,7 @@ of servers -- that is, when deploying clusters of servers.
     corresponds to the authenticated UDP-based version of fast
     leader election, and "3" corresponds to TCP-based version of
     fast leader election. Currently, algorithm 3 is the default.
-    ######Note
+    ###### Note
     >The implementations of leader election 1, and 2 are now
     **deprecated**. We have the intention
     of removing them in the next release, at which point only the
@@ -849,7 +849,7 @@ of servers -- that is, when deploying clusters of servers.
     can be configured to not accept clients and focus on
     coordination. The default to this option is yes, which means
     that a leader will accept client connections.
-    ######Note
+    ###### Note
     >Turning on leader selection is highly recommended when
     you have more than three ZooKeeper servers in an ensemble.
 
@@ -898,7 +898,7 @@ of servers -- that is, when deploying clusters of servers.
     (Java system property: zookeeper.**cnxTimeout**)
     Sets the timeout value for opening connections for leader election notifications.
     Only applicable if you are using electionAlg 3.
-    ######Note
+    ###### Note
     >Default value is 5 seconds.
 
 * *standaloneEnabled* :
@@ -1232,32 +1232,6 @@ Both subsystems need to have sufficient amount of threads to achieve peak read t
     minute. This prevents herding during container deletion.
     Default is "10000".
 
-<a name="Communication+using+the+Netty+framework"></a>
-
-#### Communication using the Netty framework
-
-[Netty](http://netty.io)
-is an NIO based client/server communication framework, it
-simplifies (over NIO being used directly) many of the
-complexities of network level communication for java
-applications. Additionally the Netty framework has built
-in support for encryption (SSL) and authentication
-(certificates). These are optional features and can be
-turned on or off individually.
-
-In versions 3.5+, a ZooKeeper server can use Netty
-instead of NIO (default option) by setting the environment
-variable **zookeeper.serverCnxnFactory**
-to **org.apache.zookeeper.server.NettyServerCnxnFactory**;
-for the client, set **zookeeper.clientCnxnSocket**
-to **org.apache.zookeeper.ClientCnxnSocketNetty**.
-
-TBD - tuning options for netty - currently there are none that are netty specific but we should add some. Esp around max bound on the number of reader worker threads netty creates.
-
-TBD - how to manage encryption
-
-TBD - how to manage certificates
-
 <a name="sc_adminserver_config"></a>
 
 #### AdminServer configuration
@@ -1287,6 +1261,51 @@ options are used to configure the [AdminServer](#sc_adminserver).
     (Java system property: **zookeeper.admin.commandURL**)
     The URL for listing and issuing commands relative to the
     root URL.  Defaults to "/commands".
+
+
+<a name="Communication+using+the+Netty+framework"></a>
+
+### Communication using the Netty framework
+
+[Netty](http://netty.io)
+is an NIO based client/server communication framework, it
+simplifies (over NIO being used directly) many of the
+complexities of network level communication for java
+applications. Additionally the Netty framework has built
+in support for encryption (SSL) and authentication
+(certificates). These are optional features and can be
+turned on or off individually.
+
+In versions 3.5+, a ZooKeeper server can use Netty
+instead of NIO (default option) by setting the environment
+variable **zookeeper.serverCnxnFactory**
+to **org.apache.zookeeper.server.NettyServerCnxnFactory**;
+for the client, set **zookeeper.clientCnxnSocket**
+to **org.apache.zookeeper.ClientCnxnSocketNetty**.
+
+TBD - tuning options for netty - currently there are none that are netty specific but we should add some. Esp around max bound on the number of reader worker threads netty creates.
+
+#### Quorum TLS - How to manage encryption
+
+**New in 3.5.5**
+
+Based on the Netty Framework ZooKeeper ensembles can be set up
+to use TLS encryption in their communication channels. This section
+describes how to set up encryption on the quorum communication.
+
+After successful leader election participants of the ensemble establish
+communication on the quorum port and voting of the ZAB protocal will take
+place on this channel. ZooKeeper data packets will traverse on these 
+channels, therefore encrypting this channel is essential in order to 
+secure your Zookeeper installation.
+
+
+
+
+
+TBD - How to manage certificates
+
+
 
 <a name="sc_zkCommands"></a>
 
@@ -1589,7 +1608,7 @@ proceed somewhat independently in ZooKeeper. See the
 this document for more details on setting a retention policy
 and maintenance of ZooKeeper storage.
 
-######Note
+###### Note
 >The data stored in these files is not encrypted. In the case of
 storing sensitive data in ZooKeeper, necessary measures need to be
 taken to prevent unauthorized access. Such measures are external to
@@ -1598,7 +1617,7 @@ individual settings in which it is being deployed.
 
 <a name="Recovery+-+TxnLogToolkit"></a>
 
-####Recovery - TxnLogToolkit
+#### Recovery - TxnLogToolkit
 
 TxnLogToolkit is a command line tool shipped with ZooKeeper which
 is capable of recovering transaction log entries with broken CRC.
