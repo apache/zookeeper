@@ -594,10 +594,6 @@
         <scope>test</scope>
         <exclusions>
           <exclusion>
-            <groupId>org.apache.directory.jdbm</groupId>
-            <artifactId>apacheds-jdbm1</artifactId>
-          </exclusion>
-          <exclusion>
             <groupId>org.apache.directory.api</groupId>
             <artifactId>api-ldap-schema-data</artifactId>
           </exclusion>
@@ -751,6 +747,11 @@
           <groupId>org.owasp</groupId>
           <artifactId>dependency-check-maven</artifactId>
           <version>4.0.2</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.felix</groupId>
+          <artifactId>maven-bundle-plugin</artifactId>
+          <version>4.1.0</version>
         </plugin>
       </plugins>
     </pluginManagement>
