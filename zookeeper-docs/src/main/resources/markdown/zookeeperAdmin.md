@@ -815,6 +815,12 @@ property, when available, is noted below.
     By default, this value is unset (`-1`) which, on Linux, uses a backlog of
     `50`. This value must be a positive number.
 
+* *serverCnxnFactory* :
+    (Java system property: **zookeeper.serverCnxnFactory**)
+    Specifies ServerCnxnFactory implementation. 
+    This should be set to `NettyServerCnxnFactory` in order to use TLS based server communication.
+    Default is `NIOServerCnxnFactory`.
+
 <a name="sc_clusterOptions"></a>
 
 #### Cluster Options
@@ -1053,6 +1059,25 @@ encryption/authentication/authorization performed by the service.
     If the credential is not in the list, the connection request will be refused.
     This prevents a client accidentally connecting to a wrong ensemble.
 
+* *sslQuorum* :
+    (Java system property: **zookeeper.sslQuorum**)
+    **New in 3.5.5:**
+    Enables encrypted quorum communication. Default is `false`.
+       
+* *ssl.quorum.keyStore.location* and *ssl.quorum.keyStore.password=password* :
+    (Java system properties: **zookeeper.ssl.quorum.keyStore.location** and **zookeeper.ssl.quorum.keyStore.password**)
+    **New in 3.5.5:**
+    Specifies the file path to a JKS containing the local
+    credentials to be used for Quorum TLS connections, and the
+    password to unlock the file.
+    
+* *ssl.quorum.trustStore.location* and *ssl.quorum.trustStore.password=password* :
+    (Java system properties: **zookeeper.ssl.quorum.trustStore.location** and **zookeeper.ssl.quorum.trustStore.password**)
+    **New in 3.5.5:**
+    Specifies the file path to a JKS containing the remote
+    credentials to be used for Quorum TLS connections, and the
+    password to unlock the file.
+
 <a name="Experimental+Options%2FFeatures"></a>
 
 #### Experimental Options/Features
@@ -1285,7 +1310,7 @@ to **org.apache.zookeeper.ClientCnxnSocketNetty**.
 
 TBD - tuning options for netty - currently there are none that are netty specific but we should add some. Esp around max bound on the number of reader worker threads netty creates.
 
-#### Quorum TLS - How to manage encryption
+#### Quorum TLS
 
 **New in 3.5.5**
 
@@ -1293,19 +1318,55 @@ Based on the Netty Framework ZooKeeper ensembles can be set up
 to use TLS encryption in their communication channels. This section
 describes how to set up encryption on the quorum communication.
 
-After successful leader election participants of the ensemble establish
-communication on the quorum port and voting of the ZAB protocal will take
-place on this channel. ZooKeeper data packets will traverse on these 
-channels, therefore encrypting this channel is essential in order to 
-secure your Zookeeper installation.
+Please note that Quorum TLS encapsulates securing both leader election
+and quorum communication protocols.
 
+1. Create SSL keystore JKS to store local credentials
 
+One keystore should be created for each ZK instance.
 
+In this example we generate a self-signed certificate and store it 
+together with the private key in `keystore.jks`. This is suitable for 
+testing purposes, but you probably need an official certificate to sign 
+your keys in a production environment.
 
+Please note that the alias (`-alias`) and the (`-dname`) (distinguished name)
+must match the hostname of the machine that is associated with, otherwise 
+hostname verification won't work.
 
-TBD - How to manage certificates
+```
+keytool -genkeypair -alias $(hostname -f) -keyalg RSA -keysize 2048 -dname "cn=$(hostname -f)" -keypass password -keystore keystore.jks -storepass password
+```
 
+2. Extract the signed public key (certificate) from keystore 
 
+*This step might only necessary for self-signed certificates.*
+
+```
+keytool -exportcert -alias $(hostname -f) -keystore keystore.jks -file $(hostname -f).cer -rfc
+```
+
+3. Create SSL truststore JKS containing certificates of all ZooKeeper instances
+
+The same truststore (storing all accepted certs) should be shared on
+participants of the ensemble.
+
+```
+keytool -importcert -file hostname.local.cer -keystore truststore.jks -storepass password`
+```
+
+4. Need to use `NettyServerCnxnFactory` and serverCnxnFactory, because SSL is not supported by NIO.
+
+5. You need the following configuration settings in your `zoo.cfg` config file:
+
+```
+sslQuorum=true
+serverCnxnFactory=org.apache.zookeeper.server.NettyServerCnxnFactory
+ssl.quorum.keyStore.location=/path/to/keystore.jks
+ssl.quorum.keyStore.password=password
+ssl.quorum.trustStore.location=/path/to/truststore.jks
+ssl.quorum.trustStore.password=password
+```
 
 <a name="sc_zkCommands"></a>
 
