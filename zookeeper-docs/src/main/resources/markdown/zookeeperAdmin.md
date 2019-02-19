@@ -48,8 +48,9 @@ limitations under the License.
         * [Disabling data directory autocreation](#Disabling+data+directory+autocreation)
         * [Enabling db existence validation](#sc_db_existence_validation)
         * [Performance Tuning Options](#sc_performance_options)
-        * [Communication using the Netty framework](#Communication+using+the+Netty+framework)
         * [AdminServer configuration](#sc_adminserver_config)
+    * [Communication using the Netty framework](#Communication+using+the+Netty+framework)
+        * [Quorum TLS](#Quorum+TLS)
     * [ZooKeeper Commands](#sc_zkCommands)
         * [The Four Letter Words](#sc_4lw)
         * [The AdminServer](#sc_adminserver)
@@ -1064,14 +1065,14 @@ encryption/authentication/authorization performed by the service.
     **New in 3.5.5:**
     Enables encrypted quorum communication. Default is `false`.
        
-* *ssl.quorum.keyStore.location* and *ssl.quorum.keyStore.password=password* :
+* *ssl.quorum.keyStore.location* and *ssl.quorum.keyStore.password* :
     (Java system properties: **zookeeper.ssl.quorum.keyStore.location** and **zookeeper.ssl.quorum.keyStore.password**)
     **New in 3.5.5:**
     Specifies the file path to a JKS containing the local
     credentials to be used for Quorum TLS connections, and the
     password to unlock the file.
     
-* *ssl.quorum.trustStore.location* and *ssl.quorum.trustStore.password=password* :
+* *ssl.quorum.trustStore.location* and *ssl.quorum.trustStore.password* :
     (Java system properties: **zookeeper.ssl.quorum.trustStore.location** and **zookeeper.ssl.quorum.trustStore.password**)
     **New in 3.5.5:**
     Specifies the file path to a JKS containing the remote
@@ -1310,9 +1311,11 @@ to **org.apache.zookeeper.ClientCnxnSocketNetty**.
 
 TBD - tuning options for netty - currently there are none that are netty specific but we should add some. Esp around max bound on the number of reader worker threads netty creates.
 
+<a name="Quorum+TLS"></a>
+
 #### Quorum TLS
 
-**New in 3.5.5**
+*New in 3.5.5*
 
 Based on the Netty Framework ZooKeeper ensembles can be set up
 to use TLS encryption in their communication channels. This section
