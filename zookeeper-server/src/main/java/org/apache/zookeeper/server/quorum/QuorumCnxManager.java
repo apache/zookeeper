@@ -653,7 +653,7 @@ public class QuorumCnxManager {
                  sslSock.connect(electionAddr, cnxTO);
                  sslSock.startHandshake();
                  sock = sslSock;
-                 LOG.info("SSL handshake complete: " + sslSock.toString());
+                 LOG.info("SSL handshake complete with {} - {} - {}", sslSock.getRemoteSocketAddress(), sslSock.getSession().getProtocol(), sslSock.getSession().getCipherSuite());
              } else {
                  sock = new Socket();
                  setSockOpts(sock);

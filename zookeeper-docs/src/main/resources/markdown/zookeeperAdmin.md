@@ -51,6 +51,7 @@ limitations under the License.
         * [AdminServer configuration](#sc_adminserver_config)
     * [Communication using the Netty framework](#Communication+using+the+Netty+framework)
         * [Quorum TLS](#Quorum+TLS)
+        * [Upgrading existing non-TLS cluster with no downtime](#Upgrading+existing+nonTLS+cluster)
     * [ZooKeeper Commands](#sc_zkCommands)
         * [The Four Letter Words](#sc_4lw)
         * [The AdminServer](#sc_adminserver)
@@ -1370,6 +1371,65 @@ ssl.quorum.keyStore.password=password
 ssl.quorum.trustStore.location=/path/to/truststore.jks
 ssl.quorum.trustStore.password=password
 ```
+
+6. Verify in the logs that your ensemble is running on TLS:
+
+```
+INFO  [main:QuorumPeer@1789] - Using TLS encrypted quorum communication
+INFO  [main:QuorumPeer@1797] - Port unification disabled
+...
+INFO  [QuorumPeerListener:QuorumCnxManager$Listener@877] - Creating TLS-only quorum server socket
+```
+
+<a name="Upgrading+existing+nonTLS+cluster"></a>
+
+#### Upgrading existing non-TLS cluster with no downtime
+
+Here're the steps needed to upgrade an already running ZooKeeper ensemble
+to TLS without downtime by taking advantage of port unification functionality.
+
+1. Create the necessary keystores and truststores for all ZK participants as described in the previous section
+
+2. Add the following config settings and restart the first node
+
+```
+sslQuorum=false
+portUnification=true
+serverCnxnFactory=org.apache.zookeeper.server.NettyServerCnxnFactory
+ssl.quorum.keyStore.location=/path/to/keystore.jks
+ssl.quorum.keyStore.password=password
+ssl.quorum.trustStore.location=/path/to/truststore.jks
+ssl.quorum.trustStore.password=password
+```
+
+Note that TLS is not yet enabled, but we turn on port unification.
+
+3. Repeat step #2 on the remaining nodes. Verify that you see the following entries in the logs:
+
+```
+INFO  [main:QuorumPeer@1791] - Using insecure (non-TLS) quorum communication
+INFO  [main:QuorumPeer@1797] - Port unification enabled
+...
+INFO  [QuorumPeerListener:QuorumCnxManager$Listener@874] - Creating TLS-enabled quorum server socket
+```
+
+You should also double check after each node restart that the quorum become healthy again.
+
+4. Enable Quorum TLS on each node and do rolling restart:
+
+```
+sslQuorum=true
+portUnification=true
+```
+
+5. Once you verified that your entire ensemble is running on TLS, you could disable port unification
+and do another rolling restart
+
+```
+sslQuorum=true
+portUnification=false
+``` 
+
 
 <a name="sc_zkCommands"></a>
 
