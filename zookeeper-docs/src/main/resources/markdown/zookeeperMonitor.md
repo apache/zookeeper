@@ -84,7 +84,7 @@ All the metrics are included in the `ServerMetrics.java`.
     Access: proxy
     ```
 - Then download and import the default ZooKeeper dashboard [template](https://grafana.com/dashboards/10465) and customize.
-- Users can ask for Grafana dashboard account if having any good improvements by writing a email to **dev@zookeeper.apache.org**.
+- Users can ask for Grafana dashboard account if having any good improvements by writing an email to **dev@zookeeper.apache.org**.
 
 <a name="JMX"></a>
 ## JMX

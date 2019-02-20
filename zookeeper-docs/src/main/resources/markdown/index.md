@@ -37,6 +37,7 @@ archives.
 + **Developers**
     Documents for Developers using the ZooKeeper Client API
     + [API Docs](api/index.html) - the technical reference to ZooKeeper Client APIs
+    + [ZooKeeper Clients](zookeeperClients.html) - A series of ZooKeeper Client Bindings
     + [Programmer's Guide](zookeeperProgrammers.html) - a client application developer's guide to ZooKeeper
     + [ZooKeeper Use Cases](zookeeperUseCases.html) - a series of use cases using the ZooKeeper.
     + [ZooKeeper Java Example](javaExample.html) - a simple Zookeeper client application, written in Java
