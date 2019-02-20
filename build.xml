@@ -838,7 +838,11 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
       <copy todir="${dist.dir}/zookeeper-server/src/main/resources">
         <fileset file="${java.server.resources.dir}/pom.template"/>
       </copy>
-  	  
+
+      <copy todir="${dist.dir}/src" includeEmptyDirs="true">
+        <fileset dir="src" excludes="**/*.template **/docs/build/**/* **/ivy*.jar"/>
+      </copy>
+
       <chmod perm="ugo+x" type="file" parallel="false">
         <fileset dir="${dist.dir}/bin"/>
         <fileset dir="${dist.dir}/zookeeper-contrib/">
