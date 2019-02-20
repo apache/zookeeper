@@ -94,6 +94,8 @@ public class DataTree {
     private final ConcurrentHashMap<String, DataNode> nodes =
         new ConcurrentHashMap<String, DataNode>();
 
+    private final DataCache dataCache = new DataCache();
+
     private IWatchManager dataWatches;
 
     private IWatchManager childWatches;
@@ -470,6 +472,18 @@ public class DataTree {
             DataNode child = new DataNode(data, longval, stat);
             parent.addChild(childName);
             nodeDataSize.addAndGet(getNodeSize(path, child.data));
+
+            // ***************************************************
+            // CSCI 612 - Blue
+            //
+            // Marks the newly added node as accessed
+            //
+            // Stephen
+            //
+            // Adds it to our cache management system
+            // ***************************************************
+            trackNewlyAddedNodeForCacheControl(path, getNodeSize(path, data));
+
             nodes.put(path, child);
             EphemeralType ephemeralType = EphemeralType.get(ephemeralOwner);
             if (ephemeralType == EphemeralType.CONTAINER) {
@@ -604,6 +618,17 @@ public class DataTree {
         childWatches.triggerWatch(path, EventType.NodeDeleted, processed);
         childWatches.triggerWatch("".equals(parentName) ? "/" : parentName,
                 EventType.NodeChildrenChanged);
+
+        // ***************************************************
+        // CSCI 612 - Blue
+        //
+        // remove the node from the DataCache tracking
+        //
+        // Stephen
+        //
+        // Since we are removing this node from the nodes list (and the system) we no longer need to track it
+        // ***************************************************
+        dataCache.removeNode(path);
     }
 
     public Stat setData(String path, byte data[], int version, long zxid,
@@ -629,8 +654,20 @@ public class DataTree {
             this.updateCountBytes(lastPrefix, dataBytes
                     - (lastdata == null ? 0 : lastdata.length), 0);
         }
-        nodeDataSize.addAndGet(getNodeSize(path, data) - getNodeSize(path, lastdata));
+        long nodeSize = getNodeSize(path, data);
+        nodeDataSize.addAndGet(nodeSize - getNodeSize(path, lastdata));
         dataWatches.triggerWatch(path, EventType.NodeDataChanged);
+
+        // ***************************************************
+        // CSCI 612 - Blue
+        //
+        // update the size of this node in the DataCache
+        //
+        // Stephen
+        //
+        // A possible change in Node size needs to be registered to keep track of how much space we have in the cache
+        dataCache.updateSizeOfNode(path, nodeSize);
+        removeRecentlyEvictedNodesFromCachedNodes(); // It is possible that this triggered some nodes to be evicted
         return s;
     }
 
@@ -656,6 +693,17 @@ public class DataTree {
 
     public byte[] getData(String path, Stat stat, Watcher watcher)
             throws KeeperException.NoNodeException {
+        // ***************************************************
+        // CSCI 612 - Blue
+        //
+        // Marks the node as accessed
+        //
+        // Stephen
+        //
+        // Adds it to our cache management system at the top of the cached list
+        // ***************************************************
+        prepareNodesForAccessFromDataCache(path);
+
         DataNode n = nodes.get(path);
         if (n == null) {
             throw new KeeperException.NoNodeException();
@@ -1504,5 +1552,58 @@ public class DataTree {
     // visible for testing
     public ReferenceCountedACLCache getReferenceCountedAclCache() {
         return aclCache;
+    }
+
+    // ***************************************************
+    // CSCI 612 - Blue
+    //
+    // Marks the node as accessed and puts it in the nodes list if necessary
+    //
+    // Stephen
+    //
+    // Adds it to our cache management system at the top of the cached list, and places it in memory. It also removes any recently evicted nodes
+    // ***************************************************
+    private void prepareNodesForAccessFromDataCache(String path) {
+        boolean nodeInCacheAlready = dataCache.markNodeAsAccessed(path);
+        removeRecentlyEvictedNodesFromCachedNodes();
+
+        // If the node is not in the cache it will need to be added to the nodes list
+        if (!nodeInCacheAlready) {
+            //TODO: this is where we will need to actually get the node from the disk and add it to the nodes list
+        }
+    }
+
+    // ***************************************************
+    // CSCI 612 - Blue
+    //
+    // Adds the node to the DataCaches allNodes list for tracking
+    //
+    // Stephen
+    //
+    // In order to track all the nodes that are in or out of the cache we must maintain a separate list along with size
+    // ***************************************************
+    private void trackNewlyAddedNodeForCacheControl(String path, long size) {
+        dataCache.addNodeToAllNodes(path, size);
+        prepareNodesForAccessFromDataCache(path);
+    }
+
+    // ***************************************************
+    // CSCI 612 - Blue
+    //
+    // removes the nodes pending eviction from the nodes list
+    //
+    // Stephen
+    //
+    // Each time a node is accessed we need to see if any nodes were evicted from the cachedNodes list and remove them from the nodes list if so
+    // ***************************************************
+    private void removeRecentlyEvictedNodesFromCachedNodes() {
+        List<String> nodesPendingEviction = dataCache.getAndClearNodesPendingEviction();
+        for (String nodePendingEviction : nodesPendingEviction) {
+            if (!nodes.contains(nodePendingEviction)) {
+                throw new IllegalStateException("Tried to remove a node that was not in the nodes list.");
+            }
+
+            nodes.remove(nodePendingEviction);
+        }
     }
 }
