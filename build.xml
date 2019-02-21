@@ -878,6 +878,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
       <copy todir="${dist.dir}" includeEmptyDirs="true">
         <fileset dir="${basedir}" excludes="**/*.template **/docs/build/**/* **/ivy*.jar">
+          <include name="zookeeper-assembly/**"/>
           <include name="zookeeper-recipes/**"/>
           <include name="zookeeper-docs/**"/>
           <include name="zookeeper-contrib/**"/>
@@ -1005,6 +1006,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
       <copy todir="${dist.dir}" includeEmptyDirs="true">
         <fileset dir="${basedir}" excludes="**/*.template **/docs/build/**/* **/ivy*.jar">
+          <include name="zookeeper-assembly/**"/>
           <include name="zookeeper-recipes/**"/>
           <include name="zookeeper-docs/**"/>
           <include name="zookeeper-contrib/**"/>

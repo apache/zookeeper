@@ -62,6 +62,7 @@
     <module>zookeeper-server</module>
     <module>zookeeper-client</module>
     <module>zookeeper-recipes</module>
+    <module>zookeeper-assembly</module>
   </modules>
 
   <scm>
@@ -656,28 +657,6 @@
             <goals>
               <goal>jar</goal>
             </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>source-package</id>
-            <phase>package</phase>
-            <goals>
-              <goal>
-                single
-              </goal>
-            </goals>
-            <configuration>
-              <descriptors>
-                <descriptor>${project.basedir}/source-package.xml</descriptor>
-              </descriptors>
-              <finalName>zookeeper-${project.version}</finalName>
-              <tarLongFileMode>gnu</tarLongFileMode>
-            </configuration>
           </execution>
         </executions>
       </plugin>
