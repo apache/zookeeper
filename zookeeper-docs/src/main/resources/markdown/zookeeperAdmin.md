@@ -1026,18 +1026,6 @@ encryption/authentication/authorization performed by the service.
     but is generic for SASL based logins. It stores the name of
     a user that can access the znode hierarchy as a "super" user.
 
-* *ssl.keyStore.location and ssl.keyStore.password* :
-    (Java system properties: **zookeeper.ssl.keyStore.location** and **zookeeper.ssl.keyStore.password**)
-    Specifies the file path to a JKS containing the local
-    credentials to be used for SSL connections, and the
-    password to unlock the file.
-
-* *ssl.trustStore.location and ssl.trustStore.password* :
-    (Java system properties: **zookeeper.ssl.trustStore.location** and **zookeeper.ssl.trustStore.password**)
-    Specifies the file path to a JKS containing the remote
-    credentials to be used for SSL connections, and the
-    password to unlock the file.
-
 * *ssl.authProvider* :
     (Java system property: **zookeeper.ssl.authProvider**)
     Specifies a subclass of **org.apache.zookeeper.auth.X509AuthenticationProvider**
@@ -1066,19 +1054,88 @@ encryption/authentication/authorization performed by the service.
     **New in 3.5.5:**
     Enables encrypted quorum communication. Default is `false`.
        
-* *ssl.quorum.keyStore.location* and *ssl.quorum.keyStore.password* :
-    (Java system properties: **zookeeper.ssl.quorum.keyStore.location** and **zookeeper.ssl.quorum.keyStore.password**)
+* *ssl.keyStore.location and ssl.keyStore.password* and *ssl.quorum.keyStore.location* and *ssl.quorum.keyStore.password* :
+    (Java system properties: **zookeeper.ssl.keyStore.location** and **zookeeper.ssl.keyStore.password** and **zookeeper.ssl.quorum.keyStore.location** and **zookeeper.ssl.quorum.keyStore.password**)
     **New in 3.5.5:**
-    Specifies the file path to a JKS containing the local
-    credentials to be used for Quorum TLS connections, and the
+    Specifies the file path to a Java keystore containing the local
+    credentials to be used for client and quorum TLS connections, and the
     password to unlock the file.
     
-* *ssl.quorum.trustStore.location* and *ssl.quorum.trustStore.password* :
-    (Java system properties: **zookeeper.ssl.quorum.trustStore.location** and **zookeeper.ssl.quorum.trustStore.password**)
+* *ssl.keyStore.type* and *ssl.quorum.keyStore.type* :
+    (Java system properties: **zookeeper.ssl.keyStore.type** and **zookeeper.ssl.quorum.keyStore.type**)
     **New in 3.5.5:**
-    Specifies the file path to a JKS containing the remote
-    credentials to be used for Quorum TLS connections, and the
+    Specifies the file format of client and quorum keystores. Values: JKS, PEM or null (detect by filename).    
+    Default: null     
+    
+* *ssl.trustStore.location* and *ssl.trustStore.password* and *ssl.quorum.trustStore.location* and *ssl.quorum.trustStore.password* :
+    (Java system properties: **zookeeper.ssl.trustStore.location** and **zookeeper.ssl.trustStore.password** and **zookeeper.ssl.quorum.trustStore.location** and **zookeeper.ssl.quorum.trustStore.password**)
+    **New in 3.5.5:**
+    Specifies the file path to a Java truststore containing the remote
+    credentials to be used for client and quorum TLS connections, and the
     password to unlock the file.
+
+* *ssl.trustStore.type* and *ssl.quorum.trustStore.type* :
+    (Java system properties: **zookeeper.ssl.trustStore.type** and **zookeeper.ssl.quorum.trustStore.type**)
+    **New in 3.5.5:**
+    Specifies the file format of client and quorum trustStores. Values: JKS, PEM or null (detect by filename).    
+    Default: null     
+
+* *ssl.protocol* and *ssl.quorum.protocol* :
+    (Java system properties: **zookeeper.ssl.protocol** and **zookeeper.ssl.quorum.protocol**)
+    **New in 3.5.5:**
+    Specifies to protocol to be used in client and quorum TLS negotiation.
+    Default: TLSv1.2
+
+* *ssl.enabledProtocols* and *ssl.quorum.enabledProtocols* :
+    (Java system properties: **zookeeper.ssl.enabledProtocols** and **zookeeper.ssl.quorum.enabledProtocols**)
+    **New in 3.5.5:**
+    Specifies the enabled protocols in client and quorum TLS negotiation.
+    Default: value of `protocol` property
+    
+* *ssl.ciphersuites* and *ssl.quorum.ciphersuites* :
+    (Java system properties: **zookeeper.ssl.ciphersuites** and **zookeeper.ssl.quorum.ciphersuites**)
+    **New in 3.5.5:**
+    Specifies the enabled cipher suites to be used in client and quorum TLS negotiation.
+    Default: Enabled cipher suites depend on the Java runtime version being used.    
+
+* *ssl.context.supplier.class* and *ssl.quorum.context.supplier.class* :
+    (Java system properties: **zookeeper.ssl.context.supplier.class** and **zookeeper.ssl.quorum.context.supplier.class**)
+    **New in 3.5.5:**
+    Specifies the class to be used for creating SSL context in client and quorum SSL communication.
+    This allows you to use custom SSL context and implement the following scenarios:
+    1. Use hardware keystore, loaded in using PKCS11 or something similar.
+    2. You don't have access to the software keystore, but can retrieve an already-constructed SSLContext from their container.
+    Default: null
+    
+* *ssl.hostnameVerification* and *ssl.quorum.hostnameVerification* :
+    (Java system properties: **zookeeper.ssl.hostnameVerification** and **zookeeper.ssl.quorum.hostnameVerification**)
+    **New in 3.5.5:**
+    Specifies whether the hostname verification is enabled in client and quorum TLS negotiation process.
+    Disabling it only recommended for testing purposes.
+    Default: true
+
+* *ssl.crl* and *ssl.quorum.crl* :
+    (Java system properties: **zookeeper.ssl.crl** and **zookeeper.ssl.quorum.crl**)
+    **New in 3.5.5:**
+    Specifies whether Certificate Revocation List is enabled in client and quorum TLS protocols.
+    Default: false
+
+* *ssl.ocsp* and *ssl.quorum.ocsp* :
+    (Java system properties: **zookeeper.ssl.ocsp** and **zookeeper.ssl.quorum.ocsp**)
+    **New in 3.5.5:**
+    Specifies whether Online Certificate Status Protocol is enabled in client and quorum TLS protocols.
+    Default: false
+    
+* *ssl.clientAuth* and *ssl.quorum.clientAuth* :
+    (Java system properties: **zookeeper.ssl.clientAuth** and **zookeeper.ssl.quorum.clientAuth**)
+    **New in 3.5.5:**
+    TBD
+    
+* *ssl.handshakeDetectionTimeoutMillis* and *ssl.quorum.handshakeDetectionTimeoutMillis* :
+    (Java system properties: **zookeeper.ssl.handshakeDetectionTimeoutMillis** and **zookeeper.ssl.quorum.handshakeDetectionTimeoutMillis**)
+    **New in 3.5.5:**
+    TBD
+        
 
 <a name="Experimental+Options%2FFeatures"></a>
 
@@ -1384,6 +1441,8 @@ INFO  [QuorumPeerListener:QuorumCnxManager$Listener@877] - Creating TLS-only quo
 <a name="Upgrading+existing+nonTLS+cluster"></a>
 
 #### Upgrading existing non-TLS cluster with no downtime
+
+*New in 3.5.5*
 
 Here're the steps needed to upgrade an already running ZooKeeper ensemble
 to TLS without downtime by taking advantage of port unification functionality.
