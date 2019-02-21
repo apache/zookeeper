@@ -34,25 +34,46 @@
   <description>
     Contrib projects to Apache ZooKeeper
   </description>
-  <build>
-    <pluginManagement>
-       <plugins>
-          <plugin>
-            <groupId>com.github.spotbugs</groupId>
-            <artifactId>spotbugs-maven-plugin</artifactId>
-            <version>3.1.9</version>
-            <configuration>
-                <!-- No spotbugs for contri modules -->
-                <skip>true</skip>
-            </configuration>
-          </plugin>
-        </plugins>
-      </pluginManagement>
-  </build>
+
   <modules>
     <module>zookeeper-contrib-loggraph</module>
     <module>zookeeper-contrib-rest</module>
     <module>zookeeper-contrib-zooinspector</module>
   </modules>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>com.github.spotbugs</groupId>
+          <artifactId>spotbugs-maven-plugin</artifactId>
+          <version>3.1.9</version>
+          <configuration>
+            <!-- No spotbugs for contri modules -->
+            <skip>true</skip>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>source-package</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <skipAssembly>true</skipAssembly>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 
 </project>
