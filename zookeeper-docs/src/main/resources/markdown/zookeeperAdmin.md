@@ -1413,7 +1413,7 @@ The same truststore (storing all accepted certs) should be shared on
 participants of the ensemble.
 
 ```
-keytool -importcert -file hostname.local.cer -keystore truststore.jks -storepass password`
+keytool -importcert -file $(hostname -f).cer -keystore truststore.jks -storepass password
 ```
 
 4. Need to use `NettyServerCnxnFactory` and serverCnxnFactory, because SSL is not supported by NIO.
@@ -1444,7 +1444,7 @@ INFO  [QuorumPeerListener:QuorumCnxManager$Listener@877] - Creating TLS-only quo
 
 *New in 3.5.5*
 
-Here're the steps needed to upgrade an already running ZooKeeper ensemble
+Here are the steps needed to upgrade an already running ZooKeeper ensemble
 to TLS without downtime by taking advantage of port unification functionality.
 
 1. Create the necessary keystores and truststores for all ZK participants as described in the previous section
