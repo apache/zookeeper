@@ -77,11 +77,11 @@ int32_t inc_ref_counter(zhandle_t* zh,int i)
 
 int32_t get_xid()
 {
-    static int32_t xid = -1;
-    if (xid == -1) {
-        xid = time(0);
-    }
-    return xid++;
+    static int32_t xid = 1;
+
+    // The XID returned should not be negative to avoid collisions
+    // with reserved XIDs, such as AUTH_XID or SET_WATCHES_XID.
+    return xid++ & ~(1<<31);
 }
 
 int lock_reconfig(struct _zhandle *zh)
