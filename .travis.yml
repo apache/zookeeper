@@ -1,0 +1,17 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+  - openjdk11
+
+cache:
+  directories:
+  - "$HOME/.m2"
+
+script: mvn clean install -DskipTests spotbugs:check
+
+branches:
+  only:
+  - master
+  - branch-3.5
+  - branch-3.4
