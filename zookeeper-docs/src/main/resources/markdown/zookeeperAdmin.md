@@ -212,7 +212,8 @@ ensemble:
   consists of a single line containing only the text of that machine's
   id. So *myid* of server 1 would contain the text
   "1" and nothing else. The id must be unique within the
-  ensemble and should have a value between 1 and 255.
+  ensemble and must have a value between 1 and 255.
+  (because the generating of sessionId uses the low 8 bits of myid).
   **IMPORTANT:** if you enable extended features such
    as TTL Nodes (see below) the id must be between 1
    and 254 due to internal limitations.
