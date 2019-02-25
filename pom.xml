@@ -666,6 +666,8 @@
         </executions>
       </plugin>
       <plugin>
+        <!-- Maven's deploy plugin only creates checksums during the deployment of the jar artifacts to repo. -->
+        <!-- We also want to sign tarballs. Nicoulaj's plugin is the recommended solution by the community.   -->
         <groupId>net.nicoulaj.maven.plugins</groupId>
         <artifactId>checksum-maven-plugin</artifactId>
         <executions>
