@@ -75,7 +75,7 @@ zookeeper-client/zookeeper-client-c/Makefile.in
 zookeeper-client/zookeeper-client-c/aclocal.m4
 zookeeper-client/zookeeper-client-c/autom4te.cache/
 zookeeper-client/zookeeper-client-c/compile
-szookeeper-client/zookeeper-client-c/config.guess
+zookeeper-client/zookeeper-client-c/config.guess
 zookeeper-client/zookeeper-client-c/config.h.in
 zookeeper-client/zookeeper-client-c/config.sub
 zookeeper-client/zookeeper-client-c/configure
