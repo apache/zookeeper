@@ -104,10 +104,12 @@ public class WatcherCleaner extends Thread {
                 totalDeadWatchers.get() >= maxInProcessingDeadWatchers) {
             try {
                 RATE_LOGGER.rateLimitLog("Waiting for dead watchers cleaning");
+                long startTime = Time.currentElapsedTime();
                 synchronized(processingCompletedEvent) {
                     processingCompletedEvent.wait(100);
                 }
-                ServerMetrics.ADD_DEAD_WATCHER_STALL_TIME.add(100);
+                long latency = Time.currentElapsedTime() - startTime;
+                ServerMetrics.ADD_DEAD_WATCHER_STALL_TIME.add(latency);
             } catch (InterruptedException e) {
                 LOG.info("Got interrupted while waiting for dead watches " +
                         "queue size");
