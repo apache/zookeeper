@@ -146,7 +146,7 @@ only handle the failure of a single machine; if two machines fail, the
 remaining two machines do not constitute a majority. However, with five
 machines ZooKeeper can handle the failure of two machines.
 
-######Note
+###### Note
 >As mentioned in the
 [ZooKeeper Getting Started Guide](zookeeperStarted.html)
 , a minimum of three servers are required for a fault tolerant
@@ -227,10 +227,9 @@ ensemble:
   ensemble.
 
 7. If your configuration file is set up, you can start a
-  ZooKeeper server:
+  ZooKeeper server:  
 
-        $ java -cp zookeeper.jar:lib/slf4j-api-1.7.5.jar:lib/slf4j-log4j12-1.7.5.jar:lib/log4j-1.2.17.jar:conf \\
-        org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.cfg
+        $ java -cp zookeeper.jar:lib/*:conf org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.conf 
 
   QuorumPeerMain starts a ZooKeeper server,
   [JMX](http://java.sun.com/javase/technologies/core/mntr-mgmt/javamanagement/)
@@ -1410,15 +1409,15 @@ keytool -exportcert -alias $(hostname -f) -keystore keystore.jks -file $(hostnam
 3. Create SSL truststore JKS containing certificates of all ZooKeeper instances
 
 The same truststore (storing all accepted certs) should be shared on
-participants of the ensemble.
+participants of the ensemble. You need to use different aliases to store
+multiple certificates in the same truststore. Name of the aliases doesn't matter.
 
 ```
-keytool -importcert -file $(hostname -f).cer -keystore truststore.jks -storepass password
+keytool -importcert -alias [host1..3] -file [host1..3].cer -keystore truststore.jks -storepass password
 ```
 
-4. Need to use `NettyServerCnxnFactory` and serverCnxnFactory, because SSL is not supported by NIO.
-
-5. You need the following configuration settings in your `zoo.cfg` config file:
+4. You need to use `NettyServerCnxnFactory` as serverCnxnFactory, because SSL is not supported by NIO.
+Add the following configuration settings to your `zoo.cfg` config file:
 
 ```
 sslQuorum=true
@@ -1429,7 +1428,7 @@ ssl.quorum.trustStore.location=/path/to/truststore.jks
 ssl.quorum.trustStore.password=password
 ```
 
-6. Verify in the logs that your ensemble is running on TLS:
+5. Verify in the logs that your ensemble is running on TLS:
 
 ```
 INFO  [main:QuorumPeer@1789] - Using TLS encrypted quorum communication
