@@ -146,22 +146,6 @@
         </executions>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>source-package</id>
-            <phase>package</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-            <configuration>
-              <skipAssembly>true</skipAssembly>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
         <!-- spotbugs does not make sense for generated code -->
         <groupId>com.github.spotbugs</groupId>
         <artifactId>spotbugs-maven-plugin</artifactId>

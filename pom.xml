@@ -62,6 +62,7 @@
     <module>zookeeper-server</module>
     <module>zookeeper-client</module>
     <module>zookeeper-recipes</module>
+    <module>zookeeper-assembly</module>
   </modules>
 
   <scm>
@@ -522,6 +523,11 @@
           <version>3.0.0</version>
         </plugin>
         <plugin>
+          <groupId>net.nicoulaj.maven.plugins</groupId>
+          <artifactId>checksum-maven-plugin</artifactId>
+          <version>1.8</version>
+        </plugin>
+        <plugin>
           <groupId>org.openclover</groupId>
           <artifactId>clover-maven-plugin</artifactId>
           <version>4.3.1</version>
@@ -660,26 +666,22 @@
         </executions>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-assembly-plugin</artifactId>
+        <!-- Maven's deploy plugin only creates checksums during the deployment of the jar artifacts to repo. -->
+        <!-- We also want to sign tarballs. Nicoulaj's plugin is the recommended solution by the community.   -->
+        <groupId>net.nicoulaj.maven.plugins</groupId>
+        <artifactId>checksum-maven-plugin</artifactId>
         <executions>
           <execution>
-            <id>source-package</id>
-            <phase>package</phase>
             <goals>
-              <goal>
-                single
-              </goal>
+              <goal>artifacts</goal>
             </goals>
-            <configuration>
-              <descriptors>
-                <descriptor>${project.basedir}/source-package.xml</descriptor>
-              </descriptors>
-              <finalName>zookeeper-${project.version}</finalName>
-              <tarLongFileMode>gnu</tarLongFileMode>
-            </configuration>
           </execution>
         </executions>
+        <configuration>
+          <algorithms>
+            <algorithm>SHA-512</algorithm>
+          </algorithms>
+        </configuration>
       </plugin>
 
       <plugin>
