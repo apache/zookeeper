@@ -99,14 +99,14 @@ check_PROGRAMS = zktest-st
 TESTS_ENVIRONMENT = ZKROOT=${srcdir}/../.. \
                     CLASSPATH=$$CLASSPATH:$$CLOVER_HOME/lib/clover*.jar
 nodist_zktest_st_SOURCES = $(TEST_SOURCES)
-zktest_st_LDADD = libzkst.la libhashtable.la $(CPPUNIT_LIBS)
+zktest_st_LDADD = libzkst.la libhashtable.la $(CPPUNIT_LIBS) -ldl
 zktest_st_CXXFLAGS = -DUSE_STATIC_LIB $(CPPUNIT_CFLAGS) $(USEIPV6) $(SOLARIS_CPPFLAGS)
 zktest_st_LDFLAGS = -static-libtool-libs $(SYMBOL_WRAPPERS) $(SOLARIS_LIB_LDFLAGS)
 
 if WANT_SYNCAPI
   check_PROGRAMS += zktest-mt
   nodist_zktest_mt_SOURCES = $(TEST_SOURCES) tests/PthreadMocks.cc
-  zktest_mt_LDADD = libzkmt.la libhashtable.la -lpthread $(CPPUNIT_LIBS)
+  zktest_mt_LDADD = libzkmt.la libhashtable.la -lpthread $(CPPUNIT_LIBS) -ldl
   zktest_mt_CXXFLAGS = -DUSE_STATIC_LIB -DTHREADED $(CPPUNIT_CFLAGS) $(USEIPV6)
 if SOLARIS
   SHELL_SYMBOL_WRAPPERS_MT = cat ${srcdir}/tests/wrappers-mt.opt

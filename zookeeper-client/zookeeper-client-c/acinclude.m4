@@ -310,3 +310,18 @@ esac
 #echo DX_FLAG_ps=$DX_FLAG_ps
 #echo DX_ENV=$DX_ENV
 ])
+
+# CHECK_CPPUNIT
+# ------------------
+# Check for cppunit presence.
+AC_DEFUN([CHECK_CPPUNIT], [
+  ifdef(
+    [AM_PATH_CPPUNIT],
+    [AM_PATH_CPPUNIT($1)],
+    [ifdef(
+      [PKG_CHECK_MODULES],
+      [PKG_CHECK_MODULES([CPPUNIT], [cppunit >= $1])],
+      [m4_fatal([Missing AM_PATH_CPPUNIT or PKG_CHECK_MODULES m4 macro.])]
+    )]
+  )
+])
