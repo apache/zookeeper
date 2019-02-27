@@ -653,6 +653,13 @@ void processline(char *line) {
 }
 
 int main(int argc, char **argv) {
+    static struct option long_options[] = {
+            {"host",    required_argument, NULL, 'h'}, //hostPort
+            {"myid",    optional_argument, NULL, 'i'}, //myId
+            {"cmd",     optional_argument, NULL, 'c'}, //cmd
+            {"cert",    optional_argument, NULL, 's'}, //certificates files
+            {NULL,      0,                 NULL, 0},
+    };
 #ifndef THREADED
     fd_set rfds, wfds, efds;
     int processed=0;
@@ -669,14 +676,7 @@ int main(int argc, char **argv) {
 
     int opt;
     int option_index = 0;
-    opterr = 0;
-    static struct option long_options[] = {
-            {"host",    required_argument, NULL, 'h'}, //hostPort
-            {"myid",    optional_argument, NULL, 'i'}, //myId
-            {"cmd",     optional_argument, NULL, 'c'}, //cmd
-            {"cert",    optional_argument, NULL, 's'}, //certificates files
-            {NULL,      0,                 NULL, 0},
-    };
+
     flags = 0;
     while ((opt = getopt_long(argc, argv, "h:m::rc::s::", long_options, &option_index)) != -1) {
         switch (opt) {
