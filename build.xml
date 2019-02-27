@@ -792,7 +792,9 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
         <fileset dir="${lib.dir}">
           <exclude name="**/ivy*.jar" />
         </fileset>
-        <fileset dir="${ivy.lib}"/>
+        <fileset dir="${ivy.lib}">
+          <exclude name="**/jsr305*.jar" />
+        </fileset>
       </copy>
 
       <subant target="package">
