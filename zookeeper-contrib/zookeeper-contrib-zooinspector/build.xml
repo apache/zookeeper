@@ -145,9 +145,6 @@
 		<copy todir="${dist.dir}/zookeeper-contrib/zookeeper-contrib-${name}/lib">
 			<fileset file="${basedir}/lib/jtoaster-1.0.4.jar" />
 		</copy>
-		<copy todir="${dist.dir}/zookeeper-contrib/zookeeper-contrib-${name}/lib">
-			<fileset file="../../build/zookeeper-${version}.jar" />
-		</copy>
 	</target>
 
 </project>
