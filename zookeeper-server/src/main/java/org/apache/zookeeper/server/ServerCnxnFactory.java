@@ -223,7 +223,7 @@ public abstract class ServerCnxnFactory {
             if (securityException != null && (loginContextName != null || jaasFile != null)) {
                 String errorMessage = "No JAAS configuration section named '" + serverSection +  "' was found";
                 if (jaasFile != null) {
-                    errorMessage += "in '" + jaasFile + "'.";
+                    errorMessage += " in '" + jaasFile + "'.";
                 }
                 if (loginContextName != null) {
                     errorMessage += " But " + ZooKeeperSaslServer.LOGIN_CONTEXT_NAME_KEY + " was set.";
