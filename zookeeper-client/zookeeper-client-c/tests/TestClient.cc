@@ -269,12 +269,14 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
         return zk;
     }
 
+#ifdef HAVE_OPENSSL_H
     zhandle_t *createSSLClient(const char *hp, const char *cert, watchctx_t *ctx) {
         zhandle_t *zk = zookeeper_init_ssl(hp, cert, watcher, 30000, 0, ctx, 0);
         ctx->zh = zk;
         sleep(1);
         return zk;
     }
+#endif
     
     zhandle_t *createchClient(watchctx_t *ctx, const char* chroot) {
         zhandle_t *zk = zookeeper_init(chroot, watcher, 10000, 0, ctx, 0);
@@ -762,6 +764,7 @@ public:
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
     }
 
+#ifdef HAVE_OPENSSL_H
     void testSSL() {
         watchctx_t ctx;
         zhandle_t *zk = createSSLClient("127.0.0.1:22281", "../ssl/server.crt,../ssl/client.crt,../ssl/clientkey.pem,testpass", &ctx);
@@ -771,6 +774,7 @@ public:
                         &ZOO_OPEN_ACL_UNSAFE, 0, 0, 0);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
     }
+#endif
 
     void testNullData() {
         watchctx_t ctx;
