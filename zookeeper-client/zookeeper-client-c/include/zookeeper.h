@@ -200,8 +200,6 @@ extern ZOOAPI const int ZOO_SEQUENCE;
 extern ZOOAPI const int ZOO_CONTAINER;
 // @}
 
-#define IS_CONTAINER(flags) (((flags) & ZOO_CONTAINER) == ZOO_CONTAINER)
-
 /**
  * @name State Consts
  * These constants represent the states of a zookeeper connection. They are
