@@ -343,7 +343,8 @@ public class Learner {
                                 "connecting to {}", tries, remainingInitLimitTime, address, e);
                         throw e;
                     } else {
-                        LOG.warn("Unexpected exception, tries={}, remaining init limit={}, connecting to {}", tries, remainingInitLimitTime, address, e);
+                        LOG.warn("Unexpected exception, tries={}, remaining init limit={}, connecting to {}", tries,
+                                remainingInitLimitTime, address, e);
                         sock = createSocket();
                     }
                 }
