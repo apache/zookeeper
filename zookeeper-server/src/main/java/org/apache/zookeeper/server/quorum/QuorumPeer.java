@@ -25,10 +25,22 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.net.*;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -327,8 +339,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         public String toString(){
             StringWriter sw = new StringWriter();
 
-            List<InetSocketAddress> addrList = addr.getAllAddresses();
-            List<InetSocketAddress> electionAddrList = electionAddr.getAllAddresses();
+            List<InetSocketAddress> addrList = new LinkedList<>(addr.getAllAddresses());
+            List<InetSocketAddress> electionAddrList = new LinkedList<>(electionAddr.getAllAddresses());
 
             if(addrList.size() > 0 && electionAddrList.size() > 0) {
                 addrList.sort(Comparator.comparing(InetSocketAddress::getHostString));
@@ -2019,12 +2031,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         observerMasters.clear();
         StringBuilder sb = new StringBuilder();
         for (QuorumServer server : quorumVerifier.getVotingMembers().values()) {
-            InetAddress address;
-            try {
-                address = server.addr.getValidAddress().getAddress();
-            } catch (NoRouteToHostException e) {
-                address = server.addr.getOne().getAddress();
-            }
+            InetAddress address = server.addr.getReachableOrOne().getAddress();
             InetSocketAddress addr = new InetSocketAddress(address, observerMasterPort);
             observerMasters.add(new QuorumServer(server.id, addr));
             sb.append(addr).append(",");

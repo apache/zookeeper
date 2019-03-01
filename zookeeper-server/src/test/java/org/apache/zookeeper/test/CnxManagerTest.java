@@ -24,7 +24,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.net.InetSocketAddress;
-import java.net.NoRouteToHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
@@ -236,12 +235,7 @@ public class CnxManagerTest extends ZKTestCase {
         } else {
             LOG.error("Null listener when initializing cnx manager");
         }
-        InetSocketAddress address;
-        try {
-            address = peers.get(peer.getId()).electionAddr.getValidAddress();
-        } catch (NoRouteToHostException e) {
-            address = peers.get(peer.getId()).electionAddr.getOne();
-        }
+        InetSocketAddress address = peers.get(peer.getId()).electionAddr.getReachableOrOne();
         LOG.info("Election port: " + address.getPort());
 
         Thread.sleep(1000);
@@ -249,12 +243,7 @@ public class CnxManagerTest extends ZKTestCase {
         SocketChannel sc = SocketChannel.open();
         sc.socket().connect(address, 5000);
 
-        InetSocketAddress otherAddr;
-        try {
-            otherAddr = peers.get(2L).electionAddr.getValidAddress();
-        } catch (NoRouteToHostException e) {
-            otherAddr = peers.get(2L).electionAddr.getOne();
-        }
+        InetSocketAddress otherAddr = peers.get(2L).electionAddr.getReachableOrOne();
 
         DataOutputStream dout = new DataOutputStream(sc.socket().getOutputStream());
         dout.writeLong(QuorumCnxManager.PROTOCOL_VERSION);
@@ -312,13 +301,7 @@ public class CnxManagerTest extends ZKTestCase {
             LOG.error("Null listener when initializing cnx manager");
         }
 
-        InetSocketAddress address;
-        try {
-            address = peers.get(peer.getId()).electionAddr.getValidAddress();
-        } catch (NoRouteToHostException e) {
-            address = peers.get(peer.getId()).electionAddr.getOne();
-        }
-
+        InetSocketAddress address = peers.get(peer.getId()).electionAddr.getReachableOrOne();
         LOG.info("Election port: " + address.getPort());
 
         Thread.sleep(1000);
@@ -366,13 +349,7 @@ public class CnxManagerTest extends ZKTestCase {
             LOG.error("Null listener when initializing cnx manager");
         }
 
-        InetSocketAddress address;
-        try {
-            address = peers.get(peer.getId()).electionAddr.getValidAddress();
-        } catch (NoRouteToHostException e) {
-            address = peers.get(peer.getId()).electionAddr.getOne();
-        }
-
+        InetSocketAddress address = peers.get(peer.getId()).electionAddr.getReachableOrOne();
         LOG.info("Election port: " + address.getPort());
         Thread.sleep(1000);
 

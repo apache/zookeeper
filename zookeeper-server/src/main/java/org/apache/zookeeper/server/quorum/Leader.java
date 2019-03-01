@@ -24,10 +24,29 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.*;
+import java.net.BindException;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketAddress;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -240,14 +259,15 @@ public class Leader implements LearnerMaster {
         this.self = self;
         this.proposalStats = new BufferStats();
 
-        List<InetSocketAddress> addresses;
-        if (self.getQuorumListenOnAllIPs())
+        Set<InetSocketAddress> addresses;
+        if (self.getQuorumListenOnAllIPs()) {
             addresses = self.getQuorumAddress().getWildcardAddresses();
-        else
+        } else {
             addresses = self.getQuorumAddress().getAllAddresses();
+        }
 
         serverSockets = new LinkedList<>();
-        for(InetSocketAddress address : addresses)
+        for (InetSocketAddress address : addresses)
             serverSockets.add(createServerSocket(address, self.shouldUsePortUnification(), self.isSslQuorum()));
 
         this.zk = zk;
@@ -264,7 +284,6 @@ public class Leader implements LearnerMaster {
             } else {
                 serverSocket = new ServerSocket();
             }
-
             serverSocket.setReuseAddress(true);
             serverSocket.bind(address);
             return serverSocket;
@@ -440,7 +459,7 @@ public class Leader implements LearnerMaster {
                         acceptConnections();
                     }
                 } catch (Exception e) {
-                    LOG.warn("Exception while accepting follower", e.getMessage());
+                    LOG.warn("Exception while accepting follower", e);
                     if (!fail.get()) {
                         handleException(getName(), e);
                         fail.set(true);
@@ -468,7 +487,7 @@ public class Leader implements LearnerMaster {
                 } catch (SocketException e) {
                     error = true;
                     if (stop.get()) {
-                        LOG.info("exception while shutting down acceptor: " + e);
+                        LOG.info("Exception while shutting down acceptor", e);
                     } else {
                         throw e;
                     }
@@ -775,12 +794,13 @@ public class Leader implements LearnerMaster {
     synchronized void closeSockets() {
         if (serverSockets != null)
             for (ServerSocket serverSocket : serverSockets) {
-                if (!serverSocket.isClosed())
+                if (!serverSocket.isClosed()) {
                     try {
                         serverSocket.close();
                     } catch (IOException e) {
-                        LOG.warn("Ignoring unexpected exception during close" + serverSocket, e);
+                        LOG.warn("Ignoring unexpected exception during close {}", serverSocket, e);
                     }
+                }
             }
     }
 

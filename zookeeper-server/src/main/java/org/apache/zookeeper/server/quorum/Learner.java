@@ -28,9 +28,9 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -258,7 +258,7 @@ public class Learner {
     protected void connectToLeader(MultipleAddresses addr, String hostname)
             throws IOException, InterruptedException {
 
-        List<InetSocketAddress> addresses = addr.getAllAddresses();
+        Set<InetSocketAddress> addresses = addr.getAllAddresses();
         ExecutorService executor = Executors.newFixedThreadPool(addresses.size());
         CountDownLatch latch = new CountDownLatch(addresses.size());
         AtomicReference<Socket> socket = new AtomicReference<>(null);
@@ -266,10 +266,11 @@ public class Learner {
 
         latch.await();
 
-        if(socket.get() == null)
+        if (socket.get() == null) {
             throw new IOException("Failed connect to " + addr);
-        else
+        } else {
             sock = socket.get();
+        }
 
         self.authLearner.authenticate(sock, hostname);
 
@@ -297,11 +298,13 @@ public class Learner {
                 Thread.currentThread().setName("LeaderConnector-" + address);
                 Socket sock = connectToLeader();
 
-                if(sock != null && sock.isConnected() && !socket.compareAndSet(null, sock))
+                if (sock != null && sock.isConnected() && !socket.compareAndSet(null, sock)) {
+                    LOG.info("Connection to the leader is already established, close the redundant connection");
                     sock.close();
+                }
 
             } catch (Exception e) {
-                LOG.error("Failed to connect to " + address, e);
+                LOG.error("Failed connect to {}", address, e);
             } finally {
                 latch.countDown();
             }
@@ -332,19 +335,15 @@ public class Learner {
                     remainingInitLimitTime = initLimitTime - (int) ((nanoTime() - startNanoTime) / 1000000);
 
                     if (remainingInitLimitTime <= leaderConnectDelayDuringRetryMs) {
-                        LOG.error("Unexpected exception, initLimit exceeded. tries=" + tries +
-                                ", remaining init limit=" + remainingInitLimitTime +
-                                ", connecting to " + address, e);
+                        LOG.error("Unexpected exception, initLimit exceeded. tries={}, remaining init limit={}, " +
+                                "connecting to {}", tries, remainingInitLimitTime, address, e);
                         throw e;
                     } else if (tries >= 4) {
-                        LOG.error("Unexpected exception, retries exceeded. tries=" + tries +
-                                ", remaining init limit=" + remainingInitLimitTime +
-                                ", connecting to " + address, e);
+                        LOG.error("Unexpected exception, retries exceeded. tries={}, remaining init limit={}, " +
+                                "connecting to {}", tries, remainingInitLimitTime, address, e);
                         throw e;
                     } else {
-                        LOG.warn("Unexpected exception, tries=" + tries +
-                                ", remaining init limit=" + remainingInitLimitTime +
-                                ", connecting to " + address, e);
+                        LOG.warn("Unexpected exception, tries={}, remaining init limit={}, connecting to {}", tries, remainingInitLimitTime, address, e);
                         sock = createSocket();
                     }
                 }

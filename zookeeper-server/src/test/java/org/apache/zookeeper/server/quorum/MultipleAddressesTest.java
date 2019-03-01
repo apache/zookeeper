@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,6 +27,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NoRouteToHostException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -85,13 +86,13 @@ public class MultipleAddressesTest {
         List<InetSocketAddress> addresses = getAddressList();
         MultipleAddresses multipleAddresses = new MultipleAddresses(addresses);
 
-        Assert.assertTrue(addresses.contains(multipleAddresses.getValidAddress()));
+        Assert.assertTrue(addresses.contains(multipleAddresses.getReachableAddress()));
     }
 
     @Test(expected = NoRouteToHostException.class)
     public void testGetValidAddressWithNotValid() throws NoRouteToHostException {
         MultipleAddresses multipleAddresses = new MultipleAddresses(new InetSocketAddress("10.0.0.1", 22));
-        multipleAddresses.getValidAddress();
+        multipleAddresses.getReachableAddress();
     }
 
     @Test
@@ -100,14 +101,14 @@ public class MultipleAddressesTest {
                 .map(addr -> new InetSocketAddress(addr, 222)).collect(Collectors.toList());
 
         MultipleAddresses multipleAddresses = new MultipleAddresses(searchedAddresses.get(searchedAddresses.size() - 1));
-        List<InetSocketAddress> addresses = multipleAddresses.getAllAddresses();
+        List<InetSocketAddress> addresses = new ArrayList<>(multipleAddresses.getAllAddresses());
 
         Assert.assertEquals(1, addresses.size());
         Assert.assertEquals(searchedAddresses.get(searchedAddresses.size() - 1), addresses.get(0));
 
         multipleAddresses.recreateSocketAddresses();
 
-        addresses = multipleAddresses.getAllAddresses();
+        addresses = new ArrayList<>(multipleAddresses.getAllAddresses());
         Assert.assertEquals(1, addresses.size());
         Assert.assertEquals(searchedAddresses.get(0), addresses.get(0));
     }
@@ -118,7 +119,7 @@ public class MultipleAddressesTest {
         MultipleAddresses multipleAddresses = new MultipleAddresses(address);
         multipleAddresses.recreateSocketAddresses();
 
-        Assert.assertEquals(address, multipleAddresses.getAllAddresses().get(0));
+        Assert.assertEquals(address, multipleAddresses.getOne());
     }
 
     @Test

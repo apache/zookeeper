@@ -21,9 +21,7 @@ package org.apache.zookeeper.server;
 import org.apache.zookeeper.server.quorum.Observer;
 import org.apache.zookeeper.server.quorum.ObserverMXBean;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
-
 import java.net.InetSocketAddress;
-import java.net.NoRouteToHostException;
 
 /**
  * ObserverBean
@@ -55,12 +53,7 @@ public class ObserverBean extends ZooKeeperServerBean implements ObserverMXBean{
         if (learnerMaster == null || learnerMaster.addr == null) {
             return "Unknown";
         }
-        InetSocketAddress address;
-        try {
-            address = learnerMaster.addr.getValidAddress();
-        } catch (NoRouteToHostException e) {
-            address = learnerMaster.addr.getOne();
-        }
+        InetSocketAddress address = learnerMaster.addr.getReachableOrOne();
         return address.getAddress().getHostAddress() + ":" + address.getPort();
     }
 
