@@ -97,7 +97,7 @@ public class MockServerCnxn extends ServerCnxn {
     }
 
     @Override
-    protected ServerStats serverStats() {
+    public ServerStats serverStats() {
         return null;
     }
 

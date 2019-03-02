@@ -68,6 +68,7 @@ import org.apache.zookeeper.txn.ErrorTxn;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.apache.zookeeper.ZKTestCase;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -317,7 +318,7 @@ public class Zab1_0Test extends ZKTestCase {
             
             LearnerHandler lh = new LearnerHandler(leaderSocket,
                     new BufferedInputStream(leaderSocket.getInputStream()),
-                    leader);
+                    leader, ServerMetrics.NULL_METRICS);
             lh.start();
             leaderSocket.setSoTimeout(4000);
 
@@ -351,7 +352,7 @@ public class Zab1_0Test extends ZKTestCase {
         try {              
             // Setup a database with two znodes
             FileTxnSnapLog snapLog = new FileTxnSnapLog(tmpDir, tmpDir);
-            ZKDatabase zkDb = new ZKDatabase(snapLog);
+            ZKDatabase zkDb = new ZKDatabase(snapLog, ServerMetrics.NULL_METRICS);
             
             Assert.assertTrue(ops >= 1);
             long zxid = ZxidUtils.makeZxid(1, 0);            
@@ -388,7 +389,7 @@ public class Zab1_0Test extends ZKTestCase {
 
             LearnerHandler lh = new LearnerHandler(leaderSocket,
                     new BufferedInputStream(leaderSocket.getInputStream()),
-                    leader);
+                    leader, ServerMetrics.NULL_METRICS);
             lh.start();
             leaderSocket.setSoTimeout(4000);
 
@@ -597,7 +598,8 @@ public class Zab1_0Test extends ZKTestCase {
                     Assert.assertEquals(0, f.self.getCurrentEpoch());
 
                     // Setup a database with a single /foo node
-                    ZKDatabase zkDb = new ZKDatabase(new FileTxnSnapLog(tmpDir, tmpDir));
+                    ZKDatabase zkDb = new ZKDatabase(new FileTxnSnapLog(tmpDir, tmpDir),
+                                                        ServerMetrics.NULL_METRICS);
                     final long firstZxid = ZxidUtils.makeZxid(1, 1);
                     zkDb.processTxn(new TxnHeader(13, 1313, firstZxid, 33, ZooDefs.OpCode.create), new CreateTxn("/foo", "data1".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 1));
                     Stat stat = new Stat();
@@ -653,7 +655,8 @@ public class Zab1_0Test extends ZKTestCase {
                     Assert.assertEquals(firstZxid, f.fzk.getLastProcessedZxid());
                     
                     // Make sure the data was recorded in the filesystem ok
-                    ZKDatabase zkDb2 = new ZKDatabase(new FileTxnSnapLog(logDir, snapDir));
+                    ZKDatabase zkDb2 = new ZKDatabase(new FileTxnSnapLog(logDir, snapDir),
+                                                      ServerMetrics.NULL_METRICS);
                     long lastZxid = zkDb2.loadDataBase();
                     Assert.assertEquals("data1", new String(zkDb2.getData("/foo", stat, null)));
                     Assert.assertEquals(firstZxid, lastZxid);
@@ -690,7 +693,7 @@ public class Zab1_0Test extends ZKTestCase {
                     Assert.assertEquals("data2", new String(f.fzk.getZKDatabase().getData("/foo", stat, null)));
                     
                     // check and make sure the change is persisted
-                    zkDb2 = new ZKDatabase(new FileTxnSnapLog(logDir, snapDir));
+                    zkDb2 = new ZKDatabase(new FileTxnSnapLog(logDir, snapDir), ServerMetrics.NULL_METRICS);
                     lastZxid = zkDb2.loadDataBase();
                     Assert.assertEquals("data2", new String(zkDb2.getData("/foo", stat, null)));
                     Assert.assertEquals(proposalZxid, lastZxid);
@@ -732,7 +735,7 @@ public class Zab1_0Test extends ZKTestCase {
                     Assert.assertEquals(0, f.self.getCurrentEpoch());
 
                     // Setup a database with a single /foo node
-                    ZKDatabase zkDb = new ZKDatabase(new FileTxnSnapLog(tmpDir, tmpDir));
+                    ZKDatabase zkDb = new ZKDatabase(new FileTxnSnapLog(tmpDir, tmpDir), ServerMetrics.NULL_METRICS);
                     final long firstZxid = ZxidUtils.makeZxid(1, 1);
                     zkDb.processTxn(new TxnHeader(13, 1313, firstZxid, 33, ZooDefs.OpCode.create), new CreateTxn("/foo", "data1".getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, false, 1));
                     Stat stat = new Stat();
@@ -804,7 +807,8 @@ public class Zab1_0Test extends ZKTestCase {
                     Assert.assertEquals(createSessionZxid, f.fzk.getLastProcessedZxid());
                     
                     // Make sure the data was recorded in the filesystem ok
-                    ZKDatabase zkDb2 = new ZKDatabase(new FileTxnSnapLog(logDir, snapDir));
+                    ZKDatabase zkDb2 = new ZKDatabase(new FileTxnSnapLog(logDir, snapDir),
+                            ServerMetrics.NULL_METRICS);
                     start = System.currentTimeMillis();
                     zkDb2.loadDataBase();
                     while (zkDb2.getSessionWithTimeOuts().isEmpty() && (System.currentTimeMillis() - start) < 50) {
@@ -951,7 +955,7 @@ public class Zab1_0Test extends ZKTestCase {
 
     private void deserializeSnapshot(InputArchive ia)
             throws IOException {
-        ZKDatabase zkdb = new ZKDatabase(null);
+        ZKDatabase zkdb = new ZKDatabase(null, ServerMetrics.NULL_METRICS);
         zkdb.deserializeSnapshot(ia);
         String signature = ia.readString("signature");
         assertEquals("BenWasHere", signature);
@@ -973,7 +977,8 @@ public class Zab1_0Test extends ZKTestCase {
                     Assert.assertEquals(0, o.self.getCurrentEpoch());
 
                     // Setup a database with a single /foo node
-                    ZKDatabase zkDb = new ZKDatabase(new FileTxnSnapLog(tmpDir, tmpDir));
+                    ZKDatabase zkDb = new ZKDatabase(new FileTxnSnapLog(tmpDir, tmpDir),
+                            ServerMetrics.NULL_METRICS);
                     final long foo1Zxid = ZxidUtils.makeZxid(1, 1);
                     final long foo2Zxid = ZxidUtils.makeZxid(1, 2);
                     zkDb.processTxn(new TxnHeader(13, 1313, foo1Zxid, 33,
@@ -1038,7 +1043,7 @@ public class Zab1_0Test extends ZKTestCase {
 
                     // Make sure the data was recorded in the filesystem ok
                     ZKDatabase zkDb2 = new ZKDatabase(new FileTxnSnapLog(
-                            logDir, snapDir));
+                            logDir, snapDir), ServerMetrics.NULL_METRICS);
                     long lastZxid = zkDb2.loadDataBase();
                     Assert.assertEquals("data1",
                             new String(zkDb2.getData("/foo1", stat, null)));
@@ -1085,7 +1090,8 @@ public class Zab1_0Test extends ZKTestCase {
                     // in sync request processor get flush to disk
                     o.zk.shutdown();
 
-                    zkDb2 = new ZKDatabase(new FileTxnSnapLog(logDir, snapDir));
+                    zkDb2 = new ZKDatabase(new FileTxnSnapLog(logDir, snapDir),
+                            ServerMetrics.NULL_METRICS);
                     lastZxid = zkDb2.loadDataBase();
                     Assert.assertEquals("data2", new String(zkDb2.getData("/foo1", stat, null)));
                     Assert.assertEquals("data2", new String(zkDb2.getData("/foo2", stat, null)));
@@ -1200,7 +1206,7 @@ public class Zab1_0Test extends ZKTestCase {
     throws IOException {
         FileTxnSnapLog logFactory = new FileTxnSnapLog(tmpDir, tmpDir);
         peer.setTxnFactory(logFactory);
-        ZKDatabase zkDb = new ZKDatabase(logFactory);
+        ZKDatabase zkDb = new ZKDatabase(logFactory, peer.getServerMetrics());
         FollowerZooKeeperServer zk = new FollowerZooKeeperServer(logFactory, peer, zkDb);
         peer.setZKDatabase(zkDb);
         return new ConversableFollower(peer, zk);
@@ -1227,7 +1233,7 @@ public class Zab1_0Test extends ZKTestCase {
             throws IOException {
         FileTxnSnapLog logFactory = new FileTxnSnapLog(tmpDir, tmpDir);
         peer.setTxnFactory(logFactory);
-        ZKDatabase zkDb = new ZKDatabase(logFactory);
+        ZKDatabase zkDb = new ZKDatabase(logFactory, peer.getServerMetrics());
         ObserverZooKeeperServer zk = new ObserverZooKeeperServer(logFactory, peer, zkDb);
         peer.setZKDatabase(zkDb);
         return new ConversableObserver(peer, zk);
@@ -1252,7 +1258,7 @@ public class Zab1_0Test extends ZKTestCase {
                     new TxnHeader(1, 1, zxid, 1, ZooDefs.OpCode.error),
                     new ErrorTxn(1), zxid));
             logFactory.commit();
-            ZKDatabase zkDb = new ZKDatabase(logFactory);
+            ZKDatabase zkDb = new ZKDatabase(logFactory, ServerMetrics.NULL_METRICS);
             QuorumPeer peer = QuorumPeer.testingQuorumPeer();
             peer.setZKDatabase(zkDb);
             peer.setTxnFactory(logFactory);

@@ -79,6 +79,7 @@ import org.slf4j.LoggerFactory;
 
 import static org.apache.zookeeper.common.NetUtils.formatInetAddr;
 import org.apache.zookeeper.metrics.MetricsContext;
+import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.impl.NullMetricsProvider;
 
 /**
@@ -131,7 +132,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * message from the leader
      */
     private ZKDatabase zkDb;
-
+    
     public static final class AddressTuple {
         public final InetSocketAddress quorumAddr;
         public final InetSocketAddress electionAddr;
@@ -832,7 +833,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     AdminServer adminServer;
 
-    private MetricsContext rootMetricsContext = NullMetricsProvider.NullMetricsContext.INSTANCE;
+    private ServerMetrics serverMetrics = ServerMetrics.NULL_METRICS;
 
     public static QuorumPeer testingQuorumPeer() throws SaslException {
         return new QuorumPeer();
@@ -875,7 +876,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         this.syncLimit = syncLimit;
         this.quorumListenOnAllIPs = quorumListenOnAllIPs;
         this.logFactory = new FileTxnSnapLog(dataLogDir, dataDir);
-        this.zkDb = new ZKDatabase(this.logFactory);
+        this.zkDb = new ZKDatabase(this.logFactory, serverMetrics);
         if(quorumConfig == null) quorumConfig = new QuorumMaj(quorumPeers);
         setQuorumVerifier(quorumConfig, false);
         adminServer = AdminServerFactory.createAdminServer();
@@ -1178,7 +1179,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 switch (getPeerState()) {
                 case LOOKING:
                     LOG.info("LOOKING");
-                    ServerMetrics.LOOKING_COUNT.add(1);
+                    serverMetrics.LOOKING_COUNT.add(1);
 
                     if (Boolean.getBoolean("readonlymode.enabled")) {
                         LOG.info("Attempting to start ReadOnlyZooKeeperServer");
@@ -1472,6 +1473,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         return -1;
     }
 
+    /** access to main server metrics */
+    public ServerMetrics getServerMetrics() {
+        return serverMetrics;
+    }
+        
     /** Whether local sessions are enabled */
     public boolean areLocalSessionsEnabled() {
         return localSessionsEnabled;
@@ -1780,8 +1786,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         this.secureCnxnFactory = secureCnxnFactory;
     }
 
-    public void setRootMetricsContext(MetricsContext rootMetricsContext) {
-        this.rootMetricsContext = rootMetricsContext;
+    public void setServerMetrics(ServerMetrics serverMetrics) {
+        this.serverMetrics = serverMetrics;
     }
 
     public void setSslQuorum(boolean sslQuorum) {

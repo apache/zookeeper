@@ -46,7 +46,8 @@ public class ReadOnlyZooKeeperServer extends ZooKeeperServer {
     ReadOnlyZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self,
                             ZKDatabase zkDb) {
         super(logFactory, self.tickTime, self.minSessionTimeout,
-              self.maxSessionTimeout, self.clientPortListenBacklog, zkDb);
+              self.maxSessionTimeout, self.clientPortListenBacklog, zkDb,
+              self.getServerMetrics());
         this.self = self;
     }
 

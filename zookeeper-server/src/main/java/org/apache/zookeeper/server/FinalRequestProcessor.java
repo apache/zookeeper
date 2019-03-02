@@ -168,7 +168,7 @@ public class FinalRequestProcessor implements RequestProcessor {
              */
             long propagationLatency = Time.currentWallTime() - request.getHdr().getTime();
             if (propagationLatency > 0) {
-                ServerMetrics.PROPAGATION_LATENCY.add(propagationLatency);
+                this.zks.getServerMetrics().PROPAGATION_LATENCY.add(propagationLatency);
             }
         }
 

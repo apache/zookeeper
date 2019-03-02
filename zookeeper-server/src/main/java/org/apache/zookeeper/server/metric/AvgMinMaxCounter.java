@@ -22,12 +22,14 @@ import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import org.apache.zookeeper.metrics.Summary;
 
 /**
  * Generic long counter that keep track of min/max/avg. The counter is
  * thread-safe
  */
-public class AvgMinMaxCounter extends Metric {
+public class AvgMinMaxCounter extends Metric
+            implements Summary {
     private String name;
     private AtomicLong total = new AtomicLong();
     private AtomicLong min = new AtomicLong(Long.MAX_VALUE);

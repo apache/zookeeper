@@ -43,6 +43,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.zookeeper.server.ServerMetrics;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -82,7 +83,7 @@ public class LeaderBeanTest {
         File tmpDir = ClientBase.createEmptyTestDir();
         fileTxnSnapLog = new FileTxnSnapLog(new File(tmpDir, "data"),
                 new File(tmpDir, "data_txnlog"));
-        ZKDatabase zkDb = new ZKDatabase(fileTxnSnapLog);
+        ZKDatabase zkDb = new ZKDatabase(fileTxnSnapLog, ServerMetrics.NULL_METRICS);
 
         zks = new LeaderZooKeeperServer(fileTxnSnapLog, qp, zkDb);
         leader = new Leader(qp, zks);

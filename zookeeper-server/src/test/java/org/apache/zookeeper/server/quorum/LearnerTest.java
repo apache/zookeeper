@@ -33,6 +33,7 @@ import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.test.TestUtils;
@@ -51,7 +52,8 @@ public class LearnerTest extends ZKTestCase {
 
         public SimpleLearnerZooKeeperServer(FileTxnSnapLog ftsl, QuorumPeer self)
                 throws IOException {
-            super(ftsl, 2000, 2000, 2000, -1, new ZKDatabase(ftsl), self);
+            super(ftsl, 2000, 2000, 2000, -1,
+                    new ZKDatabase(ftsl, self.getServerMetrics()), self);
         }
 
         @Override

@@ -19,6 +19,7 @@
 package org.apache.zookeeper.metrics;
 
 import java.util.Properties;
+import java.util.function.BiConsumer;
 
 /**
  * A MetricsProvider is a system which collects Metrics and publishes current values to external facilities.
@@ -61,4 +62,18 @@ public interface MetricsProvider {
      * This method can be called more than once.
      */
     void stop();
+
+    /**
+     * Dumps all metrics as a key-value pair.
+     * This method will be used in legacy monitor command.
+     * @param sink the receiver of all of the current values.
+     */
+    public void dump(BiConsumer<String, Object> sink);
+
+    /**
+     * Reset all values.
+     * This method is optional and can be noop, depending
+     * on the underlying implementation.
+     */
+    public void resetAllValues();
 }

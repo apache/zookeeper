@@ -193,8 +193,16 @@ public class CommandsTest extends ClientBase {
                 new Field("global_sessions", Long.class),
                 new Field("local_sessions", Long.class),
                 new Field("connection_drop_probability", Double.class)
-        ));
-        for (String metric : ServerMetrics.getAllValues().keySet()) {
+        ));        
+        Map<String, Object> metrics = new HashMap<>();
+                this.serverFactory
+                .getZooKeeperServer()
+                .getServerMetrics()
+                .getMetricsProvider()
+                .dump( (metric, value)-> {
+                    metrics.put(metric, value);
+                });
+        for (String metric : metrics.keySet()) {
             if (metric.startsWith("avg_")) {
                 fields.add(new Field(metric, Double.class));  
             } else {

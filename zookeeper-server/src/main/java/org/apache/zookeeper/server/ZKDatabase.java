@@ -73,6 +73,7 @@ public class ZKDatabase {
     protected DataTree dataTree;
     protected ConcurrentHashMap<Long, Integer> sessionsWithTimeouts;
     protected FileTxnSnapLog snapLog;
+    protected ServerMetrics serverMetrics;
     protected long minCommittedLog, maxCommittedLog;
 
     /**
@@ -94,10 +95,11 @@ public class ZKDatabase {
      * between a filetxnsnaplog and zkdatabase.
      * @param snapLog the FileTxnSnapLog mapping this zkdatabase
      */
-    public ZKDatabase(FileTxnSnapLog snapLog) {
+    public ZKDatabase(FileTxnSnapLog snapLog, ServerMetrics serverMetrics) {
         dataTree = createDataTree();
         sessionsWithTimeouts = new ConcurrentHashMap<Long, Integer>();
         this.snapLog = snapLog;
+        this.serverMetrics = serverMetrics;
 
         try {
             snapshotSizeFactor = Double.parseDouble(
@@ -249,7 +251,7 @@ public class ZKDatabase {
         long zxid = snapLog.restore(dataTree, sessionsWithTimeouts, commitProposalPlaybackListener);
         initialized = true;
         long loadTime = Time.currentElapsedTime() - startTime;
-        ServerMetrics.DB_INIT_TIME.add(loadTime);
+        serverMetrics.DB_INIT_TIME.add(loadTime);
         LOG.info("Snapshot loaded in " + loadTime + " ms");
         return zxid;
     }

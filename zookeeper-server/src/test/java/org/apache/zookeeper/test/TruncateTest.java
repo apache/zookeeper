@@ -34,6 +34,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.ServerCnxnFactory;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
@@ -73,7 +74,7 @@ public class TruncateTest extends ZKTestCase {
     public void testTruncationStreamReset() throws Exception {
         File tmpdir = ClientBase.createTmpDir();
         FileTxnSnapLog snaplog = new FileTxnSnapLog(tmpdir, tmpdir);
-        ZKDatabase zkdb = new ZKDatabase(snaplog);
+        ZKDatabase zkdb = new ZKDatabase(snaplog, ServerMetrics.NULL_METRICS);
         // make sure to snapshot, so that we have something there when
         // truncateLog reloads the db
         snaplog.save(zkdb.getDataTree(), zkdb.getSessionWithTimeOuts(), false);
@@ -112,7 +113,7 @@ public class TruncateTest extends ZKTestCase {
     public void testTruncationNullLog() throws Exception {
         File tmpdir = ClientBase.createTmpDir();
         FileTxnSnapLog snaplog = new FileTxnSnapLog(tmpdir, tmpdir);
-        ZKDatabase zkdb = new ZKDatabase(snaplog);
+        ZKDatabase zkdb = new ZKDatabase(snaplog, ServerMetrics.NULL_METRICS);
 
         for (int i = 1; i <= 100; i++) {
             append(zkdb, i);

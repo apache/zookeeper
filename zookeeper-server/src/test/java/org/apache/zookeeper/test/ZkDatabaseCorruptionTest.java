@@ -28,6 +28,7 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -163,7 +164,7 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
             public File findMostRecentSnapshot() throws IOException {
                 return null;
             }
-        });
+        }, ServerMetrics.NULL_METRICS);
         assertEquals(0, zkDatabase.calculateTxnLogSizeLimit());
     }
 

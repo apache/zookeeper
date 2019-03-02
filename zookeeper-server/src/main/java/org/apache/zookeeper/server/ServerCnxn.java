@@ -137,9 +137,13 @@ public abstract class ServerCnxn implements Stats, Watcher {
                     // Cache miss, serialize the response and put it in cache.
                     data = serializeRecord(r);
                     cache.put(cacheKey, data, stat);
-                    ServerMetrics.RESPONSE_PACKET_CACHE_MISSING.add(1);
+                    if (zkServer != null) {
+                        zkServer.getServerMetrics().RESPONSE_PACKET_CACHE_MISSING.add(1);
+                    }
                 } else {
-                    ServerMetrics.RESPONSE_PACKET_CACHE_HITS.add(1);
+                    if (zkServer != null) {
+                        zkServer.getServerMetrics().RESPONSE_PACKET_CACHE_HITS.add(1);
+                    }
                 }
             } else {
                 data = serializeRecord(r);
@@ -235,7 +239,9 @@ public abstract class ServerCnxn implements Stats, Watcher {
         if (serverStats != null) {
             serverStats().incrementPacketsReceived();
         }
-        ServerMetrics.BYTES_RECEIVED_COUNT.add(bytes);
+        if (zkServer != null) {
+            zkServer.getServerMetrics().BYTES_RECEIVED_COUNT.add(bytes);
+        }
     }
 
     protected void packetSent() {
@@ -247,6 +253,13 @@ public abstract class ServerCnxn implements Stats, Watcher {
     }
 
     protected abstract ServerStats serverStats();
+    
+    public final ServerMetrics getServerMetrics() {
+        if (zkServer == null) {
+            return ServerMetrics.NULL_METRICS;
+        }
+        return zkServer.getServerMetrics();
+    }  
 
     protected final Date established = new Date();
 

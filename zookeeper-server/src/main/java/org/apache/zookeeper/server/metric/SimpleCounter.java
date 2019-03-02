@@ -22,8 +22,10 @@ import java.lang.Override;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import org.apache.zookeeper.metrics.Counter;
 
-public class SimpleCounter extends Metric {
+public class SimpleCounter extends Metric
+                    implements Counter {
     private final String name;
     private final AtomicLong counter = new AtomicLong();
 
@@ -41,14 +43,14 @@ public class SimpleCounter extends Metric {
         counter.set(0);
     }
 
-    public long getCount() {
+    public long get() {
         return counter.get();
     }
 
     @Override
     public Map<String, Object> values() {
         Map<String, Object> m = new LinkedHashMap<String, Object>();
-        m.put(name, this.getCount());
+        m.put(name, this.get());
         return m;
     }
 }
