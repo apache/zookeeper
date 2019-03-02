@@ -17,9 +17,12 @@
  */
 package org.apache.zookeeper.metrics;
 
+import java.util.Collections;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import org.apache.zookeeper.metrics.impl.NullMetricsProvider;
 
 /**
@@ -42,6 +45,14 @@ public abstract class BaseTestMetricsProvider implements MetricsProvider {
 
     @Override
     public void stop() {
+    }
+
+    @Override
+    public void dump(BiConsumer<String, Object> sink) {
+    }
+
+    @Override
+    public void resetAllValues() {
     }
 
     public static final class MetricsProviderCapturingLifecycle extends BaseTestMetricsProvider {

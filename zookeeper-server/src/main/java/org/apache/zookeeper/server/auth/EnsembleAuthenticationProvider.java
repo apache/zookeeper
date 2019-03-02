@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
 
 import javax.management.JMException;
+import org.apache.zookeeper.server.ServerStats;
 
 /**
  * This is not a true AuthenticationProvider in the strict sense. it does
@@ -83,19 +84,19 @@ public class EnsembleAuthenticationProvider implements AuthenticationProvider {
     handleAuthentication(ServerCnxn cnxn, byte[] authData)
     {
         if (authData == null || authData.length == 0) {
-            ServerMetrics.ENSEMBLE_AUTH_SKIP.add(1);
+            cnxn.getServerMetrics().ENSEMBLE_AUTH_SKIP.add(1);            
             return KeeperException.Code.OK;
         }
 
         String receivedEnsembleName = new String(authData);
 
         if (ensembleNames == null) {
-            ServerMetrics.ENSEMBLE_AUTH_SKIP.add(1);
+            cnxn.getServerMetrics().ENSEMBLE_AUTH_SKIP.add(1);
             return KeeperException.Code.OK;
         }
 
         if (ensembleNames.contains(receivedEnsembleName)) {
-            ServerMetrics.ENSEMBLE_AUTH_SUCCESS.add(1);
+            cnxn.getServerMetrics().ENSEMBLE_AUTH_SUCCESS.add(1);            
             return KeeperException.Code.OK;
         }
 
@@ -111,7 +112,8 @@ public class EnsembleAuthenticationProvider implements AuthenticationProvider {
          * we return an error, the client will get a fatal auth error and
          * shutdown.
          */
-        ServerMetrics.ENSEMBLE_AUTH_FAIL.add(1);
+        cnxn.getServerMetrics().ENSEMBLE_AUTH_FAIL.add(1);
+        
         cnxn.close();
         return KeeperException.Code.BADARGUMENTS;
     }

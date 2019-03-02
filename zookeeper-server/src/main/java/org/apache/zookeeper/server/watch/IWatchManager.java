@@ -22,6 +22,7 @@ import java.io.PrintWriter;
 
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
+import org.apache.zookeeper.server.ServerMetrics;
 
 public interface IWatchManager {
 
@@ -131,4 +132,11 @@ public interface IWatchManager {
      * @return string representation of watches
      */
     public void dumpWatches(PrintWriter pwriter, boolean byPath);
+    
+    
+    /**
+     * Link the manager with the Metrics collector.
+     * @param serverMetrics 
+     */
+    public void setServerMetrics(ServerMetrics serverMetrics);
 }

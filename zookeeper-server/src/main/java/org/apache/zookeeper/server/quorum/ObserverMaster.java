@@ -473,7 +473,7 @@ public class ObserverMaster implements LearnerMaster, Runnable {
                 // in LearnerHandler switch to the syncLimit
                 s.setSoTimeout(self.tickTime * self.initLimit);
                 BufferedInputStream is = new BufferedInputStream(s.getInputStream());
-                LearnerHandler lh = new LearnerHandler(s, is, this);
+                LearnerHandler lh = new LearnerHandler(s, is, this, self.getServerMetrics());
                 lh.start();
             } catch (Exception e) {
                 if (listenerRunning) {

@@ -48,7 +48,9 @@ public class WatchManager implements IWatchManager {
 
     private final Map<Watcher, Set<String>> watch2Paths =
         new HashMap<Watcher, Set<String>>();
-
+    
+    private ServerMetrics serverMetrics = ServerMetrics.NULL_METRICS;
+    
     @Override
     public synchronized int size(){
         int result = 0;
@@ -142,19 +144,19 @@ public class WatchManager implements IWatchManager {
 
         switch (type) {
         case NodeCreated:
-            ServerMetrics.NODE_CREATED_WATCHER.add(watchers.size());
+            serverMetrics.NODE_CREATED_WATCHER.add(watchers.size());
             break;
 
         case NodeDeleted:
-            ServerMetrics.NODE_DELETED_WATCHER.add(watchers.size());
+            serverMetrics.NODE_DELETED_WATCHER.add(watchers.size());
             break;
 
         case NodeDataChanged:
-            ServerMetrics.NODE_CHANGED_WATCHER.add(watchers.size());
+            serverMetrics.NODE_CHANGED_WATCHER.add(watchers.size());
             break;
 
         case NodeChildrenChanged:
-            ServerMetrics.NODE_CHILDREN_WATCHER.add(watchers.size());
+            serverMetrics.NODE_CHILDREN_WATCHER.add(watchers.size());
             break;
         default:
             // Other types not logged.
@@ -267,4 +269,11 @@ public class WatchManager implements IWatchManager {
 
     @Override
     public void shutdown() { /* do nothing */ }
+
+    @Override
+    public void setServerMetrics(ServerMetrics serverMetrics) {
+        this.serverMetrics = serverMetrics;
+    }
+    
+    
 }

@@ -61,6 +61,7 @@ import org.apache.zookeeper.server.MockSelectorThread;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.ZKParameterized;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
@@ -118,9 +119,10 @@ public class WatchLeakTest {
             }
         });
 
-        ZKDatabase database = new ZKDatabase(null);
+        ZKDatabase database = new ZKDatabase(null, ServerMetrics.NULL_METRICS);
         database.setlastProcessedZxid(2L);
         QuorumPeer quorumPeer = mock(QuorumPeer.class);
+        when(quorumPeer.getServerMetrics()).thenReturn(ServerMetrics.NULL_METRICS);
         FileTxnSnapLog logfactory = mock(FileTxnSnapLog.class);
         // Directories are not used but we need it to avoid NPE
         when(logfactory.getDataDir()).thenReturn(new File(""));

@@ -379,7 +379,7 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
             return new QuorumPeer() {
                 @Override
                 public void setZKDatabase(ZKDatabase database) {
-                    super.setZKDatabase(new ZKDatabase(this.getTxnFactory()) {
+                    super.setZKDatabase(new ZKDatabase(this.getTxnFactory(), this.getServerMetrics()) {
                         @Override
                         public DataTree createDataTree() {
                             return new CustomDataTree();

@@ -55,6 +55,7 @@ import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.metrics.MetricsContext;
+import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.impl.NullMetricsProvider;
 import org.apache.zookeeper.proto.AuthPacket;
 import org.apache.zookeeper.proto.ConnectRequest;
@@ -140,8 +141,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected ServerCnxnFactory secureServerCnxnFactory;
 
     private final ServerStats serverStats;
+    private final ServerMetrics serverMetrics;
     private final ZooKeeperServerListener listener;
-    private MetricsContext rootMetricsContext = NullMetricsProvider.NullMetricsContext.INSTANCE;
     private ZooKeeperServerShutdownHandler zkShutdownHandler;
     private volatile int createSessionTrackerServerId = 1;
 
@@ -184,8 +185,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * @throws IOException
      */
     public ZooKeeperServer() {
-        serverStats = new ServerStats(this);
         listener = new ZooKeeperServerListenerImpl(this);
+        serverMetrics = ServerMetrics.NULL_METRICS;
+        serverStats = new ServerStats(this);
     }
 
     /**
@@ -196,8 +198,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      */
     public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime,
             int minSessionTimeout, int maxSessionTimeout, int clientPortListenBacklog,
-            ZKDatabase zkDb) {
-        serverStats = new ServerStats(this);
+            ZKDatabase zkDb, ServerMetrics serverMetrics) {
+        this.serverStats = new ServerStats(this);
+        this.serverMetrics = serverMetrics;
         this.txnLogFactory = txnLogFactory;
         this.txnLogFactory.setServerStats(this.serverStats);
         this.zkDb = zkDb;
@@ -228,13 +231,22 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      */
     public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime)
             throws IOException {
-        this(txnLogFactory, tickTime, -1, -1, -1, new ZKDatabase(txnLogFactory));
+        this(txnLogFactory, tickTime, -1, -1, -1, new ZKDatabase(txnLogFactory,
+                // we have to use a real Metrics provider
+                // because we have tests that need metrics to be computed
+                ServerMetrics.DEFAULT_METRICS_FOR_TESTS),
+                ServerMetrics.DEFAULT_METRICS_FOR_TESTS); 
     }
 
     public ServerStats serverStats() {
         return serverStats;
     }
 
+    @Override
+    public ServerMetrics getServerMetrics() {
+        return serverMetrics;
+    }     
+    
     public BlueThrottle connThrottle() {
         return connThrottle;
     }
@@ -299,7 +311,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public ZooKeeperServer(FileTxnSnapLog txnLogFactory)
         throws IOException
     {
-        this(txnLogFactory, DEFAULT_TICK_TIME, -1, -1, -1, new ZKDatabase(txnLogFactory));
+        this(txnLogFactory, DEFAULT_TICK_TIME, -1, -1, -1, new ZKDatabase(txnLogFactory,
+                ServerMetrics.NULL_METRICS),
+                ServerMetrics.NULL_METRICS);
     }
 
     /**
@@ -380,7 +394,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
         long elapsed = Time.currentElapsedTime() - start;
         LOG.info("Snapshot taken in " + elapsed + " ms");
-        ServerMetrics.SNAPSHOT_TIME.add(elapsed);
+        serverMetrics.SNAPSHOT_TIME.add(elapsed);
     }
 
     @Override
@@ -509,7 +523,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     throws IOException, InterruptedException {
         //check to see if zkDb is not null
         if (zkDb == null) {
-            zkDb = new ZKDatabase(this.txnLogFactory);
+            zkDb = new ZKDatabase(this.txnLogFactory, serverMetrics);
         }
         if (!zkDb.isInitialized()) {
             loadData();
@@ -939,14 +953,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         secureServerCnxnFactory = factory;
     }
 
-    public MetricsContext getRootMetricsContext() {
-        return rootMetricsContext;
-    }
-
-    public void setRootMetricsContext(MetricsContext rootMetricsContext) {
-        this.rootMetricsContext = rootMetricsContext;
-    }
-
     /**
      * return the last proceesed id from the
      * datatree
@@ -1085,7 +1091,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         if (connThrottle.checkLimit(1) == false) {
             throw new ClientCnxnLimitException();
         }
-        ServerMetrics.CONNECTION_TOKEN_DEFICIT.add(connThrottle.getDeficit());
+        serverMetrics.CONNECTION_TOKEN_DEFICIT.add(connThrottle.getDeficit());
 
         BinaryInputArchive bia = BinaryInputArchive.getArchive(new ByteBufferInputStream(incomingBuffer));
         ConnectRequest connReq = new ConnectRequest();
@@ -1096,7 +1102,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                     + " client's lastZxid is 0x"
                     + Long.toHexString(connReq.getLastZxidSeen()));
         }
-        ServerMetrics.CONNECTION_REQUEST_COUNT.add(1);
+        serverMetrics.CONNECTION_REQUEST_COUNT.add(1);
         boolean readOnly = false;
         try {
             readOnly = bia.readBool("readOnly");

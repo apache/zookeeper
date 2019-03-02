@@ -15,139 +15,168 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.server;
 
-import org.apache.zookeeper.server.metric.AvgMinMaxCounter;
-import org.apache.zookeeper.server.metric.AvgMinMaxCounterSet;
-import org.apache.zookeeper.server.metric.AvgMinMaxPercentileCounter;
-import org.apache.zookeeper.server.metric.AvgMinMaxPercentileCounterSet;
-import org.apache.zookeeper.server.metric.Metric;
-import org.apache.zookeeper.server.metric.SimpleCounter;
+import org.apache.zookeeper.metrics.Counter;
+import org.apache.zookeeper.metrics.MetricsContext;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import org.apache.zookeeper.metrics.MetricsProvider;
+import org.apache.zookeeper.metrics.Summary;
+import org.apache.zookeeper.metrics.impl.DefaultMetricsProvider;
+import org.apache.zookeeper.metrics.impl.NullMetricsProvider;
 
-public enum ServerMetrics {
+public class ServerMetrics {
+
+    /**
+     * Dummy instance useful for tests.
+     */
+    public static final ServerMetrics NULL_METRICS
+            = new ServerMetrics(NullMetricsProvider.INSTANCE);
+
+    /**
+     * Dummy instance useful for tests.
+     */
+    public static final ServerMetrics DEFAULT_METRICS_FOR_TESTS
+            = new ServerMetrics(new DefaultMetricsProvider());
+
+    public ServerMetrics(MetricsProvider metricsProvider) {
+        this.metricsProvider = metricsProvider;
+        MetricsContext metricsContext = this.metricsProvider.getRootContext();
+
+        FSYNC_TIME = metricsContext.getBasicSummary("fsynctime");
+
+        SNAPSHOT_TIME = metricsContext.getBasicSummary("snapshottime");
+        DB_INIT_TIME = metricsContext.getBasicSummary("dbinittime");
+        READ_LATENCY = metricsContext.getSummary("readlatency");
+        UPDATE_LATENCY = metricsContext.getSummary("updatelatency");
+        PROPAGATION_LATENCY = metricsContext.getSummary("propagation_latency");
+        FOLLOWER_SYNC_TIME = metricsContext.getBasicSummary("follower_sync_time");
+        ELECTION_TIME = metricsContext.getBasicSummary("election_time");
+        LOOKING_COUNT = metricsContext.getCounter("looking_count");
+        DIFF_COUNT = metricsContext.getCounter("diff_count");
+        SNAP_COUNT = metricsContext.getCounter("snap_count");
+        COMMIT_COUNT = metricsContext.getCounter("commit_count");
+        CONNECTION_REQUEST_COUNT = metricsContext.getCounter("connection_request_count");
+        CONNECTION_TOKEN_DEFICIT = metricsContext.getBasicSummary("connection_token_deficit");
+        CONNECTION_REJECTED = metricsContext.getCounter("connection_rejected");
+
+        BYTES_RECEIVED_COUNT = metricsContext.getCounter("bytes_received_count");
+
+        NODE_CREATED_WATCHER = metricsContext.getBasicSummary("node_created_watch_count");
+        NODE_DELETED_WATCHER = metricsContext.getBasicSummary("node_deleted_watch_count");
+        NODE_CHANGED_WATCHER = metricsContext.getBasicSummary("node_changed_watch_count");
+        NODE_CHILDREN_WATCHER = metricsContext.getBasicSummary("node_children_watch_count");
+
+
+        /*
+     * Number of dead watchers in DeadWatcherListener
+         */
+        ADD_DEAD_WATCHER_STALL_TIME = metricsContext.getCounter("add_dead_watcher_stall_time");
+        DEAD_WATCHERS_QUEUED = metricsContext.getCounter("dead_watchers_queued");
+        DEAD_WATCHERS_CLEARED = metricsContext.getCounter("dead_watchers_cleared");
+        DEAD_WATCHERS_CLEANER_LATENCY = metricsContext.getSummary("dead_watchers_cleaner_latency");
+
+        RESPONSE_PACKET_CACHE_HITS = metricsContext.getCounter("response_packet_cache_hits");
+        RESPONSE_PACKET_CACHE_MISSING = metricsContext.getCounter("response_packet_cache_misses");
+
+        ENSEMBLE_AUTH_SUCCESS = metricsContext.getCounter("ensemble_auth_success");
+
+        ENSEMBLE_AUTH_FAIL = metricsContext.getCounter("ensemble_auth_fail");
+
+        ENSEMBLE_AUTH_SKIP = metricsContext.getCounter("ensemble_auth_skip");
+
+    }
+
     /**
      * Txnlog fsync time
      */
-    FSYNC_TIME(new AvgMinMaxCounter("fsynctime")),
+    public final Summary FSYNC_TIME;
 
     /**
      * Snapshot writing time
      */
-    SNAPSHOT_TIME(new AvgMinMaxCounter("snapshottime")),
+    public final Summary SNAPSHOT_TIME;
 
     /**
      * Db init time (snapshot loading + txnlog replay)
      */
-    DB_INIT_TIME(new AvgMinMaxCounter("dbinittime")),
+    public final Summary DB_INIT_TIME;
 
     /**
      * Stats for read request. The timing start from when the server see the
      * request until it leave final request processor.
      */
-    READ_LATENCY(new AvgMinMaxPercentileCounter("readlatency")),
+    public final Summary READ_LATENCY;
 
     /**
      * Stats for request that need quorum voting. Timing is the same as read
      * request. We only keep track of stats for request that originated from
      * this machine only.
      */
-    UPDATE_LATENCY(new AvgMinMaxPercentileCounter("updatelatency")),
+    public final Summary UPDATE_LATENCY;
 
     /**
-     * Stats for all quorum request. The timing start from when the leader
-     * see the request until it reach the learner.
+     * Stats for all quorum request. The timing start from when the leader see
+     * the request until it reach the learner.
      */
-    PROPAGATION_LATENCY(new AvgMinMaxPercentileCounter("propagation_latency")),
+    public final Summary PROPAGATION_LATENCY;
 
-    FOLLOWER_SYNC_TIME(new AvgMinMaxCounter("follower_sync_time")),
-    ELECTION_TIME(new AvgMinMaxCounter("election_time")),
-    LOOKING_COUNT(new SimpleCounter("looking_count")),
-    DIFF_COUNT(new SimpleCounter("diff_count")),
-    SNAP_COUNT(new SimpleCounter("snap_count")),
-    COMMIT_COUNT(new SimpleCounter("commit_count")),
-    CONNECTION_REQUEST_COUNT(new SimpleCounter("connection_request_count")),
+    public final Summary FOLLOWER_SYNC_TIME;
+
+    public final Summary ELECTION_TIME;
+
+    public final Counter LOOKING_COUNT;
+    public final Counter DIFF_COUNT;
+    public final Counter SNAP_COUNT;
+    public final Counter COMMIT_COUNT;
+    public final Counter CONNECTION_REQUEST_COUNT;
     // Connection throttling related
-    CONNECTION_TOKEN_DEFICIT(new AvgMinMaxCounter("connection_token_deficit")),
-    CONNECTION_REJECTED(new SimpleCounter("connection_rejected")),
+    public final Summary CONNECTION_TOKEN_DEFICIT;
+    public final Counter CONNECTION_REJECTED;
 
-    BYTES_RECEIVED_COUNT(new SimpleCounter("bytes_received_count")),
+    public final Counter BYTES_RECEIVED_COUNT;
 
     /**
      * Fired watcher stats.
      */
-    NODE_CREATED_WATCHER(new AvgMinMaxCounter("node_created_watch_count")),
-    NODE_DELETED_WATCHER(new AvgMinMaxCounter("node_deleted_watch_count")),
-    NODE_CHANGED_WATCHER(new AvgMinMaxCounter("node_changed_watch_count")),
-    NODE_CHILDREN_WATCHER(new AvgMinMaxCounter("node_children_watch_count")),
-
+    public final Summary NODE_CREATED_WATCHER;
+    public final Summary NODE_DELETED_WATCHER;
+    public final Summary NODE_CHANGED_WATCHER;
+    public final Summary NODE_CHILDREN_WATCHER;
 
     /*
      * Number of dead watchers in DeadWatcherListener
      */
-    ADD_DEAD_WATCHER_STALL_TIME(new SimpleCounter("add_dead_watcher_stall_time")),
-    DEAD_WATCHERS_QUEUED(new SimpleCounter("dead_watchers_queued")),
-    DEAD_WATCHERS_CLEARED(new SimpleCounter("dead_watchers_cleared")),
-    DEAD_WATCHERS_CLEANER_LATENCY(new AvgMinMaxPercentileCounter("dead_watchers_cleaner_latency")),
+    public final Counter ADD_DEAD_WATCHER_STALL_TIME;
+    public final Counter DEAD_WATCHERS_QUEUED;
+    public final Counter DEAD_WATCHERS_CLEARED;
+    public final Summary DEAD_WATCHERS_CLEANER_LATENCY;
+    public final Counter RESPONSE_PACKET_CACHE_HITS;
+    public final Counter RESPONSE_PACKET_CACHE_MISSING;
 
-    RESPONSE_PACKET_CACHE_HITS(new SimpleCounter("response_packet_cache_hits")),
-    RESPONSE_PACKET_CACHE_MISSING(new SimpleCounter("response_packet_cache_misses")),
-    
     /*
      * Number of successful matches of expected ensemble name in EnsembleAuthenticationProvider.
      */
-    ENSEMBLE_AUTH_SUCCESS(new SimpleCounter("ensemble_auth_success")),
+    public final Counter ENSEMBLE_AUTH_SUCCESS;
 
     /*
      * Number of unsuccessful matches of expected ensemble name in EnsembleAuthenticationProvider.
      */
-    ENSEMBLE_AUTH_FAIL(new SimpleCounter("ensemble_auth_fail")),
+    public final Counter ENSEMBLE_AUTH_FAIL;
 
     /*
      * Number of client auth requests with no ensemble set in EnsembleAuthenticationProvider.
      */
-    ENSEMBLE_AUTH_SKIP(new SimpleCounter("ensemble_auth_skip"));
+    public final Counter ENSEMBLE_AUTH_SKIP;
 
-    private final Metric metric;
+    private final MetricsProvider metricsProvider;
 
-    ServerMetrics(Metric metric) {
-        this.metric = metric;
+    public void resetAll() {
+        metricsProvider.resetAllValues();
     }
 
-    public void add(long value) {
-        metric.add(value);
+    public MetricsProvider getMetricsProvider() {
+        return metricsProvider;
     }
 
-    public void add(int key, long value) {
-        metric.add(key, value);
-    }
-
-    public void add(String key, long value) {
-        metric.add(key, value);
-    }
-
-    public void reset() {
-        metric.reset();
-    }
-
-    Map<String, Object> getValues() {
-        return metric.values();
-    }
-
-    static public Map<String, Object> getAllValues() {
-        LinkedHashMap<String, Object> m = new LinkedHashMap<>();
-        for (ServerMetrics metric : ServerMetrics.values()) {
-            m.putAll(metric.getValues());
-        }
-        return m;
-    }
-
-    static public void resetAll() {
-        for (ServerMetrics metric : ServerMetrics.values()) {
-            metric.reset();
-        }
-    }
 }

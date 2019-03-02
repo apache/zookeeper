@@ -62,9 +62,27 @@ public interface MetricsContext {
 
     /**
      * Returns a summary.
+     * The returned Summary is expected to track
+     * only simple aggregated values, like min/max/avg.
+     * <p>If you get a Summary with this method you cannot
+     * request the same with {@link #getSummary(java.lang.String) }
      *
      * @param name
      * @return the summary identified by name in this context.
+     * @see #getSummary(java.lang.String)
+     */
+    Summary getBasicSummary(String name);
+    
+    /**
+     * Returns a summary. It is expected
+     * that the returned Summary performs expensive
+     * aggregations, like percentiles.
+     * <p>If you get a Summary with this method you cannot
+     * request the same with {@link #getBasicSummary(java.lang.String) }
+     *
+     * @param name
+     * @return the summary identified by name in this context.
+     * @see #getBasicSummary(java.lang.String)
      */
     Summary getSummary(String name);
 

@@ -60,6 +60,7 @@ public class LearnerHandler extends ZooKeeperThread {
     private static final Logger LOG = LoggerFactory.getLogger(LearnerHandler.class);
 
     protected final Socket sock;
+    private final ServerMetrics serverMetrics;
 
     public Socket getSocket() {
         return sock;
@@ -184,8 +185,10 @@ public class LearnerHandler extends ZooKeeperThread {
      */
     private long leaderLastZxid;
 
-    LearnerHandler(Socket sock, BufferedInputStream bufferedInput, LearnerMaster learnerMaster) throws IOException {
+    LearnerHandler(Socket sock, BufferedInputStream bufferedInput,
+            LearnerMaster learnerMaster, ServerMetrics serverMetrics) throws IOException {
         super("LearnerHandler-" + sock.getRemoteSocketAddress());
+        this.serverMetrics = serverMetrics;
         this.sock = sock;
         this.learnerMaster = learnerMaster;
         this.bufferedInput = bufferedInput;
@@ -481,11 +484,11 @@ public class LearnerHandler extends ZooKeeperThread {
                     bufferedOutput.flush();
                 } finally {
                     snapshot.close();
-                    ServerMetrics.SNAP_COUNT.add(1);
+                    serverMetrics.SNAP_COUNT.add(1);
                 }
             }
             else {
-                ServerMetrics.DIFF_COUNT.add(1);
+                serverMetrics.DIFF_COUNT.add(1);
             }
 
             LOG.debug("Sending NEWLEADER message to " + sid);
