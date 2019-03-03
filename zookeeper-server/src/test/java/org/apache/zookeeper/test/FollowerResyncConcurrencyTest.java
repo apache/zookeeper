@@ -46,6 +46,7 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.quorum.Leader;
+import org.apache.zookeeper.server.util.ZxidUtils;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.After;
 import org.junit.Assert;
@@ -613,8 +614,8 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
     private void verifyState(QuorumUtil qu, int index, Leader leader) {
         LOG.info("Verifying state");
         assertTrue("Not following", qu.getPeer(index).peer.follower != null);
-        long epochF = (qu.getPeer(index).peer.getActiveServer().getZxid() >> 32L);
-        long epochL = (leader.getEpoch() >> 32L);
+        long epochF = ZxidUtils.getEpochFromZxid(qu.getPeer(index).peer.getActiveServer().getZxid());
+        long epochL = ZxidUtils.getEpochFromZxid(leader.getEpoch());
         assertTrue("Zxid: " + qu.getPeer(index).peer.getActiveServer().getZKDatabase().getDataTreeLastProcessedZxid() +
                 "Current epoch: " + epochF, epochF == epochL);
         int leaderIndex = (index == 1) ? 2 : 1;
