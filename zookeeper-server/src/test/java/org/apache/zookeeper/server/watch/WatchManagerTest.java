@@ -394,8 +394,10 @@ public class WatchManagerTest extends ZKTestCase {
         }
 
         // 4. sleep for a while to make sure all the thread exited
+        // the cleaner may wait as long as CleanerInterval+CleanerInterval/2+1
+        // So need to sleep as least that long
         try {
-            Thread.sleep(1000);
+            Thread.sleep(2000);
         } catch (InterruptedException e) {}
 
         // 5. make sure the dead watchers are not in the existing watchers

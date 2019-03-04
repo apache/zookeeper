@@ -30,6 +30,8 @@ import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.hamcrest.number.OrderingComparison.greaterThan;
+
 public class WatcherCleanerTest extends ZKTestCase {
     private static final Logger LOG = LoggerFactory.getLogger(WatcherCleanerTest.class);
 
@@ -147,7 +149,9 @@ public class WatcherCleanerTest extends ZKTestCase {
 
         Map<String, Object> values = ServerMetrics.getAllValues();
 
-        Assert.assertTrue("Adding dead watcher should be stalled twice", (Long)values.get("add_dead_watcher_stall_time") > 0L);
+        Assert.assertThat("Adding dead watcher should be stalled twice",
+                          (Long)values.get("add_dead_watcher_stall_time"),
+                           greaterThan(0L));
         Assert.assertEquals("Total dead watchers added to the queue should be 3", 3L, values.get("dead_watchers_queued"));
         Assert.assertEquals("Total dead watchers cleared should be 3", 3L, values.get("dead_watchers_cleared"));
 
