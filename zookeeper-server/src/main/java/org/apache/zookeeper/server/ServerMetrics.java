@@ -76,6 +76,23 @@ public enum ServerMetrics {
 
     BYTES_RECEIVED_COUNT(new SimpleCounter("bytes_received_count")),
 
+    /**
+     * Fired watcher stats.
+     */
+    NODE_CREATED_WATCHER(new AvgMinMaxCounter("node_created_watch_count")),
+    NODE_DELETED_WATCHER(new AvgMinMaxCounter("node_deleted_watch_count")),
+    NODE_CHANGED_WATCHER(new AvgMinMaxCounter("node_changed_watch_count")),
+    NODE_CHILDREN_WATCHER(new AvgMinMaxCounter("node_children_watch_count")),
+
+
+    /*
+     * Number of dead watchers in DeadWatcherListener
+     */
+    ADD_DEAD_WATCHER_STALL_TIME(new SimpleCounter("add_dead_watcher_stall_time")),
+    DEAD_WATCHERS_QUEUED(new SimpleCounter("dead_watchers_queued")),
+    DEAD_WATCHERS_CLEARED(new SimpleCounter("dead_watchers_cleared")),
+    DEAD_WATCHERS_CLEANER_LATENCY(new AvgMinMaxPercentileCounter("dead_watchers_cleaner_latency")),
+
     RESPONSE_PACKET_CACHE_HITS(new SimpleCounter("response_packet_cache_hits")),
     RESPONSE_PACKET_CACHE_MISSING(new SimpleCounter("response_packet_cache_misses")),
     
