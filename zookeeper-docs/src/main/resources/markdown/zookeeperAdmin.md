@@ -1390,7 +1390,7 @@ together with the private key in `keystore.jks`. This is suitable for
 testing purposes, but you probably need an official certificate to sign 
 your keys in a production environment.
 
-Please note that the alias (`-alias`) and the (`-dname`) (distinguished name)
+Please note that the alias (`-alias`) and the distinguished name (`-dname`)
 must match the hostname of the machine that is associated with, otherwise 
 hostname verification won't work.
 
