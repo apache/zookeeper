@@ -70,7 +70,7 @@ public class DefaultMetricsProvider implements MetricsProvider {
         rootMetricsContext.reset();
     }
 
-    private final class DefaultMetricsContext implements MetricsContext {
+    private static final class DefaultMetricsContext implements MetricsContext {
 
         private final ConcurrentMap<String, SimpleCounter> counters = new ConcurrentHashMap<>();
         private final ConcurrentMap<String, AvgMinMaxCounter> basicSummaries = new ConcurrentHashMap<>();
