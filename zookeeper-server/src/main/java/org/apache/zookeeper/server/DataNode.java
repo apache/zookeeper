@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
@@ -35,11 +36,12 @@ import org.apache.zookeeper.data.StatPersisted;
  * <p>
  * A data node contains a reference to its parent, a byte array as its data, an
  * array of ACLs, a stat object, and a set of its children's paths.
- * 
  */
 @SuppressFBWarnings("EI_EXPOSE_REP2")
 public class DataNode implements Record {
-    /** the data for this datanode */
+    /**
+     * the data for this datanode
+     */
     byte data[];
 
     /**
@@ -51,6 +53,24 @@ public class DataNode implements Record {
      * the stat for this node that is persisted to disk.
      */
     public StatPersisted stat;
+
+    /**
+     * CSCI 612 - Blue
+     * <p>
+     * The position of the node in the cache. Default is -1 (for when not cached). This
+     * value is only set when serializing.
+     * <p>
+     * Tyler
+     */
+    public int cachePosition = -1;
+
+    public void setCachePosition(int position) {
+        this.cachePosition = position;
+    }
+
+    public void resetCachePosition() {
+        this.cachePosition = -1;
+    }
 
     /**
      * the list of children for this node. note that the list of children string
@@ -70,15 +90,11 @@ public class DataNode implements Record {
 
     /**
      * create a DataNode with parent, data, acls and stat
-     * 
-     * @param parent
-     *            the parent of this DataNode
-     * @param data
-     *            the data to be set
-     * @param acl
-     *            the acls for this node
-     * @param stat
-     *            the stat for this node.
+     *
+     * @param parent the parent of this DataNode
+     * @param data   the data to be set
+     * @param acl    the acls for this node
+     * @param stat   the stat for this node.
      */
     public DataNode(byte data[], Long acl, StatPersisted stat) {
         this.data = data;
@@ -88,9 +104,8 @@ public class DataNode implements Record {
 
     /**
      * Method that inserts a child into the children set
-     * 
-     * @param child
-     *            to be inserted
+     *
+     * @param child to be inserted
      * @return true if this set did not already contain the specified element
      */
     public synchronized boolean addChild(String child) {
@@ -103,7 +118,7 @@ public class DataNode implements Record {
 
     /**
      * Method that removes a child from the children set
-     * 
+     *
      * @param child
      * @return true if this set contained the specified element
      */
@@ -116,7 +131,7 @@ public class DataNode implements Record {
 
     /**
      * convenience method for setting the children for this datanode
-     * 
+     *
      * @param children
      */
     public synchronized void setChildren(HashSet<String> children) {
@@ -125,9 +140,9 @@ public class DataNode implements Record {
 
     /**
      * convenience methods to get the children
-     * 
+     *
      * @return the children of this datanode. If the datanode has no children, empty
-     *         set is returned
+     * set is returned
      */
     public synchronized Set<String> getChildren() {
         if (children == null) {
@@ -154,7 +169,7 @@ public class DataNode implements Record {
         // when we do the Cversion we need to translate from the count of the creates
         // to the count of the changes (v3 semantics)
         // for every create there is a delete except for the children still present
-        to.setCversion(stat.getCversion()*2 - numChildren);
+        to.setCversion(stat.getCversion() * 2 - numChildren);
         to.setNumChildren(numChildren);
     }
 
