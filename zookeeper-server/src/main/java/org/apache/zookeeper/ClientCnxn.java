@@ -1486,7 +1486,8 @@ public class ClientCnxn {
         }
     }
 
-    private int xid = 1;
+    // @VisibleForTesting
+    protected int xid = 1;
 
     // @VisibleForTesting
     volatile States state = States.NOT_CONNECTED;
@@ -1496,6 +1497,12 @@ public class ClientCnxn {
      * the server. Thus, getXid() must be public.
      */
     synchronized public int getXid() {
+        // Avoid negative cxid values.  In particular, cxid values of -4, -2, and -1 are special and
+        // must not be used for requests -- see SendThread.readResponse.
+        // Skip from MAX to 1.
+        if (xid == Integer.MAX_VALUE) {
+            xid = 1;
+        }
         return xid++;
     }
 
