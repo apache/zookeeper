@@ -61,6 +61,7 @@ tmp/**/*
 .gradle
 *.patch
 *.swp
+.ant-targets-build.xml
 
 # C
 tags
