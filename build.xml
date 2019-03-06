@@ -748,6 +748,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
         </fileset>
         <fileset dir="${ivy.lib}">
           <exclude name="**/jsr305*.jar" />
+          <exclude name="**/spotbugs-annotations*.jar" />
         </fileset>
       </copy>
 
