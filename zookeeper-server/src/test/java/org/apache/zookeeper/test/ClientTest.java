@@ -26,8 +26,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import java.util.concurrent.atomic.AtomicInteger;
-import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
@@ -803,38 +801,5 @@ public class ClientTest extends ClientBase {
         // Sending a nonexisting opcode should cause the server to disconnect
         Assert.assertTrue("failed to disconnect",
                 clientDisconnected.await(5000, TimeUnit.MILLISECONDS));
-    }
-
-    @Test
-    public void testCXidRollover() throws Exception {
-        TestableZooKeeper zk = null;
-        try {
-            zk = createClient();
-            zk.setXid(Integer.MAX_VALUE - 10);
-
-            zk.create("/testnode", "".getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
-            for (int i = 0; i < 20; ++i) {
-                final CountDownLatch latch = new CountDownLatch(1);
-                final AtomicInteger rc = new AtomicInteger(0);
-                zk.setData("/testnode", "".getBytes(), -1,
-                    new AsyncCallback.StatCallback() {
-                        @Override
-                        public void processResult(int retcode, String path, Object ctx, Stat stat) {
-                            rc.set(retcode);
-                            latch.countDown();
-                        }
-                    }, null);
-                Assert.assertTrue("setData should complete within 5s",
-                    latch.await(zk.getSessionTimeout(), TimeUnit.MILLISECONDS));
-                Assert.assertEquals("setData should have succeeded", Code.OK.intValue(), rc.get());
-            }
-            zk.delete("/testnode", -1);
-            Assert.assertTrue("xid should be positive", zk.checkXid() > 0);
-        } finally {
-            if (zk != null) {
-                zk.close();
-            }
-        }
     }
 }
