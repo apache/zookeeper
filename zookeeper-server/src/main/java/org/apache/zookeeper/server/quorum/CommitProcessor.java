@@ -267,7 +267,9 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
                      */
                     Deque<Request> sessionQueue = pendingRequests
                             .get(request.sessionId);
+                    ServerMetrics.getMetrics().PENDING_SESSION_QUEUE_SIZE.add(pendingRequests.size());
                     if (sessionQueue != null) {
+                        ServerMetrics.getMetrics().REQUESTS_IN_SESSION_QUEUE.add(sessionQueue.size());
                         // If session queue != null, then it is also not empty.
                         Request topPending = sessionQueue.poll();
                         if (request.cxid != topPending.cxid) {
@@ -317,11 +319,13 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
                             topPending.zxid = request.zxid;
                             topPending.commitRecvTime = request.commitRecvTime;
                             request = topPending;
+
+                            // Only decrement if we take a request off the queue.
+                            numWriteQueuedRequests.decrementAndGet();
                         }
                     }
 
                     sendToNextProcessor(request);
-
                     waitForEmptyPool();
 
                     /*
@@ -329,18 +333,24 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
                      * empty.
                      */
                     if (sessionQueue != null) {
+                        int readsAfterWrite = 0;
                         while (!stopped && !sessionQueue.isEmpty()
                                 && !needCommit(sessionQueue.peek())) {
                             numReadQueuedRequests.decrementAndGet();
                             sendToNextProcessor(sessionQueue.poll());
+                            readsAfterWrite++;
                         }
+                        ServerMetrics.getMetrics().READS_AFTER_WRITE_IN_SESSION_QUEUE.add(readsAfterWrite);
+
                         // Remove empty queues
                         if (sessionQueue.isEmpty()) {
                             pendingRequests.remove(request.sessionId);
                         }
                     }
                 }
+
                 ServerMetrics.getMetrics().COMMIT_PROCESS_TIME.add(Time.currentElapsedTime() - time);
+                endOfIteration();
             } while (!stoppedMainLoop);
         } catch (Throwable e) {
             handleException(this.getName(), e);
@@ -348,12 +358,26 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
         LOG.info("CommitProcessor exited loop!");
     }
 
-    private void waitForEmptyPool() throws InterruptedException {
+    //for test only
+    protected void endOfIteration() {
+
+    }
+
+    protected void waitForEmptyPool() throws InterruptedException {
+        int numRequestsInProcess = numRequestsProcessing.get();
+        if (numRequestsInProcess != 0) {
+            ServerMetrics.getMetrics().CONCURRENT_REQUEST_PROCESSING_IN_COMMIT_PROCESSOR.add(
+                    numRequestsInProcess);
+        }
+
+        long startWaitTime = Time.currentElapsedTime();
         synchronized(emptyPoolSync) {
             while ((!stopped) && isProcessingRequest()) {
                 emptyPoolSync.wait();
             }
         }
+        ServerMetrics.getMetrics().TIME_WAITING_EMPTY_POOL_IN_COMMIT_PROCESSOR_READ.add(
+                Time.currentElapsedTime() - startWaitTime);
     }
 
     @Override
@@ -482,6 +506,12 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
         }
         request.commitProcQueueStartTime = Time.currentElapsedTime();
         queuedRequests.add(request);
+        // If the request will block, add it to the queue of blocking requests
+        if (needCommit(request)) {
+            numWriteQueuedRequests.incrementAndGet();
+        } else {
+            numReadQueuedRequests.incrementAndGet();
+        }
         wakeup();
     }
 
