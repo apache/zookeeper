@@ -910,7 +910,6 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
       <delete dir="${dist.dir}"/>
       <mkdir dir="${dist.dir}"/>
       <mkdir dir="${dist.dir}/lib"/>
-      <mkdir dir="${dist.dir}/libexec"/>
       <mkdir dir="${dist.dir}/share/zookeeper/contrib"/>
       <mkdir dir="${dist.dir}/share/zookeeper/recipes"/>
       <mkdir dir="${dist.dir}/bin"/>
@@ -974,11 +973,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
 
       <copy todir="${dist.dir}/bin">
-        <fileset dir="bin" includes="zkCli*"/>
-      </copy>
-
-      <copy todir="${dist.dir}/libexec">
-        <fileset dir="bin" includes="zkEnv*"/>
+        <fileset dir="bin" includes="zkCli*,zkEnv*"/>
       </copy>
 
       <copy todir="${dist.dir}/sbin">
