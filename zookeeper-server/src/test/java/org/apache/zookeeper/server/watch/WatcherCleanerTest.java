@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.metrics.impl.DefaultMetricsProvider;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.junit.Test;
 import org.junit.Assert;
@@ -135,10 +136,10 @@ public class WatcherCleanerTest extends ZKTestCase {
 
     @Test
     public void testDeadWatcherMetrics() {
-        ServerMetrics serverMetrics = ServerMetrics.DEFAULT_METRICS_FOR_TESTS;
-        serverMetrics.resetAll();
+        ServerMetrics serverMetrics = new ServerMetrics(new DefaultMetricsProvider());
         MyDeadWatcherListener listener = new MyDeadWatcherListener();
         WatcherCleaner cleaner = new WatcherCleaner(listener, 1, 1, 1, 1);
+        cleaner.setServerMetrics(serverMetrics);
         listener.setDelayMs(20);
         cleaner.start();
         listener.setCountDownLatch(new CountDownLatch(3));
