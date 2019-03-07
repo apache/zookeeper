@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.server;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.io.IOUtils;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
@@ -56,11 +58,11 @@ import org.apache.zookeeper.txn.SetACLTxn;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.Txn;
 import org.apache.zookeeper.txn.TxnHeader;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -84,9 +86,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * through the hashtable. The tree is traversed only when serializing to disk.
  */
 public class DataTree {
-    //TODO: I think this is where the majority of our changes will take place, the nodes in this class are the data that we need to move in and out of memory
+    private static final String NODE_DATA_FILE_NAME = "nodeData.json";
     private static final Logger LOG = LoggerFactory.getLogger(DataTree.class);
-
     /**
      * This hashtable provides a fast lookup to the datanodes. The tree is the
      * source of truth and is where all the locking occurs
@@ -702,7 +703,7 @@ public class DataTree {
         //
         // Adds it to our cache management system at the top of the cached list
         // ***************************************************
-        prepareNodesForAccessFromDataCache(path);
+        prepareNodesForAccessFromDataCache(path, false);
 
         DataNode n = nodes.get(path);
         if (n == null) {
@@ -1337,6 +1338,20 @@ public class DataTree {
         setupQuota();
 
         aclCache.purgeUnused();
+
+        // ***************************************************
+        // CSCI 612 - Blue
+        //
+        // load all the preexisting nodes into the cache control
+        //
+        // Stephen
+        //
+        // Nodes exist on startup and need to be tracked
+        for (Entry<String, DataNode> stringDataNodeEntry : nodes.entrySet()) {
+            String nodePath = stringDataNodeEntry.getKey();
+            DataNode node = stringDataNodeEntry.getValue();
+            dataCache.addNodeToAllNodes(nodePath, getNodeSize(nodePath, node.data));
+        }
     }
 
     /**
@@ -1563,13 +1578,15 @@ public class DataTree {
     //
     // Adds it to our cache management system at the top of the cached list, and places it in memory. It also removes any recently evicted nodes
     // ***************************************************
-    private void prepareNodesForAccessFromDataCache(String path) {
+    private void prepareNodesForAccessFromDataCache(String path, boolean newNode) {
         boolean nodeInCacheAlready = dataCache.markNodeAsAccessed(path);
         removeRecentlyEvictedNodesFromCachedNodes();
 
         // If the node is not in the cache it will need to be added to the nodes list
-        if (!nodeInCacheAlready) {
+        if (!newNode && !nodeInCacheAlready) {
+            LOG.info("Trying to access Node that is not in the cache, loading data from file...");
             //TODO: this is where we will need to actually get the node from the disk and add it to the nodes list
+            //TODO: get the data from disk and load it into the node
         }
     }
 
@@ -1583,8 +1600,9 @@ public class DataTree {
     // In order to track all the nodes that are in or out of the cache we must maintain a separate list along with size
     // ***************************************************
     private void trackNewlyAddedNodeForCacheControl(String path, long size) {
+        LOG.info("Newly added node being tracked for cache control");
         dataCache.addNodeToAllNodes(path, size);
-        prepareNodesForAccessFromDataCache(path);
+        prepareNodesForAccessFromDataCache(path, true);
     }
 
     // ***************************************************
@@ -1599,11 +1617,63 @@ public class DataTree {
     private void removeRecentlyEvictedNodesFromCachedNodes() {
         List<String> nodesPendingEviction = dataCache.getAndClearNodesPendingEviction();
         for (String nodePendingEviction : nodesPendingEviction) {
-            if (!nodes.contains(nodePendingEviction)) {
+            if (!nodes.containsKey(nodePendingEviction)) {
                 throw new IllegalStateException("Tried to remove a node that was not in the nodes list.");
             }
 
-            nodes.remove(nodePendingEviction);
+            LOG.info("Node needs to be removed from the cache, saving data to file...");
+            DataNode node = nodes.get(nodePendingEviction);
+            writeNodeDataToFile(nodePendingEviction, node);
+            node.data = null;
         }
+    }
+
+    // ***************************************************
+    // CSCI 612 - Blue
+    //
+    // Write the node.data to a json file
+    //
+    // Stephen
+    //
+    // In order to access the data later when needed
+    private void writeNodeDataToFile(String path, DataNode dataNode) {
+        File nodeDataFile = new File(NODE_DATA_FILE_NAME);
+        JSONObject nodeData = getJSONFromNodeDataFile(nodeDataFile);
+        nodeData.put(path, dataNode.data);
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            objectMapper.writeValue(nodeDataFile, nodeData.toString());
+        } catch (IOException e) {
+            LOG.error("failed to write to NodeDataFile", e);
+            System.exit(1);
+        }
+    }
+
+    // ***************************************************
+    // CSCI 612 - Blue
+    //
+    // gets all of the nodes.data from the json file
+    //
+    // Stephen
+    //
+    // For repopulating the nodes hashmap for a cache miss
+    private JSONObject getJSONFromNodeDataFile(File nodeDataFile) {
+        JSONObject nodeData = null;
+
+        if (!nodeDataFile.exists() || nodeDataFile.length() <= 0) {
+             nodeData = new JSONObject();
+        } else {
+            try {
+                InputStream inputStream = new FileInputStream(NODE_DATA_FILE_NAME);
+                String jsonTxt = IOUtils.toString(inputStream, "UTF-8");
+                LOG.info("jsonTxt: " + jsonTxt); //TODO: remove this logging as it is too verbose
+                nodeData = new JSONObject(jsonTxt);
+            } catch (IOException e) {
+                LOG.error("failed to read from NodeDataFile", e);
+                System.exit(1);
+            }
+        }
+
+        return nodeData;
     }
 }

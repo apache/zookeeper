@@ -10,11 +10,16 @@
 
 package org.apache.zookeeper.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.*;
 
 public class DataCache {
-    private static final long ONE_MB = 1024 * 1024;
-    private static final int MAX_SIZE_IN_MB = 1;
+    private static final long ONE_KB = 1024;
+    private static final int MAX_SIZE_IN_KB = 1;
+
+    private static final Logger LOG = LoggerFactory.getLogger(DataCache.class);
 
     private Map<String, Long> allNodes = new HashMap<>();
     private LinkedHashMap<String, Long> cachedNodes = new LinkedHashMap<>(); // Kept in order by LRU first
@@ -30,10 +35,12 @@ public class DataCache {
     public synchronized boolean markNodeAsAccessed(String pathToNode) {
         boolean nodeInCache = false;
         if (cachedNodes.keySet().contains(pathToNode)) {
+            LOG.info("Node already marked as cached, putting it at the end of the hash map.");
             cachedNodes.remove(pathToNode); // Remove as it will need to be appended to the end of the LinkedHashMap
             nodeInCache = true;
         }
 
+        LOG.info("marking: " + pathToNode + " as accessed.");
         long size = allNodes.get(pathToNode);
         if (size <= 0) {
             throw new IllegalArgumentException("Attempted to mark a node as accessed when it was not found in the list of all tracked nodes.");
@@ -44,14 +51,18 @@ public class DataCache {
         cachedNodes.put(pathToNode, size);
         currentSize += size;
 
+        LOG.info("After marking a node as accessed the cache is now: " + currentSize + " bytes.");
+
         return nodeInCache;
     }
 
     public void addNodeToAllNodes(String path, long size) {
+        LOG.info("adding: " + path + " to allNodes with size: " + size);
         allNodes.put(path, size);
     }
 
     public void removeNode(String path) {
+        LOG.info("removing node: " + path);
         allNodes.remove(path);
         if (cachedNodes.containsKey(path)) {
             long sizeOfRemovedNode = cachedNodes.remove(path);
@@ -60,6 +71,7 @@ public class DataCache {
     }
 
     public void updateSizeOfNode(String path, long size) {
+        LOG.info("updating the size of node: " + path + " to: " + size);
         allNodes.put(path, size);
 
         if (cachedNodes.containsKey(path)) {
@@ -76,15 +88,19 @@ public class DataCache {
     public List<String> getAndClearNodesPendingEviction() {
         List<String> nodesPendingEvictionCopy = new ArrayList<>(nodesPendingEviction);
         nodesPendingEviction.clear();
+        LOG.info("Nodes pending eviction: " + nodesPendingEvictionCopy.size());
         return nodesPendingEvictionCopy;
     }
 
     private void removeLeastRecentlyUsedNodePathsUntilCanAccommodateSize(long size) {
         Iterator<String> cachedNodesIterator = cachedNodes.keySet().iterator();
-        while (((currentSize + size) / ONE_MB >= MAX_SIZE_IN_MB) && cachedNodes.size() > 0) {
+        while (((currentSize + size) / ONE_KB >= MAX_SIZE_IN_KB) && cachedNodes.size() > 0) {
             String firstPath = cachedNodesIterator.next();
-            long sizeOfRemovedNode = cachedNodes.remove(firstPath);
+            LOG.info("removing " + firstPath + " from the cache");
+            long sizeOfRemovedNode = cachedNodes.get(firstPath);
+            cachedNodesIterator.remove();
             currentSize -= sizeOfRemovedNode;
+            LOG.info("cache size is now: " + currentSize);
 
             nodesPendingEviction.add(firstPath);
         }
