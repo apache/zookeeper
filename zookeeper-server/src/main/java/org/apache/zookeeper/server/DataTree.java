@@ -18,8 +18,6 @@
 
 package org.apache.zookeeper.server;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.io.IOUtils;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
@@ -58,12 +56,17 @@ import org.apache.zookeeper.txn.SetACLTxn;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.Txn;
 import org.apache.zookeeper.txn.TxnHeader;
-import org.json.JSONObject;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -87,6 +90,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class DataTree {
     private static final String NODE_DATA_FILE_NAME = "nodeData.json";
+    private static final Charset CHARSET = Charset.forName("UTF-8");
     private static final Logger LOG = LoggerFactory.getLogger(DataTree.class);
     /**
      * This hashtable provides a fast lookup to the datanodes. The tree is the
@@ -1350,7 +1354,7 @@ public class DataTree {
         for (Entry<String, DataNode> stringDataNodeEntry : nodes.entrySet()) {
             String nodePath = stringDataNodeEntry.getKey();
             DataNode node = stringDataNodeEntry.getValue();
-            dataCache.addNodeToAllNodes(nodePath, getNodeSize(nodePath, node.data));
+            trackNewlyAddedNodeForCacheControl(nodePath, getNodeSize(nodePath, node.data));
         }
     }
 
@@ -1585,8 +1589,7 @@ public class DataTree {
         // If the node is not in the cache it will need to be added to the nodes list
         if (!newNode && !nodeInCacheAlready) {
             LOG.info("Trying to access Node that is not in the cache, loading data from file...");
-            //TODO: this is where we will need to actually get the node from the disk and add it to the nodes list
-            //TODO: get the data from disk and load it into the node
+            loadDataFromFile(path);
         }
     }
 
@@ -1639,14 +1642,32 @@ public class DataTree {
     private void writeNodeDataToFile(String path, DataNode dataNode) {
         File nodeDataFile = new File(NODE_DATA_FILE_NAME);
         JSONObject nodeData = getJSONFromNodeDataFile(nodeDataFile);
-        nodeData.put(path, dataNode.data);
-        ObjectMapper objectMapper = new ObjectMapper();
+
+        byte[] rawData = dataNode.data != null ? dataNode.data : new byte[0];
+        nodeData.put(path, new String(rawData, CHARSET));
+
         try {
-            objectMapper.writeValue(nodeDataFile, nodeData.toString());
+            Files.write(Paths.get(NODE_DATA_FILE_NAME), nodeData.toJSONString().getBytes());
         } catch (IOException e) {
             LOG.error("failed to write to NodeDataFile", e);
             System.exit(1);
         }
+    }
+
+    // ***************************************************
+    // CSCI 612 - Blue
+    //
+    // loads the data from a given path into nodes.data for the proper DataNode
+    //
+    // Stephen
+    //
+    // Uses the dataNode file
+    private void loadDataFromFile(String path) {
+        File nodeDataFile = new File(NODE_DATA_FILE_NAME);
+        JSONObject nodeData = getJSONFromNodeDataFile(nodeDataFile);
+        String data = (String) nodeData.get(path);
+        DataNode dataNode = nodes.get(path);
+        dataNode.data = data.getBytes(CHARSET);
     }
 
     // ***************************************************
@@ -1664,11 +1685,10 @@ public class DataTree {
              nodeData = new JSONObject();
         } else {
             try {
-                InputStream inputStream = new FileInputStream(NODE_DATA_FILE_NAME);
-                String jsonTxt = IOUtils.toString(inputStream, "UTF-8");
-                LOG.info("jsonTxt: " + jsonTxt); //TODO: remove this logging as it is too verbose
-                nodeData = new JSONObject(jsonTxt);
-            } catch (IOException e) {
+                FileReader reader = new FileReader(NODE_DATA_FILE_NAME);
+                JSONParser jsonParser = new JSONParser();
+                nodeData = (JSONObject) jsonParser.parse(reader);
+            } catch (ParseException | IOException e) {
                 LOG.error("failed to read from NodeDataFile", e);
                 System.exit(1);
             }
