@@ -678,15 +678,15 @@ int main(int argc, char **argv) {
     }
     if (argc > 2) {
       if(strncmp("cmd:",argv[2],4)==0){
-        size_t cmdlen = strlen(argv[2]);
-        if (cmdlen > sizeof(cmd)) {
+        size_t cmdlen = strlen(argv[2]) - 4;
+        if (cmdlen >= sizeof(cmd)) {
           fprintf(stderr,
                   "Command length %zu exceeds max length of %zu\n",
                   cmdlen,
                   sizeof(cmd));
           return 2;
         }
-        strncpy(cmd, argv[2]+4, sizeof(cmd));
+        memcpy(cmd, argv[2]+4, cmdlen);
         batchMode=1;
         fprintf(stderr,"Batch mode: %s\n",cmd);
       }else{
