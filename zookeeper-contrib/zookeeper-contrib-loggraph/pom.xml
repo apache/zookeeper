@@ -33,6 +33,9 @@
   <description>
     LogGraph is an application for viewing and filtering zookeeper logs. It can handle transaction logs and message logs.
   </description>
+  <properties>
+    <jetty.version>9.4.14.v20181114</jetty.version>
+  </properties>
 
   <dependencies>
     <dependency>
@@ -72,10 +75,12 @@
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-server</artifactId>
+      <version>${jetty.version}</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-servlet</artifactId>
+      <version>${jetty.version}</version>
     </dependency>
     <dependency>
       <groupId>com.googlecode.json-simple</groupId>
