@@ -1210,6 +1210,8 @@ public class ZooKeeper implements AutoCloseable {
      *            configuring properties differently compared to other instances
      * @throws IOException in cases of network failure
      * @throws IllegalArgumentException if an invalid chroot path is specified
+     *
+     * @since 3.5.5
      */
     public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher,
     		long sessionId, byte[] sessionPasswd, boolean canBeReadOnly,
