@@ -1775,10 +1775,16 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     public void setSslQuorum(boolean sslQuorum) {
+        if (sslQuorum) {
+            LOG.info("Using TLS encrypted quorum communication");
+        } else {
+            LOG.info("Using insecure (non-TLS) quorum communication");
+        }
         this.sslQuorum = sslQuorum;
     }
 
     public void setUsePortUnification(boolean shouldUsePortUnification) {
+        LOG.info("Port unification {}", shouldUsePortUnification ? "enabled" : "disabled");
         this.shouldUsePortUnification = shouldUsePortUnification;
     }
 
@@ -2145,7 +2151,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     void setQuorumSaslEnabled(boolean enableAuth) {
         quorumSaslEnableAuth = enableAuth;
         if (!quorumSaslEnableAuth) {
-            LOG.info("QuorumPeer communication is not secured!");
+            LOG.info("QuorumPeer communication is not secured! (SASL auth disabled)");
         } else {
             LOG.info("{} set to {}",
                     QuorumAuth.QUORUM_SASL_AUTH_ENABLED, enableAuth);
