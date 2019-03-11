@@ -28,6 +28,7 @@ import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 
@@ -82,6 +83,11 @@ public class LearnerHandler extends ZooKeeperThread {
         return sid;
     }
 
+    /**
+     * server identifier used in reporting metrics
+     */
+    private String reportId = null;
+
     String getRemoteAddress() {
         return sock == null ? "<null>" : sock.getRemoteSocketAddress().toString();
     }
@@ -97,6 +103,15 @@ public class LearnerHandler extends ZooKeeperThread {
      */
     final LinkedBlockingQueue<QuorumPacket> queuedPackets =
         new LinkedBlockingQueue<QuorumPacket>();
+
+    /**
+     * Marker packets would be added to quorum packet queue after every
+     * markerPacketInterval packets.
+     * It is ok if packetCounter overflows.
+     */
+    private final int markerPacketInterval = 1000;
+    private AtomicInteger packetCounter = new AtomicInteger();
+
 
     /**
      * This class controls the time that the Leader has been
@@ -154,6 +169,13 @@ public class LearnerHandler extends ZooKeeperThread {
     };
 
     private SyncLimitCheck syncLimitCheck = new SyncLimitCheck();
+
+    private class MarkerQuorumPacket extends QuorumPacket {
+        long time;
+        MarkerQuorumPacket(long time) {
+            this.time = time;
+        }
+    };
 
     private BinaryInputArchive ia;
 
@@ -247,6 +269,16 @@ public class LearnerHandler extends ZooKeeperThread {
                 if (p == null) {
                     bufferedOutput.flush();
                     p = queuedPackets.take();
+                }
+
+                ServerMetrics.LEARNER_HANDLER_QP_SIZE.add(this.reportId, queuedPackets.size());
+
+                if (p instanceof MarkerQuorumPacket) {
+                    MarkerQuorumPacket m = (MarkerQuorumPacket)p;
+                    ServerMetrics.LEARNER_HANDLER_QP_TIME.add(
+                            this.reportId,
+                            (System.nanoTime() - m.time) / 1000000L);
+                    continue;
                 }
 
                 if (p == proposalOfDeath) {
@@ -392,6 +424,7 @@ public class LearnerHandler extends ZooKeeperThread {
                 ByteBuffer bbsid = ByteBuffer.wrap(learnerInfoData);
                 if (learnerInfoData.length >= 8) {
                     this.sid = bbsid.getLong();
+                    this.reportId = Long.toString(this.sid);
                 }
                 if (learnerInfoData.length >= 12) {
                     this.version = bbsid.getInt(); // protocolVersion
@@ -404,6 +437,7 @@ public class LearnerHandler extends ZooKeeperThread {
                 }
             } else {
                 this.sid = learnerMaster.getAndDecrementFollowerCounter();
+                this.reportId = Long.toString(this.sid);
             }
 
             String followerInfo = learnerMaster.getPeerInfo(this.sid);
@@ -648,6 +682,14 @@ public class LearnerHandler extends ZooKeeperThread {
         } else {
             LOG.error("Attempting to start sending thread after it already started");
         }
+    }
+
+    /**
+     * Tests need not send marker packets as they are only needed to
+     * log quorum packet delays
+     */
+    protected boolean shouldSendMarkerPacketForLogging() {
+        return true;
     }
 
     /**
@@ -964,6 +1006,11 @@ public class LearnerHandler extends ZooKeeperThread {
 
     void queuePacket(QuorumPacket p) {
         queuedPackets.add(p);
+        // Add a MarkerQuorumPacket at regular intervals.
+        if (shouldSendMarkerPacketForLogging() &&
+                packetCounter.getAndIncrement() % markerPacketInterval == 0) {
+            queuedPackets.add(new MarkerQuorumPacket(System.nanoTime()));
+        }
     }
 
     static long packetSize(QuorumPacket p) {
