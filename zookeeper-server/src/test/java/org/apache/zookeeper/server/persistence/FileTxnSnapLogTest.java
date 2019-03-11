@@ -18,12 +18,18 @@
 
 package org.apache.zookeeper.server.persistence;
 
+import org.apache.jute.BinaryInputArchive;
+import org.apache.jute.BinaryOutputArchive;
+import org.apache.jute.InputArchive;
+import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.server.DataNode;
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.TestUtils;
+import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.junit.After;
@@ -32,6 +38,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -270,5 +278,64 @@ public class FileTxnSnapLogTest {
         createLogFile(snapVersionDir,4);
 
         createFileTxnSnapLogWithNoAutoCreateDataDir(logDir, snapDir);
+    }
+
+    /**
+     * Make sure the ACL is exist in the ACL map after SNAP syncing.
+     *
+     * ZooKeeper uses ACL reference id and count to save the space in snapshot.
+     * During fuzzy snapshot sync, the reference count may not be updated
+     * correctly in case like the znode is already exist.
+     *
+     * When ACL reference count reaches 0, it will be deleted from the cache,
+     * but actually there might be other nodes still using it. When visiting
+     * a node with the deleted ACL id, it will be rejected because it doesn't
+     * exist anymore.
+     *
+     * Here is the detailed flow for one of the scenario here:
+     *   1. Server A starts to have snap sync with leader
+     *   2. After serializing the ACL map to Server A, there is a txn T1 to
+     *      create a node N1 with new ACL_1 which was not exist in ACL map
+     *   3. On leader, after this txn, the ACL map will be ID1 -> (ACL_1, COUNT: 1),
+     *      and data tree N1 -> ID1
+     *   4. On server A, it will be empty ACL map, and N1 -> ID1 in fuzzy snapshot
+     *   5. When replaying the txn T1, it will skip at the beginning since the
+     *      node is already exist, which leaves an empty ACL map, and N1 is
+     *      referencing to a non-exist ACL ID1
+     *   6. Node N1 will be not accessible because the ACL not exist, and if it
+     *      became leader later then all the write requests will be rejected as
+     *      well with marshalling error.
+     */
+    @Test
+    public void testACLCreatedDuringFuzzySnapshotSync() throws IOException {
+        DataTree leaderDataTree = new DataTree();
+
+        // Start the simulated snap-sync by serializing ACL cache.
+        File file = File.createTempFile("snapshot", "zk");
+        FileOutputStream os = new FileOutputStream(file);
+        OutputArchive oa = BinaryOutputArchive.getArchive(os);
+        leaderDataTree.serializeAcls(oa);
+
+        // Add couple of transaction in-between.
+        TxnHeader hdr1 = new TxnHeader(1, 2, 2, 2, ZooDefs.OpCode.create);
+        Record txn1 = new CreateTxn("/a1", "foo".getBytes(), ZooDefs.Ids.CREATOR_ALL_ACL, false, -1);
+        leaderDataTree.processTxn(hdr1, txn1);
+
+        // Finish the snapshot.
+        leaderDataTree.serializeNodes(oa);
+        os.close();
+
+        // Simulate restore on follower and replay.
+        FileInputStream is = new FileInputStream(file);
+        InputArchive ia = BinaryInputArchive.getArchive(is);
+        DataTree followerDataTree = new DataTree();
+        followerDataTree.deserialize(ia, "tree");
+        followerDataTree.processTxn(hdr1, txn1);
+
+        DataNode a1 = leaderDataTree.getNode("/a1");
+        Assert.assertNotNull(a1);
+        Assert.assertEquals(ZooDefs.Ids.CREATOR_ALL_ACL, leaderDataTree.getACL(a1));
+
+        Assert.assertEquals(ZooDefs.Ids.CREATOR_ALL_ACL, followerDataTree.getACL(a1));
     }
 }
