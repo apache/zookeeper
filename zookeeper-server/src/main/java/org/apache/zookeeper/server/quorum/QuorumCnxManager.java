@@ -653,6 +653,7 @@ public class QuorumCnxManager {
                  sslSock.connect(electionAddr, cnxTO);
                  sslSock.startHandshake();
                  sock = sslSock;
+                 LOG.info("SSL handshake complete with {} - {} - {}", sslSock.getRemoteSocketAddress(), sslSock.getSession().getProtocol(), sslSock.getSession().getCipherSuite());
              } else {
                  sock = new Socket();
                  setSockOpts(sock);
@@ -870,8 +871,10 @@ public class QuorumCnxManager {
             while((!shutdown) && (numRetries < 3)){
                 try {
                     if (self.shouldUsePortUnification()) {
+                        LOG.info("Creating TLS-enabled quorum server socket");
                         ss = new UnifiedServerSocket(self.getX509Util(), true);
                     } else if (self.isSslQuorum()) {
+                        LOG.info("Creating TLS-only quorum server socket");
                         ss = new UnifiedServerSocket(self.getX509Util(), false);
                     } else {
                         ss = new ServerSocket();
