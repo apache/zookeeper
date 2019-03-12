@@ -756,9 +756,9 @@ public class QuorumPeerConfig {
             throw new IllegalArgumentException("serverid " + myIdString
                     + " is not a number");
         }
-        //myid must be in [1, 255]
-        if (serverId < 1 || serverId > 255) {
-            throw new IllegalArgumentException("myid must have a value between 1 and 255.");
+        //myid must be in [0, 255]
+        if (serverId < 0 || serverId > 255) {
+            throw new IllegalArgumentException("myid must have a value between 0 and 255.");
         }
     }
 

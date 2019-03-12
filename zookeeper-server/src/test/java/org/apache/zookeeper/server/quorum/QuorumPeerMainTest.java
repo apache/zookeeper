@@ -34,8 +34,6 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -442,28 +440,22 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     public void testBadMyId() throws Exception {
         ClientBase.setupTestEnv();
 
+        int invalidMyid = 256;
         final int CLIENT_PORT_QP1 = PortAssignment.unique();
-        List<Integer> invalidMyidList = new ArrayList<>();
-        invalidMyidList.add(-1);
-        invalidMyidList.add(0);
-        invalidMyidList.add(256);
-        invalidMyidList.add(1024);
-        for (Integer myidForCheck : invalidMyidList) {
-            String quorumCfgSection = "server.1=127.0.0.1:"
-                    + PortAssignment.unique() + ":" + PortAssignment.unique()
-                    + "\nserver." + myidForCheck + "=127.0.0.1:" + PortAssignment.unique() + ":"
-                    + PortAssignment.unique();
+        String quorumCfgSection = "server.1=127.0.0.1:"
+                + PortAssignment.unique() + ":" + PortAssignment.unique()
+                + "\nserver." + invalidMyid + "=127.0.0.1:" + PortAssignment.unique() + ":"
+                + PortAssignment.unique();
 
-            MainThread q1 = new MainThread(myidForCheck, CLIENT_PORT_QP1, quorumCfgSection);
-            String args[] = new String[1];
-            args[0] = q1.confFile.toString();
-            try {
-                q1.start();
-                q1.main.initializeAndRun(args);
-                Assert.fail("the number of myid must be between 1 and 255.");
-            } catch (QuorumPeerConfig.ConfigException e) {
-                // expected
-            }
+        MainThread q1 = new MainThread(invalidMyid, CLIENT_PORT_QP1, quorumCfgSection);
+        String args[] = new String[1];
+        args[0] = q1.confFile.toString();
+        try {
+            q1.start();
+            q1.main.initializeAndRun(args);
+            Assert.fail("the number of myid must be between 0 and 255.");
+        } catch (QuorumPeerConfig.ConfigException e) {
+            // expected
         }
     }
 
