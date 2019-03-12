@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -87,6 +88,11 @@ public class LearnerHandler extends ZooKeeperThread {
      * server identifier used in reporting metrics
      */
     private String reportId = null;
+
+    //for test only
+    protected void setReportID(String id) {
+        this.reportId = id;
+    }
 
     String getRemoteAddress() {
         return sock == null ? "<null>" : sock.getRemoteSocketAddress().toString();
@@ -170,10 +176,24 @@ public class LearnerHandler extends ZooKeeperThread {
 
     private SyncLimitCheck syncLimitCheck = new SyncLimitCheck();
 
-    private class MarkerQuorumPacket extends QuorumPacket {
+    private static class MarkerQuorumPacket extends QuorumPacket {
         long time;
         MarkerQuorumPacket(long time) {
             this.time = time;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(super.hashCode(), time);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            if (!super.equals(o)) return false;
+            MarkerQuorumPacket that = (MarkerQuorumPacket) o;
+            return time == that.time;
         }
     };
 
@@ -181,8 +201,17 @@ public class LearnerHandler extends ZooKeeperThread {
 
     private BinaryOutputArchive oa;
 
+    //for test only
+    protected void setOutputArchive(BinaryOutputArchive oa) {
+        this.oa = oa;
+    }
+
     private final BufferedInputStream bufferedInput;
     private BufferedOutputStream bufferedOutput;
+    //for test only
+    protected void setBufferedOutput(BufferedOutputStream bufferedOutput) {
+        this.bufferedOutput = bufferedOutput;
+    }
 
     /**
      * Keep track of whether we have started send packets thread

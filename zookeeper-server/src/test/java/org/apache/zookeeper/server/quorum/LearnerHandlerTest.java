@@ -61,6 +61,11 @@ public class LearnerHandlerTest extends ZKTestCase {
         protected void startSendingPackets() {
             threadStarted = true;
         }
+
+        @Override
+        protected boolean shouldSendMarkerPacketForLogging() {
+            return false;
+        }
     }
 
     class MockZKDatabase extends ZKDatabase {
