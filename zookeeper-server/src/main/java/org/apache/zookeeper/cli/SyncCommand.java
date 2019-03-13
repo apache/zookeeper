@@ -17,6 +17,7 @@
 package org.apache.zookeeper.cli;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -32,6 +33,7 @@ public class SyncCommand extends CliCommand {
 
     private static Options options = new Options();
     private String[] args;
+    public static final int CONNECTION_TIMEOUT = 30000;//30s
 
     public SyncCommand() {
         super("sync", "path");
@@ -58,7 +60,7 @@ public class SyncCommand extends CliCommand {
     public boolean exec() throws CliException {
         String path = args[1];
         CountDownLatch latch = new CountDownLatch(1);
-        final int[] resultCode = new int[1];
+        final int[] resultCode = {-1};
         try {
             zk.sync(path, new AsyncCallback.VoidCallback() {
                 public void processResult(int rc, String path, Object ctx) {
@@ -66,8 +68,13 @@ public class SyncCommand extends CliCommand {
                     latch.countDown();
                 }
             }, null);
-            latch.await();
-            out.println("Sync returned " + resultCode[0]);
+
+            if (latch.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)) {
+                out.println("Sync returned " + resultCode[0]);
+            } else {
+                out.println("Sync is timeout within " +  CONNECTION_TIMEOUT + " ms");
+            }
+
         } catch (IllegalArgumentException | InterruptedException ex) {
             throw new MalformedPathException(ex.getMessage());
         }
