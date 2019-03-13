@@ -16,6 +16,8 @@
  */
 package org.apache.zookeeper.cli;
 
+import java.util.concurrent.CountDownLatch;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
@@ -55,14 +57,18 @@ public class SyncCommand extends CliCommand {
     @Override
     public boolean exec() throws CliException {
         String path = args[1];
+        CountDownLatch latch = new CountDownLatch(1);
+        final int[] resultCode = new int[1];
         try {
             zk.sync(path, new AsyncCallback.VoidCallback() {
-
                 public void processResult(int rc, String path, Object ctx) {
-                    out.println("Sync returned " + rc);
+                    resultCode[0] = rc;
+                    latch.countDown();
                 }
             }, null);
-        } catch (IllegalArgumentException ex) {
+            latch.await();
+            out.println("Sync returned " + resultCode[0]);
+        } catch (IllegalArgumentException | InterruptedException ex) {
             throw new MalformedPathException(ex.getMessage());
         }
 
