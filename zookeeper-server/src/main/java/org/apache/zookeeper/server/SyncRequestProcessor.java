@@ -112,6 +112,15 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
         return snapCount;
     }
 
+    /**
+     * used by tests to check for changing
+     * snapcounts
+     * @param size
+     */
+    public static void setSnapSize(long size) {
+        snapSize = size;
+    }
+
     private boolean shouldSnapshot() {
         int logCount = zks.getZKDatabase().getTxnCount();
         long logSize = zks.getZKDatabase().getTxnSize();
@@ -127,8 +136,6 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
     @Override
     public void run() {
         try {
-            int logCount = 0;
-
             // we do this in an attempt to ensure that not all of the servers
             // in the ensemble take a snapshot at the same time
             resetSnapshotStats();

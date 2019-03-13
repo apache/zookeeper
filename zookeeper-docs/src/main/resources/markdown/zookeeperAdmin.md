@@ -612,7 +612,7 @@ property, when available, is noted below.
     transaction log file in blocks of preAllocSize kilobytes. The
     default block size is 64M. One reason for changing the size of
     the blocks is to reduce the block size if snapshots are taken
-    more often. (Also, see **snapCount**).
+    more often. (Also, see **snapCount** and **snapSize**).
 
 * *snapCount* :
     (Java system property: **zookeeper.snapCount**)
@@ -626,6 +626,18 @@ property, when available, is noted below.
     reaches a runtime generated random value in the \[snapCount/2+1, snapCount]
     range.The default snapCount is 100,000.
 
+* *snapSize* :
+    (Java system property: **zookeeper.snapSize**)
+    ZooKeeper records its transactions using snapshots and
+    a transaction log (think write-ahead log). The total size in bytes allowed
+    in the set of transactions recorded in the transaction log before a snapshot
+    can be taken (and the transaction log rolled) is determined
+    by snapSize. In order to prevent all of the machines in the quorum
+    from taking a snapshot at the same time, each ZooKeeper server
+    will take a snapshot when the size in bytes of the set of transactions in the
+    transaction log reaches a runtime generated random value in the \[snapSize/2+1, snapSize]
+    range. The default snapSize is 4,294,967,296 (4GB).
+
 * *txnLogSizeLimitInKb* :
     (Java system property: **zookeeper.txnLogSizeLimitInKb**)
     Zookeeper transaction log file can also be controlled more
@@ -633,9 +645,9 @@ property, when available, is noted below.
     slower follower syncs when sync is done using transaction log.
     This is because leader has to scan through the appropriate log
     file on disk to find the transaction to start sync from.
-    This feature is turned off by this default and snapCount is the
-    only value that limits transaction log size. When enabled
-    Zookeeper will roll the log when either of the limit is hit.
+    This feature is turned off by this default and snapCount and snapSize are the
+    only values that limit transaction log size. When enabled
+    Zookeeper will roll the log when any of the limits is hit.
     Please note that actual log size can exceed this value by the size
     of the serialized transaction. On the other hand, if this value is
     set too close to (or smaller than) **preAllocSize**,
@@ -1759,8 +1771,8 @@ that represents the update is written to non-volatile storage. A new
 log file is started when the number of transactions written to the
 current log file reaches a (variable) threshold. The threshold is
 computed using the same parameter which influences the frequency of
-snapshotting (see snapCount above). The log file's suffix is the first
-zxid written to that log.
+snapshotting (see snapCount and snapSize above). The log file's suffix
+is the first zxid written to that log.
 
 <a name="sc_filemanagement"></a>
 
