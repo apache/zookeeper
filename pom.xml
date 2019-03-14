@@ -278,7 +278,7 @@
     <hamcrest.version>1.3</hamcrest.version>
     <commons-cli.version>1.2</commons-cli.version>
     <netty.version>4.1.29.Final</netty.version>
-    <jetty.version>9.4.14.v20181114</jetty.version>
+    <jetty.version>9.4.15.v20190215</jetty.version>
     <jackson.version>2.9.8</jackson.version>
     <json.version>1.1.1</json.version>
     <jline.version>2.11</jline.version>
