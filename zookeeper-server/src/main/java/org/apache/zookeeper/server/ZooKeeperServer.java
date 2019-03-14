@@ -145,6 +145,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     private ZooKeeperServerShutdownHandler zkShutdownHandler;
     private volatile int createSessionTrackerServerId = 1;
 
+    private static volatile long flushDelay = Long.getLong("zookeeper.flushDelay", 0);
+    private static volatile long maxWriteQueuePollTime = Long.getLong("zookeeper.maxWriteQueuePollTime", flushDelay /3);
+    private static volatile int maxBatchSize = Integer.getInteger("zookeeper.maxBatchSize", 1000);
+
     /**
      * Starting size of read and write ByteArroyOuputBuffers. Default is 32 bytes.
      * Flag not used for small transfers like connectResponses.
@@ -1207,6 +1211,30 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             return outStandingCount > 0;
         }
         return false;
+    }
+
+    public long getFlushDelay() {
+        return flushDelay;
+    }
+
+    public void setFlushDelay(long delay) {
+        flushDelay = delay;
+    }
+
+    public long getMaxWriteQueuePollTime() {
+        return maxWriteQueuePollTime;
+    }
+
+    public void setMaxWriteQueuePollTime(long delay) {
+        maxWriteQueuePollTime = delay;
+    }
+
+    public int getMaxBatchSize() {
+        return maxBatchSize;
+    }
+
+    public void setMaxBatchSize(int size) {
+        maxBatchSize = size;
     }
 
     public void processPacket(ServerCnxn cnxn, ByteBuffer incomingBuffer) throws IOException {
