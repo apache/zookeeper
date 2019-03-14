@@ -288,7 +288,7 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
 
     @Override
     public void setFlushDelay(long delay) {
-        zks.setFlushDelay(delay);
+        ZooKeeperServer.setFlushDelay(delay);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -300,7 +300,7 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
 
     @Override
     public void setMaxWriteQueuePollTime(long delay) {
-        zks.setMaxWriteQueuePollTime(delay);
+        ZooKeeperServer.setMaxWriteQueuePollTime(delay);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -312,6 +312,6 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
 
     @Override
     public void setMaxBatchSize(int size) {
-        zks.setMaxBatchSize(size);
+        ZooKeeperServer.setMaxBatchSize(size);
     }
 }

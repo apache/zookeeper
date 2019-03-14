@@ -1213,27 +1213,27 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return false;
     }
 
-    public long getFlushDelay() {
+    long getFlushDelay() {
         return flushDelay;
     }
 
-    public void setFlushDelay(long delay) {
+    static void setFlushDelay(long delay) {
         flushDelay = delay;
     }
 
-    public long getMaxWriteQueuePollTime() {
+    long getMaxWriteQueuePollTime() {
         return maxWriteQueuePollTime;
     }
 
-    public void setMaxWriteQueuePollTime(long delay) {
+    static void setMaxWriteQueuePollTime(long delay) {
         maxWriteQueuePollTime = delay;
     }
 
-    public int getMaxBatchSize() {
+    int getMaxBatchSize() {
         return maxBatchSize;
     }
 
-    public void setMaxBatchSize(int size) {
+    static void setMaxBatchSize(int size) {
         maxBatchSize = size;
     }
 
