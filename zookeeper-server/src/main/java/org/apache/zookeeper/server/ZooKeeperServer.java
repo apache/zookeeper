@@ -227,6 +227,14 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         this(txnLogFactory, tickTime, -1, -1, -1, new ZKDatabase(txnLogFactory));
     }
 
+    public Deque<ChangeRecord> getOutstandingChanges() {
+        return outstandingChanges;
+    }
+
+    public Map<String, ChangeRecord> getOutstandingChangesForPath() {
+        return outstandingChangesForPath;
+    }
+
     public ServerStats serverStats() {
         return serverStats;
     }
