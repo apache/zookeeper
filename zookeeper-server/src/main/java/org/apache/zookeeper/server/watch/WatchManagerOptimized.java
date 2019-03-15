@@ -69,8 +69,6 @@ public class WatchManagerOptimized
 
     private final ReentrantReadWriteLock addRemovePathRWLock = new ReentrantReadWriteLock();
     
-    private ServerMetrics serverMetrics = ServerMetrics.NULL_METRICS;
-
     public WatchManagerOptimized() {
         watcherCleaner = new WatcherCleaner(this);
         watcherCleaner.start();
@@ -279,19 +277,19 @@ public class WatchManagerOptimized
     void updateMetrics(final EventType type, int size) {
         switch (type) {
         case NodeCreated:
-            serverMetrics.NODE_CREATED_WATCHER.add(size);
+            ServerMetrics.getMetrics().NODE_CREATED_WATCHER.add(size);
             break;
 
         case NodeDeleted:
-            serverMetrics.NODE_DELETED_WATCHER.add(size);
+            ServerMetrics.getMetrics().NODE_DELETED_WATCHER.add(size);
             break;
 
         case NodeDataChanged:
-            serverMetrics.NODE_CHANGED_WATCHER.add(size);
+            ServerMetrics.getMetrics().NODE_CHANGED_WATCHER.add(size);
             break;
 
         case NodeChildrenChanged:
-            serverMetrics.NODE_CHILDREN_WATCHER.add(size);
+            ServerMetrics.getMetrics().NODE_CHILDREN_WATCHER.add(size);
             break;
         default:
             // Other types not logged.
@@ -417,9 +415,4 @@ public class WatchManagerOptimized
         return sb.toString();
     }
 
-    @Override
-    public void setServerMetrics(ServerMetrics serverMetrics) {
-        this.serverMetrics = serverMetrics;
-        watcherCleaner.setServerMetrics(serverMetrics);
-    }
 }

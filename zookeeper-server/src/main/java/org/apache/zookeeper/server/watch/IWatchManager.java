@@ -132,11 +132,5 @@ public interface IWatchManager {
      * @return string representation of watches
      */
     public void dumpWatches(PrintWriter pwriter, boolean byPath);
-    
-    
-    /**
-     * Link the manager with the Metrics collector.
-     * @param serverMetrics 
-     */
-    public void setServerMetrics(ServerMetrics serverMetrics);
+
 }

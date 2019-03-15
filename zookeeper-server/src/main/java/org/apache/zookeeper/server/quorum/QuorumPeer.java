@@ -833,8 +833,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     AdminServer adminServer;
 
-    private ServerMetrics serverMetrics = ServerMetrics.NULL_METRICS;
-
     public static QuorumPeer testingQuorumPeer() throws SaslException {
         return new QuorumPeer();
     }
@@ -876,7 +874,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         this.syncLimit = syncLimit;
         this.quorumListenOnAllIPs = quorumListenOnAllIPs;
         this.logFactory = new FileTxnSnapLog(dataLogDir, dataDir);
-        this.zkDb = new ZKDatabase(this.logFactory, serverMetrics);
+        this.zkDb = new ZKDatabase(this.logFactory);
         if(quorumConfig == null) quorumConfig = new QuorumMaj(quorumPeers);
         setQuorumVerifier(quorumConfig, false);
         adminServer = AdminServerFactory.createAdminServer();
@@ -1179,7 +1177,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 switch (getPeerState()) {
                 case LOOKING:
                     LOG.info("LOOKING");
-                    serverMetrics.LOOKING_COUNT.add(1);
+                    ServerMetrics.getMetrics().LOOKING_COUNT.add(1);
 
                     if (Boolean.getBoolean("readonlymode.enabled")) {
                         LOG.info("Attempting to start ReadOnlyZooKeeperServer");
@@ -1471,11 +1469,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             return secureCnxnFactory.getMaxClientCnxnsPerHost();
         }
         return -1;
-    }
-
-    /** access to main server metrics */
-    public ServerMetrics getServerMetrics() {
-        return serverMetrics;
     }
         
     /** Whether local sessions are enabled */
@@ -1784,10 +1777,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     public void setSecureCnxnFactory(ServerCnxnFactory secureCnxnFactory) {
         this.secureCnxnFactory = secureCnxnFactory;
-    }
-
-    public void setServerMetrics(ServerMetrics serverMetrics) {
-        this.serverMetrics = serverMetrics;
     }
 
     public void setSslQuorum(boolean sslQuorum) {

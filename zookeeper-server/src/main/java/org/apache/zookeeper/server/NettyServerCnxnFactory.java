@@ -109,9 +109,8 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             InetAddress addr = ((InetSocketAddress) channel.remoteAddress())
                     .getAddress();
             if (maxClientCnxns > 0 && getClientCnxnCount(addr) >= maxClientCnxns) {
-                if (zkServer != null) {
-                    zkServer.getServerMetrics().CONNECTION_REJECTED.add(1);
-                }
+                ServerMetrics.getMetrics().CONNECTION_REJECTED.add(1);
+                
                 LOG.warn("Too many connections from {} - max is {}", addr,
                         maxClientCnxns);
                 channel.close();

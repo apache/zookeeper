@@ -195,9 +195,8 @@ public class CommandsTest extends ClientBase {
                 new Field("connection_drop_probability", Double.class)
         ));        
         Map<String, Object> metrics = new HashMap<>();
-                this.serverFactory
-                .getZooKeeperServer()
-                .getServerMetrics()
+        ServerMetrics
+                .getMetrics()
                 .getMetricsProvider()
                 .dump( (metric, value)-> {
                     metrics.put(metric, value);

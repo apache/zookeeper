@@ -106,7 +106,7 @@ public class NonRecoverableErrorTest extends QuorumPeerTestBase {
                 .getZKDatabase();
         long leaderCurrentEpoch = leader.getCurrentEpoch();
 
-        ZKDatabase newDB = new ZKDatabase(fileTxnSnapLogWithError, ServerMetrics.NULL_METRICS);
+        ZKDatabase newDB = new ZKDatabase(fileTxnSnapLogWithError);
         leader.getActiveServer().setZKDatabase(newDB);
 
         try {

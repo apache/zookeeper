@@ -92,7 +92,7 @@ public class ZabUtils {
             throws IOException, NoSuchFieldException, IllegalAccessException {
         FileTxnSnapLog logFactory = new FileTxnSnapLog(tmpDir, tmpDir);
         peer.setTxnFactory(logFactory);
-        ZKDatabase zkDb = new ZKDatabase(logFactory, peer.getServerMetrics());
+        ZKDatabase zkDb = new ZKDatabase(logFactory);
         LeaderZooKeeperServer zk = new LeaderZooKeeperServer(logFactory, peer, zkDb);
         return zk;
     }

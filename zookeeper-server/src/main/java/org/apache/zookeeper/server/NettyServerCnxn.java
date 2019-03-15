@@ -531,9 +531,8 @@ public class NettyServerCnxn extends ServerCnxn {
             close();
         } catch(ClientCnxnLimitException e) {
             // Common case exception, print at debug level
-            if (zkServer != null) {
-                zkServer.getServerMetrics().CONNECTION_REJECTED.add(1);
-            }
+            ServerMetrics.getMetrics().CONNECTION_REJECTED.add(1);
+            
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Closing connection to " + getRemoteSocketAddress(), e);
             }

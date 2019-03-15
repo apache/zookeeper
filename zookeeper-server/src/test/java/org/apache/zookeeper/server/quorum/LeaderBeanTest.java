@@ -83,7 +83,7 @@ public class LeaderBeanTest {
         File tmpDir = ClientBase.createEmptyTestDir();
         fileTxnSnapLog = new FileTxnSnapLog(new File(tmpDir, "data"),
                 new File(tmpDir, "data_txnlog"));
-        ZKDatabase zkDb = new ZKDatabase(fileTxnSnapLog, ServerMetrics.NULL_METRICS);
+        ZKDatabase zkDb = new ZKDatabase(fileTxnSnapLog);
 
         zks = new LeaderZooKeeperServer(fileTxnSnapLog, qp, zkDb);
         leader = new Leader(qp, zks);

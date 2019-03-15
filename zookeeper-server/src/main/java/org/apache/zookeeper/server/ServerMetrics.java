@@ -24,9 +24,13 @@ import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.Summary;
 import org.apache.zookeeper.metrics.impl.DefaultMetricsProvider;
 import org.apache.zookeeper.metrics.impl.NullMetricsProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class ServerMetrics {
-
+public final class ServerMetrics {
+    
+    private static final Logger LOG = LoggerFactory.getLogger(ServerMetrics.class);
+    
     /**
      * Dummy instance useful for tests.
      */
@@ -39,7 +43,27 @@ public class ServerMetrics {
     public static final ServerMetrics DEFAULT_METRICS_FOR_TESTS
             = new ServerMetrics(new DefaultMetricsProvider());
 
-    public ServerMetrics(MetricsProvider metricsProvider) {
+    /**
+     * Real instance used for tracking server side metrics.
+     * The final value is assigned after the {@link MetricsProvider} 
+     * bootstrap.
+     */
+    private static volatile ServerMetrics CURRENT = DEFAULT_METRICS_FOR_TESTS;
+
+    /**
+     * Access current ServerMetrics.
+     * @return a reference to the current Metrics
+     */
+    public static ServerMetrics getMetrics() {
+        return CURRENT;
+    }
+    
+    public static void metricsProviderInitialized(MetricsProvider metricsProvider) {
+        LOG.info("ServerMetrics initialized with provider {}", metricsProvider);
+        CURRENT = new ServerMetrics(metricsProvider);
+    }
+    
+    private ServerMetrics(MetricsProvider metricsProvider) {
         this.metricsProvider = metricsProvider;
         MetricsContext metricsContext = this.metricsProvider.getRootContext();
 

@@ -164,7 +164,7 @@ public class ZkDatabaseCorruptionTest extends ZKTestCase {
             public File findMostRecentSnapshot() throws IOException {
                 return null;
             }
-        }, ServerMetrics.NULL_METRICS);
+        });
         assertEquals(0, zkDatabase.calculateTxnLogSizeLimit());
     }
 

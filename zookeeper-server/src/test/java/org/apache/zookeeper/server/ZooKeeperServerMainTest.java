@@ -189,8 +189,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
                 throw new IOException("Input/output error");
             }
         };
-        ZKDatabase newDB = new ZKDatabase(fileTxnSnapLogWithError,
-                ServerMetrics.NULL_METRICS);
+        ZKDatabase newDB = new ZKDatabase(fileTxnSnapLogWithError);
         zooKeeperServer.setZKDatabase(newDB);
 
         try {

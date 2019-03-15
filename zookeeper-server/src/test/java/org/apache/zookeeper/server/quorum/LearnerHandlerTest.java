@@ -34,7 +34,6 @@ import java.util.Queue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.TxnLogProposalIterator;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -57,7 +56,7 @@ public class LearnerHandlerTest extends ZKTestCase {
 
         MockLearnerHandler(Socket sock, Leader leader) throws IOException {
             super(sock, new BufferedInputStream(sock.getInputStream()),
-                    leader, ServerMetrics.NULL_METRICS);
+                    leader);
         }
 
         protected void startSendingPackets() {
@@ -72,7 +71,7 @@ public class LearnerHandlerTest extends ZKTestCase {
         LinkedList<Proposal> txnLog = new LinkedList<Leader.Proposal>();
 
         public MockZKDatabase(FileTxnSnapLog snapLog) {
-            super(snapLog, ServerMetrics.NULL_METRICS);
+            super(snapLog);
         }
 
         public long getDataTreeLastProcessedZxid() {

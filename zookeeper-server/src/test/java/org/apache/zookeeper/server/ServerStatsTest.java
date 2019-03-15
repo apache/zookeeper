@@ -25,7 +25,6 @@ import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 
 public class ServerStatsTest extends ZKTestCase {
@@ -35,8 +34,6 @@ public class ServerStatsTest extends ZKTestCase {
     @Before
     public void setUp() {
         providerMock = mock(ServerStats.Provider.class);
-        when(providerMock.getServerMetrics())
-                .thenReturn(ServerMetrics.NULL_METRICS);
     }
 
     @Test

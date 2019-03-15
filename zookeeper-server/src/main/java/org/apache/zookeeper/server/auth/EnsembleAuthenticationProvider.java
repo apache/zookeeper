@@ -84,19 +84,19 @@ public class EnsembleAuthenticationProvider implements AuthenticationProvider {
     handleAuthentication(ServerCnxn cnxn, byte[] authData)
     {
         if (authData == null || authData.length == 0) {
-            cnxn.getServerMetrics().ENSEMBLE_AUTH_SKIP.add(1);            
+            ServerMetrics.getMetrics().ENSEMBLE_AUTH_SKIP.add(1);            
             return KeeperException.Code.OK;
         }
 
         String receivedEnsembleName = new String(authData);
 
         if (ensembleNames == null) {
-            cnxn.getServerMetrics().ENSEMBLE_AUTH_SKIP.add(1);
+            ServerMetrics.getMetrics().ENSEMBLE_AUTH_SKIP.add(1);
             return KeeperException.Code.OK;
         }
 
         if (ensembleNames.contains(receivedEnsembleName)) {
-            cnxn.getServerMetrics().ENSEMBLE_AUTH_SUCCESS.add(1);            
+            ServerMetrics.getMetrics().ENSEMBLE_AUTH_SUCCESS.add(1);            
             return KeeperException.Code.OK;
         }
 
@@ -112,7 +112,7 @@ public class EnsembleAuthenticationProvider implements AuthenticationProvider {
          * we return an error, the client will get a fatal auth error and
          * shutdown.
          */
-        cnxn.getServerMetrics().ENSEMBLE_AUTH_FAIL.add(1);
+        ServerMetrics.getMetrics().ENSEMBLE_AUTH_FAIL.add(1);
         
         cnxn.close();
         return KeeperException.Code.BADARGUMENTS;

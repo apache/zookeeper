@@ -74,7 +74,7 @@ public class TruncateTest extends ZKTestCase {
     public void testTruncationStreamReset() throws Exception {
         File tmpdir = ClientBase.createTmpDir();
         FileTxnSnapLog snaplog = new FileTxnSnapLog(tmpdir, tmpdir);
-        ZKDatabase zkdb = new ZKDatabase(snaplog, ServerMetrics.NULL_METRICS);
+        ZKDatabase zkdb = new ZKDatabase(snaplog);
         // make sure to snapshot, so that we have something there when
         // truncateLog reloads the db
         snaplog.save(zkdb.getDataTree(), zkdb.getSessionWithTimeOuts(), false);
@@ -113,7 +113,7 @@ public class TruncateTest extends ZKTestCase {
     public void testTruncationNullLog() throws Exception {
         File tmpdir = ClientBase.createTmpDir();
         FileTxnSnapLog snaplog = new FileTxnSnapLog(tmpdir, tmpdir);
-        ZKDatabase zkdb = new ZKDatabase(snaplog, ServerMetrics.NULL_METRICS);
+        ZKDatabase zkdb = new ZKDatabase(snaplog);
 
         for (int i = 1; i <= 100; i++) {
             append(zkdb, i);

@@ -361,10 +361,8 @@ public class NIOServerCnxn extends ServerCnxn {
             // expecting close to log session closure
             close();
         } catch (ClientCnxnLimitException e) {
-            // Common case exception, print at debug level
-            if (zkServer != null) {
-                zkServer.getServerMetrics().CONNECTION_REJECTED.add(1);            
-            }
+            // Common case exception, print at debug level            
+            ServerMetrics.getMetrics().CONNECTION_REJECTED.add(1);
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Exception causing close of session 0x"
                           + Long.toHexString(sessionId) + ": " + e.getMessage());

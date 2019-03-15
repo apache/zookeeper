@@ -393,7 +393,7 @@ public class Commands {
             }
             
             
-            zkServer.getServerMetrics()
+            ServerMetrics.getMetrics()
                     .getMetricsProvider()
                     .dump(
                     (metric, value) -> {

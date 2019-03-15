@@ -53,17 +53,12 @@ public class ServerStats {
         public int getNumAliveConnections();
         public long getDataDirSize();
         public long getLogDirSize();
-        public ServerMetrics getServerMetrics();
     }
     
     public ServerStats(Provider provider) {
         this.provider = provider;
     }
 
-    public ServerMetrics getServerMetrics() {
-        return provider.getServerMetrics();
-    }        
-    
     // getters
     public long getMinLatency() {
         return requestLatency.getMin();
@@ -147,10 +142,10 @@ public class ServerStats {
         requestLatency.addDataPoint(latency);
         if (request.getHdr() != null) {
             // Only quorum request should have header
-            provider.getServerMetrics().UPDATE_LATENCY.add(latency);
+            ServerMetrics.getMetrics().UPDATE_LATENCY.add(latency);
         } else {
             // All read request should goes here
-            provider.getServerMetrics().READ_LATENCY.add(latency);
+            ServerMetrics.getMetrics().READ_LATENCY.add(latency);
         }
     }
 
@@ -191,7 +186,7 @@ public class ServerStats {
         resetLatency();
         resetRequestCounters();
         clientResponseStats.reset();
-        provider.getServerMetrics().resetAll();
+        ServerMetrics.getMetrics().resetAll();
     }
 
     public void updateClientResponseSize(int size) {

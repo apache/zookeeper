@@ -136,10 +136,8 @@ public class WatcherCleanerTest extends ZKTestCase {
 
     @Test
     public void testDeadWatcherMetrics() {
-        ServerMetrics serverMetrics = new ServerMetrics(new DefaultMetricsProvider());
         MyDeadWatcherListener listener = new MyDeadWatcherListener();
         WatcherCleaner cleaner = new WatcherCleaner(listener, 1, 1, 1, 1);
-        cleaner.setServerMetrics(serverMetrics);
         listener.setDelayMs(20);
         cleaner.start();
         listener.setCountDownLatch(new CountDownLatch(3));
@@ -152,7 +150,7 @@ public class WatcherCleanerTest extends ZKTestCase {
         Assert.assertTrue(listener.wait(5000));
         
         Map<String, Object> values = new HashMap<>();
-        serverMetrics.getMetricsProvider().dump((metric, value) -> {
+        ServerMetrics.getMetrics().getMetricsProvider().dump((metric, value) -> {
             values.put(metric, value);
         });
         Assert.assertThat("Adding dead watcher should be stalled twice",

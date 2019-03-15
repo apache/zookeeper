@@ -155,7 +155,7 @@ public class QuorumPeerMain {
                       error);
       }
       try {
-          final ServerMetrics serverMetrics = new ServerMetrics(metricsProvider);
+          ServerMetrics.metricsProviderInitialized(metricsProvider);
           ServerCnxnFactory cnxnFactory = null;
           ServerCnxnFactory secureCnxnFactory = null;
 
@@ -174,7 +174,6 @@ public class QuorumPeerMain {
           }
 
           quorumPeer = getQuorumPeer();
-          quorumPeer.setServerMetrics(serverMetrics);
           quorumPeer.setTxnFactory(new FileTxnSnapLog(
                       config.getDataLogDir(),
                       config.getDataDir()));
@@ -192,7 +191,7 @@ public class QuorumPeerMain {
           quorumPeer.setObserverMasterPort(config.getObserverMasterPort());
           quorumPeer.setConfigFileName(config.getConfigFilename());
           quorumPeer.setClientPortListenBacklog(config.getClientPortListenBacklog());
-          quorumPeer.setZKDatabase(new ZKDatabase(quorumPeer.getTxnFactory(), serverMetrics));
+          quorumPeer.setZKDatabase(new ZKDatabase(quorumPeer.getTxnFactory()));
           quorumPeer.setQuorumVerifier(config.getQuorumVerifier(), false);
           if (config.getLastSeenQuorumVerifier()!=null) {
               quorumPeer.setLastSeenQuorumVerifier(config.getLastSeenQuorumVerifier(), false);

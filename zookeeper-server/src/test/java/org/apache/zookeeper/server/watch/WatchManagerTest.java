@@ -53,8 +53,7 @@ public class WatchManagerTest extends ZKTestCase {
     private ConcurrentHashMap<Integer, DumbWatcher> watchers;
     private Random r;
     private String className;
-    private ServerMetrics serverMetrics = ServerMetrics.DEFAULT_METRICS_FOR_TESTS;
-
+    
     public WatchManagerTest(String className) {
         this.className = className;
     }
@@ -69,7 +68,7 @@ public class WatchManagerTest extends ZKTestCase {
 
     @Before
     public void setUp() {
-        serverMetrics.resetAll();
+        ServerMetrics.getMetrics().resetAll();
         watchers = new ConcurrentHashMap<Integer, DumbWatcher>();
         r = new Random(System.nanoTime());
     }
@@ -77,7 +76,6 @@ public class WatchManagerTest extends ZKTestCase {
     public IWatchManager getWatchManager() throws IOException {
         System.setProperty(WatchManagerFactory.ZOOKEEPER_WATCH_MANAGER_NAME, className);
         IWatchManager res = WatchManagerFactory.createWatchManager();
-        res.setServerMetrics(serverMetrics);
         return res;
     }
 
@@ -412,7 +410,7 @@ public class WatchManagerTest extends ZKTestCase {
 
     private void checkMetrics(String metricName, long min, long max, double avg, long cnt, long sum){
         Map<String, Object> values = new HashMap<>();
-        serverMetrics.getMetricsProvider().dump((metric, value) -> {
+        ServerMetrics.getMetrics().getMetricsProvider().dump((metric, value) -> {
             values.put(metric, value);
         });
 
@@ -426,7 +424,7 @@ public class WatchManagerTest extends ZKTestCase {
     @Test
     public void testWatcherMetrics() throws IOException {
         IWatchManager manager = getWatchManager();
-        serverMetrics.resetAll();
+        ServerMetrics.getMetrics().resetAll();
 
         DumbWatcher watcher1 = new DumbWatcher(1);
         DumbWatcher watcher2 = new DumbWatcher(2);
