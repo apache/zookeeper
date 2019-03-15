@@ -104,7 +104,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
             // in the ensemble take a snapshot at the same time
             int randRoll = r.nextInt(snapCount/2);
             while (true) {
-                Request si = null;
+                Request si;
                 if (toFlush.isEmpty()) {
                     si = queuedRequests.take();
                 } else {
@@ -117,48 +117,35 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
                 if (si == requestOfDeath) {
                     break;
                 }
-                if (si != null) {
-                    // track the number of records written to the log
-                    if (zks.getZKDatabase().append(si)) {
-                        logCount++;
-                        if (logCount > (snapCount / 2 + randRoll)) {
-                            randRoll = r.nextInt(snapCount/2);
-                            // roll the log
-                            zks.getZKDatabase().rollLog();
-                            // take a snapshot
-                            if (snapInProcess != null && snapInProcess.isAlive()) {
-                                LOG.warn("Too busy to snap, skipping");
-                            } else {
-                                snapInProcess = new ZooKeeperThread("Snapshot Thread") {
-                                        public void run() {
-                                            try {
-                                                zks.takeSnapshot();
-                                            } catch(Exception e) {
-                                                LOG.warn("Unexpected exception", e);
-                                            }
+
+                // track the number of records written to the log
+                if (zks.getZKDatabase().append(si)) {
+                    logCount++;
+                    if (logCount > (snapCount / 2 + randRoll)) {
+                        randRoll = r.nextInt(snapCount/2);
+                        // roll the log
+                        zks.getZKDatabase().rollLog();
+                        // take a snapshot
+                        if (snapInProcess != null && snapInProcess.isAlive()) {
+                            LOG.warn("Too busy to snap, skipping");
+                        } else {
+                            snapInProcess = new ZooKeeperThread("Snapshot Thread") {
+                                    public void run() {
+                                        try {
+                                            zks.takeSnapshot();
+                                        } catch(Exception e) {
+                                            LOG.warn("Unexpected exception", e);
                                         }
-                                    };
-                                snapInProcess.start();
-                            }
-                            logCount = 0;
+                                    }
+                                };
+                            snapInProcess.start();
                         }
-                    } else if (toFlush.isEmpty()) {
-                        // optimization for read heavy workloads
-                        // iff this is a read, and there are no pending
-                        // flushes (writes), then just pass this to the next
-                        // processor
-                        if (nextProcessor != null) {
-                            nextProcessor.processRequest(si);
-                            if (nextProcessor instanceof Flushable) {
-                                ((Flushable)nextProcessor).flush();
-                            }
-                        }
-                        continue;
+                        logCount = 0;
                     }
-                    toFlush.add(si);
-                    if (toFlush.size() > 1000) {
-                        flush(toFlush);
-                    }
+                } 
+                toFlush.add(si);
+                if (toFlush.size() > 1000) {
+                    flush(toFlush);
                 }
             }
         } catch (Throwable t) {
