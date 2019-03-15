@@ -84,16 +84,6 @@ public class LearnerHandler extends ZooKeeperThread {
         return sid;
     }
 
-    /**
-     * server identifier used in reporting metrics
-     */
-    private String reportId = null;
-
-    //for test only
-    protected void setReportID(String id) {
-        this.reportId = id;
-    }
-
     String getRemoteAddress() {
         return sock == null ? "<null>" : sock.getRemoteSocketAddress().toString();
     }
@@ -117,7 +107,6 @@ public class LearnerHandler extends ZooKeeperThread {
      */
     private final int markerPacketInterval = 1000;
     private AtomicInteger packetCounter = new AtomicInteger();
-
 
     /**
      * This class controls the time that the Leader has been
@@ -184,14 +173,13 @@ public class LearnerHandler extends ZooKeeperThread {
 
         @Override
         public int hashCode() {
-            return Objects.hash(super.hashCode(), time);
+            return Objects.hash(time);
         }
 
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-            if (!super.equals(o)) return false;
             MarkerQuorumPacket that = (MarkerQuorumPacket) o;
             return time == that.time;
         }
@@ -201,14 +189,13 @@ public class LearnerHandler extends ZooKeeperThread {
 
     private BinaryOutputArchive oa;
 
-    //for test only
+    private final BufferedInputStream bufferedInput;
+    private BufferedOutputStream bufferedOutput;
+
+    // for test only
     protected void setOutputArchive(BinaryOutputArchive oa) {
         this.oa = oa;
     }
-
-    private final BufferedInputStream bufferedInput;
-    private BufferedOutputStream bufferedOutput;
-    //for test only
     protected void setBufferedOutput(BufferedOutputStream bufferedOutput) {
         this.bufferedOutput = bufferedOutput;
     }
@@ -300,12 +287,12 @@ public class LearnerHandler extends ZooKeeperThread {
                     p = queuedPackets.take();
                 }
 
-                ServerMetrics.LEARNER_HANDLER_QP_SIZE.add(this.reportId, queuedPackets.size());
+                ServerMetrics.LEARNER_HANDLER_QP_SIZE.add(Long.toString(this.sid), queuedPackets.size());
 
                 if (p instanceof MarkerQuorumPacket) {
                     MarkerQuorumPacket m = (MarkerQuorumPacket)p;
                     ServerMetrics.LEARNER_HANDLER_QP_TIME.add(
-                            this.reportId,
+                            Long.toString(this.sid),
                             (System.nanoTime() - m.time) / 1000000L);
                     continue;
                 }
@@ -453,7 +440,6 @@ public class LearnerHandler extends ZooKeeperThread {
                 ByteBuffer bbsid = ByteBuffer.wrap(learnerInfoData);
                 if (learnerInfoData.length >= 8) {
                     this.sid = bbsid.getLong();
-                    this.reportId = Long.toString(this.sid);
                 }
                 if (learnerInfoData.length >= 12) {
                     this.version = bbsid.getInt(); // protocolVersion
@@ -466,7 +452,6 @@ public class LearnerHandler extends ZooKeeperThread {
                 }
             } else {
                 this.sid = learnerMaster.getAndDecrementFollowerCounter();
-                this.reportId = Long.toString(this.sid);
             }
 
             String followerInfo = learnerMaster.getPeerInfo(this.sid);

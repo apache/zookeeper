@@ -41,8 +41,7 @@ import static org.mockito.Mockito.when;
 
 public class LearnerHandlerMetricsTest {
     private MockLearnerHandler learnerHandler;
-    private String reportId = "5";
-
+    private long sid = 5;
 
     class MockLearnerHandler extends LearnerHandler {
         MockLearnerHandler(Socket socket, Leader leader) throws IOException {
@@ -69,9 +68,9 @@ public class LearnerHandlerMetricsTest {
         }).when(oa).writeRecord(any(QuorumPacket.class), Matchers.anyString());
 
         learnerHandler = new MockLearnerHandler(socket, leader);
-        learnerHandler.setReportID(reportId);
         learnerHandler.setOutputArchive(oa);
         learnerHandler.setBufferedOutput(mock(BufferedOutputStream.class));
+        learnerHandler.sid = sid;
     }
 
     @Test
@@ -92,22 +91,23 @@ public class LearnerHandlerMetricsTest {
         }
 
         Map<String, Object> values = ServerMetrics.getAllValues();
+        String sidStr = Long.toString(sid);
 
         //we record time for each marker packet and we have two marker packets
-        Assert.assertEquals(2L,  values.get("cnt_" + reportId + "_learner_handler_qp_time_ms"));
+        Assert.assertEquals(2L,  values.get("cnt_" + sidStr + "_learner_handler_qp_time_ms"));
 
         //the second marker has 1000 packets in front of it and each takes 5 ms to send so the time in queue should be
         //longer than 5*1000
-        Assert.assertThat((long)values.get("max_" + reportId + "_learner_handler_qp_time_ms"), greaterThan(5000L));
+        Assert.assertThat((long)values.get("max_" + sidStr + "_learner_handler_qp_time_ms"), greaterThan(5000L));
 
         //we send 1001 packets + 2 marker packets so the queue size is recorded 1003 times
-        Assert.assertEquals(1003L, values.get("cnt_" + reportId + "_learner_handler_qp_size"));
+        Assert.assertEquals(1003L, values.get("cnt_" + sidStr + "_learner_handler_qp_size"));
 
         //the longest queue size is recorded when we are sending the first packet
-        Assert.assertEquals(1002L, values.get("max_" + reportId + "_learner_handler_qp_size"));
+        Assert.assertEquals(1002L, values.get("max_" + sidStr + "_learner_handler_qp_size"));
 
         //this is when the queue is emptied
-        Assert.assertEquals(0L, values.get("min_" + reportId + "_learner_handler_qp_size"));
+        Assert.assertEquals(0L, values.get("min_" + sidStr + "_learner_handler_qp_size"));
 
     }
 }
