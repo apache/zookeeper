@@ -39,8 +39,8 @@ import org.apache.zookeeper.metrics.Summary;
 public class AvgMinMaxPercentileCounter extends Metric 
                 implements Summary {
 
-    private String name;
-    private AvgMinMaxCounter counter;
+    private final String name;
+    private final AvgMinMaxCounter counter;
     private final ResettableUniformReservoir reservoir;
     private final Histogram histogram;
 

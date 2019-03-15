@@ -19,6 +19,7 @@ package org.apache.zookeeper.server;
 
 import org.apache.zookeeper.metrics.Counter;
 import org.apache.zookeeper.metrics.MetricsContext;
+import org.apache.zookeeper.metrics.MetricsContext.DetailLevel;
 
 import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.Summary;
@@ -67,31 +68,31 @@ public final class ServerMetrics {
         this.metricsProvider = metricsProvider;
         MetricsContext metricsContext = this.metricsProvider.getRootContext();
 
-        FSYNC_TIME = metricsContext.getBasicSummary("fsynctime");
+        FSYNC_TIME = metricsContext.getSummary("fsynctime", DetailLevel.BASIC);
 
-        SNAPSHOT_TIME = metricsContext.getBasicSummary("snapshottime");
-        DB_INIT_TIME = metricsContext.getBasicSummary("dbinittime");
-        READ_LATENCY = metricsContext.getSummary("readlatency");
-        UPDATE_LATENCY = metricsContext.getSummary("updatelatency");
-        PROPAGATION_LATENCY = metricsContext.getSummary("propagation_latency");
-        FOLLOWER_SYNC_TIME = metricsContext.getBasicSummary("follower_sync_time");
-        ELECTION_TIME = metricsContext.getBasicSummary("election_time");
+        SNAPSHOT_TIME = metricsContext.getSummary("snapshottime", DetailLevel.BASIC);
+        DB_INIT_TIME = metricsContext.getSummary("dbinittime", DetailLevel.BASIC);
+        READ_LATENCY = metricsContext.getSummary("readlatency", DetailLevel.ADVANCED);
+        UPDATE_LATENCY = metricsContext.getSummary("updatelatency", DetailLevel.ADVANCED);
+        PROPAGATION_LATENCY = metricsContext.getSummary("propagation_latency", DetailLevel.ADVANCED);
+        FOLLOWER_SYNC_TIME = metricsContext.getSummary("follower_sync_time", DetailLevel.BASIC);
+        ELECTION_TIME = metricsContext.getSummary("election_time", DetailLevel.BASIC);
         LOOKING_COUNT = metricsContext.getCounter("looking_count");
         DIFF_COUNT = metricsContext.getCounter("diff_count");
         SNAP_COUNT = metricsContext.getCounter("snap_count");
         COMMIT_COUNT = metricsContext.getCounter("commit_count");
         CONNECTION_REQUEST_COUNT = metricsContext.getCounter("connection_request_count");
-        CONNECTION_TOKEN_DEFICIT = metricsContext.getBasicSummary("connection_token_deficit");
+        CONNECTION_TOKEN_DEFICIT = metricsContext.getSummary("connection_token_deficit", DetailLevel.BASIC);
         CONNECTION_REJECTED = metricsContext.getCounter("connection_rejected");
 
         BYTES_RECEIVED_COUNT = metricsContext.getCounter("bytes_received_count");
         UNRECOVERABLE_ERROR_COUNT = metricsContext.getCounter("unrecoverable_error_count");
 
 
-        NODE_CREATED_WATCHER = metricsContext.getBasicSummary("node_created_watch_count");
-        NODE_DELETED_WATCHER = metricsContext.getBasicSummary("node_deleted_watch_count");
-        NODE_CHANGED_WATCHER = metricsContext.getBasicSummary("node_changed_watch_count");
-        NODE_CHILDREN_WATCHER = metricsContext.getBasicSummary("node_children_watch_count");
+        NODE_CREATED_WATCHER = metricsContext.getSummary("node_created_watch_count", DetailLevel.BASIC);
+        NODE_DELETED_WATCHER = metricsContext.getSummary("node_deleted_watch_count", DetailLevel.BASIC);
+        NODE_CHANGED_WATCHER = metricsContext.getSummary("node_changed_watch_count", DetailLevel.BASIC);
+        NODE_CHILDREN_WATCHER = metricsContext.getSummary("node_children_watch_count", DetailLevel.BASIC);
 
 
         /*
@@ -100,7 +101,7 @@ public final class ServerMetrics {
         ADD_DEAD_WATCHER_STALL_TIME = metricsContext.getCounter("add_dead_watcher_stall_time");
         DEAD_WATCHERS_QUEUED = metricsContext.getCounter("dead_watchers_queued");
         DEAD_WATCHERS_CLEARED = metricsContext.getCounter("dead_watchers_cleared");
-        DEAD_WATCHERS_CLEANER_LATENCY = metricsContext.getSummary("dead_watchers_cleaner_latency");
+        DEAD_WATCHERS_CLEANER_LATENCY = metricsContext.getSummary("dead_watchers_cleaner_latency", DetailLevel.ADVANCED);
 
         RESPONSE_PACKET_CACHE_HITS = metricsContext.getCounter("response_packet_cache_hits");
         RESPONSE_PACKET_CACHE_MISSING = metricsContext.getCounter("response_packet_cache_misses");

@@ -139,7 +139,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
                     cache.put(cacheKey, data, stat);
                     ServerMetrics.getMetrics().RESPONSE_PACKET_CACHE_MISSING.add(1);
                 } else {
-                    ServerMetrics.getMetrics().RESPONSE_PACKET_CACHE_HITS.add(1);                    
+                    ServerMetrics.getMetrics().RESPONSE_PACKET_CACHE_HITS.add(1);
                 }
             } else {
                 data = serializeRecord(r);
@@ -236,7 +236,6 @@ public abstract class ServerCnxn implements Stats, Watcher {
             serverStats().incrementPacketsReceived();
         }
         ServerMetrics.getMetrics().BYTES_RECEIVED_COUNT.add(bytes);
-        
     }
 
     protected void packetSent() {

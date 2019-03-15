@@ -17,7 +17,6 @@
  */
 package org.apache.zookeeper.metrics.impl;
 
-import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -28,16 +27,19 @@ import org.apache.zookeeper.metrics.MetricsContext;
 import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
 import org.apache.zookeeper.metrics.Summary;
+import org.apache.zookeeper.metrics.SummarySet;
 import org.apache.zookeeper.server.metric.AvgMinMaxCounter;
+import org.apache.zookeeper.server.metric.AvgMinMaxCounterSet;
 import org.apache.zookeeper.server.metric.AvgMinMaxPercentileCounter;
+import org.apache.zookeeper.server.metric.AvgMinMaxPercentileCounterSet;
 import org.apache.zookeeper.server.metric.SimpleCounter;
 
 /**
  * Default implementation of {@link MetricsProvider}.<br>
- * It does not implement a real hierarchy of contexts, but metrics are
- * flattened in a single namespace.<br>
- * It is mostly useful to make the legacy 4 letter words interface work
- * as expected.
+ * It does not implement a real hierarchy of contexts, but metrics are flattened
+ * in a single namespace.<br>
+ * It is mostly useful to make the legacy 4 letter words interface work as
+ * expected.
  */
 public class DefaultMetricsProvider implements MetricsProvider {
 
@@ -75,6 +77,8 @@ public class DefaultMetricsProvider implements MetricsProvider {
         private final ConcurrentMap<String, SimpleCounter> counters = new ConcurrentHashMap<>();
         private final ConcurrentMap<String, AvgMinMaxCounter> basicSummaries = new ConcurrentHashMap<>();
         private final ConcurrentMap<String, AvgMinMaxPercentileCounter> summaries = new ConcurrentHashMap<>();
+        private final ConcurrentMap<String, AvgMinMaxCounterSet> basicSummarySets = new ConcurrentHashMap<>();
+        private final ConcurrentMap<String, AvgMinMaxPercentileCounterSet> summarySets = new ConcurrentHashMap<>();
 
         @Override
         public MetricsContext getContext(String name) {
@@ -96,23 +100,41 @@ public class DefaultMetricsProvider implements MetricsProvider {
         }
 
         @Override
-        public Summary getSummary(String name) {
-            return summaries.computeIfAbsent(name, (n) -> {
-                if (basicSummaries.containsKey(n)) {
-                    throw new IllegalArgumentException("Already registered a basic summary as " + n);
-                }
-                return new AvgMinMaxPercentileCounter(name);
-            });
+        public Summary getSummary(String name, DetailLevel detailLevel) {
+            if (detailLevel == DetailLevel.BASIC) {
+                return basicSummaries.computeIfAbsent(name, (n) -> {
+                    if (summaries.containsKey(n)) {
+                        throw new IllegalArgumentException("Already registered a non basic summary as " + n);
+                    }
+                    return new AvgMinMaxCounter(name);
+                });
+            } else {
+                return summaries.computeIfAbsent(name, (n) -> {
+                    if (basicSummaries.containsKey(n)) {
+                        throw new IllegalArgumentException("Already registered a basic summary as " + n);
+                    }
+                    return new AvgMinMaxPercentileCounter(name);
+                });
+            }
         }
 
         @Override
-        public Summary getBasicSummary(String name) {
-            return basicSummaries.computeIfAbsent(name, (n) -> {
-                if (summaries.containsKey(n)) {
-                    throw new IllegalArgumentException("Already registered a non basic summary as " + n);
-                }
-                return new AvgMinMaxCounter(name);
-            });
+        public SummarySet getSummarySet(String name, DetailLevel detailLevel) {
+            if (detailLevel == DetailLevel.BASIC) {
+                return basicSummarySets.computeIfAbsent(name, (n) -> {
+                    if (summarySets.containsKey(n)) {
+                        throw new IllegalArgumentException("Already registered a non basic summary set as " + n);
+                    }
+                    return new AvgMinMaxCounterSet(name);
+                });
+            } else {
+                return summarySets.computeIfAbsent(name, (n) -> {
+                    if (basicSummarySets.containsKey(n)) {
+                        throw new IllegalArgumentException("Already registered a basic summary set as " + n);
+                    }
+                    return new AvgMinMaxPercentileCounterSet(name);
+                });
+            }
         }
 
         void dump(BiConsumer<String, Object> sink) {
