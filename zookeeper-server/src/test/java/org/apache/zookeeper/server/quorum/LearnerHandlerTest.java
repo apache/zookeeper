@@ -55,8 +55,7 @@ public class LearnerHandlerTest extends ZKTestCase {
         boolean threadStarted = false;
 
         MockLearnerHandler(Socket sock, Leader leader) throws IOException {
-            super(sock, new BufferedInputStream(sock.getInputStream()),
-                    leader);
+            super(sock, new BufferedInputStream(sock.getInputStream()), leader);
         }
 
         protected void startSendingPackets() {

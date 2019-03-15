@@ -132,7 +132,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * message from the leader
      */
     private ZKDatabase zkDb;
-    
+
     public static final class AddressTuple {
         public final InetSocketAddress quorumAddr;
         public final InetSocketAddress electionAddr;
@@ -1470,7 +1470,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         }
         return -1;
     }
-        
+    
     /** Whether local sessions are enabled */
     public boolean areLocalSessionsEnabled() {
         return localSessionsEnabled;

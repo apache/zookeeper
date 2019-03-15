@@ -53,7 +53,7 @@ public class WatchManagerTest extends ZKTestCase {
     private ConcurrentHashMap<Integer, DumbWatcher> watchers;
     private Random r;
     private String className;
-    
+
     public WatchManagerTest(String className) {
         this.className = className;
     }

@@ -110,7 +110,6 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                     .getAddress();
             if (maxClientCnxns > 0 && getClientCnxnCount(addr) >= maxClientCnxns) {
                 ServerMetrics.getMetrics().CONNECTION_REJECTED.add(1);
-                
                 LOG.warn("Too many connections from {} - max is {}", addr,
                         maxClientCnxns);
                 channel.close();

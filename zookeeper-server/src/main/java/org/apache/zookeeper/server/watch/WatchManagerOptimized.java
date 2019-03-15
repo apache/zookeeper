@@ -68,7 +68,7 @@ public class WatchManagerOptimized
     private final WatcherCleaner watcherCleaner;
 
     private final ReentrantReadWriteLock addRemovePathRWLock = new ReentrantReadWriteLock();
-    
+
     public WatchManagerOptimized() {
         watcherCleaner = new WatcherCleaner(this);
         watcherCleaner.start();

@@ -61,7 +61,7 @@ public class WatcherCleaner extends Thread {
     private final int watcherCleanIntervalInSeconds;
     private final int maxInProcessingDeadWatchers;
     private final AtomicInteger totalDeadWatchers = new AtomicInteger();
-    
+
     public WatcherCleaner(IDeadWatcherListener listener) {
         this(listener,
             Integer.getInteger("zookeeper.watcherCleanThreshold", 1000),

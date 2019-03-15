@@ -84,7 +84,7 @@ public class EnsembleAuthenticationProvider implements AuthenticationProvider {
     handleAuthentication(ServerCnxn cnxn, byte[] authData)
     {
         if (authData == null || authData.length == 0) {
-            ServerMetrics.getMetrics().ENSEMBLE_AUTH_SKIP.add(1);            
+            ServerMetrics.getMetrics().ENSEMBLE_AUTH_SKIP.add(1);
             return KeeperException.Code.OK;
         }
 
@@ -96,7 +96,7 @@ public class EnsembleAuthenticationProvider implements AuthenticationProvider {
         }
 
         if (ensembleNames.contains(receivedEnsembleName)) {
-            ServerMetrics.getMetrics().ENSEMBLE_AUTH_SUCCESS.add(1);            
+            ServerMetrics.getMetrics().ENSEMBLE_AUTH_SUCCESS.add(1);
             return KeeperException.Code.OK;
         }
 
@@ -113,7 +113,6 @@ public class EnsembleAuthenticationProvider implements AuthenticationProvider {
          * shutdown.
          */
         ServerMetrics.getMetrics().ENSEMBLE_AUTH_FAIL.add(1);
-        
         cnxn.close();
         return KeeperException.Code.BADARGUMENTS;
     }

@@ -60,7 +60,6 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 
 import org.apache.zookeeper.server.util.ZxidUtils;
-import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.TestUtils;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.CreateTxn;
@@ -68,7 +67,6 @@ import org.apache.zookeeper.txn.ErrorTxn;
 import org.apache.zookeeper.txn.SetDataTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.server.ServerMetrics;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

@@ -391,8 +391,7 @@ public class Commands {
             if (zkServer instanceof ObserverZooKeeperServer) {
                 response.put("observer_master_id", ((ObserverZooKeeperServer)zkServer).getObserver().getLearnerMasterId());
             }
-            
-            
+
             ServerMetrics.getMetrics()
                     .getMetricsProvider()
                     .dump(

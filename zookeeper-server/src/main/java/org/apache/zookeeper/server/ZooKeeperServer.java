@@ -194,7 +194,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime,
             int minSessionTimeout, int maxSessionTimeout, int clientPortListenBacklog,
             ZKDatabase zkDb) {
-        this.serverStats = new ServerStats(this);
+        serverStats = new ServerStats(this);
         this.txnLogFactory = txnLogFactory;
         this.txnLogFactory.setServerStats(this.serverStats);
         this.zkDb = zkDb;
@@ -225,13 +225,13 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      */
     public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime)
             throws IOException {
-        this(txnLogFactory, tickTime, -1, -1, -1, new ZKDatabase(txnLogFactory)); 
+        this(txnLogFactory, tickTime, -1, -1, -1, new ZKDatabase(txnLogFactory));
     }
 
     public ServerStats serverStats() {
         return serverStats;
     }
-    
+
     public BlueThrottle connThrottle() {
         return connThrottle;
     }

@@ -138,7 +138,6 @@ public abstract class ServerCnxn implements Stats, Watcher {
                     data = serializeRecord(r);
                     cache.put(cacheKey, data, stat);
                     ServerMetrics.getMetrics().RESPONSE_PACKET_CACHE_MISSING.add(1);
-                    
                 } else {
                     ServerMetrics.getMetrics().RESPONSE_PACKET_CACHE_HITS.add(1);                    
                 }
@@ -248,7 +247,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
         }
     }
 
-    protected abstract ServerStats serverStats();    
+    protected abstract ServerStats serverStats();
 
     protected final Date established = new Date();
 
