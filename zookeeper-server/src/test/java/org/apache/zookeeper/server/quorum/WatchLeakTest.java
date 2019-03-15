@@ -61,7 +61,6 @@ import org.apache.zookeeper.server.MockSelectorThread;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.ZKParameterized;
-import org.apache.zookeeper.server.ServerMetrics;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
