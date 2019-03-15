@@ -81,7 +81,12 @@ int32_t get_xid()
 
     // The XID returned should not be negative to avoid collisions
     // with reserved XIDs, such as AUTH_XID or SET_WATCHES_XID.
-    return xid++ & ~(1<<31);
+    // If xid is currently negative, then the previous increment
+    // caused an overflow and we reset it.
+    if (xid < 0) {
+        xid = 1;
+    }
+    return xid++;
 }
 
 int lock_reconfig(struct _zhandle *zh)
