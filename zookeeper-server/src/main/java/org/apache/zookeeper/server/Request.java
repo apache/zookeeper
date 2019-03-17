@@ -311,4 +311,25 @@ public class Request {
     public KeeperException getException() {
         return e;
     }
+
+    public void logLatency(ServerMetrics metric, String key, long currentTime) {
+        if (hdr != null) {
+            /* Request header is created by leader. If there is clock drift
+             * latency might be negative. Headers use wall time, not
+             * CLOCK_MONOTONIC.
+             */
+            long latency = currentTime - hdr.getTime();
+            if (latency > 0) {
+                if (key != null) {
+                    metric.add(key, latency);
+                } else {
+                    metric.add(latency);
+                }
+            }
+        }
+    }
+
+    public void logLatency(ServerMetrics metric, String key) {
+        logLatency(metric, key, Time.currentWallTime());
+    }
 }
