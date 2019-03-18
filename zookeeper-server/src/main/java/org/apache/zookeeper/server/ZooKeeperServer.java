@@ -145,9 +145,12 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     private ZooKeeperServerShutdownHandler zkShutdownHandler;
     private volatile int createSessionTrackerServerId = 1;
 
-    private static volatile long flushDelay = Long.getLong("zookeeper.flushDelay", 0);
-    private static volatile long maxWriteQueuePollTime = Long.getLong("zookeeper.maxWriteQueuePollTime", flushDelay /3);
-    private static volatile int maxBatchSize = Integer.getInteger("zookeeper.maxBatchSize", 1000);
+    private static final String FLUSH_DELAY = "zookeeper.flushDelay";
+    private static volatile long flushDelay;
+    private static final String MAX_WRITE_QUEUE_POLL_SIZE = "zookeeper.maxWriteQueuePollTime";
+    private static volatile long maxWriteQueuePollTime;
+    private static final String MAX_BATCH_SIZE = "zookeeper.maxBatchSize";
+    private static volatile int maxBatchSize;
 
     /**
      * Starting size of read and write ByteArroyOuputBuffers. Default is 32 bytes.
@@ -159,6 +162,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public static final int intBufferStartingSizeBytes;
 
     static {
+        long configuredFlushDelay = Long.getLong(FLUSH_DELAY, 0);
+        setFlushDelay(configuredFlushDelay);
+        setMaxWriteQueuePollTime(Long.getLong(MAX_WRITE_QUEUE_POLL_SIZE, configuredFlushDelay / 3));
+        setMaxBatchSize(Integer.getInteger(MAX_BATCH_SIZE, 1000));
+
         intBufferStartingSizeBytes = Integer.getInteger(
                 INT_BUFFER_STARTING_SIZE_BYTES,
                 DEFAULT_STARTING_BUFFER_SIZE);
@@ -1218,6 +1226,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     static void setFlushDelay(long delay) {
+        LOG.info("{}={}", FLUSH_DELAY, delay);
         flushDelay = delay;
     }
 
@@ -1225,8 +1234,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return maxWriteQueuePollTime;
     }
 
-    static void setMaxWriteQueuePollTime(long delay) {
-        maxWriteQueuePollTime = delay;
+    static void setMaxWriteQueuePollTime(long maxTime) {
+        LOG.info("{}={}", MAX_WRITE_QUEUE_POLL_SIZE, maxTime);
+        maxWriteQueuePollTime = maxTime;
     }
 
     int getMaxBatchSize() {
@@ -1234,6 +1244,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     static void setMaxBatchSize(int size) {
+        LOG.info("{}={}", MAX_BATCH_SIZE, size);
         maxBatchSize = size;
     }
 
