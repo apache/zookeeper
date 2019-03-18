@@ -101,6 +101,22 @@ public class Leader implements LearnerMaster {
 
     private final LearnerSnapshotThrottler learnerSnapshotThrottler;
 
+    // log ack latency if zxid is a multiple of ackLoggingFrequency. If <=0, disable logging.
+    protected static final String ACK_LOGGING_FREQUENCY = "zookeeper.leader.ackLoggingFrequency";
+    private static int ackLoggingFrequency;
+    static {
+        ackLoggingFrequency = Integer.getInteger(ACK_LOGGING_FREQUENCY, 1000);
+        LOG.info(ACK_LOGGING_FREQUENCY + " = " + ackLoggingFrequency);
+    }
+
+    public static void setAckLoggingFrequency(int frequency) {
+        ackLoggingFrequency = frequency;
+    }
+
+    public static int getAckLoggingFrequency() {
+        return ackLoggingFrequency;
+    }
+
     final LeaderZooKeeperServer zk;
 
     final QuorumPeer self;
@@ -865,6 +881,7 @@ public class Leader implements LearnerMaster {
             informAndActivate(p, designatedLeader);
             //turnOffFollowers();
         } else {
+            p.request.logLatency(ServerMetrics.getMetrics().QUORUM_ACK_LATENCY);
             commit(zxid);
             inform(p);
         }
@@ -929,6 +946,10 @@ public class Leader implements LearnerMaster {
             LOG.warn("Trying to commit future proposal: zxid 0x{} from {}",
                     Long.toHexString(zxid), followerAddr);
             return;
+        }
+
+        if (ackLoggingFrequency > 0 && (zxid % ackLoggingFrequency == 0)) {
+            p.request.logLatency(ServerMetrics.getMetrics().ACK_LATENCY, Long.toString(sid));
         }
 
         p.addAck(sid);
@@ -1171,6 +1192,7 @@ public class Leader implements LearnerMaster {
             outstandingProposals.put(lastProposed, p);
             sendPacket(pp);
         }
+        ServerMetrics.getMetrics().PROPOSAL_COUNT.add(1);
         return p;
     }
 
@@ -1296,6 +1318,7 @@ public class Leader implements LearnerMaster {
             quitWaitForEpoch = true;
             connectingFollowers.notifyAll();
         }
+        ServerMetrics.getMetrics().QUIT_LEADING_DUE_TO_DISLOYAL_VOTER.add(1);
         LOG.info("Quit leading due to voter changed mind.");
     }
 
