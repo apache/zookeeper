@@ -18,13 +18,19 @@
 
 package org.apache.zookeeper.server;
 
+import jline.internal.Log;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.proto.DeleteRequest;
 import org.apache.zookeeper.proto.SetDataRequest;
 import org.apache.zookeeper.server.ZooKeeperServer.ChangeRecord;
+import org.apache.zookeeper.test.ClientBase;
+import org.apache.zookeeper.test.QuorumUtil;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -34,34 +40,34 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.util.*;
 
 import static org.hamcrest.number.OrderingComparison.greaterThan;
+import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
-public class PrepRequestProcessorMetricsTest {
+public class PrepRequestProcessorMetricsTest extends ZKTestCase {
     private static final Logger LOG = LoggerFactory.getLogger(PrepRequestProcessorMetricsTest.class);
 
     ZooKeeperServer zks;
     RequestProcessor nextProcessor;
     boolean oldSkipAcl;
 
+
     @Before
-    public void setup() throws NoSuchFieldException {
+    public void setup() throws Exception {
         oldSkipAcl = PrepRequestProcessor.skipACL;
 
-        zks = mock(ZooKeeperServer.class);
+        zks = spy(new ZooKeeperServer());
         zks.sessionTracker = mock(SessionTracker.class);
-
-        Deque<ChangeRecord> outstandingChanges = new ArrayDeque<>();
-        Map<String, ChangeRecord> outstandingChangesForPath = new HashMap<>();
-        when(zks.getOutstandingChanges()).thenReturn(outstandingChanges);
-        when(zks.getOutstandingChangesForPath()).thenReturn(outstandingChangesForPath);
 
         ZKDatabase db = mock(ZKDatabase.class);
         when(zks.getZKDatabase()).thenReturn(db);
@@ -140,11 +146,30 @@ public class PrepRequestProcessorMetricsTest {
         Assert.assertEquals(3L, values.get("cnt_prep_processor_queue_time_ms"));
 
         Assert.assertEquals(3L, values.get("cnt_prep_process_time"));
-        Assert.assertThat((long)values.get("min_prep_process_time"), greaterThan(0l));
+        Assert.assertThat((long)values.get("max_prep_process_time"), greaterThan(0l));
 
         Assert.assertEquals(1L, values.get("cnt_close_session_prep_time"));
-        Assert.assertThat((long)values.get("min_close_session_prep_time"), greaterThan(0L));
+        Assert.assertThat((long)values.get("max_close_session_prep_time"), greaterThanOrEqualTo(0L));
 
         Assert.assertEquals(5L, values.get("outstanding_changes_queued"));
+    }
+
+    @Test
+    public void testOutstandingChangesRemoved() throws Exception {
+        // this metric is currently recorded in FinalRequestProcessor but it is tightly related to the Prep metrics
+        QuorumUtil util = new QuorumUtil(1);
+        util.startAll();
+
+        ServerMetrics.resetAll();
+
+        ZooKeeper zk = ClientBase.createZKClient(util.getConnString());
+        zk.create("/test", new byte[50], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        Thread.sleep(200);
+
+        Map<String, Object> values = ServerMetrics.getAllValues();
+        Assert.assertThat((long)values.get("outstanding_changes_removed"), greaterThan(0L));
+
+        util.shutdownAll();
     }
 }

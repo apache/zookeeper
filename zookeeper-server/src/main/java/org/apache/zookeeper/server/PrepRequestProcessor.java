@@ -160,8 +160,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
 
     private ChangeRecord getRecordForPath(String path) throws KeeperException.NoNodeException {
         ChangeRecord lastChange = null;
-        synchronized (zks.getOutstandingChanges()) {
-            lastChange = zks.getOutstandingChangesForPath().get(path);
+        synchronized (zks.outstandingChanges) {
+            lastChange = zks.outstandingChangesForPath.get(path);
             if (lastChange == null) {
                 DataNode n = zks.getZKDatabase().getNode(path);
                 if (n != null) {
@@ -187,10 +187,9 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
     }
 
     protected void addChangeRecord(ChangeRecord c) {
-        LOG.info("addChangeRecord called");
-        synchronized (zks.getOutstandingChanges()) {
-            zks.getOutstandingChanges().add(c);
-            zks.getOutstandingChangesForPath().put(c.path, c);
+        synchronized (zks.outstandingChanges) {
+            zks.outstandingChanges.add(c);
+            zks.outstandingChangesForPath.put(c.path, c);
             ServerMetrics.OUTSTANDING_CHANGES_QUEUED.add(1);
         }
     }
@@ -596,8 +595,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 long startTime =  Time.currentElapsedTime();
                 Set<String> es = zks.getZKDatabase()
                         .getEphemerals(request.sessionId);
-                synchronized (zks.getOutstandingChanges()) {
-                    for (ChangeRecord c : zks.getOutstandingChanges()) {
+                synchronized (zks.outstandingChanges) {
+                    for (ChangeRecord c : zks.outstandingChanges) {
                         if (c.stat == null) {
                             // Doing a delete
                             es.remove(c.path);
