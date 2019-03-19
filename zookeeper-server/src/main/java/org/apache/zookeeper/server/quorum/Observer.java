@@ -171,7 +171,7 @@ public class Observer extends Learner{
             TxnHeader hdr = new TxnHeader();
             Record txn = SerializeUtils.deserializeTxn(qp.getData(), hdr);
             Request request = new Request (hdr.getClientId(),  hdr.getCxid(), hdr.getType(), hdr, txn, 0);
-            request.logLatency(ServerMetrics.COMMIT_PROPAGATION_LATENCY, null);
+            request.logLatency(ServerMetrics.COMMIT_PROPAGATION_LATENCY);
             ObserverZooKeeperServer obs = (ObserverZooKeeperServer)zk;
             obs.commitRequest(request);
             break;
