@@ -194,6 +194,7 @@ extern ZOOAPI const int ZOOKEEPER_READ;
 // @{
 extern ZOOAPI const int ZOO_EPHEMERAL;
 extern ZOOAPI const int ZOO_SEQUENCE;
+extern ZOOAPI const int ZOO_CONTAINER;
 // @}
 
 /**

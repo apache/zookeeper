@@ -210,6 +210,7 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testIPV6);
 #endif
     CPPUNIT_TEST(testCreate);
+    CPPUNIT_TEST(testCreateContainer);
     CPPUNIT_TEST(testPath);
     CPPUNIT_TEST(testPathValidation);
     CPPUNIT_TEST(testPing);
@@ -696,6 +697,19 @@ public:
 
         // Should get different Stats back from different creates
         CPPUNIT_ASSERT(Stat_eq(&stat_a, &stat_b) != 1);
+    }
+
+    void testCreateContainer() {
+        watchctx_t ctx;
+        int rc = 0;
+        zhandle_t *zk = createClient(&ctx);
+        CPPUNIT_ASSERT(zk);
+        char pathbuf[80];
+        struct Stat stat = {0};
+
+        rc = zoo_create2(zk, "/testContainer", "", 0, &ZOO_OPEN_ACL_UNSAFE,
+                         ZOO_CONTAINER, pathbuf, sizeof(pathbuf), &stat);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
     }
 
     void testGetChildren2() {
