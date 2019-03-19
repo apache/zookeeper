@@ -122,6 +122,15 @@ public final class ServerMetrics {
         OUTSTANDING_CHANGES_REMOVED = metricsContext.getCounter("outstanding_changes_removed");
         PREP_PROCESS_TIME = metricsContext.getSummary("prep_process_time", DetailLevel.BASIC);
         CLOSE_SESSION_PREP_TIME = metricsContext.getSummary("close_session_prep_time", DetailLevel.ADVANCED);
+
+        REVALIDATE_COUNT = metricsContext.getCounter("revalidate_count");
+        CONNECTION_DROP_COUNT = metricsContext.getCounter("connection_drop_count");
+        CONNECTION_REVALIDATE_COUNT = metricsContext.getCounter("connection_revalidate_count");
+
+        // Expiry queue stats
+        SESSIONLESS_CONNECTIONS_EXPIRED = metricsContext.getCounter("sessionless_connections_expired");
+        STALE_SESSIONS_EXPIRED = metricsContext.getCounter("stale_sessions_expired");
+
     }
 
     /**
@@ -167,6 +176,15 @@ public final class ServerMetrics {
     public final Counter SNAP_COUNT;
     public final Counter COMMIT_COUNT;
     public final Counter CONNECTION_REQUEST_COUNT;
+
+    public final Counter REVALIDATE_COUNT;
+    public final Counter CONNECTION_DROP_COUNT;
+    public final Counter CONNECTION_REVALIDATE_COUNT;
+
+    // Expiry queue stats
+    public final Counter SESSIONLESS_CONNECTIONS_EXPIRED;
+    public final Counter STALE_SESSIONS_EXPIRED;
+
     // Connection throttling related
     public final Summary CONNECTION_TOKEN_DEFICIT;
     public final Counter CONNECTION_REJECTED;
