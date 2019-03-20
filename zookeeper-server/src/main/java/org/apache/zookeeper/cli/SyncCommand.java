@@ -16,8 +16,10 @@
  */
 package org.apache.zookeeper.cli;
 
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -59,26 +61,24 @@ public class SyncCommand extends CliCommand {
     @Override
     public boolean exec() throws CliException {
         String path = args[1];
-        CountDownLatch latch = new CountDownLatch(1);
-        final int[] resultCode = {-1};
+        CompletableFuture<Integer> cf = new CompletableFuture<>();
+
         try {
             zk.sync(path, new AsyncCallback.VoidCallback() {
                 public void processResult(int rc, String path, Object ctx) {
-                    resultCode[0] = rc;
-                    latch.countDown();
+                    cf.complete(rc);
                 }
             }, null);
 
-            if (latch.await(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS)) {
-                out.println("Sync returned " + resultCode[0]);
-            } else {
+            try {
+                int resultCode = cf.get(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
+                out.println("Sync returned " + resultCode);
+            } catch (TimeoutException ex) {
                 out.println("Sync is timeout within " +  CONNECTION_TIMEOUT + " ms");
             }
-
-        } catch (IllegalArgumentException | InterruptedException ex) {
+        } catch (IllegalArgumentException | InterruptedException | ExecutionException ex) {
             throw new MalformedPathException(ex.getMessage());
         }
-
 
         return false;
     }
