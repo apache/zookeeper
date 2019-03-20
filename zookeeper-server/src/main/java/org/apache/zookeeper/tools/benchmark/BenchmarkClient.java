@@ -1,4 +1,4 @@
-package org.apache.zookeeper.tools;
+package org.apache.zookeeper.tools.benchmark;
 
 public abstract class BenchmarkClient implements Runnable {
 
