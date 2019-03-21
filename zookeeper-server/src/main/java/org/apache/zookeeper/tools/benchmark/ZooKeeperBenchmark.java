@@ -47,7 +47,7 @@ public class ZooKeeperBenchmark {
     }
 
     class BenchmarkConfig {
-        int
+        int re
 
     }
 
