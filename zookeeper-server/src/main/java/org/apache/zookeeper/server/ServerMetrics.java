@@ -74,6 +74,8 @@ public enum ServerMetrics {
     CONNECTION_TOKEN_DEFICIT(new AvgMinMaxCounter("connection_token_deficit")),
     CONNECTION_REJECTED(new SimpleCounter("connection_rejected")),
 
+    UNRECOVERABLE_ERROR_COUNT(new SimpleCounter("unrecoverable_error_count")),
+
     BYTES_RECEIVED_COUNT(new SimpleCounter("bytes_received_count")),
 
     /**
