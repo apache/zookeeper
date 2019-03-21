@@ -848,12 +848,17 @@ public class QuorumCnxManager {
      */
     public class Listener extends ZooKeeperThread {
 
+        private final int portBindMaxRetry;
         volatile ServerSocket ss = null;
 
         public Listener() {
             // During startup of thread, thread name will be overridden to
             // specific election address
             super("ListenerThread");
+
+            // maximum retry count while trying to bind to election port
+            // see ZOOKEEPER-3320 for more details
+            portBindMaxRetry = Integer.getInteger("zookeeper.electionPortBindRetry", 3);
         }
 
         /**
@@ -865,7 +870,7 @@ public class QuorumCnxManager {
             InetSocketAddress addr;
             Socket client = null;
             Exception exitException = null;
-            while((!shutdown) && (numRetries < 3)){
+            while((!shutdown) && (numRetries < portBindMaxRetry)){
                 try {
                     if (self.shouldUsePortUnification()) {
                         LOG.info("Creating TLS-enabled quorum server socket");
