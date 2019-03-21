@@ -166,7 +166,7 @@ From the shell, type `help` to get a listing of commands that can be executed fr
         addauth scheme auth
         delete path [version]
         deleteall path
-        setquota -n|-b val path
+        setquota [-n|-b] val path
 
 
 From here, you can try a few simple commands to get a feel for this simple command line interface.  First, start by issuing the list command, as

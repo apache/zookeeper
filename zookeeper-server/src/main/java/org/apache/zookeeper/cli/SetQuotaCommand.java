@@ -36,7 +36,7 @@ public class SetQuotaCommand extends CliCommand {
     private CommandLine cl;
 
     public SetQuotaCommand() {
-        super("setquota", "-n|-b val path");
+        super("setquota", "[-n|-b] val path");
         
         OptionGroup og1 = new OptionGroup();
         og1.addOption(new Option("b", true, "bytes quota"));
