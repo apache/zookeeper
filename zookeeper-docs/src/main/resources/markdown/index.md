@@ -31,27 +31,27 @@ archives.
 
 + **ZooKeeper Overview**
     Technical Overview Documents for Client Developers, Administrators, and Contributors
-    + [Overview](zookeeperOver.html) - a bird's eye view of ZooKeeper, including design concepts and architecture
-    + [Getting Started](zookeeperStarted.html) - a tutorial-style guide for developers to install, run, and program to ZooKeeper
-    + [Release Notes](releasenotes.html) - new developer and user facing features, improvements, and incompatibilities
+    + [Overview](zookeeperOver.md) - a bird's eye view of ZooKeeper, including design concepts and architecture
+    + [Getting Started](zookeeperStarted.md) - a tutorial-style guide for developers to install, run, and program to ZooKeeper
+    + [Release Notes](releasenotes.md) - new developer and user facing features, improvements, and incompatibilities
 + **Developers**
     Documents for Developers using the ZooKeeper Client API
     + [API Docs](api/index.html) - the technical reference to ZooKeeper Client APIs
-    + [Programmer's Guide](zookeeperProgrammers.html) - a client application developer's guide to ZooKeeper
-    + [ZooKeeper Java Example](javaExample.html) - a simple Zookeeper client application, written in Java
-    + [Barrier and Queue Tutorial](zookeeperTutorial.html) - sample implementations of barriers and queues
-    + [ZooKeeper Recipes](recipes.html) - higher level solutions to common problems in distributed applications
+    + [Programmer's Guide](zookeeperProgrammers.md) - a client application developer's guide to ZooKeeper
+    + [ZooKeeper Java Example](javaExample.md) - a simple Zookeeper client application, written in Java
+    + [Barrier and Queue Tutorial](zookeeperTutorial.md) - sample implementations of barriers and queues
+    + [ZooKeeper Recipes](recipes.md) - higher level solutions to common problems in distributed applications
 + **Administrators & Operators**
     Documents for Administrators and Operations Engineers of ZooKeeper Deployments
-    + [Administrator's Guide](zookeeperAdmin.html) - a guide for system administrators and anyone else who might deploy ZooKeeper
-    + [Quota Guide](zookeeperQuotas.html) - a guide for system administrators on Quotas in ZooKeeper.
-    + [JMX](zookeeperJMX.html) - how to enable JMX in ZooKeeper
-    + [Hierarchical quorums](zookeeperHierarchicalQuorums.html)
-    + [Observers](zookeeperObservers.html) - non-voting ensemble members that easily improve ZooKeeper's scalability
-    + [Dynamic Reconfiguration](zookeeperReconfig.html) - a guide on how to use dynamic reconfiguration in ZooKeeper
+    + [Administrator's Guide](zookeeperAdmin.md) - a guide for system administrators and anyone else who might deploy ZooKeeper
+    + [Quota Guide](zookeeperQuotas.md) - a guide for system administrators on Quotas in ZooKeeper.
+    + [JMX](zookeeperJMX.md) - how to enable JMX in ZooKeeper
+    + [Hierarchical quorums](zookeeperHierarchicalQuorums.md)
+    + [Observers](zookeeperObservers.md) - non-voting ensemble members that easily improve ZooKeeper's scalability
+    + [Dynamic Reconfiguration](zookeeperReconfig.md) - a guide on how to use dynamic reconfiguration in ZooKeeper
 + **Contributors**
     Documents for Developers Contributing to the ZooKeeper Open Source Project
-    + [ZooKeeper Internals](zookeeperInternals.html) - assorted topics on the inner workings of ZooKeeper
+    + [ZooKeeper Internals](zookeeperInternals.md) - assorted topics on the inner workings of ZooKeeper
 + **Miscellaneous ZooKeeper Documentation**
     + [Wiki](https://cwiki.apache.org/confluence/display/ZOOKEEPER)
     + [FAQ](https://cwiki.apache.org/confluence/display/ZOOKEEPER/FAQ)
