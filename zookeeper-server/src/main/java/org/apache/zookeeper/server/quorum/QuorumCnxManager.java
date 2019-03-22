@@ -853,6 +853,9 @@ public class QuorumCnxManager {
      */
     public class Listener extends ZooKeeperThread {
 
+        private static final String ELECTION_PORT_BIND_RETRY = "zookeeper.electionPortBindRetry";
+        private static final int DEFAULT_PORT_BIND_MAX_RETRY = 3;
+
         private final int portBindMaxRetry;
         volatile ServerSocket ss = null;
 
@@ -863,7 +866,17 @@ public class QuorumCnxManager {
 
             // maximum retry count while trying to bind to election port
             // see ZOOKEEPER-3320 for more details
-            portBindMaxRetry = Integer.getInteger("zookeeper.electionPortBindRetry", 3);
+            final Integer maxRetry = Integer.getInteger(ELECTION_PORT_BIND_RETRY,
+                                                        DEFAULT_PORT_BIND_MAX_RETRY);
+            if (maxRetry >= 0) {
+                LOG.info("Election port bind maximum retries is {}", maxRetry);
+                portBindMaxRetry = maxRetry;
+            } else {
+                LOG.info("'{}' contains invalid value: {}(must be >= 0). "
+                         + "Use default value of {} instead.",
+                         ELECTION_PORT_BIND_RETRY, maxRetry, DEFAULT_PORT_BIND_MAX_RETRY);
+                portBindMaxRetry = DEFAULT_PORT_BIND_MAX_RETRY;
+            }
         }
 
         /**
