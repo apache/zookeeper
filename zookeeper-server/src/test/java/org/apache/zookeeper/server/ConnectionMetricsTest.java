@@ -194,9 +194,14 @@ public class ConnectionMetricsTest extends ZKTestCase {
         ((NIOServerCnxnFactory) factory).touchCnxn(createMockNIOCnxn());
         ((NIOServerCnxnFactory) factory).touchCnxn(createMockNIOCnxn());
 
-        Thread.sleep(2*timeout);
-
         Map<String, Object> values = ServerMetrics.getAllValues();
+        int sleptTime = 0;
+        while (values.get("sessionless_connections_expired") == null || sleptTime < 2*timeout){
+            Thread.sleep(100);
+            sleptTime += 100;
+            values = ServerMetrics.getAllValues();
+        }
+
         Assert.assertEquals(2L, values.get("sessionless_connections_expired"));
 
         factory.shutdown();
@@ -218,9 +223,14 @@ public class ConnectionMetricsTest extends ZKTestCase {
 
         tracker.start();
 
-        Thread.sleep(2*tickTime);
-
         Map<String, Object> values = ServerMetrics.getAllValues();
+        int sleptTime = 0;
+        while (values.get("stale_sessions_expired") == null || sleptTime < 2*tickTime) {
+            Thread.sleep(100);
+            sleptTime += 100;
+            values = ServerMetrics.getAllValues();
+        }
+
         Assert.assertEquals(2L, values.get("stale_sessions_expired"));
 
         tracker.shutdown();
