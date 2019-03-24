@@ -35,7 +35,9 @@ import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.txn.CreateContainerTxn;
 import org.apache.zookeeper.txn.CreateTTLTxn;
 import org.apache.zookeeper.txn.CreateTxn;
+import org.apache.zookeeper.txn.MultiTxn;
 import org.apache.zookeeper.txn.SetDataTxn;
+import org.apache.zookeeper.txn.Txn;
 import org.apache.zookeeper.txn.TxnHeader;
 
 import java.io.BufferedInputStream;
@@ -51,6 +53,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.DateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Scanner;
 import java.util.zip.Adler32;
 import java.util.zip.Checksum;
@@ -312,6 +315,17 @@ public class TxnLogToolkit implements Closeable {
             txnData.append(createTTLTxn.getPath() + "," + new String(createTTLTxn.getData()))
                    .append("," + createTTLTxn.getAcl() + "," + createTTLTxn.getParentCVersion())
                    .append("," + createTTLTxn.getTtl());
+        } else if (txn instanceof MultiTxn) {
+            MultiTxn multiTxn = ((MultiTxn) txn);
+            List<Txn> txnList = multiTxn.getTxns();
+            for (int i = 0; i < txnList.size(); i++ ) {
+                Txn t = txnList.get(i);
+                if (i == 0) {
+                    txnData.append(TraceFormatter.op2String(t.getType()) + ":" + new String(t.getData()));
+                } else {
+                    txnData.append(";" + TraceFormatter.op2String(t.getType()) + ":" + new String(t.getData()));
+                }
+            }
         } else {
             txnData.append(txn.toString());
         }

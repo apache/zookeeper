@@ -37,6 +37,9 @@ import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.util.SerializeUtils;
 import org.apache.zookeeper.txn.TxnHeader;
 
+/**
+ * @deprecated deprecated in 3.5.5, use @see TxnLogToolkit instead
+ */
 @InterfaceAudience.Public
 public class LogFormatter {
     private static final Logger LOG = LoggerFactory.getLogger(LogFormatter.class);
