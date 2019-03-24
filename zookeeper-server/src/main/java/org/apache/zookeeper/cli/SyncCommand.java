@@ -76,8 +76,10 @@ public class SyncCommand extends CliCommand {
             } catch (TimeoutException ex) {
                 out.println("Sync is timeout within " +  CONNECTION_TIMEOUT + " ms");
             }
-        } catch (IllegalArgumentException | InterruptedException | ExecutionException ex) {
+        } catch (IllegalArgumentException ex) {
             throw new MalformedPathException(ex.getMessage());
+        } catch (InterruptedException | ExecutionException ex) {
+            throw new CliWrapperException(ex);
         }
 
         return false;
