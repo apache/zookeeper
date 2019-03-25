@@ -839,7 +839,8 @@ property, when available, is noted below.
     (Java system property: **zookeeper.flushDelay**)
     Time in milliseconds to delay the flush of the commit log.
     Does not effect the limit defined by *maxBatchSize*.
-    Disabled by default (with value 0).
+    Disabled by default (with value 0). Ensembles with high write rates
+    may see throughput improved with a value of 10-20 ms.
 
 * *maxWriteQueuePollTime* :
     (Java system property: **zookeeper.maxWriteQueuePollTime**)
