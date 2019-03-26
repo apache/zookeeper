@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Iterator;
-import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -262,7 +262,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
 
     @Override
     void doTransport(int waitTimeOut,
-                     List<Packet> pendingQueue,
+                     Queue<Packet> pendingQueue,
                      ClientCnxn cnxn)
             throws IOException, InterruptedException {
         try {
@@ -352,7 +352,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
     /**
      * doWrite handles writing the packets from outgoingQueue via network to server.
      */
-    private void doWrite(List<Packet> pendingQueue, Packet p, ClientCnxn cnxn) {
+    private void doWrite(Queue<Packet> pendingQueue, Packet p, ClientCnxn cnxn) {
         updateNow();
         boolean anyPacketsSent = false;
         while (true) {
