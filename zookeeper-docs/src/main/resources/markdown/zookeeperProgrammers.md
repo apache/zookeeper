@@ -89,9 +89,9 @@ information. These are:
 The book concludes with an [appendix](#apx_linksToOtherInfo) containing links to other
 useful, ZooKeeper-related information.
 
-Most of information in this document is written to be accessible as
+Most of the information in this document is written to be accessible as
 stand-alone reference material. However, before starting your first
-ZooKeeper application, you should probably at least read the chaptes on
+ZooKeeper application, you should probably at least read the chapters on
 the [ZooKeeper Data Model](#ch_zkDataModel) and [ZooKeeper Basic Operations](#ch_guideToZkOperations). Also,
 the [Simple Programmming
 Example](#ch_programStructureWithExample) _[tbd]_ is helpful for understanding the basic
