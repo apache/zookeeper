@@ -334,7 +334,7 @@ service by creating a handle to the service using a language
 binding. Once created, the handle starts of in the CONNECTING state
 and the client library tries to connect to one of the servers that
 make up the ZooKeeper service at which point it switches to the
-CONNECTED state. During normal operation will be in one of these
+CONNECTED state. During normal operation the client handle will be in one of these
 two states. If an unrecoverable error occurs, such as session
 expiration or authentication failure, or if the application explicitly
 closes the handle, the handle will move to the CLOSED state.
