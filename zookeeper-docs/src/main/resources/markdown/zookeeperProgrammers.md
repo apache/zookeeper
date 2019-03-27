@@ -682,7 +682,7 @@ the _digest_ scheme.
 When a client connects to ZooKeeper and authenticates
 itself, ZooKeeper associates all the ids that correspond to a
 client with the clients connection. These ids are checked against
-the ACLs of znodes when a clients tries to access a node. ACLs are
+the ACLs of znodes when a client tries to access a node. ACLs are
 made up of pairs of _(scheme:expression,
 perms)_. The format of
 the _expression_ is specific to the scheme. For
