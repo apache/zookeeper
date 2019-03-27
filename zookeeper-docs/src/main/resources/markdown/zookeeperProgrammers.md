@@ -511,7 +511,7 @@ In the first example, each client decides to disconnect with probability 0.4 but
 made, it will try to connect to a random new server and only if it cannot connect to any of the new
 servers will it try to connect to the old ones. After finding a server, or trying all servers in the
 new list and failing to connect, the client moves back to the normal mode of operation where it picks
-an arbitrary server from the connectString and attempt to connect to it. If that fails, is will continue
+an arbitrary server from the connectString and attempts to connect to it. If that fails, it will continue
 trying different random servers in round robin. (see above the algorithm used to initially choose a server)
 
 <a name="ch_zkWatches"></a>
