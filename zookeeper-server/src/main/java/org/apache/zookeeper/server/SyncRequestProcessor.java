@@ -20,8 +20,9 @@ package org.apache.zookeeper.server;
 
 import java.io.Flushable;
 import java.io.IOException;
-import java.util.LinkedList;
+import java.util.ArrayDeque;
 import java.util.Objects;
+import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -48,6 +49,9 @@ import org.slf4j.LoggerFactory;
 public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
         RequestProcessor {
     private static final Logger LOG = LoggerFactory.getLogger(SyncRequestProcessor.class);
+
+    private final static int FLUSH_SIZE = 1000;
+
     private final ZooKeeperServer zks;
     private final LinkedBlockingQueue<Request> queuedRequests =
         new LinkedBlockingQueue<Request>();
@@ -61,7 +65,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
      * disk. Basically this is the list of SyncItems whose callbacks will be
      * invoked after flush returns successfully.
      */
-    private final LinkedList<Request> toFlush = new LinkedList<Request>();
+    private final Queue<Request> toFlush = new ArrayDeque<>(FLUSH_SIZE);
 
     /**
      * The number of log entries to log before starting a snapshot
@@ -156,7 +160,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
                     continue;
                 }
                 toFlush.add(si);
-                if (toFlush.size() > 1000) {
+                if (toFlush.size() == FLUSH_SIZE) {
                     flush();
                 }
             }
