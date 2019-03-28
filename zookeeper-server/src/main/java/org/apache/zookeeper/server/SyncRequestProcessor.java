@@ -53,6 +53,8 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
 
     private final static int FLUSH_SIZE = 1000;
 
+    private static final Request REQUEST_OF_DEATH = Request.requestOfDeath;
+
     private final ZooKeeperServer zks;
     private final LinkedBlockingQueue<Request> queuedRequests =
         new LinkedBlockingQueue<Request>();
@@ -71,8 +73,6 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
      * The number of log entries to log before starting a snapshot
      */
     private static int snapCount = ZooKeeperServer.getSnapCount();
-
-    private final Request requestOfDeath = Request.requestOfDeath;
 
     public SyncRequestProcessor(ZooKeeperServer zks,
             RequestProcessor nextProcessor) {
@@ -108,19 +108,16 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
             // in the ensemble take a snapshot at the same time
             int randRoll = ThreadLocalRandom.current().nextInt(snapCount / 2, snapCount);
             while (true) {
-                Request si = null;
-                if (toFlush.isEmpty()) {
+                Request si = queuedRequests.poll();
+                if (si == null) {
+                    flush();
                     si = queuedRequests.take();
-                } else {
-                    si = queuedRequests.poll();
-                    if (si == null) {
-                        flush();
-                        continue;
-                    }
                 }
-                if (si == requestOfDeath) {
+  
+                if (si == REQUEST_OF_DEATH) {
                     break;
                 }
+
                 // track the number of records written to the log
                 if (zks.getZKDatabase().append(si)) {
                     logCount++;
@@ -192,7 +189,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
 
     public void shutdown() {
         LOG.info("Shutting down");
-        queuedRequests.add(requestOfDeath);
+        queuedRequests.add(REQUEST_OF_DEATH);
         try {
             this.join();
             this.flush();
