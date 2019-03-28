@@ -196,39 +196,28 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
             try {
                 sock.socket().shutdownInput();
             } catch (IOException e) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Ignoring exception during shutdown input", e);
-                }
+                LOG.debug("Ignoring exception during shutdown input", e);
             }
             try {
                 sock.socket().shutdownOutput();
             } catch (IOException e) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Ignoring exception during shutdown output",
-                            e);
-                }
+                LOG.debug("Ignoring exception during shutdown output", e);
             }
             try {
                 sock.socket().close();
             } catch (IOException e) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Ignoring exception during socket close", e);
-                }
+                LOG.debug("Ignoring exception during socket close", e);
             }
             try {
                 sock.close();
             } catch (IOException e) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Ignoring exception during channel close", e);
-                }
+                LOG.debug("Ignoring exception during channel close", e);
             }
         }
         try {
             Thread.sleep(100);
         } catch (InterruptedException e) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("SendThread interrupted during sleep, ignoring");
-            }
+            LOG.debug("SendThread interrupted during sleep, ignoring");
         }
         sockKey = null;
     }
@@ -236,13 +225,9 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
     @Override
     void close() {
         try {
-            if (LOG.isTraceEnabled()) {
-                LOG.trace("Doing client selector close");
-            }
+            LOG.trace("Doing client selector close");
             selector.close();
-            if (LOG.isTraceEnabled()) {
-                LOG.trace("Closed client selector");
-            }
+            LOG.trace("Closed client selector");
         } catch (IOException e) {
             LOG.warn("Ignoring exception during selector close", e);
         }

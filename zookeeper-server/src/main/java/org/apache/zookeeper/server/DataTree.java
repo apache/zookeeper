@@ -1033,14 +1033,10 @@ public class DataTree {
                     break;
             }
         } catch (KeeperException e) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Failed: " + header + ":" + txn, e);
-            }
+            LOG.debug("Failed: {}:{}", header, txn, e);
             rc.err = e.code().intValue();
         } catch (IOException e) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Failed: " + header + ":" + txn, e);
-            }
+          LOG.debug("Failed: {}:{}", header, txn, e);
         }
 
         /*
@@ -1059,8 +1055,8 @@ public class DataTree {
          */
         if (header.getType() == OpCode.create &&
                 rc.err == Code.NODEEXISTS.intValue()) {
-            LOG.debug("Adjusting parent cversion for Txn: " + header.getType() +
-                    " path:" + rc.path + " err: " + rc.err);
+            LOG.debug("Adjusting parent cversion for Txn: {} path: {} err: {}",
+                header.getType(), rc.path, rc.err);
             int lastSlash = rc.path.lastIndexOf('/');
             String parentName = rc.path.substring(0, lastSlash);
             CreateTxn cTxn = (CreateTxn)txn;
@@ -1073,8 +1069,8 @@ public class DataTree {
                 rc.err = e.code().intValue();
             }
         } else if (rc.err != Code.OK.intValue()) {
-            LOG.debug("Ignoring processTxn failure hdr: " + header.getType() +
-                  " : error: " + rc.err);
+            LOG.debug("Ignoring processTxn failure hdr: {} : error: {}",
+                header.getType(), rc.err);
         }
 
         /*

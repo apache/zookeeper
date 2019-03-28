@@ -151,9 +151,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 try {
                     key.cancel();
                 } catch (Exception ex) {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("ignoring exception during selectionkey cancel", ex);
-                    }
+                    LOG.debug("ignoring exception during selectionkey cancel", ex);
                 }
             }
         }
@@ -293,8 +291,9 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                                           + " - max is " + maxClientCnxns );
                 }
 
-                LOG.debug("Accepted socket connection from "
-                         + sc.socket().getRemoteSocketAddress());
+                LOG.debug("Accepted socket connection from {}",
+                    sc.socket().getRemoteSocketAddress());
+
                 sc.configureBlocking(false);
 
                 // Round-robin assign this connection to a selector thread

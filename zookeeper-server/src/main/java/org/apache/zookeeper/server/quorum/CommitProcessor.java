@@ -602,9 +602,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
         if (stopped || request == null) {
             return;
         }
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Committing request:: " + request);
-        }
+        LOG.debug("Committing request:: {}", request);
         request.commitRecvTime = Time.currentElapsedTime();
         ServerMetrics.getMetrics().COMMITS_QUEUED.add(1);
         committedRequests.add(request);
@@ -616,9 +614,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
         if (stopped) {
             return;
         }
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Processing request:: " + request);
-        }
+        LOG.debug("Processing request:: {}", request);
         request.commitProcQueueStartTime = Time.currentElapsedTime();
         queuedRequests.add(request);
         // If the request will block, add it to the queue of blocking requests

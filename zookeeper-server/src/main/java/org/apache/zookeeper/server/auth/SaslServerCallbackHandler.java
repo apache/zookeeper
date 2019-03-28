@@ -109,7 +109,7 @@ public class SaslServerCallbackHandler implements CallbackHandler {
     }
 
     private void handleRealmCallback(RealmCallback rc) {
-        LOG.debug("client supplied realm: " + rc.getDefaultText());
+        LOG.debug("client supplied realm: {}", rc.getDefaultText());
         rc.setText(rc.getDefaultText());
     }
 

@@ -329,7 +329,7 @@ public class QuorumCnxManager {
      * @param sid
      */
     public void testInitiateConnection(long sid) throws Exception {
-        LOG.debug("Opening channel to server " + sid);
+        LOG.debug("Opening channel to server {}", sid);
         Socket sock = new Socket();
         setSockOpts(sock);
         sock.connect(self.getVotingView().get(sid).electionAddr, cnxTO);
@@ -637,13 +637,13 @@ public class QuorumCnxManager {
      */
     synchronized boolean connectOne(long sid, InetSocketAddress electionAddr){
         if (senderWorkerMap.get(sid) != null) {
-            LOG.debug("There is a connection already for server " + sid);
+            LOG.debug("There is a connection already for server {}", sid);
             return true;
         }
 
         Socket sock = null;
         try {
-            LOG.debug("Opening channel to server " + sid);
+            LOG.debug("Opening channel to server {}", sid);
             if (self.isSslQuorum()) {
                  sock = self.getX509Util().createSSLSocket();
              } else {
@@ -657,7 +657,7 @@ public class QuorumCnxManager {
                 LOG.info("SSL handshake complete with {} - {} - {}", sslSock.getRemoteSocketAddress(), sslSock.getSession().getProtocol(), sslSock.getSession().getCipherSuite());
             }
 
-             LOG.debug("Connected to server " + sid);
+            LOG.debug("Connected to server {}", sid);
             // Sends connection request asynchronously if the quorum
             // sasl authentication is enabled. This is required because
             // sasl server authentication process may take few seconds to
@@ -698,7 +698,7 @@ public class QuorumCnxManager {
      */
     synchronized void connectOne(long sid){
         if (senderWorkerMap.get(sid) != null) {
-            LOG.debug("There is a connection already for server " + sid);
+            LOG.debug("There is a connection already for server {}", sid);
             return;
         }
         synchronized (self.QV_LOCK) {
@@ -749,7 +749,7 @@ public class QuorumCnxManager {
      */
     boolean haveDelivered() {
         for (ArrayBlockingQueue<ByteBuffer> queue : queueSendMap.values()) {
-            LOG.debug("Queue size: " + queue.size());
+            LOG.debug("Queue size: {}", queue.size());
             if (queue.size() == 0) {
                 return true;
             }
@@ -787,7 +787,7 @@ public class QuorumCnxManager {
      */
     public void softHalt() {
         for (SendWorker sw : senderWorkerMap.values()) {
-            LOG.debug("Halting sender: " + sw);
+            LOG.debug("Halting sender: {}", sw);
             sw.finish();
         }
     }
@@ -961,9 +961,9 @@ public class QuorumCnxManager {
          */
         void halt(){
             try{
-                LOG.debug("Trying to close listener: " + ss);
+                LOG.debug("Trying to close listener: {}", ss);
                 if(ss != null) {
-                    LOG.debug("Closing listener: "
+                    LOG.debug("Closing listener: {}",
                               + QuorumCnxManager.this.mySid);
                     ss.close();
                 }
@@ -1006,7 +1006,7 @@ public class QuorumCnxManager {
                 closeSocket(sock);
                 running = false;
             }
-            LOG.debug("Address of remote peer: " + this.sid);
+            LOG.debug("Address of remote peer: {}", this.sid);
         }
 
         synchronized void setRecv(RecvWorker recvWorker) {
@@ -1023,7 +1023,7 @@ public class QuorumCnxManager {
         }
 
         synchronized boolean finish() {
-            LOG.debug("Calling finish for " + sid);
+            LOG.debug("Calling finish for {}", sid);
 
             if(!running){
                 /*
@@ -1040,7 +1040,7 @@ public class QuorumCnxManager {
                 recvWorker.finish();
             }
 
-            LOG.debug("Removing entry from senderWorkerMap sid=" + sid);
+            LOG.debug("Removing entry from senderWorkerMap sid={}", sid);
 
             senderWorkerMap.remove(sid, this);
             threadCnt.decrementAndGet();
@@ -1082,7 +1082,7 @@ public class QuorumCnxManager {
                 if (bq == null || isSendQueueEmpty(bq)) {
                    ByteBuffer b = lastMessageSent.get(sid);
                    if (b != null) {
-                       LOG.debug("Attempting to send lastMessage to sid=" + sid);
+                       LOG.debug("Attempting to send lastMessage to sid={}", sid);
                        send(b);
                    }
                 }
@@ -1230,7 +1230,7 @@ public class QuorumCnxManager {
             } catch (NoSuchElementException ne) {
                 // element could be removed by poll()
                 LOG.debug("Trying to remove from an empty " +
-                        "Queue. Ignoring exception " + ne);
+                        "Queue. Ignoring exception.", ne);
             }
         }
         try {
@@ -1292,7 +1292,7 @@ public class QuorumCnxManager {
                 } catch (NoSuchElementException ne) {
                     // element could be removed by poll()
                      LOG.debug("Trying to remove from an empty " +
-                         "recvQueue. Ignoring exception " + ne);
+                         "recvQueue. Ignoring exception.", ne);
                 }
             }
             try {

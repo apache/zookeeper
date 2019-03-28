@@ -938,11 +938,13 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             cnxn.sendBuffer(bb);
 
             if (valid) {
-                LOG.debug("Established session 0x"
-                        + Long.toHexString(cnxn.getSessionId())
-                        + " with negotiated timeout " + cnxn.getSessionTimeout()
-                        + " for client "
-                        + cnxn.getRemoteSocketAddress());
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Established session 0x"
+                            + Long.toHexString(cnxn.getSessionId())
+                            + " with negotiated timeout " + cnxn.getSessionTimeout()
+                            + " for client "
+                            + cnxn.getRemoteSocketAddress());
+                }
                 cnxn.enableRecv();
             } else {
 
@@ -1291,20 +1293,24 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         long sessionId = connReq.getSessionId();
         if (sessionId == 0) {
             long id = createSession(cnxn, passwd, sessionTimeout);
-            LOG.debug("Client attempting to establish new session:" +
-                            " session = 0x{}, zxid = 0x{}, timeout = {}, address = {}",
-                    Long.toHexString(id),
-                    Long.toHexString(connReq.getLastZxidSeen()),
-                    connReq.getTimeOut(),
-                    cnxn.getRemoteSocketAddress());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Client attempting to establish new session:" +
+                                " session = 0x{}, zxid = 0x{}, timeout = {}, address = {}",
+                        Long.toHexString(id),
+                        Long.toHexString(connReq.getLastZxidSeen()),
+                        connReq.getTimeOut(),
+                        cnxn.getRemoteSocketAddress());
+            }
         } else {
             long clientSessionId = connReq.getSessionId();
-            LOG.debug("Client attempting to renew session:" +
-                            " session = 0x{}, zxid = 0x{}, timeout = {}, address = {}",
-                    Long.toHexString(clientSessionId),
-                    Long.toHexString(connReq.getLastZxidSeen()),
-                    connReq.getTimeOut(),
-                    cnxn.getRemoteSocketAddress());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Client attempting to renew session:" +
+                                " session = 0x{}, zxid = 0x{}, timeout = {}, address = {}",
+                        Long.toHexString(clientSessionId),
+                        Long.toHexString(connReq.getLastZxidSeen()),
+                        connReq.getTimeOut(),
+                        cnxn.getRemoteSocketAddress());
+            }
             if (serverCnxnFactory != null) {
                 serverCnxnFactory.closeSession(sessionId, ServerCnxn.DisconnectReason.CLIENT_RECONNECT);
             }
@@ -1392,9 +1398,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 }
             }
             if (authReturn == KeeperException.Code.OK) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Authentication succeeded for scheme: " + scheme);
-                }
+                LOG.debug("Authentication succeeded for scheme: {}", scheme);
                 LOG.info("auth success " + cnxn.getRemoteSocketAddress());
                 ReplyHeader rh = new ReplyHeader(h.getXid(), 0,
                         KeeperException.Code.OK.intValue());
@@ -1460,7 +1464,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         GetSASLRequest clientTokenRecord = new GetSASLRequest();
         ByteBufferInputStream.byteBuffer2Record(incomingBuffer,clientTokenRecord);
         byte[] clientToken = clientTokenRecord.getToken();
-        LOG.debug("Size of client SASL token: " + clientToken.length);
+        LOG.debug("Size of client SASL token: {}", clientToken.length);
         byte[] responseToken = null;
         try {
             ZooKeeperSaslServer saslServer  = cnxn.zooKeeperSaslServer;
@@ -1506,7 +1510,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             LOG.error("cnxn.saslServer is null: cnxn object did not initialize its saslServer properly.");
         }
         if (responseToken != null) {
-            LOG.debug("Size of server SASL response: " + responseToken.length);
+            LOG.debug("Size of server SASL response: {}", responseToken.length);
         }
 
         ReplyHeader replyHeader = new ReplyHeader(requestHeader.getXid(), 0, Code.OK.intValue());

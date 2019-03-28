@@ -191,8 +191,8 @@ public class SaslQuorumAuthLearner implements QuorumAuthLearner {
                     final byte[] retval = Subject.doAs(login.getSubject(),
                             new PrivilegedExceptionAction<byte[]>() {
                                 public byte[] run() throws SaslException {
-                                    LOG.debug("saslClient.evaluateChallenge(len="
-                                                    + saslToken.length + ")");
+                                    LOG.debug("saslClient.evaluateChallenge(len={})",
+                                        saslToken.length);
                                     return saslClient.evaluateChallenge(saslToken);
                                 }
                             });

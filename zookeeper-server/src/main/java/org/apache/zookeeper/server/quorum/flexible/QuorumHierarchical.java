@@ -310,10 +310,10 @@ public class QuorumHierarchical implements QuorumVerifier {
          * Do not consider groups with weight zero
          */
         for(long weight: groupWeight.values()){
-            LOG.debug("Group weight: " + weight);
+            LOG.debug("Group weight: {}", weight);
             if(weight == ((long) 0)){
                 numGroups--;
-                LOG.debug("One zero-weight group: " + 1 + ", " + numGroups);
+                LOG.debug("One zero-weight group: 1, {}", numGroups);
             }
         }
     }
@@ -327,9 +327,9 @@ public class QuorumHierarchical implements QuorumVerifier {
         /*
          * Adds up weights per group
          */
-        if(set.size() == 0) return false;
-        else LOG.debug("Set size: " + set.size());
-        
+        LOG.debug("Set size: {}", set.size());
+        if (set.size() == 0) return false;
+
         for(long sid : set){
             Long gid = serverGroup.get(sid);
             if (gid == null) continue;
