@@ -36,9 +36,9 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
@@ -143,11 +143,7 @@ public class QuorumCnxManager {
     /*
      * Reception queue
      */
-    public final ArrayBlockingQueue<Message> recvQueue;
-    /*
-     * Object to synchronize access to recvQueue
-     */
-    private final Object recvQLock = new Object();
+    public final BlockingQueue<Message> recvQueue;
 
     /*
      * Shutdown flag
@@ -438,7 +434,8 @@ public class QuorumCnxManager {
             }
 
             senderWorkerMap.put(sid, sw);
-            queueSendMap.putIfAbsent(sid, new ArrayBlockingQueue<ByteBuffer>(SEND_CAPACITY));
+
+            queueSendMap.putIfAbsent(sid, new ArrayBlockingQueue<>(SEND_CAPACITY));
 
             sw.start();
             rw.start();
@@ -573,7 +570,7 @@ public class QuorumCnxManager {
 
             senderWorkerMap.put(sid, sw);
 
-            queueSendMap.putIfAbsent(sid, new ArrayBlockingQueue<ByteBuffer>(SEND_CAPACITY));
+            queueSendMap.putIfAbsent(sid, new ArrayBlockingQueue<>(SEND_CAPACITY));
 
             sw.start();
             rw.start();
@@ -601,7 +598,6 @@ public class QuorumCnxManager {
             ArrayBlockingQueue<ByteBuffer> bq = queueSendMap.computeIfAbsent(sid, serverId -> new ArrayBlockingQueue<>(SEND_CAPACITY));
             addToSendQueue(bq, b);
             connectOne(sid);
-
         }
     }
 
@@ -1085,7 +1081,7 @@ public class QuorumCnxManager {
                  * message than that stored in lastMessage. To avoid sending
                  * stale message, we should send the message in the send queue.
                  */
-                ArrayBlockingQueue<ByteBuffer> bq = queueSendMap.get(sid);
+                BlockingQueue<ByteBuffer> bq = queueSendMap.get(sid);
                 if (bq == null || isSendQueueEmpty(bq)) {
                     ByteBuffer b = lastMessageSent.get(sid);
                     if (b != null) {
@@ -1103,7 +1099,7 @@ public class QuorumCnxManager {
 
                     ByteBuffer b = null;
                     try {
-                        ArrayBlockingQueue<ByteBuffer> bq = queueSendMap.get(sid);
+                        BlockingQueue<ByteBuffer> bq = queueSendMap.get(sid);
                         if (bq != null) {
                             b = pollSendQueue(bq, 1000, TimeUnit.MILLISECONDS);
                         } else {
@@ -1233,20 +1229,12 @@ public class QuorumCnxManager {
      * @param buffer
      *          Reference to the buffer to be inserted in the queue
      */
-    private void addToSendQueue(ArrayBlockingQueue<ByteBuffer> queue, ByteBuffer buffer) {
-        if (queue.remainingCapacity() == 0) {
-            try {
-                queue.remove();
-            } catch (NoSuchElementException ne) {
-                // element could be removed by poll()
-                LOG.debug("Trying to remove from an empty Queue. Ignoring exception.", ne);
-            }
-        }
-        try {
-            queue.add(buffer);
-        } catch (IllegalStateException ie) {
-            // This should never happen
-            LOG.error("Unable to insert an element in the queue ", ie);
+    private void addToSendQueue(final BlockingQueue<ByteBuffer> queue,
+        final ByteBuffer buffer) {
+        final boolean success = queue.offer(buffer);
+        if (!success) {
+            queue.poll();
+            queue.offer(buffer);
         }
     }
 
@@ -1257,7 +1245,7 @@ public class QuorumCnxManager {
      * @return
      *      true if the specified queue is empty
      */
-    private boolean isSendQueueEmpty(ArrayBlockingQueue<ByteBuffer> queue) {
+    private boolean isSendQueueEmpty(BlockingQueue<ByteBuffer> queue) {
         return queue.isEmpty();
     }
 
@@ -1266,10 +1254,11 @@ public class QuorumCnxManager {
      * waiting up to the specified wait time if necessary for an element to
      * become available.
      *
-     * {@link ArrayBlockingQueue#poll(long, java.util.concurrent.TimeUnit)}
+     * {@link BlockingQueue#poll(long, java.util.concurrent.TimeUnit)}
      */
-    private ByteBuffer pollSendQueue(ArrayBlockingQueue<ByteBuffer> queue, long timeout, TimeUnit unit) throws InterruptedException {
-        return queue.poll(timeout, unit);
+    private ByteBuffer pollSendQueue(final BlockingQueue<ByteBuffer> queue,
+          final long timeout, final TimeUnit unit) throws InterruptedException {
+       return queue.poll(timeout, unit);
     }
 
     /**
@@ -1292,21 +1281,12 @@ public class QuorumCnxManager {
      * @param msg
      *          Reference to the message to be inserted in the queue
      */
-    public void addToRecvQueue(Message msg) {
-        synchronized (recvQLock) {
-            if (recvQueue.remainingCapacity() == 0) {
-                try {
-                    recvQueue.remove();
-                } catch (NoSuchElementException ne) {
-                    // element could be removed by poll()
-                    LOG.debug("Trying to remove from an empty recvQueue. Ignoring exception.", ne);
-                }
-            }
-            try {
-                recvQueue.add(msg);
-            } catch (IllegalStateException ie) {
-                // This should never happen
-                LOG.error("Unable to insert element in the recvQueue ", ie);
+    public void addToRecvQueue(final Message msg) {
+        synchronized (this.recvQueue) {
+            final boolean success = this.recvQueue.offer(msg);
+            if (!success) {
+              this.recvQueue.poll();
+              this.recvQueue.offer(msg);
             }
         }
     }
@@ -1318,8 +1298,9 @@ public class QuorumCnxManager {
      *
      * {@link ArrayBlockingQueue#poll(long, java.util.concurrent.TimeUnit)}
      */
-    public Message pollRecvQueue(long timeout, TimeUnit unit) throws InterruptedException {
-        return recvQueue.poll(timeout, unit);
+    public Message pollRecvQueue(final long timeout, final TimeUnit unit)
+       throws InterruptedException {
+       return this.recvQueue.poll(timeout, unit);
     }
 
     public boolean connectedToPeer(long peerSid) {
