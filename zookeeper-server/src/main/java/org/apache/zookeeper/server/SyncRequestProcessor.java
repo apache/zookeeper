@@ -24,6 +24,7 @@ import java.util.ArrayDeque;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.slf4j.Logger;
@@ -57,7 +58,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
         new LinkedBlockingQueue<Request>();
     private final RequestProcessor nextProcessor;
 
-    private Thread snapInProcess = null;
+    private final Semaphore snapThreadMutex = new Semaphore(1);
 
     /**
      * Transactions that have been written and are waiting to be flushed to
@@ -128,19 +129,20 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
                         // roll the log
                         zks.getZKDatabase().rollLog();
                         // take a snapshot
-                        if (snapInProcess != null && snapInProcess.isAlive()) {
+                        if (!snapThreadMutex.tryAcquire()) {
                             LOG.warn("Too busy to snap, skipping");
                         } else {
-                            snapInProcess = new ZooKeeperThread("Snapshot Thread") {
-                                    public void run() {
-                                        try {
-                                            zks.takeSnapshot();
-                                        } catch(Exception e) {
-                                            LOG.warn("Unexpected exception", e);
-                                        }
+                            new ZooKeeperThread("Snapshot Thread") {
+                                public void run() {
+                                    try {
+                                        zks.takeSnapshot();
+                                    } catch (Exception e) {
+                                        LOG.warn("Unexpected exception", e);
+                                    } finally {
+                                      snapThreadMutex.release();
                                     }
-                                };
-                            snapInProcess.start();
+                                }
+                            }.start();
                         }
                         logCount = 0;
                     }
