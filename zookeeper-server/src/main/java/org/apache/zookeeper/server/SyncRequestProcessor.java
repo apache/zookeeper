@@ -58,7 +58,6 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
     private final RequestProcessor nextProcessor;
 
     private Thread snapInProcess = null;
-    volatile private boolean running;
 
     /**
      * Transactions that have been written and are waiting to be flushed to
@@ -80,7 +79,6 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
                 .getZooKeeperServerListener());
         this.zks = zks;
         this.nextProcessor = nextProcessor;
-        running = true;
     }
 
     /**
@@ -166,8 +164,6 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
             }
         } catch (Throwable t) {
             handleException(this.getName(), t);
-        } finally{
-            running = false;
         }
         LOG.info("SyncRequestProcessor exited!");
     }
@@ -196,12 +192,11 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
         LOG.info("Shutting down");
         queuedRequests.add(requestOfDeath);
         try {
-            if(running){
-                this.join();
-            }
-            flush();
-        } catch(InterruptedException e) {
+            this.join();
+            this.flush();
+        } catch (InterruptedException e) {
             LOG.warn("Interrupted while wating for " + this + " to finish");
+            Thread.currentThread().interrupt();
         } catch (IOException e) {
             LOG.warn("Got IO exception during shutdown");
         } catch (RequestProcessorException e) {
