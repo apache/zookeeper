@@ -110,7 +110,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
                 } else {
                     si = queuedRequests.poll();
                     if (si == null) {
-                        flush(toFlush);
+                        flush();
                         continue;
                     }
                 }
@@ -157,7 +157,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
                     }
                     toFlush.add(si);
                     if (toFlush.size() > 1000) {
-                        flush(toFlush);
+                        flush();
                     }
                 }
             }
@@ -169,22 +169,24 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
         LOG.info("SyncRequestProcessor exited!");
     }
 
-    private void flush(LinkedList<Request> toFlush)
-        throws IOException, RequestProcessorException
-    {
-        if (toFlush.isEmpty())
-            return;
+    private void flush() throws IOException, RequestProcessorException {
+      if (this.toFlush.isEmpty()) {
+          return;
+      }
 
-        zks.getZKDatabase().commit();
-        while (!toFlush.isEmpty()) {
-            Request i = toFlush.remove();
-            if (nextProcessor != null) {
-                nextProcessor.processRequest(i);
-            }
-        }
-        if (nextProcessor != null && nextProcessor instanceof Flushable) {
-            ((Flushable)nextProcessor).flush();
-        }
+      zks.getZKDatabase().commit();
+
+      if (this.nextProcessor == null) {
+        this.toFlush.clear();
+      } else {
+          while (!this.toFlush.isEmpty()) {
+              final Request i = this.toFlush.remove();
+              this.nextProcessor.processRequest(i);
+          }
+          if (this.nextProcessor instanceof Flushable) {
+              ((Flushable)this.nextProcessor).flush();
+          } 
+      }
     }
 
     public void shutdown() {
@@ -194,9 +196,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
             if(running){
                 this.join();
             }
-            if (!toFlush.isEmpty()) {
-                flush(toFlush);
-            }
+            flush();
         } catch(InterruptedException e) {
             LOG.warn("Interrupted while wating for " + this + " to finish");
         } catch (IOException e) {
