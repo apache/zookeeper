@@ -1513,7 +1513,7 @@ information for ZooKeeper developers.
     The definitive discussion of ZooKeeper design and performance,
     by Yahoo! Research
 
-* *[API Reference](https://zookeeper.apache.org/doc/r3.4.13/api/index.html)* :
+* *[API Reference](https://zookeeper.apache.org/doc/current/api/index.html)* :
     The complete reference to the ZooKeeper API
 
 * *[ZooKeeper Talk at the Hadoup Summit 2008](http://us.dl1.yimg.com/download.yahoo.com/dl/ydn/zookeeper.m4v)* :
