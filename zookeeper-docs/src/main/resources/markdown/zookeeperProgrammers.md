@@ -89,9 +89,9 @@ information. These are:
 The book concludes with an [appendix](#apx_linksToOtherInfo) containing links to other
 useful, ZooKeeper-related information.
 
-Most of information in this document is written to be accessible as
+Most of the information in this document is written to be accessible as
 stand-alone reference material. However, before starting your first
-ZooKeeper application, you should probably at least read the chaptes on
+ZooKeeper application, you should probably at least read the chapters on
 the [ZooKeeper Data Model](#ch_zkDataModel) and [ZooKeeper Basic Operations](#ch_guideToZkOperations). Also,
 the [Simple Programmming
 Example](#ch_programStructureWithExample) _[tbd]_ is helpful for understanding the basic
@@ -331,10 +331,10 @@ following fields:
 
 A ZooKeeper client establishes a session with the ZooKeeper
 service by creating a handle to the service using a language
-binding. Once created, the handle starts of in the CONNECTING state
+binding. Once created, the handle starts off in the CONNECTING state
 and the client library tries to connect to one of the servers that
 make up the ZooKeeper service at which point it switches to the
-CONNECTED state. During normal operation will be in one of these
+CONNECTED state. During normal operation the client handle will be in one of these
 two states. If an unrecoverable error occurs, such as session
 expiration or authentication failure, or if the application explicitly
 closes the handle, the handle will move to the CLOSED state.
@@ -511,7 +511,7 @@ In the first example, each client decides to disconnect with probability 0.4 but
 made, it will try to connect to a random new server and only if it cannot connect to any of the new
 servers will it try to connect to the old ones. After finding a server, or trying all servers in the
 new list and failing to connect, the client moves back to the normal mode of operation where it picks
-an arbitrary server from the connectString and attempt to connect to it. If that fails, is will continue
+an arbitrary server from the connectString and attempts to connect to it. If that fails, it will continue
 trying different random servers in round robin. (see above the algorithm used to initially choose a server)
 
 <a name="ch_zkWatches"></a>
@@ -682,7 +682,7 @@ the _digest_ scheme.
 When a client connects to ZooKeeper and authenticates
 itself, ZooKeeper associates all the ids that correspond to a
 client with the clients connection. These ids are checked against
-the ACLs of znodes when a clients tries to access a node. ACLs are
+the ACLs of znodes when a client tries to access a node. ACLs are
 made up of pairs of _(scheme:expression,
 perms)_. The format of
 the _expression_ is specific to the scheme. For
@@ -1513,7 +1513,7 @@ information for ZooKeeper developers.
     The definitive discussion of ZooKeeper design and performance,
     by Yahoo! Research
 
-* *API Reference _[tbd: find url]_* :
+* *[API Reference](https://zookeeper.apache.org/doc/r3.4.13/api/index.html)* :
     The complete reference to the ZooKeeper API
 
 * *[ZooKeeper Talk at the Hadoup Summit 2008](http://us.dl1.yimg.com/download.yahoo.com/dl/ydn/zookeeper.m4v)* :
