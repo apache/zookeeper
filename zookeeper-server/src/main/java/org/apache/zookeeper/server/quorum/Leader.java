@@ -460,9 +460,8 @@ public class Leader implements LearnerMaster {
                     }
                 } catch (Exception e) {
                     LOG.warn("Exception while accepting follower", e);
-                    if (!fail.get()) {
+                    if (fail.compareAndSet(false, true)) {
                         handleException(getName(), e);
-                        fail.set(true);
                         halt();
                     }
                 } finally {
