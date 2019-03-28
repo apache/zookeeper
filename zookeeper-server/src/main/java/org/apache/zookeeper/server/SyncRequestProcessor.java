@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Objects;
 import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadLocalRandom;
@@ -49,18 +50,24 @@ import org.slf4j.LoggerFactory;
  */
 public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
         RequestProcessor {
+
     private static final Logger LOG = LoggerFactory.getLogger(SyncRequestProcessor.class);
 
-    private final static int FLUSH_SIZE = 1000;
+    private static final int FLUSH_SIZE = 1000;
 
     private static final Request REQUEST_OF_DEATH = Request.requestOfDeath;
 
-    private final ZooKeeperServer zks;
-    private final LinkedBlockingQueue<Request> queuedRequests =
+    /** The number of log entries to log before starting a snapshot */
+    private static int snapCount = ZooKeeperServer.getSnapCount();
+
+    private final BlockingQueue<Request> queuedRequests =
         new LinkedBlockingQueue<Request>();
-    private final RequestProcessor nextProcessor;
 
     private final Semaphore snapThreadMutex = new Semaphore(1);
+
+    private final ZooKeeperServer zks;
+
+    private final RequestProcessor nextProcessor;
 
     /**
      * Transactions that have been written and are waiting to be flushed to
@@ -68,11 +75,6 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
      * invoked after flush returns successfully.
      */
     private final Queue<Request> toFlush = new ArrayDeque<>(FLUSH_SIZE);
-
-    /**
-     * The number of log entries to log before starting a snapshot
-     */
-    private static int snapCount = ZooKeeperServer.getSnapCount();
 
     public SyncRequestProcessor(ZooKeeperServer zks,
             RequestProcessor nextProcessor) {
@@ -206,7 +208,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
         }
     }
 
-    public void processRequest(Request request) {
+    public void processRequest(final Request request) {
         Objects.requireNonNull(request, "Request cannot be null");
         queuedRequests.add(request);
     }
