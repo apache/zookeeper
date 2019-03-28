@@ -912,13 +912,13 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
 
         // This would be done better with a Set but ACL hashcode/equals do not
         // allow for null values
-        final ArrayList<ACL> dedup = new ArrayList<>(acls.size());
+        final ArrayList<ACL> retval = new ArrayList<>(acls.size());
         for (final ACL acl : acls) {
-            if (!dedup.contains(acl)) {
-                dedup.add(acl);
+            if (!retval.contains(acl)) {
+              retval.add(acl);
             }
         }
-        return dedup;
+        return retval;
     }
 
     private void validateCreateRequest(String path, CreateMode createMode, Request request, long ttl)
