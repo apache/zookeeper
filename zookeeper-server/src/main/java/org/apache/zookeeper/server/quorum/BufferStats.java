@@ -19,7 +19,8 @@
 package org.apache.zookeeper.server.quorum;
 
 /**
- * Provides live statistics about Jute buffer usage in term of proposal and client request size.
+ * Provides live statistics about Jute buffer usage in term of proposal and
+ * client request size.
  */
 public class BufferStats {
     public static final int INIT_VALUE = -1;
@@ -40,50 +41,50 @@ public class BufferStats {
     private int maxBufferSize = INIT_VALUE;
 
     /**
-     * Size of the last buffer usage.
+     * Updates statistics by setting the last buffer usage size.
+     *
+     * @param value The last buffer size; must be equal to or greater than 0
      */
-    public synchronized int getLastBufferSize() {
-        return lastBufferSize;
+    public synchronized void setLastBufferSize(final int value) {
+        this.lastBufferSize = value;
+        this.minBufferSize = minBufferSize < 0 ? value : Math.min(minBufferSize, value);
+        this.maxBufferSize = Math.max(maxBufferSize, value);
     }
 
     /**
-     * Updates statistics by setting the last buffer usage size.
+     * Size of the last buffer usage.
      */
-    public synchronized void setLastBufferSize(int value) {
-        lastBufferSize = value;
-        if (minBufferSize == INIT_VALUE || value < minBufferSize) {
-            minBufferSize = value;
-        }
-        if (value > maxBufferSize) {
-            maxBufferSize = value;
-        }
+    public synchronized int getLastBufferSize() {
+        return this.lastBufferSize;
     }
 
     /**
      * Size of the smallest buffer usage.
      */
     public synchronized int getMinBufferSize() {
-        return minBufferSize;
+        return this.minBufferSize;
     }
 
     /**
      * Size of the largest buffer usage.
      */
     public synchronized int getMaxBufferSize() {
-        return maxBufferSize;
+        return this.maxBufferSize;
     }
 
     /**
      * Reset statistics.
      */
     public synchronized void reset() {
-        lastBufferSize = INIT_VALUE;
-        minBufferSize = INIT_VALUE;
-        maxBufferSize = INIT_VALUE;
+        this.lastBufferSize = INIT_VALUE;
+        this.minBufferSize = INIT_VALUE;
+        this.maxBufferSize = INIT_VALUE;
     }
 
     @Override
     public synchronized String toString() {
-        return String.format("%d/%d/%d", lastBufferSize, minBufferSize, maxBufferSize);
+    return new StringBuilder(40).append(this.lastBufferSize).append('/')
+        .append(this.minBufferSize).append('/').append(this.maxBufferSize)
+        .toString();
     }
 }
