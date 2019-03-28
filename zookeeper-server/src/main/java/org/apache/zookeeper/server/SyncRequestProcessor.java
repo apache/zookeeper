@@ -22,8 +22,8 @@ import java.io.Flushable;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Objects;
-import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,7 +62,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
      * invoked after flush returns successfully.
      */
     private final LinkedList<Request> toFlush = new LinkedList<Request>();
-    private final Random r = new Random();
+
     /**
      * The number of log entries to log before starting a snapshot
      */
@@ -103,7 +103,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
 
             // we do this in an attempt to ensure that not all of the servers
             // in the ensemble take a snapshot at the same time
-            int randRoll = r.nextInt(snapCount/2);
+            int randRoll = ThreadLocalRandom.current().nextInt(snapCount / 2, snapCount);
             while (true) {
                 Request si = null;
                 if (toFlush.isEmpty()) {
@@ -121,8 +121,8 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
                 // track the number of records written to the log
                 if (zks.getZKDatabase().append(si)) {
                     logCount++;
-                    if (logCount > (snapCount / 2 + randRoll)) {
-                        randRoll = r.nextInt(snapCount/2);
+                    if (logCount > randRoll) {
+                        randRoll = ThreadLocalRandom.current().nextInt(snapCount / 2, snapCount);
                         // roll the log
                         zks.getZKDatabase().rollLog();
                         // take a snapshot
