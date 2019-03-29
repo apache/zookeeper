@@ -1233,6 +1233,7 @@ public class QuorumCnxManager {
         final ByteBuffer buffer) {
         final boolean success = queue.offer(buffer);
         if (!success) {
+            LOG.debug("Could not insert buffer into queue. Discarding one.");
             queue.poll();
             queue.offer(buffer);
         }
@@ -1245,7 +1246,7 @@ public class QuorumCnxManager {
      * @return
      *      true if the specified queue is empty
      */
-    private boolean isSendQueueEmpty(BlockingQueue<ByteBuffer> queue) {
+    private boolean isSendQueueEmpty(final BlockingQueue<ByteBuffer> queue) {
         return queue.isEmpty();
     }
 
@@ -1285,6 +1286,7 @@ public class QuorumCnxManager {
         synchronized (this.recvQueue) {
             final boolean success = this.recvQueue.offer(msg);
             if (!success) {
+              LOG.debug("Could not insert buffer into recv queue. Discarding one.");
               this.recvQueue.poll();
               this.recvQueue.offer(msg);
             }
