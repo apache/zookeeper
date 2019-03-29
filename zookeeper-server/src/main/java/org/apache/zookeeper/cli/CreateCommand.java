@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.cli;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -112,7 +113,7 @@ public class CreateCommand extends CliCommand {
         String path = args[1];
         byte[] data = null;
         if (args.length > 2) {
-            data = args[2].getBytes();
+            data = args[2].getBytes(StandardCharsets.UTF_8);
         }
         List<ACL> acl = ZooDefs.Ids.OPEN_ACL_UNSAFE;
         if (args.length > 3) {

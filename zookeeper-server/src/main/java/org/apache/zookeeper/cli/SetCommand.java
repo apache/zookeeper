@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.cli;
 
+import java.nio.charset.StandardCharsets;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
@@ -62,7 +63,7 @@ public class SetCommand extends CliCommand {
     @Override
     public boolean exec() throws CliException {
         String path = args[1];
-        byte[] data = args[2].getBytes();
+        byte[] data = args[2].getBytes(StandardCharsets.UTF_8);
         int version;
         if (cl.hasOption("v")) {
             version = Integer.parseInt(cl.getOptionValue("v"));

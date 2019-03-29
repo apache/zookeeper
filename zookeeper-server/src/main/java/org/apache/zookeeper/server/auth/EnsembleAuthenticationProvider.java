@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.auth;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 import org.apache.zookeeper.KeeperException;
@@ -76,7 +77,7 @@ public class EnsembleAuthenticationProvider implements AuthenticationProvider {
             return KeeperException.Code.OK;
         }
 
-        String receivedEnsembleName = new String(authData);
+        String receivedEnsembleName = new String(authData, StandardCharsets.UTF_8);
 
         if (ensembleNames == null) {
             ServerMetrics.getMetrics().ENSEMBLE_AUTH_SKIP.add(1);

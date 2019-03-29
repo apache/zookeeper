@@ -22,6 +22,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -391,10 +392,10 @@ public class DataTree {
             return;
         }
         synchronized (node) {
-            updatedStat = new StatsTrack(new String(node.data));
+            updatedStat = new StatsTrack(new String(node.data, StandardCharsets.UTF_8));
             updatedStat.setCount(updatedStat.getCount() + countDiff);
             updatedStat.setBytes(updatedStat.getBytes() + bytesDiff);
-            node.data = updatedStat.toString().getBytes();
+            node.data = updatedStat.toString().getBytes(StandardCharsets.UTF_8);
         }
         // now check if the counts match the quota
         String quotaNode = Quotas.quotaPath(lastPrefix);
@@ -406,7 +407,7 @@ public class DataTree {
             return;
         }
         synchronized (node) {
-            thisStats = new StatsTrack(new String(node.data));
+            thisStats = new StatsTrack(new String(node.data, StandardCharsets.UTF_8));
         }
         if (thisStats.getCount() > -1 && (thisStats.getCount() < updatedStat.getCount())) {
             LOG.warn(
@@ -1260,7 +1261,7 @@ public class DataTree {
         }
         synchronized (node) {
             nodes.preChange(statPath, node);
-            node.data = strack.toString().getBytes();
+            node.data = strack.toString().getBytes(StandardCharsets.UTF_8);
             nodes.postChange(statPath, node);
         }
     }

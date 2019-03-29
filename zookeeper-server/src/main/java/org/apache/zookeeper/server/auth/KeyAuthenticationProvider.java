@@ -92,22 +92,11 @@ public class KeyAuthenticationProvider extends ServerAuthenticationProvider {
     @Override
     public KeeperException.Code handleAuthentication(ServerObjs serverObjs, byte[] authData) {
         byte[] key = getKey(serverObjs.getZks());
-        String authStr = "";
+        String authStr = new String(authData, StandardCharsets.UTF_8);
         String keyStr = "";
-        try {
-            authStr = new String(authData, StandardCharsets.UTF_8);
-        } catch (Exception e) {
-            LOG.error("UTF-8", e);
-        }
         if (key != null) {
             if (!validate(key, authData)) {
-                try {
-                    keyStr = new String(key, StandardCharsets.UTF_8);
-                } catch (Exception e) {
-                    LOG.error("UTF-8", e);
-                    // empty key
-                    keyStr = authStr;
-                }
+                keyStr = new String(key, StandardCharsets.UTF_8);
                 LOG.debug("KeyAuthenticationProvider handleAuthentication ({}, {}) -> FAIL.\n", keyStr, authStr);
                 return KeeperException.Code.AUTHFAILED;
             }

@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.cli;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.cli.CommandLine;
@@ -169,21 +170,21 @@ public class SetQuotaCommand extends CliCommand {
         strack.setBytes(bytes);
         strack.setCount(numNodes);
         try {
-            zk.create(quotaPath, strack.toString().getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk.create(quotaPath, strack.toString().getBytes(UTF_8), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             StatsTrack stats = new StatsTrack(null);
             stats.setBytes(0L);
             stats.setCount(0);
-            zk.create(statPath, stats.toString().getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            zk.create(statPath, stats.toString().getBytes(UTF_8), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         } catch (KeeperException.NodeExistsException ne) {
             byte[] data = zk.getData(quotaPath, false, new Stat());
-            StatsTrack strackC = new StatsTrack(new String(data));
+            StatsTrack strackC = new StatsTrack(new String(data, UTF_8));
             if (bytes != -1L) {
                 strackC.setBytes(bytes);
             }
             if (numNodes != -1) {
                 strackC.setCount(numNodes);
             }
-            zk.setData(quotaPath, strackC.toString().getBytes(), -1);
+            zk.setData(quotaPath, strackC.toString().getBytes(UTF_8), -1);
         }
         return true;
     }

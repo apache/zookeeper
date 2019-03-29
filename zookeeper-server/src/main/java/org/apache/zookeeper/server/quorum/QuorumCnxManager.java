@@ -35,6 +35,7 @@ import java.net.UnknownHostException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.UnresolvedAddressException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -255,10 +256,9 @@ public class QuorumCnxManager {
 
             // in PROTOCOL_VERSION_V1 we expect to get a single address here represented as a 'host:port' string
             // in PROTOCOL_VERSION_V2 we expect to get multiple addresses like: 'host1:port1|host2:port2|...'
-            String[] addressStrings = new String(b).split("\\|");
+            String[] addressStrings = new String(b, StandardCharsets.UTF_8).split("\\|");
             List<InetSocketAddress> addresses = new ArrayList<>(addressStrings.length);
             for (String addr : addressStrings) {
-
                 String[] host_port;
                 try {
                     host_port = ConfigUtils.getHostAndPort(addr);

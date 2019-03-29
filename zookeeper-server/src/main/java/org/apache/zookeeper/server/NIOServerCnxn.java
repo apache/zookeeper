@@ -28,6 +28,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.CancelledKeyException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.StandardCharsets;
 import java.security.cert.Certificate;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -442,7 +443,7 @@ public class NIOServerCnxn extends ServerCnxn {
          */
         private void checkFlush(boolean force) {
             if ((force && sb.length() > 0) || sb.length() > 2048) {
-                sendBufferSync(ByteBuffer.wrap(sb.toString().getBytes()));
+                sendBufferSync(ByteBuffer.wrap(sb.toString().getBytes(StandardCharsets.UTF_8)));
                 // clear our internal buffer
                 sb.setLength(0);
             }

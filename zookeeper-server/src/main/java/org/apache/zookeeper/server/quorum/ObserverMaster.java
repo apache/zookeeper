@@ -26,6 +26,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -343,7 +344,7 @@ public class ObserverMaster extends LearnerMaster implements Runnable {
 
     @Override
     public byte[] getQuorumVerifierBytes() {
-        return self.getLastSeenQuorumVerifier().toString().getBytes();
+        return self.getLastSeenQuorumVerifier().toString().getBytes(StandardCharsets.UTF_8);
     }
 
     @Override
