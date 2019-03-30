@@ -22,6 +22,7 @@ import java.io.PrintWriter;
 
 import org.apache.zookeeper.Version;
 import org.apache.zookeeper.server.ServerCnxn;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.quorum.Leader;
@@ -80,6 +81,20 @@ public class MonitorCommand extends AbstractFourLetterCommand {
             print("max_proposal_size", leader.getProposalStats().getMaxBufferSize());
             print("min_proposal_size", leader.getProposalStats().getMinBufferSize());
         }
+
+        ServerMetrics.getMetrics()
+                    .getMetricsProvider()
+                    .dump(
+                    (metric, value) -> {
+                        if (value instanceof Long
+                                || value instanceof Integer) {
+                            print(metric, ((Number) value).longValue());
+                        } else if (value instanceof Number) {
+                            print(metric, ((Number) value).doubleValue());                        
+                        } else {
+                            print(metric, value + "");
+                        }
+                    });
     }
 
     private void print(String key, long number) {
