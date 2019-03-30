@@ -17,8 +17,6 @@
  */
 package org.apache.zookeeper.metrics;
 
-import java.util.Collections;
-import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;

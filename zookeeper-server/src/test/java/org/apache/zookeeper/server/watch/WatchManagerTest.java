@@ -34,6 +34,7 @@ import org.apache.zookeeper.server.DumbWatcher;
 import org.apache.zookeeper.server.ServerCnxn;
 
 import org.apache.zookeeper.ZKTestCase;
+import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.junit.Assert;
 import org.junit.Before;
@@ -409,10 +410,7 @@ public class WatchManagerTest extends ZKTestCase {
     }
 
     private void checkMetrics(String metricName, long min, long max, double avg, long cnt, long sum){
-        Map<String, Object> values = new HashMap<>();
-        ServerMetrics.getMetrics().getMetricsProvider().dump((metric, value) -> {
-            values.put(metric, value);
-        });
+        Map<String, Object> values = MetricsUtils.currentServerMetrics();
 
         Assert.assertEquals(min, values.get("min_" + metricName));
         Assert.assertEquals(max, values.get("max_" + metricName));
