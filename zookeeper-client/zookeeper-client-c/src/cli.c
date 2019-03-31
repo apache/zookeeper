@@ -667,6 +667,7 @@ int handleBatchMode(char* arg, char* buf, size_t maxlen) {
     if(strncmp("cmd:", arg, 4) != 0){
         return 0;        
     }
+    // we must leave space for the NULL terminator
     if (cmdlen >= maxlen) {
           fprintf(stderr,
                   "Command length %zu exceeds max length of %zu\n",
