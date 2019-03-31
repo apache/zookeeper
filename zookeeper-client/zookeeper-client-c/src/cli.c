@@ -674,10 +674,6 @@ int handleBatchMode(char* arg, char* buf, size_t maxlen) {
                   maxlen);
           return -1;
     }
-    fprintf(stderr,
-                  "Command length %zu, max length of %zu\n",
-                  cmdlen,
-                  maxlen);
     memcpy(cmd, arg + 4, cmdlen);
     return 1;
 }
