@@ -32,6 +32,7 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
+import java.nio.channels.UnresolvedAddressException;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
