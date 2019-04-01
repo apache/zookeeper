@@ -326,9 +326,9 @@ public interface AsyncCallback {
          * <p/>
          * On failure, rc is a failure code in
          * {@link org.apache.zookeeper.KeeperException.Code}.
-         * All opResults are
+         * Either opResults is null, or all opResults are
          * {@link org.apache.zookeeper.OpResult.ErrorResult}.
-         * All operations will be rollback-ed even if operations
+         * All operations will be rolled back even if operations
          * before the failing one were successful.
          *
          * @param rc   The return code or the result of the call.
