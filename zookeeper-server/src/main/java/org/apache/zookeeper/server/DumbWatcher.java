@@ -26,8 +26,7 @@ import java.security.cert.Certificate;
 import org.apache.jute.Record;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.proto.ReplyHeader;
-import org.apache.zookeeper.server.ServerCnxn;
-import org.apache.zookeeper.server.ServerStats;
+import org.apache.zookeeper.data.Stat;
 
 /**
  * A empty watcher implementation used in bench and unit test.
@@ -55,10 +54,10 @@ public class DumbWatcher extends ServerCnxn {
     int getSessionTimeout() { return 0; }
 
     @Override
-    void close() { }
+    public void close() { }
 
     @Override
-    public void sendResponse(ReplyHeader h, Record r, String tag) throws IOException { }
+    public void sendResponse(ReplyHeader h, Record r, String tag, String cacheKey, Stat stat) throws IOException { }
 
     @Override
     public void sendCloseSession() { }
@@ -70,7 +69,7 @@ public class DumbWatcher extends ServerCnxn {
     void setSessionId(long sessionId) { }
 
     @Override
-    void sendBuffer(ByteBuffer closeConn) { }
+    void sendBuffer(ByteBuffer... closeConn) { }
 
     @Override
     void enableRecv() { }

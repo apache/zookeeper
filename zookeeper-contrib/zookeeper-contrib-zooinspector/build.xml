@@ -15,7 +15,7 @@
    limitations under the License.
 -->
 
-<project name="ZooInspector" default="jar">
+<project name="zooinspector" default="jar">
 	<import file="../build-contrib.xml" />
 
 
@@ -127,18 +127,18 @@
 
 	<target name="package" depends="jar, zookeeperbuildcontrib.package" unless="skip.contrib">
 
-		<copy file="${basedir}/build.xml" todir="${dist.dir}/contrib/${name}" />
+		<copy file="${basedir}/build.xml" todir="${dist.dir}/zookeeper-contrib/zookeeper-contrib-${name}" />
 
-		<mkdir dir="${dist.dir}/contrib/${name}/src" />
-		<copy todir="${dist.dir}/contrib/${name}/src">
+		<mkdir dir="${dist.dir}/zookeeper-contrib/zookeeper-contrib-${name}/src" />
+		<copy todir="${dist.dir}/zookeeper-contrib/zookeeper-contrib-${name}/src">
 			<fileset dir="${basedir}/src" />
 		</copy>
-		<mkdir dir="${dist.dir}/contrib/${name}/licences" />
-		<copy todir="${dist.dir}/contrib/${name}/licences">
+		<mkdir dir="${dist.dir}/zookeeper-contrib/zookeeper-contrib-${name}/licences" />
+		<copy todir="${dist.dir}/zookeeper-contrib/zookeeper-contrib-${name}/licences">
 			<fileset dir="${basedir}/licences" />
 		</copy>
-		<mkdir dir="${dist.dir}/contrib/${name}/config" />
-		<copy todir="${dist.dir}/contrib/${name}/config">
+		<mkdir dir="${dist.dir}/zookeeper-contrib/zookeeper-contrib-${name}/config" />
+		<copy todir="${dist.dir}/zookeeper-contrib/zookeeper-contrib-${name}/config">
 			<fileset dir="${basedir}/src/main/resources">
 				<include name="defaultConnectionSettings.cfg" />
 				<include name="defaultNodeViewers.cfg" />

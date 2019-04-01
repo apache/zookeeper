@@ -30,7 +30,7 @@ public class SetCommand extends CliCommand {
     private String[] args;
     private CommandLine cl;
 
-    {
+    static {
         options.addOption("s", false, "stats");
         options.addOption("v", true, "version");
     }

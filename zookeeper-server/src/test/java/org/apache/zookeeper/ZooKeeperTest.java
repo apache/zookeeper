@@ -29,6 +29,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.cli.*;
+import org.apache.zookeeper.client.ConnectStringParser;
+import org.apache.zookeeper.client.HostProvider;
+import org.apache.zookeeper.client.StaticHostProvider;
+import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.test.ClientBase;
@@ -591,4 +595,28 @@ public class ZooKeeperTest extends ClientBase {
         // /e is unset, its acl should remain the same.
         Assert.assertEquals(Ids.OPEN_ACL_UNSAFE, zk.getACL("/e", new Stat()));
     }
+
+    @Test
+    public void testClientReconnectWithZKClientConfig() throws Exception {
+        ZooKeeper zk = null;
+        ZooKeeper newZKClient = null;
+        try {
+            zk = createClient();
+            ZKClientConfig clientConfig = new ZKClientConfig();
+            clientConfig.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET,
+                    "org.apache.zookeeper.ClientCnxnSocketNetty");
+            CountdownWatcher watcher = new CountdownWatcher();
+            HostProvider aHostProvider = new StaticHostProvider(
+                    new ConnectStringParser(hostPort).getServerAddresses());
+            newZKClient = new ZooKeeper(hostPort, zk.getSessionTimeout(), watcher,
+                    zk.getSessionId(), zk.getSessionPasswd(), false, aHostProvider, clientConfig);
+            watcher.waitForConnected(CONNECTION_TIMEOUT);
+            assertEquals("Old client session id and new clinet session id must be same",
+                    zk.getSessionId(), newZKClient.getSessionId());
+        } finally {
+            zk.close();
+            newZKClient.close();
+        }
+    }
+
 }

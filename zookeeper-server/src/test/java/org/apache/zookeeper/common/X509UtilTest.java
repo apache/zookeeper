@@ -17,10 +17,26 @@
  */
 package org.apache.zookeeper.common;
 
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.util.Collection;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
+import javax.net.ssl.HandshakeCompletedEvent;
+import javax.net.ssl.HandshakeCompletedListener;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.X509KeyManager;
@@ -176,8 +192,8 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
 
     @Test(timeout = 5000)
     public void testCreateSSLServerSocketWithPort() throws Exception {
-        int port = PortAssignment.unique();
         setCustomCipherSuites();
+        int port = PortAssignment.unique();
         SSLServerSocket sslServerSocket = x509Util.createSSLServerSocket(port);
         Assert.assertEquals(sslServerSocket.getLocalPort(), port);
         Assert.assertArrayEquals(customCipherSuites, sslServerSocket.getEnabledCipherSuites());
@@ -389,10 +405,160 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
         }
     }
 
+    @Test(expected = X509Exception.SSLContextException.class)
+    public void testCreateSSLContext_invalidCustomSSLContextClass() throws Exception {
+        ZKConfig zkConfig = new ZKConfig();
+        ClientX509Util clientX509Util = new ClientX509Util();
+        zkConfig.setProperty(clientX509Util.getSslContextSupplierClassProperty(), String.class.getCanonicalName());
+        clientX509Util.createSSLContext(zkConfig);
+    }
+
+    @Test
+    public void testCreateSSLContext_validCustomSSLContextClass() throws Exception {
+        ZKConfig zkConfig = new ZKConfig();
+        ClientX509Util clientX509Util = new ClientX509Util();
+        zkConfig.setProperty(clientX509Util.getSslContextSupplierClassProperty(), SslContextSupplier.class.getName());
+        final SSLContext sslContext = clientX509Util.createSSLContext(zkConfig);
+        Assert.assertEquals(SSLContext.getDefault(), sslContext);
+    }
+
+    private static void forceClose(Socket s) {
+        if (s == null || s.isClosed()) {
+            return;
+        }
+        try {
+            s.close();
+        } catch (IOException e) {
+        }
+    }
+
+    private static void forceClose(ServerSocket s) {
+        if (s == null || s.isClosed()) {
+            return;
+        }
+        try {
+            s.close();
+        } catch (IOException e) {
+        }
+    }
+
+    // This test makes sure that client-initiated TLS renegotiation does not
+    // succeed. We explicitly disable it at the top of X509Util.java.
+    @Test(expected = SSLHandshakeException.class)
+    public void testClientRenegotiationFails() throws Throwable {
+        int port = PortAssignment.unique();
+        ExecutorService workerPool = Executors.newCachedThreadPool();
+        final SSLServerSocket listeningSocket = x509Util.createSSLServerSocket();
+        SSLSocket clientSocket = null;
+        SSLSocket serverSocket = null;
+        final AtomicInteger handshakesCompleted = new AtomicInteger(0);
+        try {
+            InetSocketAddress localServerAddress = new InetSocketAddress(
+                    InetAddress.getLoopbackAddress(), port);
+            listeningSocket.bind(localServerAddress);
+            Future<SSLSocket> acceptFuture;
+            acceptFuture = workerPool.submit(new Callable<SSLSocket>() {
+                @Override
+                public SSLSocket call() throws Exception {
+                    SSLSocket sslSocket = (SSLSocket) listeningSocket.accept();
+                    sslSocket.addHandshakeCompletedListener(new HandshakeCompletedListener() {
+                        @Override
+                        public void handshakeCompleted(HandshakeCompletedEvent handshakeCompletedEvent) {
+                            handshakesCompleted.getAndIncrement();
+                        }
+                    });
+                    Assert.assertEquals(1, sslSocket.getInputStream().read());
+                    try {
+                        // 2nd read is after the renegotiation attempt and will fail
+                        sslSocket.getInputStream().read();
+                        return sslSocket;
+                    } catch (Exception e) {
+                        forceClose(sslSocket);
+                        throw e;
+                    }
+                }
+            });
+            clientSocket = x509Util.createSSLSocket();
+            clientSocket.connect(localServerAddress);
+            clientSocket.getOutputStream().write(1);
+            // Attempt to renegotiate after establishing the connection
+            clientSocket.startHandshake();
+            clientSocket.getOutputStream().write(1);
+            // The exception is thrown on the server side, we need to unwrap it
+            try {
+                serverSocket = acceptFuture.get();
+            } catch (ExecutionException e) {
+                throw e.getCause();
+            }
+        } finally {
+            forceClose(serverSocket);
+            forceClose(clientSocket);
+            forceClose(listeningSocket);
+            workerPool.shutdown();
+            // Make sure the first handshake completed and only the second
+            // one failed.
+            Assert.assertEquals(1, handshakesCompleted.get());
+        }
+    }
+
+    @Test
+    public void testGetDefaultCipherSuitesJava8() {
+        String[] cipherSuites = X509Util.getDefaultCipherSuitesForJavaVersion("1.8");
+        // Java 8 default should have the CBC suites first
+        Assert.assertTrue(cipherSuites[0].contains("CBC"));
+    }
+
+    @Test
+    public void testGetDefaultCipherSuitesJava9() {
+        String[] cipherSuites = X509Util.getDefaultCipherSuitesForJavaVersion("9");
+        // Java 9+ default should have the GCM suites first
+        Assert.assertTrue(cipherSuites[0].contains("GCM"));
+    }
+
+    @Test
+    public void testGetDefaultCipherSuitesJava10() {
+        String[] cipherSuites = X509Util.getDefaultCipherSuitesForJavaVersion("10");
+        // Java 9+ default should have the GCM suites first
+        Assert.assertTrue(cipherSuites[0].contains("GCM"));
+    }
+
+    @Test
+    public void testGetDefaultCipherSuitesJava11() {
+        String[] cipherSuites = X509Util.getDefaultCipherSuitesForJavaVersion("11");
+        // Java 9+ default should have the GCM suites first
+        Assert.assertTrue(cipherSuites[0].contains("GCM"));
+    }
+
+    @Test
+    public void testGetDefaultCipherSuitesUnknownVersion() {
+        String[] cipherSuites = X509Util.getDefaultCipherSuitesForJavaVersion("notaversion");
+        // If version can't be parsed, use the more conservative Java 8 default
+        Assert.assertTrue(cipherSuites[0].contains("CBC"));
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testGetDefaultCipherSuitesNullVersion() {
+        X509Util.getDefaultCipherSuitesForJavaVersion(null);
+    }
+
     // Warning: this will reset the x509Util
     private void setCustomCipherSuites() {
         System.setProperty(x509Util.getCipherSuitesProperty(), customCipherSuites[0] + "," + customCipherSuites[1]);
         x509Util.close(); // remember to close old instance before replacing it
         x509Util = new ClientX509Util();
     }
+
+    public static class SslContextSupplier implements Supplier<SSLContext> {
+
+        @Override
+        public SSLContext get() {
+            try {
+                return SSLContext.getDefault();
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+    }
+
 }

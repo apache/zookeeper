@@ -664,11 +664,12 @@ public class QuorumCnxManager {
                 sslSock.connect(address, cnxTO);
                 sslSock.startHandshake();
                 sock = sslSock;
+                LOG.info("SSL handshake complete with {} - {} - {}", sslSock.getRemoteSocketAddress(),
+                        sslSock.getSession().getProtocol(), sslSock.getSession().getCipherSuite());
             } else {
                 sock = new Socket();
                 setSockOpts(sock);
                 sock.connect(address, cnxTO);
-
             }
             LOG.debug("Connected to server " + sid);
             // Sends connection request asynchronously if the quorum
@@ -681,6 +682,15 @@ public class QuorumCnxManager {
                 initiateConnection(sock, sid);
             }
             return true;
+        } catch (UnresolvedAddressException e) {
+            // Sun doesn't include the address that causes this
+            // exception to be thrown, also UAE cannot be wrapped cleanly
+            // so we log the exception in order to capture this critical
+            // detail.
+            LOG.warn("Cannot open channel to " + sid
+                    + " at election address " + electionAddr, e);
+            closeSocket(sock);
+            throw e;
         } catch (X509Exception e) {
             LOG.warn("Cannot open secure channel to " + sid
                     + " at election address " + electionAddr, e);
@@ -848,7 +858,7 @@ public class QuorumCnxManager {
     }
 
     /**
-     * Thread to listen on some port
+     * Thread to listen on some ports
      */
     public class Listener extends ZooKeeperThread {
 
@@ -861,7 +871,6 @@ public class QuorumCnxManager {
             super("ListenerThread");
             bindException = new AtomicBoolean(false);
         }
-
 
         @Override
         public void run() {
@@ -1039,8 +1048,10 @@ public class QuorumCnxManager {
                 ServerSocket socket;
 
                 if (portUnification) {
+                    LOG.info("Creating TLS-enabled quorum server socket");
                     socket = new UnifiedServerSocket(self.getX509Util(), true);
                 } else if (sslQuorum) {
+                    LOG.info("Creating TLS-only quorum server socket");
                     socket = new UnifiedServerSocket(self.getX509Util(), false);
                 } else {
                     socket = new ServerSocket();
@@ -1051,9 +1062,7 @@ public class QuorumCnxManager {
 
                 return socket;
             }
-
         }
-
     }
 
     /**

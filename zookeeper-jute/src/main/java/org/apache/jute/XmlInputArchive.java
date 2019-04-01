@@ -143,6 +143,8 @@ class XmlInputArchive implements InputArchive {
         valList = new ArrayList<Value>();
         DefaultHandler handler = new XMLParser(valList);
         SAXParserFactory factory = SAXParserFactory.newInstance();
+        factory.setFeature(javax.xml.XMLConstants.FEATURE_SECURE_PROCESSING, Boolean.TRUE);
+        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
         SAXParser parser = factory.newSAXParser();
         parser.parse(in, handler);
         vLen = valList.size();

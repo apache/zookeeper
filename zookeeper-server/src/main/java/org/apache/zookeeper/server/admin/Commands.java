@@ -354,6 +354,7 @@ public class Commands {
             OSMXBean osMbean = new OSMXBean();
             response.put("open_file_descriptor_count", osMbean.getOpenFileDescriptorCount());
             response.put("max_file_descriptor_count", osMbean.getMaxFileDescriptorCount());
+            response.put("connection_drop_probability", zkServer.getConnectionDropChance());
 
             response.put("last_client_response_size", stats.getClientResponseStats().getLastBufferSize());
             response.put("max_client_response_size", stats.getClientResponseStats().getMaxBufferSize());
@@ -369,6 +370,7 @@ public class Commands {
 
                 response.put("learners", leader.getLearners().size());
                 response.put("synced_followers", leader.getForwardingFollowers().size());
+                response.put("synced_non_voting_followers", leader.getNonVotingFollowers().size());
                 response.put("synced_observers", leader.getObservingLearners().size());
                 response.put("pending_syncs", leader.getNumPendingSyncs());
                 response.put("leader_uptime", leader.getUptime());

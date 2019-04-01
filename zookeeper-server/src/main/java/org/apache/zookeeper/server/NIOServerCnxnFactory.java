@@ -310,6 +310,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 acceptErrorLogger.flush();
             } catch (IOException e) {
                 // accept, maxClientCnxns, configureBlocking
+                ServerMetrics.CONNECTION_REJECTED.add(1);
                 acceptErrorLogger.rateLimitLog(
                     "Error accepting new connection: " + e.getMessage());
                 fastCloseSock(sc);
@@ -609,6 +610,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         new ConcurrentHashMap<InetAddress, Set<NIOServerCnxn>>( );
 
     protected int maxClientCnxns = 60;
+    int listenBacklog = -1;
 
     int sessionlessCnxnTimeout;
     private ExpiryQueue<NIOServerCnxn> cnxnExpiryQueue;
@@ -636,7 +638,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         new HashSet<SelectorThread>();
 
     @Override
-    public void configure(InetSocketAddress addr, int maxcc, boolean secure) throws IOException {
+    public void configure(InetSocketAddress addr, int maxcc, int backlog, boolean secure) throws IOException {
         if (secure) {
             throw new UnsupportedOperationException("SSL isn't supported in NIOServerCnxn");
         }
@@ -678,10 +680,15 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             selectorThreads.add(new SelectorThread(i));
         }
 
+        listenBacklog = backlog;
         this.ss = ServerSocketChannel.open();
         ss.socket().setReuseAddress(true);
         LOG.info("binding to port " + addr);
-        ss.socket().bind(addr);
+        if (listenBacklog == -1) {
+          ss.socket().bind(addr);
+        } else {
+          ss.socket().bind(addr, listenBacklog);
+        }
         ss.configureBlocking(false);
         acceptThread = new AcceptThread(ss, addr, selectorThreads);
     }
@@ -729,6 +736,11 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     /** {@inheritDoc} */
     public void setMaxClientCnxnsPerHost(int max) {
         maxClientCnxns = max;
+    }
+
+    /** {@inheritDoc} */
+    public int getSocketListenBacklog() {
+        return listenBacklog;
     }
 
     @Override

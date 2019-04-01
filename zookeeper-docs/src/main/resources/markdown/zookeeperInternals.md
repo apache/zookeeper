@@ -157,7 +157,7 @@ Leader activation includes leader election. We currently have two leader electio
 algorithms in ZooKeeper: LeaderElection and FastLeaderElection (AuthFastLeaderElection
 is a variant of FastLeaderElection that uses UDP and allows servers to perform a simple
 form of authentication to avoid IP spoofing). ZooKeeper messaging doesn't care about the
-exact method of electing a leader has long as the following holds:
+exact method of electing a leader as long as the following holds:
 
 * The leader has seen the highest zxid of all the followers.
 * A quorum of servers have committed to following the leader.
@@ -185,7 +185,7 @@ to the leader, the leader will tell the follower to discard U.
 
 A new leader establishes a zxid to start using for new proposals by getting the
 epoch, e, of the highest zxid it has seen and setting the next zxid to use to be
-(e+1, 0), fter the leader syncs with a follower, it will propose a NEW_LEADER
+(e+1, 0), after the leader syncs with a follower, it will propose a NEW_LEADER
 proposal. Once the NEW_LEADER proposal has been committed, the leader will activate
 and start receiving and issuing proposals.
 

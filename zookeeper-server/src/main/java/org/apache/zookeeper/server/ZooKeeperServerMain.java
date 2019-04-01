@@ -136,7 +136,8 @@ public class ZooKeeperServerMain {
             // create a file logger url from the command line args
             txnLog = new FileTxnSnapLog(config.dataLogDir, config.dataDir);
             final ZooKeeperServer zkServer = new ZooKeeperServer(txnLog,
-                    config.tickTime, config.minSessionTimeout, config.maxSessionTimeout, null);
+                    config.tickTime, config.minSessionTimeout, config.maxSessionTimeout,
+                    config.listenBacklog, null);
             zkServer.setRootMetricsContext(metricsProvider.getRootContext());
             txnLog.setServerStats(zkServer.serverStats());
 
@@ -154,14 +155,16 @@ public class ZooKeeperServerMain {
             boolean needStartZKServer = true;
             if (config.getClientPortAddress() != null) {
                 cnxnFactory = ServerCnxnFactory.createFactory();
-                cnxnFactory.configure(config.getClientPortAddress(), config.getMaxClientCnxns(), false);
+                cnxnFactory.configure(config.getClientPortAddress(), config.getMaxClientCnxns(),
+                    config.getClientPortListenBacklog(), false);
                 cnxnFactory.startup(zkServer);
                 // zkServer has been started. So we don't need to start it again in secureCnxnFactory.
                 needStartZKServer = false;
             }
             if (config.getSecureClientPortAddress() != null) {
                 secureCnxnFactory = ServerCnxnFactory.createFactory();
-                secureCnxnFactory.configure(config.getSecureClientPortAddress(), config.getMaxClientCnxns(), true);
+                secureCnxnFactory.configure(config.getSecureClientPortAddress(), config.getMaxClientCnxns(),
+                    config.getClientPortListenBacklog(), true);
                 secureCnxnFactory.startup(zkServer, needStartZKServer);
             }
 

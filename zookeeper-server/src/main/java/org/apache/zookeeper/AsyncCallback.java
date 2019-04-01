@@ -68,6 +68,20 @@ public interface AsyncCallback {
         public void processResult(int rc, String path, Object ctx, Stat stat);
     }
 
+    /*
+    *  This callback is used to get all children node number of the node.
+    * */
+    @InterfaceAudience.Public
+    interface AllChildrenNumberCallback extends AsyncCallback {
+        /**
+         *
+         * @param rc      The return code or the result of the call.
+         * @param ctx     Whatever context object that we passed to asynchronous calls.
+         * @param number  the number of children nodes under a specific path
+         */
+        public void processResult(int rc, String path, Object ctx, int number);
+    }
+
     /**
      * This callback is used to retrieve the data and stat of the node.
      */
@@ -327,5 +341,19 @@ public interface AsyncCallback {
          */
         public void processResult(int rc, String path, Object ctx,
                 List<OpResult> opResults);
+    }
+
+    /**
+     * This callback is used to process the getEphemerals results from
+     * a single getEphemerals call.
+     */
+    interface EphemeralsCallback extends AsyncCallback {
+        /**
+         *
+         * @param rc      The return code or the result of the call.
+         * @param ctx     Whatever context object that we passed to asynchronous calls.
+         * @param paths   The path that we passed to asynchronous calls.
+         */
+        public void processResult(int rc, Object ctx, List<String> paths);
     }
 }

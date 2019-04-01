@@ -9,6 +9,7 @@ zookeeper-server/version-2/*
 # SVN
 .svn
 .revision
+git.properties
 
 # Eclipse
 .metadata
@@ -43,6 +44,10 @@ nbdist/
 nb-configuration.xml
 nbactions.xml
 
+# vscode
+classes
+.vscode
+
 # Other
 *~
 logs/
@@ -56,6 +61,7 @@ tmp/**/*
 .gradle
 *.patch
 *.swp
+.ant-targets-build.xml
 
 # C
 tags

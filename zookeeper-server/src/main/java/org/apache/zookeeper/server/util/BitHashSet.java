@@ -120,7 +120,10 @@ public class BitHashSet implements Iterable<Integer> {
      */
     @Override
     public Iterator<Integer> iterator() {
-        if (cache.size() == elementCount) {
+        // sample current size at the beginning
+        int currentSize = size();
+
+        if (cache.size() == currentSize) {
             return cache.iterator();
         }
 
@@ -130,7 +133,7 @@ public class BitHashSet implements Iterable<Integer> {
 
             @Override
             public boolean hasNext() {
-                return returnedCount < elementCount;
+                return returnedCount < currentSize;
             }
 
             @Override

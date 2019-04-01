@@ -33,7 +33,7 @@ public class LsCommand extends CliCommand {
     private String args[];
     private CommandLine cl;
 
-    {
+    static {
         options.addOption("?", false, "help");
         options.addOption("s", false, "stat");
         options.addOption("w", false, "watch");

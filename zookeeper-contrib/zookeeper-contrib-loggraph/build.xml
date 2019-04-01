@@ -38,7 +38,7 @@
     <jar destfile="${jarname}">
       <fileset file="${zk.root}/LICENSE.txt" />
       <fileset dir="${build.classes}" />
-      <fileset dir="src/main/webapp"/>
+      <fileset dir="src/main/resources/webapp"/>
       <manifest>
         <attribute name="Built-By" value="${user.name}"/>
         <attribute name="Built-At" value="${build.time}"/>
@@ -58,10 +58,10 @@
   <target name="package" depends="compile, zookeeperbuildcontrib.package" unless="skip.contrib">
     <echo message="contrib: ${name}"/>
     
-    <copy file="${basedir}/build.xml" todir="${dist.dir}/contrib/${name}"/>
+    <copy file="${basedir}/build.xml" todir="${dist.dir}/zookeeper-contrib/zookeeper-contrib-${name}"/>
 
-    <mkdir dir="${dist.dir}/contrib/${name}/src"/>
-    <copy todir="${dist.dir}/contrib/${name}/src">
+    <mkdir dir="${dist.dir}/zookeeper-contrib/zookeeper-contrib-${name}/src"/>
+    <copy todir="${dist.dir}/zookeeper-contrib/zookeeper-contrib-${name}/src">
       <fileset dir="${basedir}/src/main"/>
     </copy>
 

@@ -52,7 +52,7 @@ responsibility of implementing coordination services from scratch.
 
 **ZooKeeper is simple.** ZooKeeper
 allows distributed processes to coordinate with each other through a
-shared hierarchal namespace which is organized similarly to a standard
+shared hierarchical namespace which is organized similarly to a standard
 file system. The name space consists of data registers - called znodes,
 in ZooKeeper parlance - and these are similar to files and directories.
 Unlike a typical file system, which is designed for storage, ZooKeeper
@@ -144,7 +144,7 @@ ZooKeeper supports the concept of _watches_.
 Clients can set a watch on a znode. A watch will be triggered and
 removed when the znode changes. When a watch is triggered, the client
 receives a packet saying that the znode has changed. If the
-connection between the client and one of the Zoo Keeper servers is
+connection between the client and one of the ZooKeeper servers is
 broken, the client will receive a local notification. These can be used
 to _[tbd]_.
 
@@ -162,10 +162,8 @@ synchronization, it provides a set of guarantees. These are:
   results.
 * Single System Image - A client will see the same view of the
   service regardless of the server that it connects to.
-
 * Reliability - Once an update has been applied, it will persist
   from that time forward until a client overwrites the update.
-
 * Timeliness - The clients view of the system is guaranteed to
   be up-to-date within a certain time bound.
 
@@ -176,7 +174,7 @@ _[tbd]_
 
 ### Simple API
 
-One of the design goals of ZooKeeper is provide a very simple
+One of the design goals of ZooKeeper is providing a very simple
 programming interface. As a result, it supports only these
 operations:
 
@@ -225,7 +223,7 @@ writes are serialized to disk before they are applied to the in-memory
 database.
 
 Every ZooKeeper server services clients. Clients connect to
-exactly one server to submit irequests. Read requests are serviced from
+exactly one server to submit requests. Read requests are serviced from
 the local replica of each server database. Requests that change the
 state of the service, write requests, are processed by an agreement
 protocol.
@@ -260,7 +258,7 @@ _[tbd]_
 
 ### Performance
 
-ZooKeeper is designed to be highly performant. But is it? The
+ZooKeeper is designed to be highly performance. But is it? The
 results of the ZooKeeper's development team at Yahoo! Research indicate
 that it is. (See [ZooKeeper Throughput as the Read-Write Ratio Varies](#zkPerfRW).) It is especially high
 performance in applications where reads outnumber writes, since writes
@@ -311,7 +309,7 @@ workloads.
 
 ![Reliability in the Presence of Errors](images/zkperfreliability.jpg)
 
-The are a few important observations from this graph. First, if
+There are a few important observations from this graph. First, if
 followers fail and recover quickly, then ZooKeeper is able to sustain a
 high throughput despite the failure. But maybe more importantly, the
 leader election algorithm allows for the system to recover fast enough

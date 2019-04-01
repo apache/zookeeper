@@ -145,8 +145,10 @@ public class Request {
         case OpCode.exists:
         case OpCode.getACL:
         case OpCode.getChildren:
+        case OpCode.getAllChildrenNumber:
         case OpCode.getChildren2:
         case OpCode.getData:
+        case OpCode.getEphemerals:
         case OpCode.multi:
         case OpCode.ping:
         case OpCode.reconfig:
@@ -167,8 +169,10 @@ public class Request {
         case OpCode.exists:
         case OpCode.getACL:
         case OpCode.getChildren:
+        case OpCode.getAllChildrenNumber:
         case OpCode.getChildren2:
         case OpCode.getData:
+        case OpCode.getEphemerals:
             return false;
         case OpCode.create:
         case OpCode.create2:
@@ -227,8 +231,12 @@ public class Request {
             return "setACL";
         case OpCode.getChildren:
             return "getChildren";
+        case OpCode.getAllChildrenNumber:
+            return "getAllChildrenNumber";
         case OpCode.getChildren2:
             return "getChildren2";
+        case OpCode.getEphemerals:
+            return "getEphemerals";
         case OpCode.ping:
             return "ping";
         case OpCode.createSession:

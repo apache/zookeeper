@@ -573,6 +573,13 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     protected int maxSessionTimeout = -1;
 
     /**
+     * The ZooKeeper server's socket backlog length. The number of connections
+     * that will be queued to be read before new connections are dropped. A
+     * value of one indicates the default backlog will be used.
+     */
+    protected int clientPortListenBacklog = -1;
+
+    /**
      * The number of ticks that the initial synchronization phase can take
      */
     protected volatile int initLimit;;
@@ -1524,6 +1531,16 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         this.maxSessionTimeout = max;
     }
 
+    /** The server socket's listen backlog length */
+    public int getClientPortListenBacklog() {
+        return this.clientPortListenBacklog;
+    }
+
+    /** Sets the server socket's listen backlog length. */
+    public void setClientPortListenBacklog(int backlog) {
+        this.clientPortListenBacklog = backlog;
+    }
+
     /**
      * Get the number of ticks that the initial synchronization phase can take
      */
@@ -1783,10 +1800,16 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     public void setSslQuorum(boolean sslQuorum) {
+        if (sslQuorum) {
+            LOG.info("Using TLS encrypted quorum communication");
+        } else {
+            LOG.info("Using insecure (non-TLS) quorum communication");
+        }
         this.sslQuorum = sslQuorum;
     }
 
     public void setUsePortUnification(boolean shouldUsePortUnification) {
+        LOG.info("Port unification {}", shouldUsePortUnification ? "enabled" : "disabled");
         this.shouldUsePortUnification = shouldUsePortUnification;
     }
 
@@ -2223,7 +2246,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     void setQuorumSaslEnabled(boolean enableAuth) {
         quorumSaslEnableAuth = enableAuth;
         if (!quorumSaslEnableAuth) {
-            LOG.info("QuorumPeer communication is not secured!");
+            LOG.info("QuorumPeer communication is not secured! (SASL auth disabled)");
         } else {
             LOG.info("{} set to {}",
                     QuorumAuth.QUORUM_SASL_AUTH_ENABLED, enableAuth);

@@ -87,7 +87,7 @@ public class DistributedQueue {
                     continue;
                 }
                 String suffix = childName.substring(prefix.length());
-                Long childId = new Long(suffix);
+                Long childId = Long.parseLong(suffix);
                 orderedChildren.put(childId,childName);
             }catch(NumberFormatException e){
                 LOG.warn("Found child node with improper format : " + childName + " " + e,e);
@@ -209,7 +209,7 @@ public class DistributedQueue {
         }
     }
 
-    private class LatchChildWatcher implements Watcher {
+    private static class LatchChildWatcher implements Watcher {
 
         CountDownLatch latch;
 

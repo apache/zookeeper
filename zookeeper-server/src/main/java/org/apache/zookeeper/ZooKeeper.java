@@ -53,10 +53,15 @@ import org.apache.zookeeper.proto.GetACLRequest;
 import org.apache.zookeeper.proto.GetACLResponse;
 import org.apache.zookeeper.proto.GetChildren2Request;
 import org.apache.zookeeper.proto.GetChildren2Response;
+import org.apache.zookeeper.proto.GetAllChildrenNumberRequest;
+import org.apache.zookeeper.proto.GetAllChildrenNumberResponse;
 import org.apache.zookeeper.proto.GetChildrenRequest;
 import org.apache.zookeeper.proto.GetChildrenResponse;
 import org.apache.zookeeper.proto.GetDataRequest;
 import org.apache.zookeeper.proto.GetDataResponse;
+import org.apache.zookeeper.proto.GetEphemeralsRequest;
+import org.apache.zookeeper.proto.GetEphemeralsResponse;
+import org.apache.zookeeper.proto.ReconfigRequest;
 import org.apache.zookeeper.proto.RemoveWatchesRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
@@ -1135,17 +1140,96 @@ public class ZooKeeper implements AutoCloseable {
     public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher,
             long sessionId, byte[] sessionPasswd, boolean canBeReadOnly,
             HostProvider aHostProvider) throws IOException {
-        LOG.info("Initiating client connection, connectString=" + connectString
-                + " sessionTimeout=" + sessionTimeout
-                + " watcher=" + watcher
-                + " sessionId=" + Long.toHexString(sessionId)
-                + " sessionPasswd="
-                + (sessionPasswd == null ? "<null>" : "<hidden>"));
+    	this(connectString, sessionTimeout, watcher, sessionId, sessionPasswd,
+    			canBeReadOnly, aHostProvider, null);
+    }
 
-        this.clientConfig = new ZKClientConfig();
+    /**
+     * To create a ZooKeeper client object, the application needs to pass a
+     * connection string containing a comma separated list of host:port pairs,
+     * each corresponding to a ZooKeeper server.
+     * <p>
+     * Session establishment is asynchronous. This constructor will initiate
+     * connection to the server and return immediately - potentially (usually)
+     * before the session is fully established. The watcher argument specifies
+     * the watcher that will be notified of any changes in state. This
+     * notification can come at any point before or after the constructor call
+     * has returned.
+     * <p>
+     * The instantiated ZooKeeper client object will pick an arbitrary server
+     * from the connectString and attempt to connect to it. If establishment of
+     * the connection fails, another server in the connect string will be tried
+     * (the order is non-deterministic, as we random shuffle the list), until a
+     * connection is established. The client will continue attempts until the
+     * session is explicitly closed (or the session is expired by the server).
+     * <p>
+     * Added in 3.2.0: An optional "chroot" suffix may also be appended to the
+     * connection string. This will run the client commands while interpreting
+     * all paths relative to this root (similar to the unix chroot command).
+     * <p>
+     * Use {@link #getSessionId} and {@link #getSessionPasswd} on an established
+     * client connection, these values must be passed as sessionId and
+     * sessionPasswd respectively if reconnecting. Otherwise, if not
+     * reconnecting, use the other constructor which does not require these
+     * parameters.
+     * <p>
+     * For backward compatibility, there is another version
+     * {@link #ZooKeeper(String, int, Watcher, long, byte[], boolean)} which uses
+     * default {@link StaticHostProvider}
+     *
+     * @param connectString
+     *            comma separated host:port pairs, each corresponding to a zk
+     *            server. e.g. "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002"
+     *            If the optional chroot suffix is used the example would look
+     *            like: "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002/app/a"
+     *            where the client would be rooted at "/app/a" and all paths
+     *            would be relative to this root - ie getting/setting/etc...
+     *            "/foo/bar" would result in operations being run on
+     *            "/app/a/foo/bar" (from the server perspective).
+     * @param sessionTimeout
+     *            session timeout in milliseconds
+     * @param watcher
+     *            a watcher object which will be notified of state changes, may
+     *            also be notified for node events
+     * @param sessionId
+     *            specific session id to use if reconnecting
+     * @param sessionPasswd
+     *            password for this session
+     * @param canBeReadOnly
+     *            (added in 3.4) whether the created client is allowed to go to
+     *            read-only mode in case of partitioning. Read-only mode
+     *            basically means that if the client can't find any majority
+     *            servers but there's partitioned server it could reach, it
+     *            connects to one in read-only mode, i.e. read requests are
+     *            allowed while write requests are not. It continues seeking for
+     *            majority in the background.
+     * @param aHostProvider
+     *            use this as HostProvider to enable custom behaviour.
+     * @param clientConfig
+     *            (added in 3.5.2) passing this conf object gives each client the flexibility of
+     *            configuring properties differently compared to other instances
+     * @throws IOException in cases of network failure
+     * @throws IllegalArgumentException if an invalid chroot path is specified
+     *
+     * @since 3.5.5
+     */
+    public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher,
+    		long sessionId, byte[] sessionPasswd, boolean canBeReadOnly,
+    		HostProvider aHostProvider, ZKClientConfig clientConfig) throws IOException {
+    	LOG.info("Initiating client connection, connectString=" + connectString
+    			+ " sessionTimeout=" + sessionTimeout
+    			+ " watcher=" + watcher
+    			+ " sessionId=" + Long.toHexString(sessionId)
+    			+ " sessionPasswd="
+    			+ (sessionPasswd == null ? "<null>" : "<hidden>"));
+
+        if (clientConfig == null) {
+            clientConfig = new ZKClientConfig();
+        }
+        this.clientConfig = clientConfig;
         watchManager = defaultWatchManager();
         watchManager.defaultWatcher = watcher;
-       
+
         ConnectStringParser connectStringParser = new ConnectStringParser(
                 connectString);
         hostProvider = aHostProvider;
@@ -1186,7 +1270,7 @@ public class ZooKeeper implements AutoCloseable {
      * reconnecting, use the other constructor which does not require these
      * parameters.
      * <p>
-     * This constructor uses a StaticHostProvider; there is another one  
+     * This constructor uses a StaticHostProvider; there is another one
      * to enable custom behaviour.
      *
      * @param connectString
@@ -1233,7 +1317,7 @@ public class ZooKeeper implements AutoCloseable {
 
     // VisibleForTesting
     public Testable getTestable() {
-        return new ZooKeeperTestable(this, cnxn);
+        return new ZooKeeperTestable(cnxn);
     }
 
     /* Useful for testing watch handling behavior */
@@ -2425,7 +2509,7 @@ public class ZooKeeper implements AutoCloseable {
      * Return the list of the children of the node of the given path.
      * <p>
      * If the watch is non-null and the call is successful (no exception is thrown),
-     * a watch will be left on the node with the given path. The watch willbe
+     * a watch will be left on the node with the given path. The watch will be
      * triggered by a successful operation that deletes the node of the given
      * path or creates/delete a child under the node.
      * <p>
@@ -2474,7 +2558,7 @@ public class ZooKeeper implements AutoCloseable {
      * Return the list of the children of the node of the given path.
      * <p>
      * If the watch is true and the call is successful (no exception is thrown),
-     * a watch will be left on the node with the given path. The watch willbe
+     * a watch will be left on the node with the given path. The watch will be
      * triggered by a successful operation that deletes the node of the given
      * path or creates/delete a child under the node.
      * <p>
@@ -2539,7 +2623,7 @@ public class ZooKeeper implements AutoCloseable {
      * For the given znode path return the stat and children list.
      * <p>
      * If the watch is non-null and the call is successful (no exception is thrown),
-     * a watch will be left on the node with the given path. The watch willbe
+     * a watch will be left on the node with the given path. The watch will be
      * triggered by a successful operation that deletes the node of the given
      * path or creates/delete a child under the node.
      * <p>
@@ -2595,7 +2679,7 @@ public class ZooKeeper implements AutoCloseable {
      * For the given znode path return the stat and children list.
      * <p>
      * If the watch is true and the call is successful (no exception is thrown),
-     * a watch will be left on the node with the given path. The watch willbe
+     * a watch will be left on the node with the given path. The watch will be
      * triggered by a successful operation that deletes the node of the given
      * path or creates/delete a child under the node.
      * <p>
@@ -2663,6 +2747,123 @@ public class ZooKeeper implements AutoCloseable {
             Object ctx)
     {
         getChildren(path, watch ? watchManager.defaultWatcher : null, cb, ctx);
+    }
+
+    /**
+     * Synchronously gets all numbers of children nodes under a specific path
+     *
+     * @since 3.6.0
+     * @param path
+     * @return Children nodes count under path
+     * @throws KeeperException
+     * @throws InterruptedException
+     */
+    public int getAllChildrenNumber(final String path)
+            throws KeeperException, InterruptedException {
+
+        final String clientPath = path;
+        PathUtils.validatePath(clientPath);
+
+        final String serverPath = prependChroot(clientPath);
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.getAllChildrenNumber);
+        GetAllChildrenNumberRequest request = new GetAllChildrenNumberRequest(serverPath);
+        GetAllChildrenNumberResponse response = new GetAllChildrenNumberResponse();
+
+        ReplyHeader r = cnxn.submitRequest(h, request, response, null);
+        if (r.getErr() != 0) {
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()),
+                    clientPath);
+        }
+        return response.getTotalNumber();
+    }
+
+    /**
+     * Asynchronously gets all numbers of children nodes under a specific path
+     *
+     * @since 3.6.0
+     * @param path
+     * @throws KeeperException
+     * @throws InterruptedException
+     */
+    public void getAllChildrenNumber(final String path, AsyncCallback.AllChildrenNumberCallback cb, Object ctx) {
+
+        final String clientPath = path;
+        PathUtils.validatePath(clientPath);
+
+        final String serverPath = prependChroot(clientPath);
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.getAllChildrenNumber);
+        GetAllChildrenNumberRequest request = new GetAllChildrenNumberRequest(serverPath);
+        GetAllChildrenNumberResponse response = new GetAllChildrenNumberResponse();
+
+        cnxn.queuePacket(h, new ReplyHeader(), request, response, cb,
+                clientPath, serverPath, ctx, null);
+    }
+
+
+    /**
+     * Synchronously gets all the ephemeral nodes  created by this session.
+     *
+     * @since 3.6.0
+     *
+     */
+    public List<String> getEphemerals()
+        throws KeeperException, InterruptedException {
+        return getEphemerals("/");
+    }
+
+    /**
+     * Synchronously gets all the ephemeral nodes matching prefixPath
+     * created by this session.  If prefixPath is "/" then it returns all
+     * ephemerals
+     *
+     * @since 3.6.0
+     *
+     */
+    public List<String> getEphemerals(String prefixPath)
+        throws KeeperException, InterruptedException {
+        PathUtils.validatePath(prefixPath);
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.getEphemerals);
+        GetEphemeralsRequest request = new GetEphemeralsRequest(prefixPath);
+        GetEphemeralsResponse response = new GetEphemeralsResponse();
+        ReplyHeader r = cnxn.submitRequest(h, request, response, null);
+        if (r.getErr() != 0) {
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()));
+        }
+        return response.getEphemerals();
+    }
+
+    /**
+     * Asynchronously gets all the ephemeral nodes matching prefixPath
+     * created by this session.  If prefixPath is "/" then it returns all
+     * ephemerals
+     *
+     * @since 3.6.0
+     *
+     */
+    public void getEphemerals(String prefixPath, AsyncCallback.EphemeralsCallback cb, Object ctx) {
+        PathUtils.validatePath(prefixPath);
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.getEphemerals);
+        GetEphemeralsRequest request = new GetEphemeralsRequest(prefixPath);
+        GetEphemeralsResponse response = new GetEphemeralsResponse();
+        cnxn.queuePacket(h, new ReplyHeader(), request, response, cb,
+            null, null, ctx, null);
+    }
+
+    /**
+     * Asynchronously gets all the ephemeral nodes created by this session.
+     * ephemerals
+     *
+     * @since 3.6.0
+     *
+     */
+    public void getEphemerals(AsyncCallback.EphemeralsCallback cb, Object ctx) {
+        getEphemerals("/", cb, ctx);
     }
 
     /**

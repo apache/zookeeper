@@ -99,7 +99,7 @@ public class ZooKeeperServerBeanTest {
         ServerCnxnFactory cnxnFactory = ServerCnxnFactory.createFactory();
         int secureClientPort = 8443;
         InetSocketAddress address = new InetSocketAddress(secureClientPort);
-        cnxnFactory.configure(address, 5, true);
+        cnxnFactory.configure(address, 5, -1, true);
         zks.setSecureServerCnxnFactory(cnxnFactory);
 
         result = serverBean.getSecureClientPort();
@@ -129,7 +129,7 @@ public class ZooKeeperServerBeanTest {
         ServerCnxnFactory cnxnFactory = ServerCnxnFactory.createFactory();
         int secureClientPort = 8443;
         InetSocketAddress address = new InetSocketAddress(secureClientPort);
-        cnxnFactory.configure(address, 5, true);
+        cnxnFactory.configure(address, 5, -1, true);
         zks.setSecureServerCnxnFactory(cnxnFactory);
 
         result = serverBean.getSecureClientAddress();

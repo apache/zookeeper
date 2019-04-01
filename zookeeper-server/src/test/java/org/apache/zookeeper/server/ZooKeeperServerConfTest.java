@@ -25,7 +25,7 @@ import static org.junit.Assert.*;
 public class ZooKeeperServerConfTest extends ZKTestCase {
     private ZooKeeperServerConf c;
     @Before public void setUp() {
-        c = new ZooKeeperServerConf(1, "a", "b", 2, 3, 4, 5, 6L);
+        c = new ZooKeeperServerConf(1, "a", "b", 2, 3, 4, 5, 6L, 7);
     }
     @Test public void testGetters() {
         assertEquals(1, c.getClientPort());
@@ -36,10 +36,11 @@ public class ZooKeeperServerConfTest extends ZKTestCase {
         assertEquals(4, c.getMinSessionTimeout());
         assertEquals(5, c.getMaxSessionTimeout());
         assertEquals(6L, c.getServerId());
+        assertEquals(7, c.getClientPortListenBacklog());
     }
     @Test public void testToMap() {
         Map<String, Object> m = c.toMap();
-        assertEquals(8, m.size());
+        assertEquals(9, m.size());
         assertEquals(Integer.valueOf(1), m.get(ZooKeeperServerConf.KEY_CLIENT_PORT));
         assertEquals("a", m.get(ZooKeeperServerConf.KEY_DATA_DIR));
         assertEquals("b", m.get(ZooKeeperServerConf.KEY_DATA_LOG_DIR));
@@ -48,5 +49,6 @@ public class ZooKeeperServerConfTest extends ZKTestCase {
         assertEquals(Integer.valueOf(4), m.get(ZooKeeperServerConf.KEY_MIN_SESSION_TIMEOUT));
         assertEquals(Integer.valueOf(5), m.get(ZooKeeperServerConf.KEY_MAX_SESSION_TIMEOUT));
         assertEquals(Long.valueOf(6L), m.get(ZooKeeperServerConf.KEY_SERVER_ID));
+        assertEquals(Integer.valueOf(7), m.get(ZooKeeperServerConf.KEY_CLIENT_PORT_LISTEN_BACKLOG));
     }
 }

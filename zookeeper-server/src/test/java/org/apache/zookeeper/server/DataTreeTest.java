@@ -154,6 +154,22 @@ public class DataTreeTest extends ZKTestCase {
     }
 
     @Test
+    public void testNoCversionRevert() throws Exception {
+        DataNode parent = dt.getNode("/");
+        dt.createNode("/test", new byte[0], null, 0, parent.stat.getCversion() + 1, 1, 1);
+        int currentCversion = parent.stat.getCversion();
+        long currentPzxid = parent.stat.getPzxid();
+        dt.createNode("/test1", new byte[0], null, 0, currentCversion - 1, 1, 1);
+        parent = dt.getNode("/");
+        int newCversion = parent.stat.getCversion();
+        long newPzxid = parent.stat.getPzxid();
+        Assert.assertTrue("<cversion, pzxid> verification failed. Expected: <" +
+                currentCversion + ", " + currentPzxid + ">, found: <" +
+                newCversion + ", " + newPzxid + ">",
+                (newCversion >= currentCversion && newPzxid >= currentPzxid));
+    }
+
+    @Test
     public void testPzxidUpdatedWhenDeletingNonExistNode() throws Exception {
         DataNode root = dt.getNode("/");
         long currentPzxid = root.stat.getPzxid();
@@ -325,5 +341,21 @@ public class DataTreeTest extends ZKTestCase {
         // delete a node
         dt.deleteNode("/testApproximateDataSize", -1);
         Assert.assertEquals(dt.cachedApproximateDataSize(), dt.approximateDataSize());
+    }
+
+    @Test
+    public void testGetAllChildrenNumber() throws Exception {
+        DataTree dt = new DataTree();
+        // create a node
+        dt.createNode("/all_children_test", new byte[20], null, -1, 1, 1, 1);
+        dt.createNode("/all_children_test/nodes", new byte[20], null, -1, 1, 1, 1);
+        dt.createNode("/all_children_test/nodes/node1", new byte[20], null, -1, 1, 1, 1);
+        dt.createNode("/all_children_test/nodes/node2", new byte[20], null, -1, 1, 1, 1);
+        dt.createNode("/all_children_test/nodes/node3", new byte[20], null, -1, 1, 1, 1);
+        Assert.assertEquals(4, dt.getAllChildrenNumber("/all_children_test"));
+        Assert.assertEquals(3, dt.getAllChildrenNumber("/all_children_test/nodes"));
+        Assert.assertEquals(0, dt.getAllChildrenNumber("/all_children_test/nodes/node1"));
+        //add these three init nodes:/zookeeper,/zookeeper/quota,/zookeeper/config,so the number is 8.
+        Assert.assertEquals( 8, dt.getAllChildrenNumber("/"));
     }
 }

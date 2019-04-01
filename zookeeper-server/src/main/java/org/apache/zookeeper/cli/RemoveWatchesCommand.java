@@ -34,7 +34,7 @@ public class RemoveWatchesCommand extends CliCommand {
     private String[] args;
     private CommandLine cl;
 
-    {
+    static {
         options.addOption("c", false, "child watcher type");
         options.addOption("d", false, "data watcher type");
         options.addOption("a", false, "any watcher type");

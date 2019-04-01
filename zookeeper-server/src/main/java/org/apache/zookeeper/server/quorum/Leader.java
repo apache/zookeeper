@@ -160,7 +160,19 @@ public class Leader implements LearnerMaster {
         }
     }
 
-    private void addForwardingFollower(LearnerHandler lh) {
+    public List<LearnerHandler> getNonVotingFollowers() {
+        List<LearnerHandler> nonVotingFollowers = new ArrayList<LearnerHandler>();
+        synchronized (forwardingFollowers) {
+            for (LearnerHandler lh : forwardingFollowers) {
+                if (!isParticipant(lh.getSid())) {
+                    nonVotingFollowers.add(lh);
+                }
+            }
+        }
+        return nonVotingFollowers;
+    }
+
+    void addForwardingFollower(LearnerHandler lh) {
         synchronized (forwardingFollowers) {
             forwardingFollowers.add(lh);
         }

@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.server.RateLogger;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.WorkerService;
 import org.apache.zookeeper.server.WorkerService.WorkRequest;
 
@@ -103,9 +104,12 @@ public class WatcherCleaner extends Thread {
                 totalDeadWatchers.get() >= maxInProcessingDeadWatchers) {
             try {
                 RATE_LOGGER.rateLimitLog("Waiting for dead watchers cleaning");
+                long startTime = Time.currentElapsedTime();
                 synchronized(processingCompletedEvent) {
                     processingCompletedEvent.wait(100);
                 }
+                long latency = Time.currentElapsedTime() - startTime;
+                ServerMetrics.ADD_DEAD_WATCHER_STALL_TIME.add(latency);
             } catch (InterruptedException e) {
                 LOG.info("Got interrupted while waiting for dead watches " +
                         "queue size");
@@ -115,6 +119,7 @@ public class WatcherCleaner extends Thread {
         synchronized (this) {
             if (deadWatchers.add(watcherBit)) {
                 totalDeadWatchers.incrementAndGet();
+                ServerMetrics.DEAD_WATCHERS_QUEUED.add(1);
                 if (deadWatchers.size() >= watcherCleanThreshold) {
                     synchronized (cleanEvent) {
                         cleanEvent.notifyAll();
@@ -164,6 +169,8 @@ public class WatcherCleaner extends Thread {
                         listener.processDeadWatchers(snapshot);
                         long latency = Time.currentElapsedTime() - startTime;
                         LOG.info("Takes {} to process {} watches", latency, total);
+                        ServerMetrics.DEAD_WATCHERS_CLEANER_LATENCY.add(latency);
+                        ServerMetrics.DEAD_WATCHERS_CLEARED.add(total);
                         totalDeadWatchers.addAndGet(-total);
                         synchronized(processingCompletedEvent) {
                             processingCompletedEvent.notifyAll();

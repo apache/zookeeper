@@ -28,17 +28,19 @@ import java.nio.channels.SelectionKey;
 import java.security.cert.Certificate;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
+import io.netty.buffer.CompositeByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
-import io.netty.util.ReferenceCountUtil;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.Record;
+import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.WatcherEvent;
@@ -52,7 +54,7 @@ import org.slf4j.LoggerFactory;
 public class NettyServerCnxn extends ServerCnxn {
     private static final Logger LOG = LoggerFactory.getLogger(NettyServerCnxn.class);
     private final Channel channel;
-    private ByteBuf queuedBuffer;
+    private CompositeByteBuf queuedBuffer;
     private final AtomicBoolean throttled = new AtomicBoolean(false);
     private ByteBuffer bb;
     private final ByteBuffer bbLen = ByteBuffer.allocate(4);
@@ -160,12 +162,14 @@ public class NettyServerCnxn extends ServerCnxn {
     }
 
     @Override
-    public void sendResponse(ReplyHeader h, Record r, String tag)
-            throws IOException {
+    public void sendResponse(ReplyHeader h, Record r, String tag,
+                             String cacheKey, Stat stat) throws IOException {
+        // cacheKey and stat are used in caching, which is not
+        // implemented here. Implementation example can be found in NIOServerCnxn.
         if (closingChannel || !channel.isOpen()) {
             return;
         }
-        super.sendResponse(h, r, tag);
+        sendBuffer(serialize(h, r, tag, cacheKey, stat));
         decrOutstandingAndCheckThrottle(h);
     }
 
@@ -175,17 +179,20 @@ public class NettyServerCnxn extends ServerCnxn {
         factory.addSession(sessionId, this);
     }
 
+    // Use a single listener instance to reduce GC
+    private final GenericFutureListener<Future<Void>> onSendBufferDoneListener = f -> {
+        if (f.isSuccess()) {
+            packetSent();
+        }
+    };
+
     @Override
-    public void sendBuffer(ByteBuffer sendBuffer) {
-        if (sendBuffer == ServerCnxnFactory.closeConn) {
+    public void sendBuffer(ByteBuffer... buffers) {
+        if (buffers.length == 1 && buffers[0] == ServerCnxnFactory.closeConn) {
             close();
             return;
         }
-        channel.writeAndFlush(Unpooled.wrappedBuffer(sendBuffer)).addListener(f -> {
-            if (f.isSuccess()) {
-                packetSent();
-            }
-        });
+        channel.writeAndFlush(Unpooled.wrappedBuffer(buffers)).addListener(onSendBufferDoneListener);
     }
 
     /**
@@ -274,12 +281,45 @@ public class NettyServerCnxn extends ServerCnxn {
     }
 
     /**
+     * Helper that throws an IllegalStateException if the current thread is not
+     * executing in the channel's event loop thread.
+     * @param callerMethodName the name of the calling method to add to the exception message.
+     */
+    private void checkIsInEventLoop(String callerMethodName) {
+        if (!channel.eventLoop().inEventLoop()) {
+            throw new IllegalStateException(
+                    callerMethodName + "() called from non-EventLoop thread");
+        }
+    }
+
+    /**
+     * Appends <code>buf</code> to <code>queuedBuffer</code>. Does not duplicate <code>buf</code>
+     * or call any flavor of {@link ByteBuf#retain()}. Caller must ensure that <code>buf</code>
+     * is not owned by anyone else, as this call transfers ownership of <code>buf</code> to the
+     * <code>queuedBuffer</code>.
+     *
+     * This method should only be called from the event loop thread.
+     * @param buf the buffer to append to the queue.
+     */
+    private void appendToQueuedBuffer(ByteBuf buf) {
+        checkIsInEventLoop("appendToQueuedBuffer");
+        if (queuedBuffer.numComponents() == queuedBuffer.maxNumComponents()) {
+            // queuedBuffer has reached its component limit, so combine the existing components.
+            queuedBuffer.consolidate();
+        }
+        queuedBuffer.addComponent(true, buf);
+    }
+
+    /**
      * Process incoming message. This should only be called from the event
      * loop thread.
+     * Note that this method does not call <code>buf.release()</code>. The caller
+     * is responsible for making sure the buf is released after this method
+     * returns.
      * @param buf the message bytes to process.
      */
     void processMessage(ByteBuf buf) {
-        assert channel.eventLoop().inEventLoop();
+        checkIsInEventLoop("processMessage");
         if (LOG.isDebugEnabled()) {
             LOG.debug("0x{} queuedBuffer: {}",
                     Long.toHexString(sessionId),
@@ -297,9 +337,9 @@ public class NettyServerCnxn extends ServerCnxn {
             // we are throttled, so we need to queue
             if (queuedBuffer == null) {
                 LOG.debug("allocating queue");
-                queuedBuffer = channel.alloc().buffer(buf.readableBytes());
+                queuedBuffer = channel.alloc().compositeBuffer();
             }
-            queuedBuffer.writeBytes(buf);
+            appendToQueuedBuffer(buf.retainedDuplicate());
             if (LOG.isTraceEnabled()) {
                 LOG.trace("0x{} queuedBuffer {}",
                         Long.toHexString(sessionId),
@@ -308,7 +348,7 @@ public class NettyServerCnxn extends ServerCnxn {
         } else {
             LOG.debug("not throttled");
             if (queuedBuffer != null) {
-                queuedBuffer.writeBytes(buf);
+                appendToQueuedBuffer(buf.retainedDuplicate());
                 processQueuedBuffer();
             } else {
                 receiveMessage(buf);
@@ -319,9 +359,9 @@ public class NettyServerCnxn extends ServerCnxn {
                         LOG.trace("Before copy {}", buf);
                     }
                     if (queuedBuffer == null) {
-                        queuedBuffer = channel.alloc().buffer(buf.readableBytes());
+                        queuedBuffer = channel.alloc().compositeBuffer();
                     }
-                    queuedBuffer.writeBytes(buf);
+                    appendToQueuedBuffer(buf.retainedSlice(buf.readerIndex(), buf.readableBytes()));
                     if (LOG.isTraceEnabled()) {
                         LOG.trace("Copy is {}", queuedBuffer);
                         LOG.trace("0x{} queuedBuffer {}",
@@ -338,7 +378,7 @@ public class NettyServerCnxn extends ServerCnxn {
      * from the event loop thread.
      */
     void processQueuedBuffer() {
-        assert channel.eventLoop().inEventLoop();
+        checkIsInEventLoop("processQueuedBuffer");
         if (queuedBuffer != null) {
             if (LOG.isTraceEnabled()) {
                 LOG.trace("processing queue 0x{} queuedBuffer {}",
@@ -354,6 +394,9 @@ public class NettyServerCnxn extends ServerCnxn {
                 releaseQueuedBuffer();
             } else {
                 LOG.debug("Processed queue - bytes remaining");
+                // Try to reduce memory consumption by freeing up buffer space
+                // which is no longer needed.
+                queuedBuffer.discardReadComponents();
             }
         } else {
             LOG.debug("queue empty");
@@ -365,9 +408,9 @@ public class NettyServerCnxn extends ServerCnxn {
      * called from the event loop thread.
      */
     private void releaseQueuedBuffer() {
-        assert channel.eventLoop().inEventLoop();
+        checkIsInEventLoop("releaseQueuedBuffer");
         if (queuedBuffer != null) {
-            ReferenceCountUtil.release(queuedBuffer);
+            queuedBuffer.release();
             queuedBuffer = null;
         }
     }
@@ -376,10 +419,13 @@ public class NettyServerCnxn extends ServerCnxn {
      * Receive a message, which can come from the queued buffer or from a new
      * buffer coming in over the channel. This should only be called from the
      * event loop thread.
+     * Note that this method does not call <code>message.release()</code>. The
+     * caller is responsible for making sure the message is released after this
+     * method returns.
      * @param message the message bytes to process.
      */
     private void receiveMessage(ByteBuf message) {
-        assert channel.eventLoop().inEventLoop();
+        checkIsInEventLoop("receiveMessage");
         try {
             while(message.isReadable() && !throttled.get()) {
                 if (bb != null) {
@@ -482,6 +528,13 @@ public class NettyServerCnxn extends ServerCnxn {
             }
         } catch(IOException e) {
             LOG.warn("Closing connection to " + getRemoteSocketAddress(), e);
+            close();
+        } catch(ClientCnxnLimitException e) {
+            // Common case exception, print at debug level
+            ServerMetrics.CONNECTION_REJECTED.add(1);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Closing connection to " + getRemoteSocketAddress(), e);
+            }
             close();
         }
     }

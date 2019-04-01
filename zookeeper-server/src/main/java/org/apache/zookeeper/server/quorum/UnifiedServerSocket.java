@@ -269,9 +269,11 @@ public class UnifiedServerSocket extends ServerSocket {
                 }
                 prependableSocket = null;
                 mode = Mode.TLS;
+                LOG.info("Accepted TLS connection from {} - {} - {}", sslSocket.getRemoteSocketAddress(), sslSocket.getSession().getProtocol(), sslSocket.getSession().getCipherSuite());
             } else if (allowInsecureConnection) {
                 prependableSocket.prependToInputStream(litmus, 0, bytesRead);
                 mode = Mode.PLAINTEXT;
+                LOG.info("Accepted plaintext connection from {}", prependableSocket.getRemoteSocketAddress());
             } else {
                 prependableSocket.close();
                 mode = Mode.PLAINTEXT;

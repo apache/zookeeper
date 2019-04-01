@@ -82,6 +82,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     private final Map<InetAddress, Set<NettyServerCnxn>> ipMap = new HashMap<>();
     private InetSocketAddress localAddress;
     private int maxClientCnxns = 60;
+    int listenBacklog = -1;
     private final ClientX509Util x509Util;
 
     private static final AttributeKey<NettyServerCnxn> CONNECTION_ATTRIBUTE =
@@ -108,6 +109,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             InetAddress addr = ((InetSocketAddress) channel.remoteAddress())
                     .getAddress();
             if (maxClientCnxns > 0 && getClientCnxnCount(addr) >= maxClientCnxns) {
+                ServerMetrics.CONNECTION_REJECTED.add(1);
                 LOG.warn("Too many connections from {} - max is {}", addr,
                         maxClientCnxns);
                 channel.close();
@@ -202,13 +204,17 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             }
         }
 
+        // Use a single listener instance to reduce GC
+        // Note: this listener is only added when LOG.isTraceEnabled() is true,
+        // so it should not do any work other than trace logging.
+        private final GenericFutureListener<Future<Void>> onWriteCompletedTracer = (f) -> {
+            LOG.trace("write {}", f.isSuccess() ? "complete" : "failed");
+        };
+
         @Override
         public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
             if (LOG.isTraceEnabled()) {
-                promise.addListener((future) -> {
-                    LOG.trace("write {}",
-                            future.isSuccess() ? "complete" : "failed");
-                });
+                promise.addListener(onWriteCompletedTracer);
             }
             super.write(ctx, msg, promise);
         }
@@ -284,7 +290,8 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     NettyServerCnxnFactory() {
         x509Util = new ClientX509Util();
 
-        EventLoopGroup bossGroup = NettyUtils.newNioOrEpollEventLoopGroup();
+        EventLoopGroup bossGroup = NettyUtils.newNioOrEpollEventLoopGroup(
+                NettyUtils.getClientReachableLocalInetAddressCount());
         EventLoopGroup workerGroup = NettyUtils.newNioOrEpollEventLoopGroup();
         ServerBootstrap bootstrap = new ServerBootstrap()
                 .group(bossGroup, workerGroup)
@@ -364,13 +371,14 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     }
 
     @Override
-    public void configure(InetSocketAddress addr, int maxClientCnxns, boolean secure)
+    public void configure(InetSocketAddress addr, int maxClientCnxns, int backlog, boolean secure)
             throws IOException
     {
         configureSaslLogin();
         localAddress = addr;
         this.maxClientCnxns = maxClientCnxns;
         this.secure = secure;
+        this.listenBacklog = backlog;
     }
 
     /** {@inheritDoc} */
@@ -381,6 +389,11 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     /** {@inheritDoc} */
     public void setMaxClientCnxnsPerHost(int max) {
         maxClientCnxns = max;
+    }
+
+    /** {@inheritDoc} */
+    public int getSocketListenBacklog() {
+        return listenBacklog;
     }
 
     @Override
@@ -451,6 +464,9 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     
     @Override
     public void start() {
+        if (listenBacklog != -1) {
+            bootstrap.option(ChannelOption.SO_BACKLOG, listenBacklog);
+        }
         LOG.info("binding to port {}", localAddress);
         parentChannel = bootstrap.bind(localAddress).syncUninterruptibly().channel();
         // Port changes after bind() if the original port was 0, update
@@ -518,13 +534,14 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                 if (s.isEmpty()) {
                     ipMap.remove(remoteAddress);
                 }
-            } else {
-                LOG.error(
-                        "Unexpected null set for remote address {} when removing cnxn {}",
-                        remoteAddress,
-                        cnxn);
+                return;
             }
         }
+        // Fallthrough and log errors outside the synchronized block
+        LOG.error(
+                "Unexpected null set for remote address {} when removing cnxn {}",
+                remoteAddress,
+                cnxn);
     }
 
     private int getClientCnxnCount(InetAddress addr) {

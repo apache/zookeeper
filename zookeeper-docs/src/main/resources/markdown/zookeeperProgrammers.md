@@ -194,7 +194,19 @@ store pointers to the storage locations in ZooKeeper.
 ZooKeeper also has the notion of ephemeral nodes. These znodes
 exists as long as the session that created the znode is active. When
 the session ends the znode is deleted. Because of this behavior
-ephemeral znodes are not allowed to have children.
+ephemeral znodes are not allowed to have children. The list of ephemerals
+for the session can be retrieved using **getEphemerals()** api.
+
+##### getEphemerals()
+Retrieves the list of ephemeral nodes created by the session for the
+given path. If the path is empty, it will list all the ephemeral nodes
+for the session.
+**Use Case** - A sample use case might be, if the list of ephemeral
+nodes for the session need to be collected for duplicate data entry check
+and the nodes are created in sequential manner so you do not know the name
+for duplicate check. In that case, getEphemerals() api could be used to
+get the list of nodes for the session. This might be a typical use case
+for service discovery.
 
 <a name="Sequence+Nodes+--+Unique+Naming"></a>
 
@@ -718,6 +730,11 @@ node, but nothing more. (The problem is, if you want to call
 zoo_exists() on a node that doesn't exist, there is no
 permission to check.)
 
+_ADMIN_ permission also has a special role in terms of ACLs:
+in order to retrieve ACLs of a znode user has to have _READ_ or _ADMIN_
+ permission, but without _ADMIN_ permission, digest hash values will be 
+masked out.
+
 <a name="sc_BuiltinACLSchemes"></a>
 
 #### Builtin ACL Schemes
@@ -827,7 +844,8 @@ node must have the CREATE permission bit set.
   \*path,_struct_ ACL_vector
   \*acl, _struct_ Stat \*stat);
 
-This operation returns a node’s ACL info.
+This operation returns a node’s ACL info. The node must have READ or ADMIN
+permission set. Without ADMIN permission, the digest hash values will be masked out.
 
 * _int_ _zoo_set_acl_
   (zhandle_t \*zh, _const_ _char_

@@ -41,7 +41,7 @@ public interface ZooKeeperServerMXBean {
     /**
      * @return average request latency in ms
      */
-    public long getAvgRequestLatency();
+    public double getAvgRequestLatency();
     /**
      * @return max request latency in ms
      */
@@ -94,6 +94,31 @@ public interface ZooKeeperServerMXBean {
      * Set maxSessionTimeout of server in milliseconds
      */
     public void setMaxSessionTimeout(int max);
+
+    public boolean getResponseCachingEnabled();
+    public void setResponseCachingEnabled(boolean isEnabled);
+
+    /* Connection throttling settings */
+    public int getConnectionMaxTokens();
+    public void setConnectionMaxTokens(int val);
+
+    public int getConnectionTokenFillTime();
+    public void setConnectionTokenFillTime(int val);
+
+    public int getConnectionTokenFillCount();
+    public void setConnectionTokenFillCount(int val);
+
+    public int getConnectionFreezeTime();
+    public void setConnectionFreezeTime(int val);
+
+    public double getConnectionDropIncrease();
+    public void setConnectionDropIncrease(double val);
+
+    public double getConnectionDropDecrease();
+    public void setConnectionDropDecrease(double val);
+
+    public double getConnectionDecreaseRatio();
+    public void setConnectionDecreaseRatio(double val);
 
     /**
      * Reset packet and latency statistics 
