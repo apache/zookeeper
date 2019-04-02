@@ -39,6 +39,10 @@ Release notes for Apache Zookeeper releases are available in Jira: [Browse relea
 <a name="news"></a>
 ## News
 
+### 2 April, 2019: release 3.4.14 available
+
+This is a bugfix release. It fixes 8 issues, mostly build / unit tests issues, dependency updates flagged by OWASP, NPE and a name resolution problem. Among these it also supports experimental Maven build and Markdown based documentation generation. See [ZooKeeper 3.4.14 Release Notes](https://zookeeper.apache.org/doc/r3.4.14/releasenotes.html) for details.
+
 ### 15 July, 2018: release 3.4.13 available
 
 This is a bugfix release. It fixes 17 issues, including issues such as ZOOKEEPER-2959 that could cause data loss when observer is used, and ZOOKEEPER-2184 that prevents ZooKeeper Java clients working in dynamic IP (container / cloud) environment. See [ZooKeeper 3.4.13 Release Notes](https://zookeeper.apache.org/doc/r3.4.13/releasenotes.html) for details.
