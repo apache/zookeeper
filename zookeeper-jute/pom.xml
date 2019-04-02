@@ -33,6 +33,10 @@
   <name>Apache ZooKeeper - Jute</name>
   <description>ZooKeeper jute</description>
 
+  <properties>
+    <maven.deploy.skip>false</maven.deploy.skip>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.apache.yetus</groupId>

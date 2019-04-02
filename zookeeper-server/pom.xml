@@ -33,6 +33,10 @@
   <name>Apache ZooKeeper - Server</name>
   <description>ZooKeeper server</description>
 
+  <properties>
+    <maven.deploy.skip>false</maven.deploy.skip>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>com.github.spotbugs</groupId>
