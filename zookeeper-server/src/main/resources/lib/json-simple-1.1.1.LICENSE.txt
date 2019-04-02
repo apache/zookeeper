@@ -187,7 +187,7 @@
       same "printed page" as the copyright notice for easier
       identification within third-party archives.
 
-   Copyright [yyyy] [name of copyright owner]
+   Copyright 1999-2005 The Apache Software Foundation
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -200,25 +200,3 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-
-
-This distribution bundles javacc, which is available under the
-3-clause BSD License. For details, see a copy of the license in
-lib/javacc.LICENSE.txt
-
-This distribution bundles jline 2.11, which is available under the
-2-clause BSD License. For details, see a copy of the license in
-lib/jline-2.11.LICENSE.txt
-
-This distribution bundles SLF4J 1.7.5, which is available under the MIT
-License. For details, see a copy of the license in
-lib/slf4j-1.7.5.LICENSE.txt
-
-This distribution bundles json-simple v1.1.1, which is available under the
-Apache Software License, Version 2.0. For details, see a copy of the license in
-lib/json-simple-1.1.1.LICENSE.txt
-
-This distribution bundles a modified version of 'JZLib' as part of
-Netty-3.7.0, which is available under the 3-clause BSD licence. For
-details, see a copy of the licence in META-INF/license/LICENSE-jzlib.txt
-as part of the Netty jar in lib/netty-3.7.0.Final.jar.
