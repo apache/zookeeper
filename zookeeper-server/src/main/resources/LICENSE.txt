@@ -214,7 +214,7 @@ This distribution bundles SLF4J 1.7.5, which is available under the MIT
 License. For details, see a copy of the license in
 lib/slf4j-1.7.5.LICENSE.txt
 
-This distribution bundles SLF4J 1.7.5, which is available under the
+This distribution bundles json-simple v1.1.1, which is available under the
 Apache Software License, Version 2.0. For details, see a copy of the license in
 lib/json-simple-1.1.1.LICENSE.txt
 
