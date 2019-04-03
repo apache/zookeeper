@@ -34,7 +34,7 @@
     <moduleSet>
       <useAllReactorProjects>true</useAllReactorProjects>
       <includes>
-        <include>org.apache.zookeeper:zookeeper-server</include>
+        <include>org.apache.zookeeper:zookeeper</include>
         <include>org.apache.zookeeper:zookeeper-recipes-election</include>
         <include>org.apache.zookeeper:zookeeper-recipes-lock</include>
         <include>org.apache.zookeeper:zookeeper-recipes-queue</include>
