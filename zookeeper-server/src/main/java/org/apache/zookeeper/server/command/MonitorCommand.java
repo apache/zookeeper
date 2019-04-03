@@ -86,13 +86,15 @@ public class MonitorCommand extends AbstractFourLetterCommand {
                     .getMetricsProvider()
                     .dump(
                     (metric, value) -> {
-                        if (value instanceof Long
+                        if (value == null) {
+                            print(metric, null);
+                        } else if (value instanceof Long
                                 || value instanceof Integer) {
                             print(metric, ((Number) value).longValue());
                         } else if (value instanceof Number) {
                             print(metric, ((Number) value).doubleValue());                        
                         } else {
-                            print(metric, value + "");
+                            print(metric, value.toString());
                         }
                     });
     }
