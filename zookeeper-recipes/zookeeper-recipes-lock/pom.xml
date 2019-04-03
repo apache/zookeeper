@@ -37,7 +37,7 @@
   <dependencies>
     <dependency>
       <groupId>org.apache.zookeeper</groupId>
-      <artifactId>zookeeper-server</artifactId>
+      <artifactId>zookeeper</artifactId>
       <version>3.5.5</version>
     </dependency>
     <dependency>
@@ -49,7 +49,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.zookeeper</groupId>
-      <artifactId>zookeeper-server</artifactId>
+      <artifactId>zookeeper</artifactId>
       <version>3.5.5</version>
       <type>test-jar</type>
       <scope>test</scope>

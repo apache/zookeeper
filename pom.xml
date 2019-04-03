@@ -28,7 +28,7 @@
     <!-- no parent resolution -->
   </parent>
   <groupId>org.apache.zookeeper</groupId>
-  <artifactId>zookeeper</artifactId>
+  <artifactId>parent</artifactId>
   <packaging>pom</packaging>
   <version>3.5.5</version>
   <name>Apache ZooKeeper</name>

@@ -22,13 +22,13 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.apache.zookeeper</groupId>
-    <artifactId>zookeeper</artifactId>
+    <artifactId>parent</artifactId>
     <version>3.5.5</version>
     <relativePath>..</relativePath>
   </parent>
 
   <groupId>org.apache.zookeeper</groupId>
-  <artifactId>zookeeper-server</artifactId>
+  <artifactId>zookeeper</artifactId>
   <packaging>jar</packaging>
   <name>Apache ZooKeeper - Server</name>
   <description>ZooKeeper server</description>
