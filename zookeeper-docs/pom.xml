@@ -53,6 +53,13 @@
           <copyDirectories>images,skin</copyDirectories>
         </configuration>
       </plugin>
+      <plugin>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <configuration>
+          <!-- this module isn't to be deployed to Maven Central -->
+          <skip>true</skip>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 
