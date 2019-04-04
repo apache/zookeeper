@@ -24,6 +24,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -56,6 +57,10 @@ public class PathTrie {
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock(true);
 
+    private final Lock readLock = lock.readLock();
+
+    private final Lock writeLock = lock.writeLock();
+
     static class TrieNode {
         final String value;
         final Map<String, TrieNode> children;
@@ -72,7 +77,7 @@ public class PathTrie {
             this.value = value;
             this.parent = parent;
             this.property = false;
-            this.children = new HashMap<>();
+            this.children = new HashMap<>(4);
         }
 
         /**
@@ -203,20 +208,20 @@ public class PathTrie {
             throw new IllegalArgumentException("Invalid path: " + path);
         }
 
-        lock.writeLock().lock();
+        writeLock.lock();
         try {
             TrieNode parent = rootNode;
             for (final String part : pathComponents) {
                 TrieNode child = parent.getChild(part);
                 if (child == null) {
-                    parent.addChild(part, new TrieNode(parent, part));
-                    child = parent.getChild(part);
+                    child = new TrieNode(parent, part);
+                    parent.addChild(part, child);
                 }
                 parent = child;
             }
             parent.setProperty(true);
         } finally {
-            lock.writeLock().lock();
+            writeLock.lock();
         }
     }
 
@@ -233,7 +238,7 @@ public class PathTrie {
             throw new IllegalArgumentException("Invalid path: " + path);
         }
 
-        lock.writeLock().lock();
+        writeLock.lock();
         try {
             TrieNode parent = rootNode;
             for (final String part : pathComponents) {
@@ -248,7 +253,7 @@ public class PathTrie {
             final TrieNode realParent = parent.getParent();
             realParent.deleteChild(parent.getValue());
         } finally {
-          lock.writeLock().unlock();
+            writeLock.unlock();
         }
     }
 
@@ -270,7 +275,7 @@ public class PathTrie {
             throw new IllegalArgumentException("Invalid path: " + path);
         }
 
-        lock.readLock().lock();
+        readLock.lock();
         try {
             TrieNode parent = rootNode;
             TrieNode deepestPropertyNode = null;
@@ -297,7 +302,7 @@ public class PathTrie {
             }
             return String.join("/", treePath);
         } finally {
-            lock.readLock().unlock();
+            readLock.unlock();
         }
     }
 
@@ -305,11 +310,11 @@ public class PathTrie {
      * Clear all nodes in the trie.
      */
     public void clear() {
-      lock.writeLock().lock();
+      writeLock.lock();
       try {
           rootNode.getChildren().clear();
       } finally {
-          lock.writeLock().unlock();
+          writeLock.unlock();
       }
     }
 }

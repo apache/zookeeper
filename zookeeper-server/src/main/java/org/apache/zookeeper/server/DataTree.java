@@ -520,7 +520,7 @@ public class DataTree {
         // also check to update the quotas for this node
         String lastPrefix = getMaxPrefixWithQuota(path);
         long bytes = data == null ? 0 : data.length;
-        if (lastPrefix != null) {
+        if(lastPrefix != null) {
             // ok we have some match and need to update
             updateCountBytes(lastPrefix, bytes, 1);
         }
@@ -600,7 +600,7 @@ public class DataTree {
 
         // also check to update the quotas for this node
         String lastPrefix = getMaxPrefixWithQuota(path);
-        if (lastPrefix != null) {
+        if(lastPrefix != null) {
             // ok we have some match and need to update
             int bytes = 0;
             synchronized (node) {
@@ -643,7 +643,7 @@ public class DataTree {
         // now update if the path is in a quota subtree.
         String lastPrefix = getMaxPrefixWithQuota(path);
         long dataBytes = data == null ? 0 : data.length;
-        if (lastPrefix != null) {
+        if(lastPrefix != null) {
             this.updateCountBytes(lastPrefix, dataBytes
                     - (lastdata == null ? 0 : lastdata.length), 0);
         }
