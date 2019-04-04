@@ -122,7 +122,6 @@ public class QuorumCnxManager {
      * Local IP address
      */
     final long mySid;
-    final int socketTimeout;
     final Map<Long, QuorumPeer.QuorumServer> view;
     final boolean listenOnAllIPs;
     private ThreadPoolExecutor connectionExecutor;
@@ -259,7 +258,6 @@ public class QuorumCnxManager {
                             Map<Long,QuorumPeer.QuorumServer> view,
                             QuorumAuthServer authServer,
                             QuorumAuthLearner authLearner,
-                            int socketTimeout,
                             boolean listenOnAllIPs,
                             int quorumCnxnThreadsSize,
                             boolean quorumSaslAuthEnabled) {
@@ -276,7 +274,6 @@ public class QuorumCnxManager {
         this.self = self;
 
         this.mySid = mySid;
-        this.socketTimeout = socketTimeout;
         this.view = view;
         this.listenOnAllIPs = listenOnAllIPs;
 

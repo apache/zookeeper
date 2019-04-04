@@ -2278,7 +2278,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 this.getView(),
                 this.authServer,
                 this.authLearner,
-                this.tickTime * this.syncLimit,
                 this.getQuorumListenOnAllIPs(),
                 this.quorumCnxnThreadsSize,
                 this.isQuorumSaslAuthEnabled());
