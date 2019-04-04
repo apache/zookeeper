@@ -30,7 +30,8 @@
 #ifdef THREADED
 class Zookeeper_readOnly : public CPPUNIT_NS::TestFixture {
     CPPUNIT_TEST_SUITE(Zookeeper_readOnly);
-    CPPUNIT_TEST(testReadOnly);
+    // Disabling this test as it's flapping on Ubuntu
+    //CPPUNIT_TEST(testReadOnly);
     CPPUNIT_TEST_SUITE_END();
 
     static void watcher(zhandle_t* zh, int type, int state,

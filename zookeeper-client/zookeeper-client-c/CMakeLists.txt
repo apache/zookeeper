@@ -182,6 +182,14 @@ target_link_libraries(zookeeper PUBLIC
   $<$<PLATFORM_ID:Linux>:rt> # clock_gettime
   $<$<PLATFORM_ID:Windows>:ws2_32>) # Winsock 2.0
 
+option(WITH_OPENSSL "openssl directory" OFF)
+if(WITH_OPENSSL)
+  target_compile_definitions(zookeeper PUBLIC HAVE_OPENSSL_H)
+  include_directories(${WITH_OPENSSL}/include)
+  link_directories(${WITH_OPENSSL}/lib)
+  target_link_libraries(zookeeper PUBLIC ssl crypto)
+endif()
+
 if(WANT_SYNCAPI AND NOT WIN32)
   find_package(Threads REQUIRED)
   target_link_libraries(zookeeper PUBLIC Threads::Threads)
@@ -223,6 +231,7 @@ if(WANT_SYNCAPI)
 endif()
 
 if(WANT_CPPUNIT)
+  set (CMAKE_CXX_STANDARD 11)
   add_executable(zktest ${test_sources})
   target_include_directories(zktest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
