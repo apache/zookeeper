@@ -137,6 +137,7 @@ public class WatcherCleanerTest extends ZKTestCase {
 
     @Test
     public void testDeadWatcherMetrics() {
+        ServerMetrics.getMetrics().resetAll();
         MyDeadWatcherListener listener = new MyDeadWatcherListener();
         WatcherCleaner cleaner = new WatcherCleaner(listener, 1, 1, 1, 1);
         listener.setDelayMs(20);
