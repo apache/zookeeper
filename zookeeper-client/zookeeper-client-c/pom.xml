@@ -33,6 +33,20 @@
   <name>Apache ZooKeeper - Client - C</name>
   <description>ZooKeeper c client</description>
 
+  <dependencies>
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-all</artifactId>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-log4j12 -->
+    <dependency>
+    <groupId>org.slf4j</groupId>
+    <artifactId>slf4j-log4j12</artifactId>
+    <version>1.7.26</version>
+    <scope>test</scope>
+    </dependency>
+  </dependencies>
+
   <build>
     <plugins>
       <plugin>
@@ -109,6 +123,7 @@
                 <CALLER>ANT</CALLER>
               </environmentVariables>
               <arguments>
+                <argument>--with-openssl=/usr/include/openssl/</argument>
                 <argument>--prefix=${project.build.directory}/c</argument>
                 <argument>--enable-gcov</argument>
               </arguments>
