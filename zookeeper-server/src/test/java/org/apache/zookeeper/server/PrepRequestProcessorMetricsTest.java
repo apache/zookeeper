@@ -21,10 +21,8 @@ package org.apache.zookeeper.server;
 import jline.internal.Log;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.*;
+import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.proto.DeleteRequest;
 import org.apache.zookeeper.proto.SetDataRequest;
@@ -44,28 +42,24 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.number.OrderingComparison.greaterThan;
 import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class PrepRequestProcessorMetricsTest extends ZKTestCase {
     private static final Logger LOG = LoggerFactory.getLogger(PrepRequestProcessorMetricsTest.class);
 
     ZooKeeperServer zks;
     RequestProcessor nextProcessor;
-    boolean oldSkipAcl;
-
 
     @Before
-    public void setup() throws Exception {
-        oldSkipAcl = PrepRequestProcessor.skipACL;
-
+    public void setup() {
         zks = spy(new ZooKeeperServer());
         zks.sessionTracker = mock(SessionTracker.class);
 
@@ -81,13 +75,7 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
         when(db.getEphemerals(anyLong())).thenReturn(ephemerals);
 
         nextProcessor = mock(RequestProcessor.class);
-
         ServerMetrics.resetAll();
-    }
-
-    @After
-    public void teardown() {
-        PrepRequestProcessor.skipACL = oldSkipAcl;
     }
 
     private Request createRequest(Record record, int opCode) throws IOException {
@@ -122,6 +110,11 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
 
     @Test
     public void testPrepRequestProcessorMetrics() throws Exception {
+        CountDownLatch threeRequests = new CountDownLatch(3);
+        doAnswer(invocationOnMock -> {
+            threeRequests.countDown();
+            return  null;}).when(nextProcessor).processRequest(any(Request.class));
+
         PrepRequestProcessor prepRequestProcessor = new PrepRequestProcessor(zks, nextProcessor);
         PrepRequestProcessor.skipACL = true;
 
@@ -137,7 +130,7 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
 
         prepRequestProcessor.start();
 
-        Thread.sleep(500);
+        threeRequests.await(500, TimeUnit.MILLISECONDS);
 
         values = ServerMetrics.getAllValues();
         Assert.assertEquals(3L, values.get("max_prep_processor_queue_size"));
@@ -154,6 +147,17 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
         Assert.assertEquals(5L, values.get("outstanding_changes_queued"));
     }
 
+    private class SimpleWatcher implements Watcher {
+        CountDownLatch created;
+        public SimpleWatcher(CountDownLatch latch) {
+            this.created = latch;
+        }
+        @Override
+        public void process(WatchedEvent e) {
+            created.countDown();
+        }
+    }
+
     @Test
     public void testOutstandingChangesRemoved() throws Exception {
         // this metric is currently recorded in FinalRequestProcessor but it is tightly related to the Prep metrics
@@ -165,7 +169,9 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
         ZooKeeper zk = ClientBase.createZKClient(util.getConnString());
         zk.create("/test", new byte[50], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
-        Thread.sleep(200);
+        CountDownLatch created = new CountDownLatch(1);
+        zk.exists("/test", new SimpleWatcher(created));
+        created.await(200, TimeUnit.MILLISECONDS);
 
         Map<String, Object> values = ServerMetrics.getAllValues();
         Assert.assertThat((long)values.get("outstanding_changes_removed"), greaterThan(0L));
