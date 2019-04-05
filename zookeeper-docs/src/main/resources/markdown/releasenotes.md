@@ -109,6 +109,7 @@ limitations under the License.
 * [ZOOKEEPER-3094](https://issues.apache.org/jira/browse/ZOOKEEPER-3094) - Make BufferSizeTest reliable
 * [ZOOKEEPER-3097](https://issues.apache.org/jira/browse/ZOOKEEPER-3097) - Use Runnable instead of Thread for working items in WorkerService to improve the throughput of CommitProcessor
 * [ZOOKEEPER-3110](https://issues.apache.org/jira/browse/ZOOKEEPER-3110) - Improve the closeSession throughput in PrepRequestProcessor
+* [ZOOKEEPER-3152](https://issues.apache.org/jira/browse/ZOOKEEPER-3152) - Port ZK netty stack to netty 4
 * [ZOOKEEPER-3159](https://issues.apache.org/jira/browse/ZOOKEEPER-3159) - Flaky: ClientRequestTimeoutTest.testClientRequestTimeout
 * [ZOOKEEPER-3172](https://issues.apache.org/jira/browse/ZOOKEEPER-3172) - Quorum TLS - fix port unification to allow rolling upgrades
 * [ZOOKEEPER-3173](https://issues.apache.org/jira/browse/ZOOKEEPER-3173) - Quorum TLS - support PEM trust/key stores
