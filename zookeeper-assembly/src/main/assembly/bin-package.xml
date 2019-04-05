@@ -24,7 +24,7 @@
   <formats>
     <format>tar.gz</format>
   </formats>
-  <includeBaseDirectory>false</includeBaseDirectory>
+  <includeBaseDirectory>true</includeBaseDirectory>
   <componentDescriptors>
     <componentDescriptor>src/main/assembly/components.xml</componentDescriptor>
   </componentDescriptors>
