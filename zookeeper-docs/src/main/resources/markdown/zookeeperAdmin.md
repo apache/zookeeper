@@ -1394,6 +1394,19 @@ Both subsystems need to have sufficient amount of threads to achieve peak read t
     Number of Commit Processor worker threads. If configured with 0 worker threads, the main thread
     will process the request directly. The default value is the number of cpu cores.
 
+* *zookeeper.commitProcessor.maxReadBatchSize* :
+    (Java system property only: **zookeeper.commitProcessor.maxReadBatchSize**)
+    Max number of reads to process from queuedRequests before switching to processing commits.
+    If the value < 0 (default), we switch whenever we have a local write, and pending commits.
+    A high read batch size will delay commit processing, causing stale data to be served.
+
+* *zookeeper.commitProcessor.maxCommitBatchSize* :
+    (Java system property only: **zookeeper.commitProcessor.maxCommitBatchSize**)
+    Max number of commits to process before processing reads. We will try to process as many
+    remote/local commits as we can till we reach this count. A high commit batch size will delay
+    reads while processing more commits. A low commit batch size will favor reads.
+    Default is "1".
+
 * *znode.container.checkIntervalMs* :
     (Java system property only)
     **New in 3.6.0:** The
