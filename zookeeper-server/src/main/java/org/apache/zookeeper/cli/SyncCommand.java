@@ -35,7 +35,7 @@ public class SyncCommand extends CliCommand {
 
     private static Options options = new Options();
     private String[] args;
-    public static final int CONNECTION_TIMEOUT = 30000;//30s
+    public static final long SYNC_TIMEOUT = TimeUnit.SECONDS.toMillis(30L);
 
     public SyncCommand() {
         super("sync", "path");
@@ -70,15 +70,14 @@ public class SyncCommand extends CliCommand {
                 }
             }, null);
 
-            try {
-                int resultCode = cf.get(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
-                out.println("Sync returned " + resultCode);
-            } catch (TimeoutException ex) {
-                out.println("Sync is timeout within " +  CONNECTION_TIMEOUT + " ms");
-            }
+            int resultCode = cf.get(SYNC_TIMEOUT, TimeUnit.MILLISECONDS);
+            out.println("Sync returned " + resultCode);
         } catch (IllegalArgumentException ex) {
             throw new MalformedPathException(ex.getMessage());
-        } catch (InterruptedException | ExecutionException ex) {
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            throw new CliWrapperException(ie);
+        } catch (TimeoutException | ExecutionException ex) {
             throw new CliWrapperException(ex);
         }
 
