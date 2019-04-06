@@ -26,6 +26,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -809,7 +810,35 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
     	Assert.assertEquals(qs.clientAddr.getHostString(), "0.0.0.0");
     	Assert.assertEquals(qs.clientAddr.getPort(), ports[2]);
     }
-    
+
+    @Test
+    public void testWildcards() throws IOException, KeeperException, InterruptedException {
+        qu = new QuorumUtil(1); // create 3 servers
+        qu.disableJMXTest = true;
+        qu.startAll();
+        zkArr = createHandles(qu);
+        zkAdminArr = createAdminHandles(qu);
+
+        ArrayList<String> members = new ArrayList<>();
+        for (int i = 1; i <= 3; i++) {
+            members.add("server." + i + "=[0:0:0:0:0:0:0:0]:"
+                    + qu.getPeer(i).peer.getQuorumAddress().getPort() + ":"
+                    + qu.getPeer(i).peer.getElectionAddress().getPort() + ":participant;"
+                    + "[0:0:0:0:0:0:0:0]:" + qu.getPeer(i).peer.getClientPort());
+        }
+        String otherMember4 = String.format("server.4=[0:0:0:0:0:0:0:0]:%d:%d:participant;[0:0:0:0:0:0:0:0]:%d",
+                PortAssignment.unique(),
+                PortAssignment.unique(),
+                qu.getPeer(1).peer.getClientPort());
+
+        reconfig(zkAdminArr[1], null, null, members, -1);
+        testNormalOperation(zkArr[1], zkArr[2]);
+
+        reconfig(zkAdminArr[1], Collections.singletonList(otherMember4),
+                null, null, -1);
+        testNormalOperation(zkArr[1], zkArr[2]);
+    }
+
     @Test
     public void testQuorumSystemChange() throws Exception {
         qu = new QuorumUtil(3); // create 7 servers
