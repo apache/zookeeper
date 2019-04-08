@@ -54,12 +54,15 @@ public class CircularBlockingQueue<E> implements BlockingQueue<E> {
 
   private final int maxSize;
 
+  private long droppedCount;
+
   public CircularBlockingQueue(int queueSize) {
     this.queue = new ArrayDeque<>(queueSize);
     this.maxSize = queueSize;
 
     this.lock =  new ReentrantLock();
     this.notEmpty = this.lock.newCondition();
+    this.droppedCount = 0L;
   }
 
   /**
@@ -78,7 +81,9 @@ public class CircularBlockingQueue<E> implements BlockingQueue<E> {
       try {
           if (this.queue.size() == this.maxSize) {
               final E discard = this.queue.remove();
-              LOG.debug("Queue if full. Discarding oldest element: {}", discard);
+              this.droppedCount++;
+              LOG.debug("Queue is full. Discarding oldest element [count={}]: {}",
+                  this.droppedCount, discard);
           }
           this.queue.add(e);
           this.notEmpty.signal();
@@ -142,10 +147,37 @@ public class CircularBlockingQueue<E> implements BlockingQueue<E> {
     }
   }
 
+  /**
+   * Returns the number of elements that were dropped from the queue because the
+   * queue was full when a new element was offered.
+   *
+   * @return The number of elements dropped (lost) from the queue
+   */
+  public long getDroppedCount() {
+    return this.droppedCount;
+  }
+
+  /**
+   * For testing purposes only.
+   *
+   * @return True if a thread is blocked waiting for a new element to be offered
+   *         to the queue
+   */
+  boolean isConsumerThreadBlocked() {
+    final ReentrantLock lock = this.lock;
+    lock.lock();
+    try {
+      return lock.getWaitQueueLength(this.notEmpty) > 0;
+    } finally {
+      lock.unlock();
+    }
+  }
+
   @Override
   public int drainTo(Collection<? super E> c) {
     throw new UnsupportedOperationException();
   }
+
 
   @Override
   public E poll() {

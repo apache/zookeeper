@@ -16,15 +16,13 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.server.util;
+package org.apache.zookeeper.util;
 
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import org.apache.zookeeper.util.CircularBlockingQueue;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -32,7 +30,9 @@ public class TestCircularBlockingQueue {
 
   @Test
   public void testCircularBlockingQueue() throws InterruptedException {
-    final BlockingQueue<Integer> testQueue = new CircularBlockingQueue<>(2);
+    final CircularBlockingQueue<Integer> testQueue =
+        new CircularBlockingQueue<>(2);
+
     testQueue.offer(1);
     testQueue.offer(2);
     testQueue.offer(3);
@@ -42,6 +42,7 @@ public class TestCircularBlockingQueue {
     Assert.assertEquals(2, testQueue.take().intValue());
     Assert.assertEquals(3, testQueue.take().intValue());
 
+    Assert.assertEquals(1L, testQueue.getDroppedCount());
     Assert.assertEquals(0, testQueue.size());
     Assert.assertEquals(true, testQueue.isEmpty());
   }
@@ -50,7 +51,7 @@ public class TestCircularBlockingQueue {
   public void testCircularBlockingQueueTakeBlock()
       throws InterruptedException, ExecutionException {
 
-    final BlockingQueue<Integer> testQueue = new CircularBlockingQueue<>(2);
+    final CircularBlockingQueue<Integer> testQueue = new CircularBlockingQueue<>(2);
 
     ExecutorService executor = Executors.newSingleThreadExecutor();
 
@@ -59,7 +60,9 @@ public class TestCircularBlockingQueue {
     });
 
     // Allow the other thread to get into position; waiting for item to be inserted
-    Thread.sleep(2000L);
+    while (!testQueue.isConsumerThreadBlocked()) {
+      Thread.sleep(50L);
+    }
 
     testQueue.offer(10);
 
