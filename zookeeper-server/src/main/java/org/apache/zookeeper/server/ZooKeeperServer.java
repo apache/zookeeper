@@ -224,14 +224,16 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     /**
      * Adds JvmPauseMonitor and calls
-     * {@link #ZooKeeperServer(FileTxnSnapLog, int, int, int, ZKDatabase)}
+     * {@link #ZooKeeperServer(FileTxnSnapLog, int, int, int, int, ZKDatabase)}
      *
      */
     public ZooKeeperServer(JvmPauseMonitor jvmPauseMonitor, FileTxnSnapLog txnLogFactory, int tickTime,
-                           int minSessionTimeout, int maxSessionTimeout, ZKDatabase zkDb) {
-        this(txnLogFactory, tickTime, minSessionTimeout, maxSessionTimeout, zkDb);
+                           int minSessionTimeout, int maxSessionTimeout, int clientPortListenBacklog, ZKDatabase zkDb) {
+        this(txnLogFactory, tickTime, minSessionTimeout, maxSessionTimeout, clientPortListenBacklog, zkDb);
         this.jvmPauseMonitor = jvmPauseMonitor;
-        LOG.info("Added JvmPauseMonitor to server");
+        if(jvmPauseMonitor != null) {
+            LOG.info("Added JvmPauseMonitor to server");
+        }
     }
 
     /**

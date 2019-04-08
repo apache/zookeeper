@@ -46,17 +46,17 @@ public class JvmPauseMonitor {
     public static final String JVM_PAUSE_MONITOR_FEATURE_SWITCH_KEY = "jvm.pause.monitor";
 
     /** The target sleep time */
-    private long sleepTimeMs = SLEEP_TIME_MS_DEFAULT;
+    protected long sleepTimeMs;
     public static final String SLEEP_TIME_MS_KEY = "jvm.pause.sleep.time.ms";
     public static final long SLEEP_TIME_MS_DEFAULT = 500;
 
     /** log WARN if we detect a pause longer than this threshold */
-    private long warnThresholdMs = WARN_THRESHOLD_DEFAULT;
+    protected long warnThresholdMs;
     public static final String WARN_THRESHOLD_KEY = "jvm.pause.warn-threshold.ms";
     public static final long WARN_THRESHOLD_DEFAULT = 10000;
 
     /** log INFO if we detect a pause longer than this threshold */
-    private long infoThresholdMs = INFO_THRESHOLD_DEFAULT;
+    protected long infoThresholdMs;
     public static final String INFO_THRESHOLD_KEY = "jvm.pause.info-threshold.ms";
     public static final long INFO_THRESHOLD_DEFAULT = 1000;
 
@@ -128,10 +128,11 @@ public class JvmPauseMonitor {
             }
         }
 
-        String ret = "Detected pause in JVM or host machine (eg GC): " +
-                "pause of approximately " + extraSleepTime + "ms\n";
+        String ret = "Detected pause in JVM or host machine (eg GC): pause of approximately " + extraSleepTime
+                + "ms, total pause: info level: " + numGcInfoThresholdExceeded
+                + ", warn level: " + numGcWarnThresholdExceeded + "\n";
         if (gcDiffs.isEmpty()) {
-            ret += "No GCs detected";
+            ret += ("No GCs detected");
         } else {
             ret += String.join("\n", gcDiffs);
         }
