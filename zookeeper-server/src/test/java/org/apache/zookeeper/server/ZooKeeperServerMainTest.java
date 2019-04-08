@@ -667,6 +667,23 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
         }
     }
 
+    @Test
+    public void testJvmPauseMonitor() throws IOException {
+        final int CLIENT_PORT = PortAssignment.unique();
+        final String configs = "jvm.pause.monitor=true";
+        MainThread main = new MainThread(CLIENT_PORT, true, configs);
+        main.start();
+
+        String HOSTPORT = "127.0.0.1:" + CLIENT_PORT;
+        Assert.assertTrue("waiting for server being up",
+                ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+
+        main.shutdown();
+
+        Assert.assertTrue("waiting for server down", ClientBase
+                .waitForServerDown(HOSTPORT, ClientBase.CONNECTION_TIMEOUT));
+    }
+
     private void deleteFile(File f) throws IOException {
         if (f.isDirectory()) {
             for (File c : f.listFiles())
