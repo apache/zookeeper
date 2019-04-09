@@ -74,6 +74,10 @@ public class CommandExecutor {
             command = new MonitorCommand(pwriter, serverCnxn);
         } else if (commandCode == FourLetterCommands.isroCmd) {
             command = new IsroCommand(pwriter, serverCnxn);
+        } else if (commandCode == FourLetterCommands.icfgCmd) {
+            command = new IcfgCommand(pwriter, serverCnxn);
+        } else if (commandCode == FourLetterCommands.syspCmd) {
+            command = new SyspCommand(pwriter, serverCnxn);
         }
         return command;
     }

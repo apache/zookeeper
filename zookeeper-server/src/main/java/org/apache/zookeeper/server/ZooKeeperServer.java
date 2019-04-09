@@ -116,6 +116,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected JvmPauseMonitor jvmPauseMonitor;
     protected volatile State state = State.INITIAL;
     private boolean isResponseCachingEnabled = true;
+    /* contains the configuration file content read at startup */
+    protected String initialConfig;
 
     protected enum State {
         INITIAL, RUNNING, SHUTDOWN, ERROR
@@ -194,7 +196,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      */
     public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime,
             int minSessionTimeout, int maxSessionTimeout, int clientPortListenBacklog,
-            ZKDatabase zkDb) {
+            ZKDatabase zkDb, String initialConfig) {
         serverStats = new ServerStats(this);
         this.txnLogFactory = txnLogFactory;
         this.txnLogFactory.setServerStats(this.serverStats);
@@ -210,6 +212,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         connThrottle = new BlueThrottle();
 
+        this.initialConfig = initialConfig;
+
         LOG.info("Created server with tickTime " + tickTime
                 + " minSessionTimeout " + getMinSessionTimeout()
                 + " maxSessionTimeout " + getMaxSessionTimeout()
@@ -218,14 +222,23 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 + " snapdir " + txnLogFactory.getSnapDir());
     }
 
+    public String getInitialConfig() {
+        return initialConfig;
+    }
+
+    public void dumpInitialConf(PrintWriter pwriter) {
+        pwriter.println(getInitialConfig());
+    }
+
     /**
      * Adds JvmPauseMonitor and calls
-     * {@link #ZooKeeperServer(FileTxnSnapLog, int, int, int, int, ZKDatabase)}
+     * {@link #ZooKeeperServer(FileTxnSnapLog, int, int, int, int, ZKDatabase, String)}
      *
      */
     public ZooKeeperServer(JvmPauseMonitor jvmPauseMonitor, FileTxnSnapLog txnLogFactory, int tickTime,
-                           int minSessionTimeout, int maxSessionTimeout, int clientPortListenBacklog, ZKDatabase zkDb) {
-        this(txnLogFactory, tickTime, minSessionTimeout, maxSessionTimeout, clientPortListenBacklog, zkDb);
+                           int minSessionTimeout, int maxSessionTimeout, int clientPortListenBacklog,
+                           ZKDatabase zkDb, String initialConfig) {
+        this(txnLogFactory, tickTime, minSessionTimeout, maxSessionTimeout, clientPortListenBacklog, zkDb, initialConfig);
         this.jvmPauseMonitor = jvmPauseMonitor;
         if(jvmPauseMonitor != null) {
             LOG.info("Added JvmPauseMonitor to server");
@@ -238,9 +251,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * @param tickTime the ticktime for the server
      * @throws IOException
      */
-    public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime)
+    public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime, String initialConfig)
             throws IOException {
-        this(txnLogFactory, tickTime, -1, -1, -1, new ZKDatabase(txnLogFactory));
+        this(txnLogFactory, tickTime, -1, -1, -1, new ZKDatabase(txnLogFactory), initialConfig);
     }
 
     public ServerStats serverStats() {
@@ -300,7 +313,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public ZooKeeperServer(File snapDir, File logDir, int tickTime)
             throws IOException {
         this( new FileTxnSnapLog(snapDir, logDir),
-                tickTime);
+                tickTime, "");
     }
 
     /**
@@ -311,7 +324,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public ZooKeeperServer(FileTxnSnapLog txnLogFactory)
         throws IOException
     {
-        this(txnLogFactory, DEFAULT_TICK_TIME, -1, -1, -1, new ZKDatabase(txnLogFactory));
+        this(txnLogFactory, DEFAULT_TICK_TIME, -1, -1, -1, new ZKDatabase(txnLogFactory), "");
     }
 
     /**

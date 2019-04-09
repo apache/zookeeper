@@ -66,6 +66,9 @@ public class QuorumBase extends ClientBase {
     protected int portClient4;
     protected int portClient5;
 
+
+    static final String INITIAL_CONFIG = "# Test initial configuration!";
+
     protected boolean localSessionsEnabled = false;
     protected boolean localSessionsUpgradingEnabled = false;
 
@@ -207,25 +210,14 @@ public class QuorumBase extends ClientBase {
         s4.enableLocalSessionsUpgrading(localSessionsUpgradingEnabled);
         s5.enableLocalSessionsUpgrading(localSessionsUpgradingEnabled);
 
-        LOG.info("start QuorumPeer 1");
-        s1.start();
-        LOG.info("start QuorumPeer 2");
-        s2.start();
-        LOG.info("start QuorumPeer 3");
-        s3.start();
-        LOG.info("start QuorumPeer 4");
-        s4.start();
-        LOG.info("start QuorumPeer 5");
-        s5.start();
-        LOG.info("started QuorumPeer 5");
+        // To (unit) test admin command: 'icfg'
+        s1.setInitialConfig(INITIAL_CONFIG);
+        s2.setInitialConfig(INITIAL_CONFIG);
+        s3.setInitialConfig(INITIAL_CONFIG);
+        s4.setInitialConfig(INITIAL_CONFIG);
+        s5.setInitialConfig(INITIAL_CONFIG);
 
-        LOG.info ("Checking ports " + hostPort);
-        for (String hp : hostPort.split(",")) {
-            Assert.assertTrue("waiting for server up",
-                       ClientBase.waitForServerUp(hp,
-                                    CONNECTION_TIMEOUT));
-            LOG.info(hp + " is accepting client connections");
-        }
+        startAll();
 
         // interesting to see what's there...
         JMXEnv.dump();
@@ -274,6 +266,28 @@ public class QuorumBase extends ClientBase {
         }
         LOG.info("getPeersMatching ports are {}", hosts);
         return hosts.toString();
+    }
+
+    protected void startAll() {
+        LOG.info("start QuorumPeer 1");
+        s1.start();
+        LOG.info("start QuorumPeer 2");
+        s2.start();
+        LOG.info("start QuorumPeer 3");
+        s3.start();
+        LOG.info("start QuorumPeer 4");
+        s4.start();
+        LOG.info("start QuorumPeer 5");
+        s5.start();
+        LOG.info("started QuorumPeer 5");
+
+        LOG.info ("Checking ports " + hostPort);
+        for (String hp : hostPort.split(",")) {
+            Assert.assertTrue("waiting for server up",
+                    ClientBase.waitForServerUp(hp,
+                            CONNECTION_TIMEOUT));
+            LOG.info(hp + " is accepting client connections");
+        }
     }
 
     public ArrayList<QuorumPeer> getPeerList() {

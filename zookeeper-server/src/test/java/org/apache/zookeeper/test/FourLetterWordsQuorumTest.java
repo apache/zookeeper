@@ -90,6 +90,8 @@ public class FourLetterWordsQuorumTest extends QuorumBase {
             verify(hp, "wchp", "");
             verify(hp, "wchc", "");
             verify(hp, "dirs", "size");
+            verify(hp, "icfg", QuorumBase.INITIAL_CONFIG);
+
 
             verify(hp, "srst", "reset");
             verify(hp, "crst", "reset");

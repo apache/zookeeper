@@ -18,14 +18,16 @@
 
 package org.apache.zookeeper.server.admin;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.Environment.Entry;
@@ -62,13 +64,17 @@ public class Commands {
     /** Maps command names to Command instances */
     private static Map<String, Command> commands = new HashMap<String, Command>();
     private static Set<String> primaryNames = new HashSet<String>();
+    private static Set<String> commandsAvailableBeforePeerSync = new HashSet<String>();
 
     /**
      * Registers the given command. Registered commands can be run by passing
      * any of their names to runCommand.
      */
-    public static void registerCommand(Command command) {
+    public static void registerCommand(Command command, boolean enabledBeforePeerSync) {
         for (String name : command.getNames()) {
+            if (enabledBeforePeerSync) {
+                commandsAvailableBeforePeerSync.add(name);
+            }
             Command prev = commands.put(name, command);
             if (prev != null) {
                 LOG.warn("Re-registering command %s (primary name = %s)", name, command.getPrimaryName());
@@ -95,7 +101,7 @@ public class Commands {
         if (!commands.containsKey(cmdName)) {
             return new CommandResponse(cmdName, "Unknown command: " + cmdName);
         }
-        if (zkServer == null || !zkServer.isRunning()) {
+        if (!commandsAvailableBeforePeerSync.contains(cmdName) && (zkServer == null || !zkServer.isRunning())) {
             return new CommandResponse(cmdName, "This ZooKeeper instance is not currently serving requests");
         }
         return commands.get(cmdName).run(zkServer, kwargs);
@@ -117,23 +123,25 @@ public class Commands {
     }
 
     static {
-        registerCommand(new CnxnStatResetCommand());
-        registerCommand(new ConfCommand());
-        registerCommand(new ConsCommand());
-        registerCommand(new DirsCommand());
-        registerCommand(new DumpCommand());
-        registerCommand(new EnvCommand());
-        registerCommand(new GetTraceMaskCommand());
-        registerCommand(new IsroCommand());
-        registerCommand(new MonitorCommand());
-        registerCommand(new RuokCommand());
-        registerCommand(new SetTraceMaskCommand());
-        registerCommand(new SrvrCommand());
-        registerCommand(new StatCommand());
-        registerCommand(new StatResetCommand());
-        registerCommand(new WatchCommand());
-        registerCommand(new WatchesByPathCommand());
-        registerCommand(new WatchSummaryCommand());
+        registerCommand(new CnxnStatResetCommand(), false);
+        registerCommand(new ConfCommand(), false);
+        registerCommand(new ConsCommand(), false);
+        registerCommand(new DirsCommand(), false);
+        registerCommand(new DumpCommand(), false);
+        registerCommand(new EnvCommand(), true);
+        registerCommand(new GetTraceMaskCommand(), true);
+        registerCommand(new IsroCommand(), false);
+        registerCommand(new MonitorCommand(), true);
+        registerCommand(new RuokCommand(), false);
+        registerCommand(new SetTraceMaskCommand(), true);
+        registerCommand(new SrvrCommand(), false);
+        registerCommand(new StatCommand(), false);
+        registerCommand(new StatResetCommand(), false);
+        registerCommand(new WatchCommand(), false);
+        registerCommand(new WatchesByPathCommand(), false);
+        registerCommand(new WatchSummaryCommand(), false);
+        registerCommand(new SystemPropertiesCommand(), true);
+        registerCommand(new InitialConfigurationCommand(), false);
     }
 
     /**
@@ -322,74 +330,76 @@ public class Commands {
 
         @Override
         public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
-            ZKDatabase zkdb = zkServer.getZKDatabase();
-            ServerStats stats = zkServer.serverStats();
-
             CommandResponse response = initializeResponse();
 
             response.put("version", Version.getFullVersion());
 
-            response.put("avg_latency", stats.getAvgLatency());
-            response.put("max_latency", stats.getMaxLatency());
-            response.put("min_latency", stats.getMinLatency());
-
-            response.put("packets_received", stats.getPacketsReceived());
-            response.put("packets_sent", stats.getPacketsSent());
-            response.put("num_alive_connections", stats.getNumAliveClientConnections());
-
-            response.put("outstanding_requests", stats.getOutstandingRequests());
-            response.put("uptime", stats.getUptime());
-
-            response.put("server_state", stats.getServerState());
-            response.put("znode_count", zkdb.getNodeCount());
-
-            response.put("watch_count", zkdb.getDataTree().getWatchCount());
-            response.put("ephemerals_count", zkdb.getDataTree().getEphemeralsCount());
-            response.put("approximate_data_size", zkdb.getDataTree().cachedApproximateDataSize());
-
-            response.put("global_sessions", zkdb.getSessionCount());
-            response.put("local_sessions",
-                    zkServer.getSessionTracker().getLocalSessionCount());
-
             OSMXBean osMbean = new OSMXBean();
             response.put("open_file_descriptor_count", osMbean.getOpenFileDescriptorCount());
             response.put("max_file_descriptor_count", osMbean.getMaxFileDescriptorCount());
-            response.put("connection_drop_probability", zkServer.getConnectionDropChance());
 
-            response.put("last_client_response_size", stats.getClientResponseStats().getLastBufferSize());
-            response.put("max_client_response_size", stats.getClientResponseStats().getMaxBufferSize());
-            response.put("min_client_response_size", stats.getClientResponseStats().getMinBufferSize());
+            if (zkServer != null) {
+                ZKDatabase zkdb = zkServer.getZKDatabase();
+                ServerStats stats = zkServer.serverStats();
+                response.put("avg_latency", stats.getAvgLatency());
+                response.put("max_latency", stats.getMaxLatency());
+                response.put("min_latency", stats.getMinLatency());
 
-            if (zkServer instanceof QuorumZooKeeperServer) {
-                QuorumPeer peer = ((QuorumZooKeeperServer) zkServer).self;
-                response.put("quorum_size", peer.getQuorumSize());
-            }
+                response.put("packets_received", stats.getPacketsReceived());
+                response.put("packets_sent", stats.getPacketsSent());
+                response.put("num_alive_connections", stats.getNumAliveClientConnections());
 
-            if (zkServer instanceof LeaderZooKeeperServer) {
-                Leader leader = ((LeaderZooKeeperServer) zkServer).getLeader();
+                response.put("outstanding_requests", stats.getOutstandingRequests());
+                response.put("uptime", stats.getUptime());
 
-                response.put("learners", leader.getLearners().size());
-                response.put("synced_followers", leader.getForwardingFollowers().size());
-                response.put("synced_non_voting_followers", leader.getNonVotingFollowers().size());
-                response.put("synced_observers", leader.getObservingLearners().size());
-                response.put("pending_syncs", leader.getNumPendingSyncs());
-                response.put("leader_uptime", leader.getUptime());
+                response.put("server_state", stats.getServerState());
+                response.put("znode_count", zkdb.getNodeCount());
 
-                response.put("last_proposal_size", leader.getProposalStats().getLastBufferSize());
-                response.put("max_proposal_size", leader.getProposalStats().getMaxBufferSize());
-                response.put("min_proposal_size", leader.getProposalStats().getMinBufferSize());
-            }
+                response.put("watch_count", zkdb.getDataTree().getWatchCount());
+                response.put("ephemerals_count", zkdb.getDataTree().getEphemeralsCount());
+                response.put("approximate_data_size", zkdb.getDataTree().cachedApproximateDataSize());
 
-            if (zkServer instanceof FollowerZooKeeperServer) {
-                Follower follower = ((FollowerZooKeeperServer) zkServer).getFollower();
-                Integer syncedObservers = follower.getSyncedObserverSize();
-                if (syncedObservers != null) {
-                    response.put("synced_observers", syncedObservers);
+                response.put("global_sessions", zkdb.getSessionCount());
+                response.put("local_sessions",
+                        zkServer.getSessionTracker().getLocalSessionCount());
+
+                response.put("connection_drop_probability", zkServer.getConnectionDropChance());
+
+                response.put("last_client_response_size", stats.getClientResponseStats().getLastBufferSize());
+                response.put("max_client_response_size", stats.getClientResponseStats().getMaxBufferSize());
+                response.put("min_client_response_size", stats.getClientResponseStats().getMinBufferSize());
+
+                if (zkServer instanceof QuorumZooKeeperServer) {
+                    QuorumPeer peer = ((QuorumZooKeeperServer) zkServer).self;
+                    response.put("quorum_size", peer.getQuorumSize());
                 }
-            }
 
-            if (zkServer instanceof ObserverZooKeeperServer) {
-                response.put("observer_master_id", ((ObserverZooKeeperServer)zkServer).getObserver().getLearnerMasterId());
+                if (zkServer instanceof LeaderZooKeeperServer) {
+                    Leader leader = ((LeaderZooKeeperServer) zkServer).getLeader();
+
+                    response.put("learners", leader.getLearners().size());
+                    response.put("synced_followers", leader.getForwardingFollowers().size());
+                    response.put("synced_non_voting_followers", leader.getNonVotingFollowers().size());
+                    response.put("synced_observers", leader.getObservingLearners().size());
+                    response.put("pending_syncs", leader.getNumPendingSyncs());
+                    response.put("leader_uptime", leader.getUptime());
+
+                    response.put("last_proposal_size", leader.getProposalStats().getLastBufferSize());
+                    response.put("max_proposal_size", leader.getProposalStats().getMaxBufferSize());
+                    response.put("min_proposal_size", leader.getProposalStats().getMinBufferSize());
+                }
+
+                if (zkServer instanceof FollowerZooKeeperServer) {
+                    Follower follower = ((FollowerZooKeeperServer) zkServer).getFollower();
+                    Integer syncedObservers = follower.getSyncedObserverSize();
+                    if (syncedObservers != null) {
+                        response.put("synced_observers", syncedObservers);
+                    }
+                }
+
+                if (zkServer instanceof ObserverZooKeeperServer) {
+                    response.put("observer_master_id", ((ObserverZooKeeperServer) zkServer).getObserver().getLearnerMasterId());
+                }
             }
 
             ServerMetrics.getMetrics()
@@ -569,6 +579,38 @@ public class Commands {
             DataTree dt = zkServer.getZKDatabase().getDataTree();
             CommandResponse response = initializeResponse();
             response.putAll(dt.getWatchesSummary().toMap());
+            return response;
+        }
+    }
+
+    /**
+     * All defined system properties.
+     */
+    public static class SystemPropertiesCommand extends CommandBase {
+        public SystemPropertiesCommand() {
+            super(Arrays.asList("system_properties", "sysp"));
+        }
+
+        @Override
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+            CommandResponse response = initializeResponse();
+            Properties systemProperties = System.getProperties();
+            SortedMap<String, String> sortedSystemProperties = new TreeMap<String, String>();
+            systemProperties.forEach((k, v) -> sortedSystemProperties.put(k.toString(), v.toString()));
+            response.putAll(sortedSystemProperties);
+            return response;
+        }
+    }
+
+    public static class InitialConfigurationCommand extends CommandBase {
+        public InitialConfigurationCommand() {
+            super(Arrays.asList("initial_configuration", "icfg"));
+        }
+
+        @Override
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+            CommandResponse response = initializeResponse();
+            response.put("initial_configuration", zkServer.getInitialConfig());
             return response;
         }
     }
