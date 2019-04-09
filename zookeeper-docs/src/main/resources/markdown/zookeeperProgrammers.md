@@ -1480,7 +1480,7 @@ information for ZooKeeper developers.
 * *[API Reference](https://zookeeper.apache.org/doc/current/api/index.html)* :
     The complete reference to the ZooKeeper API
 
-* *[ZooKeeper Talk at the Hadoop Summit 2008](http://us.dl1.yimg.com/download.yahoo.com/dl/ydn/zookeeper.m4v)* :
+* *[ZooKeeper Talk at the Hadoop Summit 2008](https://www.youtube.com/watch?v=rXI9xiesUV8)* :
     A video introduction to ZooKeeper, by Benjamin Reed of Yahoo!
     Research
 
