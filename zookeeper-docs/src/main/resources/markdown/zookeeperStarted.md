@@ -368,6 +368,4 @@ greatly increase performance:
   snapshots and _myid_ file. The dataLogDir
   parameters indicates a different directory to use for the
   transaction logs.
-* _[tbd: what is the other config param?]_
-
 
