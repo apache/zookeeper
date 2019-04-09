@@ -19,6 +19,7 @@
 package org.apache.zookeeper.test;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.zookeeper.CreateMode;
@@ -74,7 +75,7 @@ public class RestoreCommittedLogTest extends ZKTestCase{
         // start server again
         zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
         zks.startdata();
-        List<Proposal> committedLog = zks.getZKDatabase().getCommittedLog();
+        Collection<Proposal> committedLog = zks.getZKDatabase().getCommittedLog();
         int logsize = committedLog.size();
         LOG.info("committedLog size = {}", logsize);
         Assert.assertTrue("log size != 0", (logsize != 0));
