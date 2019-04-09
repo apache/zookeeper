@@ -833,6 +833,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
 
         reconfig(zkAdminArr[1], null, null, members, -1);
         testNormalOperation(zkArr[1], zkArr[2]);
+        Thread.sleep(1000);
 
         reconfig(zkAdminArr[1], Collections.singletonList(otherMember4),
                 null, null, -1);
