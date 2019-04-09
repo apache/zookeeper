@@ -649,6 +649,35 @@ void processline(char *line) {
       zoo_add_auth(zh, line, ptr, ptr ? strlen(ptr) : 0, NULL, NULL);
     }
 }
+/*
+ * Look for a command in the form 'cmd:command'.
+ * Strips the prefix and copies the command in buf.
+ * Returns 0 if the argument does not start with the prefix.
+ * Returns -1 in case of error (command too long).
+ * Returns 1 in case of success.
+ * 
+ */
+int handleBatchMode(char* arg, char* buf, size_t maxlen) {    
+    size_t cmdlen = strlen(arg);
+    if (cmdlen < 4) {
+        // too short
+        return 0;
+    }
+    cmdlen -= 4;
+    if(strncmp("cmd:", arg, 4) != 0){
+        return 0;        
+    }
+    // we must leave space for the NULL terminator
+    if (cmdlen >= maxlen) {
+          fprintf(stderr,
+                  "Command length %zu exceeds max length of %zu\n",
+                  cmdlen,
+                  maxlen);
+          return -1;
+    }
+    memcpy(cmd, arg + 4, cmdlen);
+    return 1;
+}
 
 int main(int argc, char **argv) {
 #ifndef THREADED
@@ -677,18 +706,12 @@ int main(int argc, char **argv) {
         return 2;
     }
     if (argc > 2) {
-      if(strncmp("cmd:",argv[2],4)==0){
-        size_t cmdlen = strlen(argv[2]);
-        if (cmdlen > sizeof(cmd)) {
-          fprintf(stderr,
-                  "Command length %zu exceeds max length of %zu\n",
-                  cmdlen,
-                  sizeof(cmd));
+      int batchModeRes = handleBatchMode(argv[2], cmd, sizeof(cmd));
+      if (batchModeRes == -1) {
           return 2;
-        }
-        strncpy(cmd, argv[2]+4, sizeof(cmd));
+      } else if(batchModeRes == 1){                
         batchMode=1;
-        fprintf(stderr,"Batch mode: %s\n",cmd);
+        fprintf(stderr,"Batch mode: '%s'\n",cmd);
       }else{
         clientIdFile = argv[2];
         fh = fopen(clientIdFile, "r");
