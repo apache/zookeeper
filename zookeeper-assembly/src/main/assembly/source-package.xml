@@ -106,6 +106,7 @@
       <directory>${project.basedir}/..</directory>
       <outputDirectory>.</outputDirectory>
       <includes>
+        <include>pom.xml</include>
         <include>build.xml</include>
         <include>ivy.xml</include>
         <include>ivysettings.xml</include>
