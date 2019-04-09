@@ -108,17 +108,19 @@ then
     CLASSPATH=`cygpath -wp "$CLASSPATH"`
 fi
 
+PROPERTIES="-Dzookeeper.extendedTypesEnabled=true -Dznode.container.checkIntervalMs=100"
+
 case $1 in
 start|startClean)
     if [ "x${base_dir}" == "x" ]
     then
         mkdir -p /tmp/zkdata
-        java -cp "$CLASSPATH" org.apache.zookeeper.server.ZooKeeperServerMain $ZOOPORT /tmp/zkdata 3000 $ZKMAXCNXNS &> /tmp/zk.log &
+        java -cp "$CLASSPATH" $PROPERTIES org.apache.zookeeper.server.ZooKeeperServerMain $ZOOPORT /tmp/zkdata 3000 $ZKMAXCNXNS &> /tmp/zk.log &
         pid=$!
         echo -n $! > /tmp/zk.pid
     else
         mkdir -p "${base_dir}/build/tmp/zkdata"
-        java -cp "$CLASSPATH" org.apache.zookeeper.server.ZooKeeperServerMain $ZOOPORT "${base_dir}/build/tmp/zkdata" 3000 $ZKMAXCNXNS &> "${base_dir}/build/tmp/zk.log" &
+        java -cp "$CLASSPATH" $PROPERTIES org.apache.zookeeper.server.ZooKeeperServerMain $ZOOPORT "${base_dir}/build/tmp/zkdata" 3000 $ZKMAXCNXNS &> "${base_dir}/build/tmp/zk.log" &
         pid=$!
         echo -n $pid > "${base_dir}/build/tmp/zk.pid"
     fi
@@ -130,7 +132,7 @@ start|startClean)
     do
         if ps -p $pid > /dev/null
         then
-            java -cp "$CLASSPATH" org.apache.zookeeper.ZooKeeperMain -server localhost:$ZOOPORT ls / > /dev/null 2>&1
+            java -cp "$CLASSPATH" $PROPERTIES org.apache.zookeeper.ZooKeeperMain -server localhost:$ZOOPORT ls / > /dev/null 2>&1
             if [ $? -ne 0  ]
             then
                 # server not up yet - wait
@@ -170,7 +172,8 @@ startReadOnly)
         sed "s#TMPDIR#${tmpdir}#g" ${base_dir}/zookeeper-client/zookeeper-client-c/tests/quorum.cfg > "${tmpdir}/quorum.cfg"
 
         # force read-only mode
-        java -cp "$CLASSPATH" -Dreadonlymode.enabled=true org.apache.zookeeper.server.quorum.QuorumPeerMain ${tmpdir}/quorum.cfg &> "${tmpdir}/zk.log" &
+	PROPERTIES="$PROPERTIES -Dreadonlymode.enabled=true"
+        java -cp "$CLASSPATH" $PROPERTIES org.apache.zookeeper.server.quorum.QuorumPeerMain ${tmpdir}/quorum.cfg &> "${tmpdir}/zk.log" &
         pid=$!
         echo -n $pid > "${base_dir}/build/tmp/zk.pid"
         sleep 3 # wait until read-only server is up

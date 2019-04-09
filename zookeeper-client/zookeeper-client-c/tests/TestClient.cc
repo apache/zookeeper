@@ -211,6 +211,7 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
 #endif
     CPPUNIT_TEST(testCreate);
     CPPUNIT_TEST(testCreateContainer);
+    CPPUNIT_TEST(testCreateTtl);
     CPPUNIT_TEST(testPath);
     CPPUNIT_TEST(testPathValidation);
     CPPUNIT_TEST(testPing);
@@ -710,6 +711,24 @@ public:
         rc = zoo_create2(zk, "/testContainer", "", 0, &ZOO_OPEN_ACL_UNSAFE,
                          ZOO_CONTAINER, pathbuf, sizeof(pathbuf), &stat);
         CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+    }
+
+    void testCreateTtl() {
+        watchctx_t ctx;
+        int rc = 0;
+        zhandle_t *zk = createClient(&ctx);
+        CPPUNIT_ASSERT(zk);
+        char pathbuf[80];
+        struct Stat stat = {0};
+
+        rc = zoo_create2_ttl(zk, "/testTtl", "", 0, &ZOO_OPEN_ACL_UNSAFE,
+                             ZOO_PERSISTENT_WITH_TTL, 1, pathbuf, sizeof(pathbuf), &stat);
+        CPPUNIT_ASSERT_EQUAL((int) ZOK, rc);
+
+        sleep(1);
+
+        rc = zoo_exists(zk, "/testTtl", 1, &stat);
+        CPPUNIT_ASSERT_EQUAL((int) ZNONODE, rc);
     }
 
     void testGetChildren2() {
