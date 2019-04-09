@@ -24,6 +24,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.Semaphore;
+import org.apache.zookeeper.AsyncCallback.MultiCallback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
 import org.apache.zookeeper.AsyncCallback.VoidCallback;
 import org.apache.zookeeper.KeeperException.Code;
@@ -45,7 +48,7 @@ public class ZKUtil {
      *
      * @throws IllegalArgumentException if an invalid path is specified
      */
-    public static void deleteRecursive(ZooKeeper zk, final String pathRoot)
+    public static boolean deleteRecursive(ZooKeeper zk, final String pathRoot)
         throws InterruptedException, KeeperException
     {
         PathUtils.validatePath(pathRoot);
@@ -53,12 +56,59 @@ public class ZKUtil {
         List<String> tree = listSubTreeBFS(zk, pathRoot);
         LOG.debug("Deleting " + tree);
         LOG.debug("Deleting " + tree.size() + " subnodes ");
-        for (int i = tree.size() - 1; i >= 0 ; --i) {
-            //Delete the leaves first and eventually get rid of the root
-            zk.delete(tree.get(i), -1); //Delete all versions of the node with -1.
+
+        int asyncReqRateLimit = 10;
+        // Try deleting the tree nodes in batches of size 1000.
+        // If some batch failed, try again with batches of size 1 to delete as
+        // many nodes as possible.
+        boolean success = deleteInBatch(zk, tree, 1000, asyncReqRateLimit);
+        if (!success) {
+            LOG.debug("Failed to delete all nodes in batches of 1000.");
+            LOG.debug("Retry with batches of size 1...");
+            success = deleteInBatch(zk, tree, 1, asyncReqRateLimit);
+        }
+        return success;
+    }
+
+    private static class BatchedDeleteCbContext {
+        public Semaphore sem;
+        public AtomicBoolean success;
+
+        public BatchedDeleteCbContext(int rateLimit) {
+            sem = new Semaphore(rateLimit);
+            success = new AtomicBoolean(true);
         }
     }
 
+    private static boolean deleteInBatch(ZooKeeper zk, List<String> tree,
+        int batchSize, int rateLimit)
+        throws InterruptedException
+    {
+        List<Op> ops = new ArrayList<>();
+        BatchedDeleteCbContext context = new BatchedDeleteCbContext(rateLimit);
+        MultiCallback cb = (rc, path, ctx, opResults) -> {
+            ((BatchedDeleteCbContext)ctx).sem.release();
+            if (rc != Code.OK.intValue()) {
+                ((BatchedDeleteCbContext)ctx).success.set(false);
+            }
+        };
+
+        // Delete the leaves first and eventually get rid of the root
+        for (int i = tree.size() - 1; i >= 0 ; --i) {
+            // Create Op to delete all versions of the node with -1.
+            ops.add(Op.delete(tree.get(i), -1));
+
+            if (ops.size() == batchSize || i == 0) {
+                context.sem.acquire();
+                zk.multi(ops, cb, context);
+                ops = new ArrayList<>();
+            }
+        }
+
+        // wait for all callbacks to finish
+        context.sem.acquire(rateLimit);
+        return context.success.get();
+    }
 
     /**
      * Recursively delete the node with the given path. (async version).

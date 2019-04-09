@@ -49,7 +49,53 @@ public class ZooKeeperTest extends ClientBase {
     private static final String LINE_SEPARATOR = System.getProperty("line.separator", "\n");
 
     @Test
-    public void testDeleteRecursive() throws IOException, InterruptedException, CliException, KeeperException {
+    public void testDeleteRecursive()
+        throws IOException, InterruptedException, KeeperException
+    {
+        final ZooKeeper zk = createClient();
+        // making sure setdata works on /
+        zk.setData("/", "some".getBytes(), -1);
+        zk.create("/a", "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+
+        zk.create("/a/b", "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+
+        zk.create("/a/b/v", "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+
+        for (int i = 1000; i < 3000; ++i) {
+            zk.create("/a/b/v/" + i, "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT);
+        }
+
+        zk.create("/a/c", "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+
+        zk.create("/a/c/v", "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+
+        for (int i = 0; i < 500; ++i) {
+            zk.create("/a/c/" + i, "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT);
+        }
+        List<String> children = zk.getChildren("/a", false);
+
+        Assert.assertEquals("2 children - b & c should be present ", 2, children.size());
+        Assert.assertTrue(children.contains("b"));
+        Assert.assertTrue(children.contains("c"));
+
+        Assert.assertTrue(ZKUtil.deleteRecursive(zk, "/a/c"));
+        children = zk.getChildren("/a", false);
+        Assert.assertEquals("1 children - c should be deleted ", 1, children.size());
+        Assert.assertTrue(children.contains("b"));
+
+        Assert.assertTrue(ZKUtil.deleteRecursive(zk, "/a"));
+        Assert.assertNull(zk.exists("/a", null));
+    }
+
+    @Test
+    public void testDeleteRecursiveCli() throws IOException, InterruptedException, CliException, KeeperException {
         final ZooKeeper zk = createClient();
         // making sure setdata works on /
         zk.setData("/", "some".getBytes(), -1);

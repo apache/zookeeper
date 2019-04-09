@@ -64,7 +64,10 @@ public class DeleteAllCommand extends CliCommand {
         
         String path = args[1];
         try {
-            ZKUtil.deleteRecursive(zk, path);
+            boolean success = ZKUtil.deleteRecursive(zk, path);
+            if (!success) {
+                err.println("Failed to delete some node(s) in the subtree!");
+            }
         } catch (IllegalArgumentException ex) {
             throw new MalformedPathException(ex.getMessage());
         } catch (KeeperException|InterruptedException ex) {
