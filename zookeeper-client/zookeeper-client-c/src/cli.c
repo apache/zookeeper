@@ -334,8 +334,8 @@ void processline(char *line) {
         line++;
     }
     if (startsWith(line, "help")) {
-      fprintf(stderr, "    create [+[e|s]] <path>\n");
-      fprintf(stderr, "    create2 [+[e|s]] <path>\n");
+      fprintf(stderr, "    create [+[e|s|c|t=ttl]] <path>\n");
+      fprintf(stderr, "    create2 [+[e|s|c|t=ttl]] <path>\n");
       fprintf(stderr, "    delete <path>\n");
       fprintf(stderr, "    set <path> <data>\n");
       fprintf(stderr, "    get <path>\n");
@@ -532,26 +532,87 @@ void processline(char *line) {
             fprintf(stderr, "Error %d for %s\n", rc, line);
         }
     } else if (startsWith(line, "create ") || startsWith(line, "create2 ")) {
-        int flags = 0;
+        int mode = 0;
+        int64_t ttl_value = -1;
         int is_create2 = startsWith(line, "create2 ");
         line += is_create2 ? 8 : 7;
+
         if (line[0] == '+') {
+            int ephemeral = 0;
+            int sequential = 0;
+            int container = 0;
+            int ttl = 0;
+
             line++;
-            if (line[0] == 'e') {
-                flags |= ZOO_EPHEMERAL;
+
+            while (*line != ' ' && *line != '\0') {
+                switch (*line) {
+                case 'e':
+                    ephemeral = 1;
+                    break;
+                case 's':
+                    sequential = 1;
+                    break;
+                case 'c':
+                    container = 1;
+                    break;
+                case 't':
+                    ttl = 1;
+
+                    line++;
+
+                    if (*line != '=') {
+                        fprintf(stderr, "Missing ttl value after +t\n");
+                        return;
+                    }
+
+                    line++;
+
+                    ttl_value = strtol(line, &line, 10);
+
+                    if (ttl_value <= 0) {
+                        fprintf(stderr, "ttl value must be a positive integer\n");
+                        return;
+                    }
+
+                    // move back line pointer to the last digit
+                    line--;
+
+                    break;
+                default:
+                    fprintf(stderr, "Unknown option: %c\n", *line);
+                    return;
+                }
+
                 line++;
             }
-            if (line[0] == 's') {
-                flags |= ZOO_SEQUENCE;
+
+            if (ephemeral != 0 && sequential == 0 && container == 0 && ttl == 0) {
+                mode = ZOO_EPHEMERAL;
+            } else if (ephemeral == 0 && sequential != 0 && container == 0 && ttl == 0) {
+                mode = ZOO_PERSISTENT_SEQUENTIAL;
+            } else if (ephemeral != 0 && sequential != 0 && container == 0 && ttl == 0) {
+                mode = ZOO_EPHEMERAL_SEQUENTIAL;
+            } else if (ephemeral == 0 && sequential == 0 && container != 0 && ttl == 0) {
+                mode = ZOO_CONTAINER;
+            } else if (ephemeral == 0 && sequential == 0 && container == 0 && ttl != 0) {
+                mode = ZOO_PERSISTENT_WITH_TTL;
+            } else if (ephemeral == 0 && sequential != 0 && container == 0 && ttl != 0) {
+                mode = ZOO_PERSISTENT_SEQUENTIAL_WITH_TTL;
+            } else {
+                fprintf(stderr, "Invalid mode.\n");
+                return;
+            }
+
+            if (*line == ' ') {
                 line++;
             }
-            line++;
         }
         if (line[0] != '/') {
             fprintf(stderr, "Path must start with /, found: %s\n", line);
             return;
         }
-        fprintf(stderr, "Creating [%s] node\n", line);
+        fprintf(stderr, "Creating [%s] node (mode: %d)\n", line, mode);
 //        {
 //            struct ACL _CREATE_ONLY_ACL_ACL[] = {{ZOO_PERM_CREATE, ZOO_ANYONE_ID_UNSAFE}};
 //            struct ACL_vector CREATE_ONLY_ACL = {1,_CREATE_ONLY_ACL_ACL};
@@ -559,10 +620,10 @@ void processline(char *line) {
 //                    my_string_completion, strdup(line));
 //        }
         if (is_create2) {
-          rc = zoo_acreate2(zh, line, "new", 3, &ZOO_OPEN_ACL_UNSAFE, flags,
+          rc = zoo_acreate2_ttl(zh, line, "new", 3, &ZOO_OPEN_ACL_UNSAFE, mode, ttl_value,
                 my_string_stat_completion_free_data, strdup(line));
         } else {
-          rc = zoo_acreate(zh, line, "new", 3, &ZOO_OPEN_ACL_UNSAFE, flags,
+          rc = zoo_acreate_ttl(zh, line, "new", 3, &ZOO_OPEN_ACL_UNSAFE, mode, ttl_value,
                 my_string_completion_free_data, strdup(line));
         }
         if (rc) {
