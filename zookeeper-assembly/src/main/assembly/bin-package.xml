@@ -35,9 +35,6 @@
       <useAllReactorProjects>true</useAllReactorProjects>
       <includes>
         <include>org.apache.zookeeper:zookeeper</include>
-        <include>org.apache.zookeeper:zookeeper-recipes-election</include>
-        <include>org.apache.zookeeper:zookeeper-recipes-lock</include>
-        <include>org.apache.zookeeper:zookeeper-recipes-queue</include>
       </includes>
 
       <binaries>
@@ -73,44 +70,6 @@
       <outputDirectory>lib</outputDirectory>
       <fileMode>${rw.file.permission}</fileMode>
     </fileSet>
-
-    <!-- Add source jars "manually", as the :source classiffier doesn't work in moduleSets -->
-    <fileSet>
-      <directory>${project.basedir}/../zookeeper-server/target</directory>
-      <outputDirectory>lib</outputDirectory>
-      <includes>
-        <include>zookeeper-*-sources.jar</include>
-      </includes>
-    </fileSet>
-    <fileSet>
-      <directory>${project.basedir}/../zookeeper-recipes/zookeeper-recipes-election/target</directory>
-      <outputDirectory>lib</outputDirectory>
-      <includes>
-        <include>zookeeper-*-sources.jar</include>
-      </includes>
-    </fileSet>
-    <fileSet>
-      <directory>${project.basedir}/../zookeeper-recipes/zookeeper-recipes-lock/target</directory>
-      <outputDirectory>lib</outputDirectory>
-      <includes>
-        <include>zookeeper-*-sources.jar</include>
-      </includes>
-    </fileSet>
-    <fileSet>
-      <directory>${project.basedir}/../zookeeper-recipes/zookeeper-recipes-queue/target</directory>
-      <outputDirectory>lib</outputDirectory>
-      <includes>
-        <include>zookeeper-*-sources.jar</include>
-      </includes>
-    </fileSet>
   </fileSets>
-
-  <files>
-    <file>
-      <source>${project.basedir}/../zookeeper-server/src/main/resources/lib/cobertura/README.txt</source>
-      <outputDirectory>lib/cobertura</outputDirectory>
-      <fileMode>${rw.file.permission}</fileMode>
-    </file>
-  </files>
 
 </assembly>
