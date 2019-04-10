@@ -17,11 +17,7 @@
  */
 
 package org.apache.zookeeper.server.persistence;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -29,7 +25,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.zip.Adler32;
 import java.util.zip.CheckedInputStream;
 import java.util.zip.CheckedOutputStream;
 
@@ -82,15 +77,10 @@ public class FileSnap implements SnapShot {
         for (int i = 0, snapListSize = snapList.size(); i < snapListSize; i++) {
             snap = snapList.get(i);
             LOG.info("Reading snapshot " + snap);
-            try (InputStream snapIS = new BufferedInputStream(new FileInputStream(snap));
-                 CheckedInputStream crcIn = new CheckedInputStream(snapIS, new Adler32())) {
-                InputArchive ia = BinaryInputArchive.getArchive(crcIn);
+            try (CheckedInputStream snapIS = SnapStream.getInputStream(snap)) {
+                InputArchive ia = BinaryInputArchive.getArchive(snapIS);
                 deserialize(dt, sessions, ia);
-                long checkSum = crcIn.getChecksum().getValue();
-                long val = ia.readLong("val");
-                if (val != checkSum) {
-                    throw new IOException("CRC corruption in snapshot :  " + snap);
-                }
+                SnapStream.checkSealIntegrity(snapIS, ia);
                 foundValid = true;
                 break;
             } catch (IOException e) {
@@ -136,12 +126,12 @@ public class FileSnap implements SnapShot {
     }
 
     /**
-     * find the last (maybe) valid n snapshots. this does some 
+     * find the last (maybe) valid n snapshots. this does some
      * minor checks on the validity of the snapshots. It just
      * checks for / at the end of the snapshot. This does
      * not mean that the snapshot is truly valid but is
-     * valid with a high probability. also, the most recent 
-     * will be first on the list. 
+     * valid with a high probability. also, the most recent
+     * will be first on the list.
      * @param n the number of most recent snapshots
      * @return the last n snapshots (the number might be
      * less than n in case enough snapshots are not available).
@@ -156,7 +146,7 @@ public class FileSnap implements SnapShot {
             // from the valid snapshot and continue
             // until we find a valid one
             try {
-                if (Util.isValidSnapshot(f)) {
+                if (SnapStream.isValidSnapshot(f)) {
                     list.add(f);
                     count++;
                     if (count == n) {
@@ -221,18 +211,11 @@ public class FileSnap implements SnapShot {
     public synchronized void serialize(DataTree dt, Map<Long, Integer> sessions, File snapShot, boolean fsync)
             throws IOException {
         if (!close) {
-            try (CheckedOutputStream crcOut =
-                         new CheckedOutputStream(new BufferedOutputStream(fsync ? new AtomicFileOutputStream(snapShot) :
-                                                                                  new FileOutputStream(snapShot)),
-                                                 new Adler32())) {
-                //CheckedOutputStream cout = new CheckedOutputStream()
-                OutputArchive oa = BinaryOutputArchive.getArchive(crcOut);
+            try (CheckedOutputStream snapOS = SnapStream.getOutputStream(snapShot)) {
+                OutputArchive oa = BinaryOutputArchive.getArchive(snapOS);
                 FileHeader header = new FileHeader(SNAP_MAGIC, VERSION, dbId);
                 serialize(dt, sessions, oa, header);
-                long val = crcOut.getChecksum().getValue();
-                oa.writeLong(val, "val");
-                oa.writeString("/", "path");
-                crcOut.flush();
+                SnapStream.sealStream(snapOS, oa);
             }
         }
     }
