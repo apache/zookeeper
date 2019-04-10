@@ -34,6 +34,9 @@ import java.util.Set;
 import java.util.List;
 
 /**
+ * This code is originally from hadoop-common, see:
+ * https://github.com/apache/hadoop/blob/trunk/hadoop-common-project/hadoop-common/src/main/java/org/apache/hadoop/util/JvmPauseMonitor.java
+ *
  * Class which sets up a simple thread which runs in a loop sleeping
  * for a short interval of time. If the sleep takes significantly longer
  * than its target time, it implies that the JVM or host machine has
