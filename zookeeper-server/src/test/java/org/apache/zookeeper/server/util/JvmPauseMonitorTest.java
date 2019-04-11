@@ -18,116 +18,37 @@
 
 package org.apache.zookeeper.server.util;
 
-import org.apache.zookeeper.server.ServerConfig;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Properties;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class JvmPauseMonitorTest {
 
-    @Test
-    public void testJvmPauseMonitorInit() {
-        final Long sleepTime = 444L;
-        final Long warnTH = 5555L;
-        final Long infoTH = 555L;
-
-        ServerConfig serverConfig = new ServerConfig();
-        QuorumPeerConfig quorumPeerConfig = new QuorumPeerConfig();
-
-        Assert.assertEquals(false, serverConfig.isJvmPauseMonitorToRun());
-        Assert.assertEquals(false, quorumPeerConfig.isJvmPauseMonitorToRun());
-
-        Properties zkProp = new Properties();
-        zkProp.setProperty("dataDir", new File("myDataDir").getAbsolutePath());
-        zkProp.setProperty("jvm.pause.monitor", "true");
-        zkProp.setProperty("jvm.pause.sleep.time.ms", sleepTime.toString());
-        zkProp.setProperty("jvm.pause.warn-threshold.ms", warnTH.toString());
-        zkProp.setProperty("jvm.pause.info-threshold.ms", infoTH.toString());
-        try {
-            quorumPeerConfig.parseProperties(zkProp);
-        } catch (IOException | QuorumPeerConfig.ConfigException e) {
-            Assert.fail("Exception while reading config for JvmPauseMonitor");
-        }
-        serverConfig.readFrom(quorumPeerConfig);
-
-        Assert.assertEquals(true, serverConfig.isJvmPauseMonitorToRun());
-        Assert.assertEquals(true, quorumPeerConfig.isJvmPauseMonitorToRun());
-
-        JvmPauseMonitor pauseMonitor = new JvmPauseMonitor(serverConfig);
-        Assert.assertFalse(pauseMonitor.isStarted());
-        pauseMonitor.serviceStart();
-        Assert.assertTrue(pauseMonitor.isStarted());
-
-        Assert.assertEquals(sleepTime, Long.valueOf(pauseMonitor.sleepTimeMs));
-        Assert.assertEquals(warnTH, Long.valueOf(pauseMonitor.warnThresholdMs));
-        Assert.assertEquals(infoTH, Long.valueOf(pauseMonitor.infoThresholdMs));
-    }
-
-    @Test
-    public void testJvmPauseMonitorExceedInfoThreshold() throws InterruptedException {
-        final Long sleepTime = 100L;
-        final Long infoTH = -1L;
-
-        ServerConfig serverConfig = new ServerConfig();
-        QuorumPeerConfig quorumPeerConfig = new QuorumPeerConfig();
-
-        Properties zkProp = new Properties();
-        zkProp.setProperty("dataDir", new File("myDataDir").getAbsolutePath());
-        zkProp.setProperty("jvm.pause.monitor", "true");
-        zkProp.setProperty("jvm.pause.sleep.time.ms", sleepTime.toString());
-        zkProp.setProperty("jvm.pause.info-threshold.ms", infoTH.toString());
-        try {
-            quorumPeerConfig.parseProperties(zkProp);
-        } catch (IOException | QuorumPeerConfig.ConfigException e) {
-            Assert.fail("Exception while reading config for JvmPauseMonitor");
-        }
-        serverConfig.readFrom(quorumPeerConfig);
-
-        JvmPauseMonitor pauseMonitor = new JvmPauseMonitor(serverConfig);
-        pauseMonitor.serviceStart();
-
-        Assert.assertEquals(sleepTime, Long.valueOf(pauseMonitor.sleepTimeMs));
-        Assert.assertEquals(infoTH, Long.valueOf(pauseMonitor.infoThresholdMs));
-
-        Thread.sleep(1000);
-
-        Assert.assertNotEquals(0L, pauseMonitor.getNumGcInfoThresholdExceeded());
-        Assert.assertEquals(0L, pauseMonitor.getNumGcWarnThresholdExceeded());
-    }
-
-    @Test
-    public void testJvmPauseMonitorExceedWarnThreshold() throws InterruptedException {
+    @Test(timeout=5000)
+    public void testJvmPauseMonitorExceedThreshold() throws InterruptedException {
         final Long sleepTime = 100L;
         final Long warnTH = -1L;
+        final Long infoTH = -1L;
 
-        ServerConfig serverConfig = new ServerConfig();
-        QuorumPeerConfig quorumPeerConfig = new QuorumPeerConfig();
+        QuorumPeerConfig qpConfig = mock(QuorumPeerConfig.class);
+        when(qpConfig.getJvmPauseSleepTimeMs()).thenReturn(sleepTime);
+        when(qpConfig.getJvmPauseWarnThresholdMs()).thenReturn(warnTH);
+        when(qpConfig.getJvmPauseInfoThresholdMs()).thenReturn(infoTH);
 
-        Properties zkProp = new Properties();
-        zkProp.setProperty("dataDir", new File("myDataDir").getAbsolutePath());
-        zkProp.setProperty("jvm.pause.monitor", "true");
-        zkProp.setProperty("jvm.pause.sleep.time.ms", sleepTime.toString());
-        zkProp.setProperty("jvm.pause.warn-threshold.ms", warnTH.toString());
-        try {
-            quorumPeerConfig.parseProperties(zkProp);
-        } catch (IOException | QuorumPeerConfig.ConfigException e) {
-            Assert.fail("Exception while reading config for JvmPauseMonitor");
-        }
-        serverConfig.readFrom(quorumPeerConfig);
-
-        JvmPauseMonitor pauseMonitor = new JvmPauseMonitor(serverConfig);
+        JvmPauseMonitor pauseMonitor = new JvmPauseMonitor(qpConfig);
         pauseMonitor.serviceStart();
 
         Assert.assertEquals(sleepTime, Long.valueOf(pauseMonitor.sleepTimeMs));
         Assert.assertEquals(warnTH, Long.valueOf(pauseMonitor.warnThresholdMs));
+        Assert.assertEquals(infoTH, Long.valueOf(pauseMonitor.infoThresholdMs));
 
-        Thread.sleep(1000);
+        while(pauseMonitor.getNumGcInfoThresholdExceeded() == 0 && pauseMonitor.getNumGcWarnThresholdExceeded() == 0) {
+            Thread.sleep(200);
+        }
 
-        Assert.assertEquals(0L, pauseMonitor.getNumGcInfoThresholdExceeded());
-        Assert.assertNotEquals(0L, pauseMonitor.getNumGcWarnThresholdExceeded());
+        pauseMonitor.serviceStop();
     }
 }
