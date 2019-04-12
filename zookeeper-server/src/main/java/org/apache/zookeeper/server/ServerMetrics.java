@@ -76,6 +76,9 @@ public enum ServerMetrics {
 
     UNRECOVERABLE_ERROR_COUNT(new SimpleCounter("unrecoverable_error_count")),
 
+    WRITE_PER_NAMESPACE(new AvgMinMaxCounterSet("write_per_namespace")),
+    READ_PER_NAMESPACE(new AvgMinMaxCounterSet("read_per_namespace")),
+
     BYTES_RECEIVED_COUNT(new SimpleCounter("bytes_received_count")),
 
     /**

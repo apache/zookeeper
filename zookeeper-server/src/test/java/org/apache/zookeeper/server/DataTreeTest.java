@@ -45,6 +45,8 @@ import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.common.PathTrie;
 import java.lang.reflect.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -357,5 +359,63 @@ public class DataTreeTest extends ZKTestCase {
         Assert.assertEquals(0, dt.getAllChildrenNumber("/all_children_test/nodes/node1"));
         //add these three init nodes:/zookeeper,/zookeeper/quota,/zookeeper/config,so the number is 8.
         Assert.assertEquals( 8, dt.getAllChildrenNumber("/"));
+    }
+
+    @Test
+    public void testDataTreeMetrics() throws Exception {
+        ServerMetrics.resetAll();
+
+
+        long readBytes1 = 0;
+        long readBytes2 = 0;
+        long writeBytes1 = 0;
+        long writeBytes2 = 0;
+
+        final String TOP1 = "top1";
+        final String TOP2 = "ttop2";
+        final String TOP1PATH = "/" + TOP1;
+        final String TOP2PATH = "/" + TOP2;
+        final String CHILD1 = "child1";
+        final String CHILD2 = "springishere";
+        final String CHILD1PATH = TOP1PATH + "/" + CHILD1;
+        final String CHILD2PATH = TOP1PATH + "/" + CHILD2;
+
+        final int TOP2_LEN = 50;
+        final int CHILD1_LEN = 100;
+        final int CHILD2_LEN = 250;
+
+        DataTree dt = new DataTree();
+        dt.createNode(TOP1PATH, null, null, -1, 1, 1, 1);
+        writeBytes1 += TOP1PATH.length();
+        dt.createNode(TOP2PATH, new byte[TOP2_LEN], null, -1, 1, 1, 1);
+        writeBytes2 += TOP2PATH.length() + TOP2_LEN;
+        dt.createNode(CHILD1PATH, null, null, -1, 1, 1, 1);
+        writeBytes1 += CHILD1PATH.length();
+        dt.setData(CHILD1PATH, new byte[CHILD1_LEN], 1, -1, 1);
+        writeBytes1 += CHILD1PATH.length() + CHILD1_LEN;
+        dt.createNode(CHILD2PATH, new byte[CHILD2_LEN], null, -1, 1, 1, 1);
+        writeBytes1 += CHILD2PATH.length() + CHILD2_LEN;
+        dt.getData(TOP1PATH, new Stat(), null);
+        readBytes1 += TOP1PATH.length() + DataTree.STAT_OVERHEAD_BYTES;
+        dt.getData(TOP2PATH, new Stat(), null);
+        readBytes2 += TOP2PATH.length() + TOP2_LEN + DataTree.STAT_OVERHEAD_BYTES;
+        dt.statNode(CHILD2PATH, null);
+        readBytes1 += CHILD2PATH.length() + DataTree.STAT_OVERHEAD_BYTES;
+        dt.getChildren(TOP1PATH, new Stat(), null);
+        readBytes1 += TOP1PATH.length() + CHILD1.length() + CHILD2.length() + DataTree.STAT_OVERHEAD_BYTES;
+        dt.deleteNode(TOP1PATH, 1);
+        writeBytes1 += TOP1PATH.length();
+        
+        Map<String, Object> values = ServerMetrics.getAllValues();
+
+        Assert.assertEquals(writeBytes1, values.get("sum_" + TOP1+ "_write_per_namespace"));
+        Assert.assertEquals(5L, values.get("cnt_" + TOP1 + "_write_per_namespace"));
+        Assert.assertEquals(writeBytes2, values.get("sum_" + TOP2+ "_write_per_namespace"));
+        Assert.assertEquals(1L, values.get("cnt_" + TOP2 + "_write_per_namespace"));
+
+        Assert.assertEquals(readBytes1, values.get("sum_" + TOP1+ "_read_per_namespace"));
+        Assert.assertEquals(3L, values.get("cnt_" + TOP1 + "_read_per_namespace"));
+        Assert.assertEquals(readBytes2, values.get("sum_" + TOP2+ "_read_per_namespace"));
+        Assert.assertEquals(1L, values.get("cnt_" + TOP2 + "_read_per_namespace"));
     }
 }
