@@ -1355,6 +1355,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         if(udpSocket != null) {
             udpSocket.close();
         }
+        if(jvmPauseMonitor != null) {
+            jvmPauseMonitor.serviceStop();
+        }
 
         try {
             adminServer.shutdown();

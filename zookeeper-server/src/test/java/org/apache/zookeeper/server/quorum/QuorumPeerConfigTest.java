@@ -153,7 +153,7 @@ public class QuorumPeerConfigTest {
         final Long warnTH = 5555L;
         final Long infoTH = 555L;
 
-        QuorumPeerConfig quorumPeerConfig = new MockQuorumPeerConfig(1);
+        QuorumPeerConfig quorumPeerConfig = new QuorumPeerConfig();
         Properties zkProp = getDefaultZKProperties();
         zkProp.setProperty("dataDir", new File("myDataDir").getAbsolutePath());
         zkProp.setProperty("jvm.pause.monitor", "true");

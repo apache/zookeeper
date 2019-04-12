@@ -657,6 +657,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         if (firstProcessor != null) {
             firstProcessor.shutdown();
         }
+        if(jvmPauseMonitor != null) {
+            jvmPauseMonitor.serviceStop();
+        }
 
         if (zkDb != null) {
             if (fullyShutDown) {
