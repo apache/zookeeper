@@ -135,6 +135,11 @@ public class DataTree {
     private final PathTrie pTrie = new PathTrie();
 
     /**
+     * over-the-wire size of znode's stat. Counting the fields of Stat class
+     */
+    public static final int STAT_OVERHEAD_BYTES = (6 * 8) + (5 * 4);
+
+    /**
      * This hashtable lists the paths of the ephemeral nodes of a session.
      */
     private final Map<Long, HashSet<String>> ephemerals =
@@ -509,6 +514,7 @@ public class DataTree {
             // ok we have some match and need to update
             updateCountBytes(lastPrefix, bytes, 1);
         }
+        updateWriteStat(path, bytes);
         dataWatches.triggerWatch(path, Event.EventType.NodeCreated);
         childWatches.triggerWatch(parentName.equals("") ? "/" : parentName,
                 Event.EventType.NodeChildrenChanged);
@@ -592,6 +598,9 @@ public class DataTree {
             }
             updateCountBytes(lastPrefix, bytes,-1);
         }
+
+        updateWriteStat(path, 0L);
+
         if (LOG.isTraceEnabled()) {
             ZooTrace.logTraceMessage(LOG, ZooTrace.EVENT_DELIVERY_TRACE_MASK,
                     "dataWatches.triggerWatch " + path);
@@ -623,12 +632,14 @@ public class DataTree {
         }
         // now update if the path is in a quota subtree.
         String lastPrefix = getMaxPrefixWithQuota(path);
+        long dataBytes = data == null ? 0 : data.length;
         if(lastPrefix != null) {
-            long dataBytes = data == null ? 0 : data.length;
             this.updateCountBytes(lastPrefix, dataBytes
                     - (lastdata == null ? 0 : lastdata.length), 0);
         }
         nodeDataSize.addAndGet(getNodeSize(path, data) - getNodeSize(path, lastdata));
+
+        updateWriteStat(path, dataBytes);
         dataWatches.triggerWatch(path, EventType.NodeDataChanged);
         return s;
     }
@@ -656,6 +667,7 @@ public class DataTree {
     public byte[] getData(String path, Stat stat, Watcher watcher)
             throws KeeperException.NoNodeException {
         DataNode n = nodes.get(path);
+        byte[] data = null;
         if (n == null) {
             throw new KeeperException.NoNodeException();
         }
@@ -664,8 +676,10 @@ public class DataTree {
             if (watcher != null) {
                 dataWatches.addWatch(path, watcher);
             }
-            return n.data;
+            data = n.data;
         }
+        updateReadStat(path, data == null ? 0 : data.length);
+        return data;
     }
 
     public Stat statNode(String path, Watcher watcher)
@@ -680,8 +694,9 @@ public class DataTree {
         }
         synchronized (n) {
             n.copyStat(stat);
-            return stat;
         }
+        updateReadStat(path, 0L);
+        return stat;
     }
 
     public List<String> getChildren(String path, Stat stat, Watcher watcher)
@@ -690,17 +705,25 @@ public class DataTree {
         if (n == null) {
             throw new KeeperException.NoNodeException();
         }
+        List<String> children;
         synchronized (n) {
             if (stat != null) {
                 n.copyStat(stat);
             }
-            List<String> children=new ArrayList<String>(n.getChildren());
+            children = new ArrayList<String>(n.getChildren());
 
             if (watcher != null) {
                 childWatches.addWatch(path, watcher);
             }
-            return children;
         }
+
+        int bytes = 0;
+        for (String child : children) {
+            bytes += child.length();
+        }
+        updateReadStat(path, bytes);
+
+        return children;
     }
 
     public int getAllChildrenNumber(String path) {
@@ -1503,5 +1526,27 @@ public class DataTree {
     // visible for testing
     public ReferenceCountedACLCache getReferenceCountedAclCache() {
         return aclCache;
+    }
+
+    private String getTopNamespace(String path) {
+        String[] parts = path.split("/");
+        return parts.length > 1 ? parts[1] : null;
+    }
+
+    private void updateReadStat(String path, long bytes) {
+        String namespace = getTopNamespace(path);
+        if (namespace == null) {
+            return;
+        }
+        long totalBytes = path.length() + bytes + STAT_OVERHEAD_BYTES;
+        ServerMetrics.getMetrics().READ_PER_NAMESPACE.add(namespace, totalBytes);
+    }
+
+    private void updateWriteStat(String path, long bytes) {
+        String namespace = getTopNamespace(path);
+        if (namespace == null) {
+            return;
+        }
+        ServerMetrics.getMetrics().WRITE_PER_NAMESPACE.add(namespace, path.length() + bytes);
     }
 }

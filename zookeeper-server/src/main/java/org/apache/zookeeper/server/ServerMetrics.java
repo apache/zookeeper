@@ -23,15 +23,16 @@ import org.apache.zookeeper.metrics.MetricsContext.DetailLevel;
 
 import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.Summary;
+import org.apache.zookeeper.metrics.SummarySet;
 import org.apache.zookeeper.metrics.impl.DefaultMetricsProvider;
 import org.apache.zookeeper.metrics.impl.NullMetricsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public final class ServerMetrics {
-    
+
     private static final Logger LOG = LoggerFactory.getLogger(ServerMetrics.class);
-    
+
     /**
      * Dummy instance useful for tests.
      */
@@ -45,25 +46,25 @@ public final class ServerMetrics {
             = new ServerMetrics(new DefaultMetricsProvider());
 
     /**
-     * Real instance used for tracking server side metrics.
-     * The final value is assigned after the {@link MetricsProvider} 
-     * bootstrap.
+     * Real instance used for tracking server side metrics. The final value is
+     * assigned after the {@link MetricsProvider} bootstrap.
      */
     private static volatile ServerMetrics CURRENT = DEFAULT_METRICS_FOR_TESTS;
 
     /**
      * Access current ServerMetrics.
+     *
      * @return a reference to the current Metrics
      */
     public static ServerMetrics getMetrics() {
         return CURRENT;
     }
-    
+
     public static void metricsProviderInitialized(MetricsProvider metricsProvider) {
         LOG.info("ServerMetrics initialized with provider {}", metricsProvider);
         CURRENT = new ServerMetrics(metricsProvider);
     }
-    
+
     private ServerMetrics(MetricsProvider metricsProvider) {
         this.metricsProvider = metricsProvider;
         MetricsContext metricsContext = this.metricsProvider.getRootContext();
@@ -85,9 +86,11 @@ public final class ServerMetrics {
         CONNECTION_TOKEN_DEFICIT = metricsContext.getSummary("connection_token_deficit", DetailLevel.BASIC);
         CONNECTION_REJECTED = metricsContext.getCounter("connection_rejected");
 
+        WRITE_PER_NAMESPACE = metricsContext.getSummarySet("write_per_namespace", DetailLevel.BASIC);
+        READ_PER_NAMESPACE = metricsContext.getSummarySet("read_per_namespace", DetailLevel.BASIC);
+
         BYTES_RECEIVED_COUNT = metricsContext.getCounter("bytes_received_count");
         UNRECOVERABLE_ERROR_COUNT = metricsContext.getCounter("unrecoverable_error_count");
-
 
         NODE_CREATED_WATCHER = metricsContext.getSummary("node_created_watch_count", DetailLevel.BASIC);
         NODE_DELETED_WATCHER = metricsContext.getSummary("node_deleted_watch_count", DetailLevel.BASIC);
@@ -162,6 +165,8 @@ public final class ServerMetrics {
     public final Counter CONNECTION_REJECTED;
 
     public final Counter UNRECOVERABLE_ERROR_COUNT;
+    public final SummarySet WRITE_PER_NAMESPACE;
+    public final SummarySet READ_PER_NAMESPACE;
     public final Counter BYTES_RECEIVED_COUNT;
 
     /**

@@ -71,9 +71,9 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -905,14 +905,17 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
         nextProcessor.processRequest(request);
     }
 
-    private List<ACL> removeDuplicates(List<ACL> acl) {
+    private List<ACL> removeDuplicates(final List<ACL> acls) {
+        if (acls == null || acls.isEmpty()) {
+          return Collections.emptyList();
+        }
 
-        List<ACL> retval = new LinkedList<ACL>();
-        if (acl != null) {
-            for (ACL a : acl) {
-                if (!retval.contains(a)) {
-                    retval.add(a);
-                }
+        // This would be done better with a Set but ACL hashcode/equals do not
+        // allow for null values
+        final ArrayList<ACL> retval = new ArrayList<>(acls.size());
+        for (final ACL acl : acls) {
+            if (!retval.contains(acl)) {
+              retval.add(acl);
             }
         }
         return retval;
@@ -960,7 +963,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
         if (uniqacls == null || uniqacls.size() == 0) {
             throw new KeeperException.InvalidACLException(path);
         }
-        List<ACL> rv = new LinkedList<ACL>();
+        List<ACL> rv = new ArrayList<>();
         for (ACL a: uniqacls) {
             LOG.debug("Processing ACL: {}", a);
             if (a == null) {

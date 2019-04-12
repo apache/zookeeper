@@ -24,7 +24,7 @@
   <formats>
     <format>tar.gz</format>
   </formats>
-  <includeBaseDirectory>false</includeBaseDirectory>
+  <includeBaseDirectory>true</includeBaseDirectory>
   <componentDescriptors>
     <componentDescriptor>src/main/assembly/components.xml</componentDescriptor>
   </componentDescriptors>
@@ -102,19 +102,18 @@
       <fileMode>${rw.file.permission}</fileMode>
       <directoryMode>${rwx.file.permission}</directoryMode>
     </fileSet>
+    <fileSet>
+      <directory>${project.basedir}/..</directory>
+      <outputDirectory>.</outputDirectory>
+      <includes>
+        <include>pom.xml</include>
+        <include>build.xml</include>
+        <include>ivy.xml</include>
+        <include>ivysettings.xml</include>
+        <include>excludeFindBugsFilter.xml</include>
+        <include>owaspSuppressions.xml</include>
+      </includes>
+      <fileMode>${rw.file.permission}</fileMode>
+    </fileSet>
   </fileSets>
-  <files>
-    <file>
-      <source>${project.basedir}/../pom.xml</source>
-      <fileMode>${rw.file.permission}</fileMode>
-    </file>
-    <file>
-      <source>${project.basedir}/src/main/assembly/source-package.xml</source>
-      <fileMode>${rw.file.permission}</fileMode>
-    </file>
-    <file>
-      <source>${project.basedir}/src/main/assembly/bin-package.xml</source>
-      <fileMode>${rw.file.permission}</fileMode>
-    </file>
-  </files>
 </assembly>
