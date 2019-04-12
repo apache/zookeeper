@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.persistence;
 
+import java.io.Closeable;
 import java.io.IOException;
 
 import org.apache.jute.Record;
@@ -28,7 +29,7 @@ import org.apache.zookeeper.txn.TxnHeader;
  * Interface for reading transaction logs.
  *
  */
-public interface TxnLog {
+public interface TxnLog extends Closeable {
 
     /**
      * Setter for ServerStats to monitor fsync threshold exceed
@@ -96,15 +97,11 @@ public interface TxnLog {
      */
     long getTxnLogSyncElapsedTime();
    
-    /** 
-     * close the transactions logs
-     */
-    void close() throws IOException;
     /**
      * an iterating interface for reading 
      * transaction logs. 
      */
-    public interface TxnIterator {
+    public interface TxnIterator extends Closeable {
         /**
          * return the transaction header.
          * @return return the transaction header.
@@ -122,14 +119,7 @@ public interface TxnLog {
          * @throws IOException
          */
         boolean next() throws IOException;
-        
-        /**
-         * close files and release the 
-         * resources
-         * @throws IOException
-         */
-        void close() throws IOException;
-        
+
         /**
          * Get an estimated storage space used to store transaction records
          * that will return by this iterator
