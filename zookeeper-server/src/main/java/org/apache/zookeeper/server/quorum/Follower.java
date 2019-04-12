@@ -70,7 +70,7 @@ public class Follower extends Learner{
         self.end_fle = Time.currentElapsedTime();
         long electionTimeTaken = self.end_fle - self.start_fle;
         self.setElectionTimeTaken(electionTimeTaken);
-        ServerMetrics.ELECTION_TIME.add(electionTimeTaken);
+        ServerMetrics.getMetrics().ELECTION_TIME.add(electionTimeTaken);
         LOG.info("FOLLOWING - LEADER ELECTION TOOK - {} {}", electionTimeTaken,
                 QuorumPeer.FLE_TIME_UNIT);
         self.start_fle = 0;
@@ -96,7 +96,7 @@ public class Follower extends Learner{
                     syncWithLeader(newEpochZxid);
                 } finally {
                     long syncTime = Time.currentElapsedTime() - startTime;
-                    ServerMetrics.FOLLOWER_SYNC_TIME.add(syncTime);
+                    ServerMetrics.getMetrics().FOLLOWER_SYNC_TIME.add(syncTime);
                 }
                 if (self.getObserverMasterPort() > 0) {
                     LOG.info("Starting ObserverMaster");

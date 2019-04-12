@@ -18,17 +18,24 @@
 package org.apache.zookeeper.metrics.impl;
 
 import java.util.Properties;
+import java.util.function.BiConsumer;
 import org.apache.zookeeper.metrics.Counter;
 import org.apache.zookeeper.metrics.Gauge;
 import org.apache.zookeeper.metrics.MetricsContext;
 import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
 import org.apache.zookeeper.metrics.Summary;
+import org.apache.zookeeper.metrics.SummarySet;
 
 /**
  * This is a dummy MetricsProvider which does nothing.
  */
 public class NullMetricsProvider implements MetricsProvider {
+
+    /**
+     * Instance of NullMetricsProvider useful for tests.
+     */
+    public static final MetricsProvider INSTANCE = new NullMetricsProvider();
 
     @Override
     public void configure(Properties configuration) throws MetricsProviderLifeCycleException {
@@ -41,6 +48,14 @@ public class NullMetricsProvider implements MetricsProvider {
     @Override
     public MetricsContext getRootContext() {
         return NullMetricsContext.INSTANCE;
+    }
+
+    @Override
+    public void dump(BiConsumer<String, Object> sink) {
+    }
+
+    @Override
+    public void resetAllValues() {
     }
 
     @Override
@@ -67,8 +82,13 @@ public class NullMetricsProvider implements MetricsProvider {
         }
 
         @Override
-        public Summary getSummary(String name) {
+        public Summary getSummary(String name, DetailLevel detailLevel) {
             return NullSummary.INSTANCE;
+        }
+
+        @Override
+        public SummarySet getSummarySet(String name, DetailLevel detailLevel) {
+            return NullSummarySet.INSTANCE;
         }
 
     }
@@ -78,7 +98,7 @@ public class NullMetricsProvider implements MetricsProvider {
         private static final NullCounter INSTANCE = new NullCounter();
 
         @Override
-        public void inc(long delta) {
+        public void add(long delta) {
         }
 
         @Override
@@ -93,7 +113,17 @@ public class NullMetricsProvider implements MetricsProvider {
         private static final NullSummary INSTANCE = new NullSummary();
 
         @Override
-        public void registerValue(long value) {
+        public void add(long value) {
+        }
+
+    }
+
+    private static final class NullSummarySet implements SummarySet {
+
+        private static final NullSummarySet INSTANCE = new NullSummarySet();
+
+        @Override
+        public void add(String key, long value) {
         }
 
     }

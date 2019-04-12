@@ -79,6 +79,7 @@ import org.slf4j.LoggerFactory;
 
 import static org.apache.zookeeper.common.NetUtils.formatInetAddr;
 import org.apache.zookeeper.metrics.MetricsContext;
+import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.impl.NullMetricsProvider;
 
 /**
@@ -832,8 +833,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     AdminServer adminServer;
 
-    private MetricsContext rootMetricsContext = NullMetricsProvider.NullMetricsContext.INSTANCE;
-
     public static QuorumPeer testingQuorumPeer() throws SaslException {
         return new QuorumPeer();
     }
@@ -1178,7 +1177,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 switch (getPeerState()) {
                 case LOOKING:
                     LOG.info("LOOKING");
-                    ServerMetrics.LOOKING_COUNT.add(1);
+                    ServerMetrics.getMetrics().LOOKING_COUNT.add(1);
 
                     if (Boolean.getBoolean("readonlymode.enabled")) {
                         LOG.info("Attempting to start ReadOnlyZooKeeperServer");
@@ -1471,7 +1470,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         }
         return -1;
     }
-
+    
     /** Whether local sessions are enabled */
     public boolean areLocalSessionsEnabled() {
         return localSessionsEnabled;
@@ -1778,10 +1777,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     public void setSecureCnxnFactory(ServerCnxnFactory secureCnxnFactory) {
         this.secureCnxnFactory = secureCnxnFactory;
-    }
-
-    public void setRootMetricsContext(MetricsContext rootMetricsContext) {
-        this.rootMetricsContext = rootMetricsContext;
     }
 
     public void setSslQuorum(boolean sslQuorum) {

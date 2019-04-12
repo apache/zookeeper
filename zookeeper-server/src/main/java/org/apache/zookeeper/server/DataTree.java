@@ -1539,7 +1539,7 @@ public class DataTree {
             return;
         }
         long totalBytes = path.length() + bytes + STAT_OVERHEAD_BYTES;
-        ServerMetrics.READ_PER_NAMESPACE.add(namespace, totalBytes);
+        ServerMetrics.getMetrics().READ_PER_NAMESPACE.add(namespace, totalBytes);
     }
 
     private void updateWriteStat(String path, long bytes) {
@@ -1547,6 +1547,6 @@ public class DataTree {
         if (namespace == null) {
             return;
         }
-        ServerMetrics.WRITE_PER_NAMESPACE.add(namespace, path.length() + bytes);
+        ServerMetrics.getMetrics().WRITE_PER_NAMESPACE.add(namespace, path.length() + bytes);
     }
 }

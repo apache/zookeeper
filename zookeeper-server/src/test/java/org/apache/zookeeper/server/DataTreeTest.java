@@ -52,6 +52,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.List;
 import java.util.ArrayList;
+import org.apache.zookeeper.metrics.MetricsUtils;
 
 public class DataTreeTest extends ZKTestCase {
     protected static final Logger LOG = LoggerFactory.getLogger(DataTreeTest.class);
@@ -363,7 +364,7 @@ public class DataTreeTest extends ZKTestCase {
 
     @Test
     public void testDataTreeMetrics() throws Exception {
-        ServerMetrics.resetAll();
+        ServerMetrics.getMetrics().resetAll();
 
 
         long readBytes1 = 0;
@@ -406,8 +407,8 @@ public class DataTreeTest extends ZKTestCase {
         dt.deleteNode(TOP1PATH, 1);
         writeBytes1 += TOP1PATH.length();
         
-        Map<String, Object> values = ServerMetrics.getAllValues();
-
+        Map<String, Object> values = MetricsUtils.currentServerMetrics();
+        System.out.println("values:"+values);
         Assert.assertEquals(writeBytes1, values.get("sum_" + TOP1+ "_write_per_namespace"));
         Assert.assertEquals(5L, values.get("cnt_" + TOP1 + "_write_per_namespace"));
         Assert.assertEquals(writeBytes2, values.get("sum_" + TOP2+ "_write_per_namespace"));

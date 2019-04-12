@@ -16,6 +16,7 @@
  */
 package org.apache.zookeeper.server.watch;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
@@ -24,6 +25,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.metrics.MetricsUtils;
+import org.apache.zookeeper.metrics.impl.DefaultMetricsProvider;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.junit.Test;
 import org.junit.Assert;
@@ -134,6 +137,7 @@ public class WatcherCleanerTest extends ZKTestCase {
 
     @Test
     public void testDeadWatcherMetrics() {
+        ServerMetrics.getMetrics().resetAll();
         MyDeadWatcherListener listener = new MyDeadWatcherListener();
         WatcherCleaner cleaner = new WatcherCleaner(listener, 1, 1, 1, 1);
         listener.setDelayMs(20);
@@ -146,9 +150,8 @@ public class WatcherCleanerTest extends ZKTestCase {
         cleaner.addDeadWatcher(3);
 
         Assert.assertTrue(listener.wait(5000));
-
-        Map<String, Object> values = ServerMetrics.getAllValues();
-
+        
+        Map<String, Object> values = MetricsUtils.currentServerMetrics();
         Assert.assertThat("Adding dead watcher should be stalled twice",
                           (Long)values.get("add_dead_watcher_stall_time"),
                            greaterThan(0L));

@@ -21,15 +21,17 @@ package org.apache.zookeeper.metrics;
 /**
  * Summaries track the size and number of events.
  * They are able to publish minumum, maximum, average values, depending on the capabilities of the MetricsProvider.
+ * A SummarySet is a set of {@link Summary}.
  */
-public interface Summary {
+public interface SummarySet {
 
      /**
       * Register a value.
       * <p>This method is thread safe, The MetricsProvider will take care of synchronization.</p>
       *
+      * @param key the key to access the Summary for the given key
       * @param value current value
       */
-     void add(long value);
+     void add(String key, long value);
 
 }

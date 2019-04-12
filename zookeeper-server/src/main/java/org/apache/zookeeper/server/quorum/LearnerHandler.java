@@ -481,11 +481,11 @@ public class LearnerHandler extends ZooKeeperThread {
                     bufferedOutput.flush();
                 } finally {
                     snapshot.close();
-                    ServerMetrics.SNAP_COUNT.add(1);
+                    ServerMetrics.getMetrics().SNAP_COUNT.add(1);
                 }
             }
             else {
-                ServerMetrics.DIFF_COUNT.add(1);
+                ServerMetrics.getMetrics().DIFF_COUNT.add(1);
             }
 
             LOG.debug("Sending NEWLEADER message to " + sid);

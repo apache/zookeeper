@@ -255,7 +255,7 @@ public class ZKDatabase {
         long zxid = snapLog.restore(dataTree, sessionsWithTimeouts, commitProposalPlaybackListener);
         initialized = true;
         long loadTime = Time.currentElapsedTime() - startTime;
-        ServerMetrics.DB_INIT_TIME.add(loadTime);
+        ServerMetrics.getMetrics().DB_INIT_TIME.add(loadTime);
         LOG.info("Snapshot loaded in " + loadTime + " ms");
         return zxid;
     }

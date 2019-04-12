@@ -34,6 +34,7 @@ import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.DatadirCleanupManager;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ZooKeeperServerMain;
 import org.apache.zookeeper.server.admin.AdminServer.AdminServerException;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
@@ -154,7 +155,7 @@ public class QuorumPeerMain {
                       error);
       }
       try {
-
+          ServerMetrics.metricsProviderInitialized(metricsProvider);
           ServerCnxnFactory cnxnFactory = null;
           ServerCnxnFactory secureCnxnFactory = null;
 
@@ -173,7 +174,6 @@ public class QuorumPeerMain {
           }
 
           quorumPeer = getQuorumPeer();
-          quorumPeer.setRootMetricsContext(metricsProvider.getRootContext());
           quorumPeer.setTxnFactory(new FileTxnSnapLog(
                       config.getDataLogDir(),
                       config.getDataDir()));

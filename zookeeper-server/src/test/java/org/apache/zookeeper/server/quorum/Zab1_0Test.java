@@ -60,7 +60,6 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 
 import org.apache.zookeeper.server.util.ZxidUtils;
-import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.TestUtils;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.CreateTxn;

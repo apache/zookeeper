@@ -428,7 +428,8 @@ public class Leader implements LearnerMaster {
 
                         BufferedInputStream is = new BufferedInputStream(
                                 s.getInputStream());
-                        LearnerHandler fh = new LearnerHandler(s, is, Leader.this);
+                        LearnerHandler fh = new LearnerHandler(s, is,
+                                Leader.this);
                         fh.start();
                     } catch (SocketException e) {
                         error = true;
@@ -502,7 +503,7 @@ public class Leader implements LearnerMaster {
         self.end_fle = Time.currentElapsedTime();
         long electionTimeTaken = self.end_fle - self.start_fle;
         self.setElectionTimeTaken(electionTimeTaken);
-        ServerMetrics.ELECTION_TIME.add(electionTimeTaken);
+        ServerMetrics.getMetrics().ELECTION_TIME.add(electionTimeTaken);
         LOG.info("LEADING - LEADER ELECTION TOOK - {} {}", electionTimeTaken,
                 QuorumPeer.FLE_TIME_UNIT);
         self.start_fle = 0;
@@ -1057,7 +1058,7 @@ public class Leader implements LearnerMaster {
         }
         QuorumPacket qp = new QuorumPacket(Leader.COMMIT, zxid, null, null);
         sendPacket(qp);
-        ServerMetrics.COMMIT_COUNT.add(1);
+        ServerMetrics.getMetrics().COMMIT_COUNT.add(1);
     }
 
     //commit and send some info

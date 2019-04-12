@@ -56,7 +56,7 @@ import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.VerifyingFileFactory;
 
 import static org.apache.zookeeper.common.NetUtils.formatInetAddr;
-import org.apache.zookeeper.metrics.impl.NullMetricsProvider;
+import org.apache.zookeeper.metrics.impl.DefaultMetricsProvider;
 
 @InterfaceAudience.Public
 public class QuorumPeerConfig {
@@ -83,7 +83,7 @@ public class QuorumPeerConfig {
     protected int minSessionTimeout = -1;
     /** defaults to -1 if not set explicitly */
     protected int maxSessionTimeout = -1;
-    protected String metricsProviderClassName = NullMetricsProvider.class.getName();
+    protected String metricsProviderClassName = DefaultMetricsProvider.class.getName();
     protected Properties metricsProviderConfiguration = new Properties();
     protected boolean localSessionsEnabled = false;
     protected boolean localSessionsUpgradingEnabled = false;

@@ -99,7 +99,7 @@ public class ServerMetricsTest extends ZKTestCase {
         }
 
         long expectedCount = Arrays.stream(values).sum();
-        Assert.assertEquals(expectedCount, metric.getCount());
+        Assert.assertEquals(expectedCount, metric.get());
 
         final Map<String, Object> results = metric.values();
         Assert.assertEquals(expectedCount, (long)results.get("test"));

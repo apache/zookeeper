@@ -388,7 +388,8 @@ public class FileTxnLog implements TxnLog {
                             + "File size is " + channel.size() + " bytes. "
                             + "See the ZooKeeper troubleshooting guide");
                 }
-                ServerMetrics.FSYNC_TIME.add(syncElapsedMS);
+                
+                ServerMetrics.getMetrics().FSYNC_TIME.add(syncElapsedMS);
             }
         }
         while (streamsToFlush.size() > 1) {

@@ -53,8 +53,6 @@ import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.jmx.MBeanRegistry;
-import org.apache.zookeeper.metrics.MetricsContext;
-import org.apache.zookeeper.metrics.impl.NullMetricsProvider;
 import org.apache.zookeeper.proto.AuthPacket;
 import org.apache.zookeeper.proto.ConnectRequest;
 import org.apache.zookeeper.proto.ConnectResponse;
@@ -140,7 +138,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     private final ServerStats serverStats;
     private final ZooKeeperServerListener listener;
-    private MetricsContext rootMetricsContext = NullMetricsProvider.NullMetricsContext.INSTANCE;
     private ZooKeeperServerShutdownHandler zkShutdownHandler;
     private volatile int createSessionTrackerServerId = 1;
 
@@ -183,8 +180,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * @throws IOException
      */
     public ZooKeeperServer() {
-        serverStats = new ServerStats(this);
         listener = new ZooKeeperServerListenerImpl(this);
+        serverStats = new ServerStats(this);
     }
 
     /**
@@ -379,7 +376,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
         long elapsed = Time.currentElapsedTime() - start;
         LOG.info("Snapshot taken in " + elapsed + " ms");
-        ServerMetrics.SNAPSHOT_TIME.add(elapsed);
+        ServerMetrics.getMetrics().SNAPSHOT_TIME.add(elapsed);
     }
 
     @Override
@@ -938,14 +935,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         secureServerCnxnFactory = factory;
     }
 
-    public MetricsContext getRootMetricsContext() {
-        return rootMetricsContext;
-    }
-
-    public void setRootMetricsContext(MetricsContext rootMetricsContext) {
-        this.rootMetricsContext = rootMetricsContext;
-    }
-
     /**
      * return the last proceesed id from the
      * datatree
@@ -1084,7 +1073,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         if (connThrottle.checkLimit(1) == false) {
             throw new ClientCnxnLimitException();
         }
-        ServerMetrics.CONNECTION_TOKEN_DEFICIT.add(connThrottle.getDeficit());
+        ServerMetrics.getMetrics().CONNECTION_TOKEN_DEFICIT.add(connThrottle.getDeficit());
 
         BinaryInputArchive bia = BinaryInputArchive.getArchive(new ByteBufferInputStream(incomingBuffer));
         ConnectRequest connReq = new ConnectRequest();
@@ -1095,7 +1084,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                     + " client's lastZxid is 0x"
                     + Long.toHexString(connReq.getLastZxidSeen()));
         }
-        ServerMetrics.CONNECTION_REQUEST_COUNT.add(1);
+        ServerMetrics.getMetrics().CONNECTION_REQUEST_COUNT.add(1);
         boolean readOnly = false;
         try {
             readOnly = bia.readBool("readOnly");

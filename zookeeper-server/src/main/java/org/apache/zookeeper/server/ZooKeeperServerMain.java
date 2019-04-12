@@ -129,7 +129,7 @@ public class ZooKeeperServerMain {
                 throw new IOException("Cannot boot MetricsProvider "+config.getMetricsProviderClassName(),
                     error);
             }
-
+            ServerMetrics.metricsProviderInitialized(metricsProvider);
             // Note that this thread isn't going to be doing anything else,
             // so rather than spawning another thread, we will just call
             // run() in this thread.
@@ -138,7 +138,6 @@ public class ZooKeeperServerMain {
             final ZooKeeperServer zkServer = new ZooKeeperServer(txnLog,
                     config.tickTime, config.minSessionTimeout, config.maxSessionTimeout,
                     config.listenBacklog, null);
-            zkServer.setRootMetricsContext(metricsProvider.getRootContext());
             txnLog.setServerStats(zkServer.serverStats());
 
             // Registers shutdown handler which will be used to know the

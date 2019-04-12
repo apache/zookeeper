@@ -15,15 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.zookeeper.metrics;
 
 /**
- * A MetricsContext is like a namespace for metrics.
- * Each component/submodule will have its own MetricsContext.
- * <p>In some cases it is possible to have a separate MetricsContext
- * for each instance of a component, for instance on the server side
- * a possible usecase it to gather metrics for every other peer.
+ * A MetricsContext is like a namespace for metrics. Each component/submodule
+ * will have its own MetricsContext.
+ * <p>
+ * In some cases it is possible to have a separate MetricsContext for each
+ * instance of a component, for instance on the server side a possible usecase
+ * it to gather metrics for every other peer.
  * </p>
  * <p>
  * Contexts are organized in a hierarchy.
@@ -50,22 +50,48 @@ public interface MetricsContext {
     Counter getCounter(String name);
 
     /**
-     * Registers an user provided {@link Gauge} which will be called by the MetricsProvider in order to sample
-     * an integer value.
+     * Registers an user provided {@link Gauge} which will be called by the
+     * MetricsProvider in order to sample an integer value.
      *
      * @param name unique name of the Gauge in this context
      * @param gauge the implementation of the Gauge
      *
-     * @return true if the Gauge was successfully registered, false if the Gauge was already registered.
+     * @return true if the Gauge was successfully registered, false if the Gauge
+     * was already registered.
      */
     boolean registerGauge(String name, Gauge gauge);
+
+    static enum DetailLevel {
+        /**
+         * The returned Summary is expected to track only simple aggregated
+         * values, like min/max/avg
+         */
+        BASIC,
+        /**
+         * It is expected that the returned Summary performs expensive
+         * aggregations, like percentiles.
+         */
+        ADVANCED
+    }
 
     /**
      * Returns a summary.
      *
      * @param name
+     * @param detailLevel
      * @return the summary identified by name in this context.
+     * @see #getSummary(java.lang.String)
      */
-    Summary getSummary(String name);
+    Summary getSummary(String name, DetailLevel detailLevel);
+
+    /**
+     * Returns a set of summaries.
+     *
+     * @param name
+     * @param detailLevel
+     * @return the summary identified by name in this context.
+     * @see #getSummary(java.lang.String)
+     */
+    SummarySet getSummarySet(String name, DetailLevel detailLevel);
 
 }

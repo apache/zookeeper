@@ -392,8 +392,12 @@ public class Commands {
                 response.put("observer_master_id", ((ObserverZooKeeperServer)zkServer).getObserver().getLearnerMasterId());
             }
 
-            response.putAll(ServerMetrics.getAllValues());
-
+            ServerMetrics.getMetrics()
+                    .getMetricsProvider()
+                    .dump(
+                    (metric, value) -> {
+                        response.put(metric, value);
+                    });
             return response;
 
         }}
