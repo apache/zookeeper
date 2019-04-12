@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public class Version implements org.apache.zookeeper.version.Info {
 
     /*
@@ -39,6 +41,8 @@ public class Version implements org.apache.zookeeper.version.Info {
         return BUILD_DATE;
     }
 
+    @SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NULL_VALUE",
+            justification = "Missing QUALIFIER causes redundant null-check")
     public static String getVersion() {
         return MAJOR + "." + MINOR + "." + MICRO
             + (QUALIFIER == null ? "" : "-" + QUALIFIER);
