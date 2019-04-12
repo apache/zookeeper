@@ -408,7 +408,7 @@ public class DataTreeTest extends ZKTestCase {
         writeBytes1 += TOP1PATH.length();
         
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
-
+        System.out.println("values:"+values);
         Assert.assertEquals(writeBytes1, values.get("sum_" + TOP1+ "_write_per_namespace"));
         Assert.assertEquals(5L, values.get("cnt_" + TOP1 + "_write_per_namespace"));
         Assert.assertEquals(writeBytes2, values.get("sum_" + TOP2+ "_write_per_namespace"));

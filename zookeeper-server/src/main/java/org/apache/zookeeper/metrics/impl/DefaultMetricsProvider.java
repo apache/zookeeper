@@ -147,6 +147,12 @@ public class DefaultMetricsProvider implements MetricsProvider {
             summaries.values().forEach(metric -> {
                 metric.values().forEach(sink);
             });
+            basicSummarySets.values().forEach(metric -> {
+                metric.values().forEach(sink);
+            });
+            summarySets.values().forEach(metric -> {
+                metric.values().forEach(sink);
+            });
         }
 
         void reset() {
@@ -157,6 +163,12 @@ public class DefaultMetricsProvider implements MetricsProvider {
                 metric.reset();
             });
             summaries.values().forEach(metric -> {
+                metric.reset();
+            });
+            basicSummarySets.values().forEach(metric -> {
+                metric.reset();
+            });
+            summarySets.values().forEach(metric -> {
                 metric.reset();
             });
         }
