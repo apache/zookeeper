@@ -62,7 +62,7 @@ public class RestoreCommittedLogTest extends ZKTestCase{
         final byte[] data = sb.toString().getBytes();
 
         SyncRequestProcessor.setSnapCount(numTransactions * 1000);
-        SyncRequestProcessor.setSnapSize(minTxnsToSnap * data.length);
+        SyncRequestProcessor.setSnapSizeInBytes(minTxnsToSnap * data.length);
 
         testRestoreCommittedLog(numTransactions, data, minExpectedSnapshots);
 
@@ -80,7 +80,7 @@ public class RestoreCommittedLogTest extends ZKTestCase{
         final int snapCount = 100;
 
         SyncRequestProcessor.setSnapCount(snapCount);
-        SyncRequestProcessor.setSnapSize(4294967296L);
+        SyncRequestProcessor.setSnapSizeInBytes(4294967296L);
 
         testRestoreCommittedLog(minExpectedSnapshots * snapCount, new byte[0], minExpectedSnapshots);
     }

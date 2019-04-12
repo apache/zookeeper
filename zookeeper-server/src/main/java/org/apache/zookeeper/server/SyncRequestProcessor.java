@@ -63,7 +63,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
     /**
      * The total size of log entries before starting a snapshot
      */
-    private static long snapSize = ZooKeeperServer.getSnapSize();
+    private static long snapSizeInBytes = ZooKeeperServer.getSnapSizeInBytes();
 
     /**
      * Random numbers used to vary snapshot timing
@@ -117,20 +117,20 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
      * snapcounts
      * @param size
      */
-    public static void setSnapSize(long size) {
-        snapSize = size;
+    public static void setSnapSizeInBytes(long size) {
+        snapSizeInBytes = size;
     }
 
     private boolean shouldSnapshot() {
         int logCount = zks.getZKDatabase().getTxnCount();
         long logSize = zks.getZKDatabase().getTxnSize();
         return (logCount > (snapCount / 2 + randRoll)) ||
-                (logSize > (snapSize / 2 + randSize));
+                (logSize > (snapSizeInBytes / 2 + randSize));
     }
 
     private void resetSnapshotStats() {
         randRoll = ThreadLocalRandom.current().nextInt(snapCount/2);
-        randSize = Math.abs(ThreadLocalRandom.current().nextLong() % (snapSize/2));
+        randSize = Math.abs(ThreadLocalRandom.current().nextLong() % (snapSizeInBytes/2));
     }
 
     @Override
