@@ -8,6 +8,11 @@ cache:
   directories:
   - "$HOME/.m2"
 
+addons:
+  apt:
+    packages:
+    - libcppunit-dev
+
 script: mvn clean install -DskipTests spotbugs:check checkstyle:check -Pfull-build
 
 branches:
