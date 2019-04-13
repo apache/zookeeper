@@ -107,12 +107,14 @@ public class SyncCallTest extends ClientBase
     }
 
     @SuppressWarnings("unchecked")
+    @Override
     public void processResult(int rc, String path, Object ctx){
         ((List<Integer>) ctx).add(rc);    
         opsCount.countDown();
     
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void processResult(int rc, String path, Object ctx, String name,
         Stat stat) {
