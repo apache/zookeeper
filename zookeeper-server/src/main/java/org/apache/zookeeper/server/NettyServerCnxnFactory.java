@@ -23,12 +23,12 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.net.ssl.SSLContext;
@@ -78,7 +78,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     private Channel parentChannel;
     private final ChannelGroup allChannels =
             new DefaultChannelGroup("zkServerCnxns", new DefaultEventExecutor());
-    private final Map<InetAddress, Set<NettyServerCnxn>> ipMap = new ConcurrentHashMap<>();
+    private final Map<InetAddress, AtomicInteger> ipMap = new ConcurrentHashMap<>();
     private InetSocketAddress localAddress;
     private int maxClientCnxns = 60;
     int listenBacklog = -1;
@@ -516,29 +516,30 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         InetAddress addr =
             ((InetSocketAddress) cnxn.getChannel().remoteAddress()).getAddress();
 
-        ipMap.compute(addr, (a, cnxnSet) -> {
-            if (cnxnSet == null) {
-                cnxnSet = new HashSet<>();
+        ipMap.compute(addr, (a, cnxnCount) -> {
+            if (cnxnCount == null) {
+              cnxnCount = new AtomicInteger();
             }
-            cnxnSet.add(cnxn);
-            return cnxnSet;
+            cnxnCount.incrementAndGet();
+            return cnxnCount;
         });
     }
   
     void removeCnxnFromIpMap(NettyServerCnxn cnxn, InetAddress remoteAddress) {
-        ipMap.compute(remoteAddress, (addr, cnxnSet) -> {
-        if (cnxnSet == null) {
+        ipMap.compute(remoteAddress, (addr, cnxnCount) -> {
+        if (cnxnCount == null) {
             LOG.error("Unexpected remote address {} when removing cnxn {}",
                 remoteAddress, cnxn);
-            cnxnSet = Collections.emptySet();
+            return null;
         }
-        cnxnSet.remove(cnxn);
-        return cnxnSet.isEmpty() ? null : cnxnSet;
+        final int newValue = cnxnCount.decrementAndGet();
+        return newValue == 0 ? null : cnxnCount;
       });
     }
 
     private int getClientCnxnCount(final InetAddress addr) {
-      return ipMap.getOrDefault(addr, Collections.emptySet()).size();
+      final AtomicInteger count = ipMap.get(addr);
+      return count == null ? 0 : count.get();
     }
 
     @Override
