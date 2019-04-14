@@ -23,11 +23,12 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.net.ssl.SSLContext;
@@ -77,9 +78,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     private Channel parentChannel;
     private final ChannelGroup allChannels =
             new DefaultChannelGroup("zkServerCnxns", new DefaultEventExecutor());
-    // Access to ipMap or to any Set contained in the map needs to be
-    // protected with synchronized (ipMap) { ... }
-    private final Map<InetAddress, Set<NettyServerCnxn>> ipMap = new HashMap<>();
+    private final Map<InetAddress, Set<NettyServerCnxn>> ipMap = new ConcurrentHashMap<>();
     private InetSocketAddress localAddress;
     private int maxClientCnxns = 60;
     int listenBacklog = -1;
@@ -512,44 +511,34 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         return localAddress;
     }
 
-    private void addCnxn(NettyServerCnxn cnxn) {
+    private void addCnxn(final NettyServerCnxn cnxn) {
         cnxns.add(cnxn);
-        synchronized (ipMap){
-            InetAddress addr =
-                ((InetSocketAddress)cnxn.getChannel().remoteAddress()).getAddress();
-            Set<NettyServerCnxn> s = ipMap.get(addr);
-            if (s == null) {
-                s = new HashSet<>();
-                ipMap.put(addr, s);
-            }
-            s.add(cnxn);
-        }
-    }
+        InetAddress addr =
+            ((InetSocketAddress) cnxn.getChannel().remoteAddress()).getAddress();
 
+        ipMap.compute(addr, (a, cnxnSet) -> {
+            if (cnxnSet == null) {
+                cnxnSet = new HashSet<>();
+            }
+            cnxnSet.add(cnxn);
+            return cnxnSet;
+        });
+    }
+  
     void removeCnxnFromIpMap(NettyServerCnxn cnxn, InetAddress remoteAddress) {
-        synchronized (ipMap) {
-            Set<NettyServerCnxn> s = ipMap.get(remoteAddress);
-            if (s != null) {
-                s.remove(cnxn);
-                if (s.isEmpty()) {
-                    ipMap.remove(remoteAddress);
-                }
-                return;
-            }
+        ipMap.compute(remoteAddress, (addr, cnxnSet) -> {
+        if (cnxnSet == null) {
+            LOG.error("Unexpected remote address {} when removing cnxn {}",
+                remoteAddress, cnxn);
+            cnxnSet = Collections.emptySet();
         }
-        // Fallthrough and log errors outside the synchronized block
-        LOG.error(
-                "Unexpected null set for remote address {} when removing cnxn {}",
-                remoteAddress,
-                cnxn);
+        cnxnSet.remove(cnxn);
+        return cnxnSet.isEmpty() ? null : cnxnSet;
+      });
     }
 
-    private int getClientCnxnCount(InetAddress addr) {
-        synchronized (ipMap) {
-            Set<NettyServerCnxn> s = ipMap.get(addr);
-            if (s == null) return 0;
-            return s.size();
-        }
+    private int getClientCnxnCount(final InetAddress addr) {
+      return ipMap.getOrDefault(addr, Collections.emptySet()).size();
     }
 
     @Override
