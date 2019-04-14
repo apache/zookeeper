@@ -78,8 +78,6 @@ public class Request {
 
     public final long createTime = Time.currentElapsedTime();
 
-    public long prepQueueStartTime= -1;
-
     private Object owner;
 
     private KeeperException e;
