@@ -169,6 +169,15 @@ public final class ServerMetrics {
     public final SummarySet READ_PER_NAMESPACE;
     public final Counter BYTES_RECEIVED_COUNT;
 
+    PREP_PROCESSOR_QUEUE_TIME(new AvgMinMaxPercentileCounter("prep_processor_queue_time_ms")),
+    PREP_PROCESSOR_QUEUE_SIZE(new AvgMinMaxCounter("prep_processor_queue_size")),
+    PREP_PROCESSOR_QUEUED(new SimpleCounter("prep_processor_request_queued")),
+    OUTSTANDING_CHANGES_QUEUED(new SimpleCounter("outstanding_changes_queued")),
+    OUTSTANDING_CHANGES_REMOVED(new SimpleCounter("outstanding_changes_removed")),
+    PREP_PROCESS_TIME(new AvgMinMaxCounter("prep_process_time")),
+    CLOSE_SESSION_PREP_TIME(new AvgMinMaxPercentileCounter("close_session_prep_time")),
+
+
     /**
      * Fired watcher stats.
      */
