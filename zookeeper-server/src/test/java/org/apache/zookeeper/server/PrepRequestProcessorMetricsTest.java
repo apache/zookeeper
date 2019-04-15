@@ -18,18 +18,15 @@
 
 package org.apache.zookeeper.server;
 
-import jline.internal.Log;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.*;
-import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.data.StatPersisted;
+import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.proto.DeleteRequest;
 import org.apache.zookeeper.proto.SetDataRequest;
-import org.apache.zookeeper.server.ZooKeeperServer.ChangeRecord;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.QuorumUtil;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,8 +35,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -75,7 +70,7 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
         when(db.getEphemerals(anyLong())).thenReturn(ephemerals);
 
         nextProcessor = mock(RequestProcessor.class);
-        ServerMetrics.resetAll();
+        ServerMetrics.getMetrics().resetAll();
     }
 
     private Request createRequest(Record record, int opCode) throws IOException {
@@ -125,14 +120,14 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
         //mocking two ephemeral nodes exists for this session so two changes
         prepRequestProcessor.processRequest(createRequest(2, ZooDefs.OpCode.closeSession));
 
-        Map<String, Object> values = ServerMetrics.getAllValues();
+        Map<String, Object> values = MetricsUtils.currentServerMetrics();
         Assert.assertEquals(3L, values.get("prep_processor_request_queued"));
 
         prepRequestProcessor.start();
 
         threeRequests.await(500, TimeUnit.MILLISECONDS);
 
-        values = ServerMetrics.getAllValues();
+        values = MetricsUtils.currentServerMetrics();
         Assert.assertEquals(3L, values.get("max_prep_processor_queue_size"));
 
         Assert.assertThat((long)values.get("min_prep_processor_queue_time_ms"), greaterThan(0l));
@@ -164,7 +159,7 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
         QuorumUtil util = new QuorumUtil(1);
         util.startAll();
 
-        ServerMetrics.resetAll();
+        ServerMetrics.getMetrics().resetAll();
 
         ZooKeeper zk = ClientBase.createZKClient(util.getConnString());
         zk.create("/test", new byte[50], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -173,7 +168,7 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
         zk.exists("/test", new SimpleWatcher(created));
         created.await(200, TimeUnit.MILLISECONDS);
 
-        Map<String, Object> values = ServerMetrics.getAllValues();
+        Map<String, Object> values = MetricsUtils.currentServerMetrics();
         Assert.assertThat((long)values.get("outstanding_changes_removed"), greaterThan(0L));
 
         util.shutdownAll();

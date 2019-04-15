@@ -131,7 +131,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
     public void run() {
         try {
             while (true) {
-                ServerMetrics.PREP_PROCESSOR_QUEUE_SIZE.add(submittedRequests.size());
+                ServerMetrics.getMetrics().PREP_PROCESSOR_QUEUE_SIZE.add(submittedRequests.size());
                 Request request = submittedRequests.take();
                 long traceMask = ZooTrace.CLIENT_REQUEST_TRACE_MASK;
                 if (request.type == OpCode.ping) {
@@ -145,7 +145,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 }
                 long prepStartTime = Time.currentElapsedTime();
                 pRequest(request);
-                ServerMetrics.PREP_PROCESS_TIME.add(Time.currentElapsedTime() - prepStartTime);
+                ServerMetrics.getMetrics().PREP_PROCESS_TIME.add(Time.currentElapsedTime() - prepStartTime);
             }
         } catch (RequestProcessorException e) {
             if (e.getCause() instanceof XidRolloverException) {
@@ -190,7 +190,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
         synchronized (zks.outstandingChanges) {
             zks.outstandingChanges.add(c);
             zks.outstandingChangesForPath.put(c.path, c);
-            ServerMetrics.OUTSTANDING_CHANGES_QUEUED.add(1);
+            ServerMetrics.getMetrics().OUTSTANDING_CHANGES_QUEUED.add(1);
         }
     }
 
@@ -610,7 +610,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
 
                     zks.sessionTracker.setSessionClosing(request.sessionId);
                 }
-                ServerMetrics.CLOSE_SESSION_PREP_TIME.add(Time.currentElapsedTime() - startTime);
+                ServerMetrics.getMetrics().CLOSE_SESSION_PREP_TIME.add(Time.currentElapsedTime() - startTime);
                 break;
             case OpCode.check:
                 zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
@@ -908,7 +908,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
             }
         }
         request.zxid = zks.getZxid();
-        ServerMetrics.PREP_PROCESSOR_QUEUE_TIME.add(Time.currentElapsedTime() - request.prepQueueStartTime);
+        ServerMetrics.getMetrics().PREP_PROCESSOR_QUEUE_TIME.add(Time.currentElapsedTime() - request.prepQueueStartTime);
         nextProcessor.processRequest(request);
     }
 
@@ -1014,7 +1014,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
     public void processRequest(Request request) {
         request.prepQueueStartTime =  Time.currentElapsedTime();
         submittedRequests.add(request);
-        ServerMetrics.PREP_PROCESSOR_QUEUED.add(1);
+        ServerMetrics.getMetrics().PREP_PROCESSOR_QUEUED.add(1);
     }
 
     public void shutdown() {
