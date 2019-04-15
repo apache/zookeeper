@@ -22,6 +22,7 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.Assert;
@@ -36,7 +37,7 @@ public class LearnerMetricsTest extends QuorumPeerTestBase {
 
     @Test
     public void testLearnerMetricsTest() throws Exception {
-        ServerMetrics.resetAll();
+        ServerMetrics.getMetrics().resetAll();
         ClientBase.setupTestEnv();
 
         final int SERVER_COUNT = 6; // 5 participants, 1 observer
@@ -75,7 +76,7 @@ public class LearnerMetricsTest extends QuorumPeerTestBase {
 
         Thread.sleep(200);
 
-        Map<String, Object> values = ServerMetrics.getAllValues();
+        Map<String, Object> values = MetricsUtils.currentServerMetrics();
         // there are 4 followers, each received two proposals, one for leader election, one for the create request
         Assert.assertEquals(8L, values.get("learner_proposal_received_count"));
         Assert.assertEquals(8L, values.get("cnt_proposal_latency"));

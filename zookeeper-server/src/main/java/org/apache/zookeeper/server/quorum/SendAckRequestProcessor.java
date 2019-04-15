@@ -43,7 +43,7 @@ public class SendAckRequestProcessor implements RequestProcessor, Flushable {
             QuorumPacket qp = new QuorumPacket(Leader.ACK, si.getHdr().getZxid(), null,
                 null);
             try {
-                si.logLatency(ServerMetrics.PROPOSAL_ACK_CREATION_LATENCY);
+                si.logLatency(ServerMetrics.getMetrics().PROPOSAL_ACK_CREATION_LATENCY);
 
                 learner.writePacket(qp, false);
             } catch (IOException e) {

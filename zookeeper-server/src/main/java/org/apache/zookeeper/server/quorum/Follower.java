@@ -142,7 +142,7 @@ public class Follower extends Learner{
             ping(qp);            
             break;
         case Leader.PROPOSAL:
-            ServerMetrics.LEARNER_PROPOSAL_RECEIVED_COUNT.add(1);
+            ServerMetrics.getMetrics().LEARNER_PROPOSAL_RECEIVED_COUNT.add(1);
             TxnHeader hdr = new TxnHeader();
             Record txn = SerializeUtils.deserializeTxn(qp.getData(), hdr);
             if (hdr.getZxid() != lastQueued + 1) {
@@ -169,7 +169,7 @@ public class Follower extends Learner{
                 long now = Time.currentWallTime();
                 long latency = now - hdr.getTime();
                 if (latency > 0) {
-                    ServerMetrics.PROPOSAL_LATENCY.add(latency);
+                    ServerMetrics.getMetrics().PROPOSAL_LATENCY.add(latency);
                 }
             }
             if (om != null) {
@@ -177,7 +177,7 @@ public class Follower extends Learner{
             }
             break;
         case Leader.COMMIT:
-            ServerMetrics.LEARNER_COMMIT_RECEIVED_COUNT.add(1);
+            ServerMetrics.getMetrics().LEARNER_COMMIT_RECEIVED_COUNT.add(1);
             fzk.commit(qp.getZxid());
             if (om != null) {
                 om.proposalCommitted(qp.getZxid());

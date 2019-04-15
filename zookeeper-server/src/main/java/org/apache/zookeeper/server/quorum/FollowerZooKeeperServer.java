@@ -114,7 +114,7 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
             System.exit(ExitCode.UNMATCHED_TXN_COMMIT.getValue());
         }
         Request request = pendingTxns.remove();
-        request.logLatency(ServerMetrics.COMMIT_PROPAGATION_LATENCY);
+        request.logLatency(ServerMetrics.getMetrics().COMMIT_PROPAGATION_LATENCY);
         commitProcessor.commit(request);
     }
 
