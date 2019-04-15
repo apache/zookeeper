@@ -20,7 +20,9 @@ package org.apache.zookeeper.server.quorum;
 
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.*;
+import org.apache.zookeeper.server.metric.Metric;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -49,7 +51,7 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
     @Before
     public void setup() {
         LOG.info("setup");
-        ServerMetrics.resetAll();
+        ServerMetrics.getMetrics().resetAll();
     }
 
     public void setupProcessors(int commitWorkers, int finalProcTime ) {
@@ -148,7 +150,7 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
     }
 
     private void checkMetrics(String metricName, long min, long max, double avg, long cnt, long sum) {
-        Map<String, Object> values = ServerMetrics.getAllValues();
+        Map<String, Object> values = MetricsUtils.currentServerMetrics();
 
         Assert.assertEquals("expected min is " + min, min, values.get("min_" + metricName));
         Assert.assertEquals("expected max is: " + max, max, values.get("max_" + metricName));
@@ -212,12 +214,12 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
         processRequestWithWait(req1);
 
         //no request sent to next processor yet
-        Map<String, Object> values = ServerMetrics.getAllValues();
+        Map<String, Object> values = MetricsUtils.currentServerMetrics();
         Assert.assertEquals(0L, values.get("cnt_write_final_proc_time_ms"));
 
         commitWithWait(req1);
 
-        values = ServerMetrics.getAllValues();
+        values = MetricsUtils.currentServerMetrics();
         Assert.assertEquals(1L, values.get("cnt_write_final_proc_time_ms"));
         checkTimeMetric((long)values.get("max_write_final_proc_time_ms"), 1000L, 2000L);
     }
@@ -228,7 +230,7 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
 
         processRequestWithWait(createReadRequest(1L, 1));
 
-        Map<String, Object> values = ServerMetrics.getAllValues();
+        Map<String, Object> values = MetricsUtils.currentServerMetrics();
         Assert.assertEquals(1L, values.get("cnt_read_final_proc_time_ms"));
         checkTimeMetric((long)values.get("max_read_final_proc_time_ms"), 1000L, 2000L);
     }
@@ -238,7 +240,7 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
         setupProcessors(0, 0);
         processRequestWithWait(createReadRequest(1L, 1));
 
-        Map<String, Object> values = ServerMetrics.getAllValues();
+        Map<String, Object> values = MetricsUtils.currentServerMetrics();
         Assert.assertEquals(1L, values.get("cnt_commit_process_time"));
         checkTimeMetric((long)values.get("max_commit_process_time"), 0L, 1000L);
     }
@@ -249,7 +251,7 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
         //a commit w/o pending request is a write from other servers
         commitWithWait(createWriteRequest(1L, 1));
 
-        Map<String, Object> values = ServerMetrics.getAllValues();
+        Map<String, Object> values = MetricsUtils.currentServerMetrics();
         Assert.assertEquals(1L, values.get("cnt_server_write_committed_time_ms"));
         checkTimeMetric((long)values.get("max_server_write_committed_time_ms"), 0L, 1000L);
     }
@@ -261,7 +263,7 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
         processRequestWithWait(req1);
         commitWithWait(req1);
 
-        Map<String, Object> values = ServerMetrics.getAllValues();
+        Map<String, Object> values = MetricsUtils.currentServerMetrics();
 
         Assert.assertEquals(1L, values.get("cnt_local_write_committed_time_ms"));
         checkTimeMetric((long)values.get("max_local_write_committed_time_ms"), 0l, 1000l);
@@ -274,7 +276,7 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
 
         commitWithWait(req2);
 
-        values = ServerMetrics.getAllValues();
+        values = MetricsUtils.currentServerMetrics();
         Assert.assertEquals(2L, values.get("cnt_local_write_committed_time_ms"));
         checkTimeMetric((long)values.get("max_local_write_committed_time_ms"), 0L, 1000L);
     }
@@ -287,7 +289,7 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
         processRequestWithWait(req1);
         commitWithWait(req1);
 
-        Map<String, Object> values = ServerMetrics.getAllValues();
+        Map<String, Object> values = MetricsUtils.currentServerMetrics();
 
         Assert.assertEquals(1L, values.get("cnt_write_commitproc_time_ms"));
         checkTimeMetric((long)values.get("max_write_commitproc_time_ms"), 0l, 1000l);
@@ -299,7 +301,7 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
 
         commitWithWait(req2);
 
-        values = ServerMetrics.getAllValues();
+        values = MetricsUtils.currentServerMetrics();
         Assert.assertEquals(2L, values.get("cnt_write_commitproc_time_ms"));
         checkTimeMetric((long)values.get("max_write_commitproc_time_ms"), 1000L, 2000L);
     }
@@ -310,7 +312,7 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
         setupProcessors(0, 0);
         processRequestWithWait(createReadRequest(1l, 1));
 
-        Map<String, Object> values = ServerMetrics.getAllValues();
+        Map<String, Object> values = MetricsUtils.currentServerMetrics();
 
         Assert.assertEquals(1L, values.get("cnt_read_commitproc_time_ms"));
         checkTimeMetric((long)values.get("max_read_commitproc_time_ms"), 0l, 1000l);
@@ -323,7 +325,7 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
 
         commitWithWait(req1);
 
-        values = ServerMetrics.getAllValues();
+        values = MetricsUtils.currentServerMetrics();
         Assert.assertEquals(2L, values.get("cnt_read_commitproc_time_ms"));
         checkTimeMetric((long)values.get("max_read_commitproc_time_ms"), 1000L, 2000L);
     }
@@ -345,7 +347,7 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
         commitProcessor.commit(createWriteRequest(1l, 1));
         poolEmpytied.await(5, TimeUnit.SECONDS);
 
-        long actual = (long)ServerMetrics.getAllValues().get("max_time_waiting_empty_pool_in_commit_processor_read_ms");
+        long actual = (long)MetricsUtils.currentServerMetrics().get("max_time_waiting_empty_pool_in_commit_processor_read_ms");
         //since each request takes 1000ms to process, so the waiting shouldn't be more than three times of that
         checkTimeMetric(actual, 2500L, 3500L);
     }
@@ -367,7 +369,7 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
         poolEmpytied.await(5, TimeUnit.SECONDS);
 
         //this will change after we upstream batch write in CommitProcessor
-        Map<String, Object> values = ServerMetrics.getAllValues();
+        Map<String, Object> values = MetricsUtils.currentServerMetrics();
         Assert.assertEquals(3L, values.get("max_concurrent_request_processing_in_commit_processor"));
     }
 
@@ -450,7 +452,7 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
         commitWithWait(createWriteRequest(1l, 1));
         commitWithWait(createWriteRequest(1l, 2));
 
-        Map<String, Object> values = ServerMetrics.getAllValues();
+        Map<String, Object> values = MetricsUtils.currentServerMetrics();
         Assert.assertEquals(2l, (long)values.get("request_commit_queued"));
     }
 
