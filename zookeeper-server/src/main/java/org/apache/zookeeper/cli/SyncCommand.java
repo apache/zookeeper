@@ -71,7 +71,11 @@ public class SyncCommand extends CliCommand {
             }, null);
 
             int resultCode = cf.get(SYNC_TIMEOUT, TimeUnit.MILLISECONDS);
-            out.println("Sync returned " + resultCode);
+            if(resultCode == 0) {
+                out.println("Sync is OK");
+            } else {
+                out.println("Sync has failed");
+            }
         } catch (IllegalArgumentException ex) {
             throw new MalformedPathException(ex.getMessage());
         } catch (InterruptedException ie) {

@@ -626,7 +626,7 @@ public class ZooKeeperTest extends ClientBase {
         cmd.setZk(zk);
         cmd.parse("sync /".split(" "));
         List<String> expected = new ArrayList<String>();
-        expected.add("Sync returned 0");
+        expected.add("Sync is OK");
 
         runCommandExpect(cmd, expected);
     }
