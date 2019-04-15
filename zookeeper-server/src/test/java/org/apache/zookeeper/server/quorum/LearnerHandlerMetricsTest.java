@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server.quorum;
 
 import org.apache.jute.BinaryOutputArchive;
+import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.junit.Assert;
 import org.junit.Before;
@@ -75,7 +76,7 @@ public class LearnerHandlerMetricsTest {
 
     @Test
     public void testMetrics() {
-        ServerMetrics.resetAll();
+        ServerMetrics.getMetrics().resetAll();
 
         //adding 1001 packets in the queue, two marker packets will be added since the interval is every 1000 packets
         for (int i=0; i<1001; i++) {
@@ -90,7 +91,7 @@ public class LearnerHandlerMetricsTest {
 
         }
 
-        Map<String, Object> values = ServerMetrics.getAllValues();
+        Map<String, Object> values = MetricsUtils.currentServerMetrics();
         String sidStr = Long.toString(sid);
 
         //we record time for each marker packet and we have two marker packets

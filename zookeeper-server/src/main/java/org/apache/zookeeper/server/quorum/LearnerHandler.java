@@ -287,11 +287,11 @@ public class LearnerHandler extends ZooKeeperThread {
                     p = queuedPackets.take();
                 }
 
-                ServerMetrics.LEARNER_HANDLER_QP_SIZE.add(Long.toString(this.sid), queuedPackets.size());
+                ServerMetrics.getMetrics().LEARNER_HANDLER_QP_SIZE.add(Long.toString(this.sid), queuedPackets.size());
 
                 if (p instanceof MarkerQuorumPacket) {
                     MarkerQuorumPacket m = (MarkerQuorumPacket)p;
-                    ServerMetrics.LEARNER_HANDLER_QP_TIME.add(
+                    ServerMetrics.getMetrics().LEARNER_HANDLER_QP_TIME.add(
                             Long.toString(this.sid),
                             (System.nanoTime() - m.time) / 1000000L);
                     continue;
