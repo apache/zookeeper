@@ -124,7 +124,7 @@ public class NettyServerCnxn extends ServerCnxn {
                 }
             });
         } else {
-            ServerMetrics.CONNECTION_DROP_COUNT.add(1);
+            ServerMetrics.getMetrics().CONNECTION_DROP_COUNT.add(1);
             channel.eventLoop().execute(this::releaseQueuedBuffer);
         }
     }

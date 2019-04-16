@@ -582,7 +582,7 @@ public class LearnerHandler extends ZooKeeperThread {
                     }
                     break;
                 case Leader.REVALIDATE:
-                    ServerMetrics.REVALIDATE_COUNT.add(1);
+                    ServerMetrics.getMetrics().REVALIDATE_COUNT.add(1);
                     learnerMaster.revalidateSession(qp, this);
                     break;
                 case Leader.REQUEST:

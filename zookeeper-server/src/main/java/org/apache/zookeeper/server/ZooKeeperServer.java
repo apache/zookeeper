@@ -1180,7 +1180,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             }
             cnxn.setSessionId(sessionId);
             reopenSession(cnxn, sessionId, passwd, sessionTimeout);
-            ServerMetrics.CONNECTION_REVALIDATE_COUNT.add(1);
+            ServerMetrics.getMetrics().CONNECTION_REVALIDATE_COUNT.add(1);
 
         }
     }

@@ -23,6 +23,7 @@ import io.netty.channel.EventLoop;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.QuorumUtil;
 import org.junit.Assert;
@@ -48,7 +49,7 @@ public class ConnectionMetricsTest extends ZKTestCase {
 
     @Test
     public void testRevalidateCount() throws  Exception {
-        ServerMetrics.resetAll();
+        ServerMetrics.getMetrics().resetAll();
         QuorumUtil util = new QuorumUtil(1); // create a quorum of 3 servers
         // disable local session to make sure we create a global session
         util.enableLocalSession(false);
@@ -74,7 +75,7 @@ public class ConnectionMetricsTest extends ZKTestCase {
         watcher.waitForConnected(ClientBase.CONNECTION_TIMEOUT);
         LOG.info("reconnected");
 
-        Map<String, Object> values = ServerMetrics.getAllValues();
+        Map<String, Object> values = MetricsUtils.currentServerMetrics();
         Assert.assertEquals(1L, values.get("connection_revalidate_count"));
         Assert.assertEquals(1L, values.get("revalidate_count"));
 
@@ -150,12 +151,12 @@ public class ConnectionMetricsTest extends ZKTestCase {
 
     @Test
     public void testNIOConnectionDropCount() throws Exception {
-        ServerMetrics.resetAll();
+        ServerMetrics.getMetrics().resetAll();
 
         NIOServerCnxn cnxn = createMockNIOCnxn();
         cnxn.doIO(new FakeSK());
 
-        Map<String, Object> values = ServerMetrics.getAllValues();
+        Map<String, Object> values = MetricsUtils.currentServerMetrics();
         Assert.assertEquals(1L, values.get("connection_drop_count"));
     }
 
@@ -168,7 +169,7 @@ public class ConnectionMetricsTest extends ZKTestCase {
         EventLoop eventLoop = mock(EventLoop.class);
         when(channel.eventLoop()).thenReturn(eventLoop);
 
-        ServerMetrics.resetAll();
+        ServerMetrics.getMetrics().resetAll();
 
         NettyServerCnxnFactory factory = new NettyServerCnxnFactory();
         NettyServerCnxn cnxn = new NettyServerCnxn(channel, mock(ZooKeeperServer.class), factory);
@@ -177,7 +178,7 @@ public class ConnectionMetricsTest extends ZKTestCase {
         factory.cnxns.add(cnxn);
         cnxn.close();
 
-        Map<String, Object> values = ServerMetrics.getAllValues();
+        Map<String, Object> values = MetricsUtils.currentServerMetrics();
         Assert.assertEquals(1L, values.get("connection_drop_count"));
     }
 
@@ -189,17 +190,17 @@ public class ConnectionMetricsTest extends ZKTestCase {
         int timeout = Integer.getInteger(
                 ZOOKEEPER_NIO_SESSIONLESS_CNXN_TIMEOUT, 10000);
 
-        ServerMetrics.resetAll();
+        ServerMetrics.getMetrics().resetAll();
         // add two connections w/o touching them so they will expire
         ((NIOServerCnxnFactory) factory).touchCnxn(createMockNIOCnxn());
         ((NIOServerCnxnFactory) factory).touchCnxn(createMockNIOCnxn());
 
-        Map<String, Object> values = ServerMetrics.getAllValues();
+        Map<String, Object> values = MetricsUtils.currentServerMetrics();
         int sleptTime = 0;
         while (values.get("sessionless_connections_expired") == null || sleptTime < 2*timeout){
             Thread.sleep(100);
             sleptTime += 100;
-            values = ServerMetrics.getAllValues();
+            values = MetricsUtils.currentServerMetrics();
         }
 
         Assert.assertEquals(2L, values.get("sessionless_connections_expired"));
@@ -219,16 +220,16 @@ public class ConnectionMetricsTest extends ZKTestCase {
         tracker.touchSession(1L, tickTime);
         tracker.touchSession(2L, tickTime);
 
-        ServerMetrics.resetAll();
+        ServerMetrics.getMetrics().resetAll();
 
         tracker.start();
 
-        Map<String, Object> values = ServerMetrics.getAllValues();
+        Map<String, Object> values = MetricsUtils.currentServerMetrics();
         int sleptTime = 0;
         while (values.get("stale_sessions_expired") == null || sleptTime < 2*tickTime) {
             Thread.sleep(100);
             sleptTime += 100;
-            values = ServerMetrics.getAllValues();
+            values = MetricsUtils.currentServerMetrics();
         }
 
         Assert.assertEquals(2L, values.get("stale_sessions_expired"));
