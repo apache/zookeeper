@@ -131,6 +131,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
     public void run() {
         try {
             while (true) {
+                ServerMetrics.getMetrics().PREP_PROCESSOR_QUEUE_SIZE.add(submittedRequests.size());
                 Request request = submittedRequests.take();
                 long traceMask = ZooTrace.CLIENT_REQUEST_TRACE_MASK;
                 if (request.type == OpCode.ping) {
@@ -142,7 +143,9 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 if (Request.requestOfDeath == request) {
                     break;
                 }
+                long prepStartTime = Time.currentElapsedTime();
                 pRequest(request);
+                ServerMetrics.getMetrics().PREP_PROCESS_TIME.add(Time.currentElapsedTime() - prepStartTime);
             }
         } catch (RequestProcessorException e) {
             if (e.getCause() instanceof XidRolloverException) {
@@ -183,10 +186,11 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
         }
     }
 
-    private void addChangeRecord(ChangeRecord c) {
+    protected void addChangeRecord(ChangeRecord c) {
         synchronized (zks.outstandingChanges) {
             zks.outstandingChanges.add(c);
             zks.outstandingChangesForPath.put(c.path, c);
+            ServerMetrics.getMetrics().OUTSTANDING_CHANGES_QUEUED.add(1);
         }
     }
 
@@ -588,6 +592,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 // queues up this operation without being the session owner.
                 // this request is the last of the session so it should be ok
                 //zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
+                long startTime =  Time.currentElapsedTime();
                 Set<String> es = zks.getZKDatabase()
                         .getEphemerals(request.sessionId);
                 synchronized (zks.outstandingChanges) {
@@ -605,6 +610,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
 
                     zks.sessionTracker.setSessionClosing(request.sessionId);
                 }
+                ServerMetrics.getMetrics().CLOSE_SESSION_PREP_TIME.add(Time.currentElapsedTime() - startTime);
                 break;
             case OpCode.check:
                 zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
@@ -902,6 +908,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
             }
         }
         request.zxid = zks.getZxid();
+        ServerMetrics.getMetrics().PREP_PROCESSOR_QUEUE_TIME.add(Time.currentElapsedTime() - request.prepQueueStartTime);
         nextProcessor.processRequest(request);
     }
 
@@ -1005,7 +1012,9 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
     }
 
     public void processRequest(Request request) {
+        request.prepQueueStartTime =  Time.currentElapsedTime();
         submittedRequests.add(request);
+        ServerMetrics.getMetrics().PREP_PROCESSOR_QUEUED.add(1);
     }
 
     public void shutdown() {

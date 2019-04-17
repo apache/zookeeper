@@ -99,7 +99,7 @@ public final class ServerMetrics {
 
 
         /*
-     * Number of dead watchers in DeadWatcherListener
+         * Number of dead watchers in DeadWatcherListener
          */
         ADD_DEAD_WATCHER_STALL_TIME = metricsContext.getCounter("add_dead_watcher_stall_time");
         DEAD_WATCHERS_QUEUED = metricsContext.getCounter("dead_watchers_queued");
@@ -115,6 +115,13 @@ public final class ServerMetrics {
 
         ENSEMBLE_AUTH_SKIP = metricsContext.getCounter("ensemble_auth_skip");
 
+        PREP_PROCESSOR_QUEUE_TIME = metricsContext.getSummary("prep_processor_queue_time_ms", DetailLevel.ADVANCED);
+        PREP_PROCESSOR_QUEUE_SIZE = metricsContext.getSummary("prep_processor_queue_size", DetailLevel.BASIC);
+        PREP_PROCESSOR_QUEUED = metricsContext.getCounter("prep_processor_request_queued");
+        OUTSTANDING_CHANGES_QUEUED = metricsContext.getCounter("outstanding_changes_queued");
+        OUTSTANDING_CHANGES_REMOVED = metricsContext.getCounter("outstanding_changes_removed");
+        PREP_PROCESS_TIME = metricsContext.getSummary("prep_process_time", DetailLevel.BASIC);
+        CLOSE_SESSION_PREP_TIME = metricsContext.getSummary("close_session_prep_time", DetailLevel.ADVANCED);
     }
 
     /**
@@ -168,6 +175,14 @@ public final class ServerMetrics {
     public final SummarySet WRITE_PER_NAMESPACE;
     public final SummarySet READ_PER_NAMESPACE;
     public final Counter BYTES_RECEIVED_COUNT;
+
+    public final Summary PREP_PROCESSOR_QUEUE_TIME;
+    public final Summary PREP_PROCESSOR_QUEUE_SIZE;
+    public final Counter PREP_PROCESSOR_QUEUED;
+    public final Counter OUTSTANDING_CHANGES_QUEUED;
+    public final Counter OUTSTANDING_CHANGES_REMOVED;
+    public final Summary PREP_PROCESS_TIME;
+    public final Summary CLOSE_SESSION_PREP_TIME;
 
     /**
      * Fired watcher stats.
