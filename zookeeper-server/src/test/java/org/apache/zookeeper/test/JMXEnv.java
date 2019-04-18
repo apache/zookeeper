@@ -37,7 +37,6 @@ import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXServiceURL;
 
 
-import org.apache.zookeeper.jmx.CommonNames;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.junit.Assert;
 import org.slf4j.Logger;
@@ -110,7 +109,7 @@ public class JMXEnv {
             }
             try {
                 beans = conn().queryNames(
-                        new ObjectName(CommonNames.DOMAIN + ":*"), null);
+                        new ObjectName(MBeanRegistry.DOMAIN + ":*"), null);
             } catch (MalformedObjectNameException e) {
                 throw new RuntimeException(e);
             }
@@ -168,7 +167,7 @@ public class JMXEnv {
             }
             try {
                 beans = conn().queryNames(
-                        new ObjectName(CommonNames.DOMAIN + ":*"), null);
+                        new ObjectName(MBeanRegistry.DOMAIN + ":*"), null);
             } catch (MalformedObjectNameException e) {
                 throw new RuntimeException(e);
             }
@@ -202,7 +201,7 @@ public class JMXEnv {
         Set<ObjectName> beans;
         try {
             beans = conn().queryNames(
-                    new ObjectName(CommonNames.DOMAIN + ":*"), null);
+                    new ObjectName(MBeanRegistry.DOMAIN + ":*"), null);
         } catch (MalformedObjectNameException e) {
             throw new RuntimeException(e);
         }
@@ -239,7 +238,7 @@ public class JMXEnv {
             }
             try {
                 beans = conn().queryNames(
-                        new ObjectName(CommonNames.DOMAIN + ":*"), null);
+                        new ObjectName(MBeanRegistry.DOMAIN + ":*"), null);
             } catch (MalformedObjectNameException e) {
                 throw new RuntimeException(e);
             }
@@ -290,7 +289,7 @@ public class JMXEnv {
             }
             try {
                 beans = conn().queryNames(
-                        new ObjectName(CommonNames.DOMAIN + ":*"), null);
+                        new ObjectName(MBeanRegistry.DOMAIN + ":*"), null);
             } catch (MalformedObjectNameException e) {
                 throw new RuntimeException(e);
             }
@@ -341,7 +340,7 @@ public class JMXEnv {
         Set<ObjectName> beans;
         try {
             beans = conn().queryNames(
-                    new ObjectName(CommonNames.DOMAIN + ":*"), null);
+                    new ObjectName(MBeanRegistry.DOMAIN + ":*"), null);
         } catch (MalformedObjectNameException e) {
             throw new RuntimeException(e);
         }

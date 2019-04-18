@@ -33,7 +33,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.jmx.CommonNames;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
 import org.apache.zookeeper.server.admin.Commands;
@@ -550,7 +549,7 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher{
 
         // test admin commands for disconnection
         ObjectName connBean = null;
-        for (ObjectName bean : JMXEnv.conn().queryNames(new ObjectName(CommonNames.DOMAIN + ":*"), null)) {
+        for (ObjectName bean : JMXEnv.conn().queryNames(new ObjectName(MBeanRegistry.DOMAIN + ":*"), null)) {
             if (bean.getCanonicalName().contains("Learner_Connections") &&
                     bean.getCanonicalName().contains("id:" + q3.getQuorumPeer().getId())) {
                 connBean = bean;

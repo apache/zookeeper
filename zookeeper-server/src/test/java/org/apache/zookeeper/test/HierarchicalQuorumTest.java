@@ -26,11 +26,11 @@ import java.util.LinkedHashSet;
 import java.util.Properties;
 import java.util.Set;
 
+import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.TestableZooKeeper;
-import org.apache.zookeeper.jmx.CommonNames;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumHierarchical;
@@ -250,7 +250,7 @@ public class HierarchicalQuorumTest extends ClientBase {
         JMXEnv.ensureAll(ensureNames.toArray(new String[ensureNames.size()]));
         for (int i = 1; i <= numberOfPeers; i++) {
             // LocalPeerBean
-            String bean = CommonNames.DOMAIN + ":name0=ReplicatedServer_id" + i
+            String bean = MBeanRegistry.DOMAIN + ":name0=ReplicatedServer_id" + i
                     + ",name1=replica." + i;
             JMXEnv.ensureBeanAttribute(bean, "ConfigVersion");
             JMXEnv.ensureBeanAttribute(bean, "LearnerType");
@@ -264,7 +264,7 @@ public class HierarchicalQuorumTest extends ClientBase {
             for (int j = 1; j <= numberOfPeers; j++) {
                 if (j != i) {
                     // RemotePeerBean
-                    String bean = CommonNames.DOMAIN + ":name0=ReplicatedServer_id" + i
+                    String bean = MBeanRegistry.DOMAIN + ":name0=ReplicatedServer_id" + i
                             + ",name1=replica." + j;
                     JMXEnv.ensureBeanAttribute(bean, "Name");
                     JMXEnv.ensureBeanAttribute(bean, "LearnerType");
