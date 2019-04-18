@@ -24,6 +24,7 @@ import javax.management.JMException;
 import javax.security.sasl.SaslException;
 
 import org.apache.yetus.audience.InterfaceAudience;
+import org.apache.zookeeper.server.util.JvmPauseMonitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.jmx.ManagedUtil;
@@ -219,7 +220,11 @@ public class QuorumPeerMain {
           }
           quorumPeer.setQuorumCnxnThreadsSize(config.quorumCnxnThreadsSize);
           quorumPeer.initialize();
-          
+
+          if(config.jvmPauseMonitorToRun) {
+              quorumPeer.setJvmPauseMonitor(new JvmPauseMonitor(config));
+          }
+
           quorumPeer.start();
           quorumPeer.join();
       } catch (InterruptedException e) {

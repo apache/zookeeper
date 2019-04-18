@@ -70,6 +70,7 @@ import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.auth.ServerAuthenticationProvider;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServer;
+import org.apache.zookeeper.server.util.JvmPauseMonitor;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
@@ -112,6 +113,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     private final AtomicLong hzxid = new AtomicLong(0);
     public final static Exception ok = new Exception("No prob");
     protected RequestProcessor firstProcessor;
+    protected JvmPauseMonitor jvmPauseMonitor;
     protected volatile State state = State.INITIAL;
     private boolean isResponseCachingEnabled = true;
 
@@ -214,6 +216,20 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 + " clientPortListenBacklog " + getClientPortListenBacklog()
                 + " datadir " + txnLogFactory.getDataDir()
                 + " snapdir " + txnLogFactory.getSnapDir());
+    }
+
+    /**
+     * Adds JvmPauseMonitor and calls
+     * {@link #ZooKeeperServer(FileTxnSnapLog, int, int, int, int, ZKDatabase)}
+     *
+     */
+    public ZooKeeperServer(JvmPauseMonitor jvmPauseMonitor, FileTxnSnapLog txnLogFactory, int tickTime,
+                           int minSessionTimeout, int maxSessionTimeout, int clientPortListenBacklog, ZKDatabase zkDb) {
+        this(txnLogFactory, tickTime, minSessionTimeout, maxSessionTimeout, clientPortListenBacklog, zkDb);
+        this.jvmPauseMonitor = jvmPauseMonitor;
+        if(jvmPauseMonitor != null) {
+            LOG.info("Added JvmPauseMonitor to server");
+        }
     }
 
     /**
@@ -521,8 +537,16 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         registerJMX();
 
+        startJvmPauseMonitor();
+
         setState(State.RUNNING);
         notifyAll();
+    }
+
+    protected void startJvmPauseMonitor() {
+        if (this.jvmPauseMonitor != null) {
+            this.jvmPauseMonitor.serviceStart();
+        }
     }
 
     protected void setupRequestProcessors() {
@@ -628,6 +652,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
         if (firstProcessor != null) {
             firstProcessor.shutdown();
+        }
+        if(jvmPauseMonitor != null) {
+            jvmPauseMonitor.serviceStop();
         }
 
         if (zkDb != null) {
