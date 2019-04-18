@@ -288,6 +288,7 @@
     <commons-lang.version>2.6</commons-lang.version>
     <dropwizard.version>3.2.5</dropwizard.version>
     <spotbugsannotations.version>3.1.9</spotbugsannotations.version>
+    <checkstyle.version>8.17</checkstyle.version>
   </properties>
 
   <dependencyManagement>
@@ -553,7 +554,7 @@
             <dependency>
               <groupId>com.puppycrawl.tools</groupId>
               <artifactId>checkstyle</artifactId>
-              <version>8.17</version>
+              <version>${checkstyle.version}</version>
             </dependency>
           </dependencies>
           <configuration>
