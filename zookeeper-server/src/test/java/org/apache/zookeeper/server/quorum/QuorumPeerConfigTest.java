@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.quorum;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
@@ -113,6 +114,28 @@ public class QuorumPeerConfigTest {
         Properties zkProp = getDefaultZKProperties();
         zkProp.setProperty("server.1", "localhost:2888:2888");
         quorumPeerConfig.parseProperties(zkProp);
+    }
+
+    @Test
+    public void testJvmPauseMonitorConfigured()
+            throws IOException, ConfigException {
+        final Long sleepTime = 444L;
+        final Long warnTH = 5555L;
+        final Long infoTH = 555L;
+
+        QuorumPeerConfig quorumPeerConfig = new QuorumPeerConfig();
+        Properties zkProp = getDefaultZKProperties();
+        zkProp.setProperty("dataDir", new File("myDataDir").getAbsolutePath());
+        zkProp.setProperty("jvm.pause.monitor", "true");
+        zkProp.setProperty("jvm.pause.sleep.time.ms", sleepTime.toString());
+        zkProp.setProperty("jvm.pause.warn-threshold.ms", warnTH.toString());
+        zkProp.setProperty("jvm.pause.info-threshold.ms", infoTH.toString());
+        quorumPeerConfig.parseProperties(zkProp);
+
+        assertEquals(sleepTime, Long.valueOf(quorumPeerConfig.getJvmPauseSleepTimeMs()));
+        assertEquals(warnTH, Long.valueOf(quorumPeerConfig.getJvmPauseWarnThresholdMs()));
+        assertEquals(infoTH, Long.valueOf(quorumPeerConfig.getJvmPauseInfoThresholdMs()));
+        assertTrue(quorumPeerConfig.isJvmPauseMonitorToRun());
     }
 
     private Properties getDefaultZKProperties() {
