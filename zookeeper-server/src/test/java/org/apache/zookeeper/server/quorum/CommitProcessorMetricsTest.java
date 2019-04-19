@@ -22,7 +22,6 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.*;
-import org.apache.zookeeper.server.metric.Metric;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -44,7 +43,7 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
     DummyFinalProcessor finalProcessor;
 
     CountDownLatch requestScheduled = null;
-    CountDownLatch requestSeen = null;
+    CountDownLatch requestProcessed = null;
     CountDownLatch commitSeen = null;
     CountDownLatch poolEmpytied = null;
 
@@ -80,21 +79,36 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
         public void start() {
             super.workerPool = new TestWorkerService(numWorkerThreads);
             super.start();
-            // the sleep is needed to make sure that the thread is in the wait status
-            // and it won't start to process a request before the required countdown latch
-            // is set
-            try {
-                Thread.sleep(50);
-            } catch (Exception e){
+            // Since there are two threads--the test thread that puts requests into the queue and the processor
+            // thread (this thread) that removes requests from the queue--the execution order in general is
+            // indeterminate, making it hard to check the test results.
+            //
+            // In some tests, we really want the requests processed one by one. To achieve this, we make sure that
+            // things happen in this order:
+            // processor thread gets into WAITING -> test thread sets requestProcessed latch -> test thread puts
+            // a request into the queue (which wakes up the processor thread in the WAITING state) and waits for
+            // the requestProcessed latch -> the processor thread wakes up and removes the request from the queue and
+            // processes it and opens the requestProcessed latch -> the test thread continues onto the next request
 
+            // So it is important for the processor thread to get into WAITING before any request is put into the queue.
+            // Otherwise, it would miss the wakeup signal and wouldn't process the request or open the latch and the
+            // test thread waiting on the latch would be stuck
+            Thread.State state = super.getState();
+            while (state != State.WAITING) {
+                try {
+                    Thread.sleep(50);
+                } catch (Exception e){
+
+                }
+                state = super.getState();
             }
             LOG.info("numWorkerThreads in Test is {}", numWorkerThreads);
         }
 
         @Override
         protected void endOfIteration() {
-            if (requestSeen != null) {
-                requestSeen.countDown();
+            if (requestProcessed != null) {
+                requestProcessed.countDown();
             }
         }
 
@@ -175,15 +189,15 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
     }
 
     private void processRequestWithWait(Request request) throws Exception {
-        requestSeen = new CountDownLatch(1);
+        requestProcessed = new CountDownLatch(1);
         commitProcessor.processRequest(request);
-        requestSeen.await(5, TimeUnit.SECONDS);
+        requestProcessed.await(5, TimeUnit.SECONDS);
     }
 
     private void commitWithWait(Request request) throws Exception {
-        requestSeen = new CountDownLatch(1);
+        requestProcessed = new CountDownLatch(1);
         commitProcessor.commit(request);
-        requestSeen.await(5, TimeUnit.SECONDS);
+        requestProcessed.await(5, TimeUnit.SECONDS);
     }
 
     @Test
