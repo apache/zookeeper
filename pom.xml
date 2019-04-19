@@ -645,7 +645,18 @@
               <goal>jar</goal>
             </goals>
           </execution>
+          <execution>
+            <id>aggregate</id>
+            <phase>site</phase>
+            <goals>
+              <goal>aggregate</goal>
+            </goals>
+          </execution>
         </executions>
+        <configuration>
+          <overview>zookeeper-server/src/main/resources/overview.html</overview>
+          <excludePackageNames>*.recipes.*</excludePackageNames>
+        </configuration>
       </plugin>
       <plugin>
         <!-- Maven's deploy plugin only creates checksums during the deployment of the jar artifacts to repo. -->
