@@ -41,6 +41,7 @@ import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.server.util.JvmPauseMonitor;
+import org.apache.zookeeper.server.EphemeralType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -64,6 +65,8 @@ import org.apache.zookeeper.metrics.impl.DefaultMetricsProvider;
 public class QuorumPeerConfig {
     private static final Logger LOG = LoggerFactory.getLogger(QuorumPeerConfig.class);
     private static final int UNSET_SERVERID = -1;
+    protected static final long MIN_VALID_SERVER_ID = 0;
+    protected static final long MAX_VALID_SERVER_ID = 255;
     public static final String nextDynamicConfigFileSuffix = ".dynamic.next";
 
     private static boolean standaloneEnabled = true;
@@ -756,10 +759,21 @@ public class QuorumPeerConfig {
             throw new IllegalArgumentException("serverid " + myIdString
                     + " is not a number");
         }
+
+        validateMyid(serverId);
+    }
+
+    /**
+     * check the validity of the myid/serverId.
+     * @param myid
+     */
+    protected void validateMyid(long myid) {
         //myid must be in [0, 255]
-        if (serverId < 0 || serverId > 255) {
-            throw new IllegalArgumentException("myid must have a value between 0 and 255.");
+        if (myid < MIN_VALID_SERVER_ID || myid > MAX_VALID_SERVER_ID) {
+            throw new IllegalArgumentException("myid must have a value between " + MIN_VALID_SERVER_ID + " and " + MAX_VALID_SERVER_ID);
         }
+        //myid must be in [0, 254] when using ttl node by setting extendedTypesEnabled=true
+        EphemeralType.validateServerId(serverId);
     }
 
     private void setupClientPort() throws ConfigException {
