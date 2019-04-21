@@ -75,8 +75,8 @@ The environment setting for the ZooKeeper server
 
 ```bash
 # the setting of log property
-ZOO_LOG_DIR：the directory to store the logs
-ZOO_LOG4J_PROP：the level of logs to print
+ZOO_LOG_DIR: the directory to store the logs
+ZOO_LOG4J_PROP: the level of logs to print
 ```
 
 <a name="zkCleanup"></a>
@@ -89,7 +89,7 @@ Usage:
      * args dataLogDir [snapDir] -n count
      * dataLogDir -- path to the txn log directory
      * snapDir -- path to the snapshot directory
-     * count -- the number of old snaps/logs you want to keep, value should be greater than or equal to 3<br>
+     * count -- the number of old snaps/logs you want to keep, value should be greater than or equal to 3
 # Keep the latest 5 logs and snapshots
 ./zkCleanup.sh -n 5
 ```

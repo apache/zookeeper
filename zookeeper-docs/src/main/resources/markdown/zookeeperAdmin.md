@@ -59,6 +59,7 @@ limitations under the License.
         * [The Data Directory](#The+Data+Directory)
         * [The Log Directory](#The+Log+Directory)
         * [File Management](#sc_filemanagement)
+        * [Recovery - TxnLogToolkit](#Recovery+-+TxnLogToolkit)
     * [Things to Avoid](#sc_commonProblems)
     * [Best Practices](#sc_bestPractices)
 
@@ -1795,6 +1796,11 @@ storing sensitive data in ZooKeeper, necessary measures need to be
 taken to prevent unauthorized access. Such measures are external to
 ZooKeeper (e.g., control access to the files) and depend on the
 individual settings in which it is being deployed.
+
+<a name="Recovery+-+TxnLogToolkit"></a>
+
+#### Recovery - TxnLogToolkit
+More details can be found in [this](http://zookeeper.apache.org/doc/current/zookeeperTools.html#zkTxnLogToolkit)
 
 <a name="sc_commonProblems"></a>
 
