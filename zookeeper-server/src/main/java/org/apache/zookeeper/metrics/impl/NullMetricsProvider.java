@@ -77,8 +77,7 @@ public class NullMetricsProvider implements MetricsProvider {
         }
 
         @Override
-        public boolean registerGauge(String name, Gauge gauge) {
-            return true;
+        public void registerGauge(String name, Gauge gauge) {            
         }
 
         @Override
