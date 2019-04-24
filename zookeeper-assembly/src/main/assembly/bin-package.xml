@@ -62,6 +62,20 @@
       <directoryMode>${rwx.file.permission}</directoryMode>
     </fileSet>
     <fileSet>
+      <!-- ZooKeeper jute generated api document -->
+      <directory>${project.basedir}/../zookeeper-jute/target/apidocs</directory>
+      <outputDirectory>docs/apidocs/zookeeper-jute</outputDirectory>
+      <fileMode>${rw.file.permission}</fileMode>
+      <directoryMode>${rwx.file.permission}</directoryMode>
+    </fileSet>
+    <fileSet>
+      <!-- ZooKeeper server generated api document -->
+      <directory>${project.basedir}/../zookeeper-server/target/apidocs</directory>
+      <outputDirectory>docs/apidocs/zookeeper-server</outputDirectory>
+      <fileMode>${rw.file.permission}</fileMode>
+      <directoryMode>${rwx.file.permission}</directoryMode>
+    </fileSet>
+    <fileSet>
       <!-- License files for 3rd party libs -->
       <directory>${project.basedir}/../zookeeper-server/src/main/resources/lib</directory>
       <includes>
