@@ -68,6 +68,8 @@ public class NettyServerCnxn extends ServerCnxn {
     private final NettyServerCnxnFactory factory;
     private boolean initialized;
 
+    public int readIssuedAfterReadComplete;
+
     NettyServerCnxn(Channel channel, ZooKeeperServer zks, NettyServerCnxnFactory factory) {
         super(zks);
         this.channel = channel;
@@ -321,6 +323,7 @@ public class NettyServerCnxn extends ServerCnxn {
             queuedBuffer.consolidate();
         }
         queuedBuffer.addComponent(true, buf);
+        ServerMetrics.getMetrics().NETTY_QUEUED_BUFFER.add(queuedBuffer.capacity());
     }
 
     /**
@@ -553,11 +556,11 @@ public class NettyServerCnxn extends ServerCnxn {
     }
 
     /**
-     * An event that triggers a change in the channel's "Auto Read" setting.
+     * An event that triggers a change in the channel's read setting.
      * Used for throttling. By using an enum we can treat the two values as
      * singletons and compare with ==.
      */
-    enum AutoReadEvent {
+    enum ReadEvent {
         DISABLE,
         ENABLE
     }
@@ -573,7 +576,7 @@ public class NettyServerCnxn extends ServerCnxn {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Throttling - disabling recv {}", this);
             }
-            channel.pipeline().fireUserEventTriggered(AutoReadEvent.DISABLE);
+            channel.pipeline().fireUserEventTriggered(ReadEvent.DISABLE);
         }
     }
 
@@ -583,7 +586,7 @@ public class NettyServerCnxn extends ServerCnxn {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Sending unthrottle event {}", this);
             }
-            channel.pipeline().fireUserEventTriggered(AutoReadEvent.ENABLE);
+            channel.pipeline().fireUserEventTriggered(ReadEvent.ENABLE);
         }
     }
 
@@ -658,5 +661,13 @@ public class NettyServerCnxn extends ServerCnxn {
     // For tests and NettyServerCnxnFactory only, thus package-private.
     Channel getChannel() {
         return channel;
+    }
+
+    public int getQueuedReadableBytes() {
+        checkIsInEventLoop("getQueuedReadableBytes");
+        if (queuedBuffer != null) {
+            return queuedBuffer.readableBytes();
+        }
+        return 0;
     }
 }
