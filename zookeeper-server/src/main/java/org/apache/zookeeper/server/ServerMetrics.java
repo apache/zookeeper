@@ -131,6 +131,61 @@ public final class ServerMetrics {
         SESSIONLESS_CONNECTIONS_EXPIRED = metricsContext.getCounter("sessionless_connections_expired");
         STALE_SESSIONS_EXPIRED = metricsContext.getCounter("stale_sessions_expired");
 
+        /*
+         * Number of requests that are in the session queue.
+         */
+        REQUESTS_IN_SESSION_QUEUE = metricsContext.getSummary("requests_in_session_queue", DetailLevel.BASIC);
+        PENDING_SESSION_QUEUE_SIZE = metricsContext.getSummary("pending_session_queue_size", DetailLevel.BASIC);
+        /*
+         * Consecutive number of read requests that are in the session queue right after a commit request.
+         */
+        READS_AFTER_WRITE_IN_SESSION_QUEUE = metricsContext.getSummary("reads_after_write_in_session_queue", DetailLevel.BASIC);
+        READ_ISSUED_FROM_SESSION_QUEUE = metricsContext.getSummary("reads_issued_from_session_queue", DetailLevel.BASIC);
+        SESSION_QUEUES_DRAINED = metricsContext.getSummary("session_queues_drained", DetailLevel.BASIC);
+
+        TIME_WAITING_EMPTY_POOL_IN_COMMIT_PROCESSOR_READ = metricsContext.getSummary("time_waiting_empty_pool_in_commit_processor_read_ms", DetailLevel.BASIC);
+        WRITE_BATCH_TIME_IN_COMMIT_PROCESSOR = metricsContext.getSummary("write_batch_time_in_commit_processor", DetailLevel.BASIC);
+
+        CONCURRENT_REQUEST_PROCESSING_IN_COMMIT_PROCESSOR = metricsContext.getSummary("concurrent_request_processing_in_commit_processor", DetailLevel.BASIC);
+
+        READS_QUEUED_IN_COMMIT_PROCESSOR = metricsContext.getSummary("read_commit_proc_req_queued", DetailLevel.BASIC);
+        WRITES_QUEUED_IN_COMMIT_PROCESSOR = metricsContext.getSummary("write_commit_proc_req_queued", DetailLevel.BASIC);
+        COMMITS_QUEUED_IN_COMMIT_PROCESSOR = metricsContext.getSummary("commit_commit_proc_req_queued", DetailLevel.BASIC);
+        COMMITS_QUEUED = metricsContext.getCounter("request_commit_queued");
+        READS_ISSUED_IN_COMMIT_PROC = metricsContext.getSummary("read_commit_proc_issued", DetailLevel.BASIC);
+        WRITES_ISSUED_IN_COMMIT_PROC = metricsContext.getSummary("write_commit_proc_issued", DetailLevel.BASIC);
+
+        /**
+         * Time spent by a read request in the commit processor.
+         */
+        READ_COMMITPROC_TIME = metricsContext.getSummary("read_commitproc_time_ms", DetailLevel.ADVANCED);
+
+        /**
+         * Time spent by a write request in the commit processor.
+         */
+        WRITE_COMMITPROC_TIME = metricsContext.getSummary("write_commitproc_time_ms", DetailLevel.ADVANCED);
+
+        /**
+         * Time spent by a committed request, for a locally issued write, in the
+         * commit processor.
+         */
+        LOCAL_WRITE_COMMITTED_TIME = metricsContext.getSummary("local_write_committed_time_ms", DetailLevel.ADVANCED);
+
+        /**
+         * Time spent by a committed request for a write, issued by other server, in the
+         * commit processor.
+         */
+        SERVER_WRITE_COMMITTED_TIME = metricsContext.getSummary("server_write_committed_time_ms", DetailLevel.ADVANCED);
+
+        COMMIT_PROCESS_TIME = metricsContext.getSummary("commit_process_time", DetailLevel.BASIC);
+
+
+        /**
+         * Time spent by the final processor. This is tracked in the commit processor.
+         */
+        READ_FINAL_PROC_TIME = metricsContext.getSummary("read_final_proc_time_ms", DetailLevel.ADVANCED);
+        WRITE_FINAL_PROC_TIME = metricsContext.getSummary("write_final_proc_time_ms", DetailLevel.ADVANCED);
+
     }
 
     /**
@@ -219,6 +274,61 @@ public final class ServerMetrics {
     public final Summary DEAD_WATCHERS_CLEANER_LATENCY;
     public final Counter RESPONSE_PACKET_CACHE_HITS;
     public final Counter RESPONSE_PACKET_CACHE_MISSING;
+
+    /*
+     * Number of requests that are in the session queue.
+     */
+    public final Summary REQUESTS_IN_SESSION_QUEUE;
+    public final Summary PENDING_SESSION_QUEUE_SIZE;
+    /*
+     * Consecutive number of read requests that are in the session queue right after a commit request.
+     */
+    public final Summary READS_AFTER_WRITE_IN_SESSION_QUEUE;
+    public final Summary READ_ISSUED_FROM_SESSION_QUEUE;
+    public final Summary SESSION_QUEUES_DRAINED;
+
+    public final Summary TIME_WAITING_EMPTY_POOL_IN_COMMIT_PROCESSOR_READ;
+    public final Summary WRITE_BATCH_TIME_IN_COMMIT_PROCESSOR;
+
+    public final Summary CONCURRENT_REQUEST_PROCESSING_IN_COMMIT_PROCESSOR;
+
+    public final Summary READS_QUEUED_IN_COMMIT_PROCESSOR;
+    public final Summary WRITES_QUEUED_IN_COMMIT_PROCESSOR;
+    public final Summary COMMITS_QUEUED_IN_COMMIT_PROCESSOR;
+    public final Counter COMMITS_QUEUED;
+    public final Summary READS_ISSUED_IN_COMMIT_PROC;
+    public final Summary WRITES_ISSUED_IN_COMMIT_PROC;
+
+    /**
+     * Time spent by a read request in the commit processor.
+     */
+    public final Summary READ_COMMITPROC_TIME;
+
+    /**
+     * Time spent by a write request in the commit processor.
+     */
+    public final Summary WRITE_COMMITPROC_TIME;
+
+    /**
+     * Time spent by a committed request, for a locally issued write, in the
+     * commit processor.
+     */
+    public final Summary LOCAL_WRITE_COMMITTED_TIME;
+
+    /**
+     * Time spent by a committed request for a write, issued by other server, in the
+     * commit processor.
+     */
+    public final Summary SERVER_WRITE_COMMITTED_TIME;
+
+    public final Summary COMMIT_PROCESS_TIME;
+
+
+    /**
+     * Time spent by the final processor. This is tracked in the commit processor.
+     */
+    public final Summary READ_FINAL_PROC_TIME;
+    public final Summary WRITE_FINAL_PROC_TIME;
 
     /*
      * Number of successful matches of expected ensemble name in EnsembleAuthenticationProvider.
