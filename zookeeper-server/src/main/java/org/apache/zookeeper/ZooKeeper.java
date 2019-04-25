@@ -53,6 +53,8 @@ import org.apache.zookeeper.proto.GetACLRequest;
 import org.apache.zookeeper.proto.GetACLResponse;
 import org.apache.zookeeper.proto.GetChildren2Request;
 import org.apache.zookeeper.proto.GetChildren2Response;
+import org.apache.zookeeper.proto.GetChildrenListRequest;
+import org.apache.zookeeper.proto.GetChildrenListResponse;
 import org.apache.zookeeper.proto.GetAllChildrenNumberRequest;
 import org.apache.zookeeper.proto.GetAllChildrenNumberResponse;
 import org.apache.zookeeper.proto.GetChildrenRequest;
@@ -81,12 +83,14 @@ import java.lang.reflect.Constructor;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * This is the main class of ZooKeeper client library. To use a ZooKeeper
@@ -544,11 +548,12 @@ public class ZooKeeper implements AutoCloseable {
      */
     public abstract class WatchRegistration {
         private Watcher watcher;
-        private String clientPath;
-        public WatchRegistration(Watcher watcher, String clientPath)
+        private List<String> clientPaths;
+
+        public WatchRegistration(Watcher watcher, List<String> clientPaths)
         {
             this.watcher = watcher;
-            this.clientPath = clientPath;
+            this.clientPaths = clientPaths;
         }
 
         abstract protected Map<String, Set<Watcher>> getWatches(int rc);
@@ -562,12 +567,14 @@ public class ZooKeeper implements AutoCloseable {
             if (shouldAddWatch(rc)) {
                 Map<String, Set<Watcher>> watches = getWatches(rc);
                 synchronized(watches) {
-                    Set<Watcher> watchers = watches.get(clientPath);
-                    if (watchers == null) {
-                        watchers = new HashSet<Watcher>();
-                        watches.put(clientPath, watchers);
+                    for(String clientPath : clientPaths) {
+                        Set<Watcher> watchers = watches.get(clientPath);
+                        if (watchers == null) {
+                            watchers = new HashSet<Watcher>();
+                            watches.put(clientPath, watchers);
+                        }
+                        watchers.add(watcher);
                     }
-                    watchers.add(watcher);
                 }
             }
         }
@@ -586,8 +593,12 @@ public class ZooKeeper implements AutoCloseable {
      * even in the case where NONODE result code is returned.
      */
     class ExistsWatchRegistration extends WatchRegistration {
+        public ExistsWatchRegistration(Watcher watcher, List<String> clientPaths) {
+            super(watcher, clientPaths);
+        }
+
         public ExistsWatchRegistration(Watcher watcher, String clientPath) {
-            super(watcher, clientPath);
+            this(watcher, Arrays.asList(clientPath));
         }
 
         @Override
@@ -602,8 +613,12 @@ public class ZooKeeper implements AutoCloseable {
     }
 
     class DataWatchRegistration extends WatchRegistration {
+        public DataWatchRegistration(Watcher watcher, List<String> clientPaths) {
+            super(watcher, clientPaths);
+        }
+
         public DataWatchRegistration(Watcher watcher, String clientPath) {
-            super(watcher, clientPath);
+            this(watcher, Arrays.asList(clientPath));
         }
 
         @Override
@@ -613,8 +628,12 @@ public class ZooKeeper implements AutoCloseable {
     }
 
     class ChildWatchRegistration extends WatchRegistration {
+        public ChildWatchRegistration(Watcher watcher, List<String> clientPaths) {
+            super(watcher, clientPaths);
+        }
+
         public ChildWatchRegistration(Watcher watcher, String clientPath) {
-            super(watcher, clientPath);
+            this(watcher, Arrays.asList(clientPath));
         }
 
         @Override
@@ -2671,6 +2690,87 @@ public class ZooKeeper implements AutoCloseable {
         }
         if (stat != null) {
             DataTree.copyStat(response.getStat(), stat);
+        }
+        return response.getChildren();
+    }
+
+    /**
+     * For the given znode path list return the children list for every given path.
+     * <p>
+     * If the watch is true and the call is successful (no exception is thrown),
+     * a watch will be left on all the nodes with a given path. The watch will be
+     * triggered by a successful operation that deletes the node of the given
+     * path or creates/delete a child under the node.
+     * <p>
+     * A list is returned which contains the list of children for every
+     * node in the input path list, in the same order. The children lists
+     * are not sorted and no guarantee is provides as to its natural or lexical order.
+     * <p>
+     * A KeeperException with error code KeeperException.NoNode will be thrown
+     * if no node with the given path exists.
+     *
+     * @since 3.6.0
+     *
+     * @param paths znode path list
+     * @param watch
+     * @return a list of unordered arrays of children of the node with the given paths
+     * @throws InterruptedException If the server transaction is interrupted.
+     * @throws KeeperException If the server signals an error with a non-zero error code.
+     * @throws IllegalArgumentException if an invalid path is specified in the path list
+     */
+    public List<List<String>> getChildren(final List<String> paths, boolean watch)
+            throws KeeperException, InterruptedException {
+        return getChildren(paths, watch ? watchManager.defaultWatcher : null);
+    }
+
+    /**
+     * For the given znode path list return the children list for every given path.
+     * <p>
+     * If the watch is non-null and the call is successful (no exception is thrown),
+     * a watch will be left on all the nodes with a given path. The watch will be
+     * triggered by a successful operation that deletes the node of the given
+     * path or creates/delete a child under the node.
+     * <p>
+     * A list is returned which contains the list of children for every
+     * node in the input path list, in the same order. The children lists
+     * are not sorted and no guarantee is provides as to its natural or lexical order.
+     * <p>
+     * A KeeperException with error code KeeperException.NoNode will be thrown
+     * if no node with the given path exists.
+     *
+     * @since 3.6.0
+     *
+     * @param paths znode path list
+     * @param watcher explicit watcher
+     * @return a list of unordered arrays of children of the node with the given paths
+     * @throws InterruptedException If the server transaction is interrupted.
+     * @throws KeeperException If the server signals an error with a non-zero error code.
+     * @throws IllegalArgumentException if an invalid path is specified in the path list
+     */
+    public List<List<String>> getChildren(final List<String> paths, Watcher watcher)
+            throws KeeperException, InterruptedException
+    {
+        for(String clientPath : paths) {
+            PathUtils.validatePath(clientPath);
+        }
+        // the watch contains the un-chroot path
+        WatchRegistration wcb = null;
+        if (watcher != null) {
+            wcb = new ChildWatchRegistration(watcher, paths);
+        }
+
+        final List<String> serverPaths = paths.stream()
+                .map(this::prependChroot).collect(Collectors.toList());
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.getChildrenList);
+        GetChildrenListRequest request = new GetChildrenListRequest();
+        request.setPathList(serverPaths);
+        request.setWatch(watcher != null);
+        GetChildrenListResponse response = new GetChildrenListResponse();
+        ReplyHeader r = cnxn.submitRequest(h, request, response, wcb);
+        if (r.getErr() != 0) {
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()),
+                    paths.toString());
         }
         return response.getChildren();
     }

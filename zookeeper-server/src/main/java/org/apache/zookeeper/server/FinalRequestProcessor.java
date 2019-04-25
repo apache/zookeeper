@@ -53,6 +53,8 @@ import org.apache.zookeeper.proto.GetACLRequest;
 import org.apache.zookeeper.proto.GetACLResponse;
 import org.apache.zookeeper.proto.GetChildren2Request;
 import org.apache.zookeeper.proto.GetChildren2Response;
+import org.apache.zookeeper.proto.GetChildrenListRequest;
+import org.apache.zookeeper.proto.GetChildrenListResponse;
 import org.apache.zookeeper.proto.GetAllChildrenNumberRequest;
 import org.apache.zookeeper.proto.GetAllChildrenNumberResponse;
 import org.apache.zookeeper.proto.GetChildrenRequest;
@@ -466,6 +468,28 @@ public class FinalRequestProcessor implements RequestProcessor {
                         path, stat, getChildren2Request
                                 .getWatch() ? cnxn : null);
                 rsp = new GetChildren2Response(children, stat);
+                break;
+            }
+            case OpCode.getChildrenList: {
+                lastOp = "GETC";
+                GetChildrenListRequest getChildrenListRequest = new GetChildrenListRequest();
+                ByteBufferInputStream.byteBuffer2Record(request.request,
+                        getChildrenListRequest);
+                List<List<String>> childrenList = new ArrayList<List<String>>();
+                for(String p : getChildrenListRequest.getPathList()) {
+                    path = p;
+                    DataNode n = zks.getZKDatabase().getNode(path);
+                    if (n == null) {
+                        throw new KeeperException.NoNodeException();
+                    }
+                    PrepRequestProcessor.checkACL(zks, request.cnxn, zks.getZKDatabase().aclForNode(n),
+                            ZooDefs.Perms.READ,
+                            request.authInfo, path, null);
+                    childrenList.add(zks.getZKDatabase().getChildren(
+                            path, null, getChildrenListRequest
+                                    .getWatch() ? cnxn : null));
+                }
+                rsp = new GetChildrenListResponse(childrenList);
                 break;
             }
             case OpCode.checkWatches: {

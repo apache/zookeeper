@@ -153,6 +153,7 @@ public class Request {
         case OpCode.getChildren:
         case OpCode.getAllChildrenNumber:
         case OpCode.getChildren2:
+        case OpCode.getChildrenList:
         case OpCode.getData:
         case OpCode.getEphemerals:
         case OpCode.multi:

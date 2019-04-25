@@ -38,7 +38,7 @@ public class JVector extends JCompType {
     /** Creates a new instance of JVector */
     public JVector(JType t) {
         super("struct " + extractVectorName(t), " ::std::vector<"+t.getCppType()+">", "System.Collections.Generic.List<" + t.getCsharpType() + ">", "java.util.List<" + t.getJavaType() + ">", "Vector",
-                "System.Collections.Generic.List<" + t.getCsharpType() + ">", "java.util.ArrayList<" + t.getJavaType() + ">");
+                "java.util.ArrayList<" + t.getJavaType() + ">", "System.Collections.Generic.List<" + t.getCsharpType() + ">");
         mElement = t;
     }
     
@@ -54,7 +54,7 @@ public class JVector extends JCompType {
     public String genJavaReadWrapper(String fname, String tag, boolean decl) {
         StringBuilder ret = new StringBuilder("");
         if (decl) {
-            ret.append("      java.util.List "+fname+";\n");
+            ret.append("      java.util.List "+fname+"=null;\n");
         }
         ret.append("    {\n");
         incrLevel();

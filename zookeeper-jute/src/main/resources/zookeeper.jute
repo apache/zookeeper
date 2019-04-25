@@ -149,6 +149,10 @@ module org.apache.zookeeper.proto {
         ustring path;
         boolean watch;
     }
+    class GetChildrenListRequest {
+        vector<ustring> pathList;
+        boolean watch;
+    }
     class CheckVersionRequest {
         ustring path;
         int version;
@@ -215,6 +219,9 @@ module org.apache.zookeeper.proto {
     class GetChildren2Response {
         vector<ustring> children;
         org.apache.zookeeper.data.Stat stat;
+    }
+    class GetChildrenListResponse {
+        vector<vector<ustring>> children;
     }
     class GetACLResponse {
         vector<org.apache.zookeeper.data.ACL> acl;
