@@ -50,5 +50,5 @@ if not exist "%JAVA_HOME%"\bin\java.exe (
 REM strip off trailing \ from JAVA_HOME or java does not start
 if "%JAVA_HOME:~-1%" EQU "\" set "JAVA_HOME=%JAVA_HOME:~0,-1%"
  
-set JAVA="%JAVA_HOME%"\bin\java
+set JAVA="%JAVA_HOME%\bin\java"
 
