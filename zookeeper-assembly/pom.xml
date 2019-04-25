@@ -75,7 +75,7 @@
         <artifactId>maven-assembly-plugin</artifactId>
         <executions>
           <execution>
-            <id>make-assembly</id>
+            <id>source-assembly</id>
             <phase>package</phase>
             <goals>
               <goal>single</goal>
@@ -83,9 +83,24 @@
             <configuration>
               <descriptors>
                 <descriptor>${project.basedir}/src/main/assembly/source-package.xml</descriptor>
+              </descriptors>
+              <finalName>apache-zookeeper-${project.version}</finalName>
+              <appendAssemblyId>false</appendAssemblyId>
+              <tarLongFileMode>posix</tarLongFileMode>
+            </configuration>
+          </execution>
+          <execution>
+            <id>bin-assembly</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <descriptors>
                 <descriptor>${project.basedir}/src/main/assembly/bin-package.xml</descriptor>
               </descriptors>
-              <finalName>zookeeper-${project.version}</finalName>
+              <finalName>apache-zookeeper-${project.version}-bin</finalName>
+              <appendAssemblyId>false</appendAssemblyId>
               <tarLongFileMode>posix</tarLongFileMode>
             </configuration>
           </execution>
