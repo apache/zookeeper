@@ -98,7 +98,12 @@ public class DefaultMetricsProvider implements MetricsProvider {
 
         @Override
         public void registerGauge(String name, Gauge gauge) {
-            gauges.put(name, gauge);
+            if (gauge == null) {
+                // null means 'unregister'
+                gauges.remove(name);
+            } else {
+                gauges.put(name, gauge);
+            }
         }
 
         @Override
