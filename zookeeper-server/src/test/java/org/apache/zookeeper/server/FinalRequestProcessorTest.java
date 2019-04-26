@@ -21,12 +21,15 @@ package org.apache.zookeeper.server;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.GetACLRequest;
 import org.apache.zookeeper.proto.GetACLResponse;
+import org.apache.zookeeper.proto.GetChildrenListRequest;
+import org.apache.zookeeper.proto.GetChildrenListResponse;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.junit.Before;
 import org.junit.Test;
@@ -74,6 +77,8 @@ public class FinalRequestProcessorTest {
         when(db.getNode(eq(testPath))).thenReturn(new DataNode());
         when(db.getACL(eq(testPath), any(Stat.class))).thenReturn(testACLs);
         when(db.aclForNode(any(DataNode.class))).thenReturn(testACLs);
+        when(db.getChildren(any(String.class), any(Stat.class), any(Watcher.class)))
+                .thenReturn(Arrays.asList("child1", "child2", "child3"));
         zks.setZKDatabase(db);
         processor = new FinalRequestProcessor(zks);
 
@@ -226,5 +231,41 @@ public class FinalRequestProcessorTest {
         assertThat("Original ACL list has been modified", testACLs.get(2).getPerms(), equalTo(ZooDefs.Perms.READ));
         assertThat("Original ACL list has been modified", testACLs.get(2).getId().getScheme(), equalTo("world"));
         assertThat("Original ACL list has been modified", testACLs.get(2).getId().getId(), equalTo("anyone"));
+    }
+
+    @Test
+    public void testGetChildrenList_Empty_List() throws IOException {
+        GetChildrenListRequest getChildrenListRequest = new GetChildrenListRequest();
+        getChildrenListRequest.setPathList(new ArrayList<>());
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
+        getChildrenListRequest.serialize(boa, "request");
+        baos.close();
+
+        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getChildrenList,
+                                ByteBuffer.wrap(baos.toByteArray()), new ArrayList<Id>());
+        processor.processRequest(r);
+
+        GetChildrenListResponse rsp = (GetChildrenListResponse)responseRecord[0];
+        assertTrue(rsp.getChildren().isEmpty());
+    }
+
+    @Test
+    public void testGetChildrenList_Normal() throws IOException {
+        GetChildrenListRequest getChildrenListRequest = new GetChildrenListRequest();
+        getChildrenListRequest.setPathList(Arrays.asList("/testPath", "/testPath"));
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
+        getChildrenListRequest.serialize(boa, "request");
+        baos.close();
+
+        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getChildrenList,
+                                ByteBuffer.wrap(baos.toByteArray()), new ArrayList<Id>());
+        processor.processRequest(r);
+
+        GetChildrenListResponse rsp = (GetChildrenListResponse)responseRecord[0];
+        assertThat(rsp.getChildren().size(), equalTo(2));
+        assertThat(rsp.getChildren().get(0), equalTo(Arrays.asList("child1", "child2", "child3")));
+        assertThat(rsp.getChildren().get(1), equalTo(Arrays.asList("child1", "child2", "child3")));
     }
 }
