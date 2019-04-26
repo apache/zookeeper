@@ -85,10 +85,8 @@ public abstract class BaseTestMetricsProvider implements MetricsProvider {
 
         @Override
         public MetricsContext getRootContext() {
-            if (!getRootContextCalled.compareAndSet(false, true)) {
-                // called twice
-                throw new IllegalStateException();
-            }
+            getRootContextCalled.set(true);
+
             return NullMetricsProvider.NullMetricsContext.INSTANCE;
         }
 
