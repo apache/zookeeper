@@ -271,6 +271,8 @@ public class JRecord extends JCompType {
     static String extractMethodSuffix(JType t) {
         if (t instanceof JRecord) {
             return extractStructName(t);
+        } else if (t instanceof JVector) {
+            return JVector.extractVectorName(((JVector)t).getElementType());
         }
         return t.getMethodSuffix();
     }
