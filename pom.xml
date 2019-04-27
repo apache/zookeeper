@@ -277,11 +277,12 @@
     <mockito.version>1.8.5</mockito.version>
     <hamcrest.version>1.3</hamcrest.version>
     <commons-cli.version>1.2</commons-cli.version>
-    <jetty.version>9.4.15.v20190215</jetty.version>
+    <jetty.version>9.4.17.v20190418</jetty.version>
     <jackson.version>2.9.8</jackson.version>
     <netty.version>4.1.29.Final</netty.version>
     <json.version>1.1.1</json.version>
     <jline.version>2.11</jline.version>
+    <snappy.version>1.1.7</snappy.version>
     <kerby.version>1.1.0</kerby.version>
     <bouncycastle.version>1.60</bouncycastle.version>
     <commons-collections.version>3.2.2</commons-collections.version>
@@ -412,6 +413,12 @@
         <groupId>com.googlecode.json-simple</groupId>
         <artifactId>json-simple</artifactId>
         <version>${json.version}</version>
+        <exclusions>
+          <exclusion>
+              <groupId>junit</groupId>
+              <artifactId>junit</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>jline</groupId>
@@ -419,12 +426,17 @@
         <version>${jline.version}</version>
       </dependency>
       <dependency>
-         <groupId>com.github.spotbugs</groupId>
-         <artifactId>spotbugs-annotations</artifactId>
-         <version>${spotbugsannotations.version}</version>
-         <scope>provided</scope>
-         <optional>true</optional>
-        </dependency>
+        <groupId>com.github.spotbugs</groupId>
+        <artifactId>spotbugs-annotations</artifactId>
+        <version>${spotbugsannotations.version}</version>
+        <scope>provided</scope>
+        <optional>true</optional>
+      </dependency>
+      <dependency>
+        <groupId>org.xerial.snappy</groupId>
+        <artifactId>snappy-java</artifactId>
+        <version>${snappy.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
