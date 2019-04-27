@@ -44,6 +44,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.security.sasl.SaslException;
+import org.apache.yetus.audience.InterfaceAudience;
 
 import org.apache.zookeeper.KeeperException.BadArgumentsException;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom;
@@ -2298,5 +2299,19 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     boolean isLeader(long id) {
         Vote vote = getCurrentVote();
         return vote != null && id == vote.getId();
+    }
+
+    @InterfaceAudience.Private
+    /**
+     * This is a metric that depends on the status of the peer.
+     */
+    public Integer getSynced_observers_metric() {
+        if (leader != null) {
+            return leader.getObservingLearners().size();
+        } else if (follower != null) {
+            return follower.getSyncedObserverSize();
+        } else {
+            return null;
+        }
     }
 }

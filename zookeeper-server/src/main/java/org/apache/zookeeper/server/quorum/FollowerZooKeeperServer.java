@@ -181,9 +181,8 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
                 .getMetrics()
                 .getMetricsProvider()
                 .getRootContext();
-        rootContext.registerGauge("synced_observers", () -> {
-            return getFollower().getSyncedObserverSize();
-        });
+
+        rootContext.registerGauge("synced_observers", self::getSynced_observers_metric);
 
     }
 
