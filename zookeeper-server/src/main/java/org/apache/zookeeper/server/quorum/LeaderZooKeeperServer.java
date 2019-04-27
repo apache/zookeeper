@@ -116,9 +116,9 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
         rootContext.registerGauge("synced_non_voting_followers", () -> {
             return getLeader().getNonVotingFollowers().size();
         });
-        rootContext.registerGauge("synced_observers", () -> {
-            return getLeader().getObservingLearners().size();
-        });
+
+        rootContext.registerGauge("synced_observers", self::getSynced_observers_metric);
+
         rootContext.registerGauge("pending_syncs", () -> {
             return getLeader().getNumPendingSyncs();
         });
