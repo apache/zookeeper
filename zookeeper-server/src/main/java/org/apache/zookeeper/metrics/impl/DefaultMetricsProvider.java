@@ -33,6 +33,8 @@ import org.apache.zookeeper.server.metric.AvgMinMaxCounterSet;
 import org.apache.zookeeper.server.metric.AvgMinMaxPercentileCounter;
 import org.apache.zookeeper.server.metric.AvgMinMaxPercentileCounterSet;
 import org.apache.zookeeper.server.metric.SimpleCounter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Default implementation of {@link MetricsProvider}.<br>

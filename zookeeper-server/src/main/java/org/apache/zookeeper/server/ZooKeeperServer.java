@@ -1418,6 +1418,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         rootContext.registerGauge("watch_count", zkdb.getDataTree()::getWatchCount);
         rootContext.registerGauge("ephemerals_count", zkdb.getDataTree()::getEphemeralsCount);
+
         rootContext.registerGauge("approximate_data_size", zkdb.getDataTree()::cachedApproximateDataSize);
 
         rootContext.registerGauge("global_sessions", zkdb::getSessionCount);
