@@ -137,4 +137,5 @@ public interface SessionTracker {
      */
     long getLocalSessionCount();
 
+    boolean isLocalSessionsEnabled();
 }
