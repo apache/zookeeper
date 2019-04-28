@@ -54,7 +54,7 @@ public class VersionCommand extends CliCommand {
 
     @Override
     public boolean exec() throws CliException {
-        out.println("ZooKeeper version: " + Version.getFullVersion());
+        out.println("ZooKeeper CLI version: " + Version.getFullVersion());
 
         return false;
     }
