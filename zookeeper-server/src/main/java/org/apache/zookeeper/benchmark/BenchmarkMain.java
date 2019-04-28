@@ -11,38 +11,9 @@ import org.apache.commons.cli.PosixParser;
 
 public class BenchmarkMain {
 
-    private static BenchmarkConfig parseCommandLine2(String[] args) {
-        BenchmarkConfig config = new BenchmarkConfig();
+    private static BenchmarkClient client = null;
 
-        CommandLineParser parser = new PosixParser();
-        Options options = new Options();
-
-        Option endpoints = new Option("endpoints", true, "endpoints");
-        options.addOption(endpoints);
-
-
-        try {
-            CommandLine cli = parser.parse(options, args);
-            if (cli.hasOption("help")) {
-                printHelpAndExit(0, options);
-            }
-            if (cli.getArgs().length < 1) {
-                printHelpAndExit(1, options);
-            }
-            if (cli.hasOption("endpoints")) {
-                System.out.println("fuck__endpoints:" + cli.getOptionValue("endpoints"));
-                //return new TxnLogToolkit(cli.getArgs()[0], cli.getOptionValue("zxid"));
-            }
-            //String database = cli.getOptionValue("d");
-            //System.out.println("database: " + database);
-            //return new TxnLogToolkit(cli.hasOption("recover"), cli.hasOption("verbose"), cli.getArgs()[0], cli.hasOption("yes"));
-        } catch (Exception e) {
-            System.out.println(e);
-            //throw new TxnLogToolkit.TxnLogToolkitParseException(options, ExitCode.UNEXPECTED_ERROR.getValue(), e.getMessage());
-        }
-
-        return config;
-    }
+    private static BenchmarkClient[] clients;
 
     private static BenchmarkConfig parseCommandLine(String[] args) {
         BenchmarkConfig config = new BenchmarkConfig();
@@ -63,7 +34,7 @@ public class BenchmarkMain {
                 hf.printHelp("Options", options);
             } else {
                 String endpoints = cli.getOptionValue("endpoints");
-                config.endpoints = endpoints;
+                config.setEndpoints(endpoints);
                 System.out.println("endpoints: " + endpoints);
 //                String table = cli.getOptionValue("t");
 //                System.out.println("table: " + table);
@@ -87,6 +58,25 @@ public class BenchmarkMain {
         try {
             //-endpoints 127.0.0.1:2181 -cmd put
             BenchmarkConfig config = parseCommandLine(args);
+            int conns = config.getConns();
+            String[] serverList = config.getEndpoints().split(",");
+            int clientCount = config.getClients();
+
+            clients = new BenchmarkClient[clientCount];
+
+            for (int i = 0; i < clientCount; i++) {
+                BenchmarkClient client = new SyncBenchmarkClient(config);
+                client.start();
+                clients[i] = client;
+            }
+
+            for (int i = 0; i < conns; i++) {
+                
+            }
+
+            BenchmarkClient client = new SyncBenchmarkClient(config);
+            client.start();
+            //Thread workThread = new WorkThread(
         } catch (Exception e) {
 
         }
@@ -94,11 +84,68 @@ public class BenchmarkMain {
 }
 
 class BenchmarkConfig {
-    protected String endpoints = "127.0.0.1:2181";//=
-    private int conns = 10000;//=10000
+    private String endpoints = "127.0.0.1:2181";//=
+    private int conns = 100;//=10000
     private String cmd; //put
     private int clients = 10;//=10 put
     private String keySize;//;=8 --sequential-keys
+
+    public String getEndpoints() {
+        return endpoints;
+    }
+
+    public void setEndpoints(String endpoints) {
+        this.endpoints = endpoints;
+    }
+
+    public int getConns() {
+        return conns;
+    }
+
+    public void setConns(int conns) {
+        this.conns = conns;
+    }
+
+    public String getCmd() {
+        return cmd;
+    }
+
+    public void setCmd(String cmd) {
+        this.cmd = cmd;
+    }
+
+    public int getClients() {
+        return clients;
+    }
+
+    public void setClients(int clients) {
+        this.clients = clients;
+    }
+
+    public String getKeySize() {
+        return keySize;
+    }
+
+    public void setKeySize(String keySize) {
+        this.keySize = keySize;
+    }
+
+    public int getTotal() {
+        return total;
+    }
+
+    public void setTotal(int total) {
+        this.total = total;
+    }
+
+    public int getValSize() {
+        return valSize;
+    }
+
+    public void setValSize(int valSize) {
+        this.valSize = valSize;
+    }
+
     private int total;//=100000 --
     private int valSize;//=256
 

@@ -23,7 +23,7 @@ public class SyncBenchmarkClient extends BenchmarkClient {
     @Override
     protected void create() {
         try {
-            zk.create("/apps", null, ZooDefs.Ids.OPEN_ACL_UNSAFE,
+            zk.create("/benchmark/b", null, ZooDefs.Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT_SEQUENTIAL);
         } catch (KeeperException e) {
             e.printStackTrace();
@@ -31,5 +31,10 @@ public class SyncBenchmarkClient extends BenchmarkClient {
             e.printStackTrace();
         }
 
+    }
+
+    @Override
+    public void run() {
+        create();
     }
 }
