@@ -452,6 +452,19 @@ public class DataTree {
             throw new KeeperException.NoNodeException();
         }
         synchronized (parent) {
+            // Add the ACL to ACL cache first, to avoid the ACL not being
+            // created race condition during fuzzy snapshot sync.
+            //
+            // This is the simplest fix, which may add ACL reference count
+            // again if it's already counted in in the ACL map of fuzzy
+            // snapshot, which might also happen for deleteNode txn, but
+            // at least it won't cause the ACL not exist issue.
+            //
+            // Later we can audit and delete all non-referenced ACLs from
+            // ACL map when loading the snapshot/txns from disk, like what
+            // we did for the global sessions.
+            Long longval = aclCache.convertAcls(acl);
+
             Set<String> children = parent.getChildren();
             if (children.contains(childName)) {
                 throw new KeeperException.NodeExistsException();
@@ -470,7 +483,6 @@ public class DataTree {
                 parent.stat.setCversion(parentCVersion);
                 parent.stat.setPzxid(zxid);
             }
-            Long longval = aclCache.convertAcls(acl);
             DataNode child = new DataNode(data, longval, stat);
             parent.addChild(childName);
             nodeDataSize.addAndGet(getNodeSize(path, child.data));
@@ -1249,14 +1261,22 @@ public class DataTree {
         oa.writeRecord(node, "node");
     }
 
-    public void serialize(OutputArchive oa, String tag) throws IOException {
+    public void serializeAcls(OutputArchive oa) throws IOException { 
         aclCache.serialize(oa);
+    }
+
+    public void serializeNodes(OutputArchive oa) throws IOException { 
         serializeNode(oa, new StringBuilder(""));
         // / marks end of stream
         // we need to check if clear had been called in between the snapshot.
         if (root != null) {
             oa.writeString("/", "path");
         }
+    }
+
+    public void serialize(OutputArchive oa, String tag) throws IOException {
+        serializeAcls(oa);
+        serializeNodes(oa);
     }
 
     public void deserialize(InputArchive ia, String tag) throws IOException {
