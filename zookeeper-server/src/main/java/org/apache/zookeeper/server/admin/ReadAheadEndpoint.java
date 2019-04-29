@@ -116,7 +116,9 @@ public class ReadAheadEndpoint implements EndPoint {
                 pendingException = e;
             }
         }
-        return bytes;
+        byte[] ret = new byte[bytes.length];
+        System.arraycopy(bytes, 0, ret, 0, ret.length);
+        return ret;
     }
 
     private void throwPendingException() throws IOException {
