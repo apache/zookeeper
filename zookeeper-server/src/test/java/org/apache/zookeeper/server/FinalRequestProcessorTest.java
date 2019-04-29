@@ -54,31 +54,20 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class FinalRequestProcessorTest {
-    private List<ACL> testACLs = new ArrayList<ACL>();
+    private ZKDatabase db = mock(ZKDatabase.class);
     private final Record[] responseRecord = new Record[1];
     private final ReplyHeader[] replyHeaders = new ReplyHeader[1];
+    // Adding a specific path for testing - getNode returns a default created, empty DataNode.
+    private String testPath = "/testPath";
 
     private ServerCnxn cnxn;
     private ByteBuffer bb;
     private FinalRequestProcessor processor;
 
     @Before
-    public void setUp() throws KeeperException.NoNodeException, IOException {
-        testACLs.clear();
-        testACLs.addAll(Arrays.asList(
-                new ACL(ZooDefs.Perms.ALL, new Id("digest", "user:secrethash")),
-                new ACL(ZooDefs.Perms.ADMIN, new Id("digest", "adminuser:adminsecret")),
-                new ACL(ZooDefs.Perms.READ, new Id("world", "anyone"))
-        ));
-
+    public void setUp() throws IOException {
         ZooKeeperServer zks = new ZooKeeperServer();
-        ZKDatabase db = mock(ZKDatabase.class);
-        String testPath = "/testPath";
         when(db.getNode(eq(testPath))).thenReturn(new DataNode());
-        when(db.getACL(eq(testPath), any(Stat.class))).thenReturn(testACLs);
-        when(db.aclForNode(any(DataNode.class))).thenReturn(testACLs);
-        when(db.getChildren(any(String.class), any(Stat.class), any(Watcher.class)))
-                .thenReturn(Arrays.asList("child1", "child2", "child3"));
         zks.setZKDatabase(db);
         processor = new FinalRequestProcessor(zks);
 
@@ -92,34 +81,45 @@ public class FinalRequestProcessorTest {
             }
         }).when(cnxn).sendResponse(any(ReplyHeader.class), any(Record.class), anyString());
 
+    }
+
+    private ByteBuffer createACLRequestByteBuffer() throws IOException {
         GetACLRequest getACLRequest = new GetACLRequest();
         getACLRequest.setPath(testPath);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
         getACLRequest.serialize(boa, "request");
         baos.close();
-        bb = ByteBuffer.wrap(baos.toByteArray());
+        return ByteBuffer.wrap(baos.toByteArray());
     }
 
     @Test
-    public void testACLDigestHashHiding_NoAuth_WorldCanRead() {
+    public void testACLDigestHashHiding_NoAuth_WorldCanRead() throws IOException, KeeperException.NoNodeException {
         // Arrange
+        List<ACL> testACLs = Arrays.asList(new ACL(ZooDefs.Perms.ALL, new Id("digest", "user:secrethash")),
+                              new ACL(ZooDefs.Perms.ADMIN, new Id("digest", "adminuser:adminsecret")),
+                              new ACL(ZooDefs.Perms.READ, new Id("world", "anyone")));
+        when(db.getACL(eq(testPath), any(Stat.class))).thenReturn(testACLs);
+        when(db.aclForNode(any(DataNode.class))).thenReturn(testACLs);
 
         // Act
-        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, bb, new ArrayList<Id>());
+        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, createACLRequestByteBuffer(), new ArrayList<Id>());
         processor.processRequest(r);
 
         // Assert
-        assertMasked(true);
+        assertMasked(true, testACLs);
     }
 
     @Test
-    public void testACLDigestHashHiding_NoAuth_NoWorld() {
+    public void testACLDigestHashHiding_NoAuth_NoWorld() throws IOException, KeeperException.NoNodeException {
         // Arrange
-        testACLs.remove(2);
+        List<ACL> testACLs = Arrays.asList(new ACL(ZooDefs.Perms.ALL, new Id("digest", "user:secrethash")),
+                new ACL(ZooDefs.Perms.READ, new Id("digest", "adminuser:adminsecret")));
+        when(db.getACL(eq(testPath), any(Stat.class))).thenReturn(testACLs);
+        when(db.aclForNode(any(DataNode.class))).thenReturn(testACLs);
 
         // Act
-        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, bb, new ArrayList<Id>());
+        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, createACLRequestByteBuffer(), new ArrayList<Id>());
         processor.processRequest(r);
 
         // Assert
@@ -127,60 +127,78 @@ public class FinalRequestProcessorTest {
     }
 
     @Test
-    public void testACLDigestHashHiding_UserCanRead() {
+    public void testACLDigestHashHiding_UserCanRead() throws IOException, KeeperException.NoNodeException {
         // Arrange
+        List<ACL> testACLs = Arrays.asList(new ACL(ZooDefs.Perms.ALL, new Id("digest", "user:secrethash")),
+                new ACL(ZooDefs.Perms.ADMIN, new Id("digest", "adminuser:adminsecret")),
+                new ACL(ZooDefs.Perms.READ, new Id("world", "anyone")));
+        when(db.getACL(eq(testPath), any(Stat.class))).thenReturn(testACLs);
+        when(db.aclForNode(any(DataNode.class))).thenReturn(testACLs);
+
         List<Id> authInfo = new ArrayList<Id>();
         authInfo.add(new Id("digest", "otheruser:somesecrethash"));
 
         // Act
-        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, bb, authInfo);
+        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, createACLRequestByteBuffer(), authInfo);
         processor.processRequest(r);
 
         // Assert
-        assertMasked(true);
+        assertMasked(true, testACLs);
     }
 
     @Test
-    public void testACLDigestHashHiding_UserCanAll() {
+    public void testACLDigestHashHiding_UserCanAll() throws IOException, KeeperException.NoNodeException {
         // Arrange
+        List<ACL> testACLs = Arrays.asList(new ACL(ZooDefs.Perms.ALL, new Id("digest", "user:secrethash")),
+                new ACL(ZooDefs.Perms.ADMIN, new Id("digest", "adminuser:adminsecret")),
+                new ACL(ZooDefs.Perms.READ, new Id("world", "anyone")));
+        when(db.getACL(eq(testPath), any(Stat.class))).thenReturn(testACLs);
+        when(db.aclForNode(any(DataNode.class))).thenReturn(testACLs);
+
         List<Id> authInfo = new ArrayList<Id>();
         authInfo.add(new Id("digest", "user:secrethash"));
 
         // Act
-        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, bb, authInfo);
+        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, createACLRequestByteBuffer(), authInfo);
         processor.processRequest(r);
 
         // Assert
-        assertMasked(false);
+        assertMasked(false, testACLs);
     }
 
     @Test
-    public void testACLDigestHashHiding_AdminUser() {
+    public void testACLDigestHashHiding_AdminUser() throws IOException, KeeperException.NoNodeException {
         // Arrange
+        List<ACL> testACLs = Arrays.asList(new ACL(ZooDefs.Perms.ALL, new Id("digest", "user:secrethash")),
+                new ACL(ZooDefs.Perms.ADMIN, new Id("digest", "adminuser:adminsecret")),
+                new ACL(ZooDefs.Perms.READ, new Id("world", "anyone")));
+        when(db.getACL(eq(testPath), any(Stat.class))).thenReturn(testACLs);
+        when(db.aclForNode(any(DataNode.class))).thenReturn(testACLs);
+
         List<Id> authInfo = new ArrayList<Id>();
         authInfo.add(new Id("digest", "adminuser:adminsecret"));
 
         // Act
-        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, bb, authInfo);
+        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, createACLRequestByteBuffer(), authInfo);
         processor.processRequest(r);
 
         // Assert
-        assertMasked(false);
+        assertMasked(false, testACLs);
     }
 
     @Test
-    public void testACLDigestHashHiding_OnlyAdmin() {
+    public void testACLDigestHashHiding_OnlyAdmin() throws IOException, KeeperException.NoNodeException {
         // Arrange
-        testACLs.clear();
-        testACLs.addAll(Arrays.asList(
-                new ACL(ZooDefs.Perms.READ, new Id("digest", "user:secrethash")),
-                new ACL(ZooDefs.Perms.ADMIN, new Id("digest", "adminuser:adminsecret"))
-        ));
+        List<ACL> testACLs = Arrays.asList(new ACL(ZooDefs.Perms.ALL, new Id("digest", "user:secrethash")),
+                new ACL(ZooDefs.Perms.ADMIN, new Id("digest", "adminuser:adminsecret")));
+        when(db.getACL(eq(testPath), any(Stat.class))).thenReturn(testACLs);
+        when(db.aclForNode(any(DataNode.class))).thenReturn(testACLs);
+
         List<Id> authInfo = new ArrayList<Id>();
         authInfo.add(new Id("digest", "adminuser:adminsecret"));
 
         // Act
-        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, bb, authInfo);
+        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getACL, createACLRequestByteBuffer(), authInfo);
         processor.processRequest(r);
 
         // Assert
@@ -193,7 +211,7 @@ public class FinalRequestProcessorTest {
         assertThat("Password hash mismatch in the response", rsp.getAcl().get(1).getId().getId(), equalTo("adminuser:adminsecret"));
     }
 
-    private void assertMasked(boolean masked) {
+    private void assertMasked(boolean masked, final List<ACL> testACLs) {
         assertTrue("Not a GetACL response. Auth failed?", responseRecord[0] instanceof GetACLResponse);
         GetACLResponse rsp = (GetACLResponse)responseRecord[0];
         assertThat("Number of ACLs in the response are different", rsp.getAcl().size(), equalTo(3));
@@ -233,39 +251,84 @@ public class FinalRequestProcessorTest {
         assertThat("Original ACL list has been modified", testACLs.get(2).getId().getId(), equalTo("anyone"));
     }
 
-    @Test
-    public void testGetChildrenList_Empty_List() throws IOException {
+    ByteBuffer createGetChildrenListRequestByteBuffer(final List<String> nodeNames) throws IOException {
         GetChildrenListRequest getChildrenListRequest = new GetChildrenListRequest();
-        getChildrenListRequest.setPathList(new ArrayList<>());
+        getChildrenListRequest.setPathList(nodeNames);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
         getChildrenListRequest.serialize(boa, "request");
         baos.close();
+        return ByteBuffer.wrap(baos.toByteArray());
+    }
 
-        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getChildrenList,
-                                ByteBuffer.wrap(baos.toByteArray()), new ArrayList<Id>());
+    @Test
+    public void testGetChildrenList_Empty_List() throws IOException {
+        // Arrange
+
+        // Act
+        ByteBuffer bb = createGetChildrenListRequestByteBuffer(new ArrayList<>());
+        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getChildrenList, bb, new ArrayList<Id>());
         processor.processRequest(r);
 
+        // Assert
         GetChildrenListResponse rsp = (GetChildrenListResponse)responseRecord[0];
         assertTrue(rsp.getChildren().isEmpty());
     }
 
     @Test
-    public void testGetChildrenList_Normal() throws IOException {
-        GetChildrenListRequest getChildrenListRequest = new GetChildrenListRequest();
-        getChildrenListRequest.setPathList(Arrays.asList("/testPath", "/testPath"));
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
-        getChildrenListRequest.serialize(boa, "request");
-        baos.close();
+    public void testGetChildrenList_Normal() throws IOException, KeeperException.NoNodeException {
+        // Arrange
+        when(db.getNode((any(String.class)))).thenReturn(new DataNode());
+        when(db.getChildren(eq("/path1"), any(Stat.class), any(Watcher.class)))
+                .thenReturn(Arrays.asList("child1", "child2", "child3"));
+        when(db.getChildren(eq("/path2"), any(Stat.class), any(Watcher.class)))
+                .thenReturn(Arrays.asList("child4", "child5"));
 
-        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getChildrenList,
-                                ByteBuffer.wrap(baos.toByteArray()), new ArrayList<Id>());
+        // Act
+        ByteBuffer bb = createGetChildrenListRequestByteBuffer(Arrays.asList("/path1", "/path2"));
+        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getChildrenList, bb, new ArrayList<Id>());
         processor.processRequest(r);
 
+        // Assert
+        GetChildrenListResponse rsp = (GetChildrenListResponse)responseRecord[0];
+        assertThat(rsp.getChildren().size(), equalTo(2));
+        assertThat(rsp.getChildren().get(0), equalTo(Arrays.asList("child1", "child2", "child3")));
+        assertThat(rsp.getChildren().get(1), equalTo(Arrays.asList("child4", "child5")));
+    }
+
+    @Test
+    public void testGetChildrenList_Same_Node() throws IOException, KeeperException.NoNodeException {
+        // Arrange
+        when(db.getChildren(eq(testPath), any(Stat.class), any(Watcher.class)))
+                .thenReturn(Arrays.asList("child1", "child2", "child3"));
+
+        // Act
+        ByteBuffer bb = createGetChildrenListRequestByteBuffer(Arrays.asList("/testPath", "/testPath"));
+        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getChildrenList, bb, new ArrayList<Id>());
+        processor.processRequest(r);
+
+        // Assert
         GetChildrenListResponse rsp = (GetChildrenListResponse)responseRecord[0];
         assertThat(rsp.getChildren().size(), equalTo(2));
         assertThat(rsp.getChildren().get(0), equalTo(Arrays.asList("child1", "child2", "child3")));
         assertThat(rsp.getChildren().get(1), equalTo(Arrays.asList("child1", "child2", "child3")));
+    }
+
+    @Test
+    public void testGetChildrenList_No_Auth() throws IOException, KeeperException.NoNodeException {
+        // Arrange
+        List<ACL> testACLs = Arrays.asList(new ACL(ZooDefs.Perms.ALL, new Id("digest", "user:secrethash")),
+                new ACL(ZooDefs.Perms.WRITE, new Id("digest", "writeuser:secrethash")));
+        when(db.aclForNode(any(DataNode.class))).thenReturn(testACLs);
+        List<Id> authInfo = new ArrayList<Id>();
+        authInfo.add(new Id("digest", "writeuser:secrethash"));
+
+        // Act
+        ByteBuffer bb = createGetChildrenListRequestByteBuffer(Arrays.asList("/testPath", "/testPath"));
+        Request r = new Request(cnxn, 0, 0, ZooDefs.OpCode.getChildrenList, bb, authInfo);
+        processor.processRequest(r);
+
+        // Assert
+        assertThat(KeeperException.Code.get(replyHeaders[0].getErr()), equalTo(KeeperException.Code.NOAUTH));
     }
 }

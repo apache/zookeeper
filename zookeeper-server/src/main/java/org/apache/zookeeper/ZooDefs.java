@@ -147,5 +147,6 @@ public class ZooDefs {
 
     final public static String[] opNames = { "notification", "create",
             "delete", "exists", "getData", "setData", "getACL", "setACL",
-            "getChildren", "getChildren2", "getMaxChildren", "setMaxChildren", "ping", "reconfig", "getConfig" };
+            "getChildren", "getChildren2" , "getChildrenList", "getMaxChildren",
+            "setMaxChildren", "ping", "reconfig", "getConfig" };
 }

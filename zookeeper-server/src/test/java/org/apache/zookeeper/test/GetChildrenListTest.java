@@ -18,14 +18,21 @@
 
 package org.apache.zookeeper.test;
 
-import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeSet;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.Ids;
-import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Id;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -47,52 +54,12 @@ public class GetChildrenListTest extends ClientBase {
     }
 
     @Test
-    public void testChild()
-            throws IOException, KeeperException, InterruptedException
-    {
-        String name = "/foo";
-        zk.create(name, name.getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
-
-        String childname = name + "/bar";
-        zk.create(childname, childname.getBytes(), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.EPHEMERAL);
-
-        Stat stat = new Stat();
-        List<String> s = zk.getChildren(name, false, stat);
-
-        Assert.assertEquals(stat.getCzxid(), stat.getMzxid());
-        Assert.assertEquals(stat.getCzxid() + 1, stat.getPzxid());
-        Assert.assertEquals(stat.getCtime(), stat.getMtime());
-        Assert.assertEquals(1, stat.getCversion());
-        Assert.assertEquals(0, stat.getVersion());
-        Assert.assertEquals(0, stat.getAversion());
-        Assert.assertEquals(0, stat.getEphemeralOwner());
-        Assert.assertEquals(name.length(), stat.getDataLength());
-        Assert.assertEquals(1, stat.getNumChildren());
-        Assert.assertEquals(s.size(), stat.getNumChildren());
-
-        s = zk.getChildren(childname, false, stat);
-
-        Assert.assertEquals(stat.getCzxid(), stat.getMzxid());
-        Assert.assertEquals(stat.getCzxid(), stat.getPzxid());
-        Assert.assertEquals(stat.getCtime(), stat.getMtime());
-        Assert.assertEquals(0, stat.getCversion());
-        Assert.assertEquals(0, stat.getVersion());
-        Assert.assertEquals(0, stat.getAversion());
-        Assert.assertEquals(zk.getSessionId(), stat.getEphemeralOwner());
-        Assert.assertEquals(childname.length(), stat.getDataLength());
-        Assert.assertEquals(0, stat.getNumChildren());
-        Assert.assertEquals(s.size(), stat.getNumChildren());
-    }
-
-    @Test
     public void testChildrenList()
-            throws IOException, KeeperException, InterruptedException
+            throws KeeperException, InterruptedException
     {
         List<String> topLevelNodes = new ArrayList<String>();
         Map<String, List<String>> childrenNodes = new HashMap<String, List<String>>();
-        // Creating a database where '/fooX' nodes contains 'barXY' nodes
+        // Creating a database where '/fooX' nodes has 'barXY' named children.
         for (int i = 0; i < 10; i++) {
             String name = "/foo" + i;
             zk.create(name, name.getBytes(), Ids.OPEN_ACL_UNSAFE,
@@ -117,6 +84,48 @@ public class GetChildrenListTest extends ClientBase {
 
             List<String> children = zk.getChildren(nodeName, false);
             Assert.assertEquals(childrenList.get(i), children);
+        }
+
+        // Check for getting the children of the same node twice
+        List<String> sameNodes = Arrays.asList(topLevelNodes.get(0), topLevelNodes.get(0));
+        List<List<String>> sameChildrenList = zk.getChildren(sameNodes, false);
+        Assert.assertEquals(sameChildrenList.get(0), childrenList.get(0));
+        Assert.assertEquals(sameChildrenList.get(0), sameChildrenList.get(1));
+        Assert.assertEquals(sameChildrenList.size(), sameNodes.size());
+    }
+
+
+    @Test
+    public void testAuthentication()
+            throws KeeperException, InterruptedException
+    {
+        List<ACL> writeOnly = Collections.singletonList(new ACL(ZooDefs.Perms.WRITE,
+                new Id("world", "anyone")));
+        zk.create("/foo_auth", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/foo_no_auth", null, writeOnly, CreateMode.PERSISTENT);
+
+        zk.create("/foo_auth/bar", null, Ids.READ_ACL_UNSAFE, CreateMode.PERSISTENT);
+
+        // Check for normal behaviour.
+        List<List<String>> childrenList = zk.getChildren(Collections.singletonList("/foo_auth"), false);
+        Assert.assertEquals(childrenList.size(), 1);
+        Assert.assertEquals(childrenList.get(0).size(), 1);
+        Assert.assertEquals(childrenList.get(0).get(0), "bar");
+
+        // Check for authentication violation.
+        try {
+            childrenList = zk.getChildren(Collections.singletonList("/foo_no_auth"), false);
+            Assert.fail("Expected NoAuthException for getting the childrens of a write only node");
+        } catch (KeeperException.NoAuthException e) {
+            // Expected. Do nothing
+        }
+
+        // Check for using mixed nodes - throws exception as well.
+        try {
+            childrenList = zk.getChildren(Arrays.asList("/foo_auth" ,"/foo_no_auth"), false);
+            Assert.fail("Expected NoAuthException for getting the childrens of a write only node");
+        } catch (KeeperException.NoAuthException e) {
+            // Expected. Do nothing
         }
     }
 }
