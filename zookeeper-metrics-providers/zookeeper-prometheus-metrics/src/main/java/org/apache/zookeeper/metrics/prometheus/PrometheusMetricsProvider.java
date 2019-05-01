@@ -47,7 +47,7 @@ import org.slf4j.LoggerFactory;
 public class PrometheusMetricsProvider implements MetricsProvider {
 
     private static final Logger LOG = LoggerFactory.getLogger(PrometheusMetricsProvider.class);
-    private final CollectorRegistry collectorRegistry = CollectorRegistry.defaultRegistry;
+    private final CollectorRegistry collectorRegistry = new CollectorRegistry(true);
     private int port = 7000;
     private Server server;
     private final Context rootContext = new Context();
@@ -61,8 +61,6 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     @Override
     public void start() throws MetricsProviderLifeCycleException {
         try {
-            // export JVM status
-            DefaultExports.initialize();
             LOG.info("Starting /metrics HTTP endpoint at port " + port);
             server = new Server(port);
             ServletContextHandler context = new ServletContextHandler();
