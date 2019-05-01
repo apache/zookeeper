@@ -20,7 +20,6 @@ package org.apache.zookeeper.metrics.prometheus;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.MetricsServlet;
-import io.prometheus.client.exporter.common.TextFormat;
 import java.util.Enumeration;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,11 +32,6 @@ import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
 import org.apache.zookeeper.metrics.Summary;
 import org.apache.zookeeper.metrics.SummarySet;
-import org.apache.zookeeper.server.metric.AvgMinMaxCounter;
-import org.apache.zookeeper.server.metric.AvgMinMaxCounterSet;
-import org.apache.zookeeper.server.metric.AvgMinMaxPercentileCounter;
-import org.apache.zookeeper.server.metric.AvgMinMaxPercentileCounterSet;
-import org.apache.zookeeper.server.metric.SimpleCounter;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -128,13 +122,12 @@ public class PrometheusMetricsProvider implements MetricsProvider {
 
     private class Context implements MetricsContext {
 
-     
         private final ConcurrentMap<String, Gauge> gauges = new ConcurrentHashMap<>();
-        private final ConcurrentMap<String, SimpleCounter> counters = new ConcurrentHashMap<>();
-        private final ConcurrentMap<String, AvgMinMaxCounter> basicSummaries = new ConcurrentHashMap<>();
-        private final ConcurrentMap<String, AvgMinMaxPercentileCounter> summaries = new ConcurrentHashMap<>();
-        private final ConcurrentMap<String, AvgMinMaxCounterSet> basicSummarySets = new ConcurrentHashMap<>();
-        private final ConcurrentMap<String, AvgMinMaxPercentileCounterSet> summarySets = new ConcurrentHashMap<>();
+        private final ConcurrentMap<String, PrometheusCounter> counters = new ConcurrentHashMap<>();
+        private final ConcurrentMap<String, PrometheusSummary> basicSummaries = new ConcurrentHashMap<>();
+        private final ConcurrentMap<String, PrometheusSummary> summaries = new ConcurrentHashMap<>();
+        private final ConcurrentMap<String, PrometheusLabelledSummary> basicSummarySets = new ConcurrentHashMap<>();
+        private final ConcurrentMap<String, PrometheusLabelledSummary> summarySets = new ConcurrentHashMap<>();
 
         @Override
         public MetricsContext getContext(String name) {
@@ -145,7 +138,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         @Override
         public Counter getCounter(String name) {
             return counters.computeIfAbsent(name, (n) -> {
-                return new SimpleCounter(n);
+                return new PrometheusCounter(n);
             });
         }
 
@@ -166,14 +159,14 @@ public class PrometheusMetricsProvider implements MetricsProvider {
                     if (summaries.containsKey(n)) {
                         throw new IllegalArgumentException("Already registered a non basic summary as " + n);
                     }
-                    return new AvgMinMaxCounter(name);
+                    return new PrometheusSummary(name, detailLevel);
                 });
             } else {
                 return summaries.computeIfAbsent(name, (n) -> {
                     if (basicSummaries.containsKey(n)) {
                         throw new IllegalArgumentException("Already registered a basic summary as " + n);
                     }
-                    return new AvgMinMaxPercentileCounter(name);
+                    return new PrometheusSummary(name, detailLevel);
                 });
             }
         }
@@ -185,59 +178,117 @@ public class PrometheusMetricsProvider implements MetricsProvider {
                     if (summarySets.containsKey(n)) {
                         throw new IllegalArgumentException("Already registered a non basic summary set as " + n);
                     }
-                    return new AvgMinMaxCounterSet(name);
+                    return new PrometheusLabelledSummary(name, detailLevel);
                 });
             } else {
                 return summarySets.computeIfAbsent(name, (n) -> {
                     if (basicSummarySets.containsKey(n)) {
                         throw new IllegalArgumentException("Already registered a basic summary set as " + n);
                     }
-                    return new AvgMinMaxPercentileCounterSet(name);
+                    return new PrometheusLabelledSummary(name, detailLevel);
                 });
             }
         }
 
-        void dump(BiConsumer<String, Object> sink) {
-            gauges.forEach((name, metric) -> {
-                Number value = metric.get();
-                if (value != null) {
-                    sink.accept(name, value);
-                }
-            });
-            counters.values().forEach(metric -> {
-                metric.values().forEach(sink);
-            });
-            basicSummaries.values().forEach(metric -> {
-                metric.values().forEach(sink);
-            });
-            summaries.values().forEach(metric -> {
-                metric.values().forEach(sink);
-            });
-            basicSummarySets.values().forEach(metric -> {
-                metric.values().forEach(sink);
-            });
-            summarySets.values().forEach(metric -> {
-                metric.values().forEach(sink);
-            });
+    }
+
+    private class PrometheusCounter implements Counter {
+
+        private final io.prometheus.client.Counter inner;
+        private final String name;
+
+        public PrometheusCounter(String name) {
+            this.name = name;
+            this.inner = io.prometheus.client.Counter
+                    .build(name, name)
+                    .register(collectorRegistry)
+                    .register();
         }
 
-        void reset() {
-            counters.values().forEach(metric -> {
-                metric.reset();
-            });
-            basicSummaries.values().forEach(metric -> {
-                metric.reset();
-            });
-            summaries.values().forEach(metric -> {
-                metric.reset();
-            });
-            basicSummarySets.values().forEach(metric -> {
-                metric.reset();
-            });
-            summarySets.values().forEach(metric -> {
-                metric.reset();
-            });
-            // no need to reset gauges
+        @Override
+        public void add(long delta) {
+            try {
+                inner.inc(delta);
+            } catch (IllegalArgumentException err) {
+                LOG.error("invalid delta for counter " + name, err);
+            }
         }
+
+        @Override
+        public long get() {
+            return (long) inner.get();
+        }
+
+    }
+
+    private class PrometheusSummary implements Summary {
+
+        private final io.prometheus.client.Summary inner;
+        private final String name;
+
+        public PrometheusSummary(String name, MetricsContext.DetailLevel level) {
+            this.name = name;
+            if (level == MetricsContext.DetailLevel.ADVANCED) {
+                this.inner = io.prometheus.client.Summary
+                        .build(name, name)
+                        .quantile(0.5, 0.05) // Add 50th percentile (= median) with 5% tolerated error
+                        .quantile(0.9, 0.01) // Add 90th percentile with 1% tolerated error
+                        .quantile(0.99, 0.001) // Add 99th percentile with 0.1% tolerated error
+                        .register(collectorRegistry)
+                        .register();
+            } else {
+                this.inner = io.prometheus.client.Summary
+                        .build(name, name)
+                        .quantile(0.5, 0.05) // Add 50th percentile (= median) with 5% tolerated error
+                        .register(collectorRegistry)
+                        .register();
+            }
+        }
+
+        @Override
+        public void add(long delta) {
+            try {
+                inner.observe(delta);
+            } catch (IllegalArgumentException err) {
+                LOG.error("invalid delta for counter " + name, err);
+            }
+        }
+
+    }
+    private static final String LABEL = "key";
+
+    private static final String[] LABELS = {LABEL};
+
+    private class PrometheusLabelledSummary implements SummarySet {
+
+        private final io.prometheus.client.Summary inner;
+        private final String name;
+
+        public PrometheusLabelledSummary(String name, MetricsContext.DetailLevel level) {
+            this.name = name;
+            if (level == MetricsContext.DetailLevel.ADVANCED) {
+                this.inner = io.prometheus.client.Summary
+                        .build(name, name)
+                        .labelNames(LABELS)
+                        .quantile(0.5, 0.05) // Add 50th percentile (= median) with 5% tolerated error
+                        .quantile(0.9, 0.01) // Add 90th percentile with 1% tolerated error
+                        .quantile(0.99, 0.001) // Add 99th percentile with 0.1% tolerated error
+                        .register(collectorRegistry)
+                        .register();
+            } else {
+                this.inner = io.prometheus.client.Summary
+                        .build(name, name)
+                        .labelNames(LABELS)
+                        .quantile(0.5, 0.05) // Add 50th percentile (= median) with 5% tolerated error
+                        .register(collectorRegistry)
+                        .register();
+            }
+        }
+
+        @Override
+        public void add(String key, long value) {
+            inner.labels(key).observe(value);
+        }
+
     }
 }
