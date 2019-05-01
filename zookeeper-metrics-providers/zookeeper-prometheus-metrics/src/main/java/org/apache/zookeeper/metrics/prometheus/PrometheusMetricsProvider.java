@@ -54,7 +54,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     @Override
     public void configure(Properties configuration) throws MetricsProviderLifeCycleException {
         LOG.info("Initializing metrics, configuration: {}", configuration);
-        this.port = Integer.parseInt(configuration.getProperty("port", "7000"));
+        this.port = Integer.parseInt(configuration.getProperty("httpPort", "7000"));
     }
 
     @Override
