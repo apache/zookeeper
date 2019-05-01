@@ -53,6 +53,7 @@ import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.jmx.MBeanRegistry;
+import org.apache.zookeeper.metrics.MetricsContext;
 import org.apache.zookeeper.proto.AuthPacket;
 import org.apache.zookeeper.proto.ConnectRequest;
 import org.apache.zookeeper.proto.ConnectResponse;
@@ -65,12 +66,12 @@ import org.apache.zookeeper.server.RequestProcessor.RequestProcessorException;
 import org.apache.zookeeper.server.ServerCnxn.CloseRequestException;
 import org.apache.zookeeper.server.SessionTracker.Session;
 import org.apache.zookeeper.server.SessionTracker.SessionExpirer;
-import org.apache.zookeeper.server.auth.AuthenticationProvider;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.auth.ServerAuthenticationProvider;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServer;
 import org.apache.zookeeper.server.util.JvmPauseMonitor;
+import org.apache.zookeeper.server.util.OSMXBean;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
@@ -216,6 +217,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 + " clientPortListenBacklog " + getClientPortListenBacklog()
                 + " datadir " + txnLogFactory.getDataDir()
                 + " snapdir " + txnLogFactory.getSnapDir());
+
     }
 
     /**
@@ -539,6 +541,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         startJvmPauseMonitor();
 
+        registerMetrics();
+
         setState(State.RUNNING);
         notifyAll();
     }
@@ -644,6 +648,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         // new RuntimeException("Calling shutdown").printStackTrace();
         setState(State.SHUTDOWN);
+
+        // unregister all metrics that are keeping a strong reference to this object
+        // subclasses will do their specific clean up
+        unregisterMetrics();
+
         // Since sessionTracker and syncThreads poll we just have to
         // set running to false and they will detect it during the poll
         // interval.
@@ -1203,7 +1212,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         // there might be a race condition that it enabled recv after
         // processing request and then disabled when check throttling.
         //
-        // Be aware that we're actually checking the global outstanding 
+        // Be aware that we're actually checking the global outstanding
         // request before this request.
         //
         // It's fine if the IOException thrown before we decrease the count
@@ -1382,5 +1391,86 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     public ResponseCache getReadResponseCache() {
         return isResponseCachingEnabled ? readResponseCache : null;
+    }
+
+    protected void registerMetrics() {
+        MetricsContext rootContext = ServerMetrics
+                .getMetrics()
+                .getMetricsProvider()
+                .getRootContext();
+
+        final ZKDatabase zkdb = this.getZKDatabase();
+        final ServerStats stats = this.serverStats();
+
+        rootContext.registerGauge("avg_latency", stats::getAvgLatency);
+
+        rootContext.registerGauge("max_latency", stats::getMaxLatency);
+        rootContext.registerGauge("min_latency", stats::getMinLatency);
+
+        rootContext.registerGauge("packets_received", stats::getPacketsReceived);
+        rootContext.registerGauge("packets_sent", stats::getPacketsSent);
+        rootContext.registerGauge("num_alive_connections", stats::getNumAliveClientConnections);
+
+        rootContext.registerGauge("outstanding_requests", stats::getOutstandingRequests);
+        rootContext.registerGauge("uptime", stats::getUptime);
+
+        rootContext.registerGauge("znode_count", zkdb::getNodeCount);
+
+        rootContext.registerGauge("watch_count", zkdb.getDataTree()::getWatchCount);
+        rootContext.registerGauge("ephemerals_count", zkdb.getDataTree()::getEphemeralsCount);
+
+        rootContext.registerGauge("approximate_data_size", zkdb.getDataTree()::cachedApproximateDataSize);
+
+        rootContext.registerGauge("global_sessions", zkdb::getSessionCount);
+        rootContext.registerGauge("local_sessions",
+                this.getSessionTracker()::getLocalSessionCount);
+
+        OSMXBean osMbean = new OSMXBean();
+        rootContext.registerGauge("open_file_descriptor_count", osMbean::getOpenFileDescriptorCount);
+        rootContext.registerGauge("max_file_descriptor_count", osMbean::getMaxFileDescriptorCount);
+        rootContext.registerGauge("connection_drop_probability", this::getConnectionDropChance);
+
+        rootContext.registerGauge("last_client_response_size", stats.getClientResponseStats()::getLastBufferSize);
+        rootContext.registerGauge("max_client_response_size", stats.getClientResponseStats()::getMaxBufferSize);
+        rootContext.registerGauge("min_client_response_size", stats.getClientResponseStats()::getMinBufferSize);
+
+    }
+
+    protected void unregisterMetrics() {
+
+        MetricsContext rootContext = ServerMetrics
+                .getMetrics()
+                .getMetricsProvider()
+                .getRootContext();
+
+        rootContext.registerGauge("avg_latency", null);
+
+        rootContext.registerGauge("max_latency", null);
+        rootContext.registerGauge("min_latency", null);
+
+        rootContext.registerGauge("packets_received", null);
+        rootContext.registerGauge("packets_sent", null);
+        rootContext.registerGauge("num_alive_connections", null);
+
+        rootContext.registerGauge("outstanding_requests", null);
+        rootContext.registerGauge("uptime", null);
+
+        rootContext.registerGauge("znode_count", null);
+
+        rootContext.registerGauge("watch_count", null);
+        rootContext.registerGauge("ephemerals_count", null);
+        rootContext.registerGauge("approximate_data_size", null);
+
+        rootContext.registerGauge("global_sessions", null);
+        rootContext.registerGauge("local_sessions", null);
+
+        rootContext.registerGauge("open_file_descriptor_count", null);
+        rootContext.registerGauge("max_file_descriptor_count", null);
+        rootContext.registerGauge("connection_drop_probability", null);
+
+        rootContext.registerGauge("last_client_response_size", null);
+        rootContext.registerGauge("max_client_response_size", null);
+        rootContext.registerGauge("min_client_response_size", null);
+
     }
 }

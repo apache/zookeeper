@@ -198,6 +198,15 @@ public class CommandsTest extends ClientBase {
         Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
         
         for (String metric : metrics.keySet()) {
+            boolean alreadyDefined = fields
+                    .stream()
+                    .anyMatch(f -> {
+                        return f.key.equals(metric);
+                    });
+            if (alreadyDefined) {
+                // known metrics are defined statically in the block above
+                continue;
+            }
             if (metric.startsWith("avg_")) {
                 fields.add(new Field(metric, Double.class));  
             } else {
