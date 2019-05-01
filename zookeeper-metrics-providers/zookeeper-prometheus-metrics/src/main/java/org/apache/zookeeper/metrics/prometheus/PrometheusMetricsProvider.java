@@ -128,15 +128,17 @@ public class PrometheusMetricsProvider implements MetricsProvider {
 
     private class Context implements MetricsContext {
 
-        private final ConcurrentMap<String, io.prometheus.client.Counter> counters = new ConcurrentHashMap<>();
-        private final ConcurrentMap<String, io.prometheus.client.Summary> basicSummaries = new ConcurrentHashMap<>();
-        private final ConcurrentMap<String, io.prometheus.client.Summary> summaries = new ConcurrentHashMap<>();
-        private final ConcurrentMap<String, io.prometheus.client.Summary> basicSummarySets = new ConcurrentHashMap<>();
-        private final ConcurrentMap<String, io.prometheus.client.Summary> summarySets = new ConcurrentHashMap<>();
+     
+        private final ConcurrentMap<String, Gauge> gauges = new ConcurrentHashMap<>();
+        private final ConcurrentMap<String, SimpleCounter> counters = new ConcurrentHashMap<>();
+        private final ConcurrentMap<String, AvgMinMaxCounter> basicSummaries = new ConcurrentHashMap<>();
+        private final ConcurrentMap<String, AvgMinMaxPercentileCounter> summaries = new ConcurrentHashMap<>();
+        private final ConcurrentMap<String, AvgMinMaxCounterSet> basicSummarySets = new ConcurrentHashMap<>();
+        private final ConcurrentMap<String, AvgMinMaxPercentileCounterSet> summarySets = new ConcurrentHashMap<>();
 
         @Override
         public MetricsContext getContext(String name) {
-            // no hierarchy
+            // no hierarchy yet
             return this;
         }
 
@@ -148,9 +150,13 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         }
 
         @Override
-        public boolean registerGauge(String name, Gauge gauge) {
-            // Not supported
-            return false;
+        public void registerGauge(String name, Gauge gauge) {
+            if (gauge == null) {
+                // null means 'unregister'
+                gauges.remove(name);
+            } else {
+                gauges.put(name, gauge);
+            }
         }
 
         @Override
@@ -192,6 +198,12 @@ public class PrometheusMetricsProvider implements MetricsProvider {
         }
 
         void dump(BiConsumer<String, Object> sink) {
+            gauges.forEach((name, metric) -> {
+                Number value = metric.get();
+                if (value != null) {
+                    sink.accept(name, value);
+                }
+            });
             counters.values().forEach(metric -> {
                 metric.values().forEach(sink);
             });
@@ -225,7 +237,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             summarySets.values().forEach(metric -> {
                 metric.reset();
             });
+            // no need to reset gauges
         }
     }
-
 }
