@@ -61,6 +61,7 @@
     <module>zookeeper-jute</module>
     <module>zookeeper-server</module>
     <module>zookeeper-client</module>
+    <module>zookeeper-metrics-providers</module>
     <module>zookeeper-recipes</module>
     <module>zookeeper-assembly</module>
   </modules>
