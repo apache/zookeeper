@@ -1623,13 +1623,6 @@ The output contains multiple lines with the following format:
     decimal format.  See `stmk` for an explanation of
     the possible values.
 
-* *icfg* :
-    Gets the initial contents of the configuration file (e.g. conf/zoo_sample.cfg)
-    used when first starting the running process.
-
-* *sysp* :
-    Gets the full set of system properties set for the running process.
-
 * *stmk* :
     Sets the current trace mask.  The trace mask is 64 bits,
     where each bit enables or disables a specific category of trace

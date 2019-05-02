@@ -150,15 +150,6 @@ public class FourLetterCommands {
     public final static int isroCmd = ByteBuffer.wrap("isro".getBytes())
             .getInt();
 
-    /**
-     * Get initial configuration command
-     */
-    public final static int icfgCmd = ByteBuffer.wrap("icfg".getBytes())
-            .getInt();
-
-    public final static int syspCmd = ByteBuffer.wrap("sysp".getBytes())
-            .getInt();
-
     /*
      * The control sequence sent by the telnet program when it closes a
      * connection. Include simply to keep the logs cleaner (the server would
@@ -265,7 +256,5 @@ public class FourLetterCommands {
         cmd2String.put(mntrCmd, "mntr");
         cmd2String.put(isroCmd, "isro");
         cmd2String.put(telnetCloseCmd, "telnet close");
-        cmd2String.put(icfgCmd, "icfg");
-        cmd2String.put(syspCmd, "sysp");
     }
 }

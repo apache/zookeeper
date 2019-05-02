@@ -226,10 +226,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return initialConfig;
     }
 
-    public void dumpInitialConf(PrintWriter pwriter) {
-        pwriter.println(getInitialConfig());
-    }
-
     /**
      * Adds JvmPauseMonitor and calls
      * {@link #ZooKeeperServer(FileTxnSnapLog, int, int, int, int, ZKDatabase, String)}
