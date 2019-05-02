@@ -26,6 +26,8 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.Id;
+import org.apache.zookeeper.metrics.Summary;
+import org.apache.zookeeper.metrics.SummarySet;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.txn.TxnHeader;
 
@@ -310,5 +312,39 @@ public class Request {
 
     public KeeperException getException() {
         return e;
+    }
+
+    public void logLatency(Summary metric) {
+        logLatency(metric, Time.currentWallTime());
+    }
+
+    public void logLatency(Summary metric, long currentTime){
+        if (hdr != null) {
+            /* Request header is created by leader. If there is clock drift
+             * latency might be negative. Headers use wall time, not
+             * CLOCK_MONOTONIC.
+             */
+            long latency = currentTime - hdr.getTime();
+            if (latency > 0) {
+                metric.add(latency);
+            }
+        }
+    }
+
+    public void logLatency(SummarySet metric, String key, long currentTime) {
+        if (hdr != null) {
+            /* Request header is created by leader. If there is clock drift
+             * latency might be negative. Headers use wall time, not
+             * CLOCK_MONOTONIC.
+             */
+            long latency = currentTime - hdr.getTime();
+            if (latency > 0) {
+                metric.add(key, latency);
+            }
+        }
+    }
+
+    public void logLatency(SummarySet metric, String key) {
+        logLatency(metric, key, Time.currentWallTime());
     }
 }

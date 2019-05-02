@@ -186,6 +186,12 @@ public final class ServerMetrics {
         READ_FINAL_PROC_TIME = metricsContext.getSummary("read_final_proc_time_ms", DetailLevel.ADVANCED);
         WRITE_FINAL_PROC_TIME = metricsContext.getSummary("write_final_proc_time_ms", DetailLevel.ADVANCED);
 
+        PROPOSAL_LATENCY = metricsContext.getSummary("proposal_latency", DetailLevel.ADVANCED);
+        PROPOSAL_ACK_CREATION_LATENCY = metricsContext.getSummary("proposal_ack_creation_latency", DetailLevel.ADVANCED);
+        COMMIT_PROPAGATION_LATENCY = metricsContext.getSummary("commit_propagation_latency", DetailLevel.ADVANCED);
+        LEARNER_PROPOSAL_RECEIVED_COUNT = metricsContext.getCounter("learner_proposal_received_count");
+        LEARNER_COMMIT_RECEIVED_COUNT = metricsContext.getCounter("learner_commit_received_count");
+
     }
 
     /**
@@ -256,6 +262,12 @@ public final class ServerMetrics {
     public final Counter OUTSTANDING_CHANGES_REMOVED;
     public final Summary PREP_PROCESS_TIME;
     public final Summary CLOSE_SESSION_PREP_TIME;
+
+    public final Summary PROPOSAL_LATENCY;
+    public final Summary PROPOSAL_ACK_CREATION_LATENCY;
+    public final Summary COMMIT_PROPAGATION_LATENCY;
+    public final Counter LEARNER_PROPOSAL_RECEIVED_COUNT;
+    public final Counter LEARNER_COMMIT_RECEIVED_COUNT;
 
     /**
      * Fired watcher stats.

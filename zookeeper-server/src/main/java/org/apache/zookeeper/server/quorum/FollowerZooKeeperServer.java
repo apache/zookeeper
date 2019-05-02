@@ -33,6 +33,7 @@ import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.txn.TxnHeader;
 
 import javax.management.JMException;
@@ -113,6 +114,7 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
             System.exit(ExitCode.UNMATCHED_TXN_COMMIT.getValue());
         }
         Request request = pendingTxns.remove();
+        request.logLatency(ServerMetrics.getMetrics().COMMIT_PROPAGATION_LATENCY);
         commitProcessor.commit(request);
     }
 
