@@ -125,7 +125,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
         int logCount = zks.getZKDatabase().getTxnCount();
         long logSize = zks.getZKDatabase().getTxnSize();
         return (logCount > (snapCount / 2 + randRoll)) ||
-                (logSize > (snapSizeInBytes / 2 + randSize));
+                (snapSizeInBytes > 0 && logSize > (snapSizeInBytes / 2 + randSize));
     }
 
     private void resetSnapshotStats() {
