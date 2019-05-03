@@ -59,6 +59,11 @@ public class Transaction {
         ops.add(Op.setData(path, data, version));
         return this;
     }
+    // Note: getChildren is a read-only function, will not change the state.
+    public Transaction getChildren(String path, boolean watch) {
+        ops.add(Op.getChildren(path));
+        return this;
+    }
 
     public List<OpResult> commit() throws InterruptedException, KeeperException {
         return zk.multi(ops);

@@ -38,6 +38,7 @@ import org.apache.zookeeper.proto.CheckVersionRequest;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.CreateTTLRequest;
 import org.apache.zookeeper.proto.DeleteRequest;
+import org.apache.zookeeper.proto.GetChildrenRequest;
 import org.apache.zookeeper.proto.ReconfigRequest;
 import org.apache.zookeeper.proto.SetACLRequest;
 import org.apache.zookeeper.proto.SetDataRequest;
@@ -58,6 +59,7 @@ import org.apache.zookeeper.txn.CreateTTLTxn;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.DeleteTxn;
 import org.apache.zookeeper.txn.ErrorTxn;
+import org.apache.zookeeper.txn.GetChildrenTxn;
 import org.apache.zookeeper.txn.MultiTxn;
 import org.apache.zookeeper.txn.SetACLTxn;
 import org.apache.zookeeper.txn.SetDataTxn;
@@ -623,6 +625,18 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 checkACL(zks, request.cnxn, nodeRecord.acl, ZooDefs.Perms.READ, request.authInfo, path, null);
                 request.setTxn(new CheckVersionTxn(path, checkAndIncVersion(nodeRecord.stat.getVersion(),
                         checkVersionRequest.getVersion(), path)));
+                break;
+                // This Txn is created for getChildren only when it is used in a multi operation.
+            case OpCode.getChildren:
+                zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
+                GetChildrenRequest getChildrenRequest = (GetChildrenRequest)record;
+                if (deserialize)
+                    ByteBufferInputStream.byteBuffer2Record(request.request, getChildrenRequest);
+                path = getChildrenRequest.getPath();
+                nodeRecord = getRecordForPath(path);
+                DataNode n = zks.getZKDatabase().getNode(path);
+                checkACL(zks, request.cnxn, nodeRecord.acl, ZooDefs.Perms.READ, request.authInfo, path, null);
+                request.setTxn(new GetChildrenTxn(path, getChildrenRequest.getWatch()));
                 break;
             default:
                 LOG.warn("unknown type " + type);

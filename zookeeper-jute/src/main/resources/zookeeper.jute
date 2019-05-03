@@ -323,6 +323,10 @@ module org.apache.zookeeper.txn {
     class CreateSessionTxn {
         int timeOut;
     }
+    class GetChildrenTxn {
+        ustring path;
+        boolean watch;
+    }
     class ErrorTxn {
         int err;
     }

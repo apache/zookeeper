@@ -51,6 +51,7 @@ import org.apache.zookeeper.txn.CreateTTLTxn;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.DeleteTxn;
 import org.apache.zookeeper.txn.ErrorTxn;
+import org.apache.zookeeper.txn.GetChildrenTxn;
 import org.apache.zookeeper.txn.MultiTxn;
 import org.apache.zookeeper.txn.SetACLTxn;
 import org.apache.zookeeper.txn.SetDataTxn;
@@ -788,6 +789,8 @@ public class DataTree {
 
         public Stat stat;
 
+        public List<String> children;
+
         public List<ProcessTxnResult> multiResult;
 
         /**
@@ -917,6 +920,10 @@ public class DataTree {
                     CheckVersionTxn checkTxn = (CheckVersionTxn) txn;
                     rc.path = checkTxn.getPath();
                     break;
+                case OpCode.getChildren:
+                    GetChildrenTxn getChildrenTxn = (GetChildrenTxn) txn;
+                    rc.children = getChildren(getChildrenTxn.getPath(), null, null);
+                    break;
                 case OpCode.multi:
                     MultiTxn multiTxn = (MultiTxn) txn ;
                     List<Txn> txns = multiTxn.getTxns();
@@ -950,6 +957,9 @@ public class DataTree {
                             case OpCode.setData:
                                 record = new SetDataTxn();
                                 break;
+                            case OpCode.getChildren:
+                                record = new GetChildrenTxn();
+                                break;
                             case OpCode.error:
                                 record = new ErrorTxn();
                                 post_failed = true;
@@ -964,7 +974,9 @@ public class DataTree {
 
                         ByteBufferInputStream.byteBuffer2Record(bb, record);
 
-                        if (failed && subtxn.getType() != OpCode.error){
+                        if (failed && subtxn.getType() != OpCode.error &&
+                            // Before the error, the return values of getter methods are valid.
+                            (post_failed || subtxn.getType() != OpCode.getChildren)) {
                             int ec = post_failed ? Code.RUNTIMEINCONSISTENCY.intValue()
                                                  : Code.OK.intValue();
 
@@ -973,7 +985,8 @@ public class DataTree {
                         }
 
                         if (failed) {
-                            assert(subtxn.getType() == OpCode.error) ;
+                            assert(subtxn.getType() == OpCode.error ||
+                                   (!post_failed && subtxn.getType() == OpCode.getChildren));
                         }
 
                         TxnHeader subHdr = new TxnHeader(header.getClientId(), header.getCxid(),

@@ -38,6 +38,7 @@ import org.apache.zookeeper.OpResult.CheckResult;
 import org.apache.zookeeper.OpResult.CreateResult;
 import org.apache.zookeeper.OpResult.DeleteResult;
 import org.apache.zookeeper.OpResult.ErrorResult;
+import org.apache.zookeeper.OpResult.GetChildrenResult;
 import org.apache.zookeeper.OpResult.SetDataResult;
 import org.apache.zookeeper.Watcher.WatcherType;
 import org.apache.zookeeper.ZooDefs;
@@ -255,6 +256,10 @@ public class FinalRequestProcessor implements RequestProcessor {
                         case OpCode.setData:
                             subResult = new SetDataResult(subTxnResult.stat);
                             break;
+                        case OpCode.getChildren: {
+                            subResult = new GetChildrenResult(subTxnResult.children);
+                            break;
+                        }
                         case OpCode.error:
                             subResult = new ErrorResult(subTxnResult.err) ;
                             if (subTxnResult.err == Code.SESSIONMOVED.intValue()) {

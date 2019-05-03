@@ -20,6 +20,8 @@ package org.apache.zookeeper;
 
 import org.apache.zookeeper.data.Stat;
 
+import java.util.List;
+
 /**
  * Encodes the result of a single part of a multiple operation commit.
  */
@@ -161,6 +163,34 @@ public abstract class OpResult {
             if (!(o instanceof CheckResult)) return false;
 
             CheckResult other = (CheckResult) o;
+            return getType() == other.getType();
+        }
+
+        @Override
+        public int hashCode() {
+            return getType();
+        }
+    }
+
+    /**
+     * A result from a getChildren operation. This provides access to a list containing
+     * the names of the children of the given node.
+     */
+    public static class GetChildrenResult extends OpResult {
+        private List<String> children;
+        public GetChildrenResult(List<String> children) {
+            super(ZooDefs.OpCode.getChildren);
+            this.children = children;
+        }
+
+        public List<String> getChildren() { return children; }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof GetChildrenResult)) return false;
+
+            GetChildrenResult other = (GetChildrenResult) o;
             return getType() == other.getType();
         }
 

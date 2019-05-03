@@ -24,6 +24,7 @@ import org.apache.zookeeper.proto.CheckVersionRequest;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.CreateTTLRequest;
 import org.apache.zookeeper.proto.DeleteRequest;
+import org.apache.zookeeper.proto.GetChildrenRequest;
 import org.apache.zookeeper.proto.SetDataRequest;
 import org.apache.zookeeper.server.EphemeralType;
 
@@ -32,8 +33,8 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Represents a single operation in a multi-operation transaction.  Each operation can be a create, update
- * or delete or can just be a version check.
+ * Represents a single operation in a multi-operation transaction.  Each operation can be a create, update,
+ * delete, getChildren or can just be a version check.
  *
  * Sub-classes of Op each represent each detailed type but should not normally be referenced except via
  * the provided factory methods.
@@ -41,6 +42,7 @@ import java.util.List;
  * @see ZooKeeper#create(String, byte[], java.util.List, CreateMode)
  * @see ZooKeeper#create(String, byte[], java.util.List, CreateMode, org.apache.zookeeper.AsyncCallback.StringCallback, Object)
  * @see ZooKeeper#delete(String, int)
+ * @see ZooKeeper#getChildren(String, boolean)
  * @see ZooKeeper#setData(String, byte[], int)
  */
 public abstract class Op {
@@ -183,6 +185,18 @@ public abstract class Op {
      */
     public static Op check(String path, int version) {
         return new Check(path, version);
+    }
+
+    /**
+     * Constructs an getChildren operation.  Arguments are as for the ZooKeeper.getChildren method except that
+     * the WatchRegistration is not supported yet. This way, the only argument that need to be provided is the
+     * path of the given node.
+     *
+     * @param path
+     *                the path of the node
+     */
+    public static Op getChildren(String path) {
+        return new GetChildren(path);
     }
 
     /**
@@ -446,6 +460,38 @@ public abstract class Op {
         @Override
         Op withChroot(String path) {
             return new Check(path, version);
+        }
+    }
+
+    public static class GetChildren extends Op {
+
+        private GetChildren(String path) {
+            super(ZooDefs.OpCode.getChildren, path);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof GetChildren)) return false;
+
+            GetChildren op = (GetChildren) o;
+
+            return getType() == op.getType() && getPath().equals(op.getPath());
+        }
+
+        @Override
+        public int hashCode() {
+            return getType() + getPath().hashCode();
+        }
+
+        @Override
+        public Record toRequestRecord() {
+            return new GetChildrenRequest(getPath(), false);
+        }
+
+        @Override
+        Op withChroot(String path) {
+            return new GetChildren(path);
         }
     }
 

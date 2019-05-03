@@ -73,6 +73,7 @@ public class MultiTransactionRecord implements Record, Iterable<Op> {
                 case ZooDefs.OpCode.delete:
                 case ZooDefs.OpCode.setData:
                 case ZooDefs.OpCode.check:
+                case ZooDefs.OpCode.getChildren:
                     op.toRequestRecord().serialize(archive, tag);
                     break;
                 default:
@@ -117,6 +118,11 @@ public class MultiTransactionRecord implements Record, Iterable<Op> {
                     CheckVersionRequest cvr = new CheckVersionRequest();
                     cvr.deserialize(archive, tag);
                     add(Op.check(cvr.getPath(), cvr.getVersion()));
+                    break;
+                case ZooDefs.OpCode.getChildren:
+                    GetChildrenRequest gcr = new GetChildrenRequest();
+                    gcr.deserialize(archive, tag);
+                    add(Op.getChildren(gcr.getPath()));
                     break;
                 default:
                     throw new IOException("Invalid type of op");
