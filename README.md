@@ -9,8 +9,7 @@ and our wiki, at:
 
    https://cwiki.apache.org/confluence/display/ZOOKEEPER
 
----------------------------
-Packaging/release artifacts
+## Packaging/release artifacts
 
 Either downloaded from https://zookeeper.apache.org/releases.html or
 found in zookeeper-assembly/target directory after building the project with maven.
@@ -35,12 +34,12 @@ is voted on and approved by the Apache ZooKeeper PMC:
 
   https://repo1.maven.org/maven2/org/apache/zookeeper/zookeeper/
 
-# Java 8
+## Java 8
 
 If you are going to compile with Java 1.8, you should use a
 recent release at u211 or above. 
 
-# Contributing
+## Contributing
 We always welcome new contributors to the project! See [How to Contribute](https://cwiki.apache.org/confluence/display/ZOOKEEPER/HowToContribute) for details on how to submit patch through pull request and our contribution workflow.
 
 
