@@ -41,8 +41,9 @@ import org.slf4j.LoggerFactory;
  * will be stored in the zookeeper data tree instance as a virtual data tree.
  */
 public class MBeanRegistry {
+    public static final String DOMAIN = "org.apache.ZooKeeperService";
+
     private static final Logger LOG = LoggerFactory.getLogger(MBeanRegistry.class);
-    
     private static volatile MBeanRegistry instance = new MBeanRegistry();
     
     private final Object LOCK = new Object();
@@ -205,7 +206,7 @@ public class MBeanRegistry {
     {
         if(path==null)
             return null;
-        StringBuilder beanName = new StringBuilder(CommonNames.DOMAIN + ":");
+        StringBuilder beanName = new StringBuilder(DOMAIN + ":");
         int counter=0;
         counter=tokenize(beanName,path,counter);
         tokenize(beanName,bean.getName(),counter);
