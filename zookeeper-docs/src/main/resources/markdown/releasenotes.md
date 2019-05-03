@@ -16,6 +16,9 @@ limitations under the License.
 
 # Release Notes - ZooKeeper - Version 3.5.5
 
+Java 8 users: if you are going to compile with Java 1.8, you should use a
+recent release at u211 or above. 
+
 ## Sub-task
 * [ZOOKEEPER-2168](https://issues.apache.org/jira/browse/ZOOKEEPER-2168) - Add C APIs for new createContainer Methods
 * [ZOOKEEPER-2481](https://issues.apache.org/jira/browse/ZOOKEEPER-2481) - Flaky Test: testZeroWeightQuorum
