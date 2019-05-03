@@ -57,7 +57,7 @@ public class WriteLock extends ProtocolSupport {
      * zookeeper contructor for writelock
      * @param zookeeper zookeeper client instance
      * @param dir the parent path you want to use for locking
-     * @param acls the acls that you want to use for all the paths, 
+     * @param acl the acls that you want to use for all the paths,
      * if null world read/write is used.
      */
     public WriteLock(ZooKeeper zookeeper, String dir, List<ACL> acl) {
