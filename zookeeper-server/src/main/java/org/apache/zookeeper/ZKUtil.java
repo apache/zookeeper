@@ -99,6 +99,10 @@ public class ZKUtil {
             ops.add(Op.delete(tree.get(i), -1));
 
             if (ops.size() == batchSize || i == 0) {
+                if (!context.success.get()) {
+                    // fail fast
+                    break;
+                }
                 context.sem.acquire();
                 zk.multi(ops, cb, context);
                 ops = new ArrayList<>();
