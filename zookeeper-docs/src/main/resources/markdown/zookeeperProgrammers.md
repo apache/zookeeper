@@ -1064,8 +1064,8 @@ guarantees:
     results.
 
 * *Single System Image* :
-    A client will see the same view of the service regardless of
-    the server that it connects to.
+    Once connected, a client will see the same view of the service even
+    if it switches to another server.
 
 * *Reliability* :
     Once an update has been applied, it will persist from that
