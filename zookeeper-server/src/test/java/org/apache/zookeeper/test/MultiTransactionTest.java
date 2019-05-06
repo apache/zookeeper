@@ -844,15 +844,36 @@ public class MultiTransactionTest extends ClientBase {
             List<String> children = zk.getChildren(nodeName, false);
             Assert.assertEquals(childrenList, children);
         }
+    }
 
-        // Check for getting the children of the same node twice
+    @Test
+    public void testMultiGetChildrenSameNode() throws Exception {
+        List<String> childrenNodes = new ArrayList<String>();
+        // Creating a database where '/foo' node has 'barX' named children.
+        String topLevelNode = "/foo";
+        zk.create(topLevelNode, topLevelNode.getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        for (int i = 0; i < 10; i++) {
+            String childname = topLevelNode + "/bar" + i;
+            String childname_s = "bar" + i;
+            zk.create(childname, childname.getBytes(), Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.EPHEMERAL);
+            childrenNodes.add(childname_s);
+        }
+
+        // Check for getting the children of the same node twice.
         List<OpResult> sameChildrenList = multi(zk, Arrays.asList(
-                Op.getChildren(topLevelNodes.get(0)),
-                Op.getChildren(topLevelNodes.get(0))));
-
+                Op.getChildren(topLevelNode),
+                Op.getChildren(topLevelNode)));
+        // The response should contain two elements which are the same.
         Assert.assertEquals(sameChildrenList.size(), 2);
-        Assert.assertEquals(sameChildrenList.get(0), multiChildrenList.get(0));
         Assert.assertEquals(sameChildrenList.get(0), sameChildrenList.get(1));
+        // Check the actual result.
+        Assert.assertTrue(sameChildrenList.get(0) instanceof OpResult.GetChildrenResult);
+        OpResult.GetChildrenResult gcr = (OpResult.GetChildrenResult) sameChildrenList.get(0);
+        // In general, we do not demand an order from the children list but to contain every child.
+        Assert.assertEquals(new TreeSet<String>(gcr.getChildren()),
+                            new TreeSet<String>(childrenNodes));
     }
 
     @Test
@@ -887,30 +908,17 @@ public class MultiTransactionTest extends ClientBase {
         } else {
             Assert.assertNull(multiChildrenList);
         }
-        // Check for using mixed nodes - throws exception as well.
-        // The getChildren operation returns GetChildrenResult if it happened before the error.
-        try {
-            multiChildrenList = multi(zk, Arrays.asList(Op.getChildren("/foo_auth"), Op.getChildren("/foo_no_auth")));
-            Assert.fail("Expected NoAuthException for getting the children of a write only node");
-        } catch (KeeperException.NoAuthException e) {
-            // Expected.
-            multiChildrenList = e.getResults();
-        }
+    }
 
-        if (!useAsync) {
-            Assert.assertEquals(multiChildrenList.size(), 2);
+    @Test
+    public void testMultiGetChildrenMixedAuthentication() throws KeeperException, InterruptedException {
+        List<ACL> writeOnly = Collections.singletonList(new ACL(ZooDefs.Perms.WRITE,
+                new Id("world", "anyone")));
+        zk.create("/foo_auth", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/foo_auth/bar", null, Ids.READ_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/foo_no_auth", null, writeOnly, CreateMode.PERSISTENT);
+        List<OpResult> multiChildrenList;
 
-            Assert.assertTrue(multiChildrenList.get(0) instanceof OpResult.GetChildrenResult);
-            childrenList = ((OpResult.GetChildrenResult) multiChildrenList.get(0)).getChildren();
-            Assert.assertEquals(childrenList.size(), 1);
-            Assert.assertEquals(childrenList.get(0), "bar");
-
-            Assert.assertTrue(multiChildrenList.get(1) instanceof OpResult.ErrorResult);
-            Assert.assertEquals("Expected NoAuthException for getting the childrens of a write only node",
-                    ((OpResult.ErrorResult) multiChildrenList.get(1)).getErr(), KeeperException.Code.NOAUTH.intValue());
-        } else {
-            Assert.assertNull(multiChildrenList);
-        }
         // Mixed nodes, the operation after the error should return RuntimeInconsistency error.
         try {
             multiChildrenList = multi(zk, Arrays.asList(Op.getChildren("/foo_no_auth"), Op.getChildren("/foo_auth")));
@@ -923,12 +931,46 @@ public class MultiTransactionTest extends ClientBase {
         if (!useAsync) {
             Assert.assertEquals(multiChildrenList.size(), 2);
             Assert.assertTrue(multiChildrenList.get(0) instanceof OpResult.ErrorResult);
-            Assert.assertEquals("Expected NoAuthException for getting the childrens of a write only node",
+            Assert.assertEquals("Expected NoAuthException for getting the children of a write only node",
                     ((OpResult.ErrorResult) multiChildrenList.get(0)).getErr(), KeeperException.Code.NOAUTH.intValue());
 
             Assert.assertTrue(multiChildrenList.get(1) instanceof OpResult.ErrorResult);
             Assert.assertEquals("Expected RunTimeInconsistency for being a later request than the error resulting one",
                     ((OpResult.ErrorResult) multiChildrenList.get(1)).getErr(), KeeperException.Code.RUNTIMEINCONSISTENCY.intValue());
+        } else {
+            Assert.assertNull(multiChildrenList);
+        }
+    }
+
+    @Test
+    public void testMultiGetChildrenMixedAuthentication2() throws KeeperException, InterruptedException {
+        List<ACL> writeOnly = Collections.singletonList(new ACL(ZooDefs.Perms.WRITE,
+                new Id("world", "anyone")));
+        zk.create("/foo_auth", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/foo_auth/bar", null, Ids.READ_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/foo_no_auth", null, writeOnly, CreateMode.PERSISTENT);
+
+        // Check for using mixed nodes - throws exception as well.
+        // The getChildren operation returns GetChildrenResult if it happened before the error.
+        List<OpResult> multiChildrenList;
+        try {
+            multiChildrenList = multi(zk, Arrays.asList(Op.getChildren("/foo_auth"), Op.getChildren("/foo_no_auth")));
+            Assert.fail("Expected NoAuthException for getting the children of a write only node");
+        } catch (KeeperException.NoAuthException e) {
+            // Expected.
+            multiChildrenList = e.getResults();
+        }
+
+        if (!useAsync) {
+            Assert.assertEquals(multiChildrenList.size(), 2);
+            Assert.assertTrue(multiChildrenList.get(0) instanceof OpResult.GetChildrenResult);
+            List<String> childrenList = ((OpResult.GetChildrenResult) multiChildrenList.get(0)).getChildren();
+            Assert.assertEquals(childrenList.size(), 1);
+            Assert.assertEquals(childrenList.get(0), "bar");
+
+            Assert.assertTrue(multiChildrenList.get(1) instanceof OpResult.ErrorResult);
+            Assert.assertEquals("Expected NoAuthException for getting the children of a write only node",
+                    ((OpResult.ErrorResult) multiChildrenList.get(1)).getErr(), KeeperException.Code.NOAUTH.intValue());
         } else {
             Assert.assertNull(multiChildrenList);
         }

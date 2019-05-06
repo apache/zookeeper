@@ -191,7 +191,7 @@ public abstract class OpResult {
             if (!(o instanceof GetChildrenResult)) return false;
 
             GetChildrenResult other = (GetChildrenResult) o;
-            return getType() == other.getType();
+            return getType() == other.getType() && children.equals(other.children);
         }
 
         @Override

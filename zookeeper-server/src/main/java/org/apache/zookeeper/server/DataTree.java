@@ -974,8 +974,9 @@ public class DataTree {
 
                         ByteBufferInputStream.byteBuffer2Record(bb, record);
 
+                        // For getChildren requests we'd like to the see the results of
+                        // requests which was made before the error in the multi operation.
                         if (failed && subtxn.getType() != OpCode.error &&
-                            // Before the error, the return values of getter methods are valid.
                             (post_failed || subtxn.getType() != OpCode.getChildren)) {
                             int ec = post_failed ? Code.RUNTIMEINCONSISTENCY.intValue()
                                                  : Code.OK.intValue();
