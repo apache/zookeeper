@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.ProtocolException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
@@ -53,6 +54,8 @@ public class NettyServerCnxnTest extends ClientBase {
         System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY,
                 "org.apache.zookeeper.server.NettyServerCnxnFactory");
         NettyServerCnxnFactory.setTestAllocator(TestByteBufAllocator.getInstance());
+        super.maxCnxns = 1;
+        super.exceptionOnFailedConnect = true;
         super.setUp();
     }
 
@@ -107,6 +110,22 @@ public class NettyServerCnxnTest extends ClientBase {
             Assert.assertEquals(0, zkServer.getZKDatabase().getDataTree().getWatchCount());
         } finally {
             zk.close();
+        }
+    }
+
+    /**
+     * In the {@link #setUp()} routine, the maximum number of connections per IP
+     * is set to 1. This tests that if more than one connection is attempted, the
+     * connection fails.
+     */
+    @Test(timeout = 40000, expected = ProtocolException.class)
+    public void testMaxConnectionPerIpSurpased() throws Exception {
+        Assert.assertTrue(
+                "Did not instantiate ServerCnxnFactory with NettyServerCnxnFactory!",
+                serverFactory instanceof NettyServerCnxnFactory);
+
+        try (final ZooKeeper zk1 = createClient();
+            final ZooKeeper zk2 = createClient();) {
         }
     }
 

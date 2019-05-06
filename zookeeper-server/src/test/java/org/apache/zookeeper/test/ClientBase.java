@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.net.ProtocolException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -78,6 +79,7 @@ public abstract class ClientBase extends ZKTestCase {
     protected int maxCnxns = 0;
     protected ServerCnxnFactory serverFactory = null;
     protected File tmpDir = null;
+    protected boolean exceptionOnFailedConnect = false;
 
     long initialFdCount;
 
@@ -230,6 +232,9 @@ public abstract class ClientBase extends ZKTestCase {
         TestableZooKeeper zk = new TestableZooKeeper(hp, timeout, watcher);
         if (!watcher.clientConnected.await(timeout, TimeUnit.MILLISECONDS))
         {
+            if (exceptionOnFailedConnect) {
+              throw new ProtocolException("Unable to connect to server");
+            }
             Assert.fail("Unable to connect to server");
         }
         synchronized(this) {
