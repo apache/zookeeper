@@ -192,6 +192,11 @@ public final class ServerMetrics {
         LEARNER_PROPOSAL_RECEIVED_COUNT = metricsContext.getCounter("learner_proposal_received_count");
         LEARNER_COMMIT_RECEIVED_COUNT = metricsContext.getCounter("learner_commit_received_count");
 
+        /**
+         * Learner handler quorum packet metrics.
+         */
+        LEARNER_HANDLER_QP_SIZE = metricsContext.getSummarySet("learner_handler_qp_size", DetailLevel.BASIC);
+        LEARNER_HANDLER_QP_TIME = metricsContext.getSummarySet("learner_handler_qp_time_ms", DetailLevel.ADVANCED);
     }
 
     /**
@@ -286,6 +291,12 @@ public final class ServerMetrics {
     public final Summary DEAD_WATCHERS_CLEANER_LATENCY;
     public final Counter RESPONSE_PACKET_CACHE_HITS;
     public final Counter RESPONSE_PACKET_CACHE_MISSING;
+
+    /**
+     * Learner handler quorum packet metrics.
+     */
+    public final SummarySet LEARNER_HANDLER_QP_SIZE;
+    public final SummarySet LEARNER_HANDLER_QP_TIME;
 
     /*
      * Number of requests that are in the session queue.
