@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server.metric;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -69,7 +70,7 @@ public class AvgMinMaxCounter extends Metric
         if (currentCount > 0) {
             double avgLatency = currentTotal / (double)currentCount;
             BigDecimal bg = new BigDecimal(avgLatency);
-            return bg.setScale(4, BigDecimal.ROUND_HALF_UP).doubleValue();
+            return bg.setScale(4, RoundingMode.HALF_UP).doubleValue();
         }
         return 0;
     }

@@ -39,7 +39,8 @@ public class WatchManagerFactory {
         }
         try {
             IWatchManager watchManager =
-                    (IWatchManager) Class.forName(watchManagerName).newInstance();
+                    (IWatchManager) Class.forName(watchManagerName)
+                            .getConstructor().newInstance();
             LOG.info("Using {} as watch manager", watchManagerName);
             return watchManager;
         } catch (Exception e) {

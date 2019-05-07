@@ -17,6 +17,7 @@
  */
 package org.apache.zookeeper.metrics.impl;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Properties;
 import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
@@ -34,11 +35,12 @@ public abstract class MetricsProviderBootstrap {
             throws MetricsProviderLifeCycleException {
         try {
             MetricsProvider metricsProvider = (MetricsProvider) Class.forName(metricsProviderClassName,
-                    true, Thread.currentThread().getContextClassLoader()).newInstance();
+                    true, Thread.currentThread().getContextClassLoader()).getConstructor().newInstance();
             metricsProvider.configure(configuration);
             metricsProvider.start();
             return metricsProvider;
-        } catch (ClassNotFoundException | IllegalAccessException | InstantiationException error) {
+        } catch (ClassNotFoundException | IllegalAccessException
+                | InvocationTargetException | NoSuchMethodException | InstantiationException error) {
             LOG.error("Cannot boot MetricsProvider {}", metricsProviderClassName, error);
             throw new MetricsProviderLifeCycleException("Cannot boot MetricsProvider " + metricsProviderClassName,
                     error);

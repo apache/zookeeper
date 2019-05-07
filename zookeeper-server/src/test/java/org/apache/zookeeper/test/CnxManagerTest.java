@@ -245,10 +245,10 @@ public class CnxManagerTest extends ZKTestCase {
         SocketChannel sc = SocketChannel.open();
         sc.socket().connect(peers.get(1L).electionAddr, 5000);
 
-        InetSocketAddress otherAddr = peers.get(new Long(2)).electionAddr;
+        InetSocketAddress otherAddr = peers.get(Long.valueOf(2)).electionAddr;
         DataOutputStream dout = new DataOutputStream(sc.socket().getOutputStream());
         dout.writeLong(QuorumCnxManager.PROTOCOL_VERSION);
-        dout.writeLong(new Long(2));
+        dout.writeLong(2);
         String addr = otherAddr.getHostString()+ ":" + otherAddr.getPort();
         byte[] addr_bytes = addr.getBytes();
         dout.writeInt(addr_bytes.length);

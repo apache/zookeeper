@@ -56,7 +56,7 @@ public class ZKTestCase {
             // ZOOKEEPER-2693 disables all 4lw by default.
             // Here we enable the 4lw which ZooKeeper tests depends.
             System.setProperty("zookeeper.4lw.commands.whitelist", "*");
-            testName = method.getDisplayName();
+            testName = method.getMethodName();
             LOG.info("STARTING " + testName);
         }
 
