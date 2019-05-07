@@ -774,7 +774,7 @@ property, when available, is noted below.
     dropping.
     This parameter defines the interval in milliseconds when the dropping
     probability is adjusted. When set to -1, probabilistic dropping is disabled.
-    Default is -1.     
+    Default is -1.
 
 * *connectionDropIncrease* :
     (Java system property: **zookeeper.connection_throttle_drop_increase**)
@@ -907,6 +907,13 @@ of servers -- that is, when deploying clusters of servers.
     Only applicable if you are using electionAlg 3.
     ###### Note
     >Default value is 5 seconds.
+
+* *quorumCnxnTimeoutMs* :
+    (Java system property: zookeeper.**quorumCnxnTimeoutMs**)
+    Sets the read timeout value for the connections for leader election notifications.
+    Only applicable if you are using electionAlg 3.
+    ######Note
+    >Default value is -1, which will then use the syncLimit * tickTime as the timeout.
 
 * *standaloneEnabled* :
     (No Java system property)
