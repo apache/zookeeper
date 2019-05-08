@@ -112,6 +112,8 @@
         <include>ivysettings.xml</include>
         <include>excludeFindBugsFilter.xml</include>
         <include>owaspSuppressions.xml</include>
+        <include>checktyle.xml</include>
+        <include>checktyleSuppressions.xml</include>
       </includes>
       <fileMode>${rw.file.permission}</fileMode>
     </fileSet>
