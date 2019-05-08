@@ -44,7 +44,7 @@ public class FourLetterWordsTest extends ClientBase {
         LoggerFactory.getLogger(FourLetterWordsTest.class);
 
     @Rule
-    public Timeout timeout = new Timeout(30000);
+    public Timeout timeout = Timeout.millis(30000);
 
     /** Test the various four letter words */
     @Test

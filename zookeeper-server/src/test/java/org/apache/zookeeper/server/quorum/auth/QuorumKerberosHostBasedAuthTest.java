@@ -34,10 +34,9 @@ import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import junit.framework.Assert;
 
 public class QuorumKerberosHostBasedAuthTest extends KerberosSecurityTestcase {
     private static File keytabFile;
