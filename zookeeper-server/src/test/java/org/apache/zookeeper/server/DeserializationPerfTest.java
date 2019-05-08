@@ -35,7 +35,7 @@ public class DeserializationPerfTest extends ZKTestCase {
     protected static final Logger LOG = LoggerFactory.getLogger(DeserializationPerfTest.class);
 
     private static void deserializeTree(int depth, int width, int len)
-            throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+            throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException, KeeperException.QuotaExceedException {
         BinaryInputArchive ia;
         int count;
         {
@@ -70,49 +70,49 @@ public class DeserializationPerfTest extends ZKTestCase {
 
     @Test
     public void testSingleDeserialize() throws
-            InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+            InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException, KeeperException.QuotaExceedException {
         deserializeTree(1, 0, 20);
     }
 
     @Test
     public void testWideDeserialize() throws
-            InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+            InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException, KeeperException.QuotaExceedException {
         deserializeTree(2, 10000, 20);
     }
 
     @Test
     public void testDeepDeserialize() throws
-            InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+            InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException, KeeperException.QuotaExceedException {
         deserializeTree(400, 1, 20);
     }
 
     @Test
     public void test10Wide5DeepDeserialize() throws
-            InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+            InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException, KeeperException.QuotaExceedException {
         deserializeTree(5, 10, 20);
     }
 
     @Test
     public void test15Wide5DeepDeserialize() throws
-            InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+            InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException, KeeperException.QuotaExceedException {
         deserializeTree(5, 15, 20);
     }
 
     @Test
     public void test25Wide4DeepDeserialize() throws
-            InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+            InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException, KeeperException.QuotaExceedException {
         deserializeTree(4, 25, 20);
     }
 
     @Test
     public void test40Wide4DeepDeserialize() throws
-            InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+            InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException, KeeperException.QuotaExceedException {
         deserializeTree(4, 40, 20);
     }
 
     @Test
     public void test300Wide3DeepDeserialize() throws
-            InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+            InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException, KeeperException.QuotaExceedException {
         deserializeTree(3, 300, 20);
     }
 

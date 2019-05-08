@@ -38,7 +38,7 @@ public class SerializationPerfTest extends ZKTestCase {
     }
 
     static int createNodes(DataTree tree, String path, int depth,
-            int childcount, int parentCVersion, byte[] data) throws KeeperException.NodeExistsException, KeeperException.NoNodeException {
+            int childcount, int parentCVersion, byte[] data) throws KeeperException.NodeExistsException, KeeperException.NoNodeException, KeeperException.QuotaExceedException {
         path += "node" + depth;
         tree.createNode(path, data, null, -1, ++parentCVersion, 1, 1);
 
@@ -57,7 +57,7 @@ public class SerializationPerfTest extends ZKTestCase {
     }
 
     private static void serializeTree(int depth, int width, int len)
-            throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+            throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException, KeeperException.QuotaExceedException {
         DataTree tree = new DataTree();
         createNodes(tree, "/", depth, width, tree.getNode("/").stat.getCversion(), new byte[len]);
         int count = tree.getNodeCount();
@@ -77,49 +77,49 @@ public class SerializationPerfTest extends ZKTestCase {
 
     @Test
     public void testSingleSerialize()
-            throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+            throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException, KeeperException.QuotaExceedException {
         serializeTree(1, 0, 20);
     }
 
     @Test
     public void testWideSerialize()
-            throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+            throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException, KeeperException.QuotaExceedException {
         serializeTree(2, 10000, 20);
     }
 
     @Test
     public void testDeepSerialize()
-            throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+            throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException, KeeperException.QuotaExceedException {
         serializeTree(400, 1, 20);
     }
 
     @Test
     public void test10Wide5DeepSerialize()
-            throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+            throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException, KeeperException.QuotaExceedException {
         serializeTree(5, 10, 20);
     }
 
     @Test
     public void test15Wide5DeepSerialize()
-            throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+            throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException, KeeperException.QuotaExceedException {
         serializeTree(5, 15, 20);
     }
 
     @Test
     public void test25Wide4DeepSerialize()
-            throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+            throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException, KeeperException.QuotaExceedException {
         serializeTree(4, 25, 20);
     }
 
     @Test
     public void test40Wide4DeepSerialize()
-            throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+            throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException, KeeperException.QuotaExceedException {
         serializeTree(4, 40, 20);
     }
 
     @Test
     public void test300Wide3DeepSerialize()
-            throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException {
+            throws InterruptedException, IOException, KeeperException.NodeExistsException, KeeperException.NoNodeException, KeeperException.QuotaExceedException {
         serializeTree(3, 300, 20);
     }
 }

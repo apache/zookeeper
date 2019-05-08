@@ -25,6 +25,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
+import org.apache.zookeeper.KeeperException.QuotaExceedException;
 import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.StatsTrack;
 import org.apache.zookeeper.WatchedEvent;
@@ -347,7 +348,8 @@ public class DataTree {
      * @param countDiff
      *            the diff to be added to the count
      */
-    public void updateCountBytes(String lastPrefix, long bytesDiff, int countDiff) {
+    public void updateCountBytes(String lastPrefix, long bytesDiff, int countDiff)
+            throws KeeperException.QuotaExceedException {
         String statNode = Quotas.statPath(lastPrefix);
         DataNode node = nodes.get(statNode);
 
@@ -379,11 +381,13 @@ public class DataTree {
             LOG.warn("Quota exceeded: " + lastPrefix + " count="
                     + updatedStat.getCount() + " limit="
                     + thisStats.getCount());
+            throw new KeeperException.QuotaExceedException(lastPrefix);
         }
         if (thisStats.getBytes() > -1 && (thisStats.getBytes() < updatedStat.getBytes())) {
             LOG.warn("Quota exceeded: " + lastPrefix + " bytes="
                     + updatedStat.getBytes() + " limit="
                     + thisStats.getBytes());
+            throw new KeeperException.QuotaExceedException(lastPrefix);
         }
     }
 
@@ -407,7 +411,7 @@ public class DataTree {
      */
     public void createNode(final String path, byte data[], List<ACL> acl,
             long ephemeralOwner, int parentCVersion, long zxid, long time)
-    		throws NoNodeException, NodeExistsException {
+    		throws NoNodeException, NodeExistsException, QuotaExceedException {
     	createNode(path, data, acl, ephemeralOwner, parentCVersion, zxid, time, null);
     }
 
@@ -434,7 +438,8 @@ public class DataTree {
     public void createNode(final String path, byte data[], List<ACL> acl,
             long ephemeralOwner, int parentCVersion, long zxid, long time, Stat outputStat)
             throws KeeperException.NoNodeException,
-            KeeperException.NodeExistsException {
+            KeeperException.NodeExistsException,
+            KeeperException.QuotaExceedException {
         int lastSlash = path.lastIndexOf('/');
         String parentName = path.substring(0, lastSlash);
         String childName = path.substring(lastSlash + 1);
@@ -608,7 +613,12 @@ public class DataTree {
             synchronized (node) {
                 bytes = (node.data == null ? 0 : -(node.data.length));
             }
-            updateCountBytes(lastPrefix, bytes,-1);
+            try {
+                updateCountBytes(lastPrefix, bytes,-1);
+            } catch (QuotaExceedException e) {
+                //fuck
+                e.printStackTrace();
+            }
         }
 
         updateWriteStat(path, 0L);
@@ -627,7 +637,8 @@ public class DataTree {
     }
 
     public Stat setData(String path, byte data[], int version, long zxid,
-            long time) throws KeeperException.NoNodeException {
+            long time) throws KeeperException.NoNodeException,
+            KeeperException.QuotaExceedException {
         Stat s = new Stat();
         DataNode n = nodes.get(path);
         if (n == null) {
@@ -646,6 +657,7 @@ public class DataTree {
         String lastPrefix = getMaxPrefixWithQuota(path);
         long dataBytes = data == null ? 0 : data.length;
         if(lastPrefix != null) {
+            LOG.info("fuck_____lastPrefix:");
             this.updateCountBytes(lastPrefix, dataBytes
                     - (lastdata == null ? 0 : lastdata.length), 0);
         }
