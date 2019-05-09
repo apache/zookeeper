@@ -22,6 +22,7 @@ import java.io.IOException;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.KeeperException.QuotaExceedException;
 import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.StatsTrack;
 import org.apache.zookeeper.ZooKeeper;
@@ -75,5 +76,61 @@ public class ZooKeeperQuotaTest extends ClientBase {
         ZooKeeperServer server = getServer(serverFactory);
         Assert.assertNotNull("Quota is still set",
             server.getZKDatabase().getDataTree().getMaxPrefixWithQuota(path) != null);
+    }
+
+    @Test(expected = QuotaExceedException.class)
+    public void testSetExceedBytesQuota() throws Exception {
+
+        final ZooKeeper zk = createClient();
+        final String path = "/test/quota";
+        zk.create("/test", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/test/quota", "data".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        ZooKeeperMain.createQuota(zk, path, 5L, 10);
+        zk.setData("/test/quota", "newdata".getBytes(), -1);
+    }
+
+    @Test//(expected = QuotaExceedException.class)
+    public void testSetOnChildExceedBytesQuota() throws Exception {
+
+        final ZooKeeper zk = createClient();
+        final String path = "/test/quota";
+        zk.create("/test", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/test/quota", "data".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        zk.create("/test/quota/data", "data".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        ZooKeeperMain.createQuota(zk, path, 5L, 10);
+        try {
+            zk.setData("/test/quota/data", "newdata".getBytes(), -1);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test(expected = QuotaExceedException.class)
+    public void testCreateExceedBytesQuota() throws Exception {
+
+        final ZooKeeper zk = createClient();
+        final String path = "/test/quota";
+        zk.create("/test", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/test/quota", "data".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        ZooKeeperMain.createQuota(zk, path, 5L, 10);
+        zk.create("/test/quota/data", "data".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+    }
+
+    @Test(expected = QuotaExceedException.class)
+    public void testCreateExceedCountQuota() throws Exception {
+
+        final ZooKeeper zk = createClient();
+        final String path = "/test/quota";
+        zk.create("/test", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/test/quota", "data".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        ZooKeeperMain.createQuota(zk, path, 100L, 1);
+        zk.create("/test/quota/data", "data".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
     }
 }

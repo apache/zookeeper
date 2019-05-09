@@ -359,11 +359,17 @@ public class DataTree {
             LOG.error("Missing count node for stat " + statNode);
             return;
         }
+        if(updatedStat!=null) {
+            System.out.println("fuck_updateCountBytes:" + updatedStat.getCount() + "," + countDiff + "," + updatedStat.getCount());
+        }
         synchronized (node) {
             updatedStat = new StatsTrack(new String(node.data));
             updatedStat.setCount(updatedStat.getCount() + countDiff);
             updatedStat.setBytes(updatedStat.getBytes() + bytesDiff);
             node.data = updatedStat.toString().getBytes();
+        }
+        if(updatedStat!=null) {
+            System.out.println("fuck_updateCountBytes2:" + updatedStat.getCount());
         }
         // now check if the counts match the quota
         String quotaNode = Quotas.quotaPath(lastPrefix);
@@ -377,13 +383,16 @@ public class DataTree {
         synchronized (node) {
             thisStats = new StatsTrack(new String(node.data));
         }
-        if (thisStats.getCount() > -1 && (thisStats.getCount() < updatedStat.getCount())) {
+        if(updatedStat!=null) {
+            System.out.println("fuck_updateCountBytes3:" + updatedStat.getCount() + "," + thisStats.getCount());
+        }
+        if (thisStats.getCount() > -1 && (updatedStat.getCount() > thisStats.getCount())) {
             LOG.warn("Quota exceeded: " + lastPrefix + " count="
                     + updatedStat.getCount() + " limit="
                     + thisStats.getCount());
             throw new KeeperException.QuotaExceedException(lastPrefix);
         }
-        if (thisStats.getBytes() > -1 && (thisStats.getBytes() < updatedStat.getBytes())) {
+        if (thisStats.getBytes() > -1 && (updatedStat.getBytes() > thisStats.getBytes())) {
             LOG.warn("Quota exceeded: " + lastPrefix + " bytes="
                     + updatedStat.getBytes() + " limit="
                     + thisStats.getBytes());
@@ -528,6 +537,7 @@ public class DataTree {
         String lastPrefix = getMaxPrefixWithQuota(path);
         long bytes = data == null ? 0 : data.length;
         if(lastPrefix != null) {
+            LOG.info("fuck_createData_lastPrefix:" + lastPrefix + " has a quota");
             // ok we have some match and need to update
             updateCountBytes(lastPrefix, bytes, 1);
         }
@@ -657,7 +667,6 @@ public class DataTree {
         String lastPrefix = getMaxPrefixWithQuota(path);
         long dataBytes = data == null ? 0 : data.length;
         if(lastPrefix != null) {
-            LOG.info("fuck_____lastPrefix:");
             this.updateCountBytes(lastPrefix, dataBytes
                     - (lastdata == null ? 0 : lastdata.length), 0);
         }

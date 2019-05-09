@@ -17,7 +17,6 @@
  */
 package org.apache.zookeeper.cli;
 
-import java.io.IOException;
 import java.util.List;
 import org.apache.commons.cli.*;
 import org.apache.zookeeper.*;
@@ -43,7 +42,7 @@ public class SetQuotaCommand extends CliCommand {
         og1.addOption(new Option("n", true, "num quota"));
         og1.setRequired(true);
         options.addOptionGroup(og1);
-   }
+    }
 
     @Override
     public CliCommand parse(String[] cmdArgs) throws CliParseException {
@@ -71,7 +70,7 @@ public class SetQuotaCommand extends CliCommand {
             long bytes = Long.parseLong(cl.getOptionValue("b"));
             try {
                 createQuota(zk, path, bytes, -1);
-            } catch (KeeperException|IOException|InterruptedException ex) {
+            } catch (KeeperException|InterruptedException ex) {
                 throw new CliWrapperException(ex);
             }
         } else if (cl.hasOption("n")) {
@@ -79,7 +78,7 @@ public class SetQuotaCommand extends CliCommand {
             int numNodes = Integer.parseInt(cl.getOptionValue("n"));
             try {
                 createQuota(zk, path, -1L, numNodes);
-            } catch (KeeperException|IOException|InterruptedException ex) {
+            } catch (KeeperException|InterruptedException ex) {
                 throw new CliWrapperException(ex);
             }
         } else {
@@ -91,9 +90,9 @@ public class SetQuotaCommand extends CliCommand {
 
     public static boolean createQuota(ZooKeeper zk, String path,
             long bytes, int numNodes)
-            throws KeeperException, IOException, InterruptedException, MalformedPathException {
+            throws KeeperException, InterruptedException, MalformedPathException {
         // check if the path exists. We cannot create
-        // quota for a path that already exists in zookeeper
+        // quota for a path that doesn't exist in zookeeper
         // for now.
         Stat initStat;
         try {

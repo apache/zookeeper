@@ -54,7 +54,7 @@ public class CliWrapperException extends CliException {
                         "up-to-date with the leader of last commmitted config - try invoking reconfiguration after " +
                         "new servers are connected and synced";
             }else if (keeperException instanceof KeeperException.QuotaExceedException) {
-                return "fuck quota";
+                return "Quota has exceeded : " + keeperException.getPath();
             }
         }
         return cause.getMessage();
