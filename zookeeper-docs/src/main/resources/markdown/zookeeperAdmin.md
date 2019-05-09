@@ -1824,8 +1824,9 @@ ZooKeeper correctly:
     returns a response. A dedicated transaction log device is key to
     consistent good performance. Putting the log on a busy device will
     adversely effect performance. If you only have one storage device,
-    put trace files on NFS and increase the snapshotCount; it doesn't
-    eliminate the problem, but it should mitigate it.
+    increase the snapCount so that snapshot files are generated less often;
+    it does not eliminate the problem, but it makes more resources available
+    for the transaction log.
 
 * *incorrect Java heap size* :
     You should take special care to set your Java max heap size
