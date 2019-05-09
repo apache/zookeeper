@@ -19,6 +19,7 @@ limitations under the License.
 ### A Guide to Deployment and Administration
 
 * [Quotas](#zookeeper_quotas)
+    * [Design Quotas](#Design+Quotas)
     * [Setting Quotas](#Setting+Quotas)
     * [Listing Quotas](#Listing+Quotas)
     * [Deleting Quotas](#Deleting+Quotas)
@@ -34,6 +35,24 @@ are printed in the log of the ZooKeeper.
     $ bin/zkCli.sh -server host:port**
 
 The above command gives you a command line option of using quotas.
+
+<a name="Design+Quotas"></a>
+
+### Design Quotas
+ZooKeeper has both namespace/count and bytes quotas. You can use the ZooKeeperMain class to setup quotas.
+ZooKeeper will throw the quotaExceedException and print DEBUG messages if users exceed the quota assigned to them.The messages are printed in the log of the ZooKeeper.
+The implement of quota depends on registering the znode on the path under /zookeeper/quota to remmber the quota users set for one path.
+The more detail about the quota can be found under the /zookeeper/quota.
+ls /zookeeper/quota/foo
+[zookeeper_limits, zookeeper_stats]
+Notice:For a complete tree path(from the root node to the leaf node) only allow to set one quota.
+e.g:
+
+    $ bin/zkCli.sh -server host:port**
+
+The above command gives you a command line option of using quotas.
+Explore more to see the usage of the CLI: setquota in the zookeeperCLI.html
+
 
 <a name="Setting+Quotas"></a>
 

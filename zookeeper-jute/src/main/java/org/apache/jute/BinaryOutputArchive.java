@@ -120,7 +120,18 @@ public class BinaryOutputArchive implements OutputArchive {
     }
     
     public void writeRecord(Record r, String tag) throws IOException {
-        r.serialize(this, tag);
+              //r.serialize(this, tag);
+        //try {
+            System.out.println("fuck_Record:" + r + ",this:" + this + ", tag:" + tag);
+            if (r == null) {
+                return;
+            }
+            r.serialize(this, tag);
+        //}
+//        } catch (Exception e) {
+//            //fuck
+//            e.printStackTrace();
+//        }
     }
     
     public void startRecord(Record r, String tag) throws IOException {}
