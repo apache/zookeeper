@@ -123,6 +123,8 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
         Assert.assertEquals(3L, values.get("prep_processor_request_queued"));
 
+        // the sleep is just to make sure the requests will stay in the queue for some time
+        Thread.sleep(20);
         prepRequestProcessor.start();
 
         threeRequests.await(500, TimeUnit.MILLISECONDS);
@@ -130,7 +132,7 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
         values = MetricsUtils.currentServerMetrics();
         Assert.assertEquals(3L, values.get("max_prep_processor_queue_size"));
 
-        Assert.assertThat((long)values.get("min_prep_processor_queue_time_ms"), greaterThan(0l));
+        Assert.assertThat((long)values.get("min_prep_processor_queue_time_ms"), greaterThan(20l));
         Assert.assertEquals(3L, values.get("cnt_prep_processor_queue_time_ms"));
 
         Assert.assertEquals(3L, values.get("cnt_prep_process_time"));
