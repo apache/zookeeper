@@ -82,6 +82,8 @@ public class Request {
 
     public long prepQueueStartTime= -1;
 
+    public long prepStartTime = -1;
+
     public long commitProcQueueStartTime = -1;
 
     public long commitRecvTime = -1;
