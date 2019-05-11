@@ -287,7 +287,7 @@ public class JRecord extends JCompType {
     public void genCppCode(FileWriter hh, FileWriter cc)
         throws IOException {
 	BufferedWriter bwhh = new BufferedWriter(hh);
-	BufferedWriter bwcc = new BufferedWriterd(cc);
+	BufferedWriter bwcc = new BufferedWriter(cc);
 	
         String[] ns = getCppNameSpace().split("::");
         for (int i = 0; i < ns.length; i++) {

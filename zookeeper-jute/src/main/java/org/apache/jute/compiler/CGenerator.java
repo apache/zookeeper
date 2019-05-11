@@ -64,7 +64,7 @@ class CGenerator {
         }
 
         try (BufferedWriter c = new BufferedWriter(new FileWriter(new File(outputDirectory, mName + ".c")));
-             BufferedWriter h = new BufferedWRiter(new FileWriter(new File(outputDirectory, mName + ".h")));
+             BufferedWriter h = new BufferedWriter(new FileWriter(new File(outputDirectory, mName + ".h")));
         ) {
 	
             h.write("/**\n");
@@ -121,7 +121,7 @@ class CGenerator {
 
             for (Iterator<JRecord> i = mRecList.iterator(); i.hasNext(); ) {
                 JRecord jr = i.next();
-                jr.genCCode(h, c);
+                jr.genCCode(new FileWriter(h), new FileWriter(c));
             }
 
             h.write("\n#ifdef __cplusplus\n}\n#endif\n\n");
