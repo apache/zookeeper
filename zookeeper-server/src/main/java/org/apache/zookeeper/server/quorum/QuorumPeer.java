@@ -888,7 +888,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     // VisibleForTesting
-    public QuorumX509Util createX509Util() {
+    QuorumX509Util createX509Util() {
         return new QuorumX509Util();
     }
 
