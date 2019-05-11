@@ -81,6 +81,10 @@ public class NullMetricsProvider implements MetricsProvider {
         }
 
         @Override
+        public void unregisterGauge(String name) {
+        }
+
+        @Override
         public Summary getSummary(String name, DetailLevel detailLevel) {
             return NullSummary.INSTANCE;
         }

@@ -212,7 +212,7 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
                 .getMetricsProvider()
                 .getRootContext();
 
-        rootContext.registerGauge("quorum_size", null);
+        rootContext.unregisterGauge("quorum_size");
     }
 
 }

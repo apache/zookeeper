@@ -17,6 +17,7 @@
  */
 package org.apache.zookeeper.metrics.impl;
 
+import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -100,12 +101,14 @@ public class DefaultMetricsProvider implements MetricsProvider {
 
         @Override
         public void registerGauge(String name, Gauge gauge) {
-            if (gauge == null) {
-                // null means 'unregister'
-                gauges.remove(name);
-            } else {
-                gauges.put(name, gauge);
-            }
+            Objects.requireNonNull(gauge,
+                    "Cannot register a null Gauge for "+name);
+            gauges.put(name, gauge);
+        }
+
+        @Override
+        public void unregisterGauge(String name) {
+            gauges.remove(name);
         }
 
         @Override

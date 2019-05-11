@@ -194,7 +194,7 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
                 .getMetrics()
                 .getMetricsProvider()
                 .getRootContext();
-        rootContext.registerGauge("synced_observers", null);
+        rootContext.unregisterGauge("synced_observers");
 
     }
 }

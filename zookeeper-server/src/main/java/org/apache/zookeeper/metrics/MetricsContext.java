@@ -54,13 +54,21 @@ public interface MetricsContext {
      * MetricsProvider in order to sample an integer value.
      * If another Gauge was already registered the new one will
      * take its place.
-     * Registering a null callback will deregister the Gauge if already registered. 
+     * Registering a null callback is not allowed.
      *
      * @param name unique name of the Gauge in this context
      * @param gauge the implementation of the Gauge
      *
      */
     void registerGauge(String name, Gauge gauge);
+
+    /**
+     * Unregisters the user provided {@link Gauge} bound to the given name.
+     *
+     * @param name unique name of the Gauge in this context
+     *
+     */
+    void unregisterGauge(String name);
 
     static enum DetailLevel {
         /**

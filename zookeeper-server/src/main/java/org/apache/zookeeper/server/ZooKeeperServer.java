@@ -1443,34 +1443,34 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 .getMetricsProvider()
                 .getRootContext();
 
-        rootContext.registerGauge("avg_latency", null);
+        rootContext.unregisterGauge("avg_latency");
 
-        rootContext.registerGauge("max_latency", null);
-        rootContext.registerGauge("min_latency", null);
+        rootContext.unregisterGauge("max_latency");
+        rootContext.unregisterGauge("min_latency");
 
-        rootContext.registerGauge("packets_received", null);
-        rootContext.registerGauge("packets_sent", null);
-        rootContext.registerGauge("num_alive_connections", null);
+        rootContext.unregisterGauge("packets_received");
+        rootContext.unregisterGauge("packets_sent");
+        rootContext.unregisterGauge("num_alive_connections");
 
-        rootContext.registerGauge("outstanding_requests", null);
-        rootContext.registerGauge("uptime", null);
+        rootContext.unregisterGauge("outstanding_requests");
+        rootContext.unregisterGauge("uptime");
 
-        rootContext.registerGauge("znode_count", null);
+        rootContext.unregisterGauge("znode_count");
 
-        rootContext.registerGauge("watch_count", null);
-        rootContext.registerGauge("ephemerals_count", null);
-        rootContext.registerGauge("approximate_data_size", null);
+        rootContext.unregisterGauge("watch_count");
+        rootContext.unregisterGauge("ephemerals_count");
+        rootContext.unregisterGauge("approximate_data_size");
 
-        rootContext.registerGauge("global_sessions", null);
-        rootContext.registerGauge("local_sessions", null);
+        rootContext.unregisterGauge("global_sessions");
+        rootContext.unregisterGauge("local_sessions");
 
-        rootContext.registerGauge("open_file_descriptor_count", null);
-        rootContext.registerGauge("max_file_descriptor_count", null);
-        rootContext.registerGauge("connection_drop_probability", null);
+        rootContext.unregisterGauge("open_file_descriptor_count");
+        rootContext.unregisterGauge("max_file_descriptor_count");
+        rootContext.unregisterGauge("connection_drop_probability");
 
-        rootContext.registerGauge("last_client_response_size", null);
-        rootContext.registerGauge("max_client_response_size", null);
-        rootContext.registerGauge("min_client_response_size", null);
+        rootContext.unregisterGauge("last_client_response_size");
+        rootContext.unregisterGauge("max_client_response_size");
+        rootContext.unregisterGauge("min_client_response_size");
 
     }
 }

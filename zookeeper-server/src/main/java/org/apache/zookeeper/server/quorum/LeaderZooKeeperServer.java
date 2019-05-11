@@ -144,16 +144,16 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
                 .getMetrics()
                 .getMetricsProvider()
                 .getRootContext();
-        rootContext.registerGauge("learners", null);
-        rootContext.registerGauge("synced_followers", null);
-        rootContext.registerGauge("synced_non_voting_followers", null);
-        rootContext.registerGauge("synced_observers", null);
-        rootContext.registerGauge("pending_syncs", null);
-        rootContext.registerGauge("leader_uptime", null);
+        rootContext.unregisterGauge("learners");
+        rootContext.unregisterGauge("synced_followers");
+        rootContext.unregisterGauge("synced_non_voting_followers");
+        rootContext.unregisterGauge("synced_observers");
+        rootContext.unregisterGauge("pending_syncs");
+        rootContext.unregisterGauge("leader_uptime");
 
-        rootContext.registerGauge("last_proposal_size", null);
-        rootContext.registerGauge("max_proposal_size", null);
-        rootContext.registerGauge("min_proposal_size", null);
+        rootContext.unregisterGauge("last_proposal_size");
+        rootContext.unregisterGauge("max_proposal_size");
+        rootContext.unregisterGauge("min_proposal_size");
     }
 
     @Override
