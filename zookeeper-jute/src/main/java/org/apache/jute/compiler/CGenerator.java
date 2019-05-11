@@ -20,6 +20,7 @@ package org.apache.jute.compiler;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
@@ -62,9 +63,10 @@ class CGenerator {
             }
         }
 
-        try (FileWriter c = new FileWriter(new File(outputDirectory, mName + ".c"));
-             FileWriter h = new FileWriter(new File(outputDirectory, mName + ".h"));
+        try (BufferedWriter c = new BufferedWriter(new FileWriter(new File(outputDirectory, mName + ".c")));
+             BufferedWriter h = new BufferedWRiter(new FileWriter(new File(outputDirectory, mName + ".h")));
         ) {
+	
             h.write("/**\n");
             h.write("* Licensed to the Apache Software Foundation (ASF) under one\n");
             h.write("* or more contributor license agreements.  See the NOTICE file\n");

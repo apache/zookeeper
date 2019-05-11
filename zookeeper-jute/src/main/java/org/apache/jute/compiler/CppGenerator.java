@@ -20,6 +20,7 @@ package org.apache.jute.compiler;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
@@ -65,24 +66,25 @@ class CppGenerator {
         try (FileWriter cc = new FileWriter(new File(outputDirectory, mName + ".cc"));
              FileWriter hh = new FileWriter(new File(outputDirectory, mName + ".hh"));
         ) {
-            hh.write("/**\n");
-            hh.write("* Licensed to the Apache Software Foundation (ASF) under one\n");
-            hh.write("* or more contributor license agreements.  See the NOTICE file\n");
-            hh.write("* distributed with this work for additional information\n");
-            hh.write("* regarding copyright ownership.  The ASF licenses this file\n");
-            hh.write("* to you under the Apache License, Version 2.0 (the\n");
-            hh.write("* \"License\"); you may not use this file except in compliance\n");
-            hh.write("* with the License.  You may obtain a copy of the License at\n");
-            hh.write("*\n");
-            hh.write("*     http://www.apache.org/licenses/LICENSE-2.0\n");
-            hh.write("*\n");
-            hh.write("* Unless required by applicable law or agreed to in writing, software\n");
-            hh.write("* distributed under the License is distributed on an \"AS IS\" BASIS,\n");
-            hh.write("* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n");
-            hh.write("* See the License for the specific language governing permissions and\n");
-            hh.write("* limitations under the License.\n");
-            hh.write("*/\n");
-            hh.write("\n");
+            BufferedWriter bwhh = new BufferedWriter(hh);
+            bwhh.write("/**\n");
+            bwhh.write("* Licensed to the Apache Software Foundation (ASF) under one\n");
+            bwhh.write("* or more contributor license agreements.  See the NOTICE file\n");
+            bwhh.write("* distributed with this work for additional information\n");
+            bwhh.write("* regarding copyright ownership.  The ASF licenses this file\n");
+            bwhh.write("* to you under the Apache License, Version 2.0 (the\n");
+            bwhh.write("* \"License\"); you may not use this file except in compliance\n");
+            bwhh.write("* with the License.  You may obtain a copy of the License at\n");
+            bwhh.write("*\n");
+            bwhh.write("*     http://www.apache.org/licenses/LICENSE-2.0\n");
+            bwhh.write("*\n");
+            bwhh.write("* Unless required by applicable law or agreed to in writing, software\n");
+            bwhh.write("* distributed under the License is distributed on an \"AS IS\" BASIS,\n");
+            bwhh.write("* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n");
+            bwhh.write("* See the License for the specific language governing permissions and\n");
+            bwhh.write("* limitations under the License.\n");
+            bwhh.write("*/\n");
+            bwhh.write("\n");
 
             cc.write("/**\n");
             cc.write("* Licensed to the Apache Software Foundation (ASF) under one\n");
@@ -103,13 +105,13 @@ class CppGenerator {
             cc.write("*/\n");
             cc.write("\n");
 
-            hh.write("#ifndef __" + mName.toUpperCase().replace('.', '_') + "__\n");
-            hh.write("#define __" + mName.toUpperCase().replace('.', '_') + "__\n");
+            bwhh.write("#ifndef __" + mName.toUpperCase().replace('.', '_') + "__\n");
+            bwhh.write("#define __" + mName.toUpperCase().replace('.', '_') + "__\n");
 
-            hh.write("#include \"recordio.hh\"\n");
+            bwhh.write("#include \"recordio.hh\"\n");
             for (Iterator<JFile> i = mInclFiles.iterator(); i.hasNext(); ) {
                 JFile f = i.next();
-                hh.write("#include \"" + f.getName() + ".hh\"\n");
+                bwhh.write("#include \"" + f.getName() + ".hh\"\n");
             }
             cc.write("#include \"" + mName + ".hh\"\n");
 
@@ -118,7 +120,7 @@ class CppGenerator {
                 jr.genCppCode(hh, cc);
             }
 
-            hh.write("#endif //" + mName.toUpperCase().replace('.', '_') + "__\n");
+            bwhh.write("#endif //" + mName.toUpperCase().replace('.', '_') + "__\n");
         }
     }
 }
