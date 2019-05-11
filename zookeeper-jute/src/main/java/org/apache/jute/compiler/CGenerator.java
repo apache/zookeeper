@@ -63,69 +63,71 @@ class CGenerator {
             }
         }
 
-        try (BufferedWriter c = new BufferedWriter(new FileWriter(new File(outputDirectory, mName + ".c")));
-             BufferedWriter h = new BufferedWriter(new FileWriter(new File(outputDirectory, mName + ".h")));
+        try (FileWriter c = new FileWriter(new File(outputDirectory, mName + ".c"));
+             FileWriter h = new FileWriter(new File(outputDirectory, mName + ".h"));
         ) {
-	
-            h.write("/**\n");
-            h.write("* Licensed to the Apache Software Foundation (ASF) under one\n");
-            h.write("* or more contributor license agreements.  See the NOTICE file\n");
-            h.write("* distributed with this work for additional information\n");
-            h.write("* regarding copyright ownership.  The ASF licenses this file\n");
-            h.write("* to you under the Apache License, Version 2.0 (the\n");
-            h.write("* \"License\"); you may not use this file except in compliance\n");
-            h.write("* with the License.  You may obtain a copy of the License at\n");
-            h.write("*\n");
-            h.write("*     http://www.apache.org/licenses/LICENSE-2.0\n");
-            h.write("*\n");
-            h.write("* Unless required by applicable law or agreed to in writing, software\n");
-            h.write("* distributed under the License is distributed on an \"AS IS\" BASIS,\n");
-            h.write("* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n");
-            h.write("* See the License for the specific language governing permissions and\n");
-            h.write("* limitations under the License.\n");
-            h.write("*/\n");
-            h.write("\n");
+            BufferedWriter bwh = new BufferedWriter(h);
+	    BufferedWriter bwc = new BufferedWriter(c);
 
-            c.write("/**\n");
-            c.write("* Licensed to the Apache Software Foundation (ASF) under one\n");
-            c.write("* or more contributor license agreements.  See the NOTICE file\n");
-            c.write("* distributed with this work for additional information\n");
-            c.write("* regarding copyright ownership.  The ASF licenses this file\n");
-            c.write("* to you under the Apache License, Version 2.0 (the\n");
-            c.write("* \"License\"); you may not use this file except in compliance\n");
-            c.write("* with the License.  You may obtain a copy of the License at\n");
-            c.write("*\n");
-            c.write("*     http://www.apache.org/licenses/LICENSE-2.0\n");
-            c.write("*\n");
-            c.write("* Unless required by applicable law or agreed to in writing, software\n");
-            c.write("* distributed under the License is distributed on an \"AS IS\" BASIS,\n");
-            c.write("* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n");
-            c.write("* See the License for the specific language governing permissions and\n");
-            c.write("* limitations under the License.\n");
-            c.write("*/\n");
-            c.write("\n");
+            bwh.write("/**\n");
+            bwh.write("* Licensed to the Apache Software Foundation (ASF) under one\n");
+            bwh.write("* or more contributor license agreements.  See the NOTICE file\n");
+            bwh.write("* distributed with this work for additional information\n");
+            bwh.write("* regarding copyright ownership.  The ASF licenses this file\n");
+            bwh.write("* to you under the Apache License, Version 2.0 (the\n");
+            bwh.write("* \"License\"); you may not use this file except in compliance\n");
+            bwh.write("* with the License.  You may obtain a copy of the License at\n");
+            bwh.write("*\n");
+            bwh.write("*     http://www.apache.org/licenses/LICENSE-2.0\n");
+            bwh.write("*\n");
+            bwh.write("* Unless required by applicable law or agreed to in writing, software\n");
+            bwh.write("* distributed under the License is distributed on an \"AS IS\" BASIS,\n");
+            bwh.write("* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n");
+            bwh.write("* See the License for the specific language governing permissions and\n");
+            bwh.write("* limitations under the License.\n");
+            bwh.write("*/\n");
+            bwh.write("\n");
 
-            h.write("#ifndef __" + mName.toUpperCase().replace('.', '_') + "__\n");
-            h.write("#define __" + mName.toUpperCase().replace('.', '_') + "__\n");
+            bwc.write("/**\n");
+            bwc.write("* Licensed to the Apache Software Foundation (ASF) under one\n");
+            bwc.write("* or more contributor license agreements.  See the NOTICE file\n");
+            bwc.write("* distributed with this work for additional information\n");
+            bwc.write("* regarding copyright ownership.  The ASF licenses this file\n");
+            bwc.write("* to you under the Apache License, Version 2.0 (the\n");
+            bwc.write("* \"License\"); you may not use this file except in compliance\n");
+            bwc.write("* with the License.  You may obtain a copy of the License at\n");
+            bwc.write("*\n");
+            bwc.write("*     http://www.apache.org/licenses/LICENSE-2.0\n");
+            bwc.write("*\n");
+            bwc.write("* Unless required by applicable law or agreed to in writing, software\n");
+            bwc.write("* distributed under the License is distributed on an \"AS IS\" BASIS,\n");
+            bwc.write("* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n");
+            bwc.write("* See the License for the specific language governing permissions and\n");
+            bwc.write("* limitations under the License.\n");
+            bwc.write("*/\n");
+            bwc.write("\n");
+
+            bwh.write("#ifndef __" + mName.toUpperCase().replace('.', '_') + "__\n");
+            bwh.write("#define __" + mName.toUpperCase().replace('.', '_') + "__\n");
 
             h.write("#include \"recordio.h\"\n");
             for (Iterator<JFile> i = mInclFiles.iterator(); i.hasNext(); ) {
                 JFile f = i.next();
-                h.write("#include \"" + f.getName() + ".h\"\n");
+                bwh.write("#include \"" + f.getName() + ".h\"\n");
             }
             // required for compilation from C++
-            h.write("\n#ifdef __cplusplus\nextern \"C\" {\n#endif\n\n");
+            bwh.write("\n#ifdef __cplusplus\nextern \"C\" {\n#endif\n\n");
 
-            c.write("#include <stdlib.h>\n"); // need it for calloc() & free()
-            c.write("#include \"" + mName + ".h\"\n\n");
+            bwc.write("#include <stdlib.h>\n"); // need it for calloc() & free()
+            bwc.write("#include \"" + mName + ".h\"\n\n");
 
             for (Iterator<JRecord> i = mRecList.iterator(); i.hasNext(); ) {
                 JRecord jr = i.next();
-                jr.genCCode(new FileWriter(h), new FileWriter(c));
+                jr.genCCode(h, c);
             }
 
-            h.write("\n#ifdef __cplusplus\n}\n#endif\n\n");
-            h.write("#endif //" + mName.toUpperCase().replace('.', '_') + "__\n");
+            bwh.write("\n#ifdef __cplusplus\n}\n#endif\n\n");
+            bwh.write("#endif //" + mName.toUpperCase().replace('.', '_') + "__\n");
         }
     }
 }
