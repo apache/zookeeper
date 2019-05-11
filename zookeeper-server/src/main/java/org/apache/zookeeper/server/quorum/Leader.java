@@ -581,6 +581,7 @@ public class Leader implements LearnerMaster {
 
              waitForEpochAck(self.getId(), leaderStateSummary);
              self.setCurrentEpoch(epoch);
+            self.setLeaderAddressAndId(self.getQuorumAddress(), self.getId());
 
              try {
                  waitForNewLeaderAck(self.getId(), zk.getZxid());

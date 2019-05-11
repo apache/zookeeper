@@ -93,6 +93,7 @@ public class Follower extends Learner{
                 }
                 long startTime = Time.currentElapsedTime();
                 try {
+                    self.setLeaderAddressAndId(leaderServer.addr, leaderServer.getId());
                     syncWithLeader(newEpochZxid);
                 } finally {
                     long syncTime = Time.currentElapsedTime() - startTime;

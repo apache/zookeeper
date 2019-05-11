@@ -130,6 +130,7 @@ public class Commands {
         registerCommand(new GetTraceMaskCommand());
         registerCommand(new IsroCommand());
         registerCommand(new LastSnapshotCommand());
+        registerCommand(new LeaderCommand());
         registerCommand(new MonitorCommand());
         registerCommand(new RuokCommand());
         registerCommand(new SetTraceMaskCommand());
@@ -318,6 +319,30 @@ public class Commands {
             SnapshotInfo info = zkServer.getTxnLogFactory().getLastSnapshotInfo();
             response.put("zxid", Long.toHexString(info == null ? -1L : info.zxid));
             response.put("timestamp", info == null ? -1L : info.timestamp);
+            return response;
+        }
+    }
+
+    /**
+     * Returns the leader status of this instance and the leader host string.
+     */
+    public static class LeaderCommand extends CommandBase {
+        public LeaderCommand() {
+            super(Arrays.asList("leader", "lead"));
+        }
+
+        @Override
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+            CommandResponse response = initializeResponse();
+            if (zkServer instanceof QuorumZooKeeperServer) {
+                response.put("is_leader", zkServer instanceof LeaderZooKeeperServer);
+                QuorumPeer peer = ((QuorumZooKeeperServer) zkServer).self;
+                response.put("leader_id", peer.getLeaderId());
+                String leaderAddress = peer.getLeaderAddress();
+                response.put("leader_ip", leaderAddress != null ? leaderAddress : "");
+            } else {
+                response.put("error", "server is not initialized");
+            }
             return response;
         }
     }
