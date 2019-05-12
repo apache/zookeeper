@@ -71,7 +71,7 @@ public class SetQuotaCommand extends CliCommand {
             long bytes = Long.parseLong(cl.getOptionValue("b"));
             try {
                 createQuota(zk, path, bytes, -1);
-            } catch (KeeperException|IOException|InterruptedException ex) {
+            } catch (KeeperException|IOException|InterruptedException|IllegalArgumentException ex) {
                 throw new CliWrapperException(ex);
             }
         } else if (cl.hasOption("n")) {
@@ -79,7 +79,7 @@ public class SetQuotaCommand extends CliCommand {
             int numNodes = Integer.parseInt(cl.getOptionValue("n"));
             try {
                 createQuota(zk, path, -1L, numNodes);
-            } catch (KeeperException|IOException|InterruptedException ex) {
+            } catch (KeeperException|IOException|InterruptedException|IllegalArgumentException ex) {
                 throw new CliWrapperException(ex);
             }
         } else {
