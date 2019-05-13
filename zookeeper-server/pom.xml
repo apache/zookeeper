@@ -29,9 +29,57 @@
 
   <groupId>org.apache.zookeeper</groupId>
   <artifactId>zookeeper</artifactId>
-  <packaging>jar</packaging>
+  <packaging>bundle</packaging>
   <name>Apache ZooKeeper - Server</name>
   <description>ZooKeeper server</description>
+
+  <properties>
+    <bundle.symbolicName>org.apache.hadoop.zookeeper</bundle.symbolicName>
+    <osgi.import.package>
+        javax.management;resolution:=optional,
+        javax.security.auth.callback,
+        javax.security.auth.login,
+        javax.security.sasl,
+        org.slf4j;version="[1.6,2)",
+        org.jboss.netty.buffer;resolution:=optional;version="[3.2,4)",
+        org.jboss.netty.channel;resolution:=optional;version="[3.2,4)",
+        org.jboss.netty.channel.group;resolution:=optional;version="[3.2,4)",
+        org.jboss.netty.channel.socket.nio;resolution:=optional;version="[3.2,4)",
+        org.osgi.framework;resolution:=optional;version="[1.5,2)",
+        org.osgi.util.tracker;resolution:=optional;version="[1.4,2)",
+        org.ietf.jgss,
+        org.apache.jute;version="${project.version}"
+        org.apache.zookeeper.data;version="${project.version}",
+        org.apache.zookeeper.proto;version="${project.version}",
+        org.apache.zookeeper.server;version="${project.version}",
+        org.apache.zookeeper.txn;version="${project.version}"
+    </osgi.import.package>
+    <osgi.export.package>
+        org.apache.zookeeper;version="${project.version}",
+        org.apache.zookeeper.cli;version="${project.version}",
+        org.apache.zookeeper.client;version="${project.version}",
+        org.apache.zookeeper.common;version="${project.version}",
+        org.apache.zookeeper.jmx;version="${project.version}",
+        org.apache.zookeeper.metrics;version="${project.version}",
+        <!--org.apache.zookeeper.data;version="${project.version}",-->
+        org.apache.zookeeper.version;version="${project.version}",
+        org.apache.zookeeper.server;version="${project.version}",
+        org.apache.zookeeper.server.auth;version="${project.version}",
+        org.apache.zookeeper.server.admin;version="${project.version}",
+        org.apache.zookeeper.server.persistence;version="${project.version}";-split-package:=merge-first,
+        org.apache.zookeeper.server.quorum;version="${project.version}";-split-package:=merge-first,
+        org.apache.zookeeper.server.quorum.auth;version="${project.version}",
+        org.apache.zookeeper.server.util;version="${project.version}",
+        <!--org.apache.zookeeper.server.txn;version="${project.version}",-->
+        org.apache.zookeeper.server.watch;version="${project.version}",
+        org.apache.jute;version="${project.version}",
+        org.apache.zookeeper.server.quorum.flexible;version="${project.version}",
+        org.apache.zookeeper.proto;version="${project.version}"
+    </osgi.export.package>
+    <osgi.private.package>
+        org.apache.zookeeper.*;-split-package:=merge-first
+    </osgi.private.package>
+  </properties>
 
   <dependencies>
     <dependency>
