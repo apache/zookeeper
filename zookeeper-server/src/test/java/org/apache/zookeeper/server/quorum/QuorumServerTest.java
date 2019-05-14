@@ -28,41 +28,42 @@ import org.junit.Test;
 import java.net.InetSocketAddress;
 
 public class QuorumServerTest extends ZKTestCase {
-    private String v6addr1 = "[2500:0:0:0:0:0:1:0]";
-    private String v6addr2 = "[2600:0:0:0:0:0:1:0]";
+    private String ipv6n1 = "[2500:0:0:0:0:0:1:0]";
+    private String ipv6n2 = "[2600:0:0:0:0:0:1:0]";
+    private String ipv4config = "127.0.0.1:1234:1236";
 
     @Test
     public void testToString() throws ConfigException {
-        String config = "127.0.0.1:1234:1236:participant;0.0.0.0:1237";
-        String expected = "127.0.0.1:1234:1236:participant;0.0.0.0:1237";
-        QuorumServer qs = new QuorumServer(0, config);
+        String provided = ipv4config + ":participant;0.0.0.0:1237";
+        String expected = ipv4config + ":participant;0.0.0.0:1237";
+        QuorumServer qs = new QuorumServer(0, provided);
         Assert.assertEquals("Use IP address", expected, qs.toString());
 
-        config = "127.0.0.1:1234:1236;0.0.0.0:1237";
-        expected = "127.0.0.1:1234:1236:participant;0.0.0.0:1237";
-        qs = new QuorumServer(0, config);
+        provided = ipv4config + ";0.0.0.0:1237";
+        expected = ipv4config + ":participant;0.0.0.0:1237";
+        qs = new QuorumServer(0, provided);
         Assert.assertEquals("Type unspecified", expected, qs.toString());
 
-        config = "127.0.0.1:1234:1236:observer;0.0.0.0:1237";
-        expected = "127.0.0.1:1234:1236:observer;0.0.0.0:1237";
-        qs = new QuorumServer(0, config);
+        provided = ipv4config + ":observer;0.0.0.0:1237";
+        expected = ipv4config + ":observer;0.0.0.0:1237";
+        qs = new QuorumServer(0, provided);
         Assert.assertEquals("Observer type", expected, qs.toString());
 
-        config = "127.0.0.1:1234:1236:participant;1237";
-        expected = "127.0.0.1:1234:1236:participant;0.0.0.0:1237";
-        qs = new QuorumServer(0, config);
+        provided = ipv4config + ":participant;1237";
+        expected = ipv4config + ":participant;0.0.0.0:1237";
+        qs = new QuorumServer(0, provided);
         Assert.assertEquals("Client address unspecified",
                             expected, qs.toString());
 
-        config = "127.0.0.1:1234:1236:participant;1.2.3.4:1237";
-        expected = "127.0.0.1:1234:1236:participant;1.2.3.4:1237";
-        qs = new QuorumServer(0, config);
+        provided = ipv4config + ":participant;1.2.3.4:1237";
+        expected = ipv4config + ":participant;1.2.3.4:1237";
+        qs = new QuorumServer(0, provided);
         Assert.assertEquals("Client address specified",
                             expected, qs.toString());
 
-        config = "example.com:1234:1236:participant;1237";
+        provided = "example.com:1234:1236:participant;1237";
         expected = "example.com:1234:1236:participant;0.0.0.0:1237";
-        qs = new QuorumServer(0, config);
+        qs = new QuorumServer(0, provided);
         Assert.assertEquals("Use hostname", expected, qs.toString());
     }
 
@@ -75,9 +76,9 @@ public class QuorumServerTest extends ZKTestCase {
 
     @Test
     public void constructionUnderstandsIpv6LiteralsInClientConfig() throws ConfigException {
-        String config = "127.0.0.1:1234:1236:participant;[::1]:1237";
+        String config = ipv4config + ":participant;[::1]:1237";
         QuorumServer qs = new QuorumServer(0, config);
-        assertEquals("127.0.0.1:1234:1236:participant;[0:0:0:0:0:0:0:1]:1237", qs.toString());
+        assertEquals(ipv4config + ":participant;[0:0:0:0:0:0:0:1]:1237", qs.toString());
     }
 
     @Test(expected = ConfigException.class)
@@ -87,7 +88,7 @@ public class QuorumServerTest extends ZKTestCase {
 
     @Test(expected = ConfigException.class)
     public void unbalancedIpv6LiteralsInClientConfigFailToBeParsed() throws ConfigException {
-        new QuorumServer(0, "127.0.0.1:1234:1236:participant;[::1:1237");
+        new QuorumServer(0, ipv4config + ":participant;[::1:1237");
     }
 
     @Test
@@ -97,14 +98,14 @@ public class QuorumServerTest extends ZKTestCase {
             for (int j = i; j < addrs.length; j++) {
                 QuorumPeer.QuorumServer server1 =
                         new QuorumPeer.QuorumServer(1,
-                                new InetSocketAddress(v6addr1, 1234), // peer
-                                new InetSocketAddress(v6addr1, 1236), // election
+                                new InetSocketAddress(ipv6n1, 1234), // peer
+                                new InetSocketAddress(ipv6n1, 1236), // election
                                 new InetSocketAddress(addrs[i], 1237)  // client
                         );
                 QuorumPeer.QuorumServer server2 =
                         new QuorumPeer.QuorumServer(2,
-                                new InetSocketAddress(v6addr2, 1234), // peer
-                                new InetSocketAddress(v6addr2, 1236), // election
+                                new InetSocketAddress(ipv6n2, 1234), // peer
+                                new InetSocketAddress(ipv6n2, 1236), // election
                                 new InetSocketAddress(addrs[j], 1237)  // client
                         );
                 server1.checkAddressDuplicate(server2);
@@ -116,15 +117,15 @@ public class QuorumServerTest extends ZKTestCase {
     public void testDuplicate() throws KeeperException.BadArgumentsException {
         QuorumPeer.QuorumServer server1 =
                 new QuorumPeer.QuorumServer(1,
-                        new InetSocketAddress(v6addr1, 1234), // peer
-                        new InetSocketAddress(v6addr1, 1236), // election
-                        new InetSocketAddress(v6addr1, 1237)  // client
+                        new InetSocketAddress(ipv6n1, 1234), // peer
+                        new InetSocketAddress(ipv6n1, 1236), // election
+                        new InetSocketAddress(ipv6n1, 1237)  // client
                 );
         QuorumPeer.QuorumServer server2 =
                 new QuorumPeer.QuorumServer(2,
-                        new InetSocketAddress(v6addr2, 1234), // peer
-                        new InetSocketAddress(v6addr2, 1236), // election
-                        new InetSocketAddress(v6addr1, 1237)  // client
+                        new InetSocketAddress(ipv6n2, 1234), // peer
+                        new InetSocketAddress(ipv6n2, 1236), // election
+                        new InetSocketAddress(ipv6n1, 1237)  // client
                 );
         server1.checkAddressDuplicate(server2);
     }
