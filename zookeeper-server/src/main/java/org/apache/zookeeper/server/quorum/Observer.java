@@ -226,11 +226,11 @@ public class Observer extends Learner{
     }
 
     static void waitForReconnectDelay() {
-        Observer.waitForReconnectDelayHelper(reconnectDelayMs);
+        waitForReconnectDelayHelper(reconnectDelayMs);
     }
 
     static void waitForObserverElectionDelay(){
-        Observer.waitForReconnectDelayHelper(observerElectionDelayMs);
+        waitForReconnectDelayHelper(observerElectionDelayMs);
     }
 
     private static void waitForReconnectDelayHelper(long delayValueMs){
