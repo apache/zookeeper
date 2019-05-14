@@ -491,7 +491,7 @@ public class FileTxnSnapLog {
     /**
      * append the request to the transaction logs
      * @param si the request to be appended
-     * returns true iff something appended, otw false
+     * @return true iff something appended, otw false
      * @throws IOException
      */
     public boolean append(Request si) throws IOException {
@@ -553,5 +553,13 @@ public class FileTxnSnapLog {
         public SnapDirContentCheckException(String msg) {
             super(msg);
         }
+    }
+
+    public void setTotalLogSize(long size) {
+        txnLog.setTotalLogSize(size);
+    }
+
+    public long getTotalLogSize() {
+        return txnLog.getTotalLogSize();
     }
 }

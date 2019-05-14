@@ -60,6 +60,17 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
     /** The number of log entries to log before starting a snapshot */
     private static int snapCount = ZooKeeperServer.getSnapCount();
 
+    /**
+     * The total size of log entries before starting a snapshot
+     */
+    private static long snapSizeInBytes = ZooKeeperServer.getSnapSizeInBytes();
+
+    /**
+     * Random numbers used to vary snapshot timing
+     */
+    private int randRoll;
+    private long randSize;
+
     private final BlockingQueue<Request> queuedRequests =
         new LinkedBlockingQueue<Request>();
 
@@ -101,14 +112,33 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
         return snapCount;
     }
 
+    /**
+     * used by tests to check for changing
+     * snapcounts
+     * @param size
+     */
+    public static void setSnapSizeInBytes(long size) {
+        snapSizeInBytes = size;
+    }
+
+    private boolean shouldSnapshot() {
+        int logCount = zks.getZKDatabase().getTxnCount();
+        long logSize = zks.getZKDatabase().getTxnSize();
+        return (logCount > (snapCount / 2 + randRoll)) ||
+                (snapSizeInBytes > 0 && logSize > (snapSizeInBytes / 2 + randSize));
+    }
+
+    private void resetSnapshotStats() {
+        randRoll = ThreadLocalRandom.current().nextInt(snapCount/2);
+        randSize = Math.abs(ThreadLocalRandom.current().nextLong() % (snapSizeInBytes/2));
+    }
+
     @Override
     public void run() {
         try {
-            int logCount = 0;
-
             // we do this in an attempt to ensure that not all of the servers
             // in the ensemble take a snapshot at the same time
-            int randRoll = ThreadLocalRandom.current().nextInt(snapCount / 2, snapCount);
+            resetSnapshotStats();
             while (true) {
                 Request si = queuedRequests.poll();
                 if (si == null) {
@@ -122,9 +152,8 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
 
                 // track the number of records written to the log
                 if (zks.getZKDatabase().append(si)) {
-                    logCount++;
-                    if (logCount > randRoll) {
-                        randRoll = ThreadLocalRandom.current().nextInt(snapCount / 2, snapCount);
+                    if (shouldSnapshot()) {
+                        resetSnapshotStats();
                         // roll the log
                         zks.getZKDatabase().rollLog();
                         // take a snapshot
@@ -143,7 +172,6 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
                                 }
                             }.start();
                         }
-                        logCount = 0;
                     }
                 } else if (toFlush.isEmpty()) {
                     // optimization for read heavy workloads

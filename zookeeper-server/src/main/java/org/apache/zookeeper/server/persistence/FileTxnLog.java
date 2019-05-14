@@ -158,6 +158,12 @@ public class FileTxnLog implements TxnLog {
     private volatile long syncElapsedMS = -1L;
 
     /**
+     * A running total of all complete log files
+     * This does not include the current file being written to
+     */
+    private long prevLogsRunningTotal;
+
+    /**
      * constructor for FileTxnLog. Take the directory
      * where the txnlogs are stored
      * @param logDir the directory where the txnlogs are stored
@@ -202,6 +208,14 @@ public class FileTxnLog implements TxnLog {
         return 0;
     }
 
+    public synchronized void setTotalLogSize(long size) {
+        prevLogsRunningTotal = size;
+    }
+
+    public synchronized long getTotalLogSize() {
+        return prevLogsRunningTotal + getCurrentLogSize();
+    }
+
     /**
      * creates a checksum algorithm to be used
      * @return the checksum used for this txnlog
@@ -217,8 +231,11 @@ public class FileTxnLog implements TxnLog {
     public synchronized void rollLog() throws IOException {
         if (logStream != null) {
             this.logStream.flush();
+            prevLogsRunningTotal += getCurrentLogSize();
             this.logStream = null;
             oa = null;
+
+            // Roll over the current log file into the running total
         }
     }
 
