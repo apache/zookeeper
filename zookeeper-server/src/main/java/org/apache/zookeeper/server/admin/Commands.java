@@ -64,17 +64,13 @@ public class Commands {
     /** Maps command names to Command instances */
     private static Map<String, Command> commands = new HashMap<String, Command>();
     private static Set<String> primaryNames = new HashSet<String>();
-    private static Set<String> commandsAvailableBeforePeerSync = new HashSet<String>();
 
     /**
      * Registers the given command. Registered commands can be run by passing
      * any of their names to runCommand.
      */
-    public static void registerCommand(Command command, boolean enabledBeforePeerSync) {
+    public static void registerCommand(Command command) {
         for (String name : command.getNames()) {
-            if (enabledBeforePeerSync) {
-                commandsAvailableBeforePeerSync.add(name);
-            }
             Command prev = commands.put(name, command);
             if (prev != null) {
                 LOG.warn("Re-registering command %s (primary name = %s)", name, command.getPrimaryName());
@@ -98,13 +94,14 @@ public class Commands {
      *    - "error" key containing a String error message or null if no error
      */
     public static CommandResponse runCommand(String cmdName, ZooKeeperServer zkServer, Map<String, String> kwargs) {
-        if (!commands.containsKey(cmdName)) {
+        Command command = getCommand(cmdName);
+        if (command == null) {
             return new CommandResponse(cmdName, "Unknown command: " + cmdName);
         }
-        if (!commandsAvailableBeforePeerSync.contains(cmdName) && (zkServer == null || !zkServer.isRunning())) {
+        if (command.isServerRequired() && (zkServer == null || !zkServer.isRunning())) {
             return new CommandResponse(cmdName, "This ZooKeeper instance is not currently serving requests");
         }
-        return commands.get(cmdName).run(zkServer, kwargs);
+        return command.run(zkServer, kwargs);
     }
 
     /**
@@ -123,25 +120,25 @@ public class Commands {
     }
 
     static {
-        registerCommand(new CnxnStatResetCommand(), false);
-        registerCommand(new ConfCommand(), false);
-        registerCommand(new ConsCommand(), false);
-        registerCommand(new DirsCommand(), false);
-        registerCommand(new DumpCommand(), false);
-        registerCommand(new EnvCommand(), true);
-        registerCommand(new GetTraceMaskCommand(), true);
-        registerCommand(new IsroCommand(), false);
-        registerCommand(new MonitorCommand(), true);
-        registerCommand(new RuokCommand(), false);
-        registerCommand(new SetTraceMaskCommand(), true);
-        registerCommand(new SrvrCommand(), false);
-        registerCommand(new StatCommand(), false);
-        registerCommand(new StatResetCommand(), false);
-        registerCommand(new WatchCommand(), false);
-        registerCommand(new WatchesByPathCommand(), false);
-        registerCommand(new WatchSummaryCommand(), false);
-        registerCommand(new SystemPropertiesCommand(), true);
-        registerCommand(new InitialConfigurationCommand(), false);
+        registerCommand(new CnxnStatResetCommand());
+        registerCommand(new ConfCommand());
+        registerCommand(new ConsCommand());
+        registerCommand(new DirsCommand());
+        registerCommand(new DumpCommand());
+        registerCommand(new EnvCommand());
+        registerCommand(new GetTraceMaskCommand());
+        registerCommand(new IsroCommand());
+        registerCommand(new MonitorCommand());
+        registerCommand(new RuokCommand());
+        registerCommand(new SetTraceMaskCommand());
+        registerCommand(new SrvrCommand());
+        registerCommand(new StatCommand());
+        registerCommand(new StatResetCommand());
+        registerCommand(new WatchCommand());
+        registerCommand(new WatchesByPathCommand());
+        registerCommand(new WatchSummaryCommand());
+        registerCommand(new SystemPropertiesCommand());
+        registerCommand(new InitialConfigurationCommand());
     }
 
     /**
@@ -252,7 +249,7 @@ public class Commands {
      */
     public static class EnvCommand extends CommandBase {
         public EnvCommand() {
-            super(Arrays.asList("environment", "env", "envi"));
+            super(Arrays.asList("environment", "env", "envi"), false);
         }
 
         @Override
@@ -271,7 +268,7 @@ public class Commands {
      */
     public static class GetTraceMaskCommand extends CommandBase {
         public GetTraceMaskCommand() {
-            super(Arrays.asList("get_trace_mask", "gtmk"));
+            super(Arrays.asList("get_trace_mask", "gtmk"), false);
         }
 
         @Override
@@ -325,7 +322,7 @@ public class Commands {
      */
     public static class MonitorCommand extends CommandBase {
         public MonitorCommand() {
-            super(Arrays.asList("monitor", "mntr"));
+            super(Arrays.asList("monitor", "mntr"), false);
         }
 
         @Override
@@ -434,7 +431,7 @@ public class Commands {
      */
     public static class SetTraceMaskCommand extends CommandBase {
         public SetTraceMaskCommand() {
-            super(Arrays.asList("set_trace_mask", "stmk"));
+            super(Arrays.asList("set_trace_mask", "stmk"), false);
         }
 
         @Override
@@ -588,14 +585,14 @@ public class Commands {
      */
     public static class SystemPropertiesCommand extends CommandBase {
         public SystemPropertiesCommand() {
-            super(Arrays.asList("system_properties", "sysp"));
+            super(Arrays.asList("system_properties", "sysp"), false);
         }
 
         @Override
         public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
             CommandResponse response = initializeResponse();
             Properties systemProperties = System.getProperties();
-            SortedMap<String, String> sortedSystemProperties = new TreeMap<String, String>();
+            SortedMap<String, String> sortedSystemProperties = new TreeMap<>();
             systemProperties.forEach((k, v) -> sortedSystemProperties.put(k.toString(), v.toString()));
             response.putAll(sortedSystemProperties);
             return response;
