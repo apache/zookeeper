@@ -57,11 +57,23 @@ public class Observer extends Learner{
     public static final String OBSERVER_RECONNECT_DELAY_MS =
             "zookeeper.observer.reconnectDelayMs";
 
+    /**
+     * Delay the Observer's participation in a leader election upon disconnect
+     * so as to prevent unexpected additional load on the voting peers during
+     * the process. Default value is 200.
+     */
+    public static final String OBSERVER_ELECTION_DELAY_MS =
+            "zookeeper.observer.election.DelayMs";
+
     private static final long reconnectDelayMs;
+
+    private static volatile long observerElectionDelayMs;
 
     static {
         reconnectDelayMs = Long.getLong(OBSERVER_RECONNECT_DELAY_MS, 0);
         LOG.info(OBSERVER_RECONNECT_DELAY_MS + " = " + reconnectDelayMs);
+        observerElectionDelayMs = Long.getLong(OBSERVER_ELECTION_DELAY_MS, 200);
+        LOG.info(OBSERVER_ELECTION_DELAY_MS + " = " + observerElectionDelayMs);
     }
 
     /**
@@ -214,8 +226,16 @@ public class Observer extends Learner{
     }
 
     static void waitForReconnectDelay() {
-        if (reconnectDelayMs > 0) {
-            long randomDelay = (long) (reconnectDelayMs * Math.random());
+        Observer.waitForReconnectDelayHelper(reconnectDelayMs);
+    }
+
+    static void waitForObserverElectionDelay(){
+        Observer.waitForReconnectDelayHelper(observerElectionDelayMs);
+    }
+
+    private static void waitForReconnectDelayHelper(long delayValueMs){
+        if (delayValueMs > 0) {
+            long randomDelay = (long) (delayValueMs * Math.random());
             LOG.info("Waiting for " + randomDelay
                     + " ms before reconnecting with the leader");
             try {
@@ -254,6 +274,15 @@ public class Observer extends Learner{
 
     public QuorumPeer.QuorumServer getCurrentLearnerMaster() {
         return currentLearnerMaster;
+    }
+
+    public static long getObserverElectionDelayMs(){
+        return observerElectionDelayMs;
+    }
+
+    public static void setObserverElectionDelayMs(long electionDelayMs) {
+        observerElectionDelayMs = electionDelayMs;
+        LOG.info(OBSERVER_ELECTION_DELAY_MS + " = " + observerElectionDelayMs);
     }
 }
 

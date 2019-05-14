@@ -983,6 +983,20 @@ As an example, this will enable all four letter word commands:
     keepalive for more information.  Defaults to
     **false**.
 
+* *observer.reconnectDelayMs* :
+    (Java system property: **zookeeper.observer.reconnectDelayMs**)
+    When observer loses its connection with the leader, it waits for the
+    specified value before trying to reconnect with the leader so that
+    the entire observer fleet won't try to run leader election and reconnect
+    to the leader at once.
+    Defaults to 0 ms.
+
+* *observer.election.DelayMs* :
+    (Java system property: **zookeeper.observer.election.DelayMs**)
+    Delay the observer's participation in a leader election upon disconnect
+    so as to prevent unexpected additional load on the voting peers during
+    the process. Defaults to 200 ms.
+
 <a name="sc_authOptions"></a>
 
 #### Encryption, Authentication, Authorization Options
