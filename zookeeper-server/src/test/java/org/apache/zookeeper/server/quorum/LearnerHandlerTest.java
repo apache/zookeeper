@@ -41,7 +41,7 @@ import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
@@ -137,8 +137,8 @@ public class LearnerHandlerTest extends ZKTestCase {
         // Intercept when startForwarding is called
         leader = mock(Leader.class);
         when(
-                leader.startForwarding(Matchers.any(LearnerHandler.class),
-                        Matchers.anyLong())).thenAnswer(new Answer() {
+                leader.startForwarding(ArgumentMatchers.any(LearnerHandler.class),
+                        ArgumentMatchers.anyLong())).thenAnswer(new Answer() {
             public Object answer(InvocationOnMock invocation) {
                 currentZxid = (Long) invocation.getArguments()[1];
                 return 0;
