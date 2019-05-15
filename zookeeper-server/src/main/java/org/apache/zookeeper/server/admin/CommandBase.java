@@ -26,18 +26,23 @@ public abstract class CommandBase implements Command {
     private final String primaryName;
     private final Set<String> names;
     private final String doc;
+    private final boolean serverRequired;
 
     /**
      * @param names The possible names of this command, with the primary name first.
      */
     protected CommandBase(List<String> names) {
-        this(names, null);
+        this(names, true, null);
+    }
+    protected CommandBase(List<String> names, boolean serverRequired) {
+        this(names, serverRequired, null);
     }
 
-    protected CommandBase(List<String> names, String doc) {
+    protected CommandBase(List<String> names, boolean serverRequired, String doc) {
         this.primaryName = names.get(0);
         this.names = new HashSet<String>(names);
         this.doc = doc;
+        this.serverRequired = serverRequired;
     }
 
     @Override
@@ -53,6 +58,11 @@ public abstract class CommandBase implements Command {
     @Override
     public String getDoc() {
         return doc;
+    }
+
+    @Override
+    public boolean isServerRequired() {
+        return serverRequired;
     }
 
     /**

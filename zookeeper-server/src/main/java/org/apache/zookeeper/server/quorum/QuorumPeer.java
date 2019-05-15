@@ -535,6 +535,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     private volatile boolean running = true;
 
+    private String initialConfig;
+
     /**
      * The number of milliseconds of each tick
      */
@@ -1459,6 +1461,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      */
     public void setMyid(long myid) {
         this.myid = myid;
+    }
+
+    public void setInitialConfig(String initialConfig) {
+        this.initialConfig = initialConfig;
+    }
+
+    public String getInitialConfig() {
+        return initialConfig;
     }
 
     /**
