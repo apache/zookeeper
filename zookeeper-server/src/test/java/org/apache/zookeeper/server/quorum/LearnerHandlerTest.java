@@ -138,10 +138,10 @@ public class LearnerHandlerTest extends ZKTestCase {
         leader = mock(Leader.class);
         when(
                 leader.startForwarding(ArgumentMatchers.any(LearnerHandler.class),
-                        ArgumentMatchers.anyLong())).thenAnswer(new Answer() {
-            public Object answer(InvocationOnMock invocation) {
-                currentZxid = (Long) invocation.getArguments()[1];
-                return 0;
+                        ArgumentMatchers.anyLong())).thenAnswer(new Answer<Long>() {
+            public Long answer(InvocationOnMock invocation) {
+                currentZxid = invocation.getArgument(1);
+                return 0L;
             }
         });
         when(leader.getZKDatabase()).thenReturn(db);
