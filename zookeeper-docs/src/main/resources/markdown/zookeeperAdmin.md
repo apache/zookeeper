@@ -636,8 +636,10 @@ property, when available, is noted below.
     from taking a snapshot at the same time, each ZooKeeper server
     will take a snapshot when the size in bytes of the set of transactions in the
     transaction log reaches a runtime generated random value in the \[snapSize/2+1, snapSize]
-    range. The default snapSizeLimitInKb is 4,194,304 (4GB). A non-positive
-    value will disable the feature.
+    range. Each file system has a minimum standard file size and in order
+    to for valid functioning of this feature, the number chosen must be larger
+    than that value. The default snapSizeLimitInKb is 4,194,304 (4GB).
+    A non-positive value will disable the feature.
 
 * *txnLogSizeLimitInKb* :
     (Java system property: **zookeeper.txnLogSizeLimitInKb**)

@@ -53,7 +53,7 @@ public class RestoreCommittedLogTest extends ZKTestCase{
     @Test
     public void testRestoreCommittedLogWithSnapSize() throws Exception {
         final int minExpectedSnapshots = 5;
-        final int minTxnsToSnap = 40;
+        final int minTxnsToSnap = 256;
         final int numTransactions = minExpectedSnapshots * minTxnsToSnap;
         final StringBuilder sb = new StringBuilder();
         for (int i = 0; i < 4*1024; i++) {
@@ -61,7 +61,10 @@ public class RestoreCommittedLogTest extends ZKTestCase{
         }
         final byte[] data = sb.toString().getBytes();
 
-        SyncRequestProcessor.setSnapCount(numTransactions * 1000);
+        SyncRequestProcessor.setSnapCount(numTransactions * 1000 /* just some high number */);
+        // The test breaks if this number is less than the smallest size file
+        // created on the system, as revealed through File::length.
+        // Setting to about 1 Mb.
         SyncRequestProcessor.setSnapSizeInBytes(minTxnsToSnap * data.length);
 
         testRestoreCommittedLog(numTransactions, data, minExpectedSnapshots);
