@@ -390,8 +390,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         }
 
         private List<InetSocketAddress> excludedSpecialAddresses(List<InetSocketAddress> addrs) {
-            List<InetSocketAddress> included = new ArrayList<InetSocketAddress>();
-            InetAddress wcAddr = new InetSocketAddress(0).getAddress();
+            List<InetSocketAddress> included = new ArrayList<>();
 
             for (InetSocketAddress addr : addrs) {
                 if (addr == null) {
@@ -400,7 +399,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 InetAddress inetaddr = addr.getAddress();
 
                 if (inetaddr == null ||
-                    inetaddr.equals(wcAddr) || // wildCard address(0.0.0.0)
+                    inetaddr.isAnyLocalAddress() || // wildCard addresses (0.0.0.0 or [::])
                     inetaddr.isLoopbackAddress()) { // loopback address(localhost/127.0.0.1)
                     continue;
                 }
