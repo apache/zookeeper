@@ -48,7 +48,7 @@ public class ZKUtil {
      *
      * @throws IllegalArgumentException if an invalid path is specified
      */
-    public static boolean deleteRecursive(ZooKeeper zk, final String pathRoot)
+    public static boolean deleteRecursive(ZooKeeper zk, final String pathRoot, final int batchSize)
         throws InterruptedException, KeeperException
     {
         PathUtils.validatePath(pathRoot);
@@ -58,10 +58,10 @@ public class ZKUtil {
         LOG.debug("Deleting " + tree.size() + " subnodes ");
 
         int asyncReqRateLimit = 10;
-        // Try deleting the tree nodes in batches of size 1000.
+        // Try deleting the tree nodes in batches.
         // If some batch failed, try again with batches of size 1 to delete as
         // many nodes as possible.
-        boolean success = deleteInBatch(zk, tree, 1000, asyncReqRateLimit);
+        boolean success = deleteInBatch(zk, tree, batchSize, asyncReqRateLimit);
         if (!success) {
             LOG.debug("Failed to delete all nodes in batches of 1000.");
             LOG.debug("Retry with batches of size 1...");

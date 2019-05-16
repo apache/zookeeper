@@ -58,12 +58,12 @@ public class ZooKeeperTest extends ClientBase {
         final ZooKeeper zk = createClient();
         setupDataTree(zk);
 
-        Assert.assertTrue(ZKUtil.deleteRecursive(zk, "/a/c"));
+        Assert.assertTrue(ZKUtil.deleteRecursive(zk, "/a/c", 1000));
         List<String> children = zk.getChildren("/a", false);
         Assert.assertEquals("1 children - c should be deleted ", 1, children.size());
         Assert.assertTrue(children.contains("b"));
 
-        Assert.assertTrue(ZKUtil.deleteRecursive(zk, "/a"));
+        Assert.assertTrue(ZKUtil.deleteRecursive(zk, "/a", 1000));
         Assert.assertNull(zk.exists("/a", null));
     }
 
@@ -87,19 +87,19 @@ public class ZooKeeperTest extends ClientBase {
         zk.setACL("/a/c/0", acls, -1);
         Assert.assertEquals(2, zk.getACL("/a/c/0", new Stat()).size());
 
-        Assert.assertFalse(ZKUtil.deleteRecursive(zk, "/a/c"));
+        Assert.assertFalse(ZKUtil.deleteRecursive(zk, "/a/c", 1000));
         List<String> children = zk.getChildren("/a", false);
         Assert.assertEquals("2 children - c should fail to be deleted ", 2, children.size());
         Assert.assertTrue(children.contains("b"));
 
-        Assert.assertTrue(ZKUtil.deleteRecursive(zk, "/a/b"));
+        Assert.assertTrue(ZKUtil.deleteRecursive(zk, "/a/b", 1000));
         children = zk.getChildren("/a", false);
         Assert.assertEquals("1 children - b should be deleted ", 1, children.size());
 
         // acquire immunity to poison
         zk.addAuthInfo(deleteProtection.getId().getScheme(), "user:test".getBytes());
 
-        Assert.assertTrue(ZKUtil.deleteRecursive(zk, "/a"));
+        Assert.assertTrue(ZKUtil.deleteRecursive(zk, "/a", 1000));
         Assert.assertNull(zk.exists("/a", null));
     }
 
