@@ -284,7 +284,7 @@
     <jline.version>2.11</jline.version>
     <snappy.version>1.1.7</snappy.version>
     <kerby.version>1.1.0</kerby.version>
-    <bouncycastle.version>1.60</bouncycastle.version>
+    <bouncycastle.version>1.61</bouncycastle.version>
     <commons-collections.version>3.2.2</commons-collections.version>
     <commons-lang.version>2.6</commons-lang.version>
     <dropwizard.version>3.2.5</dropwizard.version>
