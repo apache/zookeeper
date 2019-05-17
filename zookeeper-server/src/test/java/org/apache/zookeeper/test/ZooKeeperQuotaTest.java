@@ -27,6 +27,7 @@ import org.apache.zookeeper.StatsTrack;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeperMain;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.cli.SetQuotaCommand;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.junit.Assert;
@@ -52,7 +53,7 @@ public class ZooKeeperQuotaTest extends ClientBase {
 
         zk.create("/a/b/v/d", "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
                 CreateMode.PERSISTENT);
-        ZooKeeperMain.createQuota(zk, path, 5L, 10);
+        SetQuotaCommand.createQuota(zk, path, 5L, 10);
 
         // see if its set
         String absolutePath = Quotas.quotaZookeeper + path + "/" + Quotas.limitNode;

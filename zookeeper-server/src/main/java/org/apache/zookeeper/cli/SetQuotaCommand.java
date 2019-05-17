@@ -18,6 +18,7 @@
 package org.apache.zookeeper.cli;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.cli.*;
 import org.apache.zookeeper.*;
@@ -114,14 +115,33 @@ public class SetQuotaCommand extends CliCommand {
         // is an ancestor of some path that
         // already has quota
         String realPath = Quotas.quotaZookeeper + path;
+
         try {
-            List<String> children = zk.getChildren(realPath, false);
-            for (String child : children) {
-                if (!child.startsWith("zookeeper_")) {
-                    throw new IllegalArgumentException(path + " has child "
-                            + child + " which has a quota");
+            ZKUtil.visitSubTreeDFS(zk, realPath, false, new AsyncCallback.StringCallback() {
+                @Override
+                public void processResult(int rc, String quotaPath, Object ctx, String name) {
+                    List<String> children = new ArrayList<>();
+                    System.out.println("fuck_processResult_path:" + quotaPath);
+                    try {
+                        children = zk.getChildren(quotaPath, false);
+                    } catch (KeeperException.NoNodeException ne) {
+                        LOG.debug("child removed during quota check", ne);
+                        return;
+                    } catch (InterruptedException|KeeperException e) {
+                        e.printStackTrace();
+                    }
+
+                    if (children.size() == 0) {
+                        return;
+                    }
+                    for (String child : children) {
+                        if (!quotaPath.equals(Quotas.quotaZookeeper+path) && Quotas.limitNode.equals(child)) {
+                            throw new IllegalArgumentException(path + " has a child "
+                                    + quotaPath + " which has a quota");
+                        }
+                    }
                 }
-            }
+            });
         } catch (KeeperException.NoNodeException ne) {
             // this is fine
         }
@@ -187,15 +207,16 @@ public class SetQuotaCommand extends CliCommand {
     private static void checkIfParentQuota(ZooKeeper zk, String path)
             throws InterruptedException, KeeperException {
         final String[] splits = path.split("/");
-        String quotaPath = Quotas.quotaZookeeper;
+        String realPath = "";
         for (String str : splits) {
             if (str.length() == 0) {
                 // this should only be for the beginning of the path
                 // i.e. "/..." - split(path)[0] is empty string before first '/'
                 continue;
             }
-            quotaPath += "/" + str;
-            List<String> children = null;
+            realPath += "/" + str;
+            List<String> children;
+            String quotaPath = Quotas.quotaZookeeper + realPath;
             try {
                 children = zk.getChildren(quotaPath, false);
             } catch (KeeperException.NoNodeException ne) {
@@ -206,9 +227,9 @@ public class SetQuotaCommand extends CliCommand {
                 return;
             }
             for (String child : children) {
-                if (Quotas.limitNode.equals(child)) {
+                if (!quotaPath.equals(Quotas.quotaZookeeper+path) && Quotas.limitNode.equals(child)) {
                     throw new IllegalArgumentException(path + " has a parent "
-                            + quotaPath + " which has a quota");
+                            + realPath + " which has a quota");
                 }
             }
         }
