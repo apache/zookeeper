@@ -66,6 +66,7 @@ ZooKeeper's active committers are
 |afine|Abraham Fine|IFTTT|-8|
 |andor|Andor Molnar|Cloudera Inc.|+1|
 |fangmin|Fangmin Lyu|Facebook|-8|
+|eolivelli|Enrico Olivelli|Diennea|+1|
 
 <a name="contributors"></a>
 ## Contributors
