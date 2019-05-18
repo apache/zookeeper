@@ -147,7 +147,7 @@ public abstract class KeeperException extends Exception {
                 return new ReconfigDisabledException();
             case REQUESTTIMEOUT:
                 return new RequestTimeoutException();
-            case QuotaExceed:
+            case QuotaExceeded:
                 return new QuotaExceedException();
             case OK:
             default:
@@ -402,7 +402,7 @@ public abstract class KeeperException extends Exception {
         /** Attempts to perform a reconfiguration operation when reconfiguration feature is disabled. */
         RECONFIGDISABLED(-123),
         /** Exceeded the quota what setted on one path.*/
-        QuotaExceed(-124);
+        QuotaExceeded(-125);
 
         private static final Map<Integer,Code> lookup
             = new HashMap<Integer,Code>();
@@ -489,7 +489,7 @@ public abstract class KeeperException extends Exception {
                 return "No such watcher";
             case RECONFIGDISABLED:
                 return "Reconfig is disabled";
-            case QuotaExceed:
+            case QuotaExceeded:
                 return "Quota exceeded";
             default:
                 return "Unknown error " + code;
@@ -865,15 +865,15 @@ public abstract class KeeperException extends Exception {
     }
 
     /**
-     * @see Code#QuotaExceed
+     * @see Code#QuotaExceeded
      */
     @InterfaceAudience.Public
     public static class QuotaExceedException extends KeeperException {
         public QuotaExceedException() {
-            super(Code.QuotaExceed);
+            super(Code.QuotaExceeded);
         }
         public QuotaExceedException(String path) {
-            super(Code.QuotaExceed, path);
+            super(Code.QuotaExceeded, path);
         }
     }
 }

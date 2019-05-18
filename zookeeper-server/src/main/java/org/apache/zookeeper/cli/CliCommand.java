@@ -17,8 +17,11 @@
  */
 package org.apache.zookeeper.cli;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Map;
+
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooKeeper;
 
 /**
@@ -113,5 +116,5 @@ abstract public class CliCommand {
      * @return
      * @throws CliException
      */
-    abstract public boolean exec() throws CliException;
+    abstract public boolean exec() throws CliException, InterruptedException, IOException, KeeperException;
 }
