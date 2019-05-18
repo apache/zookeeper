@@ -21,6 +21,8 @@ import org.apache.commons.cli.*;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.StatsTrack;
+import org.apache.zookeeper.ZKUtil;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 
 /**
@@ -51,32 +53,53 @@ public class ListQuotaCommand extends CliCommand {
         
         return this;
     }
-    
+
     @Override
     public boolean exec() throws CliException {
         String path = args[1];
-        String absolutePath = Quotas.quotaZookeeper + path + "/"
-                + Quotas.limitNode;
         try {
-            err.println("absolute path is " + absolutePath);
-            Stat stat = new Stat();
-            byte[] data = zk.getData(absolutePath, false, stat);
-            StatsTrack st = new StatsTrack(new String(data));
-            out.println("Output quota for " + path + " "
-                    + st.toString());
-
-            data = zk.getData(Quotas.quotaZookeeper + path + "/"
-                    + Quotas.statNode, false, stat);
-            out.println("Output stat for " + path + " "
-                    + new StatsTrack(new String(data)).toString());
+            listQuota(zk, path);
         } catch (IllegalArgumentException ex) {
             throw new MalformedPathException(ex.getMessage());
         } catch (KeeperException.NoNodeException ne) {
             err.println("quota for " + path + " does not exist.");
-        } catch (KeeperException|InterruptedException ex) {
+        } catch (KeeperException | InterruptedException ex) {
             throw new CliWrapperException(ex);
         }
-        
+
+        return false;
+    }
+
+    // VisibleForTesting
+    public boolean listQuota(ZooKeeper zk, String path) throws KeeperException, InterruptedException {
+
+        if (zk.exists(path, null) == null) {
+            err.println("the path: " + path + " does not exist.");
+            if (zk.exists(Quotas.quotaZookeeper + path, null) != null) {
+                try {
+                    ZKUtil.deleteRecursive(zk, Quotas.quotaZookeeper + path, 1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (KeeperException e) {
+                    e.printStackTrace();
+                }
+            }
+            return false;
+        }
+
+        String absolutePath = Quotas.quotaZookeeper + path + "/"
+                + Quotas.limitNode;
+        Stat stat = new Stat();
+        byte[] data = zk.getData(absolutePath, false, stat);
+        StatsTrack st = new StatsTrack(new String(data));
+        out.println("Output quota for " + path + " "
+                + st.toString());
+
+        data = zk.getData(Quotas.quotaZookeeper + path + "/"
+                + Quotas.statNode, false, stat);
+        out.println("Output stat for " + path + " "
+                + new StatsTrack(new String(data)).toString());
+
         return false;
     }
 }
