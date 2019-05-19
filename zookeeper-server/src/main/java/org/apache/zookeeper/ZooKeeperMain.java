@@ -293,8 +293,7 @@ public class ZooKeeperMain {
         zk = new ZooKeeperAdmin(host, Integer.parseInt(cl.getOption("timeout")), new MyWatcher(), readOnly);
     }
     
-    public static void main(String args[]) throws CliException, IOException, InterruptedException
-    {
+    public static void main(String args[]) throws CliException, IOException, InterruptedException, KeeperException {
         ZooKeeperMain main = new ZooKeeperMain(args);
         main.run();
     }
@@ -309,7 +308,7 @@ public class ZooKeeperMain {
       this.zk = zk;
     }
 
-    void run() throws CliException, IOException, InterruptedException {
+    void run() throws CliException, IOException, InterruptedException, KeeperException {
         if (cl.getCommand() == null) {
             System.out.println("Welcome to ZooKeeper!");
 
@@ -370,7 +369,7 @@ public class ZooKeeperMain {
         System.exit(exitCode);
     }
 
-    public void executeLine(String line) throws CliException, InterruptedException, IOException {
+    public void executeLine(String line) throws CliException, InterruptedException, IOException, KeeperException {
       if (!line.equals("")) {
         cl.parseCommand(line);
         addToHistory(commandCount,line);
@@ -587,7 +586,7 @@ public class ZooKeeperMain {
         return true;
     }
 
-    protected boolean processCmd(MyCommandOptions co) throws CliException, IOException, InterruptedException {
+    protected boolean processCmd(MyCommandOptions co) throws CliException, IOException, InterruptedException, KeeperException {
         boolean watch = false;
         try {
             watch = processZKCmd(co);
@@ -599,7 +598,7 @@ public class ZooKeeperMain {
         return watch;
     }
 
-    protected boolean processZKCmd(MyCommandOptions co) throws CliException, IOException, InterruptedException {
+    protected boolean processZKCmd(MyCommandOptions co) throws CliException, IOException, InterruptedException, KeeperException {
         String[] args = co.getArgArray();
         String cmd = co.getCommand();
         if (args.length < 1) {

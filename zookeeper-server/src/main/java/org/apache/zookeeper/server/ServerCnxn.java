@@ -231,11 +231,28 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     protected void packetReceived(long bytes) {
         incrPacketsReceived();
+        updateRequestThroughput(bytes);
         ServerStats serverStats = serverStats();
         if (serverStats != null) {
-            serverStats().incrementPacketsReceived();
+            serverStats.incrementPacketsReceived();
+            serverStats.updateRequestThroughput(bytes);
         }
         ServerMetrics.getMetrics().BYTES_RECEIVED_COUNT.add(bytes);
+    }
+
+    /**
+     * window duration used for computing bytes-per-second stats
+     */
+    private static int throughputWindowSecs = ServerStats.getThroughputWindowSecs();
+
+    synchronized public void updateRequestThroughput(long bytes) {
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - windowStartTime < 1000 * throughputWindowSecs) {
+            windowBytesReceived = bytes;
+        } else {
+            windowStartTime = currentTime;
+            windowBytesReceived = bytes;
+        }
     }
 
     protected void packetSent() {
@@ -264,6 +281,9 @@ public abstract class ServerCnxn implements Stats, Watcher {
     protected long count;
     protected long totalLatency;
 
+    protected long windowStartTime;
+    protected long windowBytesReceived;
+
     public synchronized void resetStats() {
         packetsReceived.set(0);
         packetsSent.set(0);
@@ -277,10 +297,19 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
         count = 0;
         totalLatency = 0;
+
+        windowStartTime = System.currentTimeMillis();
+        windowBytesReceived = 0;
     }
 
     protected long incrPacketsReceived() {
         return packetsReceived.incrementAndGet();
+    }
+
+    public synchronized long getBytesPerSecReceived() {
+        long secs = (System.currentTimeMillis() - windowStartTime) / 1000L;
+        long bytes = secs < throughputWindowSecs ? windowBytesReceived : 0;
+        return secs != 0 ? bytes / secs : 0;
     }
 
     protected long incrPacketsSent() {
@@ -426,6 +455,8 @@ public abstract class ServerCnxn implements Stats, Watcher {
                 pwriter.print(getAvgLatency());
                 pwriter.print(",maxlat=");
                 pwriter.print(getMaxLatency());
+                pwriter.print(",reqbps=");
+                pwriter.print(getBytesPerSecReceived());
             }
         }
         pwriter.print(")");
@@ -438,6 +469,8 @@ public abstract class ServerCnxn implements Stats, Watcher {
         info.put("outstanding_requests", getOutstandingRequests());
         info.put("packets_received", getPacketsReceived());
         info.put("packets_sent", getPacketsSent());
+        //TODO fuck
+        info.put("bytes_per_sec_received", getBytesPerSecReceived());
         if (!brief) {
             info.put("session_id", getSessionId());
             info.put("last_operation", getLastOperation());

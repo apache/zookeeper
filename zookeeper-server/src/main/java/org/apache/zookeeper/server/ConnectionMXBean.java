@@ -47,6 +47,10 @@ public interface ConnectionMXBean {
      */
     public long getPacketsSent();
     /**
+     * @return bytes-per-second received in current window
+     */
+    public long getBytesPerSecReceived();
+    /**
      * @return number of requets being processed
      */
     public long getOutstandingRequests();

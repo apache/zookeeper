@@ -31,7 +31,7 @@ import org.apache.jute.OutputArchive;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
-import org.apache.zookeeper.KeeperException.QuotaExceedException;
+import org.apache.zookeeper.KeeperException.QuotaExceededException;
 import org.apache.zookeeper.Op;
 
 import org.apache.zookeeper.PortAssignment;
@@ -346,7 +346,7 @@ public class FuzzySnapshotRelatedTest extends QuorumPeerTestBase {
         public void createNode(final String path, byte data[], List<ACL> acl,
                            long ephemeralOwner, int parentCVersion, long zxid,
                            long time, Stat outputStat)
-                throws NoNodeException, NodeExistsException, QuotaExceedException {
+                throws NoNodeException, NodeExistsException, QuotaExceededException {
             NodeCreateListener listener = nodeCreateListeners.get(path);
             if (listener != null) {
                 listener.process(path);

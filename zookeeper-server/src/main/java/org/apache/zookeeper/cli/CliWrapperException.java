@@ -53,7 +53,7 @@ public class CliWrapperException extends CliException {
                 return "No quorum of new config is connected and " +
                         "up-to-date with the leader of last commmitted config - try invoking reconfiguration after " +
                         "new servers are connected and synced";
-            } else if (keeperException instanceof KeeperException.QuotaExceedException) {
+            } else if (keeperException instanceof KeeperException.QuotaExceededException) {
                 return "Quota has exceeded : " + keeperException.getPath();
             }
         }

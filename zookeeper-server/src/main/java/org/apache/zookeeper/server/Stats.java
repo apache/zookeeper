@@ -65,4 +65,8 @@ interface Stats {
     /** Reset counters
      * @since 3.3.0 */
     void resetStats();
+
+    /** Request throughput over current window in bytes-per-second
+     * @since 3.6.0 */
+    long getBytesPerSecReceived();
 }

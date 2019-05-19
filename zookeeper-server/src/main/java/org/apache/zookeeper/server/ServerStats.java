@@ -46,6 +46,9 @@ public class ServerStats {
     private final Provider provider;
     private final long startTime = Time.currentElapsedTime();
 
+    private long windowStartTime;
+    private long windowBytesReceived;
+
     public static interface Provider {
         public long getOutstandingRequests();
         public long getLastProcessedZxid();
@@ -99,7 +102,30 @@ public class ServerStats {
     public String getServerState() {
         return provider.getState();
     }
-    
+
+    /**
+     * window duration used for computing bytes-per-second stats
+     */
+    private static int throughputWindowSecs = getThroughputWindowSecs();
+
+    /**
+     * window duration used for computing bytes-per-second stats
+     */
+    public static int getThroughputWindowSecs() {
+        String sc = System.getProperty("zookeeper.throughputWindowSecs");
+        try {
+            return Integer.parseInt(sc);
+        } catch (Exception e) {
+            return 10;
+        }
+    }
+
+    synchronized public long getBytesPerSecReceived() {
+        long secs = (System.currentTimeMillis() - windowStartTime) / 1000L;
+        long bytes = secs < throughputWindowSecs ? windowBytesReceived : 0;
+        return secs != 0 ? bytes / secs : 0;
+    }
+
     /** The number of client connections alive to this server */
     public int getNumAliveClientConnections() {
     	return provider.getNumAliveConnections();
@@ -120,6 +146,7 @@ public class ServerStats {
                 + getAvgLatency() + "/" + getMaxLatency() + "\n");
         sb.append("Received: " + getPacketsReceived() + "\n");
         sb.append("Sent: " + getPacketsSent() + "\n");
+        sb.append("Received bytes/sec: " + getBytesPerSecReceived() + "\n");
         sb.append("Connections: " + getNumAliveClientConnections() + "\n");
 
         if (provider != null) {
@@ -168,6 +195,18 @@ public class ServerStats {
     public void resetRequestCounters(){
         packetsReceived.set(0);
         packetsSent.set(0);
+        windowStartTime = System.currentTimeMillis();
+        windowBytesReceived = 0;
+    }
+
+    synchronized public void updateRequestThroughput(long bytes) {
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - windowStartTime < 1000 * throughputWindowSecs) {
+            windowBytesReceived = bytes;
+        } else {
+            windowStartTime = currentTime;
+            windowBytesReceived = bytes;
+        }
     }
 
     public long getFsyncThresholdExceedCount() {

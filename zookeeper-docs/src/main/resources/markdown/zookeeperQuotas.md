@@ -40,7 +40,7 @@ The above command gives you a command line option of using quotas.
 
 ### Design Quotas
 ZooKeeper has both namespace/count and bytes quotas. You can use the ZooKeeperMain class to setup quotas.
-ZooKeeper will throw the quotaExceedException and print DEBUG messages if users exceed the quota assigned to them.The messages are printed in the log of the ZooKeeper.
+ZooKeeper will throw the QuotaExceededException and print DEBUG messages if users exceed the quota assigned to them.The messages are printed in the log of the ZooKeeper.
 The implement of quota depends on registering the znode on the path under /zookeeper/quota to remmber the quota users set for one path.
 The more detail about the quota can be found under the /zookeeper/quota.
 ls /zookeeper/quota/foo

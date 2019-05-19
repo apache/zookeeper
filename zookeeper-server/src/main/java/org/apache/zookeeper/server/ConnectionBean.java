@@ -134,7 +134,12 @@ public class ConnectionBean implements ConnectionMXBean, ZKMBeanInfo {
     public long getPacketsSent() {
         return stats.getPacketsSent();
     }
-    
+
+    @Override
+    public long getBytesPerSecReceived() {
+        return stats.getBytesPerSecReceived();
+    }
+
     public int getSessionTimeout() {
         return connection.getSessionTimeout();
     }

@@ -22,18 +22,44 @@ import java.io.IOException;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.KeeperException.QuotaExceedException;
+import org.apache.zookeeper.KeeperException.QuotaExceededException;
 import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.StatsTrack;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeperMain;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.cli.SetQuotaCommand;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class ZooKeeperQuotaTest extends ClientBase {
+
+    public static class OldStatsTrack {
+        private int count;
+        private long bytes;
+
+        public OldStatsTrack(String stats) {
+            if (stats == null) {
+                stats = "count=-1,bytes=-1";
+            }
+            String[] split = stats.split(",");
+            if (split.length != 2) {
+                throw new IllegalArgumentException("invalid string " + stats);
+            }
+            count = Integer.parseInt(split[0].split("=")[1]);
+            bytes = Long.parseLong(split[1].split("=")[1]);
+        }
+
+        public int getCount() {
+            return count;
+        }
+
+        public long getBytes() {
+            return bytes;
+        }
+    }
 
     @Test
     public void testQuota() throws IOException,
@@ -78,7 +104,62 @@ public class ZooKeeperQuotaTest extends ClientBase {
             server.getZKDatabase().getDataTree().getMaxPrefixWithQuota(path) != null);
     }
 
-    @Test(expected = QuotaExceedException.class)
+    @Test
+    public void testRateQuota() throws IOException, InterruptedException, KeeperException, Exception {
+        final ZooKeeper zk = createClient();
+
+        zk.create("/a2", "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        StatsTrack quota = new StatsTrack(null);
+        // Default BPS window duration is 10s, so a limit of 10 allows 100
+        // bytes through over the course of the 10s window.
+        quota.setBytesPerSecHardLimit(10L);
+        SetQuotaCommand.createQuota(zk, "/a2", quota);
+
+        // see if its set
+        String absolutePath = Quotas.quotaZookeeper + "/a2/" + Quotas.limitNode;
+        byte[] data = zk.getData(absolutePath, false, new Stat());
+        StatsTrack st = new StatsTrack(new String(data));
+        Assert.assertTrue("bytes-per-sec hard limit is set",
+                st.getBytesPerSecHardLimit() == 10L);
+        Assert.assertTrue("bytes-per-sec soft limit is not set",
+                st.getBytesPerSec() == -1L);
+        // check quota node readable by old servers
+        OldStatsTrack ost = new OldStatsTrack(new String(data));
+
+        String statPath = Quotas.quotaZookeeper + "/a2/" + Quotas.statNode;
+        data = zk.getData(statPath, false, new Stat());
+        st = new StatsTrack(new String(data));
+        Assert.assertTrue("bytes-per-sec bytes is unset",
+                st.getBytesPerSecBytes() == 0L);
+        // check stats node readable by old servers
+        ost = new OldStatsTrack(new String(data));
+
+        // Overhead per transaction is modeled at 40 bytes, so these two
+        // creates send 404=44 bytes each.
+        zk.create("/a2/b", "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        zk.create("/a2/c", "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        try {
+            zk.create("/a2/d", "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT);
+            Assert.fail("Should get quota exceeded error (bytes-per-sec hard limit)");
+        } catch (KeeperException.QuotaExceededException e) {
+            // expected
+        }
+        
+        data = zk.getData(statPath, false, new Stat());
+        st = new StatsTrack(new String(data));
+        Assert.assertTrue("bytes-per-sec bytes is set",
+                st.getBytesPerSecBytes() == 88L);
+        Assert.assertTrue("bytes-per-sec start time is set",
+                st.getBytesPerSecStartTime() != -1L);
+        // check stats node readable by old servers
+        ost = new OldStatsTrack(new String(data));
+    }
+
+    @Test(expected = QuotaExceededException.class)
     public void testSetExceedBytesQuota() throws Exception {
 
         final ZooKeeper zk = createClient();
@@ -90,7 +171,7 @@ public class ZooKeeperQuotaTest extends ClientBase {
         zk.setData("/test/quota", "newdata".getBytes(), -1);
     }
 
-    @Test//(expected = QuotaExceedException.class)
+    @Test//(expected = QuotaExceededException.class)
     public void testSetOnChildExceedBytesQuota() throws Exception {
 
         final ZooKeeper zk = createClient();
@@ -108,7 +189,7 @@ public class ZooKeeperQuotaTest extends ClientBase {
         }
     }
 
-    @Test(expected = QuotaExceedException.class)
+    @Test(expected = QuotaExceededException.class)
     public void testCreateExceedBytesQuota() throws Exception {
 
         final ZooKeeper zk = createClient();
@@ -121,7 +202,7 @@ public class ZooKeeperQuotaTest extends ClientBase {
                 CreateMode.PERSISTENT);
     }
 
-    @Test(expected = QuotaExceedException.class)
+    @Test(expected = QuotaExceededException.class)
     public void testCreateExceedCountQuota() throws Exception {
 
         final ZooKeeper zk = createClient();

@@ -425,6 +425,11 @@ public class NIOServerCnxn extends ServerCnxn {
         initialized = true;
     }
 
+    @Override
+    public long getBytesPerSecReceived() {
+        return 0;
+    }
+
     /**
      * This class wraps the sendBuffer method of NIOServerCnxn. It is
      * responsible for chunking up the response to a client. Rather

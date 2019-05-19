@@ -67,7 +67,7 @@ public class DelQuotaCommand extends CliCommand {
     }
 
     @Override
-    public boolean exec() throws CliException, InterruptedException, IOException, KeeperException {
+    public boolean exec() throws CliException {
         String path = args[1];
         // Use a StatsTrack object to pass in to delQuota which quotas
         // to delete by setting them to 1 as a flag.

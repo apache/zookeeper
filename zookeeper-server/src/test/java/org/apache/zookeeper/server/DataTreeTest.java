@@ -22,7 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
-import org.apache.zookeeper.KeeperException.QuotaExceedException;
+import org.apache.zookeeper.KeeperException.QuotaExceededException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
@@ -115,7 +115,7 @@ public class DataTreeTest extends ZKTestCase {
     }
 
     private void createEphemeralNode(long session, final DataTree dataTree,
-            int count) throws NoNodeException, NodeExistsException, QuotaExceedException {
+            int count) throws NoNodeException, NodeExistsException, QuotaExceededException {
         for (int i = 0; i < count; i++) {
             dataTree.createNode("/test" + i, new byte[0], null, session + i,
                     dataTree.getNode("/").stat.getCversion() + 1, 1, 1);

@@ -148,7 +148,7 @@ public abstract class KeeperException extends Exception {
             case REQUESTTIMEOUT:
                 return new RequestTimeoutException();
             case QuotaExceeded:
-                return new QuotaExceedException();
+                return new QuotaExceededException();
             case OK:
             default:
                 throw new IllegalArgumentException("Invalid exception code");
@@ -868,11 +868,11 @@ public abstract class KeeperException extends Exception {
      * @see Code#QuotaExceeded
      */
     @InterfaceAudience.Public
-    public static class QuotaExceedException extends KeeperException {
-        public QuotaExceedException() {
+    public static class QuotaExceededException extends KeeperException {
+        public QuotaExceededException() {
             super(Code.QuotaExceeded);
         }
-        public QuotaExceedException(String path) {
+        public QuotaExceededException(String path) {
             super(Code.QuotaExceeded, path);
         }
     }

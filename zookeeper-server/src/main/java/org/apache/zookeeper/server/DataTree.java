@@ -25,7 +25,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
-import org.apache.zookeeper.KeeperException.QuotaExceedException;
+import org.apache.zookeeper.KeeperException.QuotaExceededException;
 import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.StatsTrack;
 import org.apache.zookeeper.WatchedEvent;
@@ -159,6 +159,26 @@ public class DataTree {
             Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 
     private final ReferenceCountedACLCache aclCache = new ReferenceCountedACLCache();
+
+    /**
+     * window duration used for computing bytes-per-second stats
+     */
+    private static int throughputWindowSecs = ServerStats.getThroughputWindowSecs();
+
+    private static int requestOverheadBytes = getRequestOverheadBytes();
+
+    /**
+     * number of bytes of overhead (approximate) sent with every request
+     * (used for rate throughput computation)
+     */
+    public static int getRequestOverheadBytes() {
+        String sc = System.getProperty("zookeeper.requestOverheadBytes");
+        try {
+            return Integer.parseInt(sc);
+        } catch (Exception e) {
+            return 40;
+        }
+    }
 
     @SuppressWarnings("unchecked")
     public Set<String> getEphemerals(long sessionId) {
@@ -343,13 +363,15 @@ public class DataTree {
      *
      * @param lastPrefix
      *            the path of the node that is quotaed.
+     * @param time
+     *            in milliseconds
      * @param bytesDiff
      *            the diff to be added to number of bytes
      * @param countDiff
      *            the diff to be added to the count
      */
-    public void updateCountBytes(String lastPrefix, long bytesDiff, int countDiff)
-            throws KeeperException.QuotaExceedException {
+    public void updateQuota(String lastPrefix, long time, long bytesDiff, int countDiff)
+            throws KeeperException.QuotaExceededException {
         String statNode = Quotas.statPath(lastPrefix);
         DataNode node = nodes.get(statNode);
 
@@ -364,6 +386,7 @@ public class DataTree {
         }
         synchronized (node) {
             updatedStat = new StatsTrack(new String(node.data));
+            //fuck set
             updatedStat.setCount(updatedStat.getCount() + countDiff);
             updatedStat.setBytes(updatedStat.getBytes() + bytesDiff);
             node.data = updatedStat.toString().getBytes();
@@ -386,18 +409,81 @@ public class DataTree {
         if(updatedStat!=null) {
             System.out.println("fuck_updateCountBytes3:" + updatedStat.getCount() + "," + thisStats.getCount());
         }
-        if (thisStats.getCount() > -1 && (updatedStat.getCount() > thisStats.getCount())) {
-            LOG.warn("Quota exceeded: " + lastPrefix + " count="
-                    + updatedStat.getCount() + " limit="
-                    + thisStats.getCount());
-            throw new KeeperException.QuotaExceedException(lastPrefix);
-        }
-        if (thisStats.getBytes() > -1 && (updatedStat.getBytes() > thisStats.getBytes())) {
-            LOG.warn("Quota exceeded: " + lastPrefix + " bytes="
-                    + updatedStat.getBytes() + " limit="
-                    + thisStats.getBytes());
-            throw new KeeperException.QuotaExceedException(lastPrefix);
-        }
+        //check the quota
+//        boolean checkCountQuota = countDiff > 0 &&
+//                (thisStats.getCount() > -1 || thisStats.getCountHardLimit() > -1);
+//        boolean checkByteQuota = bytesDiff > 0 &&
+//                (thisStats.getBytes() > -1 || thisStats.getByteHardLimit() > -1);
+//        boolean checkBytesPerSecQuota = bytesDiff > 0 &&
+//                (thisStats.getBytesPerSec() > -1 || thisStats.getBytesPerSecHardLimit() > -1);
+//        if (!checkCountQuota && !checkByteQuota && !checkBytesPerSecQuota) {
+//            return;
+//        }
+
+        //check
+        //if (checkCountQuota) {
+            long newCount = updatedStat.getCount();
+            long countLimit = thisStats.getCountHardLimit();
+            if (countLimit > -1 && newCount > countLimit) {
+                String msg = lastPrefix + " [count=" + newCount + ", hardlimit=" + countLimit + "]";
+                LOG.warn("Quota exceeded: {}", msg);
+                throw new KeeperException.QuotaExceededException(msg);
+            }
+            countLimit = thisStats.getCount();
+            if (countLimit > -1 && newCount > countLimit) {
+                String msg = lastPrefix + " [count=" + newCount + ", softlimit=" + countLimit + "]";
+                LOG.warn("Quota exceeded: {}", msg);
+            }
+        //}
+        //if (checkByteQuota) {
+            long newBytes = updatedStat.getBytes();
+            long byteLimit = thisStats.getByteHardLimit();
+            if (byteLimit > -1 && newBytes > byteLimit) {
+                String msg = lastPrefix + " [bytes=" + newBytes + ", hardlimit=" + byteLimit + "]";
+                LOG.warn("Quota exceeded: {}", msg);
+                throw new KeeperException.QuotaExceededException(msg);
+            }
+            byteLimit = thisStats.getBytes();
+            if (byteLimit > -1 && newBytes > byteLimit) {
+                String msg = lastPrefix + " [bytes=" + newBytes + ", softlimit=" + byteLimit + "]";
+                LOG.warn("Quota exceeded: {}", msg);
+            }
+        //}
+        //if (checkBytesPerSecQuota) {
+        //    TODO
+//            long prevTime = currentStats.getBytesPerSecStartTime();
+//            long bpsBytes = 0L;
+//            if (time - prevTime < 1000 * throughputWindowSecs) {
+//                bpsBytes = currentStats.getBytesPerSecBytes();
+//            }
+//            updateBytes = requestOverheadBytes;
+//            long bpsRate = (bpsBytes + updateBytes) / throughputWindowSecs;
+//            long bpsLimit = quotaStats.getBytesPerSecHardLimit();
+//            if (bpsLimit > -1 && bpsLimit < bpsRate) {
+//                String msg = lastPrefix + " [bytesPerSec=" + bpsRate
+//                        + ", hardlimit=" + bpsLimit + "]";
+//                LOG.warn("Quota exceeded: {}", msg);
+//                throw new KeeperException.QuotaExceededException(msg);
+//            }
+//            bpsLimit = quotaStats.getBytesPerSec();
+//            if (bpsLimit > -1 && bpsLimit < bpsRate) {
+//                String msg = lastPrefix + " [bytesPerSec=" + bpsRate
+//                        + ", softlimit=" + bpsLimit + "]";
+//                LOG.warn("Quota exceeded: {}", msg);
+//            }
+        //}
+//        if (thisStats.getCount() > -1 && (updatedStat.getCount() > thisStats.getCount())) {
+//            LOG.warn("Quota exceeded: " + lastPrefix + " count="
+//                    + updatedStat.getCount() + " limit="
+//                    + thisStats.getCount());
+//            throw new KeeperException.QuotaExceededException(lastPrefix);
+//        }
+//        if (thisStats.getBytes() > -1 && (updatedStat.getBytes() > thisStats.getBytes())) {
+//            LOG.warn("Quota exceeded: " + lastPrefix + " bytes="
+//                    + updatedStat.getBytes() + " limit="
+//                    + thisStats.getBytes());
+//            throw new KeeperException.QuotaExceededException(lastPrefix);
+//        }
     }
 
     /**
@@ -420,7 +506,7 @@ public class DataTree {
      */
     public void createNode(final String path, byte data[], List<ACL> acl,
             long ephemeralOwner, int parentCVersion, long zxid, long time)
-    		throws NoNodeException, NodeExistsException, QuotaExceedException {
+    		throws NoNodeException, NodeExistsException, QuotaExceededException {
     	createNode(path, data, acl, ephemeralOwner, parentCVersion, zxid, time, null);
     }
 
@@ -448,7 +534,7 @@ public class DataTree {
             long ephemeralOwner, int parentCVersion, long zxid, long time, Stat outputStat)
             throws KeeperException.NoNodeException,
             KeeperException.NodeExistsException,
-            KeeperException.QuotaExceedException {
+            KeeperException.QuotaExceededException {
         int lastSlash = path.lastIndexOf('/');
         String parentName = path.substring(0, lastSlash);
         String childName = path.substring(lastSlash + 1);
@@ -539,7 +625,7 @@ public class DataTree {
         if(lastPrefix != null) {
             LOG.info("fuck_createData_lastPrefix:" + lastPrefix + " has a quota");
             // ok we have some match and need to update
-            updateCountBytes(lastPrefix, bytes, 1);
+            updateQuota(lastPrefix, bytes, 1);
         }
         updateWriteStat(path, bytes);
         dataWatches.triggerWatch(path, Event.EventType.NodeCreated);
@@ -624,8 +710,8 @@ public class DataTree {
                 bytes = (node.data == null ? 0 : -(node.data.length));
             }
             try {
-                updateCountBytes(lastPrefix, bytes,-1);
-            } catch (QuotaExceedException e) {
+                updateQuota(lastPrefix, bytes,-1);
+            } catch (QuotaExceededException e) {
                 //fuck
                 e.printStackTrace();
             }
@@ -648,7 +734,7 @@ public class DataTree {
 
     public Stat setData(String path, byte data[], int version, long zxid,
             long time) throws KeeperException.NoNodeException,
-            KeeperException.QuotaExceedException {
+            KeeperException.QuotaExceededException {
         Stat s = new Stat();
         DataNode n = nodes.get(path);
         if (n == null) {
@@ -667,7 +753,7 @@ public class DataTree {
         String lastPrefix = getMaxPrefixWithQuota(path);
         long dataBytes = data == null ? 0 : data.length;
         if(lastPrefix != null) {
-            this.updateCountBytes(lastPrefix, dataBytes
+            this.updateQuota(lastPrefix, dataBytes
                     - (lastdata == null ? 0 : lastdata.length), 0);
         }
         nodeDataSize.addAndGet(getNodeSize(path, data) - getNodeSize(path, lastdata));

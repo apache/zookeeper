@@ -157,7 +157,9 @@ public class ZooKeeperTest extends ClientBase {
     		Assert.fail("As Node does not exist, command should fail by throwing No Node Exception.");
     	} catch (CliException e) {
     		Assert.assertEquals("Node does not exist: /invalidPath", e.getMessage());
-    	}
+    	} catch (KeeperException e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
