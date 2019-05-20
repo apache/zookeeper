@@ -650,6 +650,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      */
     protected int quorumCnxnThreadsSize = QUORUM_CNXN_THREADS_SIZE_DEFAULT_VALUE;
 
+    public static final String QUORUM_CNXN_TIMEOUT_MS = "zookeeper.quorumCnxnTimeoutMs";
+    private static int quorumCnxnTimeoutMs;
+
+    static {
+        quorumCnxnTimeoutMs = Integer.getInteger(QUORUM_CNXN_TIMEOUT_MS, -1);
+        LOG.info("{}={}", QUORUM_CNXN_TIMEOUT_MS, quorumCnxnTimeoutMs);
+    }
+
     /**
      * @deprecated As of release 3.4.0, this class has been deprecated, since
      * it is used with one of the udp-based versions of leader election, which
@@ -2293,12 +2301,15 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     public QuorumCnxManager createCnxnManager() {
+        int timeout = quorumCnxnTimeoutMs > 0 ?
+                quorumCnxnTimeoutMs : this.tickTime * this.syncLimit;
+        LOG.info("Using {}ms as the quorum cnxn socket timeout", timeout);
         return new QuorumCnxManager(this,
                 this.getId(),
                 this.getView(),
                 this.authServer,
                 this.authLearner,
-                this.tickTime * this.syncLimit,
+                timeout,
                 this.getQuorumListenOnAllIPs(),
                 this.quorumCnxnThreadsSize,
                 this.isQuorumSaslAuthEnabled());
