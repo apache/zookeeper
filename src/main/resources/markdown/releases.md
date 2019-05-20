@@ -58,7 +58,7 @@ Various performance and stability improvements.
 Please also note:
 
 * Minimum recommended JDK version is now 1.8
-* Release artifacts have been changed considerably to be more Apache and Maven friendly:
+* Release artifacts have been changed considerably:
     * apache-zookeeper-X.Y.Z.tar.gz is standard source-only release,
     * apache-zookeeper-X.Y.Z-bin.tar.gz is the convenience tarball which contains the binaries
 
