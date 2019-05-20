@@ -43,7 +43,6 @@ public class LETest extends ZKTestCase {
     volatile long leader = -1;
     Random rand = new Random();
     class LEThread extends Thread {
-        @SuppressWarnings("deprecated")
         org.apache.zookeeper.server.quorum.LeaderElection le;
         int i;
         QuorumPeer peer;
@@ -107,14 +106,15 @@ public class LETest extends ZKTestCase {
             tmpdir[i] = ClientBase.createTmpDir();
             port[i] = PortAssignment.unique();
         }
-        LeaderElection le[] = new LeaderElection[count];
+        org.apache.zookeeper.server.quorum.LeaderElection le[]
+                = new org.apache.zookeeper.server.quorum.LeaderElection[count];
         leaderDies = true;
         boolean allowOneBadLeader = leaderDies;
         for(int i = 0; i < le.length; i++) {
             QuorumPeer peer = new QuorumPeer(peers, tmpdir[i], tmpdir[i],
                     port[i], 0, i, 1000, 2, 2);
             peer.startLeaderElection();
-            le[i] = new LeaderElection(peer);
+            le[i] = new org.apache.zookeeper.server.quorum.LeaderElection(peer);
             LEThread thread = new LEThread(le[i], peer, i);
             thread.start();
             threads.add(thread);
