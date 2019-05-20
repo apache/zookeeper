@@ -55,6 +55,13 @@ It contains 950 commits, resolves 744 issues, fixes 470 bugs and includes the fo
 
 Various performance and stability improvements.
 
+Please also note:
+
+* Minimum recommended JDK version is now 1.8
+* Release artifacts have been changed considerably to be more Apache and Maven friendly:
+    * apache-zookeeper-X.Y.Z.tar.gz is standard source-only release,
+    * apache-zookeeper-X.Y.Z-bin.tar.gz is the convenience tarball which contains the binaries
+
 Thanks to the contributors for their tremendous efforts to make this release happen.
 
 See [ZooKeeper 3.5.5 Release Notes](https://zookeeper.apache.org/doc/r3.5.5/releasenotes.html) for details.

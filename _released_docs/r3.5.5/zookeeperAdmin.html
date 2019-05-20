@@ -427,69 +427,66 @@ server.3=zoo3:2888:3888
 </ul><p><a name="Communication+using+the+Netty+framework"></a></p><h3>Communication using the Netty framework</h3><p><a href="http://netty.io">Netty</a> is an NIO based client/server communication framework, it simplifies (over NIO being used directly) many of the complexities of network level communication for java applications. Additionally the Netty framework has built in support for encryption (SSL) and authentication (certificates). These are optional features and can be turned on or off individually.</p><p>In versions 3.5+, a ZooKeeper server can use Netty instead of NIO (default option) by setting the environment variable <strong>zookeeper.serverCnxnFactory</strong> to <strong>org.apache.zookeeper.server.NettyServerCnxnFactory</strong>; for the client, set <strong>zookeeper.clientCnxnSocket</strong> to <strong>org.apache.zookeeper.ClientCnxnSocketNetty</strong>.</p><p>TBD - tuning options for netty - currently there are none that are netty specific but we should add some. Esp around max bound on the number of reader worker threads netty creates.</p><p><a name="Quorum+TLS"></a></p><h4>Quorum TLS</h4><p><em>New in 3.5.5</em></p><p>Based on the Netty Framework ZooKeeper ensembles can be set up to use TLS encryption in their communication channels. This section describes how to set up encryption on the quorum communication.</p><p>Please note that Quorum TLS encapsulates securing both leader election and quorum communication protocols.</p>
 <ol>
   <li>Create SSL keystore JKS to store local credentials</li>
-</ol><p>One keystore should be created for each ZK instance.</p><p>In this example we generate a self-signed certificate and store it together with the private key in <code>keystore.jks</code>. This is suitable for testing purposes, but you probably need an official certificate to sign your keys in a production environment.</p><p>Please note that the alias (<code>-alias</code>) and the distinguished name (<code>-dname</code>) must match the hostname of the machine that is associated with, otherwise hostname verification won't work.</p><p><code>
-keytool -genkeypair -alias $(hostname -f) -keyalg RSA -keysize 2048 -dname &quot;cn=$(hostname -f)&quot; -keypass password -keystore keystore.jks -storepass password
-</code></p>
+</ol><p>One keystore should be created for each ZK instance.</p><p>In this example we generate a self-signed certificate and store it together with the private key in <code>keystore.jks</code>. This is suitable for testing purposes, but you probably need an official certificate to sign your keys in a production environment.</p><p>Please note that the alias (<code>-alias</code>) and the distinguished name (<code>-dname</code>) must match the hostname of the machine that is associated with, otherwise hostname verification won't work.</p>
+<pre><code>keytool -genkeypair -alias $(hostname -f) -keyalg RSA -keysize 2048 -dname &quot;cn=$(hostname -f)&quot; -keypass password -keystore keystore.jks -storepass password</code></pre>
 <ol>
   <li>Extract the signed public key (certificate) from keystore</li>
-</ol><p><em>This step might only necessary for self-signed certificates.</em></p><p><code>
-keytool -exportcert -alias $(hostname -f) -keystore keystore.jks -file $(hostname -f).cer -rfc
-</code></p>
+</ol><p><em>This step might only necessary for self-signed certificates.</em></p>
+<pre><code>keytool -exportcert -alias $(hostname -f) -keystore keystore.jks -file $(hostname -f).cer -rfc</code></pre>
 <ol>
   <li>Create SSL truststore JKS containing certificates of all ZooKeeper instances</li>
-</ol><p>The same truststore (storing all accepted certs) should be shared on participants of the ensemble. You need to use different aliases to store multiple certificates in the same truststore. Name of the aliases doesn't matter.</p><p><code>
-keytool -importcert -alias [host1..3] -file [host1..3].cer -keystore truststore.jks -storepass password
-</code></p>
+</ol><p>The same truststore (storing all accepted certs) should be shared on participants of the ensemble. You need to use different aliases to store multiple certificates in the same truststore. Name of the aliases doesn't matter.</p>
+<pre><code>keytool -importcert -alias [host1..3] -file [host1..3].cer -keystore truststore.jks -storepass password</code></pre>
 <ol>
   <li>You need to use <code>NettyServerCnxnFactory</code> as serverCnxnFactory, because SSL is not supported by NIO. Add the following configuration settings to your <code>zoo.cfg</code> config file:</li>
-</ol><p><code>
-sslQuorum=true
+</ol>
+<pre><code>sslQuorum=true
 serverCnxnFactory=org.apache.zookeeper.server.NettyServerCnxnFactory
 ssl.quorum.keyStore.location=/path/to/keystore.jks
 ssl.quorum.keyStore.password=password
 ssl.quorum.trustStore.location=/path/to/truststore.jks
 ssl.quorum.trustStore.password=password
-</code></p>
+</code></pre>
 <ol>
   <li>Verify in the logs that your ensemble is running on TLS:</li>
-</ol><p><code>
-INFO  [main:QuorumPeer@1789] - Using TLS encrypted quorum communication
+</ol>
+<pre><code>INFO  [main:QuorumPeer@1789] - Using TLS encrypted quorum communication
 INFO  [main:QuorumPeer@1797] - Port unification disabled
 ...
 INFO  [QuorumPeerListener:QuorumCnxManager$Listener@877] - Creating TLS-only quorum server socket
-</code></p><p><a name="Upgrading+existing+nonTLS+cluster"></a></p><h4>Upgrading existing non-TLS cluster with no downtime</h4><p><em>New in 3.5.5</em></p><p>Here are the steps needed to upgrade an already running ZooKeeper ensemble to TLS without downtime by taking advantage of port unification functionality.</p>
+</code></pre><p><a name="Upgrading+existing+nonTLS+cluster"></a></p><h4>Upgrading existing non-TLS cluster with no downtime</h4><p><em>New in 3.5.5</em></p><p>Here are the steps needed to upgrade an already running ZooKeeper ensemble to TLS without downtime by taking advantage of port unification functionality.</p>
 <ol>
   <li><p>Create the necessary keystores and truststores for all ZK participants as described in the previous section</p></li>
   <li><p>Add the following config settings and restart the first node</p></li>
-</ol><p><code>
-sslQuorum=false
+</ol>
+<pre><code>sslQuorum=false
 portUnification=true
 serverCnxnFactory=org.apache.zookeeper.server.NettyServerCnxnFactory
 ssl.quorum.keyStore.location=/path/to/keystore.jks
 ssl.quorum.keyStore.password=password
 ssl.quorum.trustStore.location=/path/to/truststore.jks
 ssl.quorum.trustStore.password=password
-</code></p><p>Note that TLS is not yet enabled, but we turn on port unification.</p>
+</code></pre><p>Note that TLS is not yet enabled, but we turn on port unification.</p>
 <ol>
   <li>Repeat step #2 on the remaining nodes. Verify that you see the following entries in the logs:</li>
-</ol><p><code>
-INFO  [main:QuorumPeer@1791] - Using insecure (non-TLS) quorum communication
+</ol>
+<pre><code>INFO  [main:QuorumPeer@1791] - Using insecure (non-TLS) quorum communication
 INFO  [main:QuorumPeer@1797] - Port unification enabled
 ...
 INFO  [QuorumPeerListener:QuorumCnxManager$Listener@874] - Creating TLS-enabled quorum server socket
-</code></p><p>You should also double check after each node restart that the quorum become healthy again.</p>
+</code></pre><p>You should also double check after each node restart that the quorum become healthy again.</p>
 <ol>
   <li>Enable Quorum TLS on each node and do rolling restart:</li>
-</ol><p><code>
-sslQuorum=true
+</ol>
+<pre><code>sslQuorum=true
 portUnification=true
-</code></p>
+</code></pre>
 <ol>
   <li>Once you verified that your entire ensemble is running on TLS, you could disable port unification and do another rolling restart</li>
-</ol><p><code>
-sslQuorum=true
+</ol>
+<pre><code>sslQuorum=true
 portUnification=false
-</code> </p><p><a name="sc_zkCommands"></a></p><h3>ZooKeeper Commands</h3><p><a name="sc_4lw"></a></p><h4>The Four Letter Words</h4><p>ZooKeeper responds to a small set of commands. Each command is composed of four letters. You issue the commands to ZooKeeper via telnet or nc, at the client port.</p><p>Three of the more interesting commands: "stat" gives some general information about the server and connected clients, while "srvr" and "cons" give extended details on server and connections respectively.</p><p><strong>New in 3.5.3:</strong> Four Letter Words need to be explicitly white listed before using. Please refer <strong>4lw.commands.whitelist</strong> described in <a href="#sc_clusterOptions">cluster configuration section</a> for details. Moving forward, Four Letter Words will be deprecated, please use <a href="#sc_adminserver">AdminServer</a> instead.</p>
+</code></pre><p><a name="sc_zkCommands"></a></p><h3>ZooKeeper Commands</h3><p><a name="sc_4lw"></a></p><h4>The Four Letter Words</h4><p>ZooKeeper responds to a small set of commands. Each command is composed of four letters. You issue the commands to ZooKeeper via telnet or nc, at the client port.</p><p>Three of the more interesting commands: "stat" gives some general information about the server and connected clients, while "srvr" and "cons" give extended details on server and connections respectively.</p><p><strong>New in 3.5.3:</strong> Four Letter Words need to be explicitly white listed before using. Please refer <strong>4lw.commands.whitelist</strong> described in <a href="#sc_clusterOptions">cluster configuration section</a> for details. Moving forward, Four Letter Words will be deprecated, please use <a href="#sc_adminserver">AdminServer</a> instead.</p>
 <ul>
   <li><p><em>conf</em> : <strong>New in 3.3.0:</strong> Print details about serving configuration.</p></li>
   <li><p><em>cons</em> : <strong>New in 3.3.0:</strong> List full connection/session details for all clients connected to this server. Includes information on numbers of packets received/sent, session id, operation latencies, last operation performed, etc...</p></li>
