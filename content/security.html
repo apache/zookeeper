@@ -43,7 +43,7 @@
 					Documentation
 				</a>
 				<div class="dropdown-menu" aria-labelledby="navbarDropdown">
-					<a class="dropdown-item" href="doc/r3.5.4-beta">Release 3.5.4-beta</a>
+					<a class="dropdown-item" href="doc/r3.5.5">Release 3.5.5</a>
 					<a class="dropdown-item" href="doc/r3.4.14">Release 3.4.14</a>
 					<a class="dropdown-item" href="documentation.html">Older Versions</a>
 				</div>
@@ -98,10 +98,20 @@ target="_top">security@zookeeper.apache.org</a>. In the message, try to provide 
 <p>The ASF Security team maintains a page with a description of how vulnerabilities are handled, check their <a href="https://www.apache.org/security/">Web page</a> for more information.</p>
 <h2>Vulnerability reports</h2>
 <ul>
+<li><a href="#CVE-2019-0201">CVE-2019-0201: Information disclosure vulnerability in Apache ZooKeeper</a></li>
 <li><a href="#CVE-2018-8012">CVE-2018-8012: Apache ZooKeeper Quorum Peer mutual authentication</a></li>
 <li><a href="#CVE-2017-5637">CVE-2017-5637: DOS attack on wchp/wchc four letter words (4lw)</a></li>
 <li><a href="#CVE-2016-5017">CVE-2016-5017: Buffer overflow vulnerability in ZooKeeper C cli shell</a></li>
 </ul>
+<p><a name="CVE-2019-0201"></a></p>
+<h3>CVE-2019-0201: Information disclosure vulnerability in Apache ZooKeeper</h3>
+<p>Severity: Critical</p>
+<p>Vendor: The Apache Software Foundation</p>
+<p>Versions Affected: ZooKeeper prior to 3.4.14 ZooKeeper 3.5.0-alpha through 3.5.4-beta. The unsupported ZooKeeper 1.x through 3.3.x versions may be also affected.</p>
+<p>Description: ZooKeeper’s getACL() command doesn’t check any permission when retrieves the ACLs of the requested node and returns all information contained in the ACL Id field as plaintext string. DigestAuthenticationProvider overloads the Id field with the hash value that is used for user authentication. As a consequence, if Digest Authentication is in use, the unsalted hash value will be disclosed by getACL() request for unauthenticated or unprivileged users.</p>
+<p>Mitigation: Use an authentication method other than Digest (e.g. Kerberos) or upgrade to 3.4.14 or later (3.5.5 or later if on the 3.5 branch).</p>
+<p>Credit: This issue was identified by Harrison Neal <a href="&#109;a&#105;&#x6c;&#x74;&#x6f;&#x3a;&#104;&#x61;&#x72;r&#105;&#x73;&#111;n&#64;&#112;&#97;t&#99;h&#x61;&#100;&#x76;&#x69;&#115;&#111;r&#x2e;&#x63;o&#109;">&#x68;&#x61;&#114;&#114;&#105;&#115;&#111;&#x6e;&#x40;&#112;&#97;&#116;&#99;&#x68;&#97;&#100;&#118;&#x69;&#115;&#111;&#x72;&#46;&#x63;&#x6f;&#x6d;</a> PatchAdvisor, Inc.</p>
+<p>References: https://issues.apache.org/jira/browse/ZOOKEEPER-1392</p>
 <p><a name="CVE-2018-8012"></a></p>
 <h3>CVE-2018-8012: Apache ZooKeeper Quorum Peer mutual authentication</h3>
 <p>Severity: Critical</p>
@@ -145,7 +155,7 @@ target="_top">security@zookeeper.apache.org</a>. In the message, try to provide 
 
 <footer>
     <div class="row">
-        <div class="col">Copyright &copy; 2010-2018
+        <div class="col">Copyright &copy; 2010-2019
             <a href="https://www.apache.org/">The Apache Software Foundation</a>, Licensed under the <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.<br>
             Apache ZooKeeper, ZooKeeper, Apache, the Apache feather logo, and the Apache ZooKeeper project logo are trademarks of The Apache Software Foundation.
         </div>

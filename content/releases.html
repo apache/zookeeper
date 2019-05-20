@@ -43,7 +43,7 @@
 					Documentation
 				</a>
 				<div class="dropdown-menu" aria-labelledby="navbarDropdown">
-					<a class="dropdown-item" href="doc/r3.5.4-beta">Release 3.5.4-beta</a>
+					<a class="dropdown-item" href="doc/r3.5.5">Release 3.5.5</a>
 					<a class="dropdown-item" href="doc/r3.4.14">Release 3.4.14</a>
 					<a class="dropdown-item" href="documentation.html">Older Versions</a>
 				</div>
@@ -110,6 +110,32 @@ limitations under the License.
 <p>Release notes for Apache Zookeeper releases are available in Jira: <a href="https://issues.apache.org/jira/browse/ZOOKEEPER?report=com.atlassian.jira.plugin.system.project:changelog-panel">Browse release notes</a></p>
 <p><a name="news"></a></p>
 <h2>News</h2>
+<h3>20 May, 2019: release 3.5.5 available</h3>
+<p>First stable version of 3.5 branch. This release is considered to be the successor of 3.4 stable branch and recommended for production use.<br />
+It contains 950 commits, resolves 744 issues, fixes 470 bugs and includes the following new features:</p>
+<ul>
+<li>Dynamic reconfiguration</li>
+<li>Local sessions</li>
+<li>New node types: Container, TTL</li>
+<li>SSL support for Atomic Broadcast Protocol</li>
+<li>Ability to remove watchers</li>
+<li>Multi-threaded commit processor</li>
+<li>Upgraded to Netty 4.1</li>
+<li>Maven build</li>
+</ul>
+<p>Various performance and stability improvements.</p>
+<p>Please also note:</p>
+<ul>
+<li>Minimum recommended JDK version is now 1.8</li>
+<li>Release artifacts have been changed considerably:
+<ul>
+<li>apache-zookeeper-X.Y.Z.tar.gz is standard source-only release,</li>
+<li>apache-zookeeper-X.Y.Z-bin.tar.gz is the convenience tarball which contains the binaries</li>
+</ul>
+</li>
+</ul>
+<p>Thanks to the contributors for their tremendous efforts to make this release happen.</p>
+<p>See <a href="https://zookeeper.apache.org/doc/r3.5.5/releasenotes.html">ZooKeeper 3.5.5 Release Notes</a> for details.</p>
 <h3>2 April, 2019: release 3.4.14 available</h3>
 <p>This is a bugfix release. It fixes 8 issues, mostly build / unit tests issues, dependency updates flagged by OWASP, NPE and a name resolution problem. Among these it also supports experimental Maven build and Markdown based documentation generation. See <a href="https://zookeeper.apache.org/doc/r3.4.14/releasenotes.html">ZooKeeper 3.4.14 Release Notes</a> for details.</p>
 <h3>15 July, 2018: release 3.4.13 available</h3>
@@ -200,7 +226,7 @@ limitations under the License.
 
 <footer>
     <div class="row">
-        <div class="col">Copyright &copy; 2010-2018
+        <div class="col">Copyright &copy; 2010-2019
             <a href="https://www.apache.org/">The Apache Software Foundation</a>, Licensed under the <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.<br>
             Apache ZooKeeper, ZooKeeper, Apache, the Apache feather logo, and the Apache ZooKeeper project logo are trademarks of The Apache Software Foundation.
         </div>
