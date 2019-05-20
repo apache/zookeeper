@@ -28,7 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.server.quorum.LeaderElection;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.Vote;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
@@ -44,10 +43,11 @@ public class LETest extends ZKTestCase {
     volatile long leader = -1;
     Random rand = new Random();
     class LEThread extends Thread {
-        LeaderElection le;
+        @SuppressWarnings("deprecated")
+        org.apache.zookeeper.server.quorum.LeaderElection le;
         int i;
         QuorumPeer peer;
-        LEThread(LeaderElection le, QuorumPeer peer, int i) {
+        LEThread(org.apache.zookeeper.server.quorum.LeaderElection le, QuorumPeer peer, int i) {
             this.le = le;
             this.i = i;
             this.peer = peer;
