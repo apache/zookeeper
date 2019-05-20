@@ -57,17 +57,7 @@ public class ZKUtil {
         LOG.debug("Deleting " + tree);
         LOG.debug("Deleting " + tree.size() + " subnodes ");
 
-        int asyncReqRateLimit = 10;
-        // Try deleting the tree nodes in batches.
-        // If some batch failed, try again with batches of size 1 to delete as
-        // many nodes as possible.
-        boolean success = deleteInBatch(zk, tree, batchSize, asyncReqRateLimit);
-        if (!success) {
-            LOG.debug("Failed to delete all nodes in batches of 1000.");
-            LOG.debug("Retry with batches of size 1...");
-            success = deleteInBatch(zk, tree, 1, asyncReqRateLimit);
-        }
-        return success;
+        return deleteInBatch(zk, tree, batchSize);
     }
 
     private static class BatchedDeleteCbContext {
@@ -80,10 +70,10 @@ public class ZKUtil {
         }
     }
 
-    private static boolean deleteInBatch(ZooKeeper zk, List<String> tree,
-        int batchSize, int rateLimit)
+    private static boolean deleteInBatch(ZooKeeper zk, List<String> tree, int batchSize)
         throws InterruptedException
     {
+        int rateLimit = 10;
         List<Op> ops = new ArrayList<>();
         BatchedDeleteCbContext context = new BatchedDeleteCbContext(rateLimit);
         MultiCallback cb = (rc, path, ctx, opResults) -> {
