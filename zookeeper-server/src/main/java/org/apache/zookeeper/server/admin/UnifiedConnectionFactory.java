@@ -65,7 +65,7 @@ public class UnifiedConnectionFactory extends AbstractConnectionFactory {
         SSLEngine engine = this.sslContextFactory.newSSLEngine();
         SSLSession session = engine.getSession();
         engine.setUseClientMode(false);
-        if(session.getPacketBufferSize() > this.getInputBufferSize()) {
+        if (session.getPacketBufferSize() > this.getInputBufferSize()) {
             this.setInputBufferSize(session.getPacketBufferSize());
         }
     }

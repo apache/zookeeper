@@ -114,7 +114,7 @@ public class JettyAdminServer implements AdminServer {
             config.setSecureScheme("https");
             config.addCustomizer(customizer);
 
-            try(QuorumX509Util x509Util = new QuorumX509Util()) {
+            try (QuorumX509Util x509Util = new QuorumX509Util()) {
                 String privateKeyPath = System.getProperty(x509Util.getSslKeystoreLocationProperty(), "");
                 String privateKeyPassword = System.getProperty(x509Util.getSslKeystorePasswdProperty(), "");
                 String certAuthPath = System.getProperty(x509Util.getSslTruststoreLocationProperty(), "");
