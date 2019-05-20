@@ -39,6 +39,26 @@ Release notes for Apache Zookeeper releases are available in Jira: [Browse relea
 <a name="news"></a>
 ## News
 
+### 20 May, 2019: release 3.5.5 available
+
+First stable version of 3.5 branch. This release is considered to be the successor of 3.4 stable branch and recommended for production use.\
+It contains 950 commits, resolves 744 issues, fixes 470 bugs and includes the following new features:
+
+* Dynamic reconfiguration
+* Local sessions
+* New node types: Container, TTL
+* SSL support for Atomic Broadcast Protocol
+* Ability to remove watchers
+* Multi-threaded commit processor
+* Upgraded to Netty 4.1
+* Maven build
+
+Various performance and stability improvements.
+
+Thanks to the contributors for their tremendous efforts to make this release happen.
+
+See [ZooKeeper 3.5.5 Release Notes](https://zookeeper.apache.org/doc/r3.5.5/releasenotes.html) for details.
+
 ### 2 April, 2019: release 3.4.14 available
 
 This is a bugfix release. It fixes 8 issues, mostly build / unit tests issues, dependency updates flagged by OWASP, NPE and a name resolution problem. Among these it also supports experimental Maven build and Markdown based documentation generation. See [ZooKeeper 3.4.14 Release Notes](https://zookeeper.apache.org/doc/r3.4.14/releasenotes.html) for details.

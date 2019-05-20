@@ -30,9 +30,41 @@ their <a href="https://www.apache.org/security/">Web page</a> for more informati
 
 ## Vulnerability reports
 
+* [CVE-2019-0201: Information disclosure vulnerability in Apache ZooKeeper](#CVE-2019-0201)
 * [CVE-2018-8012: Apache ZooKeeper Quorum Peer mutual authentication](#CVE-2018-8012)
 * [CVE-2017-5637: DOS attack on wchp/wchc four letter words (4lw)](#CVE-2017-5637)
 * [CVE-2016-5017: Buffer overflow vulnerability in ZooKeeper C cli shell](#CVE-2016-5017)
+
+
+<a name="CVE-2019-0201"></a>
+### CVE-2019-0201: Information disclosure vulnerability in Apache ZooKeeper
+
+Severity: Critical
+ 
+Vendor: 
+The Apache Software Foundation
+ 
+Versions Affected: 
+ZooKeeper prior to 3.4.14
+ZooKeeper 3.5.0-alpha through 3.5.4-beta. 
+The unsupported ZooKeeper 1.x through 3.3.x versions may be also affected.
+ 
+Description: 
+ZooKeeper’s getACL() command doesn’t check any permission when retrieves the ACLs of the requested node 
+and returns all information contained in the ACL Id field as plaintext string. DigestAuthenticationProvider 
+overloads the Id field with the hash value that is used for user authentication. As a consequence, 
+if Digest Authentication is in use, the unsalted hash value will be disclosed by getACL() request 
+for unauthenticated or unprivileged users.
+ 
+Mitigation: 
+Use an authentication method other than Digest (e.g. Kerberos) or upgrade to 3.4.14 or later (3.5.5 
+or later if on the 3.5 branch).
+ 
+Credit: 
+This issue was identified by Harrison Neal <harrison@patchadvisor.com> PatchAdvisor, Inc.
+ 
+References: 
+https://issues.apache.org/jira/browse/ZOOKEEPER-1392
 
 
 <a name="CVE-2018-8012"></a>
