@@ -43,9 +43,9 @@ import java.util.List;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -81,11 +81,11 @@ public class FinalRequestProcessorTest {
         doAnswer(new Answer() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) {
-                replyHeaders[0] = (ReplyHeader) invocationOnMock.getArguments()[0];
-                responseRecord[0] = (Record) invocationOnMock.getArguments()[1];
+                replyHeaders[0] = invocationOnMock.getArgument(0);
+                responseRecord[0] = invocationOnMock.getArgument(1);
                 return null;
             }
-        }).when(cnxn).sendResponse(any(ReplyHeader.class), any(Record.class), anyString());
+        }).when(cnxn).sendResponse(any(), any(), anyString());
 
         GetACLRequest getACLRequest = new GetACLRequest();
         getACLRequest.setPath(testPath);
