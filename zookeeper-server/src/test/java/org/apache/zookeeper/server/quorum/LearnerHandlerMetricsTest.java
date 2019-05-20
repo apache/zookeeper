@@ -24,7 +24,7 @@ import org.apache.zookeeper.server.ServerMetrics;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -35,7 +35,7 @@ import java.net.Socket;
 import java.util.Map;
 
 import static org.hamcrest.number.OrderingComparison.greaterThan;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -66,7 +66,7 @@ public class LearnerHandlerMetricsTest {
                 Thread.sleep(5);
                 return  null;
             }
-        }).when(oa).writeRecord(any(QuorumPacket.class), Matchers.anyString());
+        }).when(oa).writeRecord(any(QuorumPacket.class), ArgumentMatchers.anyString());
 
         learnerHandler = new MockLearnerHandler(socket, leader);
         learnerHandler.setOutputArchive(oa);
