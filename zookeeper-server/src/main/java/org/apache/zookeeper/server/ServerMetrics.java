@@ -202,6 +202,7 @@ public final class ServerMetrics {
         STARTUP_TXNS_LOAD_TIME = metricsContext.getSummary("startup_txns_load_time", DetailLevel.BASIC);
         STARTUP_SNAP_LOAD_TIME = metricsContext.getSummary("startup_snap_load_time", DetailLevel.BASIC);
 
+        SYNC_PROCESSOR_QUEUE_AND_FLUSH_TIME = metricsContext.getSummary("sync_processor_queue_and_flush_time_ms", DetailLevel.ADVANCED);
         SYNC_PROCESSOR_QUEUE_SIZE = metricsContext.getSummary("sync_processor_queue_size", DetailLevel.BASIC);
         SYNC_PROCESSOR_QUEUED = metricsContext.getCounter("sync_processor_request_queued");
         SYNC_PROCESSOR_QUEUE_TIME = metricsContext.getSummary("sync_processor_queue_time_ms", DetailLevel.ADVANCED);
@@ -290,6 +291,7 @@ public final class ServerMetrics {
     public final Summary STARTUP_TXNS_LOAD_TIME;
     public final Summary STARTUP_SNAP_LOAD_TIME;
 
+    public final Summary SYNC_PROCESSOR_QUEUE_AND_FLUSH_TIME;
     public final Summary SYNC_PROCESSOR_QUEUE_SIZE;
     public final Counter SYNC_PROCESSOR_QUEUED;
     public final Summary SYNC_PROCESSOR_QUEUE_TIME;

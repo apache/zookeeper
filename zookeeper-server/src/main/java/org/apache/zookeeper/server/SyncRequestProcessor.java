@@ -247,6 +247,8 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
       } else {
           while (!this.toFlush.isEmpty()) {
               final Request i = this.toFlush.remove();
+              long latency = Time.currentElapsedTime() - i.syncQueueStartTime;
+              ServerMetrics.getMetrics().SYNC_PROCESSOR_QUEUE_AND_FLUSH_TIME.add(latency);
               this.nextProcessor.processRequest(i);
           }
           if (this.nextProcessor instanceof Flushable) {

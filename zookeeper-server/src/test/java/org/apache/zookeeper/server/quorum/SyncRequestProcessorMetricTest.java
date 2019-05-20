@@ -21,13 +21,14 @@ package org.apache.zookeeper.server.quorum;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.*;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.number.OrderingComparison.greaterThan;
 import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
@@ -38,6 +39,8 @@ import static org.mockito.Mockito.when;
 
 public class SyncRequestProcessorMetricTest {
     ZooKeeperServer zks;
+    RequestProcessor nextProcessor;
+    CountDownLatch allRequestsFlushed;
 
     @Before
     public void setup() throws Exception {
@@ -49,6 +52,12 @@ public class SyncRequestProcessorMetricTest {
         }).when(db).commit();
         zks = mock(ZooKeeperServer.class);
         when(zks.getZKDatabase()).thenReturn(db);
+
+        nextProcessor = mock(RequestProcessor.class);
+        doAnswer(invocationOnMock -> {
+            allRequestsFlushed.countDown();
+            return null;
+        }).when(nextProcessor).processRequest(any(Request.class));
     }
 
     private Request createRquest(long sessionId, int xid) {
@@ -58,7 +67,7 @@ public class SyncRequestProcessorMetricTest {
 
     @Test
     public void testSyncProcessorMetrics() throws  Exception{
-        SyncRequestProcessor syncProcessor = new SyncRequestProcessor(zks, null);
+        SyncRequestProcessor syncProcessor = new SyncRequestProcessor(zks, nextProcessor);
         for (int i=0; i<500; i++) {
             syncProcessor.processRequest(createRquest(1, i));
         }
@@ -66,10 +75,10 @@ public class SyncRequestProcessorMetricTest {
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
         Assert.assertEquals(500L, values.get("sync_processor_request_queued"));
 
+        allRequestsFlushed = new CountDownLatch(500);
         syncProcessor.start();
 
-
-        Thread.sleep(500);
+        allRequestsFlushed.await(500, TimeUnit.MILLISECONDS);
 
         values = MetricsUtils.currentServerMetrics();
 
@@ -79,6 +88,9 @@ public class SyncRequestProcessorMetricTest {
 
         Assert.assertEquals(500L, values.get("cnt_sync_processor_queue_time_ms"));
         Assert.assertThat((long)values.get("max_sync_processor_queue_time_ms"), greaterThan(0L));
+
+        Assert.assertEquals(500L, values.get("cnt_sync_processor_queue_and_flush_time_ms"));
+        Assert.assertThat((long)values.get("max_sync_processor_queue_and_flush_time_ms"), greaterThan(0L));
 
         Assert.assertEquals(500L, values.get("cnt_sync_process_time"));
         Assert.assertThat((long)values.get("max_sync_process_time"), greaterThan(0L));
