@@ -1275,7 +1275,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                         // Add delay jitter before we switch to LOOKING
                         // state to reduce the load of ObserverMaster
                         if (isRunning()) {
-                            Observer.waitForReconnectDelay();
+                            Observer.waitForObserverElectionDelay();
                         }
                     }
                     break;
@@ -2073,6 +2073,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         }
         LOG.info("Updated learner master list to be {}", sb.toString());
         Collections.shuffle(observerMasters);
+        // Reset the internal index of the observerMaster when
+        // the observerMaster List is refreshed
+        nextObserverMaster = 0;
     }
 
     private boolean useObserverMasters() {
@@ -2083,12 +2086,26 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     private QuorumServer nextObserverMaster() {
         if (nextObserverMaster >= observerMasters.size()) {
             nextObserverMaster = 0;
+            // Add a reconnect delay only after the observer
+            // has exhausted trying to connect to all the masters
+            // from the observerMasterList
+            if (isRunning()) {
+                Observer.waitForReconnectDelay();
+            }
         }
         return observerMasters.get(nextObserverMaster++);
     }
 
     QuorumServer findLearnerMaster(QuorumServer leader) {
-        return useObserverMasters() ? nextObserverMaster() : leader;
+        if (useObserverMasters()) {
+            return nextObserverMaster();
+        } else {
+            // Add delay jitter to reduce the load on the leader
+            if (isRunning()) {
+                Observer.waitForReconnectDelay();
+            }
+            return leader;
+        }
     }
 
     /**

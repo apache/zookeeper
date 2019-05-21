@@ -61,4 +61,14 @@ public interface QuorumMXBean {
      * @return SSL communication between quorum members enabled
      */
     public boolean isPortUnification();
+
+    /**
+     * @return Observer Leader Election Reconnect Delay time in MS
+     */
+    public long getObserverElectionDelayMS();
+
+    /**
+     * Set the Observer Leader Election Reconnect Delay time in MS
+     */
+    public void setObserverElectionDelayMS(long delayMS);
 }
