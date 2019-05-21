@@ -33,7 +33,6 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.jmx.CommonNames;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
@@ -48,6 +47,7 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;
+import org.apache.zookeeper.jmx.CommonNames;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -917,7 +917,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         int leavingIndex = 1;
         int replica2 = 2;
         QuorumPeer peer2 = qu.getPeer(replica2).peer;
-        QuorumServer leavingQS2 = peer2.getView().get(new Long(leavingIndex));
+        QuorumServer leavingQS2 = peer2.getView().get(Long.valueOf(leavingIndex));        
         String remotePeerBean2 = CommonNames.DOMAIN
                 + ":name0=ReplicatedServer_id" + replica2 + ",name1=replica."
                 + leavingIndex;
@@ -926,7 +926,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         // assert remotePeerBean.1 of ReplicatedServer_3
         int replica3 = 3;
         QuorumPeer peer3 = qu.getPeer(replica3).peer;
-        QuorumServer leavingQS3 = peer3.getView().get(new Long(leavingIndex));
+        QuorumServer leavingQS3 = peer3.getView().get(Long.valueOf(leavingIndex));
         String remotePeerBean3 = CommonNames.DOMAIN
                 + ":name0=ReplicatedServer_id" + replica3 + ",name1=replica."
                 + leavingIndex;
@@ -967,11 +967,11 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         assertLocalPeerMXBeanAttributes(removedPeer, localPeerBean, true);
 
         // assert remotePeerBean.1 of ReplicatedServer_2
-        leavingQS2 = peer2.getView().get(new Long(leavingIndex));
+        leavingQS2 = peer2.getView().get(Long.valueOf(leavingIndex));
         assertRemotePeerMXBeanAttributes(leavingQS2, remotePeerBean2);
 
         // assert remotePeerBean.1 of ReplicatedServer_3
-        leavingQS3 = peer3.getView().get(new Long(leavingIndex));
+        leavingQS3 = peer3.getView().get(Long.valueOf(leavingIndex));
         assertRemotePeerMXBeanAttributes(leavingQS3, remotePeerBean3);
     }
 
@@ -995,7 +995,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         int changingIndex = 1;
         int replica2 = 2;
         QuorumPeer peer2 = qu.getPeer(replica2).peer;
-        QuorumServer changingQS2 = peer2.getView().get(new Long(changingIndex));
+        QuorumServer changingQS2 = peer2.getView().get(Long.valueOf(changingIndex));
         String remotePeerBean2 = CommonNames.DOMAIN
                 + ":name0=ReplicatedServer_id" + replica2 + ",name1=replica."
                 + changingIndex;
@@ -1004,7 +1004,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         // assert remotePeerBean.1 of ReplicatedServer_3
         int replica3 = 3;
         QuorumPeer peer3 = qu.getPeer(replica3).peer;
-        QuorumServer changingQS3 = peer3.getView().get(new Long(changingIndex));
+        QuorumServer changingQS3 = peer3.getView().get(Long.valueOf(changingIndex));
         String remotePeerBean3 = CommonNames.DOMAIN
                 + ":name0=ReplicatedServer_id" + replica3 + ",name1=replica."
                 + changingIndex;
@@ -1040,11 +1040,11 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         assertLocalPeerMXBeanAttributes(qp, localPeerBeanName, true);
 
         // assert remotePeerBean.1 of ReplicatedServer_2
-        changingQS2 = peer2.getView().get(new Long(changingIndex));
+        changingQS2 = peer2.getView().get(Long.valueOf(changingIndex));
         assertRemotePeerMXBeanAttributes(changingQS2, remotePeerBean2);
 
         // assert remotePeerBean.1 of ReplicatedServer_3
-        changingQS3 = peer3.getView().get(new Long(changingIndex));
+        changingQS3 = peer3.getView().get(Long.valueOf(changingIndex));
         assertRemotePeerMXBeanAttributes(changingQS3, remotePeerBean3);
     }
 

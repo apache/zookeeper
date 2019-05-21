@@ -38,7 +38,6 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.quorum.Election;
 import org.apache.zookeeper.server.quorum.FLELostMessageTest;
-import org.apache.zookeeper.server.quorum.LeaderElection;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.Vote;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
@@ -51,7 +50,10 @@ import org.junit.Test;
 
 @SuppressWarnings("deprecation")
 public class LENonTerminateTest extends ZKTestCase {
-    public static class MockLeaderElection extends LeaderElection {
+
+    @SuppressWarnings("deprecation")
+    public static class MockLeaderElection
+            extends org.apache.zookeeper.server.quorum.LeaderElection {
         public MockLeaderElection(QuorumPeer self) {
             super(self);
         }
