@@ -39,6 +39,7 @@ import org.apache.zookeeper.Quotas;
 import org.apache.zookeeper.StatsTrack;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.Watcher.WatcherType;
 import org.apache.zookeeper.Watcher.Event;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
@@ -1266,6 +1267,21 @@ public class DataTree {
                 node.stat.setCversion(newCversion);
                 node.stat.setPzxid(zxid);
             }
+        }
+    }
+
+    public void removeWatch(String path, WatcherType type, Watcher watcher) {
+        switch (type) {
+        case Children:
+            this.childWatches.removeWatcher(path, watcher);
+            break;
+        case Data:
+            this.dataWatches.removeWatcher(path, watcher);
+            break;
+        case Any:
+            this.childWatches.removeWatcher(path, watcher);
+            this.dataWatches.removeWatcher(path, watcher);
+            break;
         }
     }
 }
