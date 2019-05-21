@@ -197,6 +197,11 @@ public final class ServerMetrics {
          */
         LEARNER_HANDLER_QP_SIZE = metricsContext.getSummarySet("learner_handler_qp_size", DetailLevel.BASIC);
         LEARNER_HANDLER_QP_TIME = metricsContext.getSummarySet("learner_handler_qp_time_ms", DetailLevel.ADVANCED);
+
+        STARTUP_TXNS_LOADED = metricsContext.getSummary("startup_txns_loaded", DetailLevel.BASIC);
+        STARTUP_TXNS_LOAD_TIME = metricsContext.getSummary("startup_txns_load_time", DetailLevel.BASIC);
+        STARTUP_SNAP_LOAD_TIME = metricsContext.getSummary("startup_snap_load_time", DetailLevel.BASIC);
+
     }
 
     /**
@@ -273,6 +278,10 @@ public final class ServerMetrics {
     public final Summary COMMIT_PROPAGATION_LATENCY;
     public final Counter LEARNER_PROPOSAL_RECEIVED_COUNT;
     public final Counter LEARNER_COMMIT_RECEIVED_COUNT;
+
+    public final Summary STARTUP_TXNS_LOADED;
+    public final Summary STARTUP_TXNS_LOAD_TIME;
+    public final Summary STARTUP_SNAP_LOAD_TIME;
 
     /**
      * Fired watcher stats.
