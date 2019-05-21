@@ -74,7 +74,7 @@ public class SyncCommand extends CliCommand {
             if(resultCode == 0) {
                 out.println("Sync is OK");
             } else {
-                out.println("Sync has failed");
+                out.println("Sync has failed. rc=" + resultCode);
             }
         } catch (IllegalArgumentException ex) {
             throw new MalformedPathException(ex.getMessage());
