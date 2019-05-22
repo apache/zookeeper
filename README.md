@@ -9,32 +9,28 @@ and our wiki, at:
 
    https://cwiki.apache.org/confluence/display/ZOOKEEPER
 
-Full documentation for this release can also be found in docs/index.html
-
 ---------------------------
 Packaging/release artifacts
 
-The release artifact contains the following jar file at the top level:
+Either downloaded from https://zookeeper.apache.org/releases.html or
+found in zookeeper-assembly/target directory after building the project with maven.
 
-zookeeper-<version>.jar         - legacy jar file which contains all classes
-                                  and source files. Prior to version 3.3.0 this
-                                  was the only jar file available. It has the 
-                                  benefit of having the source included (for
-                                  debugging purposes) however is also larger as
-                                  a result
+    apache-zookeeper-[version].tar.gz
 
-The release artifact contains the following jar files in "dist-maven" directory:
+        Contains all the source files which can be built by running:
+        mvn clean install
 
-zookeeper-<version>.jar         - bin (binary) jar - contains only class (*.class) files
-zookeeper-<version>-sources.jar - contains only src (*.java) files
-zookeeper-<version>-javadoc.jar - contains only javadoc files
+        To generate an aggregated apidocs for zookeeper-server and zookeeper-jute:
+        mvn javadoc:aggregate
+        (generated files will be at target/site/apidocs)
 
-These bin/src/javadoc jars were added specifically to support Maven/Ivy which have 
-the ability to pull these down automatically as part of your build process. 
-The contents of the legacy jar and the bin + sources jars are the same.
+    apache-zookeeper-[version]-bin.tar.gz
 
-As of version 3.3.0, the bin, sources and javadoc jars contained in the
-dist-maven directory are deployed to the central repository after the release
+        Contains all the jar files required to run ZooKeeper
+        Full documentation can also be found in the docs folder
+
+As of version 3.5.5, the parent, zookeeper and zookeeper-jute artifacts
+are deployed to the central repository after the release
 is voted on and approved by the Apache ZooKeeper PMC:
 
   https://repo1.maven.org/maven2/org/apache/zookeeper/zookeeper/
