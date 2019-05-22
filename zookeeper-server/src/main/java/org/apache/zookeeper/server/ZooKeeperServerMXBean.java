@@ -183,4 +183,13 @@ public interface ZooKeeperServerMXBean {
      * @return size of largest generated client response
      */
     public int getMaxClientResponseSize();
+
+    public long getFlushDelay();
+    public void setFlushDelay(long delay);
+
+    public long getMaxWriteQueuePollTime();
+    public void setMaxWriteQueuePollTime(long delay);
+
+    public int getMaxBatchSize();
+    public void setMaxBatchSize(int size);
 }
