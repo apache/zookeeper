@@ -274,7 +274,7 @@
     <audience-annotations.version>0.5.0</audience-annotations.version>
     <junit.version>4.12</junit.version>
     <log4j.version>1.2.17</log4j.version>
-    <mockito.version>1.8.5</mockito.version>
+    <mockito.version>2.27.0</mockito.version>
     <hamcrest.version>1.3</hamcrest.version>
     <commons-cli.version>1.2</commons-cli.version>
     <jetty.version>9.4.17.v20190418</jetty.version>
@@ -284,7 +284,7 @@
     <jline.version>2.11</jline.version>
     <snappy.version>1.1.7</snappy.version>
     <kerby.version>1.1.0</kerby.version>
-    <bouncycastle.version>1.60</bouncycastle.version>
+    <bouncycastle.version>1.61</bouncycastle.version>
     <commons-collections.version>3.2.2</commons-collections.version>
     <spotbugsannotations.version>3.1.9</spotbugsannotations.version>
   </properties>
@@ -386,7 +386,7 @@
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
-        <artifactId>mockito-all</artifactId>
+        <artifactId>mockito-core</artifactId>
         <version>${mockito.version}</version>
       </dependency>
       <dependency>
