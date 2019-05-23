@@ -417,6 +417,22 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         LOOKING, FOLLOWING, LEADING, OBSERVING;
     }
 
+    /**
+     * (Used for monitoring) shows the current phase of
+     * Zab protocol that peer is running.
+     */
+    public enum ZabState {
+        ELECTION, DISCOVERY, SYNCHRONIZATION, BROADCAST;
+    }
+
+    /**
+     * (Used for monitoring) When peer is in synchronization phase, this shows
+     * which synchronization mechanism is being used
+     */
+    public enum SyncMode {
+        NONE, DIFF, SNAP, TRUNC;
+    }
+
     /*
      * A peer can either be participating, which implies that it is willing to
      * both vote in instances of consensus and to elect or become a Leader, or
@@ -749,6 +765,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     private ServerState state = ServerState.LOOKING;
 
+    private AtomicReference<ZabState> zabState = new AtomicReference<>(ZabState.ELECTION);
+    private AtomicReference<SyncMode> syncMode = new AtomicReference<>(SyncMode.NONE);
     private AtomicReference<String> leaderAddress = new AtomicReference<String>("");
     private AtomicLong leaderId = new AtomicLong(-1);
 
@@ -758,7 +776,28 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         state = newState;
         if (newState == ServerState.LOOKING) {
             setLeaderAddressAndId(null, -1);
+            setZabState(ZabState.ELECTION);
+        } else {
+            LOG.info("Peer state changed: {}", getDetailedPeerState());
         }
+    }
+
+    public void setZabState(ZabState zabState) {
+        this.zabState.set(zabState);
+        LOG.info("Peer state changed: {}", getDetailedPeerState());
+    }
+
+    public void setSyncMode(SyncMode syncMode) {
+        this.syncMode.set(syncMode);
+        LOG.info("Peer state changed: {}", getDetailedPeerState());
+    }
+
+    public ZabState getZabState() {
+        return zabState.get();
+    }
+
+    public SyncMode getSyncMode() {
+        return syncMode.get();
     }
 
     public void setLeaderAddressAndId(InetSocketAddress addr, long newId) {
@@ -776,6 +815,15 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     public long getLeaderId() {
         return leaderId.get();
+    }
+
+
+    public String getDetailedPeerState() {
+        return getPeerState().toString().toLowerCase()
+                + ((getZabState() != ZabState.ELECTION) ?
+                " - " + getZabState().toString().toLowerCase() : "")
+                + ((getSyncMode() != SyncMode.NONE) ?
+                " - " + getSyncMode().toString().toLowerCase() : "");
     }
 
     public synchronized void reconfigFlagSet(){

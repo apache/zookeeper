@@ -78,6 +78,7 @@ public class Follower extends Learner{
         self.end_fle = 0;
         fzk.registerJMX(new FollowerBean(this, zk), self.jmxLocalPeerBean);
         try {
+            self.setZabState(QuorumPeer.ZabState.DISCOVERY);
             QuorumServer leaderServer = findLeader();
             try {
                 connectToLeader(leaderServer.addr, leaderServer.hostname);
@@ -95,7 +96,9 @@ public class Follower extends Learner{
                 long startTime = Time.currentElapsedTime();
                 try {
                     self.setLeaderAddressAndId(leaderServer.addr, leaderServer.getId());
+                    self.setZabState(QuorumPeer.ZabState.SYNCHRONIZATION);
                     syncWithLeader(newEpochZxid);
+                    self.setZabState(QuorumPeer.ZabState.BROADCAST);
                 } finally {
                     long syncTime = Time.currentElapsedTime() - startTime;
                     ServerMetrics.getMetrics().FOLLOWER_SYNC_TIME.add(syncTime);
