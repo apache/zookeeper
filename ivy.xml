@@ -60,7 +60,7 @@
     <dependency org="org.vafer" name="jdeb" rev="${jdeb.version}" conf="package->master"/>
 
     <dependency org="junit" name="junit" rev="${junit.version}" conf="test->default"/>
-    <dependency org="org.mockito" name="mockito-all" rev="${mockito.version}"
+	<dependency org="org.mockito" name="mockito-core" rev="${mockito.version}"
                conf="test->default"/>
     <dependency org="com.puppycrawl.tools" name="checkstyle" rev="${checkstyle.version}"
                 conf="test->default"/>

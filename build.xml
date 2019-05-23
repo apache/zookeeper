@@ -60,7 +60,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="audience-annotations.version" value="0.5.0" />
     <property name="netty.version" value="3.10.6.Final"/>
     <property name="junit.version" value="4.12"/>
-    <property name="mockito.version" value="1.8.5"/>
+    <property name="mockito.version" value="2.27.0"/>
     <property name="checkstyle.version" value="6.13"/>
     <property name="commons-collections.version" value="3.2.2"/>
     <property name="commons-io.version" value="2.6"/>
@@ -149,7 +149,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="contrib.dir" value="${src.dir}/contrib"/>
     <property name="recipes.dir" value="${src.dir}/recipes"/>
 
-    <property name="ivy.version" value="2.4.0"/>
+    <property name="ivy.version" value="2.5.0-rc1"/>
     <property name="ivy.url"
               value="http://repo2.maven.org/maven2/org/apache/ivy/ivy" />
     <property name="ivy.home" value="${user.home}/.ant" />
