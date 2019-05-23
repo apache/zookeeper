@@ -24,7 +24,6 @@ import org.apache.zookeeper.server.ServerMetrics;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Matchers;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -35,7 +34,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.number.OrderingComparison.greaterThan;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -62,7 +62,8 @@ public class LearnerHandlerMetricsTest {
         //adding 5ms artificial delay when sending each packet
         BinaryOutputArchive oa = mock(BinaryOutputArchive.class);
         doAnswer(invocationOnMock -> {Thread.sleep(5); return null;})
-                .when(oa).writeRecord(any(QuorumPacket.class), Matchers.anyString());
+                .when(oa).writeRecord(any(QuorumPacket.class), anyString());
+
 
         BufferedOutputStream bos = mock(BufferedOutputStream.class);
         // flush is called when all packets are sent and the queue is empty
