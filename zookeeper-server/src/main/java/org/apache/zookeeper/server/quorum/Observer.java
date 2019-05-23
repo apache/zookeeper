@@ -105,6 +105,7 @@ public class Observer extends Learner{
         zk.registerJMX(new ObserverBean(this, zk), self.jmxLocalPeerBean);
 
         try {
+            self.setZabState(QuorumPeer.ZabState.DISCOVERY);
             QuorumServer master = findLearnerMaster();
             try {
                 connectToLeader(master.addr, master.hostname);
@@ -114,7 +115,9 @@ public class Observer extends Learner{
                 }
 
                 self.setLeaderAddressAndId(master.addr, master.getId());
+                self.setZabState(QuorumPeer.ZabState.SYNCHRONIZATION);
                 syncWithLeader(newLeaderZxid);
+                self.setZabState(QuorumPeer.ZabState.BROADCAST);
                 QuorumPacket qp = new QuorumPacket();
                 while (this.isRunning() && nextLearnerMaster.get() == null) {
                     readPacket(qp);

@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.quorum;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
+import java.util.function.BiConsumer;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -215,4 +216,9 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
         rootContext.unregisterGauge("quorum_size");
     }
 
+    @Override
+    public void dumpMonitorValues(BiConsumer<String, Object> response) {
+        super.dumpMonitorValues(response);
+        response.accept("peer_state", self.getDetailedPeerState());
+    }
 }
