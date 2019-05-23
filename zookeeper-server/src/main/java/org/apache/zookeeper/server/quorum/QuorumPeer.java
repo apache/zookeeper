@@ -391,8 +391,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         }
 
         private List<InetSocketAddress> excludedSpecialAddresses(List<InetSocketAddress> addrs) {
-            List<InetSocketAddress> included = new ArrayList<InetSocketAddress>();
-            InetAddress wcAddr = new InetSocketAddress(0).getAddress();
+            List<InetSocketAddress> included = new ArrayList<>();
 
             for (InetSocketAddress addr : addrs) {
                 if (addr == null) {
@@ -401,7 +400,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 InetAddress inetaddr = addr.getAddress();
 
                 if (inetaddr == null ||
-                    inetaddr.equals(wcAddr) || // wildCard address(0.0.0.0)
+                    inetaddr.isAnyLocalAddress() || // wildCard addresses (0.0.0.0 or [::])
                     inetaddr.isLoopbackAddress()) { // loopback address(localhost/127.0.0.1)
                     continue;
                 }
@@ -536,6 +535,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     private volatile boolean running = true;
 
+    private String initialConfig;
+
     /**
      * The number of milliseconds of each tick
      */
@@ -649,6 +650,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * pool which will be used to initiate quorum server connections.
      */
     protected int quorumCnxnThreadsSize = QUORUM_CNXN_THREADS_SIZE_DEFAULT_VALUE;
+
+    public static final String QUORUM_CNXN_TIMEOUT_MS = "zookeeper.quorumCnxnTimeoutMs";
+    private static int quorumCnxnTimeoutMs;
+
+    static {
+        quorumCnxnTimeoutMs = Integer.getInteger(QUORUM_CNXN_TIMEOUT_MS, -1);
+        LOG.info("{}={}", QUORUM_CNXN_TIMEOUT_MS, quorumCnxnTimeoutMs);
+    }
 
     /**
      * @deprecated As of release 3.4.0, this class has been deprecated, since
@@ -1267,7 +1276,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                         // Add delay jitter before we switch to LOOKING
                         // state to reduce the load of ObserverMaster
                         if (isRunning()) {
-                            Observer.waitForReconnectDelay();
+                            Observer.waitForObserverElectionDelay();
                         }
                     }
                     break;
@@ -1460,6 +1469,14 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      */
     public void setMyid(long myid) {
         this.myid = myid;
+    }
+
+    public void setInitialConfig(String initialConfig) {
+        this.initialConfig = initialConfig;
+    }
+
+    public String getInitialConfig() {
+        return initialConfig;
     }
 
     /**
@@ -2057,6 +2074,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         }
         LOG.info("Updated learner master list to be {}", sb.toString());
         Collections.shuffle(observerMasters);
+        // Reset the internal index of the observerMaster when
+        // the observerMaster List is refreshed
+        nextObserverMaster = 0;
     }
 
     private boolean useObserverMasters() {
@@ -2067,12 +2087,26 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     private QuorumServer nextObserverMaster() {
         if (nextObserverMaster >= observerMasters.size()) {
             nextObserverMaster = 0;
+            // Add a reconnect delay only after the observer
+            // has exhausted trying to connect to all the masters
+            // from the observerMasterList
+            if (isRunning()) {
+                Observer.waitForReconnectDelay();
+            }
         }
         return observerMasters.get(nextObserverMaster++);
     }
 
     QuorumServer findLearnerMaster(QuorumServer leader) {
-        return useObserverMasters() ? nextObserverMaster() : leader;
+        if (useObserverMasters()) {
+            return nextObserverMaster();
+        } else {
+            // Add delay jitter to reduce the load on the leader
+            if (isRunning()) {
+                Observer.waitForReconnectDelay();
+            }
+            return leader;
+        }
     }
 
     /**
@@ -2285,12 +2319,15 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     public QuorumCnxManager createCnxnManager() {
+        int timeout = quorumCnxnTimeoutMs > 0 ?
+                quorumCnxnTimeoutMs : this.tickTime * this.syncLimit;
+        LOG.info("Using {}ms as the quorum cnxn socket timeout", timeout);
         return new QuorumCnxManager(this,
                 this.getId(),
                 this.getView(),
                 this.authServer,
                 this.authLearner,
-                this.tickTime * this.syncLimit,
+                timeout,
                 this.getQuorumListenOnAllIPs(),
                 this.quorumCnxnThreadsSize,
                 this.isQuorumSaslAuthEnabled());

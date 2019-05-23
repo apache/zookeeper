@@ -804,7 +804,7 @@ public class QuorumCnxManager {
     private void setSockOpts(Socket sock) throws SocketException {
         sock.setTcpNoDelay(true);
         sock.setKeepAlive(tcpKeepAlive);
-        sock.setSoTimeout(self.tickTime * self.syncLimit);
+        sock.setSoTimeout(this.socketTimeout);
     }
 
     /**

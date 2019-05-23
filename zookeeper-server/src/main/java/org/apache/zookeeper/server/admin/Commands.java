@@ -24,7 +24,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.Environment.Entry;
@@ -85,13 +88,14 @@ public class Commands {
      *    - "error" key containing a String error message or null if no error
      */
     public static CommandResponse runCommand(String cmdName, ZooKeeperServer zkServer, Map<String, String> kwargs) {
-        if (!commands.containsKey(cmdName)) {
+        Command command = getCommand(cmdName);
+        if (command == null) {
             return new CommandResponse(cmdName, "Unknown command: " + cmdName);
         }
-        if (zkServer == null || !zkServer.isRunning()) {
+        if (command.isServerRequired() && (zkServer == null || !zkServer.isRunning())) {
             return new CommandResponse(cmdName, "This ZooKeeper instance is not currently serving requests");
         }
-        return commands.get(cmdName).run(zkServer, kwargs);
+        return command.run(zkServer, kwargs);
     }
 
     /**
@@ -127,6 +131,8 @@ public class Commands {
         registerCommand(new WatchCommand());
         registerCommand(new WatchesByPathCommand());
         registerCommand(new WatchSummaryCommand());
+        registerCommand(new SystemPropertiesCommand());
+        registerCommand(new InitialConfigurationCommand());
     }
 
     /**
@@ -237,7 +243,7 @@ public class Commands {
      */
     public static class EnvCommand extends CommandBase {
         public EnvCommand() {
-            super(Arrays.asList("environment", "env", "envi"));
+            super(Arrays.asList("environment", "env", "envi"), false);
         }
 
         @Override
@@ -256,7 +262,7 @@ public class Commands {
      */
     public static class GetTraceMaskCommand extends CommandBase {
         public GetTraceMaskCommand() {
-            super(Arrays.asList("get_trace_mask", "gtmk"));
+            super(Arrays.asList("get_trace_mask", "gtmk"), false);
         }
 
         @Override
@@ -310,7 +316,7 @@ public class Commands {
      */
     public static class MonitorCommand extends CommandBase {
         public MonitorCommand() {
-            super(Arrays.asList("monitor", "mntr"));
+            super(Arrays.asList("monitor", "mntr"), false);
         }
 
         @Override
@@ -322,10 +328,6 @@ public class Commands {
             response.put("version", Version.getFullVersion());
 
             response.put("server_state", stats.getServerState());
-
-            if (zkServer instanceof ObserverZooKeeperServer) {
-                response.put("observer_master_id", ((ObserverZooKeeperServer)zkServer).getObserver().getLearnerMasterId());
-            }
 
             ServerMetrics.getMetrics()
                     .getMetricsProvider()
@@ -359,7 +361,7 @@ public class Commands {
      */
     public static class SetTraceMaskCommand extends CommandBase {
         public SetTraceMaskCommand() {
-            super(Arrays.asList("set_trace_mask", "stmk"));
+            super(Arrays.asList("set_trace_mask", "stmk"), false);
         }
 
         @Override
@@ -504,6 +506,38 @@ public class Commands {
             DataTree dt = zkServer.getZKDatabase().getDataTree();
             CommandResponse response = initializeResponse();
             response.putAll(dt.getWatchesSummary().toMap());
+            return response;
+        }
+    }
+
+    /**
+     * All defined system properties.
+     */
+    public static class SystemPropertiesCommand extends CommandBase {
+        public SystemPropertiesCommand() {
+            super(Arrays.asList("system_properties", "sysp"), false);
+        }
+
+        @Override
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+            CommandResponse response = initializeResponse();
+            Properties systemProperties = System.getProperties();
+            SortedMap<String, String> sortedSystemProperties = new TreeMap<>();
+            systemProperties.forEach((k, v) -> sortedSystemProperties.put(k.toString(), v.toString()));
+            response.putAll(sortedSystemProperties);
+            return response;
+        }
+    }
+
+    public static class InitialConfigurationCommand extends CommandBase {
+        public InitialConfigurationCommand() {
+            super(Arrays.asList("initial_configuration", "icfg"));
+        }
+
+        @Override
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+            CommandResponse response = initializeResponse();
+            response.put("initial_configuration", zkServer.getInitialConfig());
             return response;
         }
     }

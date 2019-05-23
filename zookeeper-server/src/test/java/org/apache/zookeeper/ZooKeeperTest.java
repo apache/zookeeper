@@ -619,4 +619,15 @@ public class ZooKeeperTest extends ClientBase {
         }
     }
 
+    @Test
+    public void testSyncCommand() throws Exception {
+        final ZooKeeper zk = createClient();
+        SyncCommand cmd = new SyncCommand();
+        cmd.setZk(zk);
+        cmd.parse("sync /".split(" "));
+        List<String> expected = new ArrayList<String>();
+        expected.add("Sync is OK");
+
+        runCommandExpect(cmd, expected);
+    }
 }

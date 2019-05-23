@@ -54,6 +54,7 @@ public class ServerConfig {
     protected Properties metricsProviderConfiguration = new Properties();
     /** defaults to -1 if not set explicitly */
     protected int listenBacklog = -1;
+    protected String initialConfig;
 
     /** JVM Pause Monitor feature switch */
     protected boolean jvmPauseMonitorToRun = false;
@@ -121,6 +122,7 @@ public class ServerConfig {
         metricsProviderClassName = config.getMetricsProviderClassName();
         metricsProviderConfiguration = config.getMetricsProviderConfiguration();
         listenBacklog = config.getClientPortListenBacklog();
+        initialConfig = config.getInitialConfig();
     }
 
     public InetSocketAddress getClientPortAddress() {

@@ -117,6 +117,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected JvmPauseMonitor jvmPauseMonitor;
     protected volatile State state = State.INITIAL;
     private boolean isResponseCachingEnabled = true;
+    /* contains the configuration file content read at startup */
+    protected String initialConfig;
 
     protected enum State {
         INITIAL, RUNNING, SHUTDOWN, ERROR
@@ -144,6 +146,13 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     private ZooKeeperServerShutdownHandler zkShutdownHandler;
     private volatile int createSessionTrackerServerId = 1;
 
+    private static final String FLUSH_DELAY = "zookeeper.flushDelay";
+    private static volatile long flushDelay;
+    private static final String MAX_WRITE_QUEUE_POLL_SIZE = "zookeeper.maxWriteQueuePollTime";
+    private static volatile long maxWriteQueuePollTime;
+    private static final String MAX_BATCH_SIZE = "zookeeper.maxBatchSize";
+    private static volatile int maxBatchSize;
+
     /**
      * Starting size of read and write ByteArroyOuputBuffers. Default is 32 bytes.
      * Flag not used for small transfers like connectResponses.
@@ -154,6 +163,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public static final int intBufferStartingSizeBytes;
 
     static {
+        long configuredFlushDelay = Long.getLong(FLUSH_DELAY, 0);
+        setFlushDelay(configuredFlushDelay);
+        setMaxWriteQueuePollTime(Long.getLong(MAX_WRITE_QUEUE_POLL_SIZE, configuredFlushDelay / 3));
+        setMaxBatchSize(Integer.getInteger(MAX_BATCH_SIZE, 1000));
+
         intBufferStartingSizeBytes = Integer.getInteger(
                 INT_BUFFER_STARTING_SIZE_BYTES,
                 DEFAULT_STARTING_BUFFER_SIZE);
@@ -195,7 +209,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      */
     public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime,
             int minSessionTimeout, int maxSessionTimeout, int clientPortListenBacklog,
-            ZKDatabase zkDb) {
+            ZKDatabase zkDb, String initialConfig) {
         serverStats = new ServerStats(this);
         this.txnLogFactory = txnLogFactory;
         this.txnLogFactory.setServerStats(this.serverStats);
@@ -211,6 +225,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         connThrottle = new BlueThrottle();
 
+        this.initialConfig = initialConfig;
+
         LOG.info("Created server with tickTime " + tickTime
                 + " minSessionTimeout " + getMinSessionTimeout()
                 + " maxSessionTimeout " + getMaxSessionTimeout()
@@ -220,14 +236,19 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     }
 
+    public String getInitialConfig() {
+        return initialConfig;
+    }
+
     /**
      * Adds JvmPauseMonitor and calls
-     * {@link #ZooKeeperServer(FileTxnSnapLog, int, int, int, int, ZKDatabase)}
+     * {@link #ZooKeeperServer(FileTxnSnapLog, int, int, int, int, ZKDatabase, String)}
      *
      */
     public ZooKeeperServer(JvmPauseMonitor jvmPauseMonitor, FileTxnSnapLog txnLogFactory, int tickTime,
-                           int minSessionTimeout, int maxSessionTimeout, int clientPortListenBacklog, ZKDatabase zkDb) {
-        this(txnLogFactory, tickTime, minSessionTimeout, maxSessionTimeout, clientPortListenBacklog, zkDb);
+                           int minSessionTimeout, int maxSessionTimeout, int clientPortListenBacklog,
+                           ZKDatabase zkDb, String initialConfig) {
+        this(txnLogFactory, tickTime, minSessionTimeout, maxSessionTimeout, clientPortListenBacklog, zkDb, initialConfig);
         this.jvmPauseMonitor = jvmPauseMonitor;
         if(jvmPauseMonitor != null) {
             LOG.info("Added JvmPauseMonitor to server");
@@ -240,9 +261,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * @param tickTime the ticktime for the server
      * @throws IOException
      */
-    public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime)
+    public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime, String initialConfig)
             throws IOException {
-        this(txnLogFactory, tickTime, -1, -1, -1, new ZKDatabase(txnLogFactory));
+        this(txnLogFactory, tickTime, -1, -1, -1, new ZKDatabase(txnLogFactory), initialConfig);
     }
 
     public ServerStats serverStats() {
@@ -302,7 +323,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public ZooKeeperServer(File snapDir, File logDir, int tickTime)
             throws IOException {
         this( new FileTxnSnapLog(snapDir, logDir),
-                tickTime);
+                tickTime, "");
     }
 
     /**
@@ -313,7 +334,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public ZooKeeperServer(FileTxnSnapLog txnLogFactory)
         throws IOException
     {
-        this(txnLogFactory, DEFAULT_TICK_TIME, -1, -1, -1, new ZKDatabase(txnLogFactory));
+        this(txnLogFactory, DEFAULT_TICK_TIME, -1, -1, -1, new ZKDatabase(txnLogFactory), "");
     }
 
     /**
@@ -955,6 +976,14 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return limit;
     }
 
+    public static long getSnapSizeInBytes() {
+        long size = Long.getLong("zookeeper.snapSizeLimitInKb", 4194304L); // 4GB by default
+        if (size <= 0) {
+            LOG.info("zookeeper.snapSizeLimitInKb set to a non-positive value {}; disabling feature", size);
+        }
+        return size * 1024; // Convert to bytes
+    }
+
     public void setServerCnxnFactory(ServerCnxnFactory factory) {
         serverCnxnFactory = factory;
     }
@@ -1199,6 +1228,33 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             return outStandingCount > 0;
         }
         return false;
+    }
+
+    long getFlushDelay() {
+        return flushDelay;
+    }
+
+    static void setFlushDelay(long delay) {
+        LOG.info("{}={}", FLUSH_DELAY, delay);
+        flushDelay = delay;
+    }
+
+    long getMaxWriteQueuePollTime() {
+        return maxWriteQueuePollTime;
+    }
+
+    static void setMaxWriteQueuePollTime(long maxTime) {
+        LOG.info("{}={}", MAX_WRITE_QUEUE_POLL_SIZE, maxTime);
+        maxWriteQueuePollTime = maxTime;
+    }
+
+    int getMaxBatchSize() {
+        return maxBatchSize;
+    }
+
+    static void setMaxBatchSize(int size) {
+        LOG.info("{}={}", MAX_BATCH_SIZE, size);
+        maxBatchSize = size;
     }
 
     public void processPacket(ServerCnxn cnxn, ByteBuffer incomingBuffer) throws IOException {

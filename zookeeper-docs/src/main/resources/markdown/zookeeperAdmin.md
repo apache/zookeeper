@@ -612,7 +612,7 @@ property, when available, is noted below.
     transaction log file in blocks of preAllocSize kilobytes. The
     default block size is 64M. One reason for changing the size of
     the blocks is to reduce the block size if snapshots are taken
-    more often. (Also, see **snapCount**).
+    more often. (Also, see **snapCount** and **snapSizeLimitInKb**).
 
 * *snapCount* :
     (Java system property: **zookeeper.snapCount**)
@@ -626,6 +626,21 @@ property, when available, is noted below.
     reaches a runtime generated random value in the \[snapCount/2+1, snapCount]
     range.The default snapCount is 100,000.
 
+* *snapSizeLimitInKb* :
+    (Java system property: **zookeeper.snapSizeLimitInKb**)
+    ZooKeeper records its transactions using snapshots and
+    a transaction log (think write-ahead log). The total size in bytes allowed
+    in the set of transactions recorded in the transaction log before a snapshot
+    can be taken (and the transaction log rolled) is determined
+    by snapSize. In order to prevent all of the machines in the quorum
+    from taking a snapshot at the same time, each ZooKeeper server
+    will take a snapshot when the size in bytes of the set of transactions in the
+    transaction log reaches a runtime generated random value in the \[snapSize/2+1, snapSize]
+    range. Each file system has a minimum standard file size and in order
+    to for valid functioning of this feature, the number chosen must be larger
+    than that value. The default snapSizeLimitInKb is 4,194,304 (4GB).
+    A non-positive value will disable the feature.
+
 * *txnLogSizeLimitInKb* :
     (Java system property: **zookeeper.txnLogSizeLimitInKb**)
     Zookeeper transaction log file can also be controlled more
@@ -633,14 +648,14 @@ property, when available, is noted below.
     slower follower syncs when sync is done using transaction log.
     This is because leader has to scan through the appropriate log
     file on disk to find the transaction to start sync from.
-    This feature is turned off by this default and snapCount is the
-    only value that limits transaction log size. When enabled
-    Zookeeper will roll the log when either of the limit is hit.
+    This feature is turned off by default and snapCount and snapSizeLimitInKb are the
+    only values that limit transaction log size. When enabled
+    Zookeeper will roll the log when any of the limits is hit.
     Please note that actual log size can exceed this value by the size
     of the serialized transaction. On the other hand, if this value is
     set too close to (or smaller than) **preAllocSize**,
-    it can cause Zookeeper to roll the log for every tranasaction. While
-    this is not a correctness issue, this may cause severly degraded
+    it can cause Zookeeper to roll the log for every transaction. While
+    this is not a correctness issue, this may cause severely degraded
     performance. To avoid this and to get most out of this feature, it is
     recommended to set the value to N * **preAllocSize**
     where N >= 2.
@@ -774,7 +789,7 @@ property, when available, is noted below.
     dropping.
     This parameter defines the interval in milliseconds when the dropping
     probability is adjusted. When set to -1, probabilistic dropping is disabled.
-    Default is -1.     
+    Default is -1.
 
 * *connectionDropIncrease* :
     (Java system property: **zookeeper.connection_throttle_drop_increase**)
@@ -821,6 +836,26 @@ property, when available, is noted below.
     Specifies ServerCnxnFactory implementation. 
     This should be set to `NettyServerCnxnFactory` in order to use TLS based server communication.
     Default is `NIOServerCnxnFactory`.
+
+* *flushDelay* :
+    (Java system property: **zookeeper.flushDelay**)
+    Time in milliseconds to delay the flush of the commit log.
+    Does not effect the limit defined by *maxBatchSize*.
+    Disabled by default (with value 0). Ensembles with high write rates
+    may see throughput improved with a value of 10-20 ms.
+
+* *maxWriteQueuePollTime* :
+    (Java system property: **zookeeper.maxWriteQueuePollTime**)
+    If *flushDelay* is enabled, this determines the amount of time in milliseconds
+    to wait before flushing when no new requests are being queued.
+    Set to *flushDelay*/3 by default (implicitly disabled by default).
+
+* *maxBatchSize* :
+    (Java system property: **zookeeper.maxBatchSize**)
+    The number of transactions allowed in the server before a flush of the
+    commit log is triggered.
+    Does not effect the limit defined by *flushDelay*.
+    Default is 1000.
 
 <a name="sc_clusterOptions"></a>
 
@@ -908,6 +943,13 @@ of servers -- that is, when deploying clusters of servers.
     ###### Note
     >Default value is 5 seconds.
 
+* *quorumCnxnTimeoutMs* :
+    (Java system property: zookeeper.**quorumCnxnTimeoutMs**)
+    Sets the read timeout value for the connections for leader election notifications.
+    Only applicable if you are using electionAlg 3.
+    ######Note
+    >Default value is -1, which will then use the syncLimit * tickTime as the timeout.
+
 * *standaloneEnabled* :
     (No Java system property)
     **New in 3.5.0:**
@@ -982,6 +1024,20 @@ As an example, this will enable all four letter word commands:
     properly, check your operating system's options regarding TCP
     keepalive for more information.  Defaults to
     **false**.
+
+* *observer.reconnectDelayMs* :
+    (Java system property: **zookeeper.observer.reconnectDelayMs**)
+    When observer loses its connection with the leader, it waits for the
+    specified value before trying to reconnect with the leader so that
+    the entire observer fleet won't try to run leader election and reconnect
+    to the leader at once.
+    Defaults to 0 ms.
+
+* *observer.election.DelayMs* :
+    (Java system property: **zookeeper.observer.election.DelayMs**)
+    Delay the observer's participation in a leader election upon disconnect
+    so as to prevent unexpected additional load on the voting peers during
+    the process. Defaults to 200 ms.
 
 <a name="sc_authOptions"></a>
 
@@ -1759,8 +1815,8 @@ that represents the update is written to non-volatile storage. A new
 log file is started when the number of transactions written to the
 current log file reaches a (variable) threshold. The threshold is
 computed using the same parameter which influences the frequency of
-snapshotting (see snapCount above). The log file's suffix is the first
-zxid written to that log.
+snapshotting (see snapCount and snapSizeLimitInKb above). The log file's
+suffix is the first zxid written to that log.
 
 <a name="sc_filemanagement"></a>
 

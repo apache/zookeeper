@@ -278,4 +278,40 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
     public void setConnectionDecreaseRatio(double val) {
         zks.connThrottle().setDecreasePoint(val);
     }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public long getFlushDelay() {
+        return zks.getFlushDelay();
+    }
+
+    @Override
+    public void setFlushDelay(long delay) {
+        ZooKeeperServer.setFlushDelay(delay);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public long getMaxWriteQueuePollTime() {
+        return zks.getMaxWriteQueuePollTime();
+    }
+
+    @Override
+    public void setMaxWriteQueuePollTime(long delay) {
+        ZooKeeperServer.setMaxWriteQueuePollTime(delay);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public int getMaxBatchSize() {
+        return zks.getMaxBatchSize();
+    }
+
+    @Override
+    public void setMaxBatchSize(int size) {
+        ZooKeeperServer.setMaxBatchSize(size);
+    }
 }

@@ -36,15 +36,17 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.number.OrderingComparison.greaterThan;
 import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 public class PrepRequestProcessorMetricsTest extends ZKTestCase {
@@ -123,6 +125,8 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
         Map<String, Object> values = MetricsUtils.currentServerMetrics();
         Assert.assertEquals(3L, values.get("prep_processor_request_queued"));
 
+        // the sleep is just to make sure the requests will stay in the queue for some time
+        Thread.sleep(20);
         prepRequestProcessor.start();
 
         threeRequests.await(500, TimeUnit.MILLISECONDS);
@@ -130,7 +134,7 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
         values = MetricsUtils.currentServerMetrics();
         Assert.assertEquals(3L, values.get("max_prep_processor_queue_size"));
 
-        Assert.assertThat((long)values.get("min_prep_processor_queue_time_ms"), greaterThan(0l));
+        Assert.assertThat((long)values.get("min_prep_processor_queue_time_ms"), greaterThan(20l));
         Assert.assertEquals(3L, values.get("cnt_prep_processor_queue_time_ms"));
 
         Assert.assertEquals(3L, values.get("cnt_prep_process_time"));

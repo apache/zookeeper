@@ -29,6 +29,7 @@ import java.io.StringReader;
 import java.io.Writer;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -104,6 +105,8 @@ public class QuorumPeerConfig {
     protected int purgeInterval = 0;
     protected boolean syncEnabled = true;
 
+    protected String initialConfig;
+
     protected LearnerType peerType = LearnerType.PARTICIPANT;
 
     /**
@@ -172,7 +175,10 @@ public class QuorumPeerConfig {
             } finally {
                 in.close();
             }
-            
+
+            /* Read entire config file as initial configuration */
+            initialConfig = new String(Files.readAllBytes(configFile.toPath()));
+
             parseProperties(cfg);
         } catch (IOException e) {
             throw new ConfigException("Error processing " + path, e);
@@ -802,6 +808,11 @@ public class QuorumPeerConfig {
     public int getObserverMasterPort() { return observerMasterPort; }
     public File getDataDir() { return dataDir; }
     public File getDataLogDir() { return dataLogDir; }
+
+    public String getInitialConfig() {
+        return initialConfig;
+    }
+
     public int getTickTime() { return tickTime; }
     public int getMaxClientCnxns() { return maxClientCnxns; }
     public int getMinSessionTimeout() { return minSessionTimeout; }

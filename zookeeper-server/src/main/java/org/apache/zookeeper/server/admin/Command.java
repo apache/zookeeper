@@ -51,6 +51,12 @@ public interface Command {
     String getDoc();
 
     /**
+     * @return true if the command requires an active ZooKeeperServer or a
+     *     synced peer in order to resolve
+     */
+    boolean isServerRequired();
+
+    /**
      * Run this command. Commands take a ZooKeeperServer and String-valued
      * keyword arguments and return a map containing any information
      * constituting the response to the command. Commands are responsible for

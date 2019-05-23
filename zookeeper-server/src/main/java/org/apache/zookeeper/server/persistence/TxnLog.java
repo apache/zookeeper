@@ -47,7 +47,7 @@ public interface TxnLog extends Closeable {
      * Append a request to the transaction log
      * @param hdr the transaction header
      * @param r the transaction itself
-     * returns true iff something appended, otw false 
+     * @return true iff something appended, otw false
      * @throws IOException
      */
     boolean append(TxnHeader hdr, Record r) throws IOException;
@@ -97,6 +97,16 @@ public interface TxnLog extends Closeable {
      */
     long getTxnLogSyncElapsedTime();
    
+    /**
+     * Sets the total size of all log files
+     */
+    void setTotalLogSize(long size);
+
+    /**
+     * Gets the total size of all log files
+     */
+    long getTotalLogSize();
+
     /**
      * an iterating interface for reading 
      * transaction logs. 

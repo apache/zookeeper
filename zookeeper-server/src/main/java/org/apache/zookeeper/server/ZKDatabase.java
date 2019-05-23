@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
@@ -90,6 +91,11 @@ public class ZKDatabase {
     protected Queue<Proposal> committedLog = new ArrayDeque<>();
     protected ReentrantReadWriteLock logLock = new ReentrantReadWriteLock();
     volatile private boolean initialized = false;
+
+    /**
+     * Number of txn since last snapshot;
+     */
+    private AtomicInteger txnCount = new AtomicInteger(0);
 
     /**
      * the filetxnsnaplog that this zk database
@@ -595,6 +601,7 @@ public class ZKDatabase {
      * @return true if the append was succesfull and false if not
      */
     public boolean append(Request si) throws IOException {
+        txnCount.incrementAndGet();
         return this.snapLog.append(si);
     }
 
@@ -603,6 +610,7 @@ public class ZKDatabase {
      */
     public void rollLog() throws IOException {
         this.snapLog.rollLog();
+        resetTxnCount();
     }
 
     /**
@@ -674,5 +682,27 @@ public class ZKDatabase {
     // visible for testing
     public DataTree createDataTree() {
         return new DataTree();
+    }
+
+    /**
+     * Reset the number of txn since last rollLog
+     */
+    public void resetTxnCount() {
+        txnCount.set(0);
+        snapLog.setTotalLogSize(0);
+    }
+
+    /**
+     * Get the number of txn since last snapshot
+     */
+    public int getTxnCount() {
+        return txnCount.get();
+    }
+
+    /**
+     * Get the size of txn since last snapshot
+     */
+    public long getTxnSize() {
+        return snapLog.getTotalLogSize();
     }
 }
