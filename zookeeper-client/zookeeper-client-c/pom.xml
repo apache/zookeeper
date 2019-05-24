@@ -55,6 +55,8 @@
             <id>test-cppunit</id>
             <phase>test</phase>
             <configuration>
+              <!-- do not run cpp tests if tests are globally skipped -->
+              <skip>${skipTests}</skip> 
               <tasks>
                 <exec dir="${basedir}/target/c" executable="make" failonerror="true">
                   <env key="LD_LIBRARY_PATH" value="${env.LD_LIBRARY_PATH};/usr/lib" />
