@@ -81,7 +81,7 @@ public class LearnerMetricsTest extends QuorumPeerTestBase {
         Assert.assertEquals(8L, values.get("learner_proposal_received_count"));
         Assert.assertEquals(8L, values.get("cnt_proposal_latency"));
         Assert.assertThat((long)values.get("min_proposal_latency"), greaterThan(0L));
-        Assert.assertEquals(8L, values.get("cnt_proposal_ack_creation_latency"));
+        Assert.assertEquals(10L, values.get("cnt_proposal_ack_creation_latency"));
         Assert.assertThat((long)values.get("min_proposal_ack_creation_latency"), greaterThan(0L));
 
         // there are five learners, each received two commits, one for leader election, one for the create request
