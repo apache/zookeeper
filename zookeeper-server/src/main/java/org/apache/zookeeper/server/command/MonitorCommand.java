@@ -20,14 +20,8 @@ package org.apache.zookeeper.server.command;
 
 import java.io.PrintWriter;
 
-import org.apache.zookeeper.Version;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerMetrics;
-import org.apache.zookeeper.server.ServerStats;
-import org.apache.zookeeper.server.ZKDatabase;
-import org.apache.zookeeper.server.quorum.Leader;
-import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
-import org.apache.zookeeper.server.util.OSMXBean;
 
 public class MonitorCommand extends AbstractFourLetterCommand {
 
@@ -41,38 +35,31 @@ public class MonitorCommand extends AbstractFourLetterCommand {
             pw.println(ZK_NOT_SERVING);
             return;
         }
-        ServerStats stats = zkServer.serverStats();
 
-        print("version", Version.getFullVersion());
-
-        print("server_state", stats.getServerState());
+        // non metrics
+        zkServer.dumpMonitorValues(this::print);
 
         ServerMetrics.getMetrics()
                     .getMetricsProvider()
-                    .dump(
-                    (metric, value) -> {
-                        if (value == null) {
-                            print(metric, null);
-                        } else if (value instanceof Long
-                                || value instanceof Integer) {
-                            print(metric, ((Number) value).longValue());
-                        } else if (value instanceof Number) {
-                            print(metric, ((Number) value).doubleValue());                        
-                        } else {
-                            print(metric, value.toString());
-                        }
-                    });
-    }
-
-    private void print(String key, long number) {
-        print(key, "" + number);
+                    .dump(this::print);
     }
     
-    private void print(String key, double number) {
-        print(key, "" + number);
+    private void print(String key, Object value) {
+        if (value == null) {
+            output(key, null);
+        } else if (value instanceof Long
+                || value instanceof Integer) {
+            // format as integers
+            output(key, value + "");
+        } else if (value instanceof Number) {
+            // format as floating point
+            output(key, ((Number) value).doubleValue() + "");
+        } else {
+            output(key, value.toString());
+        }
     }
 
-    private void print(String key, String value) {
+    private void output(String key, String value) {
         pw.print("zk_");
         pw.print(key);
         pw.print("\t");

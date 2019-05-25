@@ -36,6 +36,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiConsumer;
 
 import javax.security.sasl.SaslException;
 
@@ -46,6 +47,7 @@ import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
+import org.apache.zookeeper.Version;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.ZookeeperBanner;
 import org.apache.zookeeper.common.Time;
@@ -1528,5 +1530,17 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         rootContext.unregisterGauge("max_client_response_size");
         rootContext.unregisterGauge("min_client_response_size");
 
+    }
+
+    /**
+     * Hook into admin server, useful to expose additional data
+     * that do not represent metrics.
+     *
+     * @param response a sink which collects the data.
+     */
+    public void dumpMonitorValues(BiConsumer<String, Object> response) {
+      ServerStats stats = serverStats();
+      response.accept("version", Version.getFullVersion());
+      response.accept("server_state", stats.getServerState());
     }
 }

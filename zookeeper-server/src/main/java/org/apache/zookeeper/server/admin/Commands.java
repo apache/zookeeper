@@ -321,20 +321,11 @@ public class Commands {
 
         @Override
         public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
-            ServerStats stats = zkServer.serverStats();
-
             CommandResponse response = initializeResponse();
-
-            response.put("version", Version.getFullVersion());
-
-            response.put("server_state", stats.getServerState());
-
+            zkServer.dumpMonitorValues(response::put);
             ServerMetrics.getMetrics()
                     .getMetricsProvider()
-                    .dump(
-                    (metric, value) -> {
-                        response.put(metric, value);
-                    });
+                    .dump(response::put);
             return response;
 
         }}
