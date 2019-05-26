@@ -25,6 +25,8 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.jute.Record;
+import org.apache.zookeeper.MultiTransactionRecord;
+import org.apache.zookeeper.Op;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.Id;
 import org.slf4j.Logger;
@@ -38,6 +40,8 @@ import org.apache.zookeeper.OpResult.CheckResult;
 import org.apache.zookeeper.OpResult.CreateResult;
 import org.apache.zookeeper.OpResult.DeleteResult;
 import org.apache.zookeeper.OpResult.ErrorResult;
+import org.apache.zookeeper.OpResult.GetChildrenResult;
+import org.apache.zookeeper.OpResult.GetDataResult;
 import org.apache.zookeeper.OpResult.SetDataResult;
 import org.apache.zookeeper.Watcher.WatcherType;
 import org.apache.zookeeper.ZooDefs;
@@ -270,6 +274,33 @@ public class FinalRequestProcessor implements RequestProcessor {
 
                 break;
             }
+            case OpCode.multiRead: {
+                lastOp = "MLTR";
+                MultiTransactionRecord multiTransactionRecord = new MultiTransactionRecord();
+                ByteBufferInputStream.byteBuffer2Record(request.request, multiTransactionRecord);
+                rsp = new MultiResponse();
+                OpResult subResult;
+                for(Op readOp : multiTransactionRecord) {
+                    try {
+                        Record rec = handleReadRequest(readOp.getType(), readOp.toRequestRecord(), cnxn, request.authInfo);
+                        switch(readOp.getType()) {
+                            case OpCode.getChildren:
+                                subResult = new GetChildrenResult(((GetChildrenResponse) rec).getChildren());
+                                break;
+                            case OpCode.getData:
+                                GetDataResponse gdr = (GetDataResponse) rec;
+                                subResult = new GetDataResult(gdr.getData());
+                                break;
+                            default:
+                                throw new IOException("Invalid type of readOp");
+                        }
+                    } catch (KeeperException e) {
+                        subResult = new ErrorResult(e.code().intValue());
+                    }
+                    ((MultiResponse)rsp).add(subResult);
+                }
+                break;
+            }
             case OpCode.create: {
                 lastOp = "CREA";
                 rsp = new CreateResponse(rc.path);
@@ -348,17 +379,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 ByteBufferInputStream.byteBuffer2Record(request.request,
                         getDataRequest);
                 path = getDataRequest.getPath();
-                DataNode n = zks.getZKDatabase().getNode(path);
-                if (n == null) {
-                    throw new KeeperException.NoNodeException();
-                }
-                PrepRequestProcessor.checkACL(zks, request.cnxn, zks.getZKDatabase().aclForNode(n),
-                        ZooDefs.Perms.READ,
-                        request.authInfo, path, null);
-                Stat stat = new Stat();
-                byte b[] = zks.getZKDatabase().getData(path, stat,
-                        getDataRequest.getWatch() ? cnxn : null);
-                rsp = new GetDataResponse(b, stat);
+                rsp = handleReadRequest(OpCode.getData, getDataRequest, cnxn, request.authInfo);
                 break;
             }
             case OpCode.setWatches: {
@@ -417,17 +438,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 ByteBufferInputStream.byteBuffer2Record(request.request,
                         getChildrenRequest);
                 path = getChildrenRequest.getPath();
-                DataNode n = zks.getZKDatabase().getNode(path);
-                if (n == null) {
-                    throw new KeeperException.NoNodeException();
-                }
-                PrepRequestProcessor.checkACL(zks, request.cnxn, zks.getZKDatabase().aclForNode(n),
-                        ZooDefs.Perms.READ,
-                        request.authInfo, path, null);
-                List<String> children = zks.getZKDatabase().getChildren(
-                        path, null, getChildrenRequest
-                                .getWatch() ? cnxn : null);
-                rsp = new GetChildrenResponse(children);
+                rsp = handleReadRequest(OpCode.getChildren, getChildrenRequest, cnxn, request.authInfo);
                 break;
             }
             case OpCode.getAllChildrenNumber: {
@@ -571,6 +582,41 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
         } catch (IOException e) {
             LOG.error("FIXMSG",e);
+        }
+    }
+
+    private Record handleReadRequest(int opCode, Record request, ServerCnxn cnxn, List<Id> authInfo)
+            throws KeeperException, IOException {
+        switch(opCode) {
+            case OpCode.getChildren: {
+                GetChildrenRequest getChildrenRequest = (GetChildrenRequest) request;
+                String path = getChildrenRequest.getPath();
+                DataNode n = zks.getZKDatabase().getNode(path);
+                if (n == null) {
+                    throw new KeeperException.NoNodeException();
+                }
+                PrepRequestProcessor.checkACL(zks, cnxn, zks.getZKDatabase().aclForNode(n),
+                        ZooDefs.Perms.READ, authInfo, path, null);
+                List<String> children = zks.getZKDatabase().getChildren(path, null,
+                        getChildrenRequest.getWatch() ? cnxn : null);
+                return new GetChildrenResponse(children);
+            }
+            case OpCode.getData: {
+                GetDataRequest getDataRequest = (GetDataRequest) request;
+                String path = getDataRequest.getPath();
+                DataNode n = zks.getZKDatabase().getNode(path);
+                if (n == null) {
+                    throw new KeeperException.NoNodeException();
+                }
+                PrepRequestProcessor.checkACL(zks, cnxn, zks.getZKDatabase().aclForNode(n),
+                        ZooDefs.Perms.READ, authInfo, path, null);
+                Stat stat = new Stat();
+                byte b[] = zks.getZKDatabase().getData(path, stat,
+                        getDataRequest.getWatch() ? cnxn : null);
+                return new GetDataResponse(b, stat);
+            }
+            default:
+                throw new IOException("Not supported request");
         }
     }
 
