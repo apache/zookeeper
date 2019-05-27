@@ -170,6 +170,13 @@ public class CommandsTest extends ClientBase {
     }
 
     @Test
+    public void testLastSnapshot() throws IOException, InterruptedException {
+        testCommand("last_snapshot",
+                    new Field("zxid", String.class),
+                    new Field("timestamp", Long.class));
+    }
+
+    @Test
     public void testMonitor() throws IOException, InterruptedException {
         ArrayList<Field> fields = new ArrayList<>(Arrays.asList(
                 new Field("version", String.class),
