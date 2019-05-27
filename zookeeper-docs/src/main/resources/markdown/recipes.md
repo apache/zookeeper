@@ -37,7 +37,7 @@ limitations under the License.
 In this article, you'll find guidelines for using
 ZooKeeper to implement higher order functions. All of them are conventions
 implemented at the client and do not require special support from
-ZooKeeper. Hopfully the community will capture these conventions in client-side libraries
+ZooKeeper. Hopefully the community will capture these conventions in client-side libraries
 to ease their use and to encourage standardization.
 
 One of the most interesting things about ZooKeeper is that even
@@ -270,7 +270,7 @@ protocol:
 | 1. Call **create( )** to create a node with pathname "*guid-/read-*". This is the lock node use later in the protocol. Make sure to set both the _sequence_ and _ephemeral_ flags. | 1. Call **create( )** to create a node with pathname "*guid-/write-*". This is the lock node spoken of later in the protocol. Make sure to set both _sequence_ and _ephemeral_ flags. |
 | 2. Call **getChildren( )** on the lock node _without_ setting the _watch_ flag - this is important, as it avoids the herd effect. | 2. Call **getChildren( )** on the lock node _without_ setting the _watch_ flag - this is important, as it avoids the herd effect. |
 | 3. If there are no children with a pathname starting with "*write-*" and having a lower sequence number than the node created in step **1**, the client has the lock and can exit the protocol. | 3. If there are no children with a lower sequence number than the node created in step **1**, the client has the lock and the client exits the protocol. |
-| 4. Otherwise, call **exists( )**, with _watch_ flag, set on the node in lock directory with pathname staring with "*write-*" having the next lowest sequence number. | 4. Call **exists( ),** with _watch_ flag set, on the node with the pathname that has the next lowest sequence number. |
+| 4. Otherwise, call **exists( )**, with _watch_ flag, set on the node in lock directory with pathname starting with "*write-*" having the next lowest sequence number. | 4. Call **exists( ),** with _watch_ flag set, on the node with the pathname that has the next lowest sequence number. |
 | 5. If **exists( )** returns _false_, goto step **2**. | 5. If **exists( )** returns _false_, goto step **2**. Otherwise, wait for a notification for the pathname from the previous step before going to step **2**. |
 | 6. Otherwise, wait for a notification for the pathname from the previous step before going to step **2** |  |
 
@@ -407,7 +407,7 @@ Upon receiving a notification of znode deletion:
 Notes:
 
 * Note that the znode having no preceding znode on the list of
-  children does not imply that the creator of this znode is aware that it is
+  children do not imply that the creator of this znode is aware that it is
   the current leader. Applications may consider creating a separate znode
   to acknowledge that the leader has executed the leader procedure.
 
