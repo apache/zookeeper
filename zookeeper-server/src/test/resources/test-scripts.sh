@@ -23,11 +23,6 @@ if [ ! -d "conf" ]; then
     exit 1
 fi
 
-if [ ! `ls build/zookeeper*.jar` ]; then
-    echo "first compile the zk jar file"
-    exit 1
-fi
-
 DATADIR=test-scripts_datadir
 DATALOGDIR=test-scripts_datalogdir
 
