@@ -38,6 +38,9 @@ import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooTrace;
+import org.apache.zookeeper.server.persistence.SnapshotInfo;
+import org.apache.zookeeper.server.quorum.Follower;
+import org.apache.zookeeper.server.quorum.FollowerZooKeeperServer;
 import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
 import org.apache.zookeeper.server.quorum.ObserverZooKeeperServer;
@@ -122,6 +125,7 @@ public class Commands {
         registerCommand(new EnvCommand());
         registerCommand(new GetTraceMaskCommand());
         registerCommand(new IsroCommand());
+        registerCommand(new LastSnapshotCommand());
         registerCommand(new MonitorCommand());
         registerCommand(new RuokCommand());
         registerCommand(new SetTraceMaskCommand());
@@ -286,6 +290,30 @@ public class Commands {
         public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
             CommandResponse response = initializeResponse();
             response.put("read_only", zkServer instanceof ReadOnlyZooKeeperServer);
+            return response;
+        }
+    }
+
+    /**
+     * Command returns information of the last snapshot that zookeeper server
+     * has finished saving to disk. During the time between the server starts up
+     * and it finishes saving its first snapshot, the command returns the zxid
+     * and last modified time of the snapshot file used for restoration at
+     * server startup. Returned map contains:
+     *   - "zxid": String
+     *   - "timestamp": Long
+     */
+    public static class LastSnapshotCommand extends CommandBase {
+        public LastSnapshotCommand() {
+            super(Arrays.asList("last_snapshot", "lsnp"));
+        }
+
+        @Override
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+            CommandResponse response = initializeResponse();
+            SnapshotInfo info = zkServer.getTxnLogFactory().getLastSnapshotInfo();
+            response.put("zxid", Long.toHexString(info == null ? -1L : info.zxid));
+            response.put("timestamp", info == null ? -1L : info.timestamp);
             return response;
         }
     }

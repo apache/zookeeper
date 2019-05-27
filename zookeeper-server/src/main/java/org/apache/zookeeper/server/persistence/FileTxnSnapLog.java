@@ -201,6 +201,14 @@ public class FileTxnSnapLog {
     }
 
     /**
+     * get information of the last saved/restored snapshot
+     * @return info of last snapshot
+     */
+    public SnapshotInfo getLastSnapshotInfo() {
+        return this.snapLog.getLastSnapshotInfo();
+    }
+
+    /**
      * this function restores the server
      * database after reading from the
      * snapshots and transaction logs

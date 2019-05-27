@@ -46,6 +46,7 @@ import org.apache.zookeeper.server.util.SerializeUtils;
  */
 public class FileSnap implements SnapShot {
     File snapDir;
+    SnapshotInfo lastSnapshotInfo = null;
     private volatile boolean close = false;
     private static final int VERSION = 2;
     private static final long dbId = -1;
@@ -57,6 +58,14 @@ public class FileSnap implements SnapShot {
 
     public FileSnap(File snapDir) {
         this.snapDir = snapDir;
+    }
+
+    /**
+     * get information of the last saved/restored snapshot
+     * @return info of last snapshot
+     */
+    public SnapshotInfo getLastSnapshotInfo() {
+        return this.lastSnapshotInfo;
     }
 
     /**
@@ -91,6 +100,7 @@ public class FileSnap implements SnapShot {
             throw new IOException("Not able to find valid snapshots in " + snapDir);
         }
         dt.lastProcessedZxid = Util.getZxidFromName(snap.getName(), SNAPSHOT_FILE_PREFIX);
+        lastSnapshotInfo = new SnapshotInfo(dt.lastProcessedZxid, snap.lastModified() / 1000);
         return dt.lastProcessedZxid;
     }
 
@@ -216,6 +226,9 @@ public class FileSnap implements SnapShot {
                 FileHeader header = new FileHeader(SNAP_MAGIC, VERSION, dbId);
                 serialize(dt, sessions, oa, header);
                 SnapStream.sealStream(snapOS, oa);
+                lastSnapshotInfo = new SnapshotInfo(
+                        Util.getZxidFromName(snapShot.getName(), SNAPSHOT_FILE_PREFIX),
+                        snapShot.lastModified() / 1000);
             }
         }
     }
