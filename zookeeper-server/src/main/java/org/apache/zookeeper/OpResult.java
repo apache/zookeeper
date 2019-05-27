@@ -212,11 +212,11 @@ public abstract class OpResult {
 
         public GetDataResult(byte[] data) {
             super(ZooDefs.OpCode.getData);
-            this.data = data;
+            this.data = data.clone();
         }
 
         public byte[] getData() {
-            return data;
+            return data.clone();
         }
 
         @Override
