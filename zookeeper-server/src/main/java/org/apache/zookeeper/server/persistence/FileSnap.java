@@ -51,6 +51,7 @@ import org.apache.zookeeper.server.util.SerializeUtils;
  */
 public class FileSnap implements SnapShot {
     File snapDir;
+    SnapshotInfo lastSnapshotInfo = null;
     private volatile boolean close = false;
     private static final int VERSION = 2;
     private static final long dbId = -1;
@@ -62,6 +63,14 @@ public class FileSnap implements SnapShot {
 
     public FileSnap(File snapDir) {
         this.snapDir = snapDir;
+    }
+
+    /**
+     * get information of the last saved/restored snapshot
+     * @return info of last snapshot
+     */
+    public SnapshotInfo getLastSnapshotInfo() {
+        return this.lastSnapshotInfo;
     }
 
     /**
@@ -101,6 +110,7 @@ public class FileSnap implements SnapShot {
             throw new IOException("Not able to find valid snapshots in " + snapDir);
         }
         dt.lastProcessedZxid = Util.getZxidFromName(snap.getName(), SNAPSHOT_FILE_PREFIX);
+        lastSnapshotInfo = new SnapshotInfo(dt.lastProcessedZxid, snap.lastModified() / 1000);
         return dt.lastProcessedZxid;
     }
 
@@ -136,12 +146,12 @@ public class FileSnap implements SnapShot {
     }
 
     /**
-     * find the last (maybe) valid n snapshots. this does some 
+     * find the last (maybe) valid n snapshots. this does some
      * minor checks on the validity of the snapshots. It just
      * checks for / at the end of the snapshot. This does
      * not mean that the snapshot is truly valid but is
-     * valid with a high probability. also, the most recent 
-     * will be first on the list. 
+     * valid with a high probability. also, the most recent
+     * will be first on the list.
      * @param n the number of most recent snapshots
      * @return the last n snapshots (the number might be
      * less than n in case enough snapshots are not available).
@@ -233,6 +243,9 @@ public class FileSnap implements SnapShot {
                 oa.writeLong(val, "val");
                 oa.writeString("/", "path");
                 crcOut.flush();
+                lastSnapshotInfo = new SnapshotInfo(
+                        Util.getZxidFromName(snapShot.getName(), SNAPSHOT_FILE_PREFIX),
+                        snapShot.lastModified() / 1000);
             }
         } else {
             throw new IOException("FileSnap has already been closed");

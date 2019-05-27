@@ -59,7 +59,13 @@ public interface SnapShot {
      * @throws IOException
      */
     File findMostRecentSnapshot() throws IOException;
-    
+
+    /**
+     * get information of the last saved/restored snapshot
+     * @return info of last snapshot
+     */
+    SnapshotInfo getLastSnapshotInfo();
+
     /**
      * free resources from this snapshot immediately
      * @throws IOException
