@@ -98,5 +98,7 @@ public class SyncRequestProcessorMetricTest {
         Assert.assertEquals(500L, values.get("max_sync_processor_batch_size"));
         Assert.assertEquals(1L, values.get("cnt_sync_processor_queue_flush_time_ms"));
         Assert.assertThat((long)values.get("max_sync_processor_queue_flush_time_ms"), greaterThanOrEqualTo(100L));
+
+        syncProcessor.shutdown();
     }
 }
