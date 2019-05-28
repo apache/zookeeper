@@ -78,7 +78,7 @@ public class SyncRequestProcessorMetricTest {
         allRequestsFlushed = new CountDownLatch(500);
         syncProcessor.start();
 
-        allRequestsFlushed.await(500, TimeUnit.MILLISECONDS);
+        allRequestsFlushed.await(5000, TimeUnit.MILLISECONDS);
 
         values = MetricsUtils.currentServerMetrics();
 
