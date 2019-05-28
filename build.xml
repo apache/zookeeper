@@ -44,7 +44,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="checkstyle.version" value="7.1.2"/>
     <property name="commons-collections.version" value="3.2.2"/>
 
-    <property name="bouncycastle.version" value="1.61"/>
+    <property name="bouncycastle.version" value="1.60"/>
 
     <property name="jdiff.version" value="1.0.9"/>
     <property name="xerces.version" value="1.4.4"/>
