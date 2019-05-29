@@ -1487,9 +1487,10 @@ ZooKeeper users fall into:
   ZooKeeper must sync transactions to media before it returns a
   response. A dedicated transaction log device is key to consistent good
   performance. Putting the log on a busy device will adversely effect
-  performance. If you only have one storage device, put trace files on
-  NFS and increase the snapshotCount; it doesn't eliminate the problem,
-  but it can mitigate it.
+  performance. If you only have one storage device,
+  increase the snapCount so that snapshot files are generated less often;
+  it does not eliminate the problem, but it makes more resources available
+  for the transaction log.
 1. Set your Java max heap size correctly. It is very important to
   _avoid swapping._ Going to disk unnecessarily will
   almost certainly degrade your performance unacceptably. Remember, in
