@@ -52,7 +52,7 @@ public class UnifiedConnectionFactory extends AbstractConnectionFactory {
 
     public UnifiedConnectionFactory(SslContextFactory factory, String nextProtocol) {
         super("SSL");
-        this.sslContextFactory = (factory == null) ? new SslContextFactory() : factory;
+        this.sslContextFactory = (factory == null) ? new SslContextFactory.Server() : factory;
         this.nextProtocol = nextProtocol;
         this.addBean(this.sslContextFactory);
     }
