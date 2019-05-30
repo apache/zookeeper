@@ -34,7 +34,7 @@ In order to post to the list, it is necessary to first subscribe to it.
 
 If you'd like to contribute to ZooKeeper, please subscribe to the ZooKeeper developer mailing list.
 
-This mailing list is for general chat and announcements. All notifications are sent to other mailing lists (see below). The only exception are new Jira issues which will still be sent to this list.
+This mailing list is for general developer chat and announcements. All notifications are sent to other mailing lists (see below). The only exception are new Jira issues which will still be sent to this list.
 
 The ZooKeeper developer mailing list is : [dev@zookeeper.apache.org](mailto:dev@zookeeper.apache.org)
 
