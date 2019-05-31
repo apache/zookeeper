@@ -17,20 +17,15 @@
  */
 package org.apache.zookeeper.graph;
 
-
+import org.apache.zookeeper.server.util.ZxidUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
-import java.io.Writer;
-import java.io.OutputStreamWriter;
-import java.io.IOException;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.ListIterator;
 import java.util.Set;
 
 public class JsonGenerator {
@@ -122,8 +117,8 @@ public class JsonGenerator {
 		} else if ((m = newElectionP.matcher(e.getEntry())).find()) {
 		    Iterator<Integer> iterator = servers.iterator();
 		    long zxid = Long.valueOf(m.group(2));
-		    int count = (int)zxid;// & 0xFFFFFFFFL;
-		    int epoch = (int)Long.rotateRight(zxid, 32);// >> 32;
+            long count = ZxidUtils.getCounterFromZxid(zxid);
+            long epoch = ZxidUtils.getEpochFromZxid(zxid);
 		    
 		    if (leader != 0 && epoch > curEpoch) {
 			JSONObject stateChange = new JSONObject();
@@ -156,9 +151,9 @@ public class JsonGenerator {
 		    long zxid = Long.valueOf(m.group(2));
 		    int dst = e.getNode();
 		    long epoch2 = Long.valueOf(m.group(3));
-		    
-		    int count = (int)zxid;// & 0xFFFFFFFFL;
-		    int epoch = (int)Long.rotateRight(zxid, 32);// >> 32;
+
+            long count = ZxidUtils.getCounterFromZxid(zxid);
+            long epoch = ZxidUtils.getEpochFromZxid(zxid);
 		    
 		    if (leader != 0 && epoch > curEpoch) {
 			JSONObject stateChange = new JSONObject();

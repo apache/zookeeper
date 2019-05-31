@@ -884,7 +884,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
                         + " doesn't think the quorum system is a majority quorum system!");
         }
     }
-    
+
     @Test
     public void testInitialConfigHasPositiveVersion() throws Exception {
         qu = new QuorumUtil(1); // create 3 servers
@@ -896,7 +896,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
             String configStr = testServerHasConfig(zkArr[i], null, null);
             QuorumVerifier qv = qu.getPeer(i).peer.configFromString(configStr);
             long version = qv.getVersion();
-            Assert.assertTrue(version == 0x100000000L);
+            Assert.assertTrue(version == 0x10000000000L);
         }
     }
 

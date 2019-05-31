@@ -534,7 +534,7 @@ public class Leader implements LearnerMaster {
                    null, null);
 
 
-            if ((newLeaderProposal.packet.getZxid() & 0xffffffffL) != 0) {
+            if (ZxidUtils.getCounterFromZxid(newLeaderProposal.packet.getZxid()) != 0) {
                 LOG.info("NEWLEADER proposal has Zxid of "
                         + Long.toHexString(newLeaderProposal.packet.getZxid()));
             }
@@ -625,7 +625,7 @@ public class Leader implements LearnerMaster {
             String initialZxid = System.getProperty("zookeeper.testingonly.initialZxid");
             if (initialZxid != null) {
                 long zxid = Long.parseLong(initialZxid);
-                zk.setZxid((zk.getZxid() & 0xffffffff00000000L) | zxid);
+                zk.setZxid(ZxidUtils.clearCounter(zk.getZxid()) | zxid);
             }
 
             if (!System.getProperty("zookeeper.leaderServes", "yes").equals("no")) {
@@ -899,7 +899,7 @@ public class Leader implements LearnerMaster {
             LOG.trace("outstanding proposals all");
         }
 
-        if ((zxid & 0xffffffffL) == 0) {
+        if (ZxidUtils.getCounterFromZxid(zxid) == 0) {
             /*
              * We no longer process NEWLEADER ack with this method. However,
              * the learner sends an ack back to the leader after it gets
@@ -1136,7 +1136,7 @@ public class Leader implements LearnerMaster {
          * Address the rollover issue. All lower 32bits set indicate a new leader
          * election. Force a re-election instead. See ZOOKEEPER-1277
          */
-        if ((request.zxid & 0xffffffffL) == 0xffffffffL) {
+        if (ZxidUtils.getCounterFromZxid(request.zxid) == ZxidUtils.getCounterLowPosition()) {
             String msg =
                     "zxid lower 32 bits have rolled over, forcing re-election, and therefore new epoch start";
             shutdown(msg);

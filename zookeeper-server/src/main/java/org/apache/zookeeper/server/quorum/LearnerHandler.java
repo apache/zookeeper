@@ -726,7 +726,7 @@ public class LearnerHandler extends ZooKeeperThread {
          * zxid in our history. In this case, we will ignore TRUNC logic and
          * always send DIFF if we have old enough history
          */
-        boolean isPeerNewEpochZxid = (peerLastZxid & 0xffffffffL) == 0;
+        boolean isPeerNewEpochZxid = ZxidUtils.getCounterFromZxid(peerLastZxid) == 0;
         // Keep track of the latest zxid which already queued
         long currentZxid = peerLastZxid;
         boolean needSnap = true;
@@ -875,7 +875,7 @@ public class LearnerHandler extends ZooKeeperThread {
      */
     protected long queueCommittedProposals(Iterator<Proposal> itr,
             long peerLastZxid, Long maxZxid, Long lastCommittedZxid) {
-        boolean isPeerNewEpochZxid = (peerLastZxid & 0xffffffffL) == 0;
+        boolean isPeerNewEpochZxid = ZxidUtils.getCounterFromZxid(peerLastZxid) == 0;
         long queuedZxid = peerLastZxid;
         // as we look through proposals, this variable keeps track of previous
         // proposal Id.

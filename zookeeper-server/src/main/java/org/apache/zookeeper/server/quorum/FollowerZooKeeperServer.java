@@ -24,6 +24,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.jute.Record;
 import org.apache.zookeeper.jmx.MBeanRegistry;
+import org.apache.zookeeper.server.util.ZxidUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.server.ExitCode;
@@ -88,7 +89,7 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
 
     public void logRequest(TxnHeader hdr, Record txn) {
         Request request = new Request(hdr.getClientId(), hdr.getCxid(), hdr.getType(), hdr, txn, hdr.getZxid());
-        if ((request.zxid & 0xffffffffL) != 0) {
+        if (ZxidUtils.getCounterFromZxid(request.zxid) != 0) {
             pendingTxns.add(request);
         }
         syncProcessor.processRequest(request);
