@@ -403,7 +403,6 @@ public class DataTree {
      * @param time
      * @throws NodeExistsException
      * @throws NoNodeException
-     * @throws KeeperException
      */
     public void createNode(final String path, byte data[], List<ACL> acl,
             long ephemeralOwner, int parentCVersion, long zxid, long time)
@@ -429,7 +428,6 @@ public class DataTree {
      * 			  A Stat object to store Stat output results into.
      * @throws NodeExistsException
      * @throws NoNodeException
-     * @throws KeeperException
      */
     public void createNode(final String path, byte data[], List<ACL> acl,
             long ephemeralOwner, int parentCVersion, long zxid, long time, Stat outputStat)
@@ -1223,7 +1221,6 @@ public class DataTree {
      * @param path
      *            a string builder.
      * @throws IOException
-     * @throws InterruptedException
      */
     void serializeNode(OutputArchive oa, StringBuilder path) throws IOException {
         String pathString = path.toString();

@@ -246,7 +246,7 @@ public class ReconfigBackupTest extends QuorumPeerTestBase {
     /**
      * This test checks that if a version is appended to dynamic file,
      * then peer should use that version as quorum config version.
-     * <p/>
+     * <p>
      * The scenario: one server has an older version of 3 servers, and
      * four others have newer version of 5 servers. Finally, the lag-off one
      * should have server config of 5 servers.

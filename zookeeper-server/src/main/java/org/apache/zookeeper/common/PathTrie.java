@@ -157,7 +157,6 @@ public class PathTrie {
         /**
          * get the list of children of this 
          * trienode.
-         * @param node to get its children
          * @return the string list of its children
          */
         String[] getChildren() {

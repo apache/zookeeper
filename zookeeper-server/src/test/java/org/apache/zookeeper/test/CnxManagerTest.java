@@ -284,7 +284,7 @@ public class CnxManagerTest extends ZKTestCase {
     /**
      * Tests a bug in QuorumCnxManager that causes a NPE when a 3.4.6
      * observer connects to a 3.5.0 server. 
-     * {@link https://issues.apache.org/jira/browse/ZOOKEEPER-1789}
+     * see https://issues.apache.org/jira/browse/ZOOKEEPER-1789
      * 
      * @throws Exception
      */

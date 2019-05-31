@@ -95,7 +95,7 @@ public class JMXEnv {
      * @param expectedNames
      * @return
      * @throws IOException
-     * @throws MalformedObjectNameException
+     * @throws InterruptedException
      */
     public static Set<ObjectName> ensureAll(String... expectedNames)
         throws IOException, InterruptedException
@@ -140,7 +140,7 @@ public class JMXEnv {
      * @param expectedNames
      * @return
      * @throws IOException
-     * @throws MalformedObjectNameException
+     * @throws InterruptedException
      */
     public static Set<ObjectName> ensureOnly(String... expectedNames)
         throws IOException, InterruptedException
@@ -216,7 +216,7 @@ public class JMXEnv {
      * failing if there is a mismatch. This will return the beans which are not
      * matched.
      * 
-     * {@link https://issues.apache.org/jira/browse/ZOOKEEPER-1858}
+     * https://issues.apache.org/jira/browse/ZOOKEEPER-1858
      * 
      * @param expectedNames
      *            - expected beans

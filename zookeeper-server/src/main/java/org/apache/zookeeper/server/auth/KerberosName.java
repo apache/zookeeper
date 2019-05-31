@@ -298,7 +298,7 @@ public class KerberosName {
      * Try to apply this rule to the given name represented as a parameter
      * array.
      * @param params first element is the realm, second and later elements are
-     *        are the components of the name "a/b@FOO" -> {"FOO", "a", "b"}
+     *        are the components of the name "a/b@FOO" -&gt; {"FOO", "a", "b"}
      * @return the short name if this rule applies or null
      * @throws IOException throws if something is wrong with the rules
      */
@@ -351,7 +351,6 @@ public class KerberosName {
 
   /**
    * Set the static configuration to get the rules.
-   * @param conf the new configuration
    * @throws IOException
    */
   public static void setConfiguration() throws IOException {

@@ -27,9 +27,6 @@ import org.apache.zookeeper.common.Time;
 
 public class TestHammer implements VoidCallback {
 
-    /**
-     * @param args
-     */
     static int REPS = 50000;
     public static void main(String[] args) {
             long startTime = Time.currentElapsedTime();

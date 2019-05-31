@@ -489,7 +489,7 @@ public class LearnerHandlerTest extends ZKTestCase {
 
     /**
      * Test cases when learner has new-epcoh zxid
-     * (zxid & 0xffffffffL) == 0;
+     * (zxid &amp; 0xffffffffL) == 0;
      */
     @Test
     public void testNewEpochZxidWithTxnlogOnly() throws Exception {

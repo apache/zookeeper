@@ -34,9 +34,9 @@ import java.util.TreeSet;
 
 /**
  * A <a href="package.html">protocol to implement an exclusive
- *  write lock or to elect a leader</a>. <p/> You invoke {@link #lock()} to 
+ *  write lock or to elect a leader</a>. <p> You invoke {@link #lock()} to 
  *  start the process of grabbing the lock; you may get the lock then or it may be 
- *  some time later. <p/> You can register a listener so that you are invoked 
+ *  some time later. <p> You can register a listener so that you are invoked 
  *  when you get the lock; otherwise you can ask if you have the lock
  *  by calling {@link #isOwner()}
  *

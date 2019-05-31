@@ -84,14 +84,13 @@ public class FilePadding {
     /**
      * Calculates a new file size with padding. We only return a new size if
      * the current file position is sufficiently close (less than 4K) to end of
-     * file and preAllocSize is > 0.
+     * file and preAllocSize is &gt; 0.
      *
      * @param position     the point in the file we have written to
      * @param fileSize     application keeps track of the current file size
      * @param preAllocSize how many bytes to pad
      * @return the new file size. It can be the same as fileSize if no
      * padding was done.
-     * @throws IOException
      */
     // VisibleForTesting
     public static long calculateFileSizeWithPadding(long position, long fileSize, long preAllocSize) {

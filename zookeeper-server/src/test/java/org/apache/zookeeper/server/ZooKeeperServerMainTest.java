@@ -326,7 +326,7 @@ public class ZooKeeperServerMainTest extends ZKTestCase implements Watcher {
     }
 
     /**
-     * Test verifies that the server shouldn't allow minsessiontimeout >
+     * Test verifies that the server shouldn't allow minsessiontimeout greater than
      * maxsessiontimeout
      */
     @Test

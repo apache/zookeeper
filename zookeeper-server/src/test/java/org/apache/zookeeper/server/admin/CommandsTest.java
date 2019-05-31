@@ -51,11 +51,8 @@ public class CommandsTest extends ClientBase {
      *            - the primary name of the command
      * @param kwargs
      *            - keyword arguments to the command
-     * @param keys
-     *            - the keys that are expected in the returned Map
-     * @param types
-     *            - the classes of the values in the returned Map. types[i] is
-     *            the type of the value for keys[i].
+     * @param fields
+     *            - the fields that are expected in the returned Map
      * @throws IOException
      * @throws InterruptedException
      */

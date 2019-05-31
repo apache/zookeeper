@@ -92,7 +92,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
 
     /**
      * lifecycles diagram:
-     * <p/>
+     * <p>
      * loop:
      * - try:
      * - - !isConnected()
@@ -101,7 +101,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
      * - catch:
      * - - cleanup()
      * close()
-     * <p/>
+     * <p>
      * Other non-lifecycle methods are in jeopardy getting a null channel
      * when calling in concurrency. We must handle it.
      */
