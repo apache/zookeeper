@@ -80,7 +80,7 @@ import org.slf4j.LoggerFactory;
 /**
  * This class implements a simple standalone ZooKeeperServer. It sets up the
  * following chain of RequestProcessors to process requests:
- * PrepRequestProcessor -> SyncRequestProcessor -> FinalRequestProcessor
+ * PrepRequestProcessor -&gt; SyncRequestProcessor -&gt; FinalRequestProcessor
  */
 public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected static final Logger LOG;
@@ -193,7 +193,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * methods to prepare the instance (eg datadir, datalogdir, ticktime,
      * builder, etc...)
      *
-     * @throws IOException
      */
     public ZooKeeperServer() {
         listener = new ZooKeeperServerListenerImpl(this);
@@ -204,7 +203,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * Creates a ZooKeeperServer instance. It sets everything up, but doesn't
      * actually start listening for clients until run() is invoked.
      *
-     * @param dataDir the directory to put the data
      */
     public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime,
             int minSessionTimeout, int maxSessionTimeout, int clientPortListenBacklog,
@@ -607,7 +605,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * the server state change to a registered shutdown handler, if any.
      * <p>
      * The following are the server state transitions:
-     * <li>During startup the server will be in the INITIAL state.</li>
+     * <ul><li>During startup the server will be in the INITIAL state.</li>
      * <li>After successfully starting, the server sets the state to RUNNING.
      * </li>
      * <li>The server transitions to the ERROR state if it hits an internal
@@ -615,7 +613,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * error events, e.g., SyncRequestProcessor not being able to write a txn to
      * disk.</li>
      * <li>During shutdown the server sets the state to SHUTDOWN, which
-     * corresponds to the server not running.</li>
+     * corresponds to the server not running.</li></ul>
      *
      * @param state new server state.
      */

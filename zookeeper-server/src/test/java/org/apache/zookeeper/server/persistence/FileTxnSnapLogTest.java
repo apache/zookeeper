@@ -296,9 +296,9 @@ public class FileTxnSnapLogTest {
      *   1. Server A starts to have snap sync with leader
      *   2. After serializing the ACL map to Server A, there is a txn T1 to
      *      create a node N1 with new ACL_1 which was not exist in ACL map
-     *   3. On leader, after this txn, the ACL map will be ID1 -> (ACL_1, COUNT: 1),
-     *      and data tree N1 -> ID1
-     *   4. On server A, it will be empty ACL map, and N1 -> ID1 in fuzzy snapshot
+     *   3. On leader, after this txn, the ACL map will be ID1 -&gt; (ACL_1, COUNT: 1),
+     *      and data tree N1 -&gt; ID1
+     *   4. On server A, it will be empty ACL map, and N1 -&gt; ID1 in fuzzy snapshot
      *   5. When replaying the txn T1, it will skip at the beginning since the
      *      node is already exist, which leaves an empty ACL map, and N1 is
      *      referencing to a non-exist ACL ID1

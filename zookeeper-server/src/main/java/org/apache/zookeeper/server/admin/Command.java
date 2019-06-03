@@ -65,7 +65,7 @@ public interface Command {
      * map with an appropriate message rather than throwing an exception.
      *
      * @param zkServer
-     * @param kwargs keyword -> argument value mapping
+     * @param kwargs keyword -&gt; argument value mapping
      * @return Map representing response to command containing at minimum:
      *    - "command" key containing the command's primary name
      *    - "error" key containing a String error message or null if no error

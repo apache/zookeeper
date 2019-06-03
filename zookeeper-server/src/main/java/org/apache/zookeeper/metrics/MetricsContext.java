@@ -80,7 +80,6 @@ public interface MetricsContext {
      * @param name
      * @param detailLevel
      * @return the summary identified by name in this context.
-     * @see #getSummary(java.lang.String)
      */
     Summary getSummary(String name, DetailLevel detailLevel);
 
@@ -90,7 +89,6 @@ public interface MetricsContext {
      * @param name
      * @param detailLevel
      * @return the summary identified by name in this context.
-     * @see #getSummary(java.lang.String)
      */
     SummarySet getSummarySet(String name, DetailLevel detailLevel);
 

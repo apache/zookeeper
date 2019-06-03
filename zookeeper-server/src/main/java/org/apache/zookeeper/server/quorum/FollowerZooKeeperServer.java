@@ -40,7 +40,7 @@ import javax.management.JMException;
 
 /**
  * Just like the standard ZooKeeperServer. We just replace the request
- * processors: FollowerRequestProcessor -> CommitProcessor ->
+ * processors: FollowerRequestProcessor -&gt; CommitProcessor -&gt;
  * FinalRequestProcessor
  *
  * A SyncRequestProcessor is also spawned off to log proposals from the leader.
@@ -55,8 +55,6 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
     ConcurrentLinkedQueue<Request> pendingSyncs;
 
     /**
-     * @param port
-     * @param dataDir
      * @throws IOException
      */
     FollowerZooKeeperServer(FileTxnSnapLog logFactory,QuorumPeer self,

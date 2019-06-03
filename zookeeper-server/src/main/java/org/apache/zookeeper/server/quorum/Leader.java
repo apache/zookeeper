@@ -1095,7 +1095,7 @@ public class Leader implements LearnerMaster {
     }
 
     /**
-     * Create an inform&activate packet and send it to all observers.
+     * Create an inform and activate packet and send it to all observers.
      */
     public void informAndActivate(Proposal proposal, long designatedLeader) {
         sendObserverPacket(buildInformAndActivePacket(proposal.request.zxid,
@@ -1211,7 +1211,6 @@ public class Leader implements LearnerMaster {
      *
      * @param handler handler of the follower
      * @return last proposed zxid
-     * @throws InterruptedException
      */
     @Override
     synchronized public long startForwarding(LearnerHandler handler,
@@ -1283,7 +1282,7 @@ public class Leader implements LearnerMaster {
     /**
      * Quit condition:
      *
-     * 1 voter goes to looking again and time waitForEpoch > maxTimeToWaitForEpoch
+     * 1 voter goes to looking again and time waitForEpoch &gt; maxTimeToWaitForEpoch
      *
      * Note: the voter may go to looking again in case of:
      * 1. change mind in the last minute when received a different notification

@@ -68,7 +68,6 @@ public class ServerConfig {
     /**
      * Parse arguments for server configuration
      * @param args clientPort dataDir and optional tickTime and maxClientCnxns
-     * @return ServerConfig configured wrt arguments
      * @throws IllegalArgumentException on invalid usage
      */
     public void parse(String[] args) {
@@ -90,7 +89,6 @@ public class ServerConfig {
     /**
      * Parse a ZooKeeper configuration file
      * @param path the patch of the configuration file
-     * @return ServerConfig configured wrt arguments
      * @throws ConfigException error processing configuration
      */
     public void parse(String path) throws ConfigException {

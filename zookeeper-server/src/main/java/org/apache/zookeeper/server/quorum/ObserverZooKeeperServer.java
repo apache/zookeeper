@@ -83,7 +83,7 @@ public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
     
     /**
      * Set up the request processors for an Observer:
-     * firstProcesor->commitProcessor->finalProcessor
+     * firstProcesor-&gt;commitProcessor-&gt;finalProcessor
      */
     @Override
     protected void setupRequestProcessors() {      

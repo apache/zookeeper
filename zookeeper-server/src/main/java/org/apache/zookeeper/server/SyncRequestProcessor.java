@@ -123,7 +123,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
         return 0;
     }
 
-    /** If both flushDelay and maxMaxBatchSize are set (> 0), flush
+    /** If both flushDelay and maxMaxBatchSize are set (bigger than 0), flush
      * whenever either condition is hit. If only one or the other is
      * set, flush only when the relevant condition is hit.
      */

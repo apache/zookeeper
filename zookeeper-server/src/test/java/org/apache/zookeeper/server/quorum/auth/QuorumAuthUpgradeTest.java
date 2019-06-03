@@ -75,8 +75,8 @@ public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
 
     /**
      * Test to verify that servers are able to start without any authentication.
-     * peer0 -> quorum.auth.enableSasl=false
-     * peer1 -> quorum.auth.enableSasl=false
+     * peer0 -&gt; quorum.auth.enableSasl=false
+     * peer1 -&gt; quorum.auth.enableSasl=false
      */
     @Test(timeout = 30000)
     public void testNullAuthLearnerServer() throws Exception {
@@ -95,8 +95,8 @@ public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
 
     /**
      * Test to verify that servers are able to form quorum.
-     * peer0 -> quorum.auth.enableSasl=true, quorum.auth.learnerRequireSasl=false, quorum.auth.serverRequireSasl=false
-     * peer1 -> quorum.auth.enableSasl=false, quorum.auth.learnerRequireSasl=false, quorum.auth.serverRequireSasl=false
+     * peer0 -&gt; quorum.auth.enableSasl=true, quorum.auth.learnerRequireSasl=false, quorum.auth.serverRequireSasl=false
+     * peer1 -&gt; quorum.auth.enableSasl=false, quorum.auth.learnerRequireSasl=false, quorum.auth.serverRequireSasl=false
      */
     @Test(timeout = 30000)
     public void testAuthLearnerAgainstNullAuthServer() throws Exception {
@@ -115,8 +115,8 @@ public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
 
     /**
      * Test to verify that servers are able to form quorum.
-     * peer0 -> quorum.auth.enableSasl=true, quorum.auth.learnerRequireSasl=false, quorum.auth.serverRequireSasl=false
-     * peer1 -> quorum.auth.enableSasl=true, quorum.auth.learnerRequireSasl=false, quorum.auth.serverRequireSasl=false
+     * peer0 -&gt; quorum.auth.enableSasl=true, quorum.auth.learnerRequireSasl=false, quorum.auth.serverRequireSasl=false
+     * peer1 -&gt; quorum.auth.enableSasl=true, quorum.auth.learnerRequireSasl=false, quorum.auth.serverRequireSasl=false
      */
     @Test(timeout = 30000)
     public void testAuthLearnerAgainstNoAuthRequiredServer() throws Exception {
@@ -135,8 +135,8 @@ public class QuorumAuthUpgradeTest extends QuorumAuthTestBase {
 
     /**
      * Test to verify that servers are able to form quorum.
-     * peer0 -> quorum.auth.enableSasl=true, quorum.auth.learnerRequireSasl=true, quorum.auth.serverRequireSasl=true
-     * peer1 -> quorum.auth.enableSasl=true, quorum.auth.learnerRequireSasl=true, quorum.auth.serverRequireSasl=true
+     * peer0 -&gt; quorum.auth.enableSasl=true, quorum.auth.learnerRequireSasl=true, quorum.auth.serverRequireSasl=true
+     * peer1 -&gt; quorum.auth.enableSasl=true, quorum.auth.learnerRequireSasl=true, quorum.auth.serverRequireSasl=true
      */
     @Test(timeout = 30000)
     public void testAuthLearnerServer() throws Exception {

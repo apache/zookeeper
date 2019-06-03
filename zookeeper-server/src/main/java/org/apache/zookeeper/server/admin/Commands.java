@@ -225,10 +225,10 @@ public class Commands {
 
     /**
      * Information on session expirations and ephemerals. Returned map contains:
-     *   - "expiry_time_to_session_ids": Map<Long, Set<Long>>
-     *                                   time -> sessions IDs of sessions that expire at time
-     *   - "session_id_to_ephemeral_paths": Map<Long, Set<String>>
-     *                                       session ID -> ephemeral paths created by that session
+     *   - "expiry_time_to_session_ids": Map&lt;Long, Set&lt;Long&gt;&gt;
+     *                                   time -&gt; sessions IDs of sessions that expire at time
+     *   - "session_id_to_ephemeral_paths": Map&lt;Long, Set&lt;String&gt;&gt;
+     *                                       session ID -&gt; ephemeral paths created by that session
      * @see ZooKeeperServer#getSessionExpiryMap()
      * @see ZooKeeperServer#getEphemerals()
      */
@@ -552,7 +552,7 @@ public class Commands {
 
     /**
      * Watch information aggregated by session. Returned Map contains:
-     *   - "session_id_to_watched_paths": Map<Long, Set<String>> session ID -> watched paths
+     *   - "session_id_to_watched_paths": Map&lt;Long, Set&lt;String&gt;&gt; session ID -&gt; watched paths
      * @see DataTree#getWatches()
      */
     public static class WatchCommand extends CommandBase {
@@ -571,7 +571,7 @@ public class Commands {
 
     /**
      * Watch information aggregated by path. Returned Map contains:
-     *   - "path_to_session_ids": Map<String, Set<Long>> path -> session IDs of sessions watching path
+     *   - "path_to_session_ids": Map&lt;String, Set&lt;Long&gt;&gt; path -&gt; session IDs of sessions watching path
      * @see DataTree#getWatchesByPath()
      */
     public static class WatchesByPathCommand extends CommandBase {

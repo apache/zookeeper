@@ -41,7 +41,6 @@ public class ZKUtil {
      * If there is an error with deleting one of the sub-nodes in the tree,
      * this operation would abort and would be the responsibility of the app to handle the same.
      *
-     * See {@link #delete(String, int)} for more details.
      *
      * @throws IllegalArgumentException if an invalid path is specified
      */

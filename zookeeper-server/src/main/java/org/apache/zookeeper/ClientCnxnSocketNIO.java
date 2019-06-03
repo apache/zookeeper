@@ -61,7 +61,6 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
     }
     
     /**
-     * @return true if a packet was received
      * @throws InterruptedException
      * @throws IOException
      */
