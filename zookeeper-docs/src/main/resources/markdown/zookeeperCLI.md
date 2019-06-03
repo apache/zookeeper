@@ -60,6 +60,7 @@ ZooKeeper -server host:port cmd args
 	setquota -n|-b val path
 	stat [-w] path
 	sync path
+	version
 ```
 
 ## addauth
@@ -538,5 +539,13 @@ Sync the data of one node between leader and followers(Asynchronous sync)
 
 ```bash
 [zkshell: 14] sync /
-[zkshell: 15] Sync returned 0
+[zkshell: 15] Sync is OK
+```
+
+## version
+Show the version of the ZooKeeper client/CLI
+
+```bash
+[zkshell: 1] version
+ZooKeeper CLI version: 3.6.0-SNAPSHOT-29f9b2c1c0e832081f94d59a6b88709c5f1bb3ca, built on 05/30/2019 09:26 GMT
 ```
