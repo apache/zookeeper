@@ -41,6 +41,7 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.security.sasl.SaslException;
@@ -746,12 +747,36 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     private ServerState state = ServerState.LOOKING;
-    
+
+    private AtomicReference<String> leaderAddress = new AtomicReference<String>("");
+    private AtomicLong leaderId = new AtomicLong(-1);
+
     private boolean reconfigFlag = false; // indicates that a reconfig just committed
 
-    public synchronized void setPeerState(ServerState newState){
-        state=newState;
+    public synchronized void setPeerState(ServerState newState) {
+        state = newState;
+        if (newState == ServerState.LOOKING) {
+            setLeaderAddressAndId(null, -1);
+        }
     }
+
+    public void setLeaderAddressAndId(InetSocketAddress addr, long newId) {
+        if (addr != null) {
+            leaderAddress.set(addr.getHostString());
+        } else {
+            leaderAddress.set(null);
+        }
+        leaderId.set(newId);
+    }
+
+    public String getLeaderAddress() {
+        return leaderAddress.get();
+    }
+
+    public long getLeaderId() {
+        return leaderId.get();
+    }
+
     public synchronized void reconfigFlagSet(){
        reconfigFlag = true;
     }
