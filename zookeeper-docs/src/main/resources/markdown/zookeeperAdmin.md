@@ -1032,7 +1032,13 @@ encryption/authentication/authorization performed by the service.
     (Java system properties: **zookeeper.ssl.handshakeDetectionTimeoutMillis** and **zookeeper.ssl.quorum.handshakeDetectionTimeoutMillis**)
     **New in 3.5.5:**
     TBD
-        
+
+* *client.portUnification*:
+    (Java system properties: **zookeeper.client.portUnification**)
+    Specifies that the client port should accept SSL connections
+    (using the same configuration as the secure client port).
+    Default: false
+
 
 <a name="Experimental+Options%2FFeatures"></a>
 
