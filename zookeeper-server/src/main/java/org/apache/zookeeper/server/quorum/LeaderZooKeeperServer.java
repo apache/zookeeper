@@ -33,6 +33,8 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import javax.management.JMException;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import org.apache.zookeeper.metrics.MetricsContext;
+import org.apache.zookeeper.server.ServerMetrics;
 
 /**
  *
@@ -92,6 +94,64 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
         if (containerManager != null) {
             containerManager.start();
         }
+    }
+
+    @Override
+    protected void registerMetrics() {
+        super.registerMetrics();
+
+        MetricsContext rootContext = ServerMetrics
+                .getMetrics()
+                .getMetricsProvider()
+                .getRootContext();
+
+        rootContext.registerGauge("learners", () -> {
+            return getLeader().getLearners().size();
+        });
+        rootContext.registerGauge("synced_followers", () -> {
+            return getLeader().getForwardingFollowers().size();
+        });
+        rootContext.registerGauge("synced_non_voting_followers", () -> {
+            return getLeader().getNonVotingFollowers().size();
+        });
+
+        rootContext.registerGauge("synced_observers", self::getSynced_observers_metric);
+
+        rootContext.registerGauge("pending_syncs", () -> {
+            return getLeader().getNumPendingSyncs();
+        });
+        rootContext.registerGauge("leader_uptime", () -> {
+            return getLeader().getUptime();
+        });
+        rootContext.registerGauge("last_proposal_size", () -> {
+            return getLeader().getProposalStats().getLastBufferSize();
+        });
+        rootContext.registerGauge("max_proposal_size", () -> {
+            return getLeader().getProposalStats().getMaxBufferSize();
+        });
+        rootContext.registerGauge("min_proposal_size", () -> {
+            return getLeader().getProposalStats().getMinBufferSize();
+        });
+    }
+
+    @Override
+    protected void unregisterMetrics() {
+        super.unregisterMetrics();
+
+        MetricsContext rootContext = ServerMetrics
+                .getMetrics()
+                .getMetricsProvider()
+                .getRootContext();
+        rootContext.unregisterGauge("learners");
+        rootContext.unregisterGauge("synced_followers");
+        rootContext.unregisterGauge("synced_non_voting_followers");
+        rootContext.unregisterGauge("synced_observers");
+        rootContext.unregisterGauge("pending_syncs");
+        rootContext.unregisterGauge("leader_uptime");
+
+        rootContext.unregisterGauge("last_proposal_size");
+        rootContext.unregisterGauge("max_proposal_size");
+        rootContext.unregisterGauge("min_proposal_size");
     }
 
     @Override

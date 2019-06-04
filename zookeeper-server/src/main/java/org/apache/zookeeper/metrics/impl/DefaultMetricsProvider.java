@@ -17,6 +17,7 @@
  */
 package org.apache.zookeeper.metrics.impl;
 
+import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -33,6 +34,8 @@ import org.apache.zookeeper.server.metric.AvgMinMaxCounterSet;
 import org.apache.zookeeper.server.metric.AvgMinMaxPercentileCounter;
 import org.apache.zookeeper.server.metric.AvgMinMaxPercentileCounterSet;
 import org.apache.zookeeper.server.metric.SimpleCounter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Default implementation of {@link MetricsProvider}.<br>
@@ -60,6 +63,8 @@ public class DefaultMetricsProvider implements MetricsProvider {
 
     @Override
     public void stop() {
+        // release all references to external objects
+        rootMetricsContext.gauges.clear();
     }
 
     @Override
@@ -74,6 +79,7 @@ public class DefaultMetricsProvider implements MetricsProvider {
 
     private static final class DefaultMetricsContext implements MetricsContext {
 
+        private final ConcurrentMap<String, Gauge> gauges = new ConcurrentHashMap<>();
         private final ConcurrentMap<String, SimpleCounter> counters = new ConcurrentHashMap<>();
         private final ConcurrentMap<String, AvgMinMaxCounter> basicSummaries = new ConcurrentHashMap<>();
         private final ConcurrentMap<String, AvgMinMaxPercentileCounter> summaries = new ConcurrentHashMap<>();
@@ -82,7 +88,7 @@ public class DefaultMetricsProvider implements MetricsProvider {
 
         @Override
         public MetricsContext getContext(String name) {
-            // no hierarchy
+            // no hierarchy yet
             return this;
         }
 
@@ -94,9 +100,15 @@ public class DefaultMetricsProvider implements MetricsProvider {
         }
 
         @Override
-        public boolean registerGauge(String name, Gauge gauge) {
-            // Not supported
-            return false;
+        public void registerGauge(String name, Gauge gauge) {
+            Objects.requireNonNull(gauge,
+                    "Cannot register a null Gauge for "+name);
+            gauges.put(name, gauge);
+        }
+
+        @Override
+        public void unregisterGauge(String name) {
+            gauges.remove(name);
         }
 
         @Override
@@ -138,6 +150,12 @@ public class DefaultMetricsProvider implements MetricsProvider {
         }
 
         void dump(BiConsumer<String, Object> sink) {
+            gauges.forEach((name, metric) -> {
+                Number value = metric.get();
+                if (value != null) {
+                    sink.accept(name, value);
+                }
+            });
             counters.values().forEach(metric -> {
                 metric.values().forEach(sink);
             });
@@ -171,6 +189,7 @@ public class DefaultMetricsProvider implements MetricsProvider {
             summarySets.values().forEach(metric -> {
                 metric.reset();
             });
+            // no need to reset gauges
         }
     }
 }

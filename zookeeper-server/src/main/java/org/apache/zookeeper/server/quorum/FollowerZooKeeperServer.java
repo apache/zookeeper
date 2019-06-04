@@ -37,6 +37,8 @@ import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.txn.TxnHeader;
 
 import javax.management.JMException;
+import org.apache.zookeeper.metrics.MetricsContext;
+import org.apache.zookeeper.server.ServerMetrics;
 
 /**
  * Just like the standard ZooKeeperServer. We just replace the request
@@ -166,5 +168,30 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
             LOG.warn("Could not register connection", e);
         }
         return false;
+    }
+
+    @Override
+    protected void registerMetrics() {
+        super.registerMetrics();
+
+        MetricsContext rootContext = ServerMetrics
+                .getMetrics()
+                .getMetricsProvider()
+                .getRootContext();
+
+        rootContext.registerGauge("synced_observers", self::getSynced_observers_metric);
+
+    }
+
+    @Override
+    protected void unregisterMetrics() {
+        super.unregisterMetrics();
+
+        MetricsContext rootContext = ServerMetrics
+                .getMetrics()
+                .getMetricsProvider()
+                .getRootContext();
+        rootContext.unregisterGauge("synced_observers");
+
     }
 }
