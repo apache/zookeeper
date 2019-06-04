@@ -87,6 +87,12 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     public static final String PORT_UNIFICATION_KEY = "zookeeper.client.portUnification";
     private final boolean shouldUsePortUnification;
 
+    /**
+     * The first byte in TLS protocol is the content type of the subsequent record.
+     * Handshakes use value 22 (0x16) so the first byte offered on any TCP connection
+     * attempting to establish a TLS connection will be this value.
+     * https://tools.ietf.org/html/rfc8446#page-79
+     */
     private static final byte TLS_HANDSHAKE_RECORD_TYPE = 0x16;
 
     private final ServerBootstrap bootstrap;
@@ -429,20 +435,13 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     }
 
     private synchronized void initSSL(ChannelPipeline p, boolean supportPlaintext)
-            throws X509Exception, KeyManagementException, NoSuchAlgorithmException, SSLException {
+            throws X509Exception, KeyManagementException, NoSuchAlgorithmException {
         String authProviderProp = System.getProperty(x509Util.getSslAuthProviderProperty());
+        SslContext nettySslContext;
         if (authProviderProp == null) {
             SSLContextAndOptions sslContextAndOptions = x509Util.getDefaultSSLContextAndOptions();
-            SslContext nettySslContext = sslContextAndOptions.createNettyJdkSslContext(
+            nettySslContext = sslContextAndOptions.createNettyJdkSslContext(
                         sslContextAndOptions.getSSLContext(), false);
-
-            if (supportPlaintext) {
-                p.addLast("ssl", new DualModeSslHandler(nettySslContext));
-                LOG.debug("dual mode Java SSL handler added for channel: {}", p.channel());
-            } else {
-                p.addLast("ssl", nettySslContext.newHandler(p.channel().alloc()));
-                LOG.debug("Java SSL handler added for channel: {}", p.channel());
-            }
         } else {
             SSLContext sslContext = SSLContext.getInstance(ClientX509Util.DEFAULT_PROTOCOL);
             X509AuthenticationProvider authProvider =
@@ -459,15 +458,16 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             sslContext.init(new X509KeyManager[]{authProvider.getKeyManager()},
                     new X509TrustManager[]{authProvider.getTrustManager()},
                     null);
-            SslContext nettySslContext = x509Util.getDefaultSSLContextAndOptions()
+            nettySslContext = x509Util.getDefaultSSLContextAndOptions()
                     .createNettyJdkSslContext(sslContext,false);
-            if (supportPlaintext) {
-                p.addLast("ssl", new DualModeSslHandler(nettySslContext));
-                LOG.debug("dual mode SSL handler added for channel: {}", p.channel());
-            } else {
-                p.addLast("ssl", nettySslContext.newHandler(p.channel().alloc()));
-                LOG.debug("SSL handler added for channel: {}", p.channel());
-            }
+        }
+
+        if (supportPlaintext) {
+            p.addLast("ssl", new DualModeSslHandler(nettySslContext));
+            LOG.debug("dual mode SSL handler added for channel: {}", p.channel());
+        } else {
+            p.addLast("ssl", nettySslContext.newHandler(p.channel().alloc()));
+            LOG.debug("SSL handler added for channel: {}", p.channel());
         }
     }
 
