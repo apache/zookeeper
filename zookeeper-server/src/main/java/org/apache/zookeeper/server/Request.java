@@ -88,6 +88,8 @@ public class Request {
 
     public long commitRecvTime = -1;
 
+    public long syncQueueStartTime;
+
     private Object owner;
 
     private KeeperException e;
