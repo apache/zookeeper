@@ -53,7 +53,7 @@ responsibility of implementing coordination services from scratch.
 **ZooKeeper is simple.** ZooKeeper
 allows distributed processes to coordinate with each other through a
 shared hierarchical namespace which is organized similarly to a standard
-file system. The name space consists of data registers - called znodes,
+file system. The namespace consists of data registers - called znodes,
 in ZooKeeper parlance - and these are similar to files and directories.
 Unlike a typical file system, which is designed for storage, ZooKeeper
 data is kept in-memory, which means ZooKeeper can achieve high
@@ -68,7 +68,7 @@ be implemented at the client.
 
 **ZooKeeper is replicated.** Like the
 distributed processes it coordinates, ZooKeeper itself is intended to be
-replicated over a sets of hosts called an ensemble.
+replicated over a set of hosts called an ensemble.
 
 ![ZooKeeper Service](images/zkservice.jpg)
 
@@ -98,9 +98,9 @@ common than writes, at ratios of around 10:1.
 
 ### Data model and the hierarchical namespace
 
-The name space provided by ZooKeeper is much like that of a
+The namespace provided by ZooKeeper is much like that of a
 standard file system. A name is a sequence of path elements separated by
-a slash (/). Every node in ZooKeeper's name space is identified by a
+a slash (/). Every node in ZooKeeper's namespace is identified by a
 path.
 
 #### ZooKeeper's Hierarchical Namespace

@@ -43,7 +43,7 @@ You can use _setquota_ to set a quota on a ZooKeeper node. It has an option of s
 `-n` (for namespace)
 and `-b` (for bytes).
 
-The ZooKeeper quota are stored in ZooKeeper itself in /zookeeper/quota. To disable other people from
+The ZooKeeper quota is stored in ZooKeeper itself in /zookeeper/quota. To disable other people from
 changing the quota's set the ACL for /zookeeper/quota such that only admins are able to read and write to it.
 
 <a name="Listing+Quotas"></a>

@@ -86,14 +86,14 @@ the ZooKeeper service.
 ## How to use Observer Masters
 
 Observers function simple as non-voting members of the ensemble, sharing
-the Learner interface with Followers and holding only a slightly difference
+the Learner interface with Followers and holding only a slightly different
 internal pipeline. Both maintain connections along the quorum port with the
 Leader by which they learn of all new proposals on the ensemble.
 
 By default, Observers connect to the Leader of the quorum along its
 quorum port and this is how they learn of all new proposals on the
 ensemble. There are benefits to allowing Observers to connect to the
-Followers instead as a means of plugging in to the commit stream in place
+Followers instead as a means of plugging into the commit stream in place
 of connecting to the Leader. It shifts the burden of supporting Observers
 off the Leader and allow it to focus on coordinating the commit of writes.
 This means better performance when the Leader is under high load,
@@ -101,7 +101,7 @@ particularly high network load such as can happen after a leader election
 when many Learners need to sync. It reduces the total network connections
 maintained on the Leader when there are a high number of observers.
 Activating Followers to support Observers allow the overall number of
-Observers to scale into the hundreds. One the other end, Observer
+Observers to scale into the hundreds. On the other end, Observer
 availability is improved since it will take shorter time for a high
 number of Observers to finish syncing and start serving client traffic.
 

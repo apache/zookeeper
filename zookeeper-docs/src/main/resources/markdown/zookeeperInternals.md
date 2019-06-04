@@ -162,7 +162,7 @@ exact method of electing a leader as long as the following holds:
 * The leader has seen the highest zxid of all the followers.
 * A quorum of servers have committed to following the leader.
 
-Of these two requirements only the first, the highest zxid amoung the followers
+Of these two requirements only the first, the highest zxid among the followers
 needs to hold for correct operation. The second requirement, a quorum of followers,
 just needs to hold with high probability. We are going to recheck the second requirement,
 so if a failure happens during or after the leader election and quorum is lost,
@@ -194,9 +194,9 @@ activation:
 
 * A follower will ACK the NEW_LEADER proposal after it has synced with the leader.
 * A follower will only ACK a NEW_LEADER proposal with a given zxid from a single server.
-* A new leader will COMMIT the NEW_LEADER proposal when a quorum of followers have ACKed it.
+* A new leader will COMMIT the NEW_LEADER proposal when a quorum of followers has ACKed it.
 * A follower will commit any state it received from the leader when the NEW_LEADER proposal is COMMIT.
-* A new leader will not accept new proposals until the NEW_LEADER proposal has been COMMITED.
+* A new leader will not accept new proposals until the NEW_LEADER proposal has been COMMITTED.
 
 If leader election terminates erroneously, we don't have a problem since the
 NEW_LEADER proposal will not be committed since the leader will not have quorum.
@@ -232,7 +232,7 @@ the following operating constraints are observed:
 * The leader will issue a COMMIT to all followers as soon as a
   quorum of followers have ACKed a message. Since messages are ACKed in order,
   COMMITs will be sent by the leader as received by the followers in order.
-* COMMITs are processed in order. Followers deliver a proposals
+* COMMITs are processed in order. Followers deliver a proposal
   message when that proposal is committed.
 
 <a name="sc_summary"></a>
@@ -247,7 +247,7 @@ to worry about two different values being proposed for the same zxid; followers
 committed in order; there is only one active leader at a time since followers only
 follow a single leader at a time; a new leader has seen all committed proposals
 from the previous epoch since it has seen the highest zxid from a quorum of servers;
-any uncommited proposals from a previous epoch seen by a new leader will be committed
+any uncommitted proposals from a previous epoch seen by a new leader will be committed
 by that leader before it becomes active.
 
 <a name="sc_comparisons"></a>
