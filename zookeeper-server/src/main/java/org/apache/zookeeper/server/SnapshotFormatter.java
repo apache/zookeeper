@@ -18,9 +18,7 @@
 
 package org.apache.zookeeper.server;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Base64;
@@ -28,8 +26,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.zip.Adler32;
-import java.util.zip.CheckedInputStream;
 
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.InputArchive;
@@ -55,7 +51,7 @@ public class SnapshotFormatter {
     private static Integer INODE_IDX = 1000;
 
     /**
-     * USAGE: SnapshotFormatter snapshot_file
+     * USAGE: SnapshotFormatter snapshot_file or the ready-made script: zkSnapShotToolkit.sh
      */
     public static void main(String[] args) throws Exception {
         String snapshotFile = null;
