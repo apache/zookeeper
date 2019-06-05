@@ -595,4 +595,26 @@ public class LearnerHandlerTest extends ZKTestCase {
         assertEquals(0, learnerHandler.getQueuedPackets().size());
         reset();
     }
+
+    /**
+     * Test cases when the leader's disk is slow. There can be a gap
+     * between the txnLog and the committedLog. Make sure we detect this
+     * and send a snap instead of a diff.
+     */
+    @Test
+    public void testTxnLogGap() throws Exception {
+        long peerZxid;
+        db.txnLog.add(createProposal(2));
+        db.txnLog.add(createProposal(3));
+        db.txnLog.add(createProposal(4));
+
+        db.lastProcessedZxid = 8;
+        db.committedLog.add(createProposal(7));
+        db.committedLog.add(createProposal(8));
+
+        // Peer zxid is in txnlog range
+        peerZxid = 3;
+        assertTrue(learnerHandler.syncFollower(peerZxid, leader));
+        reset();
+    }
 }
