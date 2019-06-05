@@ -362,7 +362,7 @@ public class SessionTest extends ZKTestCase {
         final int MINSESS = 20000;
         final int MAXSESS = 240000;
         {
-            ZooKeeperServer zs = ClientBase.getServer(serverFactory);
+            ZooKeeperServer zs = serverFactory.getZooKeeperServer();
             zs.setMinSessionTimeout(MINSESS);
             zs.setMaxSessionTimeout(MAXSESS);
         }

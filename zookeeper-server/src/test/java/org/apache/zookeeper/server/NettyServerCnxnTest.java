@@ -78,7 +78,7 @@ public class NettyServerCnxnTest extends ClientBase {
                 serverFactory instanceof NettyServerCnxnFactory);
 
         final ZooKeeper zk = createClient();
-        final ZooKeeperServer zkServer = getServer(serverFactory);
+        final ZooKeeperServer zkServer = serverFactory.getZooKeeperServer();
         final String path = "/a";
         try {
             // make sure zkclient works
