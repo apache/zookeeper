@@ -1312,6 +1312,7 @@ static zhandle_t *zookeeper_init_internal(const char *host, watcher_fn watcher,
 abort:
     errnosave=errno;
     destroy(zh);
+    free(zh->fd);
     free(zh);
     errno=errnosave;
     return 0;
@@ -3494,6 +3495,7 @@ int zookeeper_close(zhandle_t *zh)
 finish:
     destroy(zh);
     adaptor_destroy(zh);
+    free(zh->fd);
     free(zh);
 #ifdef _WIN32
     Win32WSACleanup();
