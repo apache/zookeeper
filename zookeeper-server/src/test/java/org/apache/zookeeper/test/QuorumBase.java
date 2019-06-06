@@ -287,6 +287,15 @@ public class QuorumBase extends ClientBase {
         return peers;
     }
 
+    public QuorumPeer getPeerByClientPort(int clientPort) {
+        for (QuorumPeer p : getPeerList()) {
+            if (p.getClientAddress().getPort() == clientPort) {
+                return p;
+            }
+        }
+        return null;
+    }
+
     public void setupServers() throws IOException {
         setupServer(1);
         setupServer(2);

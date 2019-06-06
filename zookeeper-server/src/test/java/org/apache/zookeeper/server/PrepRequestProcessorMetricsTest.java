@@ -27,6 +27,7 @@ import org.apache.zookeeper.proto.DeleteRequest;
 import org.apache.zookeeper.proto.SetDataRequest;
 import org.apache.zookeeper.test.ClientBase;
 import org.apache.zookeeper.test.QuorumUtil;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -57,6 +58,7 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
 
     @Before
     public void setup() {
+        System.setProperty(ZooKeeperServer.SKIP_ACL, "true");
         zks = spy(new ZooKeeperServer());
         zks.sessionTracker = mock(SessionTracker.class);
 
@@ -73,6 +75,11 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
 
         nextProcessor = mock(RequestProcessor.class);
         ServerMetrics.getMetrics().resetAll();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        System.clearProperty(ZooKeeperServer.SKIP_ACL);
     }
 
     private Request createRequest(Record record, int opCode) throws IOException {
@@ -113,7 +120,6 @@ public class PrepRequestProcessorMetricsTest extends ZKTestCase {
             return  null;}).when(nextProcessor).processRequest(any(Request.class));
 
         PrepRequestProcessor prepRequestProcessor = new PrepRequestProcessor(zks, nextProcessor);
-        PrepRequestProcessor.skipACL = true;
 
         //setData will generate one change
         prepRequestProcessor.processRequest(createRequest("/foo", ZooDefs.OpCode.setData));

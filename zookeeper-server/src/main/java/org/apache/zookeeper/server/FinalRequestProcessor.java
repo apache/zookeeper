@@ -412,7 +412,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 if (n == null) {
                     throw new KeeperException.NoNodeException();
                 }
-                PrepRequestProcessor.checkACL(zks, request.cnxn, zks.getZKDatabase().aclForNode(n),
+                zks.checkACL(request.cnxn, zks.getZKDatabase().aclForNode(n),
                         ZooDefs.Perms.READ | ZooDefs.Perms.ADMIN,
                         request.authInfo, path, null);
 
@@ -420,7 +420,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 List<ACL> acl =
                         zks.getZKDatabase().getACL(path, stat);
                 try {
-                    PrepRequestProcessor.checkACL(zks, request.cnxn, zks.getZKDatabase().aclForNode(n),
+                    zks.checkACL(request.cnxn, zks.getZKDatabase().aclForNode(n),
                             ZooDefs.Perms.ADMIN,
                             request.authInfo, path, null);
                     rsp = new GetACLResponse(acl, stat);
@@ -459,7 +459,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 if (n == null) {
                     throw new KeeperException.NoNodeException();
                 }
-                PrepRequestProcessor.checkACL(zks, request.cnxn, zks.getZKDatabase().aclForNode(n),
+                zks.checkACL(request.cnxn, zks.getZKDatabase().aclForNode(n),
                         ZooDefs.Perms.READ,
                         request.authInfo, path, null);
                 int number = zks.getZKDatabase().getAllChildrenNumber(path);
@@ -477,7 +477,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 if (n == null) {
                     throw new KeeperException.NoNodeException();
                 }
-                PrepRequestProcessor.checkACL(zks, request.cnxn, zks.getZKDatabase().aclForNode(n),
+                zks.checkACL(request.cnxn, zks.getZKDatabase().aclForNode(n),
                         ZooDefs.Perms.READ,
                         request.authInfo, path, null);
                 List<String> children = zks.getZKDatabase().getChildren(
@@ -600,7 +600,7 @@ public class FinalRequestProcessor implements RequestProcessor {
         if (n == null) {
             throw new KeeperException.NoNodeException();
         }
-        PrepRequestProcessor.checkACL(zks, cnxn, zks.getZKDatabase().aclForNode(n),
+        zks.checkACL(cnxn, zks.getZKDatabase().aclForNode(n),
                 ZooDefs.Perms.READ, authInfo, path, null);
         List<String> children = zks.getZKDatabase().getChildren(path, null,
                 getChildrenRequest.getWatch() ? cnxn : null);
@@ -615,7 +615,7 @@ public class FinalRequestProcessor implements RequestProcessor {
         if (n == null) {
             throw new KeeperException.NoNodeException();
         }
-        PrepRequestProcessor.checkACL(zks, cnxn, zks.getZKDatabase().aclForNode(n),
+        zks.checkACL(cnxn, zks.getZKDatabase().aclForNode(n),
                 ZooDefs.Perms.READ, authInfo, path, null);
         Stat stat = new Stat();
         byte b[] = zks.getZKDatabase().getData(path, stat,
