@@ -141,7 +141,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
 
     /**
      * Max number of reads to process from queuedRequests before switching to
-     * processing commits. If the value < 0, we switch whenever we have
+     * processing commits. If the value is negative, we switch whenever we have
      * a local write, and pending commits.
      * A high read batch size will delay commit processing causing us to
      * serve stale data.
