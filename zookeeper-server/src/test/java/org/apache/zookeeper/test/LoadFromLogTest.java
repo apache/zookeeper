@@ -180,7 +180,7 @@ public class LoadFromLogTest extends ClientBase {
         String expectedPath = "/invalidsnap/test-"
                 + String.format("%010d",
                 (Integer.parseInt(tokens[1])) + 1);
-        ZooKeeperServer zks = getServer(serverFactory);
+        ZooKeeperServer zks = serverFactory.getZooKeeperServer();
         long eZxid = zks.getZKDatabase().getDataTreeLastProcessedZxid();
         // force the zxid to be behind the content
         zks.getZKDatabase().setlastProcessedZxid(
@@ -193,7 +193,7 @@ public class LoadFromLogTest extends ClientBase {
         stopServer();
 
         startServer();
-        zks = getServer(serverFactory);
+        zks = serverFactory.getZooKeeperServer();
         long fZxid = zks.getZKDatabase().getDataTreeLastProcessedZxid();
 
         // Verify lastProcessedZxid is set correctly
@@ -243,7 +243,7 @@ public class LoadFromLogTest extends ClientBase {
         }
 
         // force the zxid to be behind the content
-        ZooKeeperServer zks = getServer(serverFactory);
+        ZooKeeperServer zks = serverFactory.getZooKeeperServer();
         zks.getZKDatabase().setlastProcessedZxid(
                 zks.getZKDatabase().getDataTreeLastProcessedZxid() - 10);
         LOG.info("Set lastProcessedZxid to "
@@ -296,7 +296,7 @@ public class LoadFromLogTest extends ClientBase {
         zk.delete("/a/b", -1);
         zk.delete("/a", -1);
         // force the zxid to be behind the content
-        ZooKeeperServer zks = getServer(serverFactory);
+        ZooKeeperServer zks = serverFactory.getZooKeeperServer();
         zks.getZKDatabase().setlastProcessedZxid(createZxId);
         LOG.info("Set lastProcessedZxid to {}", zks.getZKDatabase()
                 .getDataTreeLastProcessedZxid());

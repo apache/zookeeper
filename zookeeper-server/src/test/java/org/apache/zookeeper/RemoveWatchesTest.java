@@ -1249,7 +1249,7 @@ public class RemoveWatchesTest extends ClientBase {
         CollectionUtils.addAll(cnxns, serverFactory.getConnections().iterator());
         for (ServerCnxn cnxn : cnxns) {
             if (cnxn.getSessionId() == sessionId) {
-                return getServer(serverFactory).getZKDatabase().getDataTree()
+                return serverFactory.getZooKeeperServer().getZKDatabase().getDataTree()
                         .containsWatcher(path, type, cnxn);
             }
         }

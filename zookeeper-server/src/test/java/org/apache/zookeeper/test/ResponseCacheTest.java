@@ -64,7 +64,7 @@ public class ResponseCacheTest extends ClientBase {
         long expectedHits = 0;
         long expectedMisses = 0;
 
-        getServer(serverFactory).setResponseCachingEnabled(useCache);
+        serverFactory.getZooKeeperServer().setResponseCachingEnabled(useCache);
         LOG.info("caching: {}", useCache);
 
         byte[] writeData = "test1".getBytes();
