@@ -1655,6 +1655,8 @@ static int recv_buffer(zhandle_t *zh, buffer_list_t *buff)
          * old server sends 40 bytes to finish connection handshake,
          * while we're expecting 41 (1 byte for read-only mode data) */
         if (buff == &zh->primer_buffer && rc == buff->len - 1) ++rc;
+        if (buff == &zh->primer_buffer &&
+                buff->curr_offset + rc == buff->len + sizeof(buff->len) - 1) ++rc;
 
         switch(rc) {
         case 0:
