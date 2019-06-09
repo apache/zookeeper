@@ -50,6 +50,7 @@ archives.
     + [Observers](zookeeperObservers.html) - non-voting ensemble members that easily improve ZooKeeper's scalability
     + [Dynamic Reconfiguration](zookeeperReconfig.html) - a guide on how to use dynamic reconfiguration in ZooKeeper
     + [ZooKeeper Tools](zookeeperTools.html) - a guide on how to use a series of tools for ZooKeeper
+    + [ZooKeeper Protocol](zookeeperProtocol.html) - introduce the implementation details of ZAB comparing with the raft
 + **Contributors**
     Documents for Developers Contributing to the ZooKeeper Open Source Project
     + [ZooKeeper Internals](zookeeperInternals.html) - assorted topics on the inner workings of ZooKeeper
