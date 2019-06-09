@@ -1407,6 +1407,29 @@ options are used to configure the [AdminServer](#sc_adminserver).
     The URL for listing and issuing commands relative to the
     root URL.  Defaults to "/commands".
 
+### Metrics Providers
+
+**New in 3.6.0:** The following options are used to configure metrics. 
+
+ By default ZooKeeper server exposes useful metrics using the [AdminServer](#sc_adminserver).
+ and [Four Letter Words](#sc_4lw) interface.
+
+ Since 3.6.0 you can configure a different Metrics Provider, that exports metrics
+ to your favourite system.
+
+ Since 3.6.0 ZooKeeper binary package bundles an integration with [Prometheus.io](https://prometheus.io)
+
+* *metricsProvider.className* :
+    Set to "org.apache.zookeeper.metrics.prometheus.PrometheusMetricsProvider" to
+    enable Prometheus.io exporter.
+
+* *metricsProvider.httpPort* :
+    Prometheus.io exporter will start a Jetty server and bind to this port, it default to 7000.
+    Prometheus end point will be http://hostname:httPort/metrics.
+
+* *metricsProvider.exportJvmInfo* :
+    If this property is set to **true** Prometheus.io will export useful metrics about the JVM.
+    The default is true.
 
 <a name="Communication+using+the+Netty+framework"></a>
 
