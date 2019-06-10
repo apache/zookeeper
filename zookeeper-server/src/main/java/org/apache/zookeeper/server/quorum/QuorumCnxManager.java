@@ -1210,8 +1210,8 @@ public class QuorumCnxManager {
     /**
      * Inserts an element in the specified queue. If the Queue is full, this
      * method removes an element from the head of the Queue and then inserts
-     * the element at the tail. It can happen that the an element is removed
-     * by another thread in {@link SendWorker#processMessage() processMessage}
+     * the element at the tail. It can happen that an element is removed
+     * by another thread in {@link SendWorker#run() }
      * method before this method attempts to remove an element from the queue.
      * This will cause {@link ArrayBlockingQueue#remove() remove} to throw an
      * exception, which is safe to ignore.

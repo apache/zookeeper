@@ -1238,7 +1238,7 @@ public class RemoveWatchesTest extends ClientBase {
     /**
      * Checks if a session is registered with the server as a watcher.
      *
-     * @param long sessionId the session ID to check
+     * @param sessionId the session ID to check
      * @param path the path to check for watchers
      * @param type the type of watcher
      * @return true if the client session is a watcher on path for the type
@@ -1249,7 +1249,7 @@ public class RemoveWatchesTest extends ClientBase {
         CollectionUtils.addAll(cnxns, serverFactory.getConnections().iterator());
         for (ServerCnxn cnxn : cnxns) {
             if (cnxn.getSessionId() == sessionId) {
-                return getServer(serverFactory).getZKDatabase().getDataTree()
+                return serverFactory.getZooKeeperServer().getZKDatabase().getDataTree()
                         .containsWatcher(path, type, cnxn);
             }
         }

@@ -33,7 +33,7 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
 
     /** specify a command line property with key of 
      * "zookeeper.DigestAuthenticationProvider.superDigest"
-     * and value of "super:<base64encoded(SHA1(password))>" to enable
+     * and value of "super:&lt;base64encoded(SHA1(password))&gt;" to enable
      * super user access (i.e. acls disabled)
      */
     private final static String superDigest = System.getProperty(

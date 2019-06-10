@@ -27,7 +27,9 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 
+import org.apache.zookeeper.common.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,8 +54,6 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
         RequestProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(SyncRequestProcessor.class);
-
-    private static final int FLUSH_SIZE = 1000;
 
     private static final Request REQUEST_OF_DEATH = Request.requestOfDeath;
 
@@ -85,7 +85,8 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
      * disk. Basically this is the list of SyncItems whose callbacks will be
      * invoked after flush returns successfully.
      */
-    private final Queue<Request> toFlush = new ArrayDeque<>(FLUSH_SIZE);
+    private final Queue<Request> toFlush;
+    private long lastFlushTime;
 
     public SyncRequestProcessor(ZooKeeperServer zks,
             RequestProcessor nextProcessor) {
@@ -93,6 +94,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
                 .getZooKeeperServerListener());
         this.zks = zks;
         this.nextProcessor = nextProcessor;
+        this.toFlush = new ArrayDeque<>(zks.getMaxBatchSize());
     }
 
     /**
@@ -110,6 +112,28 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
      */
     public static int getSnapCount() {
         return snapCount;
+    }
+
+    private long getRemainingDelay() {
+        long flushDelay = zks.getFlushDelay();
+        long duration = Time.currentElapsedTime() - lastFlushTime;
+        if (duration < flushDelay) {
+            return flushDelay - duration;
+        }
+        return 0;
+    }
+
+    /** If both flushDelay and maxMaxBatchSize are set (bigger than 0), flush
+     * whenever either condition is hit. If only one or the other is
+     * set, flush only when the relevant condition is hit.
+     */
+    private boolean shouldFlush() {
+        long flushDelay = zks.getFlushDelay();
+        long maxBatchSize = zks.getMaxBatchSize();
+        if ((flushDelay > 0) && (getRemainingDelay() == 0)) {
+            return true;
+        }
+        return (maxBatchSize > 0) && (toFlush.size() >= maxBatchSize);
     }
 
     /**
@@ -139,9 +163,14 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
             // we do this in an attempt to ensure that not all of the servers
             // in the ensemble take a snapshot at the same time
             resetSnapshotStats();
+            lastFlushTime = Time.currentElapsedTime();
             while (true) {
-                Request si = queuedRequests.poll();
+                ServerMetrics.getMetrics().SYNC_PROCESSOR_QUEUE_SIZE.add(queuedRequests.size());
+
+                long pollTime = Math.min(zks.getMaxWriteQueuePollTime(), getRemainingDelay());
+                Request si = queuedRequests.poll(pollTime, TimeUnit.MILLISECONDS);
                 if (si == null) {
+                    /* We timed out looking for more writes to batch, go ahead and flush immediately */
                     flush();
                     si = queuedRequests.take();
                 }
@@ -149,6 +178,10 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
                 if (si == REQUEST_OF_DEATH) {
                     break;
                 }
+
+                long startProcessTime = Time.currentElapsedTime();
+                ServerMetrics.getMetrics().SYNC_PROCESSOR_QUEUE_TIME.add(
+                                    startProcessTime - si.syncQueueStartTime);
 
                 // track the number of records written to the log
                 if (zks.getZKDatabase().append(si)) {
@@ -187,9 +220,10 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
                     continue;
                 }
                 toFlush.add(si);
-                if (toFlush.size() == FLUSH_SIZE) {
+                if (shouldFlush()) {
                     flush();
                 }
+                ServerMetrics.getMetrics().SYNC_PROCESS_TIME.add(Time.currentElapsedTime() - startProcessTime);
             }
         } catch (Throwable t) {
             handleException(this.getName(), t);
@@ -202,18 +236,25 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
           return;
       }
 
+      ServerMetrics.getMetrics().BATCH_SIZE.add(toFlush.size());
+
+      long flushStartTime = Time.currentElapsedTime();
       zks.getZKDatabase().commit();
+      ServerMetrics.getMetrics().SYNC_PROCESSOR_FLUSH_TIME.add(Time.currentElapsedTime() - flushStartTime);
 
       if (this.nextProcessor == null) {
         this.toFlush.clear();
       } else {
           while (!this.toFlush.isEmpty()) {
               final Request i = this.toFlush.remove();
+              long latency = Time.currentElapsedTime() - i.syncQueueStartTime;
+              ServerMetrics.getMetrics().SYNC_PROCESSOR_QUEUE_AND_FLUSH_TIME.add(latency);
               this.nextProcessor.processRequest(i);
           }
           if (this.nextProcessor instanceof Flushable) {
               ((Flushable)this.nextProcessor).flush();
-          } 
+          }
+          lastFlushTime = Time.currentElapsedTime();
       }
     }
 
@@ -238,7 +279,10 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
 
     public void processRequest(final Request request) {
         Objects.requireNonNull(request, "Request cannot be null");
+
+        request.syncQueueStartTime = Time.currentElapsedTime();
         queuedRequests.add(request);
+        ServerMetrics.getMetrics().SYNC_PROCESSOR_QUEUED.add(1);
     }
 
 }

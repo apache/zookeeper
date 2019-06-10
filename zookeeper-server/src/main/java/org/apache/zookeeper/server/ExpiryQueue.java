@@ -21,7 +21,6 @@ package org.apache.zookeeper.server;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
@@ -181,7 +180,7 @@ public class ExpiryQueue<E> {
     }
 
     /**
-     * Returns an unmodifiable view of the expiration time -> elements mapping.
+     * Returns an unmodifiable view of the expiration time -&gt; elements mapping.
      */
     public Map<Long, Set<E>> getExpiryMap() {
         return Collections.unmodifiableMap(expiryMap);

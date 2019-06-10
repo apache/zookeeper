@@ -109,9 +109,11 @@ public class Observer extends Learner{
             try {
                 connectToLeader(master.addr, master.hostname);
                 long newLeaderZxid = registerWithLeader(Leader.OBSERVERINFO);
-                if (self.isReconfigStateChange())
-                   throw new Exception("learned about role change");
- 
+                if (self.isReconfigStateChange()) {
+                    throw new Exception("learned about role change");
+                }
+
+                self.setLeaderAddressAndId(master.addr, master.getId());
                 syncWithLeader(newLeaderZxid);
                 QuorumPacket qp = new QuorumPacket();
                 while (this.isRunning() && nextLearnerMaster.get() == null) {

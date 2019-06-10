@@ -59,7 +59,7 @@ public class WorkerService {
     private volatile boolean stopped = true;
 
     /**
-     * @param name                  worker threads are named <name>Thread-##
+     * @param name                  worker threads are named &lt;name&gt;Thread-##
      * @param numThreads            number of worker threads (0 - N)
      *                              If 0, scheduled work is run immediately by
      *                              the calling thread.

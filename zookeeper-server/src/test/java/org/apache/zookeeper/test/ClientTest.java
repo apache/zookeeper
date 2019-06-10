@@ -825,7 +825,6 @@ public class ClientTest extends ClientBase {
 
     /**
      * We create a perfectly valid 'exists' request, except that the opcode is wrong.
-     * @return
      * @throws Exception
      */
     @Test

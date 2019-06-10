@@ -34,16 +34,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Command line program for demonstrating robustness to clock
  * changes.
- * <p/>
+ * <p>
  * How to run:
  * ant clean compile-test
- * echo build/test/lib/*.jar build/lib/*.jar build/classes build/test/classes | sed -e 's/ /:/g' > cp
+ * echo build/test/lib/*.jar build/lib/*.jar build/classes build/test/classes | sed -e 's/ /:/g' &gt; cp
  * java -cp $(cat cp) org.apache.zookeeper.common.TimeTest | tee log-without-patch
- * <p/>
+ * <p>
  * After test program starts, in another window, do commands:
  * date -s '+1hour'
  * date -s '-1hour'
- * <p/>
+ * <p>
  * As long as there isn't any expired event, the experiment is successful.
  */
 public class TimeTest extends ClientBase {

@@ -18,6 +18,7 @@
 package org.apache.zookeeper.cli;
 
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.Parser;
@@ -32,19 +33,23 @@ public class DeleteAllCommand extends CliCommand {
 
     private static Options options = new Options();
     private String[] args;
+    private CommandLine cl;
+
+    static {
+        options.addOption(new Option("b", true, "batch size"));
+    }
 
     public DeleteAllCommand() {
         this("deleteall");
     }
 
     public DeleteAllCommand(String cmdStr) {
-        super(cmdStr, "path");
+        super(cmdStr, "path [-b batch size]");
     }
     
     @Override
     public CliCommand parse(String[] cmdArgs) throws CliParseException {
         Parser parser = new PosixParser();
-        CommandLine cl;
         try {
             cl = parser.parse(options, cmdArgs);
         } catch (ParseException ex) {
@@ -61,10 +66,19 @@ public class DeleteAllCommand extends CliCommand {
     @Override
     public boolean exec() throws CliException {
         printDeprecatedWarning();
-        
+        int batchSize;
+        try {
+            batchSize = cl.hasOption("b") ? Integer.parseInt(cl.getOptionValue("b")) : 1000;
+        } catch (NumberFormatException e) {
+            throw new MalformedCommandException("-b argument must be an int value");
+        }
+
         String path = args[1];
         try {
-            ZKUtil.deleteRecursive(zk, path);
+            boolean success = ZKUtil.deleteRecursive(zk, path, batchSize);
+            if (!success) {
+                err.println("Failed to delete some node(s) in the subtree!");
+            }
         } catch (IllegalArgumentException ex) {
             throw new MalformedPathException(ex.getMessage());
         } catch (KeeperException|InterruptedException ex) {

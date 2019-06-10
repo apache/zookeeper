@@ -43,8 +43,8 @@ import org.slf4j.LoggerFactory;
  * This class encapsulates a Jetty server for running Commands.
  *
  * Given the default settings, start a ZooKeeper server and visit
- * http://<hostname>:8080/commands for links to all registered commands. Visiting
- * http://<hostname>:8080/commands/<commandname> will execute the associated
+ * http://hostname:8080/commands for links to all registered commands. Visiting
+ * http://hostname:8080/commands/commandname will execute the associated
  * Command and return the result in the body of the response. Any keyword
  * arguments to the command are specified with URL parameters (e.g.,
  * http://localhost:8080/commands/set_trace_mask?traceMask=306).

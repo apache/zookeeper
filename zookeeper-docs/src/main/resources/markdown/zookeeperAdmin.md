@@ -166,7 +166,7 @@ your environment. If you have three ZooKeeper servers, but their
 network cables are all plugged into the same network switch, then
 the failure of that switch will take down your entire ensemble.
 
-Here are the steps to setting a server that will be part of an
+Here are the steps to set a server that will be part of an
 ensemble. These steps should be performed on every host in the
 ensemble:
 
@@ -219,7 +219,7 @@ ensemble:
 
 6. Create an initialization marker file *initialize*
   in the same directory as *myid*. This file indicates
-  that an empty data directory is expected. When present, an empty data base
+  that an empty data directory is expected. When present, an empty database
   is created and the marker file deleted. When not present, an empty data
   directory will mean this peer will not have voting rights and it will not
   populate the data directory until it communicates with an active leader.
@@ -566,7 +566,7 @@ in the configuration file:
     >Be careful where you put the transaction log. A
     dedicated transaction log device is key to consistent good
     performance. Putting the log on a busy device will adversely
-    effect performance.
+    affect performance.
 
 * *tickTime* :
     the length of a single tick, which is the basic time unit
@@ -836,6 +836,26 @@ property, when available, is noted below.
     Specifies ServerCnxnFactory implementation. 
     This should be set to `NettyServerCnxnFactory` in order to use TLS based server communication.
     Default is `NIOServerCnxnFactory`.
+
+* *flushDelay* :
+    (Java system property: **zookeeper.flushDelay**)
+    Time in milliseconds to delay the flush of the commit log.
+    Does not affect the limit defined by *maxBatchSize*.
+    Disabled by default (with value 0). Ensembles with high write rates
+    may see throughput improved with a value of 10-20 ms.
+
+* *maxWriteQueuePollTime* :
+    (Java system property: **zookeeper.maxWriteQueuePollTime**)
+    If *flushDelay* is enabled, this determines the amount of time in milliseconds
+    to wait before flushing when no new requests are being queued.
+    Set to *flushDelay*/3 by default (implicitly disabled by default).
+
+* *maxBatchSize* :
+    (Java system property: **zookeeper.maxBatchSize**)
+    The number of transactions allowed in the server before a flush of the
+    commit log is triggered.
+    Does not affect the limit defined by *flushDelay*.
+    Default is 1000.
 
 <a name="sc_clusterOptions"></a>
 
@@ -1170,7 +1190,13 @@ encryption/authentication/authorization performed by the service.
     (Java system properties: **zookeeper.ssl.handshakeDetectionTimeoutMillis** and **zookeeper.ssl.quorum.handshakeDetectionTimeoutMillis**)
     **New in 3.5.5:**
     TBD
-        
+
+* *client.portUnification*:
+    (Java system properties: **zookeeper.client.portUnification**)
+    Specifies that the client port should accept SSL connections
+    (using the same configuration as the secure client port).
+    Default: false
+
 
 <a name="Experimental+Options%2FFeatures"></a>
 
@@ -1806,7 +1832,7 @@ The format of snapshot and log files does not change between
 standalone ZooKeeper servers and different configurations of
 replicated ZooKeeper servers. Therefore, you can pull these files from
 a running replicated ZooKeeper server to a development machine with a
-stand-alone ZooKeeper server for trouble shooting.
+stand-alone ZooKeeper server for troubleshooting.
 
 Using older log and snapshot files, you can look at the previous
 state of ZooKeeper servers and even restore that state. The
@@ -1859,9 +1885,10 @@ ZooKeeper correctly:
     transaction log. ZooKeeper syncs transactions to media before it
     returns a response. A dedicated transaction log device is key to
     consistent good performance. Putting the log on a busy device will
-    adversely effect performance. If you only have one storage device,
-    put trace files on NFS and increase the snapshotCount; it doesn't
-    eliminate the problem, but it should mitigate it.
+    adversely affect performance. If you only have one storage device,
+    increase the snapCount so that snapshot files are generated less often;
+    it does not eliminate the problem, but it makes more resources available
+    for the transaction log.
 
 * *incorrect Java heap size* :
     You should take special care to set your Java max heap size

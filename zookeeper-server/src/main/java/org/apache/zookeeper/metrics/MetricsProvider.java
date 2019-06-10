@@ -25,7 +25,7 @@ import java.util.function.BiConsumer;
  * A MetricsProvider is a system which collects Metrics and publishes current values to external facilities.
  *
  * The system will create an instance of the configured class using the default constructor, which must be public.<br>
- * After the instantiation of the provider, the system will call {@link #configure(java.util.Map) } in order to provide configuration,
+ * After the instantiation of the provider, the system will call {@link #configure(java.util.Properties) } in order to provide configuration,
  * and then when the system is ready to work it will call {@link #start() }.
  * <br>
  * Providers can be used both on ZooKeeper servers and on ZooKeeper clients.

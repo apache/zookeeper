@@ -41,9 +41,11 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.security.sasl.SaslException;
+import org.apache.yetus.audience.InterfaceAudience;
 
 import org.apache.zookeeper.KeeperException.BadArgumentsException;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom;
@@ -745,12 +747,36 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     private ServerState state = ServerState.LOOKING;
-    
+
+    private AtomicReference<String> leaderAddress = new AtomicReference<String>("");
+    private AtomicLong leaderId = new AtomicLong(-1);
+
     private boolean reconfigFlag = false; // indicates that a reconfig just committed
 
-    public synchronized void setPeerState(ServerState newState){
-        state=newState;
+    public synchronized void setPeerState(ServerState newState) {
+        state = newState;
+        if (newState == ServerState.LOOKING) {
+            setLeaderAddressAndId(null, -1);
+        }
     }
+
+    public void setLeaderAddressAndId(InetSocketAddress addr, long newId) {
+        if (addr != null) {
+            leaderAddress.set(addr.getHostString());
+        } else {
+            leaderAddress.set(null);
+        }
+        leaderId.set(newId);
+    }
+
+    public String getLeaderAddress() {
+        return leaderAddress.get();
+    }
+
+    public long getLeaderId() {
+        return leaderId.get();
+    }
+
     public synchronized void reconfigFlagSet(){
        reconfigFlag = true;
     }
@@ -2221,7 +2247,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * around by skipping comparing the zxid and electionEpoch when counting for 
      * votes for out of election servers during looking for leader.
      * 
-     * {@see https://issues.apache.org/jira/browse/ZOOKEEPER-1732}
+     * See https://issues.apache.org/jira/browse/ZOOKEEPER-1732
      */
     protected void updateElectionVote(long newEpoch) {
         Vote currentVote = getCurrentVote();
@@ -2335,5 +2361,19 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     boolean isLeader(long id) {
         Vote vote = getCurrentVote();
         return vote != null && id == vote.getId();
+    }
+
+    @InterfaceAudience.Private
+    /**
+     * This is a metric that depends on the status of the peer.
+     */
+    public Integer getSynced_observers_metric() {
+        if (leader != null) {
+            return leader.getObservingLearners().size();
+        } else if (follower != null) {
+            return follower.getSyncedObserverSize();
+        } else {
+            return null;
+        }
     }
 }

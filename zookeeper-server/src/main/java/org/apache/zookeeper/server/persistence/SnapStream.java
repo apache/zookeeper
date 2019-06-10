@@ -97,7 +97,7 @@ public class SnapStream {
     /**
      * Return the CheckedInputStream based on the extension of the fileName.
      *
-     * @param fileName the file the InputStream read from
+     * @param file the file the InputStream read from
      * @return the specific InputStream
      * @throws IOException
      */
@@ -121,7 +121,7 @@ public class SnapStream {
     /**
      * Return the OutputStream based on predefined stream mode.
      *
-     * @param fileName the file the OutputStream writes to
+     * @param file the file the OutputStream writes to
      * @return the specific OutputStream
      * @throws IOException
      */

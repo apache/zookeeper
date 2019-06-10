@@ -71,8 +71,6 @@ public class DataNode implements Record {
     /**
      * create a DataNode with parent, data, acls and stat
      * 
-     * @param parent
-     *            the parent of this DataNode
      * @param data
      *            the data to be set
      * @param acl

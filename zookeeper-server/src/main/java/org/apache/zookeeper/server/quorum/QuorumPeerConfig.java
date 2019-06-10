@@ -500,7 +500,7 @@ public class QuorumPeerConfig {
      *             If authentication scheme is configured but authentication
      *             provider is not configured.
      */
-    private void configureSSLAuth() throws ConfigException {
+    public static void configureSSLAuth() throws ConfigException {
         try (ClientX509Util clientX509Util = new ClientX509Util()) {
             String sslAuthProp = "zookeeper.authProvider." + System.getProperty(clientX509Util.getSslAuthProviderProperty(), "x509");
             if (System.getProperty(sslAuthProp) == null) {

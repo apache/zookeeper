@@ -94,7 +94,7 @@ public abstract class ServerCnxnFactory {
         return cnxns.size();
     }
 
-    public ZooKeeperServer getZooKeeperServer() {
+    public final ZooKeeperServer getZooKeeperServer() {
         return zkServer;
     }
 

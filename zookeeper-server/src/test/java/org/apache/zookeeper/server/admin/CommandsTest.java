@@ -51,11 +51,8 @@ public class CommandsTest extends ClientBase {
      *            - the primary name of the command
      * @param kwargs
      *            - keyword arguments to the command
-     * @param keys
-     *            - the keys that are expected in the returned Map
-     * @param types
-     *            - the classes of the values in the returned Map. types[i] is
-     *            the type of the value for keys[i].
+     * @param fields
+     *            - the fields that are expected in the returned Map
      * @throws IOException
      * @throws InterruptedException
      */
@@ -170,6 +167,13 @@ public class CommandsTest extends ClientBase {
     }
 
     @Test
+    public void testLastSnapshot() throws IOException, InterruptedException {
+        testCommand("last_snapshot",
+                    new Field("zxid", String.class),
+                    new Field("timestamp", Long.class));
+    }
+
+    @Test
     public void testMonitor() throws IOException, InterruptedException {
         ArrayList<Field> fields = new ArrayList<>(Arrays.asList(
                 new Field("version", String.class),
@@ -198,6 +202,15 @@ public class CommandsTest extends ClientBase {
         Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
         
         for (String metric : metrics.keySet()) {
+            boolean alreadyDefined = fields
+                    .stream()
+                    .anyMatch(f -> {
+                        return f.key.equals(metric);
+                    });
+            if (alreadyDefined) {
+                // known metrics are defined statically in the block above
+                continue;
+            }
             if (metric.startsWith("avg_")) {
                 fields.add(new Field(metric, Double.class));  
             } else {

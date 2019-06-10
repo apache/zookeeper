@@ -23,11 +23,6 @@ if [ ! -d "conf" ]; then
     exit 1
 fi
 
-if [ ! `ls build/zookeeper*.jar` ]; then
-    echo "first compile the zk jar file"
-    exit 1
-fi
-
 DATADIR=test-scripts_datadir
 DATALOGDIR=test-scripts_datalogdir
 
@@ -217,6 +212,9 @@ stop
 
 $ZKSI --force --myid=1 --configfile "$ZOOCFGDIR/$ZOOCFG" || fail $LINENO
 
+#test version script
+TEST_PRINT_VERSION=`$ZKS version 2>/dev/null`
+[ "$TEST_PRINT_VERSION" != "" ] || fail $LINENO
 
 #done, cleanup and exit
 clear_tmp

@@ -181,7 +181,7 @@ public class Zab1_0Test extends ZKTestCase {
      * follower with lastAcceptedEpoch = 6 doesn't change the value
      * of epoch, and the test fails. It passes with the fix to predicate.
      * 
-     * {@link https://issues.apache.org/jira/browse/ZOOKEEPER-1343}
+     * https://issues.apache.org/jira/browse/ZOOKEEPER-1343
      * 
      * 
      * @throws Exception

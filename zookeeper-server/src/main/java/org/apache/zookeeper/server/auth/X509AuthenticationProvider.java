@@ -42,12 +42,12 @@ import org.slf4j.LoggerFactory;
  * to perform remote host certificate authentication. The default algorithm is
  * SunX509 and a JKS KeyStore. To specify the locations of the key store and
  * trust store, set the following system properties:
- * <br/><code>zookeeper.ssl.keyStore.location</code>
- * <br/><code>zookeeper.ssl.trustStore.location</code>
- * <br/>To specify store passwords, set the following system properties:
- * <br/><code>zookeeper.ssl.keyStore.password</code>
- * <br/><code>zookeeper.ssl.trustStore.password</code>
- * <br/>Alternatively, this can be plugged with any X509TrustManager and
+ * <br><code>zookeeper.ssl.keyStore.location</code>
+ * <br><code>zookeeper.ssl.trustStore.location</code>
+ * <br>To specify store passwords, set the following system properties:
+ * <br><code>zookeeper.ssl.keyStore.password</code>
+ * <br><code>zookeeper.ssl.trustStore.password</code>
+ * <br>Alternatively, this can be plugged with any X509TrustManager and
  * X509KeyManager implementation.
  */
 public class X509AuthenticationProvider implements AuthenticationProvider {
@@ -61,10 +61,10 @@ public class X509AuthenticationProvider implements AuthenticationProvider {
     /**
      * Initialize the X509AuthenticationProvider with a JKS KeyStore and JKS
      * TrustStore according to the following system properties:
-     * <br/><code>zookeeper.ssl.keyStore.location</code>
-     * <br/><code>zookeeper.ssl.trustStore.location</code>
-     * <br/><code>zookeeper.ssl.keyStore.password</code>
-     * <br/><code>zookeeper.ssl.trustStore.password</code>
+     * <br><code>zookeeper.ssl.keyStore.location</code>
+     * <br><code>zookeeper.ssl.trustStore.location</code>
+     * <br><code>zookeeper.ssl.keyStore.password</code>
+     * <br><code>zookeeper.ssl.trustStore.password</code>
      */
     public X509AuthenticationProvider() throws X509Exception {
         ZKConfig config = new ZKConfig();

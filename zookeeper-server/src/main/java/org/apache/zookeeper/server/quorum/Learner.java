@@ -115,7 +115,6 @@ public class Learner {
      *                the client to be revalidated
      * @param timeout
      *                the timeout for which the session is valid
-     * @return
      * @throws IOException
      */
     void validateSession(ServerCnxn cnxn, long clientId, int timeout)
@@ -249,8 +248,8 @@ public class Learner {
      * Retries until either initLimit time has elapsed or 5 tries have happened.
      * @param addr - the address of the Peer to connect to.
      * @throws IOException - if the socket connection fails on the 5th attempt
-     * <li>if there is an authentication failure while connecting to leader</li>
-     * @throws ConnectException
+     * if there is an authentication failure while connecting to leader
+     * @throws X509Exception
      * @throws InterruptedException
      */
     protected void connectToLeader(InetSocketAddress addr, String hostname)

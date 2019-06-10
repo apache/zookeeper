@@ -43,12 +43,12 @@ public interface QuorumMXBean {
     public int getSyncLimit();
 
     /**
-     * @param the number of ticks that the initial synchronization phase can take
+     * @param initLimit the number of ticks that the initial synchronization phase can take
      */
     public void setInitLimit(int initLimit);
 
     /**
-     * @param the number of ticks that can pass between sending a request and getting an acknowledgment
+     * @param syncLimit the number of ticks that can pass between sending a request and getting an acknowledgment
      */
     public void setSyncLimit(int syncLimit);
 

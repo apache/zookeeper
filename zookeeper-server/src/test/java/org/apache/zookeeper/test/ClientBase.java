@@ -54,11 +54,9 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.common.IOUtils;
 import org.apache.zookeeper.server.ServerCnxnFactory;
-import org.apache.zookeeper.server.ServerCnxnFactoryAccessor;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FilePadding;
-import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.util.OSMXBean;
 import org.junit.After;
@@ -460,7 +458,7 @@ public abstract class ClientBase extends ZKTestCase {
         if (factory != null) {
             ZKDatabase zkDb = null;
             {
-                ZooKeeperServer zs = getServer(factory);
+                ZooKeeperServer zs = factory.getZooKeeperServer();
                 if (zs != null) {
                     zkDb = zs.getZKDatabase();
                 }
@@ -587,13 +585,6 @@ public abstract class ClientBase extends ZKTestCase {
         serverFactory = null;
         // ensure no beans are leftover
         JMXEnv.ensureOnly();
-    }
-
-
-    protected static ZooKeeperServer getServer(ServerCnxnFactory fac) {
-        ZooKeeperServer zs = ServerCnxnFactoryAccessor.getZkServer(fac);
-
-        return zs;
     }
 
     protected void tearDownAll() throws Exception {
