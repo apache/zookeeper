@@ -289,7 +289,7 @@ public class TxnLogToolkit implements Closeable {
                 System.out.println(txns);
             }
         } catch (Exception e) {
-            System.err.println("unexpected exception happens when printing the Txn:" + e);
+            e.printStackTrace();
         }
     }
 
@@ -298,7 +298,7 @@ public class TxnLogToolkit implements Closeable {
      * @param txn transaction log data
      * @return the formatted string
      */
-    private static String getFormattedTxnStr(Record txn) {
+    private static String getFormattedTxnStr(Record txn) throws IOException {
         StringBuilder txnData = new StringBuilder();
         if (txn == null) {
             return txnData.toString();
@@ -339,12 +339,12 @@ public class TxnLogToolkit implements Closeable {
         return txnData.toString();
     }
 
-    private static String checkNullToEmpty(byte[] data) {
+    private static String checkNullToEmpty(byte[] data) throws IOException {
         if (data == null || data.length == 0) {
             return "";
         }
 
-        return new String(data);
+        return new String(data, "UTF8");
     }
 
     private void openTxnLogFile() throws FileNotFoundException {
