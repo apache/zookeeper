@@ -53,8 +53,8 @@ public class ZKUtil {
         PathUtils.validatePath(pathRoot);
 
         List<String> tree = listSubTreeBFS(zk, pathRoot);
-        LOG.debug("Deleting " + tree);
-        LOG.debug("Deleting " + tree.size() + " subnodes ");
+        LOG.debug("Deleting {}",tree);
+        LOG.debug("Deleting {} subnodes ",tree.size());
 
         return deleteInBatch(zk, tree, batchSize);
     }
@@ -125,8 +125,8 @@ public class ZKUtil {
         PathUtils.validatePath(pathRoot);
 
         List<String> tree = listSubTreeBFS(zk, pathRoot);
-        LOG.debug("Deleting " + tree);
-        LOG.debug("Deleting " + tree.size() + " subnodes ");
+        LOG.debug("Deleting {}",tree);
+        LOG.debug("Deleting {} subnodes ",tree.size());
         for (int i = tree.size() - 1; i >= 0 ; --i) {
             //Delete the leaves first and eventually get rid of the root
             zk.delete(tree.get(i), -1, cb, ctx); //Delete all versions of the node with -1.
