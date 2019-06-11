@@ -543,18 +543,19 @@ public class Commands {
 
                 response.put("synced_observers", leader.getObservingLearners().size());
                 response.put("observers", leader.getObservingLearnersInfo());
+                return response;
             } else if (zkServer instanceof FollowerZooKeeperServer) {
                 Follower follower = ((FollowerZooKeeperServer) zkServer).getFollower();
                 Integer syncedObservers = follower.getSyncedObserverSize();
                 if (syncedObservers != null) {
                     response.put("synced_observers", syncedObservers);
                     response.put("observers", follower.getSyncedObserversInfo());
+                    return response;
                 }
-            } else {
-                response.put("synced_observers", 0);
-                response.put("observers", null);
             }
 
+            response.put("synced_observers", 0);
+            response.put("observers", Collections.emptySet());
             return response;
         }
     }

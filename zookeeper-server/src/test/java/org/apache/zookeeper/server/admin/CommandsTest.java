@@ -122,7 +122,8 @@ public class CommandsTest extends ClientBase {
     @Test
     public void testObservers() throws IOException, InterruptedException {
         testCommand("observers",
-                new Field("synced_observers", Integer.class));
+                new Field("synced_observers", Integer.class),
+                new Field("observers", Iterable.class));
     }
 
     @Test

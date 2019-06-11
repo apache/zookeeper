@@ -1072,7 +1072,7 @@ public class LearnerHandler extends ZooKeeperThread {
     }
 
     public synchronized Map<String, Object> getLearnerHandlerInfo() {
-        Map<String, Object> info = new LinkedHashMap<>();
+        Map<String, Object> info = new LinkedHashMap<>(9);
         info.put("remote_socket_address", getRemoteAddress());
         info.put("sid", getSid());
         info.put("established", getEstablished());

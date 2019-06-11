@@ -513,7 +513,7 @@ public class ObserverMaster implements LearnerMaster, Runnable {
     }
 
     public Iterable<Map<String, Object>> getActiveObservers() {
-        HashSet<Map<String,Object>> info = new HashSet<>();
+        Set<Map<String,Object>> info = new HashSet<>();
         for (LearnerHandler lh:activeObservers) {
             info.add(lh.getLearnerHandlerInfo());
         }

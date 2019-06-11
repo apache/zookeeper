@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.Map;
 
 import org.apache.jute.Record;
@@ -259,7 +260,7 @@ public class Follower extends Learner{
         if (om != null && om.getNumActiveObservers() > 0) {
             return om.getActiveObservers();
         }
-        return null;
+        return Collections.emptySet();
     }
 
     public void resetObserverConnectionStats() {

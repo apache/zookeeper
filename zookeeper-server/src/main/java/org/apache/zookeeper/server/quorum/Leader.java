@@ -205,7 +205,7 @@ public class Leader implements LearnerMaster {
     }
 
     public Iterable<Map<String, Object>> getObservingLearnersInfo() {
-        HashSet<Map<String,Object>> info = new HashSet<>();
+        Set<Map<String,Object>> info = new HashSet<>();
         synchronized (observingLearners) {
             for (LearnerHandler lh: observingLearners) {
                 info.add(lh.getLearnerHandlerInfo());
