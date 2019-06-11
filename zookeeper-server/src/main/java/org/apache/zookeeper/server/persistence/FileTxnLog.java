@@ -27,6 +27,7 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.io.StreamCorruptedException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayDeque;
@@ -405,7 +406,7 @@ public class FileTxnLog implements TxnLog {
                             + "File size is " + channel.size() + " bytes. "
                             + "See the ZooKeeper troubleshooting guide");
                 }
-                
+
                 ServerMetrics.getMetrics().FSYNC_TIME.add(syncElapsedMS);
             }
         }
@@ -690,10 +691,30 @@ public class FileTxnLog implements TxnLog {
          * @throws IOException
          */
         private boolean goToNextLog() throws IOException {
-            if (storedFiles.size() > 0) {
+            while (storedFiles.size() > 0) {
                 this.logFile = storedFiles.remove(storedFiles.size()-1);
-                ia = createInputArchive(this.logFile);
-                return true;
+                try {
+                    ia = createInputArchive(this.logFile);
+                    return true;
+                } catch (StreamCorruptedException ex) {
+                    // The magic number is corrupted. We shouldn't simply skip
+                    // this log file since it might contain transactions that
+                    // have already been acknowledged.
+                    throw ex;
+                } catch (EOFException ex) {
+                    // The header was incomplete. It means that this log file
+                    // doesn't contain any transactions. Delete it and skip to
+                    // the next one.  Deletion is essential, otherwise in the
+                    // future, this skipped but useless file can mislead init()
+                    // in using it as the last log file before the snapshot.
+                    LOG.warn("Failed to parse the header of the transaction " +
+                             "log file: {}. Deleting.", this.logFile, ex);
+                    if (this.logFile.delete() == false) {
+                        throw new IOException("Transaction log: " +
+                                this.logFile + " has an incomplete header, " +
+                                "but failed to delete it");
+                    }
+                }
             }
             return false;
         }
@@ -702,16 +723,17 @@ public class FileTxnLog implements TxnLog {
          * read the header from the inputarchive
          * @param ia the inputarchive to be read from
          * @param is the inputstream
-         * @throws IOException
+         * @throws IOException if the header is incomplete
+         * @throws StreamCorruptedException if the magic number is corrupted
          */
         protected void inStreamCreated(InputArchive ia, InputStream is)
             throws IOException{
             FileHeader header= new FileHeader();
             header.deserialize(ia, "fileheader");
             if (header.getMagic() != FileTxnLog.TXNLOG_MAGIC) {
-                throw new IOException("Transaction log: " + this.logFile + " has invalid magic number "
-                        + header.getMagic()
-                        + " != " + FileTxnLog.TXNLOG_MAGIC);
+                throw new StreamCorruptedException("Transaction log: "
+                        + this.logFile + " has invalid magic number "
+                        + header.getMagic() + " != " + FileTxnLog.TXNLOG_MAGIC);
             }
         }
 
@@ -799,6 +821,13 @@ public class FileTxnLog implements TxnLog {
          */
         public Record getTxn() {
             return record;
+        }
+
+        /**
+         * Gets a copy of storedFiles. For testing only.
+         */
+        public List<File> getStoredFiles() {
+            return new ArrayList<File>(storedFiles);
         }
 
         /**
