@@ -61,6 +61,10 @@ Mode: standalone
 # print the parameters of the start-up
 ./zkServer.sh print-cmd
 
+# show the version of the ZooKeeper server
+./zkServer.sh version
+Apache ZooKeeper, version 3.6.0-SNAPSHOT 06/11/2019 05:39 GMT
+
 ```
 
 <a name="zkCli"></a>
