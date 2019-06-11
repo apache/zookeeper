@@ -212,12 +212,12 @@ public abstract class OpResult {
 
         public GetDataResult(byte[] data, Stat stat) {
             super(ZooDefs.OpCode.getData);
-            this.data = data;
+            this.data = (data == null ? null : Arrays.copyOf(data, data.length));
             this.stat = stat;
         }
 
         public byte[] getData() {
-            return data;
+            return data == null ? null : Arrays.copyOf(data, data.length);
         }
         public Stat getStat() {
             return stat;
