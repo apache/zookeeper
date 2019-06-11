@@ -1312,9 +1312,6 @@ public class ClientCnxn {
             }
             eventThread.queueEvent(new WatchedEvent(Event.EventType.None,
                         Event.KeeperState.Closed, null));
-            ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(),
-                    "SendThread exited loop for session: 0x"
-                           + Long.toHexString(getSessionId()));
         }
 
         private void cleanAndNotifyState() {
@@ -1640,7 +1637,7 @@ public class ClientCnxn {
             Record response, AsyncCallback cb, String clientPath,
             String serverPath, Object ctx, WatchRegistration watchRegistration) {
         return queuePacket(h, r, request, response, cb, clientPath, serverPath,
-                ctx, watchRegistration,null);
+                ctx, watchRegistration, null);
     }
 
     public Packet queuePacket(RequestHeader h, ReplyHeader r, Record request,
