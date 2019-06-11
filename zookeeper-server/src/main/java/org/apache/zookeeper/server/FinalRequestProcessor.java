@@ -18,17 +18,8 @@
 
 package org.apache.zookeeper.server;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.jute.Record;
-import org.apache.zookeeper.common.Time;
-import org.apache.zookeeper.data.Id;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.KeeperException.SessionMovedException;
@@ -42,7 +33,9 @@ import org.apache.zookeeper.OpResult.SetDataResult;
 import org.apache.zookeeper.Watcher.WatcherType;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.CheckWatchesRequest;
 import org.apache.zookeeper.proto.Create2Response;
@@ -51,12 +44,14 @@ import org.apache.zookeeper.proto.ExistsRequest;
 import org.apache.zookeeper.proto.ExistsResponse;
 import org.apache.zookeeper.proto.GetACLRequest;
 import org.apache.zookeeper.proto.GetACLResponse;
-import org.apache.zookeeper.proto.GetChildren2Request;
-import org.apache.zookeeper.proto.GetChildren2Response;
 import org.apache.zookeeper.proto.GetAllChildrenNumberRequest;
 import org.apache.zookeeper.proto.GetAllChildrenNumberResponse;
+import org.apache.zookeeper.proto.GetChildren2Request;
+import org.apache.zookeeper.proto.GetChildren2Response;
 import org.apache.zookeeper.proto.GetChildrenRequest;
 import org.apache.zookeeper.proto.GetChildrenResponse;
+import org.apache.zookeeper.proto.GetDataListRequest;
+import org.apache.zookeeper.proto.GetDataListResponse;
 import org.apache.zookeeper.proto.GetDataRequest;
 import org.apache.zookeeper.proto.GetDataResponse;
 import org.apache.zookeeper.proto.GetEphemeralsRequest;
@@ -510,8 +505,8 @@ public class FinalRequestProcessor implements RequestProcessor {
                 if (StringUtils.isBlank(prefixPath) || "/".equals(prefixPath.trim())) {
                     ephemerals.addAll(allEphems);
                 } else {
-                    for (String p: allEphems) {
-                        if(p.startsWith(prefixPath)) {
+                    for (String p : allEphems) {
+                        if (p.startsWith(prefixPath)) {
                             ephemerals.add(p);
                         }
                     }
@@ -519,6 +514,39 @@ public class FinalRequestProcessor implements RequestProcessor {
                 rsp = new GetEphemeralsResponse(ephemerals);
                 break;
             }
+            case OpCode.getDataList: {
+                    lastOp = "GETL";
+                    GetDataListRequest getDataListRequest = new GetDataListRequest();
+                    ByteBufferInputStream.byteBuffer2Record(request.request,
+                            getDataListRequest);
+                    List<String> paths = getDataListRequest.getPaths();
+                    if (paths == null) {
+                        throw new KeeperException.APIErrorException();
+                    }
+
+                    List<byte[]> resultData = new ArrayList<>();
+                    List<Stat> resultStats = new ArrayList<>();
+
+                    ZKDatabase zkDatabase = zks.getZKDatabase();
+                    for (String getDataPath : paths) {
+                        DataNode n = zkDatabase.getNode(getDataPath);
+                        Stat stat = new Stat();
+                        if (n == null) {
+                            resultData.add(null);
+                            resultStats.add(stat);
+                        } else {
+                            PrepRequestProcessor.checkACL(zks, request.cnxn, zkDatabase.aclForNode(n),
+                                    ZooDefs.Perms.READ,
+                                    request.authInfo, getDataPath, null);
+                            byte[] b = zkDatabase.getData(getDataPath, stat,
+                                    getDataListRequest.getWatch() ? cnxn : null);
+                            resultData.add(b);
+                            resultStats.add(stat);
+                        }
+                    }
+                    rsp = new GetDataListResponse(resultData, resultStats);
+                    break;
+                }
             }
         } catch (SessionMovedException e) {
             // session moved is a connection level error, we need to tear

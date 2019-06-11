@@ -20,6 +20,8 @@ package org.apache.zookeeper;
 
 import org.apache.zookeeper.data.Stat;
 
+import java.util.Arrays;
+
 /**
  * Encodes the result of a single part of a multiple operation commit.
  */
@@ -200,6 +202,41 @@ public abstract class OpResult {
         @Override
         public int hashCode() {
             return getType() * 35 + err;
+        }
+    }
+
+    public static class GetDataResult extends OpResult {
+
+        private byte[] data;
+        private Stat stat;
+
+        public GetDataResult(byte[] data, Stat stat) {
+            super(ZooDefs.OpCode.getData);
+            this.data = data;
+            this.stat = stat;
+        }
+
+        public byte[] getData() {
+            return data;
+        }
+        public Stat getStat() {
+            return stat;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof GetDataResult)) return false;
+
+            GetDataResult other = (GetDataResult) o;
+            return getType() == other.getType()
+                    && stat.equals(other.stat)
+                    && Arrays.equals(data, other.data);
+        }
+
+        @Override
+        public int hashCode() {
+            return (int) (getType() * 35 + stat.getMzxid() + Arrays.hashCode(data));
         }
     }
 }

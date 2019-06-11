@@ -685,7 +685,7 @@ public class NIOServerCnxn extends ServerCnxn {
      * @param r reply payload, can be null
      * @param tag Jute serialization tag, can be null
      * @param cacheKey key for caching the serialized payload. a null value
-     *     prvents caching
+     *     prevents caching
      * @param stat stat information for the the reply payload, used
      *     for cache invalidation. a value of 0 prevents caching.
      */

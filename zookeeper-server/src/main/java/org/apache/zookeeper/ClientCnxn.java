@@ -19,42 +19,16 @@
 package org.apache.zookeeper;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.ConnectException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketAddress;
-import java.net.SocketException;
-import java.nio.ByteBuffer;
-import java.util.HashSet;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.Map.Entry;
-import java.util.Queue;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.LinkedBlockingQueue;
-
-import javax.security.auth.login.LoginException;
-import javax.security.sasl.SaslException;
-
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.AsyncCallback.ACLCallback;
+import org.apache.zookeeper.AsyncCallback.AllChildrenNumberCallback;
 import org.apache.zookeeper.AsyncCallback.Children2Callback;
 import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
-import org.apache.zookeeper.AsyncCallback.AllChildrenNumberCallback;
 import org.apache.zookeeper.AsyncCallback.Create2Callback;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
+import org.apache.zookeeper.AsyncCallback.DataListCallback;
 import org.apache.zookeeper.AsyncCallback.EphemeralsCallback;
 import org.apache.zookeeper.AsyncCallback.MultiCallback;
 import org.apache.zookeeper.AsyncCallback.StatCallback;
@@ -68,8 +42,8 @@ import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.ZooKeeper.WatchRegistration;
-import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.client.HostProvider;
+import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.proto.AuthPacket;
@@ -78,9 +52,10 @@ import org.apache.zookeeper.proto.Create2Response;
 import org.apache.zookeeper.proto.CreateResponse;
 import org.apache.zookeeper.proto.ExistsResponse;
 import org.apache.zookeeper.proto.GetACLResponse;
-import org.apache.zookeeper.proto.GetChildren2Response;
 import org.apache.zookeeper.proto.GetAllChildrenNumberResponse;
+import org.apache.zookeeper.proto.GetChildren2Response;
 import org.apache.zookeeper.proto.GetChildrenResponse;
+import org.apache.zookeeper.proto.GetDataListResponse;
 import org.apache.zookeeper.proto.GetDataResponse;
 import org.apache.zookeeper.proto.GetEphemeralsResponse;
 import org.apache.zookeeper.proto.GetSASLRequest;
@@ -92,10 +67,36 @@ import org.apache.zookeeper.proto.SetWatches;
 import org.apache.zookeeper.proto.WatcherEvent;
 import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.apache.zookeeper.server.ZooKeeperThread;
-import org.apache.zookeeper.server.ZooTrace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+
+import javax.security.auth.login.LoginException;
+import javax.security.sasl.SaslException;
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.ConnectException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketAddress;
+import java.net.SocketException;
+import java.nio.ByteBuffer;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Queue;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * This class manages the socket i/o for the client. ClientCnxn maintains a list
@@ -272,7 +273,7 @@ public class ClientCnxn {
 
         Object ctx;
 
-        WatchRegistration watchRegistration;
+        List<WatchRegistration> watchRegistrationList;
 
         public boolean readOnly;
 
@@ -281,21 +282,21 @@ public class ClientCnxn {
         /** Convenience ctor */
         Packet(RequestHeader requestHeader, ReplyHeader replyHeader,
                Record request, Record response,
-               WatchRegistration watchRegistration) {
+               List<WatchRegistration> watchRegistrationList) {
             this(requestHeader, replyHeader, request, response,
-                 watchRegistration, false);
+                 watchRegistrationList, false);
         }
 
         Packet(RequestHeader requestHeader, ReplyHeader replyHeader,
                Record request, Record response,
-               WatchRegistration watchRegistration, boolean readOnly) {
+               List<WatchRegistration> watchRegistrationList, boolean readOnly) {
 
             this.requestHeader = requestHeader;
             this.replyHeader = replyHeader;
             this.request = request;
             this.response = response;
             this.readOnly = readOnly;
-            this.watchRegistration = watchRegistration;
+            this.watchRegistrationList = watchRegistrationList == null ? null : new ArrayList<>(watchRegistrationList);
         }
 
         public void createBB() {
@@ -535,10 +536,12 @@ public class ClientCnxn {
                   // each watcher will process the event
                   WatcherSetEventPair pair = (WatcherSetEventPair) event;
                   for (Watcher watcher : pair.watchers) {
-                      try {
-                          watcher.process(pair.event);
-                      } catch (Throwable t) {
-                          LOG.error("Error while calling watcher ", t);
+                      if (watcher != null) {
+                          try {
+                              watcher.process(pair.event);
+                          } catch (Throwable t) {
+                              LOG.error("Error while calling watcher ", t);
+                          }
                       }
                   }
                 } else if (event instanceof LocalCallback) {
@@ -567,6 +570,8 @@ public class ClientCnxn {
                     } else if (lcb.cb instanceof AsyncCallback.AllChildrenNumberCallback) {
                         ((AsyncCallback.AllChildrenNumberCallback) lcb.cb).processResult(lcb.rc,
                                 lcb.path, lcb.ctx, -1);
+                    } else if (lcb.cb instanceof DataListCallback) {
+                        ((AsyncCallback.DataListCallback) lcb.cb).processResult(lcb.rc, lcb.ctx, null);
                     } else {
                         ((VoidCallback) lcb.cb).processResult(lcb.rc, lcb.path,
                                 lcb.ctx);
@@ -696,6 +701,15 @@ public class ClientCnxn {
                     } else {
                       cb.processResult(rc, p.ctx, null);
                     }
+                  } else if (p.response instanceof GetDataListResponse) {
+                      AsyncCallback.DataListCallback cb = (AsyncCallback.DataListCallback) p.cb;
+                      GetDataListResponse rsp = (GetDataListResponse) p.response;
+                      // TODO: compare with multi response, e.g. alter rc?
+                      if (rc == 0) {
+                          // TODO: how do we get the input paths to compare length?
+                          List<OpResult> results = ZooKeeper.getDataListProcessResponse(rsp);
+                          cb.processResult(rc, p.ctx, results);
+                      }
                   }
                   else if (p.cb instanceof VoidCallback) {
                       VoidCallback cb = (VoidCallback) p.cb;
@@ -711,8 +725,12 @@ public class ClientCnxn {
     // @VisibleForTesting
     protected void finishPacket(Packet p) {
         int err = p.replyHeader.getErr();
-        if (p.watchRegistration != null) {
-            p.watchRegistration.register(err);
+        if (p.watchRegistrationList != null && p.watchRegistrationList.size() > 0) {
+            for (WatchRegistration watchRegistration : p.watchRegistrationList) {
+                if (watchRegistration != null) {
+                    watchRegistration.register(err);
+                }
+            }
         }
         // Add all the removed watch events to the event queue, so that the
         // clients will be notified with 'Data/Child WatchRemoved' event type.
@@ -1533,19 +1551,21 @@ public class ClientCnxn {
         return xid++;
     }
 
-    public ReplyHeader submitRequest(RequestHeader h, Record request,
-            Record response, WatchRegistration watchRegistration)
+    public ReplyHeader submitRequestMulti(RequestHeader h, Record request,
+                                          Record response,
+                                          List<WatchRegistration> watchRegistrationList)
             throws InterruptedException {
-        return submitRequest(h, request, response, watchRegistration, null);
+        return submitRequestMulti(h, request, response, watchRegistrationList, null);
     }
 
-    public ReplyHeader submitRequest(RequestHeader h, Record request,
-            Record response, WatchRegistration watchRegistration,
-            WatchDeregistration watchDeregistration)
+    public ReplyHeader submitRequestMulti(RequestHeader h, Record request,
+                                          Record response,
+                                          List<WatchRegistration> watchRegistrationList,
+                                          WatchDeregistration watchDeregistration)
             throws InterruptedException {
         ReplyHeader r = new ReplyHeader();
-        Packet packet = queuePacket(h, r, request, response, null, null, null,
-                null, watchRegistration, watchDeregistration);
+        Packet packet = queuePacketMulti(h, r, request, response, null, null, null,
+                null, watchRegistrationList, watchDeregistration);
         synchronized (packet) {
             if (requestTimeout > 0) {
                 // Wait for request completion with timeout
@@ -1561,6 +1581,20 @@ public class ClientCnxn {
             sendThread.cleanAndNotifyState();
         }
         return r;
+    }
+
+    public ReplyHeader submitRequest(RequestHeader h, Record request,
+            Record response, WatchRegistration watchRegistration)
+            throws InterruptedException {
+        return submitRequest(h, request, response, watchRegistration, null);
+    }
+
+    public ReplyHeader submitRequest(RequestHeader h, Record request,
+            Record response, WatchRegistration watchRegistration,
+            WatchDeregistration watchDeregistration)
+            throws InterruptedException {
+        return submitRequestMulti(h, request, response, Collections.singletonList(watchRegistration),
+                watchDeregistration);
     }
 
     /**
@@ -1606,19 +1640,28 @@ public class ClientCnxn {
             Record response, AsyncCallback cb, String clientPath,
             String serverPath, Object ctx, WatchRegistration watchRegistration) {
         return queuePacket(h, r, request, response, cb, clientPath, serverPath,
-                ctx, watchRegistration, null);
+                ctx, watchRegistration,null);
     }
 
     public Packet queuePacket(RequestHeader h, ReplyHeader r, Record request,
+                              Record response, AsyncCallback cb, String clientPath,
+                              String serverPath, Object ctx, WatchRegistration watchRegistration,
+                              WatchDeregistration watchDeregistration) {
+        return queuePacketMulti(h, r, request, response, cb, clientPath, serverPath,
+                ctx, Collections.singletonList(watchRegistration),watchDeregistration);
+    }
+
+
+    public Packet queuePacketMulti(RequestHeader h, ReplyHeader r, Record request,
             Record response, AsyncCallback cb, String clientPath,
-            String serverPath, Object ctx, WatchRegistration watchRegistration,
+            String serverPath, Object ctx, List<WatchRegistration> watchRegistrationList,
             WatchDeregistration watchDeregistration) {
-        Packet packet = null;
+        Packet packet;
 
         // Note that we do not generate the Xid for the packet yet. It is
         // generated later at send-time, by an implementation of ClientCnxnSocket::doIO(),
         // where the packet is actually sent.
-        packet = new Packet(h, r, request, response, watchRegistration);
+        packet = new Packet(h, r, request, response, watchRegistrationList);
         packet.cb = cb;
         packet.ctx = ctx;
         packet.clientPath = clientPath;

@@ -28,7 +28,7 @@ import org.apache.zookeeper.data.Id;
 
 @InterfaceAudience.Public
 public class ZooDefs {
-   
+
    final public static String CONFIG_NODE = "/zookeeper/config";
 
    @InterfaceAudience.Public
@@ -60,7 +60,7 @@ public class ZooDefs {
         public final int check = 13;
 
         public final int multi = 14;
-        
+
         public final int create2 = 15;
 
         public final int reconfig = 16;
@@ -74,6 +74,8 @@ public class ZooDefs {
         public final int deleteContainer = 20;
 
         public final int createTTL = 21;
+
+        public final int getDataList = 201;
 
         public final int auth = 100;
 

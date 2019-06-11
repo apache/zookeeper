@@ -25,6 +25,7 @@ import org.apache.zookeeper.AsyncCallback.Children2Callback;
 import org.apache.zookeeper.AsyncCallback.ChildrenCallback;
 import org.apache.zookeeper.AsyncCallback.Create2Callback;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
+import org.apache.zookeeper.AsyncCallback.DataListCallback;
 import org.apache.zookeeper.AsyncCallback.MultiCallback;
 import org.apache.zookeeper.AsyncCallback.StatCallback;
 import org.apache.zookeeper.AsyncCallback.StringCallback;
@@ -57,11 +58,12 @@ import org.apache.zookeeper.proto.GetAllChildrenNumberRequest;
 import org.apache.zookeeper.proto.GetAllChildrenNumberResponse;
 import org.apache.zookeeper.proto.GetChildrenRequest;
 import org.apache.zookeeper.proto.GetChildrenResponse;
+import org.apache.zookeeper.proto.GetDataListRequest;
 import org.apache.zookeeper.proto.GetDataRequest;
 import org.apache.zookeeper.proto.GetDataResponse;
+import org.apache.zookeeper.proto.GetDataListResponse;
 import org.apache.zookeeper.proto.GetEphemeralsRequest;
 import org.apache.zookeeper.proto.GetEphemeralsResponse;
-import org.apache.zookeeper.proto.ReconfigRequest;
 import org.apache.zookeeper.proto.RemoveWatchesRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
@@ -87,6 +89,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * This is the main class of ZooKeeper client library. To use a ZooKeeper
@@ -3159,6 +3162,166 @@ public class ZooKeeper implements AutoCloseable {
     private void validateACL(List<ACL> acl) throws KeeperException.InvalidACLException {
         if (acl == null || acl.isEmpty() || acl.contains(null)) {
             throw new KeeperException.InvalidACLException();
+        }
+    }
+
+    /**
+     * Return data and stats from multiple paths, set watch on all or none.
+     * Returns a List of OpResult in the same order as the paths input List.
+     *
+     * Finishes with best-effort, the return list can contain either GetDataResult or ErrResult.
+
+     * @param paths - paths on which to fetch data and stats
+     * @param watch - whether to set watches on all paths
+     * @return a List of OpResult, in the same order as paths.  OpResult can be either GetDatResult or ErrorResult
+     */
+    public List<OpResult> getDataList(List<String> paths, boolean watch)
+            throws KeeperException, InterruptedException {
+        return getDataList(paths, watch ? watchManager.defaultWatcher : null);
+    }
+
+    /**
+     * Return data and stats from multiple paths, set watch on all or none.
+     * Returns a List of OpResult in the same order as the paths input List.
+     *
+     * Finishes with best-effort, the return list can contain either GetDataResult or ErrResult.
+
+     * @param paths - paths on which to fetch data and stats
+     * @param watcher - watcher to set on all paths
+     * @return a List of OpResult, in the same order as paths.  OpResult can be either GetDatResult or ErrorResult
+     */
+    private List<OpResult> getDataList(List<String> paths, Watcher watcher)
+            throws KeeperException, InterruptedException {
+
+        getDataMultiValidatePaths(paths);
+
+        // watch contains the un-chroot paths
+        List<WatchRegistration> watchRegistrationList = new ArrayList<>();
+        if (watcher != null) {
+            for (String path : paths) {
+                watchRegistrationList.add(new DataWatchRegistration(watcher, path));
+            }
+        }
+
+        final List<String> serverPaths = paths.stream().map(this::prependChroot).collect(Collectors.toList());
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.getDataList);
+        GetDataListRequest request = new GetDataListRequest();
+        request.setPaths(serverPaths);
+        request.setWatch(watcher != null);
+        GetDataListResponse response = new GetDataListResponse();
+        ReplyHeader r = cnxn.submitRequestMulti(h, request, response, watchRegistrationList);
+
+        if (r.getErr() != 0) {
+            throw KeeperException.create(KeeperException.Code.get(r.getErr()));
+        }
+
+        return getDataListProcessResponse(response);
+    }
+
+
+    /**
+     * convert GetDataListResponse into a List of OpResult.  Used by sync and async clients
+     *
+     * @param response -
+     * @return - List of OpResult - can be either ErrorResult or GetDataResult
+     * @throws KeeperException -
+     */
+    static List<OpResult> getDataListProcessResponse(GetDataListResponse response) throws KeeperException {
+
+        List<OpResult> results = new ArrayList<>();
+
+        List<byte[]> dataList = response.getData();
+        List<Stat> stats = response.getStats();
+
+        // TODO: compare with input paths, need to make this available for async case
+        if (dataList == null || stats == null || dataList.size() != stats.size()) {
+            throw KeeperException.create(Code.APIERROR);
+        }
+
+        for (int i = 0; i < dataList.size(); i++) {
+            byte[] data = dataList.get(i);
+            Stat stat = stats.get(i);
+            OpResult result;
+            // 2 conditions indicate an error for a path: the stat needs to be unset, and the data null
+            if (data == null && stat.equals(new Stat())) {
+                result = new OpResult.ErrorResult(Code.NONODE.intValue());
+            } else {
+                result = new OpResult.GetDataResult(data, stat);
+            }
+            results.add(result);
+        }
+
+        return results;
+    }
+
+
+    /**
+     * Return data and stats from multiple paths, set watch on all or none.
+     * Returns a List of OpResult in the same order as the paths input List.
+     *
+     * Finishes with best-effort, the return list can contain either GetDataResult or ErrResult.
+
+     * @param paths - paths on which to fetch data and stats
+     * @param watch - whether to set watches on all paths
+     * @param cb - DataListCallback contains a List of OpResult, in the same order as paths.
+     *           OpResult can be either GetDatResult or ErrorResult
+     * @param ctx - async context
+     */
+    public void getDataList(List<String> paths, boolean watch, DataListCallback cb, Object ctx) {
+        getDataList(paths, watch ? watchManager.defaultWatcher : null, cb, ctx);
+    }
+
+
+    /**
+     * Return data and stats from multiple paths, set watch on all or none.
+     * Returns a List of OpResult in the same order as the paths input List.
+     *
+     * Finishes with best-effort, the return list can contain either GetDataResult or ErrResult.
+
+     * @param paths - paths on which to fetch data and stats
+     * @param watcher - whether to set watches on all paths
+     * @param cb - DataListCallback contains a List of OpResult, in the same order as paths.
+     *           OpResult can be either GetDatResult or ErrorResult
+     * @param ctx - async context
+     */
+    public void getDataList(List<String> paths, Watcher watcher, DataListCallback cb, Object ctx) {
+
+        getDataMultiValidatePaths(paths);
+
+        // watch contains the un-chroot paths
+        List<WatchRegistration> watchRegistrationList = new ArrayList<>();
+        if (watcher != null) {
+            for (String path : paths) {
+                watchRegistrationList.add(new DataWatchRegistration(watcher, path));
+            }
+        }
+
+        final List<String> serverPaths = paths.stream().map(this::prependChroot).collect(Collectors.toList());
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.getDataList);
+        GetDataListRequest request = new GetDataListRequest();
+        request.setPaths(serverPaths);
+        request.setWatch(watcher != null);
+        GetDataListResponse response = new GetDataListResponse();
+        cnxn.queuePacketMulti(h, new ReplyHeader(), request, response, cb,
+                null, null, ctx, watchRegistrationList, null);
+    }
+
+    private void getDataMultiValidatePaths(List<String> paths) {
+        if (paths == null) {
+            throw new IllegalArgumentException("Paths cannot be null");
+        }
+
+        if (paths.size() == 0) {
+            throw new IllegalArgumentException("Paths size must be > 0");
+        }
+
+        // First pass, fail fast, all or none.
+        for (String path: paths) {
+            PathUtils.validatePath(path);
         }
     }
 }

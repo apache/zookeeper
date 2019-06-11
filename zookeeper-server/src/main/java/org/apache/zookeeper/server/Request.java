@@ -95,7 +95,7 @@ public class Request {
     private KeeperException e;
 
     public QuorumVerifier qv = null;
-    
+
     /**
      * If this is a create or close request for a local-only session.
      */
@@ -170,6 +170,7 @@ public class Request {
         case OpCode.sync:
         case OpCode.checkWatches:
         case OpCode.removeWatches:
+        case OpCode.getDataList:
             return true;
         default:
             return false;
@@ -185,6 +186,7 @@ public class Request {
         case OpCode.getChildren2:
         case OpCode.getData:
         case OpCode.getEphemerals:
+        case OpCode.getDataList:
             return false;
         case OpCode.create:
         case OpCode.create2:
@@ -263,6 +265,8 @@ public class Request {
             return "checkWatches";
         case OpCode.removeWatches:
             return "removeWatches";
+        case OpCode.getDataList:
+            return "getDataList";
         default:
             return "unknown " + op;
         }

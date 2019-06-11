@@ -18,14 +18,14 @@
 
 package org.apache.zookeeper.server;
 
+import org.apache.zookeeper.ZooDefs.OpCode;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.text.DateFormat;
 import java.util.Date;
-
-import org.apache.zookeeper.ZooDefs.OpCode;
 
 public class TraceFormatter {
 
@@ -89,6 +89,8 @@ public class TraceFormatter {
             return "setWatches";
         case OpCode.sasl:
             return "sasl";
+        case OpCode.getDataList:
+            return "getDataList";
         default:
             return "unknown " + op;
         }

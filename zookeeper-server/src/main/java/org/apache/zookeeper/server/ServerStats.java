@@ -54,7 +54,7 @@ public class ServerStats {
         public long getDataDirSize();
         public long getLogDirSize();
     }
-    
+
     public ServerStats(Provider provider) {
         this.provider = provider;
     }
@@ -75,7 +75,7 @@ public class ServerStats {
     public long getOutstandingRequests() {
         return provider.getOutstandingRequests();
     }
-    
+
     public long getLastProcessedZxid(){
         return provider.getLastProcessedZxid();
     }
@@ -87,7 +87,7 @@ public class ServerStats {
     public long getLogDirSize() {
         return provider.getLogDirSize();
     }
-    
+
     public long getPacketsReceived() {
         return packetsReceived.get();
     }
@@ -99,7 +99,7 @@ public class ServerStats {
     public String getServerState() {
         return provider.getState();
     }
-    
+
     /** The number of client connections alive to this server */
     public int getNumAliveClientConnections() {
     	return provider.getNumAliveConnections();
