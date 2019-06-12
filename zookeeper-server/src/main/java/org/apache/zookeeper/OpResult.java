@@ -21,6 +21,7 @@ package org.apache.zookeeper;
 import org.apache.zookeeper.data.Stat;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Encodes the result of a single part of a multiple operation commit.
@@ -173,38 +174,40 @@ public abstract class OpResult {
     }
 
     /**
-     * An error result from any kind of operation.  The point of error results
-     * is that they contain an error code which helps understand what happened.
-     * @see KeeperException.Code
-     *
+     * A result from a getChildren operation. Provides a list which contains
+     * the names of the children of a given node.
      */
-    public static class ErrorResult extends OpResult {
-        private int err;
+    public static class GetChildrenResult extends OpResult {
+        private List<String> children;
 
-        public ErrorResult(int err) {
-            super(ZooDefs.OpCode.error);
-            this.err = err;
+        public GetChildrenResult(List<String> children) {
+            super(ZooDefs.OpCode.getChildren);
+            this.children = children;
         }
 
-        public int getErr() {
-            return err;
+        public List<String> getChildren() {
+            return children;
         }
 
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof ErrorResult)) return false;
+            if (!(o instanceof GetChildrenResult)) return false;
 
-            ErrorResult other = (ErrorResult) o;
-            return getType() == other.getType() && err == other.getErr();
+            GetChildrenResult other = (GetChildrenResult) o;
+            return getType() == other.getType() && children.equals(other.children);
         }
 
         @Override
         public int hashCode() {
-            return getType() * 35 + err;
+            return getType() * 35 + children.hashCode();
         }
     }
 
+    /**
+     * A result from a getData operation. The data is represented as a byte array
+     * and a Stat.
+     */
     public static class GetDataResult extends OpResult {
 
         private byte[] data;
@@ -237,6 +240,39 @@ public abstract class OpResult {
         @Override
         public int hashCode() {
             return (int) (getType() * 35 + stat.getMzxid() + Arrays.hashCode(data));
+        }
+    }
+
+    /**
+     * An error result from any kind of operation.  The point of error results
+     * is that they contain an error code which helps understand what happened.
+     * @see KeeperException.Code
+     *
+     */
+    public static class ErrorResult extends OpResult {
+        private int err;
+
+        public ErrorResult(int err) {
+            super(ZooDefs.OpCode.error);
+            this.err = err;
+        }
+
+        public int getErr() {
+            return err;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof ErrorResult)) return false;
+
+            ErrorResult other = (ErrorResult) o;
+            return getType() == other.getType() && err == other.getErr();
+        }
+
+        @Override
+        public int hashCode() {
+            return getType() * 35 + err;
         }
     }
 }

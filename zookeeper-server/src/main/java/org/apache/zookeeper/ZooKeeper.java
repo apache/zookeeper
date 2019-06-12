@@ -91,6 +91,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static org.apache.zookeeper.Op.OpKind.READ;
+
 /**
  * This is the main class of ZooKeeper client library. To use a ZooKeeper
  * service, an application must first instantiate an object of ZooKeeper class.
@@ -1798,7 +1800,7 @@ public class ZooKeeper implements AutoCloseable {
     }
 
     /**
-     * Executes multiple ZooKeeper operations or none of them.
+     * Executes multiple ZooKeeper operations. In case of transactions all of them or none of them will be executed.
      * <p>
      * On success, a list of results is returned.
      * On failure, an exception is raised which contains partial results and
@@ -1812,7 +1814,7 @@ public class ZooKeeper implements AutoCloseable {
      * thrown.
      *
      * @param ops An iterable that contains the operations to be done.
-     * These should be created using the factory methods on {@link Op}.
+     * These should be created using the factory methods on {@link Op} and must be the same kind of ops.
      * @return A list of results, one for each input Op, the order of
      * which exactly matches the order of the <code>ops</code> input
      * operations.
@@ -1821,7 +1823,7 @@ public class ZooKeeper implements AutoCloseable {
      * partially succeeded if this exception is thrown.
      * @throws KeeperException If the operation could not be completed
      * due to some error in doing one of the specified ops.
-     * @throws IllegalArgumentException if an invalid path is specified
+     * @throws IllegalArgumentException if an invalid path is specified or different kind of ops are mixed
      *
      * @since 3.4.0
      */
@@ -1898,7 +1900,10 @@ public class ZooKeeper implements AutoCloseable {
 
     protected void multiInternal(MultiTransactionRecord request, MultiCallback cb, Object ctx) {
         RequestHeader h = new RequestHeader();
-        h.setType(ZooDefs.OpCode.multi);
+        switch (request.getOpKind()) {
+            case TRANSACTION: h.setType(ZooDefs.OpCode.multi); break;
+            case READ: h.setType(ZooDefs.OpCode.multiRead); break;
+        }
         MultiResponse response = new MultiResponse();
         cnxn.queuePacket(h, new ReplyHeader(), request, response, cb, null, null, ctx, null);
     }
@@ -1906,7 +1911,10 @@ public class ZooKeeper implements AutoCloseable {
     protected List<OpResult> multiInternal(MultiTransactionRecord request)
         throws InterruptedException, KeeperException {
         RequestHeader h = new RequestHeader();
-        h.setType(ZooDefs.OpCode.multi);
+        switch (request.getOpKind()) {
+            case TRANSACTION: h.setType(ZooDefs.OpCode.multi); break;
+            case READ: h.setType(ZooDefs.OpCode.multiRead); break;
+        }
         MultiResponse response = new MultiResponse();
         ReplyHeader r = cnxn.submitRequest(h, request, response, null);
         if (r.getErr() != 0) {
@@ -1914,7 +1922,11 @@ public class ZooKeeper implements AutoCloseable {
         }
 
         List<OpResult> results = response.getResultList();
-        
+        // In case of only read operations there is no need to throw an exception
+        // as the subResults are still possibly valid.
+        if(request.getOpKind() == Op.OpKind.READ)
+            return results;
+
         ErrorResult fatalError = null;
         for (OpResult result : results) {
             if (result instanceof ErrorResult && ((ErrorResult)result).getErr() != KeeperException.Code.OK.intValue()) {

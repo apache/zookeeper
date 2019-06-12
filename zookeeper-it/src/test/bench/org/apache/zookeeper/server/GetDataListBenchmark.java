@@ -33,6 +33,9 @@ public class GetDataListBenchmark {
         @Param( { "0", "100", "1000", "10000" })
         String batchSize;
 
+        @Param( { "true", "false" })
+        String useMulti;
+
         @Setup(Level.Trial)
         public void setup() throws Exception {
 
@@ -63,7 +66,7 @@ public class GetDataListBenchmark {
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     @Fork(value = 3)
     public void measureGetDataListNoWatch(GetDataListBenchmark.ClientState state) throws KeeperException, InterruptedException {
-        state.testReadNodesNoWatch(NUM_TOP_LEVEL_ZNODES, Integer.parseInt(state.batchSize), state.syncOrAsync,
+        state.testReadNodesNoWatch(NUM_TOP_LEVEL_ZNODES, Integer.parseInt(state.batchSize), state.syncOrAsync, Boolean.parseBoolean(state.useMulti),
                 NUM_SECOND_LEVEL_ZNODES * NUM_TOP_LEVEL_ZNODES + NUM_TOP_LEVEL_ZNODES);
         // TODO: Blackhole results?
     }

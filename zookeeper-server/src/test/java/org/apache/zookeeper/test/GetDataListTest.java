@@ -3,6 +3,7 @@ package org.apache.zookeeper.test;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.Op;
 import org.apache.zookeeper.OpResult;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
@@ -14,6 +15,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class GetDataListTest extends ClientBase {
 
@@ -172,7 +174,7 @@ public class GetDataListTest extends ClientBase {
         boolean watch = false;
     }
 
-    private ReadNodesResults readNodes(int numTopLevel, int batchSize, String syncOrAsync, boolean watch) throws KeeperException, InterruptedException {
+    private ReadNodesResults readNodes(int numTopLevel, int batchSize, String syncOrAsync, boolean watch, boolean multi) throws KeeperException, InterruptedException {
 
         ReadNodesResults readNodesResults = new ReadNodesResults();
 
@@ -182,7 +184,7 @@ public class GetDataListTest extends ClientBase {
         if (batchSize == 0) {
             readNodesSingle(numTopLevel, children, syncOrAsync, watch, readNodesResults);
         } else {
-            readNodesMulti(numTopLevel, children, batchSize, syncOrAsync, watch, readNodesResults);
+            readNodesBatch(numTopLevel, children, batchSize, syncOrAsync, watch, multi, readNodesResults);
         }
 
         readNodesResults.elapsedTime = System.currentTimeMillis() - t0;
@@ -366,8 +368,8 @@ public class GetDataListTest extends ClientBase {
     }
 
 
-    private void readNodesMulti(int numTopLevel, List<String> children, int batchSize,
-                                String syncOrAsync, boolean watch, ReadNodesResults readNodesResults)
+    private void readNodesBatch(int numTopLevel, List<String> children, int batchSize,
+                                String syncOrAsync, boolean watch, boolean multi, ReadNodesResults readNodesResults)
             throws KeeperException, InterruptedException {
         int topLevel = 0;
 
@@ -387,7 +389,7 @@ public class GetDataListTest extends ClientBase {
                 paths.add(curPath);
                 if (paths.size() == batchSize) {
                     numRequestsAsyncSubmitted++;
-                    doBatchRead(paths, batchStats, async, watch);
+                    doBatchRead(paths, batchStats, async, watch, multi);
                 }
             }
 
@@ -395,7 +397,7 @@ public class GetDataListTest extends ClientBase {
             int remainderSize = paths.size();
             if (remainderSize > 0) {
                 numRequestsAsyncSubmitted++;
-                doBatchRead(paths, batchStats, async, watch);
+                doBatchRead(paths, batchStats, async, watch, multi);
             }
 
             if (!async) {
@@ -426,12 +428,19 @@ public class GetDataListTest extends ClientBase {
     }
 
 
-    private void doBatchRead(List<String> paths, BatchStats batchStats, boolean async, boolean watch)
+    private void doBatchRead(List<String> paths, BatchStats batchStats, boolean async, boolean watch, boolean multi)
             throws KeeperException, InterruptedException {
         if (async) {
-            zooKeeper.getDataList(paths, watch, batchStats, batchStats);
+            if (multi) {
+                Iterable<Op> ops = paths.stream().map(Op::getData).collect(Collectors.toList());
+                zooKeeper.multi(ops, (rc, path, ctx, opResults) -> batchStats.processResult(rc, ctx, opResults), batchStats);
+            } else {
+                zooKeeper.getDataList(paths, watch, batchStats, batchStats);
+            }
         } else {
-            List<OpResult> opResults = zooKeeper.getDataList(paths, watch);
+            List<OpResult> opResults = multi ?
+                    zooKeeper.multi(paths.stream().map(Op::getData).collect(Collectors.toList())) :
+                    zooKeeper.getDataList(paths, watch);
             batchStats.numRequests++;
 
             int singleResponseSize = 0;
@@ -485,11 +494,11 @@ public class GetDataListTest extends ClientBase {
         return totalNodesMutated;
     }
 
-    private void testWithoutWatch(int numTopLevelZNodes, int expectedTotalNodeRead) throws Exception {
-        testReadNodesNoWatch(numTopLevelZNodes, 0, "sync", expectedTotalNodeRead);
-        testReadNodesNoWatch(numTopLevelZNodes, 0, "async", expectedTotalNodeRead);
-        testReadNodesNoWatch(numTopLevelZNodes, 100, "sync", expectedTotalNodeRead);
-        testReadNodesNoWatch(numTopLevelZNodes, 100, "async", expectedTotalNodeRead);
+    private void testWithoutWatch(int numTopLevelZNodes, int expectedTotalNodeRead, boolean multi) throws Exception {
+        testReadNodesNoWatch(numTopLevelZNodes, 0, "sync", multi, expectedTotalNodeRead);
+        testReadNodesNoWatch(numTopLevelZNodes, 0, "async", multi, expectedTotalNodeRead);
+        testReadNodesNoWatch(numTopLevelZNodes, 100, "sync", multi, expectedTotalNodeRead);
+        testReadNodesNoWatch(numTopLevelZNodes, 100, "async", multi, expectedTotalNodeRead);
     }
 
 
@@ -521,12 +530,12 @@ public class GetDataListTest extends ClientBase {
     }
 
     public void testReadNodesAndWatch(int numTopLevelZNodes,
-                                       int batchSize,
-                                       String syncOrAsync,
-                                       int expectedTotalNodesRead,
-                                       AtomicInteger numNodeDataChanged,
-                                       int modForSetData) throws KeeperException, InterruptedException {
-        ReadNodesResults readNodesResults = readNodes(numTopLevelZNodes, batchSize, syncOrAsync, true);
+                                      int batchSize,
+                                      String syncOrAsync,
+                                      int expectedTotalNodesRead,
+                                      AtomicInteger numNodeDataChanged,
+                                      int modForSetData) throws KeeperException, InterruptedException {
+        ReadNodesResults readNodesResults = readNodes(numTopLevelZNodes, batchSize, syncOrAsync, true, false);
         Assert.assertEquals(expectedTotalNodesRead, readNodesResults.totalNodesRead);
         Assert.assertEquals(readNodesResults.syncAsync, syncOrAsync);
 
@@ -540,10 +549,11 @@ public class GetDataListTest extends ClientBase {
     }
 
     public void testReadNodesNoWatch(int numTopLevelZNodes,
-                                      int batchSize,
-                                      String syncOrAsync,
-                                      int expectedTotalNodesRead) throws KeeperException, InterruptedException {
-        ReadNodesResults readNodesResults = readNodes(numTopLevelZNodes, batchSize, syncOrAsync, false);
+                                     int batchSize,
+                                     String syncOrAsync,
+                                     boolean multi,
+                                     int expectedTotalNodesRead) throws KeeperException, InterruptedException {
+        ReadNodesResults readNodesResults = readNodes(numTopLevelZNodes, batchSize, syncOrAsync, false, multi);
         Assert.assertEquals(expectedTotalNodesRead, readNodesResults.totalNodesRead);
         Assert.assertEquals(readNodesResults.syncAsync, syncOrAsync);
 
@@ -569,8 +579,9 @@ public class GetDataListTest extends ClientBase {
             final int EXPECTED_TOTAL_NODES_READ = numTopLevelZNodes * numSecondLevelZNodes + numTopLevelZNodes;
             final int modForSetData = 10;
 
-            testWithoutWatch(numTopLevelZNodes, EXPECTED_TOTAL_NODES_READ);
-            testWithWatch(numTopLevelZNodes, EXPECTED_TOTAL_NODES_READ, modForSetData);
+            //testWithoutWatch(numTopLevelZNodes, EXPECTED_TOTAL_NODES_READ, false);
+            testWithoutWatch(numTopLevelZNodes, EXPECTED_TOTAL_NODES_READ, true);
+            //testWithWatch(numTopLevelZNodes, EXPECTED_TOTAL_NODES_READ, modForSetData);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -587,6 +598,7 @@ public class GetDataListTest extends ClientBase {
         int batchReadSize = 0;
         String syncOrAsync = "async";
         boolean watch = false;
+        boolean multi = false;
 
         if (argv != null) {
 
@@ -606,6 +618,15 @@ public class GetDataListTest extends ClientBase {
                 watch = Boolean.parseBoolean(argv[3]);
                 System.out.println("watch " + watch);
             }
+            if (argv.length == 5) {
+                multi = Boolean.parseBoolean(argv[4]);
+                System.out.println("Multi " + multi);
+            }
+        }
+
+        if (watch && multi) {
+            System.out.println("WARN: multi and watch not supported, setting watch to false");
+            watch = false;
         }
 
         GetDataListTest getDataListTest = new GetDataListTest();
@@ -637,7 +658,7 @@ public class GetDataListTest extends ClientBase {
             getDataListTest.testReadNodesAndWatch(numLevels, batchReadSize, syncOrAsync, EXPECTED_TOTAL_NODES_READ,
                     numNodeDataChanged, modForSetData);
         } else {
-            getDataListTest.testReadNodesNoWatch(numLevels, batchReadSize, syncOrAsync, EXPECTED_TOTAL_NODES_READ);
+            getDataListTest.testReadNodesNoWatch(numLevels, batchReadSize, syncOrAsync, multi, EXPECTED_TOTAL_NODES_READ);
         }
 
         getDataListTest.tearDown();
