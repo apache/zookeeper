@@ -18,6 +18,7 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import org.apache.zookeeper.server.ServerMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,10 +43,12 @@ class AckRequestProcessor implements RequestProcessor {
      */
     public void processRequest(Request request) {
         QuorumPeer self = leader.self;
-        if(self != null)
+        if(self != null) {
+            request.logLatency(ServerMetrics.getMetrics().PROPOSAL_ACK_CREATION_LATENCY);
             leader.processAck(self.getId(), request.zxid, null);
-        else
+        } else {
             LOG.error("Null QuorumPeer");
+        }
     }
 
     public void shutdown() {

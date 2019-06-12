@@ -140,7 +140,7 @@ public class ReconfigLegacyTest extends QuorumPeerTestBase {
     }
 
     /**
-     * {@link https://issues.apache.org/jira/browse/ZOOKEEPER-1992}
+     * https://issues.apache.org/jira/browse/ZOOKEEPER-1992
      * 1. When a server starts from old style static config, without a client port in the server
      *    specification, it should keep the client port in static config file.
      * 2. After port reconfig, the old port should be removed from static file

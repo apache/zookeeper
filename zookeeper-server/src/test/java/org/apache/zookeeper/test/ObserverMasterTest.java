@@ -516,34 +516,32 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher{
         Assert.assertTrue("observer not emitting observer_master_id", stats.containsKey("observer_master_id"));
 
         // check the stats for the first peer
-        stats = Commands.runCommand("mntr", q1.getQuorumPeer().getActiveServer(), emptyMap).toMap();
         if (testObserverMaster) {
             if (q1.getQuorumPeer().leader == null) {
-                Assert.assertEquals(1, stats.get("synced_observers"));
+                Assert.assertEquals(Integer.valueOf(1), q1.getQuorumPeer().getSynced_observers_metric());
             } else {
-                Assert.assertEquals(0, stats.get("synced_observers"));
+                Assert.assertEquals(Integer.valueOf(0), q1.getQuorumPeer().getSynced_observers_metric());
             }
         } else {
             if (q1.getQuorumPeer().leader == null) {
-                Assert.assertNull(stats.get("synced_observers"));
+                Assert.assertNull(q1.getQuorumPeer().getSynced_observers_metric());
             } else {
-                Assert.assertEquals(1, stats.get("synced_observers"));
+                Assert.assertEquals(Integer.valueOf(1), q1.getQuorumPeer().getSynced_observers_metric());
             }
         }
 
         // check the stats for the second peer
-        stats = Commands.runCommand("mntr", q2.getQuorumPeer().getActiveServer(), emptyMap).toMap();
         if (testObserverMaster) {
             if (q2.getQuorumPeer().leader == null) {
-                Assert.assertEquals(1, stats.get("synced_observers"));
+                Assert.assertEquals(Integer.valueOf(1), q2.getQuorumPeer().getSynced_observers_metric());
             } else {
-                Assert.assertEquals(0, stats.get("synced_observers"));
+                Assert.assertEquals(Integer.valueOf(0), q2.getQuorumPeer().getSynced_observers_metric());
             }
         } else {
             if (q2.getQuorumPeer().leader == null) {
-                Assert.assertNull(stats.get("synced_observers"));
+                Assert.assertNull(q2.getQuorumPeer().getSynced_observers_metric());
             } else {
-                Assert.assertEquals(1, stats.get("synced_observers"));
+                Assert.assertEquals(Integer.valueOf(1), q2.getQuorumPeer().getSynced_observers_metric());
             }
         }
 

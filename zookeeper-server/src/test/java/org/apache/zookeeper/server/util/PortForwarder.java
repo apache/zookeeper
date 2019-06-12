@@ -56,7 +56,7 @@ import org.slf4j.LoggerFactory;
  *   This way server 1 can communicate with servers 2 and 3
  *  ....
  *   
- *   List<PortForwarder> pfs = startForwarding();
+ *   List&lt;PortForwarder&gt; pfs = startForwarding();
  *  ....
  *   // simulate a network interruption for server 1
  *   stopForwarding(pfs);
@@ -65,8 +65,8 @@ import org.slf4j.LoggerFactory;
  *   pfs = startForwarding();
  *
  *
- *  private List<PortForwarder> startForwarding() throws IOException {
- *      List<PortForwarder> res = new ArrayList<PortForwarder>();
+ *  private List&lt;PortForwarder&gt; startForwarding() throws IOException {
+ *      List&lt;PortForwarder&gt; res = new ArrayList&lt;PortForwarder&gt;();
  *      res.add(new PortForwarder(8301, 7301));
  *      res.add(new PortForwarder(8401, 7401));
  *      res.add(new PortForwarder(7302, 8302));
@@ -76,7 +76,7 @@ import org.slf4j.LoggerFactory;
  *      return res;
  *  }
  *  
- *  private void stopForwarding(List<PortForwarder> pfs) throws Exception {
+ *  private void stopForwarding(List&lt;PortForwarder&gt; pfs) throws Exception {
  *       for (PortForwarder pf : pfs) {
  *           pf.shutdown();
  *       }

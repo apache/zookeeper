@@ -197,7 +197,7 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
     }
 
     /**
-     * Starts servers 1 & 2 as participants and
+     * Starts servers 1 and 2 as participants and
      * adds them to the list to be reconfigured
      * into the ensemble.
      */
@@ -212,7 +212,7 @@ public class StandaloneDisabledTest extends QuorumPeerTestBase {
         }
     }
      /**
-     * Starts servers 1 & 2 as participants,
+     * Starts servers 1 and 2 as participants,
      * adds them to the list to be reconfigured
      * into the ensemble, and adds an observer
      * version of their information to a list

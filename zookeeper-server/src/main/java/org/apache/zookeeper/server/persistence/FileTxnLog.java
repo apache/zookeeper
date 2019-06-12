@@ -717,8 +717,7 @@ public class FileTxnLog implements TxnLog {
 
         /**
          * Invoked to indicate that the input stream has been created.
-         * @param ia input archive
-         * @param is file input stream associated with the input archive.
+         * @param logFile the file to read.
          * @throws IOException
          **/
         protected InputArchive createInputArchive(File logFile) throws IOException {

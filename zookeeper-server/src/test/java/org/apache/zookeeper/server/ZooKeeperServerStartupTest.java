@@ -72,7 +72,7 @@ public class ZooKeeperServerStartupTest extends ZKTestCase {
 
     /**
      * Test case for
-     * {@link https://issues.apache.org/jira/browse/ZOOKEEPER-2383}.
+     * https://issues.apache.org/jira/browse/ZOOKEEPER-2383
      */
     @Test(timeout = 30000)
     public void testClientConnectionRequestDuringStartupWithNIOServerCnxn()
@@ -110,7 +110,7 @@ public class ZooKeeperServerStartupTest extends ZKTestCase {
 
     /**
      * Test case for
-     * {@link https://issues.apache.org/jira/browse/ZOOKEEPER-2383}.
+     * https://issues.apache.org/jira/browse/ZOOKEEPER-2383
      */
     @Test(timeout = 30000)
     public void testClientConnectionRequestDuringStartupWithNettyServerCnxn()
@@ -163,7 +163,7 @@ public class ZooKeeperServerStartupTest extends ZKTestCase {
 
     /**
      * Test case for
-     * {@link https://issues.apache.org/jira/browse/ZOOKEEPER-2383}.
+     * https://issues.apache.org/jira/browse/ZOOKEEPER-2383
      */
     @Test(timeout = 30000)
     public void testFourLetterWords() throws Exception {

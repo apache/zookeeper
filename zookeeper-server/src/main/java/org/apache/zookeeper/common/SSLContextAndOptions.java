@@ -23,10 +23,16 @@ import java.net.Socket;
 import java.util.Arrays;
 
 import javax.net.ssl.SSLContext;
+import java.util.Collections;
+import java.util.List;
+
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLSocket;
 
+import io.netty.handler.ssl.IdentityCipherSuiteFilter;
+import io.netty.handler.ssl.JdkSslContext;
+import io.netty.handler.ssl.SslContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +51,7 @@ public class SSLContextAndOptions {
     private final X509Util x509Util;
     private final String[] enabledProtocols;
     private final String[] cipherSuites;
+    private final List<String> cipherSuitesAsList;
     private final X509Util.ClientAuth clientAuth;
     private final SSLContext sslContext;
     private final int handshakeDetectionTimeoutMillis;
@@ -60,7 +67,9 @@ public class SSLContextAndOptions {
         this.x509Util = requireNonNull(x509Util);
         this.sslContext = requireNonNull(sslContext);
         this.enabledProtocols = getEnabledProtocols(requireNonNull(config), sslContext);
-        this.cipherSuites = getCipherSuites(config);
+        String[] ciphers = getCipherSuites(config);
+        this.cipherSuites = ciphers;
+        this.cipherSuitesAsList = Collections.unmodifiableList(Arrays.asList(ciphers));
         this.clientAuth = getClientAuth(config);
         this.handshakeDetectionTimeoutMillis = getHandshakeDetectionTimeoutMillis(config);
     }
@@ -95,6 +104,18 @@ public class SSLContextAndOptions {
         SSLServerSocket sslServerSocket =
                 (SSLServerSocket) sslContext.getServerSocketFactory().createServerSocket(port);
         return configureSSLServerSocket(sslServerSocket);
+    }
+
+    public SslContext createNettyJdkSslContext(SSLContext sslContext, boolean isClientSocket) {
+        return new JdkSslContext(
+                sslContext,
+                isClientSocket,
+                cipherSuitesAsList,
+                IdentityCipherSuiteFilter.INSTANCE,
+                null,
+                isClientSocket ? X509Util.ClientAuth.NONE.toNettyClientAuth() : clientAuth.toNettyClientAuth(),
+                enabledProtocols,
+                false);
     }
 
     public int getHandshakeDetectionTimeoutMillis() {

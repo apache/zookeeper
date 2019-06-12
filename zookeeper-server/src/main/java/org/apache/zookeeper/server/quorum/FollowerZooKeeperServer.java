@@ -37,10 +37,12 @@ import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.txn.TxnHeader;
 
 import javax.management.JMException;
+import org.apache.zookeeper.metrics.MetricsContext;
+import org.apache.zookeeper.server.ServerMetrics;
 
 /**
  * Just like the standard ZooKeeperServer. We just replace the request
- * processors: FollowerRequestProcessor -> CommitProcessor ->
+ * processors: FollowerRequestProcessor -&gt; CommitProcessor -&gt;
  * FinalRequestProcessor
  *
  * A SyncRequestProcessor is also spawned off to log proposals from the leader.
@@ -55,8 +57,6 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
     ConcurrentLinkedQueue<Request> pendingSyncs;
 
     /**
-     * @param port
-     * @param dataDir
      * @throws IOException
      */
     FollowerZooKeeperServer(FileTxnSnapLog logFactory,QuorumPeer self,
@@ -136,7 +136,6 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
     public int getGlobalOutstandingLimit() {
         int divisor = self.getQuorumSize() > 2 ? self.getQuorumSize() - 1 : 1;
         int globalOutstandingLimit = super.getGlobalOutstandingLimit() / divisor;
-        LOG.info("Override {} to {}", GLOBAL_OUTSTANDING_LIMIT, globalOutstandingLimit);
         return globalOutstandingLimit;
     }
 
@@ -169,5 +168,30 @@ public class FollowerZooKeeperServer extends LearnerZooKeeperServer {
             LOG.warn("Could not register connection", e);
         }
         return false;
+    }
+
+    @Override
+    protected void registerMetrics() {
+        super.registerMetrics();
+
+        MetricsContext rootContext = ServerMetrics
+                .getMetrics()
+                .getMetricsProvider()
+                .getRootContext();
+
+        rootContext.registerGauge("synced_observers", self::getSynced_observers_metric);
+
+    }
+
+    @Override
+    protected void unregisterMetrics() {
+        super.unregisterMetrics();
+
+        MetricsContext rootContext = ServerMetrics
+                .getMetrics()
+                .getMetricsProvider()
+                .getRootContext();
+        rootContext.unregisterGauge("synced_observers");
+
     }
 }

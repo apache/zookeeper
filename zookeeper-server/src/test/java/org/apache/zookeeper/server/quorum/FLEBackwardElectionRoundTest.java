@@ -81,7 +81,7 @@ public class FLEBackwardElectionRoundTest extends ZKTestCase {
      * they can't get a consistent set of notifications from a
      * quorum.
      *
-     * {@link https://issues.apache.org/jira/browse/ZOOKEEPER-1514}
+     * https://issues.apache.org/jira/browse/ZOOKEEPER-1514
      *
      *
      * @throws Exception

@@ -264,7 +264,7 @@ functionally equivalent. The C bindings exist in two variants: single
 threaded and multi-threaded. These differ only in how the messaging loop
 is done. For more information, see the [Programming
 Examples in the ZooKeeper Programmer's Guide](zookeeperProgrammers.html#ch_programStructureWithExample) for
-sample code using of the different APIs.
+sample code using the different APIs.
 
 <a name="sc_RunningReplicatedZooKeeper"></a>
 
@@ -282,7 +282,7 @@ file.
 and it is strongly recommended that you have an odd number of
 servers. If you only have two servers, then you are in a
 situation where if one of them fails, there are not enough
-machines to form a majority quorum. Two servers is inherently
+machines to form a majority quorum. Two servers are inherently
 **less** stable than a single server, because there are two single
 points of failure.
 
@@ -307,7 +307,7 @@ be from a leader.
 
 With both of these timeouts, you specify the unit of time using
 **tickTime**. In this example, the timeout
-for initLimit is 5 ticks at 2000 milleseconds a tick, or 10
+for initLimit is 5 ticks at 2000 milliseconds a tick, or 10
 seconds.
 
 The entries of the form _server.X_ list the

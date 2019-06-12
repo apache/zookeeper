@@ -365,7 +365,7 @@ public class FollowerResyncConcurrencyTest extends ZKTestCase {
      * This test:
      * Starts up 3 ZKs. The non-leader ZKs are writing to cluster
      * Shut down one of the non-leader ZKs.
-     * Restart after sessions have expired but <500 txns have taken place (get a diff)
+     * Restart after sessions have expired but less than 500 txns have taken place (get a diff)
      * Shut down immediately after restarting, start running separate thread with other transactions
      * Restart to a diff while transactions are running in leader
      *

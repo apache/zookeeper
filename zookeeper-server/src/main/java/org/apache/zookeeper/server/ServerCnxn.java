@@ -382,7 +382,6 @@ public abstract class ServerCnxn implements Stats, Watcher {
     /**
      * Print information about the connection.
      * @param brief iff true prints brief details, otw full detail
-     * @return information about this connection
      */
     public synchronized void
     dumpConnectionInfo(PrintWriter pwriter, boolean brief) {

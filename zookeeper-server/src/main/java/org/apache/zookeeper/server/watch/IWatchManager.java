@@ -128,7 +128,6 @@ public interface IWatchManager {
      * @param byPath iff true output watches by paths, otw output
      * watches by connection
      *
-     * @return string representation of watches
      */
     public void dumpWatches(PrintWriter pwriter, boolean byPath);
 }

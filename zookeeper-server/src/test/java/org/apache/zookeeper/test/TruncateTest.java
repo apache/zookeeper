@@ -172,7 +172,7 @@ public class TruncateTest extends ZKTestCase {
         
         ZKDatabase zkDb;
         {
-            ZooKeeperServer zs = ClientBase.getServer(factory);
+            ZooKeeperServer zs = factory.getZooKeeperServer();
     
             zkDb = zs.getZKDatabase();
         }

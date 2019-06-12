@@ -37,14 +37,14 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
 
     <property name="audience-annotations.version" value="0.5.0" />
 
-    <property name="netty.version" value="4.1.29.Final"/>
+    <property name="netty.version" value="4.1.36.Final"/>
 
     <property name="junit.version" value="4.12"/>
     <property name="mockito.version" value="2.27.0"/>
     <property name="checkstyle.version" value="7.1.2"/>
     <property name="commons-collections.version" value="3.2.2"/>
 
-    <property name="bouncycastle.version" value="1.61"/>
+    <property name="bouncycastle.version" value="1.60"/>
 
     <property name="jdiff.version" value="1.0.9"/>
     <property name="xerces.version" value="1.4.4"/>
@@ -55,7 +55,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="javacc.version" value="5.0"/>
 
     <property name="jetty.version" value="9.4.15.v20190215"/>
-    <property name="jackson.version" value="2.9.8"/>
+    <property name="jackson.version" value="2.9.9"/>
     <property name="dependency-check-ant.version" value="4.0.2"/>
 
     <property name="commons-io.version" value="2.6"/>

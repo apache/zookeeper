@@ -80,7 +80,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         }
     }
 
-    static final String DEFAULT_PROTOCOL = "TLSv1.2";
+    public static final String DEFAULT_PROTOCOL = "TLSv1.2";
     private static String[] getGCMCiphers() {
         return new String[] {
             "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
@@ -129,9 +129,15 @@ public abstract class X509Util implements Closeable, AutoCloseable {
      * If the config property is not set, the default value is NEED.
      */
     public enum ClientAuth {
-        NONE,
-        WANT,
-        NEED;
+        NONE(io.netty.handler.ssl.ClientAuth.NONE),
+        WANT(io.netty.handler.ssl.ClientAuth.OPTIONAL),
+        NEED(io.netty.handler.ssl.ClientAuth.REQUIRE);
+
+        private final io.netty.handler.ssl.ClientAuth nettyAuth;
+
+        ClientAuth(io.netty.handler.ssl.ClientAuth nettyAuth) {
+            this.nettyAuth = nettyAuth;
+        }
 
         /**
          * Converts a property value to a ClientAuth enum. If the input string is empty or null, returns
@@ -145,6 +151,10 @@ public abstract class X509Util implements Closeable, AutoCloseable {
                 return NEED;
             }
             return ClientAuth.valueOf(prop.toUpperCase());
+        }
+
+        public io.netty.handler.ssl.ClientAuth toNettyClientAuth() {
+            return nettyAuth;
         }
     }
 

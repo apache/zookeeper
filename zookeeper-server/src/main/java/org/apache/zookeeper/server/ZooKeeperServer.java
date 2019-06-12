@@ -36,6 +36,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiConsumer;
 
 import javax.security.sasl.SaslException;
 
@@ -46,6 +47,7 @@ import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
+import org.apache.zookeeper.Version;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.ZookeeperBanner;
 import org.apache.zookeeper.common.Time;
@@ -53,6 +55,7 @@ import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.StatPersisted;
 import org.apache.zookeeper.jmx.MBeanRegistry;
+import org.apache.zookeeper.metrics.MetricsContext;
 import org.apache.zookeeper.proto.AuthPacket;
 import org.apache.zookeeper.proto.ConnectRequest;
 import org.apache.zookeeper.proto.ConnectResponse;
@@ -65,12 +68,12 @@ import org.apache.zookeeper.server.RequestProcessor.RequestProcessorException;
 import org.apache.zookeeper.server.ServerCnxn.CloseRequestException;
 import org.apache.zookeeper.server.SessionTracker.Session;
 import org.apache.zookeeper.server.SessionTracker.SessionExpirer;
-import org.apache.zookeeper.server.auth.AuthenticationProvider;
 import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.auth.ServerAuthenticationProvider;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServer;
 import org.apache.zookeeper.server.util.JvmPauseMonitor;
+import org.apache.zookeeper.server.util.OSMXBean;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
@@ -80,7 +83,7 @@ import org.slf4j.LoggerFactory;
 /**
  * This class implements a simple standalone ZooKeeperServer. It sets up the
  * following chain of RequestProcessors to process requests:
- * PrepRequestProcessor -> SyncRequestProcessor -> FinalRequestProcessor
+ * PrepRequestProcessor -&gt; SyncRequestProcessor -&gt; FinalRequestProcessor
  */
 public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected static final Logger LOG;
@@ -193,7 +196,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * methods to prepare the instance (eg datadir, datalogdir, ticktime,
      * builder, etc...)
      *
-     * @throws IOException
      */
     public ZooKeeperServer() {
         listener = new ZooKeeperServerListenerImpl(this);
@@ -204,7 +206,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * Creates a ZooKeeperServer instance. It sets everything up, but doesn't
      * actually start listening for clients until run() is invoked.
      *
-     * @param dataDir the directory to put the data
      */
     public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime,
             int minSessionTimeout, int maxSessionTimeout, int clientPortListenBacklog,
@@ -232,6 +233,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 + " clientPortListenBacklog " + getClientPortListenBacklog()
                 + " datadir " + txnLogFactory.getDataDir()
                 + " snapdir " + txnLogFactory.getSnapDir());
+
     }
 
     public String getInitialConfig() {
@@ -560,6 +562,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         startJvmPauseMonitor();
 
+        registerMetrics();
+
         setState(State.RUNNING);
         notifyAll();
     }
@@ -607,7 +611,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * the server state change to a registered shutdown handler, if any.
      * <p>
      * The following are the server state transitions:
-     * <li>During startup the server will be in the INITIAL state.</li>
+     * <ul><li>During startup the server will be in the INITIAL state.</li>
      * <li>After successfully starting, the server sets the state to RUNNING.
      * </li>
      * <li>The server transitions to the ERROR state if it hits an internal
@@ -615,7 +619,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * error events, e.g., SyncRequestProcessor not being able to write a txn to
      * disk.</li>
      * <li>During shutdown the server sets the state to SHUTDOWN, which
-     * corresponds to the server not running.</li>
+     * corresponds to the server not running.</li></ul>
      *
      * @param state new server state.
      */
@@ -665,6 +669,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         // new RuntimeException("Calling shutdown").printStackTrace();
         setState(State.SHUTDOWN);
+
+        // unregister all metrics that are keeping a strong reference to this object
+        // subclasses will do their specific clean up
+        unregisterMetrics();
+
         // Since sessionTracker and syncThreads poll we just have to
         // set running to false and they will detect it during the poll
         // interval.
@@ -1259,7 +1268,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         // there might be a race condition that it enabled recv after
         // processing request and then disabled when check throttling.
         //
-        // Be aware that we're actually checking the global outstanding 
+        // Be aware that we're actually checking the global outstanding
         // request before this request.
         //
         // It's fine if the IOException thrown before we decrease the count
@@ -1438,5 +1447,98 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     public ResponseCache getReadResponseCache() {
         return isResponseCachingEnabled ? readResponseCache : null;
+    }
+
+    protected void registerMetrics() {
+        MetricsContext rootContext = ServerMetrics
+                .getMetrics()
+                .getMetricsProvider()
+                .getRootContext();
+
+        final ZKDatabase zkdb = this.getZKDatabase();
+        final ServerStats stats = this.serverStats();
+
+        rootContext.registerGauge("avg_latency", stats::getAvgLatency);
+
+        rootContext.registerGauge("max_latency", stats::getMaxLatency);
+        rootContext.registerGauge("min_latency", stats::getMinLatency);
+
+        rootContext.registerGauge("packets_received", stats::getPacketsReceived);
+        rootContext.registerGauge("packets_sent", stats::getPacketsSent);
+        rootContext.registerGauge("num_alive_connections", stats::getNumAliveClientConnections);
+
+        rootContext.registerGauge("outstanding_requests", stats::getOutstandingRequests);
+        rootContext.registerGauge("uptime", stats::getUptime);
+
+        rootContext.registerGauge("znode_count", zkdb::getNodeCount);
+
+        rootContext.registerGauge("watch_count", zkdb.getDataTree()::getWatchCount);
+        rootContext.registerGauge("ephemerals_count", zkdb.getDataTree()::getEphemeralsCount);
+
+        rootContext.registerGauge("approximate_data_size", zkdb.getDataTree()::cachedApproximateDataSize);
+
+        rootContext.registerGauge("global_sessions", zkdb::getSessionCount);
+        rootContext.registerGauge("local_sessions",
+                this.getSessionTracker()::getLocalSessionCount);
+
+        OSMXBean osMbean = new OSMXBean();
+        rootContext.registerGauge("open_file_descriptor_count", osMbean::getOpenFileDescriptorCount);
+        rootContext.registerGauge("max_file_descriptor_count", osMbean::getMaxFileDescriptorCount);
+        rootContext.registerGauge("connection_drop_probability", this::getConnectionDropChance);
+
+        rootContext.registerGauge("last_client_response_size", stats.getClientResponseStats()::getLastBufferSize);
+        rootContext.registerGauge("max_client_response_size", stats.getClientResponseStats()::getMaxBufferSize);
+        rootContext.registerGauge("min_client_response_size", stats.getClientResponseStats()::getMinBufferSize);
+
+    }
+
+    protected void unregisterMetrics() {
+
+        MetricsContext rootContext = ServerMetrics
+                .getMetrics()
+                .getMetricsProvider()
+                .getRootContext();
+
+        rootContext.unregisterGauge("avg_latency");
+
+        rootContext.unregisterGauge("max_latency");
+        rootContext.unregisterGauge("min_latency");
+
+        rootContext.unregisterGauge("packets_received");
+        rootContext.unregisterGauge("packets_sent");
+        rootContext.unregisterGauge("num_alive_connections");
+
+        rootContext.unregisterGauge("outstanding_requests");
+        rootContext.unregisterGauge("uptime");
+
+        rootContext.unregisterGauge("znode_count");
+
+        rootContext.unregisterGauge("watch_count");
+        rootContext.unregisterGauge("ephemerals_count");
+        rootContext.unregisterGauge("approximate_data_size");
+
+        rootContext.unregisterGauge("global_sessions");
+        rootContext.unregisterGauge("local_sessions");
+
+        rootContext.unregisterGauge("open_file_descriptor_count");
+        rootContext.unregisterGauge("max_file_descriptor_count");
+        rootContext.unregisterGauge("connection_drop_probability");
+
+        rootContext.unregisterGauge("last_client_response_size");
+        rootContext.unregisterGauge("max_client_response_size");
+        rootContext.unregisterGauge("min_client_response_size");
+
+    }
+
+    /**
+     * Hook into admin server, useful to expose additional data
+     * that do not represent metrics.
+     *
+     * @param response a sink which collects the data.
+     */
+    public void dumpMonitorValues(BiConsumer<String, Object> response) {
+      ServerStats stats = serverStats();
+      response.accept("version", Version.getFullVersion());
+      response.accept("server_state", stats.getServerState());
     }
 }

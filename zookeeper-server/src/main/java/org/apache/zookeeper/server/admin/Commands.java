@@ -35,19 +35,14 @@ import org.apache.zookeeper.Version;
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ServerMetrics;
-import org.apache.zookeeper.server.ServerStats;
-import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooTrace;
-import org.apache.zookeeper.server.quorum.Follower;
-import org.apache.zookeeper.server.quorum.FollowerZooKeeperServer;
+import org.apache.zookeeper.server.persistence.SnapshotInfo;
 import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumZooKeeperServer;
-import org.apache.zookeeper.server.quorum.ObserverZooKeeperServer;
 import org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServer;
-import org.apache.zookeeper.server.util.OSMXBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -128,6 +123,8 @@ public class Commands {
         registerCommand(new EnvCommand());
         registerCommand(new GetTraceMaskCommand());
         registerCommand(new IsroCommand());
+        registerCommand(new LastSnapshotCommand());
+        registerCommand(new LeaderCommand());
         registerCommand(new MonitorCommand());
         registerCommand(new RuokCommand());
         registerCommand(new SetTraceMaskCommand());
@@ -223,10 +220,10 @@ public class Commands {
 
     /**
      * Information on session expirations and ephemerals. Returned map contains:
-     *   - "expiry_time_to_session_ids": Map<Long, Set<Long>>
-     *                                   time -> sessions IDs of sessions that expire at time
-     *   - "session_id_to_ephemeral_paths": Map<Long, Set<String>>
-     *                                       session ID -> ephemeral paths created by that session
+     *   - "expiry_time_to_session_ids": Map&lt;Long, Set&lt;Long&gt;&gt;
+     *                                   time -&gt; sessions IDs of sessions that expire at time
+     *   - "session_id_to_ephemeral_paths": Map&lt;Long, Set&lt;String&gt;&gt;
+     *                                       session ID -&gt; ephemeral paths created by that session
      * @see ZooKeeperServer#getSessionExpiryMap()
      * @see ZooKeeperServer#getEphemerals()
      */
@@ -297,6 +294,54 @@ public class Commands {
     }
 
     /**
+     * Command returns information of the last snapshot that zookeeper server
+     * has finished saving to disk. During the time between the server starts up
+     * and it finishes saving its first snapshot, the command returns the zxid
+     * and last modified time of the snapshot file used for restoration at
+     * server startup. Returned map contains:
+     *   - "zxid": String
+     *   - "timestamp": Long
+     */
+    public static class LastSnapshotCommand extends CommandBase {
+        public LastSnapshotCommand() {
+            super(Arrays.asList("last_snapshot", "lsnp"));
+        }
+
+        @Override
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+            CommandResponse response = initializeResponse();
+            SnapshotInfo info = zkServer.getTxnLogFactory().getLastSnapshotInfo();
+            response.put("zxid", Long.toHexString(info == null ? -1L : info.zxid));
+            response.put("timestamp", info == null ? -1L : info.timestamp);
+            return response;
+        }
+    }
+
+    /**
+     * Returns the leader status of this instance and the leader host string.
+     */
+    public static class LeaderCommand extends CommandBase {
+        public LeaderCommand() {
+            super(Arrays.asList("leader", "lead"));
+        }
+
+        @Override
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+            CommandResponse response = initializeResponse();
+            if (zkServer instanceof QuorumZooKeeperServer) {
+                response.put("is_leader", zkServer instanceof LeaderZooKeeperServer);
+                QuorumPeer peer = ((QuorumZooKeeperServer) zkServer).self;
+                response.put("leader_id", peer.getLeaderId());
+                String leaderAddress = peer.getLeaderAddress();
+                response.put("leader_ip", leaderAddress != null ? leaderAddress : "");
+            } else {
+                response.put("error", "server is not initialized");
+            }
+            return response;
+        }
+    }
+
+    /**
      * Some useful info for monitoring. Returned map contains:
      *   - "version": String
      *                server version
@@ -328,83 +373,10 @@ public class Commands {
         @Override
         public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
             CommandResponse response = initializeResponse();
-
-            response.put("version", Version.getFullVersion());
-
-            OSMXBean osMbean = new OSMXBean();
-            response.put("open_file_descriptor_count", osMbean.getOpenFileDescriptorCount());
-            response.put("max_file_descriptor_count", osMbean.getMaxFileDescriptorCount());
-
-            if (zkServer != null) {
-                ZKDatabase zkdb = zkServer.getZKDatabase();
-                ServerStats stats = zkServer.serverStats();
-                response.put("avg_latency", stats.getAvgLatency());
-                response.put("max_latency", stats.getMaxLatency());
-                response.put("min_latency", stats.getMinLatency());
-
-                response.put("packets_received", stats.getPacketsReceived());
-                response.put("packets_sent", stats.getPacketsSent());
-                response.put("num_alive_connections", stats.getNumAliveClientConnections());
-
-                response.put("outstanding_requests", stats.getOutstandingRequests());
-                response.put("uptime", stats.getUptime());
-
-                response.put("server_state", stats.getServerState());
-                response.put("znode_count", zkdb.getNodeCount());
-
-                response.put("watch_count", zkdb.getDataTree().getWatchCount());
-                response.put("ephemerals_count", zkdb.getDataTree().getEphemeralsCount());
-                response.put("approximate_data_size", zkdb.getDataTree().cachedApproximateDataSize());
-
-                response.put("global_sessions", zkdb.getSessionCount());
-                response.put("local_sessions",
-                        zkServer.getSessionTracker().getLocalSessionCount());
-
-                response.put("connection_drop_probability", zkServer.getConnectionDropChance());
-
-                response.put("last_client_response_size", stats.getClientResponseStats().getLastBufferSize());
-                response.put("max_client_response_size", stats.getClientResponseStats().getMaxBufferSize());
-                response.put("min_client_response_size", stats.getClientResponseStats().getMinBufferSize());
-
-                if (zkServer instanceof QuorumZooKeeperServer) {
-                    QuorumPeer peer = ((QuorumZooKeeperServer) zkServer).self;
-                    response.put("quorum_size", peer.getQuorumSize());
-                }
-
-                if (zkServer instanceof LeaderZooKeeperServer) {
-                    Leader leader = ((LeaderZooKeeperServer) zkServer).getLeader();
-
-                    response.put("learners", leader.getLearners().size());
-                    response.put("synced_followers", leader.getForwardingFollowers().size());
-                    response.put("synced_non_voting_followers", leader.getNonVotingFollowers().size());
-                    response.put("synced_observers", leader.getObservingLearners().size());
-                    response.put("pending_syncs", leader.getNumPendingSyncs());
-                    response.put("leader_uptime", leader.getUptime());
-
-                    response.put("last_proposal_size", leader.getProposalStats().getLastBufferSize());
-                    response.put("max_proposal_size", leader.getProposalStats().getMaxBufferSize());
-                    response.put("min_proposal_size", leader.getProposalStats().getMinBufferSize());
-                }
-
-                if (zkServer instanceof FollowerZooKeeperServer) {
-                    Follower follower = ((FollowerZooKeeperServer) zkServer).getFollower();
-                    Integer syncedObservers = follower.getSyncedObserverSize();
-                    if (syncedObservers != null) {
-                        response.put("synced_observers", syncedObservers);
-                    }
-                }
-
-                if (zkServer instanceof ObserverZooKeeperServer) {
-                    response.put("observer_master_id", ((ObserverZooKeeperServer) zkServer).getObserver().getLearnerMasterId());
-                }
-            }
-
+            zkServer.dumpMonitorValues(response::put);
             ServerMetrics.getMetrics()
                     .getMetricsProvider()
-                    .dump(
-                    (metric, value) -> {
-                        response.put(metric, value);
-                    });
+                    .dump(response::put);
             return response;
 
         }}
@@ -526,7 +498,7 @@ public class Commands {
 
     /**
      * Watch information aggregated by session. Returned Map contains:
-     *   - "session_id_to_watched_paths": Map<Long, Set<String>> session ID -> watched paths
+     *   - "session_id_to_watched_paths": Map&lt;Long, Set&lt;String&gt;&gt; session ID -&gt; watched paths
      * @see DataTree#getWatches()
      */
     public static class WatchCommand extends CommandBase {
@@ -545,7 +517,7 @@ public class Commands {
 
     /**
      * Watch information aggregated by path. Returned Map contains:
-     *   - "path_to_session_ids": Map<String, Set<Long>> path -> session IDs of sessions watching path
+     *   - "path_to_session_ids": Map&lt;String, Set&lt;Long&gt;&gt; path -&gt; session IDs of sessions watching path
      * @see DataTree#getWatchesByPath()
      */
     public static class WatchesByPathCommand extends CommandBase {

@@ -33,12 +33,14 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import javax.management.JMException;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import org.apache.zookeeper.metrics.MetricsContext;
+import org.apache.zookeeper.server.ServerMetrics;
 
 /**
  *
  * Just like the standard ZooKeeperServer. We just replace the request
- * processors: PrepRequestProcessor -> ProposalRequestProcessor ->
- * CommitProcessor -> Leader.ToBeAppliedRequestProcessor ->
+ * processors: PrepRequestProcessor -&gt; ProposalRequestProcessor -&gt;
+ * CommitProcessor -&gt; Leader.ToBeAppliedRequestProcessor -&gt;
  * FinalRequestProcessor
  */
 public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
@@ -50,8 +52,6 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     PrepRequestProcessor prepRequestProcessor;
 
     /**
-     * @param port
-     * @param dataDir
      * @throws IOException
      */
     LeaderZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self, ZKDatabase zkDb) throws IOException {
@@ -97,6 +97,64 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     }
 
     @Override
+    protected void registerMetrics() {
+        super.registerMetrics();
+
+        MetricsContext rootContext = ServerMetrics
+                .getMetrics()
+                .getMetricsProvider()
+                .getRootContext();
+
+        rootContext.registerGauge("learners", () -> {
+            return getLeader().getLearners().size();
+        });
+        rootContext.registerGauge("synced_followers", () -> {
+            return getLeader().getForwardingFollowers().size();
+        });
+        rootContext.registerGauge("synced_non_voting_followers", () -> {
+            return getLeader().getNonVotingFollowers().size();
+        });
+
+        rootContext.registerGauge("synced_observers", self::getSynced_observers_metric);
+
+        rootContext.registerGauge("pending_syncs", () -> {
+            return getLeader().getNumPendingSyncs();
+        });
+        rootContext.registerGauge("leader_uptime", () -> {
+            return getLeader().getUptime();
+        });
+        rootContext.registerGauge("last_proposal_size", () -> {
+            return getLeader().getProposalStats().getLastBufferSize();
+        });
+        rootContext.registerGauge("max_proposal_size", () -> {
+            return getLeader().getProposalStats().getMaxBufferSize();
+        });
+        rootContext.registerGauge("min_proposal_size", () -> {
+            return getLeader().getProposalStats().getMinBufferSize();
+        });
+    }
+
+    @Override
+    protected void unregisterMetrics() {
+        super.unregisterMetrics();
+
+        MetricsContext rootContext = ServerMetrics
+                .getMetrics()
+                .getMetricsProvider()
+                .getRootContext();
+        rootContext.unregisterGauge("learners");
+        rootContext.unregisterGauge("synced_followers");
+        rootContext.unregisterGauge("synced_non_voting_followers");
+        rootContext.unregisterGauge("synced_observers");
+        rootContext.unregisterGauge("pending_syncs");
+        rootContext.unregisterGauge("leader_uptime");
+
+        rootContext.unregisterGauge("last_proposal_size");
+        rootContext.unregisterGauge("max_proposal_size");
+        rootContext.unregisterGauge("min_proposal_size");
+    }
+
+    @Override
     public synchronized void shutdown() {
         if (containerManager != null) {
             containerManager.stop();
@@ -108,7 +166,6 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     public int getGlobalOutstandingLimit() {
         int divisor = self.getQuorumSize() > 2 ? self.getQuorumSize() - 1 : 1;
         int globalOutstandingLimit = super.getGlobalOutstandingLimit() / divisor;
-        LOG.info("Override {} to {}", GLOBAL_OUTSTANDING_LIMIT, globalOutstandingLimit);
         return globalOutstandingLimit;
     }
 
