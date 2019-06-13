@@ -191,7 +191,7 @@ public class Utils {
     
     /**
      * 
-     * @param s 
+     * @param barr
      * @return 
      */
     static String toXMLBuffer(byte barr[]) {
@@ -228,7 +228,7 @@ public class Utils {
     
     /**
      * 
-     * @param buf 
+     * @param barr
      * @return 
      */
     static String toCSVBuffer(byte barr[]) {
