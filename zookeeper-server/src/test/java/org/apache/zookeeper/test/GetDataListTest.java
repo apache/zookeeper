@@ -101,17 +101,18 @@ public class GetDataListTest extends ClientBase {
 
         int pathToSkipCreate = 5;
         List<String> childPaths = createTestData(testData, NUM_PATHS, 5);
+        Iterable<Op> ops = childPaths.stream().map(Op::getData).collect(Collectors.toList());
 
         Assert.assertEquals(NUM_PATHS, childPaths.size());
 
         List<OpResult> results;
         if (async) {
             BatchStats batchStats = new BatchStats();
-            zooKeeper.getDataList(childPaths, true, batchStats, batchStats);
+            zooKeeper.multi(ops, (rc, path, ctx, opResults) -> batchStats.processResult(rc, ctx, opResults), batchStats);
             batchStats.waitForNumRequests(1);
             results = batchStats.opResults;
         } else {
-            results = zooKeeper.getDataList(childPaths, true);
+            results = zooKeeper.multi(ops);
         }
         Assert.assertEquals(NUM_PATHS, results.size());
 
@@ -579,9 +580,9 @@ public class GetDataListTest extends ClientBase {
             final int EXPECTED_TOTAL_NODES_READ = numTopLevelZNodes * numSecondLevelZNodes + numTopLevelZNodes;
             final int modForSetData = 10;
 
-            //testWithoutWatch(numTopLevelZNodes, EXPECTED_TOTAL_NODES_READ, false);
+            testWithoutWatch(numTopLevelZNodes, EXPECTED_TOTAL_NODES_READ, false);
             testWithoutWatch(numTopLevelZNodes, EXPECTED_TOTAL_NODES_READ, true);
-            //testWithWatch(numTopLevelZNodes, EXPECTED_TOTAL_NODES_READ, modForSetData);
+            testWithWatch(numTopLevelZNodes, EXPECTED_TOTAL_NODES_READ, modForSetData);
 
         } catch (Exception e) {
             e.printStackTrace();

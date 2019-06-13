@@ -89,6 +89,8 @@ public class TraceFormatter {
             return "setWatches";
         case OpCode.sasl:
             return "sasl";
+        case OpCode.multiRead:
+            return "multiRead";
         case OpCode.getDataList:
             return "getDataList";
         default:
