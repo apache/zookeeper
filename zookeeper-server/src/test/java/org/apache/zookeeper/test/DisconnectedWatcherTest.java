@@ -20,6 +20,7 @@ package org.apache.zookeeper.test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -269,5 +270,4 @@ public class DisconnectedWatcherTest extends ClientBase {
             i++;
         }
     }
-
 }

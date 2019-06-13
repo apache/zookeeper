@@ -712,7 +712,7 @@ public class Zab1_0Test extends ZKTestCase {
             }
         });
     }
-    
+
     @Test
     public void testNormalFollowerRunWithDiff() throws Exception {
         testFollowerConversation(new FollowerConversation() {

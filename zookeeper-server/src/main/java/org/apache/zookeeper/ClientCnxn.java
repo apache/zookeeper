@@ -710,6 +710,7 @@ public class ClientCnxn {
 
     // @VisibleForTesting
     protected void finishPacket(Packet p) {
+        System.out.println("fuck_start_to_finishPacket");
         int err = p.replyHeader.getErr();
         if (p.watchRegistration != null) {
             p.watchRegistration.register(err);
@@ -740,10 +741,12 @@ public class ClientCnxn {
 
         if (p.cb == null) {
             synchronized (p) {
+                System.out.println("fuck_enter_to_finishPacket_1");
                 p.finished = true;
                 p.notifyAll();
             }
         } else {
+            System.out.println("fuck_enter_to_finishPacket_2");
             p.finished = true;
             eventThread.queuePacket(p);
         }
@@ -779,6 +782,7 @@ public class ClientCnxn {
         default:
             p.replyHeader.setErr(KeeperException.Code.CONNECTIONLOSS.intValue());
         }
+        System.out.println("fuck_conLossPacket_here");
         finishPacket(p);
     }
 
@@ -836,12 +840,14 @@ public class ClientCnxn {
         private boolean isFirstConnect = true;
 
         void readResponse(ByteBuffer incomingBuffer) throws IOException {
+            System.out.println("fuck_start_enter_SendThread#readResponse");
             ByteBufferInputStream bbis = new ByteBufferInputStream(
                     incomingBuffer);
             BinaryInputArchive bbia = BinaryInputArchive.getArchive(bbis);
             ReplyHeader replyHdr = new ReplyHeader();
 
             replyHdr.deserialize(bbia, "header");
+            System.out.println("fuck_replyHdr.getXid():" + replyHdr.getXid());
             if (replyHdr.getXid() == -2) {
                 // -2 is the xid for pings
                 if (LOG.isDebugEnabled()) {
@@ -851,6 +857,7 @@ public class ClientCnxn {
                             + ((System.nanoTime() - lastPingSentNs) / 1000000)
                             + "ms");
                 }
+                System.out.println("fuck_return_(-2)");
                 return;
             }
             if (replyHdr.getXid() == -4) {
@@ -865,6 +872,7 @@ public class ClientCnxn {
                     LOG.debug("Got auth sessionid:0x"
                             + Long.toHexString(sessionId));
                 }
+                System.out.println("fuck_return_(-4)");
                 return;
             }
             if (replyHdr.getXid() == -1) {
@@ -897,6 +905,7 @@ public class ClientCnxn {
                 }
 
                 eventThread.queueEvent( we );
+                System.out.println("fuck_return_(-1)");
                 return;
             }
 
@@ -908,6 +917,7 @@ public class ClientCnxn {
                 request.deserialize(bbia,"token");
                 zooKeeperSaslClient.respondToServer(request.getToken(),
                   ClientCnxn.this);
+                System.out.println("fuck_return_(tunnelAuthInProgress)");
                 return;
             }
 
@@ -951,6 +961,7 @@ public class ClientCnxn {
                             + Long.toHexString(sessionId) + ", packet:: " + packet);
                 }
             } finally {
+                System.out.println("fuck_finishPacket_SendThread");
                 finishPacket(packet);
             }
         }
@@ -1547,6 +1558,7 @@ public class ClientCnxn {
         Packet packet = queuePacket(h, r, request, response, null, null, null,
                 null, watchRegistration, watchDeregistration);
         synchronized (packet) {
+            System.out.println("fuck_requestTimeout:" + requestTimeout+","+Thread.currentThread());
             if (requestTimeout > 0) {
                 // Wait for request completion with timeout
                 waitForPacketFinish(r, packet);
