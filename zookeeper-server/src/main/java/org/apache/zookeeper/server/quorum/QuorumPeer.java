@@ -883,8 +883,13 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         quorumStats = new QuorumStats(this);
         jmxRemotePeerBean = new HashMap<Long, RemotePeerBean>();
         adminServer = AdminServerFactory.createAdminServer();
-        x509Util = new QuorumX509Util();
+        x509Util = createX509Util();
         initialize();
+    }
+
+    // VisibleForTesting
+    QuorumX509Util createX509Util() {
+        return new QuorumX509Util();
     }
 
     /**
