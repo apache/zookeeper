@@ -40,6 +40,7 @@ import org.apache.zookeeper.txn.TxnHeader;
 /**
  * @deprecated deprecated in 3.5.5, use @see TxnLogToolkit instead
  */
+@Deprecated
 @InterfaceAudience.Public
 public class LogFormatter {
     private static final Logger LOG = LoggerFactory.getLogger(LogFormatter.class);
