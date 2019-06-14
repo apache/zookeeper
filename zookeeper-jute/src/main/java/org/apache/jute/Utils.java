@@ -56,9 +56,10 @@ public class Utils {
                                             '6', '7', '8', '9', 'A', 'B',
                                             'C', 'D', 'E', 'F' };
     /**
-     * 
-     * @param s 
-     * @return 
+     * Converts a string to a new xml string.
+     *
+     * @param s Origin string
+     * @return a new xml string.
      */
     static String toXMLString(String s) {
         if (s == null)
@@ -96,9 +97,10 @@ public class Utils {
     }
     
     /**
-     * 
-     * @param s 
-     * @return 
+     * Converts a xml string to a new string.
+     *
+     * @param s A xml string
+     * @return a new string.
      */
     static String fromXMLString(String s) {
         StringBuilder sb = new StringBuilder();
@@ -118,9 +120,10 @@ public class Utils {
     }
     
     /**
-     * 
-     * @param s 
-     * @return 
+     * Converts a string to a new csv string.
+     *
+     * @param s Origin string
+     * @return a new csv string.
      */
     static String toCSVString(String s) {
         if (s == null)
@@ -158,10 +161,11 @@ public class Utils {
     }
     
     /**
-     * 
-     * @param s 
+     * Converts a csv string to a new string.
+     *
+     * @param s A csv string
      * @throws java.io.IOException 
-     * @return 
+     * @return a new string.
      */
     static String fromCSVString(String s) throws IOException {
         if (s.charAt(0) != '\'') {
@@ -190,9 +194,10 @@ public class Utils {
     }
     
     /**
-     * 
-     * @param barr
-     * @return 
+     * Converts a byte array to a new xml buffer.
+     *
+     * @param barr Byte array
+     * @return a new xml buffer.
      */
     static String toXMLBuffer(byte barr[]) {
         if (barr == null || barr.length == 0) {
@@ -206,10 +211,11 @@ public class Utils {
     }
     
     /**
-     * 
-     * @param s 
+     * Converts a xml buffer to a new byte array.
+     *
+     * @param s A xml buffer
      * @throws java.io.IOException 
-     * @return 
+     * @return a new byte array.
      */
     static byte[] fromXMLBuffer(String s)
     throws IOException {
@@ -227,9 +233,10 @@ public class Utils {
     }
     
     /**
-     * 
-     * @param barr
-     * @return 
+     * Converts a byte array to a new csv buffer.
+     *
+     * @param barr Byte array
+     * @return a new csv buffer.
      */
     static String toCSVBuffer(byte barr[]) {
         if (barr == null || barr.length == 0) {
