@@ -182,7 +182,11 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
         }
     }
 
-    public synchronized void throttleWake() { this.notify(); }
+    @SuppressFBWarnings(value = "NN_NAKED_NOTIFY",
+            justification = "state change is in ZooKeeperServer.decInProgress() ")
+    public synchronized void throttleWake() {
+        this.notify();
+    }
 
     private int drainQueue() {
         // If the throttler shutdown gracefully, the queue will be empty.

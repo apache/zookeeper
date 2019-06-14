@@ -40,6 +40,7 @@ import java.util.function.BiConsumer;
 
 import javax.security.sasl.SaslException;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
@@ -194,6 +195,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     // Connection throttling
     private BlueThrottle connThrottle;
 
+    @SuppressFBWarnings(value = "IS2_INCONSISTENT_SYNC",
+            justification = "Internally the throttler has a BlockingQueue so " +
+                    "once the throttler is created and started, it is thread-safe")
     private RequestThrottler requestThrottler;
 
     void removeCnxn(ServerCnxn cnxn) {
@@ -953,8 +957,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public void submitRequest(Request si) {
         if (RequestThrottler.enabled()) {
             enqueueRequest(si);
-        }
-        else {
+        } else {
             submitRequestNow(si);
         }
     }
