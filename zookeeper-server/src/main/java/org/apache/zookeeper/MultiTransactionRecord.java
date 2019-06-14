@@ -74,9 +74,9 @@ public class MultiTransactionRecord implements Record, Iterable<Op> {
     }
 
     private void setOrCheckOpKind(Op.OpKind ok) throws IllegalArgumentException {
-        if(opKind == null) {
+        if (opKind == null) {
             opKind = ok;
-        } else if(ok != opKind) {
+        } else if (ok != opKind) {
             throw new IllegalArgumentException("Mixing read and write operations (transactions)" +
                       " is not allowed in a multi request.");
         }
@@ -159,7 +159,7 @@ public class MultiTransactionRecord implements Record, Iterable<Op> {
                 h.deserialize(archive, tag);
             }
         } catch (IllegalArgumentException e) {
-            throw new IOException("Mixing different type of ops");
+            throw new IOException("Mixing different kind of ops");
         }
         archive.endRecord(tag);
     }

@@ -20,11 +20,9 @@ package org.apache.zookeeper;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
-import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.Create2Response;
 import org.apache.zookeeper.proto.CreateResponse;
 import org.apache.zookeeper.proto.GetChildrenResponse;
-import org.apache.zookeeper.proto.GetDataRequest;
 import org.apache.zookeeper.proto.GetDataResponse;
 import org.apache.zookeeper.proto.MultiHeader;
 import org.apache.zookeeper.proto.SetDataResponse;
@@ -86,7 +84,7 @@ public class MultiResponse implements Record, Iterable<OpResult> {
                     new GetChildrenResponse(((OpResult.GetChildrenResult) result).getChildren()).serialize(archive, tag);
                     break;
                 case ZooDefs.OpCode.getData:
-                    new GetDataResponse(((OpResult.GetDataResult) result).getData(), new Stat()).serialize(archive, tag);
+                    new GetDataResponse(((OpResult.GetDataResult) result).getData(),((OpResult.GetDataResult) result).getStat()).serialize(archive, tag);
                     break;
                 case ZooDefs.OpCode.error:
                     new ErrorResponse(((OpResult.ErrorResult) result).getErr()).serialize(archive, tag);
@@ -143,7 +141,7 @@ public class MultiResponse implements Record, Iterable<OpResult> {
                 case ZooDefs.OpCode.getData:
                     GetDataResponse gdr = new GetDataResponse();
                     gdr.deserialize(archive, tag);
-                    results.add(new OpResult.GetDataResult(gdr.getData()));
+                    results.add(new OpResult.GetDataResult(gdr.getData(), gdr.getStat()));
                     break;
 
                 case ZooDefs.OpCode.error:

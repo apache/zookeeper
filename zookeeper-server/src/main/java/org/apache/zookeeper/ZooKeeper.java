@@ -1895,22 +1895,27 @@ public class ZooKeeper implements AutoCloseable {
         return op;
     }
 
-    protected void multiInternal(MultiTransactionRecord request, MultiCallback cb, Object ctx) {
+    protected void multiInternal(MultiTransactionRecord request, MultiCallback cb, Object ctx)
+            throws IllegalArgumentException {
         RequestHeader h = new RequestHeader();
         switch (request.getOpKind()) {
             case TRANSACTION: h.setType(ZooDefs.OpCode.multi); break;
             case READ: h.setType(ZooDefs.OpCode.multiRead); break;
+            default:
+                throw new IllegalArgumentException("Invalid kind of op");
         }
         MultiResponse response = new MultiResponse();
         cnxn.queuePacket(h, new ReplyHeader(), request, response, cb, null, null, ctx, null);
     }
 
     protected List<OpResult> multiInternal(MultiTransactionRecord request)
-        throws InterruptedException, KeeperException {
+        throws InterruptedException, KeeperException, IllegalArgumentException {
         RequestHeader h = new RequestHeader();
         switch (request.getOpKind()) {
             case TRANSACTION: h.setType(ZooDefs.OpCode.multi); break;
             case READ: h.setType(ZooDefs.OpCode.multiRead); break;
+            default:
+                throw new IllegalArgumentException("Invalid kind of op");
         }
         MultiResponse response = new MultiResponse();
         ReplyHeader r = cnxn.submitRequest(h, request, response, null);
@@ -1921,8 +1926,9 @@ public class ZooKeeper implements AutoCloseable {
         List<OpResult> results = response.getResultList();
         // In case of only read operations there is no need to throw an exception
         // as the subResults are still possibly valid.
-        if(request.getOpKind() == Op.OpKind.READ)
+        if (request.getOpKind() == Op.OpKind.READ) {
             return results;
+        }
 
         ErrorResult fatalError = null;
         for (OpResult result : results) {

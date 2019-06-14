@@ -208,15 +208,21 @@ public abstract class OpResult {
      * A result from a getData operation. The data is represented as a byte array.
      */
     public static class GetDataResult extends OpResult {
-        private byte[] data;
 
-        public GetDataResult(byte[] data) {
+        private byte[] data;
+        private Stat stat;
+
+        public GetDataResult(byte[] data, Stat stat) {
             super(ZooDefs.OpCode.getData);
-            this.data = data.clone();
+            this.data = (data == null ? null : Arrays.copyOf(data, data.length));
+            this.stat = stat;
         }
 
         public byte[] getData() {
-            return data.clone();
+            return data == null ? null : Arrays.copyOf(data, data.length);
+        }
+        public Stat getStat() {
+            return stat;
         }
 
         @Override
@@ -225,12 +231,14 @@ public abstract class OpResult {
             if (!(o instanceof GetDataResult)) return false;
 
             GetDataResult other = (GetDataResult) o;
-            return getType() == other.getType() && Arrays.equals(data, other.data);
+            return getType() == other.getType()
+                    && stat.equals(other.stat)
+                    && Arrays.equals(data, other.data);
         }
 
         @Override
         public int hashCode() {
-            return getType() * 35 + Arrays.hashCode(data);
+            return (int) (getType() * 35 + stat.getMzxid() + Arrays.hashCode(data));
         }
     }
 

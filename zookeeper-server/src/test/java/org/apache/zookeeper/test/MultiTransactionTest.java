@@ -888,7 +888,7 @@ public class MultiTransactionTest extends ClientBase {
     }
 
     @Test
-    public void testMultiGetChildrenMixedAuthentication() throws KeeperException, InterruptedException {
+    public void testMultiGetChildrenMixedAuthenticationErrorFirst() throws KeeperException, InterruptedException {
         List<ACL> writeOnly = Collections.singletonList(new ACL(ZooDefs.Perms.WRITE,
                 new Id("world", "anyone")));
         zk.create("/foo_auth", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -911,7 +911,7 @@ public class MultiTransactionTest extends ClientBase {
     }
 
     @Test
-    public void testMultiGetChildrenMixedAuthentication2() throws KeeperException, InterruptedException {
+    public void testMultiGetChildrenMixedAuthenticationCorrectFirst() throws KeeperException, InterruptedException {
         List<ACL> writeOnly = Collections.singletonList(new ACL(ZooDefs.Perms.WRITE,
                 new Id("world", "anyone")));
         zk.create("/foo_auth", null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
@@ -948,7 +948,7 @@ public class MultiTransactionTest extends ClientBase {
     @Test
     public void testMultiRead() throws Exception {
         zk.create("/node1", "data1".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
-        zk.create("/node2", "data2".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk.create("/node2", "data2".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
         zk.create("/node1/node1", "data11".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         zk.create("/node1/node2", "data12".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
@@ -961,12 +961,31 @@ public class MultiTransactionTest extends ClientBase {
         Assert.assertEquals(new TreeSet<String>(childrenList), new TreeSet<String>(Arrays.asList("node1", "node2")));
 
         Assert.assertArrayEquals(((OpResult.GetDataResult) multiRead.get(1)).getData(),"data1".getBytes());
+        Stat stat = ((OpResult.GetDataResult) multiRead.get(1)).getStat();
+        Assert.assertEquals(stat.getMzxid(), stat.getCzxid());
+        Assert.assertEquals(stat.getCtime(), stat.getMtime());
+        Assert.assertEquals(2, stat.getCversion());
+        Assert.assertEquals(0, stat.getVersion());
+        Assert.assertEquals(0, stat.getAversion());
+        Assert.assertEquals(0, stat.getEphemeralOwner());
+        Assert.assertEquals(5, stat.getDataLength());
+        Assert.assertEquals(2, stat.getNumChildren());
 
         Assert.assertTrue(multiRead.get(2) instanceof OpResult.GetChildrenResult);
         childrenList = ((OpResult.GetChildrenResult) multiRead.get(2)).getChildren();
         Assert.assertTrue(childrenList.isEmpty());
 
         Assert.assertArrayEquals(((OpResult.GetDataResult) multiRead.get(3)).getData(),"data2".getBytes());
+        stat = ((OpResult.GetDataResult) multiRead.get(3)).getStat();
+        Assert.assertEquals(stat.getMzxid(), stat.getCzxid());
+        Assert.assertEquals(stat.getMzxid(), stat.getPzxid());
+        Assert.assertEquals(stat.getCtime(), stat.getMtime());
+        Assert.assertEquals(0, stat.getCversion());
+        Assert.assertEquals(0, stat.getVersion());
+        Assert.assertEquals(0, stat.getAversion());
+        Assert.assertEquals(zk.getSessionId(), stat.getEphemeralOwner());
+        Assert.assertEquals(5, stat.getDataLength());
+        Assert.assertEquals(0, stat.getNumChildren());
     }
 
 
