@@ -764,7 +764,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     public void decInProcess() {
         requestsInProcess.decrementAndGet();
-        requestThrottler.throttleWake();
+        if (requestThrottler != null) {
+            requestThrottler.throttleWake();
+        }
     }
 
     public int getInProcess() {
