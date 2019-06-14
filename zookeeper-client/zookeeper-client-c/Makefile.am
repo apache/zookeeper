@@ -107,6 +107,7 @@ TEST_SOURCES = \
 	tests/ZooKeeperQuorumServer.h \
 	tests/TestReadOnlyClient.cc \
 	tests/TestLogClientEnv.cc \
+        tests/TestServerRequireClientSASLAuth.cc \
 	$(NULL)
 
 if SOLARIS
