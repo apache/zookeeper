@@ -2,6 +2,7 @@ package org.apache.zookeeper.server;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,18 +64,6 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
         ZooKeeperServer.getBooleanProp("zookeeper.request_throttle", true);
 
     /**
-     * Enable sleeps on throttling, instead of blocking on a condition
-     * variable. When this is enabled, we sleep request processing threads
-     * for a gradually increasing period of time each time they hit the
-     * throttle limit.
-     *
-     * This setting makes the throttle much more aggressive — we do less work
-     * per unit time, and force a longer delay in handling incoming requests.
-     */
-    private static volatile boolean sleepEnabled =
-        ZooKeeperServer.getBooleanProp("zookeeper.request_throttle_sleep", true);
-
-    /**
      * The total number of outstanding requests allowed before the throttler
      * starts stalling.
      *
@@ -84,14 +73,11 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
         Integer.getInteger("zookeeper.request_throttle_max_requests", 0);
 
     /**
-     * The time (in milliseconds) that the throttler sleeps when at-limit,
-     * if request_throttle_sleep is true.
-     *
-     * If reqeust_throttle_sleep is false, this is the maximum time for which
-     * a thread may wait to be notified that it may proceed processing a request.
+     * The time (in milliseconds) this is the maximum time for which throttler
+     * thread may wait to be notified that it may proceed processing a request.
      */
     private static volatile int stallTime =
-        Integer.getInteger("zookeeper.request_throttle_stall_time", 10);
+        Integer.getInteger("zookeeper.request_throttle_stall_time", 100);
 
     /**
      * When true, the throttler will drop stale requests rather than issue
@@ -108,14 +94,6 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
         this.zks = zks;
         this.stopping = false;
         this.killed = false;
-    }
-
-    public static boolean getSleepEnabled() {
-        return sleepEnabled;
-    }
-
-    public static void setSleepEnabled(boolean flag) {
-        sleepEnabled = flag;
     }
 
     public static int getMaxRequests() {
@@ -197,13 +175,8 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
 
     private synchronized void throttleSleep(int stallTime) {
         try {
-            if (sleepEnabled) {
-                Thread.sleep(stallTime);
-                ServerMetrics.getMetrics().REQUEST_THROTTLE_STALL_TIME.add(stallTime);
-            } else {
-                ServerMetrics.getMetrics().REQUEST_THROTTLE_WAIT_COUNT.add(1);
-                this.wait(stallTime);
-            }
+            ServerMetrics.getMetrics().REQUEST_THROTTLE_WAIT_COUNT.add(1);
+            this.wait(stallTime);
         } catch(InterruptedException ie) {
             return;
         }
@@ -252,6 +225,7 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
         return submittedRequests.size();
     }
 
+    @SuppressFBWarnings("DM_EXIT")
     public void shutdown() {
         // Try to shutdown gracefully
         LOG.info("Shutting down");

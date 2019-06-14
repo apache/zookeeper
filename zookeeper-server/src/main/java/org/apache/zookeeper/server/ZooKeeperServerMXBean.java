@@ -120,10 +120,6 @@ public interface ZooKeeperServerMXBean {
     public double getConnectionDecreaseRatio();
     public void setConnectionDecreaseRatio(double val);
 
-    /* Request throttling settings */
-    public boolean getRequestThrottleSleep();
-    public void setRequestThrottleSleep(boolean flag);
-
     public int getRequestThrottleLimit();
     public void setRequestThrottleLimit(int requests);
 

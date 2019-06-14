@@ -1,3 +1,21 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.zookeeper.server;
 
 import org.apache.zookeeper.CreateMode;
@@ -146,49 +164,6 @@ public class RequestThrottlerTest extends ZKTestCase {
     }
 
     @Test
-    public void testRequestThrottlerSleepEnabled() throws Exception {
-        ServerMetrics.getMetrics().resetAll();
-
-        // we only allow two requests in the pipeline
-        RequestThrottler.setMaxRequests(2);
-
-        // the throttler will sleep for STALL_TIME seconds when stalled
-        RequestThrottler.setSleepEnabled(true);
-        RequestThrottler.setStallTime(STALL_TIME);
-
-        // no requests can go through the pipeline unless we raise the latch
-        resumeProcess = new CountDownLatch(1);
-        submitted = new CountDownLatch(TOTAL_REQUESTS);
-
-        // send 5 requests asynchronously
-        for (int i =0; i < TOTAL_REQUESTS; i++) {
-            zk.create("/request_throttle_test- " + i , ("/request_throttle_test- " + i).getBytes(),
-                    ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT, (rc, path, ctx, name) -> {}, null);
-        }
-
-        // make sure the server received all 5 requests
-        submitted.await(5, TimeUnit.SECONDS);
-        Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
-
-        // but only two requests can get into the pipeline because of the throttler
-        Assert.assertEquals(2L, (long)metrics.get("prep_processor_request_queued"));
-
-        // let the requests go through the pipeline
-        resumeProcess.countDown();
-        long startPipeline = Time.currentWallTime();
-        while (zks.getInflight() > 0) {
-            Thread.sleep(50);
-        }
-
-        // even the in-progress requests decrease, the throttler won't resume processing until it sleeps for stallTime
-        Assert.assertThat(Time.currentWallTime() - startPipeline, greaterThan(8L));
-
-        metrics = MetricsUtils.currentServerMetrics();
-        Assert.assertThat((long)metrics.get("prep_processor_request_queued"), greaterThanOrEqualTo((long)TOTAL_REQUESTS));
-        Assert.assertThat((long)metrics.get("request_throttle_stall_time"), greaterThanOrEqualTo((long)STALL_TIME));
-    }
-
-    @Test
     public void testRequestThrottlerSleepDisabled() throws Exception {
         ServerMetrics.getMetrics().resetAll();
 
@@ -196,7 +171,6 @@ public class RequestThrottlerTest extends ZKTestCase {
         RequestThrottler.setMaxRequests(2);
 
         // sleep is disabled so the throttler will wait for the number of in-progress requests to be decreased
-        RequestThrottler.setSleepEnabled(false);
         RequestThrottler.setStallTime(STALL_TIME);
 
         // no requests can go through the pipeline unless we raise the latch
@@ -239,10 +213,6 @@ public class RequestThrottlerTest extends ZKTestCase {
         // we only allow two requests in the pipeline
         RequestThrottler.setMaxRequests(2);
 
-        // sleep is disabled so the throttler will wait for the number of in-progress requests to be decreased
-        // and make the wait time to be 10 seconds, so it should never timeout and the throttler is always waken
-        // by the decrease of in-progress requests
-        RequestThrottler.setSleepEnabled(false);
         RequestThrottler.setStallTime(STALL_TIME);
 
         RequestThrottler.setDropStaleRequests(true);

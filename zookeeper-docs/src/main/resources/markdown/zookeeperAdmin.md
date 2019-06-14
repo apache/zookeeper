@@ -867,15 +867,10 @@ property, when available, is noted below.
     **New in 3.6.0:**
     The total number of outstanding requests allowed before the RequestThrottler starts stalling. When set to 0, throttling is disabled. The default is 0.
 
-* *requestThrottleSleep* :
-    (Java system property: **zookeeper.request_throttle_sleep**)
-    **New in 3.6.0:**
-    When enabled, we sleep request processing threads, instead of blocking on a condition variable, for a gradually increasing period of time each time they hit the throttle limit, which forces a longer delay in handling incoming requests. The default is true.
-
 * *requestThrottleStallTime* :
     (Java system property: **zookeeper.request_throttle_stall_time**)
     **New in 3.6.0:**
-    The time (in milliseconds) that the RequestThrottler sleeps when at-limit if request_throttle_sleep is true. If reqeust_throttle_sleep is false, this is the maximum time for which a thread may wait to be notified that it may proceed processing a request. The default is 10.
+    The maximum time (in milliseconds) for which a thread may wait to be notified that it may proceed processing a request. The default is 100.
 
 * *requestThrottleDropStale* :
     (Java system property: **request_throttle_drop_stale**)
