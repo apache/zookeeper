@@ -198,7 +198,7 @@ public class VerGen {
             } else {
                 rev = rev.trim();
             }
-            generateFile(new File("."), version, rev, args[2]);
+            generateFile(new File("../../../target/generated-sources/java"), version, rev, args[2]);
         } catch (NumberFormatException e) {
             System.err.println(
                     "All version-related parameters must be valid integers!");
