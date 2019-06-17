@@ -278,7 +278,7 @@ public class Request {
         }
     }
 
-    static String op2String(int op) {
+    public static String op2String(int op) {
         switch (op) {
         case OpCode.notification:
             return "notification";
