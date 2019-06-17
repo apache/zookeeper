@@ -20,6 +20,7 @@ package org.apache.zookeeper.server.admin;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -28,6 +29,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.Environment.Entry;
@@ -609,11 +611,39 @@ public class Commands {
             CommandResponse response = initializeResponse();
             if (zkServer instanceof QuorumZooKeeperServer) {
                 QuorumPeer peer = ((QuorumZooKeeperServer) zkServer).self;
-                response.put("current_config", peer.getVotingView());
+                VotingView votingView = new VotingView(peer.getVotingView());
+                response.put("current_config", votingView);
             } else {
                 response.put("current_config", "");
             }
             return response;
+        }
+
+
+        private static class VotingView {
+            final String stringRepresentation;
+
+            VotingView(Map<Long,QuorumPeer.QuorumServer> view) {
+                this.stringRepresentation = view.entrySet().stream()
+                        .sorted(Comparator.comparingLong(Map.Entry::getKey))
+                        .filter(e -> e.getValue().addr != null)
+                        .map(e -> String.format("%s=%s:%d%s:%s%s",
+                                e.getKey().toString(),
+                                QuorumPeer.QuorumServer.delimitedHostString(e.getValue().addr),
+                                e.getValue().addr.getPort(),
+                                e.getValue().electionAddr == null ? "" : ":" + e.getValue().electionAddr.getPort(),
+                                e.getValue().type.equals(QuorumPeer.LearnerType.PARTICIPANT) ? "participant" : "observer",
+                                e.getValue().clientAddr ==null || e.getValue().isClientAddrFromStatic ? "" :
+                                        String.format(";%s:%d",
+                                                QuorumPeer.QuorumServer.delimitedHostString(e.getValue().clientAddr),
+                                                e.getValue().clientAddr.getPort())))
+                        .collect(Collectors.joining(", "));
+            }
+
+            @Override
+            public String toString() {
+                return "{" + stringRepresentation + "}";
+            }
         }
     }
 

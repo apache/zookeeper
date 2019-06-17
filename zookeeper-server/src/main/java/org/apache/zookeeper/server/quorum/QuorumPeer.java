@@ -319,7 +319,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             this.myAddrs = excludedSpecialAddresses(this.myAddrs);
         }
 
-        private static String delimitedHostString(InetSocketAddress addr)
+        public static String delimitedHostString(InetSocketAddress addr)
         {
             String host = addr.getHostString();
             if (host.contains(":")) {
