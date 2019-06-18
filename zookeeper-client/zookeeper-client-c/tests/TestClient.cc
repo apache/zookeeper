@@ -800,6 +800,7 @@ public:
 #ifdef HAVE_OPENSSL_H
     void testSSL() {
         watchctx_t ctx;
+        zoo_set_debug_level(ZOO_LOG_LEVEL_DEBUG);
         zhandle_t *zk = createSSLClient("127.0.0.1:22281", "/tmp/certs/server.crt,/tmp/certs/client.crt,/tmp/certs/clientkey.pem,password", &ctx);
         CPPUNIT_ASSERT(zk);
         int rc = 0;

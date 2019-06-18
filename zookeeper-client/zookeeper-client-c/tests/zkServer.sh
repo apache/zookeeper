@@ -124,7 +124,7 @@ start|startClean)
         ./gencerts.sh >/dev/null 2>/dev/null
         cd -
         sed "s#TMPDIR#${tmpdir}#g;s#CERTDIR#${certdir}#g" tests/zoo.cfg > "${tmpdir}/zoo.cfg"
-        java -cp "$CLASSPATH" org.apache.zookeeper.server.ZooKeeperServerMain ${tmpdir}/zoo.cfg  &> /tmp/zk.log &
+        java -cp "$CLASSPATH" $PROPERTIES org.apache.zookeeper.server.ZooKeeperServerMain $ZOOPORT /tmp/zkdata 3000 $ZKMAXCNXNS &> /tmp/zk.log &
         pid=$!
         echo -n $! > /tmp/zk.pid
     else
@@ -139,7 +139,7 @@ start|startClean)
 
         sed "s#TMPDIR#${tmpdir}#g;s#CERTDIR#${certdir}#g" ${base_dir}/zookeeper-client/zookeeper-client-c/tests/zoo.cfg > "${tmpdir}/zoo.cfg"
 
-        java -cp "$CLASSPATH" org.apache.zookeeper.server.ZooKeeperServerMain ${tmpdir}/zoo.cfg &> "${base_dir}/build/tmp/zk.log" &
+        java -cp "$CLASSPATH" $PROPERTIES org.apache.zookeeper.server.ZooKeeperServerMain $ZOOPORT "${base_dir}/build/tmp/zkdata" 3000 $ZKMAXCNXNS &> "${base_dir}/build/tmp/zk.log" &
         pid=$!
         echo -n $pid > "${base_dir}/build/tmp/zk.pid"
     fi

@@ -1,8 +1,7 @@
 # need this for Doxygen integration
 include $(top_srcdir)/aminclude.am
 
-#Many of our build machines are running older automake
-#AUTOMAKE_OPTIONS = serial-tests
+AUTOMAKE_OPTIONS = serial-tests
 
 if SOLARIS
   SOLARIS_CPPFLAGS = -D_POSIX_PTHREAD_SEMANTICS
