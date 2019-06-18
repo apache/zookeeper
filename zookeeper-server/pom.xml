@@ -242,6 +242,7 @@
                 <argument>${project.version}</argument>
                 <argument>${git.commit.id}</argument>
                 <argument>${build.time}</argument>
+                <argument>${project.basedir}/target/generated-sources/java</argument>
               </arguments>
             </configuration>
           </execution>
