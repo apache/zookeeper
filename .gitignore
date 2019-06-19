@@ -90,3 +90,6 @@ zookeeper-client/zookeeper-client-c/ltmain.sh
 zookeeper-client/zookeeper-client-c/missing
 zookeeper-server/src/main/java/org/apache/zookeeper/version/Info.java
 zookeeper-server/src/test/resources/
+
+# Python
+*.py[cod]
