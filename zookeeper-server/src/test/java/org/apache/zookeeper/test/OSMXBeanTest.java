@@ -44,9 +44,9 @@ public class OSMXBeanTest extends ZKTestCase {
     public final void testGetUnix() {
         boolean isUnix = osMbean.getUnix();
         if (!isUnix) {
-        	LOG.info("Running in a Windows system! Output won't be printed!");
+            LOG.info("Running in a Windows system! Output won't be printed!");
         } else {
-        	LOG.info("Running in a Unix or Linux system!");
+            LOG.info("Running in a Unix or Linux system!");
         }
     }
 

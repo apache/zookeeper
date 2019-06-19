@@ -102,7 +102,7 @@ public class ServerStats {
     
     /** The number of client connections alive to this server */
     public int getNumAliveClientConnections() {
-    	return provider.getNumAliveConnections();
+        return provider.getNumAliveConnections();
     }
 
     public long getUptime() {

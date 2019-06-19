@@ -238,7 +238,7 @@ public class EphemeralNodeDeletionTest extends QuorumPeerTestBase {
         
         @Override
         public void processResult(int rc, String path, Object ctx) {
-        	sync.countDown();
+            sync.countDown();
         }
     }
 }

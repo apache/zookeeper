@@ -236,17 +236,17 @@ public class ZooKeeperTest extends ClientBase {
 
     @Test
     public void testStatWhenPathDoesNotExist() throws IOException,
-    		InterruptedException, MalformedCommandException {
-    	final ZooKeeper zk = createClient();
-    	ZooKeeperMain main = new ZooKeeperMain(zk);
-    	String cmdstring = "stat /invalidPath";
-    	main.cl.parseCommand(cmdstring);
-    	try {
-    		main.processZKCmd(main.cl);
-    		Assert.fail("As Node does not exist, command should fail by throwing No Node Exception.");
-    	} catch (CliException e) {
-    		Assert.assertEquals("Node does not exist: /invalidPath", e.getMessage());
-    	}
+            InterruptedException, MalformedCommandException {
+        final ZooKeeper zk = createClient();
+        ZooKeeperMain main = new ZooKeeperMain(zk);
+        String cmdstring = "stat /invalidPath";
+        main.cl.parseCommand(cmdstring);
+        try {
+            main.processZKCmd(main.cl);
+            Assert.fail("As Node does not exist, command should fail by throwing No Node Exception.");
+        } catch (CliException e) {
+            Assert.assertEquals("Node does not exist: /invalidPath", e.getMessage());
+        }
     }
 
     @Test
@@ -264,7 +264,7 @@ public class ZooKeeperTest extends ClientBase {
     public void testParseWithQuotes() throws Exception {
         final ZooKeeper zk = createClient();
         ZooKeeperMain zkMain = new ZooKeeperMain(zk);
-        for (String quoteChar : new String[] {"'", "\""}) {
+        for (String quoteChar : new String[]{"'", "\""}) {
             String cmdstring = String.format("create /node %1$squoted data%1$s", quoteChar);
             zkMain.cl.parseCommand(cmdstring);
             Assert.assertEquals("quotes combine arguments", zkMain.cl.getNumArguments(), 3);
@@ -278,7 +278,7 @@ public class ZooKeeperTest extends ClientBase {
     public void testParseWithMixedQuotes() throws Exception {
         final ZooKeeper zk = createClient();
         ZooKeeperMain zkMain = new ZooKeeperMain(zk);
-        for (String[] quoteChars : new String[][] {{"'", "\""}, {"\"", "'"}}) {
+        for (String[] quoteChars : new String[][]{{"'", "\""}, {"\"", "'"}}) {
             String outerQuotes = quoteChars[0];
             String innerQuotes = quoteChars[1];
             String cmdstring = String.format("create /node %1$s%2$squoted data%2$s%1$s", outerQuotes, innerQuotes);
@@ -317,7 +317,7 @@ public class ZooKeeperTest extends ClientBase {
 
     @Test
     public void testNonexistantCommand() throws Exception {
-      testInvalidCommand("cret -s /node1", 127);
+        testInvalidCommand("cret -s /node1", 127);
     }
 
     @Test
@@ -351,10 +351,10 @@ public class ZooKeeperTest extends ClientBase {
 
         // Verify that the correct exception is thrown
         try {
-          zkMain.processZKCmd(zkMain.cl);
-          Assert.fail();
+            zkMain.processZKCmd(zkMain.cl);
+            Assert.fail();
         } catch (CliException e) {
-          return;
+            return;
         }
         Assert.fail("invalid command should throw CliException");
     }
@@ -460,7 +460,7 @@ public class ZooKeeperTest extends ClientBase {
             Assert.assertFalse(zkMain.processZKCmd(zkMain.cl));
             Assert.fail("Path doesn't exists so, command should fail.");
         } catch (CliWrapperException e) {
-            Assert.assertEquals(KeeperException.Code.NONODE, ((KeeperException)e.getCause()).code());
+            Assert.assertEquals(KeeperException.Code.NONODE, ((KeeperException) e.getCause()).code());
         }
     }
 
@@ -487,24 +487,24 @@ public class ZooKeeperTest extends ClientBase {
 
     @Test
     public void testCheckInvalidAcls() throws Exception {
-         final ZooKeeper zk = createClient();
-            ZooKeeperMain zkMain = new ZooKeeperMain(zk);
-            String cmdstring = "create -s -e /node data ip:scheme:gggsd"; //invalid acl's
+        final ZooKeeper zk = createClient();
+        ZooKeeperMain zkMain = new ZooKeeperMain(zk);
+        String cmdstring = "create -s -e /node data ip:scheme:gggsd"; //invalid acl's
 
-            // For Invalid ACls should not throw exception
-            zkMain.executeLine(cmdstring);
+        // For Invalid ACls should not throw exception
+        zkMain.executeLine(cmdstring);
     }
 
     @Test
     public void testDeleteWithInvalidVersionNo() throws Exception {
-         final ZooKeeper zk = createClient();
-            ZooKeeperMain zkMain = new ZooKeeperMain(zk);
-            String cmdstring = "create -s -e /node1 data ";
-            String cmdstring1 = "delete /node1 2";//invalid dataversion no
-                 zkMain.executeLine(cmdstring);
+        final ZooKeeper zk = createClient();
+        ZooKeeperMain zkMain = new ZooKeeperMain(zk);
+        String cmdstring = "create -s -e /node1 data ";
+        String cmdstring1 = "delete /node1 2";//invalid dataversion no
+        zkMain.executeLine(cmdstring);
 
-            // For Invalid dataversion number should not throw exception
-            zkMain.executeLine(cmdstring1);
+        // For Invalid dataversion number should not throw exception
+        zkMain.executeLine(cmdstring1);
     }
 
     @Test
@@ -656,7 +656,7 @@ public class ZooKeeperTest extends ClientBase {
             runCommandExpect(cmd, new ArrayList<String>());
             Assert.fail("Path doesn't exists so, command should fail.");
         } catch (CliWrapperException e) {
-            Assert.assertEquals(KeeperException.Code.NONODE, ((KeeperException)e.getCause()).code());
+            Assert.assertEquals(KeeperException.Code.NONODE, ((KeeperException) e.getCause()).code());
         }
     }
 

@@ -21,22 +21,23 @@ package org.apache.zookeeper.common;
 
 /**
  * Path related utilities
- */    
+ */
 public class PathUtils {
-	
-	/** validate the provided znode path string
-	 * @param path znode path string
-	 * @param isSequential if the path is being created
-	 * with a sequential flag
-	 * @throws IllegalArgumentException if the path is invalid
-	 */
-	public static void validatePath(String path, boolean isSequential) 
-		throws IllegalArgumentException {
-		validatePath(isSequential? path + "1": path);
-	}
-	
+
+    /** validate the provided znode path string
+     * @param path znode path string
+     * @param isSequential if the path is being created
+     * with a sequential flag
+     * @throws IllegalArgumentException if the path is invalid
+     */
+    public static void validatePath(String path, boolean isSequential)
+            throws IllegalArgumentException {
+        validatePath(isSequential ? path + "1" : path);
+    }
+
     /**
      * Validate the provided znode path string
+     *
      * @param path znode path string
      * @throws IllegalArgumentException if the path is invalid
      */
@@ -49,14 +50,14 @@ public class PathUtils {
         }
         if (path.charAt(0) != '/') {
             throw new IllegalArgumentException(
-                         "Path must start with / character");
+                    "Path must start with / character");
         }
         if (path.length() == 1) { // done checking - it's the root
             return;
         }
         if (path.charAt(path.length() - 1) == '/') {
             throw new IllegalArgumentException(
-                         "Path must not end with / character");
+                    "Path must not end with / character");
         }
 
         String reason = null;
@@ -73,16 +74,16 @@ public class PathUtils {
                 reason = "empty node name specified @" + i;
                 break;
             } else if (c == '.' && lastc == '.') {
-                if (chars[i-2] == '/' &&
+                if (chars[i - 2] == '/' &&
                         ((i + 1 == chars.length)
-                                || chars[i+1] == '/')) {
+                                || chars[i + 1] == '/')) {
                     reason = "relative paths not allowed @" + i;
                     break;
                 }
             } else if (c == '.') {
-                if (chars[i-1] == '/' &&
+                if (chars[i - 1] == '/' &&
                         ((i + 1 == chars.length)
-                                || chars[i+1] == '/')) {
+                                || chars[i + 1] == '/')) {
                     reason = "relative paths not allowed @" + i;
                     break;
                 }
@@ -104,8 +105,7 @@ public class PathUtils {
     /**
      * Convert Windows path to Unix
      *
-     * @param path
-     *            file path
+     * @param path file path
      * @return converted file path
      */
     public static String normalizeFileSystemPath(String path) {

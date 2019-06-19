@@ -73,24 +73,24 @@ public class SaslSuperUserTest extends ClientBase {
     public static void cleanupStatic() {
         if (oldAuthProvider != null) {
             System.setProperty("zookeeper.authProvider.1", oldAuthProvider);
-	} else {
+        } else {
             System.clearProperty("zookeeper.authProvider.1");
-	}
-	oldAuthProvider = null;
+        }
+        oldAuthProvider = null;
 
         if (oldLoginConfig != null) {
             System.setProperty("java.security.auth.login.config", oldLoginConfig);
-	} else {
+        } else {
             System.clearProperty("java.security.auth.login.config");
-	}
-	oldLoginConfig = null;
+        }
+        oldLoginConfig = null;
 
         if (oldSuperUser != null) {
             System.setProperty("zookeeper.superUser", oldSuperUser);
-	} else {
+        } else {
             System.clearProperty("zookeeper.superUser");
-	}
-	oldSuperUser = null;
+        }
+        oldSuperUser = null;
     }
 
     private AtomicInteger authFailed = new AtomicInteger(0);

@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,35 +23,37 @@ package org.apache.zookeeper.server.quorum;
  * how two different states are compared.
  */
 public class StateSummary {
-	private long currentEpoch;
-	private long lastZxid;
-	public StateSummary(long currentEpoch, long lastZxid) {
-		this.currentEpoch = currentEpoch;
-		this.lastZxid = lastZxid;
-	}
-	
-	public long getCurrentEpoch() {
-		return currentEpoch;
-	}
-	
-	public long getLastZxid() {
-		return lastZxid;
-	}
-	
-	public boolean isMoreRecentThan(StateSummary ss) {
-		return (currentEpoch > ss.currentEpoch) || (currentEpoch == ss.currentEpoch && lastZxid > ss.lastZxid);
-	}
-	@Override
-	public boolean equals(Object obj) {
-		if (!(obj instanceof StateSummary)) {
-			return false;
-		}
-		StateSummary ss = (StateSummary)obj;
-		return currentEpoch == ss.currentEpoch && lastZxid == ss.lastZxid;
-	}
-	
-	@Override
-	public int hashCode() {
-		return (int)(currentEpoch ^ lastZxid);
-	}
+    private long currentEpoch;
+    private long lastZxid;
+
+    public StateSummary(long currentEpoch, long lastZxid) {
+        this.currentEpoch = currentEpoch;
+        this.lastZxid = lastZxid;
+    }
+
+    public long getCurrentEpoch() {
+        return currentEpoch;
+    }
+
+    public long getLastZxid() {
+        return lastZxid;
+    }
+
+    public boolean isMoreRecentThan(StateSummary ss) {
+        return (currentEpoch > ss.currentEpoch) || (currentEpoch == ss.currentEpoch && lastZxid > ss.lastZxid);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof StateSummary)) {
+            return false;
+        }
+        StateSummary ss = (StateSummary) obj;
+        return currentEpoch == ss.currentEpoch && lastZxid == ss.lastZxid;
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) (currentEpoch ^ lastZxid);
+    }
 }

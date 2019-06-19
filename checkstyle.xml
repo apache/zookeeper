@@ -24,6 +24,9 @@ what the following rules do, please see the checkstyle configuration
 page at http://checkstyle.sourceforge.net/config.html -->
 
 <module name="Checker">
+    <!-- Filter out Checkstyle warnings that have been suppressed with the @SuppressWarnings
+  annotation -->
+    <module name="SuppressWarningsFilter"/>
 
     <!-- Prevent *Tests.java as tools may not pick them up -->
     <module name="RegexpOnFilename">
@@ -33,6 +36,8 @@ page at http://checkstyle.sourceforge.net/config.html -->
     <module name="SuppressionFilter">
         <property name="file" value="${checkstyle.suppressions.file}" default="suppressions.xml" />
     </module>
+
+    <module name="FileTabCharacter"/>
 
     <!-- All Java AST specific tests live under TreeWalker module. -->
     <module name="TreeWalker">

@@ -68,9 +68,9 @@ public class MultiResponse implements Record, Iterable<OpResult> {
                     new CreateResponse(((OpResult.CreateResult) result).getPath()).serialize(archive, tag);
                     break;
                 case ZooDefs.OpCode.create2:
-                	OpResult.CreateResult createResult = (OpResult.CreateResult) result;
+                    OpResult.CreateResult createResult = (OpResult.CreateResult) result;
                     new Create2Response(createResult.getPath(),
-                    		createResult.getStat()).serialize(archive, tag);
+                            createResult.getStat()).serialize(archive, tag);
                     break;
                 case ZooDefs.OpCode.delete:
                 case ZooDefs.OpCode.check:

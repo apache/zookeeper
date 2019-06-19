@@ -150,7 +150,7 @@ public class AuthTest extends ClientBase {
     
     @Test
     public void testSuperACL() throws Exception {
-    	 ZooKeeper zk = createClient();
+         ZooKeeper zk = createClient();
          try {
              zk.addAuthInfo("digest", "pat:pass".getBytes());
              zk.create("/path1", null, Ids.CREATOR_ALL_ACL,
@@ -163,10 +163,10 @@ public class AuthTest extends ClientBase {
              
              zk.setACL("/path1", Ids.READ_ACL_UNSAFE, -1);
              zk.create("/path1/foo", null, Ids.CREATOR_ALL_ACL, CreateMode.PERSISTENT);
-           
-             
+
+
              zk.setACL("/path1", Ids.OPEN_ACL_UNSAFE, -1);
-        	 
+
          } finally {
              zk.close();
          }

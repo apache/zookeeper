@@ -60,13 +60,13 @@ public class ConfigUtilsTest {
     
     @Test
     public void testGetHostAndPortWithoutPort() throws ConfigException {
-    	String[] nsa = ConfigUtils.getHostAndPort("127.0.0.1");
-    	assertEquals(nsa[0], "127.0.0.1");
-    	assertEquals(nsa.length, 1);
-    	
-    	nsa = ConfigUtils.getHostAndPort("[2001:db8:1::242:ac11:2]");
-    	assertEquals(nsa[0], "2001:db8:1::242:ac11:2");
-    	assertEquals(nsa.length, 1);
+        String[] nsa = ConfigUtils.getHostAndPort("127.0.0.1");
+        assertEquals(nsa[0], "127.0.0.1");
+        assertEquals(nsa.length, 1);
+
+        nsa = ConfigUtils.getHostAndPort("[2001:db8:1::242:ac11:2]");
+        assertEquals(nsa[0], "2001:db8:1::242:ac11:2");
+        assertEquals(nsa.length, 1);
     }
 
 }

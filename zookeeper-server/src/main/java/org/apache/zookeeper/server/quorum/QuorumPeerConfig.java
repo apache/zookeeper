@@ -681,7 +681,7 @@ public class QuorumPeerConfig {
      * @throws ConfigException
      */
     public static QuorumVerifier parseDynamicConfig(Properties dynamicConfigProp, int eAlg, boolean warnings,
-	   boolean configBackwardCompatibilityMode) throws IOException, ConfigException {
+                                                    boolean configBackwardCompatibilityMode) throws IOException, ConfigException {
        boolean isHierarchical = false;
         for (Entry<Object, Object> entry : dynamicConfigProp.entrySet()) {
             String key = entry.getKey().toString().trim();                    
@@ -892,9 +892,9 @@ public class QuorumPeerConfig {
     public Boolean getQuorumListenOnAllIPs() {
         return quorumListenOnAllIPs;
     }
- 
+
     public static boolean isStandaloneEnabled() {
-	return standaloneEnabled;
+        return standaloneEnabled;
     }
     
     public static void setStandaloneEnabled(boolean enabled) {

@@ -813,12 +813,12 @@ public class ClientTest extends ClientBase {
         // sessions.
         long currentCount = osMbean.getOpenFileDescriptorCount();
         final String logmsg = "open fds after test ({}) are not significantly higher than before ({})";
-        
+
         if (currentCount > initialFdCount + 10) {
             // consider as error
-        	LOG.error(logmsg,Long.valueOf(currentCount),Long.valueOf(initialFdCount));
+            LOG.error(logmsg, Long.valueOf(currentCount), Long.valueOf(initialFdCount));
         } else {
-        	LOG.info(logmsg,Long.valueOf(currentCount),Long.valueOf(initialFdCount));
+            LOG.info(logmsg, Long.valueOf(currentCount), Long.valueOf(initialFdCount));
         }
     }
 

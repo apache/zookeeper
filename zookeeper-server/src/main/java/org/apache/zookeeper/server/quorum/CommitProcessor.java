@@ -178,7 +178,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
              */
             int requestsToProcess = 0;
             boolean commitIsWaiting = false;
-			do {
+            do {
                 /*
                  * Since requests are placed in the queue before being sent to
                  * the leader, if commitIsWaiting = true, the commit belongs to

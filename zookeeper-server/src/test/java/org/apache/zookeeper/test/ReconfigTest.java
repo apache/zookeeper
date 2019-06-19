@@ -798,18 +798,18 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
 
     @Test
     public void testUnspecifiedClientAddress() throws Exception {
-    	int[] ports = {
+        int[] ports = {
                 PortAssignment.unique(),
                 PortAssignment.unique(),
                 PortAssignment.unique()
-    	};
+        };
 
-    	String server = "server.0=localhost:" + ports[0] + ":" + ports[1] + ";" + ports[2];
-    	QuorumServer qs = new QuorumServer(0, server);
-    	Assert.assertEquals(qs.clientAddr.getHostString(), "0.0.0.0");
-    	Assert.assertEquals(qs.clientAddr.getPort(), ports[2]);
+        String server = "server.0=localhost:" + ports[0] + ":" + ports[1] + ";" + ports[2];
+        QuorumServer qs = new QuorumServer(0, server);
+        Assert.assertEquals(qs.clientAddr.getHostString(), "0.0.0.0");
+        Assert.assertEquals(qs.clientAddr.getPort(), ports[2]);
     }
-    
+
     @Test
     public void testQuorumSystemChange() throws Exception {
         qu = new QuorumUtil(3); // create 7 servers
@@ -884,7 +884,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
                         + " doesn't think the quorum system is a majority quorum system!");
         }
     }
-    
+
     @Test
     public void testInitialConfigHasPositiveVersion() throws Exception {
         qu = new QuorumUtil(1); // create 3 servers
@@ -892,7 +892,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         qu.startAll();
         zkArr = createHandles(qu);
         testNormalOperation(zkArr[1], zkArr[2]);
-        for (int i=1; i<4; i++) {
+        for (int i = 1; i < 4; i++) {
             String configStr = testServerHasConfig(zkArr[i], null, null);
             QuorumVerifier qv = qu.getPeer(i).peer.configFromString(configStr);
             long version = qv.getVersion();
@@ -1051,7 +1051,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
     }
 
     private void assertLocalPeerMXBeanAttributes(QuorumPeer qp,
-            String beanName, Boolean isPartOfEnsemble) throws Exception {
+                                                 String beanName, Boolean isPartOfEnsemble) throws Exception {
         Assert.assertEquals("Mismatches LearnerType!", qp.getLearnerType()
                 .name(), JMXEnv.ensureBeanAttribute(beanName, "LearnerType"));
         Assert.assertEquals("Mismatches ClientAddress!",
@@ -1074,7 +1074,7 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
         String name = (String) JMXEnv.ensureBeanAttribute(
                 beanName, attribute);
 
-        if ( ! name.contains(":") ) {
+        if (!name.contains(":")) {
             return name;
         }
 
@@ -1089,17 +1089,17 @@ public class ReconfigTest extends ZKTestCase implements DataCallback{
     }
 
     private void assertRemotePeerMXBeanAttributes(QuorumServer qs,
-            String beanName) throws Exception {
+                                                  String beanName) throws Exception {
         Assert.assertEquals("Mismatches LearnerType!", qs.type.name(),
                 JMXEnv.ensureBeanAttribute(beanName, "LearnerType"));
         Assert.assertEquals("Mismatches ClientAddress!",
                 getNumericalAddrPort(qs.clientAddr.getHostString() + ":" + qs.clientAddr.getPort()),
-                getAddrPortFromBean(beanName, "ClientAddress") );
+                getAddrPortFromBean(beanName, "ClientAddress"));
         Assert.assertEquals("Mismatches ElectionAddress!",
                 getNumericalAddrPort(qs.electionAddr.getHostString() + ":" + qs.electionAddr.getPort()),
-                getAddrPortFromBean(beanName, "ElectionAddress") );
+                getAddrPortFromBean(beanName, "ElectionAddress"));
         Assert.assertEquals("Mismatches QuorumAddress!",
                 getNumericalAddrPort(qs.addr.getHostString() + ":" + qs.addr.getPort()),
-                getAddrPortFromBean(beanName, "QuorumAddress") );
+                getAddrPortFromBean(beanName, "QuorumAddress"));
     }
 }

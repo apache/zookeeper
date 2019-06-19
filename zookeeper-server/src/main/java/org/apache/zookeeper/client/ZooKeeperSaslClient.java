@@ -423,8 +423,8 @@ public class ZooKeeperSaslClient {
     }
 
     public boolean clientTunneledAuthenticationInProgress() {
-    	if (!isSASLConfigured) {
-    	    return false;
+        if (!isSASLConfigured) {
+            return false;
         } 
         // TODO: Rather than checking a disjunction here, should be a single member
         // variable or method in this class to determine whether the client is

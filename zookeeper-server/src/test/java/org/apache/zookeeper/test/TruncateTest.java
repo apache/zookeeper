@@ -51,7 +51,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class TruncateTest extends ZKTestCase {
-	private static final Logger LOG = LoggerFactory.getLogger(TruncateTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TruncateTest.class);
     File dataDir1, dataDir2, dataDir3;
     
     @Before

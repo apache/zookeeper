@@ -51,7 +51,7 @@ public abstract class OpResult {
         private Stat stat;
 
         public CreateResult(String path) {
-        	this(ZooDefs.OpCode.create, path, null);
+            this(ZooDefs.OpCode.create, path, null);
         }
 
         public CreateResult(String path, Stat stat) {
@@ -59,7 +59,7 @@ public abstract class OpResult {
         }
 
         private CreateResult(int opcode, String path, Stat stat) {
-        	super(opcode);
+            super(opcode);
             this.path = path;
             this.stat = stat;
         }
@@ -80,8 +80,8 @@ public abstract class OpResult {
             CreateResult other = (CreateResult) o;
 
             boolean statsAreEqual = (stat == null && other.stat == null ||
-                        						(stat != null && other.stat != null &&
-                        					   stat.getMzxid() == other.stat.getMzxid()));
+                    (stat != null && other.stat != null &&
+                            stat.getMzxid() == other.stat.getMzxid()));
             return getType() == other.getType() &&
                    path.equals(other.getPath()) && statsAreEqual;
         }

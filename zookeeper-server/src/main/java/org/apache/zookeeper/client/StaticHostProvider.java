@@ -165,7 +165,7 @@ public final class StaticHostProvider implements HostProvider {
 
     /**
      * Update the list of servers. This returns true if changing connections is necessary for load-balancing, false
-	 * otherwise. Changing connections is necessary if one of the following holds: 
+     * otherwise. Changing connections is necessary if one of the following holds:
      * a) the host to which this client is currently connected is not in serverAddresses.
      *    Otherwise (if currentHost is in the new list serverAddresses):   
      * b) the number of servers in the cluster is increasing - in this case the load on currentHost should decrease,
@@ -290,12 +290,12 @@ public final class StaticHostProvider implements HostProvider {
     }
 
     public synchronized InetSocketAddress getServerAtIndex(int i) {
-    	if (i < 0 || i >= serverAddresses.size()) return null;
-    	return serverAddresses.get(i);
+        if (i < 0 || i >= serverAddresses.size()) return null;
+        return serverAddresses.get(i);
     }
     
     public synchronized InetSocketAddress getServerAtCurrentIndex() {
-    	return getServerAtIndex(currentIndex);
+        return getServerAtIndex(currentIndex);
     }
 
     public synchronized int size() {
@@ -342,24 +342,24 @@ public final class StaticHostProvider implements HostProvider {
         boolean needToSleep = false;
         InetSocketAddress addr;
 
-        synchronized(this) {
+        synchronized (this) {
             if (reconfigMode) {
                 addr = nextHostInReconfigMode();
                 if (addr != null) {
-                	currentIndex = serverAddresses.indexOf(addr);
-                	return resolve(addr);
+                    currentIndex = serverAddresses.indexOf(addr);
+                    return resolve(addr);
                 }
                 //tried all servers and couldn't connect
                 reconfigMode = false;
                 needToSleep = (spinDelay > 0);
-            }        
+            }
             ++currentIndex;
             if (currentIndex == serverAddresses.size()) {
                 currentIndex = 0;
-            }            
+            }
             addr = serverAddresses.get(currentIndex);
             needToSleep = needToSleep || (currentIndex == lastIndex && spinDelay > 0);
-            if (lastIndex == -1) { 
+            if (lastIndex == -1) {
                 // We don't want to sleep on the first ever connect attempt.
                 lastIndex = 0;
             }

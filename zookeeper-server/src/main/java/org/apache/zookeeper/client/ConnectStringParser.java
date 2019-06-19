@@ -80,7 +80,7 @@ public final class ConnectStringParser {
             } catch (ConfigException e) {
                 e.printStackTrace();
             }
-		    
+
             serverAddresses.add(InetSocketAddress.createUnresolved(host, port));
         }
     }

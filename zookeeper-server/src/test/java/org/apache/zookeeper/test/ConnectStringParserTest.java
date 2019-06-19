@@ -24,8 +24,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class ConnectStringParserTest extends ZKTestCase{
-	private static final int DEFAULT_PORT = 2181;
-	
+    private static final int DEFAULT_PORT = 2181;
+
     @Test
     public void testSingleServerChrootPath(){
         String chrootPath = "/hallo/welt";

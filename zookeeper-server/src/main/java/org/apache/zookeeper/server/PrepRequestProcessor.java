@@ -509,9 +509,9 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                            }
                        }
                        if (joiningServers != null) {
-                           for (String joiner: joiningServers){
-                        	   // joiner should have the following format: server.x = server_spec;client_spec
-                        	   String[] parts = StringUtils.split(joiner, "=").toArray(new String[0]);
+                           for (String joiner : joiningServers) {
+                               // joiner should have the following format: server.x = server_spec;client_spec
+                               String[] parts = StringUtils.split(joiner, "=").toArray(new String[0]);
                                if (parts.length != 2) {
                                    throw new KeeperException.BadArgumentsException("Wrong format of server string");
                                }
