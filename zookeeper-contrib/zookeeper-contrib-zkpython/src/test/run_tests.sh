@@ -30,9 +30,9 @@ else
 fi
 
 # Find the build directory containing zookeeper.so
-SO_PATH=`find ../../../build/ -name "zookeeper.so" | head -1`
+SO_PATH=`find ../../build/ -name "zookeeper.so" | head -1`
 PYTHONPATH=`dirname $SO_PATH`
-LIB_PATH=../../c/.libs/:../../../build/test/test-cppunit/.libs
+LIB_PATH=../../build/c/.libs/:../../build/test/test-cppunit/.libs
 for test in `ls $1/*_test.py`; 
 do
     echo "Running $test"
