@@ -387,8 +387,13 @@ int parse_acls(struct ACL_vector *acls, PyObject *pyacls)
     PyObject *perms = PyDict_GetItemString( a, "perms" );
 #if PY_MAJOR_VERSION >= 3
     acls->data[i].perms = (int32_t)(PyLong_AsLong(perms));
-    acls->data[i].id.id = strdup( PyUnicode_AsUnicode( PyDict_GetItemString( a, "id" ) ) );
-    acls->data[i].id.scheme = strdup( PyUnicode_AsUnicode( PyDict_GetItemString( a, "scheme" ) ) );
+    PyObject *tem_utfstring;
+    tem_utfstring = PyUnicode_AsEncodedString(PyDict_GetItemString( a, "id" ), "utf-8", NULL );
+    acls->data[i].id.id = strdup( PyBytes_AS_STRING(tem_utfstring));
+    Py_DECREF(tem_utfstring); 
+    tem_utfstring = PyUnicode_AsEncodedString(PyDict_GetItemString( a, "scheme" ), "utf-8", NULL );
+    acls->data[i].id.scheme = strdup( PyBytes_AS_STRING(tem_utfstring) );
+    Py_DECREF(tem_utfstring);
 #else
     acls->data[i].perms = (int32_t)(PyInt_AsLong(perms));
     acls->data[i].id.id = strdup( PyString_AsString( PyDict_GetItemString( a, "id" ) ) );
