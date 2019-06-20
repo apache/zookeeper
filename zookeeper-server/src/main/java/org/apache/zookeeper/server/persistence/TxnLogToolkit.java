@@ -262,34 +262,28 @@ public class TxnLogToolkit implements Closeable {
         }
     }
 
-    private void printTxn(byte[] bytes) {
+    private void printTxn(byte[] bytes) throws IOException {
         printTxn(bytes, "");
     }
 
-    private void printTxn(byte[] bytes, String prefix) {
-        try {
-            TxnHeader hdr = new TxnHeader();
-            Record txn = SerializeUtils.deserializeTxn(bytes, hdr);
-            String txnStr;
-
-            txnStr = getFormattedTxnStr(txn);
-            String txns = String.format("%s session 0x%s cxid 0x%s zxid 0x%s %s %s",
-                    DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.LONG).format(new Date(hdr.getTime())),
-                    Long.toHexString(hdr.getClientId()),
-                    Long.toHexString(hdr.getCxid()),
-                    Long.toHexString(hdr.getZxid()),
-                    TraceFormatter.op2String(hdr.getType()),
-                    txnStr);
-            if (prefix != null && !"".equals(prefix.trim())) {
-                System.out.print(prefix + " - ");
-            }
-            if (txns.endsWith("\n")) {
-                System.out.print(txns);
-            } else {
-                System.out.println(txns);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+    private void printTxn(byte[] bytes, String prefix) throws IOException {
+        TxnHeader hdr = new TxnHeader();
+        Record txn = SerializeUtils.deserializeTxn(bytes, hdr);
+        String txnStr = getFormattedTxnStr(txn);
+        String txns = String.format("%s session 0x%s cxid 0x%s zxid 0x%s %s %s",
+                DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.LONG).format(new Date(hdr.getTime())),
+                Long.toHexString(hdr.getClientId()),
+                Long.toHexString(hdr.getCxid()),
+                Long.toHexString(hdr.getZxid()),
+                TraceFormatter.op2String(hdr.getType()),
+                txnStr);
+        if (prefix != null && !"".equals(prefix.trim())) {
+            System.out.print(prefix + " - ");
+        }
+        if (txns.endsWith("\n")) {
+            System.out.print(txns);
+        } else {
+            System.out.println(txns);
         }
     }
 
