@@ -273,7 +273,7 @@ public class Learner {
                 // recalculate the init limit time because retries sleep for 1000 milliseconds
                 remainingTimeout = connectTimeout - (int)((nanoTime() - startNanoTime) / 1000000);
                 if (remainingTimeout <= 0) {
-                    LOG.error("initLimit exceeded on retries.");
+                    LOG.error("connectToLeader exceeded on retries.");
                     throw new IOException("connectToLeader exceeded on retries.");
                 }
                 
@@ -287,7 +287,7 @@ public class Learner {
                 remainingTimeout = connectTimeout - (int)((nanoTime() - startNanoTime) / 1000000);
 
                 if (remainingTimeout <= 1000) {
-                    LOG.error("Unexpected exception, initLimit exceeded. tries=" + tries +
+                    LOG.error("Unexpected exception, connectToLeader exceeded. tries=" + tries +
                              ", remaining init limit=" + remainingTimeout +
                              ", connecting to " + addr,e);
                     throw e;

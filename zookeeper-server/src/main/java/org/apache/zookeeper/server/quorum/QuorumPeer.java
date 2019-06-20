@@ -1054,7 +1054,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
       }
       return count;
     }
-
+    
     /**
 
      * This constructor is only used by the existing unit test code.

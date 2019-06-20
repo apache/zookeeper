@@ -75,7 +75,7 @@ public class FLEPredicateTest extends ZKTestCase {
         try{
             File tmpDir = ClientBase.createTmpDir();
             QuorumPeer peer = new QuorumPeer(peers, tmpDir, tmpDir,
-                                        PortAssignment.unique(), 3, 0, 1000, 2, 2);
+                                        PortAssignment.unique(), 3, 0, 1000, 2, 2, 2);
         
             MockFLE mock = new MockFLE(peer);
             mock.start();
