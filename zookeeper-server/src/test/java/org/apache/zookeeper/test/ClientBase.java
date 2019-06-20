@@ -515,7 +515,8 @@ public abstract class ClientBase extends ZKTestCase {
         serverFactory = createNewServerInstance(serverFactory, hostPort, maxCnxns);
         startServerInstance(tmpDir, serverFactory, hostPort, serverId);
         // ensure that server and data bean are registered
-        Set<ObjectName> children = JMXEnv.ensureParent("InMemoryDataTree", "StandaloneServer_port");
+        Set<ObjectName> children = JMXEnv.ensureParent("InMemoryDataTree", "StandaloneServer_port",
+                "ZooTrace");
         // Remove beans which are related to zk client sessions. Strong
         // assertions cannot be done for these client sessions because
         // registeration of these beans with server will happen only on their

@@ -683,12 +683,8 @@ public class NIOServerCnxn extends ServerCnxn {
     @Override
     public void process(WatchedEvent event) {
         ReplyHeader h = new ReplyHeader(ClientCnxn.NOTIFICATION_XID, -1L, 0);
-        if (LOG.isTraceEnabled()) {
-            ZooTrace.logTraceMessage(
-                LOG,
-                ZooTrace.EVENT_DELIVERY_TRACE_MASK,
-                "Deliver event " + event + " to 0x" + Long.toHexString(this.sessionId) + " through " + this);
-        }
+        ZooTrace.logEvent(ZooTrace.EVENT_DELIVERY_TRACE_MASK,
+                RequestStage.SEND_WATCH, this.getClientInfo(), this.sessionId, event.getPath());
 
         // Convert WatchedEvent to a type that can be sent over the wire
         WatcherEvent e = event.getWrapper();

@@ -20,7 +20,6 @@ package org.apache.zookeeper.server;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.text.MessageFormat;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -188,28 +187,20 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
     }
 
     private void updateSessionExpiry(SessionImpl s, int timeout) {
-        logTraceTouchSession(s.sessionId, timeout, "");
+        logTraceTouchSession(s.sessionId, timeout, RequestStage.TOUCH_SESSION);
         sessionExpiryQueue.update(s, timeout);
     }
 
-    private void logTraceTouchSession(long sessionId, int timeout, String sessionStatus) {
-        if (LOG.isTraceEnabled()) {
-            String msg = MessageFormat.format(
-                "SessionTrackerImpl --- Touch {0}session: 0x{1} with timeout {2}",
-                sessionStatus,
-                Long.toHexString(sessionId),
-                Integer.toString(timeout));
-
-            ZooTrace.logTraceMessage(LOG, ZooTrace.CLIENT_PING_TRACE_MASK, msg);
-        }
+    private void logTraceTouchSession(long sessionId, int timeout, RequestStage stage){
+        ZooTrace.logSession(ZooTrace.CLIENT_PING_TRACE_MASK, stage, sessionId);
     }
 
     private void logTraceTouchInvalidSession(long sessionId, int timeout) {
-        logTraceTouchSession(sessionId, timeout, "invalid ");
+        logTraceTouchSession(sessionId, timeout, RequestStage.TOUCH_INVALID_SESSION);
     }
 
     private void logTraceTouchClosingSession(long sessionId, int timeout) {
-        logTraceTouchSession(sessionId, timeout, "closing ");
+        logTraceTouchSession(sessionId, timeout, RequestStage.TOUCH_CLOSING_SESSION);
     }
 
     public int getSessionTimeout(long sessionId) {
@@ -232,12 +223,7 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
         LOG.debug("Removing session 0x{}", Long.toHexString(sessionId));
         SessionImpl s = sessionsById.remove(sessionId);
         sessionsWithTimeout.remove(sessionId);
-        if (LOG.isTraceEnabled()) {
-            ZooTrace.logTraceMessage(
-                LOG,
-                ZooTrace.SESSION_TRACE_MASK,
-                "SessionTrackerImpl --- Removing session 0x" + Long.toHexString(sessionId));
-        }
+        ZooTrace.logSession(ZooTrace.SESSION_TRACE_MASK, RequestStage.REMOVE_SESSION, sessionId);
         if (s != null) {
             sessionExpiryQueue.remove(s);
         }
@@ -247,9 +233,6 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
         LOG.info("Shutting down");
 
         running = false;
-        if (LOG.isTraceEnabled()) {
-            ZooTrace.logTraceMessage(LOG, ZooTrace.getTextTraceLevel(), "Shutdown SessionTrackerImpl!");
-        }
     }
 
     public long createSession(int sessionTimeout) {
@@ -278,14 +261,8 @@ public class SessionTrackerImpl extends ZooKeeperCriticalThread implements Sessi
             LOG.debug("Adding session 0x{}", Long.toHexString(id));
         }
 
-        if (LOG.isTraceEnabled()) {
-            String actionStr = added ? "Adding" : "Existing";
-            ZooTrace.logTraceMessage(
-                LOG,
-                ZooTrace.SESSION_TRACE_MASK,
-                "SessionTrackerImpl --- " + actionStr
-                + " session 0x" + Long.toHexString(id) + " " + sessionTimeout);
-        }
+        RequestStage stage = added ? RequestStage.ADD_SESSION : RequestStage.EXISTING_SESSION;
+        ZooTrace.logSession(ZooTrace.SESSION_TRACE_MASK, stage, id);
 
         updateSessionExpiry(session, sessionTimeout);
         return added;

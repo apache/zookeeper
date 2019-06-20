@@ -16,30 +16,42 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper;
-
-import java.net.SocketAddress;
+package org.apache.zookeeper.server;
 
 /**
- * Abstraction that exposes various methods useful for testing ZooKeeper
+ * Constants reflecting different stages of request processing inside zookeeper server.
  */
-public interface Testable {
+public enum RequestStage {
+    APPEND_LOG,
+    CONNECT,
+    FINAL,
+    FOLLOWER,
+    OBSERVER,
+    PREP,
+    PROPOSE,
+    READONLY,
+    RECEIVE_COMMIT,
+    SEND_COMMIT,
+    SEND_COMMIT_ACTIVATE,
+    TREE_COMMIT,
 
-    /**
-     * Cause the ZooKeeper instance to behave as if the session expired
-     */
-    void injectSessionExpiration();
+    TRIGGER_DATA_WATCH,
+    TRIGGER_CHILD_WATCH,
+    SEND_WATCH,
+    NO_WATCH,
 
-    /**
-     * Allow an event to be inserted into the event queue
-     *
-     * @param event event to insert
-     */
-    void queueEvent(WatchedEvent event);
-
-
-    /**
-     * @return  client socket address
-     */
-    SocketAddress getLocalSocketAddress();
+    ADD_SESSION,
+    EXISTING_SESSION,
+    LOAD_SESSION,
+    VALIDATE_SESSION,
+    VALID_SESSION,
+    INVALID_SESSION,
+    KILL_SESSION,
+    REMOVE_SESSION,
+    UPGRADE_SESSION,
+    TOUCH_CLOSING_SESSION,
+    TOUCH_INVALID_SESSION,
+    TOUCH_SESSION,
+    CREATE_SESSION_LOG,
+    CLOSE_SESSION_LOG,
 }

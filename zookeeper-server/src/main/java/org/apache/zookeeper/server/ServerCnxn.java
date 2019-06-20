@@ -63,6 +63,8 @@ public abstract class ServerCnxn implements Stats, Watcher {
     private Set<Id> authInfo = Collections.newSetFromMap(new ConcurrentHashMap<Id, Boolean>());
 
     private static final byte[] fourBytes = new byte[4];
+    // client info is kept inside connection and reused in requests
+    private String clientInfo;
 
     /**
      * If the client is of old version, we don't send r-o mode info to it.
@@ -282,6 +284,10 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     public boolean removeAuthInfo(Id id) {
         return authInfo.remove(id);
+    }
+
+    public String getClientInfo() {
+        return this.clientInfo;
     }
 
     abstract void sendBuffer(ByteBuffer... buffers);

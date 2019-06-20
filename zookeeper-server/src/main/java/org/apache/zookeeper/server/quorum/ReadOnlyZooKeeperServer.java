@@ -29,6 +29,7 @@ import org.apache.zookeeper.server.RequestProcessor;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooKeeperServerBean;
+import org.apache.zookeeper.server.ZooTraceBean;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 
 /**
@@ -89,6 +90,14 @@ public class ReadOnlyZooKeeperServer extends ZooKeeperServer {
             LOG.warn("Failed to register with JMX", e);
             jmxDataTreeBean = null;
         }
+
+        try {
+            jmxTraceBean = new ZooTraceBean();
+            MBeanRegistry.getInstance().register(jmxTraceBean, jmxServerBean);
+        } catch (Exception e) {
+            LOG.warn("Failed to register with JMX", e);
+            jmxTraceBean = null;
+        }
     }
 
     public void registerJMX(ZooKeeperServerBean serverBean, LocalPeerBean localPeerBean) {
@@ -105,6 +114,15 @@ public class ReadOnlyZooKeeperServer extends ZooKeeperServer {
     @Override
     protected void unregisterJMX() {
         // unregister from JMX
+        try {
+            if (jmxTraceBean != null) {
+                MBeanRegistry.getInstance().unregister(jmxTraceBean);
+            }
+        } catch (Exception e) {
+            LOG.warn("Failed to unregister with JMX", e);
+        }
+        jmxTraceBean = null;
+
         try {
             if (jmxDataTreeBean != null) {
                 MBeanRegistry.getInstance().unregister(jmxDataTreeBean);

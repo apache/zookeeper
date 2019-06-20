@@ -16,30 +16,37 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper;
+package org.apache.zookeeper.server;
 
-import java.net.SocketAddress;
-
-/**
- * Abstraction that exposes various methods useful for testing ZooKeeper
- */
-public interface Testable {
+public interface ZooTraceMXBean {
 
     /**
-     * Cause the ZooKeeper instance to behave as if the session expired
+     * @return current trace filter
      */
-    void injectSessionExpiration();
+    String getTraceFilter();
 
     /**
-     * Allow an event to be inserted into the event queue
-     *
-     * @param event event to insert
+     * @return  current trace mask
      */
-    void queueEvent(WatchedEvent event);
-
+    long getTraceMask();
 
     /**
-     * @return  client socket address
+     * @return  max number of traces to keep in memory
      */
-    SocketAddress getLocalSocketAddress();
+    long getTraceBufferSize();
+
+    /**
+     * @param traceFilter  set trace filter
+     */
+    void setTraceFilter(String traceFilter);
+
+    /**
+     * @param traceMask  set trace mask
+     */
+    void setTraceMask(long traceMask);
+
+    /**
+     * @param traceBufferSize  max number of traces to keep in memory
+     */
+    void setTraceBufferSize(long traceBufferSize);
 }

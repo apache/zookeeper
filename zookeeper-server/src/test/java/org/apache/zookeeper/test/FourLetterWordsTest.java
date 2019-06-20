@@ -32,6 +32,7 @@ import org.apache.zookeeper.TestableZooKeeper;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.common.IOUtils;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
+import org.apache.zookeeper.server.ZooTrace;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
@@ -65,7 +66,7 @@ public class FourLetterWordsTest extends ClientBase {
         verify("stat", "Outstanding");
         verify("srvr", "Outstanding");
         verify("cons", "queued");
-        verify("gtmk", "306");
+        verify("gtmk", String.valueOf(ZooTrace.getTextTraceLevel()));
         verify("isro", "rw");
 
         TestableZooKeeper zk = createClient();

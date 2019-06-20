@@ -25,6 +25,7 @@ import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
+import org.apache.zookeeper.server.RequestStage;
 import org.apache.zookeeper.server.ZooKeeperCriticalThread;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooTrace;
@@ -65,9 +66,7 @@ public class ReadOnlyRequestProcessor extends ZooKeeperCriticalThread implements
                 if (request.type == OpCode.ping) {
                     traceMask = ZooTrace.CLIENT_PING_TRACE_MASK;
                 }
-                if (LOG.isTraceEnabled()) {
-                    ZooTrace.logRequest(LOG, traceMask, 'R', request, "");
-                }
+                ZooTrace.logRequest(traceMask, RequestStage.READONLY, request);
                 if (Request.requestOfDeath == request) {
                     break;
                 }

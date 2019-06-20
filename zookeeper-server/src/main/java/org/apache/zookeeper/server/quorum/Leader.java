@@ -59,6 +59,7 @@ import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.FinalRequestProcessor;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
+import org.apache.zookeeper.server.RequestStage;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperCriticalThread;
@@ -1143,6 +1144,7 @@ public class Leader extends LearnerMaster {
         synchronized (this) {
             lastCommitted = zxid;
         }
+        ZooTrace.logRequest(ZooTrace.QUORUM_TRACE_MASK, RequestStage.SEND_COMMIT, zxid);
         QuorumPacket qp = new QuorumPacket(Leader.COMMIT, zxid, null, null);
         sendPacket(qp);
         ServerMetrics.getMetrics().COMMIT_COUNT.add(1);
@@ -1154,6 +1156,7 @@ public class Leader extends LearnerMaster {
             lastCommitted = zxid;
         }
 
+        ZooTrace.logRequest(ZooTrace.QUORUM_TRACE_MASK, RequestStage.SEND_COMMIT_ACTIVATE, zxid);
         byte[] data = new byte[8];
         ByteBuffer buffer = ByteBuffer.wrap(data);
         buffer.putLong(designatedLeader);
@@ -1252,6 +1255,7 @@ public class Leader extends LearnerMaster {
             lastProposed = p.packet.getZxid();
             outstandingProposals.put(lastProposed, p);
             sendPacket(pp);
+            ZooTrace.logRequest(ZooTrace.QUORUM_TRACE_MASK, RequestStage.PROPOSE, request.zxid);
         }
         ServerMetrics.getMetrics().PROPOSAL_COUNT.add(1);
         return p;
@@ -1717,12 +1721,8 @@ public class Leader extends LearnerMaster {
                     e);
             }
         }
-        if (LOG.isTraceEnabled()) {
-            ZooTrace.logTraceMessage(
-                LOG,
-                ZooTrace.SESSION_TRACE_MASK,
-                "Session 0x" + Long.toHexString(id) + " is valid: " + valid);
-        }
+        RequestStage stage = valid ? RequestStage.VALID_SESSION : RequestStage.INVALID_SESSION;
+        ZooTrace.logSession(ZooTrace.SESSION_TRACE_MASK, stage, id);
         dos.writeBoolean(valid);
         qp.setData(bos.toByteArray());
         learnerHandler.queuePacket(qp);

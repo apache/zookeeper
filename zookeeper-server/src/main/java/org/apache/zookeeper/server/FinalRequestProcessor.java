@@ -110,14 +110,6 @@ public class FinalRequestProcessor implements RequestProcessor {
         LOG.debug("Processing request:: {}", request);
 
         // request.addRQRec(">final");
-        long traceMask = ZooTrace.CLIENT_REQUEST_TRACE_MASK;
-        if (request.type == OpCode.ping) {
-            traceMask = ZooTrace.SERVER_PING_TRACE_MASK;
-        }
-        if (LOG.isTraceEnabled()) {
-            ZooTrace.logRequest(LOG, traceMask, 'E', request, "");
-        }
-
         ProcessTxnResult rc = zks.processTxn(request);
 
         // ZOOKEEPER-558:
@@ -131,6 +123,8 @@ public class FinalRequestProcessor implements RequestProcessor {
             // we are just playing diffs from the leader.
             if (closeSession(zks.serverCnxnFactory, request.sessionId)
                 || closeSession(zks.secureServerCnxnFactory, request.sessionId)) {
+                ZooTrace.logRequest(ZooTrace.QUORUM_TRACE_MASK, RequestStage.FINAL, request.zxid,
+                        request.cxid, request.sessionId, request.createTime);
                 return;
             }
         }
@@ -151,6 +145,8 @@ public class FinalRequestProcessor implements RequestProcessor {
         }
 
         if (request.cnxn == null) {
+            ZooTrace.logRequest(ZooTrace.QUORUM_TRACE_MASK, RequestStage.FINAL, request.zxid,
+                    request.cxid, request.sessionId, request.createTime);
             return;
         }
         ServerCnxn cnxn = request.cnxn;
@@ -202,11 +198,13 @@ public class FinalRequestProcessor implements RequestProcessor {
                 updateStats(request, lastOp, lastZxid);
 
                 cnxn.sendResponse(new ReplyHeader(ClientCnxn.PING_XID, lastZxid, 0), null, "response");
+                ZooTrace.logRequest(ZooTrace.SERVER_PING_TRACE_MASK, RequestStage.FINAL, request, 0, true);
                 return;
             }
             case OpCode.createSession: {
                 lastOp = "SESS";
                 updateStats(request, lastOp, lastZxid);
+                ZooTrace.logRequest(ZooTrace.CLIENT_REQUEST_TRACE_MASK, RequestStage.FINAL, request, 0, true);
 
                 zks.finishSessionInit(request.cnxn, true);
                 return;
@@ -249,6 +247,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                     }
 
                     ((MultiResponse) rsp).add(subResult);
+                    request.addPath(subTxnResult.path);
                 }
 
                 break;
@@ -287,6 +286,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 rsp = new CreateResponse(rc.path);
                 err = Code.get(rc.err);
                 requestPathMetricsCollector.registerRequest(request.type, rc.path);
+                request.addPath(rc.path);
                 break;
             }
             case OpCode.create2:
@@ -296,6 +296,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 rsp = new Create2Response(rc.path, rc.stat);
                 err = Code.get(rc.err);
                 requestPathMetricsCollector.registerRequest(request.type, rc.path);
+                request.addPath(rc.path);
                 break;
             }
             case OpCode.delete:
@@ -303,6 +304,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 lastOp = "DELE";
                 err = Code.get(rc.err);
                 requestPathMetricsCollector.registerRequest(request.type, rc.path);
+                request.addPath(rc.path);
                 break;
             }
             case OpCode.setData: {
@@ -310,6 +312,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 rsp = new SetDataResponse(rc.stat);
                 err = Code.get(rc.err);
                 requestPathMetricsCollector.registerRequest(request.type, rc.path);
+                request.addPath(rc.path);
                 break;
             }
             case OpCode.reconfig: {
@@ -318,6 +321,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                     ((QuorumZooKeeperServer) zks).self.getQuorumVerifier().toString().getBytes(),
                     rc.stat);
                 err = Code.get(rc.err);
+                request.addPath(rc.path);
                 break;
             }
             case OpCode.setACL: {
@@ -325,6 +329,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 rsp = new SetACLResponse(rc.stat);
                 err = Code.get(rc.err);
                 requestPathMetricsCollector.registerRequest(request.type, rc.path);
+                request.addPath(rc.path);
                 break;
             }
             case OpCode.closeSession: {
@@ -338,12 +343,14 @@ public class FinalRequestProcessor implements RequestProcessor {
                 ByteBufferInputStream.byteBuffer2Record(request.request, syncRequest);
                 rsp = new SyncResponse(syncRequest.getPath());
                 requestPathMetricsCollector.registerRequest(request.type, syncRequest.getPath());
+                request.addPath(syncRequest.getPath());
                 break;
             }
             case OpCode.check: {
                 lastOp = "CHEC";
                 rsp = new SetDataResponse(rc.stat);
                 err = Code.get(rc.err);
+                request.addPath(rc.path);
                 break;
             }
             case OpCode.exists: {
@@ -358,6 +365,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 Stat stat = zks.getZKDatabase().statNode(path, existsRequest.getWatch() ? cnxn : null);
                 rsp = new ExistsResponse(stat);
                 requestPathMetricsCollector.registerRequest(request.type, path);
+                request.addPath(path);
                 break;
             }
             case OpCode.getData: {
@@ -365,6 +373,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 GetDataRequest getDataRequest = new GetDataRequest();
                 ByteBufferInputStream.byteBuffer2Record(request.request, getDataRequest);
                 path = getDataRequest.getPath();
+                request.addPath(path);
                 rsp = handleGetDataRequest(getDataRequest, cnxn, request.authInfo);
                 requestPathMetricsCollector.registerRequest(request.type, path);
                 break;
@@ -385,6 +394,12 @@ public class FinalRequestProcessor implements RequestProcessor {
                        Collections.emptyList(),
                        Collections.emptyList(),
                        cnxn);
+
+                // prefix path string to distinguish different watches
+                addWatchPaths(request, setWatches.getDataWatches(), ZooTrace.DATA_WATCH_PREFIX);
+                addWatchPaths(request, setWatches.getExistWatches(), ZooTrace.EXIST_WATCH_PREFIX);
+                addWatchPaths(request, setWatches.getChildWatches(), ZooTrace.CHILD_WATCH_PREFIX);
+
                 break;
             }
             case OpCode.setWatches2: {
@@ -401,6 +416,12 @@ public class FinalRequestProcessor implements RequestProcessor {
                         setWatches.getPersistentWatches(),
                         setWatches.getPersistentRecursiveWatches(),
                         cnxn);
+
+                // prefix path string to distinguish different watches
+                addWatchPaths(request, setWatches.getDataWatches(), ZooTrace.DATA_WATCH_PREFIX);
+                addWatchPaths(request, setWatches.getExistWatches(), ZooTrace.EXIST_WATCH_PREFIX);
+                addWatchPaths(request, setWatches.getChildWatches(), ZooTrace.CHILD_WATCH_PREFIX);
+
                 break;
             }
             case OpCode.addWatch: {
@@ -453,6 +474,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                     }
                     rsp = new GetACLResponse(acl1, stat);
                 }
+                request.addPath(path);
                 break;
             }
             case OpCode.getChildren: {
@@ -462,6 +484,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 path = getChildrenRequest.getPath();
                 rsp = handleGetChildrenRequest(getChildrenRequest, cnxn, request.authInfo);
                 requestPathMetricsCollector.registerRequest(request.type, path);
+                request.addPath(path);
                 break;
             }
             case OpCode.getAllChildrenNumber: {
@@ -482,6 +505,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                     null);
                 int number = zks.getZKDatabase().getAllChildrenNumber(path);
                 rsp = new GetAllChildrenNumberResponse(number);
+                request.addPath(path);
                 break;
             }
             case OpCode.getChildren2: {
@@ -504,6 +528,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                                            .getChildren(path, stat, getChildren2Request.getWatch() ? cnxn : null);
                 rsp = new GetChildren2Response(children, stat);
                 requestPathMetricsCollector.registerRequest(request.type, path);
+                request.addPath(path);
                 break;
             }
             case OpCode.checkWatches: {
@@ -518,6 +543,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                     throw new KeeperException.NoWatcherException(msg);
                 }
                 requestPathMetricsCollector.registerRequest(request.type, checkWatches.getPath());
+                request.addPath(path);
                 break;
             }
             case OpCode.removeWatches: {
@@ -532,6 +558,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                     throw new KeeperException.NoWatcherException(msg);
                 }
                 requestPathMetricsCollector.registerRequest(request.type, removeWatches.getPath());
+                request.addPath(path);
                 break;
             }
             case OpCode.getEphemerals: {
@@ -582,6 +609,9 @@ public class FinalRequestProcessor implements RequestProcessor {
         }
 
         ReplyHeader hdr = new ReplyHeader(request.cxid, lastZxid, err.intValue());
+
+        // trace return code and latency of request in final stage
+        ZooTrace.logRequest(ZooTrace.CLIENT_REQUEST_TRACE_MASK, RequestStage.FINAL, request, err.intValue(), true);
 
         updateStats(request, lastOp, lastZxid);
 
@@ -669,6 +699,17 @@ public class FinalRequestProcessor implements RequestProcessor {
         long currentTime = Time.currentElapsedTime();
         zks.serverStats().updateLatency(request, currentTime);
         request.cnxn.updateStatsForResponse(request.cxid, lastZxid, lastOp, request.createTime, currentTime);
+    }
+
+    private void addWatchPaths(Request request, List<String> watchPaths, String prefix) {
+        // set watch paths into Request object to be logged in tracing if enabled.
+        if (watchPaths != null && watchPaths.size() > 0) {
+            for (String path: watchPaths) {
+                if (path != null) {
+                    request.addPath(prefix + path);
+                }
+            }
+        }
     }
 
 }

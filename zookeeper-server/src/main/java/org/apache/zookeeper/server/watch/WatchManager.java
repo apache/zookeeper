@@ -29,6 +29,7 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
+import org.apache.zookeeper.server.RequestStage;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ZooTrace;
@@ -155,9 +156,7 @@ public class WatchManager implements IWatchManager {
             }
         }
         if (watchers.isEmpty()) {
-            if (LOG.isTraceEnabled()) {
-                ZooTrace.logTraceMessage(LOG, ZooTrace.EVENT_DELIVERY_TRACE_MASK, "No watchers for " + path);
-            }
+            ZooTrace.logPath(ZooTrace.EVENT_DELIVERY_TRACE_MASK, RequestStage.NO_WATCH, path);
             return null;
         }
 

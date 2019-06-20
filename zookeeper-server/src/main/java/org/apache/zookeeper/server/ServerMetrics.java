@@ -154,6 +154,11 @@ public final class ServerMetrics {
         READS_ISSUED_IN_COMMIT_PROC = metricsContext.getSummary("read_commit_proc_issued", DetailLevel.BASIC);
         WRITES_ISSUED_IN_COMMIT_PROC = metricsContext.getSummary("write_commit_proc_issued", DetailLevel.BASIC);
 
+        TRACE_EVENTS_QUEUED = metricsContext.getCounter("trace_events_queued");
+        TRACE_EVENTS_SENT = metricsContext.getCounter("trace_events_sent");
+        TRACE_EVENTS_DROPPED = metricsContext.getCounter("trace_events_dropped");
+        TRACE_EVENTS_ACKED = metricsContext.getCounter("trace_events_acked");
+
         /**
          * Time spent by a read request in the commit processor.
          */
@@ -378,6 +383,17 @@ public final class ServerMetrics {
     public final Counter COMMITS_QUEUED;
     public final Summary READS_ISSUED_IN_COMMIT_PROC;
     public final Summary WRITES_ISSUED_IN_COMMIT_PROC;
+
+    // trace logger related metrics
+    // QUEUED counts traces enqueued int trace logger queue
+    public final Counter TRACE_EVENTS_QUEUED;
+    // SENT counts traces sent to trace tailer
+    public final Counter TRACE_EVENTS_SENT;
+    // DROPPED counts traces dropped due to reasons like queue
+    // capacity exceeded or tailer unavailable
+    public final Counter TRACE_EVENTS_DROPPED;
+    // ACKED counts traces acknowleged by trace tailer
+    public final Counter TRACE_EVENTS_ACKED;
 
     /**
      * Time spent by a read request in the commit processor.

@@ -638,6 +638,7 @@ public class ZKDatabase {
      */
     public boolean append(Request si) throws IOException {
         txnCount.incrementAndGet();
+        ZooTrace.logRequest(ZooTrace.QUORUM_TRACE_MASK, RequestStage.APPEND_LOG, si.zxid);
         return this.snapLog.append(si);
     }
 

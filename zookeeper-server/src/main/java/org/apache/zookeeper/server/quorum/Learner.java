@@ -49,6 +49,7 @@ import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.server.ExitCode;
 import org.apache.zookeeper.server.Request;
+import org.apache.zookeeper.server.RequestStage;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.TxnLogEntry;
 import org.apache.zookeeper.server.ZooTrace;
@@ -142,12 +143,7 @@ public class Learner {
         dos.close();
         QuorumPacket qp = new QuorumPacket(Leader.REVALIDATE, -1, baos.toByteArray(), null);
         pendingRevalidations.put(clientId, cnxn);
-        if (LOG.isTraceEnabled()) {
-            ZooTrace.logTraceMessage(
-                LOG,
-                ZooTrace.SESSION_TRACE_MASK,
-                "To validate session 0x" + Long.toHexString(clientId));
-        }
+        ZooTrace.logSession(ZooTrace.SESSION_TRACE_MASK, RequestStage.VALIDATE_SESSION, clientId);
         writePacket(qp, true);
     }
 
@@ -186,9 +182,7 @@ public class Learner {
         if (pp.getType() == Leader.PING) {
             traceMask = ZooTrace.SERVER_PING_TRACE_MASK;
         }
-        if (LOG.isTraceEnabled()) {
-            ZooTrace.logQuorumPacket(LOG, traceMask, 'i', pp);
-        }
+        ZooTrace.logQuorumPacket(traceMask, "in", pp);
     }
 
     /**
@@ -752,12 +746,8 @@ public class Learner {
         } else {
             zk.finishSessionInit(cnxn, valid);
         }
-        if (LOG.isTraceEnabled()) {
-            ZooTrace.logTraceMessage(
-                LOG,
-                ZooTrace.SESSION_TRACE_MASK,
-                "Session 0x" + Long.toHexString(sessionId) + " is valid: " + valid);
-        }
+        RequestStage stage = valid ? RequestStage.VALID_SESSION : RequestStage.INVALID_SESSION;
+        ZooTrace.logSession(ZooTrace.SESSION_TRACE_MASK, stage, sessionId);
     }
 
     protected void ping(QuorumPacket qp) throws IOException {

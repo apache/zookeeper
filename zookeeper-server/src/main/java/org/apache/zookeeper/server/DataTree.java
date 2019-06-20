@@ -636,16 +636,10 @@ public class DataTree {
 
         updateWriteStat(path, 0L);
 
-        if (LOG.isTraceEnabled()) {
-            ZooTrace.logTraceMessage(
-                LOG,
-                ZooTrace.EVENT_DELIVERY_TRACE_MASK,
-                "dataWatches.triggerWatch " + path);
-            ZooTrace.logTraceMessage(
-                LOG,
-                ZooTrace.EVENT_DELIVERY_TRACE_MASK,
-                "childWatches.triggerWatch " + parentName);
-        }
+        ZooTrace.logRequest(ZooTrace.EVENT_DELIVERY_TRACE_MASK,
+                RequestStage.TRIGGER_DATA_WATCH, zxid, path);
+        ZooTrace.logRequest(ZooTrace.EVENT_DELIVERY_TRACE_MASK,
+                RequestStage.TRIGGER_CHILD_WATCH, zxid, parentName);
 
         WatcherOrBitSet processed = dataWatches.triggerWatch(path, EventType.NodeDeleted);
         childWatches.triggerWatch(path, EventType.NodeDeleted, processed);

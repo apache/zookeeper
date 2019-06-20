@@ -143,9 +143,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 if (request.type == OpCode.ping) {
                     traceMask = ZooTrace.CLIENT_PING_TRACE_MASK;
                 }
-                if (LOG.isTraceEnabled()) {
-                    ZooTrace.logRequest(LOG, traceMask, 'P', request, "");
-                }
+                ZooTrace.logRequest(traceMask, RequestStage.PREP, request);
                 if (Request.requestOfDeath == request) {
                     break;
                 }
@@ -711,6 +709,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             ephemeralOwner = EphemeralType.TTL.toEphemeralOwner(ttl);
         } else if (createMode.isEphemeral()) {
             ephemeralOwner = request.sessionId;
+            request.setEphemeral(true);
         }
         StatPersisted s = DataTree.createStat(hdr.getZxid(), hdr.getTime(), ephemeralOwner);
         parentRecord = parentRecord.duplicate(request.getHdr().getZxid());

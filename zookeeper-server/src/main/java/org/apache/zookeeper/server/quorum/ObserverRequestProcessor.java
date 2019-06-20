@@ -24,6 +24,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.Request;
 import org.apache.zookeeper.server.RequestProcessor;
+import org.apache.zookeeper.server.RequestStage;
 import org.apache.zookeeper.server.ZooKeeperCriticalThread;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.txn.ErrorTxn;
@@ -65,9 +66,7 @@ public class ObserverRequestProcessor extends ZooKeeperCriticalThread implements
         try {
             while (!finished) {
                 Request request = queuedRequests.take();
-                if (LOG.isTraceEnabled()) {
-                    ZooTrace.logRequest(LOG, ZooTrace.CLIENT_REQUEST_TRACE_MASK, 'F', request, "");
-                }
+                ZooTrace.logRequest(ZooTrace.CLIENT_REQUEST_TRACE_MASK, RequestStage.FOLLOWER, request);
                 if (request == Request.requestOfDeath) {
                     break;
                 }
