@@ -241,7 +241,7 @@ public class Learner {
     throws IOException {
         sock.connect(addr, timeout);
     }
-
+    
     /**
      * Establish a connection with the LearnerMaster found by findLearnerMaster.
      * Followers only connect to Leaders, Observers can connect to any active LearnerMaster.
@@ -252,70 +252,67 @@ public class Learner {
      * @throws X509Exception
      * @throws InterruptedException
      */
-     protected void connectToLeader(QuorumPeer.QuorumServer leader)
-             throws IOException, ConnectException, InterruptedException, X509Exception {
-         InetSocketAddress addr = leader.addr;
-         String hostname = leader.hostname;
-         LOG.info("Following/observing new leader sid={} addr={}", leader.id, addr);
-         this.sock = createSocket();
+    protected void connectToLeader(InetSocketAddress addr, String hostname)
+            throws IOException, InterruptedException, X509Exception {
+        this.sock = createSocket();
 
-         // leader connection timeout defaults to tickTime * initLimit
-         int connectTimeout = self.tickTime * self.initLimit;
+        // leader connection timeout defaults to tickTime * initLimit
+        int connectTimeout = self.tickTime * self.initLimit;
 
-         // but if connectToLearnerMasterLimit is specified, use that value to calculate
-         // timeout instead of using the initLimit value
-         if (self.connectToLearnerMasterLimit > 0) {
-           connectTimeout = self.tickTime * self.connectToLearnerMasterLimit;
-         }
+        // but if connectToLearnerMasterLimit is specified, use that value to calculate
+        // timeout instead of using the initLimit value
+        if (self.connectToLearnerMasterLimit > 0) {
+          connectTimeout = self.tickTime * self.connectToLearnerMasterLimit;
+        }
 
-         int remainingTimeout;
-         long startNanoTime = nanoTime();
+        int remainingTimeout;
+        long startNanoTime = nanoTime();
 
-         for (int tries = 0; tries < 5; tries++) {
-             try {
-                 // recalculate the init limit time because retries sleep for 500 milliseconds
-                 remainingTimeout = connectTimeout - (int)((nanoTime() - startNanoTime) / 1000000);
-                 if (remainingTimeout <= 0) {
-                     LOG.error("Connect to leader timeout exceeded on retries.");
-                     throw new IOException("Connect to leader timeout exceeded on retries.");
-                 }
+        for (int tries = 0; tries < 5; tries++) {
+            try {
+                // recalculate the init limit time because retries sleep for 1000 milliseconds
+                remainingTimeout = connectTimeout - (int)((nanoTime() - startNanoTime) / 1000000);
+                if (remainingTimeout <= 0) {
+                    LOG.error("initLimit exceeded on retries.");
+                    throw new IOException("connectToLeader exceeded on retries.");
+                }
+                
+                sockConnect(sock, addr, Math.min(connectTimeout, remainingTimeout));
+                if (self.isSslQuorum())  {
+                    ((SSLSocket) sock).startHandshake();
+                }
+                sock.setTcpNoDelay(nodelay);
+                break;
+            } catch (IOException e) {
+                remainingTimeout = connectTimeout - (int)((nanoTime() - startNanoTime) / 1000000);
 
-                 LOG.info("Connecting to leader connectTimeout={}, remainingTimeout={}", connectTimeout, remainingTimeout);
-                 // We are using Math.min() in case the system clock changes between retrieving the value of startNanoTime
-                 // and remainingTimeout which may cause the remainingTimeout value to become larger than the connectTimeout value
-                 sockConnect(sock, addr, Math.min(connectTimeout, remainingTimeout));
-                 if (self.isSslQuorum())  {
-                     ((SSLSocket) sock).startHandshake();
-                 }
-                 sock.setTcpNoDelay(nodelay);
-                 break;
-             } catch (IOException e) {
-                 remainingTimeout = connectTimeout - (int)((nanoTime() - startNanoTime) / 1000000);
+                if (remainingTimeout <= 1000) {
+                    LOG.error("Unexpected exception, initLimit exceeded. tries=" + tries +
+                             ", remaining init limit=" + remainingTimeout +
+                             ", connecting to " + addr,e);
+                    throw e;
+                } else if (tries >= 4) {
+                    LOG.error("Unexpected exception, retries exceeded. tries=" + tries +
+                             ", remaining init limit=" + remainingTimeout +
+                             ", connecting to " + addr,e);
+                    throw e;
+                } else {
+                    LOG.warn("Unexpected exception, tries=" + tries +
+                            ", remaining init limit=" + remainingTimeout +
+                            ", connecting to " + addr,e);
+                    this.sock = createSocket();
+                }
+            }
+            Thread.sleep(leaderConnectDelayDuringRetryMs);
+        }
 
-                 if (remainingTimeout <= 1000) {
-                     LOG.error("Unexpected exception, connect to leader timeout exceeded. tries={}, remainingTimeout={}, " +
-                               "connecting to {}", tries, remainingTimeout, addr, e);
-                     throw e;
-                 } else if (tries >= 4) {
-                     LOG.error("Unexpected exception, retries exceeded. tries={}, remainingTimeout={}, " +
-                               "connecting to {}", tries, remainingTimeout, addr, e);
-                     throw e;
-                 } else {
-                     LOG.warn("Unexpected exception, tries={}, remainingTimeout={}, " +
-                              "connecting to {}", tries, remainingTimeout, addr, e);
-                     this.sock = createSocket();
-                 }
-             }
-             Thread.sleep(leaderConnectDelayDuringRetryMs);
-         }
+        self.authLearner.authenticate(sock, hostname);
 
-         self.authLearner.authenticate(sock, hostname);
-
-         bufferedInputStream = new BufferedInputStream(sock.getInputStream());
-         leaderIs = BinaryInputArchive.getArchive(bufferedInputStream);
-         bufferedOutput = new BufferedOutputStream(sock.getOutputStream());
-         leaderOs = BinaryOutputArchive.getArchive(bufferedOutput);
-     }
+        leaderIs = BinaryInputArchive.getArchive(new BufferedInputStream(
+                sock.getInputStream()));
+        bufferedOutput = new BufferedOutputStream(sock.getOutputStream());
+        leaderOs = BinaryOutputArchive.getArchive(bufferedOutput);
+    }
 
     private Socket createSocket() throws X509Exception, IOException {
         Socket sock;
