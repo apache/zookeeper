@@ -39,12 +39,6 @@ public class RecordWriter {
             factory.put("binary",
                     BinaryOutputArchive.class.getDeclaredMethod(
                         "getArchive", new Class[]{ OutputStream.class }));
-            factory.put("csv",
-                    CsvOutputArchive.class.getDeclaredMethod(
-                        "getArchive", new Class[]{ OutputStream.class }));
-            factory.put("xml",
-                    XmlOutputArchive.class.getDeclaredMethod(
-                        "getArchive", new Class[]{ OutputStream.class }));
         } catch (SecurityException ex) {
             ex.printStackTrace();
         } catch (NoSuchMethodException ex) {

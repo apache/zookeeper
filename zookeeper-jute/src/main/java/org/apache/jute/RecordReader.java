@@ -42,12 +42,6 @@ public class RecordReader {
             archiveFactory.put("binary",
                     BinaryInputArchive.class.getDeclaredMethod(
                         "getArchive", new Class[]{ InputStream.class } ));
-            archiveFactory.put("csv",
-                    CsvInputArchive.class.getDeclaredMethod(
-                        "getArchive", new Class[]{ InputStream.class }));
-            archiveFactory.put("xml",
-                    XmlInputArchive.class.getDeclaredMethod(
-                        "getArchive", new Class[]{ InputStream.class }));
         } catch (SecurityException ex) {
             ex.printStackTrace();
         } catch (NoSuchMethodException ex) {
