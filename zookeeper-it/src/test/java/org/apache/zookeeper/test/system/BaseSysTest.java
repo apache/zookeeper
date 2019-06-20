@@ -176,11 +176,12 @@ public class BaseSysTest {
     final static int tickTime = 2000;
     final static int initLimit = 3;
     final static int syncLimit = 3;
+    final static int connectToLearnerMasterLimit = 3;
 
     public void startServer(int index) throws IOException {
         int port = fakeBasePort+10+index;
         if (fakeMachines) {
-            qps[index] = new QuorumPeer(peers, qpsDirs[index], qpsDirs[index], port, 3, index+1, tickTime, initLimit, syncLimit);
+            qps[index] = new QuorumPeer(peers, qpsDirs[index], qpsDirs[index], port, 3, index+1, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
             qps[index].start();
         } else {
             try {

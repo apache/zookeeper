@@ -140,6 +140,50 @@ public class LearnerTest extends ZKTestCase {
     }
 
     @Test
+    public void connectToLeaderDefaultTimeoutTest() throws Exception {
+        TimeoutLearner learner = new TimeoutLearner();
+        learner.self = new QuorumPeer();
+        learner.self.setTickTime(2000);
+        learner.self.setInitLimit(2);
+        learner.self.setSyncLimit(2);
+
+        InetSocketAddress addr = new InetSocketAddress(1111);
+        QuorumPeer.QuorumServer leader = new QuorumPeer.QuorumServer(1L, addr);
+        leader.hostname = "";
+
+        try {
+            learner.connectToLeader(leader);
+            Assert.fail("should have thrown IOException!");
+        } catch (IOException e) {
+            Integer expectedTimeout = learner.self.getInitLimit() * learner.self.getTickTime();
+            Assert.assertEquals(expectedTimeout, learner.getConnectionTimeoutValues().get(0));
+        }
+    }
+
+    @Test
+    public void connectToLeaderNonDefaultTimeoutTest() throws Exception {
+        TimeoutLearner learner = new TimeoutLearner();
+        learner.self = new QuorumPeer();
+        learner.self.setTickTime(2000);
+        learner.self.setInitLimit(2);
+        learner.self.setSyncLimit(1);
+        learner.self.setConnectToLearnerMasterLimit(10);
+
+        InetSocketAddress addr = new InetSocketAddress(1111);
+
+        QuorumPeer.QuorumServer leader = new QuorumPeer.QuorumServer(1L, addr);
+        leader.hostname = "";
+
+        try {
+            learner.connectToLeader(leader);
+            Assert.fail("should have thrown IOException!");
+        } catch (IOException e) {
+            Integer expectedTimeout = learner.self.getConnectToLearnerMasterLimit() * learner.self.getTickTime();
+            Assert.assertEquals(expectedTimeout, learner.getConnectionTimeoutValues().get(0));
+        }
+    }
+
+    @Test
     public void syncTest() throws Exception {
         File tmpFile = File.createTempFile("test", ".dir", testData);
         tmpFile.delete();
