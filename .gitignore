@@ -68,14 +68,6 @@ tags
 .cproject
 .project
 obj
-zookeeper-client/zookeeper-client-c/core.*
-zookeeper-client/zookeeper-client-c/TEST-*.txt
-zookeeper-client/zookeeper-client-c/*.la
-zookeeper-client/zookeeper-client-c/*.lo
-zookeeper-client/zookeeper-client-c/*.o
-zookeeper-client/zookeeper-client-c/generated/
-zookeeper-server/src/main/resources/lib/ant-eclipse-*
-zookeeper-server/src/main/resources/lib/ivy-*
 zookeeper-client/zookeeper-client-c/Makefile.in
 zookeeper-client/zookeeper-client-c/aclocal.m4
 zookeeper-client/zookeeper-client-c/autom4te.cache/
@@ -88,7 +80,12 @@ zookeeper-client/zookeeper-client-c/depcomp
 zookeeper-client/zookeeper-client-c/install-sh
 zookeeper-client/zookeeper-client-c/ltmain.sh
 zookeeper-client/zookeeper-client-c/missing
-zookeeper-server/src/test/resources/
+zookeeper-client/zookeeper-client-c/TEST-*.txt
+zookeeper-client/zookeeper-client-c/generated/
+zookeeper-server/src/main/resources/lib/ant-eclipse-*
+zookeeper-server/src/main/resources/lib/ivy-*
+zookeeper-server/src/main/java/org/apache/zookeeper/version/Info.java
+zookeeper-server/src/main/java/org/apache/zookeeper/version/VersionInfoMain.java
 
 # Python
 *.py[cod]
