@@ -122,11 +122,7 @@ public class Observer extends Learner{
                 }
             } catch (Exception e) {
                 LOG.warn("Exception when observing the leader", e);
-                try {
-                    sock.close();
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
+                closeSocket();
 
                 // clear pending revalidations
                 pendingRevalidations.clear();
