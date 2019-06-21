@@ -140,46 +140,25 @@ public class LearnerTest extends ZKTestCase {
     }
 
     @Test
-    public void connectToLearnerMasterLimitDefaultValueTest() throws Exception {
-        TimeoutLearner learner = new TimeoutLearner();
-        learner.self = new QuorumPeer();
-        learner.self.setTickTime(2000);
-        learner.self.setInitLimit(5);
-        learner.self.setSyncLimit(2);
-
-        InetSocketAddress addr = new InetSocketAddress(1111);
-        learner.setTimeMultiplier((long)4000 * 1000000);
-        learner.setPassConnectAttempt(5);
-        
-        try {
-            learner.connectToLeader(addr, "");
-            Assert.fail("should have thrown IOException!");
-        } catch (IOException e) {
-          Assert.assertTrue(learner.nanoTime() > 2000*5*1000000);
-          Assert.assertEquals(3, learner.getSockConnectAttempt());
-        }
-    }
-
-    @Test
     public void connectToLearnerMasterLimitTest() throws Exception {
-        TimeoutLearner learner = new TimeoutLearner();
-        learner.self = new QuorumPeer();
-        learner.self.setTickTime(2000);
-        learner.self.setInitLimit(5);
-        learner.self.setSyncLimit(2);
-        learner.self.setConnectToLearnerMasterLimit(10);
-
-        InetSocketAddress addr = new InetSocketAddress(1111);
-        learner.setTimeMultiplier((long)4000 * 1000000);
-        learner.setPassConnectAttempt(5);
-        
-        try {
-            learner.connectToLeader(addr, "");
-            Assert.fail("should have thrown IOException!");
-        } catch (IOException e) {
-          Assert.assertTrue(learner.nanoTime() > 2000*10*1000000);
-          Assert.assertEquals(3, learner.getSockConnectAttempt());
-        }
+      TimeoutLearner learner = new TimeoutLearner();
+      learner.self = new QuorumPeer();
+      learner.self.setTickTime(2000);
+      learner.self.setInitLimit(2);
+      learner.self.setSyncLimit(2);
+      learner.self.setConnectToLearnerMasterLimit(5);
+      
+      InetSocketAddress addr = new InetSocketAddress(1111);
+      learner.setTimeMultiplier((long)4000 * 1000000);
+      learner.setPassConnectAttempt(5);
+      
+      try {
+          learner.connectToLeader(addr, "");
+          Assert.fail("should have thrown IOException!");
+      } catch (IOException e) {
+        Assert.assertTrue(learner.nanoTime() > 2000*5*1000000);
+        Assert.assertEquals(3, learner.getSockConnectAttempt());
+      }
     }
 
     @Test
