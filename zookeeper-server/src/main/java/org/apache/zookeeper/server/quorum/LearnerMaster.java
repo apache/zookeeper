@@ -36,19 +36,22 @@ public abstract class LearnerMaster {
 
     // Throttle when there are too many concurrent snapshots being sent to observers
     private static final String MAX_CONCURRENT_SNAPSYNCS = "zookeeper.leader.maxConcurrentSnapSyncs";
-    private static volatile int maxConcurrentSnapSyncs;
+    private static final int DEFAULT_CONCURRENT_SNAPSYNCS;
 
     // Throttle when there are too many concurrent diff syncs being sent to observers
     private static final String MAX_CONCURRENT_DIFF_SYNCS = "zookeeper.leader.maxConcurrentDiffSyncs";
-    private static volatile int maxConcurrentDiffSyncs;
+    private static final int DEFAULT_CONCURRENT_DIFF_SYNCS;
 
     static {
-        maxConcurrentSnapSyncs = Integer.getInteger(MAX_CONCURRENT_SNAPSYNCS, 10);
-        LOG.info(MAX_CONCURRENT_SNAPSYNCS + " = " + maxConcurrentSnapSyncs);
+        DEFAULT_CONCURRENT_SNAPSYNCS = Integer.getInteger(MAX_CONCURRENT_SNAPSYNCS, 10);
+        LOG.info(MAX_CONCURRENT_SNAPSYNCS + " = " + DEFAULT_CONCURRENT_SNAPSYNCS);
 
-        maxConcurrentDiffSyncs = Integer.getInteger(MAX_CONCURRENT_DIFF_SYNCS, 100);
-        LOG.info(MAX_CONCURRENT_DIFF_SYNCS + " = " + maxConcurrentDiffSyncs);
+        DEFAULT_CONCURRENT_DIFF_SYNCS = Integer.getInteger(MAX_CONCURRENT_DIFF_SYNCS, 100);
+        LOG.info(MAX_CONCURRENT_DIFF_SYNCS + " = " + DEFAULT_CONCURRENT_DIFF_SYNCS);
     }
+
+    private volatile int maxConcurrentSnapSyncs = DEFAULT_CONCURRENT_SNAPSYNCS;
+    private volatile int maxConcurrentDiffSyncs = DEFAULT_CONCURRENT_DIFF_SYNCS;
 
     private final LearnerSyncThrottler learnerSnapSyncThrottler =
             new LearnerSyncThrottler(maxConcurrentSnapSyncs, LearnerSyncThrottler.SyncType.SNAP);
@@ -60,10 +63,10 @@ public abstract class LearnerMaster {
         return maxConcurrentSnapSyncs;
     }
 
-    public void setMaxConcurrentSnapSyncs(int maxConcurrentSnapshots) {
-        LOG.info("Set maxConcurrentSnapSyncs to {}", maxConcurrentSnapshots);
-        LearnerMaster.maxConcurrentSnapSyncs = maxConcurrentSnapshots;
-        learnerSnapSyncThrottler.setMaxConcurrentSyncs(maxConcurrentSnapshots);
+    public void setMaxConcurrentSnapSyncs(int maxConcurrentSnapSyncs) {
+        LOG.info("Set maxConcurrentSnapSyncs to {}", maxConcurrentSnapSyncs);
+        this.maxConcurrentSnapSyncs = maxConcurrentSnapSyncs;
+        learnerSnapSyncThrottler.setMaxConcurrentSyncs(maxConcurrentSnapSyncs);
     }
 
     public int getMaxConcurrentDiffSyncs() {
@@ -72,7 +75,7 @@ public abstract class LearnerMaster {
 
     public void setMaxConcurrentDiffSyncs(int maxConcurrentDiffSyncs) {
         LOG.info("Set maxConcurrentDiffSyncs to {}", maxConcurrentDiffSyncs);
-        LearnerMaster.maxConcurrentDiffSyncs = maxConcurrentDiffSyncs;
+        this.maxConcurrentDiffSyncs = maxConcurrentDiffSyncs;
         learnerDiffSyncThrottler.setMaxConcurrentSyncs(maxConcurrentDiffSyncs);
     }
 
