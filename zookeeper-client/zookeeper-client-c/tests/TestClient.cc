@@ -208,7 +208,7 @@ class Zookeeper_simpleSystem : public CPPUNIT_NS::TestFixture
 #ifdef THREADED
     CPPUNIT_TEST(testNullData);
 #ifdef ZOO_IPV6_ENABLED
-    //CPPUNIT_TEST(testIPV6);
+    CPPUNIT_TEST(testIPV6);
 #endif
 #ifdef HAVE_OPENSSL_H
     CPPUNIT_TEST(testSSL);
