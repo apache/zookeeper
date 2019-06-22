@@ -784,6 +784,7 @@
             <exclude>README_packaging.txt</exclude>
             <exclude>src/main/resources/markdown/skin/*</exclude>
             <exclude>src/main/resources/markdown/html/*</exclude>
+            <exclude>src/main/resources/markdown/images/*</exclude>
             <exclude>zookeeper-contrib/zookeeper-contrib-loggraph/src/main/resources/webapp/org/apache/zookeeper/graph/resources/*</exclude>
             <exclude>zookeeper-contrib/zookeeper-contrib-zooinspector/TODO</exclude>
             <exclude>zookeeper-contrib/zookeeper-contrib-zkperl/Changes</exclude>
