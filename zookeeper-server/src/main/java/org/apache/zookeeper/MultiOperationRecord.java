@@ -34,17 +34,15 @@ import java.util.List;
  * the type of the following operation or a negative number if no more operations
  * are included.
  * All of the operations must be from the same OpKind.
- * Note: This class is called MultiTransactionRecord because of legacy reasons,
- * MultiOperationRecord would be more accurate.
  */
-public class MultiTransactionRecord implements Record, Iterable<Op> {
+public class MultiOperationRecord implements Record, Iterable<Op> {
     private List<Op> ops = new ArrayList<Op>();
     private Op.OpKind opKind = null;
 
-    public MultiTransactionRecord() {
+    public MultiOperationRecord() {
     }
 
-    public MultiTransactionRecord(Iterable<Op> ops) throws IllegalArgumentException {
+    public MultiOperationRecord(Iterable<Op> ops) throws IllegalArgumentException {
         for (Op op : ops) {
             setOrCheckOpKind(op.getKind());
             add(op);
@@ -167,9 +165,9 @@ public class MultiTransactionRecord implements Record, Iterable<Op> {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof MultiTransactionRecord)) return false;
+        if (!(o instanceof MultiOperationRecord)) return false;
 
-        MultiTransactionRecord that = (MultiTransactionRecord) o;
+        MultiOperationRecord that = (MultiOperationRecord) o;
 
         if (ops != null) {
             Iterator<Op> other = that.ops.iterator();

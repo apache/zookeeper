@@ -25,7 +25,7 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.jute.Record;
-import org.apache.zookeeper.MultiTransactionRecord;
+import org.apache.zookeeper.MultiOperationRecord;
 import org.apache.zookeeper.Op;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.Id;
@@ -276,11 +276,11 @@ public class FinalRequestProcessor implements RequestProcessor {
             }
             case OpCode.multiRead: {
                 lastOp = "MLTR";
-                MultiTransactionRecord multiTransactionRecord = new MultiTransactionRecord();
-                ByteBufferInputStream.byteBuffer2Record(request.request, multiTransactionRecord);
+                MultiOperationRecord multiReadRecord = new MultiOperationRecord();
+                ByteBufferInputStream.byteBuffer2Record(request.request, multiReadRecord);
                 rsp = new MultiResponse();
                 OpResult subResult;
-                for(Op readOp : multiTransactionRecord) {
+                for(Op readOp : multiReadRecord) {
                     try {
                         Record rec;
                         switch(readOp.getType()) {

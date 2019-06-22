@@ -1876,13 +1876,13 @@ public class ZooKeeper implements AutoCloseable {
         return results;
     }
 
-    private MultiTransactionRecord generateMultiTransaction(Iterable<Op> ops) {
+    private MultiOperationRecord generateMultiTransaction(Iterable<Op> ops) {
         // reconstructing transaction with the chroot prefix
         List<Op> transaction = new ArrayList<Op>();
         for (Op op : ops) {
             transaction.add(withRootPrefix(op));
         }
-        return new MultiTransactionRecord(transaction);
+        return new MultiOperationRecord(transaction);
     }
 
     private Op withRootPrefix(Op op) {
@@ -1895,7 +1895,7 @@ public class ZooKeeper implements AutoCloseable {
         return op;
     }
 
-    protected void multiInternal(MultiTransactionRecord request, MultiCallback cb, Object ctx)
+    protected void multiInternal(MultiOperationRecord request, MultiCallback cb, Object ctx)
             throws IllegalArgumentException {
         RequestHeader h = new RequestHeader();
         switch (request.getOpKind()) {
@@ -1908,7 +1908,7 @@ public class ZooKeeper implements AutoCloseable {
         cnxn.queuePacket(h, new ReplyHeader(), request, response, cb, null, null, ctx, null);
     }
 
-    protected List<OpResult> multiInternal(MultiTransactionRecord request)
+    protected List<OpResult> multiInternal(MultiOperationRecord request)
         throws InterruptedException, KeeperException, IllegalArgumentException {
         RequestHeader h = new RequestHeader();
         switch (request.getOpKind()) {

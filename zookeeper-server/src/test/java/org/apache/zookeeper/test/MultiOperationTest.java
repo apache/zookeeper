@@ -65,14 +65,14 @@ import org.slf4j.LoggerFactory;
 
 @RunWith(Parameterized.class)
 @Parameterized.UseParametersRunnerFactory(ZKParameterized.RunnerFactory.class)
-public class MultiTransactionTest extends ClientBase {
-    private static final Logger LOG = LoggerFactory.getLogger(MultiTransactionTest.class);
+public class MultiOperationTest extends ClientBase {
+    private static final Logger LOG = LoggerFactory.getLogger(MultiOperationTest.class);
     private ZooKeeper zk;
     private ZooKeeper zk_chroot;
 
     private final boolean useAsync;
 
-    public MultiTransactionTest(boolean useAsync) {
+    public MultiOperationTest(boolean useAsync) {
         this.useAsync = useAsync;
     }
 
