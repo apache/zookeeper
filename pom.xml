@@ -794,11 +794,12 @@
             <exclude>zookeeper-contrib/zookeeper-contrib-zooinspector/src/main/java/com/nitido/utils/toaster/Toaster.java</exclude>
             <exclude>**/acinclude.m4</exclude>
             <exclude>**/aminclude.am</exclude>
-            <exclude>zookeeper-client-c/src/hashtable/*</exclude>
-            <exclude>zookeeper-client-c/include/winconfig.h</exclude>
-            <exclude>zookeeper-client-c/tests/wrappers.opt</exclude>
-            <exclude>zookeeper-client-c/tests/quorum.cfg</exclude>
-            <exclude>zookeeper-client-c/tests/wrappers-mt.opt</exclude>
+            <exclude>zookeeper-client/zookeeper-client-c/src/hashtable/*</exclude>
+            <exclude>zookeeper-client/zookeeper-client-c/include/winconfig.h</exclude>
+            <exclude>zookeeper-client/zookeeper-client-c/autom4te.cache/*</exclude>
+            <exclude>zookeeper-client/zookeeper-client-c/tests/wrappers.opt</exclude>
+            <exclude>zookeeper-client/zookeeper-client-c/tests/quorum.cfg</exclude>
+            <exclude>zookeeper-client/zookeeper-client-c/tests/wrappers-mt.opt</exclude>
             <exclude>**/c-doc.Doxyfile</exclude>
           </excludes>
           <consoleOutput>true</consoleOutput>
