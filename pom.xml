@@ -801,6 +801,7 @@
             <exclude>zookeeper-client-c/tests/wrappers-mt.opt</exclude>
             <exclude>**/c-doc.Doxyfile</exclude>
           </excludes>
+          <consoleOutput>true</consoleOutput>
         </configuration>
       </plugin>
     </plugins>
