@@ -35,4 +35,10 @@
            False positive on Netty 4.x-->
       <cve>CVE-2018-12056</cve>
    </suppress>
+   <suppress>
+      <!-- ZOOKEEPER-3441
+           we do not have jdom in our classpath
+           https://nvd.nist.gov/vuln/detail/CVE-2019-12814 -->
+      <cve>CVE-2019-12814</cve>
+   </suppress>
 </suppressions>
