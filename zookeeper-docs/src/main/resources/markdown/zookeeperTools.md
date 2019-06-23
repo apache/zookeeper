@@ -36,7 +36,7 @@ limitations under the License.
 A command for the operations for the ZooKeeper server.
 
 ```bash
-Usage: ./zkServer.sh {start|start-foreground|stop|restart|status|upgrade|print-cmd}
+Usage: ./zkServer.sh {start|start-foreground|stop|version|restart|status|upgrade|print-cmd}
 # start the server
 ./zkServer.sh start
 
