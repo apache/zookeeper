@@ -32,6 +32,8 @@ class Zookeeper_operations : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testUnsolicitedPing);
     CPPUNIT_TEST(testTimeoutCausedByWatches1);
     CPPUNIT_TEST(testTimeoutCausedByWatches2);
+    CPPUNIT_TEST(testCloseWhileInProgressFromMain);
+    CPPUNIT_TEST(testCloseWhileInProgressFromCompletion);
 #else    
     CPPUNIT_TEST(testAsyncWatcher1);
     CPPUNIT_TEST(testAsyncGetOperation);
@@ -442,6 +444,119 @@ public:
         CPPUNIT_ASSERT_EQUAL(1,zkServer.pingCount_);
         // make sure only 1/3 of the timeout has passed
         CPPUNIT_ASSERT_EQUAL((int32_t)TIMEOUT/3*1000,toMilliseconds(now-beginningOfTimes));
+    }
+
+    // ZOOKEEPER-2894: Memory and completions leak on zookeeper_close
+    // while there is a request waiting for being processed
+    // call zookeeper_close() from the main event loop
+    // assert the completion callback is called
+    void testCloseWhileInProgressFromMain()
+    {
+        Mock_gettimeofday timeMock;
+        ZookeeperServer zkServer;
+        CloseFinally guard(&zh);
+
+        zh=zookeeper_init("localhost:2121",watcher,10000,TEST_CLIENT_ID,0,0);
+        CPPUNIT_ASSERT(zh!=0);
+        forceConnected(zh);
+        zhandle_t* savezh=zh;
+
+        // issue a request
+        zkServer.addOperationResponse(new ZooGetResponse("1",1));
+        AsyncGetOperationCompletion res1;
+        int rc=zoo_aget(zh,"/x/y/1",0,asyncCompletion,&res1);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
+
+        // but do not allow Zookeeper C Client to process the request
+        // and call zookeeper_close() from the main event loop immediately
+        Mock_free_noop freeMock;
+        rc=zookeeper_close(zh); zh=0;
+        freeMock.disable();
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
+
+        // verify that memory for completions was freed (would be freed if no mock installed)
+        CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(savezh));
+        CPPUNIT_ASSERT(savezh->completions_to_process.head==0);
+        CPPUNIT_ASSERT(savezh->completions_to_process.last==0);
+
+        // verify that completion was called, and it was called with ZCLOSING status
+        CPPUNIT_ASSERT(res1.called_);
+        CPPUNIT_ASSERT_EQUAL((int)ZCLOSING,res1.rc_);
+    }
+
+    // ZOOKEEPER-2894: Memory and completions leak on zookeeper_close
+    // send some request #1
+    // then, while there is a request #2 waiting for being processed
+    // call zookeeper_close() from the completion callback of request #1
+    // assert the completion callback #2 is called
+    void testCloseWhileInProgressFromCompletion()
+    {
+        Mock_gettimeofday timeMock;
+        ZookeeperServer zkServer;
+        CloseFinally guard(&zh);
+
+        zh=zookeeper_init("localhost:2121",watcher,10000,TEST_CLIENT_ID,0,0);
+        CPPUNIT_ASSERT(zh!=0);
+        forceConnected(zh);
+        zhandle_t* savezh=zh;
+
+        // will handle completion on request #1 and issue request #2 from it
+        class AsyncGetOperationCompletion1: public AsyncCompletion{
+        public:
+            AsyncGetOperationCompletion1(zhandle_t **zh, ZookeeperServer *zkServer, 
+                    AsyncGetOperationCompletion *res2)
+            :zh_(zh),zkServer_(zkServer),res2_(res2){}
+
+            virtual void dataCompl(int rc1, const char *value, int len, const Stat *stat){
+                CPPUNIT_ASSERT_EQUAL((int)ZOK,rc1);
+
+                // from the completion #1 handler, issue request #2
+                zkServer_->addOperationResponse(new ZooGetResponse("2",1));
+                int rc2=zoo_aget(*zh_,"/x/y/2",0,asyncCompletion,res2_);
+                CPPUNIT_ASSERT_EQUAL((int)ZOK,rc2);
+
+                // but do not allow Zookeeper C Client to process the request #2
+                // and call zookeeper_close() from the completion callback of request #1
+                rc2=zookeeper_close(*zh_); *zh_=0;
+                CPPUNIT_ASSERT_EQUAL((int)ZOK,rc2);
+
+                // do not disable freeMock here, let completion #2 handler
+                // return through ZooKeeper C Client internals to the main loop
+                // and fulfill the work
+            }
+
+            zhandle_t **zh_;
+            ZookeeperServer *zkServer_;
+            AsyncGetOperationCompletion *res2_;
+        };
+
+        // issue request #1
+        AsyncGetOperationCompletion res2;
+        AsyncGetOperationCompletion1 res1(&zh,&zkServer,&res2);
+        zkServer.addOperationResponse(new ZooGetResponse("1",1));
+        int rc=zoo_aget(zh,"/x/y/1",0,asyncCompletion,&res1);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
+
+        // process the send queue
+        int fd; int interest; timeval tv;
+        rc=zookeeper_interest(zh,&fd,&interest,&tv);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
+        CPPUNIT_ASSERT(zh!=0);
+        Mock_free_noop freeMock;
+        while(zh!=0 && (rc=zookeeper_process(zh,interest))==ZOK) {
+          millisleep(100);
+        }
+        freeMock.disable();
+        CPPUNIT_ASSERT(zh==0);
+
+        // verify that memory for completions was freed (would be freed if no mock installed)
+        CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(savezh));
+        CPPUNIT_ASSERT(savezh->completions_to_process.head==0);
+        CPPUNIT_ASSERT(savezh->completions_to_process.last==0);
+
+        // verify that completion #2 was called, and it was called with ZCLOSING status
+        CPPUNIT_ASSERT(res2.called_);
+        CPPUNIT_ASSERT_EQUAL((int)ZCLOSING,res2.rc_);
     }
 
 #else   
