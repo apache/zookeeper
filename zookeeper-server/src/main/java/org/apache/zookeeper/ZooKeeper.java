@@ -1902,7 +1902,7 @@ public class ZooKeeper implements AutoCloseable {
             case TRANSACTION: h.setType(ZooDefs.OpCode.multi); break;
             case READ: h.setType(ZooDefs.OpCode.multiRead); break;
             default:
-                throw new IllegalArgumentException("Invalid kind of op");
+                throw new IllegalArgumentException("Unsupported OpKind: " + request.getOpKind());
         }
         MultiResponse response = new MultiResponse();
         cnxn.queuePacket(h, new ReplyHeader(), request, response, cb, null, null, ctx, null);
@@ -1915,7 +1915,7 @@ public class ZooKeeper implements AutoCloseable {
             case TRANSACTION: h.setType(ZooDefs.OpCode.multi); break;
             case READ: h.setType(ZooDefs.OpCode.multiRead); break;
             default:
-                throw new IllegalArgumentException("Invalid kind of op");
+                throw new IllegalArgumentException("Unsupported OpKind: " + request.getOpKind());
         }
         MultiResponse response = new MultiResponse();
         ReplyHeader r = cnxn.submitRequest(h, request, response, null);
