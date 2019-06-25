@@ -20,11 +20,10 @@ package org.apache.zookeeper.common;
 
 /**
  * This enum represents the file type of a KeyStore or TrustStore.
- * Currently, JKS (java keystore) and PEM types are supported.
+ * Currently, JKS (Java keystore), PEM, and PKCS12 types are supported.
  */
 public enum KeyStoreFileType {
-    // TODO: consider adding support for PKCS12
-    JKS(".jks"), PEM(".pem");
+    JKS(".jks"), PEM(".pem"), PKCS12(".p12");
 
     private final String defaultFileExtension;
 
@@ -54,7 +53,7 @@ public enum KeyStoreFileType {
      * @return the KeyStoreFileType, or <code>null</code> if
      *         <code>propertyValue</code> is <code>null</code> or empty.
      * @throws IllegalArgumentException if <code>propertyValue</code> is not
-     *         one of "JKS", "PEM", or empty/null.
+     *         one of "JKS", "PEM", "PKCS12", or empty/null.
      */
     public static KeyStoreFileType fromPropertyValue(String propertyValue) {
         if (propertyValue == null || propertyValue.length() == 0) {
@@ -67,11 +66,12 @@ public enum KeyStoreFileType {
      * Detects the type of KeyStore / TrustStore file from the file extension.
      * If the file name ends with ".jks", returns <code>StoreFileType.JKS</code>.
      * If the file name ends with ".pem", returns <code>StoreFileType.PEM</code>.
+     * If the file name ends with ".p12", returns <code>StoreFileType.PKCS12</code>.
      * Otherwise, throws an IllegalArgumentException.
      * @param filename the filename of the key store or trust store file.
      * @return a KeyStoreFileType.
      * @throws IllegalArgumentException if the filename does not end with
-     *         ".jks" or ".pem".
+     *         ".jks", ".pem", or "p12".
      */
     public static KeyStoreFileType fromFilename(String filename) {
         int i = filename.lastIndexOf('.');
@@ -99,7 +99,7 @@ public enum KeyStoreFileType {
      *                 <code>propertyValue</code> is null or empty.
      * @return a KeyStoreFileType.
      * @throws IllegalArgumentException if <code>propertyValue</code> is not
-     *         one of "JKS", "PEM", or empty/null.
+     *         one of "JKS", "PEM", "PKCS12", or empty/null.
      * @throws IllegalArgumentException if <code>propertyValue</code>is empty
      *         or null and the type could not be determined from the file name.
      */
