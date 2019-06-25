@@ -51,7 +51,7 @@ public class ReferenceCountedACLCache {
     /**
      * these are the number of acls that we have in the datatree
      */
-    long aclIndex = 0;
+    volatile long aclIndex = 0;
 
     /**
      * converts the list of acls to a long.
