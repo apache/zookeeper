@@ -76,8 +76,8 @@
     <url>http://issues.apache.org/jira/browse/ZOOKEEPER</url>
   </issueManagement>
   <ciManagement>
-    <system>hudson</system>
-    <url>http://hudson.zones.apache.org/hudson/view/ZooKeeper/job/ZooKeeper-TRUNK/</url>
+    <system>jenkins</system>
+    <url>https://builds.apache.org/view/S-Z/view/ZooKeeper/</url>
   </ciManagement>
   <mailingLists>
     <mailingList>
@@ -104,13 +104,13 @@
       <name>Issues List</name>
       <subscribe>issues-subscribe@zookeeper.apache.org</subscribe>
       <unsubscribe>issues-unsubscribe@zookeeper.apache.org</unsubscribe>
-      <archive>http://mail-archives.apache.org/mod_mbox/zookeeper-issues/</archive>
+      <archive>https://lists.apache.org/list.html?issues@zookeeper.apache.org</archive>
     </mailingList>
     <mailingList>
-      <name>Builds List</name>
-      <subscribe>builds-subscribe@zookeeper.apache.org</subscribe>
-      <unsubscribe>builds-unsubscribe@zookeeper.apache.org</unsubscribe>
-      <archive>http://mail-archives.apache.org/mod_mbox/zookeeper-builds/</archive>
+      <name>Notifications List</name>
+      <subscribe>notifications-subscribe@zookeeper.apache.org</subscribe>
+      <unsubscribe>notifications-unsubscribe@zookeeper.apache.org</unsubscribe>
+      <archive>https://lists.apache.org/list.html?notifications@zookeeper.apache.org</archive>
     </mailingList>
   </mailingLists>
   <developers>
