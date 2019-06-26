@@ -497,7 +497,7 @@ Set the Acl permission for one node.
 Set the quota in one path.
 
 ```bash
-# -n to limit the number of child nodes(namespaces)
+# -n to limit the number of child nodes(included itself)
 [zkshell: 18] setquota -n 2 /quota_test
 [zkshell: 19] create /quota_test/child_1
 	Created /quota_test/child_1
@@ -509,7 +509,7 @@ Set the quota in one path.
 	2019-03-07 11:22:36,680 [myid:1] - WARN  [SyncThread:0:DataTree@374] - Quota exceeded: /quota_test count=3 limit=2
 	2019-03-07 11:22:41,861 [myid:1] - WARN  [SyncThread:0:DataTree@374] - Quota exceeded: /quota_test count=4 limit=2
 
-# -b to limit the bytes/size of one path
+# -b to limit the bytes(data length) of one path
 [zkshell: 22] setquota -b 5 /brokers
 [zkshell: 23] set /brokers "I_love_zookeeper"
 # Notice:don't have a hard constraint,just log the warning info
