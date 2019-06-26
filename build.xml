@@ -113,6 +113,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
     <property name="build.dir" value="${basedir}/build" />
     <property name="distribution" value="${basedir}/distribution" />
     <property name="src_generated.dir" value="${basedir}/zookeeper-jute/target/main/java" />
+    <property name="src_version_generated.dir" value="${basedir}/zookeeper-server/target/generated-sources/java" />
     <property name="c.src.dir" value="${basedir}/zookeeper-client/zookeeper-client-c" />
     <property name="csrc_generated.dir" value="${c.src.dir}/generated" />
 
@@ -397,6 +398,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
             <arg value="${version}" />
             <arg value="${lastRevision}" />
             <arg value="${build.time}" />
+            <arg value="${src_version_generated.dir}" />
             <classpath>
                 <pathelement path="${build.classes}" />
             </classpath>
@@ -505,6 +507,7 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
                target="${javac.target}" source="${javac.source}" debug="on" encoding="${build.encoding}">
             <src path="${java.server.src.dir}"/>
             <src path="${jute.src.dir}"/>
+            <src path="${src_version_generated.dir}"/>
             <classpath refid="java.classpath"/>
             <compilerarg value="-Xlint:all"/>
             <compilerarg value="-Xlint:-path"/>
