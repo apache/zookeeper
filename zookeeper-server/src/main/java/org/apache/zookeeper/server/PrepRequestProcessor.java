@@ -24,7 +24,7 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.BadArgumentsException;
 import org.apache.zookeeper.KeeperException.Code;
-import org.apache.zookeeper.MultiTransactionRecord;
+import org.apache.zookeeper.MultiOperationRecord;
 import org.apache.zookeeper.Op;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.OpCode;
@@ -205,7 +205,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
      * @return a map that contains previously existed records that probably need to be
      *         rolled back in any failure.
      */
-    private Map<String, ChangeRecord> getPendingChanges(MultiTransactionRecord multiRequest) {
+    private Map<String, ChangeRecord> getPendingChanges(MultiOperationRecord multiRequest) {
         Map<String, ChangeRecord> pendingChangeRecords = new HashMap<String, ChangeRecord>();
 
         for (Op op : multiRequest) {
@@ -775,7 +775,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 pRequest2Txn(request.type, zks.getNextZxid(), request, checkRequest, true);
                 break;
             case OpCode.multi:
-                MultiTransactionRecord multiRequest = new MultiTransactionRecord();
+                MultiOperationRecord multiRequest = new MultiOperationRecord();
                 try {
                     ByteBufferInputStream.byteBuffer2Record(request.request, multiRequest);
                 } catch(IOException e) {
@@ -868,6 +868,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
             case OpCode.checkWatches:
             case OpCode.removeWatches:
             case OpCode.getEphemerals:
+            case OpCode.multiRead:
                 zks.sessionTracker.checkSession(request.sessionId,
                         request.getOwner());
                 break;

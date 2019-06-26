@@ -162,6 +162,7 @@ public class Request {
         case OpCode.getData:
         case OpCode.getEphemerals:
         case OpCode.multi:
+        case OpCode.multiRead:
         case OpCode.ping:
         case OpCode.reconfig:
         case OpCode.setACL:
@@ -185,6 +186,7 @@ public class Request {
         case OpCode.getChildren2:
         case OpCode.getData:
         case OpCode.getEphemerals:
+        case OpCode.multiRead:
             return false;
         case OpCode.create:
         case OpCode.create2:
@@ -233,6 +235,8 @@ public class Request {
             return "check";
         case OpCode.multi:
             return "multi";
+        case OpCode.multiRead:
+            return "multiRead";
         case OpCode.setData:
             return "setData";
         case OpCode.sync:
