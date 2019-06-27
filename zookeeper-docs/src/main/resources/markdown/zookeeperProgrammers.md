@@ -50,11 +50,6 @@ limitations under the License.
 * [Building Blocks: A Guide to ZooKeeper Operations](#ch_guideToZkOperations)
     * [Handling Errors](#sc_errorsZk)
     * [Connecting to ZooKeeper](#sc_connectingToZk)
-    * [Read Operations](#sc_readOps)
-    * [Write Operations](#sc_writeOps)
-    * [Handling Watches](#sc_handlingWatches)
-    * [Miscellaneous ZooKeeper Operations](#sc_miscOps)
-* [Program Structure, with Simple Example](#ch_programStructureWithExample)
 * [Gotchas: Common Problems and Troubleshooting](#ch_gotchas)
 
 <a name="_introduction"></a>
@@ -82,8 +77,6 @@ information. These are:
 
 * [Building Blocks: A Guide to ZooKeeper Operations](#ch_guideToZkOperations)
 * [Bindings](#ch_bindings)
-* [Program Structure, with Simple Example](#ch_programStructureWithExample)
-  _[tbd]_
 * [Gotchas: Common Problems and Troubleshooting](#ch_gotchas)
 
 The book concludes with an [appendix](#apx_linksToOtherInfo) containing links to other
@@ -92,10 +85,7 @@ useful, ZooKeeper-related information.
 Most of the information in this document is written to be accessible as
 stand-alone reference material. However, before starting your first
 ZooKeeper application, you should probably at least read the chapters on
-the [ZooKeeper Data Model](#ch_zkDataModel) and [ZooKeeper Basic Operations](#ch_guideToZkOperations). Also,
-the [Simple Programming
-Example](#ch_programStructureWithExample) _[tbd]_ is helpful for understanding the basic
-structure of a ZooKeeper client application.
+the [ZooKeeper Data Model](#ch_zkDataModel) and [ZooKeeper Basic Operations](#ch_guideToZkOperations).
 
 <a name="ch_zkDataModel"></a>
 
@@ -136,8 +126,7 @@ For instance, whenever a client retrieves data, it also receives the
 version of the data. And when a client performs an update or a delete,
 it must supply the version of the data of the znode it is changing. If
 the version it supplies doesn't match the actual version of the data,
-the update will fail. (This behavior can be overridden. For more
-information see... )_[tbd...]_
+the update will fail. (This behavior can be overridden.
 
 ######Note
 
@@ -1114,7 +1103,6 @@ ZooKeeper does _not_ in fact make. This is:
     primitives can be used to construct higher level functions that
     provide useful client synchronization. (For more information,
     see the [ZooKeeper Recipes](recipes.html).
-    _[tbd:..]_).
 
 <a name="ch_bindings"></a>
 
@@ -1431,28 +1419,6 @@ Run the client.
 
 From the output, you should see "Connected to Zookeeper" along with Zookeeper's DEBUG messages if the connection is successful.
 
-<a name="sc_readOps"></a>
-
-### Read Operations
-
-<a name="sc_writeOps"></a>
-
-### Write Operations
-
-<a name="sc_handlingWatches"></a>
-
-### Handling Watches
-
-<a name="sc_miscOps"></a>
-
-### Miscelleaneous ZooKeeper Operations
-
-<a name="ch_programStructureWithExample"></a>
-
-## Program Structure, with Simple Example
-
-_[tbd]_
-
 <a name="ch_gotchas"></a>
 
 ## Gotchas: Common Problems and Troubleshooting
@@ -1509,10 +1475,6 @@ ZooKeeper users fall into:
 Outside the formal documentation, there're several other sources of
 information for ZooKeeper developers.
 
-* *ZooKeeper Whitepaper _[tbd: find url]_* :
-    The definitive discussion of ZooKeeper design and performance,
-    by Yahoo! Research
-
 * *[API Reference](https://zookeeper.apache.org/doc/current/api/index.html)* :
     The complete reference to the ZooKeeper API
 
@@ -1531,7 +1493,4 @@ information for ZooKeeper developers.
     Pseudo-level discussion of the implementation of various
     synchronization solutions with ZooKeeper: Event Handles, Queues,
     Locks, and Two-phase Commits.
-
-* *_[tbd]_* :
-    Any other good sources anyone can think of...
 

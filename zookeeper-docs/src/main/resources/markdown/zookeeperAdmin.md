@@ -1451,8 +1451,6 @@ to **org.apache.zookeeper.server.NettyServerCnxnFactory**;
 for the client, set **zookeeper.clientCnxnSocket**
 to **org.apache.zookeeper.ClientCnxnSocketNetty**.
 
-TBD - tuning options for netty - currently there are none that are netty specific but we should add some. Esp around max bound on the number of reader worker threads netty creates.
-
 <a name="Quorum+TLS"></a>
 
 #### Quorum TLS
