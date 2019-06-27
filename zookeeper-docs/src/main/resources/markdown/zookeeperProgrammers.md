@@ -50,10 +50,6 @@ limitations under the License.
 * [Building Blocks: A Guide to ZooKeeper Operations](#ch_guideToZkOperations)
     * [Handling Errors](#sc_errorsZk)
     * [Connecting to ZooKeeper](#sc_connectingToZk)
-    * [Read Operations](#sc_readOps)
-    * [Write Operations](#sc_writeOps)
-    * [Handling Watches](#sc_handlingWatches)
-    * [Miscelleaneous ZooKeeper Operations](#sc_miscOps)
 * [Program Structure, with Simple Example](#ch_programStructureWithExample)
 * [Gotchas: Common Problems and Troubleshooting](#ch_gotchas)
 
@@ -82,8 +78,6 @@ information. These are:
 
 * [Building Blocks: A Guide to ZooKeeper Operations](#ch_guideToZkOperations)
 * [Bindings](#ch_bindings)
-* [Program Structure, with Simple Example](#ch_programStructureWithExample)
-  _[tbd]_
 * [Gotchas: Common Problems and Troubleshooting](#ch_gotchas)
 
 The book concludes with an [appendix](#apx_linksToOtherInfo) containing links to other
@@ -92,10 +86,7 @@ useful, ZooKeeper-related information.
 Most of the information in this document is written to be accessible as
 stand-alone reference material. However, before starting your first
 ZooKeeper application, you should probably at least read the chapters on
-the [ZooKeeper Data Model](#ch_zkDataModel) and [ZooKeeper Basic Operations](#ch_guideToZkOperations). Also,
-the [Simple Programmming
-Example](#ch_programStructureWithExample) _[tbd]_ is helpful for understanding the basic
-structure of a ZooKeeper client application.
+the [ZooKeeper Data Model](#ch_zkDataModel) and [ZooKeeper Basic Operations](#ch_guideToZkOperations).
 
 <a name="ch_zkDataModel"></a>
 
@@ -136,8 +127,7 @@ For instance, whenever a client retrieves data, it also receives the
 version of the data. And when a client performs an update or a delete,
 it must supply the version of the data of the znode it is changing. If
 the version it supplies doesn't match the actual version of the data,
-the update will fail. (This behavior can be overridden. For more
-information see... )_[tbd...]_
+the update will fail. (This behavior can be overridden.)
 
 ######Note
 
@@ -1078,7 +1068,6 @@ ZooKeeper does _not_ in fact make. This is:
     primitives can be used to construct higher level functions that
     provide useful client synchronization. (For more information,
     see the [ZooKeeper Recipes](recipes.html).
-    _[tbd:..]_).
 
 <a name="ch_bindings"></a>
 
@@ -1312,9 +1301,7 @@ for an example of a C client implementation
 This section surveys all the operations a developer can perform
 against a ZooKeeper server. It is lower level information than the earlier
 concepts chapters in this manual, but higher level than the ZooKeeper API
-Reference. It covers these topics:
-
-* [Connecting to ZooKeeper](#sc_connectingToZk)
+Reference. 
 
 <a name="sc_errorsZk"></a>
 
@@ -1326,27 +1313,91 @@ Both the Java and C client bindings may report errors. The Java client binding d
 
 ### Connecting to ZooKeeper
 
-<a name="sc_readOps"></a>
+Before we begin, you will have to set up a running Zookeeper server so that we can start developing the client. For C client bindings, we will be using the multithreaded library(zookeeper_mt) with a simple example written in C. To establish a connection with Zookeeper server, we make use of C API - _zookeeper_init_ with the following signature:
 
-### Read Operations
+    int zookeeper_init(const char *host, watcher_fn fn, int recv_timeout, const clientid_t *clientid, void *context, int flags);
 
-<a name="sc_writeOps"></a>
+* **host* :
+    Connection string to zookeeper server in the format of host:port. If there are multiple servers, use comma as separator after specifying the host:port pairs. Eg: "127.0.0.1:2181,127.0.0.1:3001,127.0.0.1:3002"
 
-### Write Operations
+* *fn* :
+    Watcher function to process events when a notification is triggered.
 
-<a name="sc_handlingWatches"></a>
+* *recv_timeout* :
+    Session expiration time in milliseconds.
 
-### Handling Watches
+* *clientid* :
+    We can specify 0 for a new session. If a session has already establish previously, we could provide that client ID and it would reconnect to that previous session.
 
-<a name="sc_miscOps"></a>
+* *context* :
+    Context object that can be associated with the zkhandle_t handler. If it is not used, we can set it to 0.
 
-### Miscelleaneous ZooKeeper Operations
+* *flags* :
+    In an initiation, we can leave it for 0.
 
-<a name="ch_programStructureWithExample"></a>
+We will demonstrate client that outputs "Connected to Zookeeper" after successful connection or an error message otherwise. Let's call the following code _zkClient.cc_ :
 
-## Program Structure, with Simple Example
 
-_[tbd]_
+    #include <stdio.h>
+    #include <zookeeper/zookeeper.h>
+    #include <errno.h>
+    using namespace std;
+
+    // Keeping track of the connection state
+    static int connected = 0;
+    static int expired   = 0;
+
+    // *zkHandler handles the connection with Zookeeper
+    static zhandle_t *zkHandler;
+
+    // watcher function would process events
+    void watcher(zhandle_t *zkH, int type, int state, const char *path, void *watcherCtx)
+    {
+        if (type == ZOO_SESSION_EVENT) {
+
+            // state refers to states of zookeeper connection.
+            // To keep it simple, we would demonstrate these 3: ZOO_EXPIRED_SESSION_STATE, ZOO_CONNECTED_STATE, ZOO_NOTCONNECTED_STATE
+            // If you are using ACL, you should be aware of an authentication failure state - ZOO_AUTH_FAILED_STATE
+            if (state == ZOO_CONNECTED_STATE) {
+                connected = 1;
+            } else if (state == ZOO_NOTCONNECTED_STATE ) {
+                connected = 0;
+            } else if (state == ZOO_EXPIRED_SESSION_STATE) {
+                expired = 1;
+                connected = 0;
+                zookeeper_close(zkH);
+            }
+        }
+    }
+
+    int main(){
+        zoo_set_debug_level(ZOO_LOG_LEVEL_DEBUG);
+
+        // zookeeper_init returns the handler upon a successful connection, null otherwise
+        zkHandler = zookeeper_init("localhost:2181", watcher, 10000, 0, 0, 0);
+
+        if (!zkHandler) {
+            return errno;
+        }else{
+            printf("Connection established with Zookeeper. \n");
+        }
+
+        // Close Zookeeper connection
+        zookeeper_close(zkHandler);
+
+        return 0;
+    }
+
+
+Compile the code with the multithreaded library mentioned before.
+
+`> g++ -Iinclude/ zkClient.cpp -lzookeeper_mt -o Client`
+
+Run the client.
+
+`> ./Client`
+
+From the output, you should see "Connected to Zookeeper" along with Zookeeper's DEBUG messages if the connection is successful.
 
 <a name="ch_gotchas"></a>
 
@@ -1404,10 +1455,6 @@ ZooKeeper users fall into:
 Outside the formal documentation, there're several other sources of
 information for ZooKeeper developers.
 
-* *ZooKeeper Whitepaper _[tbd: find url]_* :
-    The definitive discussion of ZooKeeper design and performance,
-    by Yahoo! Research
-
 * *[API Reference](https://zookeeper.apache.org/doc/current/api/index.html)* :
     The complete reference to the ZooKeeper API
 
@@ -1426,7 +1473,4 @@ information for ZooKeeper developers.
     Pseudo-level discussion of the implementation of various
     synchronization solutions with ZooKeeper: Event Handles, Queues,
     Locks, and Two-phase Commits.
-
-* *_[tbd]_* :
-    Any other good sources anyone can think of...
 
