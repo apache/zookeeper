@@ -22,7 +22,6 @@ import java.util.BitSet;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.lang.Iterable;
 
 /**
  * Using BitSet to store all the elements, and use HashSet to cache limited

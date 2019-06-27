@@ -35,6 +35,10 @@
     Contrib projects to Apache ZooKeeper
   </description>
 
+  <properties>
+    <checkstyle.skip>true</checkstyle.skip>
+  </properties>
+
   <modules>
     <module>zookeeper-contrib-loggraph</module>
     <module>zookeeper-contrib-rest</module>

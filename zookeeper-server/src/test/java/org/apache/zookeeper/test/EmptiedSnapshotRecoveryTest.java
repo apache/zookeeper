@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.File;
 import java.io.PrintWriter;
 import java.util.List;
-import java.util.LinkedList;
 
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
@@ -32,7 +31,6 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
-import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;

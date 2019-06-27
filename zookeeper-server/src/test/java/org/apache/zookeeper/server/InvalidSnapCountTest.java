@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.Assert;

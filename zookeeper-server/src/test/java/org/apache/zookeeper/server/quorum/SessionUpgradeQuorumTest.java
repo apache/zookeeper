@@ -29,14 +29,12 @@ import org.apache.jute.BinaryOutputArchive;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.PortAssignment;
-import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.test.ClientBase;
-import org.apache.zookeeper.test.ClientBase.CountdownWatcher;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.apache.zookeeper.server.Request;
@@ -46,9 +44,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import org.apache.zookeeper.test.QuorumBase;
-import org.apache.zookeeper.test.DisconnectableZooKeeper;
 
 public class SessionUpgradeQuorumTest extends QuorumPeerTestBase {
     protected static final Logger LOG = LoggerFactory.getLogger(SessionUpgradeQuorumTest.class);

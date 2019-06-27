@@ -20,7 +20,6 @@ package org.apache.zookeeper.test;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.List;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.PortAssignment;

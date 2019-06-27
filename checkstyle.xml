@@ -59,5 +59,19 @@ page at http://checkstyle.sourceforge.net/config.html -->
             <property name="severity" value="error"/>
         </module>
 
+        <module name="UnusedImports">
+            <property name="severity" value="error"/>
+            <property name="processJavadoc" value="true"/>
+            <message key="import.unused"
+                     value="Unused import: {0}."/>
+        </module>
+
+        <module name="RedundantImport">
+            <!-- Checks for redundant import statements. -->
+            <property name="severity" value="error"/>
+            <message key="import.redundancy"
+                     value="Redundant import {0}."/>
+        </module>
+
     </module>
 </module>

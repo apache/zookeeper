@@ -26,7 +26,6 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.junit.After;
 import org.junit.Assert;
@@ -44,14 +43,12 @@ import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.common.PathTrie;
-import java.lang.reflect.*;
-import java.util.HashMap;
+
+import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.List;
-import java.util.ArrayList;
 import org.apache.zookeeper.metrics.MetricsUtils;
 
 public class DataTreeTest extends ZKTestCase {

@@ -18,7 +18,6 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
-import java.util.Properties;
 
 import javax.management.JMException;
 import javax.security.sasl.SaslException;

@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.recipes.lock;
 
 import org.slf4j.Logger;
@@ -25,7 +26,6 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.recipes.lock.ZooKeeperOperation;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;

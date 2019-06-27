@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.server.metric;
 
-import java.lang.Override;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;

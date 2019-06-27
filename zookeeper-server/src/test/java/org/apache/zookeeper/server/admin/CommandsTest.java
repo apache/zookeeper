@@ -34,7 +34,6 @@ import java.util.Map;
 import org.apache.zookeeper.metrics.MetricsUtils;
 
 import org.apache.zookeeper.server.ServerCnxnFactory;
-import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.quorum.BufferStats;

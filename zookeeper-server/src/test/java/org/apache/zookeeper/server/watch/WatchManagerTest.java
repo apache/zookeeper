@@ -19,7 +19,6 @@ package org.apache.zookeeper.server.watch;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;

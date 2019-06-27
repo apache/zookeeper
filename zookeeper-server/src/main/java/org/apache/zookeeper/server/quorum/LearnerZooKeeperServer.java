@@ -23,7 +23,6 @@ import java.util.Map;
 
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.DataTreeBean;
-import org.apache.zookeeper.server.quorum.LearnerSessionTracker;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZKDatabase;

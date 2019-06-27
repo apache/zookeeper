@@ -16,7 +16,6 @@
  */
 package org.apache.zookeeper.server.watch;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
@@ -26,7 +25,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.metrics.MetricsUtils;
-import org.apache.zookeeper.metrics.impl.DefaultMetricsProvider;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.junit.Test;
 import org.junit.Assert;

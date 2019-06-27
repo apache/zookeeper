@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.test;
 
-import java.lang.Exception;
 import java.util.concurrent.CountDownLatch;
 
 import org.slf4j.Logger;

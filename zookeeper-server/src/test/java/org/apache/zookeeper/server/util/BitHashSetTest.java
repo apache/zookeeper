@@ -16,8 +16,6 @@
  */
 package org.apache.zookeeper.server.util;
 
-import java.util.Set;
-import java.util.HashSet;
 import java.util.List;
 import java.util.ArrayList;
 

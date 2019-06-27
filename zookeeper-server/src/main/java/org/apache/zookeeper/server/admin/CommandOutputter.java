@@ -19,7 +19,6 @@
 package org.apache.zookeeper.server.admin;
 
 import java.io.PrintWriter;
-import java.util.Map;
 
 /**
  * CommandOutputters are used to format the responses from Commands.

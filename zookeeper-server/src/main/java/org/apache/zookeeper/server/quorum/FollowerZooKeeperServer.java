@@ -38,7 +38,6 @@ import org.apache.zookeeper.txn.TxnHeader;
 
 import javax.management.JMException;
 import org.apache.zookeeper.metrics.MetricsContext;
-import org.apache.zookeeper.server.ServerMetrics;
 
 /**
  * Just like the standard ZooKeeperServer. We just replace the request

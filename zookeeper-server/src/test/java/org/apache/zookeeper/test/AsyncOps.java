@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.test;
 
-import java.lang.Exception;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;

@@ -61,7 +61,6 @@ import org.apache.zookeeper.proto.GetDataRequest;
 import org.apache.zookeeper.proto.GetDataResponse;
 import org.apache.zookeeper.proto.GetEphemeralsRequest;
 import org.apache.zookeeper.proto.GetEphemeralsResponse;
-import org.apache.zookeeper.proto.ReconfigRequest;
 import org.apache.zookeeper.proto.RemoveWatchesRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
@@ -87,8 +86,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static org.apache.zookeeper.Op.OpKind.READ;
 
 /**
  * This is the main class of ZooKeeper client library. To use a ZooKeeper

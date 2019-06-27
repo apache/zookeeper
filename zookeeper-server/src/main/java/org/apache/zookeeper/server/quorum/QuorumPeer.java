@@ -81,9 +81,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.apache.zookeeper.common.NetUtils.formatInetAddr;
-import org.apache.zookeeper.metrics.MetricsContext;
-import org.apache.zookeeper.metrics.MetricsProvider;
-import org.apache.zookeeper.metrics.impl.NullMetricsProvider;
 
 /**
  * This class manages the quorum protocol. There are three states this server

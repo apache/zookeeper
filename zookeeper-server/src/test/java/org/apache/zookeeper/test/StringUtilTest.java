@@ -15,14 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.zookeeper.test;
 
+package org.apache.zookeeper.test;
 
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.common.StringUtils;
 import org.junit.Test;
-
-import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 

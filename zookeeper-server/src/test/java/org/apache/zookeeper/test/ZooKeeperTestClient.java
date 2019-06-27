@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.test;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -35,8 +34,6 @@ import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.Stat;
-import org.apache.zookeeper.server.ServerCnxnFactory;
-import org.apache.zookeeper.server.ZooKeeperServer;
 import org.junit.Assert;
 
 public class ZooKeeperTestClient extends ZKTestCase implements Watcher {

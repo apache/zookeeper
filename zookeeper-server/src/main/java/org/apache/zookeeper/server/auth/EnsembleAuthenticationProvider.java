@@ -18,23 +18,13 @@
 
 package org.apache.zookeeper.server.auth;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.data.Id;
-import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerMetrics;
-import org.apache.zookeeper.server.ZooKeeperServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import org.apache.zookeeper.jmx.ZKMBeanInfo;
-
-import javax.management.JMException;
-import org.apache.zookeeper.server.ServerStats;
 
 /**
  * This is not a true AuthenticationProvider in the strict sense. it does

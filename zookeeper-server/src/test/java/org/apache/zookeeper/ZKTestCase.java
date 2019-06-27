@@ -25,7 +25,6 @@ import org.junit.Rule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
-import org.junit.runners.model.FrameworkMethod;
 
 /**
  * Base class for a non-parameterized ZK test.
