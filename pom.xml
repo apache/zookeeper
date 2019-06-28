@@ -784,22 +784,27 @@
             <exclude>README_packaging.txt</exclude>
             <exclude>src/main/resources/markdown/skin/*</exclude>
             <exclude>src/main/resources/markdown/html/*</exclude>
-            <exclude>zookeeper-contrib/zookeeper-contrib-loggraph/src/main/resources/webapp/org/apache/zookeeper/graph/resources/*</exclude>
-            <exclude>zookeeper-contrib/zookeeper-contrib-zooinspector/TODO</exclude>
-            <exclude>zookeeper-contrib/zookeeper-contrib-zkperl/Changes</exclude>
-            <exclude>zookeeper-contrib/zookeeper-contrib-zkperl/MANIFEST</exclude>
-            <exclude>zookeeper-contrib/zookeeper-contrib-fatjar/src/main/resources/mainClasses</exclude>
-            <exclude>zookeeper-contrib/zookeeper-contrib-monitoring/JMX-RESOURCES</exclude>
-            <exclude>zookeeper-contrib/zookeeper-contrib-zooinspector/src/main/java/com/nitido/utils/toaster/Toaster.java</exclude>
+            <exclude>src/main/resources/markdown/images/*</exclude>
+            <!-- contrib -->
+            <exclude>zookeeper-contrib-monitoring/JMX-RESOURCES</exclude>
+            <exclude>zookeeper-contrib-fatjar/src/main/resources/mainClasses</exclude>
+            <exclude>zookeeper-contrib-zkperl/Changes</exclude>
+            <exclude>zookeeper-contrib-zkperl/MANIFEST</exclude>
+            <exclude>zookeeper-contrib-loggraph/src/main/resources/webapp/org/apache/zookeeper/graph/resources/*</exclude>
+            <exclude>src/main/resources/webapp/org/apache/zookeeper/graph/resources/*</exclude>
+            <exclude>src/main/java/com/nitido/utils/toaster/Toaster.java</exclude>
+            <exclude>TODO</exclude>
+            <!-- c client -->
             <exclude>**/acinclude.m4</exclude>
             <exclude>**/aminclude.am</exclude>
-            <exclude>zookeeper-client-c/src/hashtable/*</exclude>
-            <exclude>zookeeper-client-c/include/winconfig.h</exclude>
-            <exclude>zookeeper-client-c/tests/wrappers.opt</exclude>
-            <exclude>zookeeper-client-c/tests/quorum.cfg</exclude>
-            <exclude>zookeeper-client-c/tests/wrappers-mt.opt</exclude>
+            <exclude>src/hashtable/*</exclude>
+            <exclude>include/winconfig.h</exclude>
+            <exclude>tests/wrappers.opt</exclude>
+            <exclude>tests/quorum.cfg</exclude>
+            <exclude>tests/wrappers-mt.opt</exclude>
             <exclude>**/c-doc.Doxyfile</exclude>
           </excludes>
+          <consoleOutput>true</consoleOutput>
         </configuration>
       </plugin>
     </plugins>
