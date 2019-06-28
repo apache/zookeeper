@@ -686,7 +686,7 @@ public class Learner {
 
     void closeSocket() {
         try {
-            if (sock != null && !sock.isClosed()) {
+            if (sock != null) {
                 sock.close();
             }
         } catch (IOException e) {
