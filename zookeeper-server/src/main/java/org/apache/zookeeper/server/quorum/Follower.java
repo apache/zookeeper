@@ -19,8 +19,9 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.util.Collections;
+import java.util.Map;
 
 import org.apache.jute.Record;
 import org.apache.zookeeper.ZooDefs.OpCode;
@@ -174,14 +175,18 @@ public class Follower extends Learner{
                 }
             }
             if (om != null) {
+                final long startTime = Time.currentElapsedTime();
                 om.proposalReceived(qp);
+                ServerMetrics.getMetrics().OM_PROPOSAL_PROCESS_TIME.add(Time.currentElapsedTime() - startTime);
             }
             break;
         case Leader.COMMIT:
             ServerMetrics.getMetrics().LEARNER_COMMIT_RECEIVED_COUNT.add(1);
             fzk.commit(qp.getZxid());
             if (om != null) {
+                final long startTime = Time.currentElapsedTime();
                 om.proposalCommitted(qp.getZxid());
+                ServerMetrics.getMetrics().OM_COMMIT_PROCESS_TIME.add(Time.currentElapsedTime() - startTime);
             }
             break;
             
@@ -249,6 +254,19 @@ public class Follower extends Learner{
 
     public Integer getSyncedObserverSize() {
         return  om == null ? null : om.getNumActiveObservers();
+    }
+
+    public Iterable<Map<String, Object>> getSyncedObserversInfo() {
+        if (om != null && om.getNumActiveObservers() > 0) {
+            return om.getActiveObservers();
+        }
+        return Collections.emptySet();
+    }
+
+    public void resetObserverConnectionStats() {
+        if (om != null && om.getNumActiveObservers() > 0) {
+            om.resetObserverConnectionStats();
+        }
     }
 
     @Override

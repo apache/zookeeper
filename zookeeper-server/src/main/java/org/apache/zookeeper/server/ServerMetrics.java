@@ -179,6 +179,11 @@ public final class ServerMetrics {
 
         COMMIT_PROCESS_TIME = metricsContext.getSummary("commit_process_time", DetailLevel.BASIC);
 
+        /**
+         * Observer Master processing metrics.
+         */
+        OM_PROPOSAL_PROCESS_TIME = metricsContext.getSummary("om_proposal_process_time_ms", DetailLevel.ADVANCED);
+        OM_COMMIT_PROCESS_TIME = metricsContext.getSummary("om_commit_process_time_ms", DetailLevel.ADVANCED);
 
         /**
          * Time spent by the final processor. This is tracked in the commit processor.
@@ -382,6 +387,11 @@ public final class ServerMetrics {
 
     public final Summary COMMIT_PROCESS_TIME;
 
+    /**
+     * Observer Master processing metrics.
+     */
+    public final Summary OM_PROPOSAL_PROCESS_TIME;
+    public final Summary OM_COMMIT_PROCESS_TIME;
 
     /**
      * Time spent by the final processor. This is tracked in the commit processor.
