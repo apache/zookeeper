@@ -23,17 +23,6 @@ import org.apache.zookeeper.server.ExitCode;
 
 public class Version implements org.apache.zookeeper.version.Info {
 
-    /*
-     * Since the SVN to Git port this field doesn't return the revision anymore
-     * TODO: remove this method and associated field declaration in VerGen
-     * @see {@link #getHashRevision()}
-     * @return the default value -1
-     */
-    @Deprecated
-    public static int getRevision() {
-        return REVISION;
-    }
-
     public static String getRevisionHash() {
         return REVISION_HASH;
     }
@@ -71,8 +60,8 @@ public class Version implements org.apache.zookeeper.version.Info {
      * @param args
      *            <ul>
      *            <li> --short - prints a short version string "1.2.3"
-     *            <li> --revision - prints a short version string with the SVN
-     *            repository revision "1.2.3-94"
+     *            <li> --revision - prints a short version string with the Git
+     *            repository revision "1.2.3-${revision_hash}"
      *            <li> --full - prints the revision and the build date
      *            </ul>
      */

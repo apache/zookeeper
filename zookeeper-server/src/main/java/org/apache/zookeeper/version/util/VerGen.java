@@ -87,7 +87,6 @@ public class VerGen {
             if (rev.equals("-1")) {
                 System.out.println("Unknown REVISION number, using " + rev);
             }
-            w.write("    int REVISION=-1; //TODO: remove as related to SVN VCS\n");
             w.write("    String REVISION_HASH=\"" + rev + "\";\n");
             w.write("    String BUILD_DATE=\"" + buildDate
                     + "\";\n");
