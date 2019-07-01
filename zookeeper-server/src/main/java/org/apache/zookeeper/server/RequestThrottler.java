@@ -68,18 +68,13 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
     private volatile boolean stopping;
     private volatile boolean killed;
 
-    /**
-     * enabled can only be set via system properties and not at runtime to
-     * ensure requests are never sent sometimes to the RequestThrottler and
-     * other times directly to a request processor, thus potentially reodering
-     * requests.
-     *
-     * This setting is designed as a code kill switch. In normal operation,
-     * enabled should be set to true. When enabled, maxRequests can be adjusted
-     * to enable/disable throttling at runtime.
-     */
-    private static final boolean enabled =
-        ZooKeeperServer.getBooleanProp("zookeeper.request_throttle", true);
+    private static final String SHUTDOWN_TIMEOUT = "zookeeper.request_throttler.shutdownTimeout";
+    private static int shutdownTimeout = 10000;
+
+    static {
+        shutdownTimeout = Integer.getInteger(SHUTDOWN_TIMEOUT, 10000);
+        LOG.info("{} = {}", SHUTDOWN_TIMEOUT, shutdownTimeout);
+    }
 
     /**
      * The total number of outstanding requests allowed before the throttler
@@ -104,8 +99,8 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
      * request latency higher than the sessionTimeout. The staleness of
      * a request is tunable property, @see Request for details.
      */
-    private static volatile boolean dropStaleRequests =
-        ZooKeeperServer.getBooleanProp("zookeeper.request_throttle_drop_stale", true);
+    private static volatile boolean dropStaleRequests = Boolean.parseBoolean(
+            System.getProperty("zookeeper.request_throttle_drop_stale", "true"));
 
     public RequestThrottler(ZooKeeperServer zks) {
         super("RequestThrottler", zks.getZooKeeperServerListener());
@@ -136,10 +131,6 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
 
     public static void setDropStaleRequests(boolean drop) {
         dropStaleRequests = drop;
-    }
-
-    public static boolean enabled() {
-        return enabled;
     }
 
     @Override
@@ -188,7 +179,7 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
             LOG.error("Unexpected interruption", e);
         }
         int dropped = drainQueue();
-        LOG.info("RequestThrottler shutdown. Dropped " + dropped + " requests");
+        LOG.info("RequestThrottler shutdown. Dropped {} requests", dropped);
     }
 
     private synchronized void throttleSleep(int stallTime) {
@@ -237,8 +228,7 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
         if (stopping) {
             LOG.debug("Shutdown in progress. Request cannot be processed");
             dropRequest(request);
-        }
-        else {
+        } else {
             submittedRequests.add(request);
         }
     }
@@ -254,7 +244,7 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
         stopping = true;
         submittedRequests.add(Request.requestOfDeath);
         try {
-            this.join(ZooKeeperServer.getShutdownTimeout());
+            this.join(shutdownTimeout);
         } catch (InterruptedException e) {
             LOG.warn("Interrupted while waiting for {} to finish", this);
         }
@@ -267,7 +257,7 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
         } catch (InterruptedException e) {
             LOG.warn("Interrupted while waiting for {} to finish", this);
             //TODO apply ZOOKEEPER-575 and remove this line.
-            System.exit(1);
+            System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
     }
 }

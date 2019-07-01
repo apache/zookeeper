@@ -41,15 +41,13 @@ public class Request {
 
     // Considers a request stale if the request's connection has closed. Enabled
     // by default.
-    private static volatile boolean staleConnectionCheck =
-        ZooKeeperServer.getBooleanProp("zookeeper.request_stale_connection_check",
-                                       true);
+    private static volatile boolean staleConnectionCheck = Boolean.parseBoolean(
+            System.getProperty("zookeeper.request_stale_connection_check","true"));
 
     // Considers a request stale if the request latency is higher than its
     // associated session timeout. Disabled by default.
-    private static volatile boolean staleLatencyCheck =
-        ZooKeeperServer.getBooleanProp("zookeeper.request_stale_latency_check",
-                                       false);
+    private static volatile boolean staleLatencyCheck = Boolean.parseBoolean(
+            System.getProperty("zookeeper.request_stale_latency_check","false"));
 
     public Request(ServerCnxn cnxn, long sessionId, int xid, int type, ByteBuffer bb, List<Id> authInfo) {
         this.cnxn = cnxn;

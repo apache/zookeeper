@@ -857,11 +857,6 @@ property, when available, is noted below.
     Does not affect the limit defined by *flushDelay*.
     Default is 1000.
 
-* *zookeeper.request_throttle* :
-    (Java system property only)
-    **New in 3.6.0:**
-    Whether to enable the RequestThrottler or not. When enabled, the RequestThrottler limits the number of outstanding requests currently submitted to the request processor pipeline. The default is true.
-
 * *requestThrottleLimit* :
     (Java system property: **zookeeper.request_throttle_max_requests**)
     **New in 3.6.0:**
@@ -887,7 +882,7 @@ property, when available, is noted below.
     **New in 3.6.0:**
     When enabled, a request is considered stale if the request's connection has closed. Enabled by default.
 
-* *zookeeper.shutdownTimeout* :
+* *zookeeper.request_throttler.shutdownTimeout* :
     (Java system property only)
     **New in 3.6.0:**
     The time (in milliseconds) the RequestThrottler waits for the request queue to drain during shutdown before it shuts down forcefully. The default is 10000.  

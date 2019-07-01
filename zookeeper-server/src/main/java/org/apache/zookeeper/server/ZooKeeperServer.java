@@ -98,14 +98,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         Environment.logEnv("Server environment:", LOG);
     }
 
-    private static final String SHUTDOWN_TIMEOUT = "zookeeper.shutdownTimeout";
-    private static int shutdownTimeout = 10000;
-
-    static {
-        shutdownTimeout = Integer.getInteger(SHUTDOWN_TIMEOUT, 10000);
-        LOG.info(SHUTDOWN_TIMEOUT + "=" + shutdownTimeout);
-    }
-
     protected ZooKeeperServerBean jmxServerBean;
     protected DataTreeBean jmxDataTreeBean;
 
@@ -265,15 +257,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         this.jvmPauseMonitor = jvmPauseMonitor;
         if (jvmPauseMonitor != null) {
             LOG.info("Added JvmPauseMonitor to server");
-        }
-    }
-
-    static boolean getBooleanProp(String name, boolean def) {
-        String val = System.getProperty(name);
-        if(val != null) {
-            return Boolean.parseBoolean(val);
-        } else {
-            return def;
         }
     }
 
@@ -774,14 +757,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public int getInflight() {
-        if (RequestThrottler.enabled()) {
-            return requestThrottleInflight();
-        } else {
-            return getInProcess();
-        }
+        return requestThrottleInflight();
     }
 
-    public int requestThrottleInflight() {
+    private int requestThrottleInflight() {
         if (requestThrottler != null) {
             return requestThrottler.getInflight();
         }
@@ -957,11 +936,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public void submitRequest(Request si) {
-        if (RequestThrottler.enabled()) {
-            enqueueRequest(si);
-        } else {
-            submitRequestNow(si);
-        }
+        enqueueRequest(si);
     }
 
     public void enqueueRequest(Request si) {
@@ -1332,10 +1307,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     static void setMaxBatchSize(int size) {
         LOG.info("{}={}", MAX_BATCH_SIZE, size);
         maxBatchSize = size;
-    }
-
-    public static int getShutdownTimeout() {
-        return shutdownTimeout;
     }
 
     public void processPacket(ServerCnxn cnxn, ByteBuffer incomingBuffer) throws IOException {
