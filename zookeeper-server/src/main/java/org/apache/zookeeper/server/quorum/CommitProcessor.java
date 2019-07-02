@@ -240,9 +240,10 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
 
                 /*
                  * Processing up to requestsToProcess requests from the incoming
-                 * queue (queuedRequests), possibly less if a committed request
-                 * is present along with a pending local write. After the loop,
-                 * we process one committed request if commitIsWaiting.
+                 * queue (queuedRequests). Will not stop to process a commit if
+                 * maxReadBatchSize is set. After the loop a single committed
+                 * request is processed if one is waiting (or a batch of commits
+                 * if maxCommitBatchSize is set).
                  */
                 Request request;
                 int readsQueued = 0;
