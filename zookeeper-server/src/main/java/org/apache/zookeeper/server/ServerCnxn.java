@@ -78,6 +78,47 @@ public abstract class ServerCnxn implements Stats, Watcher {
      */
     final ZooKeeperServer zkServer;
 
+    public enum DisconnectReason {
+        UNKNOWN("unknown"),
+        SERVER_SHUTDOWN("server_shutdown"),
+        CLOSE_ALL_CONNECTIONS_FORCED("close_all_connections_forced"),
+        CONNECTION_CLOSE_FORCED("connection_close_forced"),
+        CONNECTION_EXPIRED("connection_expired"),
+        CLIENT_CLOSED_CONNECTION("client_closed_connection"),
+        CLIENT_CLOSED_SESSION("client_closed_session"),
+        UNABLE_TO_READ_FROM_CLIENT("unable_to_read_from_client"),
+        NOT_READ_ONLY_CLIENT("not_read_only_client"),
+        CLIENT_ZXID_AHEAD("client_zxid_ahead"),
+        INFO_PROBE("info_probe"),
+        CLIENT_RECONNECT("client_reconnect"),
+        CANCELLED_KEY_EXCEPTION("cancelled_key_exception"),
+        IO_EXCEPTION("io_exception"),
+        IO_EXCEPTION_IN_SESSION_INIT("io_exception_in_session_init"),
+        BUFFER_UNDERFLOW_EXCEPTION("buffer_underflow_exception"),
+        SASL_AUTH_FAILURE("sasl_auth_failure"),
+        RESET_COMMAND("reset_command"),
+        CLOSE_CONNECTION_COMMAND("close_connection_command"),
+        CLEAN_UP("clean_up"),
+        CONNECTION_MODE_CHANGED("connection_mode_changed"),
+        // Below reasons are NettyServerCnxnFactory only
+        CHANNEL_DISCONNECTED("channel disconnected"),
+        CHANNEL_CLOSED_EXCEPTION("channel_closed_exception"),
+        AUTH_PROVIDER_NOT_FOUND("auth provider not found"),
+        FAILED_HANDSHAKE("Unsuccessful handshake"),
+        CLIENT_RATE_LIMIT("Client hits rate limiting threshold"),
+        CLIENT_CNX_LIMIT("Client hits connection limiting threshold");
+
+        String disconnectReason;
+
+        DisconnectReason(String reason) {
+            this.disconnectReason = reason;
+        }
+
+        public String toDisconnectReasonString() {
+            return disconnectReason;
+        }
+    }
+
     public ServerCnxn(final ZooKeeperServer zkServer) {
         this.zkServer = zkServer;
     }
@@ -103,7 +144,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
         }
     }
 
-    public abstract void close();
+    public abstract void close(DisconnectReason reason);
 
     public abstract void sendResponse(ReplyHeader h, Record r,
             String tag, String cacheKey, Stat stat) throws IOException;
@@ -203,22 +244,28 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     protected static class CloseRequestException extends IOException {
         private static final long serialVersionUID = -7854505709816442681L;
+        private DisconnectReason reason;
 
-        public CloseRequestException(String msg) {
+        public CloseRequestException(String msg, DisconnectReason reason) {
             super(msg);
+            this.reason = reason;
         }
+        public DisconnectReason getReason() { return reason; }
     }
 
     protected static class EndOfStreamException extends IOException {
         private static final long serialVersionUID = -8255690282104294178L;
+        private DisconnectReason reason;
 
-        public EndOfStreamException(String msg) {
+        public EndOfStreamException(String msg, DisconnectReason reason) {
             super(msg);
+            this.reason = reason;
         }
 
         public String toString() {
             return "EndOfStreamException: " + getMessage();
         }
+        public DisconnectReason getReason() { return reason; }
     }
 
     public boolean isStale() {
@@ -263,8 +310,11 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     protected long count;
     protected long totalLatency;
+    protected long requestsProcessedCount;
+    protected DisconnectReason disconnectReason = DisconnectReason.UNKNOWN;
 
     public synchronized void resetStats() {
+        disconnectReason = DisconnectReason.RESET_COMMAND;
         packetsReceived.set(0);
         packetsSent.set(0);
         minLatency = Long.MAX_VALUE;
@@ -470,7 +520,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
             LOG.info("Error closing PrintWriter ", e);
         } finally {
             try {
-                close();
+                close(DisconnectReason.CLOSE_CONNECTION_COMMAND);
             } catch (Exception e) {
                 LOG.error("Error closing a command socket ", e);
             }

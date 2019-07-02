@@ -34,7 +34,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.X509KeyManager;
@@ -58,7 +57,6 @@ import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.ChannelGroupFuture;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.handler.ssl.OpenSsl;
 import io.netty.handler.ssl.OptionalSslHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
@@ -222,7 +220,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                 if (LOG.isTraceEnabled()) {
                     LOG.trace("Channel inactive caused close {}", cnxn);
                 }
-                cnxn.close();
+                cnxn.close(ServerCnxn.DisconnectReason.CHANNEL_DISCONNECTED);
             }
         }
 
@@ -234,7 +232,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Closing {}", cnxn);
                 }
-                cnxn.close();
+                cnxn.close(ServerCnxn.DisconnectReason.CHANNEL_CLOSED_EXCEPTION);
             }
         }
 
@@ -354,7 +352,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
 
                     if (authProvider == null) {
                         LOG.error("X509 Auth provider not found: {}", authProviderProp);
-                        cnxn.close();
+                        cnxn.close(ServerCnxn.DisconnectReason.AUTH_PROVIDER_NOT_FOUND);
                         return;
                     }
 
@@ -362,7 +360,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                             authProvider.handleAuthentication(cnxn, null)) {
                         LOG.error("Authentication failed for session 0x{}",
                                 Long.toHexString(cnxn.getSessionId()));
-                        cnxn.close();
+                        cnxn.close(ServerCnxn.DisconnectReason.SASL_AUTH_FAILURE);
                         return;
                     }
                 }
@@ -373,7 +371,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             } else {
                 LOG.error("Unsuccessful handshake with session 0x{}",
                         Long.toHexString(cnxn.getSessionId()));
-                cnxn.close();
+                cnxn.close(ServerCnxn.DisconnectReason.FAILED_HANDSHAKE);
             }
         }
     }
@@ -471,7 +469,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     }
 
     @Override
-    public void closeAll() {
+    public void closeAll(ServerCnxn.DisconnectReason reason) {
         if (LOG.isDebugEnabled()) {
             LOG.debug("closeAll()");
         }
@@ -480,7 +478,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         for (ServerCnxn cnxn : cnxns) {
             try {
                 // This will remove the cnxn from cnxns
-                cnxn.close();
+                cnxn.close(reason);
             } catch (Exception e) {
                 LOG.warn("Ignoring exception closing cnxn sessionid 0x"
                          + Long.toHexString(cnxn.getSessionId()), e);
@@ -559,7 +557,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                     bossGroup.shutdownGracefully();
                 });
             }
-            closeAll();
+            closeAll(ServerCnxn.DisconnectReason.SERVER_SHUTDOWN);
             ChannelGroupFuture allChannelsCloseFuture = allChannels.close();
             if (workerGroup != null) {
                 allChannelsCloseFuture.addListener(future -> {

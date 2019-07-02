@@ -55,6 +55,7 @@ import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
+import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ZKDatabase;
@@ -1887,10 +1888,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     public void closeAllConnections() {
         if (cnxnFactory != null) {
-            cnxnFactory.closeAll();
+            cnxnFactory.closeAll(ServerCnxn.DisconnectReason.SERVER_SHUTDOWN);
         }
         if (secureCnxnFactory != null) {
-            secureCnxnFactory.closeAll();
+            secureCnxnFactory.closeAll(ServerCnxn.DisconnectReason.SERVER_SHUTDOWN);
         }
     }
 

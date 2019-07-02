@@ -887,7 +887,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
         } catch (Exception e) {
             LOG.warn("Exception while establishing session, closing", e);
-            cnxn.close();
+            cnxn.close(ServerCnxn.DisconnectReason.IO_EXCEPTION_IN_SESSION_INIT);
         }
     }
 
@@ -1165,7 +1165,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             String msg = "Refusing session request for not-read-only client "
                 + cnxn.getRemoteSocketAddress();
             LOG.info(msg);
-            throw new CloseRequestException(msg);
+            throw new CloseRequestException(msg, ServerCnxn.DisconnectReason.CLIENT_ZXID_AHEAD);
         }
         if (connReq.getLastZxidSeen() > zkDb.dataTree.lastProcessedZxid) {
             String msg = "Refusing session request for client "
@@ -1177,7 +1177,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 + " client must try another server";
 
             LOG.info(msg);
-            throw new CloseRequestException(msg);
+            throw new CloseRequestException(msg, ServerCnxn.DisconnectReason.NOT_READ_ONLY_CLIENT);
         }
         int sessionTimeout = connReq.getTimeOut();
         byte passwd[] = connReq.getPasswd();
@@ -1211,10 +1211,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                     connReq.getTimeOut(),
                     cnxn.getRemoteSocketAddress());
             if (serverCnxnFactory != null) {
-                serverCnxnFactory.closeSession(sessionId);
+                serverCnxnFactory.closeSession(sessionId, ServerCnxn.DisconnectReason.CLIENT_RECONNECT);
             }
             if (secureServerCnxnFactory != null) {
-                secureServerCnxnFactory.closeSession(sessionId);
+                secureServerCnxnFactory.closeSession(sessionId, ServerCnxn.DisconnectReason.CLIENT_RECONNECT);
             }
             cnxn.setSessionId(sessionId);
             reopenSession(cnxn, sessionId, passwd, sessionTimeout);
@@ -1370,7 +1370,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                     LOG.warn("Maintaining client connection despite SASL authentication failure.");
                 } else {
                     LOG.warn("Closing client connection due to SASL authentication failure.");
-                    cnxn.close();
+                    cnxn.close(ServerCnxn.DisconnectReason.SASL_AUTH_FAILURE);
                 }
             }
         }

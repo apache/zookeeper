@@ -73,11 +73,11 @@ public abstract class ServerCnxnFactory {
      * @return true if the cnxn that contains the sessionId exists in this ServerCnxnFactory
      *         and it's closed. Otherwise false.
      */
-    public boolean closeSession(long sessionId) {
+    public boolean closeSession(long sessionId, ServerCnxn.DisconnectReason reason) {
         ServerCnxn cnxn = sessionMap.remove(sessionId);
         if (cnxn != null) {
             try {
-                cnxn.close();
+                cnxn.close(reason);
             } catch (Exception e) {
                 LOG.warn("exception during session close", e);
             }
@@ -154,7 +154,7 @@ public abstract class ServerCnxnFactory {
         }
     }
 
-    public abstract void closeAll();
+    public abstract void closeAll(ServerCnxn.DisconnectReason reason);
     
     static public ServerCnxnFactory createFactory() throws IOException {
         String serverCnxnFactoryName =
