@@ -556,7 +556,7 @@ public class Commands {
 
     /**
      * Returns the current phase of Zab protocol that peer is running.
-     * It can be in one of these phases: NONE, DISCOVERY, SYNCHRONIZATION, BROADCAST
+     * It can be in one of these phases: ELECTION, DISCOVERY, SYNCHRONIZATION, BROADCAST
      */
     public static class ZabStateCommand extends CommandBase {
         public ZabStateCommand() {

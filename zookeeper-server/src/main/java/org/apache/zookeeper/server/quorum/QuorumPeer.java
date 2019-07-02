@@ -421,7 +421,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * Zab protocol that peer is running.
      */
     public enum ZabState {
-        NONE, DISCOVERY, SYNCHRONIZATION, BROADCAST;
+        ELECTION, DISCOVERY, SYNCHRONIZATION, BROADCAST;
     }
 
     /**
@@ -764,7 +764,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     private ServerState state = ServerState.LOOKING;
 
-    private AtomicReference<ZabState> zabState = new AtomicReference<>(ZabState.NONE);
+    private AtomicReference<ZabState> zabState = new AtomicReference<>(ZabState.ELECTION);
     private AtomicReference<SyncMode> syncMode = new AtomicReference<>(SyncMode.NONE);
     private AtomicReference<String> leaderAddress = new AtomicReference<String>("");
     private AtomicLong leaderId = new AtomicLong(-1);
@@ -775,7 +775,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         state = newState;
         if (newState == ServerState.LOOKING) {
             setLeaderAddressAndId(null, -1);
-            setZabState(ZabState.NONE);
+            setZabState(ZabState.ELECTION);
         } else {
             LOG.info("Peer state changed: {}", getDetailedPeerState());
         }
@@ -819,7 +819,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     public String getDetailedPeerState() {
         return getPeerState().toString().toLowerCase()
-                + ((getZabState() != ZabState.NONE) ?
+                + ((getZabState() != ZabState.ELECTION) ?
                 " - " + getZabState().toString().toLowerCase() : "")
                 + ((getSyncMode() != SyncMode.NONE) ?
                 " - " + getSyncMode().toString().toLowerCase() : "");
