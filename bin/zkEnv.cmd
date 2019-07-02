@@ -42,7 +42,8 @@ if not defined JAVA_HOME (
 set JAVA_HOME=%JAVA_HOME:"=%
 
 if not exist "%JAVA_HOME%"\bin\java.exe (
-  echo Error: JAVA_HOME is incorrectly set.
+  echo Error: JAVA_HOME is incorrectly set: %JAVA_HOME%
+  echo Expected to find java.exe here: %JAVA_HOME%\bin\java.exe
   goto :eof
 )
 

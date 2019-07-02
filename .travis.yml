@@ -1,0 +1,22 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+  - openjdk11
+
+cache:
+  directories:
+  - "$HOME/.m2"
+
+addons:
+  apt:
+    packages:
+    - libcppunit-dev
+
+script: mvn clean apache-rat:check install -DskipTests spotbugs:check checkstyle:check -Pfull-build
+
+branches:
+  only:
+  - master
+  - branch-3.5
+  - branch-3.4
