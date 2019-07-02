@@ -821,9 +821,8 @@ public class LearnerHandler extends ZooKeeperThread {
                                                          minCommittedLog, maxCommittedLog);
 
                     if (currentZxid < minCommittedLog) {
-                        LOG.info("Detected gap between end of txnlog: " +
-                                Long.toHexString(currentZxid) +
-                                " and start of committedLog: " +
+                        LOG.info("Detected gap between end of txnlog: 0x{} and start of committedLog: 0x{}",
+                                Long.toHexString(currentZxid),
                                 Long.toHexString(minCommittedLog));
                         currentZxid = peerLastZxid;
                         // Clear out currently queued requests and revert
@@ -831,7 +830,7 @@ public class LearnerHandler extends ZooKeeperThread {
                         queuedPackets.clear();
                         needOpPacket = true;
                     } else {
-                        LOG.debug("Queueing committedLog 0x" +
+                        LOG.debug("Queueing committedLog 0x{}",
                                 Long.toHexString(currentZxid));
                         Iterator<Proposal> committedLogItr =
                                 db.getCommittedLog().iterator();
