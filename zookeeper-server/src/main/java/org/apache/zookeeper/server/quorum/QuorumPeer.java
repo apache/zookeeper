@@ -417,8 +417,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     /**
-     * (Used for monitoring) When peer is in non-LOOKING phase, this shows the
-     * current phase of Zab protocol that peer is running.
+     * (Used for monitoring) shows the current phase of
+     * Zab protocol that peer is running.
      */
     public enum ZabState {
         NONE, DISCOVERY, SYNCHRONIZATION, BROADCAST;
@@ -777,18 +777,18 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             setLeaderAddressAndId(null, -1);
             setZabState(ZabState.NONE);
         } else {
-            LOG.info("Peer state changed: " + getDetailedPeerState());
+            LOG.info("Peer state changed: {}", getDetailedPeerState());
         }
     }
 
     public void setZabState(ZabState zabState) {
         this.zabState.set(zabState);
-        LOG.info("Peer state changed: " + getDetailedPeerState());
+        LOG.info("Peer state changed: {}", getDetailedPeerState());
     }
 
     public void setSyncMode(SyncMode syncMode) {
         this.syncMode.set(syncMode);
-        LOG.info("Peer state changed: " + getDetailedPeerState());
+        LOG.info("Peer state changed: {}", getDetailedPeerState());
     }
 
     public ZabState getZabState() {
