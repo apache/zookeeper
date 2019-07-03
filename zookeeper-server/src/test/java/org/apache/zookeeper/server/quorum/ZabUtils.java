@@ -128,10 +128,12 @@ public class ZabUtils {
                 boolean secure) throws IOException {
         }
 
-        public boolean closeSession(long sessionId) {
+        @Override
+        public boolean closeSession(long sessionId, ServerCnxn.DisconnectReason reason) {
             return false;
         }
-        public void closeAll() {
+        @Override
+        public void closeAll(ServerCnxn.DisconnectReason reason) {
         }
         @Override
         public int getNumAliveConnections() {

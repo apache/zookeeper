@@ -852,11 +852,24 @@ public class LearnerHandler extends ZooKeeperThread {
                     currentZxid = queueCommittedProposals(txnLogItr, peerLastZxid,
                                                          minCommittedLog, maxCommittedLog);
 
-                    LOG.debug("Queueing committedLog 0x" + Long.toHexString(currentZxid));
-                    Iterator<Proposal> committedLogItr = db.getCommittedLog().iterator();
-                    currentZxid = queueCommittedProposals(committedLogItr, currentZxid,
-                                                         null, maxCommittedLog);
-                    needSnap = false;
+                    if (currentZxid < minCommittedLog) {
+                        LOG.info("Detected gap between end of txnlog: 0x{} and start of committedLog: 0x{}",
+                                Long.toHexString(currentZxid),
+                                Long.toHexString(minCommittedLog));
+                        currentZxid = peerLastZxid;
+                        // Clear out currently queued requests and revert
+                        // to sending a snapshot.
+                        queuedPackets.clear();
+                        needOpPacket = true;
+                    } else {
+                        LOG.debug("Queueing committedLog 0x{}",
+                                Long.toHexString(currentZxid));
+                        Iterator<Proposal> committedLogItr =
+                                db.getCommittedLog().iterator();
+                        currentZxid = queueCommittedProposals(committedLogItr,
+                                currentZxid, null, maxCommittedLog);
+                        needSnap = false;
+                    }
                 }
                 // closing the resources
                 if (txnLogItr instanceof TxnLogProposalIterator) {

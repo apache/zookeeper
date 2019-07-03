@@ -622,7 +622,7 @@ public class FinalRequestProcessor implements RequestProcessor {
         if (serverCnxnFactory == null) {
             return false;
         }
-        return serverCnxnFactory.closeSession(sessionId);
+        return serverCnxnFactory.closeSession(sessionId, ServerCnxn.DisconnectReason.CLIENT_CLOSED_SESSION);
     }
 
     private boolean connClosedByClient(Request request) {

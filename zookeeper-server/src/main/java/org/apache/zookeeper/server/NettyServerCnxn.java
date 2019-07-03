@@ -80,7 +80,15 @@ public class NettyServerCnxn extends ServerCnxn {
         addAuthInfo(new Id("ip", addr.getHostAddress()));
     }
 
+    /**
+     * Close the cnxn and remove it from the factory cnxns list.
+     */
     @Override
+    public void close(DisconnectReason reason) {
+        disconnectReason = reason;
+        close();
+    }
+
     public void close() {
         closingChannel = true;
 
@@ -194,7 +202,7 @@ public class NettyServerCnxn extends ServerCnxn {
     @Override
     public void sendBuffer(ByteBuffer... buffers) {
         if (buffers.length == 1 && buffers[0] == ServerCnxnFactory.closeConn) {
-            close();
+            close(DisconnectReason.CLIENT_CLOSED_CONNECTION);
             return;
         }
         channel.writeAndFlush(Unpooled.wrappedBuffer(buffers)).addListener(onSendBufferDoneListener);
@@ -533,14 +541,14 @@ public class NettyServerCnxn extends ServerCnxn {
             }
         } catch(IOException e) {
             LOG.warn("Closing connection to " + getRemoteSocketAddress(), e);
-            close();
+            close(DisconnectReason.IO_EXCEPTION);
         } catch(ClientCnxnLimitException e) {
             // Common case exception, print at debug level
             ServerMetrics.getMetrics().CONNECTION_REJECTED.add(1);
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Closing connection to " + getRemoteSocketAddress(), e);
             }
-            close();
+            close(DisconnectReason.CLIENT_RATE_LIMIT);
         }
     }
 

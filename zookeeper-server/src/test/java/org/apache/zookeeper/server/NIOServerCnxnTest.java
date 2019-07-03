@@ -63,7 +63,7 @@ public class NIOServerCnxnTest extends ClientBase {
                     serverFactory instanceof NIOServerCnxnFactory);
             Iterable<ServerCnxn> connections = serverFactory.getConnections();
             for (ServerCnxn serverCnxn : connections) {
-                serverCnxn.close();
+                serverCnxn.close(ServerCnxn.DisconnectReason.CHANNEL_CLOSED_EXCEPTION);
                 try {
                     serverCnxn.toString();
                 } catch (Exception e) {
