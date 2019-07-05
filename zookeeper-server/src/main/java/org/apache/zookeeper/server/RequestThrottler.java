@@ -137,6 +137,10 @@ public class RequestThrottler extends ZooKeeperCriticalThread {
     public void run() {
         try {
             while (true) {
+                if (killed) {
+                    break;
+                }
+
                 Request request = submittedRequests.take();
                 if (Request.requestOfDeath == request) {
                     break;
