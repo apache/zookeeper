@@ -411,14 +411,46 @@ public class FileTxnSnapLog {
      * @param sessionsWithTimeouts the session timeouts to be
      * serialized onto disk
      * @param syncSnap sync the snapshot immediately after write
+       the default directory to store the snapshots is dataDir
      * @throws IOException
      */
     public void save(DataTree dataTree,
                      ConcurrentHashMap<Long, Integer> sessionsWithTimeouts,
                      boolean syncSnap)
-        throws IOException {
+            throws IOException {
+        save(dataTree, sessionsWithTimeouts, syncSnap, null);
+    }
+
+    /**
+     * save the datatree and the sessions into a snapshot
+     * @param dataTree the datatree to be serialized onto disk
+     * @param sessionsWithTimeouts the session timeouts to be
+     * serialized onto disk
+     * @param syncSnap sync the snapshot immediately after write
+     * @param snapshotDir the directory which is appointed to store the snapshot
+     *                    if snapshotDir is null, use the default directory:dataDir
+     * @throws IOException
+     */
+    public void save(DataTree dataTree,
+                     ConcurrentHashMap<Long, Integer> sessionsWithTimeouts,
+                     boolean syncSnap, String snapshotDir)
+            throws IOException {
         long lastZxid = dataTree.lastProcessedZxid;
-        File snapshotFile = new File(snapDir, Util.makeSnapshotName(lastZxid));
+        File snapshotFile;
+        if(snapshotDir == null) {
+            snapshotFile = new File(snapDir, Util.makeSnapshotName(lastZxid));
+        } else {
+            File snapshotDirFile = new File(snapshotDir);
+            if (!snapshotDirFile.exists()) {
+                snapshotDirFile.mkdirs();
+            }
+            File version2 = new File(snapshotDirFile, version + VERSION);
+            if (!version2.exists()) {
+                version2.mkdirs();
+            }
+            snapshotFile = new File(version2, Util.makeSnapshotName(lastZxid));
+        }
+
         LOG.info("Snapshotting: 0x{} to {}", Long.toHexString(lastZxid),
                 snapshotFile);
         try {

@@ -29,6 +29,8 @@ import org.apache.zookeeper.MultiOperationRecord;
 import org.apache.zookeeper.Op;
 import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.Id;
+import org.apache.zookeeper.proto.SnapshotRequest;
+import org.apache.zookeeper.proto.SnapshotResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.KeeperException;
@@ -461,6 +463,21 @@ public class FinalRequestProcessor implements RequestProcessor {
                 rsp = new GetAllChildrenNumberResponse(number);
                 break;
              }
+            case OpCode.takeSnapshot: {
+                lastOp = "SNAP";
+                SnapshotRequest snapshotRequest = new SnapshotRequest();
+                ByteBufferInputStream.byteBuffer2Record(request.request, snapshotRequest);
+                String dir = snapshotRequest.getDir();
+
+                try {
+                    zks.takeSnapshotExternal(dir);
+                } catch(IOException e) {
+                    LOG.warn("Unexpected exception when taking the snapshot in the directory:{}", dir, e);
+                    throw new KeeperException.TakeSnapshotException();
+                }
+                rsp = new SnapshotResponse(dir);
+                break;
+            }
             case OpCode.getChildren2: {
                 lastOp = "GETC";
                 GetChildren2Request getChildren2Request = new GetChildren2Request();

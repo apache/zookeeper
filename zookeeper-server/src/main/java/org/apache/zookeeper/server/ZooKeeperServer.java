@@ -399,15 +399,47 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         takeSnapshot();
     }
 
-    public void takeSnapshot() {
-        takeSnapshot(false);
+    /**
+     * the method is called by the client which want to take the snapshot.
+     * the isSevere is false.
+     * @param snapshotDir
+     * @throws IOException
+     */
+    public void takeSnapshotExternal(String snapshotDir) throws IOException {
+        takeSnapshot(false, snapshotDir, false);
     }
 
-    public void takeSnapshot(boolean syncSnap){
+    public void takeSnapshot() throws IOException {
+        takeSnapshot(false, null);
+    }
+
+    public void takeSnapshot(boolean syncSnap) throws IOException {
+        takeSnapshot(syncSnap, null);
+    }
+
+    public void takeSnapshot(String snapshotDir) throws IOException {
+        takeSnapshot(false, snapshotDir);
+    }
+
+    public void takeSnapshot(boolean syncSnap, String snapshotDir) throws IOException {
+        takeSnapshot(syncSnap, snapshotDir, true);
+    }
+
+    /**
+     *
+     * @param syncSnap
+     * @param snapshotDir
+     * @param isSevere if isSevere is false,just throw the IOException, not System.exit.
+     * @throws IOException
+     */
+    public void takeSnapshot(boolean syncSnap, String snapshotDir, boolean isSevere) throws IOException {
         long start = Time.currentElapsedTime();
         try {
-            txnLogFactory.save(zkDb.getDataTree(), zkDb.getSessionWithTimeOuts(), syncSnap);
+            txnLogFactory.save(zkDb.getDataTree(), zkDb.getSessionWithTimeOuts(), syncSnap, snapshotDir);
         } catch (IOException e) {
+            if (!isSevere) {
+                throw e;
+            }
             LOG.error("Severe unrecoverable error, exiting", e);
             // This is a severe error that we cannot recover from,
             // so we need to exit
