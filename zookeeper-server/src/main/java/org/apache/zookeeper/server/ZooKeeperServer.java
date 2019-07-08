@@ -563,8 +563,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         startSessionTracker();
         setupRequestProcessors();
 
-        requestThrottler = new RequestThrottler(this);
-        requestThrottler.start();
+        startRequestThrottler();
 
         registerJMX();
 
@@ -580,6 +579,12 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         if (this.jvmPauseMonitor != null) {
             this.jvmPauseMonitor.serviceStart();
         }
+    }
+
+    protected void startRequestThrottler() {
+        requestThrottler = new RequestThrottler(this);
+        requestThrottler.start();
+
     }
 
     protected void setupRequestProcessors() {
