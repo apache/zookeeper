@@ -31,6 +31,8 @@ import org.apache.zookeeper.server.SessionTrackerImpl.SessionImpl;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Testing zk client session logic in sessiontracker
@@ -48,6 +50,7 @@ public class SessionTrackerTest extends ZKTestCase {
      */
     @Test(timeout = 20000)
     public void testAddSessionAfterSessionExpiry() throws Exception {
+        RequestThrottler.setMaxRequests(0);
         ZooKeeperServer zks = setupSessionTracker();
 
         latch = new CountDownLatch(1);
@@ -127,6 +130,7 @@ public class SessionTrackerTest extends ZKTestCase {
         // setup session tracker
         zks.createSessionTracker();
         zks.startSessionTracker();
+        zks.startRequestThrottler();
         return zks;
     }
 

@@ -220,6 +220,11 @@ public final class ServerMetrics {
         ACK_LATENCY = metricsContext.getSummarySet("ack_latency", DetailLevel.ADVANCED);
         PROPOSAL_COUNT = metricsContext.getCounter("proposal_count");
         QUIT_LEADING_DUE_TO_DISLOYAL_VOTER = metricsContext.getCounter("quit_leading_due_to_disloyal_voter");
+
+        STALE_REQUESTS = metricsContext.getCounter("stale_requests");
+        STALE_REQUESTS_DROPPED = metricsContext.getCounter("stale_requests_dropped");
+        STALE_REPLIES = metricsContext.getCounter("stale_replies");
+        REQUEST_THROTTLE_WAIT_COUNT = metricsContext.getCounter("request_throttle_wait_count");
     }
 
     /**
@@ -413,6 +418,11 @@ public final class ServerMetrics {
      * Number of client auth requests with no ensemble set in EnsembleAuthenticationProvider.
      */
     public final Counter ENSEMBLE_AUTH_SKIP;
+
+    public final Counter STALE_REQUESTS;
+    public final Counter STALE_REQUESTS_DROPPED;
+    public final Counter STALE_REPLIES;
+    public final Counter REQUEST_THROTTLE_WAIT_COUNT;
 
     private final MetricsProvider metricsProvider;
 

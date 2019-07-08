@@ -229,7 +229,7 @@ ensemble:
 7. If your configuration file is set up, you can start a
   ZooKeeper server:  
 
-        $ java -cp zookeeper.jar:lib/*:conf org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.conf 
+        $ java -cp zookeeper.jar:lib/*:conf org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.conf
 
   QuorumPeerMain starts a ZooKeeper server,
   [JMX](http://java.sun.com/javase/technologies/core/mntr-mgmt/javamanagement/)
@@ -833,7 +833,7 @@ property, when available, is noted below.
 
 * *serverCnxnFactory* :
     (Java system property: **zookeeper.serverCnxnFactory**)
-    Specifies ServerCnxnFactory implementation. 
+    Specifies ServerCnxnFactory implementation.
     This should be set to `NettyServerCnxnFactory` in order to use TLS based server communication.
     Default is `NIOServerCnxnFactory`.
 
@@ -856,6 +856,36 @@ property, when available, is noted below.
     commit log is triggered.
     Does not affect the limit defined by *flushDelay*.
     Default is 1000.
+
+* *requestThrottleLimit* :
+    (Java system property: **zookeeper.request_throttle_max_requests**)
+    **New in 3.6.0:**
+    The total number of outstanding requests allowed before the RequestThrottler starts stalling. When set to 0, throttling is disabled. The default is 0.
+
+* *requestThrottleStallTime* :
+    (Java system property: **zookeeper.request_throttle_stall_time**)
+    **New in 3.6.0:**
+    The maximum time (in milliseconds) for which a thread may wait to be notified that it may proceed processing a request. The default is 100.
+
+* *requestThrottleDropStale* :
+    (Java system property: **request_throttle_drop_stale**)
+    **New in 3.6.0:**
+    When enabled, the throttler will drop stale requests rather than issue them to the request pipeline. A stale request is a request sent by a connection that is now closed, and/or a request that will have a  request latency higher than the sessionTimeout. The default is true.
+
+* *requestStaleLatencyCheck* :
+    (Java system property: **zookeeper.request_stale_latency_check**)
+    **New in 3.6.0:**
+    When enabled, a request is considered stale if the request latency is higher than its associated session timeout. Disabled by default.
+
+* *requestStaleConnectionCheck* :
+    (Java system property: **zookeeper.request_stale_connection_check**)
+    **New in 3.6.0:**
+    When enabled, a request is considered stale if the request's connection has closed. Enabled by default.
+
+* *zookeeper.request_throttler.shutdownTimeout* :
+    (Java system property only)
+    **New in 3.6.0:**
+    The time (in milliseconds) the RequestThrottler waits for the request queue to drain during shutdown before it shuts down forcefully. The default is 10000.  
 
 <a name="sc_clusterOptions"></a>
 
@@ -1108,20 +1138,20 @@ encryption/authentication/authorization performed by the service.
     (Java system property: **zookeeper.sslQuorum**)
     **New in 3.5.5:**
     Enables encrypted quorum communication. Default is `false`.
-       
+
 * *ssl.keyStore.location and ssl.keyStore.password* and *ssl.quorum.keyStore.location* and *ssl.quorum.keyStore.password* :
     (Java system properties: **zookeeper.ssl.keyStore.location** and **zookeeper.ssl.keyStore.password** and **zookeeper.ssl.quorum.keyStore.location** and **zookeeper.ssl.quorum.keyStore.password**)
     **New in 3.5.5:**
     Specifies the file path to a Java keystore containing the local
     credentials to be used for client and quorum TLS connections, and the
     password to unlock the file.
-    
+
 * *ssl.keyStore.type* and *ssl.quorum.keyStore.type* :
     (Java system properties: **zookeeper.ssl.keyStore.type** and **zookeeper.ssl.quorum.keyStore.type**)
     **New in 3.5.5:**
     Specifies the file format of client and quorum keystores. Values: JKS, PEM or null (detect by filename).    
     Default: null     
-    
+
 * *ssl.trustStore.location* and *ssl.trustStore.password* and *ssl.quorum.trustStore.location* and *ssl.quorum.trustStore.password* :
     (Java system properties: **zookeeper.ssl.trustStore.location** and **zookeeper.ssl.trustStore.password** and **zookeeper.ssl.quorum.trustStore.location** and **zookeeper.ssl.quorum.trustStore.password**)
     **New in 3.5.5:**
@@ -1146,7 +1176,7 @@ encryption/authentication/authorization performed by the service.
     **New in 3.5.5:**
     Specifies the enabled protocols in client and quorum TLS negotiation.
     Default: value of `protocol` property
-    
+
 * *ssl.ciphersuites* and *ssl.quorum.ciphersuites* :
     (Java system properties: **zookeeper.ssl.ciphersuites** and **zookeeper.ssl.quorum.ciphersuites**)
     **New in 3.5.5:**
@@ -1161,7 +1191,7 @@ encryption/authentication/authorization performed by the service.
     1. Use hardware keystore, loaded in using PKCS11 or something similar.
     2. You don't have access to the software keystore, but can retrieve an already-constructed SSLContext from their container.
     Default: null
-    
+
 * *ssl.hostnameVerification* and *ssl.quorum.hostnameVerification* :
     (Java system properties: **zookeeper.ssl.hostnameVerification** and **zookeeper.ssl.quorum.hostnameVerification**)
     **New in 3.5.5:**
@@ -1180,12 +1210,12 @@ encryption/authentication/authorization performed by the service.
     **New in 3.5.5:**
     Specifies whether Online Certificate Status Protocol is enabled in client and quorum TLS protocols.
     Default: false
-    
+
 * *ssl.clientAuth* and *ssl.quorum.clientAuth* :
     (Java system properties: **zookeeper.ssl.clientAuth** and **zookeeper.ssl.quorum.clientAuth**)
     **New in 3.5.5:**
     TBD
-    
+
 * *ssl.handshakeDetectionTimeoutMillis* and *ssl.quorum.handshakeDetectionTimeoutMillis* :
     (Java system properties: **zookeeper.ssl.handshakeDetectionTimeoutMillis** and **zookeeper.ssl.quorum.handshakeDetectionTimeoutMillis**)
     **New in 3.5.5:**
@@ -1468,20 +1498,20 @@ and quorum communication protocols.
 
 One keystore should be created for each ZK instance.
 
-In this example we generate a self-signed certificate and store it 
-together with the private key in `keystore.jks`. This is suitable for 
-testing purposes, but you probably need an official certificate to sign 
+In this example we generate a self-signed certificate and store it
+together with the private key in `keystore.jks`. This is suitable for
+testing purposes, but you probably need an official certificate to sign
 your keys in a production environment.
 
 Please note that the alias (`-alias`) and the distinguished name (`-dname`)
-must match the hostname of the machine that is associated with, otherwise 
+must match the hostname of the machine that is associated with, otherwise
 hostname verification won't work.
 
 ```
 keytool -genkeypair -alias $(hostname -f) -keyalg RSA -keysize 2048 -dname "cn=$(hostname -f)" -keypass password -keystore keystore.jks -storepass password
 ```
 
-2. Extract the signed public key (certificate) from keystore 
+2. Extract the signed public key (certificate) from keystore
 
 *This step might only necessary for self-signed certificates.*
 
@@ -1569,7 +1599,7 @@ and do another rolling restart
 ```
 sslQuorum=true
 portUnification=false
-``` 
+```
 
 
 <a name="sc_zkCommands"></a>
