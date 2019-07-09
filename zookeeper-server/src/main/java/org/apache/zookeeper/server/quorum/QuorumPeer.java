@@ -817,13 +817,17 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         return leaderId.get();
     }
 
-
     public String getDetailedPeerState() {
-        return getPeerState().toString().toLowerCase()
-                + ((getZabState() != ZabState.ELECTION) ?
-                " - " + getZabState().toString().toLowerCase() : "")
-                + ((getSyncMode() != SyncMode.NONE) ?
-                " - " + getSyncMode().toString().toLowerCase() : "");
+        final StringBuilder sb = new StringBuilder(getPeerState().toString().toLowerCase());
+        final ZabState zabState = getZabState();
+        if (!ZabState.DISCOVERY.equals(zabState)) {
+            sb.append(" - ").append(zabState.toString().toLowerCase());
+        }
+        final SyncMode syncMode = getSyncMode();
+        if (!SyncMode.NONE.equals(syncMode)) {
+            sb.append(" - ").append(syncMode.toString().toLowerCase());
+        }
+        return sb.toString();
     }
 
     public synchronized void reconfigFlagSet(){
