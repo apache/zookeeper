@@ -820,7 +820,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     public String getDetailedPeerState() {
         final StringBuilder sb = new StringBuilder(getPeerState().toString().toLowerCase());
         final ZabState zabState = getZabState();
-        if (!ZabState.DISCOVERY.equals(zabState)) {
+        if (!ZabState.ELECTION.equals(zabState)) {
             sb.append(" - ").append(zabState.toString().toLowerCase());
         }
         final SyncMode syncMode = getSyncMode();
