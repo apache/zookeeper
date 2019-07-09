@@ -45,14 +45,8 @@ All the metrics are included in the `ServerMetrics.java`.
   - enable the `Prometheus MetricsProvider` by setting `metricsProvider.className=org.apache.zookeeper.metrics.prometheus.PrometheusMetricsProvider` in the zoo.cfg.
   - the Port is also configurable by setting `metricsProvider.httpPort`（the default value:7000）
 - Install Prometheus:
-
-    ```bash
-    PROMETHEUS_VERSION="2.0.0"
-    wget https://github.com/prometheus/prometheus/releases/download/v$PROMETHEUS_VERSION/prometheus-$PROMETHEUS_VERSION.linux-amd64.tar.gz -O /tmp/prometheus-$PROMETHEUS_VERSION.linux-amd64.tar.gz
-    tar -xvzf /tmp/prometheus-$PROMETHEUS_VERSION.linux-amd64.tar.gz --directory /tmp/ --strip-components=1
-    /tmp/prometheus -version
-    ```
-
+  Go to the official website download [page](https://prometheus.io/download/), download the latest release.
+  
 - Set Prometheus's scraper to target the ZooKeeper cluster endpoints:
 
     ```bash
