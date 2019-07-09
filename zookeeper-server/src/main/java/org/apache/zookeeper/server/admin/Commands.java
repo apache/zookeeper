@@ -20,7 +20,6 @@ package org.apache.zookeeper.server.admin;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -31,6 +30,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.Environment.Entry;
 import org.apache.zookeeper.Version;
@@ -621,32 +621,28 @@ public class Commands {
 
 
         private static class VotingView {
-            private final String stringRepresentation;
+            private final Map<Long, String> view;
 
             VotingView(Map<Long,QuorumPeer.QuorumServer> view) {
-                this.stringRepresentation = view.entrySet().stream()
-                        .sorted(Comparator.comparingLong(Map.Entry::getKey))
+                this.view = view.entrySet().stream()
                         .filter(e -> e.getValue().addr != null)
-                        .map(e -> String.format("%s=%s:%d%s:%s%s",
-                                e.getKey().toString(),
-                                QuorumPeer.QuorumServer.delimitedHostString(e.getValue().addr),
-                                e.getValue().addr.getPort(),
-                                e.getValue().electionAddr == null ? "" : ":" + e.getValue().electionAddr.getPort(),
-                                e.getValue().type.equals(QuorumPeer.LearnerType.PARTICIPANT) ? "participant" : "observer",
-                                e.getValue().clientAddr ==null || e.getValue().isClientAddrFromStatic ? "" :
-                                        String.format(";%s:%d",
-                                                QuorumPeer.QuorumServer.delimitedHostString(e.getValue().clientAddr),
-                                                e.getValue().clientAddr.getPort())))
-                        .collect(Collectors.joining(", ", "{", "}"));
+                        .collect(Collectors.toMap(Map.Entry::getKey,
+                                e -> String.format("%s:%d%s:%s%s",
+                                        QuorumPeer.QuorumServer.delimitedHostString(e.getValue().addr),
+                                        e.getValue().addr.getPort(),
+                                        e.getValue().electionAddr == null ? "" : ":" + e.getValue().electionAddr.getPort(),
+                                        e.getValue().type.equals(QuorumPeer.LearnerType.PARTICIPANT) ? "participant" : "observer",
+                                        e.getValue().clientAddr ==null || e.getValue().isClientAddrFromStatic ? "" :
+                                                String.format(";%s:%d",
+                                                        QuorumPeer.QuorumServer.delimitedHostString(e.getValue().clientAddr),
+                                                        e.getValue().clientAddr.getPort())),
+                                (v1, v2) -> v1, // cannot get duplicates as this straight draws from the other map
+                                TreeMap::new));
             }
 
-            @Override
-            public String toString() {
-                return getStringRepresentation();
-            }
-
-            public String getStringRepresentation() {
-                return stringRepresentation;
+            @JsonAnyGetter
+            public Map<Long, String> getView() {
+                return view;
             }
         }
     }
