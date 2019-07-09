@@ -614,14 +614,14 @@ public class Commands {
                 VotingView votingView = new VotingView(peer.getVotingView());
                 response.put("current_config", votingView);
             } else {
-                response.put("current_config", "");
+                response.put("current_config", Collections.emptyMap());
             }
             return response;
         }
 
 
         private static class VotingView {
-            final String stringRepresentation;
+            private final String stringRepresentation;
 
             VotingView(Map<Long,QuorumPeer.QuorumServer> view) {
                 this.stringRepresentation = view.entrySet().stream()
@@ -637,12 +637,16 @@ public class Commands {
                                         String.format(";%s:%d",
                                                 QuorumPeer.QuorumServer.delimitedHostString(e.getValue().clientAddr),
                                                 e.getValue().clientAddr.getPort())))
-                        .collect(Collectors.joining(", "));
+                        .collect(Collectors.joining(", ", "{", "}"));
             }
 
             @Override
             public String toString() {
-                return "{" + stringRepresentation + "}";
+                return getStringRepresentation();
+            }
+
+            public String getStringRepresentation() {
+                return stringRepresentation;
             }
         }
     }
