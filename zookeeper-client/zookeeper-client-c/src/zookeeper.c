@@ -418,6 +418,9 @@ static void destroy(zhandle_t *zh)
     }
     /* call any outstanding completions with a special error code */
     cleanup_bufs(zh,1,ZCLOSING);
+    if (process_async(zh->outstanding_sync)) {
+        process_completions(zh);
+    }
     if (zh->hostname != 0) {
         free(zh->hostname);
         zh->hostname = NULL;
