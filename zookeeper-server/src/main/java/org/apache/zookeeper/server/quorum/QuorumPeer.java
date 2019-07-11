@@ -1402,7 +1402,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 start_fle = Time.currentElapsedTime();
             }
         } finally {
-            shutdown();
             LOG.warn("QuorumPeer main thread exited");
             MBeanRegistry instance = MBeanRegistry.getInstance();
             instance.unregister(jmxQuorumBean);
@@ -2001,15 +2000,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     public boolean isRunning() {
         return running;
-    }
-
-    /**
-     * Request graceful shutdown of quorum peer.
-     * Method don't wait when quorum peer will be stopped, it's only send a 'signal'
-     * which will be handled in QuorumPeer.run().
-     */
-    public void requestStop() {
-        running = false;
     }
 
     /**

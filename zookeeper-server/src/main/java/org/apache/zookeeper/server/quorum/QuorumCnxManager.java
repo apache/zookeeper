@@ -959,7 +959,7 @@ public class QuorumCnxManager {
                           + formatInetAddr(self.getElectionAddress())
                           + ". Use " + ELECTION_PORT_BIND_RETRY + " property to "
                           + "increase retry count.");
-                if (exitException instanceof BindException) {
+                if (exitException instanceof SocketException) {
                     // After leaving listener thread, the host cannot join the
                     // quorum anymore, this is a severe error that we cannot
                     // recover from, so we need to exit
