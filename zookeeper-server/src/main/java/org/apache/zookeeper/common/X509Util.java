@@ -403,11 +403,9 @@ public abstract class X509Util implements Closeable, AutoCloseable {
             String keyStorePassword,
             String keyStoreTypeProp)
             throws IOException, GeneralSecurityException {
-        LOG.info("yee: " + keyStoreLocation + keyStorePassword + keyStoreTypeProp);
         KeyStoreFileType storeFileType =
                 KeyStoreFileType.fromPropertyValueOrFileName(
                         keyStoreTypeProp, keyStoreLocation);
-        LOG.info("here");
         return FileKeyStoreLoaderBuilderProvider
                 .getBuilderForKeyStoreFileType(storeFileType)
                 .setKeyStorePath(keyStoreLocation)
