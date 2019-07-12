@@ -74,7 +74,10 @@ public class ReadAheadEndpoint implements EndPoint {
 
     private synchronized void readAhead() throws IOException {
         if (leftToRead > 0) {
-            final int n = endPoint.fill(start);
+            int n = 0;
+            do {
+                n = endPoint.fill(start);
+            } while (n == 0 && endPoint.isOpen() && !endPoint.isInputShutdown());
             if (n == -1) {
                 leftToRead = -1;
             } else {

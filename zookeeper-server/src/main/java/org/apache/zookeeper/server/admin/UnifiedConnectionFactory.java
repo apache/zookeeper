@@ -24,9 +24,7 @@ import org.eclipse.jetty.io.ssl.SslConnection;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.ConnectionFactory;
 import org.eclipse.jetty.server.AbstractConnectionFactory;
-import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
-import org.eclipse.jetty.util.annotation.Name;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSession;
@@ -37,7 +35,7 @@ import org.slf4j.LoggerFactory;
 /**
  * The purpose of this class is to dynamically determine whether to create
  * a plaintext or SSL connection whenever newConnection() is called. It works
- * in conjunction with ReadAheadEnpoint to inspect bytes on the incoming
+ * in conjunction with ReadAheadEndpoint to inspect bytes on the incoming
  * connection.
  */
 public class UnifiedConnectionFactory extends AbstractConnectionFactory {
@@ -45,8 +43,6 @@ public class UnifiedConnectionFactory extends AbstractConnectionFactory {
 
     private final SslContextFactory sslContextFactory;
     private final String nextProtocol;
-
-    public UnifiedConnectionFactory() { this(HttpVersion.HTTP_1_1.asString()); }
 
     public UnifiedConnectionFactory(String nextProtocol) { this(null, nextProtocol); }
 
@@ -56,8 +52,6 @@ public class UnifiedConnectionFactory extends AbstractConnectionFactory {
         this.nextProtocol = nextProtocol;
         this.addBean(this.sslContextFactory);
     }
-
-    public SslContextFactory getSslContextFactory() { return this.sslContextFactory; }
 
     @Override
     protected void doStart() throws Exception {
@@ -77,13 +71,14 @@ public class UnifiedConnectionFactory extends AbstractConnectionFactory {
         boolean isSSL;
 
         if (bytes == null || bytes.length == 0) {
-            isSSL = true;
+            isSSL = false;
+            LOG.warn("Incoming connection has no data");
         } else {
-            byte b = bytes[0]; // TLS first byte is 0x16 , SSLv2 first byte is >= 0x80 , HTTP is guaranteed many bytes of ASCII
-            isSSL = b >= 0x7F || (b < 0x20 && b != '\n' && b != '\r' && b != '\t'); // TODO: is this the best way to do dis?
+            byte b = bytes[0]; // TLS first byte is 0x16, let's not support SSLv3 and below
+            isSSL = b == 0x16; // matches SSL detection in NettyServerCnxnFactory.java
         }
 
-        LOG.debug("UnifiedConnectionFactory: newConnection() with SSL = " + isSSL);
+        LOG.debug(String.format("UnifiedConnectionFactory: newConnection() with SSL = %b", isSSL));
 
         EndPoint plainEndpoint;
         SslConnection sslConnection;

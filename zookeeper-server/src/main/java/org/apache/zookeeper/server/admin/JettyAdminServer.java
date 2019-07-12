@@ -19,13 +19,7 @@
 package org.apache.zookeeper.server.admin;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 
@@ -34,8 +28,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.zookeeper.common.QuorumX509Util;
-import org.apache.zookeeper.util.PemReader;
+import org.apache.zookeeper.common.*;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -115,17 +108,17 @@ public class JettyAdminServer implements AdminServer {
             config.addCustomizer(customizer);
 
             try (QuorumX509Util x509Util = new QuorumX509Util()) {
+                String privateKeyType = System.getProperty(x509Util.getSslKeystoreTypeProperty(), "");
                 String privateKeyPath = System.getProperty(x509Util.getSslKeystoreLocationProperty(), "");
                 String privateKeyPassword = System.getProperty(x509Util.getSslKeystorePasswdProperty(), "");
+                String certAuthType = System.getProperty(x509Util.getSslTruststoreTypeProperty(), "");
                 String certAuthPath = System.getProperty(x509Util.getSslTruststoreLocationProperty(), "");
                 String certAuthPassword = System.getProperty(x509Util.getSslTruststorePasswdProperty(), "");
-                File privateKey = new File(privateKeyPath);
-                File certAuth = new File(certAuthPath);
                 KeyStore keyStore = null, trustStore = null;
 
                 try {
-                    keyStore = PemReader.loadKeyStore(privateKey, privateKey, Optional.empty());
-                    trustStore = PemReader.loadTrustStore(certAuth);
+                    keyStore = X509Util.loadKeyStore(privateKeyPath, privateKeyPassword, privateKeyType);
+                    trustStore = X509Util.loadTrustStore(certAuthPath, certAuthPassword, certAuthType);
                     LOG.info("Successfully loaded private key from " + privateKeyPath);
                     LOG.info("Successfully loaded certificate authority from " + certAuthPath);
                 } catch (Exception e) {

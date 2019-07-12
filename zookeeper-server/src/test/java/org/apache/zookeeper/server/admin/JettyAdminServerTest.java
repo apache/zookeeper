@@ -27,17 +27,13 @@ import java.net.URL;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLSocketFactory;
 
-import org.apache.zookeeper.common.KeyStoreFileType;
-import org.apache.zookeeper.common.QuorumX509Util;
 import org.apache.zookeeper.common.KeyStoreFileType;
 import org.apache.zookeeper.common.X509Exception.SSLContextException;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.common.X509KeyType;
 import org.apache.zookeeper.common.X509TestContext;
-import org.apache.zookeeper.common.X509Util;
 import org.apache.zookeeper.server.ZooKeeperServerMainTest;
 import org.apache.zookeeper.server.admin.AdminServer.AdminServerException;
 import org.apache.zookeeper.server.quorum.QuorumPeerTestBase;
@@ -50,16 +46,12 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import java.security.Security;
 import java.security.cert.X509Certificate;
 import java.security.GeneralSecurityException;
-import java.security.KeyManagementException;
 
 public class JettyAdminServerTest extends ZKTestCase{
     protected static final Logger LOG = LoggerFactory.getLogger(JettyAdminServerTest.class);
@@ -254,11 +246,8 @@ public class JettyAdminServerTest extends ZKTestCase{
         if (!encrypted) {
             dis = new BufferedReader(new InputStreamReader((url.openStream())));
         } else {
-            try (QuorumX509Util x509Util = new QuorumX509Util()) {
-                SSLSocketFactory socketFactory = x509Util.getDefaultSSLContext().getSocketFactory();
-                HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
-                dis = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-            }
+            HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
+            dis = new BufferedReader(new InputStreamReader(conn.getInputStream()));
         }
         String line = dis.readLine();
         Assert.assertTrue(line.length() > 0);
