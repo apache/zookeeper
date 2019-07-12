@@ -120,6 +120,18 @@ public class CommandsTest extends ClientBase {
     }
 
     @Test
+    public void testObservers() throws IOException, InterruptedException {
+        testCommand("observers",
+                new Field("synced_observers", Integer.class),
+                new Field("observers", Iterable.class));
+    }
+
+    @Test
+    public void testObserverConnectionStatReset() throws IOException, InterruptedException {
+        testCommand("observer_connection_stat_reset");
+    }
+
+    @Test
     public void testConnectionStatReset() throws IOException, InterruptedException {
         testCommand("connection_stat_reset");
     }

@@ -33,7 +33,7 @@ public class VerGen {
 
     static void printUsage() {
         System.out.print("Usage:\tjava  -cp <classpath> org.apache.zookeeper."
-                + "version.util.VerGen maj.min.micro[-qualifier] rev buildDate");
+                + "version.util.VerGen maj.min.micro[-qualifier] rev buildDate outputDirectory");
         System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
     }
 
@@ -87,7 +87,6 @@ public class VerGen {
             if (rev.equals("-1")) {
                 System.out.println("Unknown REVISION number, using " + rev);
             }
-            w.write("    int REVISION=-1; //TODO: remove as related to SVN VCS\n");
             w.write("    String REVISION_HASH=\"" + rev + "\";\n");
             w.write("    String BUILD_DATE=\"" + buildDate
                     + "\";\n");
@@ -183,7 +182,7 @@ public class VerGen {
      *            </ul>
      */
     public static void main(String[] args) {
-        if (args.length != 3)
+        if (args.length != 4)
             printUsage();
         try {
             Version version = parseVersionString(args[0]);
@@ -198,7 +197,7 @@ public class VerGen {
             } else {
                 rev = rev.trim();
             }
-            generateFile(new File("."), version, rev, args[2]);
+            generateFile(new File(args[3]), version, rev, args[2]);
         } catch (NumberFormatException e) {
             System.err.println(
                     "All version-related parameters must be valid integers!");

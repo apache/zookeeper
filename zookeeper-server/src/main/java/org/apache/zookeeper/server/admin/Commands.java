@@ -38,6 +38,8 @@ import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooTrace;
 import org.apache.zookeeper.server.persistence.SnapshotInfo;
+import org.apache.zookeeper.server.quorum.Follower;
+import org.apache.zookeeper.server.quorum.FollowerZooKeeperServer;
 import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
@@ -126,11 +128,13 @@ public class Commands {
         registerCommand(new LastSnapshotCommand());
         registerCommand(new LeaderCommand());
         registerCommand(new MonitorCommand());
+        registerCommand(new ObserverCnxnStatResetCommand());
         registerCommand(new RuokCommand());
         registerCommand(new SetTraceMaskCommand());
         registerCommand(new SrvrCommand());
         registerCommand(new StatCommand());
         registerCommand(new StatResetCommand());
+        registerCommand(new SyncedObserverConsCommand());
         registerCommand(new WatchCommand());
         registerCommand(new WatchesByPathCommand());
         registerCommand(new WatchSummaryCommand());
@@ -382,6 +386,28 @@ public class Commands {
         }}
 
     /**
+     * Reset all observer connection statistics.
+     */
+    public static class ObserverCnxnStatResetCommand extends CommandBase {
+        public ObserverCnxnStatResetCommand() {
+            super(Arrays.asList("observer_connection_stat_reset", "orst"));
+        }
+
+        @Override
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+            CommandResponse response = initializeResponse();
+            if (zkServer instanceof LeaderZooKeeperServer) {
+                Leader leader = ((LeaderZooKeeperServer) zkServer).getLeader();
+                leader.resetObserverConnectionStats();
+            } else if (zkServer instanceof FollowerZooKeeperServer) {
+                Follower follower = ((FollowerZooKeeperServer) zkServer).getFollower();
+                follower.resetObserverConnectionStats();
+            }
+            return response;
+        }
+    }
+
+    /**
      * No-op command, check if the server is running
      */
     public static class RuokCommand extends CommandBase {
@@ -492,6 +518,44 @@ public class Commands {
         public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
             CommandResponse response = initializeResponse();
             zkServer.serverStats().reset();
+            return response;
+        }
+    }
+
+    /**
+     * Information on observer connections to server. Returned Map contains:
+     *   - "synced_observers": Integer (leader/follower only)
+     *   - "observers": list of observer learner handler info objects (leader/follower only)
+     * @see org.apache.zookeeper.server.quorum.LearnerHandler#getLearnerHandlerInfo()
+     */
+    public static class SyncedObserverConsCommand extends CommandBase {
+        public SyncedObserverConsCommand() {
+            super(Arrays.asList("observers", "obsr"));
+        }
+
+        @Override
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+
+            CommandResponse response = initializeResponse();
+
+            if (zkServer instanceof LeaderZooKeeperServer) {
+                Leader leader = ((LeaderZooKeeperServer) zkServer).getLeader();
+
+                response.put("synced_observers", leader.getObservingLearners().size());
+                response.put("observers", leader.getObservingLearnersInfo());
+                return response;
+            } else if (zkServer instanceof FollowerZooKeeperServer) {
+                Follower follower = ((FollowerZooKeeperServer) zkServer).getFollower();
+                Integer syncedObservers = follower.getSyncedObserverSize();
+                if (syncedObservers != null) {
+                    response.put("synced_observers", syncedObservers);
+                    response.put("observers", follower.getSyncedObserversInfo());
+                    return response;
+                }
+            }
+
+            response.put("synced_observers", 0);
+            response.put("observers", Collections.emptySet());
             return response;
         }
     }

@@ -160,49 +160,6 @@ public class ReconfigFailureCasesTest extends QuorumPeerTestBase {
     }
 
     /*
-     * Tests that if a quorum of a new config is synced with the leader and a reconfig
-     * is allowed to start but then the new quorum is lost, the leader will time out and
-     * we go to leader election.
-     */
-    @Test
-    public void testLeaderTimesoutOnNewQuorum() throws Exception {
-        qu = new QuorumUtil(1); // create 3 servers
-        qu.disableJMXTest = true;
-        qu.startAll();
-        ZooKeeper[] zkArr = ReconfigTest.createHandles(qu);
-        ZooKeeperAdmin[] zkAdminArr = ReconfigTest.createAdminHandles(qu);
-
-        List<String> leavingServers = new ArrayList<String>();
-        leavingServers.add("3");
-        qu.shutdown(2);
-        try {
-            // Since we just shut down server 2, its still considered "synced"
-            // by the leader, which allows us to start the reconfig
-            // (PrepRequestProcessor checks that a quorum of the new
-            // config is synced before starting a reconfig).
-            // We try to remove server 3, which requires a quorum of {1,2,3}
-            // (we have that) and of {1,2}, but 2 is down so we won't get a
-            // quorum of new config ACKs.
-            zkAdminArr[1].reconfigure(null, leavingServers, null, -1, null);
-            Assert.fail("Reconfig should have failed since we don't have quorum of new config");
-        } catch (KeeperException.ConnectionLossException e) {
-            // We expect leader to lose quorum of proposed config and time out
-        } catch (Exception e) {
-            Assert.fail("Should have been ConnectionLossException!");
-        }
-
-        // The leader should time out and remaining servers should go into
-        // LOOKING state. A new leader won't be established since that
-        // would require completing the reconfig, which is not possible while
-        // 2 is down.
-        Assert.assertEquals(QuorumStats.Provider.LOOKING_STATE,
-                qu.getPeer(1).peer.getServerState());
-        Assert.assertEquals(QuorumStats.Provider.LOOKING_STATE,
-                qu.getPeer(3).peer.getServerState());
-        ReconfigTest.closeAllHandles(zkArr, zkAdminArr);
-    }
-
-    /*
      * Converting an observer into a participant may sometimes fail with a
      * NewConfigNoQuorum exception. This test-case demonstrates the scenario.
      * Current configuration is (A, B, C, D), where A, B and C are participant

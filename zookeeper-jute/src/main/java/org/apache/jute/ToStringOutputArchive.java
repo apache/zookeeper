@@ -28,16 +28,11 @@ import java.util.TreeMap;
 /**
  *
  */
-public class CsvOutputArchive implements OutputArchive {
+public class ToStringOutputArchive implements OutputArchive {
 
     private PrintStream stream;
     private boolean isFirst = true;
-    
-    static CsvOutputArchive getArchive(OutputStream strm)
-    throws UnsupportedEncodingException {
-        return new CsvOutputArchive(strm);
-    }
-    
+
     private void throwExceptionOnError(String tag) throws IOException {
         if (stream.checkError()) {
             throw new IOException("Error serializing "+tag);
@@ -51,8 +46,8 @@ public class CsvOutputArchive implements OutputArchive {
         isFirst = false;
     }
     
-    /** Creates a new instance of CsvOutputArchive */
-    public CsvOutputArchive(OutputStream out)
+    /** Creates a new instance of ToStringOutputArchive */
+    public ToStringOutputArchive(OutputStream out)
     throws UnsupportedEncodingException {
         stream = new PrintStream(out, true, "UTF-8");
     }
@@ -90,14 +85,14 @@ public class CsvOutputArchive implements OutputArchive {
     
     public void writeString(String s, String tag) throws IOException {
         printCommaUnlessFirst();
-        stream.print(Utils.toCSVString(s));
+        stream.print(escapeString(s));
         throwExceptionOnError(tag);
     }
     
-    public void writeBuffer(byte buf[], String tag)
+    public void writeBuffer(byte[] buf, String tag)
     throws IOException {
         printCommaUnlessFirst();
-        stream.print(Utils.toCSVBuffer(buf));
+        stream.print(escapeBuffer(buf));
         throwExceptionOnError(tag);
     }
     
@@ -146,5 +141,57 @@ public class CsvOutputArchive implements OutputArchive {
     public void endMap(TreeMap<?,?> v, String tag) throws IOException {
         stream.print("}");
         isFirst = false;
+    }
+
+    private static String escapeString(String s) {
+        if (s == null) {
+            return "";
+        }
+
+        StringBuilder sb = new StringBuilder(s.length() + 1);
+        sb.append('\'');
+        int len = s.length();
+        for (int i = 0; i < len; i++) {
+            char c = s.charAt(i);
+            switch(c) {
+                case '\0':
+                    sb.append("%00");
+                    break;
+                case '\n':
+                    sb.append("%0A");
+                    break;
+                case '\r':
+                    sb.append("%0D");
+                    break;
+                case ',':
+                    sb.append("%2C");
+                    break;
+                case '}':
+                    sb.append("%7D");
+                    break;
+                case '%':
+                    sb.append("%25");
+                    break;
+                default:
+                    sb.append(c);
+            }
+        }
+
+        return sb.toString();
+    }
+
+    private static String escapeBuffer(byte[] barr) {
+        if (barr == null || barr.length == 0) {
+            return "";
+        }
+
+        StringBuilder sb = new StringBuilder(barr.length + 1);
+        sb.append('#');
+
+        for (byte b : barr) {
+            sb.append(Integer.toHexString(b));
+        }
+
+        return sb.toString();
     }
 }

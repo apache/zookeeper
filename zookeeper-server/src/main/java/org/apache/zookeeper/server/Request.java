@@ -39,6 +39,16 @@ import org.apache.zookeeper.txn.TxnHeader;
 public class Request {
     public final static Request requestOfDeath = new Request(null, 0, 0, 0, null, null);
 
+    // Considers a request stale if the request's connection has closed. Enabled
+    // by default.
+    private static volatile boolean staleConnectionCheck = Boolean.parseBoolean(
+            System.getProperty("zookeeper.request_stale_connection_check","true"));
+
+    // Considers a request stale if the request latency is higher than its
+    // associated session timeout. Disabled by default.
+    private static volatile boolean staleLatencyCheck = Boolean.parseBoolean(
+            System.getProperty("zookeeper.request_stale_latency_check","false"));
+
     public Request(ServerCnxn cnxn, long sessionId, int xid, int type, ByteBuffer bb, List<Id> authInfo) {
         this.cnxn = cnxn;
         this.sessionId = sessionId;
@@ -133,6 +143,65 @@ public class Request {
         this.txn = txn;
     }
 
+    public ServerCnxn getConnection() {
+        return cnxn;
+    }
+
+    public static boolean getStaleLatencyCheck() {
+        return staleLatencyCheck;
+    }
+
+    public static void setStaleLatencyCheck(boolean check) {
+        staleLatencyCheck = check;
+    }
+
+    public static boolean getStaleConnectionCheck() {
+        return staleConnectionCheck;
+    }
+
+    public static void setStaleConnectionCheck(boolean check) {
+        staleConnectionCheck = check;
+    }
+
+    public boolean isStale() {
+        if (cnxn == null) {
+            return false;
+        }
+
+        // closeSession requests should be able to outlive the session in order
+        // to clean-up state.
+        if (type == OpCode.closeSession) {
+            return false;
+        }
+
+        if (staleConnectionCheck) {
+            // If the connection is closed, consider the request stale.
+            if (cnxn.isStale() || cnxn.isInvalid()) {
+                return true;
+            }
+        }
+
+        if (staleLatencyCheck) {
+            // If the request latency is higher than session timeout, consider
+            // the request stale.
+            long currentTime = Time.currentElapsedTime();
+            if ((currentTime - createTime) > cnxn.getSessionTimeout()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * A prior request was dropped on this request's connection and
+     * therefore this request must also be dropped to ensure correct
+     * ordering semantics.
+     */
+    public boolean mustDrop() {
+        return ((cnxn != null) && cnxn.isInvalid());
+    }
+
     /**
      * is the packet type a valid packet in zookeeper
      *
@@ -162,6 +231,7 @@ public class Request {
         case OpCode.getData:
         case OpCode.getEphemerals:
         case OpCode.multi:
+        case OpCode.multiRead:
         case OpCode.ping:
         case OpCode.reconfig:
         case OpCode.setACL:
@@ -185,6 +255,7 @@ public class Request {
         case OpCode.getChildren2:
         case OpCode.getData:
         case OpCode.getEphemerals:
+        case OpCode.multiRead:
             return false;
         case OpCode.create:
         case OpCode.create2:
@@ -233,6 +304,8 @@ public class Request {
             return "check";
         case OpCode.multi:
             return "multi";
+        case OpCode.multiRead:
+            return "multiRead";
         case OpCode.setData:
             return "setData";
         case OpCode.sync:

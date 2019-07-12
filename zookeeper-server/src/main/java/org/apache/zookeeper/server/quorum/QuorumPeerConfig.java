@@ -94,6 +94,7 @@ public class QuorumPeerConfig {
 
     protected int initLimit;
     protected int syncLimit;
+    protected int connectToLearnerMasterLimit;
     protected int electionAlg = 3;
     protected int electionPort = 2182;
     protected boolean quorumListenOnAllIPs = false;
@@ -306,6 +307,8 @@ public class QuorumPeerConfig {
                 initLimit = Integer.parseInt(value);
             } else if (key.equals("syncLimit")) {
                 syncLimit = Integer.parseInt(value);
+            } else if (key.equals("connectToLearnerMasterLimit")) {
+                connectToLearnerMasterLimit = Integer.parseInt(value);
             } else if (key.equals("electionAlg")) {
                 electionAlg = Integer.parseInt(value);
                 if (electionAlg != 1 && electionAlg != 2 && electionAlg != 3) {
@@ -834,6 +837,7 @@ public class QuorumPeerConfig {
 
     public int getInitLimit() { return initLimit; }
     public int getSyncLimit() { return syncLimit; }
+    public int getConnectToLearnerMasterLimit() { return connectToLearnerMasterLimit; }
     public int getElectionAlg() { return electionAlg; }
     public int getElectionPort() { return electionPort; }
 

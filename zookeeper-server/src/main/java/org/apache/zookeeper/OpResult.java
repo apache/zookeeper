@@ -20,6 +20,9 @@ package org.apache.zookeeper;
 
 import org.apache.zookeeper.data.Stat;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Encodes the result of a single part of a multiple operation commit.
  */
@@ -167,6 +170,75 @@ public abstract class OpResult {
         @Override
         public int hashCode() {
             return getType();
+        }
+    }
+
+    /**
+     * A result from a getChildren operation. Provides a list which contains
+     * the names of the children of a given node.
+     */
+    public static class GetChildrenResult extends OpResult {
+        private List<String> children;
+
+        public GetChildrenResult(List<String> children) {
+            super(ZooDefs.OpCode.getChildren);
+            this.children = children;
+        }
+
+        public List<String> getChildren() {
+            return children;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof GetChildrenResult)) return false;
+
+            GetChildrenResult other = (GetChildrenResult) o;
+            return getType() == other.getType() && children.equals(other.children);
+        }
+
+        @Override
+        public int hashCode() {
+            return getType() * 35 + children.hashCode();
+        }
+    }
+
+    /**
+     * A result from a getData operation. The data is represented as a byte array.
+     */
+    public static class GetDataResult extends OpResult {
+
+        private byte[] data;
+        private Stat stat;
+
+        public GetDataResult(byte[] data, Stat stat) {
+            super(ZooDefs.OpCode.getData);
+            this.data = (data == null ? null : Arrays.copyOf(data, data.length));
+            this.stat = stat;
+        }
+
+        public byte[] getData() {
+            return data == null ? null : Arrays.copyOf(data, data.length);
+        }
+        public Stat getStat() {
+            return stat;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof GetDataResult)) return false;
+
+            GetDataResult other = (GetDataResult) o;
+            return getType() == other.getType()
+                    && stat.equals(other.stat)
+                    && Arrays.equals(data, other.data);
+        }
+
+        @Override
+        public int hashCode() {
+            return (int) (getType() * 35 + stat.getMzxid() + Arrays.hashCode(data));
         }
     }
 

@@ -269,7 +269,7 @@ public class TxnLogToolkit implements Closeable {
     private void printTxn(byte[] bytes, String prefix) throws IOException {
         TxnHeader hdr = new TxnHeader();
         Record txn = SerializeUtils.deserializeTxn(bytes, hdr);
-        String txnStr = getDataStrFromTxn(txn);
+        String txnStr = getFormattedTxnStr(txn);
         String txns = String.format("%s session 0x%s cxid 0x%s zxid 0x%s %s %s",
                 DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.LONG).format(new Date(hdr.getTime())),
                 Long.toHexString(hdr.getClientId()),
@@ -288,31 +288,31 @@ public class TxnLogToolkit implements Closeable {
     }
 
     /**
-     * get transaction log data string with node's data as a string
-     * @param txn
-     * @return
+     * get the formatted string from the txn.
+     * @param txn transaction log data
+     * @return the formatted string
      */
-    private static String getDataStrFromTxn(Record txn) {
+    private static String getFormattedTxnStr(Record txn) throws IOException {
         StringBuilder txnData = new StringBuilder();
         if (txn == null) {
             return txnData.toString();
         }
         if (txn instanceof CreateTxn) {
             CreateTxn createTxn = ((CreateTxn) txn);
-            txnData.append(createTxn.getPath() + "," + new String(createTxn.getData()))
+            txnData.append(createTxn.getPath() + "," + checkNullToEmpty(createTxn.getData()))
                    .append("," + createTxn.getAcl() + "," + createTxn.getEphemeral())
                    .append("," + createTxn.getParentCVersion());
         } else if (txn instanceof SetDataTxn) {
             SetDataTxn setDataTxn = ((SetDataTxn) txn);
-            txnData.append(setDataTxn.getPath() + "," + new String(setDataTxn.getData()))
+            txnData.append(setDataTxn.getPath() + "," + checkNullToEmpty(setDataTxn.getData()))
                    .append("," + setDataTxn.getVersion());
         } else if (txn instanceof CreateContainerTxn) {
             CreateContainerTxn createContainerTxn = ((CreateContainerTxn) txn);
-            txnData.append(createContainerTxn.getPath() + "," + new String(createContainerTxn.getData()))
+            txnData.append(createContainerTxn.getPath() + "," + checkNullToEmpty(createContainerTxn.getData()))
                    .append("," + createContainerTxn.getAcl() + "," + createContainerTxn.getParentCVersion());
         } else if (txn instanceof CreateTTLTxn) {
             CreateTTLTxn createTTLTxn = ((CreateTTLTxn) txn);
-            txnData.append(createTTLTxn.getPath() + "," + new String(createTTLTxn.getData()))
+            txnData.append(createTTLTxn.getPath() + "," + checkNullToEmpty(createTTLTxn.getData()))
                    .append("," + createTTLTxn.getAcl() + "," + createTTLTxn.getParentCVersion())
                    .append("," + createTTLTxn.getTtl());
         } else if (txn instanceof MultiTxn) {
@@ -321,9 +321,9 @@ public class TxnLogToolkit implements Closeable {
             for (int i = 0; i < txnList.size(); i++ ) {
                 Txn t = txnList.get(i);
                 if (i == 0) {
-                    txnData.append(TraceFormatter.op2String(t.getType()) + ":" + new String(t.getData()));
+                    txnData.append(TraceFormatter.op2String(t.getType()) + ":" + checkNullToEmpty(t.getData()));
                 } else {
-                    txnData.append(";" + TraceFormatter.op2String(t.getType()) + ":" + new String(t.getData()));
+                    txnData.append(";" + TraceFormatter.op2String(t.getType()) + ":" + checkNullToEmpty(t.getData()));
                 }
             }
         } else {
@@ -332,7 +332,15 @@ public class TxnLogToolkit implements Closeable {
 
         return txnData.toString();
     }
-    
+
+    private static String checkNullToEmpty(byte[] data) throws IOException {
+        if (data == null || data.length == 0) {
+            return "";
+        }
+
+        return new String(data, "UTF8");
+    }
+
     private void openTxnLogFile() throws FileNotFoundException {
         txnFis = new FileInputStream(txnLogFile);
         logStream = BinaryInputArchive.getArchive(txnFis);

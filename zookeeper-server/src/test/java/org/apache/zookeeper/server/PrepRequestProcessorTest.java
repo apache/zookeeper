@@ -23,7 +23,7 @@ import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
 import org.apache.zookeeper.KeeperException.SessionMovedException;
-import org.apache.zookeeper.MultiTransactionRecord;
+import org.apache.zookeeper.MultiOperationRecord;
 import org.apache.zookeeper.Op;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs.Ids;
@@ -116,7 +116,7 @@ public class PrepRequestProcessorTest extends ClientBase {
         pLatch = new CountDownLatch(1);
         processor = new PrepRequestProcessor(zks, new MyRequestProcessor());
 
-        Record record = new MultiTransactionRecord(ops);
+        Record record = new MultiOperationRecord(ops);
         Request req = createRequest(record, OpCode.multi);
 
         processor.pRequest(req);

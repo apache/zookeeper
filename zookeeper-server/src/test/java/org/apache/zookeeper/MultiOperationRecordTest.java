@@ -28,16 +28,16 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public class MultiTransactionRecordTest extends ZKTestCase {
+public class MultiOperationRecordTest extends ZKTestCase {
     @Test
     public void testRoundTrip() throws IOException {
-        MultiTransactionRecord request = new MultiTransactionRecord();
+        MultiOperationRecord request = new MultiOperationRecord();
         request.add(Op.check("check", 1));
         request.add(Op.create("create", "create data".getBytes(), ZooDefs.Ids.CREATOR_ALL_ACL, ZooDefs.Perms.ALL));
         request.add(Op.delete("delete", 17));
         request.add(Op.setData("setData", "set data".getBytes(), 19));
 
-        MultiTransactionRecord decodedRequest = codeDecode(request);
+        MultiOperationRecord decodedRequest = codeDecode(request);
 
         Assert.assertEquals(request, decodedRequest);
         Assert.assertEquals(request.hashCode(), decodedRequest.hashCode());
@@ -45,14 +45,14 @@ public class MultiTransactionRecordTest extends ZKTestCase {
 
     @Test
     public void testEmptyRoundTrip() throws IOException {
-        MultiTransactionRecord request = new MultiTransactionRecord();
-        MultiTransactionRecord decodedRequest = codeDecode(request);
+        MultiOperationRecord request = new MultiOperationRecord();
+        MultiOperationRecord decodedRequest = codeDecode(request);
 
         Assert.assertEquals(request, decodedRequest);
         Assert.assertEquals(request.hashCode(), decodedRequest.hashCode());
     }
 
-    private MultiTransactionRecord codeDecode(MultiTransactionRecord request) throws IOException {
+    private MultiOperationRecord codeDecode(MultiOperationRecord request) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         BinaryOutputArchive boa = BinaryOutputArchive.getArchive(baos);
         request.serialize(boa, "request");
@@ -61,7 +61,7 @@ public class MultiTransactionRecordTest extends ZKTestCase {
         bb.rewind();
 
         BinaryInputArchive bia = BinaryInputArchive.getArchive(new ByteBufferInputStream(bb));
-        MultiTransactionRecord decodedRequest = new MultiTransactionRecord();
+        MultiOperationRecord decodedRequest = new MultiOperationRecord();
         decodedRequest.deserialize(bia, "request");
         return decodedRequest;
     }
