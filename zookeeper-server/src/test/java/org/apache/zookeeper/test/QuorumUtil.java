@@ -73,6 +73,8 @@ public class QuorumUtil {
     private int initLimit;
 
     private int syncLimit;
+    
+    private int connectToLearnerMasterLimit;
 
     private int electionAlg;
 
@@ -94,6 +96,7 @@ public class QuorumUtil {
             tickTime = 2000;
             initLimit = 3;
             this.syncLimit = syncLimit;
+            connectToLearnerMasterLimit = 3;
             electionAlg = 3;
             hostPort = "";
 
@@ -115,7 +118,7 @@ public class QuorumUtil {
                 PeerStruct ps = peers.get(i);
                 LOG.info("Creating QuorumPeer " + i + "; public port " + ps.clientPort);
                 ps.peer = new QuorumPeer(peersView, ps.dataDir, ps.dataDir, ps.clientPort,
-                        electionAlg, ps.id, tickTime, initLimit, syncLimit);
+                        electionAlg, ps.id, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
                 Assert.assertEquals(ps.clientPort, ps.peer.getClientPort());
             }
         } catch (Exception e) {
@@ -202,7 +205,7 @@ public class QuorumUtil {
         PeerStruct ps = getPeer(id);
         LOG.info("Creating QuorumPeer " + ps.id + "; public port " + ps.clientPort);
         ps.peer = new QuorumPeer(peersView, ps.dataDir, ps.dataDir, ps.clientPort, electionAlg,
-                ps.id, tickTime, initLimit, syncLimit);
+                ps.id, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
         if (localSessionEnabled) {
             ps.peer.enableLocalSessions(true);
         }
@@ -221,7 +224,7 @@ public class QuorumUtil {
         PeerStruct ps = getPeer(id);
         LOG.info("Creating QuorumPeer " + ps.id + "; public port " + ps.clientPort);
         ps.peer = new QuorumPeer(peersView, ps.dataDir, ps.dataDir, ps.clientPort, electionAlg,
-                ps.id, tickTime, initLimit, syncLimit);
+                ps.id, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
         if (localSessionEnabled) {
             ps.peer.enableLocalSessions(true);
         }

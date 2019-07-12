@@ -241,7 +241,7 @@ public class Learner {
     throws IOException {
         sock.connect(addr, timeout);
     }
-
+    
     /**
      * Establish a connection with the LearnerMaster found by findLearnerMaster.
      * Followers only connect to Leaders, Observers can connect to any active LearnerMaster.
@@ -256,41 +256,49 @@ public class Learner {
             throws IOException, InterruptedException, X509Exception {
         this.sock = createSocket();
 
-        int initLimitTime = self.tickTime * self.initLimit;
-        int remainingInitLimitTime;
+        // leader connection timeout defaults to tickTime * initLimit
+        int connectTimeout = self.tickTime * self.initLimit;
+
+        // but if connectToLearnerMasterLimit is specified, use that value to calculate
+        // timeout instead of using the initLimit value
+        if (self.connectToLearnerMasterLimit > 0) {
+          connectTimeout = self.tickTime * self.connectToLearnerMasterLimit;
+        }
+
+        int remainingTimeout;
         long startNanoTime = nanoTime();
 
         for (int tries = 0; tries < 5; tries++) {
             try {
                 // recalculate the init limit time because retries sleep for 1000 milliseconds
-                remainingInitLimitTime = initLimitTime - (int)((nanoTime() - startNanoTime) / 1000000);
-                if (remainingInitLimitTime <= 0) {
-                    LOG.error("initLimit exceeded on retries.");
-                    throw new IOException("initLimit exceeded on retries.");
+                remainingTimeout = connectTimeout - (int)((nanoTime() - startNanoTime) / 1000000);
+                if (remainingTimeout <= 0) {
+                    LOG.error("connectToLeader exceeded on retries.");
+                    throw new IOException("connectToLeader exceeded on retries.");
                 }
-
-                sockConnect(sock, addr, Math.min(self.tickTime * self.syncLimit, remainingInitLimitTime));
+                
+                sockConnect(sock, addr, Math.min(connectTimeout, remainingTimeout));
                 if (self.isSslQuorum())  {
                     ((SSLSocket) sock).startHandshake();
                 }
                 sock.setTcpNoDelay(nodelay);
                 break;
             } catch (IOException e) {
-                remainingInitLimitTime = initLimitTime - (int)((nanoTime() - startNanoTime) / 1000000);
+                remainingTimeout = connectTimeout - (int)((nanoTime() - startNanoTime) / 1000000);
 
-                if (remainingInitLimitTime <= 1000) {
-                    LOG.error("Unexpected exception, initLimit exceeded. tries=" + tries +
-                             ", remaining init limit=" + remainingInitLimitTime +
+                if (remainingTimeout <= 1000) {
+                    LOG.error("Unexpected exception, connectToLeader exceeded. tries=" + tries +
+                             ", remaining init limit=" + remainingTimeout +
                              ", connecting to " + addr,e);
                     throw e;
                 } else if (tries >= 4) {
                     LOG.error("Unexpected exception, retries exceeded. tries=" + tries +
-                             ", remaining init limit=" + remainingInitLimitTime +
+                             ", remaining init limit=" + remainingTimeout +
                              ", connecting to " + addr,e);
                     throw e;
                 } else {
                     LOG.warn("Unexpected exception, tries=" + tries +
-                            ", remaining init limit=" + remainingInitLimitTime +
+                            ", remaining init limit=" + remainingTimeout +
                             ", connecting to " + addr,e);
                     this.sock = createSocket();
                 }

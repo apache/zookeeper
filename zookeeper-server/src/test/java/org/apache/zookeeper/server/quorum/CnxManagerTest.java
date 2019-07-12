@@ -118,7 +118,7 @@ public class CnxManagerTest extends ZKTestCase {
 
         public void run(){
             try {
-                QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[0], peerTmpdir[0], peerClientPort[0], 3, 0, 1000, 2, 2);
+                QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[0], peerTmpdir[0], peerClientPort[0], 3, 0, 1000, 2, 2, 2);
                 QuorumCnxManager cnxManager = peer.createCnxnManager();
                 QuorumCnxManager.Listener listener = cnxManager.listener;
                 if(listener != null){
@@ -162,7 +162,7 @@ public class CnxManagerTest extends ZKTestCase {
 
         thread.start();
 
-        QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[1], peerTmpdir[1], peerClientPort[1], 3, 1, 1000, 2, 2);
+        QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[1], peerTmpdir[1], peerClientPort[1], 3, 1, 1000, 2, 2, 2);
         QuorumCnxManager cnxManager = peer.createCnxnManager();
         QuorumCnxManager.Listener listener = cnxManager.listener;
         if(listener != null){
@@ -209,7 +209,7 @@ public class CnxManagerTest extends ZKTestCase {
                         new InetSocketAddress(deadAddress, PortAssignment.unique())));
         peerTmpdir[2] = ClientBase.createTmpDir();
 
-        QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[1], peerTmpdir[1], peerClientPort[1], 3, 1, 1000, 2, 2);
+        QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[1], peerTmpdir[1], peerClientPort[1], 3, 1, 1000, 2, 2, 2);
         QuorumCnxManager cnxManager = peer.createCnxnManager();
         QuorumCnxManager.Listener listener = cnxManager.listener;
         if(listener != null){
@@ -237,7 +237,7 @@ public class CnxManagerTest extends ZKTestCase {
      */
     @Test
     public void testCnxManagerSpinLock() throws Exception {
-        QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[1], peerTmpdir[1], peerClientPort[1], 3, 1, 1000, 2, 2);
+        QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[1], peerTmpdir[1], peerClientPort[1], 3, 1, 1000, 2, 2, 2);
         QuorumCnxManager cnxManager = peer.createCnxnManager();
         QuorumCnxManager.Listener listener = cnxManager.listener;
         if(listener != null){
@@ -302,7 +302,7 @@ public class CnxManagerTest extends ZKTestCase {
         // the connecting peer (id = 2) is a 3.4.6 observer
         peers.get(2L).type = LearnerType.OBSERVER;
         QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[1], peerTmpdir[1],
-                peerClientPort[1], 3, 1, 1000, 2, 2);
+                peerClientPort[1], 3, 1, 1000, 2, 2, 2);
         QuorumCnxManager cnxManager = peer.createCnxnManager();
         QuorumCnxManager.Listener listener = cnxManager.listener;
         if (listener != null) {
@@ -349,7 +349,7 @@ public class CnxManagerTest extends ZKTestCase {
      */
     @Test
     public void testSocketTimeout() throws Exception {
-        QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[1], peerTmpdir[1], peerClientPort[1], 3, 1, 2000, 2, 2);
+        QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[1], peerTmpdir[1], peerClientPort[1], 3, 1, 2000, 2, 2, 2);
         QuorumCnxManager cnxManager = peer.createCnxnManager();
         QuorumCnxManager.Listener listener = cnxManager.listener;
         if(listener != null){
@@ -434,7 +434,7 @@ public class CnxManagerTest extends ZKTestCase {
         };
 
         QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[0], peerTmpdir[0],
-                peerClientPort[0], 3, 0, 2000, 2, 2) {
+                peerClientPort[0], 3, 0, 2000, 2, 2, 2) {
             @Override
             public QuorumX509Util createX509Util() {
                 return mockedX509Util;
@@ -457,7 +457,7 @@ public class CnxManagerTest extends ZKTestCase {
             for (int sid = 0; sid < 3; sid++) {
                 QuorumPeer peer = new QuorumPeer(peers, peerTmpdir[sid],
                         peerTmpdir[sid], peerClientPort[sid], 3, sid, 1000, 2,
-                        2);
+                        2, 2);
                 LOG.info("Starting peer {}", peer.getId());
                 peer.start();
                 peerList.add(sid, peer);
@@ -477,7 +477,7 @@ public class CnxManagerTest extends ZKTestCase {
                     // Restart halted node and verify count
                     peer = new QuorumPeer(peers, peerTmpdir[myid],
                             peerTmpdir[myid], peerClientPort[myid], 3, myid,
-                            1000, 2, 2);
+                            1000, 2, 2, 2);
                     LOG.info("Round {}, restarting peer ",
                             new Object[] { i, peer.getId() });
                     peer.start();
