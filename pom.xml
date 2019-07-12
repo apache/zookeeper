@@ -736,7 +736,7 @@
         <plugin>
           <groupId>org.owasp</groupId>
           <artifactId>dependency-check-maven</artifactId>
-          <version>4.0.2</version>
+          <version>5.1.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.felix</groupId>
