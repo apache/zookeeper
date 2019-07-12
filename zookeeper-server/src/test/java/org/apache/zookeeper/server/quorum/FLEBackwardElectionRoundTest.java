@@ -106,7 +106,7 @@ public class FLEBackwardElectionRoundTest extends ZKTestCase {
         /*
          * Start server 0
          */
-        QuorumPeer peer = new QuorumPeer(peers, tmpdir[0], tmpdir[0], port[0], 3, 0, 1000, 2, 2);
+        QuorumPeer peer = new QuorumPeer(peers, tmpdir[0], tmpdir[0], port[0], 3, 0, 1000, 2, 2, 2);
         peer.startLeaderElection();
         FLETestUtils.LEThread thread = new FLETestUtils.LEThread(peer, 0);
         thread.start();
@@ -114,7 +114,7 @@ public class FLEBackwardElectionRoundTest extends ZKTestCase {
         /*
          * Start mock server 1
          */
-        QuorumPeer mockPeer = new QuorumPeer(peers, tmpdir[1], tmpdir[1], port[1], 3, 1, 1000, 2, 2);
+        QuorumPeer mockPeer = new QuorumPeer(peers, tmpdir[1], tmpdir[1], port[1], 3, 1, 1000, 2, 2, 2);
         cnxManagers[0] = mockPeer.createCnxnManager();
         cnxManagers[0].listener.start();
 
@@ -123,7 +123,7 @@ public class FLEBackwardElectionRoundTest extends ZKTestCase {
         /*
          * Start mock server 2
          */
-        mockPeer = new QuorumPeer(peers, tmpdir[2], tmpdir[2], port[2], 3, 2, 1000, 2, 2);
+        mockPeer = new QuorumPeer(peers, tmpdir[2], tmpdir[2], port[2], 3, 2, 1000, 2, 2, 2);
         cnxManagers[1] = mockPeer.createCnxnManager();
         cnxManagers[1].listener.start();
 

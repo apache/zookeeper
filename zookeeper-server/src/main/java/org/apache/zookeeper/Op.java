@@ -20,10 +20,13 @@ package org.apache.zookeeper;
 import org.apache.jute.Record;
 import org.apache.zookeeper.common.PathUtils;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.proto.CheckVersionRequest;
 import org.apache.zookeeper.proto.CreateRequest;
 import org.apache.zookeeper.proto.CreateTTLRequest;
 import org.apache.zookeeper.proto.DeleteRequest;
+import org.apache.zookeeper.proto.GetChildrenRequest;
+import org.apache.zookeeper.proto.GetDataRequest;
 import org.apache.zookeeper.proto.SetDataRequest;
 import org.apache.zookeeper.server.EphemeralType;
 
@@ -32,8 +35,8 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Represents a single operation in a multi-operation transaction.  Each operation can be a create, update
- * or delete or can just be a version check.
+ * Represents a single operation in a multi-operation transaction.  Each operation can be a create, update,
+ * delete, a version check or just read operations like getChildren or getData.
  *
  * Sub-classes of Op each represent each detailed type but should not normally be referenced except via
  * the provided factory methods.
@@ -42,15 +45,21 @@ import java.util.List;
  * @see ZooKeeper#create(String, byte[], java.util.List, CreateMode, org.apache.zookeeper.AsyncCallback.StringCallback, Object)
  * @see ZooKeeper#delete(String, int)
  * @see ZooKeeper#setData(String, byte[], int)
+ * @see ZooKeeper#getData(String, boolean, Stat)
+ * @see ZooKeeper#getChildren(String, boolean)
  */
 public abstract class Op {
+
+    public enum OpKind { TRANSACTION, READ }
     private int type;
     private String path;
+    private OpKind opKind;
 
     // prevent untyped construction
-    private Op(int type, String path) {
+    private Op(int type, String path, OpKind opKind) {
         this.type = type;
         this.path = path;
+        this.opKind = opKind;
     }
 
     /**
@@ -185,6 +194,14 @@ public abstract class Op {
         return new Check(path, version);
     }
 
+    public static Op getChildren(String path) {
+        return new GetChildren(path);
+    }
+
+    public static Op getData(String path) {
+        return new GetData(path);
+    }
+
     /**
      * Gets the integer type code for an Op.  This code should be as from ZooDefs.OpCode
      * @see ZooDefs.OpCode
@@ -200,6 +217,14 @@ public abstract class Op {
      */
     public String getPath() {
         return path;
+    }
+
+    /**
+     * Gets the kind of an Op.
+     * @return  The OpKind value.
+     */
+    public OpKind getKind() {
+        return opKind;
     }
 
     /**
@@ -235,7 +260,7 @@ public abstract class Op {
         protected int flags;
 
         private Create(String path, byte[] data, List<ACL> acl, int flags) {
-            super(getOpcode(CreateMode.fromFlag(flags, CreateMode.PERSISTENT)), path);
+            super(getOpcode(CreateMode.fromFlag(flags, CreateMode.PERSISTENT)), path, OpKind.TRANSACTION);
             this.data = data;
             this.acl = acl;
             this.flags = flags;
@@ -249,7 +274,7 @@ public abstract class Op {
         }
 
         private Create(String path, byte[] data, List<ACL> acl, CreateMode createMode) {
-            super(getOpcode(createMode), path);
+            super(getOpcode(createMode), path, OpKind.TRANSACTION);
             this.data = data;
             this.acl = acl;
             this.flags = createMode.toFlag();
@@ -347,7 +372,7 @@ public abstract class Op {
         private int version;
 
         private Delete(String path, int version) {
-            super(ZooDefs.OpCode.delete, path);
+            super(ZooDefs.OpCode.delete, path, OpKind.TRANSACTION);
             this.version = version;
         }
 
@@ -383,7 +408,7 @@ public abstract class Op {
         private int version;
 
         private SetData(String path, byte[] data, int version) {
-            super(ZooDefs.OpCode.setData, path);
+            super(ZooDefs.OpCode.setData, path, OpKind.TRANSACTION);
             this.data = data;
             this.version = version;
         }
@@ -419,7 +444,7 @@ public abstract class Op {
         private int version;
 
         private Check(String path, int version) {
-            super(ZooDefs.OpCode.check, path);
+            super(ZooDefs.OpCode.check, path, OpKind.TRANSACTION);
             this.version = version;
         }
 
@@ -449,4 +474,65 @@ public abstract class Op {
         }
     }
 
+    public static class GetChildren extends Op {
+        GetChildren(String path) {
+            super(ZooDefs.OpCode.getChildren, path, OpKind.READ);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof GetChildren)) return false;
+
+            GetChildren op = (GetChildren) o;
+
+            return getType() == op.getType() && getPath().equals(op.getPath());
+        }
+
+        @Override
+        public int hashCode() {
+            return getType() + getPath().hashCode();
+        }
+
+        @Override
+        public Record toRequestRecord() {
+            return new GetChildrenRequest(getPath(), false);
+        }
+
+        @Override
+        Op withChroot(String path) {
+            return new GetChildren(path);
+        }
+    }
+
+    public static class GetData extends Op {
+        GetData(String path) {
+            super(ZooDefs.OpCode.getData, path, OpKind.READ);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof GetData)) return false;
+
+            GetData op = (GetData) o;
+
+            return getType() == op.getType() && getPath().equals(op.getPath());
+        }
+
+        @Override
+        public int hashCode() {
+            return getType() + getPath().hashCode();
+        }
+
+        @Override
+        public Record toRequestRecord() {
+            return new GetDataRequest(getPath(), false);
+        }
+
+        @Override
+        Op withChroot(String path) {
+            return new GetData(path);
+        }
+    }
 }

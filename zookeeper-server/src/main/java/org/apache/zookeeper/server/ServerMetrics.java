@@ -179,6 +179,11 @@ public final class ServerMetrics {
 
         COMMIT_PROCESS_TIME = metricsContext.getSummary("commit_process_time", DetailLevel.BASIC);
 
+        /**
+         * Observer Master processing metrics.
+         */
+        OM_PROPOSAL_PROCESS_TIME = metricsContext.getSummary("om_proposal_process_time_ms", DetailLevel.ADVANCED);
+        OM_COMMIT_PROCESS_TIME = metricsContext.getSummary("om_commit_process_time_ms", DetailLevel.ADVANCED);
 
         /**
          * Time spent by the final processor. This is tracked in the commit processor.
@@ -215,6 +220,11 @@ public final class ServerMetrics {
         ACK_LATENCY = metricsContext.getSummarySet("ack_latency", DetailLevel.ADVANCED);
         PROPOSAL_COUNT = metricsContext.getCounter("proposal_count");
         QUIT_LEADING_DUE_TO_DISLOYAL_VOTER = metricsContext.getCounter("quit_leading_due_to_disloyal_voter");
+
+        STALE_REQUESTS = metricsContext.getCounter("stale_requests");
+        STALE_REQUESTS_DROPPED = metricsContext.getCounter("stale_requests_dropped");
+        STALE_REPLIES = metricsContext.getCounter("stale_replies");
+        REQUEST_THROTTLE_WAIT_COUNT = metricsContext.getCounter("request_throttle_wait_count");
     }
 
     /**
@@ -382,6 +392,11 @@ public final class ServerMetrics {
 
     public final Summary COMMIT_PROCESS_TIME;
 
+    /**
+     * Observer Master processing metrics.
+     */
+    public final Summary OM_PROPOSAL_PROCESS_TIME;
+    public final Summary OM_COMMIT_PROCESS_TIME;
 
     /**
      * Time spent by the final processor. This is tracked in the commit processor.
@@ -403,6 +418,11 @@ public final class ServerMetrics {
      * Number of client auth requests with no ensemble set in EnsembleAuthenticationProvider.
      */
     public final Counter ENSEMBLE_AUTH_SKIP;
+
+    public final Counter STALE_REQUESTS;
+    public final Counter STALE_REQUESTS_DROPPED;
+    public final Counter STALE_REPLIES;
+    public final Counter REQUEST_THROTTLE_WAIT_COUNT;
 
     private final MetricsProvider metricsProvider;
 

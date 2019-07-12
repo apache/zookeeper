@@ -827,7 +827,10 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         int leader = servers.findLeader();
         Map<Long, Proposal> outstanding =  servers.mt[leader].main.quorumPeer.leader.outstandingProposals;
         // increase the tick time to delay the leader going to looking
+        int previousTick = servers.mt[leader].main.quorumPeer.tickTime;
         servers.mt[leader].main.quorumPeer.tickTime = LEADER_TIMEOUT_MS;
+        // let the previous tick on the leader exhaust itself so the new tick time takes effect
+        Thread.sleep(previousTick);
         LOG.warn("LEADER {}", leader);
 
         for (int i = 0; i < SERVER_COUNT; i++) {

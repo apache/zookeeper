@@ -49,6 +49,7 @@ archives.
     + [Hierarchical quorums](zookeeperHierarchicalQuorums.html)
     + [Observers](zookeeperObservers.html) - non-voting ensemble members that easily improve ZooKeeper's scalability
     + [Dynamic Reconfiguration](zookeeperReconfig.html) - a guide on how to use dynamic reconfiguration in ZooKeeper
+    + [ZooKeeper CLI](zookeeperCLI.html) - a guide on how to use the ZooKeeper command line interface
     + [ZooKeeper Tools](zookeeperTools.html) - a guide on how to use a series of tools for ZooKeeper
 + **Contributors**
     Documents for Developers Contributing to the ZooKeeper Open Source Project

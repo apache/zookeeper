@@ -33,6 +33,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -508,6 +510,20 @@ public class ObserverMaster implements LearnerMaster, Runnable {
 
     int getNumActiveObservers() {
         return activeObservers.size();
+    }
+
+    public Iterable<Map<String, Object>> getActiveObservers() {
+        Set<Map<String,Object>> info = new HashSet<>();
+        for (LearnerHandler lh:activeObservers) {
+            info.add(lh.getLearnerHandlerInfo());
+        }
+        return info;
+    }
+
+    public void resetObserverConnectionStats() {
+        for (LearnerHandler lh:activeObservers) {
+            lh.resetObserverConnectionStats();
+        }
     }
 
     int getPktsSizeLimit() {

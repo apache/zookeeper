@@ -191,6 +191,17 @@
               <timeZone>GMT</timeZone>
             </configuration>
           </execution>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>${project.build.directory}/generated-sources/java</source>
+              </sources>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
       <plugin>
@@ -231,6 +242,7 @@
                 <argument>${project.version}</argument>
                 <argument>${git.commit.id}</argument>
                 <argument>${build.time}</argument>
+                <argument>${project.basedir}/target/generated-sources/java</argument>
               </arguments>
             </configuration>
           </execution>

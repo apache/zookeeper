@@ -204,6 +204,24 @@ public class Leader implements LearnerMaster {
         }
     }
 
+    public Iterable<Map<String, Object>> getObservingLearnersInfo() {
+        Set<Map<String,Object>> info = new HashSet<>();
+        synchronized (observingLearners) {
+            for (LearnerHandler lh: observingLearners) {
+                info.add(lh.getLearnerHandlerInfo());
+            }
+        }
+        return info;
+    }
+
+    public void resetObserverConnectionStats() {
+        synchronized (observingLearners) {
+            for (LearnerHandler lh : observingLearners) {
+                lh.resetObserverConnectionStats();
+            }
+        }
+    }
+
     // Pending sync requests. Must access under 'this' lock.
     private final Map<Long,List<LearnerSyncRequest>> pendingSyncs =
         new HashMap<Long,List<LearnerSyncRequest>>();

@@ -150,16 +150,31 @@ public class NIOServerCnxn extends ServerCnxn {
         requestInterestOpsUpdate();
     }
 
+    /**
+     * When read on socket failed, this is typically because client closed the
+     * connection. In most cases, the client does this when the server doesn't
+     * respond within 2/3 of session timeout. This possibly indicates server
+     * health/performance issue, so we need to log and keep track of stat
+     *
+     * @throws EndOfStreamException
+     */
+    private void handleFailedRead() throws EndOfStreamException {
+        setStale();
+        ServerMetrics.getMetrics().CONNECTION_DROP_COUNT.add(1);
+        throw new EndOfStreamException(
+                "Unable to read additional data from client,"
+                + " it probably closed the socket:"
+                + " address = " + sock.socket().getRemoteSocketAddress() + ","
+                + " session = 0x" + Long.toHexString(sessionId),
+                DisconnectReason.UNABLE_TO_READ_FROM_CLIENT);
+    }
+
     /** Read the request payload (everything following the length prefix) */
     private void readPayload() throws IOException, InterruptedException, ClientCnxnLimitException {
         if (incomingBuffer.remaining() != 0) { // have we read length bytes?
             int rc = sock.read(incomingBuffer); // sock is non-blocking, so ok
             if (rc < 0) {
-                ServerMetrics.getMetrics().CONNECTION_DROP_COUNT.add(1);
-                throw new EndOfStreamException(
-                        "Unable to read additional data from client sessionid 0x"
-                        + Long.toHexString(sessionId)
-                        + ", likely client has closed socket");
+                handleFailedRead();
             }
         }
 
@@ -224,7 +239,8 @@ public class NIOServerCnxn extends ServerCnxn {
             ByteBuffer bb;
             while ((bb = outgoingBuffers.peek()) != null) {
                 if (bb == ServerCnxnFactory.closeConn) {
-                    throw new CloseRequestException("close requested");
+                    throw new CloseRequestException("close requested",
+                        DisconnectReason.CLIENT_CLOSED_CONNECTION);
                 }
                 if (bb == packetSentinel) {
                     packetSent();
@@ -274,7 +290,8 @@ public class NIOServerCnxn extends ServerCnxn {
             // Remove the buffers that we have sent
             while ((bb = outgoingBuffers.peek()) != null) {
                 if (bb == ServerCnxnFactory.closeConn) {
-                    throw new CloseRequestException("close requested");
+                    throw new CloseRequestException("close requested",
+                        DisconnectReason.CLIENT_CLOSED_CONNECTION);
                 }
                 if (bb == packetSentinel) {
                     packetSent();
@@ -315,11 +332,7 @@ public class NIOServerCnxn extends ServerCnxn {
             if (k.isReadable()) {
                 int rc = sock.read(incomingBuffer);
                 if (rc < 0) {
-                    ServerMetrics.getMetrics().CONNECTION_DROP_COUNT.add(1);
-                    throw new EndOfStreamException(
-                            "Unable to read additional data from client sessionid 0x"
-                            + Long.toHexString(sessionId)
-                            + ", likely client has closed socket");
+                    handleFailedRead();
                 }
                 if (incomingBuffer.remaining() == 0) {
                     boolean isPayload;
@@ -345,7 +358,8 @@ public class NIOServerCnxn extends ServerCnxn {
                 handleWrite(k);
 
                 if (!initialized && !getReadInterest() && !getWriteInterest()) {
-                    throw new CloseRequestException("responded to info probe");
+                    throw new CloseRequestException("responded to info probe",
+                        DisconnectReason.INFO_PROBE);
                 }
             }
         } catch (CancelledKeyException e) {
@@ -354,14 +368,14 @@ public class NIOServerCnxn extends ServerCnxn {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("CancelledKeyException stack trace", e);
             }
-            close();
+            close(DisconnectReason.CANCELLED_KEY_EXCEPTION);
         } catch (CloseRequestException e) {
             // expecting close to log session closure
             close();
         } catch (EndOfStreamException e) {
             LOG.warn(e.getMessage());
             // expecting close to log session closure
-            close();
+            close(e.getReason());
         } catch (ClientCnxnLimitException e) {
             // Common case exception, print at debug level
             ServerMetrics.getMetrics().CONNECTION_REJECTED.add(1);
@@ -369,14 +383,14 @@ public class NIOServerCnxn extends ServerCnxn {
                 LOG.debug("Exception causing close of session 0x"
                           + Long.toHexString(sessionId) + ": " + e.getMessage());
             }
-            close();
+            close(DisconnectReason.CLIENT_CNX_LIMIT);
         } catch (IOException e) {
             LOG.warn("Exception causing close of session 0x"
                      + Long.toHexString(sessionId) + ": " + e.getMessage());
             if (LOG.isDebugEnabled()) {
                 LOG.debug("IOException stack trace", e);
             }
-            close();
+            close(DisconnectReason.IO_EXCEPTION);
         }
     }
 
@@ -576,11 +590,17 @@ public class NIOServerCnxn extends ServerCnxn {
                " sessionId: 0x" + Long.toHexString(sessionId);
     }
 
+
     /**
      * Close the cnxn and remove it from the factory cnxns list.
      */
     @Override
-    public void close() {
+    public void close(DisconnectReason reason) {
+        disconnectReason = reason;
+        close();
+    }
+
+    private void close() {
         setStale();
         if (!factory.removeCnxn(this)) {
             return;

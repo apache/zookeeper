@@ -189,6 +189,7 @@ public class QuorumPeerMain {
           quorumPeer.setMaxSessionTimeout(config.getMaxSessionTimeout());
           quorumPeer.setInitLimit(config.getInitLimit());
           quorumPeer.setSyncLimit(config.getSyncLimit());
+          quorumPeer.setConnectToLearnerMasterLimit(config.getConnectToLearnerMasterLimit());
           quorumPeer.setObserverMasterPort(config.getObserverMasterPort());
           quorumPeer.setConfigFileName(config.getConfigFilename());
           quorumPeer.setClientPortListenBacklog(config.getClientPortListenBacklog());

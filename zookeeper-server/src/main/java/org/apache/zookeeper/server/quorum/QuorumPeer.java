@@ -55,6 +55,7 @@ import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
+import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ZKDatabase;
@@ -586,6 +587,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     protected volatile int syncLimit;
     
     /**
+     * The number of ticks that can pass before retrying to connect to learner master
+     */
+    protected volatile int connectToLearnerMasterLimit;
+    
+    /**
      * Enables/Disables sync request processor. This option is enabled
      * by default and is to be used with observers.
      */
@@ -883,8 +889,13 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         quorumStats = new QuorumStats(this);
         jmxRemotePeerBean = new HashMap<Long, RemotePeerBean>();
         adminServer = AdminServerFactory.createAdminServer();
-        x509Util = new QuorumX509Util();
+        x509Util = createX509Util();
         initialize();
+    }
+
+    // VisibleForTesting
+    QuorumX509Util createX509Util() {
+        return new QuorumX509Util();
     }
 
     /**
@@ -893,16 +904,16 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File dataDir,
             File dataLogDir, int electionType,
-            long myid, int tickTime, int initLimit, int syncLimit,
+            long myid, int tickTime, int initLimit, int syncLimit, int connectToLearnerMasterLimit,
             ServerCnxnFactory cnxnFactory) throws IOException {
         this(quorumPeers, dataDir, dataLogDir, electionType, myid, tickTime,
-                initLimit, syncLimit, false, cnxnFactory,
+                initLimit, syncLimit, connectToLearnerMasterLimit, false, cnxnFactory,
                 new QuorumMaj(quorumPeers));
     }
 
     public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File dataDir,
             File dataLogDir, int electionType,
-            long myid, int tickTime, int initLimit, int syncLimit,
+            long myid, int tickTime, int initLimit, int syncLimit, int connectToLearnerMasterLimit,
             boolean quorumListenOnAllIPs,
             ServerCnxnFactory cnxnFactory,
             QuorumVerifier quorumConfig) throws IOException {
@@ -913,6 +924,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         this.tickTime = tickTime;
         this.initLimit = initLimit;
         this.syncLimit = syncLimit;
+        this.connectToLearnerMasterLimit = connectToLearnerMasterLimit;
         this.quorumListenOnAllIPs = quorumListenOnAllIPs;
         this.logFactory = new FileTxnSnapLog(dataLogDir, dataDir);
         this.zkDb = new ZKDatabase(this.logFactory);
@@ -1043,7 +1055,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
       }
       return count;
     }
-
+    
     /**
 
      * This constructor is only used by the existing unit test code.
@@ -1051,10 +1063,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      */
     public QuorumPeer(Map<Long,QuorumServer> quorumPeers, File snapDir,
             File logDir, int clientPort, int electionAlg,
-            long myid, int tickTime, int initLimit, int syncLimit)
+            long myid, int tickTime, int initLimit, int syncLimit, int connectToLearnerMasterLimit)
         throws IOException
     {
-        this(quorumPeers, snapDir, logDir, electionAlg, myid, tickTime, initLimit, syncLimit, false,
+        this(quorumPeers, snapDir, logDir, electionAlg, myid, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, false,
                 ServerCnxnFactory.createFactory(getClientAddress(quorumPeers, myid, clientPort), -1),
                 new QuorumMaj(quorumPeers));
     }
@@ -1065,12 +1077,12 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      */
     public QuorumPeer(Map<Long,QuorumServer> quorumPeers, File snapDir,
             File logDir, int clientPort, int electionAlg,
-            long myid, int tickTime, int initLimit, int syncLimit,
+            long myid, int tickTime, int initLimit, int syncLimit, int connectToLearnerMasterLimit,
             QuorumVerifier quorumConfig)
         throws IOException
     {
         this(quorumPeers, snapDir, logDir, electionAlg,
-                myid,tickTime, initLimit,syncLimit, false,
+                myid,tickTime, initLimit,syncLimit, connectToLearnerMasterLimit, false,
                 ServerCnxnFactory.createFactory(getClientAddress(quorumPeers, myid, clientPort), -1),
                 quorumConfig);
     }
@@ -1779,6 +1791,20 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         this.syncLimit = syncLimit;
     }
     
+    /**
+     * Get the connectToLearnerMasterLimit
+     */
+    public int getConnectToLearnerMasterLimit() {
+        return connectToLearnerMasterLimit;
+    }
+    
+    /**
+     * Set the connectToLearnerMasterLimit
+     */
+    public void setConnectToLearnerMasterLimit(int connectToLearnerMasterLimit) {
+        LOG.info("connectToLearnerMasterLimit set to " + connectToLearnerMasterLimit);
+        this.connectToLearnerMasterLimit = connectToLearnerMasterLimit;
+    }
     
     /**
      * The syncEnabled can also be set via a system property.
@@ -1882,10 +1908,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     public void closeAllConnections() {
         if (cnxnFactory != null) {
-            cnxnFactory.closeAll();
+            cnxnFactory.closeAll(ServerCnxn.DisconnectReason.SERVER_SHUTDOWN);
         }
         if (secureCnxnFactory != null) {
-            secureCnxnFactory.closeAll();
+            secureCnxnFactory.closeAll(ServerCnxn.DisconnectReason.SERVER_SHUTDOWN);
         }
     }
 

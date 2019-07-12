@@ -126,6 +126,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             fwriter.write("tickTime=" + tickTime + "\n");
             fwriter.write("initLimit=10\n");
             fwriter.write("syncLimit=5\n");
+            fwriter.write("connectToLearnerMasterLimit=5\n");
 
             tmpDir = new File(baseDir, "data");
             if (!tmpDir.mkdir()) {
@@ -229,6 +230,7 @@ public class QuorumPeerTestBase extends ZKTestCase implements Watcher {
             fwriter.write("tickTime=4000\n");
             fwriter.write("initLimit=10\n");
             fwriter.write("syncLimit=5\n");
+            fwriter.write("connectToLearnerMasterLimit=5\n");
             if(configs != null){
                 fwriter.write(configs);
             }

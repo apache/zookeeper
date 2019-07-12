@@ -113,7 +113,7 @@ public class EnsembleAuthenticationProvider implements AuthenticationProvider {
          * shutdown.
          */
         ServerMetrics.getMetrics().ENSEMBLE_AUTH_FAIL.add(1);
-        cnxn.close();
+        cnxn.close(ServerCnxn.DisconnectReason.FAILED_HANDSHAKE);
         return KeeperException.Code.BADARGUMENTS;
     }
 
