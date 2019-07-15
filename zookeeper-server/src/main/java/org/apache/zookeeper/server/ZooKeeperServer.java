@@ -115,7 +115,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     private ResponseCache readResponseCache;
     private final AtomicLong hzxid = new AtomicLong(0);
     public final static Exception ok = new Exception("No prob");
-    protected RequestProcessor firstProcessor;
+    public RequestProcessor firstProcessor;
     protected JvmPauseMonitor jvmPauseMonitor;
     protected volatile State state = State.INITIAL;
     private boolean isResponseCachingEnabled = true;

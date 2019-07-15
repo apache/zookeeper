@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.server;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.common.Time;
 import org.slf4j.Logger;
@@ -139,7 +141,7 @@ public class ContainerManager {
 
     // VisibleForTesting
     protected Collection<String> getCandidates() {
-        Set<String> candidates = new HashSet<String>();
+        Set<String> candidates = new LinkedHashSet<>();
         for (String containerPath : zkDb.getDataTree().getContainers()) {
             DataNode node = zkDb.getDataTree().getNode(containerPath);
             /*
@@ -153,6 +155,7 @@ public class ContainerManager {
                 candidates.add(containerPath);
             }
         }
+
         for (String ttlPath : zkDb.getDataTree().getTtls()) {
             DataNode node = zkDb.getDataTree().getNode(ttlPath);
             if (node != null) {
@@ -168,7 +171,71 @@ public class ContainerManager {
                 }
             }
         }
+
+        for (String quotaPath : zkDb.getDataTree().getQuotas()) {
+            DataNode quotaNode = zkDb.getDataTree().getNode(quotaPath);
+            //DataNode realNode = zkDb.getDataTree().getNode(quotaPath.substring(Quotas.quotaZookeeper.length()));
+            // In most cases,there're only two nodes(zookeeper_limits,zookeeper_stats) under the quotaPath.
+            // A BFS search makes the delete smoothly, to avoid manual-operation added nodes.
+            if (quotaNode != null) {
+                List<List<String>> bigList = listSubTreeBFS(quotaPath);
+                // rank from bottom to top
+                Collections.reverse(bigList);
+
+                for (List<String> levelList : bigList) {
+                    for (String path : levelList) {
+                        candidates.add(path);
+                    }
+                }
+            }
+        }
+
         return candidates;
+    }
+
+    /**
+     * list the SubTree under the quotaPath by BFS search.
+     *
+     * @param quotaPath
+     *        c1
+     *      /   \
+     *     c2   c3
+     *    / \   / \
+     *   c4 c5 c6 c7
+     * @return [[c1], [c2, c3], [c4, c5, c6, c7]]
+     */
+    private List<List<String>> listSubTreeBFS(String quotaPath) {
+        List<List<String>> bigList = new ArrayList<>();
+        if (StringUtils.isEmpty(quotaPath)) {
+            return bigList;
+        }
+        Queue<String> queue = new LinkedList<>();
+        queue.offer(quotaPath);
+        int size;
+        while (!queue.isEmpty()) {
+            size = queue.size();
+            List<String> smallList = new ArrayList<>();
+            for (int i = 0; i < size; i++) {
+                String nodePath = queue.poll();
+                smallList.add(nodePath);
+                List<String> children = null;
+                try {
+                    children = zkDb.getDataTree().getChildren(nodePath, null, null);
+                } catch (KeeperException.NoNodeException e) {
+                    e.printStackTrace();
+                }
+                if (children == null || children.size() == 0) {
+                    continue;
+                }
+                for (final String child : children) {
+                    final String childPath = nodePath + "/" + child;
+                    queue.offer(childPath);
+                }
+            }
+            bigList.add(smallList);
+        }
+
+        return bigList;
     }
 
     // VisibleForTesting

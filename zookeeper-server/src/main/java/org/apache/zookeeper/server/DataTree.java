@@ -67,6 +67,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -157,6 +158,10 @@ public class DataTree {
     private final Set<String> ttls =
             Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 
+    // This set contains the quota paths which will be deleted, due to its parasitic path doesn't exist
+    private final Set<String> quotas =
+            Collections.newSetFromMap(new ConcurrentHashMap<>());
+
     private final ReferenceCountedACLCache aclCache = new ReferenceCountedACLCache();
 
     @SuppressWarnings("unchecked")
@@ -178,6 +183,10 @@ public class DataTree {
 
     public Set<String> getTtls() {
         return new HashSet<String>(ttls);
+    }
+
+    public Set<String> getQuotas() {
+        return new HashSet<>(quotas);
     }
 
     public Collection<Long> getSessions() {
@@ -598,9 +607,18 @@ public class DataTree {
             pTrie.deletePath(parentName.substring(quotaZookeeper.length()));
         }
 
+        if (path.startsWith(Quotas.quotaZookeeper + "/") && !(path.endsWith("/" + Quotas.statNode)
+                || path.endsWith("/" + Quotas.limitNode))) {
+            quotas.remove(path);
+        }
+
         // also check to update the quotas for this node
         String lastPrefix = getMaxPrefixWithQuota(path);
         if(lastPrefix != null) {
+            String quotaRealPath = quotaZookeeper + path;
+            if (path.equals(lastPrefix) && getNode(quotaRealPath) != null) {
+                quotas.add(quotaRealPath);
+            }
             // ok we have some match and need to update
             int bytes = 0;
             synchronized (node) {
@@ -1286,6 +1304,10 @@ public class DataTree {
             DataNode node = new DataNode();
             ia.readRecord(node, "node");
             nodes.put(path, node);
+            if (path.startsWith(Quotas.quotaZookeeper + "/") && !(path.endsWith("/" + Quotas.statNode)
+                    || path.endsWith("/" + Quotas.limitNode))) {
+                quotas.add(path);
+            }
             synchronized (node) {
                 aclCache.addUsage(node.acl);
             }
@@ -1327,7 +1349,19 @@ public class DataTree {
         // and also update the stat nodes
         setupQuota();
 
+        setupQuotaPathForDelete();
+
         aclCache.purgeUnused();
+    }
+
+    private void setupQuotaPathForDelete() {
+        Iterator<String> it = quotas.iterator();
+        while (it.hasNext()) {
+            String quotaPath = it.next();
+            if (getNode(quotaPath.substring(Quotas.quotaZookeeper.length())) != null) {
+                it.remove();
+            }
+        }
     }
 
     /**
