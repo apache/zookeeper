@@ -469,6 +469,7 @@ public class Leader {
         zk.registerJMX(new LeaderBean(this, zk), self.jmxLocalPeerBean);
 
         try {
+            self.setZabState(QuorumPeer.ZabState.DISCOVERY);
             self.tick.set(0);
             zk.loadData();
 
@@ -539,6 +540,7 @@ public class Leader {
 
              waitForEpochAck(self.getId(), leaderStateSummary);
              self.setCurrentEpoch(epoch);
+             self.setZabState(QuorumPeer.ZabState.SYNCHRONIZATION);
 
              try {
                  waitForNewLeaderAck(self.getId(), zk.getZxid());
@@ -590,6 +592,7 @@ public class Leader {
                 self.setZooKeeperServer(zk);
             }
 
+            self.setZabState(QuorumPeer.ZabState.BROADCAST);
             self.adminServer.setZooKeeperServer(zk);
 
             // Everything is a go, simply start counting the ticks
