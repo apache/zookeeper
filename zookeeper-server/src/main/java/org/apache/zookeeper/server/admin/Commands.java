@@ -44,6 +44,7 @@ import org.apache.zookeeper.server.quorum.Leader;
 import org.apache.zookeeper.server.quorum.LeaderZooKeeperServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumZooKeeperServer;
+import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -138,6 +139,7 @@ public class Commands {
         registerCommand(new WatchCommand());
         registerCommand(new WatchesByPathCommand());
         registerCommand(new WatchSummaryCommand());
+        registerCommand(new ZabStateCommand());
         registerCommand(new SystemPropertiesCommand());
         registerCommand(new InitialConfigurationCommand());
     }
@@ -613,6 +615,39 @@ public class Commands {
             CommandResponse response = initializeResponse();
             response.putAll(dt.getWatchesSummary().toMap());
             return response;
+        }
+    }
+
+    /**
+     * Returns the current phase of Zab protocol that peer is running.
+     * It can be in one of these phases: ELECTION, DISCOVERY, SYNCHRONIZATION, BROADCAST
+     */
+    public static class ZabStateCommand extends CommandBase {
+        public ZabStateCommand() {
+            super(Arrays.asList("zabstate"), false);
+        }
+
+        @Override
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+            CommandResponse response = initializeResponse();
+            if (zkServer instanceof QuorumZooKeeperServer) {
+                QuorumPeer peer = ((QuorumZooKeeperServer) zkServer).self;
+                QuorumPeer.ZabState zabState = peer.getZabState();
+                QuorumVerifier qv = peer.getQuorumVerifier();
+
+                QuorumPeer.QuorumServer voter = qv.getVotingMembers().get(peer.getId());
+                boolean voting = (
+                        voter != null
+                                && voter.addr.equals(peer.getQuorumAddress())
+                                && voter.electionAddr.equals(peer.getElectionAddress())
+                );
+                response.put("voting", voting);
+                response.put("zabstate", zabState.name().toLowerCase());
+            } else {
+                response.put("voting", false);
+                response.put("zabstate", "");
+            }
+            return response ;
         }
     }
 
