@@ -53,6 +53,7 @@ public class X509TestContext {
     private final String trustStorePassword;
     private File trustStoreJksFile;
     private File trustStorePemFile;
+    private File trustStorePkcs12File;
 
     private final X509KeyType keyStoreKeyType;
     private final KeyPair keyStoreKeyPair;
@@ -61,6 +62,7 @@ public class X509TestContext {
     private final String keyStorePassword;
     private File keyStoreJksFile;
     private File keyStorePemFile;
+    private File keyStorePkcs12File;
 
     private final Boolean hostnameVerification;
 
@@ -116,7 +118,8 @@ public class X509TestContext {
                 nameBuilder.build(),
                 keyStoreKeyPair.getPublic(),
                 keyStoreCertExpirationMillis);
-        trustStorePemFile = trustStoreJksFile = keyStorePemFile = keyStoreJksFile = null;
+        trustStorePkcs12File = trustStorePemFile = trustStoreJksFile = null;
+        keyStorePkcs12File = keyStorePemFile = keyStoreJksFile = null;
 
         this.hostnameVerification = hostnameVerification;
     }
@@ -171,6 +174,8 @@ public class X509TestContext {
                 return getTrustStoreJksFile();
             case PEM:
                 return getTrustStorePemFile();
+            case PKCS12:
+                return getTrustStorePkcs12File();
             default:
                 throw new IllegalArgumentException("Invalid trust store type: " + storeFileType + ", must be one of: " +
                         Arrays.toString(KeyStoreFileType.values()));
@@ -179,22 +184,17 @@ public class X509TestContext {
 
     private File getTrustStoreJksFile() throws IOException {
         if (trustStoreJksFile == null) {
-            try {
-                File trustStoreJksFile = File.createTempFile(
-                        TRUST_STORE_PREFIX, KeyStoreFileType.JKS.getDefaultFileExtension(), tempDir);
-                trustStoreJksFile.deleteOnExit();
-                final FileOutputStream trustStoreOutputStream = new FileOutputStream(trustStoreJksFile);
-                try {
-                    byte[] bytes = X509TestHelpers.certToJavaTrustStoreBytes(trustStoreCertificate, trustStorePassword);
-                    trustStoreOutputStream.write(bytes);
-                    trustStoreOutputStream.flush();
-                } finally {
-                    trustStoreOutputStream.close();
-                }
-                this.trustStoreJksFile = trustStoreJksFile;
+            File trustStoreJksFile = File.createTempFile(
+                TRUST_STORE_PREFIX, KeyStoreFileType.JKS.getDefaultFileExtension(), tempDir);
+            trustStoreJksFile.deleteOnExit();
+            try (final FileOutputStream trustStoreOutputStream = new FileOutputStream(trustStoreJksFile)) {
+                byte[] bytes = X509TestHelpers.certToJavaTrustStoreBytes(trustStoreCertificate, trustStorePassword);
+                trustStoreOutputStream.write(bytes);
+                trustStoreOutputStream.flush();
             } catch (GeneralSecurityException e) {
                 throw new IOException(e);
             }
+            this.trustStoreJksFile = trustStoreJksFile;
         }
         return trustStoreJksFile;
     }
@@ -212,6 +212,23 @@ public class X509TestContext {
             this.trustStorePemFile = trustStorePemFile;
         }
         return trustStorePemFile;
+    }
+
+    private File getTrustStorePkcs12File() throws IOException {
+        if (trustStorePkcs12File == null) {
+            File trustStorePkcs12File = File.createTempFile(
+                TRUST_STORE_PREFIX, KeyStoreFileType.PKCS12.getDefaultFileExtension(), tempDir);
+            trustStorePkcs12File.deleteOnExit();
+            try (final FileOutputStream trustStoreOutputStream = new FileOutputStream(trustStorePkcs12File)) {
+                byte[] bytes = X509TestHelpers.certToPKCS12TrustStoreBytes(trustStoreCertificate, trustStorePassword);
+                trustStoreOutputStream.write(bytes);
+                trustStoreOutputStream.flush();
+            } catch (GeneralSecurityException e) {
+                throw new IOException(e);
+            }
+            this.trustStorePkcs12File = trustStorePkcs12File;
+        }
+        return trustStorePkcs12File;
     }
 
     public X509KeyType getKeyStoreKeyType() {
@@ -251,6 +268,8 @@ public class X509TestContext {
                 return getKeyStoreJksFile();
             case PEM:
                 return getKeyStorePemFile();
+            case PKCS12:
+                return getKeyStorePkcs12File();
             default:
                 throw new IllegalArgumentException("Invalid key store type: " + storeFileType + ", must be one of: " +
                         Arrays.toString(KeyStoreFileType.values()));
@@ -259,23 +278,18 @@ public class X509TestContext {
 
     private File getKeyStoreJksFile() throws IOException {
         if (keyStoreJksFile == null) {
-            try {
-                File keyStoreJksFile = File.createTempFile(
-                        KEY_STORE_PREFIX, KeyStoreFileType.JKS.getDefaultFileExtension(), tempDir);
-                keyStoreJksFile.deleteOnExit();
-                final FileOutputStream keyStoreOutputStream = new FileOutputStream(keyStoreJksFile);
-                try {
-                    byte[] bytes = X509TestHelpers.certAndPrivateKeyToJavaKeyStoreBytes(
-                            keyStoreCertificate, keyStoreKeyPair.getPrivate(), keyStorePassword);
-                    keyStoreOutputStream.write(bytes);
-                    keyStoreOutputStream.flush();
-                } finally {
-                    keyStoreOutputStream.close();
-                }
-                this.keyStoreJksFile = keyStoreJksFile;
+            File keyStoreJksFile = File.createTempFile(
+                KEY_STORE_PREFIX, KeyStoreFileType.JKS.getDefaultFileExtension(), tempDir);
+            keyStoreJksFile.deleteOnExit();
+            try (final FileOutputStream keyStoreOutputStream = new FileOutputStream(keyStoreJksFile)) {
+                byte[] bytes = X509TestHelpers.certAndPrivateKeyToJavaKeyStoreBytes(
+                    keyStoreCertificate, keyStoreKeyPair.getPrivate(), keyStorePassword);
+                keyStoreOutputStream.write(bytes);
+                keyStoreOutputStream.flush();
             } catch (GeneralSecurityException e) {
                 throw new IOException(e);
             }
+            this.keyStoreJksFile = keyStoreJksFile;
         }
         return keyStoreJksFile;
     }
@@ -298,6 +312,24 @@ public class X509TestContext {
             }
         }
         return keyStorePemFile;
+    }
+
+    private File getKeyStorePkcs12File() throws IOException {
+        if (keyStorePkcs12File == null) {
+            File keyStorePkcs12File = File.createTempFile(
+                KEY_STORE_PREFIX, KeyStoreFileType.PKCS12.getDefaultFileExtension(), tempDir);
+            keyStorePkcs12File.deleteOnExit();
+            try (final FileOutputStream keyStoreOutputStream = new FileOutputStream(keyStorePkcs12File)) {
+                byte[] bytes = X509TestHelpers.certAndPrivateKeyToPKCS12Bytes(
+                    keyStoreCertificate, keyStoreKeyPair.getPrivate(), keyStorePassword);
+                keyStoreOutputStream.write(bytes);
+                keyStoreOutputStream.flush();
+            } catch (GeneralSecurityException e) {
+                throw new IOException(e);
+            }
+            this.keyStorePkcs12File = keyStorePkcs12File;
+        }
+        return keyStorePkcs12File;
     }
 
     /**

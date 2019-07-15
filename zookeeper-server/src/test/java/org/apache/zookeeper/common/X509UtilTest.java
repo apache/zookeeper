@@ -377,6 +377,100 @@ public class X509UtilTest extends BaseX509ParameterizedTestCase {
     }
 
     @Test
+    public void testLoadPKCS12KeyStore() throws Exception {
+        // Make sure we can instantiate a key manager from the PKCS12 file on disk
+        X509KeyManager km = X509Util.createKeyManager(
+            x509TestContext.getKeyStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath(),
+            x509TestContext.getKeyStorePassword(),
+            KeyStoreFileType.PKCS12.getPropertyValue());
+    }
+
+    @Test
+    public void testLoadPKCS12KeyStoreNullPassword() throws Exception {
+        if (!x509TestContext.getKeyStorePassword().isEmpty()) {
+            return;
+        }
+        // Make sure that empty password and null password are treated the same
+        X509KeyManager km = X509Util.createKeyManager(
+            x509TestContext.getKeyStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath(),
+            null,
+            KeyStoreFileType.PKCS12.getPropertyValue());
+    }
+
+    @Test
+    public void testLoadPKCS12KeyStoreAutodetectStoreFileType() throws Exception {
+        // Make sure we can instantiate a key manager from the PKCS12 file on disk
+        X509KeyManager km = X509Util.createKeyManager(
+            x509TestContext.getKeyStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath(),
+            x509TestContext.getKeyStorePassword(),
+            null /* null StoreFileType means 'autodetect from file extension' */);
+    }
+
+    @Test(expected = X509Exception.KeyManagerException.class)
+    public void testLoadPKCS12KeyStoreWithWrongPassword() throws Exception {
+        // Attempting to load with the wrong key password should fail
+        X509KeyManager km = X509Util.createKeyManager(
+            x509TestContext.getKeyStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath(),
+            "wrong password",
+            KeyStoreFileType.PKCS12.getPropertyValue());
+    }
+
+    @Test
+    public void testLoadPKCS12TrustStore() throws Exception {
+        // Make sure we can instantiate a trust manager from the PKCS12 file on disk
+        X509TrustManager tm = X509Util.createTrustManager(
+            x509TestContext.getTrustStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath(),
+            x509TestContext.getTrustStorePassword(),
+            KeyStoreFileType.PKCS12.getPropertyValue(),
+            true,
+            true,
+            true,
+            true);
+    }
+
+    @Test
+    public void testLoadPKCS12TrustStoreNullPassword() throws Exception {
+        if (!x509TestContext.getTrustStorePassword().isEmpty()) {
+            return;
+        }
+        // Make sure that empty password and null password are treated the same
+        X509TrustManager tm = X509Util.createTrustManager(
+            x509TestContext.getTrustStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath(),
+            null,
+            KeyStoreFileType.PKCS12.getPropertyValue(),
+            false,
+            false,
+            true,
+            true);
+    }
+
+    @Test
+    public void testLoadPKCS12TrustStoreAutodetectStoreFileType() throws Exception {
+        // Make sure we can instantiate a trust manager from the PKCS12 file on disk
+        X509TrustManager tm = X509Util.createTrustManager(
+            x509TestContext.getTrustStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath(),
+            x509TestContext.getTrustStorePassword(),
+            null,  // null StoreFileType means 'autodetect from file extension'
+            true,
+            true,
+            true,
+            true);
+    }
+
+    @Test(expected = X509Exception.TrustManagerException.class)
+    public void testLoadPKCS12TrustStoreWithWrongPassword() throws Exception {
+        // Attempting to load with the wrong key password should fail
+        X509TrustManager tm = X509Util.createTrustManager(
+            x509TestContext.getTrustStoreFile(KeyStoreFileType.PKCS12).getAbsolutePath(),
+            "wrong password",
+            KeyStoreFileType.PKCS12.getPropertyValue(),
+            true,
+            true,
+            true,
+            true);
+    }
+
+    @Test
     public void testGetSslHandshakeDetectionTimeoutMillisProperty() {
         Assert.assertEquals(
                 X509Util.DEFAULT_HANDSHAKE_DETECTION_TIMEOUT_MILLIS,
