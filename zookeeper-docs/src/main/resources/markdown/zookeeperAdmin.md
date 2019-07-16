@@ -124,9 +124,9 @@ is no full support.
 
 #### Required Software
 
-ZooKeeper runs in Java, release 1.7 or greater (JDK 7 or
-greater, FreeBSD support requires openjdk7).  It runs as an
-_ensemble_ of ZooKeeper servers. Three
+ZooKeeper runs in Java, release 1.8 or greater 
+(JDK 8 LTS, JDK 11 LTS, JDK 12 - Java 9 and 10 are not supported). 
+It runs as an _ensemble_ of ZooKeeper servers. Three
 ZooKeeper servers is the minimum recommended size for an
 ensemble, and we also recommend that they run on separate
 machines. At Yahoo!, ZooKeeper is usually deployed on
