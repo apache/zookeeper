@@ -17,7 +17,7 @@
  */
 package org.apache.zookeeper.cli;
 
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.cli.*;
 import org.apache.zookeeper.*;
@@ -65,13 +65,17 @@ public class SetQuotaCommand extends CliCommand {
     public boolean exec() throws CliException {
         // get the args
         String path = args[1];
+        if (path.startsWith(Quotas.quotaZookeeper)) {
+            err.println("cannot set a quota under the path: " + Quotas.quotaZookeeper);
+            return false;
+        }
 
         if (cl.hasOption("b")) {
             // we are setting the bytes quota
             long bytes = Long.parseLong(cl.getOptionValue("b"));
             try {
                 createQuota(zk, path, bytes, -1);
-            } catch (KeeperException|IOException|InterruptedException ex) {
+            } catch (KeeperException|InterruptedException|IllegalArgumentException ex) {
                 throw new CliWrapperException(ex);
             }
         } else if (cl.hasOption("n")) {
@@ -79,7 +83,7 @@ public class SetQuotaCommand extends CliCommand {
             int numNodes = Integer.parseInt(cl.getOptionValue("n"));
             try {
                 createQuota(zk, path, -1L, numNodes);
-            } catch (KeeperException|IOException|InterruptedException ex) {
+            } catch (KeeperException|InterruptedException|IllegalArgumentException ex) {
                 throw new CliWrapperException(ex);
             }
         } else {
@@ -91,7 +95,7 @@ public class SetQuotaCommand extends CliCommand {
 
     public static boolean createQuota(ZooKeeper zk, String path,
             long bytes, int numNodes)
-            throws KeeperException, IOException, InterruptedException, MalformedPathException {
+            throws KeeperException, InterruptedException, IllegalArgumentException, MalformedPathException {
         // check if the path exists. We cannot create
         // quota for a path that already exists in zookeeper
         // for now.
@@ -113,18 +117,9 @@ public class SetQuotaCommand extends CliCommand {
         // are not the children then this path
         // is an ancestor of some path that
         // already has quota
-        String realPath = Quotas.quotaZookeeper + path;
-        try {
-            List<String> children = zk.getChildren(realPath, false);
-            for (String child : children) {
-                if (!child.startsWith("zookeeper_")) {
-                    throw new IllegalArgumentException(path + " has child "
-                            + child + " which has a quota");
-                }
-            }
-        } catch (KeeperException.NoNodeException ne) {
-            // this is fine
-        }
+
+        //check if the child node has a quota.
+        checkIfChildQuota(zk, path);
 
         //check for any parent that has been quota
         checkIfParentQuota(zk, path);
@@ -184,6 +179,40 @@ public class SetQuotaCommand extends CliCommand {
         return true;
     }
 
+    private static void checkIfChildQuota(ZooKeeper zk, String path) throws KeeperException, InterruptedException {
+        String realPath = Quotas.quotaZookeeper + path;
+
+        try {
+            ZKUtil.visitSubTreeDFS(zk, realPath, false, new AsyncCallback.StringCallback() {
+
+                @Override
+                public void processResult(int rc, String quotaPath, Object ctx, String name) {
+                    List<String> children = new ArrayList<>();
+                    try {
+                        children = zk.getChildren(quotaPath, false);
+                    } catch (KeeperException.NoNodeException ne) {
+                        LOG.debug("child removed during quota check", ne);
+                        return;
+                    } catch (InterruptedException | KeeperException e) {
+                        e.printStackTrace();
+                    }
+
+                    if (children.size() == 0) {
+                        return;
+                    }
+                    for (String child : children) {
+                        if (!quotaPath.equals(Quotas.quotaZookeeper + path) && Quotas.limitNode.equals(child)) {
+                            throw new IllegalArgumentException(path + " has a child "
+                                    + quotaPath.substring(Quotas.quotaZookeeper.length()) + " which has a quota");
+                        }
+                    }
+                }
+            });
+        } catch (KeeperException.NoNodeException ne) {
+            // this is fine
+        }
+    }
+
     private static void checkIfParentQuota(ZooKeeper zk, String path)
             throws InterruptedException, KeeperException {
         final String[] splits = path.split("/");
@@ -206,9 +235,9 @@ public class SetQuotaCommand extends CliCommand {
                 return;
             }
             for (String child : children) {
-                if (Quotas.limitNode.equals(child)) {
+                if (!quotaPath.equals(Quotas.quotaZookeeper + path) && Quotas.limitNode.equals(child)) {
                     throw new IllegalArgumentException(path + " has a parent "
-                            + quotaPath + " which has a quota");
+                            + quotaPath.substring(Quotas.quotaZookeeper.length()) + " which has a quota");
                 }
             }
         }
