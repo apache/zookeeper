@@ -28,6 +28,9 @@ limitations under the License.
     * [Developer Guidelines](#sc_developerGuidelines)
         * [Logging at the Right Level](#sc_rightLevel)
         * [Use of Standard slf4j Idioms](#sc_slf4jIdioms)
+* [Code Formatting](#sc_formatting)
+    * [IDEs](#sc_ides)
+        * [IDEA](#sc_IDEA)
 
 <a name="ch_Introduction"></a>
 
@@ -368,3 +371,17 @@ _Exception handling_
 
         // continue process here as you need... recover or (re)throw
     }
+
+<a name="sc_formatting"></a>
+
+## Code Formatting
+The ZooKeeper code formatting adopts the **google_checks.xml**, but a subset of it for some reality.
+Look at the **checkstyle.xml** file in the project to know the small proportion of rules that have been cut off.
+
+<a name="sc_ides"></a>
+### IDEs
+
+<a name="sc_IDEA"></a>
+#### IDEA
+Go to download the Plugins: **checkstyle-IDEA** and **google-java-format** (which allows users to
+format codes with the keyboard shortcut: **Ctrl + Alt + L**).

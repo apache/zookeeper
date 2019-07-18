@@ -20,13 +20,12 @@ package org.apache.zookeeper.admin;
 
 import java.io.IOException;
 import java.util.List;
-
 import org.apache.yetus.audience.InterfaceAudience;
-import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.AsyncCallback.DataCallback;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.StringUtils;
 import org.apache.zookeeper.data.Stat;
@@ -35,7 +34,6 @@ import org.apache.zookeeper.proto.ReconfigRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
 import org.apache.zookeeper.server.DataTree;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,203 +50,209 @@ import org.slf4j.LoggerFactory;
 @SuppressWarnings("try")
 @InterfaceAudience.Public
 public class ZooKeeperAdmin extends ZooKeeper {
-    private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperAdmin.class);
 
-    /**
-     * Create a ZooKeeperAdmin object which is used to perform dynamic reconfiguration
-     * operations.
-     *
-     * @param connectString
-     *            comma separated host:port pairs, each corresponding to a zk
-     *            server. e.g. "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002" If
-     *            the optional chroot suffix is used the example would look
-     *            like: "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002/app/a"
-     *            where the client would be rooted at "/app/a" and all paths
-     *            would be relative to this root - ie getting/setting/etc...
-     *            "/foo/bar" would result in operations being run on
-     *            "/app/a/foo/bar" (from the server perspective).
-     * @param sessionTimeout
-     *            session timeout in milliseconds
-     * @param watcher
-     *            a watcher object which will be notified of state changes, may
-     *            also be notified for node events
-     *
-     * @throws IOException
-     *             in cases of network failure
-     * @throws IllegalArgumentException
-     *             if an invalid chroot path is specified
-     *
-     * @see ZooKeeper#ZooKeeper(String, int, Watcher)
-     *
-     */
-    public ZooKeeperAdmin(String connectString, int sessionTimeout, Watcher watcher)
-        throws IOException {
-        super(connectString, sessionTimeout, watcher);
-    }
+  private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperAdmin.class);
 
-    /**
-     * Create a ZooKeeperAdmin object which is used to perform dynamic reconfiguration
-     * operations.
-     *
-     * @param connectString
-     *            comma separated host:port pairs, each corresponding to a zk
-     *            server. e.g. "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002" If
-     *            the optional chroot suffix is used the example would look
-     *            like: "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002/app/a"
-     *            where the client would be rooted at "/app/a" and all paths
-     *            would be relative to this root - ie getting/setting/etc...
-     *            "/foo/bar" would result in operations being run on
-     *            "/app/a/foo/bar" (from the server perspective).
-     * @param sessionTimeout
-     *            session timeout in milliseconds
-     * @param watcher
-     *            a watcher object which will be notified of state changes, may
-     *            also be notified for node events
-     * @param conf
-     *            passing this conf object gives each client the flexibility of
-     *            configuring properties differently compared to other instances
-     *
-     * @throws IOException
-     *             in cases of network failure
-     * @throws IllegalArgumentException
-     *             if an invalid chroot path is specified
-     *
-     * @see ZooKeeper#ZooKeeper(String, int, Watcher, ZKClientConfig)
-     */
-    public ZooKeeperAdmin(String connectString, int sessionTimeout, Watcher watcher,
-            ZKClientConfig conf) throws IOException {
-        super(connectString, sessionTimeout, watcher, conf);
-    }
+  /**
+   * Create a ZooKeeperAdmin object which is used to perform dynamic reconfiguration
+   * operations.
+   *
+   * @param connectString
+   *            comma separated host:port pairs, each corresponding to a zk
+   *            server. e.g. "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002" If
+   *            the optional chroot suffix is used the example would look
+   *            like: "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002/app/a"
+   *            where the client would be rooted at "/app/a" and all paths
+   *            would be relative to this root - ie getting/setting/etc...
+   *            "/foo/bar" would result in operations being run on
+   *            "/app/a/foo/bar" (from the server perspective).
+   * @param sessionTimeout
+   *            session timeout in milliseconds
+   * @param watcher
+   *            a watcher object which will be notified of state changes, may
+   *            also be notified for node events
+   *
+   * @throws IOException
+   *             in cases of network failure
+   * @throws IllegalArgumentException
+   *             if an invalid chroot path is specified
+   *
+   * @see ZooKeeper#ZooKeeper(String, int, Watcher)
+   *
+   */
+  public ZooKeeperAdmin(String connectString, int sessionTimeout, Watcher watcher)
+      throws IOException {
+    super(connectString, sessionTimeout, watcher);
+  }
 
-    /**
-     * Create a ZooKeeperAdmin object which is used to perform dynamic reconfiguration
-     * operations.
-     *
-     * @param connectString
-     *            comma separated host:port pairs, each corresponding to a zk
-     *            server. e.g. "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002" If
-     *            the optional chroot suffix is used the example would look
-     *            like: "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002/app/a"
-     *            where the client would be rooted at "/app/a" and all paths
-     *            would be relative to this root - ie getting/setting/etc...
-     *            "/foo/bar" would result in operations being run on
-     *            "/app/a/foo/bar" (from the server perspective).
-     * @param sessionTimeout
-     *            session timeout in milliseconds
-     * @param watcher
-     *            a watcher object which will be notified of state changes, may
-     *            also be notified for node events
-     * @param canBeReadOnly
-     *            whether the created client is allowed to go to
-     *            read-only mode in case of partitioning. Read-only mode
-     *            basically means that if the client can't find any majority
-     *            servers but there's partitioned server it could reach, it
-     *            connects to one in read-only mode, i.e. read requests are
-     *            allowed while write requests are not. It continues seeking for
-     *            majority in the background.
-     *
-     * @throws IOException
-     *             in cases of network failure
-     * @throws IllegalArgumentException
-     *             if an invalid chroot path is specified
-     *
-     * @see ZooKeeper#ZooKeeper(String, int, Watcher, boolean)
-     */
-    public ZooKeeperAdmin(String connectString, int sessionTimeout, Watcher watcher,
-                     boolean canBeReadOnly) throws IOException {
-        super(connectString, sessionTimeout, watcher, canBeReadOnly);
-    }
+  /**
+   * Create a ZooKeeperAdmin object which is used to perform dynamic reconfiguration
+   * operations.
+   *
+   * @param connectString
+   *            comma separated host:port pairs, each corresponding to a zk
+   *            server. e.g. "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002" If
+   *            the optional chroot suffix is used the example would look
+   *            like: "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002/app/a"
+   *            where the client would be rooted at "/app/a" and all paths
+   *            would be relative to this root - ie getting/setting/etc...
+   *            "/foo/bar" would result in operations being run on
+   *            "/app/a/foo/bar" (from the server perspective).
+   * @param sessionTimeout
+   *            session timeout in milliseconds
+   * @param watcher
+   *            a watcher object which will be notified of state changes, may
+   *            also be notified for node events
+   * @param conf
+   *            passing this conf object gives each client the flexibility of
+   *            configuring properties differently compared to other instances
+   *
+   * @throws IOException
+   *             in cases of network failure
+   * @throws IllegalArgumentException
+   *             if an invalid chroot path is specified
+   *
+   * @see ZooKeeper#ZooKeeper(String, int, Watcher, ZKClientConfig)
+   */
+  public ZooKeeperAdmin(String connectString, int sessionTimeout, Watcher watcher,
+      ZKClientConfig conf) throws IOException {
+    super(connectString, sessionTimeout, watcher, conf);
+  }
 
-    /**
-     * Reconfigure - add/remove servers. Return the new configuration.
-     * @param joiningServers
-     *                a comma separated list of servers being added (incremental reconfiguration)
-     * @param leavingServers
-     *                a comma separated list of servers being removed (incremental reconfiguration)
-     * @param newMembers
-     *                a comma separated list of new membership (non-incremental reconfiguration)
-     * @param fromConfig
-     *                version of the current configuration
-     *                (optional - causes reconfiguration to throw an exception if configuration is no longer current)
-     * @param stat the stat of /zookeeper/config znode will be copied to this
-     *             parameter if not null.
-     * @return new configuration
-     * @throws InterruptedException If the server transaction is interrupted.
-     * @throws KeeperException If the server signals an error with a non-zero error code.
-     */
-    public byte[] reconfigure(String joiningServers, String leavingServers,
-                              String newMembers, long fromConfig, Stat stat) throws KeeperException, InterruptedException {
-        RequestHeader h = new RequestHeader();
-        h.setType(ZooDefs.OpCode.reconfig);
-        ReconfigRequest request = new ReconfigRequest(joiningServers, leavingServers, newMembers, fromConfig);
-        GetDataResponse response = new GetDataResponse();
-        ReplyHeader r = cnxn.submitRequest(h, request, response, null);
-        if (r.getErr() != 0) {
-            throw KeeperException.create(KeeperException.Code.get(r.getErr()), "");
-        }
-        if (stat != null) {
-            DataTree.copyStat(response.getStat(), stat);
-        }
-        return response.getData();
-    }
+  /**
+   * Create a ZooKeeperAdmin object which is used to perform dynamic reconfiguration
+   * operations.
+   *
+   * @param connectString
+   *            comma separated host:port pairs, each corresponding to a zk
+   *            server. e.g. "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002" If
+   *            the optional chroot suffix is used the example would look
+   *            like: "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002/app/a"
+   *            where the client would be rooted at "/app/a" and all paths
+   *            would be relative to this root - ie getting/setting/etc...
+   *            "/foo/bar" would result in operations being run on
+   *            "/app/a/foo/bar" (from the server perspective).
+   * @param sessionTimeout
+   *            session timeout in milliseconds
+   * @param watcher
+   *            a watcher object which will be notified of state changes, may
+   *            also be notified for node events
+   * @param canBeReadOnly
+   *            whether the created client is allowed to go to
+   *            read-only mode in case of partitioning. Read-only mode
+   *            basically means that if the client can't find any majority
+   *            servers but there's partitioned server it could reach, it
+   *            connects to one in read-only mode, i.e. read requests are
+   *            allowed while write requests are not. It continues seeking for
+   *            majority in the background.
+   *
+   * @throws IOException
+   *             in cases of network failure
+   * @throws IllegalArgumentException
+   *             if an invalid chroot path is specified
+   *
+   * @see ZooKeeper#ZooKeeper(String, int, Watcher, boolean)
+   */
+  public ZooKeeperAdmin(String connectString, int sessionTimeout, Watcher watcher,
+      boolean canBeReadOnly) throws IOException {
+    super(connectString, sessionTimeout, watcher, canBeReadOnly);
+  }
 
-    /**
-     * Convenience wrapper around reconfig that takes Lists of strings instead of comma-separated servers.
-     *
-     * @see #reconfigure
-     *
-     */
-    public byte[] reconfigure(List<String> joiningServers, List<String> leavingServers,
-                              List<String> newMembers, long fromConfig,
-                              Stat stat) throws KeeperException, InterruptedException {
-        return reconfigure(StringUtils.joinStrings(joiningServers, ","),
-                        StringUtils.joinStrings(leavingServers, ","),
-                        StringUtils.joinStrings(newMembers, ","),
-                        fromConfig, stat);
+  /**
+   * Reconfigure - add/remove servers. Return the new configuration.
+   * @param joiningServers
+   *                a comma separated list of servers being added (incremental reconfiguration)
+   * @param leavingServers
+   *                a comma separated list of servers being removed (incremental reconfiguration)
+   * @param newMembers
+   *                a comma separated list of new membership (non-incremental reconfiguration)
+   * @param fromConfig
+   *                version of the current configuration
+   *                (optional - causes reconfiguration to throw an exception
+   *                if configuration is no longer current)
+   * @param stat the stat of /zookeeper/config znode will be copied to this
+   *             parameter if not null.
+   * @return new configuration
+   * @throws InterruptedException If the server transaction is interrupted.
+   * @throws KeeperException If the server signals an error with a non-zero error code.
+   */
+  public byte[] reconfigure(String joiningServers, String leavingServers,
+      String newMembers, long fromConfig, Stat stat) throws KeeperException, InterruptedException {
+    RequestHeader h = new RequestHeader();
+    h.setType(ZooDefs.OpCode.reconfig);
+    ReconfigRequest request = new ReconfigRequest(joiningServers, leavingServers, newMembers,
+        fromConfig);
+    GetDataResponse response = new GetDataResponse();
+    ReplyHeader r = cnxn.submitRequest(h, request, response, null);
+    if (r.getErr() != 0) {
+      throw KeeperException.create(KeeperException.Code.get(r.getErr()), "");
     }
+    if (stat != null) {
+      DataTree.copyStat(response.getStat(), stat);
+    }
+    return response.getData();
+  }
 
-    /**
-     * The Asynchronous version of reconfig.
-     *
-     * @see #reconfigure
-     *
-     **/
-    public void reconfigure(String joiningServers, String leavingServers,
-                            String newMembers, long fromConfig, DataCallback cb, Object ctx) {
-        RequestHeader h = new RequestHeader();
-        h.setType(ZooDefs.OpCode.reconfig);
-        ReconfigRequest request = new ReconfigRequest(joiningServers, leavingServers, newMembers, fromConfig);
-        GetDataResponse response = new GetDataResponse();
-        cnxn.queuePacket(h, new ReplyHeader(), request, response, cb,
-               ZooDefs.CONFIG_NODE, ZooDefs.CONFIG_NODE, ctx, null);
-    }
+  /**
+   * Convenience wrapper around reconfig that takes Lists of strings
+   * instead of comma-separated servers.
+   *
+   * @see #reconfigure
+   *
+   */
+  public byte[] reconfigure(List<String> joiningServers, List<String> leavingServers,
+      List<String> newMembers, long fromConfig,
+      Stat stat) throws KeeperException, InterruptedException {
+    return reconfigure(StringUtils.joinStrings(joiningServers, ","),
+        StringUtils.joinStrings(leavingServers, ","),
+        StringUtils.joinStrings(newMembers, ","),
+        fromConfig, stat);
+  }
 
-    /**
-     * Convenience wrapper around asynchronous reconfig that takes Lists of strings instead of comma-separated servers.
-     *
-     * @see #reconfigure
-     *
-     */
-    public void reconfigure(List<String> joiningServers,
-                            List<String> leavingServers, List<String> newMembers, long fromConfig,
-                            DataCallback cb, Object ctx) {
-        reconfigure(StringUtils.joinStrings(joiningServers, ","),
-                 StringUtils.joinStrings(leavingServers, ","),
-                 StringUtils.joinStrings(newMembers, ","),
-                 fromConfig, cb, ctx);
-    }
+  /**
+   * The Asynchronous version of reconfig.
+   *
+   * @see #reconfigure
+   *
+   **/
+  public void reconfigure(String joiningServers, String leavingServers,
+      String newMembers, long fromConfig, DataCallback cb, Object ctx) {
+    RequestHeader h = new RequestHeader();
+    h.setType(ZooDefs.OpCode.reconfig);
+    ReconfigRequest request = new ReconfigRequest(joiningServers, leavingServers, newMembers,
+        fromConfig);
+    GetDataResponse response = new GetDataResponse();
+    cnxn.queuePacket(h, new ReplyHeader(), request, response, cb,
+        ZooDefs.CONFIG_NODE, ZooDefs.CONFIG_NODE, ctx, null);
+  }
 
-    /**
-     * String representation of this ZooKeeperAdmin client. Suitable for things
-     * like logging.
-     *
-     * Do NOT count on the format of this string, it may change without
-     * warning.
-     *
-     * @since 3.5.3
-     */
-    @Override
-    public String toString() {
-        return super.toString();
-    }
+  /**
+   * Convenience wrapper around asynchronous reconfig that takes Lists of strings
+   * instead of comma-separated servers.
+   *
+   * @see #reconfigure
+   *
+   */
+  public void reconfigure(List<String> joiningServers,
+      List<String> leavingServers, List<String> newMembers, long fromConfig,
+      DataCallback cb, Object ctx) {
+    reconfigure(StringUtils.joinStrings(joiningServers, ","),
+        StringUtils.joinStrings(leavingServers, ","),
+        StringUtils.joinStrings(newMembers, ","),
+        fromConfig, cb, ctx);
+  }
+
+  /**
+   * String representation of this ZooKeeperAdmin client. Suitable for things
+   * like logging.
+   *
+   * <p>Do NOT count on the format of this string, it may change without
+   * warning.
+   *
+   * @since 3.5.3
+   */
+  @Override
+  public String toString() {
+    return super.toString();
+  }
 }

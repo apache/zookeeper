@@ -290,7 +290,7 @@
     <commons-lang.version>2.6</commons-lang.version>
     <dropwizard.version>3.2.5</dropwizard.version>
     <spotbugsannotations.version>3.1.9</spotbugsannotations.version>
-    <checkstyle.version>8.17</checkstyle.version>
+    <checkstyle.version>8.22</checkstyle.version>
   </properties>
 
   <dependencyManagement>
@@ -582,19 +582,20 @@
               <version>${checkstyle.version}</version>
             </dependency>
           </dependencies>
-          <configuration>
-            <configLocation>checkstyle.xml</configLocation>
-            <suppressionsLocation>checkstyleSuppressions.xml</suppressionsLocation>
-            <encoding>UTF-8</encoding>
-            <consoleOutput>true</consoleOutput>
-            <failOnViolation>true</failOnViolation>
-            <includeResources>false</includeResources>
-            <includeTestSourceDirectory>true</includeTestSourceDirectory>
-          </configuration>
           <executions>
             <execution>
               <id>checkstyle</id>
               <phase>validate</phase>
+              <configuration>
+                <configLocation>checkstyle.xml</configLocation>
+                <suppressionsLocation>checkstyleSuppressions.xml</suppressionsLocation>
+                <encoding>UTF-8</encoding>
+                <consoleOutput>true</consoleOutput>
+                <failOnViolation>true</failOnViolation>
+                <violationSeverity>warning</violationSeverity>
+                <includeResources>false</includeResources>
+                <includeTestSourceDirectory>true</includeTestSourceDirectory>
+              </configuration>
               <goals>
                 <goal>check</goal>
               </goals>
