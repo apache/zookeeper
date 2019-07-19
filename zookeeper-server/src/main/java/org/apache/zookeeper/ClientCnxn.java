@@ -1677,7 +1677,7 @@ public class ClientCnxn {
             requestTimeout = clientConfig.getLong(
                     ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT,
                     ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT_DEFAULT);
-            LOG.info("{} value is {}. feature enabled=",
+            LOG.info("{} value is {}. feature enabled={}",
                     ZKClientConfig.ZOOKEEPER_REQUEST_TIMEOUT,
                     requestTimeout, requestTimeout > 0);
         } catch (NumberFormatException e) {
