@@ -473,11 +473,13 @@
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.8.0</version>
           <configuration>
+             <showWarnings>true</showWarnings>
              <compilerArgs>
                <compilerArg>-Werror</compilerArg>
                <compilerArg>-Xlint:deprecation</compilerArg>
                <compilerArg>-Xlint:unchecked</compilerArg>
-               <compilerArg>-Xdoclint</compilerArg>
+               <compilerArg>-Xlint:-options</compilerArg>
+               <compilerArg>-Xdoclint:-missing</compilerArg>
                <!-- https://issues.apache.org/jira/browse/MCOMPILER-205 -->
                <compilerArg>-Xpkginfo:always</compilerArg>
               </compilerArgs>
