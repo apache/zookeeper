@@ -221,7 +221,7 @@ public class PathTrie {
             }
             parent.setProperty(true);
         } finally {
-            writeLock.lock();
+            writeLock.unlock();
         }
     }
 
