@@ -41,6 +41,7 @@ import org.apache.zookeeper.cli.GetAllChildrenNumberCommand;
 import org.apache.zookeeper.cli.GetEphemeralsCommand;
 import org.apache.zookeeper.cli.MalformedCommandException;
 import org.apache.zookeeper.cli.VersionCommand;
+import org.apache.zookeeper.cli.SnapshotCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -126,6 +127,7 @@ public class ZooKeeperMain {
         new GetEphemeralsCommand().addToMap(commandMapCli);
         new GetAllChildrenNumberCommand().addToMap(commandMapCli);
         new VersionCommand().addToMap(commandMapCli);
+        new SnapshotCommand().addToMap(commandMapCli);
 
         // add all to commandMap
         for (Entry<String, CliCommand> entry : commandMapCli.entrySet()) {

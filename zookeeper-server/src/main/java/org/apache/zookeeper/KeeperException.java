@@ -397,7 +397,9 @@ public abstract class KeeperException extends Exception {
         /** Request not completed within max allowed time.*/
         REQUESTTIMEOUT (-122),
         /** Attempts to perform a reconfiguration operation when reconfiguration feature is disabled. */
-        RECONFIGDISABLED(-123);
+        RECONFIGDISABLED(-123),
+        /** Client takes the snapshot failed. */
+        TAKESNAPSHOTFAILED(-124);
 
         private static final Map<Integer,Code> lookup
             = new HashMap<Integer,Code>();
@@ -658,6 +660,16 @@ public abstract class KeeperException extends Exception {
     public static class NoAuthException extends KeeperException {
         public NoAuthException() {
             super(Code.NOAUTH);
+        }
+    }
+
+    /**
+     * @see Code#TAKESNAPSHOTFAILED
+     */
+    @InterfaceAudience.Public
+    public static class TakeSnapshotException extends KeeperException {
+        public TakeSnapshotException() {
+            super(Code.TAKESNAPSHOTFAILED);
         }
     }
 

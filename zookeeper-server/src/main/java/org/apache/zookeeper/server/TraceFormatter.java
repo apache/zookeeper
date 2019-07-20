@@ -61,6 +61,8 @@ public class TraceFormatter {
             return "getChildren";
         case OpCode.getAllChildrenNumber:
             return "getAllChildrenNumber";
+        case OpCode.takeSnapshot:
+            return "takeSnapshot";
         case OpCode.getChildren2:
             return "getChildren2";
         case OpCode.getEphemerals:

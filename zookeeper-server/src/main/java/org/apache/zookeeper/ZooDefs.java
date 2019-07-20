@@ -87,6 +87,8 @@ public class ZooDefs {
 
         public final int getAllChildrenNumber = 104;
 
+        public final int takeSnapshot = 105;
+
         public final int createSession = -10;
 
         public final int closeSession = -11;

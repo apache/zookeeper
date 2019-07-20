@@ -22,7 +22,9 @@ limitations under the License.
     * [zkEnv.sh](#zkEnv)
     * [zkCleanup.sh](#zkCleanup)
     * [zkTxnLogToolkit.sh](#zkTxnLogToolkit)
-    
+
+* [Recovery](#Recovery)
+
 * [Testing](#Testing)
     * [Jepsen Test](#jepsen-test)
     
@@ -157,6 +159,37 @@ The default behaviour of recovery is to be silent: only entries with CRC error g
 One can turn on verbose mode with the `-v,--verbose` parameter to see all records.
 Interactive mode can be turned off with the `-y,--yes` parameter. In this case all CRC errors will be fixed
 in the new transaction file.
+
+## Recovery
+
+<a name="Recovery"></a>
+
+ZooKeeper is designed to withstand machine failures. A ZooKeeper cluster automatically recovers from temporary failures (e.g. machine reboots) and tolerates up to (N-1)/2 permanent failures for a cluster of N members. When a member permanently fails, whether due to hardware failure or disk corruption, it loses access to the cluster. If the cluster permanently loses more than (N-1)/2 members then it disastrously fails, irrevocably losing quorum. Once quorum is lost, the cluster cannot reach consensus and therefore cannot continue to accepte updates.
+
+To recover from disastrous failure, ZooKeeper provides snapshot and restore facilities to restore the cluster.
+
+Recovering a cluster firstly needs a snapshot of the znodes from a ZooKeeper ensemble. Users can have the following ways of backup:
+
+- A snapshot can be taken from a live server with the ZooKeeper CLI:snapshot.
+- Copying the snapshots from the dataDir periodically.
+- Using the observer as the role of backup, then write the snapshots to the distributed file system. (e.g HDFS).
+
+Recommended way is restored from snapshot.For example:
+
+```bash
+# snapshot [dir]
+# specify the directory to store the snapshot
+[zkshell: 0] snapshot /yourBackupDir
+# if no dir appointed,default store the snapshot to dataDir
+[zkshell: 0] snapshot
+```
+Next, restart ZooKeeper with the new data directory by setting dataDir with **yourBackupDir**. For example:
+
+```bash
+# edit the zoo.cfg
+dataDir=/yourBackupDir
+```
+Now the restored ZooKeeper cluster should be available and serving the nodes given by the snapshot.
 
 <a name="Testing"></a>
 
