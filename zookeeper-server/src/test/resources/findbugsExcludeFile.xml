@@ -207,4 +207,11 @@
     <Field name="ss"/>
     <Bug code="IS"/>
   </Match>
+
+  <!-- References code in a generated file that may or maynot be null -->
+  <Match>
+    <Class name="org.apache.zookeeper.version.VersionInfoMain" />
+    <Method name="main" />
+    <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NULL_VALUE" />
+  </Match>
 </FindBugsFilter>

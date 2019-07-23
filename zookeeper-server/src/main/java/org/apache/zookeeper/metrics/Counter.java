@@ -29,7 +29,7 @@ public interface Counter {
      * <p>This method is thread safe, The MetricsProvider will take care of synchronization.</p>
      */
     default void inc() {
-        inc(1);
+        add(1);
     }
 
     /**
@@ -38,7 +38,7 @@ public interface Counter {
      *
      * @param delta amount to increment, this cannot be a negative number.
      */
-    void inc(long delta);
+    void add(long delta);
 
     /**
      * Get the current value held by the counter.

@@ -48,7 +48,7 @@ public class TraceFormatter {
         case OpCode.exists:
             return "exists";
         case OpCode.getData:
-            return "getDate";
+            return "getData";
         case OpCode.setData:
             return "setData";
         case OpCode.multi:
@@ -75,6 +75,22 @@ public class TraceFormatter {
             return "error";
         case OpCode.reconfig:
            return "reconfig";
+        case OpCode.check:
+           return "check";
+        case OpCode.sync:
+            return "sync";
+        case OpCode.checkWatches:
+            return "checkWatches";
+        case OpCode.removeWatches:
+            return "removeWatches";
+        case OpCode.auth:
+            return "auth";
+        case OpCode.setWatches:
+            return "setWatches";
+        case OpCode.sasl:
+            return "sasl";
+        case OpCode.multiRead:
+            return "multiRead";
         default:
             return "unknown " + op;
         }

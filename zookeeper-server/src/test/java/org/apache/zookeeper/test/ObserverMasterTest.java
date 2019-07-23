@@ -33,7 +33,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.jmx.CommonNames;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
 import org.apache.zookeeper.server.admin.Commands;
@@ -517,40 +516,38 @@ public class ObserverMasterTest extends QuorumPeerTestBase implements Watcher{
         Assert.assertTrue("observer not emitting observer_master_id", stats.containsKey("observer_master_id"));
 
         // check the stats for the first peer
-        stats = Commands.runCommand("mntr", q1.getQuorumPeer().getActiveServer(), emptyMap).toMap();
         if (testObserverMaster) {
             if (q1.getQuorumPeer().leader == null) {
-                Assert.assertEquals(1, stats.get("synced_observers"));
+                Assert.assertEquals(Integer.valueOf(1), q1.getQuorumPeer().getSynced_observers_metric());
             } else {
-                Assert.assertEquals(0, stats.get("synced_observers"));
+                Assert.assertEquals(Integer.valueOf(0), q1.getQuorumPeer().getSynced_observers_metric());
             }
         } else {
             if (q1.getQuorumPeer().leader == null) {
-                Assert.assertNull(stats.get("synced_observers"));
+                Assert.assertNull(q1.getQuorumPeer().getSynced_observers_metric());
             } else {
-                Assert.assertEquals(1, stats.get("synced_observers"));
+                Assert.assertEquals(Integer.valueOf(1), q1.getQuorumPeer().getSynced_observers_metric());
             }
         }
 
         // check the stats for the second peer
-        stats = Commands.runCommand("mntr", q2.getQuorumPeer().getActiveServer(), emptyMap).toMap();
         if (testObserverMaster) {
             if (q2.getQuorumPeer().leader == null) {
-                Assert.assertEquals(1, stats.get("synced_observers"));
+                Assert.assertEquals(Integer.valueOf(1), q2.getQuorumPeer().getSynced_observers_metric());
             } else {
-                Assert.assertEquals(0, stats.get("synced_observers"));
+                Assert.assertEquals(Integer.valueOf(0), q2.getQuorumPeer().getSynced_observers_metric());
             }
         } else {
             if (q2.getQuorumPeer().leader == null) {
-                Assert.assertNull(stats.get("synced_observers"));
+                Assert.assertNull(q2.getQuorumPeer().getSynced_observers_metric());
             } else {
-                Assert.assertEquals(1, stats.get("synced_observers"));
+                Assert.assertEquals(Integer.valueOf(1), q2.getQuorumPeer().getSynced_observers_metric());
             }
         }
 
         // test admin commands for disconnection
         ObjectName connBean = null;
-        for (ObjectName bean : JMXEnv.conn().queryNames(new ObjectName(CommonNames.DOMAIN + ":*"), null)) {
+        for (ObjectName bean : JMXEnv.conn().queryNames(new ObjectName(MBeanRegistry.DOMAIN + ":*"), null)) {
             if (bean.getCanonicalName().contains("Learner_Connections") &&
                     bean.getCanonicalName().contains("id:" + q3.getQuorumPeer().getId())) {
                 connBean = bean;

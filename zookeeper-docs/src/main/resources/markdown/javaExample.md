@@ -133,7 +133,7 @@ to fire watch events. (More on this later.)
 
 
 The **DataMonitorListener**
-interface, on the other hand, is not part of the the ZooKeeper API. It is a completely custom interface,
+interface, on the other hand, is not part of the ZooKeeper API. It is a completely custom interface,
 designed for this sample application. The DataMonitor object uses it to communicate back to its container, which
 is also the Executor object. The DataMonitorListener interface looks like this:
 

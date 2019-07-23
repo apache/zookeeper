@@ -277,19 +277,19 @@ public class WatchManagerOptimized
     void updateMetrics(final EventType type, int size) {
         switch (type) {
         case NodeCreated:
-            ServerMetrics.NODE_CREATED_WATCHER.add(size);
+            ServerMetrics.getMetrics().NODE_CREATED_WATCHER.add(size);
             break;
 
         case NodeDeleted:
-            ServerMetrics.NODE_DELETED_WATCHER.add(size);
+            ServerMetrics.getMetrics().NODE_DELETED_WATCHER.add(size);
             break;
 
         case NodeDataChanged:
-            ServerMetrics.NODE_CHANGED_WATCHER.add(size);
+            ServerMetrics.getMetrics().NODE_CHANGED_WATCHER.add(size);
             break;
 
         case NodeChildrenChanged:
-            ServerMetrics.NODE_CHILDREN_WATCHER.add(size);
+            ServerMetrics.getMetrics().NODE_CHILDREN_WATCHER.add(size);
             break;
         default:
             // Other types not logged.
@@ -414,4 +414,5 @@ public class WatchManagerOptimized
         sb.append("Total watches:").append(size());
         return sb.toString();
     }
+
 }

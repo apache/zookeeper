@@ -44,8 +44,6 @@ import javax.swing.border.*;
 /**
  * Class to show tosters in multiplatform
  *
- * @author daniele piras
- *
  */
 public class Toaster
 {
@@ -97,8 +95,6 @@ public class Toaster
 	/**
 	 * Constructor to initialized toaster component...
 	 *
-	 * @author daniele piras
-	 *
 	 */
 	public Toaster()
 	{
@@ -123,8 +119,6 @@ public class Toaster
 
 	/**
 	 * Class that rappresent a single toaster
-	 *
-	 * @author daniele piras
 	 *
 	 */
 	class SingleToaster extends javax.swing.JWindow

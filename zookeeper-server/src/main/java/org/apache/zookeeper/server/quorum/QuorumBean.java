@@ -70,4 +70,14 @@ public class QuorumBean implements QuorumMXBean, ZKMBeanInfo {
     public boolean isPortUnification() {
         return peer.shouldUsePortUnification();
     }
+
+    @Override
+    public long getObserverElectionDelayMS() {
+        return Observer.getObserverElectionDelayMs();
+    }
+
+    @Override
+    public void setObserverElectionDelayMS(long delayMS) {
+        Observer.setObserverElectionDelayMs(delayMS);
+    }
 }

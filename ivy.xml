@@ -68,7 +68,7 @@
       <exclude org="junit" module="junit"/>
     </dependency>
     <dependency org="junit" name="junit" rev="${junit.version}" conf="test->default"/>
-	<dependency org="org.mockito" name="mockito-all" rev="${mockito.version}"
+	<dependency org="org.mockito" name="mockito-core" rev="${mockito.version}"
                conf="test->default"/>
     <dependency org="com.puppycrawl.tools" name="checkstyle" rev="${checkstyle.version}"
                 conf="test->default">
@@ -76,7 +76,7 @@
         <exclude org="commons-cli" module="commons-cli"/>
     </dependency>
     <!-- force the tests to pull the latest commons-collections jar -->
-    <dependency org="commons-collections" name="commons-collections" 
+    <dependency org="commons-collections" name="commons-collections"
                 rev="${commons-collections.version}" conf="test->default"/>
 
     <dependency org="org.bouncycastle" name="bcprov-jdk15on" rev="${bouncycastle.version}" conf="test->default"/>
@@ -87,7 +87,7 @@
     <dependency org="xerces" name="xerces" rev="${xerces.version}"
                 conf="jdiff->default"/>
 
-    <dependency org="org.apache.rat" name="apache-rat-tasks" 
+    <dependency org="org.apache.rat" name="apache-rat-tasks"
                 rev="${apache-rat-tasks.version}" conf="releaseaudit->default">
         <exclude org="commons-collections" module="commons-collections"/>
     </dependency>
@@ -141,6 +141,7 @@
                   conf="optional->default"/>
     <dependency org="com.fasterxml.jackson.core" name="jackson-databind"
                 rev="${jackson.version}" conf="optional->default"/>
+    <dependency org="org.xerial.snappy" name="snappy-java" rev="${snappy.version}"/>
 
     <dependency org="org.openclover" name="clover" rev="${clover.version}" conf="clover->default"/>
 

@@ -31,6 +31,9 @@ ZooKeeper has both namespace and bytes quotas. You can use the ZooKeeperMain cla
 ZooKeeper prints _WARN_ messages if users exceed the quota assigned to them. The messages
 are printed in the log of the ZooKeeper.
 
+Notice: What the `namespace` quota means is the count quota which limits the number of children
+under the path(included itself).
+
     $ bin/zkCli.sh -server host:port**
 
 The above command gives you a command line option of using quotas.
@@ -39,12 +42,30 @@ The above command gives you a command line option of using quotas.
 
 ### Setting Quotas
 
-You can use _setquota_ to set a quota on a ZooKeeper node. It has an option of setting quota with
-`-n` (for namespace)
-and `-b` (for bytes).
+- You can use `setquota` to set a quota on a ZooKeeper node. It has an option of setting quota with
+`-n` (for namespace/count) and `-b` (for bytes/data length).
 
-The ZooKeeper quota are stored in ZooKeeper itself in /zookeeper/quota. To disable other people from
-changing the quota's set the ACL for /zookeeper/quota such that only admins are able to read and write to it.
+- The ZooKeeper quota is stored in ZooKeeper itself in **/zookeeper/quota**. To disable other people from
+changing the quotas, users can set the ACL for **/zookeeper/quota** ,so that only admins are able to read and write to it.
+
+- If the quota doesn't exist in the specified path,create the quota, otherwise update the quota.
+
+- The Scope of the quota users set is all the nodes under the path specified (included itself).
+
+- In order to simplify the calculation of quota in the current directory/hierarchy structure, a complete tree path(from root to leaf node)
+can be set only one quota. In the situation when setting a quota in a path which its parent or child node already has a quota. `setquota` will
+reject and tell the specified parent or child path, users can adjust allocations of quotas(delete/move-up/move-down the quota)
+according to specific circumstances.
+
+- Combined with the Chroot, the quota will have a better isolation effectiveness between different applications.For example:
+
+    ```bash
+    # Chroot is:
+    192.168.0.1:2181,192.168.0.2:2181,192.168.0.3:2181/apps/app1
+    setquota -n 100000 /apps/app1
+    ```
+
+- Users cannot set the quota on the path under **/zookeeper/quota**
 
 <a name="Listing+Quotas"></a>
 

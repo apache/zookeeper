@@ -124,9 +124,9 @@ is no full support.
 
 #### Required Software
 
-ZooKeeper runs in Java, release 1.7 or greater (JDK 7 or
-greater, FreeBSD support requires openjdk7).  It runs as an
-_ensemble_ of ZooKeeper servers. Three
+ZooKeeper runs in Java, release 1.8 or greater 
+(JDK 8 LTS, JDK 11 LTS, JDK 12 - Java 9 and 10 are not supported). 
+It runs as an _ensemble_ of ZooKeeper servers. Three
 ZooKeeper servers is the minimum recommended size for an
 ensemble, and we also recommend that they run on separate
 machines. At Yahoo!, ZooKeeper is usually deployed on
@@ -166,7 +166,7 @@ your environment. If you have three ZooKeeper servers, but their
 network cables are all plugged into the same network switch, then
 the failure of that switch will take down your entire ensemble.
 
-Here are the steps to setting a server that will be part of an
+Here are the steps to set a server that will be part of an
 ensemble. These steps should be performed on every host in the
 ensemble:
 
@@ -219,7 +219,7 @@ ensemble:
 
 6. Create an initialization marker file *initialize*
   in the same directory as *myid*. This file indicates
-  that an empty data directory is expected. When present, an empty data base
+  that an empty data directory is expected. When present, an empty database
   is created and the marker file deleted. When not present, an empty data
   directory will mean this peer will not have voting rights and it will not
   populate the data directory until it communicates with an active leader.
@@ -229,7 +229,7 @@ ensemble:
 7. If your configuration file is set up, you can start a
   ZooKeeper server:  
 
-        $ java -cp zookeeper.jar:lib/*:conf org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.conf 
+        $ java -cp zookeeper.jar:lib/*:conf org.apache.zookeeper.server.quorum.QuorumPeerMain zoo.conf
 
   QuorumPeerMain starts a ZooKeeper server,
   [JMX](http://java.sun.com/javase/technologies/core/mntr-mgmt/javamanagement/)
@@ -566,7 +566,7 @@ in the configuration file:
     >Be careful where you put the transaction log. A
     dedicated transaction log device is key to consistent good
     performance. Putting the log on a busy device will adversely
-    effect performance.
+    affect performance.
 
 * *tickTime* :
     the length of a single tick, which is the basic time unit
@@ -612,7 +612,7 @@ property, when available, is noted below.
     transaction log file in blocks of preAllocSize kilobytes. The
     default block size is 64M. One reason for changing the size of
     the blocks is to reduce the block size if snapshots are taken
-    more often. (Also, see **snapCount**).
+    more often. (Also, see **snapCount** and **snapSizeLimitInKb**).
 
 * *snapCount* :
     (Java system property: **zookeeper.snapCount**)
@@ -626,6 +626,21 @@ property, when available, is noted below.
     reaches a runtime generated random value in the \[snapCount/2+1, snapCount]
     range.The default snapCount is 100,000.
 
+* *snapSizeLimitInKb* :
+    (Java system property: **zookeeper.snapSizeLimitInKb**)
+    ZooKeeper records its transactions using snapshots and
+    a transaction log (think write-ahead log). The total size in bytes allowed
+    in the set of transactions recorded in the transaction log before a snapshot
+    can be taken (and the transaction log rolled) is determined
+    by snapSize. In order to prevent all of the machines in the quorum
+    from taking a snapshot at the same time, each ZooKeeper server
+    will take a snapshot when the size in bytes of the set of transactions in the
+    transaction log reaches a runtime generated random value in the \[snapSize/2+1, snapSize]
+    range. Each file system has a minimum standard file size and in order
+    to for valid functioning of this feature, the number chosen must be larger
+    than that value. The default snapSizeLimitInKb is 4,194,304 (4GB).
+    A non-positive value will disable the feature.
+
 * *txnLogSizeLimitInKb* :
     (Java system property: **zookeeper.txnLogSizeLimitInKb**)
     Zookeeper transaction log file can also be controlled more
@@ -633,14 +648,14 @@ property, when available, is noted below.
     slower follower syncs when sync is done using transaction log.
     This is because leader has to scan through the appropriate log
     file on disk to find the transaction to start sync from.
-    This feature is turned off by this default and snapCount is the
-    only value that limits transaction log size. When enabled
-    Zookeeper will roll the log when either of the limit is hit.
+    This feature is turned off by default and snapCount and snapSizeLimitInKb are the
+    only values that limit transaction log size. When enabled
+    Zookeeper will roll the log when any of the limits is hit.
     Please note that actual log size can exceed this value by the size
     of the serialized transaction. On the other hand, if this value is
     set too close to (or smaller than) **preAllocSize**,
-    it can cause Zookeeper to roll the log for every tranasaction. While
-    this is not a correctness issue, this may cause severly degraded
+    it can cause Zookeeper to roll the log for every transaction. While
+    this is not a correctness issue, this may cause severely degraded
     performance. To avoid this and to get most out of this feature, it is
     recommended to set the value to N * **preAllocSize**
     where N >= 2.
@@ -774,7 +789,7 @@ property, when available, is noted below.
     dropping.
     This parameter defines the interval in milliseconds when the dropping
     probability is adjusted. When set to -1, probabilistic dropping is disabled.
-    Default is -1.     
+    Default is -1.
 
 * *connectionDropIncrease* :
     (Java system property: **zookeeper.connection_throttle_drop_increase**)
@@ -818,9 +833,59 @@ property, when available, is noted below.
 
 * *serverCnxnFactory* :
     (Java system property: **zookeeper.serverCnxnFactory**)
-    Specifies ServerCnxnFactory implementation. 
+    Specifies ServerCnxnFactory implementation.
     This should be set to `NettyServerCnxnFactory` in order to use TLS based server communication.
     Default is `NIOServerCnxnFactory`.
+
+* *flushDelay* :
+    (Java system property: **zookeeper.flushDelay**)
+    Time in milliseconds to delay the flush of the commit log.
+    Does not affect the limit defined by *maxBatchSize*.
+    Disabled by default (with value 0). Ensembles with high write rates
+    may see throughput improved with a value of 10-20 ms.
+
+* *maxWriteQueuePollTime* :
+    (Java system property: **zookeeper.maxWriteQueuePollTime**)
+    If *flushDelay* is enabled, this determines the amount of time in milliseconds
+    to wait before flushing when no new requests are being queued.
+    Set to *flushDelay*/3 by default (implicitly disabled by default).
+
+* *maxBatchSize* :
+    (Java system property: **zookeeper.maxBatchSize**)
+    The number of transactions allowed in the server before a flush of the
+    commit log is triggered.
+    Does not affect the limit defined by *flushDelay*.
+    Default is 1000.
+
+* *requestThrottleLimit* :
+    (Java system property: **zookeeper.request_throttle_max_requests**)
+    **New in 3.6.0:**
+    The total number of outstanding requests allowed before the RequestThrottler starts stalling. When set to 0, throttling is disabled. The default is 0.
+
+* *requestThrottleStallTime* :
+    (Java system property: **zookeeper.request_throttle_stall_time**)
+    **New in 3.6.0:**
+    The maximum time (in milliseconds) for which a thread may wait to be notified that it may proceed processing a request. The default is 100.
+
+* *requestThrottleDropStale* :
+    (Java system property: **request_throttle_drop_stale**)
+    **New in 3.6.0:**
+    When enabled, the throttler will drop stale requests rather than issue them to the request pipeline. A stale request is a request sent by a connection that is now closed, and/or a request that will have a  request latency higher than the sessionTimeout. The default is true.
+
+* *requestStaleLatencyCheck* :
+    (Java system property: **zookeeper.request_stale_latency_check**)
+    **New in 3.6.0:**
+    When enabled, a request is considered stale if the request latency is higher than its associated session timeout. Disabled by default.
+
+* *requestStaleConnectionCheck* :
+    (Java system property: **zookeeper.request_stale_connection_check**)
+    **New in 3.6.0:**
+    When enabled, a request is considered stale if the request's connection has closed. Enabled by default.
+
+* *zookeeper.request_throttler.shutdownTimeout* :
+    (Java system property only)
+    **New in 3.6.0:**
+    The time (in milliseconds) the RequestThrottler waits for the request queue to drain during shutdown before it shuts down forcefully. The default is 10000.  
 
 <a name="sc_clusterOptions"></a>
 
@@ -848,6 +913,12 @@ of servers -- that is, when deploying clusters of servers.
     connect and sync to a leader. Increased this value as needed, if
     the amount of data managed by ZooKeeper is large.
 
+* *connectToLearnerMasterLimit* :
+    (Java system property: zookeeper.**connectToLearnerMasterLimit**)
+    Amount of time, in ticks (see [tickTime](#id_tickTime)), to allow followers to
+    connect to the leader after leader election. Defaults to the value of initLimit. 
+    Use when initLimit is high so connecting to learner master doesn't result in higher timeout.
+        
 * *leaderServes* :
     (Java system property: zookeeper.**leaderServes**)
     Leader accepts client connections. Default value is "yes".
@@ -907,6 +978,13 @@ of servers -- that is, when deploying clusters of servers.
     Only applicable if you are using electionAlg 3.
     ###### Note
     >Default value is 5 seconds.
+
+* *quorumCnxnTimeoutMs* :
+    (Java system property: zookeeper.**quorumCnxnTimeoutMs**)
+    Sets the read timeout value for the connections for leader election notifications.
+    Only applicable if you are using electionAlg 3.
+    ######Note
+    >Default value is -1, which will then use the syncLimit * tickTime as the timeout.
 
 * *standaloneEnabled* :
     (No Java system property)
@@ -983,6 +1061,20 @@ As an example, this will enable all four letter word commands:
     keepalive for more information.  Defaults to
     **false**.
 
+* *observer.reconnectDelayMs* :
+    (Java system property: **zookeeper.observer.reconnectDelayMs**)
+    When observer loses its connection with the leader, it waits for the
+    specified value before trying to reconnect with the leader so that
+    the entire observer fleet won't try to run leader election and reconnect
+    to the leader at once.
+    Defaults to 0 ms.
+
+* *observer.election.DelayMs* :
+    (Java system property: **zookeeper.observer.election.DelayMs**)
+    Delay the observer's participation in a leader election upon disconnect
+    so as to prevent unexpected additional load on the voting peers during
+    the process. Defaults to 200 ms.
+
 <a name="sc_authOptions"></a>
 
 #### Encryption, Authentication, Authorization Options
@@ -1052,20 +1144,20 @@ encryption/authentication/authorization performed by the service.
     (Java system property: **zookeeper.sslQuorum**)
     **New in 3.5.5:**
     Enables encrypted quorum communication. Default is `false`.
-       
+
 * *ssl.keyStore.location and ssl.keyStore.password* and *ssl.quorum.keyStore.location* and *ssl.quorum.keyStore.password* :
     (Java system properties: **zookeeper.ssl.keyStore.location** and **zookeeper.ssl.keyStore.password** and **zookeeper.ssl.quorum.keyStore.location** and **zookeeper.ssl.quorum.keyStore.password**)
     **New in 3.5.5:**
     Specifies the file path to a Java keystore containing the local
     credentials to be used for client and quorum TLS connections, and the
     password to unlock the file.
-    
+
 * *ssl.keyStore.type* and *ssl.quorum.keyStore.type* :
     (Java system properties: **zookeeper.ssl.keyStore.type** and **zookeeper.ssl.quorum.keyStore.type**)
     **New in 3.5.5:**
-    Specifies the file format of client and quorum keystores. Values: JKS, PEM or null (detect by filename).    
+    Specifies the file format of client and quorum keystores. Values: JKS, PEM, PKCS12 or null (detect by filename).    
     Default: null     
-    
+
 * *ssl.trustStore.location* and *ssl.trustStore.password* and *ssl.quorum.trustStore.location* and *ssl.quorum.trustStore.password* :
     (Java system properties: **zookeeper.ssl.trustStore.location** and **zookeeper.ssl.trustStore.password** and **zookeeper.ssl.quorum.trustStore.location** and **zookeeper.ssl.quorum.trustStore.password**)
     **New in 3.5.5:**
@@ -1076,7 +1168,7 @@ encryption/authentication/authorization performed by the service.
 * *ssl.trustStore.type* and *ssl.quorum.trustStore.type* :
     (Java system properties: **zookeeper.ssl.trustStore.type** and **zookeeper.ssl.quorum.trustStore.type**)
     **New in 3.5.5:**
-    Specifies the file format of client and quorum trustStores. Values: JKS, PEM or null (detect by filename).    
+    Specifies the file format of client and quorum trustStores. Values: JKS, PEM, PKCS12 or null (detect by filename).    
     Default: null     
 
 * *ssl.protocol* and *ssl.quorum.protocol* :
@@ -1090,7 +1182,7 @@ encryption/authentication/authorization performed by the service.
     **New in 3.5.5:**
     Specifies the enabled protocols in client and quorum TLS negotiation.
     Default: value of `protocol` property
-    
+
 * *ssl.ciphersuites* and *ssl.quorum.ciphersuites* :
     (Java system properties: **zookeeper.ssl.ciphersuites** and **zookeeper.ssl.quorum.ciphersuites**)
     **New in 3.5.5:**
@@ -1105,7 +1197,7 @@ encryption/authentication/authorization performed by the service.
     1. Use hardware keystore, loaded in using PKCS11 or something similar.
     2. You don't have access to the software keystore, but can retrieve an already-constructed SSLContext from their container.
     Default: null
-    
+
 * *ssl.hostnameVerification* and *ssl.quorum.hostnameVerification* :
     (Java system properties: **zookeeper.ssl.hostnameVerification** and **zookeeper.ssl.quorum.hostnameVerification**)
     **New in 3.5.5:**
@@ -1124,17 +1216,23 @@ encryption/authentication/authorization performed by the service.
     **New in 3.5.5:**
     Specifies whether Online Certificate Status Protocol is enabled in client and quorum TLS protocols.
     Default: false
-    
+
 * *ssl.clientAuth* and *ssl.quorum.clientAuth* :
     (Java system properties: **zookeeper.ssl.clientAuth** and **zookeeper.ssl.quorum.clientAuth**)
     **New in 3.5.5:**
     TBD
-    
+
 * *ssl.handshakeDetectionTimeoutMillis* and *ssl.quorum.handshakeDetectionTimeoutMillis* :
     (Java system properties: **zookeeper.ssl.handshakeDetectionTimeoutMillis** and **zookeeper.ssl.quorum.handshakeDetectionTimeoutMillis**)
     **New in 3.5.5:**
     TBD
-        
+
+* *client.portUnification*:
+    (Java system properties: **zookeeper.client.portUnification**)
+    Specifies that the client port should accept SSL connections
+    (using the same configuration as the secure client port).
+    Default: false
+
 
 <a name="Experimental+Options%2FFeatures"></a>
 
@@ -1345,6 +1443,29 @@ options are used to configure the [AdminServer](#sc_adminserver).
     The URL for listing and issuing commands relative to the
     root URL.  Defaults to "/commands".
 
+### Metrics Providers
+
+**New in 3.6.0:** The following options are used to configure metrics. 
+
+ By default ZooKeeper server exposes useful metrics using the [AdminServer](#sc_adminserver).
+ and [Four Letter Words](#sc_4lw) interface.
+
+ Since 3.6.0 you can configure a different Metrics Provider, that exports metrics
+ to your favourite system.
+
+ Since 3.6.0 ZooKeeper binary package bundles an integration with [Prometheus.io](https://prometheus.io)
+
+* *metricsProvider.className* :
+    Set to "org.apache.zookeeper.metrics.prometheus.PrometheusMetricsProvider" to
+    enable Prometheus.io exporter.
+
+* *metricsProvider.httpPort* :
+    Prometheus.io exporter will start a Jetty server and bind to this port, it default to 7000.
+    Prometheus end point will be http://hostname:httPort/metrics.
+
+* *metricsProvider.exportJvmInfo* :
+    If this property is set to **true** Prometheus.io will export useful metrics about the JVM.
+    The default is true.
 
 <a name="Communication+using+the+Netty+framework"></a>
 
@@ -1366,8 +1487,6 @@ to **org.apache.zookeeper.server.NettyServerCnxnFactory**;
 for the client, set **zookeeper.clientCnxnSocket**
 to **org.apache.zookeeper.ClientCnxnSocketNetty**.
 
-TBD - tuning options for netty - currently there are none that are netty specific but we should add some. Esp around max bound on the number of reader worker threads netty creates.
-
 <a name="Quorum+TLS"></a>
 
 #### Quorum TLS
@@ -1385,20 +1504,20 @@ and quorum communication protocols.
 
 One keystore should be created for each ZK instance.
 
-In this example we generate a self-signed certificate and store it 
-together with the private key in `keystore.jks`. This is suitable for 
-testing purposes, but you probably need an official certificate to sign 
+In this example we generate a self-signed certificate and store it
+together with the private key in `keystore.jks`. This is suitable for
+testing purposes, but you probably need an official certificate to sign
 your keys in a production environment.
 
 Please note that the alias (`-alias`) and the distinguished name (`-dname`)
-must match the hostname of the machine that is associated with, otherwise 
+must match the hostname of the machine that is associated with, otherwise
 hostname verification won't work.
 
 ```
 keytool -genkeypair -alias $(hostname -f) -keyalg RSA -keysize 2048 -dname "cn=$(hostname -f)" -keypass password -keystore keystore.jks -storepass password
 ```
 
-2. Extract the signed public key (certificate) from keystore 
+2. Extract the signed public key (certificate) from keystore
 
 *This step might only necessary for self-signed certificates.*
 
@@ -1486,7 +1605,7 @@ and do another rolling restart
 ```
 sslQuorum=true
 portUnification=false
-``` 
+```
 
 
 <a name="sc_zkCommands"></a>
@@ -1759,8 +1878,8 @@ that represents the update is written to non-volatile storage. A new
 log file is started when the number of transactions written to the
 current log file reaches a (variable) threshold. The threshold is
 computed using the same parameter which influences the frequency of
-snapshotting (see snapCount above). The log file's suffix is the first
-zxid written to that log.
+snapshotting (see snapCount and snapSizeLimitInKb above). The log file's
+suffix is the first zxid written to that log.
 
 <a name="sc_filemanagement"></a>
 
@@ -1770,7 +1889,7 @@ The format of snapshot and log files does not change between
 standalone ZooKeeper servers and different configurations of
 replicated ZooKeeper servers. Therefore, you can pull these files from
 a running replicated ZooKeeper server to a development machine with a
-stand-alone ZooKeeper server for trouble shooting.
+stand-alone ZooKeeper server for troubleshooting.
 
 Using older log and snapshot files, you can look at the previous
 state of ZooKeeper servers and even restore that state. The
@@ -1800,63 +1919,7 @@ individual settings in which it is being deployed.
 <a name="Recovery+-+TxnLogToolkit"></a>
 
 #### Recovery - TxnLogToolkit
-
-TxnLogToolkit is a command line tool shipped with ZooKeeper which
-is capable of recovering transaction log entries with broken CRC.
-
-Running it without any command line parameters or with the `-h,--help` argument, it outputs the following help page:
-
-    $ bin/zkTxnLogToolkit.sh
-    usage: TxnLogToolkit [-dhrv] txn_log_file_name
-    -d,--dump      Dump mode. Dump all entries of the log file. (this is the default)
-    -h,--help      Print help message
-    -r,--recover   Recovery mode. Re-calculate CRC for broken entries.
-    -v,--verbose   Be verbose in recovery mode: print all entries, not just fixed ones.
-    -y,--yes       Non-interactive mode: repair all CRC errors without asking
-
-The default behaviour is safe: it dumps the entries of the given
-transaction log file to the screen: (same as using `-d,--dump` parameter)
-
-    $ bin/zkTxnLogToolkit.sh log.100000001
-    ZooKeeper Transactional Log File with dbid 0 txnlog format version 2
-    4/5/18 2:15:58 PM CEST session 0x16295bafcc40000 cxid 0x0 zxid 0x100000001 createSession 30000
-    CRC ERROR - 4/5/18 2:16:05 PM CEST session 0x16295bafcc40000 cxid 0x1 zxid 0x100000002 closeSession null
-    4/5/18 2:16:05 PM CEST session 0x16295bafcc40000 cxid 0x1 zxid 0x100000002 closeSession null
-    4/5/18 2:16:12 PM CEST session 0x26295bafcc90000 cxid 0x0 zxid 0x100000003 createSession 30000
-    4/5/18 2:17:34 PM CEST session 0x26295bafcc90000 cxid 0x0 zxid 0x200000001 closeSession null
-    4/5/18 2:17:34 PM CEST session 0x16295bd23720000 cxid 0x0 zxid 0x200000002 createSession 30000
-    4/5/18 2:18:02 PM CEST session 0x16295bd23720000 cxid 0x2 zxid 0x200000003 create '/andor,#626262,v{s{31,s{'world,'anyone}}},F,1
-    EOF reached after 6 txns.
-
-There's a CRC error in the 2nd entry of the above transaction log file. In **dump**
-mode, the toolkit only prints this information to the screen without touching the original file. In
-**recovery** mode (`-r,--recover` flag) the original file still remains
-untouched and all transactions will be copied over to a new txn log file with ".fixed" suffix. It recalculates
-CRC values and copies the calculated value, if it doesn't match the original txn entry.
-By default, the tool works interactively: it asks for confirmation whenever CRC error encountered.
-
-    $ bin/zkTxnLogToolkit.sh -r log.100000001
-    ZooKeeper Transactional Log File with dbid 0 txnlog format version 2
-    CRC ERROR - 4/5/18 2:16:05 PM CEST session 0x16295bafcc40000 cxid 0x1 zxid 0x100000002 closeSession null
-    Would you like to fix it (Yes/No/Abort) ?
-
-Answering **Yes** means the newly calculated CRC value will be outputted
-to the new file. **No** means that the original CRC value will be copied over.
-**Abort** will abort the entire operation and exits.
-(In this case the ".fixed" will not be deleted and left in a half-complete state: contains only entries which
-have already been processed or only the header if the operation was aborted at the first entry.)
-
-    $ bin/zkTxnLogToolkit.sh -r log.100000001
-    ZooKeeper Transactional Log File with dbid 0 txnlog format version 2
-    CRC ERROR - 4/5/18 2:16:05 PM CEST session 0x16295bafcc40000 cxid 0x1 zxid 0x100000002 closeSession null
-    Would you like to fix it (Yes/No/Abort) ? y
-    EOF reached after 6 txns.
-    Recovery file log.100000001.fixed has been written with 1 fixed CRC error(s)
-
-The default behaviour of recovery is to be silent: only entries with CRC error get printed to the screen.
-One can turn on verbose mode with the `-v,--verbose` parameter to see all records.
-Interactive mode can be turned off with the `-y,--yes` parameter. In this case all CRC errors will be fixed
-in the new transaction file.
+More details can be found in [this](http://zookeeper.apache.org/doc/current/zookeeperTools.html#zkTxnLogToolkit)
 
 <a name="sc_commonProblems"></a>
 
@@ -1879,9 +1942,10 @@ ZooKeeper correctly:
     transaction log. ZooKeeper syncs transactions to media before it
     returns a response. A dedicated transaction log device is key to
     consistent good performance. Putting the log on a busy device will
-    adversely effect performance. If you only have one storage device,
-    put trace files on NFS and increase the snapshotCount; it doesn't
-    eliminate the problem, but it should mitigate it.
+    adversely affect performance. If you only have one storage device,
+    increase the snapCount so that snapshot files are generated less often;
+    it does not eliminate the problem, but it makes more resources available
+    for the transaction log.
 
 * *incorrect Java heap size* :
     You should take special care to set your Java max heap size

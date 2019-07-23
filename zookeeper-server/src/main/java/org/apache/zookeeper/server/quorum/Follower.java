@@ -19,8 +19,9 @@
 package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.util.Collections;
+import java.util.Map;
 
 import org.apache.jute.Record;
 import org.apache.zookeeper.ZooDefs.OpCode;
@@ -70,13 +71,14 @@ public class Follower extends Learner{
         self.end_fle = Time.currentElapsedTime();
         long electionTimeTaken = self.end_fle - self.start_fle;
         self.setElectionTimeTaken(electionTimeTaken);
-        ServerMetrics.ELECTION_TIME.add(electionTimeTaken);
+        ServerMetrics.getMetrics().ELECTION_TIME.add(electionTimeTaken);
         LOG.info("FOLLOWING - LEADER ELECTION TOOK - {} {}", electionTimeTaken,
                 QuorumPeer.FLE_TIME_UNIT);
         self.start_fle = 0;
         self.end_fle = 0;
         fzk.registerJMX(new FollowerBean(this, zk), self.jmxLocalPeerBean);
         try {
+            self.setZabState(QuorumPeer.ZabState.DISCOVERY);
             QuorumServer leaderServer = findLeader();
             try {
                 connectToLeader(leaderServer.addr, leaderServer.hostname);
@@ -93,10 +95,13 @@ public class Follower extends Learner{
                 }
                 long startTime = Time.currentElapsedTime();
                 try {
+                    self.setLeaderAddressAndId(leaderServer.addr, leaderServer.getId());
+                    self.setZabState(QuorumPeer.ZabState.SYNCHRONIZATION);
                     syncWithLeader(newEpochZxid);
+                    self.setZabState(QuorumPeer.ZabState.BROADCAST);
                 } finally {
                     long syncTime = Time.currentElapsedTime() - startTime;
-                    ServerMetrics.FOLLOWER_SYNC_TIME.add(syncTime);
+                    ServerMetrics.getMetrics().FOLLOWER_SYNC_TIME.add(syncTime);
                 }
                 if (self.getObserverMasterPort() > 0) {
                     LOG.info("Starting ObserverMaster");
@@ -114,11 +119,7 @@ public class Follower extends Learner{
                 }
             } catch (Exception e) {
                 LOG.warn("Exception when following the leader", e);
-                try {
-                    sock.close();
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
+                closeSocket();
     
                 // clear pending revalidations
                 pendingRevalidations.clear();
@@ -141,7 +142,8 @@ public class Follower extends Learner{
         case Leader.PING:            
             ping(qp);            
             break;
-        case Leader.PROPOSAL:           
+        case Leader.PROPOSAL:
+            ServerMetrics.getMetrics().LEARNER_PROPOSAL_RECEIVED_COUNT.add(1);
             TxnHeader hdr = new TxnHeader();
             Record txn = SerializeUtils.deserializeTxn(qp.getData(), hdr);
             if (hdr.getZxid() != lastQueued + 1) {
@@ -159,15 +161,31 @@ public class Follower extends Learner{
             }
             
             fzk.logRequest(hdr, txn);
-
+            if (hdr != null) {
+                /*
+                 * Request header is created only by the leader, so this is only set
+                 * for quorum packets. If there is a clock drift, the latency may be
+                 * negative. Headers use wall time, not CLOCK_MONOTONIC.
+                 */
+                long now = Time.currentWallTime();
+                long latency = now - hdr.getTime();
+                if (latency > 0) {
+                    ServerMetrics.getMetrics().PROPOSAL_LATENCY.add(latency);
+                }
+            }
             if (om != null) {
+                final long startTime = Time.currentElapsedTime();
                 om.proposalReceived(qp);
+                ServerMetrics.getMetrics().OM_PROPOSAL_PROCESS_TIME.add(Time.currentElapsedTime() - startTime);
             }
             break;
         case Leader.COMMIT:
+            ServerMetrics.getMetrics().LEARNER_COMMIT_RECEIVED_COUNT.add(1);
             fzk.commit(qp.getZxid());
             if (om != null) {
+                final long startTime = Time.currentElapsedTime();
                 om.proposalCommitted(qp.getZxid());
+                ServerMetrics.getMetrics().OM_COMMIT_PROCESS_TIME.add(Time.currentElapsedTime() - startTime);
             }
             break;
             
@@ -235,6 +253,19 @@ public class Follower extends Learner{
 
     public Integer getSyncedObserverSize() {
         return  om == null ? null : om.getNumActiveObservers();
+    }
+
+    public Iterable<Map<String, Object>> getSyncedObserversInfo() {
+        if (om != null && om.getNumActiveObservers() > 0) {
+            return om.getActiveObservers();
+        }
+        return Collections.emptySet();
+    }
+
+    public void resetObserverConnectionStats() {
+        if (om != null && om.getNumActiveObservers() > 0) {
+            om.resetObserverConnectionStats();
+        }
     }
 
     @Override

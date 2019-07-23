@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.net.ProtocolException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -54,11 +55,9 @@ import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.common.IOUtils;
 import org.apache.zookeeper.server.ServerCnxnFactory;
-import org.apache.zookeeper.server.ServerCnxnFactoryAccessor;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FilePadding;
-import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.util.OSMXBean;
 import org.junit.After;
@@ -78,6 +77,7 @@ public abstract class ClientBase extends ZKTestCase {
     protected int maxCnxns = 0;
     protected ServerCnxnFactory serverFactory = null;
     protected File tmpDir = null;
+    protected boolean exceptionOnFailedConnect = false;
 
     long initialFdCount;
 
@@ -230,6 +230,9 @@ public abstract class ClientBase extends ZKTestCase {
         TestableZooKeeper zk = new TestableZooKeeper(hp, timeout, watcher);
         if (!watcher.clientConnected.await(timeout, TimeUnit.MILLISECONDS))
         {
+            if (exceptionOnFailedConnect) {
+              throw new ProtocolException("Unable to connect to server");
+            }
             Assert.fail("Unable to connect to server");
         }
         synchronized(this) {
@@ -460,7 +463,7 @@ public abstract class ClientBase extends ZKTestCase {
         if (factory != null) {
             ZKDatabase zkDb = null;
             {
-                ZooKeeperServer zs = getServer(factory);
+                ZooKeeperServer zs = factory.getZooKeeperServer();
                 if (zs != null) {
                     zkDb = zs.getZKDatabase();
                 }
@@ -587,13 +590,6 @@ public abstract class ClientBase extends ZKTestCase {
         serverFactory = null;
         // ensure no beans are leftover
         JMXEnv.ensureOnly();
-    }
-
-
-    protected static ZooKeeperServer getServer(ServerCnxnFactory fac) {
-        ZooKeeperServer zs = ServerCnxnFactoryAccessor.getZkServer(fac);
-
-        return zs;
     }
 
     protected void tearDownAll() throws Exception {

@@ -36,6 +36,8 @@ public class FileKeyStoreLoaderBuilderProvider {
                 return new JKSFileLoader.Builder();
             case PEM:
                 return new PEMFileLoader.Builder();
+            case PKCS12:
+                return new PKCS12FileLoader.Builder();
             default:
                 throw new AssertionError(
                         "Unexpected StoreFileType: " + type.name());

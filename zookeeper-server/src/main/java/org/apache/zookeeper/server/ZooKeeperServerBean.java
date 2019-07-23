@@ -278,4 +278,87 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
     public void setConnectionDecreaseRatio(double val) {
         zks.connThrottle().setDecreasePoint(val);
     }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public long getFlushDelay() {
+        return zks.getFlushDelay();
+    }
+
+    @Override
+    public void setFlushDelay(long delay) {
+        ZooKeeperServer.setFlushDelay(delay);
+    }
+
+    // Request throttling settings
+    ///////////////////////////////////////////////////////////////////////////
+
+    public int getRequestThrottleLimit() {
+        return RequestThrottler.getMaxRequests();
+    }
+
+    public void setRequestThrottleLimit(int requests) {
+        RequestThrottler.setMaxRequests(requests);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    public int getRequestThrottleStallTime() {
+        return RequestThrottler.getStallTime();
+    }
+
+    public void setRequestThrottleStallTime(int time) {
+        RequestThrottler.setStallTime(time);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    public boolean getRequestThrottleDropStale() {
+        return RequestThrottler.getDropStaleRequests();
+    }
+
+    public void setRequestThrottleDropStale(boolean drop) {
+        RequestThrottler.setDropStaleRequests(drop);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public long getMaxWriteQueuePollTime() {
+        return zks.getMaxWriteQueuePollTime();
+    }
+
+    @Override
+    public void setMaxWriteQueuePollTime(long delay) {
+        ZooKeeperServer.setMaxWriteQueuePollTime(delay);
+    }
+
+    public boolean getRequestStaleLatencyCheck() {
+        return Request.getStaleLatencyCheck();
+    }
+
+    public void setRequestStaleLatencyCheck(boolean check) {
+        Request.setStaleLatencyCheck(check);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public int getMaxBatchSize() {
+        return zks.getMaxBatchSize();
+    }
+
+    @Override
+    public void setMaxBatchSize(int size) {
+        ZooKeeperServer.setMaxBatchSize(size);
+    }
+
+    public boolean getRequestStaleConnectionCheck() {
+        return Request.getStaleConnectionCheck();
+    }
+
+    public void setRequestStaleConnectionCheck(boolean check) {
+        Request.setStaleConnectionCheck(check);
+    }
 }

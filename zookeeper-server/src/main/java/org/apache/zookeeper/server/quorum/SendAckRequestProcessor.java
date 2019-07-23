@@ -21,6 +21,7 @@ package org.apache.zookeeper.server.quorum;
 import java.io.Flushable;
 import java.io.IOException;
 
+import org.apache.zookeeper.server.ServerMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +43,8 @@ public class SendAckRequestProcessor implements RequestProcessor, Flushable {
             QuorumPacket qp = new QuorumPacket(Leader.ACK, si.getHdr().getZxid(), null,
                 null);
             try {
+                si.logLatency(ServerMetrics.getMetrics().PROPOSAL_ACK_CREATION_LATENCY);
+
                 learner.writePacket(qp, false);
             } catch (IOException e) {
                 LOG.warn("Closing connection to leader, exception during packet send", e);

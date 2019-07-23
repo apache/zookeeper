@@ -19,6 +19,7 @@ package org.apache.zookeeper.server.watch;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -33,10 +34,8 @@ import org.apache.zookeeper.server.DumbWatcher;
 import org.apache.zookeeper.server.ServerCnxn;
 
 import org.apache.zookeeper.ZKTestCase;
+import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.ServerMetrics;
-import org.apache.zookeeper.server.metric.AvgMinMaxCounter;
-import org.apache.zookeeper.server.metric.Metric;
-import org.eclipse.jetty.util.IO;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -70,6 +69,7 @@ public class WatchManagerTest extends ZKTestCase {
 
     @Before
     public void setUp() {
+        ServerMetrics.getMetrics().resetAll();
         watchers = new ConcurrentHashMap<Integer, DumbWatcher>();
         r = new Random(System.nanoTime());
     }
@@ -409,7 +409,7 @@ public class WatchManagerTest extends ZKTestCase {
     }
 
     private void checkMetrics(String metricName, long min, long max, double avg, long cnt, long sum){
-        Map<String, Object> values = ServerMetrics.getAllValues();
+        Map<String, Object> values = MetricsUtils.currentServerMetrics();
 
         Assert.assertEquals(min, values.get("min_" + metricName));
         Assert.assertEquals(max, values.get("max_" + metricName));
@@ -421,7 +421,7 @@ public class WatchManagerTest extends ZKTestCase {
     @Test
     public void testWatcherMetrics() throws IOException {
         IWatchManager manager = getWatchManager();
-        ServerMetrics.resetAll();
+        ServerMetrics.getMetrics().resetAll();
 
         DumbWatcher watcher1 = new DumbWatcher(1);
         DumbWatcher watcher2 = new DumbWatcher(2);

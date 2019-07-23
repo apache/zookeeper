@@ -30,11 +30,13 @@ import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.ZooDefs.OpCode;
-import org.apache.zookeeper.server.DataTree;
-import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
-import org.apache.zookeeper.server.Request;
+import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ServerStats;
 import org.apache.zookeeper.server.ZooTrace;
+import org.apache.zookeeper.server.Request;
+import org.apache.zookeeper.server.DataTree;
+import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
 import org.apache.zookeeper.txn.CreateSessionTxn;
 import org.apache.zookeeper.txn.TxnHeader;
@@ -199,6 +201,14 @@ public class FileTxnSnapLog {
     }
 
     /**
+     * get information of the last saved/restored snapshot
+     * @return info of last snapshot
+     */
+    public SnapshotInfo getLastSnapshotInfo() {
+        return this.snapLog.getLastSnapshotInfo();
+    }
+
+    /**
      * this function restores the server
      * database after reading from the
      * snapshots and transaction logs
@@ -211,7 +221,10 @@ public class FileTxnSnapLog {
      */
     public long restore(DataTree dt, Map<Long, Integer> sessions,
                         PlayBackListener listener) throws IOException {
+        long snapLoadingStartTime = Time.currentElapsedTime();
         long deserializeResult = snapLog.deserialize(dt, sessions);
+        ServerMetrics.getMetrics().STARTUP_SNAP_LOAD_TIME.add(
+                Time.currentElapsedTime() - snapLoadingStartTime);
         FileTxnLog txnLog = new FileTxnLog(dataDir);
         boolean trustEmptyDB;
         File initFile = new File(dataDir.getParent(), "initialize");
@@ -263,6 +276,8 @@ public class FileTxnSnapLog {
         TxnIterator itr = txnLog.read(dt.lastProcessedZxid+1);
         long highestZxid = dt.lastProcessedZxid;
         TxnHeader hdr;
+        int txnLoaded = 0;
+        long startTime = Time.currentElapsedTime();
         try {
             while (true) {
                 // iterator points to
@@ -280,6 +295,7 @@ public class FileTxnSnapLog {
                 }
                 try {
                     processTransaction(hdr,dt,sessions, itr.getTxn());
+                    txnLoaded++;
                 } catch(KeeperException.NoNodeException e) {
                    throw new IOException("Failed to process transaction type: " +
                          hdr.getType() + " error: " + e.getMessage(), e);
@@ -293,6 +309,12 @@ public class FileTxnSnapLog {
                 itr.close();
             }
         }
+
+        long loadTime = Time.currentElapsedTime() - startTime;
+        LOG.info("{} txns loaded in {} ms", txnLoaded, loadTime);
+        ServerMetrics.getMetrics().STARTUP_TXNS_LOADED.add(txnLoaded);
+        ServerMetrics.getMetrics().STARTUP_TXNS_LOAD_TIME.add(loadTime);
+
         return highestZxid;
     }
 
@@ -491,7 +513,7 @@ public class FileTxnSnapLog {
     /**
      * append the request to the transaction logs
      * @param si the request to be appended
-     * returns true iff something appended, otw false
+     * @return true iff something appended, otw false
      * @throws IOException
      */
     public boolean append(Request si) throws IOException {
@@ -553,5 +575,13 @@ public class FileTxnSnapLog {
         public SnapDirContentCheckException(String msg) {
             super(msg);
         }
+    }
+
+    public void setTotalLogSize(long size) {
+        txnLog.setTotalLogSize(size);
+    }
+
+    public long getTotalLogSize() {
+        return txnLog.getTotalLogSize();
     }
 }

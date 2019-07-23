@@ -22,6 +22,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -40,6 +41,7 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.jute.Record;
+import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.proto.ReplyHeader;
@@ -74,9 +76,19 @@ public class NettyServerCnxn extends ServerCnxn {
         if (this.factory.login != null) {
             this.zooKeeperSaslServer = new ZooKeeperSaslServer(factory.login);
         }
+        InetAddress addr = ((InetSocketAddress) channel.remoteAddress()).getAddress();
+        addAuthInfo(new Id("ip", addr.getHostAddress()));
     }
 
+    /**
+     * Close the cnxn and remove it from the factory cnxns list.
+     */
     @Override
+    public void close(DisconnectReason reason) {
+        disconnectReason = reason;
+        close();
+    }
+
     public void close() {
         closingChannel = true;
 
@@ -124,6 +136,7 @@ public class NettyServerCnxn extends ServerCnxn {
                 }
             });
         } else {
+            ServerMetrics.getMetrics().CONNECTION_DROP_COUNT.add(1);
             channel.eventLoop().execute(this::releaseQueuedBuffer);
         }
     }
@@ -189,7 +202,7 @@ public class NettyServerCnxn extends ServerCnxn {
     @Override
     public void sendBuffer(ByteBuffer... buffers) {
         if (buffers.length == 1 && buffers[0] == ServerCnxnFactory.closeConn) {
-            close();
+            close(DisconnectReason.CLIENT_CLOSED_CONNECTION);
             return;
         }
         channel.writeAndFlush(Unpooled.wrappedBuffer(buffers)).addListener(onSendBufferDoneListener);
@@ -528,14 +541,14 @@ public class NettyServerCnxn extends ServerCnxn {
             }
         } catch(IOException e) {
             LOG.warn("Closing connection to " + getRemoteSocketAddress(), e);
-            close();
+            close(DisconnectReason.IO_EXCEPTION);
         } catch(ClientCnxnLimitException e) {
             // Common case exception, print at debug level
-            ServerMetrics.CONNECTION_REJECTED.add(1);
+            ServerMetrics.getMetrics().CONNECTION_REJECTED.add(1);
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Closing connection to " + getRemoteSocketAddress(), e);
             }
-            close();
+            close(DisconnectReason.CLIENT_RATE_LIMIT);
         }
     }
 

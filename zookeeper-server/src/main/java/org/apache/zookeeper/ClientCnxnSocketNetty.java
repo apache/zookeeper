@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Iterator;
-import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -92,7 +92,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
 
     /**
      * lifecycles diagram:
-     * <p/>
+     * <p>
      * loop:
      * - try:
      * - - !isConnected()
@@ -101,7 +101,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
      * - catch:
      * - - cleanup()
      * close()
-     * <p/>
+     * <p>
      * Other non-lifecycle methods are in jeopardy getting a null channel
      * when calling in concurrency. We must handle it.
      */
@@ -262,7 +262,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
 
     @Override
     void doTransport(int waitTimeOut,
-                     List<Packet> pendingQueue,
+                     Queue<Packet> pendingQueue,
                      ClientCnxn cnxn)
             throws IOException, InterruptedException {
         try {
@@ -352,7 +352,7 @@ public class ClientCnxnSocketNetty extends ClientCnxnSocket {
     /**
      * doWrite handles writing the packets from outgoingQueue via network to server.
      */
-    private void doWrite(List<Packet> pendingQueue, Packet p, ClientCnxn cnxn) {
+    private void doWrite(Queue<Packet> pendingQueue, Packet p, ClientCnxn cnxn) {
         updateNow();
         boolean anyPacketsSent = false;
         while (true) {

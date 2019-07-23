@@ -216,6 +216,10 @@ stop)
     fi
     exit 0
     ;;
+version)
+    ZOOMAIN=org.apache.zookeeper.version.VersionInfoMain
+    $JAVA -cp "$CLASSPATH" $ZOOMAIN 2> /dev/null
+    ;;
 restart)
     shift
     "$0" stop ${@}
@@ -272,6 +276,6 @@ status)
     fi
     ;;
 *)
-    echo "Usage: $0 [--config <conf-dir>] {start|start-foreground|stop|restart|status|print-cmd}" >&2
+    echo "Usage: $0 [--config <conf-dir>] {start|start-foreground|stop|version|restart|status|print-cmd}" >&2
 
 esac

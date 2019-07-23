@@ -29,16 +29,18 @@ import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
+import org.apache.zookeeper.metrics.Summary;
 
 
 /**
  * Generic long counter that keep track of min/max/avg/percentiles.
  * The counter is thread-safe
  */
-public class AvgMinMaxPercentileCounter extends Metric  {
+public class AvgMinMaxPercentileCounter extends Metric 
+                implements Summary {
 
-    private String name;
-    private AvgMinMaxCounter counter;
+    private final String name;
+    private final AvgMinMaxCounter counter;
     private final ResettableUniformReservoir reservoir;
     private final Histogram histogram;
 

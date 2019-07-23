@@ -50,11 +50,6 @@ limitations under the License.
 * [Building Blocks: A Guide to ZooKeeper Operations](#ch_guideToZkOperations)
     * [Handling Errors](#sc_errorsZk)
     * [Connecting to ZooKeeper](#sc_connectingToZk)
-    * [Read Operations](#sc_readOps)
-    * [Write Operations](#sc_writeOps)
-    * [Handling Watches](#sc_handlingWatches)
-    * [Miscelleaneous ZooKeeper Operations](#sc_miscOps)
-* [Program Structure, with Simple Example](#ch_programStructureWithExample)
 * [Gotchas: Common Problems and Troubleshooting](#ch_gotchas)
 
 <a name="_introduction"></a>
@@ -65,7 +60,7 @@ This document is a guide for developers wishing to create
 distributed applications that take advantage of ZooKeeper's coordination
 services. It contains conceptual and practical information.
 
-The first four sections of this guide present higher level
+The first four sections of this guide present a higher level
 discussions of various ZooKeeper concepts. These are necessary both for an
 understanding of how ZooKeeper works as well how to work with it. It does
 not contain source code, but it does assume a familiarity with the
@@ -82,26 +77,21 @@ information. These are:
 
 * [Building Blocks: A Guide to ZooKeeper Operations](#ch_guideToZkOperations)
 * [Bindings](#ch_bindings)
-* [Program Structure, with Simple Example](#ch_programStructureWithExample)
-  _[tbd]_
 * [Gotchas: Common Problems and Troubleshooting](#ch_gotchas)
 
 The book concludes with an [appendix](#apx_linksToOtherInfo) containing links to other
 useful, ZooKeeper-related information.
 
-Most of information in this document is written to be accessible as
+Most of the information in this document is written to be accessible as
 stand-alone reference material. However, before starting your first
-ZooKeeper application, you should probably at least read the chaptes on
-the [ZooKeeper Data Model](#ch_zkDataModel) and [ZooKeeper Basic Operations](#ch_guideToZkOperations). Also,
-the [Simple Programmming
-Example](#ch_programStructureWithExample) _[tbd]_ is helpful for understanding the basic
-structure of a ZooKeeper client application.
+ZooKeeper application, you should probably at least read the chapters on
+the [ZooKeeper Data Model](#ch_zkDataModel) and [ZooKeeper Basic Operations](#ch_guideToZkOperations).
 
 <a name="ch_zkDataModel"></a>
 
 ## The ZooKeeper Data Model
 
-ZooKeeper has a hierarchal name space, much like a distributed file
+ZooKeeper has a hierarchal namespace, much like a distributed file
 system. The only difference is that each node in the namespace can have
 data associated with it as well as children. It is like having a file
 system that allows a file to also be a directory. Paths to nodes are
@@ -136,8 +126,7 @@ For instance, whenever a client retrieves data, it also receives the
 version of the data. And when a client performs an update or a delete,
 it must supply the version of the data of the znode it is changing. If
 the version it supplies doesn't match the actual version of the data,
-the update will fail. (This behavior can be overridden. For more
-information see... )_[tbd...]_
+the update will fail. (This behavior can be overridden.
 
 ######Note
 
@@ -145,12 +134,12 @@ information see... )_[tbd...]_
 _node_ can refer to a generic host machine, a
 server, a member of an ensemble, a client process, etc. In the ZooKeeper
 documentation, _znodes_ refer to the data nodes.
-_Servers_ refer to machines that make up the
+_Servers_ refers to machines that make up the
 ZooKeeper service; _quorum peers_ refer to the
 servers that make up an ensemble; client refers to any host or process
 which uses a ZooKeeper service.
 
-Znodes are the main enitity that a programmer access. They have
+Znodes are the main entity that a programmer access. They have
 several characteristics that are worth mentioning here.
 
 <a name="sc_zkDataMode_watches"></a>
@@ -183,7 +172,7 @@ be much less than that on average. Operating on relatively large data
 sizes will cause some operations to take much more time than others and
 will affect the latencies of some operations because of the extra time
 needed to move more data over the network and onto storage media. If
-large data storage is needed, the usually pattern of dealing with such
+large data storage is needed, the usual pattern of dealing with such
 data is to store it on a bulk storage system, such as NFS or HDFS, and
 store pointers to the storage locations in ZooKeeper.
 
@@ -202,8 +191,8 @@ Retrieves the list of ephemeral nodes created by the session for the
 given path. If the path is empty, it will list all the ephemeral nodes
 for the session.
 **Use Case** - A sample use case might be, if the list of ephemeral
-nodes for the session need to be collected for duplicate data entry check
-and the nodes are created in sequential manner so you do not know the name
+nodes for the session needs to be collected for duplicate data entry check
+and the nodes are created in a sequential manner so you do not know the name
 for duplicate check. In that case, getEphemerals() api could be used to
 get the list of nodes for the session. This might be a typical use case
 for service discovery.
@@ -331,10 +320,10 @@ following fields:
 
 A ZooKeeper client establishes a session with the ZooKeeper
 service by creating a handle to the service using a language
-binding. Once created, the handle starts of in the CONNECTING state
+binding. Once created, the handle starts off in the CONNECTING state
 and the client library tries to connect to one of the servers that
 make up the ZooKeeper service at which point it switches to the
-CONNECTED state. During normal operation will be in one of these
+CONNECTED state. During normal operation the client handle will be in one of these
 two states. If an unrecoverable error occurs, such as session
 expiration or authentication failure, or if the application explicitly
 closes the handle, the handle will move to the CLOSED state.
@@ -511,7 +500,7 @@ In the first example, each client decides to disconnect with probability 0.4 but
 made, it will try to connect to a random new server and only if it cannot connect to any of the new
 servers will it try to connect to the old ones. After finding a server, or trying all servers in the
 new list and failing to connect, the client moves back to the normal mode of operation where it picks
-an arbitrary server from the connectString and attempt to connect to it. If that fails, is will continue
+an arbitrary server from the connectString and attempts to connect to it. If that fails, it will continue
 trying different random servers in round robin. (see above the algorithm used to initially choose a server)
 
 <a name="ch_zkWatches"></a>
@@ -682,7 +671,7 @@ the _digest_ scheme.
 When a client connects to ZooKeeper and authenticates
 itself, ZooKeeper associates all the ids that correspond to a
 client with the clients connection. These ids are checked against
-the ACLs of znodes when a clients tries to access a node. ACLs are
+the ACLs of znodes when a client tries to access a node. ACLs are
 made up of pairs of _(scheme:expression,
 perms)_. The format of
 the _expression_ is specific to the scheme. For
@@ -987,7 +976,7 @@ the _isValid(String id)_ method. It is up to the plugin to verify
 that the id has a correct form. For example, _ip:172.16.0.0/16_
 is a valid id, but _ip:host.com_ is not. If the new ACL includes
 an "auth" entry, _isAuthenticated_ is used to see if the
-authentication information for this scheme that is assocatied with the connection
+authentication information for this scheme that is associated with the connection
 should be added to the ACL. Some schemes
 should not be included in auth. For example, the IP address of the client is not
 considered as an id that should be added to the ACL if auth is specified.
@@ -1107,14 +1096,13 @@ ZooKeeper does _not_ in fact make. This is:
     to read /a, client B may read the old value of 0, depending on
     which server it is connected to. If it
     is important that Client A and Client B read the same value,
-    Client B should should call the **sync()** method from the ZooKeeper API
+    Client B should call the **sync()** method from the ZooKeeper API
     method before it performs its read.
     So, ZooKeeper by itself doesn't guarantee that changes occur
     synchronously across all servers, but ZooKeeper
     primitives can be used to construct higher level functions that
     provide useful client synchronization. (For more information,
     see the [ZooKeeper Recipes](recipes.html).
-    _[tbd:..]_).
 
 <a name="ch_bindings"></a>
 
@@ -1135,7 +1123,7 @@ generated classes that are used simply as containers.
 
 The main class used by a ZooKeeper Java client is the **ZooKeeper** class. Its two constructors differ only
 by an optional session id and password. ZooKeeper supports session
-recovery accross instances of a process. A Java program may save its
+recovery across instances of a process. A Java program may save its
 session id and password to stable storage, restart, and recover the
 session that was used by the earlier instance of the program.
 
@@ -1164,8 +1152,8 @@ design:
   Note that if there is a change to **/a** between the asynchronous read and the
   synchronous read, the client library will receive the watch event
   saying **/a** changed before the
-  response for the synchronous read, but because the completion
-  callback is blocking the event queue, the synchronous read will
+  response for the synchronous read, but because of the completion
+  callback blocking the event queue, the synchronous read will
   return with the new value of **/a**
   before the watch event is processed.
 
@@ -1315,7 +1303,7 @@ you have to remember to
 1. Include ZooKeeper header: `#include <zookeeper/zookeeper.h>`
 1. If you are building a multithreaded client, compile with
   `-DTHREADED` compiler flag to enable the multi-threaded version of
-  the library, and then link against against the
+  the library, and then link against the
   _zookeeper_mt_ library. If you are building a
   single-threaded client, do not compile with `-DTHREADED`, and be
   sure to link against the_zookeeper_st_library.
@@ -1431,28 +1419,6 @@ Run the client.
 
 From the output, you should see "Connected to Zookeeper" along with Zookeeper's DEBUG messages if the connection is successful.
 
-<a name="sc_readOps"></a>
-
-### Read Operations
-
-<a name="sc_writeOps"></a>
-
-### Write Operations
-
-<a name="sc_handlingWatches"></a>
-
-### Handling Watches
-
-<a name="sc_miscOps"></a>
-
-### Miscelleaneous ZooKeeper Operations
-
-<a name="ch_programStructureWithExample"></a>
-
-## Program Structure, with Simple Example
-
-_[tbd]_
-
 <a name="ch_gotchas"></a>
 
 ## Gotchas: Common Problems and Troubleshooting
@@ -1509,14 +1475,10 @@ ZooKeeper users fall into:
 Outside the formal documentation, there're several other sources of
 information for ZooKeeper developers.
 
-* *ZooKeeper Whitepaper _[tbd: find url]_* :
-    The definitive discussion of ZooKeeper design and performance,
-    by Yahoo! Research
-
-* *API Reference _[tbd: find url]_* :
+* *[API Reference](https://zookeeper.apache.org/doc/current/api/index.html)* :
     The complete reference to the ZooKeeper API
 
-* *[ZooKeeper Talk at the Hadoup Summit 2008](http://us.dl1.yimg.com/download.yahoo.com/dl/ydn/zookeeper.m4v)* :
+* *[ZooKeeper Talk at the Hadoop Summit 2008](http://us.dl1.yimg.com/download.yahoo.com/dl/ydn/zookeeper.m4v)* :
     A video introduction to ZooKeeper, by Benjamin Reed of Yahoo!
     Research
 
@@ -1531,7 +1493,4 @@ information for ZooKeeper developers.
     Pseudo-level discussion of the implementation of various
     synchronization solutions with ZooKeeper: Event Handles, Queues,
     Locks, and Two-phase Commits.
-
-* *_[tbd]_* :
-    Any other good sources anyone can think of...
 

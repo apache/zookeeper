@@ -26,6 +26,7 @@ import org.junit.Test;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import org.apache.zookeeper.metrics.MetricsUtils;
 
 public class ZooKeeperCriticalThreadMetricsTest extends ZKTestCase {
     CountDownLatch processed;
@@ -57,7 +58,7 @@ public class ZooKeeperCriticalThreadMetricsTest extends ZKTestCase {
 
     @Test
     public void testUnrecoverableErrorCountFromRequestProcessor() throws Exception{
-        ServerMetrics.resetAll();
+        ServerMetrics.getMetrics().resetAll();
 
         processed = new CountDownLatch(1);
         PrepRequestProcessor processor =new MyPrepRequestProcessor();
@@ -69,20 +70,20 @@ public class ZooKeeperCriticalThreadMetricsTest extends ZKTestCase {
 
         processor.shutdown();
 
-        Map<String, Object> values = ServerMetrics.getAllValues();
+        Map<String, Object> values = MetricsUtils.currentServerMetrics();
         Assert.assertEquals(1L, values.get("unrecoverable_error_count"));
     }
 
     @Test
     public void testUnrecoverableErrorCount() {
-        ServerMetrics.resetAll();
+        ServerMetrics.getMetrics().resetAll();
 
         ZooKeeperServer zks = new ZooKeeperServer();
         ZooKeeperCriticalThread thread = new ZooKeeperCriticalThread("test", zks.getZooKeeperServerListener());
 
         thread.handleException("test", new Exception());
 
-        Map<String, Object> values = ServerMetrics.getAllValues();
+        Map<String, Object> values = MetricsUtils.currentServerMetrics();
         Assert.assertEquals(1L, values.get("unrecoverable_error_count"));
     }
 }

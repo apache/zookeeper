@@ -99,7 +99,7 @@ public class AsyncOps {
             latch.countDown();
         }
         
-        /** String format is rc:path:<suffix> where <suffix> is defined by each
+        /** String format is rc:path:&lt;suffix&gt; where &lt;suffix&gt; is defined by each
          * subclass individually. */
         @Override
         public String toString() {

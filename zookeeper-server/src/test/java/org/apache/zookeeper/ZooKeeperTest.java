@@ -23,6 +23,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -34,6 +35,8 @@ import org.apache.zookeeper.client.HostProvider;
 import org.apache.zookeeper.client.StaticHostProvider;
 import org.apache.zookeeper.client.ZKClientConfig;
 import org.apache.zookeeper.common.StringUtils;
+import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.test.ClientBase;
 import org.junit.Assert;
@@ -49,7 +52,93 @@ public class ZooKeeperTest extends ClientBase {
     private static final String LINE_SEPARATOR = System.getProperty("line.separator", "\n");
 
     @Test
-    public void testDeleteRecursive() throws IOException, InterruptedException, CliException, KeeperException {
+    public void testDeleteRecursive()
+        throws IOException, InterruptedException, KeeperException
+    {
+        final ZooKeeper zk = createClient();
+        setupDataTree(zk);
+
+        Assert.assertTrue(ZKUtil.deleteRecursive(zk, "/a/c", 1000));
+        List<String> children = zk.getChildren("/a", false);
+        Assert.assertEquals("1 children - c should be deleted ", 1, children.size());
+        Assert.assertTrue(children.contains("b"));
+
+        Assert.assertTrue(ZKUtil.deleteRecursive(zk, "/a", 1000));
+        Assert.assertNull(zk.exists("/a", null));
+    }
+
+    @Test
+    public void testDeleteRecursiveFail()
+            throws IOException, InterruptedException, KeeperException
+    {
+        final ZooKeeper zk = createClient();
+        setupDataTree(zk);
+
+        ACL deleteProtection = new ACL(ZooDefs.Perms.DELETE,
+                new Id("digest", "user:tl+z3z0vO6PfPfEENfLF96E6pM0="/* password is test */));
+        List<ACL> acls = Arrays.asList(
+                new ACL(ZooDefs.Perms.READ, Ids.ANYONE_ID_UNSAFE),
+                deleteProtection
+        );
+
+        // poison the well
+        zk.create("/a/c/0/surprise", "".getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        Assert.assertEquals(1, zk.getACL("/a/c/0", new Stat()).size());
+        zk.setACL("/a/c/0", acls, -1);
+        Assert.assertEquals(2, zk.getACL("/a/c/0", new Stat()).size());
+
+        Assert.assertFalse(ZKUtil.deleteRecursive(zk, "/a/c", 1000));
+        List<String> children = zk.getChildren("/a", false);
+        Assert.assertEquals("2 children - c should fail to be deleted ", 2, children.size());
+        Assert.assertTrue(children.contains("b"));
+
+        Assert.assertTrue(ZKUtil.deleteRecursive(zk, "/a/b", 1000));
+        children = zk.getChildren("/a", false);
+        Assert.assertEquals("1 children - b should be deleted ", 1, children.size());
+
+        // acquire immunity to poison
+        zk.addAuthInfo(deleteProtection.getId().getScheme(), "user:test".getBytes());
+
+        Assert.assertTrue(ZKUtil.deleteRecursive(zk, "/a", 1000));
+        Assert.assertNull(zk.exists("/a", null));
+    }
+
+    private void setupDataTree(ZooKeeper zk) throws KeeperException, InterruptedException {
+        // making sure setdata works on /
+        zk.setData("/", "some".getBytes(), -1);
+        zk.create("/a", "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+
+        zk.create("/a/b", "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+
+        zk.create("/a/b/v", "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+
+        for (int i = 1000; i < 3000; ++i) {
+            zk.create("/a/b/v/" + i, "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT);
+        }
+
+        zk.create("/a/c", "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+
+        zk.create("/a/c/v", "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+
+        for (int i = 0; i < 500; ++i) {
+            zk.create("/a/c/" + i, "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.PERSISTENT);
+        }
+        List<String> children = zk.getChildren("/a", false);
+
+        Assert.assertEquals("2 children - b & c should be present ", 2, children.size());
+        Assert.assertTrue(children.contains("b"));
+        Assert.assertTrue(children.contains("c"));
+    }
+
+    @Test
+    public void testDeleteRecursiveCli() throws IOException, InterruptedException, CliException, KeeperException {
         final ZooKeeper zk = createClient();
         // making sure setdata works on /
         zk.setData("/", "some".getBytes(), -1);
@@ -619,4 +708,15 @@ public class ZooKeeperTest extends ClientBase {
         }
     }
 
+    @Test
+    public void testSyncCommand() throws Exception {
+        final ZooKeeper zk = createClient();
+        SyncCommand cmd = new SyncCommand();
+        cmd.setZk(zk);
+        cmd.parse("sync /".split(" "));
+        List<String> expected = new ArrayList<String>();
+        expected.add("Sync is OK");
+
+        runCommandExpect(cmd, expected);
+    }
 }

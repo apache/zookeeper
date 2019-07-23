@@ -147,26 +147,34 @@ From the shell, type `help` to get a listing of commands that can be executed fr
 
 
     [zkshell: 0] help
-    ZooKeeper host:port cmd args
-        get path [watch]
-        ls path [watch]
-        set path data [version]
-        delquota [-n|-b] path
-        quit
-        getAllChildrenNumber path
-        printwatches on|off
-        create path data acl
-        stat path [watch]
-        listquota path
-        history
-        setAcl path acl
-        getAcl path
-        sync path
-        redo cmdno
-        addauth scheme auth
-        delete path [version]
-        deleteall path
-        setquota -n|-b val path
+    ZooKeeper -server host:port cmd args
+	addauth scheme auth
+	close
+	config [-c] [-w] [-s]
+	connect host:port
+	create [-s] [-e] [-c] [-t ttl] path [data] [acl]
+	delete [-v version] path
+	deleteall path
+	delquota [-n|-b] path
+	get [-s] [-w] path
+	getAcl [-s] path
+	getAllChildrenNumber path
+	getEphemerals path
+	history
+	listquota path
+	ls [-s] [-w] [-R] path
+	ls2 path [watch]
+	printwatches on|off
+	quit
+	reconfig [-s] [-v version] [[-file path] | [-members serverID=host:port1:port2;port3[,...]*]] | [-add serverId=host:port1:port2;port3[,...]]* [-remove serverId[,...]*]
+	redo cmdno
+	removewatches path [-c|-d|-a] [-l]
+	rmr path
+	set [-s] [-v version] path data
+	setAcl [-s] [-v version] [-R] path acl
+	setquota -n|-b val path
+	stat [-w] path
+	sync path
 
 
 From here, you can try a few simple commands to get a feel for this simple command line interface.  First, start by issuing the list command, as
@@ -253,7 +261,7 @@ Finally, let's `delete` the node by issuing:
     [zkshell: 18]
 
 
-That's it for now.  To explore more, continue with the rest of this document and see the [Programmer's Guide](zookeeperProgrammers.html).
+That's it for now. To explore more, see the [Zookeeper CLI](zookeeperCLI.html).
 
 <a name="sc_ProgrammingToZooKeeper"></a>
 
@@ -264,7 +272,7 @@ functionally equivalent. The C bindings exist in two variants: single
 threaded and multi-threaded. These differ only in how the messaging loop
 is done. For more information, see the [Programming
 Examples in the ZooKeeper Programmer's Guide](zookeeperProgrammers.html#ch_programStructureWithExample) for
-sample code using of the different APIs.
+sample code using the different APIs.
 
 <a name="sc_RunningReplicatedZooKeeper"></a>
 
@@ -282,7 +290,7 @@ file.
 and it is strongly recommended that you have an odd number of
 servers. If you only have two servers, then you are in a
 situation where if one of them fails, there are not enough
-machines to form a majority quorum. Two servers is inherently
+machines to form a majority quorum. Two servers are inherently
 **less** stable than a single server, because there are two single
 points of failure.
 
@@ -307,7 +315,7 @@ be from a leader.
 
 With both of these timeouts, you specify the unit of time using
 **tickTime**. In this example, the timeout
-for initLimit is 5 ticks at 2000 milleseconds a tick, or 10
+for initLimit is 5 ticks at 2000 milliseconds a tick, or 10
 seconds.
 
 The entries of the form _server.X_ list the
@@ -360,6 +368,4 @@ greatly increase performance:
   snapshots and _myid_ file. The dataLogDir
   parameters indicates a different directory to use for the
   transaction logs.
-* _[tbd: what is the other config param?]_
-
 

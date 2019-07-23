@@ -109,7 +109,7 @@ public class WatcherCleaner extends Thread {
                     processingCompletedEvent.wait(100);
                 }
                 long latency = Time.currentElapsedTime() - startTime;
-                ServerMetrics.ADD_DEAD_WATCHER_STALL_TIME.add(latency);
+                ServerMetrics.getMetrics().ADD_DEAD_WATCHER_STALL_TIME.add(latency);
             } catch (InterruptedException e) {
                 LOG.info("Got interrupted while waiting for dead watches " +
                         "queue size");
@@ -119,7 +119,7 @@ public class WatcherCleaner extends Thread {
         synchronized (this) {
             if (deadWatchers.add(watcherBit)) {
                 totalDeadWatchers.incrementAndGet();
-                ServerMetrics.DEAD_WATCHERS_QUEUED.add(1);
+                ServerMetrics.getMetrics().DEAD_WATCHERS_QUEUED.add(1);
                 if (deadWatchers.size() >= watcherCleanThreshold) {
                     synchronized (cleanEvent) {
                         cleanEvent.notifyAll();
@@ -169,8 +169,8 @@ public class WatcherCleaner extends Thread {
                         listener.processDeadWatchers(snapshot);
                         long latency = Time.currentElapsedTime() - startTime;
                         LOG.info("Takes {} to process {} watches", latency, total);
-                        ServerMetrics.DEAD_WATCHERS_CLEANER_LATENCY.add(latency);
-                        ServerMetrics.DEAD_WATCHERS_CLEARED.add(total);
+                        ServerMetrics.getMetrics().DEAD_WATCHERS_CLEANER_LATENCY.add(latency);
+                        ServerMetrics.getMetrics().DEAD_WATCHERS_CLEARED.add(total);
                         totalDeadWatchers.addAndGet(-total);
                         synchronized(processingCompletedEvent) {
                             processingCompletedEvent.notifyAll();

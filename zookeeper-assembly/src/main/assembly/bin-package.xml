@@ -24,43 +24,49 @@
   <formats>
     <format>tar.gz</format>
   </formats>
-  <includeBaseDirectory>false</includeBaseDirectory>
+  <includeBaseDirectory>true</includeBaseDirectory>
   <componentDescriptors>
     <componentDescriptor>src/main/assembly/components.xml</componentDescriptor>
   </componentDescriptors>
 
-  <moduleSets>
-    <!-- ZooKeeper jars (excluding pom projects) including 3rd party dependencies -->
-    <moduleSet>
-      <useAllReactorProjects>true</useAllReactorProjects>
+  <dependencySets>
+    <dependencySet>
       <includes>
-        <include>org.apache.zookeeper:zookeeper-server</include>
-        <include>org.apache.zookeeper:zookeeper-recipes-election</include>
-        <include>org.apache.zookeeper:zookeeper-recipes-lock</include>
-        <include>org.apache.zookeeper:zookeeper-recipes-queue</include>
+        <include>*:*</include>
       </includes>
-
-      <binaries>
-        <outputDirectory>lib</outputDirectory>
-        <unpack>false</unpack>
-        <dependencySets>
-          <dependencySet>
-            <excludes>
-              <exclude>org.apache.zookeeper:zookeeper-recipes</exclude>
-              <exclude>org.apache.zookeeper:zookeeper-client</exclude>
-              <exclude>org.apache.zookeeper:zookeeper-docs</exclude>
-            </excludes>
-          </dependencySet>
-        </dependencySets>
-      </binaries>
-    </moduleSet>
-  </moduleSets>
+      <excludes>
+        <exclude>org.apache.zookeeper:zookeeper-recipes</exclude>
+        <exclude>org.apache.zookeeper:zookeeper-client</exclude>
+        <exclude>org.apache.zookeeper:zookeeper-docs</exclude>
+      </excludes>
+      <useProjectArtifact>false</useProjectArtifact>
+      <useTransitiveDependencies>true</useTransitiveDependencies>
+      <outputDirectory>lib</outputDirectory>
+      <fileMode>${rw.file.permission}</fileMode>
+      <directoryMode>${rwx.file.permission}</directoryMode>
+      <useStrictFiltering>true</useStrictFiltering>
+    </dependencySet>
+  </dependencySets>
 
   <fileSets>
     <fileSet>
       <!-- ZooKeeper generated documents -->
       <directory>${project.basedir}/../zookeeper-docs/target/html</directory>
       <outputDirectory>docs</outputDirectory>
+      <fileMode>${rw.file.permission}</fileMode>
+      <directoryMode>${rwx.file.permission}</directoryMode>
+    </fileSet>
+    <fileSet>
+      <!-- ZooKeeper jute generated api document -->
+      <directory>${project.basedir}/../zookeeper-jute/target/apidocs</directory>
+      <outputDirectory>docs/apidocs/zookeeper-jute</outputDirectory>
+      <fileMode>${rw.file.permission}</fileMode>
+      <directoryMode>${rwx.file.permission}</directoryMode>
+    </fileSet>
+    <fileSet>
+      <!-- ZooKeeper server generated api document -->
+      <directory>${project.basedir}/../zookeeper-server/target/apidocs</directory>
+      <outputDirectory>docs/apidocs/zookeeper-server</outputDirectory>
       <fileMode>${rw.file.permission}</fileMode>
       <directoryMode>${rwx.file.permission}</directoryMode>
     </fileSet>
@@ -73,56 +79,6 @@
       <outputDirectory>lib</outputDirectory>
       <fileMode>${rw.file.permission}</fileMode>
     </fileSet>
-
-    <!-- Add source jars "manually", as the :source classiffier doesn't work in moduleSets -->
-    <fileSet>
-      <directory>${project.basedir}/../zookeeper-server/target</directory>
-      <outputDirectory>lib</outputDirectory>
-      <includes>
-        <include>zookeeper-*-sources.jar</include>
-      </includes>
-    </fileSet>
-    <fileSet>
-      <directory>${project.basedir}/../zookeeper-jute/target</directory>
-      <outputDirectory>lib</outputDirectory>
-      <includes>
-        <include>zookeeper-*-sources.jar</include>
-      </includes>
-    </fileSet>
-    <fileSet>
-      <directory>${project.basedir}/../zookeeper-recipes/zookeeper-recipes-election/target</directory>
-      <outputDirectory>lib</outputDirectory>
-      <includes>
-        <include>zookeeper-*-sources.jar</include>
-      </includes>
-    </fileSet>
-    <fileSet>
-      <directory>${project.basedir}/../zookeeper-recipes/zookeeper-recipes-lock/target</directory>
-      <outputDirectory>lib</outputDirectory>
-      <includes>
-        <include>zookeeper-*-sources.jar</include>
-      </includes>
-    </fileSet>
-    <fileSet>
-      <directory>${project.basedir}/../zookeeper-recipes/zookeeper-recipes-queue/target</directory>
-      <outputDirectory>lib</outputDirectory>
-      <includes>
-        <include>zookeeper-*-sources.jar</include>
-      </includes>
-    </fileSet>
   </fileSets>
-
-  <files>
-    <file>
-      <source>${project.basedir}/../zookeeper-server/src/main/resources/lib/cobertura/README.txt</source>
-      <outputDirectory>lib/cobertura</outputDirectory>
-      <fileMode>${rw.file.permission}</fileMode>
-    </file>
-    <file>
-      <source>${project.basedir}/../zookeeper-server/src/main/resources/lib/jdiff/zookeeper_3.1.1.xml</source>
-      <outputDirectory>lib/jdiff</outputDirectory>
-      <fileMode>${rw.file.permission}</fileMode>
-    </file>
-  </files>
 
 </assembly>

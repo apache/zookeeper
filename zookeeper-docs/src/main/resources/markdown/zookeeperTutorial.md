@@ -178,7 +178,7 @@ Once the computation is finished, a process calls leave() to leave the barrier.
 First it deletes its corresponding node, and then it gets the children of the root
 node. If there is at least one child, then it waits for a notification (obs: note
 that the second parameter of the call to getChildren() is true, meaning that
-ZooKeeper has to set a watch on the the root node). Upon reception of a notification,
+ZooKeeper has to set a watch on the root node). Upon reception of a notification,
 it checks once more whether the root node has any children.
 
     /**
@@ -282,7 +282,7 @@ if there is a conflict, then one of the two contending processes won't be able t
 delete the node and the delete operation will throw an exception.
 
 A call to getChildren() returns the list of children in lexicographic order.
-As lexicographic order does not necessary follow the numerical order of the counter
+As lexicographic order does not necessarily follow the numerical order of the counter
 values, we need to decide which element is the smallest. To decide which one has
 the smallest counter value, we traverse the list, and remove the prefix "element"
 from each one.

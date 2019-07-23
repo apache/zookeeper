@@ -25,7 +25,7 @@ public class StringUtils {
     private StringUtils() {/** non instantiable and non inheritable **/}
 
     /**
-     * This method returns an immutable List<String>, but different from String's split()
+     * This method returns an immutable List&lt;String&gt;, but different from String's split()
      * it trims the results in the input String, and removes any empty string from
      * the resulting List.
      *
@@ -43,7 +43,7 @@ public class StringUtils {
     }
     
     /**
-     * This method takes a List<String> and a delimiter and joins the strings
+     * This method takes a List&lt;String&gt; and a delimiter and joins the strings
      * into a single string, where the original strings are separated using 
      * the given delimiter.
      *
