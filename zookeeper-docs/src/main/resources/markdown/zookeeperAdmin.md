@@ -887,6 +887,12 @@ property, when available, is noted below.
     **New in 3.6.0:**
     The time (in milliseconds) the RequestThrottler waits for the request queue to drain during shutdown before it shuts down forcefully. The default is 10000.  
 
+* *advancedFlowControlEnabled* :
+    (Java system property: **zookeeper.netty.advancedFlowControl.enabled**)
+    Using accurate flow control in netty based on the status of ZooKeeper 
+    pipeline to avoid direct buffer OOM. It will disable the AUTO_READ in
+    Netty.
+
 <a name="sc_clusterOptions"></a>
 
 #### Cluster Options

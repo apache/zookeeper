@@ -33,21 +33,40 @@ import org.junit.Test;
 public class SSLAuthTest extends ClientBase {
     
     private ClientX509Util clientX509Util;
-    
-    @Before
-    public void setUp() throws Exception {
-        clientX509Util = new ClientX509Util();
+
+    public static ClientX509Util setUpSecure() throws Exception{
+        ClientX509Util x509Util = new ClientX509Util();
         String testDataPath = System.getProperty("test.data.dir", "src/test/resources/data");
         System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY, "org.apache.zookeeper.server.NettyServerCnxnFactory");
         System.setProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET, "org.apache.zookeeper.ClientCnxnSocketNetty");
         System.setProperty(ZKClientConfig.SECURE_CLIENT, "true");
-        System.setProperty(clientX509Util.getSslAuthProviderProperty(), "x509");
-        System.setProperty(clientX509Util.getSslKeystoreLocationProperty(), testDataPath + "/ssl/testKeyStore.jks");
-        System.setProperty(clientX509Util.getSslKeystorePasswdProperty(), "testpass");
-        System.setProperty(clientX509Util.getSslTruststoreLocationProperty(), testDataPath + "/ssl/testTrustStore.jks");
-        System.setProperty(clientX509Util.getSslTruststorePasswdProperty(), "testpass");
+        System.setProperty(x509Util.getSslAuthProviderProperty(), "x509");
+        System.setProperty(x509Util.getSslKeystoreLocationProperty(), testDataPath + "/ssl/testKeyStore.jks");
+        System.setProperty(x509Util.getSslKeystorePasswdProperty(), "testpass");
+        System.setProperty(x509Util.getSslTruststoreLocationProperty(), testDataPath + "/ssl/testTrustStore.jks");
+        System.setProperty(x509Util.getSslTruststorePasswdProperty(), "testpass");
         System.setProperty("javax.net.debug", "ssl");
         System.setProperty("zookeeper.authProvider.x509", "org.apache.zookeeper.server.auth.X509AuthenticationProvider");
+        return x509Util;
+    }
+
+    public static void clearSecureSetting(ClientX509Util clientX509Util) {
+        System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
+        System.clearProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET);
+        System.clearProperty(ZKClientConfig.SECURE_CLIENT);
+        System.clearProperty(clientX509Util.getSslAuthProviderProperty());
+        System.clearProperty(clientX509Util.getSslKeystoreLocationProperty());
+        System.clearProperty(clientX509Util.getSslKeystorePasswdProperty());
+        System.clearProperty(clientX509Util.getSslTruststoreLocationProperty());
+        System.clearProperty(clientX509Util.getSslTruststorePasswdProperty());
+        System.clearProperty("javax.net.debug");
+        System.clearProperty("zookeeper.authProvider.x509");
+        clientX509Util.close();
+    }
+    
+    @Before
+    public void setUp() throws Exception {
+        clientX509Util = setUpSecure();
 
         String host = "localhost";
         int port = PortAssignment.unique();
@@ -61,17 +80,7 @@ public class SSLAuthTest extends ClientBase {
 
     @After
     public void teardown() throws Exception {
-        System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
-        System.clearProperty(ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET);
-        System.clearProperty(ZKClientConfig.SECURE_CLIENT);
-        System.clearProperty(clientX509Util.getSslAuthProviderProperty());
-        System.clearProperty(clientX509Util.getSslKeystoreLocationProperty());
-        System.clearProperty(clientX509Util.getSslKeystorePasswdProperty());
-        System.clearProperty(clientX509Util.getSslTruststoreLocationProperty());
-        System.clearProperty(clientX509Util.getSslTruststorePasswdProperty());
-        System.clearProperty("javax.net.debug");
-        System.clearProperty("zookeeper.authProvider.x509");
-        clientX509Util.close();
+        clearSecureSetting(clientX509Util);
     }
 
     @Test

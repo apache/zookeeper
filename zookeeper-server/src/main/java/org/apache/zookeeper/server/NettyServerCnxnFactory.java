@@ -104,6 +104,9 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     int listenBacklog = -1;
     private final ClientX509Util x509Util;
 
+    public static final String NETTY_ADVANCED_FLOW_CONTROL = "zookeeper.netty.advancedFlowControl.enabled";
+    private boolean advancedFlowControlEnabled = false;
+
     private static final AttributeKey<NettyServerCnxn> CONNECTION_ATTRIBUTE =
             AttributeKey.valueOf("NettyServerCnxn");
 
@@ -239,18 +242,31 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         @Override
         public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
             try {
-                if (evt == NettyServerCnxn.AutoReadEvent.ENABLE) {
-                    LOG.debug("Received AutoReadEvent.ENABLE");
+                if (evt == NettyServerCnxn.ReadEvent.ENABLE) {
+                    LOG.debug("Received ReadEvent.ENABLE");
                     NettyServerCnxn cnxn = ctx.channel().attr(CONNECTION_ATTRIBUTE).get();
                     // TODO(ilyam): Not sure if cnxn can be null here. It becomes null if channelInactive()
                     // or exceptionCaught() trigger, but it's unclear to me if userEventTriggered() can run
                     // after either of those. Check for null just to be safe ...
                     if (cnxn != null) {
-                        cnxn.processQueuedBuffer();
+                        if (cnxn.getQueuedReadableBytes() > 0) {
+                            cnxn.processQueuedBuffer();
+                            if (advancedFlowControlEnabled &&
+                                    cnxn.getQueuedReadableBytes() == 0) {
+                                // trigger a read if we have consumed all
+                                // backlog
+                                ctx.read();
+                                if (LOG.isDebugEnabled()) {
+                                    LOG.debug("Issued a read after queuedBuffer drained");
+                                }
+                            }
+                        }
                     }
-                    ctx.channel().config().setAutoRead(true);
-                } else if (evt == NettyServerCnxn.AutoReadEvent.DISABLE) {
-                    LOG.debug("Received AutoReadEvent.DISABLE");
+                    if (!advancedFlowControlEnabled) {
+                        ctx.channel().config().setAutoRead(true);
+                    }
+                } else if (evt == NettyServerCnxn.ReadEvent.DISABLE) {
+                    LOG.debug("Received ReadEvent.DISABLE");
                     ctx.channel().config().setAutoRead(false);
                 }
             } finally {
@@ -281,6 +297,23 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             } finally {
                 ReferenceCountUtil.release(msg);
             }
+        }
+
+        @Override
+        public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+            if (advancedFlowControlEnabled) {
+                NettyServerCnxn cnxn = ctx.channel().attr(CONNECTION_ATTRIBUTE).get();
+                if (cnxn != null && cnxn.getQueuedReadableBytes() == 0 &&
+                        cnxn.readIssuedAfterReadComplete == 0) {
+                    ctx.read();
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Issued a read since we don't have " +
+                                "anything to consume after channelReadComplete");
+                    }
+                }
+            }
+
+            ctx.fireChannelReadComplete();
         }
 
         // Use a single listener instance to reduce GC
@@ -375,8 +408,33 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             }
         }
     }
+
+    @Sharable
+    static class ReadIssuedTrackingHandler extends ChannelDuplexHandler {
+
+        @Override
+        public void read(ChannelHandlerContext ctx) throws Exception {
+            NettyServerCnxn cnxn = ctx.channel().attr(CONNECTION_ATTRIBUTE).get();
+            if (cnxn != null) {
+                cnxn.readIssuedAfterReadComplete++;
+            }
+
+            ctx.read();
+        }
+
+        @Override
+        public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+            NettyServerCnxn cnxn = ctx.channel().attr(CONNECTION_ATTRIBUTE).get();
+            if (cnxn != null) {
+                cnxn.readIssuedAfterReadComplete = 0;
+            }
+
+            ctx.fireChannelReadComplete();
+        }
+    }
     
     CnxnChannelHandler channelHandler = new CnxnChannelHandler();
+    ReadIssuedTrackingHandler readIssuedTrackingHandler = new ReadIssuedTrackingHandler();
 
     private ServerBootstrap configureBootstrapAllocator(ServerBootstrap bootstrap) {
         ByteBufAllocator testAllocator = TEST_ALLOCATOR.get();
@@ -404,6 +462,9 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         }
         this.shouldUsePortUnification = usePortUnification;
 
+        this.advancedFlowControlEnabled = Boolean.getBoolean(NETTY_ADVANCED_FLOW_CONTROL);
+        LOG.info("{} = {}", NETTY_ADVANCED_FLOW_CONTROL, this.advancedFlowControlEnabled);
+
         EventLoopGroup bossGroup = NettyUtils.newNioOrEpollEventLoopGroup(
                 NettyUtils.getClientReachableLocalInetAddressCount());
         EventLoopGroup workerGroup = NettyUtils.newNioOrEpollEventLoopGroup();
@@ -419,6 +480,9 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
                         ChannelPipeline pipeline = ch.pipeline();
+                        if (advancedFlowControlEnabled) {
+                            pipeline.addLast(readIssuedTrackingHandler);
+                        }
                         if (secure) {
                             initSSL(pipeline, false);
                         } else if (shouldUsePortUnification) {
@@ -699,5 +763,15 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
      */
     static void clearTestAllocator() {
         TEST_ALLOCATOR.set(null);
+    }
+
+    // VisibleForTest
+    public void setAdvancedFlowControlEnabled(boolean advancedFlowControlEnabled) {
+        this.advancedFlowControlEnabled = advancedFlowControlEnabled;
+    }
+
+    // VisibleForTest
+    public void setSecure(boolean secure) {
+        this.secure = secure;
     }
 }
