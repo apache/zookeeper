@@ -18,25 +18,13 @@
 
 package org.apache.zookeeper.common;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.GeneralSecurityException;
 import java.security.KeyStore;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.security.KeyStoreException;
 
 /**
  * Implementation of {@link FileKeyStoreLoader} that loads from JKS files.
  */
-class JKSFileLoader extends FileKeyStoreLoader {
-    private static final Logger LOG = LoggerFactory.getLogger(JKSFileLoader.class);
-
-    private static final char[] EMPTY_CHAR_ARRAY = new char[0];
-    private static final String JKS_KEY_STORE_TYPE = "JKS";
-
+class JKSFileLoader extends StandardTypeFileKeyStoreLoader {
     private JKSFileLoader(String keyStorePath,
                           String trustStorePath,
                           String keyStorePassword,
@@ -45,44 +33,8 @@ class JKSFileLoader extends FileKeyStoreLoader {
     }
 
     @Override
-    public KeyStore loadKeyStore() throws IOException, GeneralSecurityException {
-        KeyStore ks = KeyStore.getInstance(JKS_KEY_STORE_TYPE);
-        InputStream inputStream = null;
-        try {
-            inputStream = new FileInputStream(new File(keyStorePath));
-            ks.load(inputStream, passwordStringToCharArray(keyStorePassword));
-            return ks;
-        } finally {
-            forceClose(inputStream);
-        }
-    }
-
-    @Override
-    public KeyStore loadTrustStore() throws IOException, GeneralSecurityException {
-        KeyStore ts = KeyStore.getInstance(JKS_KEY_STORE_TYPE);
-        InputStream inputStream = null;
-        try {
-            inputStream = new FileInputStream(new File(trustStorePath));
-            ts.load(inputStream, passwordStringToCharArray(trustStorePassword));
-            return ts;
-        } finally {
-            forceClose(inputStream);
-        }
-    }
-
-    private char[] passwordStringToCharArray(String password) {
-        return password == null ? EMPTY_CHAR_ARRAY : password.toCharArray();
-    }
-
-    private void forceClose(InputStream stream) {
-        if (stream == null) {
-            return;
-        }
-        try {
-            stream.close();
-        } catch (IOException e) {
-            LOG.info("Failed to close key store input stream", e);
-        }
+    protected KeyStore keyStoreInstance() throws KeyStoreException {
+        return KeyStore.getInstance("JKS");
     }
 
     static class Builder extends FileKeyStoreLoader.Builder<JKSFileLoader> {

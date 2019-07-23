@@ -208,9 +208,9 @@ public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
         private boolean newLeaderMessage = false;
 
         public CustomQuorumPeer(Map<Long, QuorumServer> quorumPeers, File snapDir, File logDir, int clientPort,
-                int electionAlg, long myid, int tickTime, int initLimit, int syncLimit)
+                int electionAlg, long myid, int tickTime, int initLimit, int syncLimit, int connectToLearnerMasterLimit)
                 throws IOException {
-            super(quorumPeers, snapDir, logDir, electionAlg, myid, tickTime, initLimit, syncLimit, false,
+            super(quorumPeers, snapDir, logDir, electionAlg, myid, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, false,
                     ServerCnxnFactory.createFactory(new InetSocketAddress(clientPort), -1), new QuorumMaj(quorumPeers));
         }
 
@@ -256,7 +256,8 @@ public class ReconfigDuringLeaderSyncTest extends QuorumPeerTestBase {
                 throws IOException, AdminServerException {
             quorumPeer = new CustomQuorumPeer(config.getQuorumVerifier().getAllMembers(), config.getDataDir(),
                     config.getDataLogDir(), config.getClientPortAddress().getPort(), config.getElectionAlg(),
-                    config.getServerId(), config.getTickTime(), config.getInitLimit(), config.getSyncLimit());
+                    config.getServerId(), config.getTickTime(), config.getInitLimit(), config.getSyncLimit(),
+                    config.getConnectToLearnerMasterLimit());
             quorumPeer.setConfigFileName(config.getConfigFilename());
             quorumPeer.start();
             try {

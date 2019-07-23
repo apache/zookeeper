@@ -29,9 +29,10 @@ import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.Adler32;
 import java.util.zip.Checksum;
@@ -148,14 +149,19 @@ public class FileTxnLog implements TxnLog {
     File logDir;
     private final boolean forceSync = !System.getProperty("zookeeper.forceSync", "yes").equals("no");
     long dbId;
-    private LinkedList<FileOutputStream> streamsToFlush =
-        new LinkedList<FileOutputStream>();
+    private final Queue<FileOutputStream> streamsToFlush = new ArrayDeque<>();
     File logFileWrite = null;
     private FilePadding filePadding = new FilePadding();
 
     private ServerStats serverStats;
 
     private volatile long syncElapsedMS = -1L;
+
+    /**
+     * A running total of all complete log files
+     * This does not include the current file being written to
+     */
+    private long prevLogsRunningTotal;
 
     /**
      * constructor for FileTxnLog. Take the directory
@@ -202,6 +208,14 @@ public class FileTxnLog implements TxnLog {
         return 0;
     }
 
+    public synchronized void setTotalLogSize(long size) {
+        prevLogsRunningTotal = size;
+    }
+
+    public synchronized long getTotalLogSize() {
+        return prevLogsRunningTotal + getCurrentLogSize();
+    }
+
     /**
      * creates a checksum algorithm to be used
      * @return the checksum used for this txnlog
@@ -217,8 +231,11 @@ public class FileTxnLog implements TxnLog {
     public synchronized void rollLog() throws IOException {
         if (logStream != null) {
             this.logStream.flush();
+            prevLogsRunningTotal += getCurrentLogSize();
             this.logStream = null;
             oa = null;
+
+            // Roll over the current log file into the running total
         }
     }
 
@@ -388,11 +405,12 @@ public class FileTxnLog implements TxnLog {
                             + "File size is " + channel.size() + " bytes. "
                             + "See the ZooKeeper troubleshooting guide");
                 }
-                ServerMetrics.FSYNC_TIME.add(syncElapsedMS);
+                
+                ServerMetrics.getMetrics().FSYNC_TIME.add(syncElapsedMS);
             }
         }
         while (streamsToFlush.size() > 1) {
-            streamsToFlush.removeFirst().close();
+            streamsToFlush.poll().close();
         }
 
         // Roll the log file if we exceed the size limit
@@ -699,8 +717,7 @@ public class FileTxnLog implements TxnLog {
 
         /**
          * Invoked to indicate that the input stream has been created.
-         * @param ia input archive
-         * @param is file input stream associated with the input archive.
+         * @param logFile the file to read.
          * @throws IOException
          **/
         protected InputArchive createInputArchive(File logFile) throws IOException {

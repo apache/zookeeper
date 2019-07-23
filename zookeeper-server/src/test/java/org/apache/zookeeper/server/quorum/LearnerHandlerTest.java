@@ -41,7 +41,7 @@ import org.apache.zookeeper.server.quorum.Leader.Proposal;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
@@ -60,6 +60,11 @@ public class LearnerHandlerTest extends ZKTestCase {
 
         protected void startSendingPackets() {
             threadStarted = true;
+        }
+
+        @Override
+        protected boolean shouldSendMarkerPacketForLogging() {
+            return false;
         }
     }
 
@@ -132,11 +137,11 @@ public class LearnerHandlerTest extends ZKTestCase {
         // Intercept when startForwarding is called
         leader = mock(Leader.class);
         when(
-                leader.startForwarding(Matchers.any(LearnerHandler.class),
-                        Matchers.anyLong())).thenAnswer(new Answer() {
-            public Object answer(InvocationOnMock invocation) {
-                currentZxid = (Long) invocation.getArguments()[1];
-                return 0;
+                leader.startForwarding(ArgumentMatchers.any(LearnerHandler.class),
+                        ArgumentMatchers.anyLong())).thenAnswer(new Answer<Long>() {
+            public Long answer(InvocationOnMock invocation) {
+                currentZxid = invocation.getArgument(1);
+                return 0L;
             }
         });
         when(leader.getZKDatabase()).thenReturn(db);
@@ -483,60 +488,6 @@ public class LearnerHandlerTest extends ZKTestCase {
     }
 
     /**
-     * Test cases when learner has new-epcoh zxid
-     * (zxid & 0xffffffffL) == 0;
-     */
-    @Test
-    public void testNewEpochZxidWithTxnlogOnly() throws Exception {
-        long peerZxid;
-        db.txnLog.add(createProposal(getZxid(1, 1)));
-        db.txnLog.add(createProposal(getZxid(2, 1)));
-        db.txnLog.add(createProposal(getZxid(2, 2)));
-        db.txnLog.add(createProposal(getZxid(4, 1)));
-
-        // After leader election, lastProcessedZxid will point to new epoch
-        db.lastProcessedZxid = getZxid(6, 0);
-
-        // Peer has zxid of epoch 3
-        peerZxid = getZxid(3, 0);
-        assertFalse(learnerHandler.syncFollower(peerZxid, leader));
-        // We send DIFF to (6,0) and forward any packet starting at (4,1)
-        assertOpType(Leader.DIFF, getZxid(6, 0), getZxid(4, 1));
-        // DIFF + 1 proposals + 1 commit
-        assertEquals(3, learnerHandler.getQueuedPackets().size());
-        queuedPacketMatches(new long[] { getZxid(4, 1)});
-        reset();
-
-        // Peer has zxid of epoch 4
-        peerZxid = getZxid(4, 0);
-        assertFalse(learnerHandler.syncFollower(peerZxid, leader));
-        // We send DIFF to (6,0) and forward any packet starting at (4,1)
-        assertOpType(Leader.DIFF, getZxid(6, 0), getZxid(4, 1));
-        // DIFF + 1 proposals + 1 commit
-        assertEquals(3, learnerHandler.getQueuedPackets().size());
-        queuedPacketMatches(new long[] { getZxid(4, 1)});
-        reset();
-
-        // Peer has zxid of epoch 5
-        peerZxid = getZxid(5, 0);
-        assertFalse(learnerHandler.syncFollower(peerZxid, leader));
-        // We send DIFF to (6,0) and forward any packet starting at (5,0)
-        assertOpType(Leader.DIFF, getZxid(6, 0), getZxid(5, 0));
-        // DIFF only
-        assertEquals(1, learnerHandler.getQueuedPackets().size());
-        reset();
-
-        // Peer has zxid of epoch 6
-        peerZxid = getZxid(6, 0);
-        assertFalse(learnerHandler.syncFollower(peerZxid, leader));
-        // We send DIFF to (6,0) and forward any packet starting at (6, 0)
-        assertOpType(Leader.DIFF, getZxid(6, 0), getZxid(6, 0));
-        // DIFF only
-        assertEquals(1, learnerHandler.getQueuedPackets().size());
-        reset();
-    }
-
-    /**
      * Test cases when there is a duplicate txn in the committedLog. This
      * should never happen unless there is a bug in initialization code
      * but the learner should never see duplicate packets
@@ -588,6 +539,28 @@ public class LearnerHandlerTest extends ZKTestCase {
         peerZxid = getZxid(3, 1);
         assertTrue(learnerHandler.syncFollower(peerZxid, leader));
         assertEquals(0, learnerHandler.getQueuedPackets().size());
+        reset();
+    }
+
+    /**
+     * Test cases when the leader's disk is slow. There can be a gap
+     * between the txnLog and the committedLog. Make sure we detect this
+     * and send a snap instead of a diff.
+     */
+    @Test
+    public void testTxnLogGap() throws Exception {
+        long peerZxid;
+        db.txnLog.add(createProposal(2));
+        db.txnLog.add(createProposal(3));
+        db.txnLog.add(createProposal(4));
+
+        db.lastProcessedZxid = 8;
+        db.committedLog.add(createProposal(7));
+        db.committedLog.add(createProposal(8));
+
+        // Peer zxid is in txnlog range
+        peerZxid = 3;
+        assertTrue(learnerHandler.syncFollower(peerZxid, leader));
         reset();
     }
 }

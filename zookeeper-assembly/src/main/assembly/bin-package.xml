@@ -1,0 +1,84 @@
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
+<!--
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+-->
+  <id>bin-package</id>
+  <formats>
+    <format>tar.gz</format>
+  </formats>
+  <includeBaseDirectory>true</includeBaseDirectory>
+  <componentDescriptors>
+    <componentDescriptor>src/main/assembly/components.xml</componentDescriptor>
+  </componentDescriptors>
+
+  <dependencySets>
+    <dependencySet>
+      <includes>
+        <include>*:*</include>
+      </includes>
+      <excludes>
+        <exclude>org.apache.zookeeper:zookeeper-recipes</exclude>
+        <exclude>org.apache.zookeeper:zookeeper-client</exclude>
+        <exclude>org.apache.zookeeper:zookeeper-docs</exclude>
+      </excludes>
+      <useProjectArtifact>false</useProjectArtifact>
+      <useTransitiveDependencies>true</useTransitiveDependencies>
+      <outputDirectory>lib</outputDirectory>
+      <fileMode>${rw.file.permission}</fileMode>
+      <directoryMode>${rwx.file.permission}</directoryMode>
+      <useStrictFiltering>true</useStrictFiltering>
+    </dependencySet>
+  </dependencySets>
+
+  <fileSets>
+    <fileSet>
+      <!-- ZooKeeper generated documents -->
+      <directory>${project.basedir}/../zookeeper-docs/target/html</directory>
+      <outputDirectory>docs</outputDirectory>
+      <fileMode>${rw.file.permission}</fileMode>
+      <directoryMode>${rwx.file.permission}</directoryMode>
+    </fileSet>
+    <fileSet>
+      <!-- ZooKeeper jute generated api document -->
+      <directory>${project.basedir}/../zookeeper-jute/target/apidocs</directory>
+      <outputDirectory>docs/apidocs/zookeeper-jute</outputDirectory>
+      <fileMode>${rw.file.permission}</fileMode>
+      <directoryMode>${rwx.file.permission}</directoryMode>
+    </fileSet>
+    <fileSet>
+      <!-- ZooKeeper server generated api document -->
+      <directory>${project.basedir}/../zookeeper-server/target/apidocs</directory>
+      <outputDirectory>docs/apidocs/zookeeper-server</outputDirectory>
+      <fileMode>${rw.file.permission}</fileMode>
+      <directoryMode>${rwx.file.permission}</directoryMode>
+    </fileSet>
+    <fileSet>
+      <!-- License files for 3rd party libs -->
+      <directory>${project.basedir}/../zookeeper-server/src/main/resources/lib</directory>
+      <includes>
+        <include>*.txt</include>
+      </includes>
+      <outputDirectory>lib</outputDirectory>
+      <fileMode>${rw.file.permission}</fileMode>
+    </fileSet>
+  </fileSets>
+
+</assembly>

@@ -35,4 +35,10 @@
            False positive on Netty 4.x-->
       <cve>CVE-2018-12056</cve>
    </suppress>
+   <suppress>
+      <!-- Seems like false positive - we are not using Prometheus
+           2.x, rather the client which lastest is 0.6. at the time of
+           this writing  -->
+      <cve>CVE-2019-3826</cve>
+   </suppress>
 </suppressions>

@@ -47,5 +47,6 @@ public class ZooKeeperCriticalThread extends ZooKeeperThread {
     protected void handleException(String threadName, Throwable e) {
         LOG.error("Severe unrecoverable error, from thread : {}", threadName, e);
         listener.notifyStopping(threadName, ExitCode.UNEXPECTED_ERROR.getValue());
+        ServerMetrics.getMetrics().UNRECOVERABLE_ERROR_COUNT.add(1);
     }
 }

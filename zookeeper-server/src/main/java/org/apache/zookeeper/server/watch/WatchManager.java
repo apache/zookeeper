@@ -31,6 +31,7 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.server.ServerCnxn;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.ZooTrace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +48,7 @@ public class WatchManager implements IWatchManager {
 
     private final Map<Watcher, Set<String>> watch2Paths =
         new HashMap<Watcher, Set<String>>();
-
+    
     @Override
     public synchronized int size(){
         int result = 0;
@@ -138,6 +139,28 @@ public class WatchManager implements IWatchManager {
             }
             w.process(e);
         }
+
+        switch (type) {
+        case NodeCreated:
+            ServerMetrics.getMetrics().NODE_CREATED_WATCHER.add(watchers.size());
+            break;
+
+        case NodeDeleted:
+            ServerMetrics.getMetrics().NODE_DELETED_WATCHER.add(watchers.size());
+            break;
+
+        case NodeDataChanged:
+            ServerMetrics.getMetrics().NODE_CHANGED_WATCHER.add(watchers.size());
+            break;
+
+        case NodeChildrenChanged:
+            ServerMetrics.getMetrics().NODE_CHILDREN_WATCHER.add(watchers.size());
+            break;
+        default:
+            // Other types not logged.
+            break;
+        }
+
         return new WatcherOrBitSet(watchers);
     }
 
@@ -244,4 +267,5 @@ public class WatchManager implements IWatchManager {
 
     @Override
     public void shutdown() { /* do nothing */ }
+
 }

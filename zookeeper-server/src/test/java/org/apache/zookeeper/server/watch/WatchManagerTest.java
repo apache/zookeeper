@@ -19,6 +19,7 @@ package org.apache.zookeeper.server.watch;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -33,6 +34,8 @@ import org.apache.zookeeper.server.DumbWatcher;
 import org.apache.zookeeper.server.ServerCnxn;
 
 import org.apache.zookeeper.ZKTestCase;
+import org.apache.zookeeper.metrics.MetricsUtils;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -66,6 +69,7 @@ public class WatchManagerTest extends ZKTestCase {
 
     @Before
     public void setUp() {
+        ServerMetrics.getMetrics().resetAll();
         watchers = new ConcurrentHashMap<Integer, DumbWatcher>();
         r = new Random(System.nanoTime());
     }
@@ -390,8 +394,10 @@ public class WatchManagerTest extends ZKTestCase {
         }
 
         // 4. sleep for a while to make sure all the thread exited
+        // the cleaner may wait as long as CleanerInterval+CleanerInterval/2+1
+        // So need to sleep as least that long
         try {
-            Thread.sleep(1000);
+            Thread.sleep(2000);
         } catch (InterruptedException e) {}
 
         // 5. make sure the dead watchers are not in the existing watchers
@@ -400,5 +406,68 @@ public class WatchManagerTest extends ZKTestCase {
             Assert.assertFalse(
                     existingWatchers.hasPaths(((ServerCnxn) w).getSessionId()));
         }
+    }
+
+    private void checkMetrics(String metricName, long min, long max, double avg, long cnt, long sum){
+        Map<String, Object> values = MetricsUtils.currentServerMetrics();
+
+        Assert.assertEquals(min, values.get("min_" + metricName));
+        Assert.assertEquals(max, values.get("max_" + metricName));
+        Assert.assertEquals(avg, (Double)values.get("avg_" + metricName), 0.000001);
+        Assert.assertEquals(cnt, values.get("cnt_" + metricName));
+        Assert.assertEquals(sum, values.get("sum_" + metricName));
+    }
+
+    @Test
+    public void testWatcherMetrics() throws IOException {
+        IWatchManager manager = getWatchManager();
+        ServerMetrics.getMetrics().resetAll();
+
+        DumbWatcher watcher1 = new DumbWatcher(1);
+        DumbWatcher watcher2 = new DumbWatcher(2);
+
+        final String path1 = "/path1";
+        final String path2 = "/path2";
+
+        final String path3 = "/path3";
+
+        //both wather1 and wather2 are watching path1
+        manager.addWatch(path1, watcher1);
+        manager.addWatch(path1, watcher2);
+
+        //path2 is watched by watcher1
+        manager.addWatch(path2, watcher1);
+
+        manager.triggerWatch(path3, EventType.NodeCreated);
+        //path3 is not being watched so metric is 0
+        checkMetrics("node_created_watch_count", 0L, 0L, 0D, 0L, 0L);
+
+        //path1 is watched by two watchers so two fired
+        manager.triggerWatch(path1, EventType.NodeCreated);
+        checkMetrics("node_created_watch_count", 2L, 2L, 2D, 1L, 2L);
+
+        //path2 is watched by one watcher so one fired now total is 3
+        manager.triggerWatch(path2, EventType.NodeCreated);
+        checkMetrics("node_created_watch_count", 1L, 2L, 1.5D, 2L, 3L);
+
+        //watches on path1 are no longer there so zero fired
+        manager.triggerWatch(path1, EventType.NodeDataChanged);
+        checkMetrics("node_changed_watch_count", 0L, 0L, 0D, 0L, 0L);
+
+        //both wather1 and wather2 are watching path1
+        manager.addWatch(path1, watcher1);
+        manager.addWatch(path1, watcher2);
+
+        //path2 is watched by watcher1
+        manager.addWatch(path2, watcher1);
+
+        manager.triggerWatch(path1, EventType.NodeDataChanged);
+        checkMetrics("node_changed_watch_count", 2L, 2L, 2D, 1L, 2L);
+
+        manager.triggerWatch(path2, EventType.NodeDeleted);
+        checkMetrics("node_deleted_watch_count", 1L, 1L, 1D, 1L, 1L);
+
+        //make sure that node created watch count is not impacted by the fire of other event types
+        checkMetrics("node_created_watch_count", 1L, 2L, 1.5D, 2L, 3L);
     }
 }

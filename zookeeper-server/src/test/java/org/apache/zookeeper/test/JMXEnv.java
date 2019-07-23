@@ -37,7 +37,6 @@ import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXServiceURL;
 
 
-import org.apache.zookeeper.jmx.CommonNames;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.junit.Assert;
 import org.slf4j.Logger;
@@ -96,7 +95,7 @@ public class JMXEnv {
      * @param expectedNames
      * @return
      * @throws IOException
-     * @throws MalformedObjectNameException
+     * @throws InterruptedException
      */
     public static Set<ObjectName> ensureAll(String... expectedNames)
         throws IOException, InterruptedException
@@ -110,7 +109,7 @@ public class JMXEnv {
             }
             try {
                 beans = conn().queryNames(
-                        new ObjectName(CommonNames.DOMAIN + ":*"), null);
+                        new ObjectName(MBeanRegistry.DOMAIN + ":*"), null);
             } catch (MalformedObjectNameException e) {
                 throw new RuntimeException(e);
             }
@@ -141,7 +140,7 @@ public class JMXEnv {
      * @param expectedNames
      * @return
      * @throws IOException
-     * @throws MalformedObjectNameException
+     * @throws InterruptedException
      */
     public static Set<ObjectName> ensureOnly(String... expectedNames)
         throws IOException, InterruptedException
@@ -168,7 +167,7 @@ public class JMXEnv {
             }
             try {
                 beans = conn().queryNames(
-                        new ObjectName(CommonNames.DOMAIN + ":*"), null);
+                        new ObjectName(MBeanRegistry.DOMAIN + ":*"), null);
             } catch (MalformedObjectNameException e) {
                 throw new RuntimeException(e);
             }
@@ -202,7 +201,7 @@ public class JMXEnv {
         Set<ObjectName> beans;
         try {
             beans = conn().queryNames(
-                    new ObjectName(CommonNames.DOMAIN + ":*"), null);
+                    new ObjectName(MBeanRegistry.DOMAIN + ":*"), null);
         } catch (MalformedObjectNameException e) {
             throw new RuntimeException(e);
         }
@@ -217,7 +216,7 @@ public class JMXEnv {
      * failing if there is a mismatch. This will return the beans which are not
      * matched.
      * 
-     * {@link https://issues.apache.org/jira/browse/ZOOKEEPER-1858}
+     * https://issues.apache.org/jira/browse/ZOOKEEPER-1858
      * 
      * @param expectedNames
      *            - expected beans
@@ -239,7 +238,7 @@ public class JMXEnv {
             }
             try {
                 beans = conn().queryNames(
-                        new ObjectName(CommonNames.DOMAIN + ":*"), null);
+                        new ObjectName(MBeanRegistry.DOMAIN + ":*"), null);
             } catch (MalformedObjectNameException e) {
                 throw new RuntimeException(e);
             }
@@ -290,7 +289,7 @@ public class JMXEnv {
             }
             try {
                 beans = conn().queryNames(
-                        new ObjectName(CommonNames.DOMAIN + ":*"), null);
+                        new ObjectName(MBeanRegistry.DOMAIN + ":*"), null);
             } catch (MalformedObjectNameException e) {
                 throw new RuntimeException(e);
             }
@@ -341,7 +340,7 @@ public class JMXEnv {
         Set<ObjectName> beans;
         try {
             beans = conn().queryNames(
-                    new ObjectName(CommonNames.DOMAIN + ":*"), null);
+                    new ObjectName(MBeanRegistry.DOMAIN + ":*"), null);
         } catch (MalformedObjectNameException e) {
             throw new RuntimeException(e);
         }

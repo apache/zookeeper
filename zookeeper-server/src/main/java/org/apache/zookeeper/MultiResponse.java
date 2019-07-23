@@ -22,6 +22,8 @@ import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.proto.Create2Response;
 import org.apache.zookeeper.proto.CreateResponse;
+import org.apache.zookeeper.proto.GetChildrenResponse;
+import org.apache.zookeeper.proto.GetDataResponse;
 import org.apache.zookeeper.proto.MultiHeader;
 import org.apache.zookeeper.proto.SetDataResponse;
 import org.apache.zookeeper.proto.ErrorResponse;
@@ -78,6 +80,12 @@ public class MultiResponse implements Record, Iterable<OpResult> {
                 case ZooDefs.OpCode.setData:
                     new SetDataResponse(((OpResult.SetDataResult) result).getStat()).serialize(archive, tag);
                     break;
+                case ZooDefs.OpCode.getChildren:
+                    new GetChildrenResponse(((OpResult.GetChildrenResult) result).getChildren()).serialize(archive, tag);
+                    break;
+                case ZooDefs.OpCode.getData:
+                    new GetDataResponse(((OpResult.GetDataResult) result).getData(),((OpResult.GetDataResult) result).getStat()).serialize(archive, tag);
+                    break;
                 case ZooDefs.OpCode.error:
                     new ErrorResponse(((OpResult.ErrorResult) result).getErr()).serialize(archive, tag);
                     break;
@@ -122,6 +130,18 @@ public class MultiResponse implements Record, Iterable<OpResult> {
 
                 case ZooDefs.OpCode.check:
                     results.add(new OpResult.CheckResult());
+                    break;
+
+                case ZooDefs.OpCode.getChildren:
+                    GetChildrenResponse gcr = new GetChildrenResponse();
+                    gcr.deserialize(archive, tag);
+                    results.add(new OpResult.GetChildrenResult(gcr.getChildren()));
+                    break;
+
+                case ZooDefs.OpCode.getData:
+                    GetDataResponse gdr = new GetDataResponse();
+                    gdr.deserialize(archive, tag);
+                    results.add(new OpResult.GetDataResult(gdr.getData(), gdr.getStat()));
                     break;
 
                 case ZooDefs.OpCode.error:

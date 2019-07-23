@@ -33,6 +33,7 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.server.ServerCnxn;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.util.BitHashSet;
 import org.apache.zookeeper.server.util.BitMap;
 import org.slf4j.Logger;
@@ -222,6 +223,8 @@ public class WatchManagerOptimized
             return null;
         }
 
+        int triggeredWatches = 0;
+
         // Avoid race condition between dead watcher cleaner in
         // WatcherCleaner and iterating here
         synchronized (watchers) {
@@ -238,9 +241,11 @@ public class WatchManagerOptimized
                 }
 
                 w.process(e);
+                triggeredWatches++;
             }
         }
 
+        updateMetrics(type, triggeredWatches);
         return new WatcherOrBitSet(watchers);
     }
 
@@ -266,6 +271,29 @@ public class WatchManagerOptimized
             return pathWatches.remove(path);
         } finally {
             addRemovePathRWLock.writeLock().unlock();
+        }
+    }
+
+    void updateMetrics(final EventType type, int size) {
+        switch (type) {
+        case NodeCreated:
+            ServerMetrics.getMetrics().NODE_CREATED_WATCHER.add(size);
+            break;
+
+        case NodeDeleted:
+            ServerMetrics.getMetrics().NODE_DELETED_WATCHER.add(size);
+            break;
+
+        case NodeDataChanged:
+            ServerMetrics.getMetrics().NODE_CHANGED_WATCHER.add(size);
+            break;
+
+        case NodeChildrenChanged:
+            ServerMetrics.getMetrics().NODE_CHILDREN_WATCHER.add(size);
+            break;
+        default:
+            // Other types not logged.
+            break;
         }
     }
 
@@ -386,4 +414,5 @@ public class WatchManagerOptimized
         sb.append("Total watches:").append(size());
         return sb.toString();
     }
+
 }

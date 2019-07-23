@@ -91,7 +91,6 @@ import org.slf4j.LoggerFactory;
  * the entire process and thus the connection to ZK and the leader offer
  * resulting in another round of leader determination.</li>
  * </ul>
- * </p>
  */
 public class LeaderElectionSupport implements Watcher {
 

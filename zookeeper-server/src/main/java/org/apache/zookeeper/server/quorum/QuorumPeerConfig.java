@@ -29,6 +29,7 @@ import java.io.StringReader;
 import java.io.Writer;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,6 +40,7 @@ import java.util.Map.Entry;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.common.ClientX509Util;
 import org.apache.zookeeper.common.StringUtils;
+import org.apache.zookeeper.server.util.JvmPauseMonitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -56,7 +58,7 @@ import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.VerifyingFileFactory;
 
 import static org.apache.zookeeper.common.NetUtils.formatInetAddr;
-import org.apache.zookeeper.metrics.impl.NullMetricsProvider;
+import org.apache.zookeeper.metrics.impl.DefaultMetricsProvider;
 
 @InterfaceAudience.Public
 public class QuorumPeerConfig {
@@ -83,7 +85,7 @@ public class QuorumPeerConfig {
     protected int minSessionTimeout = -1;
     /** defaults to -1 if not set explicitly */
     protected int maxSessionTimeout = -1;
-    protected String metricsProviderClassName = NullMetricsProvider.class.getName();
+    protected String metricsProviderClassName = DefaultMetricsProvider.class.getName();
     protected Properties metricsProviderConfiguration = new Properties();
     protected boolean localSessionsEnabled = false;
     protected boolean localSessionsUpgradingEnabled = false;
@@ -92,6 +94,7 @@ public class QuorumPeerConfig {
 
     protected int initLimit;
     protected int syncLimit;
+    protected int connectToLearnerMasterLimit;
     protected int electionAlg = 3;
     protected int electionPort = 2182;
     protected boolean quorumListenOnAllIPs = false;
@@ -102,6 +105,8 @@ public class QuorumPeerConfig {
     protected int snapRetainCount = 3;
     protected int purgeInterval = 0;
     protected boolean syncEnabled = true;
+
+    protected String initialConfig;
 
     protected LearnerType peerType = LearnerType.PARTICIPANT;
 
@@ -121,6 +126,23 @@ public class QuorumPeerConfig {
      * @see org.apache.zookeeper.server.PurgeTxnLog#purge(File, File, int)
      */
     private final int MIN_SNAP_RETAIN_COUNT = 3;
+
+    /**
+     * JVM Pause Monitor feature switch
+     */
+    protected boolean jvmPauseMonitorToRun = false;
+    /**
+     * JVM Pause Monitor warn threshold in ms
+     */
+    protected long jvmPauseWarnThresholdMs = JvmPauseMonitor.WARN_THRESHOLD_DEFAULT;
+    /**
+     * JVM Pause Monitor info threshold in ms
+     */
+    protected long jvmPauseInfoThresholdMs = JvmPauseMonitor.INFO_THRESHOLD_DEFAULT;
+    /**
+     * JVM Pause Monitor sleep time in ms
+     */
+    protected long jvmPauseSleepTimeMs = JvmPauseMonitor.SLEEP_TIME_MS_DEFAULT;
 
     @SuppressWarnings("serial")
     public static class ConfigException extends Exception {
@@ -154,7 +176,10 @@ public class QuorumPeerConfig {
             } finally {
                 in.close();
             }
-            
+
+            /* Read entire config file as initial configuration */
+            initialConfig = new String(Files.readAllBytes(configFile.toPath()));
+
             parseProperties(cfg);
         } catch (IOException e) {
             throw new ConfigException("Error processing " + path, e);
@@ -282,6 +307,8 @@ public class QuorumPeerConfig {
                 initLimit = Integer.parseInt(value);
             } else if (key.equals("syncLimit")) {
                 syncLimit = Integer.parseInt(value);
+            } else if (key.equals("connectToLearnerMasterLimit")) {
+                connectToLearnerMasterLimit = Integer.parseInt(value);
             } else if (key.equals("electionAlg")) {
                 electionAlg = Integer.parseInt(value);
                 if (electionAlg != 1 && electionAlg != 2 && electionAlg != 3) {
@@ -344,6 +371,14 @@ public class QuorumPeerConfig {
                 quorumServicePrincipal = value;
             } else if (key.equals("quorum.cnxn.threads.size")) {
                 quorumCnxnThreadsSize = Integer.parseInt(value);
+            } else if (key.equals(JvmPauseMonitor.INFO_THRESHOLD_KEY)) {
+                jvmPauseInfoThresholdMs = Long.parseLong(value);
+            } else if (key.equals(JvmPauseMonitor.WARN_THRESHOLD_KEY)) {
+                jvmPauseWarnThresholdMs = Long.parseLong(value);
+            } else if (key.equals(JvmPauseMonitor.SLEEP_TIME_MS_KEY)) {
+                jvmPauseSleepTimeMs = Long.parseLong(value);
+            } else if (key.equals(JvmPauseMonitor.JVM_PAUSE_MONITOR_FEATURE_SWITCH_KEY)) {
+                jvmPauseMonitorToRun = Boolean.parseBoolean(value);
             } else if (key.equals("metricsProvider.className")) {
                 metricsProviderClassName = value;
             } else if (key.startsWith("metricsProvider.")) {
@@ -468,7 +503,7 @@ public class QuorumPeerConfig {
      *             If authentication scheme is configured but authentication
      *             provider is not configured.
      */
-    private void configureSSLAuth() throws ConfigException {
+    public static void configureSSLAuth() throws ConfigException {
         try (ClientX509Util clientX509Util = new ClientX509Util()) {
             String sslAuthProp = "zookeeper.authProvider." + System.getProperty(clientX509Util.getSslAuthProviderProperty(), "x509");
             if (System.getProperty(sslAuthProp) == null) {
@@ -776,6 +811,11 @@ public class QuorumPeerConfig {
     public int getObserverMasterPort() { return observerMasterPort; }
     public File getDataDir() { return dataDir; }
     public File getDataLogDir() { return dataLogDir; }
+
+    public String getInitialConfig() {
+        return initialConfig;
+    }
+
     public int getTickTime() { return tickTime; }
     public int getMaxClientCnxns() { return maxClientCnxns; }
     public int getMinSessionTimeout() { return minSessionTimeout; }
@@ -797,6 +837,7 @@ public class QuorumPeerConfig {
 
     public int getInitLimit() { return initLimit; }
     public int getSyncLimit() { return syncLimit; }
+    public int getConnectToLearnerMasterLimit() { return connectToLearnerMasterLimit; }
     public int getElectionAlg() { return electionAlg; }
     public int getElectionPort() { return electionPort; }
 
@@ -823,6 +864,19 @@ public class QuorumPeerConfig {
     public Map<Long,QuorumServer> getServers() {
         // returns all configuration servers -- participants and observers
         return Collections.unmodifiableMap(quorumVerifier.getAllMembers());
+    }
+
+    public long getJvmPauseInfoThresholdMs() {
+        return jvmPauseInfoThresholdMs;
+    }
+    public long getJvmPauseWarnThresholdMs() {
+        return jvmPauseWarnThresholdMs;
+    }
+    public long getJvmPauseSleepTimeMs() {
+        return jvmPauseSleepTimeMs;
+    }
+    public boolean isJvmPauseMonitorToRun() {
+        return jvmPauseMonitorToRun;
     }
 
     public long getServerId() { return serverId; }

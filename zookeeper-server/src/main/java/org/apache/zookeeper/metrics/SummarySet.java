@@ -16,14 +16,22 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.jmx;
+package org.apache.zookeeper.metrics;
 
 /**
- * A bunch of constants.
- * TODO: will get rid of it eventually.
+ * Summaries track the size and number of events.
+ * They are able to publish minumum, maximum, average values, depending on the capabilities of the MetricsProvider.
+ * A SummarySet is a set of {@link Summary}.
  */
-public class CommonNames {
-    public static final String DOMAIN="org.apache.ZooKeeperService";
-    public static final String DATA_TREE_KEY="DataTree";
-    public static final String STANDALONE_SERVER_KEY="StandaloneServer";
+public interface SummarySet {
+
+     /**
+      * Register a value.
+      * <p>This method is thread safe, The MetricsProvider will take care of synchronization.</p>
+      *
+      * @param key the key to access the Summary for the given key
+      * @param value current value
+      */
+     void add(String key, long value);
+
 }

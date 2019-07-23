@@ -23,14 +23,13 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.apache.zookeeper</groupId>
-    <artifactId>zookeeper</artifactId>
+    <artifactId>parent</artifactId>
     <version>3.6.0-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
 
   <groupId>org.apache.zookeeper</groupId>
   <artifactId>zookeeper-docs</artifactId>
-  <version>3.6.0-SNAPSHOT</version>
   <name>Apache ZooKeeper - Documentation</name>
   <description>Documentation</description>
 
@@ -39,7 +38,7 @@
       <plugin>
         <groupId>com.ruleoftech</groupId>
         <artifactId>markdown-page-generator-plugin</artifactId>
-        <version>0.10</version>
+        <version>2.1.0</version>
         <executions>
           <execution>
             <phase>process-sources</phase>
@@ -55,22 +54,19 @@
         </configuration>
       </plugin>
       <plugin>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <configuration>
+          <!-- this module isn't to be deployed to Maven Central -->
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>source-package</id>
-            <phase>package</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-            <configuration>
-              <skipAssembly>true</skipAssembly>
-            </configuration>
-          </execution>
-        </executions>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
       </plugin>
     </plugins>
   </build>
-
 </project>

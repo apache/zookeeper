@@ -44,7 +44,7 @@ review the linked document to enable support for remote management
 The class
 _org.apache.zookeeper.server.quorum.QuorumPeerMain_
 will start a JMX manageable ZooKeeper server. This class
-registers the proper MBeans during initalization to support JMX
+registers the proper MBeans during initialization to support JMX
 monitoring and management of the
 instance. See _bin/zkServer.sh_ for one
 example of starting ZooKeeper using QuorumPeerMain.
@@ -65,7 +65,7 @@ start _jconsole_, which typically resides in
 _JDK_HOME/bin/jconsole_
 
 When the "new connection" window is displayed either connect
-to local process (if jconsole started on same host as Server) or
+to local process (if jconsole started on the same host as Server) or
 use the remote process connection.
 
 By default the "overview" tab for the VM is displayed (this
@@ -87,7 +87,7 @@ _-Dzookeeper.jmx.log4j.disable=true_ to the JVM
 when starting ZooKeeper. In addition, we can specify the name of
 the MBean with the _-Dzookeeper.jmx.log4j.mbean=log4j:hierarchy=default_
 option, in case we need to upgrade an integrated system
-using the old MBean name (`log4j:hiearchy = default`).
+using the old MBean name (`log4j:hierarchy = default`).
 
 <a name="ch_reference"></a>
 

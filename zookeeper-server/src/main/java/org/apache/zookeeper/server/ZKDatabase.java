@@ -21,13 +21,17 @@ package org.apache.zookeeper.server;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
@@ -84,9 +88,14 @@ public class ZKDatabase {
 
     public static final int commitLogCount = 500;
     protected static int commitLogBuffer = 700;
-    protected LinkedList<Proposal> committedLog = new LinkedList<Proposal>();
+    protected Queue<Proposal> committedLog = new ArrayDeque<>();
     protected ReentrantReadWriteLock logLock = new ReentrantReadWriteLock();
     volatile private boolean initialized = false;
+
+    /**
+     * Number of txn since last snapshot;
+     */
+    private AtomicInteger txnCount = new AtomicInteger(0);
 
     /**
      * the filetxnsnaplog that this zk database
@@ -187,18 +196,21 @@ public class ZKDatabase {
     }
 
 
-    public synchronized List<Proposal> getCommittedLog() {
+    public synchronized Collection<Proposal> getCommittedLog() {
+        final Collection<Proposal> result;
         ReadLock rl = logLock.readLock();
-        // only make a copy if this thread isn't already holding a lock
-        if(logLock.getReadHoldCount() <=0) {
+        // make a copy if this thread is not already holding a lock
+        if (logLock.getReadHoldCount() > 0) {
+          result = this.committedLog;
+        } else {
+            rl.lock();
             try {
-                rl.lock();
-                return new LinkedList<Proposal>(this.committedLog);
+                result = new ArrayList<>(this.committedLog);
             } finally {
                 rl.unlock();
             }
         }
-        return this.committedLog;
+        return Collections.unmodifiableCollection(result);
     }
 
     /**
@@ -249,7 +261,7 @@ public class ZKDatabase {
         long zxid = snapLog.restore(dataTree, sessionsWithTimeouts, commitProposalPlaybackListener);
         initialized = true;
         long loadTime = Time.currentElapsedTime() - startTime;
-        ServerMetrics.DB_INIT_TIME.add(loadTime);
+        ServerMetrics.getMetrics().DB_INIT_TIME.add(loadTime);
         LOG.info("Snapshot loaded in " + loadTime + " ms");
         return zxid;
     }
@@ -281,8 +293,8 @@ public class ZKDatabase {
         try {
             wl.lock();
             if (committedLog.size() > commitLogCount) {
-                committedLog.removeFirst();
-                minCommittedLog = committedLog.getFirst().packet.getZxid();
+                committedLog.remove();
+                minCommittedLog = committedLog.peek().packet.getZxid();
             }
             if (committedLog.isEmpty()) {
                 minCommittedLog = request.zxid;
@@ -589,6 +601,7 @@ public class ZKDatabase {
      * @return true if the append was succesfull and false if not
      */
     public boolean append(Request si) throws IOException {
+        txnCount.incrementAndGet();
         return this.snapLog.append(si);
     }
 
@@ -597,6 +610,7 @@ public class ZKDatabase {
      */
     public void rollLog() throws IOException {
         this.snapLog.rollLog();
+        resetTxnCount();
     }
 
     /**
@@ -668,5 +682,27 @@ public class ZKDatabase {
     // visible for testing
     public DataTree createDataTree() {
         return new DataTree();
+    }
+
+    /**
+     * Reset the number of txn since last rollLog
+     */
+    public void resetTxnCount() {
+        txnCount.set(0);
+        snapLog.setTotalLogSize(0);
+    }
+
+    /**
+     * Get the number of txn since last snapshot
+     */
+    public int getTxnCount() {
+        return txnCount.get();
+    }
+
+    /**
+     * Get the size of txn since last snapshot
+     */
+    public long getTxnSize() {
+        return snapLog.getTotalLogSize();
     }
 }

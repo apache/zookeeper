@@ -16,6 +16,8 @@
  */
 package org.apache.zookeeper.server.watch;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.concurrent.CountDownLatch;
@@ -23,10 +25,18 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.common.Time;
+import org.apache.zookeeper.metrics.MetricsUtils;
+import org.apache.zookeeper.metrics.impl.DefaultMetricsProvider;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.junit.Test;
 import org.junit.Assert;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static org.hamcrest.number.OrderingComparison.greaterThan;
 
 public class WatcherCleanerTest extends ZKTestCase {
+    private static final Logger LOG = LoggerFactory.getLogger(WatcherCleanerTest.class);
 
     public static class MyDeadWatcherListener implements IDeadWatcherListener {
 
@@ -123,5 +133,39 @@ public class WatcherCleanerTest extends ZKTestCase {
         System.out.println("time used " + time);
         Assert.assertTrue(Time.currentElapsedTime() - startTime >= delayMs);
         Assert.assertTrue(listener.wait(5000));
+    }
+
+    @Test
+    public void testDeadWatcherMetrics() {
+        ServerMetrics.getMetrics().resetAll();
+        MyDeadWatcherListener listener = new MyDeadWatcherListener();
+        WatcherCleaner cleaner = new WatcherCleaner(listener, 1, 1, 1, 1);
+        listener.setDelayMs(20);
+        cleaner.start();
+        listener.setCountDownLatch(new CountDownLatch(3));
+        //the dead watchers will be added one by one and cleared one by one because we set both watchCleanThreshold and
+        //maxInProcessingDeadWatchers to 1
+        cleaner.addDeadWatcher(1);
+        cleaner.addDeadWatcher(2);
+        cleaner.addDeadWatcher(3);
+
+        Assert.assertTrue(listener.wait(5000));
+        
+        Map<String, Object> values = MetricsUtils.currentServerMetrics();
+        Assert.assertThat("Adding dead watcher should be stalled twice",
+                          (Long)values.get("add_dead_watcher_stall_time"),
+                           greaterThan(0L));
+        Assert.assertEquals("Total dead watchers added to the queue should be 3", 3L, values.get("dead_watchers_queued"));
+        Assert.assertEquals("Total dead watchers cleared should be 3", 3L, values.get("dead_watchers_cleared"));
+
+        Assert.assertEquals(3L, values.get("cnt_dead_watchers_cleaner_latency"));
+
+        //Each latency should be a little over 20 ms, allow 5 ms deviation
+        Assert.assertEquals(20D, (Double)values.get("avg_dead_watchers_cleaner_latency"), 5);
+        Assert.assertEquals(20D, ((Long)values.get("min_dead_watchers_cleaner_latency")).doubleValue(), 5);
+        Assert.assertEquals(20D, ((Long)values.get("max_dead_watchers_cleaner_latency")).doubleValue(), 5);
+        Assert.assertEquals(20D, ((Long)values.get("p50_dead_watchers_cleaner_latency")).doubleValue(), 5);
+        Assert.assertEquals(20D, ((Long)values.get("p95_dead_watchers_cleaner_latency")).doubleValue(), 5);
+        Assert.assertEquals(20D, ((Long)values.get("p99_dead_watchers_cleaner_latency")).doubleValue(), 5);
     }
 }

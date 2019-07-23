@@ -39,6 +39,14 @@ public class FileKeyStoreLoaderBuilderProviderTest extends ZKTestCase {
         Assert.assertTrue(builder instanceof PEMFileLoader.Builder);
     }
 
+    @Test
+    public void testGetBuilderForPKCS12FileType() {
+        FileKeyStoreLoader.Builder<?> builder =
+            FileKeyStoreLoaderBuilderProvider.getBuilderForKeyStoreFileType(
+                KeyStoreFileType.PKCS12);
+        Assert.assertTrue(builder instanceof PKCS12FileLoader.Builder);
+    }
+
     @Test(expected = NullPointerException.class)
     public void testGetBuilderForNullFileType() {
         FileKeyStoreLoaderBuilderProvider.getBuilderForKeyStoreFileType(null);

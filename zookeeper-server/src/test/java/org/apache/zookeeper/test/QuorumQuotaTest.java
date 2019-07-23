@@ -24,6 +24,7 @@ import org.apache.zookeeper.StatsTrack;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeperMain;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.cli.SetQuotaCommand;
 import org.apache.zookeeper.data.Stat;
 import org.junit.Assert;
 import org.junit.Test;
@@ -41,7 +42,7 @@ public class QuorumQuotaTest extends QuorumBase {
             zk.create("/a/" + i, "some".getBytes(), Ids.OPEN_ACL_UNSAFE,
                     CreateMode.PERSISTENT);
         }
-        ZooKeeperMain.createQuota(zk, "/a", 1000L, 5000);
+        SetQuotaCommand.createQuota(zk, "/a", 1000L, 5000);
         String statPath = Quotas.quotaZookeeper + "/a"+ "/" + Quotas.statNode;
         byte[] data = zk.getData(statPath, false, new Stat());
         StatsTrack st = new StatsTrack(new String(data));

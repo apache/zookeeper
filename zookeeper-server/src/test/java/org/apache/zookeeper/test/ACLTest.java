@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
+import org.apache.zookeeper.server.ServerCnxn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
@@ -59,6 +60,42 @@ public class ACLTest extends ZKTestCase implements Watcher {
         Assert.assertTrue("testing lowest netmask possible", prov.isValid("127.0.0.1/0"));
         Assert.assertFalse("testing netmask too high", prov.isValid("127.0.0.1/33"));
         Assert.assertFalse("testing netmask too low", prov.isValid("10.0.0.1/-1"));
+    }
+
+    @Test
+    public void testNettyIpAuthDefault() throws Exception {
+        String HOSTPORT = "127.0.0.1:" + PortAssignment.unique();
+        System.setProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY,
+                "org.apache.zookeeper.server.NettyServerCnxnFactory");
+        ClientBase.setupTestEnv();
+        File tmpDir = ClientBase.createTmpDir();
+        ZooKeeperServer zks = new ZooKeeperServer(tmpDir, tmpDir, 3000);
+        SyncRequestProcessor.setSnapCount(1000);
+        final int PORT = Integer.parseInt(HOSTPORT.split(":")[1]);
+        ServerCnxnFactory f = ServerCnxnFactory.createFactory(PORT, -1);
+        f.startup(zks);
+        try {
+            LOG.info("starting up the zookeeper server .. waiting");
+            Assert.assertTrue("waiting for server being up",
+                    ClientBase.waitForServerUp(HOSTPORT, CONNECTION_TIMEOUT));
+            ClientBase.createZKClient(HOSTPORT);
+            for (ServerCnxn cnxn : f.getConnections()) {
+                boolean foundID = false;
+                for (Id id : cnxn.getAuthInfo()) {
+                    if (id.getScheme().equals("ip")) {
+                        foundID = true;
+                        break;
+                    }
+                }
+                Assert.assertTrue(foundID);
+            }
+        } finally {
+            f.shutdown();
+            zks.shutdown();
+            Assert.assertTrue("waiting for server down",
+                    ClientBase.waitForServerDown(HOSTPORT, CONNECTION_TIMEOUT));
+            System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
+        }
     }
 
     @Test

@@ -52,7 +52,7 @@ public class FLEOutOfElectionTest {
                     new InetSocketAddress("127.0.0.1", PortAssignment.unique())));
         }
         QuorumPeer peer = new QuorumPeer(peers, tmpdir, tmpdir, 
-                PortAssignment.unique(), 3, 3, 1000, 2, 2);
+                PortAssignment.unique(), 3, 3, 1000, 2, 2, 2);
         fle = new FastLeaderElection(peer, peer.createCnxnManager());
     }
 

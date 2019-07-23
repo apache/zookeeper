@@ -101,6 +101,22 @@ public class Leader implements LearnerMaster {
 
     private final LearnerSnapshotThrottler learnerSnapshotThrottler;
 
+    // log ack latency if zxid is a multiple of ackLoggingFrequency. If <=0, disable logging.
+    protected static final String ACK_LOGGING_FREQUENCY = "zookeeper.leader.ackLoggingFrequency";
+    private static int ackLoggingFrequency;
+    static {
+        ackLoggingFrequency = Integer.getInteger(ACK_LOGGING_FREQUENCY, 1000);
+        LOG.info(ACK_LOGGING_FREQUENCY + " = " + ackLoggingFrequency);
+    }
+
+    public static void setAckLoggingFrequency(int frequency) {
+        ackLoggingFrequency = frequency;
+    }
+
+    public static int getAckLoggingFrequency() {
+        return ackLoggingFrequency;
+    }
+
     final LeaderZooKeeperServer zk;
 
     final QuorumPeer self;
@@ -185,6 +201,24 @@ public class Leader implements LearnerMaster {
     private void addObserverLearnerHandler(LearnerHandler lh) {
         synchronized (observingLearners) {
             observingLearners.add(lh);
+        }
+    }
+
+    public Iterable<Map<String, Object>> getObservingLearnersInfo() {
+        Set<Map<String,Object>> info = new HashSet<>();
+        synchronized (observingLearners) {
+            for (LearnerHandler lh: observingLearners) {
+                info.add(lh.getLearnerHandlerInfo());
+            }
+        }
+        return info;
+    }
+
+    public void resetObserverConnectionStats() {
+        synchronized (observingLearners) {
+            for (LearnerHandler lh : observingLearners) {
+                lh.resetObserverConnectionStats();
+            }
         }
     }
 
@@ -428,7 +462,8 @@ public class Leader implements LearnerMaster {
 
                         BufferedInputStream is = new BufferedInputStream(
                                 s.getInputStream());
-                        LearnerHandler fh = new LearnerHandler(s, is, Leader.this);
+                        LearnerHandler fh = new LearnerHandler(s, is,
+                                Leader.this);
                         fh.start();
                     } catch (SocketException e) {
                         error = true;
@@ -502,7 +537,7 @@ public class Leader implements LearnerMaster {
         self.end_fle = Time.currentElapsedTime();
         long electionTimeTaken = self.end_fle - self.start_fle;
         self.setElectionTimeTaken(electionTimeTaken);
-        ServerMetrics.ELECTION_TIME.add(electionTimeTaken);
+        ServerMetrics.getMetrics().ELECTION_TIME.add(electionTimeTaken);
         LOG.info("LEADING - LEADER ELECTION TOOK - {} {}", electionTimeTaken,
                 QuorumPeer.FLE_TIME_UNIT);
         self.start_fle = 0;
@@ -511,6 +546,7 @@ public class Leader implements LearnerMaster {
         zk.registerJMX(new LeaderBean(this, zk), self.jmxLocalPeerBean);
 
         try {
+            self.setZabState(QuorumPeer.ZabState.DISCOVERY);
             self.tick.set(0);
             zk.loadData();
 
@@ -580,6 +616,8 @@ public class Leader implements LearnerMaster {
 
              waitForEpochAck(self.getId(), leaderStateSummary);
              self.setCurrentEpoch(epoch);
+            self.setLeaderAddressAndId(self.getQuorumAddress(), self.getId());
+            self.setZabState(QuorumPeer.ZabState.SYNCHRONIZATION);
 
              try {
                  waitForNewLeaderAck(self.getId(), zk.getZxid());
@@ -631,6 +669,7 @@ public class Leader implements LearnerMaster {
                 self.setZooKeeperServer(zk);
             }
 
+            self.setZabState(QuorumPeer.ZabState.BROADCAST);
             self.adminServer.setZooKeeperServer(zk);
 
             // Everything is a go, simply start counting the ticks
@@ -863,6 +902,7 @@ public class Leader implements LearnerMaster {
             informAndActivate(p, designatedLeader);
             //turnOffFollowers();
         } else {
+            p.request.logLatency(ServerMetrics.getMetrics().QUORUM_ACK_LATENCY);
             commit(zxid);
             inform(p);
         }
@@ -927,6 +967,10 @@ public class Leader implements LearnerMaster {
             LOG.warn("Trying to commit future proposal: zxid 0x{} from {}",
                     Long.toHexString(zxid), followerAddr);
             return;
+        }
+
+        if (ackLoggingFrequency > 0 && (zxid % ackLoggingFrequency == 0)) {
+            p.request.logLatency(ServerMetrics.getMetrics().ACK_LATENCY, Long.toString(sid));
         }
 
         p.addAck(sid);
@@ -1057,7 +1101,7 @@ public class Leader implements LearnerMaster {
         }
         QuorumPacket qp = new QuorumPacket(Leader.COMMIT, zxid, null, null);
         sendPacket(qp);
-        ServerMetrics.COMMIT_COUNT.add(1);
+        ServerMetrics.getMetrics().COMMIT_COUNT.add(1);
     }
 
     //commit and send some info
@@ -1094,7 +1138,7 @@ public class Leader implements LearnerMaster {
     }
 
     /**
-     * Create an inform&activate packet and send it to all observers.
+     * Create an inform and activate packet and send it to all observers.
      */
     public void informAndActivate(Proposal proposal, long designatedLeader) {
         sendObserverPacket(buildInformAndActivePacket(proposal.request.zxid,
@@ -1169,6 +1213,7 @@ public class Leader implements LearnerMaster {
             outstandingProposals.put(lastProposed, p);
             sendPacket(pp);
         }
+        ServerMetrics.getMetrics().PROPOSAL_COUNT.add(1);
         return p;
     }
 
@@ -1210,7 +1255,6 @@ public class Leader implements LearnerMaster {
      *
      * @param handler handler of the follower
      * @return last proposed zxid
-     * @throws InterruptedException
      */
     @Override
     synchronized public long startForwarding(LearnerHandler handler,
@@ -1282,7 +1326,7 @@ public class Leader implements LearnerMaster {
     /**
      * Quit condition:
      *
-     * 1 voter goes to looking again and time waitForEpoch > maxTimeToWaitForEpoch
+     * 1 voter goes to looking again and time waitForEpoch &gt; maxTimeToWaitForEpoch
      *
      * Note: the voter may go to looking again in case of:
      * 1. change mind in the last minute when received a different notification
@@ -1295,6 +1339,7 @@ public class Leader implements LearnerMaster {
             quitWaitForEpoch = true;
             connectingFollowers.notifyAll();
         }
+        ServerMetrics.getMetrics().QUIT_LEADING_DUE_TO_DISLOYAL_VOTER.add(1);
         LOG.info("Quit leading due to voter changed mind.");
     }
 

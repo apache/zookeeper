@@ -189,13 +189,23 @@ extern ZOOAPI const int ZOOKEEPER_READ;
 // @}
 
 /**
- * @name Create Flags
+ * @name Create Mode
  *
- * These flags are used by zoo_create to affect node create. They may
- * be ORed together to combine effects.
+ * These modes are used by zoo_create to affect node create.
  */
 // @{
+extern ZOOAPI const int ZOO_PERSISTENT;
 extern ZOOAPI const int ZOO_EPHEMERAL;
+extern ZOOAPI const int ZOO_PERSISTENT_SEQUENTIAL;
+extern ZOOAPI const int ZOO_EPHEMERAL_SEQUENTIAL;
+extern ZOOAPI const int ZOO_CONTAINER;
+extern ZOOAPI const int ZOO_PERSISTENT_WITH_TTL;
+extern ZOOAPI const int ZOO_PERSISTENT_SEQUENTIAL_WITH_TTL;
+
+/**
+ * \deprecated ZOO_SEQUENCE Create Flag has been deprecated. Use ZOO_PERSISTENT_SEQUENTIAL
+ * or ZOO_EPHEMERAL_SEQUENTIAL instead of it.
+ */
 extern ZOOAPI const int ZOO_SEQUENCE;
 // @}
 
@@ -306,6 +316,7 @@ typedef struct zoo_op {
             int buflen;
             const struct ACL_vector *acl;
             int flags;
+            int64_t ttl;
         } create_op;
 
         // DELETE
@@ -343,8 +354,7 @@ typedef struct zoo_op {
  * \param valuelen The number of bytes in data. To set the data to be NULL use
  * value as NULL and valuelen as -1.
  * \param acl The initial ACL of the node. The ACL must not be null or empty.
- * \param flags this parameter can be set to 0 for normal create or an OR
- *    of the Create Flags
+ * \param mode this parameter should be one of the Create Modes.
  * \param path_buffer Buffer which will be filled with the path of the
  *    new node (this might be different than the supplied path
  *    because of the ZOO_SEQUENCE flag).  The path string will always be
@@ -356,7 +366,7 @@ typedef struct zoo_op {
  *    The path string will always be null-terminated.
  */
 void zoo_create_op_init(zoo_op_t *op, const char *path, const char *value,
-        int valuelen,  const struct ACL_vector *acl, int flags,
+        int valuelen,  const struct ACL_vector *acl, int mode,
         char *path_buffer, int path_buffer_len);
 
 /**
@@ -895,11 +905,12 @@ ZOOAPI int zoo_state(zhandle_t *zh);
  * \brief create a node.
  *
  * This method will create a node in ZooKeeper. A node can only be created if
- * it does not already exists. The Create Flags affect the creation of nodes.
- * If ZOO_EPHEMERAL flag is set, the node will automatically get removed if the
- * client session goes away. If the ZOO_SEQUENCE flag is set, a unique
- * monotonically increasing sequence number is appended to the path name. The
- * sequence number is always fixed length of 10 digits, 0 padded.
+ * it does not already exist. The Create Mode affects the creation of nodes.
+ * If ZOO_EPHEMERAL mode is chosen, the node will automatically get removed if the
+ * client session goes away. If ZOO_CONTAINER flag is set, a container node will be
+ * created. For ZOO_*_SEQUENTIAL modes, a unique monotonically increasing
+ * sequence number is appended to the path name. The sequence number is always fixed
+ * length of 10 digits, 0 padded.
  *
  * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
  * \param path The name of the node. Expressed as a file name with slashes
@@ -907,8 +918,7 @@ ZOOAPI int zoo_state(zhandle_t *zh);
  * \param value The data to be stored in the node.
  * \param valuelen The number of bytes in data.
  * \param acl The initial ACL of the node. The ACL must not be null or empty.
- * \param flags this parameter can be set to 0 for normal create or an OR
- *    of the Create Flags
+ * \param mode this parameter should be one of the Create Modes.
  * \param completion the routine to invoke when the request completes. The completion
  * will be triggered with one of the following codes passed in as the rc argument:
  * ZOK operation completed successfully
@@ -924,18 +934,20 @@ ZOOAPI int zoo_state(zhandle_t *zh);
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
  */
 ZOOAPI int zoo_acreate(zhandle_t *zh, const char *path, const char *value, 
-        int valuelen, const struct ACL_vector *acl, int flags,
+        int valuelen, const struct ACL_vector *acl, int mode,
         string_completion_t completion, const void *data);
 
 /**
- * \brief create a node asynchronously and returns stat details.
+ * \brief create a node.
  *
  * This method will create a node in ZooKeeper. A node can only be created if
- * it does not already exists. The Create Flags affect the creation of nodes.
- * If ZOO_EPHEMERAL flag is set, the node will automatically get removed if the
- * client session goes away. If the ZOO_SEQUENCE flag is set, a unique
- * monotonically increasing sequence number is appended to the path name. The
- * sequence number is always fixed length of 10 digits, 0 padded.
+ * it does not already exist. The Create Mode affects the creation of nodes.
+ * If ZOO_EPHEMERAL mode is chosen, the node will automatically get removed if the
+ * client session goes away. If ZOO_CONTAINER flag is set, a container node will be
+ * created. For ZOO_*_SEQUENTIAL modes, a unique monotonically increasing
+ * sequence number is appended to the path name. The sequence number is always fixed
+ * length of 10 digits, 0 padded. When ZOO_*_WITH_TTL is selected, a ttl node will be
+ * created.
  *
  * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
  * \param path The name of the node. Expressed as a file name with slashes
@@ -943,8 +955,45 @@ ZOOAPI int zoo_acreate(zhandle_t *zh, const char *path, const char *value,
  * \param value The data to be stored in the node.
  * \param valuelen The number of bytes in data.
  * \param acl The initial ACL of the node. The ACL must not be null or empty.
- * \param flags this parameter can be set to 0 for normal create or an OR
- *    of the Create Flags
+ * \param mode this parameter should be one of the Create Modes.
+ * \param ttl the value of ttl in milliseconds. It must be positive for ZOO_*_WITH_TTL
+ *    Create modes, otherwise it must be -1.
+ * \param completion the routine to invoke when the request completes. The completion
+ * will be triggered with one of the following codes passed in as the rc argument:
+ * ZOK operation completed successfully
+ * ZNONODE the parent node does not exist.
+ * ZNODEEXISTS the node already exists
+ * ZNOAUTH the client does not have permission.
+ * ZNOCHILDRENFOREPHEMERALS cannot create children of ephemeral nodes.
+ * \param data The data that will be passed to the completion routine when the
+ * function completes.
+ * \return ZOK on success or one of the following errcodes on failure:
+ * ZBADARGUMENTS - invalid input parameters
+ * ZINVALIDSTATE - zhandle state is either ZOO_SESSION_EXPIRED_STATE or ZOO_AUTH_FAILED_STATE
+ * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
+ */
+ZOOAPI int zoo_acreate_ttl(zhandle_t *zh, const char *path, const char *value,
+        int valuelen, const struct ACL_vector *acl, int mode, int64_t ttl,
+        string_completion_t completion, const void *data);
+
+/**
+ * \brief create a node asynchronously and returns stat details.
+ *
+ * This method will create a node in ZooKeeper. A node can only be created if
+ * it does not already exist. The Create Mode affects the creation of nodes.
+ * If ZOO_EPHEMERAL mode is chosen, the node will automatically get removed if the
+ * client session goes away. If ZOO_CONTAINER flag is set, a container node will be
+ * created. For ZOO_*_SEQUENTIAL modes, a unique monotonically increasing
+ * sequence number is appended to the path name. The sequence number is always fixed
+ * length of 10 digits, 0 padded.
+ *
+ * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
+ * \param path The name of the node. Expressed as a file name with slashes
+ * separating ancestors of the node.
+ * \param value The data to be stored in the node.
+ * \param valuelen The number of bytes in data.
+ * \param acl The initial ACL of the node. The ACL must not be null or empty.
+ * \param mode this parameter should be one of the Create Modes.
  * \param completion the routine to invoke when the request completes. The completion
  * will be triggered with one of the following codes passed in as the rc argument:
  * ZOK operation completed successfully
@@ -960,7 +1009,46 @@ ZOOAPI int zoo_acreate(zhandle_t *zh, const char *path, const char *value,
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
  */
 ZOOAPI int zoo_acreate2(zhandle_t *zh, const char *path, const char *value,
-        int valuelen, const struct ACL_vector *acl, int flags,
+        int valuelen, const struct ACL_vector *acl, int mode,
+        string_stat_completion_t completion, const void *data);
+
+/**
+ * \brief create a node asynchronously and returns stat details.
+ *
+ * This method will create a node in ZooKeeper. A node can only be created if
+ * it does not already exist. The Create Mode affects the creation of nodes.
+ * If ZOO_EPHEMERAL mode is chosen, the node will automatically get removed if the
+ * client session goes away. If ZOO_CONTAINER flag is set, a container node will be
+ * created. For ZOO_*_SEQUENTIAL modes, a unique monotonically increasing
+ * sequence number is appended to the path name. The sequence number is always fixed
+ * length of 10 digits, 0 padded. When ZOO_*_WITH_TTL is selected, a ttl node will be
+ * created.
+ *
+ * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
+ * \param path The name of the node. Expressed as a file name with slashes
+ * separating ancestors of the node.
+ * \param value The data to be stored in the node.
+ * \param valuelen The number of bytes in data.
+ * \param acl The initial ACL of the node. The ACL must not be null or empty.
+ * \param mode this parameter should be one of the Create Modes.
+ * \param ttl the value of ttl in milliseconds. It must be positive for ZOO_*_WITH_TTL
+ *    Create modes, otherwise it must be -1.
+ * \param completion the routine to invoke when the request completes. The completion
+ * will be triggered with one of the following codes passed in as the rc argument:
+ * ZOK operation completed successfully
+ * ZNONODE the parent node does not exist.
+ * ZNODEEXISTS the node already exists
+ * ZNOAUTH the client does not have permission.
+ * ZNOCHILDRENFOREPHEMERALS cannot create children of ephemeral nodes.
+ * \param data The data that will be passed to the completion routine when the
+ * function completes.
+ * \return ZOK on success or one of the following errcodes on failure:
+ * ZBADARGUMENTS - invalid input parameters
+ * ZINVALIDSTATE - zhandle state is either ZOO_SESSION_EXPIRED_STATE or ZOO_AUTH_FAILED_STATE
+ * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
+ */
+ZOOAPI int zoo_acreate2_ttl(zhandle_t *zh, const char *path, const char *value,
+        int valuelen, const struct ACL_vector *acl, int mode, int64_t ttl,
         string_stat_completion_t completion, const void *data);
 
 /**
@@ -1592,10 +1680,12 @@ ZOOAPI int zoo_aremove_all_watches(zhandle_t *zh, const char *path,
  * \brief create a node synchronously.
  *
  * This method will create a node in ZooKeeper. A node can only be created if
- * it does not already exists. The Create Flags affect the creation of nodes.
- * If ZOO_EPHEMERAL flag is set, the node will automatically get removed if the
- * client session goes away. If the ZOO_SEQUENCE flag is set, a unique
- * monotonically increasing sequence number is appended to the path name.
+ * it does not already exist. The Create Mode affects the creation of nodes.
+ * If ZOO_EPHEMERAL mode is chosen, the node will automatically get removed if the
+ * client session goes away. If ZOO_CONTAINER flag is set, a container node will be
+ * created. For ZOO_*_SEQUENTIAL modes, a unique monotonically increasing
+ * sequence number is appended to the path name. The sequence number is always fixed
+ * length of 10 digits, 0 padded.
  *
  * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
  * \param path The name of the node. Expressed as a file name with slashes
@@ -1604,8 +1694,7 @@ ZOOAPI int zoo_aremove_all_watches(zhandle_t *zh, const char *path,
  * \param valuelen The number of bytes in data. To set the data to be NULL use
  * value as NULL and valuelen as -1.
  * \param acl The initial ACL of the node. The ACL must not be null or empty.
- * \param flags this parameter can be set to 0 for normal create or an OR
- *    of the Create Flags
+ * \param mode this parameter should be one of the Create Modes.
  * \param path_buffer Buffer which will be filled with the path of the
  *    new node (this might be different than the supplied path
  *    because of the ZOO_SEQUENCE flag).  The path string will always be
@@ -1626,17 +1715,20 @@ ZOOAPI int zoo_aremove_all_watches(zhandle_t *zh, const char *path,
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
  */
 ZOOAPI int zoo_create(zhandle_t *zh, const char *path, const char *value,
-        int valuelen, const struct ACL_vector *acl, int flags,
+        int valuelen, const struct ACL_vector *acl, int mode,
         char *path_buffer, int path_buffer_len);
 
 /**
- * \brief create a node synchronously and collect stat details.
+ * \brief create a node synchronously.
  *
  * This method will create a node in ZooKeeper. A node can only be created if
- * it does not already exists. The Create Flags affect the creation of nodes.
- * If ZOO_EPHEMERAL flag is set, the node will automatically get removed if the
- * client session goes away. If the ZOO_SEQUENCE flag is set, a unique
- * monotonically increasing sequence number is appended to the path name.
+ * it does not already exist. The Create Mode affects the creation of nodes.
+ * If ZOO_EPHEMERAL mode is chosen, the node will automatically get removed if the
+ * client session goes away. If ZOO_CONTAINER flag is set, a container node will be
+ * created. For ZOO_*_SEQUENTIAL modes, a unique monotonically increasing
+ * sequence number is appended to the path name. The sequence number is always fixed
+ * length of 10 digits, 0 padded. When ZOO_*_WITH_TTL is selected, a ttl node will be
+ * created.
  *
  * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
  * \param path The name of the node. Expressed as a file name with slashes
@@ -1645,8 +1737,51 @@ ZOOAPI int zoo_create(zhandle_t *zh, const char *path, const char *value,
  * \param valuelen The number of bytes in data. To set the data to be NULL use
  * value as NULL and valuelen as -1.
  * \param acl The initial ACL of the node. The ACL must not be null or empty.
- * \param flags this parameter can be set to 0 for normal create or an OR
- *    of the Create Flags
+ * \param mode this parameter should be one of the Create Modes.
+ * \param ttl the value of ttl in milliseconds. It must be positive for ZOO_*_WITH_TTL
+ *    Create modes, otherwise it must be -1.
+ * \param path_buffer Buffer which will be filled with the path of the
+ *    new node (this might be different than the supplied path
+ *    because of the ZOO_SEQUENCE flag).  The path string will always be
+ *    null-terminated. This parameter may be NULL if path_buffer_len = 0.
+ * \param path_buffer_len Size of path buffer; if the path of the new
+ *    node (including space for the null terminator) exceeds the buffer size,
+ *    the path string will be truncated to fit.  The actual path of the
+ *    new node in the server will not be affected by the truncation.
+ *    The path string will always be null-terminated.
+ * \return  one of the following codes are returned:
+ * ZOK operation completed successfully
+ * ZNONODE the parent node does not exist.
+ * ZNODEEXISTS the node already exists
+ * ZNOAUTH the client does not have permission.
+ * ZNOCHILDRENFOREPHEMERALS cannot create children of ephemeral nodes.
+ * ZBADARGUMENTS - invalid input parameters
+ * ZINVALIDSTATE - zhandle state is either ZOO_SESSION_EXPIRED_STATE or ZOO_AUTH_FAILED_STATE
+ * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
+ */
+ZOOAPI int zoo_create_ttl(zhandle_t *zh, const char *path, const char *value,
+        int valuelen, const struct ACL_vector *acl, int mode, int64_t ttl,
+        char *path_buffer, int path_buffer_len);
+
+/**
+ * \brief create a node synchronously and collect stat details.
+ *
+ * This method will create a node in ZooKeeper. A node can only be created if
+ * it does not already exist. The Create Mode affects the creation of nodes.
+ * If ZOO_EPHEMERAL mode is chosen, the node will automatically get removed if the
+ * client session goes away. If ZOO_CONTAINER flag is set, a container node will be
+ * created. For ZOO_*_SEQUENTIAL modes, a unique monotonically increasing
+ * sequence number is appended to the path name. The sequence number is always fixed
+ * length of 10 digits, 0 padded.
+ *
+ * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
+ * \param path The name of the node. Expressed as a file name with slashes
+ * separating ancestors of the node.
+ * \param value The data to be stored in the node.
+ * \param valuelen The number of bytes in data. To set the data to be NULL use
+ * value as NULL and valuelen as -1.
+ * \param acl The initial ACL of the node. The ACL must not be null or empty.
+ * \param mode this parameter should be one of the Create Modes.
  * \param path_buffer Buffer which will be filled with the path of the
  *    new node (this might be different than the supplied path
  *    because of the ZOO_SEQUENCE flag).  The path string will always be
@@ -1668,7 +1803,53 @@ ZOOAPI int zoo_create(zhandle_t *zh, const char *path, const char *value,
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
  */
 ZOOAPI int zoo_create2(zhandle_t *zh, const char *path, const char *value,
-        int valuelen, const struct ACL_vector *acl, int flags,
+        int valuelen, const struct ACL_vector *acl, int mode,
+        char *path_buffer, int path_buffer_len, struct Stat *stat);
+
+/**
+ * \brief create a node synchronously and collect stat details.
+ *
+ * This method will create a node in ZooKeeper. A node can only be created if
+ * it does not already exist. The Create Mode affects the creation of nodes.
+ * If ZOO_EPHEMERAL mode is chosen, the node will automatically get removed if the
+ * client session goes away. If ZOO_CONTAINER flag is set, a container node will be
+ * created. For ZOO_*_SEQUENTIAL modes, a unique monotonically increasing
+ * sequence number is appended to the path name. The sequence number is always fixed
+ * length of 10 digits, 0 padded. When ZOO_*_WITH_TTL is selected, a ttl node will be
+ * created.
+ *
+ * \param zh the zookeeper handle obtained by a call to \ref zookeeper_init
+ * \param path The name of the node. Expressed as a file name with slashes
+ * separating ancestors of the node.
+ * \param value The data to be stored in the node.
+ * \param valuelen The number of bytes in data. To set the data to be NULL use
+ * value as NULL and valuelen as -1.
+ * \param acl The initial ACL of the node. The ACL must not be null or empty.
+ * \param mode this parameter should be one of the Create Modes.
+ * \param ttl the value of ttl in milliseconds. It must be positive for ZOO_*_WITH_TTL
+ *    Create modes, otherwise it must be -1.
+ * \param path_buffer Buffer which will be filled with the path of the
+ *    new node (this might be different than the supplied path
+ *    because of the ZOO_SEQUENCE flag).  The path string will always be
+ *    null-terminated. This parameter may be NULL if path_buffer_len = 0.
+ * \param path_buffer_len Size of path buffer; if the path of the new
+ *    node (including space for the null terminator) exceeds the buffer size,
+ *    the path string will be truncated to fit.  The actual path of the
+ *    new node in the server will not be affected by the truncation.
+ *    The path string will always be null-terminated.
+ * \param stat The Stat struct to store Stat info into.
+ * \return  one of the following codes are returned:
+ * ZOK operation completed successfully
+ * ZNONODE the parent node does not exist.
+ * ZNODEEXISTS the node already exists
+ * ZNOAUTH the client does not have permission.
+ * ZNOCHILDRENFOREPHEMERALS cannot create children of ephemeral nodes.
+ * ZBADARGUMENTS - invalid input parameters
+ * ZINVALIDSTATE - zhandle state is either ZOO_SESSION_EXPIRED_STATE or ZOO_AUTH_FAILED_STATE
+ * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
+ */
+ZOOAPI int zoo_create2_ttl(zhandle_t *zh, const char *path, const char *value,
+        int valuelen, const struct ACL_vector *acl, int mode, int64_t ttl,
         char *path_buffer, int path_buffer_len, struct Stat *stat);
 
 /**
@@ -1691,7 +1872,6 @@ ZOOAPI int zoo_create2(zhandle_t *zh, const char *path, const char *value,
  * ZMARSHALLINGERROR - failed to marshall a request; possibly, out of memory
  */
 ZOOAPI int zoo_delete(zhandle_t *zh, const char *path, int version);
-
 
 /**
  * \brief checks the existence of a node in zookeeper synchronously.

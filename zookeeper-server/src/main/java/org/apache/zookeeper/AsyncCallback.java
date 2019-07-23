@@ -27,7 +27,7 @@ import org.apache.zookeeper.data.Stat;
  * Interface definitions of asynchronous callbacks.
  * An asynchronous callback is deferred to invoke after a function returns.
  * Asynchronous calls usually improve system efficiency on IO-related APIs.
- * <p/>
+ * <p>
  * ZooKeeper provides asynchronous version as equivalent to synchronous APIs.
  */
 @InterfaceAudience.Public
@@ -40,10 +40,10 @@ public interface AsyncCallback {
     interface StatCallback extends AsyncCallback {
         /**
          * Process the result of the asynchronous call.
-         * <p/>
+         * <p>
          * On success, rc is
          * {@link org.apache.zookeeper.KeeperException.Code#OK}.
-         * <p/>
+         * <p>
          * On failure, rc is set to the corresponding failure code in
          * {@link org.apache.zookeeper.KeeperException}.
          * <ul>
@@ -89,10 +89,10 @@ public interface AsyncCallback {
     interface DataCallback extends AsyncCallback {
         /**
          * Process the result of asynchronous calls.
-         * <p/>
+         * <p>
          * On success, rc is
          * {@link org.apache.zookeeper.KeeperException.Code#OK}.
-         * <p/>
+         * <p>
          * On failure, rc is set to the corresponding failure code in
          * {@link org.apache.zookeeper.KeeperException}.
          * <ul>
@@ -122,10 +122,10 @@ public interface AsyncCallback {
     interface ACLCallback extends AsyncCallback {
         /**
          * Process the result of the asynchronous call.
-         * <p/>
+         * <p>
          * On success, rc is
          * {@link org.apache.zookeeper.KeeperException.Code#OK}.
-         * <p/>
+         * <p>
          * On failure, rc is set to the corresponding failure code in
          * {@link org.apache.zookeeper.KeeperException}.
          * <ul>
@@ -155,10 +155,10 @@ public interface AsyncCallback {
     interface ChildrenCallback extends AsyncCallback {
         /**
          * Process the result of the asynchronous call.
-         * <p/>
+         * <p>
          * On success, rc is
          * {@link org.apache.zookeeper.KeeperException.Code#OK}.
-         * <p/>
+         * <p>
          * On failure, rc is set to the corresponding failure code in
          * {@link org.apache.zookeeper.KeeperException}.
          * <ul>
@@ -231,10 +231,10 @@ public interface AsyncCallback {
     interface StringCallback extends AsyncCallback {
         /**
          * Process the result of the asynchronous call.
-         * <p/>
+         * <p>
          * On success, rc is
          * {@link org.apache.zookeeper.KeeperException.Code#OK}.
-         * <p/>
+         * <p>
          * On failure, rc is set to the corresponding failure code in
          * {@link org.apache.zookeeper.KeeperException}.
          * <ul>
@@ -275,10 +275,10 @@ public interface AsyncCallback {
     interface VoidCallback extends AsyncCallback {
         /**
          * Process the result of the asynchronous call.
-         * <p/>
+         * <p>
          * On success, rc is
          * {@link org.apache.zookeeper.KeeperException.Code#OK}.
-         * <p/>
+         * <p>
          * On failure, rc is set to the corresponding failure code in
          * {@link org.apache.zookeeper.KeeperException}.
          * <ul>
@@ -317,18 +317,18 @@ public interface AsyncCallback {
     interface MultiCallback extends AsyncCallback {
         /**
          * Process the result of the asynchronous call.
-         * <p/>
+         * <p>
          * On success, rc is
          * {@link org.apache.zookeeper.KeeperException.Code#OK}.
          * All opResults are
          * non-{@link org.apache.zookeeper.OpResult.ErrorResult},
          *
-         * <p/>
+         * <p>
          * On failure, rc is a failure code in
          * {@link org.apache.zookeeper.KeeperException.Code}.
-         * All opResults are
+         * Either opResults is null, or all opResults are
          * {@link org.apache.zookeeper.OpResult.ErrorResult}.
-         * All operations will be rollback-ed even if operations
+         * All operations will be rolled back even if operations
          * before the failing one were successful.
          *
          * @param rc   The return code or the result of the call.

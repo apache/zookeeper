@@ -81,7 +81,7 @@ public class ReconfigMisconfigTest extends ZKTestCase {
             reconfigPort();
             Assert.fail(errorMsg);
         } catch (KeeperException e) {
-            Assert.assertTrue(e.getCode() == KeeperException.Code.NoAuth);
+            Assert.assertTrue(e.code() == KeeperException.Code.NOAUTH);
         }
 
         try {
@@ -89,7 +89,7 @@ public class ReconfigMisconfigTest extends ZKTestCase {
             reconfigPort();
             Assert.fail(errorMsg);
         } catch (KeeperException e) {
-            Assert.assertTrue(e.getCode() == KeeperException.Code.NoAuth);
+            Assert.assertTrue(e.code() == KeeperException.Code.NOAUTH);
         }
     }
 

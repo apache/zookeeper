@@ -30,14 +30,15 @@ import java.net.SocketAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.HashSet;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Queue;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -132,7 +133,7 @@ public class ClientCnxn {
     /**
      * These are the packets that have been sent and are waiting for a response.
      */
-    private final LinkedList<Packet> pendingQueue = new LinkedList<Packet>();
+    private final Queue<Packet> pendingQueue = new ArrayDeque<>();
 
     /**
      * These are the packets that need to be sent.
@@ -386,7 +387,6 @@ public class ClientCnxn {
      * @param canBeReadOnly
      *                whether the connection is allowed to go to read-only
      *                mode in case of partitioning
-     * @throws IOException
      */
     public ClientCnxn(String chrootPath, HostProvider hostProvider, int sessionTimeout, ZooKeeper zooKeeper,
             ClientWatchManager watcher, ClientCnxnSocket clientCnxnSocket,
@@ -1513,7 +1513,8 @@ public class ClientCnxn {
         }
     }
 
-    private int xid = 1;
+    // @VisibleForTesting
+    protected int xid = 1;
 
     // @VisibleForTesting
     volatile States state = States.NOT_CONNECTED;
@@ -1523,6 +1524,12 @@ public class ClientCnxn {
      * the server. Thus, getXid() must be public.
      */
     synchronized public int getXid() {
+        // Avoid negative cxid values.  In particular, cxid values of -4, -2, and -1 are special and
+        // must not be used for requests -- see SendThread.readResponse.
+        // Skip from MAX to 1.
+        if (xid == Integer.MAX_VALUE) {
+            xid = 1;
+        }
         return xid++;
     }
 

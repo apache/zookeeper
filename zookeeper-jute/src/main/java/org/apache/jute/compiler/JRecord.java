@@ -481,8 +481,8 @@ public class JRecord extends JCompType {
             jj.write("    try {\n");
             jj.write("      java.io.ByteArrayOutputStream s =\n");
             jj.write("        new java.io.ByteArrayOutputStream();\n");
-            jj.write("      CsvOutputArchive a_ = \n");
-            jj.write("        new CsvOutputArchive(s);\n");
+            jj.write("      ToStringOutputArchive a_ = \n");
+            jj.write("        new ToStringOutputArchive(s);\n");
             jj.write("      a_.startRecord(this,\"\");\n");
             fIdx = 0;
             for (Iterator<JField> i = mFields.iterator(); i.hasNext(); fIdx++) {

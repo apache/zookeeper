@@ -53,7 +53,7 @@ responsibility of implementing coordination services from scratch.
 **ZooKeeper is simple.** ZooKeeper
 allows distributed processes to coordinate with each other through a
 shared hierarchical namespace which is organized similarly to a standard
-file system. The name space consists of data registers - called znodes,
+file system. The namespace consists of data registers - called znodes,
 in ZooKeeper parlance - and these are similar to files and directories.
 Unlike a typical file system, which is designed for storage, ZooKeeper
 data is kept in-memory, which means ZooKeeper can achieve high
@@ -68,7 +68,7 @@ be implemented at the client.
 
 **ZooKeeper is replicated.** Like the
 distributed processes it coordinates, ZooKeeper itself is intended to be
-replicated over a sets of hosts called an ensemble.
+replicated over a set of hosts called an ensemble.
 
 ![ZooKeeper Service](images/zkservice.jpg)
 
@@ -98,9 +98,9 @@ common than writes, at ratios of around 10:1.
 
 ### Data model and the hierarchical namespace
 
-The name space provided by ZooKeeper is much like that of a
+The namespace provided by ZooKeeper is much like that of a
 standard file system. A name is a sequence of path elements separated by
-a slash (/). Every node in ZooKeeper's name space is identified by a
+a slash (/). Every node in ZooKeeper's namespace is identified by a
 path.
 
 #### ZooKeeper's Hierarchical Namespace
@@ -133,8 +133,7 @@ that restricts who can do what.
 
 ZooKeeper also has the notion of ephemeral nodes. These znodes
 exists as long as the session that created the znode is active. When the
-session ends the znode is deleted. Ephemeral nodes are useful when you
-want to implement _[tbd]_.
+session ends the znode is deleted.
 
 <a name="Conditional+updates+and+watches"></a>
 
@@ -145,8 +144,7 @@ Clients can set a watch on a znode. A watch will be triggered and
 removed when the znode changes. When a watch is triggered, the client
 receives a packet saying that the znode has changed. If the
 connection between the client and one of the ZooKeeper servers is
-broken, the client will receive a local notification. These can be used
-to _[tbd]_.
+broken, the client will receive a local notification.
 
 <a name="Guarantees"></a>
 
@@ -166,9 +164,6 @@ synchronization, it provides a set of guarantees. These are:
   from that time forward until a client overwrites the update.
 * Timeliness - The clients view of the system is guaranteed to
   be up-to-date within a certain time bound.
-
-For more information on these, and how they can be used, see
-_[tbd]_
 
 <a name="Simple+API"></a>
 
@@ -198,10 +193,6 @@ operations:
 
 * *sync* :
     waits for data to be propagated
-
-For a more in-depth discussion on these, and how they can be used
-to implement higher level operations, please refer to
-_[tbd]_
 
 <a name="Implementation"></a>
 
@@ -249,10 +240,7 @@ state.
 
 The programming interface to ZooKeeper is deliberately simple.
 With it, however, you can implement higher order operations, such as
-synchronizations primitives, group membership, ownership, etc. Some
-distributed applications have used it to: _[tbd: add uses from
-white paper and video presentation.]_ For more information, see
-_[tbd]_
+synchronizations primitives, group membership, ownership, etc.
 
 <a name="Performance"></a>
 

@@ -30,6 +30,6 @@ public interface Summary {
       *
       * @param value current value
       */
-     void registerValue(long value);
+     void add(long value);
 
 }

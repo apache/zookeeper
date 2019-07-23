@@ -97,8 +97,26 @@
 const int ZOOKEEPER_WRITE = 1 << 0;
 const int ZOOKEEPER_READ = 1 << 1;
 
-const int ZOO_EPHEMERAL = 1 << 0;
+const int ZOO_PERSISTENT = 0;
+const int ZOO_EPHEMERAL = 1;
+const int ZOO_PERSISTENT_SEQUENTIAL = 2;
+const int ZOO_EPHEMERAL_SEQUENTIAL = 3;
+const int ZOO_CONTAINER = 4;
+const int ZOO_PERSISTENT_WITH_TTL = 5;
+const int ZOO_PERSISTENT_SEQUENTIAL_WITH_TTL = 6;
+
+#define ZOOKEEPER_IS_SEQUENCE(mode) \
+    ((mode) == ZOO_PERSISTENT_SEQUENTIAL || \
+     (mode) == ZOO_EPHEMERAL_SEQUENTIAL || \
+     (mode) == ZOO_PERSISTENT_SEQUENTIAL_WITH_TTL)
+#define ZOOKEEPER_IS_TTL(mode) \
+    ((mode) == ZOO_PERSISTENT_WITH_TTL || \
+     (mode) == ZOO_PERSISTENT_SEQUENTIAL_WITH_TTL)
+
+// keep ZOO_SEQUENCE as a bitmask for compatibility reasons
 const int ZOO_SEQUENCE = 1 << 1;
+
+#define ZOO_MAX_TTL 0xFFFFFFFFFFLL
 
 const int ZOO_EXPIRED_SESSION_STATE = EXPIRED_SESSION_STATE_DEF;
 const int ZOO_AUTH_FAILED_STATE = AUTH_FAILED_STATE_DEF;
@@ -254,7 +272,7 @@ static int disable_conn_permute=0; // permute enabled by default
 static struct sockaddr_storage *addr_rw_server = 0;
 
 static void *SYNCHRONOUS_MARKER = (void*)&SYNCHRONOUS_MARKER;
-static int isValidPath(const char* path, const int flags);
+static int isValidPath(const char* path, const int mode);
 
 static int aremove_watches(
     zhandle_t *zh, const char *path, ZooWatcherType wtype,
@@ -548,6 +566,9 @@ static void destroy(zhandle_t *zh)
     }
     /* call any outstanding completions with a special error code */
     cleanup_bufs(zh,1,ZCLOSING);
+    if (process_async(zh->outstanding_sync)) {
+        process_completions(zh);
+    }
     if (zh->hostname != 0) {
         free(zh->hostname);
         zh->hostname = NULL;
@@ -3265,7 +3286,7 @@ finish:
     return rc;
 }
 
-static int isValidPath(const char* path, const int flags) {
+static int isValidPath(const char* path, const int mode) {
     int len = 0;
     char lastc = '/';
     char c;
@@ -3280,7 +3301,7 @@ static int isValidPath(const char* path, const int flags) {
     return 0;
   if (len == 1) // done checking - it's the root
     return 1;
-  if (path[len - 1] == '/' && !(flags & ZOO_SEQUENCE))
+  if (path[len - 1] == '/' && !ZOOKEEPER_IS_SEQUENCE(mode))
     return 0;
 
   i = 1;
@@ -3292,12 +3313,12 @@ static int isValidPath(const char* path, const int flags) {
     } else if (c == '/' && lastc == '/') {
       return 0;
     } else if (c == '.' && lastc == '.') {
-      if (path[i-2] == '/' && (((i + 1 == len) && !(flags & ZOO_SEQUENCE))
+      if (path[i-2] == '/' && (((i + 1 == len) && !ZOOKEEPER_IS_SEQUENCE(mode))
                                || path[i+1] == '/')) {
         return 0;
       }
     } else if (c == '.') {
-      if ((path[i-1] == '/') && (((i + 1 == len) && !(flags & ZOO_SEQUENCE))
+      if ((path[i-1] == '/') && (((i + 1 == len) && !ZOOKEEPER_IS_SEQUENCE(mode))
                                  || path[i+1] == '/')) {
         return 0;
       }
@@ -3313,13 +3334,13 @@ static int isValidPath(const char* path, const int flags) {
  * REQUEST INIT HELPERS
  *---------------------------------------------------------------------------*/
 /* Common Request init helper functions to reduce code duplication */
-static int Request_path_init(zhandle_t *zh, int flags,
+static int Request_path_init(zhandle_t *zh, int mode,
         char **path_out, const char *path)
 {
     assert(path_out);
 
     *path_out = prepend_string(zh, path);
-    if (zh == NULL || !isValidPath(*path_out, flags)) {
+    if (zh == NULL || !isValidPath(*path_out, mode)) {
         free_duplicate_path(*path_out, path);
         return ZBADARGUMENTS;
     }
@@ -3331,11 +3352,11 @@ static int Request_path_init(zhandle_t *zh, int flags,
     return ZOK;
 }
 
-static int Request_path_watch_init(zhandle_t *zh, int flags,
+static int Request_path_watch_init(zhandle_t *zh, int mode,
         char **path_out, const char *path,
         int32_t *watch_out, uint32_t watch)
 {
-    int rc = Request_path_init(zh, flags, path_out, path);
+    int rc = Request_path_init(zh, mode, path_out, path);
     if (rc != ZOK) {
         return rc;
     }
@@ -3518,16 +3539,16 @@ int zoo_aset(zhandle_t *zh, const char *path, const char *buffer, int buflen,
 
 static int CreateRequest_init(zhandle_t *zh, struct CreateRequest *req,
         const char *path, const char *value,
-        int valuelen, const struct ACL_vector *acl_entries, int flags)
+        int valuelen, const struct ACL_vector *acl_entries, int mode)
 {
     int rc;
     assert(req);
-    rc = Request_path_init(zh, flags, &req->path, path);
+    rc = Request_path_init(zh, mode, &req->path, path);
     assert(req);
     if (rc != ZOK) {
         return rc;
     }
-    req->flags = flags;
+    req->flags = mode;
     req->data.buff = (char*)value;
     req->data.len = valuelen;
     if (acl_entries == 0) {
@@ -3540,28 +3561,99 @@ static int CreateRequest_init(zhandle_t *zh, struct CreateRequest *req,
     return ZOK;
 }
 
-int zoo_acreate(zhandle_t *zh, const char *path, const char *value,
-        int valuelen, const struct ACL_vector *acl_entries, int flags,
-        string_completion_t completion, const void *data)
+static int CreateTTLRequest_init(zhandle_t *zh, struct CreateTTLRequest *req,
+        const char *path, const char *value,
+        int valuelen, const struct ACL_vector *acl_entries, int mode, int64_t ttl)
 {
-    struct oarchive *oa;
-    struct RequestHeader h = {get_xid(), ZOO_CREATE_OP};
-    struct CreateRequest req;
-
-    int rc = CreateRequest_init(zh, &req,
-            path, value, valuelen, acl_entries, flags);
+    int rc;
+    assert(req);
+    rc = Request_path_init(zh, mode, &req->path, path);
+    assert(req);
     if (rc != ZOK) {
         return rc;
     }
-    oa = create_buffer_oarchive();
-    rc = serialize_RequestHeader(oa, "header", &h);
-    rc = rc < 0 ? rc : serialize_CreateRequest(oa, "req", &req);
+    req->flags = mode;
+    req->data.buff = (char*)value;
+    req->data.len = valuelen;
+    if (acl_entries == 0) {
+        req->acl.count = 0;
+        req->acl.data = 0;
+    } else {
+        req->acl = *acl_entries;
+    }
+    req->ttl = ttl;
+
+    return ZOK;
+}
+
+static int get_create_op_type(int mode, int default_op) {
+    if (mode == ZOO_CONTAINER) {
+        return ZOO_CREATE_CONTAINER_OP;
+    } else if (ZOOKEEPER_IS_TTL(mode)) {
+        return ZOO_CREATE_TTL_OP;
+    } else {
+        return default_op;
+    }
+}
+
+int zoo_acreate(zhandle_t *zh, const char *path, const char *value,
+        int valuelen, const struct ACL_vector *acl_entries, int mode,
+        string_completion_t completion, const void *data)
+{
+    return zoo_acreate_ttl(zh, path, value, valuelen, acl_entries, mode, -1, completion, data);
+}
+
+int zoo_acreate_ttl(zhandle_t *zh, const char *path, const char *value,
+        int valuelen, const struct ACL_vector *acl_entries, int mode, int64_t ttl,
+        string_completion_t completion, const void *data)
+{
+    struct oarchive *oa;
+    struct RequestHeader h = {get_xid(), get_create_op_type(mode, ZOO_CREATE_OP)};
+    int rc;
+    char *req_path;
+
+    if (ZOOKEEPER_IS_TTL(mode)) {
+        struct CreateTTLRequest req;
+
+        if (ttl <= 0 || ttl > ZOO_MAX_TTL) {
+            return ZBADARGUMENTS;
+        }
+
+        rc = CreateTTLRequest_init(zh, &req,
+                path, value, valuelen, acl_entries, mode, ttl);
+        if (rc != ZOK) {
+            return rc;
+        }
+        oa = create_buffer_oarchive();
+        rc = serialize_RequestHeader(oa, "header", &h);
+        rc = rc < 0 ? rc : serialize_CreateTTLRequest(oa, "req", &req);
+
+        req_path = req.path;
+    } else {
+        struct CreateRequest req;
+
+        if (ttl >= 0) {
+            return ZBADARGUMENTS;
+        }
+
+        rc = CreateRequest_init(zh, &req,
+                path, value, valuelen, acl_entries, mode);
+        if (rc != ZOK) {
+            return rc;
+        }
+        oa = create_buffer_oarchive();
+        rc = serialize_RequestHeader(oa, "header", &h);
+        rc = rc < 0 ? rc : serialize_CreateRequest(oa, "req", &req);
+
+        req_path = req.path;
+    }
+
     enter_critical(zh);
     rc = rc < 0 ? rc : add_string_completion(zh, h.xid, completion, data);
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
     leave_critical(zh);
-    free_duplicate_path(req.path, path);
+    free_duplicate_path(req_path, path);
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
@@ -3573,26 +3665,62 @@ int zoo_acreate(zhandle_t *zh, const char *path, const char *value,
 }
 
 int zoo_acreate2(zhandle_t *zh, const char *path, const char *value,
-        int valuelen, const struct ACL_vector *acl_entries, int flags,
+        int valuelen, const struct ACL_vector *acl_entries, int mode,
+        string_stat_completion_t completion, const void *data)
+{
+    return zoo_acreate2_ttl(zh, path, value, valuelen, acl_entries, mode, -1, completion, data);
+}
+
+int zoo_acreate2_ttl(zhandle_t *zh, const char *path, const char *value,
+        int valuelen, const struct ACL_vector *acl_entries, int mode, int64_t ttl,
         string_stat_completion_t completion, const void *data)
 {
     struct oarchive *oa;
-    struct RequestHeader h = { get_xid(), ZOO_CREATE2_OP };
-    struct CreateRequest req;
+    struct RequestHeader h = { get_xid(), get_create_op_type(mode, ZOO_CREATE2_OP) };
+    int rc;
+    char *req_path;
 
-    int rc = CreateRequest_init(zh, &req, path, value, valuelen, acl_entries, flags);
-    if (rc != ZOK) {
-        return rc;
+    if (ZOOKEEPER_IS_TTL(mode)) {
+        struct CreateTTLRequest req;
+
+        if (ttl <= 0 || ttl > ZOO_MAX_TTL) {
+            return ZBADARGUMENTS;
+        }
+
+        rc = CreateTTLRequest_init(zh, &req,
+                path, value, valuelen, acl_entries, mode, ttl);
+        if (rc != ZOK) {
+            return rc;
+        }
+        oa = create_buffer_oarchive();
+        rc = serialize_RequestHeader(oa, "header", &h);
+        rc = rc < 0 ? rc : serialize_CreateTTLRequest(oa, "req", &req);
+
+        req_path = req.path;
+    } else {
+        struct CreateRequest req;
+
+        if (ttl >= 0) {
+            return ZBADARGUMENTS;
+        }
+
+        rc = CreateRequest_init(zh, &req, path, value, valuelen, acl_entries, mode);
+        if (rc != ZOK) {
+            return rc;
+        }
+        oa = create_buffer_oarchive();
+        rc = serialize_RequestHeader(oa, "header", &h);
+        rc = rc < 0 ? rc : serialize_CreateRequest(oa, "req", &req);
+
+        req_path = req.path;
     }
-    oa = create_buffer_oarchive();
-    rc = serialize_RequestHeader(oa, "header", &h);
-    rc = rc < 0 ? rc : serialize_CreateRequest(oa, "req", &req);
+
     enter_critical(zh);
     rc = rc < 0 ? rc : add_string_stat_completion(zh, h.xid, completion, data);
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
     leave_critical(zh);
-    free_duplicate_path(req.path, path);
+    free_duplicate_path(req_path, path);
     /* We queued the buffer, so don't free it */
     close_buffer_oarchive(&oa, 0);
 
@@ -3942,6 +4070,7 @@ int zoo_amulti(zhandle_t *zh, int count, const zoo_op_t *ops,
         rc = rc < 0 ? rc : serialize_MultiHeader(oa, "multiheader", &mh);
 
         switch(op->type) {
+            case ZOO_CREATE_CONTAINER_OP:
             case ZOO_CREATE_OP: {
                 struct CreateRequest req;
 
@@ -4120,31 +4249,32 @@ done:
     return rc;
 }
 void zoo_create_op_init(zoo_op_t *op, const char *path, const char *value,
-        int valuelen,  const struct ACL_vector *acl, int flags,
+        int valuelen,  const struct ACL_vector *acl, int mode,
         char *path_buffer, int path_buffer_len)
 {
     assert(op);
-    op->type = ZOO_CREATE_OP;
+    op->type = get_create_op_type(mode, ZOO_CREATE_OP);
     op->create_op.path = path;
     op->create_op.data = value;
     op->create_op.datalen = valuelen;
     op->create_op.acl = acl;
-    op->create_op.flags = flags;
+    op->create_op.flags = mode;
+    op->create_op.ttl = 0;
     op->create_op.buf = path_buffer;
     op->create_op.buflen = path_buffer_len;
 }
 
 void zoo_create2_op_init(zoo_op_t *op, const char *path, const char *value,
-        int valuelen,  const struct ACL_vector *acl, int flags,
+        int valuelen,  const struct ACL_vector *acl, int mode,
         char *path_buffer, int path_buffer_len)
 {
     assert(op);
-    op->type = ZOO_CREATE2_OP;
+    op->type = get_create_op_type(mode, ZOO_CREATE2_OP);
     op->create_op.path = path;
     op->create_op.data = value;
     op->create_op.datalen = valuelen;
     op->create_op.acl = acl;
-    op->create_op.flags = flags;
+    op->create_op.flags = mode;
     op->create_op.buf = path_buffer;
     op->create_op.buflen = path_buffer_len;
 }
@@ -4547,7 +4677,15 @@ static void process_sync_completion(zhandle_t *zh,
  * SYNC API
  *---------------------------------------------------------------------------*/
 int zoo_create(zhandle_t *zh, const char *path, const char *value,
-        int valuelen, const struct ACL_vector *acl, int flags,
+        int valuelen, const struct ACL_vector *acl, int mode,
+        char *path_buffer, int path_buffer_len)
+{
+    return zoo_create_ttl(zh, path, value, valuelen, acl, mode, -1,
+        path_buffer, path_buffer_len);
+}
+
+int zoo_create_ttl(zhandle_t *zh, const char *path, const char *value,
+        int valuelen, const struct ACL_vector *acl, int mode, int64_t ttl,
         char *path_buffer, int path_buffer_len)
 {
     struct sync_completion *sc = alloc_sync_completion();
@@ -4557,7 +4695,7 @@ int zoo_create(zhandle_t *zh, const char *path, const char *value,
     }
     sc->u.str.str = path_buffer;
     sc->u.str.str_len = path_buffer_len;
-    rc=zoo_acreate(zh, path, value, valuelen, acl, flags, SYNCHRONOUS_MARKER, sc);
+    rc=zoo_acreate_ttl(zh, path, value, valuelen, acl, mode, ttl, SYNCHRONOUS_MARKER, sc);
     if(rc==ZOK){
         wait_sync_completion(sc);
         rc = sc->rc;
@@ -4567,7 +4705,15 @@ int zoo_create(zhandle_t *zh, const char *path, const char *value,
 }
 
 int zoo_create2(zhandle_t *zh, const char *path, const char *value,
-        int valuelen, const struct ACL_vector *acl, int flags,
+        int valuelen, const struct ACL_vector *acl, int mode,
+        char *path_buffer, int path_buffer_len, struct Stat *stat)
+{
+    return zoo_create2_ttl(zh, path, value, valuelen, acl, mode, -1,
+        path_buffer, path_buffer_len, stat);
+}
+
+int zoo_create2_ttl(zhandle_t *zh, const char *path, const char *value,
+        int valuelen, const struct ACL_vector *acl, int mode, int64_t ttl,
         char *path_buffer, int path_buffer_len, struct Stat *stat)
 {
     struct sync_completion *sc = alloc_sync_completion();
@@ -4578,7 +4724,7 @@ int zoo_create2(zhandle_t *zh, const char *path, const char *value,
 
     sc->u.str.str = path_buffer;
     sc->u.str.str_len = path_buffer_len;
-    rc=zoo_acreate2(zh, path, value, valuelen, acl, flags, SYNCHRONOUS_MARKER, sc);
+    rc=zoo_acreate2_ttl(zh, path, value, valuelen, acl, mode, ttl, SYNCHRONOUS_MARKER, sc);
     if(rc==ZOK){
         wait_sync_completion(sc);
         rc = sc->rc;

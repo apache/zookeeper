@@ -43,12 +43,12 @@ public interface QuorumMXBean {
     public int getSyncLimit();
 
     /**
-     * @param the number of ticks that the initial synchronization phase can take
+     * @param initLimit the number of ticks that the initial synchronization phase can take
      */
     public void setInitLimit(int initLimit);
 
     /**
-     * @param the number of ticks that can pass between sending a request and getting an acknowledgment
+     * @param syncLimit the number of ticks that can pass between sending a request and getting an acknowledgment
      */
     public void setSyncLimit(int syncLimit);
 
@@ -61,4 +61,14 @@ public interface QuorumMXBean {
      * @return SSL communication between quorum members enabled
      */
     public boolean isPortUnification();
+
+    /**
+     * @return Observer Leader Election Reconnect Delay time in MS
+     */
+    public long getObserverElectionDelayMS();
+
+    /**
+     * Set the Observer Leader Election Reconnect Delay time in MS
+     */
+    public void setObserverElectionDelayMS(long delayMS);
 }

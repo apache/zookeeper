@@ -24,6 +24,7 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.junit.Assert;
 import org.junit.Test;
@@ -48,13 +49,14 @@ public class ResponseCacheTest extends ClientBase {
     }
 
     private void checkCacheStatus(long expectedHits, long expectedMisses) {
-        Map<String, Object> metrics = ServerMetrics.getAllValues();
+        
+        Map<String, Object> metrics = MetricsUtils.currentServerMetrics();
         Assert.assertEquals(expectedHits, metrics.get("response_packet_cache_hits"));
         Assert.assertEquals(expectedMisses, metrics.get("response_packet_cache_misses"));
     }
 
     public void performCacheTest(ZooKeeper zk, String path, boolean useCache) throws Exception {
-        ServerMetrics.resetAll();
+        ServerMetrics.getMetrics().resetAll();
         Stat writeStat = new Stat();
         Stat readStat = new Stat();
         byte[] readData = null;
@@ -62,7 +64,7 @@ public class ResponseCacheTest extends ClientBase {
         long expectedHits = 0;
         long expectedMisses = 0;
 
-        getServer(serverFactory).setResponseCachingEnabled(useCache);
+        serverFactory.getZooKeeperServer().setResponseCachingEnabled(useCache);
         LOG.info("caching: {}", useCache);
 
         byte[] writeData = "test1".getBytes();

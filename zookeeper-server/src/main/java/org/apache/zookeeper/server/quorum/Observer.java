@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.jute.Record;
 import org.apache.zookeeper.server.ObserverBean;
 import org.apache.zookeeper.server.Request;
+import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.SerializeUtils;
@@ -56,11 +57,23 @@ public class Observer extends Learner{
     public static final String OBSERVER_RECONNECT_DELAY_MS =
             "zookeeper.observer.reconnectDelayMs";
 
+    /**
+     * Delay the Observer's participation in a leader election upon disconnect
+     * so as to prevent unexpected additional load on the voting peers during
+     * the process. Default value is 200.
+     */
+    public static final String OBSERVER_ELECTION_DELAY_MS =
+            "zookeeper.observer.election.DelayMs";
+
     private static final long reconnectDelayMs;
+
+    private static volatile long observerElectionDelayMs;
 
     static {
         reconnectDelayMs = Long.getLong(OBSERVER_RECONNECT_DELAY_MS, 0);
         LOG.info(OBSERVER_RECONNECT_DELAY_MS + " = " + reconnectDelayMs);
+        observerElectionDelayMs = Long.getLong(OBSERVER_ELECTION_DELAY_MS, 200);
+        LOG.info(OBSERVER_ELECTION_DELAY_MS + " = " + observerElectionDelayMs);
     }
 
     /**
@@ -92,14 +105,19 @@ public class Observer extends Learner{
         zk.registerJMX(new ObserverBean(this, zk), self.jmxLocalPeerBean);
 
         try {
+            self.setZabState(QuorumPeer.ZabState.DISCOVERY);
             QuorumServer master = findLearnerMaster();
             try {
                 connectToLeader(master.addr, master.hostname);
                 long newLeaderZxid = registerWithLeader(Leader.OBSERVERINFO);
-                if (self.isReconfigStateChange())
-                   throw new Exception("learned about role change");
- 
+                if (self.isReconfigStateChange()) {
+                    throw new Exception("learned about role change");
+                }
+
+                self.setLeaderAddressAndId(master.addr, master.getId());
+                self.setZabState(QuorumPeer.ZabState.SYNCHRONIZATION);
                 syncWithLeader(newLeaderZxid);
+                self.setZabState(QuorumPeer.ZabState.BROADCAST);
                 QuorumPacket qp = new QuorumPacket();
                 while (this.isRunning() && nextLearnerMaster.get() == null) {
                     readPacket(qp);
@@ -107,11 +125,7 @@ public class Observer extends Learner{
                 }
             } catch (Exception e) {
                 LOG.warn("Exception when observing the leader", e);
-                try {
-                    sock.close();
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
+                closeSocket();
 
                 // clear pending revalidations
                 pendingRevalidations.clear();
@@ -166,9 +180,11 @@ public class Observer extends Learner{
             ((ObserverZooKeeperServer)zk).sync();
             break;
         case Leader.INFORM:
+            ServerMetrics.getMetrics().LEARNER_COMMIT_RECEIVED_COUNT.add(1);
             TxnHeader hdr = new TxnHeader();
             Record txn = SerializeUtils.deserializeTxn(qp.getData(), hdr);
             Request request = new Request (hdr.getClientId(),  hdr.getCxid(), hdr.getType(), hdr, txn, 0);
+            request.logLatency(ServerMetrics.getMetrics().COMMIT_PROPAGATION_LATENCY);
             ObserverZooKeeperServer obs = (ObserverZooKeeperServer)zk;
             obs.commitRequest(request);
             break;
@@ -211,8 +227,16 @@ public class Observer extends Learner{
     }
 
     static void waitForReconnectDelay() {
-        if (reconnectDelayMs > 0) {
-            long randomDelay = (long) (reconnectDelayMs * Math.random());
+        waitForReconnectDelayHelper(reconnectDelayMs);
+    }
+
+    static void waitForObserverElectionDelay(){
+        waitForReconnectDelayHelper(observerElectionDelayMs);
+    }
+
+    private static void waitForReconnectDelayHelper(long delayValueMs){
+        if (delayValueMs > 0) {
+            long randomDelay = (long) (delayValueMs * Math.random());
             LOG.info("Waiting for " + randomDelay
                     + " ms before reconnecting with the leader");
             try {
@@ -251,6 +275,15 @@ public class Observer extends Learner{
 
     public QuorumPeer.QuorumServer getCurrentLearnerMaster() {
         return currentLearnerMaster;
+    }
+
+    public static long getObserverElectionDelayMs(){
+        return observerElectionDelayMs;
+    }
+
+    public static void setObserverElectionDelayMs(long electionDelayMs) {
+        observerElectionDelayMs = electionDelayMs;
+        LOG.info(OBSERVER_ELECTION_DELAY_MS + " = " + observerElectionDelayMs);
     }
 }
 

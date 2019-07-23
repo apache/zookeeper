@@ -19,6 +19,7 @@ package org.apache.zookeeper.server.quorum;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.BiConsumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,7 +84,7 @@ public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
     
     /**
      * Set up the request processors for an Observer:
-     * firstProcesor->commitProcessor->finalProcessor
+     * firstProcesor-&gt;commitProcessor-&gt;finalProcessor
      */
     @Override
     protected void setupRequestProcessors() {      
@@ -141,4 +142,11 @@ public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
             syncProcessor.shutdown();
         }
     }
+
+    @Override
+    public void dumpMonitorValues(BiConsumer<String, Object> response) {
+        super.dumpMonitorValues(response);
+        response.accept("observer_master_id", getObserver().getLearnerMasterId());
+    }
+
 }

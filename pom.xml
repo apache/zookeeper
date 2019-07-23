@@ -28,7 +28,7 @@
     <!-- no parent resolution -->
   </parent>
   <groupId>org.apache.zookeeper</groupId>
-  <artifactId>zookeeper</artifactId>
+  <artifactId>parent</artifactId>
   <packaging>pom</packaging>
   <!-- to change version: mvn -\-batch-mode release:update-versions -DdevelopmentVersion=3.6.0-SNAPSHOT -->
   <version>3.6.0-SNAPSHOT</version>
@@ -60,8 +60,10 @@
     <module>zookeeper-docs</module>
     <module>zookeeper-jute</module>
     <module>zookeeper-server</module>
+    <module>zookeeper-metrics-providers</module>
     <module>zookeeper-client</module>
     <module>zookeeper-recipes</module>
+    <module>zookeeper-assembly</module>
   </modules>
 
   <scm>
@@ -74,8 +76,8 @@
     <url>http://issues.apache.org/jira/browse/ZOOKEEPER</url>
   </issueManagement>
   <ciManagement>
-    <system>hudson</system>
-    <url>http://hudson.zones.apache.org/hudson/view/ZooKeeper/job/ZooKeeper-TRUNK/</url>
+    <system>jenkins</system>
+    <url>https://builds.apache.org/view/S-Z/view/ZooKeeper/</url>
   </ciManagement>
   <mailingLists>
     <mailingList>
@@ -102,13 +104,13 @@
       <name>Issues List</name>
       <subscribe>issues-subscribe@zookeeper.apache.org</subscribe>
       <unsubscribe>issues-unsubscribe@zookeeper.apache.org</unsubscribe>
-      <archive>http://mail-archives.apache.org/mod_mbox/zookeeper-issues/</archive>
+      <archive>https://lists.apache.org/list.html?issues@zookeeper.apache.org</archive>
     </mailingList>
     <mailingList>
-      <name>Builds List</name>
-      <subscribe>builds-subscribe@zookeeper.apache.org</subscribe>
-      <unsubscribe>builds-unsubscribe@zookeeper.apache.org</unsubscribe>
-      <archive>http://mail-archives.apache.org/mod_mbox/zookeeper-builds/</archive>
+      <name>Notifications List</name>
+      <subscribe>notifications-subscribe@zookeeper.apache.org</subscribe>
+      <unsubscribe>notifications-unsubscribe@zookeeper.apache.org</unsubscribe>
+      <archive>https://lists.apache.org/list.html?notifications@zookeeper.apache.org</archive>
     </mailingList>
   </mailingLists>
   <developers>
@@ -273,20 +275,22 @@
     <audience-annotations.version>0.5.0</audience-annotations.version>
     <junit.version>4.12</junit.version>
     <log4j.version>1.2.17</log4j.version>
-    <mockito.version>1.8.5</mockito.version>
+    <mockito.version>2.27.0</mockito.version>
     <hamcrest.version>1.3</hamcrest.version>
     <commons-cli.version>1.2</commons-cli.version>
-    <netty.version>4.1.29.Final</netty.version>
-    <jetty.version>9.4.14.v20181114</jetty.version>
-    <jackson.version>2.9.8</jackson.version>
+    <netty.version>4.1.36.Final</netty.version>
+    <jetty.version>9.4.17.v20190418</jetty.version>
+    <jackson.version>2.9.9.1</jackson.version>
     <json.version>1.1.1</json.version>
     <jline.version>2.11</jline.version>
+    <snappy.version>1.1.7</snappy.version>
     <kerby.version>1.1.0</kerby.version>
     <bouncycastle.version>1.60</bouncycastle.version>
     <commons-collections.version>3.2.2</commons-collections.version>
     <commons-lang.version>2.6</commons-lang.version>
     <dropwizard.version>3.2.5</dropwizard.version>
     <spotbugsannotations.version>3.1.9</spotbugsannotations.version>
+    <checkstyle.version>8.17</checkstyle.version>
   </properties>
 
   <dependencyManagement>
@@ -391,7 +395,7 @@
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
-        <artifactId>mockito-all</artifactId>
+        <artifactId>mockito-core</artifactId>
         <version>${mockito.version}</version>
       </dependency>
       <dependency>
@@ -429,6 +433,12 @@
         <groupId>com.googlecode.json-simple</groupId>
         <artifactId>json-simple</artifactId>
         <version>${json.version}</version>
+        <exclusions>
+          <exclusion>
+              <groupId>junit</groupId>
+              <artifactId>junit</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>jline</groupId>
@@ -436,12 +446,17 @@
         <version>${jline.version}</version>
       </dependency>
       <dependency>
-         <groupId>com.github.spotbugs</groupId>
-         <artifactId>spotbugs-annotations</artifactId>
-         <version>${spotbugsannotations.version}</version>
-         <scope>provided</scope>
-         <optional>true</optional>
-        </dependency>
+        <groupId>com.github.spotbugs</groupId>
+        <artifactId>spotbugs-annotations</artifactId>
+        <version>${spotbugsannotations.version}</version>
+        <scope>provided</scope>
+        <optional>true</optional>
+      </dependency>
+      <dependency>
+        <groupId>org.xerial.snappy</groupId>
+        <artifactId>snappy-java</artifactId>
+        <version>${snappy.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -457,6 +472,18 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.8.0</version>
+          <configuration>
+             <showWarnings>true</showWarnings>
+             <compilerArgs>
+               <compilerArg>-Werror</compilerArg>
+               <compilerArg>-Xlint:deprecation</compilerArg>
+               <compilerArg>-Xlint:unchecked</compilerArg>
+               <compilerArg>-Xlint:-options</compilerArg>
+               <compilerArg>-Xdoclint:-missing</compilerArg>
+               <!-- https://issues.apache.org/jira/browse/MCOMPILER-205 -->
+               <compilerArg>-Xpkginfo:always</compilerArg>
+              </compilerArgs>
+            </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -522,6 +549,11 @@
           <version>3.0.0</version>
         </plugin>
         <plugin>
+          <groupId>net.nicoulaj.maven.plugins</groupId>
+          <artifactId>checksum-maven-plugin</artifactId>
+          <version>1.8</version>
+        </plugin>
+        <plugin>
           <groupId>org.openclover</groupId>
           <artifactId>clover-maven-plugin</artifactId>
           <version>4.3.1</version>
@@ -537,7 +569,37 @@
         <plugin>
           <groupId>org.owasp</groupId>
           <artifactId>dependency-check-maven</artifactId>
-          <version>4.0.2</version>
+          <version>5.1.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-checkstyle-plugin</artifactId>
+          <version>3.0.0</version>
+          <dependencies>
+            <dependency>
+              <groupId>com.puppycrawl.tools</groupId>
+              <artifactId>checkstyle</artifactId>
+              <version>${checkstyle.version}</version>
+            </dependency>
+          </dependencies>
+          <configuration>
+            <configLocation>checkstyle.xml</configLocation>
+            <suppressionsLocation>checkstyleSuppressions.xml</suppressionsLocation>
+            <encoding>UTF-8</encoding>
+            <consoleOutput>true</consoleOutput>
+            <failOnViolation>true</failOnViolation>
+            <includeResources>false</includeResources>
+            <includeTestSourceDirectory>true</includeTestSourceDirectory>
+          </configuration>
+          <executions>
+            <execution>
+              <id>checkstyle</id>
+              <phase>validate</phase>
+              <goals>
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -657,29 +719,37 @@
               <goal>jar</goal>
             </goals>
           </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <executions>
           <execution>
-            <id>source-package</id>
-            <phase>package</phase>
+            <id>aggregate</id>
+            <phase>site</phase>
             <goals>
-              <goal>
-                single
-              </goal>
+              <goal>aggregate</goal>
             </goals>
-            <configuration>
-              <descriptors>
-                <descriptor>${project.basedir}/source-package.xml</descriptor>
-              </descriptors>
-              <finalName>zookeeper-${project.version}</finalName>
-              <tarLongFileMode>gnu</tarLongFileMode>
-            </configuration>
           </execution>
         </executions>
+        <configuration>
+          <overview>zookeeper-server/src/main/resources/overview.html</overview>
+          <excludePackageNames>*.recipes.*</excludePackageNames>
+        </configuration>
+      </plugin>
+      <plugin>
+        <!-- Maven's deploy plugin only creates checksums during the deployment of the jar artifacts to repo. -->
+        <!-- We also want to sign tarballs. Nicoulaj's plugin is the recommended solution by the community.   -->
+        <groupId>net.nicoulaj.maven.plugins</groupId>
+        <artifactId>checksum-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>artifacts</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <algorithms>
+            <algorithm>SHA-512</algorithm>
+          </algorithms>
+          <appendFilename>true</appendFilename>
+        </configuration>
       </plugin>
 
       <plugin>
@@ -695,6 +765,48 @@
           <suppressionFiles>
             <suppressionsFile>owaspSuppressions.xml</suppressionsFile>
           </suppressionFiles>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.rat</groupId>
+        <artifactId>apache-rat-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>**/log4j.properties</exclude>
+            <exclude>**/README.md</exclude>
+            <exclude>**/git.properties</exclude>
+            <exclude>**/findbugsExcludeFile.xml</exclude>
+            <exclude>**/checkstyle-noframes-sorted.xsl</exclude>
+            <exclude>**/configure.ac</exclude>
+            <exclude>**/Makefile.am</exclude>
+            <exclude>conf/zoo_sample.cfg</exclude>
+            <exclude>conf/configuration.xsl</exclude>
+            <exclude>.travis.yml</exclude>
+            <exclude>excludeFindBugsFilter.xml</exclude>
+            <exclude>README_packaging.txt</exclude>
+            <exclude>src/main/resources/markdown/skin/*</exclude>
+            <exclude>src/main/resources/markdown/html/*</exclude>
+            <exclude>src/main/resources/markdown/images/*</exclude>
+            <!-- contrib -->
+            <exclude>zookeeper-contrib-monitoring/JMX-RESOURCES</exclude>
+            <exclude>zookeeper-contrib-fatjar/src/main/resources/mainClasses</exclude>
+            <exclude>zookeeper-contrib-zkperl/Changes</exclude>
+            <exclude>zookeeper-contrib-zkperl/MANIFEST</exclude>
+            <exclude>zookeeper-contrib-loggraph/src/main/resources/webapp/org/apache/zookeeper/graph/resources/*</exclude>
+            <exclude>src/main/resources/webapp/org/apache/zookeeper/graph/resources/*</exclude>
+            <exclude>src/main/java/com/nitido/utils/toaster/Toaster.java</exclude>
+            <exclude>TODO</exclude>
+            <!-- c client -->
+            <exclude>**/acinclude.m4</exclude>
+            <exclude>**/aminclude.am</exclude>
+            <exclude>src/hashtable/*</exclude>
+            <exclude>include/winconfig.h</exclude>
+            <exclude>tests/wrappers.opt</exclude>
+            <exclude>tests/quorum.cfg</exclude>
+            <exclude>tests/wrappers-mt.opt</exclude>
+            <exclude>**/c-doc.Doxyfile</exclude>
+          </excludes>
+          <consoleOutput>true</consoleOutput>
         </configuration>
       </plugin>
     </plugins>

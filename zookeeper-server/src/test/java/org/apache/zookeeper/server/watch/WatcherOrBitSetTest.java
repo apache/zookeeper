@@ -49,7 +49,7 @@ public class WatcherOrBitSetTest extends ZKTestCase {
         WatcherOrBitSet bitSet = new WatcherOrBitSet(bset);
         Assert.assertEquals(0, bitSet.size());
 
-        Integer bit = new Integer(1);
+        Integer bit = 1;
         Assert.assertFalse(bitSet.contains(1));
         Assert.assertFalse(bitSet.contains(bit));
 

@@ -15,10 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.zookeeper.server;
 
-public class ServerCnxnFactoryAccessor {
-    public static ZooKeeperServer getZkServer(ServerCnxnFactory fac) {
-	return fac.zkServer;
+package org.apache.zookeeper.server.persistence;
+
+/**
+ * stores the zxid (as in its file name) and the last modified timestamp
+ * of a snapshot file
+ */
+public class SnapshotInfo {
+    public long zxid;
+    public long timestamp;
+
+    SnapshotInfo(long zxid, long timestamp) {
+        this.zxid = zxid;
+        this.timestamp = timestamp;
     }
 }

@@ -39,14 +39,14 @@ public class ServerStats {
 
     private final AvgMinMaxCounter requestLatency = new AvgMinMaxCounter("request_latency");
 
-    private AtomicLong fsyncThresholdExceedCount = new AtomicLong(0);
+    private final AtomicLong fsyncThresholdExceedCount = new AtomicLong(0);
 
     private final BufferStats clientResponseStats = new BufferStats();
 
     private final Provider provider;
     private final long startTime = Time.currentElapsedTime();
 
-    public interface Provider {
+    public static interface Provider {
         public long getOutstandingRequests();
         public long getLastProcessedZxid();
         public String getState();
@@ -58,7 +58,7 @@ public class ServerStats {
     public ServerStats(Provider provider) {
         this.provider = provider;
     }
-    
+
     // getters
     public long getMinLatency() {
         return requestLatency.getMin();
@@ -142,10 +142,10 @@ public class ServerStats {
         requestLatency.addDataPoint(latency);
         if (request.getHdr() != null) {
             // Only quorum request should have header
-            ServerMetrics.UPDATE_LATENCY.add(latency);
+            ServerMetrics.getMetrics().UPDATE_LATENCY.add(latency);
         } else {
             // All read request should goes here
-            ServerMetrics.READ_LATENCY.add(latency);
+            ServerMetrics.getMetrics().READ_LATENCY.add(latency);
         }
     }
 
@@ -186,7 +186,7 @@ public class ServerStats {
         resetLatency();
         resetRequestCounters();
         clientResponseStats.reset();
-        ServerMetrics.resetAll();
+        ServerMetrics.getMetrics().resetAll();
     }
 
     public void updateClientResponseSize(int size) {

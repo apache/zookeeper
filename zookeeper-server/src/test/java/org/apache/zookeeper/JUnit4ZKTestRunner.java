@@ -40,6 +40,7 @@ public class JUnit4ZKTestRunner extends BlockJUnit4ClassRunner {
         super(klass);
     }
 
+    @SuppressWarnings("unchecked")
     public static List<FrameworkMethod> computeTestMethodsForClass(final Class klass, final List<FrameworkMethod> defaultMethods) {
         List<FrameworkMethod> list = defaultMethods;
         String methodName = System.getProperty("test.method");
