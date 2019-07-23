@@ -582,20 +582,19 @@
               <version>${checkstyle.version}</version>
             </dependency>
           </dependencies>
+          <configuration>
+            <configLocation>checkstyle.xml</configLocation>
+            <suppressionsLocation>checkstyleSuppressions.xml</suppressionsLocation>
+            <encoding>UTF-8</encoding>
+            <consoleOutput>true</consoleOutput>
+            <failOnViolation>true</failOnViolation>
+            <includeResources>false</includeResources>
+            <includeTestSourceDirectory>true</includeTestSourceDirectory>
+          </configuration>
           <executions>
             <execution>
               <id>checkstyle</id>
               <phase>validate</phase>
-              <configuration>
-                <configLocation>checkstyle.xml</configLocation>
-                <suppressionsLocation>checkstyleSuppressions.xml</suppressionsLocation>
-                <encoding>UTF-8</encoding>
-                <consoleOutput>true</consoleOutput>
-                <failOnViolation>true</failOnViolation>
-                <violationSeverity>warning</violationSeverity>
-                <includeResources>false</includeResources>
-                <includeTestSourceDirectory>true</includeTestSourceDirectory>
-              </configuration>
               <goals>
                 <goal>check</goal>
               </goals>

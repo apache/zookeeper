@@ -17,42 +17,6 @@
         "http://www.puppycrawl.com/dtds/suppressions_1_1.dtd">
 
 <suppressions>
-    <!--<suppress checks=".*" files=".*[\\/]admin[\\/].*"/>-->
-    <!--<suppress checks=".*" files=".*[\\/]client[\\/].*"/>-->
-    <suppress checks=".*" files=".*[\\/]cli[\\/].*"/>
-    <suppress checks=".*" files=".*[\\/]jmx[\\/].*"/>
-    <suppress checks=".*" files=".*[\\/]metrics[\\/].*"/>
-    <suppress checks=".*" files=".*[\\/]server[\\/]admin.*"/>
-    <suppress checks=".*" files=".*[\\/]server[\\/]metric.*"/>
-    <suppress checks=".*" files=".*[\\/]auth[\\/].*"/>
-    <suppress checks=".*" files=".*[\\/]command[\\/].*"/>
-    <suppress checks=".*" files=".*[\\/]persistence[\\/].*"/>
-    <suppress checks=".*" files=".*[\\/]quorum[\\/].*"/>
-    <suppress checks=".*" files=".*[\\/]watch[\\/].*"/>
-    <suppress checks=".*" files=".*[\\/]util[\\/].*"/>
-    <suppress checks=".*" files=".*[\\/]common[\\/].*"/>
-
-    <suppress checks=".*" files="BlueThrottle.java|ByteBufferInputStream.java|ByteBufferOutputStream.java|ClientCnxnLimitException.java|ConnectionBean.java|ConnectionMXBean.java|
-                                |ContainerManager.java|DataNode.java|DataTree.java|DataTreeBean.java|DataTreeMXBean.java|DatadirCleanupManager.java|DumbWatcher.java|EphemeralType.java|EphemeralTypeEmulate353.java|
-                                |ExitCode.java|ExpiryQueue.java|FinalRequestProcessor.java|LogFormatter.java|NIOServerCnxn.java|NIOServerCnxnFactory.java|NettyServerCnxn.java|NettyServerCnxnFactory.java"/>
-
-    <suppress checks=".*" files="ObserverBean.java|PrepRequestProcessor.java|PurgeTxnLog.java|RateLogger.java|ReferenceCountedACLCache.java|Request.java|RequestProcessor.java|RequestThrottler.java|ResponseCache.java|
-                                |ServerCnxn.java|ServerCnxnFactory.java|ServerConfig.java|ServerMetrics.java|ServerStats.java|SessionTracker.java|SessionTrackerImpl.java|SnapshotFormatter.java|Stats.java|
-                                |SyncRequestProcessor.java|TraceFormatter.java|TxnLogProposalIterator.java|UnimplementedRequestProcessor.java|WorkerService.java|ZKDatabase.java|ZooKeeperCriticalThread.java"/>
-
-    <suppress checks=".*" files="ZooKeeperSaslServer.java|ZooKeeperServer.java|ZooKeeperServerBean.java|ZooKeeperServerConf.java|ZooKeeperServerListener.java|ZooKeeperServerListenerImpl.java|ZooKeeperServerMXBean.java|
-                                |ZooKeeperServerMain.java|ZooKeeperServerShutdownHandler.java|ZooKeeperThread.java|ZooTrace.java"/>
-
-    <suppress checks=".*" files="AsyncCallback.java|ClientCnxn.java|ClientCnxnSocket.java|ClientCnxnSocketNetty.java|ClientCnxnSocketNIO.java|
-                            |ClientWatchManager.java|CreateMode.java|Environment.java|JLineZNodeCompleter.java|KeeperException.java|Login.java|
-                            |MultiOperationRecord.java|MultiResponse.java|Op.java|OpResult.java|Quotas.java|SaslClientCallbackHandler.java"/>
-
-    <suppress checks=".*" files="SaslServerPrincipal.java|ServerAdminClient.java|Shell.java|StatsTrack.java|Testable.java|Transaction.java|
-                            |Version.java|WatchDeregistration.java|WatchedEvent.java|Watcher.java|ZKUtil.java|ZooDefs.java|ZooKeeper.java|ZooKeeperMain.java|
-                            |ZooKeeperTestable.java|ZookeeperBanner.java"/>
-
-    <suppress checks=".*" files=".*[\\/]zookeeper-server/src/test/.*\.java"/>
-
     <!-- suppress all checks in the generated directories -->
     <suppress checks=".*" files=".+[\\/]generated[\\/].+\.java" />
     <suppress checks=".*" files=".+[\\/]generated-sources[\\/].+\.java" />
