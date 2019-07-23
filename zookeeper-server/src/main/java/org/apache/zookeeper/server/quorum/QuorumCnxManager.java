@@ -622,7 +622,7 @@ public class QuorumCnxManager {
             ArrayBlockingQueue<ByteBuffer> bq = queueSendMap.computeIfAbsent(sid,
                     serverId -> new ArrayBlockingQueue<>(SEND_CAPACITY));
             addToSendQueue(bq, b);
-             connectOne(sid);
+            connectOne(sid);
 
         }
     }
