@@ -103,12 +103,14 @@ public class Observer extends Learner{
      */
     void observeLeader() throws Exception {
         zk.registerJMX(new ObserverBean(this, zk), self.jmxLocalPeerBean);
-
+        long connectTime = 0;
+        boolean completedSync = false;
         try {
             self.setZabState(QuorumPeer.ZabState.DISCOVERY);
             QuorumServer master = findLearnerMaster();
             try {
                 connectToLeader(master.addr, master.hostname);
+                connectTime = System.currentTimeMillis();
                 long newLeaderZxid = registerWithLeader(Leader.OBSERVERINFO);
                 if (self.isReconfigStateChange()) {
                     throw new Exception("learned about role change");
@@ -118,6 +120,7 @@ public class Observer extends Learner{
                 self.setZabState(QuorumPeer.ZabState.SYNCHRONIZATION);
                 syncWithLeader(newLeaderZxid);
                 self.setZabState(QuorumPeer.ZabState.BROADCAST);
+                completedSync = true;
                 QuorumPacket qp = new QuorumPacket();
                 while (this.isRunning() && nextLearnerMaster.get() == null) {
                     readPacket(qp);
@@ -133,6 +136,14 @@ public class Observer extends Learner{
         } finally {
             currentLearnerMaster = null;
             zk.unregisterJMX(this);
+            if (connectTime != 0) {
+                long connectionDuration = System.currentTimeMillis() - connectTime;
+
+                LOG.info("Disconnected from leader (with address: {}). " +
+                        "Was connected for {}ms. Sync state: {}",
+                    leaderAddr, connectionDuration, completedSync);
+                messageTracker.dumpToLog(leaderAddr.toString());
+            }
         }
     }
 
