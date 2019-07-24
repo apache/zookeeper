@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -25,19 +25,35 @@ import java.io.IOException;
  *
  */
 public interface InputArchive {
-    public byte readByte(String tag) throws IOException;
-    public boolean readBool(String tag) throws IOException;
-    public int readInt(String tag) throws IOException;
-    public long readLong(String tag) throws IOException;
-    public float readFloat(String tag) throws IOException;
-    public double readDouble(String tag) throws IOException;
-    public String readString(String tag) throws IOException;
-    public byte[] readBuffer(String tag) throws IOException;
-    public void readRecord(Record r, String tag) throws IOException;
-    public void startRecord(String tag) throws IOException;
-    public void endRecord(String tag) throws IOException;
-    public Index startVector(String tag) throws IOException;
-    public void endVector(String tag) throws IOException;
-    public Index startMap(String tag) throws IOException;
-    public void endMap(String tag) throws IOException;
+
+    byte readByte(String tag) throws IOException;
+
+    boolean readBool(String tag) throws IOException;
+
+    int readInt(String tag) throws IOException;
+
+    long readLong(String tag) throws IOException;
+
+    float readFloat(String tag) throws IOException;
+
+    double readDouble(String tag) throws IOException;
+
+    String readString(String tag) throws IOException;
+
+    byte[] readBuffer(String tag) throws IOException;
+
+    void readRecord(Record r, String tag) throws IOException;
+
+    void startRecord(String tag) throws IOException;
+
+    void endRecord(String tag) throws IOException;
+
+    Index startVector(String tag) throws IOException;
+
+    void endVector(String tag) throws IOException;
+
+    Index startMap(String tag) throws IOException;
+
+    void endMap(String tag) throws IOException;
+
 }

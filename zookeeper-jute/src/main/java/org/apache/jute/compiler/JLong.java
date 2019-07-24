@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,20 +19,22 @@
 package org.apache.jute.compiler;
 
 /**
- *
+ * Javadoc placeholder.
  */
 public class JLong extends JType {
-    
-    /** Creates a new instance of JLong */
+
+    /**
+     * Creates a new instance of JLong.
+     */
     public JLong() {
         super("int64_t", "int64_t", "long", "long", "Long", "Long", "long", "toLong");
     }
-    
+
     public String getSignature() {
         return "l";
     }
-    
+
     public String genJavaHashCode(String fname) {
-        return "    ret = (int) ("+fname+"^("+fname+">>>32));\n";
+        return "    ret = (int) (" + fname + "^(" + fname + ">>>32));\n";
     }
 }

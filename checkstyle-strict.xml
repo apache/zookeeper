@@ -164,6 +164,7 @@ page at http://checkstyle.sourceforge.net/config.html -->
         <module name="JavadocStyle">
             <property name="severity" value="error"/>
             <property name="checkHtml" value="true"/>
+            <property name="checkEmptyJavadoc" value="true"/>
         </module>
 
         <!--
