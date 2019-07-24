@@ -21,7 +21,7 @@ ZOOPORT=22181
 
 if [ "x$1" == "x" ]
 then
-    echo "USAGE: $0 startClean|start|startReadOnly|stop hostPorts"
+    echo "USAGE: $0 startClean|start|startReadOnly|startRequireSASLAuth|stop hostPorts"
     exit 2
 fi
 
@@ -177,6 +177,20 @@ startReadOnly)
         pid=$!
         echo -n $pid > "${base_dir}/build/tmp/zk.pid"
         sleep 3 # wait until read-only server is up
+    fi
+
+    ;;
+startRequireSASLAuth)
+    if [ "x${base_dir}" == "x" ]
+    then
+        echo "this target is for unit tests only"
+        exit 2
+    else
+        mkdir -p "${base_dir}/build/tmp/zkdata"
+        java -cp "$CLASSPATH" -Dzookeeper.sessionRequireClientSASLAuth=true org.apache.zookeeper.server.ZooKeeperServerMain 23456 "${base_dir}/build/tmp/zkdata" 3000 $ZKMAXCNXNS &> "${base_dir}/build/tmp/zk.log" &
+        pid=$!
+        echo -n $pid > "${base_dir}/build/tmp/zk.pid"
+        sleep 3 # wait until server is up.
     fi
 
     ;;
