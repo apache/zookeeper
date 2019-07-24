@@ -713,6 +713,7 @@ public class LearnerHandler extends ZooKeeperThread {
             LOG.error("Unexpected exception in LearnerHandler: ", e);
         } catch (SyncThrottleException e) {
                 LOG.error("too many concurrent syncs: " + e);
+                syncThrottler = null;
         } catch (Exception e) {
             LOG.error("Unexpected exception in LearnerHandler: ", e);
             throw e;

@@ -67,8 +67,7 @@ public class LearnerSyncThrottlerTest extends ZKTestCase {
             for (int i = 0; i < 6; i++) {
                 throttler.beginSync(true);
             }
-        }
-        catch (SyncThrottleException ex) {
+        } catch (SyncThrottleException ex) {
             Assert.fail("essential syncs should not be throttled");
         }
         throttler.endSync();
@@ -109,25 +108,25 @@ public class LearnerSyncThrottlerTest extends ZKTestCase {
         }
     }
 
-    @Test(expected = SyncThrottleException.class)
+    @Test
     public void testTryWithResourceThrottle() throws Exception {
         LearnerSyncThrottler throttler =
                 new LearnerSyncThrottler(1, syncType);
-        throttler.beginSync(true);
         try {
-            throttler.beginSync(false);
+            throttler.beginSync(true);
             try {
+                throttler.beginSync(false);
                 Assert.fail("shouldn't be able to have both syncs open");
-            } finally {
-                throttler.endSync();
+            } catch (SyncThrottleException e) {
             }
-        } finally {
             throttler.endSync();
+        } catch (SyncThrottleException e) {
+            Assert.fail("First sync shouldn't be throttled");
         }
     }
 
     @Test
-    public void testParallelNoThrottle() throws Exception {
+    public void testParallelNoThrottle() {
         final int numThreads = 50;
 
         final LearnerSyncThrottler throttler =
@@ -152,8 +151,7 @@ public class LearnerSyncThrottlerTest extends ZKTestCase {
                         syncProgressLatch.await();
 
                         throttler.endSync();
-                    }
-                    catch (Exception e) {
+                    } catch (Exception e) {
                         return false;
                     }
 
@@ -162,8 +160,14 @@ public class LearnerSyncThrottlerTest extends ZKTestCase {
             }));
         }
 
-        for (Future<Boolean> result : results) {
-            Assert.assertTrue(result.get());
+        try {
+            for (Future<Boolean> result : results) {
+                Assert.assertTrue(result.get());
+            }
+        } catch (Exception e){
+
+        } finally {
+            threadPool.shutdown();
         }
     }
 }
