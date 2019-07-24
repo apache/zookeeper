@@ -953,6 +953,23 @@ and [SASL authentication for ZooKeeper](https://cwiki.apache.org/confluence/disp
     Then set this property **zookeeper.ssl.authProvider=[scheme]** and that provider
     will be used for secure authentication.
 
+* *zookeeper.sessionRequireClientSASLAuth* :
+    (Java system property only: **zookeeper.sessionRequireClientSASLAuth**)
+    **New in 3.5.9:**
+    When set to **true**, ZooKeeper server will only accept connections and requests from clients
+    that have authenticated with server via SASL. Clients that are not configured with SASL
+    authentication, or configured with SASL but failed authentication (i.e. with invalid credential)
+    will not be able to establish a session with server. A typed error code (-124) will be delivered
+    in such case, both Java and C client will close the session with server thereafter,
+    without further attempts on retrying to reconnect.
+
+    By default, this feature is disabled. Users who would like to opt-in can enable the feature
+    by setting **zookeeper.sessionRequireClientSASLAuth** to **true**.
+
+    This feature overrules the <emphasis role="bold">zookeeper.allowSaslFailedClients</emphasis> option, so even if server is
+    configured to allow clients that fail SASL authentication to login, client will not be able to
+    establish a session with server if this feature is enabled.
+
 * *sslQuorum* :
     (Java system property: **zookeeper.sslQuorum**)
     **New in 3.5.5:**
