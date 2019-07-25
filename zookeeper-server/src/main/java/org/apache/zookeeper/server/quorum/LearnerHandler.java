@@ -245,6 +245,11 @@ public class LearnerHandler extends ZooKeeperThread {
      */
     private long leaderLastZxid;
 
+    /**
+     * for sync throttling
+     */
+    private LearnerSyncThrottler syncThrottler = null;
+
     LearnerHandler(Socket sock, BufferedInputStream bufferedInput, LearnerMaster learnerMaster) throws IOException {
         super("LearnerHandler-" + sock.getRemoteSocketAddress());
         this.sock = sock;
@@ -535,34 +540,38 @@ public class LearnerHandler extends ZooKeeperThread {
             // startForwarding() will be called in all cases
             boolean needSnap = syncFollower(peerLastZxid, learnerMaster);
 
+            // syncs between followers and the leader are exempt from throttling because it
+            // is importatnt to keep the state of quorum servers up-to-date. The exempted syncs
+            // are counted as concurrent syncs though
+            boolean exemptFromThrottle = getLearnerType() != LearnerType.OBSERVER;
             /* if we are not truncating or sending a diff just send a snapshot */
             if (needSnap) {
-                boolean exemptFromThrottle = getLearnerType() != LearnerType.OBSERVER;
-                LearnerSnapshot snapshot =
-                        learnerMaster.getLearnerSnapshotThrottler().beginSnapshot(exemptFromThrottle);
+                syncThrottler = learnerMaster.getLearnerSnapSyncThrottler();
+                syncThrottler.beginSync(exemptFromThrottle);
                 try {
                     long zxidToSend = learnerMaster.getZKDatabase().getDataTreeLastProcessedZxid();
                     oa.writeRecord(new QuorumPacket(Leader.SNAP, zxidToSend, null, null), "packet");
                     bufferedOutput.flush();
 
                     LOG.info("Sending snapshot last zxid of peer is 0x{}, zxid of leader is 0x{}, "
-                            + "send zxid of db as 0x{}, {} concurrent snapshots, "
-                            + "snapshot was {} from throttle",
+                            + "send zxid of db as 0x{}, {} concurrent snapshot sync, "
+                            + "snapshot sync was {} from throttle",
                             Long.toHexString(peerLastZxid),
                             Long.toHexString(leaderLastZxid),
                             Long.toHexString(zxidToSend),
-                            snapshot.getConcurrentSnapshotNumber(),
-                            snapshot.isEssential() ? "exempt" : "not exempt");
+                            syncThrottler.getSyncInProgress(),
+                            exemptFromThrottle ? "exempt" : "not exempt");
                     // Dump data to peer
                     learnerMaster.getZKDatabase().serializeSnapshot(oa);
                     oa.writeString("BenWasHere", "signature");
                     bufferedOutput.flush();
                 } finally {
-                    snapshot.close();
                     ServerMetrics.getMetrics().SNAP_COUNT.add(1);
                 }
             }
             else {
+                syncThrottler = learnerMaster.getLearnerDiffSyncThrottler();
+                syncThrottler.beginSync(exemptFromThrottle);
                 ServerMetrics.getMetrics().DIFF_COUNT.add(1);
             }
 
@@ -603,6 +612,9 @@ public class LearnerHandler extends ZooKeeperThread {
             learnerMaster.waitForNewLeaderAck(getSid(), qp.getZxid());
 
             syncLimitCheck.start();
+            // sync ends when NEWLEADER-ACK is received
+            syncThrottler.endSync();
+            syncThrottler = null;
 
             // now that the ack has been processed expect the syncLimit
             sock.setSoTimeout(learnerMaster.syncTimeout());
@@ -698,10 +710,18 @@ public class LearnerHandler extends ZooKeeperThread {
             	}
             }
         } catch (InterruptedException e) {
-            LOG.error("Unexpected exception causing shutdown", e);
-        } catch (SnapshotThrottleException e) {
-            LOG.error("too many concurrent snapshots: " + e);
+            LOG.error("Unexpected exception in LearnerHandler: ", e);
+        } catch (SyncThrottleException e) {
+                LOG.error("too many concurrent syncs: " + e);
+                syncThrottler = null;
+        } catch (Exception e) {
+            LOG.error("Unexpected exception in LearnerHandler: ", e);
+            throw e;
         } finally {
+            if (syncThrottler != null) {
+                syncThrottler.endSync();
+                syncThrottler = null;
+            }
             LOG.warn("******* GOODBYE {} ********", getRemoteAddress());
             shutdown();
         }
@@ -772,7 +792,7 @@ public class LearnerHandler extends ZooKeeperThread {
             long minCommittedLog = db.getminCommittedLog();
             long lastProcessedZxid = db.getDataTreeLastProcessedZxid();
 
-            LOG.info("Synchronizing with Follower sid: {} maxCommittedLog=0x{}"
+            LOG.info("Synchronizing with Learner sid: {} maxCommittedLog=0x{}"
                     + " minCommittedLog=0x{} lastProcessedZxid=0x{}"
                     + " peerLastZxid=0x{}", getSid(),
                     Long.toHexString(maxCommittedLog),
@@ -1013,6 +1033,7 @@ public class LearnerHandler extends ZooKeeperThread {
     public void shutdown() {
         // Send the packet of death
         try {
+            queuedPackets.clear();
             queuedPackets.put(proposalOfDeath);
         } catch (InterruptedException e) {
             LOG.warn("Ignoring unexpected exception", e);

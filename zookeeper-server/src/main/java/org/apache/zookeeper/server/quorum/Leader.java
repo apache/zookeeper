@@ -69,7 +69,7 @@ import org.slf4j.LoggerFactory;
 /**
  * This class has the control logic for the Leader.
  */
-public class Leader implements LearnerMaster {
+public class Leader extends LearnerMaster {
     private static final Logger LOG = LoggerFactory.getLogger(Leader.class);
 
     static final private boolean nodelay = System.getProperty("leader.nodelay", "true").equals("true");
@@ -87,22 +87,8 @@ public class Leader implements LearnerMaster {
         }
     }
 
-    // Throttle when there are too many concurrent snapshots being sent to observers
-    private static final String MAX_CONCURRENT_SNAPSHOTS = "zookeeper.leader.maxConcurrentSnapshots";
-    private static final int maxConcurrentSnapshots;
-    private static final String MAX_CONCURRENT_SNAPSHOT_TIMEOUT = "zookeeper.leader.maxConcurrentSnapshotTimeout";
-    private static final long maxConcurrentSnapshotTimeout;
-    static {
-        maxConcurrentSnapshots = Integer.getInteger(MAX_CONCURRENT_SNAPSHOTS, 10);
-        LOG.info(MAX_CONCURRENT_SNAPSHOTS + " = " + maxConcurrentSnapshots);
-        maxConcurrentSnapshotTimeout = Long.getLong(MAX_CONCURRENT_SNAPSHOT_TIMEOUT, 5);
-        LOG.info(MAX_CONCURRENT_SNAPSHOT_TIMEOUT + " = " + maxConcurrentSnapshotTimeout);
-    }
-
-    private final LearnerSnapshotThrottler learnerSnapshotThrottler;
-
     // log ack latency if zxid is a multiple of ackLoggingFrequency. If <=0, disable logging.
-    protected static final String ACK_LOGGING_FREQUENCY = "zookeeper.leader.ackLoggingFrequency";
+    private static final String ACK_LOGGING_FREQUENCY = "zookeeper.leader.ackLoggingFrequency";
     private static int ackLoggingFrequency;
     static {
         ackLoggingFrequency = Integer.getInteger(ACK_LOGGING_FREQUENCY, 1000);
@@ -135,12 +121,6 @@ public class Leader implements LearnerMaster {
 
     public BufferStats getProposalStats() {
         return proposalStats;
-    }
-
-    public LearnerSnapshotThrottler createLearnerSnapshotThrottler(
-            int maxConcurrentSnapshots, long maxConcurrentSnapshotTimeout) {
-        return new LearnerSnapshotThrottler(
-                maxConcurrentSnapshots, maxConcurrentSnapshotTimeout);
     }
 
     // beans for all learners
@@ -324,8 +304,6 @@ public class Leader implements LearnerMaster {
             throw e;
         }
         this.zk = zk;
-        this.learnerSnapshotThrottler = createLearnerSnapshotThrottler(
-                maxConcurrentSnapshots, maxConcurrentSnapshotTimeout);
     }
 
     /**
@@ -1215,11 +1193,6 @@ public class Leader implements LearnerMaster {
         }
         ServerMetrics.getMetrics().PROPOSAL_COUNT.add(1);
         return p;
-    }
-
-    @Override
-    public LearnerSnapshotThrottler getLearnerSnapshotThrottler() {
-        return learnerSnapshotThrottler;
     }
 
     /**

@@ -893,6 +893,16 @@ property, when available, is noted below.
     pipeline to avoid direct buffer OOM. It will disable the AUTO_READ in
     Netty.
 
+* *maxConcurrentSnapSyncs* :
+    (Java system property: **zookeeper.leader.maxConcurrentSnapSyncs**)
+    The maximum number of snap syncs a leader or a follower can serve at the same
+    time. The default is 10.
+
+* *maxConcurrentDiffSyncs* :
+    (Java system property: **zookeeper.leader.maxConcurrentDiffSyncs**)
+    The maximum number of diff syncs a leader or a follower can serve at the same
+    time. The default is 100.
+
 <a name="sc_clusterOptions"></a>
 
 #### Cluster Options

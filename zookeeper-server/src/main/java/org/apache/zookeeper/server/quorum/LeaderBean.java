@@ -84,4 +84,24 @@ public class LeaderBean extends ZooKeeperServerBean implements LeaderMXBean {
     public void resetProposalStatistics() {
         leader.getProposalStats().reset();
     }
+    
+    @Override
+    public int getMaxConcurrentSnapSyncs() {
+        return leader.getMaxConcurrentSnapSyncs();
+    }
+
+    @Override
+    public void setMaxConcurrentSnapSyncs(int maxConcurrentSnapshots) {
+        leader.setMaxConcurrentSnapSyncs(maxConcurrentSnapshots);
+    }
+
+    @Override
+    public int getMaxConcurrentDiffSyncs() {
+        return leader.getMaxConcurrentDiffSyncs();
+    }
+
+    @Override
+    public void setMaxConcurrentDiffSyncs(int maxConcurrentDiffSyncs) {
+        leader.setMaxConcurrentDiffSyncs(maxConcurrentDiffSyncs);
+    }
 }
