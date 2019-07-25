@@ -28,7 +28,9 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.Environment.Entry;
 import org.apache.zookeeper.Version;
@@ -125,6 +127,7 @@ public class Commands {
         registerCommand(new DumpCommand());
         registerCommand(new EnvCommand());
         registerCommand(new GetTraceMaskCommand());
+        registerCommand(new InitialConfigurationCommand());
         registerCommand(new IsroCommand());
         registerCommand(new LastSnapshotCommand());
         registerCommand(new LeaderCommand());
@@ -136,12 +139,12 @@ public class Commands {
         registerCommand(new StatCommand());
         registerCommand(new StatResetCommand());
         registerCommand(new SyncedObserverConsCommand());
+        registerCommand(new SystemPropertiesCommand());
+        registerCommand(new VotingViewCommand());
         registerCommand(new WatchCommand());
         registerCommand(new WatchesByPathCommand());
         registerCommand(new WatchSummaryCommand());
         registerCommand(new ZabStateCommand());
-        registerCommand(new SystemPropertiesCommand());
-        registerCommand(new InitialConfigurationCommand());
     }
 
     /**
@@ -278,6 +281,19 @@ public class Commands {
         public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
             CommandResponse response = initializeResponse();
             response.put("tracemask", ZooTrace.getTextTraceLevel());
+            return response;
+        }
+    }
+
+    public static class InitialConfigurationCommand extends CommandBase {
+        public InitialConfigurationCommand() {
+            super(Arrays.asList("initial_configuration", "icfg"));
+        }
+
+        @Override
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+            CommandResponse response = initializeResponse();
+            response.put("initial_configuration", zkServer.getInitialConfig());
             return response;
         }
     }
@@ -563,6 +579,75 @@ public class Commands {
     }
 
     /**
+     * All defined system properties.
+     */
+    public static class SystemPropertiesCommand extends CommandBase {
+        public SystemPropertiesCommand() {
+            super(Arrays.asList("system_properties", "sysp"), false);
+        }
+
+        @Override
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+            CommandResponse response = initializeResponse();
+            Properties systemProperties = System.getProperties();
+            SortedMap<String, String> sortedSystemProperties = new TreeMap<>();
+            systemProperties.forEach((k, v) -> sortedSystemProperties.put(k.toString(), v.toString()));
+            response.putAll(sortedSystemProperties);
+            return response;
+        }
+    }
+
+    /**
+     * Returns the current ensemble configuration information.
+     * It provides list of current voting members in the ensemble.
+     */
+    public static class VotingViewCommand extends CommandBase {
+        public VotingViewCommand() {
+            super(Arrays.asList("voting_view"));
+        }
+
+        @Override
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+            CommandResponse response = initializeResponse();
+            if (zkServer instanceof QuorumZooKeeperServer) {
+                QuorumPeer peer = ((QuorumZooKeeperServer) zkServer).self;
+                VotingView votingView = new VotingView(peer.getVotingView());
+                response.put("current_config", votingView);
+            } else {
+                response.put("current_config", Collections.emptyMap());
+            }
+            return response;
+        }
+
+
+        private static class VotingView {
+            private final Map<Long, String> view;
+
+            VotingView(Map<Long,QuorumPeer.QuorumServer> view) {
+                this.view = view.entrySet().stream()
+                        .filter(e -> e.getValue().addr != null)
+                        .collect(Collectors.toMap(Map.Entry::getKey,
+                                e -> String.format("%s:%d%s:%s%s",
+                                        QuorumPeer.QuorumServer.delimitedHostString(e.getValue().addr),
+                                        e.getValue().addr.getPort(),
+                                        e.getValue().electionAddr == null ? "" : ":" + e.getValue().electionAddr.getPort(),
+                                        e.getValue().type.equals(QuorumPeer.LearnerType.PARTICIPANT) ? "participant" : "observer",
+                                        e.getValue().clientAddr ==null || e.getValue().isClientAddrFromStatic ? "" :
+                                                String.format(";%s:%d",
+                                                        QuorumPeer.QuorumServer.delimitedHostString(e.getValue().clientAddr),
+                                                        e.getValue().clientAddr.getPort())),
+                                (v1, v2) -> v1, // cannot get duplicates as this straight draws from the other map
+                                TreeMap::new));
+            }
+
+            @JsonAnyGetter
+            public Map<Long, String> getView() {
+                return view;
+            }
+        }
+    }
+
+    /**
      * Watch information aggregated by session. Returned Map contains:
      *   - "session_id_to_watched_paths": Map&lt;Long, Set&lt;String&gt;&gt; session ID -&gt; watched paths
      * @see DataTree#getWatches()
@@ -648,38 +733,6 @@ public class Commands {
                 response.put("zabstate", "");
             }
             return response ;
-        }
-    }
-
-    /**
-     * All defined system properties.
-     */
-    public static class SystemPropertiesCommand extends CommandBase {
-        public SystemPropertiesCommand() {
-            super(Arrays.asList("system_properties", "sysp"), false);
-        }
-
-        @Override
-        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
-            CommandResponse response = initializeResponse();
-            Properties systemProperties = System.getProperties();
-            SortedMap<String, String> sortedSystemProperties = new TreeMap<>();
-            systemProperties.forEach((k, v) -> sortedSystemProperties.put(k.toString(), v.toString()));
-            response.putAll(sortedSystemProperties);
-            return response;
-        }
-    }
-
-    public static class InitialConfigurationCommand extends CommandBase {
-        public InitialConfigurationCommand() {
-            super(Arrays.asList("initial_configuration", "icfg"));
-        }
-
-        @Override
-        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
-            CommandResponse response = initializeResponse();
-            response.put("initial_configuration", zkServer.getInitialConfig());
-            return response;
         }
     }
 
