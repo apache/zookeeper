@@ -63,7 +63,7 @@ import org.slf4j.LoggerFactory;
  *
  * The logic is quite a bit simpler than the corresponding logic in Leader because it only hosts observers.
  */
-public class ObserverMaster implements LearnerMaster, Runnable {
+public class ObserverMaster extends LearnerMaster implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(ObserverMaster.class);
 
     //Follower counter
@@ -92,20 +92,6 @@ public class ObserverMaster implements LearnerMaster, Runnable {
 
     // ensure ordering of revalidations returned to this learner
     private final Object revalidateSessionLock = new Object();
-
-    // Throttle when there are too many concurrent snapshots being sent to observers
-    private static final String MAX_CONCURRENT_SNAPSHOTS = "zookeeper.leader.maxConcurrentSnapshots";
-    private static final int maxConcurrentSnapshots;
-
-    private static final String MAX_CONCURRENT_DIFFS = "zookeeper.leader.maxConcurrentDiffs";
-    private static final int maxConcurrentDiffs;
-    static {
-        maxConcurrentSnapshots = Integer.getInteger(MAX_CONCURRENT_SNAPSHOTS, 10);
-        LOG.info(MAX_CONCURRENT_SNAPSHOTS + " = " + maxConcurrentSnapshots);
-
-        maxConcurrentDiffs = Integer.getInteger(MAX_CONCURRENT_DIFFS, 100);
-        LOG.info(MAX_CONCURRENT_DIFFS + " = " + maxConcurrentDiffs);
-    }
 
     private final ConcurrentLinkedQueue<Revalidation> pendingRevalidations = new ConcurrentLinkedQueue<>();
     static class Revalidation {
@@ -136,9 +122,6 @@ public class ObserverMaster implements LearnerMaster, Runnable {
             return result;
         }
     }
-
-    private final LearnerSnapshotThrottler learnerSnapshotThrottler =
-            new LearnerSnapshotThrottler(maxConcurrentSnapshots);
 
     private Thread thread;
     private ServerSocket ss;
@@ -195,11 +178,6 @@ public class ObserverMaster implements LearnerMaster, Runnable {
     @Override
     public void waitForEpochAck(long sid, StateSummary ss) throws IOException, InterruptedException {
         // since this is done by an active follower, we don't need to wait for anything
-    }
-
-    @Override
-    public LearnerSnapshotThrottler getLearnerSnapshotThrottler() {
-        return learnerSnapshotThrottler;
     }
 
     @Override

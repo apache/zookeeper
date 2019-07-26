@@ -1203,7 +1203,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
             });
 
             // 5. on the customized leader catch the beginSnapshot call in
-            //    LearnerSnapshotThrottler to set the node to value v2,
+            //    LearnerSyncThrottler to set the node to value v2,
             //    wait it hit data tree
             leaderQuorumPeer.setBeginSnapshotListener(new BeginSnapshotListener() {
                 @Override
@@ -1756,6 +1756,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
     static class CustomQuorumPeer extends QuorumPeer {
         private Context context;
 
+        private LearnerSyncThrottler throttler = null;
         private StartForwardingListener startForwardingListener;
         private BeginSnapshotListener beginSnapshotListener;
 
@@ -1818,20 +1819,21 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
                 }
 
                 @Override
-                public LearnerSnapshotThrottler createLearnerSnapshotThrottler(
-                        int maxConcurrentSnapshots, long maxConcurrentSnapshotTimeout) {
-                    return new LearnerSnapshotThrottler(
-                            maxConcurrentSnapshots, maxConcurrentSnapshotTimeout) {
-
-                        @Override
-                        public LearnerSnapshot beginSnapshot(boolean essential)
-                                throws SnapshotThrottleException, InterruptedException {
-                            if (beginSnapshotListener != null) {
-                                beginSnapshotListener.start();
+                public LearnerSyncThrottler getLearnerSnapSyncThrottler() {
+                    if (throttler == null){
+                        throttler = new LearnerSyncThrottler(getMaxConcurrentSnapSyncs(),
+                                LearnerSyncThrottler.SyncType.SNAP){
+                            @Override
+                            public void beginSync(boolean essential)
+                                    throws SyncThrottleException, InterruptedException {
+                                if (beginSnapshotListener != null) {
+                                    beginSnapshotListener.start();
+                                }
+                                super.beginSync(essential);
                             }
-                            return super.beginSnapshot(essential);
-                        }
-                    };
+                        };
+                    }
+                    return throttler;
                 }
             };
         }
