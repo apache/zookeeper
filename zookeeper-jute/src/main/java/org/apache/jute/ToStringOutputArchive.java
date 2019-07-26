@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.TreeMap;
 
 /**
- * Javadoc placeholder.
+ *
  */
 public class ToStringOutputArchive implements OutputArchive {
 

@@ -19,7 +19,7 @@
 package org.apache.jute.compiler;
 
 /**
- * Javadoc placeholder.
+ *
  */
 public class JBoolean extends JType {
 

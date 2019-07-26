@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Javadoc placeholder.
+ *
  */
 public class JRecord extends JCompType {
 

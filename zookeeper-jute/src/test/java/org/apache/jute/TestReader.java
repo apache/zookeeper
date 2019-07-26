@@ -21,7 +21,7 @@ package org.apache.jute;
 import java.io.IOException;
 
 /**
- * Javadoc placeholder.
+ *
  */
 public interface TestReader {
     void read(InputArchive ia) throws IOException;

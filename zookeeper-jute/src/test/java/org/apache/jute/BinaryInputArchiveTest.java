@@ -30,7 +30,7 @@ import org.junit.Test;
 // TODO: introduce JuteTestCase as in ZKTestCase
 
 /**
- * Javadoc placeholder.
+ *
  */
 public class BinaryInputArchiveTest {
 

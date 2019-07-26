@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * Javadoc placeholder.
+ *
  */
 public class CSharpGenerator {
     private List<JRecord> mRecList;

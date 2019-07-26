@@ -25,7 +25,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Javadoc placeholder.
+ *
  */
 public class BinaryInputArchive implements InputArchive {
 
