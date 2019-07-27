@@ -70,6 +70,11 @@ public class NodeHashMapImpl implements NodeHashMap {
     }
 
     @Override
+    public ConcurrentHashMap.KeySetView<String, DataNode> keySet() {
+        return nodes.keySet();
+    }
+
+    @Override
     public Set<Map.Entry<String, DataNode>> entrySet() {
         return nodes.entrySet();
     }

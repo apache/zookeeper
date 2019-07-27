@@ -29,6 +29,7 @@ import org.apache.zookeeper.Op;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
+import org.apache.zookeeper.server.metric.SimpleCounter;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeerMainTest;
 import org.apache.zookeeper.server.util.DigestCalculator;
@@ -55,7 +56,7 @@ public class SnapshotDigestTest extends ClientBase {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        server = getServer(serverFactory);
+        server = serverFactory.getZooKeeperServer();
         zk = createClient();
     }
 
@@ -118,7 +119,7 @@ public class SnapshotDigestTest extends ClientBase {
         reloadSnapshotAndCheckDigest();
 
         // Take a snapshot and test the logic when loading a non-fuzzy snapshot 
-        server = getServer(serverFactory);
+        server = serverFactory.getZooKeeperServer();
         server.takeSnapshot(); 
 
         reloadSnapshotAndCheckDigest();
@@ -206,14 +207,13 @@ public class SnapshotDigestTest extends ClientBase {
         stopServer();
         QuorumPeerMainTest.waitForOne(zk, States.CONNECTING);
 
-        ServerMetrics.DIGEST_MISMATCHES_COUNT.reset();
+        ((SimpleCounter) ServerMetrics.getMetrics().DIGEST_MISMATCHES_COUNT).reset();
 
         startServer();
         QuorumPeerMainTest.waitForOne(zk, States.CONNECTED);
 
         // Snapshot digests always match
-        Assert.assertEquals(0L, (long) ServerMetrics.DIGEST_MISMATCHES_COUNT
-                .getValues().get("digest_mismatches_count"));
+        Assert.assertEquals(0L, (long) ServerMetrics.getMetrics().DIGEST_MISMATCHES_COUNT.get());
 
         // reset the digestFromLoadedSnapshot after comparing
         Assert.assertNull(server.getZKDatabase().getDataTree()

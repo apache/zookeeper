@@ -1722,6 +1722,10 @@ public class DataTree {
         return nodes.getDigest();
     }
 
+    public ZxidDigest getLastProcessedZxidDigest() {
+        return lastProcessedZxidDigest;
+    }
+
     public ZxidDigest getDigestFromLoadedSnapshot() {
         return digestFromLoadedSnapshot;
     }
