@@ -236,6 +236,14 @@ module org.apache.zookeeper.proto {
     class GetEphemeralsResponse {
         vector<ustring> ephemerals;
     }
+
+    class SnapshotRequest {
+        ustring dir;
+    }
+
+    class SnapshotResponse {
+        ustring dir;
+    }
 }
 
 module org.apache.zookeeper.server.quorum {

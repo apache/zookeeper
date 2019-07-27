@@ -227,6 +227,7 @@ public class Request {
         case OpCode.getACL:
         case OpCode.getChildren:
         case OpCode.getAllChildrenNumber:
+        case OpCode.takeSnapshot:
         case OpCode.getChildren2:
         case OpCode.getData:
         case OpCode.getEphemerals:
@@ -252,6 +253,7 @@ public class Request {
         case OpCode.getACL:
         case OpCode.getChildren:
         case OpCode.getAllChildrenNumber:
+        case OpCode.takeSnapshot:
         case OpCode.getChildren2:
         case OpCode.getData:
         case OpCode.getEphemerals:
@@ -318,6 +320,8 @@ public class Request {
             return "getChildren";
         case OpCode.getAllChildrenNumber:
             return "getAllChildrenNumber";
+        case OpCode.takeSnapshot:
+            return "takeSnapshot";
         case OpCode.getChildren2:
             return "getChildren2";
         case OpCode.getEphemerals:

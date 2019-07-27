@@ -862,6 +862,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
             case OpCode.getACL:
             case OpCode.getChildren:
             case OpCode.getAllChildrenNumber:
+            case OpCode.takeSnapshot:
             case OpCode.getChildren2:
             case OpCode.ping:
             case OpCode.setWatches:

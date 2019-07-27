@@ -403,7 +403,9 @@ public abstract class KeeperException extends Exception {
         /** The session has been closed by server because server requires client to do SASL authentication,
          *  but client is not configured with SASL authentication or configuted with SASL but failed
          *  (i.e. wrong credential used.). */
-        SESSIONCLOSEDREQUIRESASLAUTH(-124);
+        SESSIONCLOSEDREQUIRESASLAUTH(-124),
+        /** Client takes the snapshot failed. */
+        TAKESNAPSHOTFAILED(-127);
 
         private static final Map<Integer,Code> lookup
             = new HashMap<Integer,Code>();
@@ -666,6 +668,16 @@ public abstract class KeeperException extends Exception {
     public static class NoAuthException extends KeeperException {
         public NoAuthException() {
             super(Code.NOAUTH);
+        }
+    }
+
+    /**
+     * @see Code#TAKESNAPSHOTFAILED
+     */
+    @InterfaceAudience.Public
+    public static class TakeSnapshotException extends KeeperException {
+        public TakeSnapshotException() {
+            super(Code.TAKESNAPSHOTFAILED);
         }
     }
 
