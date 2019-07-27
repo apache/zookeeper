@@ -25,6 +25,7 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.Parser;
 import org.apache.commons.cli.PosixParser;
 import org.apache.zookeeper.AsyncCallback;
+import org.apache.zookeeper.admin.ZooKeeperAdmin;
 
 /**
  * The CLI command: Snapshot;especially for the backup
@@ -62,7 +63,7 @@ public class SnapshotCommand extends CliCommand {
         try {
             String dir = args.length > 1 ? args[1] : null;
 
-            zk.takeSnapshot(dir, new AsyncCallback.VoidCallback() {
+            ((ZooKeeperAdmin)zk).takeSnapshot(dir, new AsyncCallback.VoidCallback() {
 
                 public void processResult(int rc, String path, Object ctx) {
                     cf.complete(rc);

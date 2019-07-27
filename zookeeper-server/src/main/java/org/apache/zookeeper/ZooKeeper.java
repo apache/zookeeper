@@ -2907,27 +2907,6 @@ public class ZooKeeper implements AutoCloseable {
     }
 
     /**
-     * Asynchronous call,let the server take the current snapshot
-     * @since 3.6.0
-     * @param dir the directory to store the snapshot
-     * @param cb a handler for the callback
-     * @param ctx context to be provided to the callback
-     */
-    public void takeSnapshot(final String dir, VoidCallback cb, Object ctx) {
-        final String clientPath = dir;
-        final String serverPath = dir;
-
-        RequestHeader h = new RequestHeader();
-        h.setType(ZooDefs.OpCode.takeSnapshot);
-        SnapshotRequest request = new SnapshotRequest(dir);
-        SnapshotResponse response = new SnapshotResponse();
-        request.setDir(dir);
-
-        cnxn.queuePacket(h, new ReplyHeader(), request, response, cb,
-                clientPath, serverPath, ctx, null);
-    }
-
-    /**
      * For the given znode path, removes the specified watcher of given
      * watcherType.
      *

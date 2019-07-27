@@ -441,17 +441,17 @@ public class FileTxnSnapLog {
             snapshotFile = new File(snapDir, Util.makeSnapshotName(lastZxid));
         } else {
             File snapshotDirFile = new File(snapshotDir);
-            boolean flag;
+            boolean createDirFlag;
             if (!snapshotDirFile.exists()) {
-                flag = snapshotDirFile.mkdirs();
-                if (!flag) {
+                createDirFlag = snapshotDirFile.mkdirs();
+                if (!createDirFlag) {
                     throw new IOException("Exception happens when creating the snapshotDirFile:" + snapshotDir);
                 }
             }
             File version2 = new File(snapshotDirFile, version + VERSION);
             if (!version2.exists()) {
-                flag = version2.mkdirs();
-                if (!flag) {
+                createDirFlag = version2.mkdirs();
+                if (!createDirFlag) {
                     throw new IOException("Exception happens when creating the version-2 file under the snapshotDirFile:" + snapshotDir);
                 }
             }

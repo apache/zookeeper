@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.List;
 
 import org.apache.yetus.audience.InterfaceAudience;
+import org.apache.zookeeper.AsyncCallback.VoidCallback;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.Watcher;
@@ -34,6 +35,8 @@ import org.apache.zookeeper.proto.GetDataResponse;
 import org.apache.zookeeper.proto.ReconfigRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
+import org.apache.zookeeper.proto.SnapshotRequest;
+import org.apache.zookeeper.proto.SnapshotResponse;
 import org.apache.zookeeper.server.DataTree;
 
 import org.slf4j.Logger;
@@ -236,6 +239,27 @@ public class ZooKeeperAdmin extends ZooKeeper {
                  StringUtils.joinStrings(leavingServers, ","),
                  StringUtils.joinStrings(newMembers, ","),
                  fromConfig, cb, ctx);
+    }
+
+    /**
+     * Asynchronous call,let the server take the current snapshot
+     * @since 3.6.0
+     * @param dir the directory to store the snapshot
+     * @param cb a handler for the callback
+     * @param ctx context to be provided to the callback
+     */
+    public void takeSnapshot(final String dir, VoidCallback cb, Object ctx) {
+        final String clientPath = dir;
+        final String serverPath = dir;
+
+        RequestHeader h = new RequestHeader();
+        h.setType(ZooDefs.OpCode.takeSnapshot);
+        SnapshotRequest request = new SnapshotRequest(dir);
+        SnapshotResponse response = new SnapshotResponse();
+        request.setDir(dir);
+
+        cnxn.queuePacket(h, new ReplyHeader(), request, response, cb,
+            clientPath, serverPath, ctx, null);
     }
 
     /**

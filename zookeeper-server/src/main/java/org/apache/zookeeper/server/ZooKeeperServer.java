@@ -440,7 +440,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * @param isSevere if isSevere is false,just throw the IOException, not System.exit.
      * @throws IOException
      */
-    public void takeSnapshot(boolean syncSnap, String snapshotDir, boolean isSevere) throws IOException {
+    public synchronized void takeSnapshot(boolean syncSnap, String snapshotDir, boolean isSevere) throws IOException {
         long start = Time.currentElapsedTime();
         try {
             txnLogFactory.save(zkDb.getDataTree(), zkDb.getSessionWithTimeOuts(), syncSnap, snapshotDir);

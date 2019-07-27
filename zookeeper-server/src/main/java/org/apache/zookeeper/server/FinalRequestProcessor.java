@@ -474,12 +474,19 @@ public class FinalRequestProcessor implements RequestProcessor {
                 ByteBufferInputStream.byteBuffer2Record(request.request, snapshotRequest);
                 String dir = snapshotRequest.getDir();
 
-                try {
-                    zks.takeSnapshotExternal(dir);
-                } catch(IOException e) {
-                    LOG.warn("Unexpected exception when taking the snapshot in the directory:{}", dir, e);
-                    throw new KeeperException.TakeSnapshotException();
-                }
+                new ZooKeeperThread("CLI client Snapshot Thread") {
+                    public void run() {
+                        try {
+                            zks.takeSnapshotExternal(dir);
+                        } catch (IOException e) {
+//                            LOG.warn(
+//                                "Unexpected exception when taking the snapshot in the directory:{}",
+//                                dir, e);
+//                            throw new KeeperException.TakeSnapshotException();
+                        }
+                    }
+                }.start();
+
                 rsp = new SnapshotResponse(dir);
                 break;
             }
