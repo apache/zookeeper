@@ -70,6 +70,14 @@ public class NettyServerCnxn extends ServerCnxn {
 
     public int readIssuedAfterReadComplete;
 
+    private volatile HandshakeState handshakeState = HandshakeState.NONE;
+
+    public enum HandshakeState {
+        NONE,
+        STARTED,
+        FINISHED
+    }
+
     NettyServerCnxn(Channel channel, ZooKeeperServer zks, NettyServerCnxnFactory factory) {
         super(zks);
         this.channel = channel;
@@ -629,4 +637,11 @@ public class NettyServerCnxn extends ServerCnxn {
         return 0;
     }
 
+    public void setHandshakeState(HandshakeState state) {
+        this.handshakeState = state;
+    }
+
+    public HandshakeState getHandshakeState() {
+        return this.handshakeState;
+    }
 }
