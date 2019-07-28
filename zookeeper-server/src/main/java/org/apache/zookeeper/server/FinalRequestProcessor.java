@@ -473,20 +473,23 @@ public class FinalRequestProcessor implements RequestProcessor {
                 SnapshotRequest snapshotRequest = new SnapshotRequest();
                 ByteBufferInputStream.byteBuffer2Record(request.request, snapshotRequest);
                 String dir = snapshotRequest.getDir();
-
-                new ZooKeeperThread("CLI client Snapshot Thread") {
-                    public void run() {
-                        try {
-                            zks.takeSnapshotExternal(dir);
-                        } catch (IOException e) {
-//                            LOG.warn(
-//                                "Unexpected exception when taking the snapshot in the directory:{}",
-//                                dir, e);
-//                            throw new KeeperException.TakeSnapshotException();
-                        }
-                    }
-                }.start();
-
+                System.out.println("fuck_ts_1:" + System.currentTimeMillis());
+                zks.takeSnapshotExternal(dir);
+                Thread.sleep(20000);
+//                new ZooKeeperThread("Client Snapshot Thread") {
+//                    public void run() {
+//                      try {
+//                        System.out.println("fuck_ts_3:" + System.currentTimeMillis());
+//                        zks.takeSnapshotExternal(dir);
+//                      } catch (IOException e) {
+////                            LOG.warn(
+////                                "Unexpected exception when taking the snapshot in the directory:{}",
+////                                dir, e);
+////                            throw new KeeperException.TakeSnapshotException();
+//                      }
+//                    }
+//                }.start();
+                System.out.println("fuck_ts_2:" + System.currentTimeMillis());
                 rsp = new SnapshotResponse(dir);
                 break;
             }

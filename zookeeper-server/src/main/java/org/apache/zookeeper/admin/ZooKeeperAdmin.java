@@ -242,7 +242,7 @@ public class ZooKeeperAdmin extends ZooKeeper {
     }
 
     /**
-     * Asynchronous call,let the server take the current snapshot
+     * Asynchronous call,let the server take the current snapshot.
      * @since 3.6.0
      * @param dir the directory to store the snapshot
      * @param cb a handler for the callback
