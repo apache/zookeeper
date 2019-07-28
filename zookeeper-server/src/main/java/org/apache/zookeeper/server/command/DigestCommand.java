@@ -35,7 +35,7 @@ public class DigestCommand extends AbstractFourLetterCommand {
 
     @Override
     public void commandRun() {
-        if (zkServer == null) {
+        if (!isZKServerRunning()) {
             pw.print(ZK_NOT_SERVING);
         } else {
             List<ZxidDigest> digestLog = 

@@ -24,16 +24,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.zookeeper.server.util.DigestCalculator;
 import org.apache.zookeeper.server.util.AdHash;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * a simple wrapper to ConcurrentHashMap that recalculates a digest after
  * each mutation.
  */
 public class NodeHashMapImpl implements NodeHashMap {
-
-    private static final Logger LOG = LoggerFactory.getLogger(NodeHashMap.class);
 
     private final ConcurrentHashMap<String, DataNode> nodes = 
             new ConcurrentHashMap<String, DataNode>();

@@ -18,16 +18,17 @@
 
 package org.apache.zookeeper.server.util;
 
+import org.apache.zookeeper.ZKTestCase;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 import org.junit.Test;
 
-import junit.framework.Assert;
-import junit.framework.TestCase;
+import org.junit.Test;
+import org.junit.Assert;
 
-public class AdHashTest extends TestCase {
+public class AdHashTest extends ZKTestCase {
 
     private static Random rand = new Random();
 

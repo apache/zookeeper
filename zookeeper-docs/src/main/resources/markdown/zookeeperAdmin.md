@@ -904,7 +904,7 @@ property, when available, is noted below.
     time. The default is 100.
 
 * *digest.enabled* :
-    (Java system property: **zookeeper.digest.enabled**)
+    (Java system property only: **zookeeper.digest.enabled**)
     **New in 3.6.0:**
     The digest feature is added to self-verify the correctness inside
     ZooKeeper when loading database from disk, and syncing with leader.

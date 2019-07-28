@@ -42,7 +42,7 @@ public class DigestCalculator {
     public static final Integer DIGEST_VERSION = 2;
 
     public static final String ZOOKEEPER_DIGEST_ENABLED = "zookeeper.digest.enabled";
-    private static boolean digestEnabled = true;
+    private static boolean digestEnabled;
 
     static {
         digestEnabled = Boolean.parseBoolean(
@@ -90,7 +90,7 @@ public class DigestCalculator {
             return 0;
         }
 
-        // "" and "/" are aliase to each other, in DataTree when adding child
+        // "" and "/" are aliases to each other, in DataTree when adding child
         // under "/", it will use "" as the path, but when set data or change
         // ACL on "/", it will use "/" as the path. Always mapping "/" to ""
         // to avoid mismatch.
@@ -121,7 +121,7 @@ public class DigestCalculator {
     }
 
     /**
-     * Calculate the digest based on the given path ande data node.
+     * Calculate the digest based on the given path and data node.
      */
     public static long calculateDigest(String path, DataNode node) {
         if (!node.isDigestCached()) {
