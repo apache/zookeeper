@@ -498,7 +498,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     private void close(long sessionId) {
         Request si = new Request(null, sessionId, 0, OpCode.closeSession, null, null);
-        setLocalSessionFlag(si);
         submitRequest(si);
     }
 
@@ -859,7 +858,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         to.putInt(timeout);
         cnxn.setSessionId(sessionId);
         Request si = new Request(cnxn, sessionId, 0, OpCode.createSession, to, null);
-        setLocalSessionFlag(si);
         submitRequest(si);
         return sessionId;
     }
@@ -1016,6 +1014,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             touch(si.cnxn);
             boolean validpacket = Request.isValid(si.type);
             if (validpacket) {
+                setLocalSessionFlag(si);
                 firstProcessor.processRequest(si);
                 if (si.cnxn != null) {
                     incInProcess();
@@ -1427,9 +1426,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             } else {
                 Request si = new Request(cnxn, cnxn.getSessionId(), h.getXid(), h.getType(), incomingBuffer, cnxn.getAuthInfo());
                 si.setOwner(ServerCnxn.me);
-                // Always treat packet from the client as a possible
-                // local request.
-                setLocalSessionFlag(si);
                 submitRequest(si);
             }
         }
