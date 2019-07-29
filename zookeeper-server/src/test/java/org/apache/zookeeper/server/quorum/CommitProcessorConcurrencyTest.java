@@ -150,7 +150,7 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
         processor.committedRequests.add(writeReq);
         processor.queuedRequests.add(readReq);
         processor.queuedRequests.add(writeReq);
-        processor.blockedRequestQueue.add(writeReq);
+        processor.queuedWriteRequests.add(writeReq);
         processor.initThreads(1);
 
         processor.stoppedMainLoop = true;
@@ -197,7 +197,7 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
             Request readReq = newRequest(new GetDataRequest(path, false),
                     OpCode.getData, sessionId, sessionId + 2);
             processor.queuedRequests.add(writeReq);
-            processor.blockedRequestQueue.add(writeReq);
+            processor.queuedWriteRequests.add(writeReq);
             processor.queuedRequests.add(readReq);
             shouldNotBeProcessed.add(writeReq);
             shouldNotBeProcessed.add(readReq);
@@ -236,7 +236,7 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
                         CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
                 OpCode.create, 0x1, 1);
         processor.queuedRequests.add(writeReq);
-        processor.blockedRequestQueue.add(writeReq);
+        processor.queuedWriteRequests.add(writeReq);
         shouldBeInPending.add(writeReq);
 
         for (int readReqId = 2; readReqId <= 5; ++readReqId) {
@@ -255,7 +255,7 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
         Assert.assertTrue("Did not handled all of queuedRequests' requests",
                 processor.queuedRequests.isEmpty());
         Assert.assertTrue("Removed from blockedQueuedRequests before commit",
-                !processor.blockedRequestQueue.isEmpty());
+                !processor.queuedWriteRequests.isEmpty());
 
         shouldBeInPending
                 .removeAll(processor.pendingRequests.get(writeReq.sessionId));
@@ -281,7 +281,7 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
         Assert.assertTrue("Did not process committed request",
                 processor.pendingRequests.isEmpty());
         Assert.assertTrue("Did not remove from blockedQueuedRequests",
-                processor.blockedRequestQueue.isEmpty());
+                processor.queuedWriteRequests.isEmpty());
     }
 
     /**
@@ -309,14 +309,14 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
                         CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
                 OpCode.create, 0x1, 1);
         processor.queuedRequests.add(writeReq);
-        processor.blockedRequestQueue.add(writeReq);
+        processor.queuedWriteRequests.add(writeReq);
 
         Request writeReq2 = newRequest(
                 new CreateRequest(path + "_2", new byte[0], Ids.OPEN_ACL_UNSAFE,
                         CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
                 OpCode.create, 0x2, 1);
         processor.queuedRequests.add(writeReq2);
-        processor.blockedRequestQueue.add(writeReq2);
+        processor.queuedWriteRequests.add(writeReq2);
 
         for (int readReqId = 2; readReqId <= 5; ++readReqId) {
             Request readReq = newRequest(new GetDataRequest(path, false),
@@ -334,7 +334,7 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
                         CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
                 OpCode.create, 0x2, 6);
         processor.queuedRequests.add(writeReq3);
-        processor.blockedRequestQueue.add(writeReq3);
+        processor.queuedWriteRequests.add(writeReq3);
 
         processor.initThreads(defaultSizeOfThreadPool);
 
@@ -346,7 +346,7 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
         Assert.assertTrue("Did not handled all of queuedRequests' requests",
                 processor.queuedRequests.isEmpty());
         Assert.assertTrue("Removed from blockedQueuedRequests before commit",
-                !processor.blockedRequestQueue.isEmpty());
+                !processor.queuedWriteRequests.isEmpty());
         Assert.assertTrue("Missing session 1 in pending queue",
                 processor.pendingRequests.containsKey(writeReq.sessionId));
         Assert.assertTrue("Missing session 2 in pending queue",
@@ -376,9 +376,9 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
         Assert.assertTrue("Missing write 3 in pending queue",
                 processor.pendingRequests.get(writeReq3.sessionId).peek() == writeReq3);
         Assert.assertTrue("Removed from blockedQueuedRequests",
-                !processor.blockedRequestQueue.isEmpty());
+                !processor.queuedWriteRequests.isEmpty());
         Assert.assertTrue("Removed write req 3 from blockedQueuedRequests",
-                processor.blockedRequestQueue.peek() == writeReq3);
+                processor.queuedWriteRequests.peek() == writeReq3);
 
         Request readReq3 = newRequest(new GetDataRequest(path, false),
                 OpCode.getData, 0x1, 7);
@@ -390,7 +390,7 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
                 OpCode.create, 0x2, 7);
 
         processor.queuedRequests.add(writeReq4);
-        processor.blockedRequestQueue.add(writeReq4);
+        processor.queuedWriteRequests.add(writeReq4);
         processor.committedRequests.add(writeReq4);
 
         processor.stoppedMainLoop = true;
@@ -408,9 +408,9 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
         Assert.assertTrue("Unexpected pending request",
                 processor.pendingRequests.isEmpty());
         Assert.assertTrue("Removed from blockedQueuedRequests",
-                !processor.blockedRequestQueue.isEmpty());
+                !processor.queuedWriteRequests.isEmpty());
         Assert.assertTrue("Removed write req 4 from blockedQueuedRequests",
-                processor.blockedRequestQueue.peek() == writeReq4);
+                processor.queuedWriteRequests.peek() == writeReq4);
 
         processor.stoppedMainLoop = true;
         CommitProcessor.setMaxCommitBatchSize(3);
@@ -427,7 +427,7 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
         Assert.assertTrue("Did not process committed request",
                 processor.pendingRequests.isEmpty());
         Assert.assertTrue("Did not remove from blockedQueuedRequests",
-                processor.blockedRequestQueue.isEmpty());
+                processor.queuedWriteRequests.isEmpty());
 
     }
 
@@ -478,7 +478,7 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
                         CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
                 OpCode.create, 0x3, 1);
         processor.queuedRequests.add(firstCommittedReq);
-        processor.blockedRequestQueue.add(firstCommittedReq);
+        processor.queuedWriteRequests.add(firstCommittedReq);
         processor.committedRequests.add(firstCommittedReq);
         Set<Request> allReads = new HashSet<Request>();
 
@@ -556,7 +556,7 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
                         CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
                 OpCode.create, sessionid, readReqId++);
         processor.queuedRequests.add(firstCommittedReq);
-        processor.blockedRequestQueue.add(firstCommittedReq);
+        processor.queuedWriteRequests.add(firstCommittedReq);
         localRequests.add(firstCommittedReq);
 
         // queue read requests to queuedRequests
@@ -621,7 +621,7 @@ public class CommitProcessorConcurrencyTest extends ZKTestCase {
                         CreateMode.PERSISTENT_SEQUENTIAL.toFlag()),
                 OpCode.create, sessionid, lastCXid);
         processor.queuedRequests.add(orphanCommittedReq);
-        processor.blockedRequestQueue.add(orphanCommittedReq);
+        processor.queuedWriteRequests.add(orphanCommittedReq);
         localRequests.add(orphanCommittedReq);
 
         // queue read requests to queuedRequests

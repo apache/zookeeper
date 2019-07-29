@@ -1415,7 +1415,7 @@ Both subsystems need to have sufficient amount of threads to achieve peak read t
     approach would be to set this value to equal the ensemble size so that with the processing
     of each batch the current server will probabilistically handle a write related to one of
     its direct clients.
-    Default is "1".
+    Default is "1". Negative and zero values are not supported.
 
 * *znode.container.checkIntervalMs* :
     (Java system property only)
