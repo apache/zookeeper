@@ -39,6 +39,7 @@ public class QuorumPeerTest {
     private int tickTime = 2000;
     private int initLimit = 3;
     private int syncLimit = 3;
+    private int connectToLearnerMasterLimit = 3;
 
     /**
      * Test case for https://issues.apache.org/jira/browse/ZOOKEEPER-2301
@@ -60,7 +61,7 @@ public class QuorumPeerTest {
          * QuorumPeer constructor without QuorumVerifier
          */
         QuorumPeer peer1 = new QuorumPeer(peersView, dataDir, dataDir, clientPort, electionAlg, myId, tickTime,
-                initLimit, syncLimit);
+                initLimit, syncLimit, connectToLearnerMasterLimit);
         String hostString1 = peer1.cnxnFactory.getLocalAddress().getHostString();
         assertEquals(clientIP.getHostAddress(), hostString1);
 
@@ -77,7 +78,7 @@ public class QuorumPeerTest {
                         new InetSocketAddress(clientIP, PortAssignment.unique()),
                         new InetSocketAddress(clientIP, clientPort), LearnerType.PARTICIPANT));
         QuorumPeer peer2 = new QuorumPeer(peersView, dataDir, dataDir, clientPort, electionAlg, myId, tickTime,
-                initLimit, syncLimit);
+                initLimit, syncLimit, connectToLearnerMasterLimit);
         String hostString2 = peer2.cnxnFactory.getLocalAddress().getHostString();
         assertEquals(clientIP.getHostAddress(), hostString2);
         // cleanup

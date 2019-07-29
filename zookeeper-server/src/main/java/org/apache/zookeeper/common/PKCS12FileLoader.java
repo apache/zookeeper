@@ -22,25 +22,25 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 
 /**
- * Implementation of {@link FileKeyStoreLoader} that loads from JKS files.
+ * Implementation of {@link FileKeyStoreLoader} that loads from PKCS12 files.
  */
-class JKSFileLoader extends StandardTypeFileKeyStoreLoader {
-    private JKSFileLoader(String keyStorePath,
-                          String trustStorePath,
-                          String keyStorePassword,
-                          String trustStorePassword) {
+class PKCS12FileLoader extends StandardTypeFileKeyStoreLoader {
+    private PKCS12FileLoader(String keyStorePath,
+                             String trustStorePath,
+                             String keyStorePassword,
+                             String trustStorePassword) {
         super(keyStorePath, trustStorePath, keyStorePassword, trustStorePassword);
     }
 
     @Override
     protected KeyStore keyStoreInstance() throws KeyStoreException {
-        return KeyStore.getInstance("JKS");
+        return KeyStore.getInstance("PKCS12");
     }
 
-    static class Builder extends FileKeyStoreLoader.Builder<JKSFileLoader> {
+    static class Builder extends FileKeyStoreLoader.Builder<PKCS12FileLoader> {
         @Override
-        JKSFileLoader build() {
-            return new JKSFileLoader(keyStorePath, trustStorePath, keyStorePassword, trustStorePassword);
+        PKCS12FileLoader build() {
+            return new PKCS12FileLoader(keyStorePath, trustStorePath, keyStorePassword, trustStorePassword);
         }
     }
 }

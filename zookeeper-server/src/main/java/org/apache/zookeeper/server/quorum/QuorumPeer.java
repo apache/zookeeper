@@ -319,7 +319,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             this.myAddrs = excludedSpecialAddresses(this.myAddrs);
         }
 
-        private static String delimitedHostString(InetSocketAddress addr)
+        public static String delimitedHostString(InetSocketAddress addr)
         {
             String host = addr.getHostString();
             if (host.contains(":")) {
@@ -415,6 +415,22 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     public enum ServerState {
         LOOKING, FOLLOWING, LEADING, OBSERVING;
+    }
+
+    /**
+     * (Used for monitoring) shows the current phase of
+     * Zab protocol that peer is running.
+     */
+    public enum ZabState {
+        ELECTION, DISCOVERY, SYNCHRONIZATION, BROADCAST;
+    }
+
+    /**
+     * (Used for monitoring) When peer is in synchronization phase, this shows
+     * which synchronization mechanism is being used
+     */
+    public enum SyncMode {
+        NONE, DIFF, SNAP, TRUNC;
     }
 
     /*
@@ -587,6 +603,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     protected volatile int syncLimit;
     
     /**
+     * The number of ticks that can pass before retrying to connect to learner master
+     */
+    protected volatile int connectToLearnerMasterLimit;
+    
+    /**
      * Enables/Disables sync request processor. This option is enabled
      * by default and is to be used with observers.
      */
@@ -749,6 +770,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     private ServerState state = ServerState.LOOKING;
 
+    private AtomicReference<ZabState> zabState = new AtomicReference<>(ZabState.ELECTION);
+    private AtomicReference<SyncMode> syncMode = new AtomicReference<>(SyncMode.NONE);
     private AtomicReference<String> leaderAddress = new AtomicReference<String>("");
     private AtomicLong leaderId = new AtomicLong(-1);
 
@@ -758,7 +781,28 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         state = newState;
         if (newState == ServerState.LOOKING) {
             setLeaderAddressAndId(null, -1);
+            setZabState(ZabState.ELECTION);
+        } else {
+            LOG.info("Peer state changed: {}", getDetailedPeerState());
         }
+    }
+
+    public void setZabState(ZabState zabState) {
+        this.zabState.set(zabState);
+        LOG.info("Peer state changed: {}", getDetailedPeerState());
+    }
+
+    public void setSyncMode(SyncMode syncMode) {
+        this.syncMode.set(syncMode);
+        LOG.info("Peer state changed: {}", getDetailedPeerState());
+    }
+
+    public ZabState getZabState() {
+        return zabState.get();
+    }
+
+    public SyncMode getSyncMode() {
+        return syncMode.get();
     }
 
     public void setLeaderAddressAndId(InetSocketAddress addr, long newId) {
@@ -776,6 +820,19 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     public long getLeaderId() {
         return leaderId.get();
+    }
+
+    public String getDetailedPeerState() {
+        final StringBuilder sb = new StringBuilder(getPeerState().toString().toLowerCase());
+        final ZabState zabState = getZabState();
+        if (!ZabState.ELECTION.equals(zabState)) {
+            sb.append(" - ").append(zabState.toString().toLowerCase());
+        }
+        final SyncMode syncMode = getSyncMode();
+        if (!SyncMode.NONE.equals(syncMode)) {
+            sb.append(" - ").append(syncMode.toString().toLowerCase());
+        }
+        return sb.toString();
     }
 
     public synchronized void reconfigFlagSet(){
@@ -899,16 +956,16 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File dataDir,
             File dataLogDir, int electionType,
-            long myid, int tickTime, int initLimit, int syncLimit,
+            long myid, int tickTime, int initLimit, int syncLimit, int connectToLearnerMasterLimit,
             ServerCnxnFactory cnxnFactory) throws IOException {
         this(quorumPeers, dataDir, dataLogDir, electionType, myid, tickTime,
-                initLimit, syncLimit, false, cnxnFactory,
+                initLimit, syncLimit, connectToLearnerMasterLimit, false, cnxnFactory,
                 new QuorumMaj(quorumPeers));
     }
 
     public QuorumPeer(Map<Long, QuorumServer> quorumPeers, File dataDir,
             File dataLogDir, int electionType,
-            long myid, int tickTime, int initLimit, int syncLimit,
+            long myid, int tickTime, int initLimit, int syncLimit, int connectToLearnerMasterLimit,
             boolean quorumListenOnAllIPs,
             ServerCnxnFactory cnxnFactory,
             QuorumVerifier quorumConfig) throws IOException {
@@ -919,6 +976,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         this.tickTime = tickTime;
         this.initLimit = initLimit;
         this.syncLimit = syncLimit;
+        this.connectToLearnerMasterLimit = connectToLearnerMasterLimit;
         this.quorumListenOnAllIPs = quorumListenOnAllIPs;
         this.logFactory = new FileTxnSnapLog(dataLogDir, dataDir);
         this.zkDb = new ZKDatabase(this.logFactory);
@@ -1049,7 +1107,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
       }
       return count;
     }
-
+    
     /**
 
      * This constructor is only used by the existing unit test code.
@@ -1057,10 +1115,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      */
     public QuorumPeer(Map<Long,QuorumServer> quorumPeers, File snapDir,
             File logDir, int clientPort, int electionAlg,
-            long myid, int tickTime, int initLimit, int syncLimit)
+            long myid, int tickTime, int initLimit, int syncLimit, int connectToLearnerMasterLimit)
         throws IOException
     {
-        this(quorumPeers, snapDir, logDir, electionAlg, myid, tickTime, initLimit, syncLimit, false,
+        this(quorumPeers, snapDir, logDir, electionAlg, myid, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit, false,
                 ServerCnxnFactory.createFactory(getClientAddress(quorumPeers, myid, clientPort), -1),
                 new QuorumMaj(quorumPeers));
     }
@@ -1071,12 +1129,12 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      */
     public QuorumPeer(Map<Long,QuorumServer> quorumPeers, File snapDir,
             File logDir, int clientPort, int electionAlg,
-            long myid, int tickTime, int initLimit, int syncLimit,
+            long myid, int tickTime, int initLimit, int syncLimit, int connectToLearnerMasterLimit,
             QuorumVerifier quorumConfig)
         throws IOException
     {
         this(quorumPeers, snapDir, logDir, electionAlg,
-                myid,tickTime, initLimit,syncLimit, false,
+                myid,tickTime, initLimit,syncLimit, connectToLearnerMasterLimit, false,
                 ServerCnxnFactory.createFactory(getClientAddress(quorumPeers, myid, clientPort), -1),
                 quorumConfig);
     }
@@ -1785,6 +1843,20 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         this.syncLimit = syncLimit;
     }
     
+    /**
+     * Get the connectToLearnerMasterLimit
+     */
+    public int getConnectToLearnerMasterLimit() {
+        return connectToLearnerMasterLimit;
+    }
+    
+    /**
+     * Set the connectToLearnerMasterLimit
+     */
+    public void setConnectToLearnerMasterLimit(int connectToLearnerMasterLimit) {
+        LOG.info("connectToLearnerMasterLimit set to " + connectToLearnerMasterLimit);
+        this.connectToLearnerMasterLimit = connectToLearnerMasterLimit;
+    }
     
     /**
      * The syncEnabled can also be set via a system property.

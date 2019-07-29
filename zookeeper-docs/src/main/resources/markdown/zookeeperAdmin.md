@@ -124,9 +124,9 @@ is no full support.
 
 #### Required Software
 
-ZooKeeper runs in Java, release 1.7 or greater (JDK 7 or
-greater, FreeBSD support requires openjdk7).  It runs as an
-_ensemble_ of ZooKeeper servers. Three
+ZooKeeper runs in Java, release 1.8 or greater 
+(JDK 8 LTS, JDK 11 LTS, JDK 12 - Java 9 and 10 are not supported). 
+It runs as an _ensemble_ of ZooKeeper servers. Three
 ZooKeeper servers is the minimum recommended size for an
 ensemble, and we also recommend that they run on separate
 machines. At Yahoo!, ZooKeeper is usually deployed on
@@ -887,6 +887,22 @@ property, when available, is noted below.
     **New in 3.6.0:**
     The time (in milliseconds) the RequestThrottler waits for the request queue to drain during shutdown before it shuts down forcefully. The default is 10000.  
 
+* *advancedFlowControlEnabled* :
+    (Java system property: **zookeeper.netty.advancedFlowControl.enabled**)
+    Using accurate flow control in netty based on the status of ZooKeeper 
+    pipeline to avoid direct buffer OOM. It will disable the AUTO_READ in
+    Netty.
+
+* *maxConcurrentSnapSyncs* :
+    (Java system property: **zookeeper.leader.maxConcurrentSnapSyncs**)
+    The maximum number of snap syncs a leader or a follower can serve at the same
+    time. The default is 10.
+
+* *maxConcurrentDiffSyncs* :
+    (Java system property: **zookeeper.leader.maxConcurrentDiffSyncs**)
+    The maximum number of diff syncs a leader or a follower can serve at the same
+    time. The default is 100.
+
 <a name="sc_clusterOptions"></a>
 
 #### Cluster Options
@@ -913,6 +929,12 @@ of servers -- that is, when deploying clusters of servers.
     connect and sync to a leader. Increased this value as needed, if
     the amount of data managed by ZooKeeper is large.
 
+* *connectToLearnerMasterLimit* :
+    (Java system property: zookeeper.**connectToLearnerMasterLimit**)
+    Amount of time, in ticks (see [tickTime](#id_tickTime)), to allow followers to
+    connect to the leader after leader election. Defaults to the value of initLimit. 
+    Use when initLimit is high so connecting to learner master doesn't result in higher timeout.
+        
 * *leaderServes* :
     (Java system property: zookeeper.**leaderServes**)
     Leader accepts client connections. Default value is "yes".
@@ -1146,6 +1168,23 @@ encryption/authentication/authorization performed by the service.
     If the credential is not in the list, the connection request will be refused.
     This prevents a client accidentally connecting to a wrong ensemble.
 
+* *zookeeper.sessionRequireClientSASLAuth* :
+    (Java system property only: **zookeeper.sessionRequireClientSASLAuth**)
+    **New in 3.6.0:**
+    When set to **true**, ZooKeeper server will only accept connections and requests from clients
+    that have authenticated with server via SASL. Clients that are not configured with SASL
+    authentication, or configured with SASL but failed authentication (i.e. with invalid credential)
+    will not be able to establish a session with server. A typed error code (-124) will be delivered
+    in such case, both Java and C client will close the session with server thereafter,
+    without further attempts on retrying to reconnect.
+
+    By default, this feature is disabled. Users who would like to opt-in can enable the feature
+    by setting **zookeeper.sessionRequireClientSASLAuth** to **true**.
+
+    This feature overrules the <emphasis role="bold">zookeeper.allowSaslFailedClients</emphasis> option, so even if server is
+    configured to allow clients that fail SASL authentication to login, client will not be able to
+    establish a session with server if this feature is enabled.
+
 * *sslQuorum* :
     (Java system property: **zookeeper.sslQuorum**)
     **New in 3.5.5:**
@@ -1161,7 +1200,7 @@ encryption/authentication/authorization performed by the service.
 * *ssl.keyStore.type* and *ssl.quorum.keyStore.type* :
     (Java system properties: **zookeeper.ssl.keyStore.type** and **zookeeper.ssl.quorum.keyStore.type**)
     **New in 3.5.5:**
-    Specifies the file format of client and quorum keystores. Values: JKS, PEM or null (detect by filename).    
+    Specifies the file format of client and quorum keystores. Values: JKS, PEM, PKCS12 or null (detect by filename).    
     Default: null     
 
 * *ssl.trustStore.location* and *ssl.trustStore.password* and *ssl.quorum.trustStore.location* and *ssl.quorum.trustStore.password* :
@@ -1174,7 +1213,7 @@ encryption/authentication/authorization performed by the service.
 * *ssl.trustStore.type* and *ssl.quorum.trustStore.type* :
     (Java system properties: **zookeeper.ssl.trustStore.type** and **zookeeper.ssl.quorum.trustStore.type**)
     **New in 3.5.5:**
-    Specifies the file format of client and quorum trustStores. Values: JKS, PEM or null (detect by filename).    
+    Specifies the file format of client and quorum trustStores. Values: JKS, PEM, PKCS12 or null (detect by filename).    
     Default: null     
 
 * *ssl.protocol* and *ssl.quorum.protocol* :

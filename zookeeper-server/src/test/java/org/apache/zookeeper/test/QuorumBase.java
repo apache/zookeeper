@@ -137,6 +137,7 @@ public class QuorumBase extends ClientBase {
         int tickTime = 2000;
         int initLimit = 3;
         int syncLimit = 3;
+        int connectToLearnerMasterLimit = 3;
         Map<Long,QuorumServer> peers = new HashMap<Long,QuorumServer>();
         peers.put(Long.valueOf(1), new QuorumServer(1,
                 new InetSocketAddress(LOCALADDR, port1),
@@ -170,19 +171,19 @@ public class QuorumBase extends ClientBase {
         }
 
         LOG.info("creating QuorumPeer 1 port " + portClient1);
-        s1 = new QuorumPeer(peers, s1dir, s1dir, portClient1, 3, 1, tickTime, initLimit, syncLimit);
+        s1 = new QuorumPeer(peers, s1dir, s1dir, portClient1, 3, 1, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
         Assert.assertEquals(portClient1, s1.getClientPort());
         LOG.info("creating QuorumPeer 2 port " + portClient2);
-        s2 = new QuorumPeer(peers, s2dir, s2dir, portClient2, 3, 2, tickTime, initLimit, syncLimit);
+        s2 = new QuorumPeer(peers, s2dir, s2dir, portClient2, 3, 2, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
         Assert.assertEquals(portClient2, s2.getClientPort());
         LOG.info("creating QuorumPeer 3 port " + portClient3);
-        s3 = new QuorumPeer(peers, s3dir, s3dir, portClient3, 3, 3, tickTime, initLimit, syncLimit);
+        s3 = new QuorumPeer(peers, s3dir, s3dir, portClient3, 3, 3, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
         Assert.assertEquals(portClient3, s3.getClientPort());
         LOG.info("creating QuorumPeer 4 port " + portClient4);
-        s4 = new QuorumPeer(peers, s4dir, s4dir, portClient4, 3, 4, tickTime, initLimit, syncLimit);
+        s4 = new QuorumPeer(peers, s4dir, s4dir, portClient4, 3, 4, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
         Assert.assertEquals(portClient4, s4.getClientPort());
         LOG.info("creating QuorumPeer 5 port " + portClient5);
-        s5 = new QuorumPeer(peers, s5dir, s5dir, portClient5, 3, 5, tickTime, initLimit, syncLimit);
+        s5 = new QuorumPeer(peers, s5dir, s5dir, portClient5, 3, 5, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
         Assert.assertEquals(portClient5, s5.getClientPort());
 
         if (withObservers) {
@@ -299,6 +300,7 @@ public class QuorumBase extends ClientBase {
         int tickTime = 2000;
         int initLimit = 3;
         int syncLimit = 3;
+        int connectToLearnerMasterLimit = 3;
 
         if(peers == null){
             peers = new HashMap<Long,QuorumServer>();
@@ -333,27 +335,27 @@ public class QuorumBase extends ClientBase {
         switch(i){
         case 1:
             LOG.info("creating QuorumPeer 1 port " + portClient1);
-            s1 = new QuorumPeer(peers, s1dir, s1dir, portClient1, 3, 1, tickTime, initLimit, syncLimit);
+            s1 = new QuorumPeer(peers, s1dir, s1dir, portClient1, 3, 1, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
             Assert.assertEquals(portClient1, s1.getClientPort());
             break;
         case 2:
             LOG.info("creating QuorumPeer 2 port " + portClient2);
-            s2 = new QuorumPeer(peers, s2dir, s2dir, portClient2, 3, 2, tickTime, initLimit, syncLimit);
+            s2 = new QuorumPeer(peers, s2dir, s2dir, portClient2, 3, 2, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
             Assert.assertEquals(portClient2, s2.getClientPort());
             break;
         case 3:
             LOG.info("creating QuorumPeer 3 port " + portClient3);
-            s3 = new QuorumPeer(peers, s3dir, s3dir, portClient3, 3, 3, tickTime, initLimit, syncLimit);
+            s3 = new QuorumPeer(peers, s3dir, s3dir, portClient3, 3, 3, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
             Assert.assertEquals(portClient3, s3.getClientPort());
             break;
         case 4:
             LOG.info("creating QuorumPeer 4 port " + portClient4);
-            s4 = new QuorumPeer(peers, s4dir, s4dir, portClient4, 3, 4, tickTime, initLimit, syncLimit);
+            s4 = new QuorumPeer(peers, s4dir, s4dir, portClient4, 3, 4, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
             Assert.assertEquals(portClient4, s4.getClientPort());
             break;
         case 5:
             LOG.info("creating QuorumPeer 5 port " + portClient5);
-            s5 = new QuorumPeer(peers, s5dir, s5dir, portClient5, 3, 5, tickTime, initLimit, syncLimit);
+            s5 = new QuorumPeer(peers, s5dir, s5dir, portClient5, 3, 5, tickTime, initLimit, syncLimit, connectToLearnerMasterLimit);
             Assert.assertEquals(portClient5, s5.getClientPort());
         }
     }

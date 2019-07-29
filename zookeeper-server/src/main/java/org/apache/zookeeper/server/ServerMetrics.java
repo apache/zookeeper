@@ -225,6 +225,8 @@ public final class ServerMetrics {
         STALE_REQUESTS_DROPPED = metricsContext.getCounter("stale_requests_dropped");
         STALE_REPLIES = metricsContext.getCounter("stale_replies");
         REQUEST_THROTTLE_WAIT_COUNT = metricsContext.getCounter("request_throttle_wait_count");
+
+        NETTY_QUEUED_BUFFER = metricsContext.getSummary("netty_queued_buffer_capacity", DetailLevel.BASIC);
     }
 
     /**
@@ -423,6 +425,8 @@ public final class ServerMetrics {
     public final Counter STALE_REQUESTS_DROPPED;
     public final Counter STALE_REPLIES;
     public final Counter REQUEST_THROTTLE_WAIT_COUNT;
+
+    public final Summary NETTY_QUEUED_BUFFER;
 
     private final MetricsProvider metricsProvider;
 
