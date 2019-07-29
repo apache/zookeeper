@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -22,20 +22,23 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ *
+ */
 public class CSharpGenerator {
     private List<JRecord> mRecList;
     private final File outputDirectory;
 
-    /** Creates a new instance of CSharpGenerator
+    /**
+     * Creates a new instance of CSharpGenerator.
      *
-     * @param name possibly full pathname to the file
-     * @param ilist included files (as JFile)
-     * @param rlist List of records defined within this file
+     * @param name            possibly full pathname to the file
+     * @param ilist           included files (as JFile)
+     * @param rlist           List of records defined within this file
      * @param outputDirectory
      */
     CSharpGenerator(String name, List<JFile> ilist, List<JRecord> rlist,
-            File outputDirectory)
-     {
+                    File outputDirectory) {
         this.outputDirectory = outputDirectory;
         mRecList = rlist;
     }

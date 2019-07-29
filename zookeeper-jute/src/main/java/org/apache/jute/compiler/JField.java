@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -24,25 +24,26 @@ package org.apache.jute.compiler;
 public class JField {
     private JType mType;
     private String mName;
+
     /**
-     * Creates a new instance of JField
+     * Creates a new instance of JField.
      */
     public JField(JType type, String name) {
         mType = type;
         mName = name;
     }
-    
+
     public String getSignature() {
         return mType.getSignature();
     }
-    
+
     public String genCppDecl() {
         return mType.genCppDecl(mName);
     }
-    
-	public String genCDecl() {
-		return mType.genCDecl(mName);
-	}
+
+    public String genCDecl() {
+        return mType.genCDecl(mName);
+    }
 
     public String genCsharpDecl() {
         return mType.genCsharpDecl(mName);
@@ -51,15 +52,15 @@ public class JField {
     public String genCsharpConstructorParam(String fname) {
         return mType.genCsharpConstructorParam(fname);
     }
-	
+
     public String genJavaDecl() {
         return mType.genJavaDecl(mName);
     }
-    
+
     public String genJavaConstructorParam(String fname) {
         return mType.genJavaConstructorParam(fname);
     }
-    
+
     public String getName() {
         return mName;
     }
@@ -67,15 +68,15 @@ public class JField {
     public String getCsharpName() {
         return "Id".equals(mName) ? "ZKId" : mName;
     }
-    
+
     public String getTag() {
         return mName;
     }
-    
+
     public JType getType() {
         return mType;
     }
-    
+
     public String genCppGetSet(int fIdx) {
         return mType.genCppGetSet(mName, fIdx);
     }
@@ -101,34 +102,34 @@ public class JField {
     }
 
     public String genCsharpEquals() {
-        return mType.genCsharpEquals(getCsharpName(), "peer."+getCsharpName());
+        return mType.genCsharpEquals(getCsharpName(), "peer." + getCsharpName());
     }
 
     public String genCsharpHashCode() {
         return mType.genCsharpHashCode(getCsharpName());
     }
 
-    
+
     public String genJavaGetSet(int fIdx) {
         return mType.genJavaGetSet(mName, fIdx);
     }
-    
+
     public String genJavaWriteMethodName() {
         return mType.genJavaWriteMethod(getName(), getTag());
     }
-    
+
     public String genJavaReadMethodName() {
         return mType.genJavaReadMethod(getName(), getTag());
     }
-    
+
     public String genJavaCompareTo() {
         return mType.genJavaCompareTo(getName());
     }
-    
+
     public String genJavaEquals() {
-        return mType.genJavaEquals(getName(), "peer."+getName());
+        return mType.genJavaEquals(getName(), "peer." + getName());
     }
-    
+
     public String genJavaHashCode() {
         return mType.genJavaHashCode(getName());
     }

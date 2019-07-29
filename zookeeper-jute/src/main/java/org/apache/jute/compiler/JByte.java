@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -22,12 +22,14 @@ package org.apache.jute.compiler;
  *
  */
 public class JByte extends JType {
-    
-    /** Creates a new instance of JByte */
+
+    /**
+     * Creates a new instance of JByte.
+     */
     public JByte() {
         super("char", "int8_t", "byte", "byte", "Byte", "Byte", "byte", "toByte");
     }
-    
+
     public String getSignature() {
         return "b";
     }
