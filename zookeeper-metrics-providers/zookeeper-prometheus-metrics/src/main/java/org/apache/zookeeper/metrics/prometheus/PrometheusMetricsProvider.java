@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.zookeeper.metrics.prometheus;
 
 import io.prometheus.client.Collector;
@@ -29,7 +30,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.zookeeper.metrics.Counter;
@@ -60,7 +60,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
      * <p>
      * When you are running ZooKeeper (server or client) together with other
      * libraries every metrics will be expected as a single view.
-     *
+     * </p>
      */
     private final CollectorRegistry collectorRegistry = CollectorRegistry.defaultRegistry;
     private int port = 7000;
@@ -133,6 +133,7 @@ public class PrometheusMetricsProvider implements MetricsProvider {
      * This method is not expected to be used to serve metrics to Prometheus. We
      * are using the MetricsServlet provided by Prometheus for that, leaving the
      * real representation to the Prometheus Java client.
+     * </p>
      *
      * @param sink the receiver of data (4lw interface, Admin server or tests)
      */
@@ -199,25 +200,21 @@ public class PrometheusMetricsProvider implements MetricsProvider {
 
         @Override
         public Counter getCounter(String name) {
-            return counters.computeIfAbsent(name, (n) -> {
-                return new PrometheusCounter(n);
-            });
+            return counters.computeIfAbsent(name, PrometheusCounter::new);
         }
 
         /**
          * Gauges may go up and down, in ZooKeeper they are a way to export
          * internal values with a callback.
          *
-         * @param name the name of the gauge
+         * @param name  the name of the gauge
          * @param gauge the callback
          */
         @Override
         public void registerGauge(String name, Gauge gauge) {
             Objects.requireNonNull(name);
-            gauges.compute(name, (id, prev) -> {
-                return new PrometheusGaugeWrapper(id, gauge,
-                        prev != null ? prev.inner : null);
-            });
+            gauges.compute(name, (id, prev) ->
+                    new PrometheusGaugeWrapper(id, gauge, prev != null ? prev.inner : null));
         }
 
         @Override
@@ -311,8 +308,8 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             this.gauge = gauge;
             this.inner = prev != null ? prev
                     : io.prometheus.client.Gauge
-                            .build(name, name)
-                            .register(collectorRegistry);
+                    .build(name, name)
+                    .register(collectorRegistry);
         }
 
         /**
