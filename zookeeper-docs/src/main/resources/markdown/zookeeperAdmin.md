@@ -1462,6 +1462,14 @@ Both subsystems need to have sufficient amount of threads to achieve peak read t
 
 #### AdminServer configuration
 
+**New in 3.6.0:** The following
+options are used to configure the [AdminServer](#sc_adminserver).
+
+* *admin.portUnification* :
+    (Java system property: **zookeeper.admin.portUnification**)
+    Enable the admin port to accept both HTTP and HTTPS traffic.
+    Defaults to disabled.
+
 **New in 3.5.0:** The following
 options are used to configure the [AdminServer](#sc_adminserver).
 

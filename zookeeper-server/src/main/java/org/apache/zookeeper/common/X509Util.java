@@ -398,6 +398,38 @@ public abstract class X509Util implements Closeable, AutoCloseable {
         }
     }
 
+    public static KeyStore loadKeyStore(
+            String keyStoreLocation,
+            String keyStorePassword,
+            String keyStoreTypeProp)
+            throws IOException, GeneralSecurityException {
+        KeyStoreFileType storeFileType =
+                KeyStoreFileType.fromPropertyValueOrFileName(
+                        keyStoreTypeProp, keyStoreLocation);
+        return FileKeyStoreLoaderBuilderProvider
+                .getBuilderForKeyStoreFileType(storeFileType)
+                .setKeyStorePath(keyStoreLocation)
+                .setKeyStorePassword(keyStorePassword)
+                .build()
+                .loadKeyStore();
+    }
+
+    public static KeyStore loadTrustStore(
+            String trustStoreLocation,
+            String trustStorePassword,
+            String trustStoreTypeProp)
+            throws IOException, GeneralSecurityException {
+        KeyStoreFileType storeFileType =
+                KeyStoreFileType.fromPropertyValueOrFileName(
+                        trustStoreTypeProp, trustStoreLocation);
+        return FileKeyStoreLoaderBuilderProvider
+                .getBuilderForKeyStoreFileType(storeFileType)
+                .setTrustStorePath(trustStoreLocation)
+                .setTrustStorePassword(trustStorePassword)
+                .build()
+                .loadTrustStore();
+    }
+
     /**
      * Creates a key manager by loading the key store from the given file of
      * the given type, optionally decrypting it using the given password.
@@ -419,15 +451,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
             keyStorePassword = "";
         }
         try {
-            KeyStoreFileType storeFileType =
-                    KeyStoreFileType.fromPropertyValueOrFileName(
-                            keyStoreTypeProp, keyStoreLocation);
-            KeyStore ks = FileKeyStoreLoaderBuilderProvider
-                    .getBuilderForKeyStoreFileType(storeFileType)
-                    .setKeyStorePath(keyStoreLocation)
-                    .setKeyStorePassword(keyStorePassword)
-                    .build()
-                    .loadKeyStore();
+            KeyStore ks = loadKeyStore(keyStoreLocation, keyStorePassword, keyStoreTypeProp);
             KeyManagerFactory kmf = KeyManagerFactory.getInstance("PKIX");
             kmf.init(ks, keyStorePassword.toCharArray());
 
@@ -480,15 +504,7 @@ public abstract class X509Util implements Closeable, AutoCloseable {
             trustStorePassword = "";
         }
         try {
-            KeyStoreFileType storeFileType =
-                    KeyStoreFileType.fromPropertyValueOrFileName(
-                            trustStoreTypeProp, trustStoreLocation);
-            KeyStore ts = FileKeyStoreLoaderBuilderProvider
-                    .getBuilderForKeyStoreFileType(storeFileType)
-                    .setTrustStorePath(trustStoreLocation)
-                    .setTrustStorePassword(trustStorePassword)
-                    .build()
-                    .loadTrustStore();
+            KeyStore ts = loadTrustStore(trustStoreLocation, trustStorePassword, trustStoreTypeProp);
             PKIXBuilderParameters pbParams = new PKIXBuilderParameters(ts, new X509CertSelector());
             if (crlEnabled || ocspEnabled) {
                 pbParams.setRevocationEnabled(true);
