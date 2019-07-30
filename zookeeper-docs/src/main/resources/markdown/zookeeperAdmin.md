@@ -1445,6 +1445,29 @@ Both subsystems need to have sufficient amount of threads to achieve peak read t
     Number of Commit Processor worker threads. If configured with 0 worker threads, the main thread
     will process the request directly. The default value is the number of cpu cores.
 
+* *zookeeper.commitProcessor.maxReadBatchSize* :
+    (Java system property only: **zookeeper.commitProcessor.maxReadBatchSize**)
+    Max number of reads to process from queuedRequests before switching to processing commits.
+    If the value < 0 (default), we switch whenever we have a local write, and pending commits.
+    A high read batch size will delay commit processing, causing stale data to be served.
+    If reads are known to arrive in fixed size batches then matching that batch size with
+    the value of this property can smooth queue performance. Since reads are handled in parallel,
+    one recommendation is to set this property to match *zookeeper.commitProcessor.numWorkerThread*
+    (default is the number of cpu cores) or lower.
+
+* *zookeeper.commitProcessor.maxCommitBatchSize* :
+    (Java system property only: **zookeeper.commitProcessor.maxCommitBatchSize**)
+    Max number of commits to process before processing reads. We will try to process as many
+    remote/local commits as we can till we reach this count. A high commit batch size will delay
+    reads while processing more commits. A low commit batch size will favor reads.
+    It is recommended to only set this property when an ensemble is serving a workload with a high
+    commit rate. If writes are known to arrive in a set number of batches then matching that
+    batch size with the value of this property can smooth queue performance. A generic
+    approach would be to set this value to equal the ensemble size so that with the processing
+    of each batch the current server will probabilistically handle a write related to one of
+    its direct clients.
+    Default is "1". Negative and zero values are not supported.
+
 * *znode.container.checkIntervalMs* :
     (Java system property only)
     **New in 3.6.0:** The
