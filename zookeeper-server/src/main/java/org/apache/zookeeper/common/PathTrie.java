@@ -192,11 +192,11 @@ public class PathTrie {
      * Construct a new PathTrie with a root node.
      */
     public PathTrie() {
-        this.rootNode = new TrieNode(null, "");
+        this.rootNode = new TrieNode(null, "/");
     }
-
+  
     /**
-     * Add a path to the path trie.
+     * Add a path to the path trie. All paths are relative to the root node.
      *
      * @param path the path to add to the trie
      */
@@ -226,7 +226,7 @@ public class PathTrie {
     }
 
     /**
-     * Delete a path from the trie.
+     * Delete a path from the trie. All paths are relative to the root node.
      *
      * @param path the path to be deleted
      */
@@ -258,7 +258,40 @@ public class PathTrie {
     }
 
     /**
-     * Return the largest prefix for the input path.
+     * Return true if the given path exists in the trie, otherwise return false;
+     * All paths are relative to the root node.
+     *
+     * @param path the input path
+     * @return the largest prefix for the
+     */ 
+    public boolean existsNode(final String path) {
+      Objects.requireNonNull(path, "Path cannot be null");
+
+      final String[] pathComponents = StringUtils.split(path, '/');
+      if (pathComponents.length == 0) {
+          throw new IllegalArgumentException("Invalid path: " + path);
+      }
+
+      readLock.lock();
+      try {
+          TrieNode parent = rootNode;
+          for (final String part : pathComponents) {
+              if (parent.getChild(part) == null) {
+                  // the path does not exist
+                  return false;
+              }
+              parent = parent.getChild(part);
+              LOG.debug("{}", parent);
+          }
+      } finally {
+          readLock.unlock();
+      }
+      return true;
+    }
+
+    /**
+     * Return the largest prefix for the input path. All paths are relative to the
+     * root node.
      *
      * @param path the input path
      * @return the largest prefix for the input path
@@ -266,14 +299,7 @@ public class PathTrie {
     public String findMaxPrefix(final String path) {
         Objects.requireNonNull(path, "Path cannot be null");
 
-        if ("/".equals(path)) {
-            return "/";
-        }
-
         final String[] pathComponents = StringUtils.split(path, '/');
-        if (pathComponents.length == 0) {
-            throw new IllegalArgumentException("Invalid path: " + path);
-        }
 
         readLock.lock();
         try {
@@ -296,11 +322,11 @@ public class PathTrie {
 
             final Deque<String> treePath = new ArrayDeque<>();
             TrieNode node = deepestPropertyNode;
-            while (node != null) {
+            while (node != this.rootNode) {
               treePath.offerFirst(node.getValue());
               node = node.parent;
             }
-            return String.join("/", treePath);
+            return "/" + String.join("/", treePath);
         } finally {
             readLock.unlock();
         }
