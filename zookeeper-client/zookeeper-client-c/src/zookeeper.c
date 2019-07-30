@@ -2021,6 +2021,17 @@ static void process_sync_completion(
     }
 }
 
+// cleanup completion list of a failed multi request
+static void cleanup_failed_multi(int xid, int rc, completion_list_t *cptr) {
+    completion_list_t *entry;
+    completion_head_t *clist = &cptr->c.clist;
+    while ((entry = dequeue_completion(clist)) != NULL) {
+        // Fake failed response for all sub-requests
+        deserialize_response(entry->c.type, xid, 1, rc, entry, NULL);
+        destroy_completion_entry(entry);
+    }
+}
+
 static int deserialize_multi(int xid, completion_list_t *cptr, struct iarchive *ia)
 {
     int rc = 0;
@@ -2138,8 +2149,12 @@ static void deserialize_response(int type, int xid, int failed, int rc, completi
     case COMPLETION_MULTI:
         LOG_DEBUG(("Calling COMPLETION_MULTI for xid=%#x failed=%d rc=%d",
                     cptr->xid, failed, rc));
-        rc = deserialize_multi(xid, cptr, ia);
         assert(cptr->c.void_result);
+        if (failed) {
+            cleanup_failed_multi(xid, rc, cptr);
+        } else {
+            rc = deserialize_multi(xid, cptr, ia);
+        }
         cptr->c.void_result(rc, cptr->data);
         break;
     default:
