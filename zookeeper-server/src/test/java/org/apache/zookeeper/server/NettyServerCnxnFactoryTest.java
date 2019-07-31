@@ -53,6 +53,7 @@ public class NettyServerCnxnFactoryTest extends ClientBase {
 
     @Override
     public void tearDown() throws Exception {
+        System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
         super.tearDown();
     }
 
