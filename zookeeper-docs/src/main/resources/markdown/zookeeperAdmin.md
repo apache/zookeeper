@@ -1076,18 +1076,6 @@ As an example, this will enable all four letter word commands:
     properly, check your operating system's options regarding TCP
     keepalive for more information.  Defaults to
     **false**.
-    
-* *zookeeper.electionPortBindRetry* :
-    (Java system property only: **zookeeper.electionPortBindRetry**)
-    Property set max retry count when Zookeeper server fails to bind 
-    leader election port. Such errors can be temporary and recoverable, 
-    such as DNS issue described in [ZOOKEEPER-3320](https://issues.apache.org/jira/projects/ZOOKEEPER/issues/ZOOKEEPER-3320),
-    or non-retryable, such as port already in use.  
-    In case of transient errors, this property can improve availability 
-    of Zookeeper server and help it to self recover. 
-    Default value 3. In container environment, especially in Kubernetes, 
-    this value should be increased to overcome issues related to DNS name resolving.
-    
 
 * *observer.reconnectDelayMs* :
     (Java system property: **zookeeper.observer.reconnectDelayMs**)

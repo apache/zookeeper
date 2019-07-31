@@ -291,35 +291,6 @@ public class CnxManagerTest extends ZKTestCase {
     }
 
     /**
-     * Test for bug described in {@link https://issues.apache.org/jira/browse/ZOOKEEPER-3320}.
-     * Test create peer with address which contains unresolvable DNS name,
-     * leader election listener thread should stop after N errors.
-     *
-     * @throws Exception
-     */
-    @Test
-    public void testCnxManagerListenerThreadConfigurableRetry() throws Exception {
-        final Map<Long,QuorumServer> unresolvablePeers = new HashMap<>();
-        final long myid = 1L;
-        unresolvablePeers.put(myid, new QuorumServer(myid, "unresolvable-domain.org:2182:2183;2181"));
-        final QuorumPeer peer = new QuorumPeer(unresolvablePeers,
-                                               ClientBase.createTmpDir(),
-                                               ClientBase.createTmpDir(),
-                                               2181, 3, myid, 1000, 2, 2, 2);
-        final QuorumCnxManager cnxManager = peer.createCnxnManager();
-        QuorumCnxManager.Listener listener = cnxManager.listener;
-        listener.start();
-        // listener thread should stop and throws error which notify QuorumPeer about error.
-        // QuorumPeer should start shutdown process
-        listener.join(15000); // set wait time, if listener contains bug and thread not stops.
-        Assert.assertFalse(listener.isAlive());
-        Assert.assertFalse(peer.isRunning());
-        peer.join(15000);
-        Assert.assertFalse(QuorumPeer.class.getSimpleName() + " not stopped after "
-                           + "listener thread death", listener.isAlive());
-    }
-
-    /**
      * Tests a bug in QuorumCnxManager that causes a NPE when a 3.4.6
      * observer connects to a 3.5.0 server. 
      * see https://issues.apache.org/jira/browse/ZOOKEEPER-1789
