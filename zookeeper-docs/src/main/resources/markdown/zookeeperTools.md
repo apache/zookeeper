@@ -164,15 +164,18 @@ in the new transaction file.
 
 <a name="Recovery"></a>
 
-ZooKeeper is designed to withstand machine failures. A ZooKeeper cluster automatically recovers from temporary failures (e.g. machine reboots) and tolerates up to (N-1)/2 permanent failures for a cluster of N members. When a member permanently fails, whether due to hardware failure or disk corruption, it loses access to the cluster. If the cluster permanently loses more than (N-1)/2 members then it disastrously fails, irrevocably losing quorum. Once quorum is lost, the cluster cannot reach consensus and therefore cannot continue to accepte updates.
+- ZooKeeper is designed to withstand machine failures. A ZooKeeper cluster automatically recovers from temporary failures (e.g. machine reboots) and tolerates up to (N-1)/2 permanent failures for a cluster of N members. When a member permanently fails, whether due to hardware failure or disk corruption, it loses access to the cluster. If the cluster permanently loses more than (N-1)/2 members then it disastrously fails, irrevocably losing quorum. Once quorum is lost, the cluster cannot reach consensus and therefore cannot continue to accepte updates.
 
-To recover from disastrous failure, ZooKeeper provides snapshot and restore facilities to restore the cluster.
+- To recover from disastrous failure which maybe a very small probability event, ZooKeeper provides snapshot and restore facilities to restore the cluster.
 
-Recovering a cluster firstly needs a snapshot of the znodes from a ZooKeeper ensemble. Users can have the following ways of backup:
+- The following scenes need to take the snapshot:
+  - Daily data backup which is a good habit
+  - Rolling upgrade or downgrade
 
-- A snapshot can be taken from a live server with the ZooKeeper CLI:snapshot.
-- Copying the snapshots from the dataDir periodically.
-- Using the observer as the role of backup, then write the snapshots to the distributed file system. (e.g HDFS).
+- Recovering a cluster firstly needs a snapshot of the znodes from a ZooKeeper ensemble. Users can have the following ways of backup:
+  - A snapshot can be taken from a live server with the ZooKeeper CLI:snapshot.
+  - Copying the snapshots from the dataDir periodically.
+  - Using the observer as the role of backup, then writing the snapshots to the distributed file system. (e.g HDFS).
 
 Recommended way is restored from snapshot.For example:
 
