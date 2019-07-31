@@ -128,6 +128,7 @@ public class Commands {
         registerCommand(new EnvCommand());
         registerCommand(new GetTraceMaskCommand());
         registerCommand(new InitialConfigurationCommand());
+        registerCommand(new DigestCommand());
         registerCommand(new IsroCommand());
         registerCommand(new LastSnapshotCommand());
         registerCommand(new LeaderCommand());
@@ -264,6 +265,22 @@ public class Commands {
             for (Entry e : Environment.list()) {
                 response.put(e.getKey(), e.getValue());
             }
+            return response;
+        }
+    }
+
+    /**
+     * Digest histories for every specific number of txns.
+     */
+    public static class DigestCommand extends CommandBase {
+        public DigestCommand() {
+            super(Arrays.asList("hash"));
+        }
+
+        @Override
+        public CommandResponse run(ZooKeeperServer zkServer, Map<String, String> kwargs) {
+            CommandResponse response = initializeResponse();
+            response.put("digests", zkServer.getZKDatabase().getDataTree().getDigestLog());
             return response;
         }
     }

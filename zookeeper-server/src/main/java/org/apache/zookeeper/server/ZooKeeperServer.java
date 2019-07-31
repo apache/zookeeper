@@ -194,6 +194,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             justification = "Internally the throttler has a BlockingQueue so " +
                     "once the throttler is created and started, it is thread-safe")
     private RequestThrottler requestThrottler;
+    public static final String SNAP_COUNT = "zookeeper.snapCount";
 
     void removeCnxn(ServerCnxn cnxn) {
         zkDb.removeCnxn(cnxn);
@@ -1010,7 +1011,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public static int getSnapCount() {
-        String sc = System.getProperty("zookeeper.snapCount");
+        String sc = System.getProperty(SNAP_COUNT);
         try {
             int snapCount = Integer.parseInt(sc);
 

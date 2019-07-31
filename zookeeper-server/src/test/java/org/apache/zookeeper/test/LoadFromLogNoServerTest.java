@@ -29,6 +29,7 @@ import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.persistence.FileHeader;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+import org.apache.zookeeper.server.util.DigestCalculator;
 import org.apache.zookeeper.txn.CreateTxn;
 import org.apache.zookeeper.txn.DeleteTxn;
 import org.apache.zookeeper.txn.MultiTxn;
@@ -55,37 +56,52 @@ public class LoadFromLogNoServerTest extends ZKTestCase {
      */
     @Test
     public void testTxnFailure() throws Exception {
-        long count = 1;
-        File tmpDir = ClientBase.createTmpDir();
-        FileTxnSnapLog logFile = new FileTxnSnapLog(tmpDir, tmpDir);
-        DataTree dt = new DataTree();
-        dt.createNode("/test", new byte[0], null, 0, -1, 1, 1);
-        for (count = 1; count <= 3; count++) {
-            dt.createNode("/test/" + count, new byte[0], null, 0, -1, count,
-                    Time.currentElapsedTime());
+        try {
+            DigestCalculator.setDigestEnabled(true);
+
+            long count = 1;
+            File tmpDir = ClientBase.createTmpDir();
+            FileTxnSnapLog logFile = new FileTxnSnapLog(tmpDir, tmpDir);
+            DataTree dt = new DataTree();
+            dt.createNode("/test", new byte[0], null, 0, -1, 1, 1);
+            for (count = 1; count <= 3; count++) {
+                dt.createNode("/test/" + count, new byte[0], null, 0, -1, count,
+                        Time.currentElapsedTime());
+            }
+            long digestBefore = dt.getTreeDigest();
+
+            DataNode zk = dt.getNode("/test");
+
+            // Make create to fail, then verify cversion.
+            LOG.info("Attempting to create " + "/test/" + (count - 1));
+            doOp(logFile, ZooDefs.OpCode.create, "/test/" + (count - 1), dt, zk, -1);
+            Assert.assertNotEquals(digestBefore, dt.getTreeDigest());
+
+            LOG.info("Attempting to create " + "/test/" + (count - 1));
+            digestBefore = dt.getTreeDigest();
+            doOp(logFile, ZooDefs.OpCode.create, "/test/" + (count - 1), dt, zk,
+                    zk.stat.getCversion() + 1);
+            Assert.assertNotEquals(digestBefore, dt.getTreeDigest());
+
+            LOG.info("Attempting to create " + "/test/" + (count - 1));
+            digestBefore = dt.getTreeDigest();
+            doOp(logFile, ZooDefs.OpCode.multi, "/test/" + (count - 1), dt, zk,
+                    zk.stat.getCversion() + 1);
+            Assert.assertNotEquals(digestBefore, dt.getTreeDigest());
+
+            LOG.info("Attempting to create " + "/test/" + (count - 1));
+            digestBefore = dt.getTreeDigest();
+            doOp(logFile, ZooDefs.OpCode.multi, "/test/" + (count - 1), dt, zk,
+                    -1);
+            Assert.assertNotEquals(digestBefore, dt.getTreeDigest());
+
+            // Make delete fo fail, then verify cversion.
+            // this doesn't happen anymore, we only set the cversion on create
+            // LOG.info("Attempting to delete " + "/test/" + (count + 1));
+            // doOp(logFile, OpCode.delete, "/test/" + (count + 1), dt, zk);
+        } finally {
+            DigestCalculator.setDigestEnabled(false);
         }
-        DataNode zk = dt.getNode("/test");
-
-        // Make create to fail, then verify cversion.
-        LOG.info("Attempting to create " + "/test/" + (count - 1));
-        doOp(logFile, ZooDefs.OpCode.create, "/test/" + (count - 1), dt, zk, -1);
-
-        LOG.info("Attempting to create " + "/test/" + (count - 1));
-        doOp(logFile, ZooDefs.OpCode.create, "/test/" + (count - 1), dt, zk,
-                zk.stat.getCversion() + 1);
-
-        LOG.info("Attempting to create " + "/test/" + (count - 1));
-        doOp(logFile, ZooDefs.OpCode.multi, "/test/" + (count - 1), dt, zk,
-                zk.stat.getCversion() + 1);
-
-        LOG.info("Attempting to create " + "/test/" + (count - 1));
-        doOp(logFile, ZooDefs.OpCode.multi, "/test/" + (count - 1), dt, zk,
-                -1);
-
-        // Make delete fo fail, then verify cversion.
-        // this doesn't happen anymore, we only set the cversion on create
-        // LOG.info("Attempting to delete " + "/test/" + (count + 1));
-        // doOp(logFile, OpCode.delete, "/test/" + (count + 1), dt, zk);
     }
 
     /*
