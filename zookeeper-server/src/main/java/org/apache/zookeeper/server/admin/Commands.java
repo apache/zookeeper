@@ -123,12 +123,12 @@ public class Commands {
         registerCommand(new CnxnStatResetCommand());
         registerCommand(new ConfCommand());
         registerCommand(new ConsCommand());
+        registerCommand(new DigestCommand());
         registerCommand(new DirsCommand());
         registerCommand(new DumpCommand());
         registerCommand(new EnvCommand());
         registerCommand(new GetTraceMaskCommand());
         registerCommand(new InitialConfigurationCommand());
-        registerCommand(new DigestCommand());
         registerCommand(new IsroCommand());
         registerCommand(new LastSnapshotCommand());
         registerCommand(new LeaderCommand());

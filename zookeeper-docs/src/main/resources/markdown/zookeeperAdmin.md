@@ -1894,6 +1894,101 @@ The AdminServer is enabled by default, but can be disabled by either:
 Note that the TCP four letter word interface is still available if
 the AdminServer is disabled.
 
+Available commands include:
+
+* *connection_stat_reset/crst*:
+    Reset all client connection statistics.
+    No new fields returned.
+
+* *configuration/conf/config* :
+    Print basic details about serving configuration, e.g.
+    client port, absolute path to data directory.
+
+* *connections/cons* :
+    Information on client connections to server.
+    Returns "connections" (list of connection info objects).
+
+* *hash*:
+    tbd
+
+* *dirs* :
+    Information on logfile directory and snapshot directory
+    size in bytes.
+    Returns "datadir_size" and "logdir_size".
+
+* *dump* :
+    Information on session expirations and ephemerals via two maps.
+    Returns "expiry_time_to_session_ids" and "session_id_to_ephemeral_paths".
+
+* *environment/env/envi* :
+    All defined environment variables.
+
+* *get_trace_mask/gtmk* :
+    The current trace mask. Read-only version of *set_trace_mask*.
+    Returns "tracemask".
+
+* *initial_configuration/icfg* :
+    Print the text of the configuration file used to start the peer.
+    Returns "initial_configuration".
+
+* *is_read_only/isro* :
+    A true/false if this server is in read-only mode.
+    Returns "read_only".
+
+* *last_snapshot/lsnp* :
+    tbd
+
+* *leader/lead* :
+    If the ensemble is configured in quorum mode then emits the current leader
+    status of the peer and the current leader location.
+    Returns "is_leader", "leader_id", and "leader_ip".
+
+* *monitor/mntr* :
+    tbd
+
+* *observer_connection_stat_reset/orst* :
+    Reset all observer connection statistics. Companion command to *observers*.
+    No new fields returned.
+
+* *ruok* :
+    No-op command, check if the server is running.
+    No new fields returned.
+
+* *set_trace_mask/stmk* :
+    tbd
+
+* *server_stats/srvr* :
+    tbd
+
+* *stats/stat* :
+    tbd
+
+* *stat_reset/srst* :
+    tbd
+
+* *observers/obsr* :
+    tbd
+
+* *system_properties/sysp* :
+    tbd
+
+* *voting_view* :
+    Print details about serving configuration.
+* *watches/wchc* :
+    Print details about serving configuration.
+* *watches_by_path/wchp* :
+    Print details about serving configuration.
+* *watch_summary/wchs* :
+    Print details about serving configuration.
+
+
+* *zabstate* :
+    The current phase of Zab protocol that peer is running and whether it is a
+    voting member.
+    Peers can be in one of these phases: ELECTION, DISCOVERY, SYNCHRONIZATION, BROADCAST.
+    Returns fields "voting" and "zabstate".
+
+
 <a name="sc_dataFileManagement"></a>
 
 ### Data File Management
