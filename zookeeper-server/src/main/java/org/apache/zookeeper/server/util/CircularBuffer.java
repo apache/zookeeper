@@ -21,6 +21,12 @@ package org.apache.zookeeper.server.util;
 import java.lang.reflect.Array;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * Thread safe FIFO CircularBuffer implementation.
+ * When the buffer is full write operation overwrites the oldest element.
+ *
+ * Fun thing @todo, make this lock free as this is called on every quorum message
+ */
 public class CircularBuffer<T> {
 
     private final T[] buffer;
@@ -28,14 +34,6 @@ public class CircularBuffer<T> {
     private int oldest;
     private AtomicInteger numberOfElements = new AtomicInteger();
 
-    /**
-     * Thread safe FIFO CircularBuffer implementation.
-     * When the buffer is full write operation overwrites the oldest element.
-     *
-     * Fun thing @todo, make this lock free as this is called on every quorum message  
-     * @param clazz
-     * @param capacity
-     */
     @SuppressWarnings("unchecked")
     public CircularBuffer(Class<T> clazz, int capacity) {
         if (capacity <= 0) {

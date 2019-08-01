@@ -54,19 +54,27 @@ public class MessageTracker {
     }
 
     public void trackSent(long timestamp) {
-        if (enabled) sentBuffer.write(new BufferedMessage(timestamp));
+        if (enabled) {
+            sentBuffer.write(new BufferedMessage(timestamp));
+        }
     }
 
     public void trackSent(int packetType) {
-        if (enabled) sentBuffer.write(new BufferedMessage(packetType));
+        if (enabled) {
+            sentBuffer.write(new BufferedMessage(packetType));
+        }
     }
 
     public void trackReceived(long timestamp) {
-        if (enabled) receivedBuffer.write(new BufferedMessage(timestamp));
+        if (enabled) {
+            receivedBuffer.write(new BufferedMessage(timestamp));
+        }
     }
 
     public void trackReceived(int packetType) {
-        if (enabled) receivedBuffer.write(new BufferedMessage(packetType));
+        if (enabled) {
+            receivedBuffer.write(new BufferedMessage(packetType));
+        }
     }
 
     public final BufferedMessage peekSent() {
@@ -86,7 +94,9 @@ public class MessageTracker {
     }
 
     public void dumpToLog(String serverAddress) {
-        if (!enabled) return;
+        if (!enabled) {
+            return;
+        }
         logMessages(serverAddress, receivedBuffer, Direction.RECEIVED);
         logMessages(serverAddress, sentBuffer, Direction.SENT);
     }
@@ -115,7 +125,7 @@ public class MessageTracker {
      * Direction for message track.
      */
     private enum Direction {
-        SENT, RECEIVED;
+        SENT, RECEIVED
     }
 
     private static class BufferedMessage {
