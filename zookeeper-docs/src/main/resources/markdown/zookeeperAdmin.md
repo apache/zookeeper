@@ -1086,7 +1086,8 @@ As an example, this will enable all four letter word commands:
     In case of transient errors, this property can improve availability 
     of Zookeeper server and help it to self recover. 
     Default value 3. In container environment, especially in Kubernetes, 
-    this value should be increased to overcome issues related to DNS name resolving.
+    this value should be increased or set to 0(infinite retry) to overcome issues 
+    related to DNS name resolving.
     
 
 * *observer.reconnectDelayMs* :
