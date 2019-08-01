@@ -92,14 +92,6 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
         RequestProcessor {
     private static final Logger LOG = LoggerFactory.getLogger(PrepRequestProcessor.class);
 
-    static boolean skipACL;
-    static {
-        skipACL = System.getProperty("zookeeper.skipACL", "no").equals("yes");
-        if (skipACL) {
-            LOG.info("zookeeper.skipACL==\"yes\", ACL checks will be skipped");
-        }
-    }
-
     /**
      * this is only for testing purposes.
      * should never be used otherwise
@@ -287,57 +279,6 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
     }
 
     /**
-     * Grant or deny authorization to an operation on a node as a function of:
-     * @param zks :     the ZooKeeper server
-     * @param cnxn :    the server connection
-     * @param acl :     set of ACLs for the node
-     * @param perm :    the permission that the client is requesting
-     * @param ids :     the credentials supplied by the client
-     * @param path :    the ZNode path
-     * @param setAcls : for set ACL operations, the list of ACLs being set. Otherwise null.
-     */
-    static void checkACL(ZooKeeperServer zks, ServerCnxn cnxn, List<ACL> acl, int perm, List<Id> ids,
-                         String path, List<ACL> setAcls) throws KeeperException.NoAuthException {
-        if (skipACL) {
-            return;
-        }
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Permission requested: {} ", perm);
-            LOG.debug("ACLs for node: {}", acl);
-            LOG.debug("Client credentials: {}", ids);
-        }
-        if (acl == null || acl.size() == 0) {
-            return;
-        }
-        for (Id authId : ids) {
-            if (authId.getScheme().equals("super")) {
-                return;
-            }
-        }
-        for (ACL a : acl) {
-            Id id = a.getId();
-            if ((a.getPerms() & perm) != 0) {
-                if (id.getScheme().equals("world")
-                        && id.getId().equals("anyone")) {
-                    return;
-                }
-                ServerAuthenticationProvider ap = ProviderRegistry.getServerProvider(id
-                        .getScheme());
-                if (ap != null) {
-                    for (Id authId : ids) {
-                        if (authId.getScheme().equals(id.getScheme())
-                                && ap.matches(new ServerAuthenticationProvider.ServerObjs(zks, cnxn),
-                                new ServerAuthenticationProvider.MatchValues(path, authId.getId(), id.getId(), perm, setAcls))) {
-                            return;
-                        }
-                    }
-                }
-            }
-        }
-        throw new KeeperException.NoAuthException();
-    }
-
-    /**
      * Performs basic validation of a path for a create request.
      * Throws if the path is not valid and returns the parent path.
      * @throws BadArgumentsException
@@ -403,7 +344,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 String path = deleteRequest.getPath();
                 String parentPath = getParentPathAndValidate(path);
                 ChangeRecord parentRecord = getRecordForPath(parentPath);
-                checkACL(zks, request.cnxn, parentRecord.acl, ZooDefs.Perms.DELETE, request.authInfo, path, null);
+                zks.checkACL(request.cnxn, parentRecord.acl, ZooDefs.Perms.DELETE, request.authInfo, path, null);
                 ChangeRecord nodeRecord = getRecordForPath(path);
                 checkAndIncVersion(nodeRecord.stat.getVersion(), deleteRequest.getVersion(), path);
                 if (nodeRecord.childCount > 0) {
@@ -423,7 +364,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 path = setDataRequest.getPath();
                 validatePath(path, request.sessionId);
                 nodeRecord = getRecordForPath(path);
-                checkACL(zks, request.cnxn, nodeRecord.acl, ZooDefs.Perms.WRITE, request.authInfo, path, null);
+                zks.checkACL(request.cnxn, nodeRecord.acl, ZooDefs.Perms.WRITE, request.authInfo, path, null);
                 int newVersion = checkAndIncVersion(nodeRecord.stat.getVersion(), setDataRequest.getVersion(), path);
                 request.setTxn(new SetDataTxn(path, setDataRequest.getData(), newVersion));
                 nodeRecord = nodeRecord.duplicate(request.getHdr().getZxid());
@@ -436,7 +377,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                     throw new KeeperException.ReconfigDisabledException();
                 }
 
-                if (skipACL) {
+                if (ZooKeeperServer.skipACL) {
                     LOG.warn("skipACL is set, reconfig operation will skip ACL checks!");
                 }
 
@@ -557,7 +498,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 }
 
                 nodeRecord = getRecordForPath(ZooDefs.CONFIG_NODE);
-                checkACL(zks, request.cnxn, nodeRecord.acl, ZooDefs.Perms.WRITE, request.authInfo, null, null);
+                zks.checkACL(request.cnxn, nodeRecord.acl, ZooDefs.Perms.WRITE, request.authInfo, null, null);
                 request.setTxn(new SetDataTxn(ZooDefs.CONFIG_NODE, request.qv.toString().getBytes(), -1));
                 nodeRecord = nodeRecord.duplicate(request.getHdr().getZxid());
                 nodeRecord.stat.setVersion(-1);
@@ -572,7 +513,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 validatePath(path, request.sessionId);
                 List<ACL> listACL = fixupACL(path, request.authInfo, setAclRequest.getAcl());
                 nodeRecord = getRecordForPath(path);
-                checkACL(zks, request.cnxn, nodeRecord.acl, ZooDefs.Perms.ADMIN, request.authInfo, path, listACL);
+                zks.checkACL(request.cnxn, nodeRecord.acl, ZooDefs.Perms.ADMIN, request.authInfo, path, listACL);
                 newVersion = checkAndIncVersion(nodeRecord.stat.getAversion(), setAclRequest.getVersion(), path);
                 request.setTxn(new SetACLTxn(path, listACL, newVersion));
                 nodeRecord = nodeRecord.duplicate(request.getHdr().getZxid());
@@ -621,7 +562,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
                 path = checkVersionRequest.getPath();
                 validatePath(path, request.sessionId);
                 nodeRecord = getRecordForPath(path);
-                checkACL(zks, request.cnxn, nodeRecord.acl, ZooDefs.Perms.READ, request.authInfo, path, null);
+                zks.checkACL(request.cnxn, nodeRecord.acl, ZooDefs.Perms.READ, request.authInfo, path, null);
                 request.setTxn(new CheckVersionTxn(path, checkAndIncVersion(nodeRecord.stat.getVersion(),
                         checkVersionRequest.getVersion(), path)));
                 break;
@@ -663,7 +604,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
         List<ACL> listACL = fixupACL(path, request.authInfo, acl);
         ChangeRecord parentRecord = getRecordForPath(parentPath);
 
-        checkACL(zks, request.cnxn, parentRecord.acl, ZooDefs.Perms.CREATE, request.authInfo, path, listACL);
+        zks.checkACL(request.cnxn, parentRecord.acl, ZooDefs.Perms.CREATE, request.authInfo, path, listACL);
         int parentCVersion = parentRecord.stat.getCversion();
         if (createMode.isSequential()) {
             path = path + String.format(Locale.ENGLISH, "%010d", parentCVersion);
@@ -914,7 +855,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
         nextProcessor.processRequest(request);
     }
 
-    private List<ACL> removeDuplicates(final List<ACL> acls) {
+    private static List<ACL> removeDuplicates(final List<ACL> acls) {
         if (acls == null || acls.isEmpty()) {
           return Collections.emptyList();
         }
@@ -964,7 +905,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements
      * @return verified and expanded ACLs
      * @throws KeeperException.InvalidACLException
      */
-    private List<ACL> fixupACL(String path, List<Id> authInfo, List<ACL> acls)
+    public static List<ACL> fixupACL(String path, List<Id> authInfo, List<ACL> acls)
         throws KeeperException.InvalidACLException {
         // check for well formed ACLs
         // This resolves https://issues.apache.org/jira/browse/ZOOKEEPER-1877

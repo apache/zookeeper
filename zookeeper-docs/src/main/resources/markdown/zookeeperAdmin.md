@@ -893,6 +893,11 @@ property, when available, is noted below.
     pipeline to avoid direct buffer OOM. It will disable the AUTO_READ in
     Netty.
 
+* *enableEagerACLCheck* :
+    (Java system property only: **zookeeper.enableEagerACLCheck**)
+    When set to "true", enables eager ACL check on write requests on each local
+    server before sending the requests to quorum. Default is "false".
+
 * *maxConcurrentSnapSyncs* :
     (Java system property: **zookeeper.leader.maxConcurrentSnapSyncs**)
     The maximum number of snap syncs a leader or a follower can serve at the same

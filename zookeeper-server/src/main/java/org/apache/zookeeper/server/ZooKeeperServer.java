@@ -49,6 +49,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
 import org.apache.zookeeper.Version;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.ZookeeperBanner;
 import org.apache.zookeeper.common.Time;
@@ -60,9 +61,13 @@ import org.apache.zookeeper.metrics.MetricsContext;
 import org.apache.zookeeper.proto.AuthPacket;
 import org.apache.zookeeper.proto.ConnectRequest;
 import org.apache.zookeeper.proto.ConnectResponse;
+import org.apache.zookeeper.proto.CreateRequest;
+import org.apache.zookeeper.proto.DeleteRequest;
 import org.apache.zookeeper.proto.GetSASLRequest;
 import org.apache.zookeeper.proto.ReplyHeader;
 import org.apache.zookeeper.proto.RequestHeader;
+import org.apache.zookeeper.proto.SetACLRequest;
+import org.apache.zookeeper.proto.SetDataRequest;
 import org.apache.zookeeper.proto.SetSASLResponse;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
 import org.apache.zookeeper.server.RequestProcessor.RequestProcessorException;
@@ -90,6 +95,16 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected static final Logger LOG;
 
     public static final String GLOBAL_OUTSTANDING_LIMIT = "zookeeper.globalOutstandingLimit";
+
+    public static final String ENABLE_EAGER_ACL_CHECK = "zookeeper.enableEagerACLCheck";
+    public static final String SKIP_ACL = "zookeeper.skipACL";
+
+    // When enabled, will check ACL constraints appertained to the requests first,
+    // before sending the requests to the quorum.
+    static final boolean enableEagerACLCheck;
+
+    static final boolean skipACL;
+
     public static final String ALLOW_SASL_FAILED_CLIENTS = "zookeeper.allowSaslFailedClients";
     public static final String SESSION_REQUIRE_CLIENT_SASL_AUTH = "zookeeper.sessionRequireClientSASLAuth";
     public static final String SASL_AUTH_SCHEME = "sasl";
@@ -100,6 +115,14 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         ZookeeperBanner.printBanner(LOG);
 
         Environment.logEnv("Server environment:", LOG);
+
+        enableEagerACLCheck = Boolean.getBoolean(ENABLE_EAGER_ACL_CHECK);
+        LOG.info(ENABLE_EAGER_ACL_CHECK + " = {}", enableEagerACLCheck);
+
+        skipACL = System.getProperty(SKIP_ACL, "no").equals("yes");
+        if (skipACL) {
+            LOG.info(SKIP_ACL + "==\"yes\", ACL checks will be skipped");
+        }
     }
 
     protected ZooKeeperServerBean jmxServerBean;
@@ -1647,5 +1670,212 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
       ServerStats stats = serverStats();
       response.accept("version", Version.getFullVersion());
       response.accept("server_state", stats.getServerState());
+    }
+
+    /**
+     * Grant or deny authorization to an operation on a node as a function of:
+     * @param cnxn :    the server connection
+     * @param acl :     set of ACLs for the node
+     * @param perm :    the permission that the client is requesting
+     * @param ids :     the credentials supplied by the client
+     * @param path :    the ZNode path
+     * @param setAcls : for set ACL operations, the list of ACLs being set. Otherwise null.
+     */
+    public void checkACL(ServerCnxn cnxn, List<ACL> acl, int perm, List<Id> ids,
+                         String path, List<ACL> setAcls) throws KeeperException.NoAuthException {
+        if (skipACL) {
+            return;
+        }
+
+        LOG.debug("Permission requested: {} ", perm);
+        LOG.debug("ACLs for node: {}", acl);
+        LOG.debug("Client credentials: {}", ids);
+
+        if (acl == null || acl.size() == 0) {
+            return;
+        }
+        for (Id authId : ids) {
+            if (authId.getScheme().equals("super")) {
+                return;
+            }
+        }
+        for (ACL a : acl) {
+            Id id = a.getId();
+            if ((a.getPerms() & perm) != 0) {
+                if (id.getScheme().equals("world")
+                    && id.getId().equals("anyone")) {
+                    return;
+                }
+                ServerAuthenticationProvider ap = ProviderRegistry.getServerProvider(id
+                    .getScheme());
+                if (ap != null) {
+                    for (Id authId : ids) {
+                        if (authId.getScheme().equals(id.getScheme())
+                            && ap.matches(new ServerAuthenticationProvider.ServerObjs(this, cnxn),
+                            new ServerAuthenticationProvider.MatchValues(path, authId.getId(), id.getId(), perm, setAcls))) {
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        throw new KeeperException.NoAuthException();
+    }
+
+    /**
+     * Trim a path to get the immediate predecessor.
+     *
+     * @param path
+     * @return
+     * @throws KeeperException.BadArgumentsException
+     */
+    private String parentPath(String path)
+        throws KeeperException.BadArgumentsException {
+        int lastSlash = path.lastIndexOf('/');
+        if (lastSlash == -1 || path.indexOf('\0') != -1
+            || getZKDatabase().isSpecialPath(path)) {
+            throw new KeeperException.BadArgumentsException(path);
+        }
+        return lastSlash == 0 ? "/" : path.substring(0, lastSlash);
+    }
+
+    private String effectiveACLPath(Request request)
+        throws KeeperException.BadArgumentsException,
+        KeeperException.InvalidACLException {
+        boolean mustCheckACL = false;
+        String path = null;
+        List<ACL> acl = null;
+
+        switch (request.type) {
+            case OpCode.create:
+            case OpCode.create2: {
+                CreateRequest req = new CreateRequest();
+                if (buffer2Record(request.request, req)) {
+                    mustCheckACL = true;
+                    acl = req.getAcl();
+                    path = parentPath(req.getPath());
+                }
+                break;
+            }
+            case OpCode.delete: {
+                DeleteRequest req = new DeleteRequest();
+                if (buffer2Record(request.request, req)) {
+                    path = parentPath(req.getPath());
+                }
+                break;
+            }
+            case OpCode.setData: {
+                SetDataRequest req = new SetDataRequest();
+                if (buffer2Record(request.request, req)) {
+                    path = req.getPath();
+                }
+                break;
+            }
+            case OpCode.setACL: {
+                SetACLRequest req = new SetACLRequest();
+                if (buffer2Record(request.request, req)) {
+                    mustCheckACL = true;
+                    acl = req.getAcl();
+                    path = req.getPath();
+                }
+                break;
+            }
+        }
+
+        if (mustCheckACL) {
+            /* we ignore the extrapolated ACL returned by fixupACL because
+             * we only care about it being well-formed (and if it isn't, an
+             * exception will be raised).
+             */
+            PrepRequestProcessor.fixupACL(path, request.authInfo, acl);
+        }
+
+        return path;
+    }
+
+    private int effectiveACLPerms(Request request) {
+        switch (request.type) {
+            case OpCode.create: case OpCode.create2:
+                return ZooDefs.Perms.CREATE;
+            case OpCode.delete:
+                return ZooDefs.Perms.DELETE;
+            case OpCode.setData:
+                return ZooDefs.Perms.WRITE;
+            case OpCode.setACL:
+                return ZooDefs.Perms.ADMIN;
+            default:
+                return ZooDefs.Perms.ALL;
+        }
+    }
+
+    /**
+     * Check Write Requests for Potential Access Restrictions
+     * <p/>
+     * Before a request is being proposed to the quorum, lets check it
+     * against local ACLs. Non-write requests (read, session, etc.)
+     * are passed along. Invalid requests are sent a response.
+     * <p/>
+     * While we are at it, if the request will set an ACL: make sure it's
+     * a valid one.
+     *
+     * @param request
+     * @return true if request is permitted, false if not.
+     * @throws java.io.IOException
+     */
+    public boolean authWriteRequest(Request request) {
+        int err;
+        String pathToCheck;
+
+        if (!enableEagerACLCheck) {
+            return true;
+        }
+
+        err = KeeperException.Code.OK.intValue();
+
+        try {
+            pathToCheck = effectiveACLPath(request);
+            if (pathToCheck != null) {
+                checkACL(request.cnxn, zkDb.getACL(pathToCheck, null),
+                    effectiveACLPerms(request), request.authInfo, pathToCheck, null);
+            }
+        } catch (KeeperException.NoAuthException e) {
+            LOG.debug("Request failed ACL check", e);
+            err = e.code().intValue();
+        } catch (KeeperException.InvalidACLException e) {
+            LOG.debug("Request has an invalid ACL check", e);
+            err = e.code().intValue();
+        } catch (KeeperException.NoNodeException e) {
+            LOG.debug("ACL check against non-existent node: {}", e.getMessage());
+        } catch (KeeperException.BadArgumentsException e) {
+            LOG.debug("ACL check against illegal node path: {}", e.getMessage());
+        } catch (Throwable t) {
+            LOG.error("Uncaught exception in authWriteRequest with: ", t);
+            throw t;
+        } finally {
+            if (err != KeeperException.Code.OK.intValue()) {
+                /*  This request has a bad ACL, so we are dismissing it early. */
+                decInProcess();
+                ReplyHeader rh = new ReplyHeader(request.cxid, 0, err);
+                try {
+                    request.cnxn.sendResponse(rh, null, null);
+                } catch (IOException e) {
+                    LOG.error("IOException : {}", e);
+                }
+            }
+        }
+
+        return err == KeeperException.Code.OK.intValue();
+    }
+
+    private boolean buffer2Record(ByteBuffer request, Record record) {
+        boolean rv = false;
+        try {
+            ByteBufferInputStream.byteBuffer2Record(request, record);
+            request.rewind();
+            rv = true;
+        } catch (IOException ex) {
+        }
+
+        return rv;
     }
 }

@@ -49,6 +49,11 @@ public class LeaderRequestProcessor implements RequestProcessor {
     @Override
     public void processRequest(Request request)
             throws RequestProcessorException {
+        // Screen quorum requests against ACLs first
+        if (!lzks.authWriteRequest(request)) {
+            return;
+        }
+
         // Check if this is a local session and we are trying to create
         // an ephemeral node, in which case we upgrade the session
         Request upgradeRequest = null;

@@ -801,7 +801,9 @@ public class DataTree {
             throw new KeeperException.NoNodeException();
         }
         synchronized (n) {
-            n.copyStat(stat);
+            if (stat != null) {
+                n.copyStat(stat);
+            }
             return new ArrayList<ACL>(aclCache.convertLong(n.acl));
         }
     }
