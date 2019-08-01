@@ -75,15 +75,11 @@ import org.apache.zookeeper.proto.SyncResponse;
 import org.apache.zookeeper.server.DataTree.ProcessTxnResult;
 import org.apache.zookeeper.server.ZooKeeperServer.ChangeRecord;
 import org.apache.zookeeper.server.quorum.QuorumZooKeeperServer;
+import org.apache.zookeeper.server.util.RequestPathMetricsCollector;
+
 import org.apache.zookeeper.txn.ErrorTxn;
 import org.apache.zookeeper.txn.TxnHeader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -99,10 +95,13 @@ import java.util.Set;
 public class FinalRequestProcessor implements RequestProcessor {
     private static final Logger LOG = LoggerFactory.getLogger(FinalRequestProcessor.class);
 
+    private final RequestPathMetricsCollector requestPathMetricsCollector;
+
     ZooKeeperServer zks;
 
     public FinalRequestProcessor(ZooKeeperServer zks) {
         this.zks = zks;
+        this.requestPathMetricsCollector = zks.getRequestPathMetricsCollector();
     }
 
     public void processRequest(Request request) {
@@ -312,6 +311,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 lastOp = "CREA";
                 rsp = new CreateResponse(rc.path);
                 err = Code.get(rc.err);
+                requestPathMetricsCollector.registerRequest(request.type, rc.path);
                 break;
             }
             case OpCode.create2:
@@ -320,18 +320,21 @@ public class FinalRequestProcessor implements RequestProcessor {
                 lastOp = "CREA";
                 rsp = new Create2Response(rc.path, rc.stat);
                 err = Code.get(rc.err);
+                requestPathMetricsCollector.registerRequest(request.type, rc.path);
                 break;
             }
             case OpCode.delete:
             case OpCode.deleteContainer: {
                 lastOp = "DELE";
                 err = Code.get(rc.err);
+                requestPathMetricsCollector.registerRequest(request.type, rc.path);
                 break;
             }
             case OpCode.setData: {
                 lastOp = "SETD";
                 rsp = new SetDataResponse(rc.stat);
                 err = Code.get(rc.err);
+                requestPathMetricsCollector.registerRequest(request.type, rc.path);
                 break;
             }
             case OpCode.reconfig: {
@@ -344,6 +347,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 lastOp = "SETA";
                 rsp = new SetACLResponse(rc.stat);
                 err = Code.get(rc.err);
+                requestPathMetricsCollector.registerRequest(request.type, rc.path);
                 break;
             }
             case OpCode.closeSession: {
@@ -357,6 +361,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 ByteBufferInputStream.byteBuffer2Record(request.request,
                         syncRequest);
                 rsp = new SyncResponse(syncRequest.getPath());
+                requestPathMetricsCollector.registerRequest(request.type, syncRequest.getPath());
                 break;
             }
             case OpCode.check: {
@@ -378,6 +383,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                 Stat stat = zks.getZKDatabase().statNode(path, existsRequest
                         .getWatch() ? cnxn : null);
                 rsp = new ExistsResponse(stat);
+                requestPathMetricsCollector.registerRequest(request.type, path);
                 break;
             }
             case OpCode.getData: {
@@ -387,6 +393,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                         getDataRequest);
                 path = getDataRequest.getPath();
                 rsp = handleGetDataRequest(getDataRequest, cnxn, request.authInfo);
+                requestPathMetricsCollector.registerRequest(request.type, path);
                 break;
             }
             case OpCode.setWatches: {
@@ -419,6 +426,8 @@ public class FinalRequestProcessor implements RequestProcessor {
                 Stat stat = new Stat();
                 List<ACL> acl =
                         zks.getZKDatabase().getACL(path, stat);
+                requestPathMetricsCollector.registerRequest(request.type, getACLRequest.getPath());
+
                 try {
                     PrepRequestProcessor.checkACL(zks, request.cnxn, zks.getZKDatabase().aclForNode(n),
                             ZooDefs.Perms.ADMIN,
@@ -446,6 +455,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                         getChildrenRequest);
                 path = getChildrenRequest.getPath();
                 rsp = handleGetChildrenRequest(getChildrenRequest, cnxn, request.authInfo);
+                requestPathMetricsCollector.registerRequest(request.type, path);
                 break;
             }
             case OpCode.getAllChildrenNumber: {
@@ -484,6 +494,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                         path, stat, getChildren2Request
                                 .getWatch() ? cnxn : null);
                 rsp = new GetChildren2Response(children, stat);
+                requestPathMetricsCollector.registerRequest(request.type, path);
                 break;
             }
             case OpCode.checkWatches: {
@@ -500,6 +511,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                             path, type);
                     throw new KeeperException.NoWatcherException(msg);
                 }
+                requestPathMetricsCollector.registerRequest(request.type, checkWatches.getPath());
                 break;
             }
             case OpCode.removeWatches: {
@@ -516,6 +528,7 @@ public class FinalRequestProcessor implements RequestProcessor {
                             path, type);
                     throw new KeeperException.NoWatcherException(msg);
                 }
+                requestPathMetricsCollector.registerRequest(request.type, removeWatches.getPath());
                 break;
             }
             case OpCode.getEphemerals: {

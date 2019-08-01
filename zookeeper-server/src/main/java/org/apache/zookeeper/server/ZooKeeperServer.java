@@ -73,6 +73,7 @@ import org.apache.zookeeper.server.auth.ProviderRegistry;
 import org.apache.zookeeper.server.auth.ServerAuthenticationProvider;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.ReadOnlyZooKeeperServer;
+import org.apache.zookeeper.server.util.RequestPathMetricsCollector;
 import org.apache.zookeeper.server.util.JvmPauseMonitor;
 import org.apache.zookeeper.server.util.OSMXBean;
 import org.apache.zookeeper.txn.CreateSessionTxn;
@@ -124,6 +125,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     private boolean isResponseCachingEnabled = true;
     /* contains the configuration file content read at startup */
     protected String initialConfig;
+    private final RequestPathMetricsCollector requestPathMetricsCollector;
 
     protected enum State {
         INITIAL, RUNNING, SHUTDOWN, ERROR
@@ -209,6 +211,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     public ZooKeeperServer() {
         listener = new ZooKeeperServerListenerImpl(this);
         serverStats = new ServerStats(this);
+        this.requestPathMetricsCollector = new RequestPathMetricsCollector();
     }
 
     /**
@@ -235,6 +238,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         connThrottle = new BlueThrottle();
 
         this.initialConfig = initialConfig;
+
+        this.requestPathMetricsCollector = new RequestPathMetricsCollector();
 
         LOG.info("Created server with tickTime " + tickTime
                 + " minSessionTimeout " + getMinSessionTimeout()
@@ -277,6 +282,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     public ServerStats serverStats() {
         return serverStats;
+    }
+
+    public RequestPathMetricsCollector getRequestPathMetricsCollector() {
+        return requestPathMetricsCollector;
     }
 
     public BlueThrottle connThrottle() {
@@ -576,6 +585,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         registerMetrics();
 
         setState(State.RUNNING);
+        requestPathMetricsCollector.start();
         notifyAll();
     }
 
@@ -727,6 +737,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             }
         }
 
+        requestPathMetricsCollector.shutdown();
         unregisterJMX();
     }
 
