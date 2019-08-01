@@ -851,6 +851,7 @@ public class QuorumCnxManager {
         private static final int DEFAULT_PORT_BIND_MAX_RETRY = 3;
 
         private final int portBindMaxRetry;
+        private Runnable socketBindErrorHandler = () -> System.exit(ExitCode.UNABLE_TO_BIND_QUORUM_PORT.getValue());
         volatile ServerSocket ss = null;
 
         public Listener() {
@@ -863,7 +864,8 @@ public class QuorumCnxManager {
             final Integer maxRetry = Integer.getInteger(ELECTION_PORT_BIND_RETRY,
                                                         DEFAULT_PORT_BIND_MAX_RETRY);
             if (maxRetry >= 0) {
-                LOG.info("Election port bind maximum retries is {}", maxRetry);
+                LOG.info("Election port bind maximum retries is {}",
+                         maxRetry == 0 ? "infinite" : maxRetry);
                 portBindMaxRetry = maxRetry;
             } else {
                 LOG.info("'{}' contains invalid value: {}(must be >= 0). "
@@ -871,6 +873,11 @@ public class QuorumCnxManager {
                          ELECTION_PORT_BIND_RETRY, maxRetry, DEFAULT_PORT_BIND_MAX_RETRY);
                 portBindMaxRetry = DEFAULT_PORT_BIND_MAX_RETRY;
             }
+        }
+
+        // VisibleForTesting
+        void setSocketBindErrorHandler(Runnable errorHandler) {
+            this.socketBindErrorHandler = errorHandler;
         }
 
         /**
@@ -882,7 +889,7 @@ public class QuorumCnxManager {
             InetSocketAddress addr;
             Socket client = null;
             Exception exitException = null;
-            while((!shutdown) && (numRetries < portBindMaxRetry)){
+            while ((!shutdown) && (portBindMaxRetry == 0 || numRetries < portBindMaxRetry)) {
                 try {
                     if (self.shouldUsePortUnification()) {
                         LOG.info("Creating TLS-enabled quorum server socket");

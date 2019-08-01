@@ -36,6 +36,7 @@ import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.net.Socket;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.HandshakeCompletedListener;
@@ -307,13 +308,16 @@ public class CnxManagerTest extends ZKTestCase {
                                                ClientBase.createTmpDir(),
                                                2181, 3, myid, 1000, 2, 2, 2);
         final QuorumCnxManager cnxManager = peer.createCnxnManager();
-        QuorumCnxManager.Listener listener = cnxManager.listener;
+        final QuorumCnxManager.Listener listener = cnxManager.listener;
+        final AtomicBoolean errorHappend = new AtomicBoolean();
+        listener.setSocketBindErrorHandler(() -> errorHappend.set(true));
         listener.start();
         // listener thread should stop and throws error which notify QuorumPeer about error.
         // QuorumPeer should start shutdown process
         listener.join(15000); // set wait time, if listener contains bug and thread not stops.
         Assert.assertFalse(listener.isAlive());
         Assert.assertFalse(peer.isRunning());
+        Assert.assertTrue(errorHappend.get());
         peer.join(15000);
         Assert.assertFalse(QuorumPeer.class.getSimpleName() + " not stopped after "
                            + "listener thread death", listener.isAlive());
