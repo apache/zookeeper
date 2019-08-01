@@ -51,6 +51,10 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
     public void setup() {
         LOG.info("setup");
         ServerMetrics.getMetrics().resetAll();
+
+        // ensure no leaked parallelism properties
+        System.clearProperty("zookeeper.commitProcessor.maxReadBatchSize");
+        System.clearProperty("zookeeper.commitProcessor.maxCommitBatchSize");
     }
 
     public void setupProcessors(int commitWorkers, int finalProcTime ) {

@@ -893,6 +893,28 @@ property, when available, is noted below.
     pipeline to avoid direct buffer OOM. It will disable the AUTO_READ in
     Netty.
 
+* *enableEagerACLCheck* :
+    (Java system property only: **zookeeper.enableEagerACLCheck**)
+    When set to "true", enables eager ACL check on write requests on each local
+    server before sending the requests to quorum. Default is "false".
+
+* *maxConcurrentSnapSyncs* :
+    (Java system property: **zookeeper.leader.maxConcurrentSnapSyncs**)
+    The maximum number of snap syncs a leader or a follower can serve at the same
+    time. The default is 10.
+
+* *maxConcurrentDiffSyncs* :
+    (Java system property: **zookeeper.leader.maxConcurrentDiffSyncs**)
+    The maximum number of diff syncs a leader or a follower can serve at the same
+    time. The default is 100.
+
+* *digest.enabled* :
+    (Java system property only: **zookeeper.digest.enabled**)
+    **New in 3.6.0:**
+    The digest feature is added to self-verify the correctness inside
+    ZooKeeper when loading database from disk, and syncing with leader.
+    By default, this feautre is disabled, set "true" to enable it.
+
 <a name="sc_clusterOptions"></a>
 
 #### Cluster Options
@@ -1145,6 +1167,23 @@ encryption/authentication/authorization performed by the service.
     the list of names/aliases of the ensemble that receives the connection request.
     If the credential is not in the list, the connection request will be refused.
     This prevents a client accidentally connecting to a wrong ensemble.
+
+* *zookeeper.sessionRequireClientSASLAuth* :
+    (Java system property only: **zookeeper.sessionRequireClientSASLAuth**)
+    **New in 3.6.0:**
+    When set to **true**, ZooKeeper server will only accept connections and requests from clients
+    that have authenticated with server via SASL. Clients that are not configured with SASL
+    authentication, or configured with SASL but failed authentication (i.e. with invalid credential)
+    will not be able to establish a session with server. A typed error code (-124) will be delivered
+    in such case, both Java and C client will close the session with server thereafter,
+    without further attempts on retrying to reconnect.
+
+    By default, this feature is disabled. Users who would like to opt-in can enable the feature
+    by setting **zookeeper.sessionRequireClientSASLAuth** to **true**.
+
+    This feature overrules the <emphasis role="bold">zookeeper.allowSaslFailedClients</emphasis> option, so even if server is
+    configured to allow clients that fail SASL authentication to login, client will not be able to
+    establish a session with server if this feature is enabled.
 
 * *sslQuorum* :
     (Java system property: **zookeeper.sslQuorum**)
@@ -1406,6 +1445,29 @@ Both subsystems need to have sufficient amount of threads to achieve peak read t
     Number of Commit Processor worker threads. If configured with 0 worker threads, the main thread
     will process the request directly. The default value is the number of cpu cores.
 
+* *zookeeper.commitProcessor.maxReadBatchSize* :
+    (Java system property only: **zookeeper.commitProcessor.maxReadBatchSize**)
+    Max number of reads to process from queuedRequests before switching to processing commits.
+    If the value < 0 (default), we switch whenever we have a local write, and pending commits.
+    A high read batch size will delay commit processing, causing stale data to be served.
+    If reads are known to arrive in fixed size batches then matching that batch size with
+    the value of this property can smooth queue performance. Since reads are handled in parallel,
+    one recommendation is to set this property to match *zookeeper.commitProcessor.numWorkerThread*
+    (default is the number of cpu cores) or lower.
+
+* *zookeeper.commitProcessor.maxCommitBatchSize* :
+    (Java system property only: **zookeeper.commitProcessor.maxCommitBatchSize**)
+    Max number of commits to process before processing reads. We will try to process as many
+    remote/local commits as we can till we reach this count. A high commit batch size will delay
+    reads while processing more commits. A low commit batch size will favor reads.
+    It is recommended to only set this property when an ensemble is serving a workload with a high
+    commit rate. If writes are known to arrive in a set number of batches then matching that
+    batch size with the value of this property can smooth queue performance. A generic
+    approach would be to set this value to equal the ensemble size so that with the processing
+    of each batch the current server will probabilistically handle a write related to one of
+    its direct clients.
+    Default is "1". Negative and zero values are not supported.
+
 * *znode.container.checkIntervalMs* :
     (Java system property only)
     **New in 3.6.0:** The
@@ -1442,6 +1504,14 @@ Both subsystems need to have sufficient amount of threads to achieve peak read t
 <a name="sc_adminserver_config"></a>
 
 #### AdminServer configuration
+
+**New in 3.6.0:** The following
+options are used to configure the [AdminServer](#sc_adminserver).
+
+* *admin.portUnification* :
+    (Java system property: **zookeeper.admin.portUnification**)
+    Enable the admin port to accept both HTTP and HTTPS traffic.
+    Defaults to disabled.
 
 **New in 3.5.0:** The following
 options are used to configure the [AdminServer](#sc_adminserver).
@@ -1762,6 +1832,10 @@ The output contains multiple lines with the following format:
     **New in 3.4.0:** Tests if
     server is running in read-only mode.  The server will respond with
     "ro" if in read-only mode or "rw" if not in read-only mode.
+
+* *hash* :
+    **New in 3.6.0:**
+    Return the latest history of the tree digest associated with zxid.
 
 * *gtmk* :
     Gets the current trace mask as a 64-bit signed long value in

@@ -23,6 +23,7 @@ import java.util.Date;
 import org.apache.jute.BinaryInputArchive;
 import org.apache.zookeeper.Version;
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
+import org.apache.zookeeper.server.quorum.CommitProcessor;
 
 /**
  * This class implements the ZooKeeper server MBean interface.
@@ -278,6 +279,18 @@ public class ZooKeeperServerBean implements ZooKeeperServerMXBean, ZKMBeanInfo {
     public void setConnectionDecreaseRatio(double val) {
         zks.connThrottle().setDecreasePoint(val);
     }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    public int getCommitProcMaxReadBatchSize() { return CommitProcessor.getMaxReadBatchSize(); }
+
+    public void setCommitProcMaxReadBatchSize(int size) { CommitProcessor.setMaxReadBatchSize(size); }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    public int getCommitProcMaxCommitBatchSize() { return CommitProcessor.getMaxCommitBatchSize(); }
+
+    public void setCommitProcMaxCommitBatchSize(int size) { CommitProcessor.setMaxCommitBatchSize(size);}
 
     ///////////////////////////////////////////////////////////////////////////
 

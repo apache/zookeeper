@@ -76,6 +76,12 @@ public class ObserverRequestProcessor extends ZooKeeperCriticalThread implements
                 if (request == Request.requestOfDeath) {
                     break;
                 }
+
+                // Screen quorum requests against ACLs first
+                if (!zks.authWriteRequest(request)) {
+                    continue;
+                }
+
                 // We want to queue the request to be processed before we submit
                 // the request to the leader so that we are ready to receive
                 // the response

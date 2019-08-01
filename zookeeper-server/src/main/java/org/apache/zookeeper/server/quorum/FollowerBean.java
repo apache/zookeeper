@@ -62,4 +62,32 @@ public class FollowerBean extends ZooKeeperServerBean implements FollowerMXBean 
     public void setObserverMasterPacketSizeLimit(int sizeLimit) {
         ObserverMaster.setPktsSizeLimit(sizeLimit);
     }
+
+    @Override
+    public int getMaxConcurrentSnapSyncs() {
+        final ObserverMaster om = follower.om;
+        return om == null ? -1 : om.getMaxConcurrentSnapSyncs();
+    }
+
+    @Override
+    public void setMaxConcurrentSnapSyncs(int maxConcurrentSnapshots) {
+        final ObserverMaster om = follower.om;
+        if (om != null) {
+            om.setMaxConcurrentSnapSyncs(maxConcurrentSnapshots);
+        }
+    }
+
+    @Override
+    public int getMaxConcurrentDiffSyncs() {
+        final ObserverMaster om = follower.om;
+        return om == null ? -1 : om.getMaxConcurrentDiffSyncs();
+    }
+
+    @Override
+    public void setMaxConcurrentDiffSyncs(int maxConcurrentDiffSyncs) {
+        final ObserverMaster om = follower.om;
+        if (om != null) {
+            om.setMaxConcurrentDiffSyncs(maxConcurrentDiffSyncs);
+        }
+    }
 }

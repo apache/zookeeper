@@ -90,6 +90,10 @@ public class FileSnap implements SnapShot {
                 InputArchive ia = BinaryInputArchive.getArchive(snapIS);
                 deserialize(dt, sessions, ia);
                 SnapStream.checkSealIntegrity(snapIS, ia);
+                if (dt.deserializeZxidDigest(ia)) {
+                    SnapStream.checkSealIntegrity(snapIS, ia);
+                }
+
                 foundValid = true;
                 break;
             } catch (IOException e) {
@@ -101,6 +105,12 @@ public class FileSnap implements SnapShot {
         }
         dt.lastProcessedZxid = Util.getZxidFromName(snap.getName(), SNAPSHOT_FILE_PREFIX);
         lastSnapshotInfo = new SnapshotInfo(dt.lastProcessedZxid, snap.lastModified() / 1000);
+
+        // compare the digest if this is not a fuzzy snapshot, we want to compare
+        // and find inconsistent asap.
+        if (dt.getDigestFromLoadedSnapshot() != null) {
+            dt.compareSnapshotDigests(dt.lastProcessedZxid);
+        }
         return dt.lastProcessedZxid;
     }
 
@@ -226,10 +236,39 @@ public class FileSnap implements SnapShot {
                 FileHeader header = new FileHeader(SNAP_MAGIC, VERSION, dbId);
                 serialize(dt, sessions, oa, header);
                 SnapStream.sealStream(snapOS, oa);
+
+                // Digest feature was added after the CRC to make it backward
+                // compatible, the older code cal still read snapshots which 
+                // includes digest.
+                //
+                // To check the intact, after adding digest we added another
+                // CRC check.
+                if (dt.serializeZxidDigest(oa)) {
+                    SnapStream.sealStream(snapOS, oa);
+                }
+
                 lastSnapshotInfo = new SnapshotInfo(
                         Util.getZxidFromName(snapShot.getName(), SNAPSHOT_FILE_PREFIX),
                         snapShot.lastModified() / 1000);
             }
+        }
+    }
+
+    private void writeChecksum(CheckedOutputStream crcOut, OutputArchive oa) 
+            throws IOException {
+        long val = crcOut.getChecksum().getValue();
+        oa.writeLong(val, "val");
+        oa.writeString("/", "path");
+    }
+
+    private void checkChecksum(CheckedInputStream crcIn, InputArchive ia)
+            throws IOException {
+        long checkSum = crcIn.getChecksum().getValue();
+        long val = ia.readLong("val");
+        // read and ignore "/" written by writeChecksum
+        ia.readString("path");
+        if (val != checkSum) {
+            throw new IOException("CRC corruption");
         }
     }
 

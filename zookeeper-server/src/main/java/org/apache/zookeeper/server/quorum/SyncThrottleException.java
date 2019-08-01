@@ -19,21 +19,23 @@
 package org.apache.zookeeper.server.quorum;
 
 /**
- * Thrown when a {@link Leader} has too many concurrent snapshots being sent
+ * Thrown when a {@link Leader} has too many concurrent syncs being sent
  * to observers.
- * 
- * @see LearnerSnapshotThrottler
+ *
+ * @see LearnerSyncThrottler
  *
  */
-public class SnapshotThrottleException extends Exception {
+public class SyncThrottleException extends Exception {
     private static final long serialVersionUID = 1L;
 
-    public SnapshotThrottleException(int concurrentSnapshotNumber, int throttleThreshold) {
-        super(getMessage(concurrentSnapshotNumber, throttleThreshold));
+    public SyncThrottleException(int concurrentSyncNumber, int throttleThreshold,
+                                 LearnerSyncThrottler.SyncType syncType) {
+        super(getMessage(concurrentSyncNumber, throttleThreshold, syncType));
     }
 
-    private static String getMessage(int concurrentSnapshotNumber, int throttleThreshold) {
-        return String.format("new snapshot would make %d concurrently in progress; " +
-                "maximum is %d", concurrentSnapshotNumber, throttleThreshold);
+    private static String getMessage(int concurrentSyncNumber, int throttleThreshold,
+                                     LearnerSyncThrottler.SyncType syncType) {
+        return String.format("new %s sync would make %d concurrently in progress; maximum is %d",
+                syncType.toString().toLowerCase(), concurrentSyncNumber, throttleThreshold);
     }
 }

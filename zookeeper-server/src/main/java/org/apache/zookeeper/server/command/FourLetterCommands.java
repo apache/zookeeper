@@ -151,6 +151,13 @@ public class FourLetterCommands {
             .getInt();
 
     /*
+     * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
+     * Zk Admin</a>. this link is for all the commands.
+     */
+    protected final static int hashCmd =
+        ByteBuffer.wrap("hash".getBytes()).getInt();
+
+    /*
      * The control sequence sent by the telnet program when it closes a
      * connection. Include simply to keep the logs cleaner (the server would
      * close the connection anyway because it would parse this as a negative
@@ -256,5 +263,6 @@ public class FourLetterCommands {
         cmd2String.put(mntrCmd, "mntr");
         cmd2String.put(isroCmd, "isro");
         cmd2String.put(telnetCloseCmd, "telnet close");
+        cmd2String.put(hashCmd, "hash");
     }
 }

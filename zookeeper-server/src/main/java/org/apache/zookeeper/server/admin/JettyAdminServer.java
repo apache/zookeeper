@@ -19,22 +19,26 @@
 package org.apache.zookeeper.server.admin;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.zookeeper.common.*;
 import org.apache.zookeeper.server.ZooKeeperServer;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.http.HttpVersion;
+import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,6 +63,8 @@ public class JettyAdminServer implements AdminServer {
     public static final int DEFAULT_IDLE_TIMEOUT = 30000;
     public static final String DEFAULT_COMMAND_URL = "/commands";
     private static final String DEFAULT_ADDRESS = "0.0.0.0";
+    public static final int DEFAULT_STS_MAX_AGE = 1 * 24 * 60 * 60;  // seconds in a day
+    public static final int DEFAULT_HTTP_VERSION = 11;  // based on HttpVersion.java in jetty
 
     private final Server server;
     private final String address;
@@ -67,24 +73,75 @@ public class JettyAdminServer implements AdminServer {
     private final String commandUrl;
     private ZooKeeperServer zkServer;
 
-    public JettyAdminServer() throws AdminServerException {
+    public JettyAdminServer() throws AdminServerException, IOException, GeneralSecurityException {
         this(System.getProperty("zookeeper.admin.serverAddress", DEFAULT_ADDRESS),
              Integer.getInteger("zookeeper.admin.serverPort", DEFAULT_PORT),
              Integer.getInteger("zookeeper.admin.idleTimeout", DEFAULT_IDLE_TIMEOUT),
-             System.getProperty("zookeeper.admin.commandURL", DEFAULT_COMMAND_URL));
+             System.getProperty("zookeeper.admin.commandURL", DEFAULT_COMMAND_URL),
+             Integer.getInteger("zookeeper.admin.httpVersion", DEFAULT_HTTP_VERSION),
+             Boolean.getBoolean("zookeeper.admin.portUnification"));
     }
 
-    public JettyAdminServer(String address, int port, int timeout, String commandUrl) {
+    public JettyAdminServer(String address,
+                            int port,
+                            int timeout,
+                            String commandUrl,
+                            int httpVersion,
+                            boolean portUnification) throws IOException, GeneralSecurityException {
         this.port = port;
         this.idleTimeout = timeout;
         this.commandUrl = commandUrl;
         this.address = address;
 
         server = new Server();
-        ServerConnector connector = new ServerConnector(server);
+        ServerConnector connector = null;
+
+        if (!portUnification) {
+            connector = new ServerConnector(server);
+        } else {
+            SecureRequestCustomizer customizer = new SecureRequestCustomizer();
+            customizer.setStsMaxAge(DEFAULT_STS_MAX_AGE);
+            customizer.setStsIncludeSubDomains(true);
+
+            HttpConfiguration config = new HttpConfiguration();
+            config.setSecureScheme("https");
+            config.addCustomizer(customizer);
+
+            try (QuorumX509Util x509Util = new QuorumX509Util()) {
+                String privateKeyType = System.getProperty(x509Util.getSslKeystoreTypeProperty(), "");
+                String privateKeyPath = System.getProperty(x509Util.getSslKeystoreLocationProperty(), "");
+                String privateKeyPassword = System.getProperty(x509Util.getSslKeystorePasswdProperty(), "");
+                String certAuthType = System.getProperty(x509Util.getSslTruststoreTypeProperty(), "");
+                String certAuthPath = System.getProperty(x509Util.getSslTruststoreLocationProperty(), "");
+                String certAuthPassword = System.getProperty(x509Util.getSslTruststorePasswdProperty(), "");
+                KeyStore keyStore = null, trustStore = null;
+
+                try {
+                    keyStore = X509Util.loadKeyStore(privateKeyPath, privateKeyPassword, privateKeyType);
+                    trustStore = X509Util.loadTrustStore(certAuthPath, certAuthPassword, certAuthType);
+                    LOG.info("Successfully loaded private key from " + privateKeyPath);
+                    LOG.info("Successfully loaded certificate authority from " + certAuthPath);
+                } catch (Exception e) {
+                    LOG.error("Failed to load authentication certificates for admin server: " + e);
+                    throw e;
+                }
+
+                SslContextFactory sslContextFactory = new SslContextFactory.Server();
+                sslContextFactory.setKeyStore(keyStore);
+                sslContextFactory.setKeyStorePassword(privateKeyPassword);
+                sslContextFactory.setTrustStore(trustStore);
+                sslContextFactory.setTrustStorePassword(certAuthPassword);
+
+                connector = new ServerConnector(server,
+                        new UnifiedConnectionFactory(sslContextFactory, HttpVersion.fromVersion(httpVersion).asString()),
+                        new HttpConnectionFactory(config));
+            }
+        }
+
         connector.setHost(address);
         connector.setPort(port);
         connector.setIdleTimeout(idleTimeout);
+
         server.addConnector(connector);
 
         ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);

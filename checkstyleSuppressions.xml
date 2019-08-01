@@ -18,8 +18,9 @@
 
 <suppressions>
     <!-- suppress all checks in the generated directories -->
+    <suppress checks=".*" files=".+[\\/]classes[\\/].+\.java" />
     <suppress checks=".*" files=".+[\\/]generated[\\/].+\.java" />
     <suppress checks=".*" files=".+[\\/]generated-sources[\\/].+\.java" />
     <suppress checks=".*" files=".+[\\/]generated-test-sources[\\/].+\.java" />
-
+    <suppress checks="LineLength" files=".+[\\/]jute[\\/].+\.java"/>
 </suppressions>

@@ -619,15 +619,10 @@ public class QuorumCnxManager {
              /*
               * Start a new connection if doesn't have one already.
               */
-             ArrayBlockingQueue<ByteBuffer> bq = new ArrayBlockingQueue<ByteBuffer>(
-                SEND_CAPACITY);
-             ArrayBlockingQueue<ByteBuffer> oldq = queueSendMap.putIfAbsent(sid, bq);
-             if (oldq != null) {
-                 addToSendQueue(oldq, b);
-             } else {
-                 addToSendQueue(bq, b);
-             }
-             connectOne(sid);
+            ArrayBlockingQueue<ByteBuffer> bq = queueSendMap.computeIfAbsent(sid,
+                    serverId -> new ArrayBlockingQueue<>(SEND_CAPACITY));
+            addToSendQueue(bq, b);
+            connectOne(sid);
 
         }
     }

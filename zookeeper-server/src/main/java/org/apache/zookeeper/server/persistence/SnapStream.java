@@ -164,6 +164,7 @@ public class SnapStream {
             throws IOException {
         long checkSum = is.getChecksum().getValue();
         long val = ia.readLong("val");
+        ia.readString("path");  // Read and ignore "/" written by SealStream.
         if (val != checkSum) {
             throw new IOException("CRC corruption");
         }

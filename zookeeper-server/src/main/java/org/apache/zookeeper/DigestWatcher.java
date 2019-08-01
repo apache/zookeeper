@@ -16,29 +16,17 @@
  * limitations under the License.
  */
 
-package org.apache.zookeeper.server.quorum;
+package org.apache.zookeeper;
 
-public class LearnerSnapshot {
-    private final LearnerSnapshotThrottler throttler;
-    private final int concurrentSnapshotNumber;
-    private final boolean essential;
+/**
+ * This interface is used to notify the digest mismatch event.
+ */
+public interface DigestWatcher {
 
-    LearnerSnapshot(LearnerSnapshotThrottler throttler, 
-            int concurrentSnapshotNumber, boolean essential) {
-        this.throttler = throttler;
-        this.concurrentSnapshotNumber = concurrentSnapshotNumber;
-        this.essential = essential;
-    }
-
-    public void close() {
-        throttler.endSnapshot();
-    }
-
-    public int getConcurrentSnapshotNumber() {
-        return concurrentSnapshotNumber;
-    }
-    
-    public boolean isEssential() {
-        return essential;
-    }
+    /**
+     * Called when the digest mismatch is found on a given zxid.
+     *
+     * @param mismatchZxid the zxid when the digest mismatch happened. 
+     */
+    void process(long mismatchZxid);
 }
