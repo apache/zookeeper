@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -22,18 +22,20 @@ package org.apache.jute.compiler;
  *
  */
 public class JFloat extends JType {
-    
-    /** Creates a new instance of JFloat */
+
+    /**
+     * Creates a new instance of JFloat.
+     */
     public JFloat() {
         super("float", "float", "float", "float", "Float", "Float", "float", "toFloat");
     }
-    
+
     public String getSignature() {
         return "f";
     }
-    
+
     public String genJavaHashCode(String fname) {
-        return "    ret = Float.floatToIntBits("+fname+");\n";
+        return "    ret = Float.floatToIntBits(" + fname + ");\n";
     }
 
 }

@@ -120,6 +120,12 @@ public interface ZooKeeperServerMXBean {
     public double getConnectionDecreaseRatio();
     public void setConnectionDecreaseRatio(double val);
 
+    public int getCommitProcMaxReadBatchSize();
+    public void setCommitProcMaxReadBatchSize(int size);
+
+    public int getCommitProcMaxCommitBatchSize();
+    public void setCommitProcMaxCommitBatchSize(int size);
+
     public int getRequestThrottleLimit();
     public void setRequestThrottleLimit(int requests);
 
