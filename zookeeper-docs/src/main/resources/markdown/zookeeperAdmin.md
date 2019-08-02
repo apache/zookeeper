@@ -1089,7 +1089,7 @@ As an example, this will enable all four letter word commands:
     keepalive for more information.  Defaults to
     **false**.
     
-* *zookeeper.electionPortBindRetry* :
+* *electionPortBindRetry* :
     (Java system property only: **zookeeper.electionPortBindRetry**)
     Property set max retry count when Zookeeper server fails to bind 
     leader election port. Such errors can be temporary and recoverable, 
