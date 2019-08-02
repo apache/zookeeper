@@ -316,9 +316,7 @@ public class CnxManagerTest extends ZKTestCase {
         // QuorumPeer should start shutdown process
         listener.join(15000); // set wait time, if listener contains bug and thread not stops.
         Assert.assertFalse(listener.isAlive());
-        Assert.assertFalse(peer.isRunning());
         Assert.assertTrue(errorHappend.get());
-        peer.join(15000);
         Assert.assertFalse(QuorumPeer.class.getSimpleName() + " not stopped after "
                            + "listener thread death", listener.isAlive());
     }
