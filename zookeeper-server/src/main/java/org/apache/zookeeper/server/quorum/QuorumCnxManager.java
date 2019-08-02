@@ -875,7 +875,9 @@ public class QuorumCnxManager {
             }
         }
 
-        // VisibleForTesting
+        /**
+         * Change socket bind error handler. Used for testing.
+         */
         void setSocketBindErrorHandler(Runnable errorHandler) {
             this.socketBindErrorHandler = errorHandler;
         }
@@ -970,7 +972,7 @@ public class QuorumCnxManager {
                     // After leaving listener thread, the host cannot join the
                     // quorum anymore, this is a severe error that we cannot
                     // recover from, so we need to exit
-                    System.exit(ExitCode.UNABLE_TO_BIND_QUORUM_PORT.getValue());
+                    socketBindErrorHandler.run();
                 }
             } else if (ss != null) {
                 // Clean up for shutdown.
