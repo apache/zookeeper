@@ -51,6 +51,7 @@ archives.
     + [Dynamic Reconfiguration](zookeeperReconfig.html) - a guide on how to use dynamic reconfiguration in ZooKeeper
     + [ZooKeeper CLI](zookeeperCLI.html) - a guide on how to use the ZooKeeper command line interface
     + [ZooKeeper Tools](zookeeperTools.html) - a guide on how to use a series of tools for ZooKeeper
+    + [ZooKeeper Monitor](zookeeperMonitor.html) - a guide on how to monitor the ZooKeeper
 + **Contributors**
     Documents for Developers Contributing to the ZooKeeper Open Source Project
     + [ZooKeeper Internals](zookeeperInternals.html) - assorted topics on the inner workings of ZooKeeper
