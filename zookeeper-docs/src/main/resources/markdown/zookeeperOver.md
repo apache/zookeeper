@@ -160,8 +160,10 @@ synchronization, it provides a set of guarantees. These are:
   in the order that they were sent.
 * Atomicity - Updates either succeed or fail. No partial
   results.
-* Single System Image - Once connected, a client will see the same 
-  view of the service even if it switches to another server.
+* Single System Image - A client will see the same view of the
+  service regardless of the server that it connects to. i.e., a
+  client will never see an older view of the system even if the
+  client fails over to a different server with the same session.
 * Reliability - Once an update has been applied, it will persist
   from that time forward until a client overwrites the update.
 * Timeliness - The clients view of the system is guaranteed to
