@@ -69,9 +69,9 @@ public final class FileChangeWatcher {
     public FileChangeWatcher(Path dirPath, Consumer<WatchEvent<?>> callback) throws IOException {
         FileSystem fs = dirPath.getFileSystem();
         WatchService watchService = fs.newWatchService();
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Registering with watch service: " + dirPath);
-        }
+
+        LOG.debug("Registering with watch service: {}", dirPath);
+
         dirPath.register(
                 watchService,
                 new WatchEvent.Kind<?>[]{
@@ -223,15 +223,12 @@ public final class FileChangeWatcher {
                 try {
                     key = watchService.take();
                 } catch (InterruptedException|ClosedWatchServiceException e) {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug(getName() + " was interrupted and is shutting down ...");
-                    }
+                    LOG.debug("{} was interrupted and is shutting down...", getName());
                     break;
                 }
                 for (WatchEvent<?> event : key.pollEvents()) {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Got file changed event: " + event.kind() + " with context: " + event.context());
-                    }
+                    LOG.debug("Got file changed event: {} with context: {}", event.kind(),
+                        event.context());
                     try {
                         callback.accept(event);
                     } catch (Throwable e) {

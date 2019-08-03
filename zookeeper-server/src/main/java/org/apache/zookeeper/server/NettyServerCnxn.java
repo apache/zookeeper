@@ -371,9 +371,8 @@ public class NettyServerCnxn extends ServerCnxn {
                 // Have to check !closingChannel, because an error in
                 // receiveMessage() could have led to close() being called.
                 if (!closingChannel && buf.isReadable()) {
-                    if (LOG.isTraceEnabled()) {
-                        LOG.trace("Before copy {}", buf);
-                    }
+                    LOG.trace("Before copy {}", buf);
+
                     if (queuedBuffer == null) {
                         queuedBuffer = channel.alloc().compositeBuffer();
                     }
@@ -488,10 +487,8 @@ public class NettyServerCnxn extends ServerCnxn {
                             // we could implement zero-copy queueing.
                             zks.processPacket(this, bb);
                         } else {
-                            if (LOG.isDebugEnabled()) {
-                                LOG.debug("got conn req request from {}",
-                                        getRemoteSocketAddress());
-                            }
+                            LOG.debug("got conn req request from {}",
+                                getRemoteSocketAddress());
                             zks.processConnectRequest(this, bb);
                             initialized = true;
                         }
@@ -548,9 +545,8 @@ public class NettyServerCnxn extends ServerCnxn {
         } catch(ClientCnxnLimitException e) {
             // Common case exception, print at debug level
             ServerMetrics.getMetrics().CONNECTION_REJECTED.add(1);
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Closing connection to " + getRemoteSocketAddress(), e);
-            }
+
+            LOG.debug("Closing connection to " + getRemoteSocketAddress(), e);
             close(DisconnectReason.CLIENT_RATE_LIMIT);
         }
     }
@@ -573,9 +569,7 @@ public class NettyServerCnxn extends ServerCnxn {
     @Override
     public void disableRecv(boolean waitDisableRecv) {
         if (throttled.compareAndSet(false, true)) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Throttling - disabling recv {}", this);
-            }
+            LOG.debug("Throttling - disabling recv {}", this);
             channel.pipeline().fireUserEventTriggered(ReadEvent.DISABLE);
         }
     }
@@ -583,9 +577,7 @@ public class NettyServerCnxn extends ServerCnxn {
     @Override
     public void enableRecv() {
         if (throttled.compareAndSet(true, false)) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Sending unthrottle event {}", this);
-            }
+            LOG.debug("Sending unthrottle event {}", this);
             channel.pipeline().fireUserEventTriggered(ReadEvent.ENABLE);
         }
     }

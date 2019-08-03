@@ -356,10 +356,7 @@ public class FastLeaderElection implements Election {
                             sendqueue.offer(notmsg);
                         } else {
                             // Receive new message
-                            if (LOG.isDebugEnabled()) {
-                                LOG.debug("Receive new notification message. My id = "
-                                        + self.getId());
-                            }
+                            LOG.debug("Receive new notification message. My id = {}", self.getId());
 
                             // State of peer that sent this message
                             QuorumPeer.ServerState ackstate = QuorumPeer.ServerState.LOOKING;
@@ -726,8 +723,12 @@ public class FastLeaderElection implements Election {
      *
      */
     protected boolean totalOrderPredicate(long newId, long newZxid, long newEpoch, long curId, long curZxid, long curEpoch) {
-        LOG.debug("id: " + newId + ", proposed id: " + curId + ", zxid: 0x" +
-                Long.toHexString(newZxid) + ", proposed zxid: 0x" + Long.toHexString(curZxid));
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("id: " + newId + ", proposed id: " + curId + ", zxid: 0x"
+                + Long.toHexString(newZxid) + ", proposed zxid: 0x"
+                + Long.toHexString(curZxid));
+        }
+
         if(self.getQuorumVerifier().getWeight(newId) == 0){
             return false;
         }
@@ -836,11 +837,11 @@ public class FastLeaderElection implements Election {
      */
     private ServerState learningState(){
         if(self.getLearnerType() == LearnerType.PARTICIPANT){
-            LOG.debug("I'm a participant: " + self.getId());
+            LOG.debug("I am a participant: {}", self.getId());
             return ServerState.FOLLOWING;
         }
         else{
-            LOG.debug("I'm an observer: " + self.getId());
+            LOG.debug("I am an observer: {}", self.getId());
             return ServerState.OBSERVING;
         }
     }
@@ -975,7 +976,7 @@ public class FastLeaderElection implements Election {
                             break;
                         }
                         if (n.zxid == -1) {
-                            LOG.debug("Ignoring notification from member with -1 zxid" + n.sid);
+                            LOG.debug("Ignoring notification from member with -1 zxid {}", n.sid);
                             break;
                         }
                         // If notification > current, replace and send messages out
@@ -1045,7 +1046,7 @@ public class FastLeaderElection implements Election {
                         }
                         break;
                     case OBSERVING:
-                        LOG.debug("Notification from observer: " + n.sid);
+                        LOG.debug("Notification from observer: {}", n.sid);
                         break;
                     case FOLLOWING:
                     case LEADING:

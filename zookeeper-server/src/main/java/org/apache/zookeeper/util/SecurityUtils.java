@@ -124,7 +124,7 @@ public final class SecurityUtils {
                                 LOG.info("{} will use GSSAPI as SASL mechanism.", entity);
                                 String[] mechs = { "GSSAPI" };
                                 LOG.debug("creating sasl client: {}={};service={};serviceHostname={}",
-                                        new Object[] { entity, clientPrincipalName, serviceName, serviceHostname });
+                                        entity, clientPrincipalName, serviceName, serviceHostname);
                                 SaslClient saslClient = Sasl.createSaslClient(
                                         mechs, clientPrincipalName, serviceName,
                                         serviceHostname, null,
@@ -188,10 +188,9 @@ public final class SecurityUtils {
                     // subject is non-null, it can be assumed to be GSSAPI.
                     final String mech = "GSSAPI";
 
-                    LOG.debug("serviceHostname is '" + serviceHostname + "'");
-                    LOG.debug("servicePrincipalName is '" + servicePrincipalName
-                            + "'");
-                    LOG.debug("SASL mechanism(mech) is '" + mech + "'");
+                    LOG.debug("serviceHostname is '{}'", serviceHostname);
+                    LOG.debug("servicePrincipalName is '{}'", servicePrincipalName);
+                    LOG.debug("SASL mechanism(mech) is '{}'", mech);
 
                     boolean usingNativeJgss = Boolean
                             .getBoolean("sun.security.jgss.native");

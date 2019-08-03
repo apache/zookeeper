@@ -1050,10 +1050,8 @@ public class ClientCnxn {
             outgoingQueue.addFirst(new Packet(null, null, conReq,
                     null, null, readOnly));
             clientCnxnSocket.connectionPrimed();
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Session establishment request sent on "
-                        + clientCnxnSocket.getRemoteSocketAddress());
-            }
+            LOG.debug("Session establishment request sent on {}",
+                        clientCnxnSocket.getRemoteSocketAddress());
         }
 
         private List<String> prependChroot(List<String> paths) {

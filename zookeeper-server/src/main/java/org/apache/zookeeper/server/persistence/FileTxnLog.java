@@ -723,10 +723,10 @@ public class FileTxnLog implements TxnLog {
         protected InputArchive createInputArchive(File logFile) throws IOException {
             if(inputStream==null){
                 inputStream= new PositionInputStream(new BufferedInputStream(new FileInputStream(logFile)));
-                LOG.debug("Created new input stream " + logFile);
+                LOG.debug("Created new input stream: {}", logFile);
                 ia  = BinaryInputArchive.getArchive(inputStream);
                 inStreamCreated(ia,inputStream);
-                LOG.debug("Created new input archive " + logFile);
+                LOG.debug("Created new input archive: {}", logFile);
             }
             return ia;
         }
@@ -764,7 +764,7 @@ public class FileTxnLog implements TxnLog {
                 hdr = new TxnHeader();
                 record = SerializeUtils.deserializeTxn(bytes, hdr);
             } catch (EOFException e) {
-                LOG.debug("EOF exception " + e);
+                LOG.debug("EOF exception", e);
                 inputStream.close();
                 inputStream = null;
                 ia = null;

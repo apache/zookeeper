@@ -1434,7 +1434,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
            LOG.debug("PeerState set to OBSERVER");
        } else { // currently shouldn't happen since there are only 2 learner types
            setPeerState(ServerState.LOOKING);
-           LOG.debug("Shouldn't be here");
+           LOG.debug("Should not be here");
        }       
        reconfigFlag = false;   
     }
@@ -1771,8 +1771,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             if ((quorumVerifier != null) && (quorumVerifier.getVersion() >= qv.getVersion())) {
                 // this is normal. For example - server found out about new config through FastLeaderElection gossiping
                 // and then got the same config in UPTODATE message so its already known
-                LOG.debug(getId() + " setQuorumVerifier called with known or old config " + qv.getVersion() +
-                        ". Current version: " + quorumVerifier.getVersion());
+                  LOG.debug("{} setQuorumVerifier called with known or old config {}."
+                          + " Current version: {}", getId(), qv.getVersion(),
+                          quorumVerifier.getVersion());
                 return quorumVerifier;
             }
             QuorumVerifier prevQV = quorumVerifier;

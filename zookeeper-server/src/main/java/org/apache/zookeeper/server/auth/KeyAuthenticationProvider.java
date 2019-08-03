@@ -108,7 +108,9 @@ public class KeyAuthenticationProvider extends ServerAuthenticationProvider {
                     // empty key
                     keyStr = authStr;
                 }
-                LOG.debug("KeyAuthenticationProvider handleAuthentication ("+keyStr+", "+authStr+") -> FAIL.\n");
+                LOG.debug(
+                    "KeyAuthenticationProvider handleAuthentication ({}, {}) -> FAIL.\n",
+                    keyStr, authStr);
                 return KeeperException.Code.AUTHFAILED;
             }
         }

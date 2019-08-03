@@ -232,9 +232,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             LOG.warn("Exception caught", cause);
             NettyServerCnxn cnxn = ctx.channel().attr(CONNECTION_ATTRIBUTE).getAndSet(null);
             if (cnxn != null) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Closing {}", cnxn);
-                }
+                LOG.debug("Closing {}", cnxn);
                 cnxn.close(ServerCnxn.DisconnectReason.CHANNEL_CLOSED_EXCEPTION);
             }
         }
@@ -256,9 +254,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                                 // trigger a read if we have consumed all
                                 // backlog
                                 ctx.read();
-                                if (LOG.isDebugEnabled()) {
-                                    LOG.debug("Issued a read after queuedBuffer drained");
-                                }
+                                LOG.debug("Issued a read after queuedBuffer drained");
                             }
                         }
                     }
@@ -277,13 +273,9 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
             try {
-                if (LOG.isTraceEnabled()) {
-                    LOG.trace("message received called {}", msg);
-                }
+                LOG.trace("message received called {}", msg);
                 try {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("New message {} from {}", msg, ctx.channel());
-                    }
+                    LOG.debug("New message {} from {}", msg, ctx.channel());
                     NettyServerCnxn cnxn = ctx.channel().attr(CONNECTION_ATTRIBUTE).get();
                     if (cnxn == null) {
                         LOG.error("channelRead() on a closed or closing NettyServerCnxn");
@@ -306,10 +298,8 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                 if (cnxn != null && cnxn.getQueuedReadableBytes() == 0 &&
                         cnxn.readIssuedAfterReadComplete == 0) {
                     ctx.read();
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Issued a read since we don't have " +
-                                "anything to consume after channelReadComplete");
-                    }
+                        LOG.debug("Issued a read since we do not have " +
+                            "anything to consume after channelReadComplete");
                 }
             }
 
@@ -320,7 +310,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         // Note: this listener is only added when LOG.isTraceEnabled() is true,
         // so it should not do any work other than trace logging.
         private final GenericFutureListener<Future<Void>> onWriteCompletedTracer = (f) -> {
-            LOG.trace("write {}", f.isSuccess() ? "complete" : "failed");
+            LOG.trace("write success: {}", f.isSuccess());
         };
 
         @Override
@@ -534,9 +524,8 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
 
     @Override
     public void closeAll(ServerCnxn.DisconnectReason reason) {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("closeAll()");
-        }
+        LOG.debug("closeAll()");
+
         // clear all the connections on which we are selecting
         int length = cnxns.size();
         for (ServerCnxn cnxn : cnxns) {
@@ -548,10 +537,9 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                          + Long.toHexString(cnxn.getSessionId()), e);
             }
         }
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("allChannels size:" + allChannels.size() + " cnxns size:"
-                    + length);
-        }
+
+        LOG.debug("allChannels size: {} cnxns size: {}", allChannels.size(),
+            length);
     }
 
     @Override
@@ -656,7 +644,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         // Port changes after bind() if the original port was 0, update
         // localAddress to get the real port.
         localAddress = (InetSocketAddress) parentChannel.localAddress();
-        LOG.info("bound to port " + getLocalPort());
+        LOG.info("bound to port {}", getLocalPort());
     }
     
     public void reconfigure(InetSocketAddress addr) {
@@ -667,7 +655,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
            // Port changes after bind() if the original port was 0, update
            // localAddress to get the real port.
            localAddress = (InetSocketAddress) parentChannel.localAddress();
-           LOG.info("bound to port " + getLocalPort());
+           LOG.info("bound to port {}", getLocalPort());
        } catch (Exception e) {
            LOG.error("Error while reconfiguring", e);
        } finally {

@@ -405,7 +405,7 @@ public class ZooKeeperMain {
         }
         
         boolean watch = false;
-        LOG.debug("Processing " + cmd);
+        LOG.debug("Processing {}", cmd);
 
 
         if (cmd.equals("quit")) {
