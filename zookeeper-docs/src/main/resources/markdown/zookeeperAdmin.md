@@ -1905,6 +1905,8 @@ Available commands include:
 
 * *connections/cons* :
     Information on client connections to server.
+    Note, depending on the number of client connections this operation may be expensive
+    (i.e. impact server performance).
     Returns "connections", a list of connection info objects.
 
 * *hash*:
@@ -1918,8 +1920,10 @@ Available commands include:
     Returns "datadir_size" and "logdir_size".
 
 * *dump* :
-    Information on session expirations and ephemerals via two maps.
-    Returns "expiry_time_to_session_ids" and "session_id_to_ephemeral_paths".
+    Information on session expirations and ephemerals.
+    Note, depending on the number of global sessions and ephemerals
+    this operation may be expensive (i.e. impact server performance).
+    Returns "expiry_time_to_session_ids" and "session_id_to_ephemeral_paths" as maps.
 
 * *environment/env/envi* :
     All defined environment variables.
@@ -1980,7 +1984,10 @@ Available commands include:
     Returns multiple fields giving a brief overview of server state.
 
 * *stats/stat* :
-    Same as *server_stats* but also returns "connections" field.
+    Same as *server_stats* but also returns the "connections" field (see *connections*
+    for details).
+    Note, depending on the number of client connections this operation may be expensive
+    (i.e. impact server performance).
 
 * *stat_reset/srst* :
     Resets server statistics. This is a subset of the information returned
@@ -2003,12 +2010,14 @@ Available commands include:
 
 * *watches/wchc* :
     Watch information aggregated by session.
-    Depending on the number of watches this operation may be expensive.
+    Note, depending on the number of watches this operation may be expensive
+    (i.e. impact server performance).
     Returns "session_id_to_watched_paths" as a map.
 
 * *watches_by_path/wchp* :
     Watch information aggregated by path.
-    Depending on the number of watches this operation may be expensive.
+    Note, depending on the number of watches this operation may be expensive
+    (i.e. impact server performance).
     Returns "path_to_session_ids" as a map.
 
 * *watch_summary/wchs* :
