@@ -46,6 +46,7 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
     CountDownLatch requestProcessed = null;
     CountDownLatch commitSeen = null;
     CountDownLatch poolEmpytied = null;
+    CountDownLatch requestIntoFinal = null;
 
     @Before
     public void setup() {
@@ -152,6 +153,9 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
         public void processRequest(Request request) {
             if (processTime > 0) {
                 try {
+                    if (requestIntoFinal != null){
+                        requestIntoFinal.countDown();
+                    }
                     if (commitSeen != null) {
                         commitSeen.await(5, TimeUnit.SECONDS);
                     }
@@ -377,9 +381,11 @@ public class CommitProcessorMetricsTest extends ZKTestCase {
 
         //three read requests will be processed in parallel
         commitSeen = new CountDownLatch(1);
+        requestIntoFinal = new CountDownLatch(3);
         commitProcessor.processRequest(createReadRequest(1l, 2));
         commitProcessor.processRequest(createReadRequest(1l, 3));
         commitProcessor.processRequest(createReadRequest(1l, 4));
+        requestIntoFinal.await(5, TimeUnit.SECONDS);
 
         //add a commit request to trigger waitForEmptyPool, which will record number of requests being proccessed
         poolEmpytied = new CountDownLatch(1);
