@@ -1724,8 +1724,7 @@ Moving forward, Four Letter Words will be deprecated, please use
     connection/session statistics for all connections.
 
 * *dump* :
-    Lists the outstanding sessions and ephemeral nodes. This
-    only works on the leader.
+    Lists the outstanding sessions and ephemeral nodes.
 
 * *envi* :
     Print details about serving environment
@@ -1898,6 +1897,144 @@ The AdminServer is enabled by default, but can be disabled by either:
 
 Note that the TCP four letter word interface is still available if
 the AdminServer is disabled.
+
+Available commands include:
+
+* *connection_stat_reset/crst*:
+    Reset all client connection statistics.
+    No new fields returned.
+
+* *configuration/conf/config* :
+    Print basic details about serving configuration, e.g.
+    client port, absolute path to data directory.
+
+* *connections/cons* :
+    Information on client connections to server.
+    Note, depending on the number of client connections this operation may be expensive
+    (i.e. impact server performance).
+    Returns "connections", a list of connection info objects.
+
+* *hash*:
+    Txn digests in the historical digest list.
+    One is recorded every 128 transactions.
+    Returns "digests", a list to transaction digest objects.
+
+* *dirs* :
+    Information on logfile directory and snapshot directory
+    size in bytes.
+    Returns "datadir_size" and "logdir_size".
+
+* *dump* :
+    Information on session expirations and ephemerals.
+    Note, depending on the number of global sessions and ephemerals
+    this operation may be expensive (i.e. impact server performance).
+    Returns "expiry_time_to_session_ids" and "session_id_to_ephemeral_paths" as maps.
+
+* *environment/env/envi* :
+    All defined environment variables.
+    Returns each as its own field.
+
+* *get_trace_mask/gtmk* :
+    The current trace mask. Read-only version of *set_trace_mask*.
+    See the description of the four letter command *stmk* for
+    more details.
+    Returns "tracemask".
+
+* *initial_configuration/icfg* :
+    Print the text of the configuration file used to start the peer.
+    Returns "initial_configuration".
+
+* *is_read_only/isro* :
+    A true/false if this server is in read-only mode.
+    Returns "read_only".
+
+* *last_snapshot/lsnp* :
+    Information of the last snapshot that zookeeper server has finished saving to disk.
+    If called during the initial time period between the server starting up
+    and the server finishing saving its first snapshot, the command returns the
+    information of the snapshot read when starting up the server.
+    Returns "zxid" and "timestamp", the latter using a time unit of seconds.
+
+* *leader/lead* :
+    If the ensemble is configured in quorum mode then emits the current leader
+    status of the peer and the current leader location.
+    Returns "is_leader", "leader_id", and "leader_ip".
+
+* *monitor/mntr* :
+    Emits a wide variety of useful info for monitoring.
+    Includes performance stats, information about internal queues, and
+    summaries of the data tree (among other things).
+    Returns each as its own field.
+
+* *observer_connection_stat_reset/orst* :
+    Reset all observer connection statistics. Companion command to *observers*.
+    No new fields returned.
+
+* *ruok* :
+    No-op command, check if the server is running.
+    A response does not necessarily indicate that the
+    server has joined the quorum, just that the admin server
+    is active and bound to the specified port.
+    No new fields returned.
+
+* *set_trace_mask/stmk* :
+    Sets the trace mask (as such, it requires a parameter).
+    Write version of *get_trace_mask*.
+    See the description of the four letter command *stmk* for
+    more details.
+    Returns "tracemask".
+
+* *server_stats/srvr* :
+    Server information.
+    Returns multiple fields giving a brief overview of server state.
+
+* *stats/stat* :
+    Same as *server_stats* but also returns the "connections" field (see *connections*
+    for details).
+    Note, depending on the number of client connections this operation may be expensive
+    (i.e. impact server performance).
+
+* *stat_reset/srst* :
+    Resets server statistics. This is a subset of the information returned
+    by *server_stats* and *stats*.
+    No new fields returned.
+
+* *observers/obsr* :
+    Information on observer connections to server.
+    Always available on a Leader, available on a Follower if its
+    acting as a learner master.
+    Returns "synced_observers" (int) and "observers" (list of per-observer properties).
+
+* *system_properties/sysp* :
+    All defined system properties.
+    Returns each as its own field.
+
+* *voting_view* :
+    Provides the current voting members in the ensemble.
+    Returns "current_config" as a map.
+
+* *watches/wchc* :
+    Watch information aggregated by session.
+    Note, depending on the number of watches this operation may be expensive
+    (i.e. impact server performance).
+    Returns "session_id_to_watched_paths" as a map.
+
+* *watches_by_path/wchp* :
+    Watch information aggregated by path.
+    Note, depending on the number of watches this operation may be expensive
+    (i.e. impact server performance).
+    Returns "path_to_session_ids" as a map.
+
+* *watch_summary/wchs* :
+    Summarized watch information.
+    Returns "num_total_watches", "num_paths", and "num_connections".
+
+* *zabstate* :
+    The current phase of Zab protocol that peer is running and whether it is a
+    voting member.
+    Peers can be in one of these phases: ELECTION, DISCOVERY, SYNCHRONIZATION, BROADCAST.
+    Returns fields "voting" and "zabstate".
+
 
 <a name="sc_dataFileManagement"></a>
 
