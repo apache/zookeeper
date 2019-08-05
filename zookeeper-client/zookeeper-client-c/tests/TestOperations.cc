@@ -34,6 +34,8 @@ class Zookeeper_operations : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testTimeoutCausedByWatches2);
     CPPUNIT_TEST(testCloseWhileInProgressFromMain);
     CPPUNIT_TEST(testCloseWhileInProgressFromCompletion);
+    CPPUNIT_TEST(testCloseWhileMultiInProgressFromMain);
+    CPPUNIT_TEST(testCloseWhileMultiInProgressFromCompletion);
 #else    
     CPPUNIT_TEST(testAsyncWatcher1);
     CPPUNIT_TEST(testAsyncGetOperation);
@@ -94,6 +96,23 @@ public:
         int rc_;
         string value_;
         NodeStat stat_;
+    };
+
+    class AsyncVoidOperationCompletion: public AsyncCompletion{
+    public:
+        AsyncVoidOperationCompletion():called_(false),rc_(ZAPIERROR){}
+        virtual void voidCompl(int rc){
+            synchronized(mx_);
+            called_=true;
+            rc_=rc;
+        }
+        bool operator()()const{
+            synchronized(mx_);
+            return called_;
+        }
+        mutable Mutex mx_;
+        bool called_;
+        int rc_;
     };
 #ifndef THREADED
     // send two get data requests; verify that the corresponding completions called
@@ -533,6 +552,138 @@ public:
         // issue request #1
         AsyncGetOperationCompletion res2;
         AsyncGetOperationCompletion1 res1(&zh,&zkServer,&res2);
+        zkServer.addOperationResponse(new ZooGetResponse("1",1));
+        int rc=zoo_aget(zh,"/x/y/1",0,asyncCompletion,&res1);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
+
+        // process the send queue
+        int fd; int interest; timeval tv;
+        rc=zookeeper_interest(zh,&fd,&interest,&tv);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
+        CPPUNIT_ASSERT(zh!=0);
+        Mock_free_noop freeMock;
+        while(zh!=0 && (rc=zookeeper_process(zh,interest))==ZOK) {
+          millisleep(100);
+        }
+        freeMock.disable();
+        CPPUNIT_ASSERT(zh==0);
+
+        // verify that memory for completions was freed (would be freed if no mock installed)
+        CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(savezh));
+        CPPUNIT_ASSERT(savezh->completions_to_process.head==0);
+        CPPUNIT_ASSERT(savezh->completions_to_process.last==0);
+
+        // verify that completion #2 was called, and it was called with ZCLOSING status
+        CPPUNIT_ASSERT(res2.called_);
+        CPPUNIT_ASSERT_EQUAL((int)ZCLOSING,res2.rc_);
+    }
+
+    // ZOOKEEPER-2891: Invalid processing of zookeeper_close for mutli-request
+    // while there is a multi request waiting for being processed
+    // call zookeeper_close() from the main event loop
+    // assert the completion callback is called with status ZCLOSING
+    void testCloseWhileMultiInProgressFromMain()
+    {
+        Mock_gettimeofday timeMock;
+        ZookeeperServer zkServer;
+        CloseFinally guard(&zh);
+
+        zh=zookeeper_init("localhost:2121",watcher,10000,TEST_CLIENT_ID,0,0);
+        CPPUNIT_ASSERT(zh!=0);
+        forceConnected(zh);
+        zhandle_t* savezh=zh;
+
+        // issue a multi request
+        int nops=2;
+        zoo_op_t ops[nops];
+        zoo_op_result_t results[nops];
+        zoo_create_op_init(&ops[0],"/a",0,-1,&ZOO_OPEN_ACL_UNSAFE,0,0,0);
+        zoo_create_op_init(&ops[1],"/a/b",0,-1,&ZOO_OPEN_ACL_UNSAFE,0,0,0);
+        // TODO: Provide ZooMultiResponse. However, it's not required in this test.
+        // zkServer.addOperationResponse(new ZooMultiResponse(...));
+        AsyncVoidOperationCompletion res1;
+        int rc=zoo_amulti(zh,nops,ops,results,asyncCompletion,&res1);
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
+
+        // but do not allow Zookeeper C Client to process the request
+        // and call zookeeper_close() from the main event loop immediately
+        Mock_free_noop freeMock;
+        rc=zookeeper_close(zh); zh=0;
+        freeMock.disable();
+        CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
+
+        // verify that memory for completions was freed (would be freed if no mock installed)
+        CPPUNIT_ASSERT_EQUAL(1,freeMock.getFreeCount(savezh));
+        CPPUNIT_ASSERT(savezh->completions_to_process.head==0);
+        CPPUNIT_ASSERT(savezh->completions_to_process.last==0);
+
+        // verify that completion was called, and it was called with ZCLOSING status
+        CPPUNIT_ASSERT(res1.called_);
+        CPPUNIT_ASSERT_EQUAL((int)ZCLOSING,res1.rc_);
+    }
+
+    // ZOOKEEPER-2891: Invalid processing of zookeeper_close for mutli-request
+    // send some request #1 (not a multi request)
+    // then, while there is a multi request #2 waiting for being processed
+    // call zookeeper_close() from the completion callback of request #1
+    // assert the completion callback #2 is called with status ZCLOSING
+    void testCloseWhileMultiInProgressFromCompletion()
+    {
+        Mock_gettimeofday timeMock;
+        ZookeeperServer zkServer;
+        CloseFinally guard(&zh);
+
+        zh=zookeeper_init("localhost:2121",watcher,10000,TEST_CLIENT_ID,0,0);
+        CPPUNIT_ASSERT(zh!=0);
+        forceConnected(zh);
+        zhandle_t* savezh=zh;
+
+        // these shall persist during the test
+        int nops=2;
+        zoo_op_t ops[nops];
+        zoo_op_result_t results[nops];
+
+        // will handle completion on request #1 and issue request #2 from it
+        class AsyncGetOperationCompletion1: public AsyncCompletion{
+        public:
+            AsyncGetOperationCompletion1(zhandle_t **zh, ZookeeperServer *zkServer,
+                    AsyncVoidOperationCompletion *res2,
+                    int nops, zoo_op_t* ops, zoo_op_result_t* results)
+            :zh_(zh),zkServer_(zkServer),res2_(res2),nops_(nops),ops_(ops),results_(results){}
+
+            virtual void dataCompl(int rc1, const char *value, int len, const Stat *stat){
+                CPPUNIT_ASSERT_EQUAL((int)ZOK,rc1);
+
+                // from the completion #1 handler, issue multi request #2
+                assert(nops_>=2);
+                zoo_create_op_init(&ops_[0],"/a",0,-1,&ZOO_OPEN_ACL_UNSAFE,0,0,0);
+                zoo_create_op_init(&ops_[1],"/a/b",0,-1,&ZOO_OPEN_ACL_UNSAFE,0,0,0);
+                // TODO: Provide ZooMultiResponse. However, it's not required in this test.
+                // zkServer_->addOperationResponse(new ZooMultiResponse(...));
+                int rc2=zoo_amulti(*zh_,nops_,ops_,results_,asyncCompletion,res2_);
+                CPPUNIT_ASSERT_EQUAL((int)ZOK,rc2);
+
+                // but do not allow Zookeeper C Client to process the request #2
+                // and call zookeeper_close() from the completion callback of request #1
+                rc2=zookeeper_close(*zh_); *zh_=0;
+                CPPUNIT_ASSERT_EQUAL((int)ZOK,rc2);
+
+                // do not disable freeMock here, let completion #2 handler
+                // return through ZooKeeper C Client internals to the main loop
+                // and fulfill the work
+            }
+
+            zhandle_t **zh_;
+            ZookeeperServer *zkServer_;
+            AsyncVoidOperationCompletion *res2_;
+            int nops_;
+            zoo_op_t* ops_;
+            zoo_op_result_t* results_;
+        };
+
+        // issue some request #1 (not a multi request)
+        AsyncVoidOperationCompletion res2;
+        AsyncGetOperationCompletion1 res1(&zh,&zkServer,&res2,nops,ops,results);
         zkServer.addOperationResponse(new ZooGetResponse("1",1));
         int rc=zoo_aget(zh,"/x/y/1",0,asyncCompletion,&res1);
         CPPUNIT_ASSERT_EQUAL((int)ZOK,rc);
