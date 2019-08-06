@@ -402,7 +402,7 @@ public class Request {
              * CLOCK_MONOTONIC.
              */
             long latency = currentTime - hdr.getTime();
-            if (latency > 0) {
+            if (latency >= 0) {
                 metric.add(latency);
             }
         }
@@ -415,7 +415,7 @@ public class Request {
              * CLOCK_MONOTONIC.
              */
             long latency = currentTime - hdr.getTime();
-            if (latency > 0) {
+            if (latency >= 0) {
                 metric.add(key, latency);
             }
         }

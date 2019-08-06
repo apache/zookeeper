@@ -169,7 +169,7 @@ public class Follower extends Learner{
                  */
                 long now = Time.currentWallTime();
                 long latency = now - hdr.getTime();
-                if (latency > 0) {
+                if (latency >= 0) {
                     ServerMetrics.getMetrics().PROPOSAL_LATENCY.add(latency);
                 }
             }

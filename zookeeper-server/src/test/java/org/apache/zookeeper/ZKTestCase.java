@@ -25,7 +25,8 @@ import org.junit.Rule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
-import org.junit.runners.model.FrameworkMethod;
+
+import java.time.LocalDateTime;
 
 /**
  * Base class for a non-parameterized ZK test.
@@ -92,9 +93,9 @@ public class ZKTestCase {
      * @param timeout   timeout in seconds
      * @throws InterruptedException
      */
-    public void waitFor(String msg, WaitForCondition condition, int timeout)
-            throws InterruptedException {
-        for (int i = 0; i < timeout; ++i) {
+    public void waitFor(String msg, WaitForCondition condition, int timeout) throws InterruptedException {
+        final LocalDateTime deadline = LocalDateTime.now().plusSeconds(timeout);
+        while (LocalDateTime.now().isBefore(deadline)) {
             if (condition.evaluate()) {
                 return;
             }

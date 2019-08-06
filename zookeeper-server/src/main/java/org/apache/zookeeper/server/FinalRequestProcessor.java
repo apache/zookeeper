@@ -170,7 +170,7 @@ public class FinalRequestProcessor implements RequestProcessor {
              * CLOCK_MONOTONIC.
              */
             long propagationLatency = Time.currentWallTime() - request.getHdr().getTime();
-            if (propagationLatency > 0) {
+            if (propagationLatency >= 0) {
                 ServerMetrics.getMetrics().PROPAGATION_LATENCY.add(propagationLatency);
             }
         }
