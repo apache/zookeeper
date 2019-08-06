@@ -18,6 +18,8 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import static org.apache.zookeeper.common.NetUtils.formatInetAddr;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
@@ -36,6 +38,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,23 +46,19 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
+import javax.net.ssl.SSLSocket;
 import org.apache.zookeeper.common.X509Exception;
 import org.apache.zookeeper.server.ExitCode;
-import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
-import org.apache.zookeeper.server.util.ConfigUtils;
 import org.apache.zookeeper.server.ZooKeeperThread;
+import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthLearner;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthServer;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
+import org.apache.zookeeper.server.util.ConfigUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.net.ssl.SSLSocket;
-import static org.apache.zookeeper.common.NetUtils.formatInetAddr;
 
 /**
  * This class implements a connection manager for leader election using TCP. It
@@ -848,12 +847,39 @@ public class QuorumCnxManager {
      */
     public class Listener extends ZooKeeperThread {
 
+        private static final String ELECTION_PORT_BIND_RETRY = "zookeeper.electionPortBindRetry";
+        private static final int DEFAULT_PORT_BIND_MAX_RETRY = 3;
+
+        private final int portBindMaxRetry;
+        private Runnable socketBindErrorHandler = () -> System.exit(ExitCode.UNABLE_TO_BIND_QUORUM_PORT.getValue());
         volatile ServerSocket ss = null;
 
         public Listener() {
             // During startup of thread, thread name will be overridden to
             // specific election address
             super("ListenerThread");
+
+            // maximum retry count while trying to bind to election port
+            // see ZOOKEEPER-3320 for more details
+            final Integer maxRetry = Integer.getInteger(ELECTION_PORT_BIND_RETRY,
+                                                        DEFAULT_PORT_BIND_MAX_RETRY);
+            if (maxRetry >= 0) {
+                LOG.info("Election port bind maximum retries is {}",
+                         maxRetry == 0 ? "infinite" : maxRetry);
+                portBindMaxRetry = maxRetry;
+            } else {
+                LOG.info("'{}' contains invalid value: {}(must be >= 0). "
+                         + "Use default value of {} instead.",
+                         ELECTION_PORT_BIND_RETRY, maxRetry, DEFAULT_PORT_BIND_MAX_RETRY);
+                portBindMaxRetry = DEFAULT_PORT_BIND_MAX_RETRY;
+            }
+        }
+
+        /**
+         * Change socket bind error handler. Used for testing.
+         */
+        void setSocketBindErrorHandler(Runnable errorHandler) {
+            this.socketBindErrorHandler = errorHandler;
         }
 
         /**
@@ -865,7 +891,7 @@ public class QuorumCnxManager {
             InetSocketAddress addr;
             Socket client = null;
             Exception exitException = null;
-            while((!shutdown) && (numRetries < 3)){
+            while ((!shutdown) && (portBindMaxRetry == 0 || numRetries < portBindMaxRetry)) {
                 try {
                     if (self.shouldUsePortUnification()) {
                         LOG.info("Creating TLS-enabled quorum server socket");
@@ -935,15 +961,18 @@ public class QuorumCnxManager {
             }
             LOG.info("Leaving listener");
             if (!shutdown) {
-                LOG.error("As I'm leaving the listener thread, "
-                        + "I won't be able to participate in leader "
-                        + "election any longer: "
-                        + formatInetAddr(self.getElectionAddress()));
-                if (exitException instanceof BindException) {
+                LOG.error("As I'm leaving the listener thread after "
+                          + numRetries + " errors. "
+                          + "I won't be able to participate in leader "
+                          + "election any longer: "
+                          + formatInetAddr(self.getElectionAddress())
+                          + ". Use " + ELECTION_PORT_BIND_RETRY + " property to "
+                          + "increase retry count.");
+                if (exitException instanceof SocketException) {
                     // After leaving listener thread, the host cannot join the
                     // quorum anymore, this is a severe error that we cannot
                     // recover from, so we need to exit
-                    System.exit(ExitCode.UNABLE_TO_BIND_QUORUM_PORT.getValue());
+                    socketBindErrorHandler.run();
                 }
             } else if (ss != null) {
                 // Clean up for shutdown.

@@ -36,6 +36,7 @@ import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.net.Socket;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.HandshakeCompletedListener;
@@ -288,6 +289,36 @@ public class CnxManagerTest extends ZKTestCase {
         peer.shutdown();
         cnxManager.halt();
         Assert.assertFalse(cnxManager.listener.isAlive());
+    }
+
+    /**
+     * Test for bug described in {@link https://issues.apache.org/jira/browse/ZOOKEEPER-3320}.
+     * Test create peer with address which contains unresolvable DNS name,
+     * leader election listener thread should stop after N errors.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testCnxManagerListenerThreadConfigurableRetry() throws Exception {
+        final Map<Long,QuorumServer> unresolvablePeers = new HashMap<>();
+        final long myid = 1L;
+        unresolvablePeers.put(myid, new QuorumServer(myid, "unresolvable-domain.org:2182:2183;2181"));
+        final QuorumPeer peer = new QuorumPeer(unresolvablePeers,
+                                               ClientBase.createTmpDir(),
+                                               ClientBase.createTmpDir(),
+                                               2181, 3, myid, 1000, 2, 2, 2);
+        final QuorumCnxManager cnxManager = peer.createCnxnManager();
+        final QuorumCnxManager.Listener listener = cnxManager.listener;
+        final AtomicBoolean errorHappend = new AtomicBoolean();
+        listener.setSocketBindErrorHandler(() -> errorHappend.set(true));
+        listener.start();
+        // listener thread should stop and throws error which notify QuorumPeer about error.
+        // QuorumPeer should start shutdown process
+        listener.join(15000); // set wait time, if listener contains bug and thread not stops.
+        Assert.assertFalse(listener.isAlive());
+        Assert.assertTrue(errorHappend.get());
+        Assert.assertFalse(QuorumPeer.class.getSimpleName() + " not stopped after "
+                           + "listener thread death", listener.isAlive());
     }
 
     /**
