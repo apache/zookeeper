@@ -26,6 +26,7 @@ import org.apache.zookeeper.metrics.MetricsUtils;
 import org.apache.zookeeper.server.ServerMetrics;
 import org.apache.zookeeper.test.ClientBase;
 import org.hamcrest.Matcher;
+import org.junit.After;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -37,13 +38,15 @@ import static org.hamcrest.number.OrderingComparison.greaterThanOrEqualTo;
 public class LearnerMetricsTest extends QuorumPeerTestBase {
 
     private static final int TIMEOUT_SECONDS = 30;
+    private static final int SERVER_COUNT = 6; // 5 participants, 1 observer
+    private final QuorumPeerTestBase.MainThread[] mt = new QuorumPeerTestBase.MainThread[SERVER_COUNT];
+    private ZooKeeper zk_client;
 
     @Test
     public void testLearnerMetricsTest() throws Exception {
         ServerMetrics.getMetrics().resetAll();
         ClientBase.setupTestEnv();
 
-        final int SERVER_COUNT = 6; // 5 participants, 1 observer
         final String path = "/zk-testLeanerMetrics";
         final byte[] data = new byte[512];
         final int[] clientPorts = new int[SERVER_COUNT];
@@ -58,7 +61,6 @@ public class LearnerMetricsTest extends QuorumPeerTestBase {
 
         // start the participants
         String quorumCfgSection = sb.toString();
-        QuorumPeerTestBase.MainThread[] mt = new QuorumPeerTestBase.MainThread[SERVER_COUNT];
         for(int i = 1; i < SERVER_COUNT; i++) {
             mt[i] = new QuorumPeerTestBase.MainThread(i, clientPorts[i], quorumCfgSection);
             mt[i].start();
@@ -71,9 +73,9 @@ public class LearnerMetricsTest extends QuorumPeerTestBase {
         mt[observer].start();
 
         // send one create request
-        ZooKeeper zk = new ZooKeeper("127.0.0.1:" + clientPorts[1], ClientBase.CONNECTION_TIMEOUT, this);
-        waitForOne(zk, ZooKeeper.States.CONNECTED);
-        zk.create(path, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+        zk_client = new ZooKeeper("127.0.0.1:" + clientPorts[1], ClientBase.CONNECTION_TIMEOUT, this);
+        waitForOne(zk_client, ZooKeeper.States.CONNECTED);
+        zk_client.create(path, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
 
         // there are 4 followers, each received two proposals, one for leader election, one for the create request
         waitForMetric("learner_proposal_received_count", is(8L));
@@ -100,5 +102,13 @@ public class LearnerMetricsTest extends QuorumPeerTestBase {
                     return true;
                 },
                 TIMEOUT_SECONDS);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        zk_client.close();
+        for(int i = 0; i < SERVER_COUNT; i++) {
+            mt[i].shutdown();
+        }
     }
 }
