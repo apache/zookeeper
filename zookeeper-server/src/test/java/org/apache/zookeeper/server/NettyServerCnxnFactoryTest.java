@@ -39,10 +39,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.greaterThan;
+
 public class NettyServerCnxnFactoryTest extends ClientBase {
 
     private static final Logger LOG = LoggerFactory
             .getLogger(NettyServerCnxnFactoryTest.class);
+
+    final LinkedBlockingQueue<ZooKeeper> zks = new LinkedBlockingQueue<ZooKeeper>();
 
     @Override
     public void setUp() throws Exception {
@@ -54,6 +59,11 @@ public class NettyServerCnxnFactoryTest extends ClientBase {
     @Override
     public void tearDown() throws Exception {
         System.clearProperty(ServerCnxnFactory.ZOOKEEPER_SERVER_CNXN_FACTORY);
+
+        // clean up
+        for (ZooKeeper zk : zks) {
+            zk.close();
+        }
         super.tearDown();
     }
 
@@ -105,7 +115,6 @@ public class NettyServerCnxnFactoryTest extends ClientBase {
         int threadNum = 3;
         int cnxnPerThread = 10;
         Thread[] cnxnWorker = new Thread[threadNum];
-        final LinkedBlockingQueue<ZooKeeper> zks = new LinkedBlockingQueue<ZooKeeper>();
 
         AtomicInteger cnxnCreated = new AtomicInteger(0);
         CountDownLatch latch = new CountDownLatch(1);
@@ -134,23 +143,20 @@ public class NettyServerCnxnFactoryTest extends ClientBase {
             cnxnWorker[i].start();
         }
 
-        Assert.assertTrue(latch.await(3, TimeUnit.SECONDS));
+        Assert.assertThat(latch.await(3, TimeUnit.SECONDS), is(true));
         LOG.info("created {} connections", threadNum * cnxnPerThread);
 
         // Assert throttling not 0
         long handshakeThrottledNum = tlsHandshakeExceeded.get();
         LOG.info("TLS_HANDSHAKE_EXCEEDED: {}", handshakeThrottledNum);
-        Assert.assertTrue(handshakeThrottledNum > 0);
+        Assert.assertThat("The number of handshake throttled should be " +
+                "greater than 0", handshakeThrottledNum, greaterThan(0L));
 
         // Assert there is no outstanding handshake anymore
         int outstandingHandshakeNum = factory.getOutstandingHandshakeNum();
         LOG.info("outstanding handshake is {}", outstandingHandshakeNum);
-        Assert.assertTrue(outstandingHandshakeNum == 0);
-
-        // clean up
-        for (ZooKeeper zk : zks) {
-            zk.close();
-        }
+        Assert.assertThat("The outstanding handshake number should be 0 " +
+                "after all cnxns established", outstandingHandshakeNum, is(0));
 
     }
 }
