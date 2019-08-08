@@ -111,6 +111,23 @@ public class LearnerHandler extends ZooKeeperThread {
 
     protected final AtomicLong requestsReceived = new AtomicLong();
 
+    public static final String PACKETS_SIZE_BEFORE_SENDING_UPTODATE = "zookeeper.packets_size_before_sending_uptodate";
+    private static int upToDatePacketsLimit = -1;
+
+    static {
+        upToDatePacketsLimit = Integer.getInteger(PACKETS_SIZE_BEFORE_SENDING_UPTODATE, -1);
+        LOG.info("{} = {}", PACKETS_SIZE_BEFORE_SENDING_UPTODATE, upToDatePacketsLimit);
+    }
+
+    public static void setUpToDatePacketsLimit(int limit) {
+        upToDatePacketsLimit = limit;
+        LOG.info("{} = {}", PACKETS_SIZE_BEFORE_SENDING_UPTODATE, upToDatePacketsLimit);
+    }
+
+    public static int getUpToDatePacketsLimit() {
+        return upToDatePacketsLimit;
+    }
+
     protected volatile long lastZxid = -1;
 
     public synchronized long getLastZxid() {
@@ -615,13 +632,19 @@ public class LearnerHandler extends ZooKeeperThread {
             syncThrottler.endSync();
             syncThrottler = null;
 
-            // now that the ack has been processed expect the syncLimit
-            sock.setSoTimeout(learnerMaster.syncTimeout());
-
             /*
              * Wait until learnerMaster starts up
              */
             learnerMaster.waitForStartup();
+
+            int queueSize = queuedPackets.size();
+            while (upToDatePacketsLimit > 0 && queueSize > upToDatePacketsLimit) {
+                LOG.info("Waiting for learner queue to be drained before " +
+                        "sending UPTODATE to {}, current queue size: {}",
+                        sid, queueSize);
+                Thread.sleep(100);
+                queueSize = queuedPackets.size();
+            }
 
             // Mutation packets will be queued during the serialize,
             // so we need to mark when the peer can actually start
@@ -629,6 +652,9 @@ public class LearnerHandler extends ZooKeeperThread {
             //
             LOG.debug("Sending UPTODATE message to {}", sid);
             queuedPackets.add(new QuorumPacket(Leader.UPTODATE, -1, null, null));
+
+            // now that the ack has been processed expect the syncLimit
+            sock.setSoTimeout(learnerMaster.syncTimeout());
 
             while (true) {
                 qp = new QuorumPacket();
@@ -1140,6 +1166,10 @@ public class LearnerHandler extends ZooKeeperThread {
      */
     public Queue<QuorumPacket> getQueuedPackets() {
         return queuedPackets;
+    }
+
+    public int getQueuedPacketsSize() {
+        return queuedPackets.size();
     }
 
     /**

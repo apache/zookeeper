@@ -40,6 +40,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.jute.BinaryInputArchive;
@@ -50,6 +51,7 @@ import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.server.ByteBufferInputStream;
 import org.apache.zookeeper.server.ByteBufferOutputStream;
@@ -279,7 +281,7 @@ public class Zab1_0Test extends ZKTestCase {
     }
     
     static public interface LeaderConversation {
-        void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l) throws Exception;
+        void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l, LearnerHandler lh) throws Exception;
     }
     
     static public interface PopulatedLeaderConversation {
@@ -325,7 +327,7 @@ public class Zab1_0Test extends ZKTestCase {
             OutputArchive oa = BinaryOutputArchive.getArchive(followerSocket
                     .getOutputStream());
 
-            conversation.converseWithLeader(ia, oa, leader);
+            conversation.converseWithLeader(ia, oa, leader, lh);
         } finally {
             if (leader != null) {
                 leader.shutdown("end of test");
@@ -838,7 +840,7 @@ public class Zab1_0Test extends ZKTestCase {
     @Test
     public void testNormalRun() throws Exception {
         testLeaderConversation(new LeaderConversation() {
-            public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l)
+            public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l, LearnerHandler lh)
                     throws IOException {
                 Assert.assertEquals(0, l.self.getAcceptedEpoch());
                 Assert.assertEquals(0, l.self.getCurrentEpoch());
@@ -884,7 +886,7 @@ public class Zab1_0Test extends ZKTestCase {
     @Test
     public void testTxnTimeout() throws Exception {
         testLeaderConversation(new LeaderConversation() {
-            public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l)
+            public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l, LearnerHandler lh)
                     throws IOException, InterruptedException, org.apache.zookeeper.server.quorum.Leader.XidRolloverException {
                 Assert.assertEquals(0, l.self.getAcceptedEpoch());
                 Assert.assertEquals(0, l.self.getCurrentEpoch());
@@ -954,6 +956,85 @@ public class Zab1_0Test extends ZKTestCase {
         zkdb.deserializeSnapshot(ia);
         String signature = ia.readString("signature");
         assertEquals("BenWasHere", signature);
+    }
+
+
+    @Test
+    public void testSendUpToDateWithPacketsLimit() throws Exception {
+        testLeaderConversation(new LeaderConversation() {
+            public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l, LearnerHandler lh)
+                    throws IOException {
+                // 1. exchange information
+                LearnerInfo li = new LearnerInfo(1, 0x10000, 0);
+                byte liBytes[] = new byte[20];
+                ByteBufferOutputStream.record2ByteBuffer(li,
+                        ByteBuffer.wrap(liBytes));
+                QuorumPacket qp = new QuorumPacket(Leader.FOLLOWERINFO, 0,
+                        liBytes, null);
+                oa.writeRecord(qp, null);
+
+                readPacketSkippingPing(ia, qp);
+                Assert.assertEquals(Leader.LEADERINFO, qp.getType());
+
+                qp = new QuorumPacket(Leader.ACKEPOCH, 0, new byte[4], null);
+                oa.writeRecord(qp, null);
+
+                readPacketSkippingPing(ia, qp);
+                Assert.assertEquals(Leader.DIFF, qp.getType());
+                readPacketSkippingPing(ia, qp);
+                Assert.assertEquals(Leader.NEWLEADER, qp.getType());
+
+                // 2. issues lots of proposals before NEWLEADER ACK is sent
+                QuorumPacket proposal = new QuorumPacket(Leader.PROPOSAL, 1,
+                        new byte[100000], null);
+
+                for (int i = 0; i < 300; i++) {
+                    lh.queuePacket(proposal);
+                }
+
+                // 3. send NEWLEADER ACK
+                qp = new QuorumPacket(Leader.ACK, qp.getZxid(), null, null);
+                oa.writeRecord(qp, null);
+
+                // 4. set the UPTODATE packets limit to be 10
+                int packetsLimit = 10;
+                lh.setUpToDatePacketsLimit(packetsLimit);
+
+                // 5. make sure the learner queue packets queue is larger
+                //    than packets limit
+                Assert.assertTrue(lh.getQueuedPacketsSize() > packetsLimit);
+
+                // 6. since we didn't consume any packets, the sender will
+                //    block there, and no UPTODATE packet will be sent even
+                //    after 1s
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) { /* ignore */ }
+
+                Assert.assertTrue(lh.getQueuedPacketsSize() > packetsLimit);
+                for (QuorumPacket p: lh.getQueuedPackets()) {
+                    Assert.assertTrue(p.getType() != Leader.UPTODATE);
+                }
+
+                // 7. start consuming and make sure we received UPTODATE packet
+                boolean receivedUpToDatePacket = false;
+                long startTimeMs = Time.currentWallTime();
+                long currentTimeMs = startTimeMs;
+                while (!receivedUpToDatePacket || (currentTimeMs - startTimeMs) < 1000) {
+                    try {
+                        ia.readRecord(qp, null);
+                    } catch (IOException e) {
+                        Assert.fail("failed to read UPTODATE packet");
+                    }
+                    if (qp.getType() == Leader.UPTODATE) {
+                        receivedUpToDatePacket = true;
+                    }
+                    currentTimeMs = Time.currentWallTime();
+                }
+                Assert.assertTrue(receivedUpToDatePacket);
+            }
+        });
+
     }
 
     @Test
@@ -1048,16 +1129,6 @@ public class Zab1_0Test extends ZKTestCase {
                     Assert.assertEquals("data1", new String(o.zk
                             .getZKDatabase().getData("/foo2", stat, watcher)));
 
-                    // Propose /foo1 update
-                    long proposalZxid = ZxidUtils.makeZxid(1, 1000);
-                    proposeSetData(qp, "/foo1", proposalZxid, "data2", 2);
-                    oa.writeRecord(qp, null);
-
-                    // Commit /foo1 update
-                    qp.setType(Leader.COMMIT);
-                    qp.setZxid(proposalZxid);
-                    oa.writeRecord(qp, null);
-
                     // Inform /foo2 update
                     long informZxid = ZxidUtils.makeZxid(1, 1001);
                     proposeSetData(qp, "/foo2", informZxid, "data2", 2);
@@ -1076,8 +1147,6 @@ public class Zab1_0Test extends ZKTestCase {
                     // Data should get updated
                     watcher.waitForChange();
                     Assert.assertEquals("data2", new String(o.zk
-                            .getZKDatabase().getData("/foo1", stat, null)));
-                    Assert.assertEquals("data2", new String(o.zk
                             .getZKDatabase().getData("/foo2", stat, null)));
 
                     // Shutdown sequence guarantee that all pending requests
@@ -1086,7 +1155,6 @@ public class Zab1_0Test extends ZKTestCase {
 
                     zkDb2 = new ZKDatabase(new FileTxnSnapLog(logDir, snapDir));
                     lastZxid = zkDb2.loadDataBase();
-                    Assert.assertEquals("data2", new String(zkDb2.getData("/foo1", stat, null)));
                     Assert.assertEquals("data2", new String(zkDb2.getData("/foo2", stat, null)));
                     Assert.assertEquals(informZxid, lastZxid);
                 } finally {
@@ -1114,7 +1182,7 @@ public class Zab1_0Test extends ZKTestCase {
     @Test
     public void testLeaderBehind() throws Exception {
         testLeaderConversation(new LeaderConversation() {
-            public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l)
+            public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l, LearnerHandler lh)
                     throws IOException {
                 /* we test a normal run. everything should work out well. */
                 LearnerInfo li = new LearnerInfo(1, 0x10000, 0);
@@ -1156,7 +1224,7 @@ public class Zab1_0Test extends ZKTestCase {
     @Test
     public void testAbandonBeforeACKEpoch() throws Exception {
         testLeaderConversation(new LeaderConversation() {
-            public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l)
+            public void converseWithLeader(InputArchive ia, OutputArchive oa, Leader l, LearnerHandler lh)
                     throws IOException, InterruptedException {
                 /* we test a normal run. everything should work out well. */            	
                 LearnerInfo li = new LearnerInfo(1, 0x10000, 0);
