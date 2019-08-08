@@ -29,18 +29,22 @@ import org.apache.zookeeper.metrics.impl.NullMetricsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// zookeeper中各个Metrics的集合
+// 各Metrics在DefaultMetricsProvider中的DefaultMetricsContext中统一存储管理，这里只是DefaultMetricsContext里面的引用
+// 通过ServerMetrics.getMetrics().XXX就可以拿到Metrics信息
 public final class ServerMetrics {
 
     private static final Logger LOG = LoggerFactory.getLogger(ServerMetrics.class);
 
     /**
      * Dummy instance useful for tests.
+     * 虚拟实例对测试很有用。这个属性是测试用的
      */
     public static final ServerMetrics NULL_METRICS
             = new ServerMetrics(NullMetricsProvider.INSTANCE);
 
     /**
-     * Dummy instance useful for tests.
+     * Dummy instance useful for tests. 测试用的
      */
     public static final ServerMetrics DEFAULT_METRICS_FOR_TESTS
             = new ServerMetrics(new DefaultMetricsProvider());
@@ -48,6 +52,7 @@ public final class ServerMetrics {
     /**
      * Real instance used for tracking server side metrics. The final value is
      * assigned after the {@link MetricsProvider} bootstrap.
+     * 用于跟踪服务器端指标的真实实例。在{@link MetricsProvider}引导程序之后分配最终值。
      */
     private static volatile ServerMetrics CURRENT = DEFAULT_METRICS_FOR_TESTS;
 
@@ -61,7 +66,7 @@ public final class ServerMetrics {
     }
 
     public static void metricsProviderInitialized(MetricsProvider metricsProvider) {
-        LOG.info("ServerMetrics initialized with provider {}", metricsProvider);
+        LOG.info("ServerMetrics使用提供程序初始化ServerMetrics initialized with provider {}", metricsProvider);
         CURRENT = new ServerMetrics(metricsProvider);
     }
 
@@ -78,6 +83,7 @@ public final class ServerMetrics {
         PROPAGATION_LATENCY = metricsContext.getSummary("propagation_latency", DetailLevel.ADVANCED);
         FOLLOWER_SYNC_TIME = metricsContext.getSummary("follower_sync_time", DetailLevel.BASIC);
         ELECTION_TIME = metricsContext.getSummary("election_time", DetailLevel.BASIC);
+
         LOOKING_COUNT = metricsContext.getCounter("looking_count");
         DIFF_COUNT = metricsContext.getCounter("diff_count");
         SNAP_COUNT = metricsContext.getCounter("snap_count");

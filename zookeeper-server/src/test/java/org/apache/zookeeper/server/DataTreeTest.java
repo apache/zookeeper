@@ -79,7 +79,7 @@ public class DataTreeTest extends ZKTestCase {
         long session = 1000;
         long zxid = 2000;
         final DataTree dataTree = new DataTree();
-        LOG.info("Create {} zkclient sessions and its ephemeral nodes", count);
+        LOG.info("Create {} zkclient sessions and its ephemeral nodes  创建{}zkclient会话及其短暂节点", count, count);
         createEphemeralNode(session, dataTree, count);
         final AtomicBoolean exceptionDuringDumpEphemerals = new AtomicBoolean(
                 false);
@@ -89,6 +89,7 @@ public class DataTreeTest extends ZKTestCase {
                 PrintWriter pwriter = new PrintWriter(new StringWriter());
                 try {
                     while (running.get()) {
+                        // 遍历临时节点
                         dataTree.dumpEphemerals(pwriter);
                     }
                 } catch (Exception e) {
@@ -98,7 +99,7 @@ public class DataTreeTest extends ZKTestCase {
             };
         };
         thread.start();
-        LOG.debug("Killing {} zkclient sessions and its ephemeral nodes", count);
+        LOG.debug("Killing {} zkclient sessions and its ephemeral nodes 删除{}zkclient会话及其短暂节点", count, count);
         killZkClientSession(session, zxid, dataTree, count);
         running.set(false);
         thread.join();

@@ -45,11 +45,14 @@ import org.apache.zookeeper.server.util.SerializeUtils;
  * and provides access to the snapshots.
  */
 public class FileSnap implements SnapShot {
+    //snap文件目录
     File snapDir;
+    //是否关闭
     private volatile boolean close = false;
     private static final int VERSION = 2;
     private static final long dbId = -1;
     private static final Logger LOG = LoggerFactory.getLogger(FileSnap.class);
+    //文件的魔数
     public final static int SNAP_MAGIC
             = ByteBuffer.wrap("ZKSN".getBytes()).getInt();
 
@@ -68,18 +71,22 @@ public class FileSnap implements SnapShot {
         // we run through 100 snapshots (not all of them)
         // if we cannot get it running within 100 snapshots
         // we should  give up
+        //找到最新的100个(大概率)valid的快照文件
         List<File> snapList = findNValidSnapshots(100);
         if (snapList.size() == 0) {
             return -1L;
         }
         File snap = null;
         boolean foundValid = false;
+        //将这些快照文件按新旧排序，直到第一个合法的就break
         for (int i = 0, snapListSize = snapList.size(); i < snapListSize; i++) {
             snap = snapList.get(i);
             LOG.info("Reading snapshot " + snap);
             try (CheckedInputStream snapIS = SnapStream.getInputStream(snap)) {
                 InputArchive ia = BinaryInputArchive.getArchive(snapIS);
+                //根据ia反序列化到dataTree以及sessions
                 deserialize(dt, sessions, ia);
+                //反序列填充session和dataTree之后，计算checkSum
                 SnapStream.checkSealIntegrity(snapIS, ia);
                 foundValid = true;
                 break;
@@ -88,8 +95,9 @@ public class FileSnap implements SnapShot {
             }
         }
         if (!foundValid) {
-            throw new IOException("Not able to find valid snapshots in " + snapDir);
+            throw new IOException("在snapDir目录里无法找到有效的快照 " + snapDir);
         }
+        //从最近的第一个valid的snap文件中，解析出zxid
         dt.lastProcessedZxid = Util.getZxidFromName(snap.getName(), SNAPSHOT_FILE_PREFIX);
         return dt.lastProcessedZxid;
     }
@@ -104,12 +112,14 @@ public class FileSnap implements SnapShot {
     public void deserialize(DataTree dt, Map<Long, Integer> sessions,
             InputArchive ia) throws IOException {
         FileHeader header = new FileHeader();
+        // 反序列化至header
         header.deserialize(ia, "fileheader");
         if (header.getMagic() != SNAP_MAGIC) {
             throw new IOException("mismatching magic headers "
                     + header.getMagic() +
                     " !=  " + FileSnap.SNAP_MAGIC);
         }
+        // 反序列化至dataTree和sessions
         SerializeUtils.deserializeSnapshot(dt,ia,sessions);
     }
 
@@ -117,6 +127,7 @@ public class FileSnap implements SnapShot {
      * find the most recent snapshot in the database.
      * @return the file containing the most recent snapshot
      */
+    // 找到最近的snapshot文件
     public File findMostRecentSnapshot() throws IOException {
         List<File> files = findNValidSnapshots(1);
         if (files.size() == 0) {
@@ -137,6 +148,7 @@ public class FileSnap implements SnapShot {
      * less than n in case enough snapshots are not available).
      * @throws IOException
      */
+    //找到最近n个(大概)合理的快照文件，按从新到旧排序
     private List<File> findNValidSnapshots(int n) throws IOException {
         List<File> files = Util.sortDataDir(snapDir.listFiles(), SNAPSHOT_FILE_PREFIX, false);
         int count = 0;
@@ -146,6 +158,7 @@ public class FileSnap implements SnapShot {
             // from the valid snapshot and continue
             // until we find a valid one
             try {
+                //一个minor check,来看这个文件是否大概率valid
                 if (SnapStream.isValidSnapshot(f)) {
                     list.add(f);
                     count++;
@@ -163,6 +176,7 @@ public class FileSnap implements SnapShot {
     /**
      * find the last n snapshots. this does not have
      * any checks if the snapshot might be valid or not
+     * 找到最后n个快照。如果快照可能有效，则没有*任何检查
      * @param n the number of most recent snapshots
      * @return the last n snapshots
      * @throws IOException
@@ -197,7 +211,9 @@ public class FileSnap implements SnapShot {
         if(header==null)
             throw new IllegalStateException(
                     "Snapshot's not open for writing: uninitialized header");
+        //header序列化
         header.serialize(oa, "fileheader");
+        //将dataTree和sessions序列化到oa
         SerializeUtils.serializeSnapshot(dt,oa,sessions);
     }
 
@@ -214,6 +230,7 @@ public class FileSnap implements SnapShot {
             try (CheckedOutputStream snapOS = SnapStream.getOutputStream(snapShot)) {
                 OutputArchive oa = BinaryOutputArchive.getArchive(snapOS);
                 FileHeader header = new FileHeader(SNAP_MAGIC, VERSION, dbId);
+                //将dt,session,header进行序列化
                 serialize(dt, sessions, oa, header);
                 SnapStream.sealStream(snapOS, oa);
             }
@@ -225,6 +242,7 @@ public class FileSnap implements SnapShot {
      * the close operation will block and will wait till serialize
      * is done and will set the close flag
      */
+    // 关闭资源
     @Override
     public synchronized void close() throws IOException {
         close = true;

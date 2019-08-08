@@ -48,19 +48,21 @@ import org.slf4j.LoggerFactory;
  * queues.
  *
  *   - 1   accept thread, which accepts new connections and assigns to a
- *         selector thread
+ *         selector thread 接受线程，它接受新连接并分配给*选择器线程
  *   - 1-N selector threads, each of which selects on 1/N of the connections.
  *         The reason the factory supports more than one selector thread is that
  *         with large numbers of connections, select() itself can become a
- *         performance bottleneck.
+ *         performance bottleneck.选择器线程，每个选择线程在连接的1 / N上选择。 *工厂支持多个选择器线程的原因是*具有大量连接，select（）本身可能成为*性能瓶颈。
  *   - 0-M socket I/O worker threads, which perform basic socket reads and
  *         writes. If configured with 0 worker threads, the selector threads
- *         do the socket I/O directly.
+ *         do the socket I/O directly.套接字I / O工作线程，执行基本套接字读取和*写入。如果配置了0个工作线程，则选择器线程*直接执行套接字I / O.
  *   - 1   connection expiration thread, which closes idle connections; this is
  *         necessary to expire connections on which no session is established.
+ *         连接到期线程，它关闭空闲连接;这对于使没有建立会话的连接失效是必要的。
  *
  * Typical (default) thread counts are: on a 32 core machine, 1 accept thread,
  * 1 connection expiration thread, 4 selector threads, and 64 worker threads.
+ * 典型（默认）线程计数是：在32核机器上，1接受线程，* 1连接到期线程，4个选择器线程和64个工作线程。
  */
 public class NIOServerCnxnFactory extends ServerCnxnFactory {
     private static final Logger LOG = LoggerFactory.getLogger(NIOServerCnxnFactory.class);
@@ -106,7 +108,8 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         /**
          * Value of 0 disables use of direct buffers and instead uses
          * gathered write call.
-         *
+         * ZOOKEEPER_NIO_DIRECT_BUFFER_BYTES = zookeeper.nio.directBufferBytes
+         * 这里通过系统变量设置
          * Default to using 64k direct buffers.
          */
         directBufferBytes = Integer.getInteger(
@@ -122,10 +125,10 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         protected final Selector selector;
 
         public AbstractSelectThread(String name) throws IOException {
-            super(name);
+            super(name); //设置线程名
             // Allows the JVM to shutdown even if this thread is still running.
-            setDaemon(true);
-            this.selector = Selector.open();
+            setDaemon(true); //设置为守护线程
+            this.selector = Selector.open(); //开启Selector
         }
 
         public void wakeupSelector() {
@@ -136,6 +139,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
          * Close the selector. This should be called when the thread is about to
          * exit and no operation is going to be performed on the Selector or
          * SelectionKey
+         * 关闭选择器。当线程即将退出并且不会对Selector或 SelectionKey执行任何操作时，应调用此方法
          */
         protected void closeSelector() {
             try {
@@ -145,7 +149,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                         + e.getMessage());
             }
         }
-
+        // 连接无效 关闭连接
         protected void cleanupSelectionKey(SelectionKey key) {
             if (key != null) {
                 try {
@@ -161,7 +165,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         protected void fastCloseSock(SocketChannel sc) {
             if (sc != null) {
                 try {
-                    // Hard close immediately, discarding buffers
+                    // Hard close immediately, discarding buffers立刻硬关闭，丢弃缓冲区
                     sc.socket().setSoLinger(true, 0);
                 } catch (SocketException e) {
                     LOG.warn("Unable to set socket linger to 0, socket close"
@@ -243,6 +247,8 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                             // queue, pause accepting to give us time to free
                             // up file descriptors and so the accept thread
                             // doesn't spin in a tight loop.
+                            // 如果无法从accept 队列中拉出新连接，请暂停接受以给我们时间来释放文件描述符
+                            // 这样接受线程不会在紧密循环中旋转。
                             pauseAccept(10);
                         }
                     } else {
@@ -277,6 +283,9 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
          * handling. Returns whether pulled a connection off the accept queue
          * or not. If encounters an error attempts to fast close the socket.
          *
+         * 接受新的套接字连接。实施每个客户端IP地址的最大连接数*。循环分配给选择器线程以进行处理。
+         * 返回是否从接受队列*中拉出连接。如果遇到错误，请尝试快速关闭套接字
+         *
          * @return whether was able to accept a connection or not
          */
         private boolean doAccept() {
@@ -286,7 +295,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 sc = acceptSocket.accept();
                 accepted = true;
                 InetAddress ia = sc.socket().getInetAddress();
-                int cnxncount = getClientCnxnCount(ia);
+                int cnxncount = getClientCnxnCount(ia);//得到这个ip有几个socket连接
 
                 if (maxClientCnxns > 0 && cnxncount >= maxClientCnxns){
                     throw new IOException("Too many connections from " + ia
@@ -298,6 +307,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 sc.configureBlocking(false);
 
                 // Round-robin assign this connection to a selector thread
+                // 这里实现循环迭代selectorThreads集合
                 if (!selectorIterator.hasNext()) {
                     selectorIterator = selectorThreads.iterator();
                 }
@@ -307,6 +317,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                         "Unable to add connection to selector queue"
                         + (stopped ? " (shutdown in progress)" : ""));
                 }
+                // 打日志
                 acceptErrorLogger.flush();
             } catch (IOException e) {
                 // accept, maxClientCnxns, configureBlocking
@@ -341,8 +352,8 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
      * directly.
      */
     class SelectorThread extends AbstractSelectThread {
-        private final int id;
-        private final Queue<SocketChannel> acceptedQueue;
+        private final int id; // SelectorThread 编号
+        private final Queue<SocketChannel> acceptedQueue;//连接队列
         private final Queue<SelectionKey> updateQueue;
 
         public SelectorThread(int id) throws IOException {
@@ -361,7 +372,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             if (stopped || !acceptedQueue.offer(accepted)) {
                 return false;
             }
-            wakeupSelector();
+            wakeupSelector(); //唤醒selector
             return true;
         }
 
@@ -389,8 +400,8 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             try {
                 while (!stopped) {
                     try {
-                        select();
-                        processAcceptedConnections();
+                        select(); // 分装请求为IOWorkRequest
+                        processAcceptedConnections(); // 从acceptedQueue队列中取值注册到select中
                         processInterestOpsUpdateRequests();
                     } catch (RuntimeException e) {
                         LOG.warn("Ignoring unexpected runtime exception", e);
@@ -401,6 +412,8 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
 
                 // Close connections still pending on the selector. Any others
                 // with in-flight work, let drain out of the work queue.
+                // 关闭选择器上仍然挂起的连接。任何其他人
+                // 在飞行中工作，让我们排出工作队列。
                 for (SelectionKey key : selector.keys()) {
                     NIOServerCnxn cnxn = (NIOServerCnxn) key.attachment();
                     if (cnxn.isSelectable()) {
@@ -454,15 +467,16 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
          * Schedule I/O for processing on the connection associated with
          * the given SelectionKey. If a worker thread pool is not being used,
          * I/O is run directly by this thread.
+         * 安排I / O以处理与给定SelectionKey相关联的连接。如果未使用工作线程池，则此I / O将由此线程直接运行。
          */
         private void handleIO(SelectionKey key) {
             IOWorkRequest workRequest = new IOWorkRequest(this, key);
             NIOServerCnxn cnxn = (NIOServerCnxn) key.attachment();
 
-            // Stop selecting this key while processing on its
-            // connection
+            // Stop selecting this key while processing on its connection
+            // 在处理连接时停止选择此键
             cnxn.disableSelectable();
-            key.interestOps(0);
+            key.interestOps(0);// 取消上面设置的监听，代表不监听任何东西
             touchCnxn(cnxn);
             workerPool.schedule(workRequest);
         }
@@ -491,6 +505,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         /**
          * Iterate over the queue of connections ready to resume selection,
          * and restore their interest ops selection mask.
+         * 迭代准备恢复选择的连接队列，*并恢复他们感兴趣的操作选择掩码。
          */
         private void processInterestOpsUpdateRequests() {
             SelectionKey key;
@@ -509,6 +524,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     /**
      * IOWorkRequest is a small wrapper class to allow doIO() calls to be
      * run on a connection using a WorkerService.
+     * IOWorkRequest是一个小的包装类，允许使用WorkerService在连接上运行doIO（）调用。
      */
     private class IOWorkRequest extends WorkerService.WorkRequest {
         private final SelectorThread selectorThread;
@@ -559,8 +575,9 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     }
 
     /**
-     * This thread is responsible for closing stale connections so that
-     * connections on which no session is established are properly expired.
+     * This thread is responsible for closing stale connections
+     * so that connections on which no session is established are properly expired.
+     * 此线程负责关闭过时连接，以便未建立会话的连接正确到期。
      */
     private class ConnectionExpirerThread extends ZooKeeperThread {
         ConnectionExpirerThread() {
@@ -606,7 +623,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         return directBufferBytes > 0 ? directBuffer.get() : null;
     }
 
-    // ipMap is used to limit connections per IP
+    // ipMap is used to limit connections per IP   ipMap用于限制每个IP的连接
     private final ConcurrentHashMap<InetAddress, Set<NIOServerCnxn>> ipMap =
         new ConcurrentHashMap<InetAddress, Set<NIOServerCnxn>>( );
 
@@ -620,7 +637,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     protected WorkerService workerPool;
 
     private static int directBufferBytes;
-    private int numSelectorThreads;
+    private int numSelectorThreads; // zookeeper.nio.numSelectorThreads
     private int numWorkerThreads;
     private long workerShutdownTimeoutMS;
 
@@ -641,34 +658,37 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     @Override
     public void configure(InetSocketAddress addr, int maxcc, int backlog, boolean secure) throws IOException {
         if (secure) {
-            throw new UnsupportedOperationException("SSL isn't supported in NIOServerCnxn");
+            throw new UnsupportedOperationException("SSL isn't supported in NIOServerCnxn，NIOServerCnxn不支持SSL,请改用netty");
         }
+        // 配置Sasl，使用父类的方法
         configureSaslLogin();
 
         maxClientCnxns = maxcc;
-        sessionlessCnxnTimeout = Integer.getInteger(
-            ZOOKEEPER_NIO_SESSIONLESS_CNXN_TIMEOUT, 10000);
+        // zookeeper.nio.sessionlessCnxnTimeout
+        sessionlessCnxnTimeout = Integer.getInteger(ZOOKEEPER_NIO_SESSIONLESS_CNXN_TIMEOUT, 10000);
         // We also use the sessionlessCnxnTimeout as expiring interval for
         // cnxnExpiryQueue. These don't need to be the same, but the expiring
         // interval passed into the ExpiryQueue() constructor below should be
         // less than or equal to the timeout.
-        cnxnExpiryQueue =
-            new ExpiryQueue<NIOServerCnxn>(sessionlessCnxnTimeout);
+        // 我们还使用sessionlessCnxnTimeout作为cnxnExpiryQueue的到期间隔。
+        // 这些不需要相同，但是传递到下面的ExpiryQueue（）构造函数的过期间隔应该小于或等于超时。
+        cnxnExpiryQueue =new ExpiryQueue<NIOServerCnxn>(sessionlessCnxnTimeout);
+        // 创建expirerThread线程
         expirerThread = new ConnectionExpirerThread();
 
+        // 拿到系统CPU核数
         int numCores = Runtime.getRuntime().availableProcessors();
         // 32 cores sweet spot seems to be 4 selector threads
-        numSelectorThreads = Integer.getInteger(
-            ZOOKEEPER_NIO_NUM_SELECTOR_THREADS,
-            Math.max((int) Math.sqrt((float) numCores/2), 1));
+        // zookeeper.nio.numSelectorThreads
+        numSelectorThreads = Integer.getInteger(ZOOKEEPER_NIO_NUM_SELECTOR_THREADS,
+                Math.max((int) Math.sqrt((float) numCores/2), 1));
         if (numSelectorThreads < 1) {
             throw new IOException("numSelectorThreads must be at least 1");
         }
-
-        numWorkerThreads = Integer.getInteger(
-            ZOOKEEPER_NIO_NUM_WORKER_THREADS, 2 * numCores);
-        workerShutdownTimeoutMS = Long.getLong(
-            ZOOKEEPER_NIO_SHUTDOWN_TIMEOUT, 5000);
+        // zookeeper.nio.numWorkerThreads
+        numWorkerThreads = Integer.getInteger(ZOOKEEPER_NIO_NUM_WORKER_THREADS, 2 * numCores);
+        // zookeeper.nio.shutdownTimeout
+        workerShutdownTimeoutMS = Long.getLong(ZOOKEEPER_NIO_SHUTDOWN_TIMEOUT, 5000);
 
         LOG.info("Configuring NIO connection handler with "
                  + (sessionlessCnxnTimeout/1000) + "s sessionless connection"
@@ -678,19 +698,33 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                  + (directBufferBytes == 0 ? "gathered writes." :
                     ("" + (directBufferBytes/1024) + " kB direct buffers.")));
         for(int i=0; i<numSelectorThreads; ++i) {
+            // 创建SelectorThread线程，一共创建numSelectorThreads个
             selectorThreads.add(new SelectorThread(i));
         }
 
         listenBacklog = backlog;
+        // 获得一个ServerSocket通道
         this.ss = ServerSocketChannel.open();
+        // 使多个Socket对象绑定在同一个端口上。
+        // 如果端口忙，但TCP状态位于 TIME_WAIT ，可以重用 端口。如果端口忙，而TCP状态位于其他状态，重用端口时依旧得到一个错误信息，
+        // 抛出“Address already in use： JVM_Bind”。如果你的服务程序停止后想立即重启，不等60秒，
+        // 而新套接字依旧 使用同一端口，此时 SO_REUSEADDR 选项非常有用。
+        // 必须意识到，此时任何非期 望数据到达，都可能导致服务程序反应混乱，不过这只是一种可能，事实上很不可能。
         ss.socket().setReuseAddress(true);
         LOG.info("binding to port " + addr);
         if (listenBacklog == -1) {
           ss.socket().bind(addr);
         } else {
+            // 绑定端口
           ss.socket().bind(addr, listenBacklog);
         }
+        // 设置通道为非阻塞
+        // 函数listen(int socketfd,int backlog)用来初始化服务端可连接队列，
+        // 服务端处理客户端连接请求是顺序处理的，所以同一时间只能处理一个客户端连接，多个客户端来的时候，
+        // 服务端将不能处理的客户端连接请求放在队列中等待处理，backlog参数指定了队列的大小
+        // 详情查看：https://www.jianshu.com/p/e6f2036621f4
         ss.configureBlocking(false);
+        // 创建acceptThread线程
         acceptThread = new AcceptThread(ss, addr, selectorThreads);
     }
 
@@ -747,19 +781,23 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     @Override
     public void start() {
         stopped = false;
+        // 创建工作线程池
         if (workerPool == null) {
             workerPool = new WorkerService(
                 "NIOWorker", numWorkerThreads, false);
         }
+        // 开启selectorThrea
         for(SelectorThread thread : selectorThreads) {
             if (thread.getState() == Thread.State.NEW) {
                 thread.start();
             }
         }
-        // ensure thread is started once and only once
+        // ensure thread is started once and only once确保线程只启动一次
+        // 启动acceptThread线程
         if (acceptThread.getState() == Thread.State.NEW) {
             acceptThread.start();
         }
+        // 启动expirerThread线程
         if (expirerThread.getState() == Thread.State.NEW) {
             expirerThread.start();
         }

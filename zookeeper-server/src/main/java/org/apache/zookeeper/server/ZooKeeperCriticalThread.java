@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Represents critical thread. When there is an uncaught exception thrown by the
  * thread this will exit the system.
+ * 代表关键线程。当线程抛出未捕获的异常时，这将退出系统。
  */
 public class ZooKeeperCriticalThread extends ZooKeeperThread {
     private static final Logger LOG = LoggerFactory

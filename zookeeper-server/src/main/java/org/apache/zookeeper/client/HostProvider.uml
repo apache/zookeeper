@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>JAVA</ID>
+  <OriginalElement>org.apache.zookeeper.client.HostProvider</OriginalElement>
+  <nodes>
+    <node x="111.5" y="315.0">org.apache.zookeeper.client.ZooKeeperSaslClient</node>
+    <node x="234.0" y="395.0">org.apache.zookeeper.client.ZooKeeperSaslClient.SaslState</node>
+    <node x="10.5" y="80.0">org.apache.zookeeper.client.FourLetterWordMain</node>
+    <node x="57.90625" y="160.0">org.apache.zookeeper.client.StaticHostProvider</node>
+    <node x="199.5" y="80.0">org.apache.zookeeper.client.HostProvider</node>
+    <node x="392.75" y="0.0">org.apache.zookeeper.common.ZKConfig</node>
+    <node x="343.5" y="80.0">org.apache.zookeeper.client.ZKClientConfig</node>
+    <node x="86.40625" y="240.0">org.apache.zookeeper.client.StaticHostProvider.Resolver</node>
+    <node x="137.25" y="0.0">org.apache.yetus.audience.InterfaceAudience.Public</node>
+    <node x="0.0" y="395.0">org.apache.zookeeper.client.ZooKeeperSaslClient.ServerSaslResponseCallback</node>
+    <node x="0.0" y="470.0">org.apache.zookeeper.client.ConnectStringParser</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="org.apache.zookeeper.client.FourLetterWordMain" target="org.apache.yetus.audience.InterfaceAudience.Public">
+      <point x="0.0" y="-15.0" />
+      <point x="95.0" y="60.0" />
+      <point x="168.0" y="60.0" />
+      <point x="-10.25" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.client.ZKClientConfig" target="org.apache.zookeeper.common.ZKConfig">
+      <point x="33.25" y="-15.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.client.ZKClientConfig" target="org.apache.yetus.audience.InterfaceAudience.Public">
+      <point x="-33.25" y="-15.0" />
+      <point x="376.75" y="50.0" />
+      <point x="209.0" y="50.0" />
+      <point x="30.75" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.client.HostProvider" target="org.apache.yetus.audience.InterfaceAudience.Public">
+      <point x="0.0" y="-15.0" />
+      <point x="261.5" y="60.0" />
+      <point x="188.5" y="60.0" />
+      <point x="10.25" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.client.ZooKeeperSaslClient.SaslState" target="org.apache.zookeeper.client.ZooKeeperSaslClient">
+      <point x="0.0" y="-15.0" />
+      <point x="284.0" y="370.0" />
+      <point x="237.5" y="370.0" />
+      <point x="42.0" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.client.StaticHostProvider.Resolver" target="org.apache.zookeeper.client.StaticHostProvider">
+      <point x="0.0" y="-15.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.client.StaticHostProvider" target="org.apache.yetus.audience.InterfaceAudience.Public">
+      <point x="-38.75" y="-15.0" />
+      <point x="96.65625" y="135.0" />
+      <point x="0.0" y="135.0" />
+      <point x="0.0" y="50.0" />
+      <point x="147.5" y="50.0" />
+      <point x="-30.75" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.client.ZooKeeperSaslClient.ServerSaslResponseCallback" target="org.apache.zookeeper.client.ZooKeeperSaslClient">
+      <point x="0.0" y="-15.0" />
+      <point x="107.0" y="370.0" />
+      <point x="153.5" y="370.0" />
+      <point x="-42.0" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.client.StaticHostProvider" target="org.apache.zookeeper.client.HostProvider">
+      <point x="38.75" y="-15.0" />
+      <point x="174.15625" y="135.0" />
+      <point x="261.5" y="135.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic Group" zoom="1.0" x="247.0" y="250.0" />
+  <SelectedNodes />
+  <Categories>
+    <Category>Inner Classes</Category>
+  </Categories>
+  <SCOPE>All</SCOPE>
+  <VISIBILITY>private</VISIBILITY>
+</Diagram>
+

@@ -26,6 +26,9 @@ import org.slf4j.LoggerFactory;
 /**
  * A factory used to produce the actual watch manager based on the
  * zookeeper.watchManagerName option.
+ *
+ * 用于根据 zookeeper.watchManagerName 选项生成实际监视管理器的工厂。
+ * 默认生成WatchManager
  */
 public class WatchManagerFactory {
     private static final Logger LOG = LoggerFactory.getLogger(WatchManagerFactory.class);

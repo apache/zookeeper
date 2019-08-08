@@ -40,16 +40,20 @@ import org.apache.zookeeper.data.StatPersisted;
 @SuppressFBWarnings("EI_EXPOSE_REP2")
 public class DataNode implements Record {
     /** the data for this datanode */
+    //数据内容
     byte data[];
 
     /**
      * the acl map long for this datanode. the datatree has the map
      */
+    //ACL信息
+    // Datatree的ReferenceCountedACLCache中使用Map<Long, List<ACL>>缓存着所有DataNode的权限列表，这里的acl就是Map<Long, List<ACL>>中的Key。
     Long acl;
 
     /**
      * the stat for this node that is persisted to disk.
      */
+    //状态信息 用来记录节点状态
     public StatPersisted stat;
 
     /**
@@ -57,6 +61,7 @@ public class DataNode implements Record {
      * does not contain the parent path -- just the last part of the path. This
      * should be synchronized on except deserializing (for speed up issues).
      */
+    //子节点集合   这个数次那个不允许外部修改
     private Set<String> children = null;
 
     private static final Set<String> EMPTY_SET = Collections.emptySet();
@@ -70,9 +75,7 @@ public class DataNode implements Record {
 
     /**
      * create a DataNode with parent, data, acls and stat
-     * 
-     * @param parent
-     *            the parent of this DataNode
+     *
      * @param data
      *            the data to be set
      * @param acl
@@ -128,6 +131,9 @@ public class DataNode implements Record {
      * 
      * @return the children of this datanode. If the datanode has no children, empty
      *         set is returned
+     *
+     * // 返回的集合必须不可修改
+     *
      */
     public synchronized Set<String> getChildren() {
         if (children == null) {
@@ -136,7 +142,7 @@ public class DataNode implements Record {
 
         return Collections.unmodifiableSet(children);
     }
-
+    // 复制状态
     synchronized public void copyStat(Stat to) {
         to.setAversion(stat.getAversion());
         to.setCtime(stat.getCtime());
@@ -146,10 +152,10 @@ public class DataNode implements Record {
         to.setPzxid(stat.getPzxid());
         to.setVersion(stat.getVersion());
         to.setEphemeralOwner(getClientEphemeralOwner(stat));
-        to.setDataLength(data == null ? 0 : data.length);
+        to.setDataLength(data == null ? 0 : data.length); // 数据长度
         int numChildren = 0;
         if (this.children != null) {
-            numChildren = children.size();
+            numChildren = children.size(); // 子节点数量
         }
         // when we do the Cversion we need to translate from the count of the creates
         // to the count of the changes (v3 semantics)
@@ -166,6 +172,7 @@ public class DataNode implements Record {
         return stat.getEphemeralOwner();
     }
 
+    // 把DataNode反序列化
     synchronized public void deserialize(InputArchive archive, String tag)
             throws IOException {
         archive.startRecord("node");
@@ -176,6 +183,7 @@ public class DataNode implements Record {
         archive.endRecord("node");
     }
 
+    // 把DataNode序列化
     synchronized public void serialize(OutputArchive archive, String tag)
             throws IOException {
         archive.startRecord(this, "node");

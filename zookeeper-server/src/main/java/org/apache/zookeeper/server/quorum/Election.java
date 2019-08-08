@@ -19,8 +19,7 @@
 package org.apache.zookeeper.server.quorum;
 
 
-import org.apache.zookeeper.server.quorum.Vote;
-
+// 选举的父接口为Election，其定义了lookForLeader和shutdown两个方法，lookForLeader表示寻找Leader，shutdown则表示关闭，如关闭服务端之间的连接。
 public interface Election {
     public Vote lookForLeader() throws InterruptedException;
     public void shutdown();

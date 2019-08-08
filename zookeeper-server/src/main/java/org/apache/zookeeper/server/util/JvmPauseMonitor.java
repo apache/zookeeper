@@ -32,16 +32,21 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * This code is originally from hadoop-common, see:
  * https://github.com/apache/hadoop/blob/trunk/hadoop-common-project/hadoop-common/src/main/java/org/apache/hadoop/util/JvmPauseMonitor.java
+ * 此代码最初来自hadoop-common，
+ * 请参阅：https://github.com/apache/hadoop/blob/trunk/hadoop-common-project/hadoop-common/src/main/java/org/apache/hadoop/UTIL/JvmPauseMonitor.java
  *
  * Class which sets up a simple thread which runs in a loop sleeping
  * for a short interval of time. If the sleep takes significantly longer
  * than its target time, it implies that the JVM or host machine has
  * paused processing, which may cause other problems. If such a pause is
  * detected, the thread logs a message.
+ * 设置一个简单线程的类，该线程在一个循环中运行，持续一小段时间。
+ * 如果睡眠时间比目标时间长得多，则意味着JVM或主机已暂停处理，这可能会导致其他问题。如果检测到这样的暂停，则线程记录消息。
  */
 public class JvmPauseMonitor {
     private static final Logger LOG = LoggerFactory.getLogger(JvmPauseMonitor.class);
@@ -91,6 +96,7 @@ public class JvmPauseMonitor {
     public void serviceStop() {
         shouldRun = false;
         if (monitorThread != null) {
+            // 中断jvm监控线程
             monitorThread.interrupt();
             try {
                 monitorThread.join();
@@ -181,19 +187,20 @@ public class JvmPauseMonitor {
         @Override
         public void run() {
             Map<String, GcTimes> gcTimesBeforeSleep = getGcTimes();
-            LOG.info("Starting JVM Pause Monitor with infoThresholdMs:{} warnThresholdMs:{} and sleepTimeMs:{}",
+            LOG.info("Starting JVM Pause Monitor with infoThresholdMs:{} warnThresholdMs:{} and sleepTimeMs:{}" +
+                            "使用infoThresholdMs启动JVM暂停监视器：{} warnThresholdMs：{}和sleepTimeMs：{}",
                     infoThresholdMs, warnThresholdMs, sleepTimeMs);
             while (shouldRun) {
                 long startTime = Instant.now().toEpochMilli();
                 try {
                     Thread.sleep(sleepTimeMs);
                 } catch (InterruptedException ie) {
+                    // 收到中断就退出
                     return;
                 }
                 long endTime = Instant.now().toEpochMilli();
                 long extraSleepTime = (endTime - startTime) - sleepTimeMs;
                 Map<String, GcTimes> gcTimesAfterSleep = getGcTimes();
-
                 if (extraSleepTime > warnThresholdMs) {
                     ++numGcWarnThresholdExceeded;
                     LOG.warn(formatMessage(extraSleepTime, gcTimesAfterSleep, gcTimesBeforeSleep));
@@ -204,6 +211,7 @@ public class JvmPauseMonitor {
                 totalGcExtraSleepTime += extraSleepTime;
                 gcTimesBeforeSleep = gcTimesAfterSleep;
             }
+
         }
     }
 }

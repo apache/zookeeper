@@ -150,6 +150,7 @@ public class ZooKeeper implements AutoCloseable {
      * @deprecated Use {@link ZKClientConfig#ZOOKEEPER_CLIENT_CNXN_SOCKET}
      *             instead.
      */
+    // 客户端Socket
     @Deprecated
     public static final String ZOOKEEPER_CLIENT_CNXN_SOCKET = "zookeeper.clientCnxnSocket";
     // Setting this to "true" will enable encrypted client-server communication.
@@ -160,11 +161,13 @@ public class ZooKeeper implements AutoCloseable {
      */
     @Deprecated
     public static final String SECURE_CLIENT = "zookeeper.client.secure";
-
+    // 客户端，用来管理客户端与服务端的连接
+    // ZooKeeper类维护一个ClientCnxn类，用来管理客户端与服务端的连接。
     protected final ClientCnxn cnxn;
     private static final Logger LOG;
     static {
-        //Keep these two lines together to keep the initialization order explicit
+        //Keep these two lines together to keep the initialization order explicit将这两行保持在一起以保持初始化顺序显式
+        // 初始化
         LOG = LoggerFactory.getLogger(ZooKeeper.class);
         Environment.logEnv("Client environment:", LOG);
     }
@@ -263,12 +266,16 @@ public class ZooKeeper implements AutoCloseable {
      * API.
      */
     static class ZKWatchManager implements ClientWatchManager {
+        //针对内容的watch
         private final Map<String, Set<Watcher>> dataWatches =
             new HashMap<String, Set<Watcher>>();
+        //针对exist API相关的watch
         private final Map<String, Set<Watcher>> existWatches =
             new HashMap<String, Set<Watcher>>();
+        //针对getChildren API相关的watch
         private final Map<String, Set<Watcher>> childWatches =
             new HashMap<String, Set<Watcher>>();
+        //client传递的,默认的watcher实现
         private boolean disableAutoWatchReset;
 
         ZKWatchManager(boolean disableAutoWatchReset) {
@@ -459,6 +466,7 @@ public class ZooKeeper implements AutoCloseable {
          * @see org.apache.zookeeper.ClientWatchManager#materialize(Event.KeeperState, 
          *                                                        Event.EventType, java.lang.String)
          */
+        // 该方法表示事件发生时，返回需要被通知的Watcher集合，可能为空集合。
         @Override
         public Set<Watcher> materialize(Watcher.Event.KeeperState state,
                                         Watcher.Event.EventType type,
@@ -467,9 +475,10 @@ public class ZooKeeper implements AutoCloseable {
             Set<Watcher> result = new HashSet<Watcher>();
 
             switch (type) {
-            case None:
-                result.add(defaultWatcher);
-                boolean clear = disableAutoWatchReset && state != Watcher.Event.KeeperState.SyncConnected;
+            case None:  //eventType是null
+                // 则所有dataWatches,existWatches,childWatches都需要被通知,???为什么要这样干
+                result.add(defaultWatcher);//添加默认watcher
+                boolean clear = disableAutoWatchReset && state != Watcher.Event.KeeperState.SyncConnected;//获取clear标记
                 synchronized(dataWatches) {
                     for(Set<Watcher> ws: dataWatches.values()) {
                         result.addAll(ws);
@@ -498,21 +507,22 @@ public class ZooKeeper implements AutoCloseable {
                 }
 
                 return result;
-            case NodeDataChanged:
-            case NodeCreated:
+            case NodeDataChanged:// 节点数据变化
+            case NodeCreated: // 创建节点
+                //如果节点内容变化或者创建
                 synchronized (dataWatches) {
-                    addTo(dataWatches.remove(clientPath), result);
+                    addTo(dataWatches.remove(clientPath), result);//从dataWatches中移除，并且添加到result中
                 }
                 synchronized (existWatches) {
-                    addTo(existWatches.remove(clientPath), result);
+                    addTo(existWatches.remove(clientPath), result);//从existWatches中移除，并且添加到result中
                 }
                 break;
-            case NodeChildrenChanged:
+            case NodeChildrenChanged:// 节点子节点变化
                 synchronized (childWatches) {
                     addTo(childWatches.remove(clientPath), result);
                 }
                 break;
-            case NodeDeleted:
+            case NodeDeleted: // 删除节点
                 synchronized (dataWatches) {
                     addTo(dataWatches.remove(clientPath), result);
                 }
@@ -528,22 +538,25 @@ public class ZooKeeper implements AutoCloseable {
                     addTo(childWatches.remove(clientPath), result);
                 }
                 break;
-            default:
+            default://默认处理
                 String msg = "Unhandled watch event type " + type
                     + " with state " + state + " on path " + clientPath;
                 LOG.error(msg);
                 throw new RuntimeException(msg);
             }
-
+            //返回结果
             return result;
         }
     }
 
     /**
-     * Register a watcher for a particular path.
+     * Register a watcher for a particular path.为特定路径注册观察者。
+     * 抽象类，用作watch注册
      */
     public abstract class WatchRegistration {
+        // Watcher
         private Watcher watcher;
+        // 客户端路径
         private String clientPath;
         public WatchRegistration(Watcher watcher, String clientPath)
         {
@@ -551,6 +564,7 @@ public class ZooKeeper implements AutoCloseable {
             this.clientPath = clientPath;
         }
 
+        // 获取路径到Watchers集合的键值对，由子类实现
         abstract protected Map<String, Set<Watcher>> getWatches(int rc);
 
         /**
@@ -558,25 +572,32 @@ public class ZooKeeper implements AutoCloseable {
          * @param rc the result code of the operation that attempted to
          * add the watch on the path.
          */
+        // 注册
         public void register(int rc) {
-            if (shouldAddWatch(rc)) {
+            if (shouldAddWatch(rc)) {// 应该添加监听
+                // 获取路径到Watchers集合的键值对，工厂模式
                 Map<String, Set<Watcher>> watches = getWatches(rc);
                 synchronized(watches) {
+                    // 通过路径获取watcher集合
                     Set<Watcher> watchers = watches.get(clientPath);
                     if (watchers == null) {
                         watchers = new HashSet<Watcher>();
+                        // 将路径和watchers集合存入
                         watches.put(clientPath, watchers);
                     }
+                    // 添加至watchers集合
                     watchers.add(watcher);
                 }
             }
         }
         /**
          * Determine whether the watch should be added based on return code.
+         * 确定是否应根据返回代码添加watch。
          * @param rc the result code of the operation that attempted to add the
          * watch on the node
          * @return true if the watch should be added, otw false
          */
+        // 判断是否需要添加，判断rc是否为0
         protected boolean shouldAddWatch(int rc) {
             return rc == 0;
         }
@@ -585,6 +606,7 @@ public class ZooKeeper implements AutoCloseable {
     /** Handle the special case of exists watches - they add a watcher
      * even in the case where NONODE result code is returned.
      */
+    // 存在性watch注册
     class ExistsWatchRegistration extends WatchRegistration {
         public ExistsWatchRegistration(Watcher watcher, String clientPath) {
             super(watcher, clientPath);
@@ -592,15 +614,18 @@ public class ZooKeeper implements AutoCloseable {
 
         @Override
         protected Map<String, Set<Watcher>> getWatches(int rc) {
+            // 根据rc是否为0确定返回dataWatches或existsWatches
             return rc == 0 ?  watchManager.dataWatches : watchManager.existWatches;
         }
 
         @Override
         protected boolean shouldAddWatch(int rc) {
+            // 判断rc是否为0或者rc是否等于NONODE的值
             return rc == 0 || rc == KeeperException.Code.NONODE.intValue();
         }
     }
 
+    // 数据watch注册
     class DataWatchRegistration extends WatchRegistration {
         public DataWatchRegistration(Watcher watcher, String clientPath) {
             super(watcher, clientPath);
@@ -608,10 +633,12 @@ public class ZooKeeper implements AutoCloseable {
 
         @Override
         protected Map<String, Set<Watcher>> getWatches(int rc) {
+            // 直接返回dataWatches
             return watchManager.dataWatches;
         }
     }
 
+    // 子节点注册
     class ChildWatchRegistration extends WatchRegistration {
         public ChildWatchRegistration(Watcher watcher, String clientPath) {
             super(watcher, clientPath);
@@ -619,15 +646,17 @@ public class ZooKeeper implements AutoCloseable {
 
         @Override
         protected Map<String, Set<Watcher>> getWatches(int rc) {
+            // 直接返回childWatches
             return watchManager.childWatches;
         }
     }
 
+    // 表示服务器的状态
     @InterfaceAudience.Public
     public enum States {
         CONNECTING, ASSOCIATING, CONNECTED, CONNECTEDREADONLY,
         CLOSED, AUTH_FAILED, NOT_CONNECTED;
-
+        // 判断服务器是否存活
         public boolean isAlive() {
             return this != CLOSED && this != AUTH_FAILED;
         }
@@ -637,6 +666,7 @@ public class ZooKeeper implements AutoCloseable {
          * could possibly be read-only, if this client is allowed
          * to go to read-only mode)
          * */
+        // 判断客户端是否连接至服务端
         public boolean isConnected() {
             return this == CONNECTED || this == CONNECTEDREADONLY;
         }
@@ -876,14 +906,20 @@ public class ZooKeeper implements AutoCloseable {
         }
         this.clientConfig = clientConfig;
         watchManager = defaultWatchManager();
+        // 初始化默认Watcher
         watchManager.defaultWatcher = watcher;
+        // 对传入的connectString进行解析
+        // connectString 类似于127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002未指定根空间的字符串
+        // 或者是127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002/app/a指定根空间的字符串,根为/app/a
         ConnectStringParser connectStringParser = new ConnectStringParser(
                 connectString);
+        // 根据服务器地址列表生成HostProvider
         hostProvider = aHostProvider;
-
+        // 生成客户端管理
         cnxn = createConnection(connectStringParser.getChrootPath(),
                 hostProvider, sessionTimeout, this, watchManager,
                 getClientCnxnSocket(), canBeReadOnly);
+        // 启动
         cnxn.start();
     }
 
@@ -1011,6 +1047,7 @@ public class ZooKeeper implements AutoCloseable {
     public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher,
             boolean canBeReadOnly, ZKClientConfig conf) throws IOException {
         this(connectString, sessionTimeout, watcher, canBeReadOnly,
+                // 根据connectString 服务器地址列表生成HostProvider
                 createDefaultHostProvider(connectString), conf);
     }
 
@@ -1204,7 +1241,7 @@ public class ZooKeeper implements AutoCloseable {
      *            allowed while write requests are not. It continues seeking for
      *            majority in the background.
      * @param aHostProvider
-     *            use this as HostProvider to enable custom behaviour.
+     *            use this as HostProvider to enable custom behaviour.使用它作为HostProvider来启用自定义行为。
      * @param clientConfig
      *            (added in 3.5.2) passing this conf object gives each client the flexibility of
      *            configuring properties differently compared to other instances
@@ -1213,6 +1250,7 @@ public class ZooKeeper implements AutoCloseable {
      *
      * @since 3.5.5
      */
+    // 此型构造函数和之前构造函数的区别在于本构造函数提供了sessionId和sessionPwd，这表明用户已经之前已经连接过服务端，所以能够获取到sessionId，其流程与之前的构造函数类似，不再累赘。
     public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher,
     		long sessionId, byte[] sessionPasswd, boolean canBeReadOnly,
     		HostProvider aHostProvider, ZKClientConfig clientConfig) throws IOException {
@@ -1227,17 +1265,23 @@ public class ZooKeeper implements AutoCloseable {
             clientConfig = new ZKClientConfig();
         }
         this.clientConfig = clientConfig;
+        // 初始化默认Watcher
         watchManager = defaultWatchManager();
         watchManager.defaultWatcher = watcher;
-
+        // 对传入的connectString进行解析
+        // connectString 类似于127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002未指定根空间的字符串
+        // 或者是127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002/app/a指定根空间的字符串,根为/app/a
         ConnectStringParser connectStringParser = new ConnectStringParser(
                 connectString);
         hostProvider = aHostProvider;
 
+        // 生成客户端管理
         cnxn = new ClientCnxn(connectStringParser.getChrootPath(),
                 hostProvider, sessionTimeout, this, watchManager,
                 getClientCnxnSocket(), sessionId, sessionPasswd, canBeReadOnly);
+        // 设置客户端的seenRwServerBefore字段为true(因为用户提供了sessionId，表示肯定已经连接过)
         cnxn.seenRwServerBefore = true; // since user has provided sessionId
+        // 启动
         cnxn.start();
     }
 
@@ -1621,10 +1665,11 @@ public class ZooKeeper implements AutoCloseable {
             CreateMode createMode, Stat stat, long ttl)
             throws KeeperException, InterruptedException {
         final String clientPath = path;
+        // 验证路径是否合法
         PathUtils.validatePath(clientPath, createMode.isSequential());
         EphemeralType.validateTTL(createMode, ttl);
         validateACL(acl);
-
+        // 添加根空间
         final String serverPath = prependChroot(clientPath);
 
         RequestHeader h = new RequestHeader();
@@ -1680,23 +1725,31 @@ public class ZooKeeper implements AutoCloseable {
      *
      * @see #create(String, byte[], List, CreateMode)
      */
+    // 该create函数是同步的，主要用作创建节点
     public void create(final String path, byte data[], List<ACL> acl,
             CreateMode createMode, StringCallback cb, Object ctx)
     {
         final String clientPath = path;
         PathUtils.validatePath(clientPath, createMode.isSequential());
         EphemeralType.validateTTL(createMode, -1);
-
+        // 添加根空间
         final String serverPath = prependChroot(clientPath);
-
+        // 新生请求头
         RequestHeader h = new RequestHeader();
+        // 设置请求头类型
         h.setType(createMode.isContainer() ? ZooDefs.OpCode.createContainer : ZooDefs.OpCode.create);
+        // 新生创建节点请求
         CreateRequest request = new CreateRequest();
+        // 新生创建节点响应
         CreateResponse response = new CreateResponse();
         ReplyHeader r = new ReplyHeader();
+        // 设置请求的数据
         request.setData(data);
+        // 设置请求对应的Flag
         request.setFlags(createMode.toFlag());
+        // 设置服务器路径
         request.setPath(serverPath);
+        // 设置请求的ACL列表
         request.setAcl(acl);
         cnxn.queuePacket(h, r, request, response, cb, clientPath,
                 serverPath, ctx, null);
@@ -3131,14 +3184,16 @@ public class ZooKeeper implements AutoCloseable {
     protected SocketAddress testableLocalSocketAddress() {
         return cnxn.sendThread.getClientCnxnSocket().getLocalSocketAddress();
     }
-
+    // 该函数会利用反射创建ClientCnxnSocketNIO实例
     private ClientCnxnSocket getClientCnxnSocket() throws IOException {
+        // 查看是否在系统属性中进行了设置   zookeeper.clientCnxnSocket
         String clientCnxnSocketName = getClientConfig().getProperty(
                 ZKClientConfig.ZOOKEEPER_CLIENT_CNXN_SOCKET);
         if (clientCnxnSocketName == null) {
-            clientCnxnSocketName = ClientCnxnSocketNIO.class.getName();
+            clientCnxnSocketName = ClientCnxnSocketNIO.class.getName(); // 若未进行设置，取得ClientCnxnSocketNIO的类名
         }
         try {
+            // 反射拿到构造器
             Constructor<?> clientCxnConstructor = Class.forName(clientCnxnSocketName).getDeclaredConstructor(ZKClientConfig.class);
             ClientCnxnSocket clientCxnSocket = (ClientCnxnSocket) clientCxnConstructor.newInstance(getClientConfig());
             return clientCxnSocket;

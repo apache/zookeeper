@@ -103,7 +103,7 @@ public class DigestAuthenticationProvider implements AuthenticationProvider {
         try {
             String digest = generateDigest(id);
             if (digest.equals(superDigest)) {
-                cnxn.addAuthInfo(new Id("super", ""));
+                cnxn.addAuthInfo(new Id("super", ""));//在这种scheme情况下，对应的id拥有超级权限，可以做任何事情(cdrwa）
             }
             cnxn.addAuthInfo(new Id(getScheme(), digest));
             return KeeperException.Code.OK;

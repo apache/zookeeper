@@ -41,7 +41,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class starts and runs a standalone ZooKeeperServer.
+ * standalone ZooKeeperServer.
+ * 该类启动并运行独立的ZooKeeperServer。
  */
 @InterfaceAudience.Public
 public class ZooKeeperServerMain {
@@ -60,6 +61,8 @@ public class ZooKeeperServerMain {
 
     /*
      * Start up the ZooKeeper server.
+     * 单机情况下
+     * 启动ZooKeeper服务器。
      *
      * @param args the configfile or the port datadir [ticktime]
      */
@@ -92,15 +95,13 @@ public class ZooKeeperServerMain {
         System.exit(ExitCode.EXECUTION_FINISHED.getValue());
     }
 
-    protected void initializeAndRun(String[] args)
-        throws ConfigException, IOException, AdminServerException
-    {
+    protected void initializeAndRun(String[] args) throws ConfigException, IOException, AdminServerException {
         try {
             ManagedUtil.registerLog4jMBeans();
         } catch (JMException e) {
             LOG.warn("Unable to register log4j JMX control", e);
         }
-
+        // 解析配置文件 ServerConfig
         ServerConfig config = new ServerConfig();
         if (args.length == 1) {
             config.parse(args[0]);
@@ -112,22 +113,22 @@ public class ZooKeeperServerMain {
     }
 
     /**
-     * Run from a ServerConfig.
+     * Run from a ServerConfig.查找所有要删除的候选项，即名称中的zxid小于leastZxidToBeRetain的文件。如上所述，这条规则有一个例外。
      * @param config ServerConfig to use.
      * @throws IOException
      * @throws AdminServerException
      */
-    public void runFromConfig(ServerConfig config)
-            throws IOException, AdminServerException {
+    public void runFromConfig(ServerConfig config) throws IOException, AdminServerException {
         LOG.info("Starting server");
         FileTxnSnapLog txnLog = null;
         try {
             try {
+                // 配置并启动DefaultMetricsProvider
                 metricsProvider = MetricsProviderBootstrap
-                        .startMetricsProvider(config.getMetricsProviderClassName(),
-                                              config.getMetricsProviderConfiguration());
+                        .startMetricsProvider(config.getMetricsProviderClassName(),// 配置文件中 metricsProvider.className，默认是DefaultMetricsProvider
+                                config.getMetricsProviderConfiguration());// 配置文件中已 metricsProvider. 开头的
             } catch (MetricsProviderLifeCycleException error) {
-                throw new IOException("Cannot boot MetricsProvider "+config.getMetricsProviderClassName(),
+                throw new IOException("Cannot boot MetricsProvider无法启动MetricsProvider "+config.getMetricsProviderClassName(),
                     error);
             }
             ServerMetrics.metricsProviderInitialized(metricsProvider);
@@ -138,6 +139,7 @@ public class ZooKeeperServerMain {
             txnLog = new FileTxnSnapLog(config.dataLogDir, config.dataDir);
             JvmPauseMonitor jvmPauseMonitor = null;
             if(config.jvmPauseMonitorToRun) {
+                // jvm 监控程序
                 jvmPauseMonitor = new JvmPauseMonitor(config);
             }
             final ZooKeeperServer zkServer = new ZooKeeperServer(jvmPauseMonitor, txnLog,
@@ -147,47 +149,67 @@ public class ZooKeeperServerMain {
 
             // Registers shutdown handler which will be used to know the
             // server error or shutdown state changes.
+            // 注册shutdown处理程序，用于了解//服务器错误或关闭状态更改。
             final CountDownLatch shutdownLatch = new CountDownLatch(1);
+            // 注册服务关闭回调
             zkServer.registerServerShutdownHandler(
                     new ZooKeeperServerShutdownHandler(shutdownLatch));
 
-            // Start Admin server
+            // Start Admin server启动管理服务器
+            // 默认不开启，这里可以启动JettyAdminServer服务器
             adminServer = AdminServerFactory.createAdminServer();
             adminServer.setZooKeeperServer(zkServer);
             adminServer.start();
 
             boolean needStartZKServer = true;
+            // 创建并启动网络IO管理器
             if (config.getClientPortAddress() != null) {
+                // ServerCnxnFactory
                 cnxnFactory = ServerCnxnFactory.createFactory();
+                // clientPortAddress  maxClientCnxns（默认60） clientPortListenBacklog（默认 -1）
                 cnxnFactory.configure(config.getClientPortAddress(), config.getMaxClientCnxns(),
                     config.getClientPortListenBacklog(), false);
+                // 此方法除了启动ServerCnxnFactory,还会启动ZooKeeper
                 cnxnFactory.startup(zkServer);
                 // zkServer has been started. So we don't need to start it again in secureCnxnFactory.
                 needStartZKServer = false;
             }
+            // 创建并启动secureCnxnFactory
             if (config.getSecureClientPortAddress() != null) {
+                // ServerCnxnFactory
                 secureCnxnFactory = ServerCnxnFactory.createFactory();
                 secureCnxnFactory.configure(config.getSecureClientPortAddress(), config.getMaxClientCnxns(),
                     config.getClientPortListenBacklog(), true);
+                // 如果创建了cnxnFactory，则needStartZKServer就是false，否则就是true
+                // needStartZKServer是为了启动zkServer服务，如果cnxnFactory启动过这里就不会多次启动
                 secureCnxnFactory.startup(zkServer, needStartZKServer);
             }
 
-            containerManager = new ContainerManager(zkServer.getZKDatabase(), zkServer.firstProcessor,
+
+            // 容器节点管理器   当容器节点的最后一个孩子节点被删除之后，容器节点将被标注并在一段时间后删除.
+            // checkIntervalMs	znode.container.checkIntervalMs	系统属性	执行两次检查任务之间的时间间隔,单位:ms,默认1min
+            // maxPerMinute	znode.container.maxPerMinute 系统属性 一分钟内最多删除多少个容器节点,即删除两个容器节点之间的最少时间间隔为60000/10000=6ms
+            containerManager = new ContainerManager(zkServer.getZKDatabase(), zkServer.firstProcessor, // 这里需要请求处理器
                     Integer.getInteger("znode.container.checkIntervalMs", (int) TimeUnit.MINUTES.toMillis(1)),
-                    Integer.getInteger("znode.container.maxPerMinute", 10000)
-            );
+                    Integer.getInteger("znode.container.maxPerMinute", 10000));
+
             containerManager.start();
 
             // Watch status of ZooKeeper server. It will do a graceful shutdown
             // if the server is not running or hits an internal error.
+            // 观察ZooKeeper服务器的状态。如果服务器没有运行或遇到内部错误，它将正常关闭
+            // 在ZooKeeperServerShutdownHandler中执行了shutdownLatch.countDown()
+            // 服务器正常启动时,运行到此处阻塞,只有server的state变为ERROR或SHUTDOWN时继续运行后面的代码
             shutdownLatch.await();
 
             shutdown();
 
             if (cnxnFactory != null) {
+                // 主线程等到cnxnFactory关闭
                 cnxnFactory.join();
             }
             if (secureCnxnFactory != null) {
+                // 主线程等到secureCnxnFactory关闭
                 secureCnxnFactory.join();
             }
             if (zkServer.canShutdown()) {

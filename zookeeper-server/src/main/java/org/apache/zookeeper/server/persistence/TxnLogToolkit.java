@@ -19,6 +19,7 @@
 package org.apache.zookeeper.server.persistence;
 
 import org.apache.commons.cli.CommandLine;
+
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
@@ -59,6 +60,9 @@ import java.util.zip.Adler32;
 import java.util.zip.Checksum;
 
 import static org.apache.zookeeper.server.persistence.FileTxnLog.TXNLOG_MAGIC;
+
+
+// 事务日志可视化 TxnLogToolkit  这个工具是为了可视化事务日志的
 
 public class TxnLogToolkit implements Closeable {
 

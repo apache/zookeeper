@@ -46,6 +46,7 @@ import org.slf4j.LoggerFactory;
  * above the implementations
  * of txnlog and snapshot
  * classes
+ * 这是txnlog和snapshot 类的实现之上的封装类
  */
 public class FileTxnSnapLog {
     //the directory containing the
@@ -77,6 +78,7 @@ public class FileTxnSnapLog {
      * restore to gather information
      * while the data is being
      * restored.
+     * 此监听器帮助外部apis调用恢复以在数据被恢复时收集信息。
      */
     public interface PlayBackListener {
         void onTxnLoaded(TxnHeader hdr, Record rec);
@@ -91,6 +93,7 @@ public class FileTxnSnapLog {
     public FileTxnSnapLog(File dataDir, File snapDir) throws IOException {
         LOG.debug("Opening datadir:{} snapDir:{}", dataDir, snapDir);
 
+        // 子目录 "version-2"
         this.dataDir = new File(dataDir, version + VERSION);
         this.snapDir = new File(snapDir, version + VERSION);
 
@@ -102,43 +105,45 @@ public class FileTxnSnapLog {
 
         if (!this.dataDir.exists()) {
             if (!enableAutocreate) {
-                throw new DatadirException("Missing data directory "
+                throw new DatadirException("Missing data directory 缺少数据目录"
                         + this.dataDir
-                        + ", automatic data directory creation is disabled ("
+                        + ", automatic data directory creation is disabled 自动数据目录创建已禁用 ("
                         + ZOOKEEPER_DATADIR_AUTOCREATE
-                        + " is false). Please create this directory manually.");
+                        + " is false). Please create this directory manually.请手动创建此目录");
             }
 
             if (!this.dataDir.mkdirs()) {
-                throw new DatadirException("Unable to create data directory "
+                throw new DatadirException("Unable to create data directory 无法创建数据目录"
                         + this.dataDir);
             }
         }
         if (!this.dataDir.canWrite()) {
-            throw new DatadirException("Cannot write to data directory " + this.dataDir);
+            throw new DatadirException("Cannot write to data directory 无法写入数据目录" + this.dataDir);
         }
 
         if (!this.snapDir.exists()) {
             // by default create this directory, but otherwise complain instead
             // See ZOOKEEPER-1161 for more details
             if (!enableAutocreate) {
-                throw new DatadirException("Missing snap directory "
+                throw new DatadirException("Missing snap directory 缺少快照数据目录"
                         + this.snapDir
-                        + ", automatic data directory creation is disabled ("
+                        + ", automatic data directory creation is disabled 自动数据目录创建已禁用("
                         + ZOOKEEPER_DATADIR_AUTOCREATE
-                        + " is false). Please create this directory manually.");
+                        + " is false). Please create this directory manually.请手动创建此目录");
             }
 
             if (!this.snapDir.mkdirs()) {
-                throw new DatadirException("Unable to create snap directory "
+                throw new DatadirException("Unable to create snap directory 无法创建快照数据目录"
                         + this.snapDir);
             }
         }
         if (!this.snapDir.canWrite()) {
-            throw new DatadirException("Cannot write to snap directory " + this.snapDir);
+            throw new DatadirException("Cannot write to snap directory 无法写入快照数据目录" + this.snapDir);
         }
 
         // check content of transaction log and snapshot dirs if they are two different directories
+        // 如果它们是两个不同的目录，则检查事务日志和快照目录的内容
+        // 事务日志目录不能包含快照文件，快照目录不能包含事务日志文件
         // See ZOOKEEPER-2967 for more details
         if(!this.dataDir.getPath().equals(this.snapDir.getPath())){
             checkLogDir();
@@ -152,10 +157,6 @@ public class FileTxnSnapLog {
                 ZOOKEEPER_DB_AUTOCREATE_DEFAULT));
     }
 
-    public void setServerStats(ServerStats serverStats) {
-        txnLog.setServerStats(serverStats);
-    }
-
     private void checkLogDir() throws LogDirContentCheckException {
         File[] files = this.dataDir.listFiles(new FilenameFilter() {
             @Override
@@ -164,7 +165,8 @@ public class FileTxnSnapLog {
             }
         });
         if (files != null && files.length > 0) {
-            throw new LogDirContentCheckException("Log directory has snapshot files. Check if dataLogDir and dataDir configuration is correct.");
+            throw new LogDirContentCheckException("Log directory has snapshot files. Check if dataLogDir and dataDir configuration is correct." +
+                    "日志目录包含快照文件。检查dataLogDir和dataDir配置是否正确。");
         }
     }
 
@@ -176,8 +178,15 @@ public class FileTxnSnapLog {
             }
         });
         if (files != null && files.length > 0) {
-            throw new SnapDirContentCheckException("Snapshot directory has log files. Check if dataLogDir and dataDir configuration is correct.");
+            throw new SnapDirContentCheckException("Snapshot directory has log files. Check if dataLogDir and dataDir configuration is correct." +
+                    "快照目录包含日志文件。检查dataLogDir和dataDir配置是否正确。");
         }
+    }
+
+
+    // 设置txnLog的服务状态
+    public void setServerStats(ServerStats serverStats) {
+        txnLog.setServerStats(serverStats);
     }
 
     /**
@@ -202,6 +211,7 @@ public class FileTxnSnapLog {
      * this function restores the server
      * database after reading from the
      * snapshots and transaction logs
+     * 此函数在读取快照和事务日志后恢复服务器数据库
      * @param dt the datatree to be restored
      * @param sessions the sessions to be restored
      * @param listener the playback listener to run on the
@@ -428,12 +438,13 @@ public class FileTxnSnapLog {
     /**
      * truncate the transaction logs the zxid
      * specified
+     * 截断指定的zxid 的事务日志
      * @param zxid the zxid to truncate the logs to
      * @return true if able to truncate the log, false if not
      * @throws IOException
      */
     public boolean truncateLog(long zxid) throws IOException {
-        // close the existing txnLog and snapLog
+        // close the existing txnLog and snapLog 关闭现有的txnLog和snapLog
         close();
 
         // truncate it
@@ -454,6 +465,7 @@ public class FileTxnSnapLog {
     /**
      * the most recent snapshot in the snapshot
      * directory
+     * snapshot 目录中的最新快照
      * @return the file that contains the most
      * recent snapshot
      * @throws IOException
@@ -464,7 +476,7 @@ public class FileTxnSnapLog {
     }
 
     /**
-     * the n most recent snapshots
+     * the n most recent snapshots  n个最近的快照
      * @param n the number of recent snapshots
      * @return the list of n most recent snapshots, with
      * the most recent in front
@@ -480,6 +492,8 @@ public class FileTxnSnapLog {
      * This includes logs with starting zxid greater than given zxid, as well as the
      * newest transaction log with starting zxid less than given zxid.  The latter log
      * file may contain transactions beyond given zxid.
+     * 获取可能包含比给定zxid更新的事务的快照日志。
+     * 这包括起始zxid大于给定zxid的日志，以及起始zxid小于给定zxid的最新事务日志。后一个log 文件可能包含超出给定zxid的事务。
      * @param zxid the zxid that contains logs greater than
      * zxid
      * @return
@@ -490,6 +504,9 @@ public class FileTxnSnapLog {
 
     /**
      * append the request to the transaction logs
+     *
+     * 将请求附加到事务日志
+     *
      * @param si the request to be appended
      * returns true iff something appended, otw false
      * @throws IOException
@@ -500,6 +517,9 @@ public class FileTxnSnapLog {
 
     /**
      * commit the transaction of logs
+     *
+     * 提交日志事务
+     *
      * @throws IOException
      */
     public void commit() throws IOException {
@@ -516,6 +536,9 @@ public class FileTxnSnapLog {
 
     /**
      * roll the transaction logs
+     *
+     * 滚动事务日志
+     *
      * @throws IOException
      */
     public void rollLog() throws IOException {
@@ -524,6 +547,7 @@ public class FileTxnSnapLog {
 
     /**
      * close the transaction log files
+     * 关闭事务日志文件和快照
      * @throws IOException
      */
     public void close() throws IOException {
@@ -531,6 +555,8 @@ public class FileTxnSnapLog {
         snapLog.close();
     }
 
+
+    /******************************************定义异常类*****************************************************************/
     @SuppressWarnings("serial")
     public static class DatadirException extends IOException {
         public DatadirException(String msg) {

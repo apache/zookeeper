@@ -39,6 +39,11 @@ import org.apache.zookeeper.txn.TxnHeader;
 
 /**
  * @deprecated deprecated in 3.5.5, use @see TxnLogToolkit instead
+ *
+ * 已经废弃，请使用TxnLogToolkit
+ *
+ * 事务日志可视化 LogFormatter
+ *
  */
 @InterfaceAudience.Public
 public class LogFormatter {

@@ -63,7 +63,7 @@ public class Follower extends Learner{
 
     /**
      * the main method called by the follower to follow the leader
-     *
+     *跟随者跟随领导者调用的主要方法
      * @throws InterruptedException
      */
     void followLeader() throws InterruptedException {

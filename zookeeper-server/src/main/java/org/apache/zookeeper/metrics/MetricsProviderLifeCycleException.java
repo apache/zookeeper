@@ -20,6 +20,7 @@ package org.apache.zookeeper.metrics;
 
 /**
  * A generic exception thrown during the licecycle of a MetricsProvider.
+ * MetricsProvider的licecycle期间抛出的一般异常。
  * <p>These exception will prevent the system from booting.</p>
  * <p>Normally these exception will be ignored during shutdown.</p>
  */

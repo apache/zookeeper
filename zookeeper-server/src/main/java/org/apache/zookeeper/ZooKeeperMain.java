@@ -74,6 +74,7 @@ import org.apache.zookeeper.server.ExitCode;
 
 /**
  * The command line client to ZooKeeper.
+ * ZooKeeper的命令行客户端。
  *
  */
 @InterfaceAudience.Public

@@ -21,6 +21,8 @@ package org.apache.zookeeper.metrics;
 /**
  * Summaries track the size and number of events.
  * They are able to publish minumum, maximum, average values, depending on the capabilities of the MetricsProvider.
+ * 摘要跟踪事件的大小和数量。
+ *  他们能够发布最小值，最大值，平均值，具体取决于MetricsProvider的功能。
  */
 public interface Summary {
 

@@ -18,30 +18,20 @@
 
 package org.apache.zookeeper.test;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.regex.Pattern;
-
-import javax.management.MBeanServer;
-import javax.management.MBeanServerConnection;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
-import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
-import javax.management.remote.JMXConnectorServer;
-import javax.management.remote.JMXConnectorServerFactory;
-import javax.management.remote.JMXServiceURL;
-
-
 import org.apache.zookeeper.jmx.CommonNames;
 import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.management.MBeanServer;
+import javax.management.MBeanServerConnection;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+import javax.management.remote.*;
+import java.io.IOException;
+import java.util.*;
+import java.util.regex.Pattern;
 
 public class JMXEnv {
     protected static final Logger LOG = LoggerFactory.getLogger(JMXEnv.class);

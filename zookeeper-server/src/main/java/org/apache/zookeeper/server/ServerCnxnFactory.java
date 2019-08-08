@@ -47,6 +47,7 @@ public abstract class ServerCnxnFactory {
     private static final Logger LOG = LoggerFactory.getLogger(ServerCnxnFactory.class);
 
     // Tells whether SSL is enabled on this ServerCnxnFactory
+    // 判断此ServerCnxnFactory上是否启用了SSL
     protected boolean secure;
 
     /**
@@ -157,12 +158,15 @@ public abstract class ServerCnxnFactory {
     public abstract void closeAll();
     
     static public ServerCnxnFactory createFactory() throws IOException {
-        String serverCnxnFactoryName =
-            System.getProperty(ZOOKEEPER_SERVER_CNXN_FACTORY);
+        // zookeeper.serverCnxnFactory
+        // 可以是NettyServerCnxnFactory，没配置就是NIOServerCnxnFactory
+        String serverCnxnFactoryName = System.getProperty(ZOOKEEPER_SERVER_CNXN_FACTORY);
         if (serverCnxnFactoryName == null) {
+            // 默认使用NIOServerCnxnFactory工厂创建对象
             serverCnxnFactoryName = NIOServerCnxnFactory.class.getName();
         }
         try {
+            // 反射创建NIOServerCnxnFactory对象
             ServerCnxnFactory serverCnxnFactory = (ServerCnxnFactory) Class.forName(serverCnxnFactoryName)
                     .getDeclaredConstructor().newInstance();
             LOG.info("Using {} as server connection factory", serverCnxnFactoryName);
@@ -207,8 +211,7 @@ public abstract class ServerCnxnFactory {
 
     public abstract Iterable<Map<String, Object>> getAllConnectionInfo(boolean brief);
 
-    private final ConcurrentHashMap<ServerCnxn, ConnectionBean> connectionBeans =
-        new ConcurrentHashMap<ServerCnxn, ConnectionBean>();
+    private final ConcurrentHashMap<ServerCnxn, ConnectionBean> connectionBeans = new ConcurrentHashMap<ServerCnxn, ConnectionBean>();
 
     // Connection set is relied on heavily by four letter commands
     // Construct a ConcurrentHashSet using a ConcurrentHashMap
@@ -236,19 +239,26 @@ public abstract class ServerCnxnFactory {
 
     /**
      * Initialize the server SASL if specified.
-     *
+     * 如果指定，则初始化服务器SASL。
      * If the user has specified a "ZooKeeperServer.LOGIN_CONTEXT_NAME_KEY"
      * or a jaas.conf using "java.security.auth.login.config"
      * the authentication is required and an exception is raised.
      * Otherwise no authentication is configured and no exception is raised.
      *
+     * 如果用户使用“java.security.auth.login.config”指定了“ZooKeeperServer.LOGIN_CONTEXT_NAME_KEY”或jaas.conf，
+     * 则需要进行身份验证并引发异常。否则，不配置身份验证，也不会引发异常。
+     *
      * @throws IOException if jaas.conf is missing or there's an error in it.
+     *                      如果缺少jaas.conf或其中有错误。
      */
     protected void configureSaslLogin() throws IOException {
+        // LOGIN_CONTEXT_NAME_KEY = "zookeeper.sasl.serverconfig"
+        // DEFAULT_LOGIN_CONTEXT_NAME = "Server"
         String serverSection = System.getProperty(ZooKeeperSaslServer.LOGIN_CONTEXT_NAME_KEY,
                                                   ZooKeeperSaslServer.DEFAULT_LOGIN_CONTEXT_NAME);
 
         // Note that 'Configuration' here refers to javax.security.auth.login.Configuration.
+        // 请注意，此处的“配置”是指javax.security.auth.login.Configuration。
         AppConfigurationEntry entries[] = null;
         SecurityException securityException = null;
         try {

@@ -28,7 +28,7 @@ import org.apache.zookeeper.data.Id;
 
 @InterfaceAudience.Public
 public class ZooDefs {
-   
+    // zookeeper 配置节点路径
    final public static String CONFIG_NODE = "/zookeeper/config";
 
    @InterfaceAudience.Public
@@ -94,17 +94,17 @@ public class ZooDefs {
 
     @InterfaceAudience.Public
     public interface Perms {
-        int READ = 1 << 0;
+        int READ = 1 << 0;//允许对本节点GetChildren和GetData操作
 
-        int WRITE = 1 << 1;
+        int WRITE = 1 << 1;//允许对本节点SetData操作
 
-        int CREATE = 1 << 2;
+        int CREATE = 1 << 2;//允许对子节点Create操作
 
-        int DELETE = 1 << 3;
+        int DELETE = 1 << 3;//允许对子节点Delete操作
 
-        int ADMIN = 1 << 4;
+        int ADMIN = 1 << 4;//允许对本节点setAcl操作
 
-        int ALL = READ | WRITE | CREATE | DELETE | ADMIN;
+        int ALL = READ | WRITE | CREATE | DELETE | ADMIN;//这个是组合权限
     }
 
     @InterfaceAudience.Public
@@ -112,23 +112,26 @@ public class ZooDefs {
         /**
          * This Id represents anyone.
          */
-        public final Id ANYONE_ID_UNSAFE = new Id("world", "anyone");
+        public final Id ANYONE_ID_UNSAFE = new Id("world", "anyone");//固定用户为anyone，为所有Client端开放权限
 
         /**
          * This Id is only usable to set ACLs. It will get substituted with the
          * Id's the client authenticated with.
          */
-        public final Id AUTH_IDS = new Id("auth", "");
+        public final Id AUTH_IDS = new Id("auth", "");//不使用任何id，代表任何已确认用户。
 
         /**
          * This is a completely open ACL .
+         * OPEN_ACL_UNSAFE：完全开放
          */
         @SuppressFBWarnings(value = "MS_MUTABLE_COLLECTION", justification = "Cannot break API")
         public final ArrayList<ACL> OPEN_ACL_UNSAFE = new ArrayList<ACL>(
                 Collections.singletonList(new ACL(Perms.ALL, ANYONE_ID_UNSAFE)));
 
+
         /**
          * This ACL gives the creators authentication id's all permissions.
+         * CREATOR_ALL_ACL：创建该znode的连接拥有所有权限
          */
         @SuppressFBWarnings(value = "MS_MUTABLE_COLLECTION", justification = "Cannot break API")
         public final ArrayList<ACL> CREATOR_ALL_ACL = new ArrayList<ACL>(
@@ -136,6 +139,7 @@ public class ZooDefs {
 
         /**
          * This ACL gives the world the ability to read.
+         * READ_ACL_UNSAFE：所有的客户端都可读
          */
         @SuppressFBWarnings(value = "MS_MUTABLE_COLLECTION", justification = "Cannot break API")
         public final ArrayList<ACL> READ_ACL_UNSAFE = new ArrayList<ACL>(

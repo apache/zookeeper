@@ -30,6 +30,7 @@ import org.apache.zookeeper.data.Stat;
 
 /**
  * A empty watcher implementation used in bench and unit test.
+ * 在工作台和单元测试中使用的空观察器实现。
  */
 public class DumbWatcher extends ServerCnxn {
 

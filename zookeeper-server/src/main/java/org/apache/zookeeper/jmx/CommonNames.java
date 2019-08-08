@@ -19,7 +19,7 @@
 package org.apache.zookeeper.jmx;
 
 /**
- * A bunch of constants.
+ * A bunch of constants. 一堆常数。
  * TODO: will get rid of it eventually.
  */
 public class CommonNames {

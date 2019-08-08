@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>JAVA</ID>
+  <OriginalElement>org.apache.zookeeper.server.watch.IWatchManager</OriginalElement>
+  <nodes>
+    <node x="210.0" y="80.0">org.apache.zookeeper.server.watch.WatchManagerOptimized</node>
+    <node x="356.125" y="0.0">org.apache.zookeeper.server.watch.IWatchManager</node>
+    <node x="89.125" y="0.0">org.apache.zookeeper.server.watch.IDeadWatcherListener</node>
+    <node x="25.5" y="155.0">java.lang.Thread</node>
+    <node x="185.0" y="155.0">org.apache.zookeeper.server.watch.WatchManagerFactory</node>
+    <node x="427.0" y="80.0">org.apache.zookeeper.server.watch.WatchManager</node>
+    <node x="0.0" y="80.0">org.apache.zookeeper.server.watch.WatcherCleanerTest.MyDeadWatcherListener</node>
+    <node x="0.0" y="235.0">org.apache.zookeeper.server.watch.WatcherCleaner</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="org.apache.zookeeper.server.watch.WatchManagerOptimized" target="org.apache.zookeeper.server.watch.IDeadWatcherListener">
+      <point x="-49.25" y="-15.0" />
+      <point x="259.25" y="55.0" />
+      <point x="221.125" y="55.0" />
+      <point x="44.0" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.watch.WatchManagerOptimized" target="org.apache.zookeeper.server.watch.IWatchManager">
+      <point x="49.25" y="-15.0" />
+      <point x="357.75" y="55.0" />
+      <point x="391.375" y="55.0" />
+      <point x="-35.25" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.watch.WatcherCleanerTest.MyDeadWatcherListener" target="org.apache.zookeeper.server.watch.IDeadWatcherListener">
+      <point x="0.0" y="-15.0" />
+      <point x="95.0" y="55.0" />
+      <point x="133.125" y="55.0" />
+      <point x="-44.0" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.watch.WatcherCleaner" target="java.lang.Thread">
+      <point x="0.0" y="-15.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.watch.WatchManager" target="org.apache.zookeeper.server.watch.IWatchManager">
+      <point x="0.0" y="-15.0" />
+      <point x="495.5" y="55.0" />
+      <point x="461.875" y="55.0" />
+      <point x="35.25" y="15.0" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic Group" zoom="1.0" x="282.0" y="55.0" />
+  <SelectedNodes />
+  <Categories />
+  <SCOPE>All</SCOPE>
+  <VISIBILITY>private</VISIBILITY>
+</Diagram>
+

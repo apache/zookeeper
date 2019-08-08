@@ -70,17 +70,17 @@ import org.apache.zookeeper.common.Time;
  **/
 
 public class BlueThrottle {
-    private int maxTokens;
-    private int fillTime;
-    private int fillCount;
-    private int tokens;
+    private int maxTokens; /*可配置.如果是0,则会禁用限制*/
+    private int fillTime;  /*可配置*/
+    private int fillCount; /*可配置*/
+    private int tokens;  /*可配置*/
     private long lastTime;
 
-    private int freezeTime;
+    private int freezeTime; /*可配置.如果是-1,则会禁用限制*/
     private long lastFreeze;
-    private double dropIncrease;
-    private double dropDecrease;
-    private double decreasePoint;
+    private double dropIncrease; /*可配置*/
+    private double dropDecrease; /*可配置*/
+    private double decreasePoint; /*可配置*/
     private double drop;
 
     Random rng;
@@ -118,7 +118,8 @@ public class BlueThrottle {
         DEFAULT_CONNECTION_THROTTLE_DECREASE_RATIO = getDoubleProp(CONNECTION_THROTTLE_DECREASE_RATIO, 0);
     }
 
-    /* Varation of Integer.getInteger for real number properties */
+    /* Varation of Integer.getInteger for real number properties
+     * 用于实数属性的Integer.getInteger的Varation */
     private static double getDoubleProp(String name, double def) {
         String val = System.getProperty(name);
         if(val != null) {
@@ -131,14 +132,14 @@ public class BlueThrottle {
 
 
     public BlueThrottle() {
-        // Disable throttling by default (maxTokens = 0)
+        // Disable throttling by default 默认情况下禁用限制 (maxTokens = 0)
         this.maxTokens = DEFAULT_CONNECTION_THROTTLE_TOKENS;
         this.fillTime  = DEFAULT_CONNECTION_THROTTLE_FILL_TIME;
         this.fillCount = DEFAULT_CONNECTION_THROTTLE_FILL_COUNT;
         this.tokens = maxTokens;
         this.lastTime = Time.currentElapsedTime();
 
-        // Disable BLUE throttling by default (freezeTime = -1)
+        // Disable BLUE throttling by default 默认情况下禁用BLUE限制 (freezeTime = -1)
         this.freezeTime = DEFAULT_CONNECTION_THROTTLE_FREEZE_TIME;
         this.lastFreeze = Time.currentElapsedTime();
         this.dropIncrease = DEFAULT_CONNECTION_THROTTLE_DROP_INCREASE;
@@ -215,8 +216,10 @@ public class BlueThrottle {
         return maxTokens - tokens;
     }
 
+    // 检查限制
     public synchronized boolean checkLimit(int need) {
         // A maxTokens setting of zero disables throttling
+        // maxTokens设置为零会禁用限制
         if (maxTokens == 0)
             return true;
 
@@ -230,6 +233,7 @@ public class BlueThrottle {
         }
 
         // A freeze time of -1 disables BLUE randomized throttling
+        // 冻结时间为-1会禁用BLUE随机限制
         if(freezeTime != -1) {
             if(!checkBlue(now)) {
                 return false;
@@ -265,4 +269,4 @@ public class BlueThrottle {
         }
         return true;
     }
-};
+}

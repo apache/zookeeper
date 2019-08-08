@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>JAVA</ID>
+  <OriginalElement>org.apache.zookeeper.server.auth.AuthenticationProvider</OriginalElement>
+  <nodes>
+    <node x="266.5" y="245.0">javax.security.auth.spi.LoginModule</node>
+    <node x="726.75" y="0.0">org.apache.zookeeper.server.auth.AuthenticationProvider</node>
+    <node x="248.0" y="325.0">org.apache.zookeeper.server.auth.DigestLoginModule</node>
+    <node x="0.0" y="170.0">org.apache.zookeeper.server.auth.KeyAuthenticationProvider</node>
+    <node x="582.5" y="90.0">org.apache.zookeeper.server.auth.EnsembleAuthenticationProvider</node>
+    <node x="1274.5" y="90.0">org.apache.zookeeper.server.auth.X509AuthenticationProvider</node>
+    <node x="110.5" y="90.0">org.apache.zookeeper.server.auth.ServerAuthenticationProvider</node>
+    <node x="346.49999999999994" y="90.0">org.apache.zookeeper.server.auth.DigestAuthenticationProvider</node>
+    <node x="1047.5" y="90.0">org.apache.zookeeper.server.auth.SASLAuthenticationProvider</node>
+    <node x="30.0" y="245.0">javax.security.auth.callback.CallbackHandler</node>
+    <node x="0.0" y="325.0">org.apache.zookeeper.server.auth.SaslServerCallbackHandler</node>
+    <node x="644.0" y="245.0">org.apache.zookeeper.server.auth.KerberosName</node>
+    <node x="837.5" y="90.0">org.apache.zookeeper.server.auth.IPAuthenticationProvider</node>
+    <node x="455.0" y="245.0">org.apache.zookeeper.server.auth.ProviderRegistry</node>
+    <node x="219.99999999999994" y="170.0">org.apache.zookeeper.server.auth.WrappedAuthenticationProvider</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="org.apache.zookeeper.server.auth.EnsembleAuthenticationProvider" target="org.apache.zookeeper.server.auth.AuthenticationProvider">
+      <point x="0.0" y="-15.0" />
+      <point x="700.0" y="70.0" />
+      <point x="801.3333333333333" y="70.0" />
+      <point x="-14.916666666666629" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.auth.IPAuthenticationProvider" target="org.apache.zookeeper.server.auth.AuthenticationProvider">
+      <point x="0.0" y="-15.0" />
+      <point x="932.5" y="70.0" />
+      <point x="831.1666666666665" y="70.0" />
+      <point x="14.916666666666629" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.auth.WrappedAuthenticationProvider" target="org.apache.zookeeper.server.auth.ServerAuthenticationProvider">
+      <point x="0.0" y="-15.0" />
+      <point x="336.99999999999994" y="145.0" />
+      <point x="272.5" y="145.0" />
+      <point x="54.0" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.auth.DigestAuthenticationProvider" target="org.apache.zookeeper.server.auth.AuthenticationProvider">
+      <point x="0.0" y="-15.0" />
+      <point x="454.49999999999994" y="60.0" />
+      <point x="771.5" y="60.0" />
+      <point x="-44.75" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.auth.ServerAuthenticationProvider" target="org.apache.zookeeper.server.auth.AuthenticationProvider">
+      <point x="0.0" y="-15.0" />
+      <point x="218.5" y="50.0" />
+      <point x="741.6666666666665" y="50.0" />
+      <point x="-74.58333333333337" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.auth.KeyAuthenticationProvider" target="org.apache.zookeeper.server.auth.ServerAuthenticationProvider">
+      <point x="0.0" y="-15.0" />
+      <point x="100.0" y="145.0" />
+      <point x="164.5" y="145.0" />
+      <point x="-54.0" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.auth.SaslServerCallbackHandler" target="javax.security.auth.callback.CallbackHandler">
+      <point x="0.0" y="-15.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.auth.X509AuthenticationProvider" target="org.apache.zookeeper.server.auth.AuthenticationProvider">
+      <point x="5.6843418860808015E-14" y="-15.0" />
+      <point x="1378.5" y="50.0" />
+      <point x="890.8333333333333" y="50.0" />
+      <point x="74.58333333333326" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.auth.SASLAuthenticationProvider" target="org.apache.zookeeper.server.auth.AuthenticationProvider">
+      <point x="0.0" y="-15.0" />
+      <point x="1151.0" y="60.0" />
+      <point x="861.0" y="60.0" />
+      <point x="44.75" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.auth.DigestLoginModule" target="javax.security.auth.spi.LoginModule">
+      <point x="0.0" y="-15.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic Group" zoom="0.9028609447771124" x="731.5" y="100.0" />
+  <SelectedNodes />
+  <Categories />
+  <SCOPE>All</SCOPE>
+  <VISIBILITY>private</VISIBILITY>
+</Diagram>
+

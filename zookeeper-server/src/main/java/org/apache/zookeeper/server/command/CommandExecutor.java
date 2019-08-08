@@ -27,6 +27,7 @@ import org.apache.zookeeper.server.ZooKeeperServer;
 public class CommandExecutor {
     /**
      * This class decides which command to be executed and then executes
+     * 该类决定执行哪个命令然后执行
      */
     public boolean execute(ServerCnxn serverCnxn, PrintWriter pwriter,
             final int commandCode, ZooKeeperServer zkServer, ServerCnxnFactory factory) {

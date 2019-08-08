@@ -86,17 +86,20 @@ import org.apache.zookeeper.metrics.impl.NullMetricsProvider;
 /**
  * This class manages the quorum protocol. There are three states this server
  * can be in:
+ * 此类管理仲裁协议。这个服务器可以有三种状态：
  * <ol>
  * <li>Leader election - each server will elect a leader (proposing itself as a
- * leader initially).</li>
+ * leader initially).领导者选举 - 每个服务器将选出一名领导者（最初提议自己为*领导者）。</li>
  * <li>Follower - the server will synchronize with the leader and replicate any
- * transactions.</li>
+ * transactions.追随者 - 服务器将与领导者同步并复制任何*交易。</li>
  * <li>Leader - the server will process requests and forward them to followers.
  * A majority of followers must log the request before it can be accepted.
+ * 领导者 - 服务器将处理请求并将其转发给关注者。 *大多数粉丝必须先记录该请求才能被接受。
  * </ol>
  *
  * This class will setup a datagram socket that will always respond with its
  * view of the current leader. The response will take the form of:
+ * 该类将设置一个数据报套接字，该套接字始终以其当前领导者的*视图进行响应。答复将采取以下形式
  *
  * <pre>
  * int xid;
@@ -413,6 +416,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     public enum ServerState {
         LOOKING, FOLLOWING, LEADING, OBSERVING;
+        //LOOKING：初始状态，表示在选举leader
+        //FOLLOWING：跟随leader的角色，参与投票
+        //LEADING：集群的leader
+        //OBSERVING：不参与投票，只是同步状态
     }
 
     /*
@@ -424,7 +431,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * conditions change (e.g. which state to become after LOOKING).
      */
     public enum LearnerType {
-        PARTICIPANT, OBSERVER;
+        PARTICIPANT, // 参加者
+        OBSERVER; // 观察者
     }
 
     /*
@@ -607,6 +615,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
     /**
      * Enable/Disables quorum authentication using sasl. Defaulting to false.
+     * 使用sasl启用/禁用仲裁身份验证。默认为虚假。
      */
     protected boolean quorumSaslEnableAuth;
 
@@ -920,6 +929,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             LOG.warn("Problem starting AdminServer", e);
             System.out.println(e);
         }
+        // 开始选举
         startLeaderElection();
         startJvmPauseMonitor();
         super.start();
@@ -1151,6 +1161,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     
     @Override
     public void run() {
+        // 更新线程名称
         updateThreadName();
 
         LOG.debug("Starting quorum peer");
@@ -1184,7 +1195,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
         try {
             /*
-             * Main loop
+             * 主循环
              */
             while (running) {
                 switch (getPeerState()) {
@@ -1193,7 +1204,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                     ServerMetrics.getMetrics().LOOKING_COUNT.add(1);
 
                     if (Boolean.getBoolean("readonlymode.enabled")) {
-                        LOG.info("Attempting to start ReadOnlyZooKeeperServer");
+                        LOG.info("Attempting to start ReadOnlyZooKeeperServer试图启动ReadOnlyZooKeeperServer");
 
                         // Create read-only server but don't start it immediately
                         final ReadOnlyZooKeeperServer roZk =

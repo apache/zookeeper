@@ -29,6 +29,7 @@ import org.apache.zookeeper.metrics.SummarySet;
 
 /**
  * This is a dummy MetricsProvider which does nothing.
+ * 这是一个虚拟的MetricsProvider，它什么都不做
  */
 public class NullMetricsProvider implements MetricsProvider {
 

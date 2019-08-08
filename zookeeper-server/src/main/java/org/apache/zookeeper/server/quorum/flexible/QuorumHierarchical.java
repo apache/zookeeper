@@ -42,13 +42,17 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
  * construction, zookeeper servers are split into disjoint groups, and 
  * each server has a weight. We obtain a quorum if we get more than half
  * of the total weight of a group for a majority of groups.
- * 
+ *
+ * 此类实现层次结构仲裁的验证程序。
+ * 通过这种结构，zookeeper服务器被分成不相交的组，每个服务器都有一个权重。如果我们为大多数群体获得超过一组总重量的一半，我们就会获得法定人数。
+ *
  * The configuration of quorums uses two parameters: group and weight. 
  * Groups are sets of ZooKeeper servers, and we set a group by passing
  * a colon-separated list of server ids. It is also necessary to assign
  * weights to server. Here is an example of a configuration that creates
  * three groups and assigns a weight of 1 to each server:
- * 
+ * 仲裁的配置使用两个参数：组和权重。
+ * 组是ZooKeeper服务器的集合，我们通过传递以冒号分隔的服务器ID列表来设置组。还需要为服务器分配权重。以下是创建三个组并为每个服务器分配权重1的配置示例：
  *  group.1=1:2:3
  *  group.2=4:5:6
  *  group.3=7:8:9
@@ -64,6 +68,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
  *  weight.9=1
  * 
  * Note that it is still necessary to define peers using the server keyword.
+ * 请注意，仍然需要使用server关键字定义对等项。
  */
 
 public class QuorumHierarchical implements QuorumVerifier {

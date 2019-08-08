@@ -31,8 +31,7 @@ public class ProviderRegistry {
     private static final Logger LOG = LoggerFactory.getLogger(ProviderRegistry.class);
 
     private static boolean initialized = false;
-    private static Map<String, AuthenticationProvider> authenticationProviders =
-        new HashMap<>();
+    private static Map<String, AuthenticationProvider> authenticationProviders = new HashMap<>();
 
     //VisibleForTesting
     public static void reset() {

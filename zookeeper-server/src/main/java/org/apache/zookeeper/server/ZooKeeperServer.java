@@ -82,36 +82,50 @@ import org.slf4j.LoggerFactory;
  * following chain of RequestProcessors to process requests:
  * PrepRequestProcessor -> SyncRequestProcessor -> FinalRequestProcessor
  */
+//ZooKeeperServer是ZooKeeper中所有服务器的父类，其实现了Session.Expirer和ServerStats.Provider接口，
+// SessionExpirer中定义了expire方法（表示会话过期）和getServerId方法（表示获取服务器ID）
+// 而Provider则主要定义了获取服务器某些数据的方法。
 public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected static final Logger LOG;
+
+    // ZooKeeperServer类中包含了心跳频率，会话跟踪器（处理会话）、事务日志快照、内存数据库、请求处理器、未处理的ChangeRecord、服务器统计信息等。
 
     public static final String GLOBAL_OUTSTANDING_LIMIT = "zookeeper.globalOutstandingLimit";
 
     static {
+        // 初始化日志器
         LOG = LoggerFactory.getLogger(ZooKeeperServer.class);
 
         ZookeeperBanner.printBanner(LOG);
 
         Environment.logEnv("Server environment:", LOG);
     }
-
+    // JMX服务
     protected ZooKeeperServerBean jmxServerBean;
     protected DataTreeBean jmxDataTreeBean;
-
+    // 默认心跳频率
     public static final int DEFAULT_TICK_TIME = 3000;
     protected int tickTime = DEFAULT_TICK_TIME;
     /** value of -1 indicates unset, use default */
+    // 最小会话过期时间
     protected int minSessionTimeout = -1;
     /** value of -1 indicates unset, use default */
+    // 最大会话过期时间
     protected int maxSessionTimeout = -1;
     /** Socket listen backlog. Value of -1 indicates unset */
+
     protected int listenBacklog = -1;
+    // 会话跟踪器
     protected SessionTracker sessionTracker;
+    // 事务日志快照
     private FileTxnSnapLog txnLogFactory = null;
+    // Zookeeper内存数据库
     private ZKDatabase zkDb;
     private ResponseCache readResponseCache;
     private final AtomicLong hzxid = new AtomicLong(0);
+    // 异常
     public final static Exception ok = new Exception("No prob");
+    // 请求处理器
     protected RequestProcessor firstProcessor;
     protected JvmPauseMonitor jvmPauseMonitor;
     protected volatile State state = State.INITIAL;
@@ -127,17 +141,22 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * security weight, and is treated internally as if it carries no
      * security weight.
      */
+    // 生成密码的密钥
     static final private long superSecret = 0XB3415C00L;
 
     private final AtomicInteger requestsInProcess = new AtomicInteger(0);
+    // 未处理的ChangeRecord
     final Deque<ChangeRecord> outstandingChanges = new ArrayDeque<>();
     // this data structure must be accessed under the outstandingChanges lock
+    // 记录path对应的ChangeRecord
     final Map<String, ChangeRecord> outstandingChangesForPath =
         new HashMap<String, ChangeRecord>();
 
+    // 连接工厂
     protected ServerCnxnFactory serverCnxnFactory;
     protected ServerCnxnFactory secureServerCnxnFactory;
 
+    // 服务器统计数据
     private final ServerStats serverStats;
     private final ZooKeeperServerListener listener;
     private ZooKeeperServerShutdownHandler zkShutdownHandler;
@@ -190,7 +209,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * Creates a ZooKeeperServer instance. It sets everything up, but doesn't
      * actually start listening for clients until run() is invoked.
      *
-     * @param dataDir the directory to put the data
+     * @param txnLogFactory the directory to put the data
      */
     public ZooKeeperServer(FileTxnSnapLog txnLogFactory, int tickTime,
             int minSessionTimeout, int maxSessionTimeout, int clientPortListenBacklog,
@@ -203,7 +222,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         setMinSessionTimeout(minSessionTimeout);
         setMaxSessionTimeout(maxSessionTimeout);
         this.listenBacklog = clientPortListenBacklog;
-
+        // 调用listener.notifyStopping()停止ZooKeeperServer
         listener = new ZooKeeperServerListenerImpl(this);
 
         readResponseCache = new ResponseCache();
@@ -219,13 +238,14 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     /**
-     * Adds JvmPauseMonitor and calls
+     * Adds JvmPauseMonitor and calls添加JvmPauseMonitor和调用ZooKeeperServer(FileTxnSnapLog, int, int, int, int, ZKDatabase)
      * {@link #ZooKeeperServer(FileTxnSnapLog, int, int, int, int, ZKDatabase)}
      *
      */
     public ZooKeeperServer(JvmPauseMonitor jvmPauseMonitor, FileTxnSnapLog txnLogFactory, int tickTime,
                            int minSessionTimeout, int maxSessionTimeout, int clientPortListenBacklog, ZKDatabase zkDb) {
         this(txnLogFactory, tickTime, minSessionTimeout, maxSessionTimeout, clientPortListenBacklog, zkDb);
+        // jvm GC 监控 这里只是创建没有启动
         this.jvmPauseMonitor = jvmPauseMonitor;
         if(jvmPauseMonitor != null) {
             LOG.info("Added JvmPauseMonitor to server");
@@ -251,6 +271,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return connThrottle;
     }
 
+    // dump zookeeperServer  配置
     public void dumpConf(PrintWriter pwriter) {
         pwriter.print("clientPort=");
         pwriter.println(getClientPort());
@@ -476,7 +497,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 + ", timeout of " + session.getTimeout() + "ms exceeded");
         close(sessionId);
     }
-
+    // 异常表示会话缺失异常。
     public static class MissingSessionException extends IOException {
         private static final long serialVersionUID = 7467414635467261007L;
 
@@ -501,10 +522,12 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     protected void registerJMX() {
         // register with JMX
         try {
+            // 注册ZooKeeperServerBean
             jmxServerBean = new ZooKeeperServerBean(this);
             MBeanRegistry.getInstance().register(jmxServerBean, null);
 
             try {
+                // 注册DataTreeBean
                 jmxDataTreeBean = new DataTreeBean(zkDb.getDataTree());
                 MBeanRegistry.getInstance().register(jmxDataTreeBean, jmxServerBean);
             } catch (Exception e) {
@@ -517,9 +540,11 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
     }
 
+    // 加载数据
     public void startdata()
     throws IOException, InterruptedException {
         //check to see if zkDb is not null
+        // 检查zkDb是否为空
         if (zkDb == null) {
             zkDb = new ZKDatabase(this.txnLogFactory);
         }
@@ -527,16 +552,19 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             loadData();
         }
     }
-
+    // 启动zookeeperServer服务
     public synchronized void startup() {
         if (sessionTracker == null) {
+            // 创建会话跟踪器
             createSessionTracker();
         }
+        // 启动会话跟踪器
         startSessionTracker();
+        // 创建请求处理链
         setupRequestProcessors();
-
+        // 注册jmx
         registerJMX();
-
+        // 启动jvm停顿监控
         startJvmPauseMonitor();
 
         setState(State.RUNNING);
@@ -548,11 +576,10 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             this.jvmPauseMonitor.serviceStart();
         }
     }
-
+    //  zookeeperServer的请求处理链 PrepRequestProcessor -> syncProcessor -> RequestProcessor
     protected void setupRequestProcessors() {
         RequestProcessor finalProcessor = new FinalRequestProcessor(this);
-        RequestProcessor syncProcessor = new SyncRequestProcessor(this,
-                finalProcessor);
+        RequestProcessor syncProcessor = new SyncRequestProcessor(this, finalProcessor);
         ((SyncRequestProcessor)syncProcessor).start();
         firstProcessor = new PrepRequestProcessor(this, syncProcessor);
         ((PrepRequestProcessor)firstProcessor).start();
@@ -715,26 +742,28 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      * This structure is used to facilitate information sharing between PrepRP
      * and FinalRP.
      */
+    // ChangeRecord数据结构是用于方便PrepRequestProcessor和FinalRequestProcessor之间进行信息共享，其包含了一个拷贝方法duplicate，用于返回属性相同的ChangeRecord实例。
     static class ChangeRecord {
         ChangeRecord(long zxid, String path, StatPersisted stat, int childCount,
                 List<ACL> acl) {
+            // 属性赋值
             this.zxid = zxid;
             this.path = path;
             this.stat = stat;
             this.childCount = childCount;
             this.acl = acl;
         }
-
+        // zxid
         long zxid;
-
+        // 路径
         String path;
-
+        // 统计数据
         StatPersisted stat; /* Make sure to create a new object when changing */
-
+        // 子节点个数
         int childCount;
-
+        // ACL列表
         List<ACL> acl; /* Make sure to create a new object when changing */
-
+        // 拷贝
         ChangeRecord duplicate(long zxid) {
             StatPersisted stat = new StatPersisted();
             if (this.stat != null) {
@@ -805,7 +834,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             finishSessionInit(cnxn, false);
         }
     }
-
+    // 完成会话初始化
     public void finishSessionInit(ServerCnxn cnxn, boolean valid) {
         // register with JMX
         try {
@@ -919,6 +948,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
     }
 
+    // 快照数量最少是2，可以通过zookeeper.snapCount设置
     public static int getSnapCount() {
         String sc = System.getProperty("zookeeper.snapCount");
         try {
@@ -926,7 +956,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
             // snapCount must be 2 or more. See org.apache.zookeeper.server.SyncRequestProcessor
             if( snapCount < 2 ) {
-                LOG.warn("SnapCount should be 2 or more. Now, snapCount is reset to 2");
+                LOG.warn(" SnapCount应为2或更多。现在，snapCount重置为2");
                 snapCount = 2;
             }
             return snapCount;

@@ -28,8 +28,7 @@ import org.apache.zookeeper.metrics.Summary;
  * Generic long counter that keep track of min/max/avg. The counter is
  * thread-safe
  */
-public class AvgMinMaxCounter extends Metric
-            implements Summary {
+public class AvgMinMaxCounter extends Metric implements Summary {
     private final String name;
     private final AtomicLong total = new AtomicLong();
     private final AtomicLong min = new AtomicLong(Long.MAX_VALUE);

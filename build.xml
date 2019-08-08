@@ -1937,7 +1937,8 @@ xmlns:cs="antlib:com.puppycrawl.tools.checkstyle.ant">
      </condition>
 
      <target name="ant-eclipse-download" unless="ant-eclipse.jar.exists">
-       <get src="https://downloads.sourceforge.net/project/ant-eclipse/ant-eclipse/1.0/ant-eclipse-1.0.bin.tar.bz2"
+       <!--<get src="https://downloads.sourceforge.net/project/ant-eclipse/ant-eclipse/1.0/ant-eclipse-1.0.bin.tar.bz2"-->
+       <get src="http://ufpr.dl.sourceforge.net/project/ant-eclipse/ant-eclipse/1.0/ant-eclipse-1.0.bin.tar.bz2"
             dest="${java.server.resources.dir}/ant-eclipse-1.0.bin.tar.bz2" usetimestamp="false" />
 
        <bunzip2 src="${java.server.resources.dir}/ant-eclipse-1.0.bin.tar.bz2"/>

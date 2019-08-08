@@ -33,6 +33,6 @@ package org.apache.jute;
  *
  */
 public interface Index {
-    public boolean done();
-    public void incr();
+    public boolean done(); // 是否已经完成
+    public void incr();  //读完一个之后调用指向下一个数据
 }

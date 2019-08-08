@@ -21,6 +21,7 @@ package org.apache.zookeeper.metrics;
 /**
  * A Gauge is an application provided object which will be called by the framework in order to sample the value
  * of an integer value.
+ * 采样
  */
 public interface Gauge {
 
@@ -28,6 +29,8 @@ public interface Gauge {
      * Returns the current value associated with this gauge.
      * The MetricsProvider will call this callback without taking care of synchronization, it is up to the application
      * to handle thread safety.
+     * 返回与此仪表关联的当前值。
+     * MetricsProvider将调用此回调而不考虑同步，由应用程序来处理线程安全。
      *
      * @return the current value for the gauge
      */

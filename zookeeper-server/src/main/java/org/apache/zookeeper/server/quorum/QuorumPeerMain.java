@@ -70,6 +70,7 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
  * "myid" that contains the server id as an ASCII decimal value.
  *
  */
+//服务器启动类
 @InterfaceAudience.Public
 public class QuorumPeerMain {
     private static final Logger LOG = LoggerFactory.getLogger(QuorumPeerMain.class);
@@ -81,6 +82,7 @@ public class QuorumPeerMain {
     /**
      * To start the replicated server specify the configuration file name on
      * the command line.
+     * 要启动复制的服务器，请在命令行上指定配置文件名。
      * @param args path to the configfile
      */
     public static void main(String[] args) {
@@ -108,36 +110,36 @@ public class QuorumPeerMain {
             LOG.error("Unexpected exception, exiting abnormally", e);
             System.exit(ExitCode.UNEXPECTED_ERROR.getValue());
         }
-        LOG.info("Exiting normally");
+        LOG.info("Exiting normally正常退出");
         System.exit(ExitCode.EXECUTION_FINISHED.getValue());
     }
 
     protected void initializeAndRun(String[] args)
         throws ConfigException, IOException, AdminServerException
     {
+        // 解析配置文件  QuorumPeerConfig
         QuorumPeerConfig config = new QuorumPeerConfig();
         if (args.length == 1) {
             config.parse(args[0]);
         }
 
-        // Start and schedule the the purge task
+        // 配置并启动清除任务
         DatadirCleanupManager purgeMgr = new DatadirCleanupManager(config
                 .getDataDir(), config.getDataLogDir(), config
                 .getSnapRetainCount(), config.getPurgeInterval());
         purgeMgr.start();
 
-        if (args.length == 1 && config.isDistributed()) {
-            runFromConfig(config);
-        } else {
+        if (args.length == 1 && config.isDistributed()) {//集群模式运行
+            runFromConfig(config); //解析 zoo.cfg
+        } else {// standalone模式运行
             LOG.warn("Either no config or no quorum defined in config, running "
                     + " in standalone mode");
-            // there is only server in the quorum -- run as standalone
             ZooKeeperServerMain.main(args);
         }
     }
 
-    public void runFromConfig(QuorumPeerConfig config)
-            throws IOException, AdminServerException
+    // zookeeper集群启动情况下
+    public void runFromConfig(QuorumPeerConfig config) throws IOException, AdminServerException
     {
       try {
           ManagedUtil.registerLog4jMBeans();
@@ -148,58 +150,60 @@ public class QuorumPeerMain {
       LOG.info("Starting quorum peer");
       MetricsProvider metricsProvider;
       try {
+          // 配置并启动DefaultMetricsProvider
         metricsProvider = MetricsProviderBootstrap
-                      .startMetricsProvider(config.getMetricsProviderClassName(),
-                                            config.getMetricsProviderConfiguration());
+                      .startMetricsProvider(config.getMetricsProviderClassName(),// 配置文件中 metricsProvider.className，默认是DefaultMetricsProvider
+                                            config.getMetricsProviderConfiguration());// 配置文件中已 metricsProvider. 开头的
       } catch (MetricsProviderLifeCycleException error) {
         throw new IOException("Cannot boot MetricsProvider " + config.getMetricsProviderClassName(),
                       error);
       }
       try {
           ServerMetrics.metricsProviderInitialized(metricsProvider);
-          ServerCnxnFactory cnxnFactory = null;
-          ServerCnxnFactory secureCnxnFactory = null;
 
-          if (config.getClientPortAddress() != null) {
+          ServerCnxnFactory cnxnFactory = null;
+          if (config.getClientPortAddress() != null) { //配置文件中 clientPortAddress
               cnxnFactory = ServerCnxnFactory.createFactory();
-              cnxnFactory.configure(config.getClientPortAddress(),
-                      config.getMaxClientCnxns(),
-                      config.getClientPortListenBacklog(), false);
+              cnxnFactory.configure(config.getClientPortAddress(),//clientPortAddress + clientPort
+                      config.getMaxClientCnxns(), // maxClientCnxns 默认60
+                      config.getClientPortListenBacklog(), false);//clientPortListenBacklog   默认-1
           }
 
-          if (config.getSecureClientPortAddress() != null) {
+          ServerCnxnFactory secureCnxnFactory = null;
+          if (config.getSecureClientPortAddress() != null) { // 配置文件中 secureClientPortAddress
               secureCnxnFactory = ServerCnxnFactory.createFactory();
-              secureCnxnFactory.configure(config.getSecureClientPortAddress(),
-                      config.getMaxClientCnxns(),
-                      config.getClientPortListenBacklog(), true);
+              secureCnxnFactory.configure(config.getSecureClientPortAddress(),// secureClientPortAddress + secureClientPort
+                      config.getMaxClientCnxns(),// maxClientCnxns 默认60
+                      config.getClientPortListenBacklog(), true);//clientPortListenBacklog   默认-1
           }
 
           quorumPeer = getQuorumPeer();
           quorumPeer.setTxnFactory(new FileTxnSnapLog(
-                      config.getDataLogDir(),
-                      config.getDataDir()));
-          quorumPeer.enableLocalSessions(config.areLocalSessionsEnabled());
+                      config.getDataLogDir(), // dataLogDir
+                      config.getDataDir())); // dataDir
+          quorumPeer.enableLocalSessions(config.areLocalSessionsEnabled()); //localSessionsEnabled 默认false
           quorumPeer.enableLocalSessionsUpgrading(
-              config.isLocalSessionsUpgradingEnabled());
-          //quorumPeer.setQuorumPeers(config.getAllMembers());
-          quorumPeer.setElectionType(config.getElectionAlg());
-          quorumPeer.setMyid(config.getServerId());
-          quorumPeer.setTickTime(config.getTickTime());
-          quorumPeer.setMinSessionTimeout(config.getMinSessionTimeout());
-          quorumPeer.setMaxSessionTimeout(config.getMaxSessionTimeout());
-          quorumPeer.setInitLimit(config.getInitLimit());
-          quorumPeer.setSyncLimit(config.getSyncLimit());
-          quorumPeer.setObserverMasterPort(config.getObserverMasterPort());
-          quorumPeer.setConfigFileName(config.getConfigFilename());
-          quorumPeer.setClientPortListenBacklog(config.getClientPortListenBacklog());
-          quorumPeer.setZKDatabase(new ZKDatabase(quorumPeer.getTxnFactory()));
+              config.isLocalSessionsUpgradingEnabled()); // localSessionsUpgradingEnabled 默认false
+//          quorumPeer.setQuorumPeers(config.getAllMembers());
+          quorumPeer.setElectionType(config.getElectionAlg()); // electionAlg  默认是3  只支持1、2、3
+          quorumPeer.setMyid(config.getServerId()); //myid  myid文件中配置  默认-1 standalone模式不需要myid文件
+          quorumPeer.setTickTime(config.getTickTime()); //tickTime  心跳时间 默认3000
+          quorumPeer.setMinSessionTimeout(config.getMinSessionTimeout()); //minSessionTimeout  默认3000 * 2
+          quorumPeer.setMaxSessionTimeout(config.getMaxSessionTimeout()); //maxSessionTimeout  默认3000 * 20
+          quorumPeer.setInitLimit(config.getInitLimit()); //initLimit
+          quorumPeer.setSyncLimit(config.getSyncLimit()); //syncLimit
+          quorumPeer.setObserverMasterPort(config.getObserverMasterPort()); //observerMasterPort
+          quorumPeer.setConfigFileName(config.getConfigFilename());  //配置文件路径
+          quorumPeer.setClientPortListenBacklog(config.getClientPortListenBacklog()); //clientPortListenBacklog  默认-1
+          quorumPeer.setZKDatabase(new ZKDatabase(quorumPeer.getTxnFactory()));  //quorumPeer.getTxnFactory()拿到了上面传入的new FileTxnSnapLog(config.getDataLogDir(),dataLogDirconfig.getDataDir())对象
+
           quorumPeer.setQuorumVerifier(config.getQuorumVerifier(), false);
           if (config.getLastSeenQuorumVerifier()!=null) {
               quorumPeer.setLastSeenQuorumVerifier(config.getLastSeenQuorumVerifier(), false);
           }
           quorumPeer.initConfigInZKDatabase();
-          quorumPeer.setCnxnFactory(cnxnFactory);
-          quorumPeer.setSecureCnxnFactory(secureCnxnFactory);
+          quorumPeer.setCnxnFactory(cnxnFactory); // 如果配置文件中没有配置clientPortAddress，则cnxnFactory为空
+          quorumPeer.setSecureCnxnFactory(secureCnxnFactory); // 如果配置文件中没有配置secureClientPortAddress，则secureCnxnFactory为空
           quorumPeer.setSslQuorum(config.isSslQuorum());
           quorumPeer.setUsePortUnification(config.shouldUsePortUnification());
           quorumPeer.setLearnerType(config.getPeerType());
@@ -209,7 +213,7 @@ public class QuorumPeerMain {
               quorumPeer.getX509Util().enableCertFileReloading();
           }
 
-          // sets quorum sasl authentication configurations
+          // sets quorum sasl authentication configurations设置仲裁sasl身份验证配置
           quorumPeer.setQuorumSaslEnabled(config.quorumEnableSasl);
           if(quorumPeer.isQuorumSaslAuthEnabled()){
               quorumPeer.setQuorumServerSaslRequired(config.quorumServerRequireSasl);

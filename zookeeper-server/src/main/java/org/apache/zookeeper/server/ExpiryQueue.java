@@ -33,17 +33,17 @@ import org.apache.zookeeper.common.Time;
  * ExpiryQueue tracks elements in time sorted fixed duration buckets.
  * It's used by SessionTrackerImpl to expire sessions and NIOServerCnxnFactory
  * to expire connections.
+ * ExpiryQueue跟踪按时间排序的固定持续时间桶中的元素。
+ * SessionTrackerImpl用它来使会话到期，而NIOServerCnxnFactory *用来使连接失效。
  */
 public class ExpiryQueue<E> {
-    private final ConcurrentHashMap<E, Long> elemMap =
-        new ConcurrentHashMap<E, Long>();
+    private final ConcurrentHashMap<E, Long> elemMap = new ConcurrentHashMap<E, Long>();
     /**
      * The maximum number of buckets is equal to max timeout/expirationInterval,
      * so the expirationInterval should not be too small compared to the
      * max timeout that this expiry queue needs to maintain.
      */
-    private final ConcurrentHashMap<Long, Set<E>> expiryMap =
-        new ConcurrentHashMap<Long, Set<E>>();
+    private final ConcurrentHashMap<Long, Set<E>> expiryMap = new ConcurrentHashMap<Long, Set<E>>();
 
     private final AtomicLong nextExpirationTime = new AtomicLong();
     private final int expirationInterval;

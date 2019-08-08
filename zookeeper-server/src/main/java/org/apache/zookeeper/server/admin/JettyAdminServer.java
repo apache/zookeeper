@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This class encapsulates a Jetty server for running Commands.
+ * 此类封装Jetty服务器以运行命令。
  *
  * Given the default settings, start a ZooKeeper server and visit
  * http://<hostname>:8080/commands for links to all registered commands. Visiting
@@ -148,7 +149,7 @@ public class JettyAdminServer implements AdminServer {
 
     private class CommandServlet extends HttpServlet {
         private static final long serialVersionUID = 1L;
-
+        // jetty响应请求
         protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
             // Capture the command name from the URL
             String cmd = request.getPathInfo();
@@ -160,10 +161,11 @@ public class JettyAdminServer implements AdminServer {
                 }
                 return;
             }
-            // Strip leading "/"
+            // 跳过第一个 "/"
             cmd = cmd.substring(1);
 
             // Extract keyword arguments to command from request parameters
+            // 获取参数
             @SuppressWarnings("unchecked")
             Map<String, String[]> parameterMap = request.getParameterMap();
             Map<String, String> kwargs = new HashMap<String, String>();
@@ -171,10 +173,10 @@ public class JettyAdminServer implements AdminServer {
                 kwargs.put(entry.getKey(), entry.getValue()[0]);
             }
 
-            // Run the command
+            // 运行命令
             CommandResponse cmdResponse = Commands.runCommand(cmd, zkServer, kwargs);
 
-            // Format and print the output of the command
+            // 格式化并打印命令的输出
             CommandOutputter outputter = new JsonOutputter();
             response.setStatus(HttpServletResponse.SC_OK);
             response.setContentType(outputter.getContentType());
@@ -183,13 +185,14 @@ public class JettyAdminServer implements AdminServer {
     }
 
     /**
-     * Returns a list of URLs to each registered Command.
+     * 返回每个已注册命令的URL列表。
      */
     private List<String> commandLinks() {
         List<String> links = new ArrayList<String>();
         List<String> commands = new ArrayList<String>(Commands.getPrimaryNames());
         Collections.sort(commands);
         for (String command : commands) {
+            // 都是“链接标签”
             String url = commandUrl + "/" + command;
             links.add(String.format("<a href=\"%s\">%s</a>", url, command));
         }

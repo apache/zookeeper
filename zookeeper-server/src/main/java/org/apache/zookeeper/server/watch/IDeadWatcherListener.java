@@ -22,6 +22,7 @@ import java.util.Set;
 
 /**
  * Interface used to process the dead watchers related to closed cnxns.
+ * 用于处理与封闭式cnxns相关的死观察者的接口。
  */
 public interface IDeadWatcherListener {
 

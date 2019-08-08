@@ -21,6 +21,7 @@ package org.apache.zookeeper.jmx;
 /**
  * Zookeeper MBean info interface. MBeanRegistry uses the interface to generate
  * JMX object name.
+ * Zookeeper MBean信息界面。 MBeanRegistry使用该接口生成 JMX对象名称。
  */
 public interface ZKMBeanInfo {
     /**
@@ -30,6 +31,8 @@ public interface ZKMBeanInfo {
     /**
      * If isHidden returns true, the MBean won't be registered with MBean server,
      * and thus won't be available for management tools. Used for grouping MBeans.
+     * 如果isHidden返回true，则MBean将不会向MBean服务器注册，因此将无法用于管理工具。
+     * 用于对MBean进行分组。
      * @return true if the MBean is hidden.
      */
     public boolean isHidden();

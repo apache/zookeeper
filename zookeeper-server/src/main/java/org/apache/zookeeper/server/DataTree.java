@@ -78,10 +78,15 @@ import java.util.concurrent.atomic.AtomicLong;
  * This class maintains the tree data structure. It doesn't have any networking
  * or client connection code in it so that it can be tested in a stand alone
  * way.
+ * 该类维护树数据结构。它没有任何网络或客户端连接代码，因此可以独立方式进行测试。
  * <p>
  * The tree maintains two parallel data structures: a hashtable that maps from
  * full paths to DataNodes and a tree of DataNodes. All accesses to a path is
  * through the hashtable. The tree is traversed only when serializing to disk.
+ * 该树维护着两个并行的数据结构：一个从完整路径映射到DataNodes的哈希表和一个DataNodes树。对路径的所有访问都是通过哈希表。
+ *
+ * 仅在序列化到磁盘时遍历树。
+ *
  */
 public class DataTree {
     private static final Logger LOG = LoggerFactory.getLogger(DataTree.class);
@@ -90,73 +95,81 @@ public class DataTree {
      * This hashtable provides a fast lookup to the datanodes. The tree is the
      * source of truth and is where all the locking occurs
      */
-    private final ConcurrentHashMap<String, DataNode> nodes =
-        new ConcurrentHashMap<String, DataNode>();
+    // 存储着所有DataNode，Key为DataNode的绝对路径Path，Value为DataNode。
+    private final ConcurrentHashMap<String, DataNode> nodes = new ConcurrentHashMap<String, DataNode>();
 
-    private IWatchManager dataWatches;
+    private IWatchManager dataWatches; //内容监听器
 
-    private IWatchManager childWatches;
+    private IWatchManager childWatches; //子节点监听器
 
-    /** cached total size of paths and data for all DataNodes */
+    /** 缓存所有DataNode的路径和数据的总大小 */
     private final AtomicLong nodeDataSize = new AtomicLong(0);
 
-    /** the root of zookeeper tree */
+    /** zookeeper树的根目录 */
     private static final String rootZookeeper = "/";
 
-    /** the zookeeper nodes that acts as the management and status node **/
-    private static final String procZookeeper = Quotas.procZookeeper;
+    /** the zookeeper nodes that acts as the management and status node  充当管理和状态节点的zookeeper节点**/
+    private static final String procZookeeper = Quotas.procZookeeper;  // "/zookeeper"
 
-    /** this will be the string thats stored as a child of root */
-    private static final String procChildZookeeper = procZookeeper.substring(1);
+    /** this will be the string thats stored as a child of root 这将是存储为root子节点的字符串 */
+    private static final String procChildZookeeper = procZookeeper.substring(1);  // "zookeeper"
 
     /**
-     * the zookeeper quota node that acts as the quota management node for
-     * zookeeper
+     * the zookeeper quota node that acts as the quota management node for zookeeper
+     * zookeeper配额节点，充当 zookeeper的配额管理节点
      */
-    private static final String quotaZookeeper = Quotas.quotaZookeeper;
+    private static final String quotaZookeeper = Quotas.quotaZookeeper; // "/zookeeper/quota"
 
-    /** this will be the string thats stored as a child of /zookeeper */
-    private static final String quotaChildZookeeper = quotaZookeeper
+    /** this will be the string thats stored as a child of /zookeeper 这将是存储为/ zookeeper的子元素的字符串 */
+    private static final String quotaChildZookeeper = quotaZookeeper // "quota"
             .substring(procZookeeper.length() + 1);
 
     /**
-     * the zookeeper config node that acts as the config management node for
-     * zookeeper
+     * the zookeeper config node that acts as the config management node for zookeeper
+     *
+     * zookeeper配置节点，充当zookeeper的配置管理节点
+     *
      */
-    private static final String configZookeeper = ZooDefs.CONFIG_NODE;
+    private static final String configZookeeper = ZooDefs.CONFIG_NODE;  // "/zookeeper/config"
 
-    /** this will be the string thats stored as a child of /zookeeper */
+    /** this will be the string thats stored as a child of /zookeeper 这将是存储为/ zookeeper的子元素的字符串*/
     private static final String configChildZookeeper = configZookeeper
             .substring(procZookeeper.length() + 1);
 
     /**
      * the path trie that keeps track of the quota nodes in this datatree
+     * 跟踪此数据树中的配额节点的路径trie
      */
     private final PathTrie pTrie = new PathTrie();
 
     /**
      * over-the-wire size of znode's stat. Counting the fields of Stat class
+     * znode的统计数据的线上大小。计算Stat类的字段
      */
     public static final int STAT_OVERHEAD_BYTES = (6 * 8) + (5 * 4);
 
     /**
      * This hashtable lists the paths of the ephemeral nodes of a session.
      */
+    // 存储着所有的临时节点的Path，Key为会话的ID，Value为当前会话的所有临时节点的Path。
     private final Map<Long, HashSet<String>> ephemerals =
         new ConcurrentHashMap<Long, HashSet<String>>();
 
     /**
      * This set contains the paths of all container nodes
      */
+    // 存储着所有 容器节点 的Path。
     private final Set<String> containers =
             Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 
     /**
      * This set contains the paths of all ttl nodes
      */
+    // 存储着所有 TTL节点 的Path。
     private final Set<String> ttls =
             Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 
+    //缓存着所有的节点的ACL列表。创建DataNode会将DataNode的ACL缓存到里面，DataNode中的acl为Key。
     private final ReferenceCountedACLCache aclCache = new ReferenceCountedACLCache();
 
     @SuppressWarnings("unchecked")
@@ -206,6 +219,7 @@ public class DataTree {
 
     /**
      * Get the size of the nodes based on path and data length.
+     * 根据路径和数据长度获取所有节点的总大小。
      *
      * @return size of the data
      */
@@ -235,38 +249,42 @@ public class DataTree {
     /**
      * This is a pointer to the root of the DataTree. It is the source of truth,
      * but we usually use the nodes hashmap to find nodes in the tree.
+     * 这是指向DataTree根目录的指针。它是事实的来源，但我们通常使用节点hashmap来查找树中的节点。
      */
     private DataNode root = new DataNode(new byte[0], -1L, new StatPersisted());
 
     /**
      * create a /zookeeper filesystem that is the proc filesystem of zookeeper
+     * 创建一个/ zookeeper文件系统，它是zookeeper的proc文件系统
      */
     private final DataNode procDataNode = new DataNode(new byte[0], -1L, new StatPersisted());
 
     /**
-     * create a /zookeeper/quota node for maintaining quota properties for
-     * zookeeper
+     * create a /zookeeper/quota node for maintaining quota properties for zookeeper
+     * 创建/zookeeper/quota 节点以维护zookeeper的配额属性
      */
     private final DataNode quotaDataNode = new DataNode(new byte[0], -1L, new StatPersisted());
 
     public DataTree() {
         /* Rather than fight it, let root have an alias */
+        // root有两个key,一个是"",另一个是"/"
         nodes.put("", root);
         nodes.put(rootZookeeper, root);
 
         /** add the proc node and quota node */
-        root.addChild(procChildZookeeper);
-        nodes.put(procZookeeper, procDataNode);
+        root.addChild(procChildZookeeper);     // 添加root的子节点"zookeeper"
+        nodes.put(procZookeeper, procDataNode);  //添加全局节点 "/zookeeper"
 
-        procDataNode.addChild(quotaChildZookeeper);
-        nodes.put(quotaZookeeper, quotaDataNode);
+        procDataNode.addChild(quotaChildZookeeper);// 添加root的子节点"quota"
+        nodes.put(quotaZookeeper, quotaDataNode);//添加全局节点 "/quota"
 
         addConfigNode();
 
         nodeDataSize.set(approximateDataSize());
         try {
-            dataWatches = WatchManagerFactory.createWatchManager();
-            childWatches = WatchManagerFactory.createWatchManager();
+            // 创建内容监听器和子节点监听器
+            dataWatches = WatchManagerFactory.createWatchManager(); // WatchManager.class
+            childWatches = WatchManagerFactory.createWatchManager(); // WatchManager.class
         } catch (Exception e) {
             LOG.error("Unexpected exception when creating WatchManager, " +
                     "exiting abnormally", e);
@@ -275,21 +293,21 @@ public class DataTree {
     }
 
     /**
-     * create a /zookeeper/config node for maintaining the configuration (membership and quorum system) info for
-     * zookeeper
+     * create a /zookeeper/config node for maintaining the configuration (membership and quorum system) info for zookeeper
+     * 创建一个/zookeeper/config 节点，用于维护zookeeper的配置（成员资格和仲裁系统）信息
      */
     public void addConfigNode() {
         DataNode zookeeperZnode = nodes.get(procZookeeper);
-        if (zookeeperZnode != null) { // should always be the case
-            zookeeperZnode.addChild(configChildZookeeper);
+        if (zookeeperZnode != null) { // should always be the case 应该永远是这样的
+            zookeeperZnode.addChild(configChildZookeeper); // 给"/zookeeper"添加子节点config
         } else {
-            assert false : "There's no /zookeeper znode - this should never happen.";
+            assert false : "There's no /zookeeper znode - this should never happen.没有/ zookeeper znode  - 这应该永远不会发生。";
         }
 
-        nodes.put(configZookeeper, new DataNode(new byte[0], -1L, new StatPersisted()));
+        nodes.put(configZookeeper, new DataNode(new byte[0], -1L, new StatPersisted()));  //添加全局节点 "/zookeeper/config"
         try {
-            // Reconfig node is access controlled by default (ZOOKEEPER-2014).
-            setACL(configZookeeper, ZooDefs.Ids.READ_ACL_UNSAFE, -1);
+            // Reconfig node is access controlled by default (ZOOKEEPER-2014).默认情况下，重新配置节点是受访问控制的（ZOOKEEPER-2014）。
+            setACL(configZookeeper, ZooDefs.Ids.READ_ACL_UNSAFE, -1); //所有的客户端都可读
         } catch (KeeperException.NoNodeException e) {
             assert false : "There's no " + configZookeeper +
                     " znode - this should never happen.";
@@ -298,9 +316,12 @@ public class DataTree {
 
     /**
      * is the path one of the special paths owned by zookeeper.
+     * 是zookeeper拥有的特殊路径之一的路径
      *
-     * @param path
-     *            the path to be checked
+     * 判断是否的 "/"  "/zookeeper"  "/zookeeper/quota"  "/zookeeper/config" 其中之一
+     * 如果是返回true，否则false
+     *
+     * @param path the path to be checked
      * @return true if a special path. false if not.
      */
     boolean isSpecialPath(String path) {
@@ -310,7 +331,7 @@ public class DataTree {
         }
         return false;
     }
-
+    // StatPersisted  从from复制信息到to,复制的都是基础类型，深拷贝
     static public void copyStatPersisted(StatPersisted from, StatPersisted to) {
         to.setAversion(from.getAversion());
         to.setCtime(from.getCtime());
@@ -323,6 +344,7 @@ public class DataTree {
         to.setEphemeralOwner(from.getEphemeralOwner());
     }
 
+    // Stat  从from复制信息到to,复制的都是基础类型，深拷贝
     static public void copyStat(Stat from, Stat to) {
         to.setAversion(from.getAversion());
         to.setCtime(from.getCtime());
@@ -339,6 +361,7 @@ public class DataTree {
 
     /**
      * update the count/count of bytes of this stat datanode
+     * 更新此stat datanode的计数/字节数
      *
      * @param lastPrefix
      *            the path of the node that is quotaed.
@@ -436,7 +459,9 @@ public class DataTree {
             throws KeeperException.NoNodeException,
             KeeperException.NodeExistsException {
         int lastSlash = path.lastIndexOf('/');
+        // 拿到父节点
         String parentName = path.substring(0, lastSlash);
+        // 拿到当前节点名字
         String childName = path.substring(lastSlash + 1);
         StatPersisted stat = new StatPersisted();
         stat.setCtime(time);
@@ -467,7 +492,7 @@ public class DataTree {
 
             Set<String> children = parent.getChildren();
             if (children.contains(childName)) {
-                throw new KeeperException.NodeExistsException();
+                throw new KeeperException.NodeExistsException();//抛出节点存在异常
             }
 
             if (parentCVersion == -1) {
@@ -485,15 +510,16 @@ public class DataTree {
             }
             DataNode child = new DataNode(data, longval, stat);
             parent.addChild(childName);
+            // 更新数据数数据大小
             nodeDataSize.addAndGet(getNodeSize(path, child.data));
             nodes.put(path, child);
             EphemeralType ephemeralType = EphemeralType.get(ephemeralOwner);
-            if (ephemeralType == EphemeralType.CONTAINER) {
+            if (ephemeralType == EphemeralType.CONTAINER) { // 如果是容器节点
                 containers.add(path);
-            } else if (ephemeralType == EphemeralType.TTL) {
+            } else if (ephemeralType == EphemeralType.TTL) { // 如果是TTL节点
                 ttls.add(path);
             } else if (ephemeralOwner != 0) {
-                HashSet<String> list = ephemerals.get(ephemeralOwner);
+                HashSet<String> list = ephemerals.get(ephemeralOwner);//临时节点
                 if (list == null) {
                     list = new HashSet<String>();
                     ephemerals.put(ephemeralOwner, list);
@@ -507,29 +533,30 @@ public class DataTree {
             }
         }
         // now check if its one of the zookeeper node child
+        // 现在检查它是否是其中一个zookeeper节点的子节点   parentName节点是否已"/zookeeper/quota"开头
         if (parentName.startsWith(quotaZookeeper)) {
             // now check if its the limit node
-            if (Quotas.limitNode.equals(childName)) {
+            if (Quotas.limitNode.equals(childName)) { // 或否是zookeeper_limits节点
                 // this is the limit node
-                // get the parent and add it to the trie
+                // get the parent and add it to the trie   添加到pTrie中
                 pTrie.addPath(parentName.substring(quotaZookeeper.length()));
             }
-            if (Quotas.statNode.equals(childName)) {
-                updateQuotaForPath(parentName
-                        .substring(quotaZookeeper.length()));
+            if (Quotas.statNode.equals(childName)) { // 是否是zookeeper_stats节点
+                // 更新给定路径的配额
+                updateQuotaForPath(parentName.substring(quotaZookeeper.length()));
             }
         }
+
         // also check to update the quotas for this node
         String lastPrefix = getMaxPrefixWithQuota(path);
         long bytes = data == null ? 0 : data.length;
         if(lastPrefix != null) {
-            // ok we have some match and need to update
+            // ok we have some match and need to update好的，我们有一些匹配，需要更新
             updateCountBytes(lastPrefix, bytes, 1);
         }
         updateWriteStat(path, bytes);
-        dataWatches.triggerWatch(path, Event.EventType.NodeCreated);
-        childWatches.triggerWatch(parentName.equals("") ? "/" : parentName,
-                Event.EventType.NodeChildrenChanged);
+        dataWatches.triggerWatch(path, Event.EventType.NodeCreated);//节点创建事件
+        childWatches.triggerWatch(parentName.equals("") ? "/" : parentName, Event.EventType.NodeChildrenChanged);// 子节点变化事件
     }
 
     /**
@@ -555,11 +582,12 @@ public class DataTree {
             throw new KeeperException.NoNodeException();
         }
         synchronized (parent) {
+            // 移除父节点包含的子节点
             parent.removeChild(childName);
             // Only update pzxid when the zxid is larger than the current pzxid,
             // otherwise we might override some higher pzxid set by a create
             // Txn, which could cause the cversion and pzxid inconsistent
-            if (zxid > parent.stat.getPzxid()) {
+            if (zxid > parent.stat.getPzxid()) { // 更新父节点的zxid
                 parent.stat.setPzxid(zxid);
             }
         }
@@ -571,6 +599,7 @@ public class DataTree {
         nodes.remove(path);
         synchronized (node) {
             aclCache.removeUsage(node.acl);
+            // 更新数据树数据大小
             nodeDataSize.addAndGet(-getNodeSize(path, node.data));
         }
 
@@ -619,13 +648,12 @@ public class DataTree {
             ZooTrace.logTraceMessage(LOG, ZooTrace.EVENT_DELIVERY_TRACE_MASK,
                     "childWatches.triggerWatch " + parentName);
         }
-        WatcherOrBitSet processed = dataWatches.triggerWatch(path,
-                EventType.NodeDeleted);
-        childWatches.triggerWatch(path, EventType.NodeDeleted, processed);
-        childWatches.triggerWatch("".equals(parentName) ? "/" : parentName,
-                EventType.NodeChildrenChanged);
+        WatcherOrBitSet processed = dataWatches.triggerWatch(path,EventType.NodeDeleted);//拿到注册了相应事件的处理程序
+        childWatches.triggerWatch(path, EventType.NodeDeleted, processed);//节点删除事件
+        childWatches.triggerWatch("".equals(parentName) ? "/" : parentName,EventType.NodeChildrenChanged);// 子节点变化事件
     }
 
+    // 返回的Stat已经是复制过的，和内存树里面的不是一个对象
     public Stat setData(String path, byte data[], int version, long zxid,
             long time) throws KeeperException.NoNodeException {
         Stat s = new Stat();
@@ -642,7 +670,7 @@ public class DataTree {
             n.stat.setVersion(version);
             n.copyStat(s);
         }
-        // now update if the path is in a quota subtree.
+        // now update if the path is in a quota subtree. 如果路径在配额子树中，现在更新。
         String lastPrefix = getMaxPrefixWithQuota(path);
         long dataBytes = data == null ? 0 : data.length;
         if(lastPrefix != null) {
@@ -657,8 +685,10 @@ public class DataTree {
     }
 
     /**
+     * 获取配额的最大前缀
      * If there is a quota set, return the appropriate prefix for that quota
      * Else return null
+     * 如果存在配额集，则返回该配额的相应前缀*否则返回null
      * @param path The ZK path to check for quota
      * @return Max quota prefix, or null if none
      */
@@ -755,7 +785,7 @@ public class DataTree {
             throw new KeeperException.NoNodeException();
         }
         synchronized (n) {
-            aclCache.removeUsage(n.acl);
+            aclCache.removeUsage(n.acl); // n.acl值对应的acl的引用次数-1
             n.stat.setAversion(version);
             n.acl = aclCache.convertAcls(acl);
             n.copyStat(stat);
@@ -1111,6 +1141,7 @@ public class DataTree {
 
     /**
      * a encapsultaing class for return value
+     * 一个返回值的包装类
      */
     private static class Counts {
         long bytes;
@@ -1147,6 +1178,7 @@ public class DataTree {
 
     /**
      * update the quota for the given path
+     * 更新给定路径的配额
      *
      * @param path
      *            the path to be used
@@ -1161,7 +1193,7 @@ public class DataTree {
         DataNode node = getNode(statPath);
         // it should exist
         if (node == null) {
-            LOG.warn("Missing quota stat node " + statPath);
+            LOG.warn("Missing quota stat node 缺少配额统计节点" + statPath);
             return;
         }
         synchronized (node) {
@@ -1344,6 +1376,8 @@ public class DataTree {
     /**
      * Write a text dump of all the watches on the datatree.
      * Warning, this is expensive, use sparingly!
+     * 在数据树上写下所有watches的文本转储。
+     * 警告，这很贵，请谨慎使用！
      * @param pwriter the output to write to
      */
     public synchronized void dumpWatches(PrintWriter pwriter, boolean byPath) {
@@ -1382,6 +1416,7 @@ public class DataTree {
 
     /**
      * Write a text dump of all the ephemerals in the datatree.
+     * 写一个数据树中所有短暂文本的文本转储。
      * @param pwriter the output to write to
      */
     public void dumpEphemerals(PrintWriter pwriter) {
@@ -1563,6 +1598,7 @@ public class DataTree {
     }
 
     private void updateWriteStat(String path, long bytes) {
+        // 命名空间
         String namespace = getTopNamespace(path);
         if (namespace == null) {
             return;

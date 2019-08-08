@@ -34,6 +34,7 @@ import org.junit.Test;
 
 /**
  * Testing zk client session logic in sessiontracker
+ * 在sessiontracker中测试zk客户端会话逻辑
  */
 public class SessionTrackerTest extends ZKTestCase {
 

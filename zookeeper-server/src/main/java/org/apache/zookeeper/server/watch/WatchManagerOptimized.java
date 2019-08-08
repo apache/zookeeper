@@ -44,22 +44,21 @@ import org.slf4j.LoggerFactory;
  * memory consumption and time complexity improved a lot, but it cannot
  * efficiently remove the watcher when the session or socket is closed, for
  * majority use case this is not a problem.
+ * 与WatchManager相比，在内存和时间复杂度方面进行了优化，内存消耗和时间复杂度都得到了很大改善，
+ * 但是当会话或套接字关闭时，它无法有效地删除观察者，对于大多数用例，这不是问题。
  *
- * Changed made compared to WatchManager:
+ * 与WatchManager相比更改了：
  *
- * - Use HashSet and BitSet to store the watchers to find a balance between
- *   memory usage and time complexity
- * - Use ReadWriteLock instead of synchronized to reduce lock retention
- * - Lazily clean up the closed watchers
+ * - 使用HashSet和BitSet存储观察者以在内存使用和时间复杂度之间找到平衡
+ * - 使用ReadWriteLock而不是synchronized来减少锁定保留
+ * - 懒洋洋地清理关闭的观察者
  */
-public class WatchManagerOptimized
-        implements IWatchManager, IDeadWatcherListener {
+public class WatchManagerOptimized implements IWatchManager, IDeadWatcherListener {
 
     private static final Logger LOG =
             LoggerFactory.getLogger(WatchManagerOptimized.class);
 
-    private final ConcurrentHashMap<String, BitHashSet> pathWatches =
-            new ConcurrentHashMap<String, BitHashSet>();
+    private final ConcurrentHashMap<String, BitHashSet> pathWatches = new ConcurrentHashMap<String, BitHashSet>();
 
     // watcher to bit id mapping
     private final BitMap<Watcher> watcherBitIdMap = new BitMap<Watcher>();
@@ -183,6 +182,8 @@ public class WatchManagerOptimized
 
     /**
      * Entry for WatcherCleaner to remove dead watchers
+     * 进入WatcherCleaner以移除死去的观察者
+     * IDeadWatcherListener接口定义的方法
      *
      * @param deadWatchers the watchers need to be removed
      */
@@ -195,11 +196,13 @@ public class WatchManagerOptimized
         for (int dw: deadWatchers) {
             bits.set(dw);
         }
+        // 从pathWatches中移除
         // The value iterator will reflect the state when it was
         // created, don't need to synchronize.
         for (BitHashSet watchers: pathWatches.values()) {
             watchers.remove(deadWatchers, bits);
         }
+        // 从watcherBitIdMap中移除
         // Better to remove the empty path from pathWatches, but it will add
         // lot of lock contention and affect the throughput of addWatch,
         // let's rely on the triggerWatch to delete it.

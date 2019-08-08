@@ -18,30 +18,24 @@
 
 package org.apache.zookeeper.server.auth;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.ZooKeeper;
-import org.apache.zookeeper.data.Id;
-import org.apache.zookeeper.jmx.MBeanRegistry;
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerMetrics;
-import org.apache.zookeeper.server.ZooKeeperServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.zookeeper.jmx.ZKMBeanInfo;
-
-import javax.management.JMException;
-import org.apache.zookeeper.server.ServerStats;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * This is not a true AuthenticationProvider in the strict sense. it does
- * handle add auth requests, but rather than authenticate the client, it checks
- * to make sure that the ensemble name the client intends to connect to
- * matches the name that the server thinks it belongs to. if the name does not match,
- * this provider will close the connection.
+ *  * handle add auth requests, but rather than authenticate the client, it checks
+ *  * to make sure that the ensemble name the client intends to connect to
+ *  * matches the name that the server thinks it belongs to. if the name does not match,
+ *  * this provider will close the connection.
+ *  从严格意义上讲，这不是真正的AuthenticationProvider。它确实*处理添加身份验证请求，
+ *  但不是对客户端进行身份验证，而是检查*以确保客户端打算连接到*的整体名称与服务器认为它所属的名称相匹配。如果名称不匹配，
+ *  此提供程序将关闭连接。
  */
 
 public class EnsembleAuthenticationProvider implements AuthenticationProvider {

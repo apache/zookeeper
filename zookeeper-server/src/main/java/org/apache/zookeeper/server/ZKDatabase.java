@@ -64,6 +64,9 @@ import org.slf4j.LoggerFactory;
  * server states that includes the sessions, datatree and the
  * committed logs. It is booted up  after reading the logs
  * and snapshots from the disk.
+ *
+ * 此类维护zookeeper 服务器状态的内存数据库，其中包括会话，数据树和提交的日志。它在从磁盘读取日志和快照后启动。
+ *
  */
 public class ZKDatabase {
 

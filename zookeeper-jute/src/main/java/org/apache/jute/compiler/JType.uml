@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>JAVA</ID>
+  <OriginalElement>org.apache.jute.compiler.JType</OriginalElement>
+  <nodes>
+    <node x="637.5" y="90.0">org.apache.jute.compiler.JByte</node>
+    <node x="323.0" y="170.0">org.apache.jute.compiler.JString</node>
+    <node x="522.5" y="90.0">org.apache.jute.compiler.JDouble</node>
+    <node x="735.5" y="90.0">org.apache.jute.compiler.JBoolean</node>
+    <node x="333.5" y="90.0">org.apache.jute.compiler.JInt</node>
+    <node x="0.0" y="170.0">org.apache.jute.compiler.JBuffer</node>
+    <node x="108.0" y="170.0">org.apache.jute.compiler.JMap</node>
+    <node x="856.5" y="90.0">org.apache.jute.compiler.JLong</node>
+    <node x="529.5" y="0.0">org.apache.jute.compiler.JType</node>
+    <node x="421.5" y="90.0">org.apache.jute.compiler.JFloat</node>
+    <node x="197.5" y="90.0">org.apache.jute.compiler.JCompType</node>
+    <node x="208.0" y="170.0">org.apache.jute.compiler.JRecord</node>
+    <node x="430.0" y="170.0">org.apache.jute.compiler.JVector</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="org.apache.jute.compiler.JMap" target="org.apache.jute.compiler.JCompType">
+      <point x="0.0" y="-15.0" />
+      <point x="148.0" y="150.0" />
+      <point x="232.3" y="150.0" />
+      <point x="-23.19999999999999" y="15.0" />
+    </edge>
+    <edge source="org.apache.jute.compiler.JBoolean" target="org.apache.jute.compiler.JType">
+      <point x="0.0" y="-15.0" />
+      <point x="786.0" y="60.0" />
+      <point x="593.1428571428571" y="60.0" />
+      <point x="23.14285714285711" y="15.0" />
+    </edge>
+    <edge source="org.apache.jute.compiler.JLong" target="org.apache.jute.compiler.JType">
+      <point x="0.0" y="-15.0" />
+      <point x="897.5" y="50.0" />
+      <point x="604.7142857142858" y="50.0" />
+      <point x="34.71428571428578" y="15.0" />
+    </edge>
+    <edge source="org.apache.jute.compiler.JDouble" target="org.apache.jute.compiler.JType">
+      <point x="0.0" y="-15.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="org.apache.jute.compiler.JBuffer" target="org.apache.jute.compiler.JCompType">
+      <point x="0.0" y="-15.0" />
+      <point x="44.0" y="140.0" />
+      <point x="209.1" y="140.0" />
+      <point x="-46.400000000000006" y="15.0" />
+    </edge>
+    <edge source="org.apache.jute.compiler.JFloat" target="org.apache.jute.compiler.JType">
+      <point x="0.0" y="-15.0" />
+      <point x="462.0" y="70.0" />
+      <point x="558.4285714285714" y="70.0" />
+      <point x="-11.571428571428555" y="15.0" />
+    </edge>
+    <edge source="org.apache.jute.compiler.JString" target="org.apache.jute.compiler.JCompType">
+      <point x="0.0" y="-15.0" />
+      <point x="366.5" y="150.0" />
+      <point x="278.70000000000005" y="150.0" />
+      <point x="23.200000000000045" y="15.0" />
+    </edge>
+    <edge source="org.apache.jute.compiler.JCompType" target="org.apache.jute.compiler.JType">
+      <point x="0.0" y="-15.0" />
+      <point x="255.5" y="50.0" />
+      <point x="535.2857142857143" y="50.0" />
+      <point x="-34.714285714285666" y="15.0" />
+    </edge>
+    <edge source="org.apache.jute.compiler.JRecord" target="org.apache.jute.compiler.JCompType">
+      <point x="0.0" y="-15.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="org.apache.jute.compiler.JInt" target="org.apache.jute.compiler.JType">
+      <point x="0.0" y="-15.0" />
+      <point x="367.5" y="60.0" />
+      <point x="546.8571428571429" y="60.0" />
+      <point x="-23.14285714285711" y="15.0" />
+    </edge>
+    <edge source="org.apache.jute.compiler.JVector" target="org.apache.jute.compiler.JCompType">
+      <point x="0.0" y="-15.0" />
+      <point x="475.5" y="140.0" />
+      <point x="301.90000000000003" y="140.0" />
+      <point x="46.400000000000034" y="15.0" />
+    </edge>
+    <edge source="org.apache.jute.compiler.JByte" target="org.apache.jute.compiler.JType">
+      <point x="0.0" y="-15.0" />
+      <point x="676.5" y="70.0" />
+      <point x="581.5714285714286" y="70.0" />
+      <point x="11.571428571428555" y="15.0" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic Group" zoom="1.0" x="469.5" y="100.0" />
+  <SelectedNodes />
+  <Categories>
+    <Category>Inner Classes</Category>
+  </Categories>
+  <SCOPE>All</SCOPE>
+  <VISIBILITY>private</VISIBILITY>
+</Diagram>
+

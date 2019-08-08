@@ -38,6 +38,7 @@ public interface SnapShot {
      * @return the last zxid that was deserialized from the snapshot
      * @throws IOException
      */
+    // 反序列化
     long deserialize(DataTree dt, Map<Long, Integer> sessions) 
         throws IOException;
     
@@ -49,6 +50,7 @@ public interface SnapShot {
      * @param fsync sync the snapshot immediately after write
      * @throws IOException
      */
+    //序列化
     void serialize(DataTree dt, Map<Long, Integer> sessions,
                    File name, boolean fsync)
         throws IOException;
@@ -58,11 +60,13 @@ public interface SnapShot {
      * @return the most recent snapshot file
      * @throws IOException
      */
+    //找到最近的快照文件
     File findMostRecentSnapshot() throws IOException;
     
     /**
      * free resources from this snapshot immediately
      * @throws IOException
      */
+    //释放资源
     void close() throws IOException;
 } 

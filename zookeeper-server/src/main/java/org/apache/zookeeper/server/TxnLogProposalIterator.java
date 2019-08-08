@@ -39,13 +39,16 @@ import org.slf4j.LoggerFactory;
  * is not initialized and set to null since we don't need it during
  * follower sync-up.
  *
+ * 此类提供了一个迭代器接口，用于访问磁盘上的txnlog反序列化为Proposal。
+ * 迭代器一次反序列化一个Proposal以减少内存占用。
+ * 请注意，Proposal的请求部分未初始化并设置为null，因为我们在 follower sync-up期间不需要它。
+ *
  */
 public class TxnLogProposalIterator implements Iterator<Proposal> {
-    private static final Logger LOG = LoggerFactory
-            .getLogger(TxnLogProposalIterator.class);
-
+    private static final Logger LOG = LoggerFactory .getLogger(TxnLogProposalIterator.class);
+    // 空迭代器
     public static final TxnLogProposalIterator EMPTY_ITERATOR = new TxnLogProposalIterator();
-
+    // 下一个是否有元素
     private boolean hasNext = false;
 
     private TxnIterator itr;
@@ -74,12 +77,12 @@ public class TxnLogProposalIterator implements Iterator<Proposal> {
             }
             baos.close();
 
-            QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, itr.getHeader()
-                    .getZxid(), baos.toByteArray(), null);
+            QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, itr.getHeader() .getZxid(), baos.toByteArray(), null);
             p.packet = pp;
             p.request = null;
 
             // This is the only place that can throw IO exception
+            // 这是唯一可以抛出IO异常的地方
             hasNext = itr.next();
 
         } catch (IOException e) {
@@ -111,7 +114,7 @@ public class TxnLogProposalIterator implements Iterator<Proposal> {
 
     private TxnLogProposalIterator() {
     }
-
+    // 传入可以TxnIterator。主要是通过TxnIterator进行迭代
     public TxnLogProposalIterator(TxnIterator itr) {
         if (itr != null) {
             this.itr = itr;

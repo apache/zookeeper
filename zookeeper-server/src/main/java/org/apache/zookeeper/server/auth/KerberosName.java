@@ -39,6 +39,7 @@ import org.apache.zookeeper.server.util.KerberosUtil;
  * This class implements parsing and handling of Kerberos principal names. In 
  * particular, it splits them apart and translates them down into local
  * operating system names.
+ * 此类实现Kerberos主体名称的解析和处理。特别是，它将它们分开并将它们转换为本地*操作系统名称。
  */
 public class KerberosName {
   /** The first component of the name */

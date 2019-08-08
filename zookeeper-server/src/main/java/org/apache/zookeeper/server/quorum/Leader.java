@@ -68,6 +68,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This class has the control logic for the Leader.
+ * 该类具有Leader的控制逻辑。
  */
 public class Leader implements LearnerMaster {
     private static final Logger LOG = LoggerFactory.getLogger(Leader.class);
@@ -495,7 +496,7 @@ public class Leader implements LearnerMaster {
 
     /**
      * This method is main function that is called to lead
-     *
+     这种方法是被称为引导的主要功能
      * @throws IOException
      * @throws InterruptedException
      */

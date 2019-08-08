@@ -43,22 +43,24 @@ public class ContainerManager {
     private final int checkIntervalMs;
     private final int maxPerMinute;
     private final Timer timer;
+
+    // task并发？？？
     private final AtomicReference<TimerTask> task = new AtomicReference<TimerTask>(null);
 
     /**
-     * @param zkDb the ZK database
+     * @param zkDb the ZK database   zookeeper内存数据
      * @param requestProcessor request processer - used to inject delete
-     *                         container requests
+     *                         container requests  服务请求处理链
      * @param checkIntervalMs how often to check containers in milliseconds
      * @param maxPerMinute the max containers to delete per second - avoids
      *                     herding of container deletions
      */
-    public ContainerManager(ZKDatabase zkDb, RequestProcessor requestProcessor,
-                            int checkIntervalMs, int maxPerMinute) {
+    public ContainerManager(ZKDatabase zkDb, RequestProcessor requestProcessor,int checkIntervalMs, int maxPerMinute) {
         this.zkDb = zkDb;
         this.requestProcessor = requestProcessor;
         this.checkIntervalMs = checkIntervalMs;
         this.maxPerMinute = maxPerMinute;
+        // 创建定时器，这是守护线程
         timer = new Timer("ContainerManagerTask", true);
 
         LOG.info(String.format("Using checkIntervalMs=%d maxPerMinute=%d",
@@ -79,6 +81,7 @@ public class ContainerManager {
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                         LOG.info("interrupted");
+                        // 取消任务
                         cancel();
                     } catch ( Throwable e ) {
                         LOG.error("Error checking containers", e);
@@ -86,6 +89,7 @@ public class ContainerManager {
                 }
             };
             if (task.compareAndSet(null, timerTask)) {
+                // 提交定时任务
                 timer.scheduleAtFixedRate(timerTask, checkIntervalMs,
                         checkIntervalMs);
             }
@@ -105,27 +109,37 @@ public class ContainerManager {
 
     /**
      * Manually check the containers. Not normally used directly
+     * 手动检查容器。通常不直接使用
+     *
+     * 容器节点管理器主要方法
+     *
      */
-    public void checkContainers()
-            throws InterruptedException {
+    public void checkContainers() throws InterruptedException {
+        //删除两个容器节点之间的最小间隔,默认:6ms
         long minIntervalMs = getMinIntervalMs();
+        // getCandidates()中返回所有需要遍历的节点路径
+        // 遍历待删除的容器节点(同时会删除过期的TTL节点)
         for (String containerPath : getCandidates()) {
             long startMs = Time.currentElapsedTime();
 
             ByteBuffer path = ByteBuffer.wrap(containerPath.getBytes());
+            // 创建删除请求
             Request request = new Request(null, 0, 0,
                     ZooDefs.OpCode.deleteContainer, path, null);
             try {
                 LOG.info("Attempting to delete candidate container: {}",
                         containerPath);
+                //只是将删除节点的请求发送给PrepRequestProcessor,并未真正删除该节点
                 requestProcessor.processRequest(request);
             } catch (Exception e) {
                 LOG.error("Could not delete container: {}",
                         containerPath, e);
             }
-
+            //删除一个容器节点所需时间
             long elapsedMs = Time.currentElapsedTime() - startMs;
             long waitMs = minIntervalMs - elapsedMs;
+            // 若删除一个容器节点所需时间小于minIntervalMs,线程sleep.
+            // 由于Timer内部只有一个线程,因此可以保证删除两个容器节点之间的时间间隔至少是minIntervalMs
             if (waitMs > 0) {
                 Thread.sleep(waitMs);
             }
@@ -134,12 +148,14 @@ public class ContainerManager {
 
     // VisibleForTesting
     protected long getMinIntervalMs() {
+        // TimeUnit.MINUTES.toMillis(1) = 60000
         return TimeUnit.MINUTES.toMillis(1) / maxPerMinute;
     }
 
     // VisibleForTesting
     protected Collection<String> getCandidates() {
         Set<String> candidates = new HashSet<String>();
+        // 遍历获取所有容器节点
         for (String containerPath : zkDb.getDataTree().getContainers()) {
             DataNode node = zkDb.getDataTree().getNode(containerPath);
             /*
@@ -148,17 +164,17 @@ public class ContainerManager {
                 container just before a container cleaning period the container
                 would be immediately be deleted.
              */
-            if ((node != null) && (node.stat.getCversion() > 0) &&
-                    (node.getChildren().isEmpty())) {
+            if ((node != null) && (node.stat.getCversion() > 0) && (node.getChildren().isEmpty())) {
                 candidates.add(containerPath);
             }
         }
+        // 遍历所有ttl节点，如果ttl节点没有子节点并且
         for (String ttlPath : zkDb.getDataTree().getTtls()) {
             DataNode node = zkDb.getDataTree().getNode(ttlPath);
             if (node != null) {
                 Set<String> children = node.getChildren();
                 if (children.isEmpty()) {
-                    if ( EphemeralType.get(node.stat.getEphemeralOwner()) == EphemeralType.TTL ) {
+                    if (EphemeralType.get(node.stat.getEphemeralOwner()) == EphemeralType.TTL ) {
                         long elapsed = getElapsed(node);
                         long ttl = EphemeralType.TTL.getValue(node.stat.getEphemeralOwner());
                         if ((ttl != 0) && (getElapsed(node) > ttl)) {

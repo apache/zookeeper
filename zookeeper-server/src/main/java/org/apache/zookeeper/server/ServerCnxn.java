@@ -49,7 +49,10 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Interface to a Server connection - represents a connection from a client
- * to the server.
+ *  * to the server.服务器连接的接口 - 表示从客户端到服务器的连接。
+ *
+ *  ServerCnxn为抽象类，其继承Stats和Watcher两个接口，表示客户端到服务端的连接
+ *
  */
 public abstract class ServerCnxn implements Stats, Watcher {
     // This is just an arbitrary object to represent requests issued by
@@ -67,7 +70,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
      * results in TCP RST packet, i.e. "connection reset by peer".
      */
     boolean isOldClient = true;
-
+    // 标志这个连接是否存活
     private volatile boolean stale = false;
 
     AtomicLong outstandingCount = new AtomicLong();
@@ -82,6 +85,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
         this.zkServer = zkServer;
     }
 
+    // 获取会话超时时间
     abstract int getSessionTimeout();
 
     public void incrOutstandingAndCheckThrottle(RequestHeader h) {
@@ -102,9 +106,9 @@ public abstract class ServerCnxn implements Stats, Watcher {
             enableRecv();
         }
     }
-
+    // 关闭
     public abstract void close();
-
+    // 发送响应
     public abstract void sendResponse(ReplyHeader h, Record r,
             String tag, String cacheKey, Stat stat) throws IOException;
 
@@ -166,41 +170,45 @@ public abstract class ServerCnxn implements Stats, Watcher {
     }
 
     /* notify the client the session is closing and close/cleanup socket */
+    // 关闭会话
     public abstract void sendCloseSession();
-
+    // 处理，Watcher接口中的方法
     public abstract void process(WatchedEvent event);
-
+    // 获取会话id
     public abstract long getSessionId();
-
+    // 设置会话id
     abstract void setSessionId(long sessionId);
 
     /** auth info for the cnxn, returns an unmodifyable list */
+     // 获取认证信息，返回不可修改的列表
     public List<Id> getAuthInfo() {
         return Collections.unmodifiableList(new ArrayList<>(authInfo));
     }
-
+    // 添加认证信息
     public void addAuthInfo(Id id) {
         authInfo.add(id);
     }
-
+    // 移除认证信息
     public boolean removeAuthInfo(Id id) {
         return authInfo.remove(id);
     }
-
+    // 设置缓冲
     abstract void sendBuffer(ByteBuffer... buffers);
-
+    // 允许接收
     abstract void enableRecv();
-
+    // 不允许接收
     void disableRecv() {
         disableRecv(true);
     }
 
     abstract void disableRecv(boolean waitDisableRecv);
-    
+    // 设置会话超时时间
     abstract void setSessionTimeout(int sessionTimeout);
 
     protected ZooKeeperSaslServer zooKeeperSaslServer = null;
 
+    // ServerCnxn包含了两个异常类，用于表示在连接中发生的异常情况。
+    // 请求关闭异常类
     protected static class CloseRequestException extends IOException {
         private static final long serialVersionUID = -7854505709816442681L;
 
@@ -209,6 +217,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
         }
     }
 
+    // 流结束异常类
     protected static class EndOfStreamException extends IOException {
         private static final long serialVersionUID = -8255690282104294178L;
 
@@ -228,7 +237,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
     public void setStale() {
         stale = true;
     }
-
+    // 接收的packet
     protected void packetReceived(long bytes) {
         incrPacketsReceived();
         ServerStats serverStats = serverStats();
@@ -237,7 +246,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
         }
         ServerMetrics.getMetrics().BYTES_RECEIVED_COUNT.add(bytes);
     }
-
+    // 发送的packet
     protected void packetSent() {
         incrPacketsSent();
         ServerStats serverStats = serverStats();
@@ -245,8 +254,9 @@ public abstract class ServerCnxn implements Stats, Watcher {
             serverStats.incrementPacketsSent();
         }
     }
-
+    // 获取服务器的统计数据
     protected abstract ServerStats serverStats();
+
 
     protected final Date established = new Date();
 
@@ -263,7 +273,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     protected long count;
     protected long totalLatency;
-
+    // 重置统计数据
     public synchronized void resetStats() {
         packetsReceived.set(0);
         packetsSent.set(0);
@@ -278,15 +288,15 @@ public abstract class ServerCnxn implements Stats, Watcher {
         count = 0;
         totalLatency = 0;
     }
-
+    // 增加接收的packet数量
     protected long incrPacketsReceived() {
         return packetsReceived.incrementAndGet();
     }
-
+    // 增加发送的packet数量
     protected long incrPacketsSent() {
         return packetsSent.incrementAndGet();
     }
-
+    // 更新响应的统计数据
     protected synchronized void updateStatsForResponse(long cxid, long zxid,
             String op, long start, long end)
     {

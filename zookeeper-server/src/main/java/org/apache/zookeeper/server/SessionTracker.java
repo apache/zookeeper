@@ -31,6 +31,10 @@ import org.apache.zookeeper.KeeperException.SessionMovedException;
  * standalone and leader ZooKeeperServer use the same SessionTracker. The
  * FollowerZooKeeperServer uses a SessionTracker which is basically a simple
  * shell to track information to be forwarded to the leader.
+ *
+ * 这是ZooKeeperServer用于跟踪会话的基本接口。
+ * standalone和leader ZooKeeperServer使用相同的SessionTracker。
+ * FollowerZooKeeperServer使用SessionTracker，它基本上是一个简单的shell来跟踪要转发给领导者的信息。
  */
 public interface SessionTracker {
     public static interface Session {

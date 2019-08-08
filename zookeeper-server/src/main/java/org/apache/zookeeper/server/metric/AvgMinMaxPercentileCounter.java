@@ -36,8 +36,7 @@ import org.apache.zookeeper.metrics.Summary;
  * Generic long counter that keep track of min/max/avg/percentiles.
  * The counter is thread-safe
  */
-public class AvgMinMaxPercentileCounter extends Metric 
-                implements Summary {
+public class AvgMinMaxPercentileCounter extends Metric implements Summary {
 
     private final String name;
     private final AvgMinMaxCounter counter;
@@ -100,7 +99,6 @@ public class AvgMinMaxPercentileCounter extends Metric
     }
 
     public AvgMinMaxPercentileCounter(String name) {
-
         this.name = name;
         this.counter = new AvgMinMaxCounter(this.name);
         reservoir = new ResettableUniformReservoir();

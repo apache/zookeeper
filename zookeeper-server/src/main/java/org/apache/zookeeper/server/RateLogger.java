@@ -20,7 +20,7 @@ package org.apache.zookeeper.server;
 
 import org.apache.zookeeper.common.Time;
 import org.slf4j.Logger;
-
+// 合并相同msg的消息，来了不一样的msg调用flush()或时间过了100也调用flush()
 public class RateLogger {
     public RateLogger(Logger log) {
         LOG = log;

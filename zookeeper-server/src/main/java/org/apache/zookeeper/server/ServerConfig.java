@@ -33,6 +33,8 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
  *
  * We use this instead of Properties as it's typed.
  *
+ * 其实就是从QuorumPeerConfig中在读取配置带本类中
+ *
  */
 @InterfaceAudience.Public
 public class ServerConfig {
@@ -55,7 +57,7 @@ public class ServerConfig {
     /** defaults to -1 if not set explicitly */
     protected int listenBacklog = -1;
 
-    /** JVM Pause Monitor feature switch */
+    /** JVM Pause Monitor feature switch JVM暂停监视器功能开关*/
     protected boolean jvmPauseMonitorToRun = false;
     /** JVM Pause Monitor warn threshold in ms */
     protected long jvmPauseWarnThresholdMs;

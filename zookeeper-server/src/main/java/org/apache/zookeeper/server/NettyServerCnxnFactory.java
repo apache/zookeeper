@@ -75,8 +75,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
 
     private final ServerBootstrap bootstrap;
     private Channel parentChannel;
-    private final ChannelGroup allChannels =
-            new DefaultChannelGroup("zkServerCnxns", new DefaultEventExecutor());
+    private final ChannelGroup allChannels = new DefaultChannelGroup("zkServerCnxns", new DefaultEventExecutor());
     // Access to ipMap or to any Set contained in the map needs to be
     // protected with synchronized (ipMap) { ... }
     private final Map<InetAddress, Set<NettyServerCnxn>> ipMap = new HashMap<>();
@@ -95,10 +94,17 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
      * This is an inner class since we need to extend ChannelDuplexHandler, but
      * NettyServerCnxnFactory already extends ServerCnxnFactory. By making it inner
      * this class gets access to the member variables and methods.
+     * 这是一个内部类，因为我们需要扩展ChannelDuplexHandler，
+     * 但NettyServerCnxnFactory已经扩展了ServerCnxnFactory。通过使其成为内部，该类可以访问成员变量和方法。
+     *
+     * ChannelDuplexHandler则同时实现了ChannelInboundHandler和ChannelOutboundHandler接口。
+     * 如果一个所需的ChannelHandler既要处理入站事件又要处理出站事件，推荐继承此类。
+     *
      */
     @Sharable
     class CnxnChannelHandler extends ChannelDuplexHandler {
 
+        // 客户端连接服务器后被调用
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
             if (LOG.isTraceEnabled()) {
@@ -106,16 +112,16 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             }
 
             final Channel channel = ctx.channel();
-            InetAddress addr = ((InetSocketAddress) channel.remoteAddress())
-                    .getAddress();
+            // 拿到远程的IP
+            InetAddress addr = ((InetSocketAddress) channel.remoteAddress()).getAddress();
             if (maxClientCnxns > 0 && getClientCnxnCount(addr) >= maxClientCnxns) {
-                ServerMetrics.getMetrics().CONNECTION_REJECTED.add(1);
+                ServerMetrics.getMetrics().CONNECTION_REJECTED.add(1); // 连接被拒绝
                 LOG.warn("Too many connections from {} - max is {}", addr,
                         maxClientCnxns);
                 channel.close();
                 return;
             }
-
+            // 创建NettyServerCnxn，代表一个连接
             NettyServerCnxn cnxn = new NettyServerCnxn(channel,
                     zkServer, NettyServerCnxnFactory.this);
             ctx.channel().attr(CONNECTION_ATTRIBUTE).set(cnxn);
@@ -126,10 +132,13 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                 handshakeFuture.addListener(new CertificateVerifier(sslHandler, cnxn));
             } else {
                 allChannels.add(ctx.channel());
+                // 把连接添加到cnxns和ipMap
                 addCnxn(cnxn);
             }
         }
 
+        // netty 里的 channelInactive 被触发一定是和服务器断开了
+        // 一种服务端主动 close，还有客户端 colse
         @Override
         public void channelInactive(ChannelHandlerContext ctx) throws Exception {
             if (LOG.isTraceEnabled()) {
@@ -145,9 +154,11 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             }
         }
 
+        // 发生异常时被调用
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-            LOG.warn("Exception caught", cause);
+            LOG.warn("Exception caught抓住了例外", cause);
+            //连接出现异常，关闭资源
             NettyServerCnxn cnxn = ctx.channel().attr(CONNECTION_ATTRIBUTE).getAndSet(null);
             if (cnxn != null) {
                 if (LOG.isDebugEnabled()) {
@@ -157,21 +168,26 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             }
         }
 
+        // 用户自定义事件，这里是在收到客户端发送的NettyServerCnxn.AutoReadEvent.DISABLE事件后关闭此连接的读事件
         @Override
         public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
             try {
                 if (evt == NettyServerCnxn.AutoReadEvent.ENABLE) {
-                    LOG.debug("Received AutoReadEvent.ENABLE");
+                    LOG.debug("Received AutoReadEvent.ENABLE，收到AutoReadEvent.ENABLE");
+                    // 拿到与channel绑定的NettyServerCnxn对象
                     NettyServerCnxn cnxn = ctx.channel().attr(CONNECTION_ATTRIBUTE).get();
                     // TODO(ilyam): Not sure if cnxn can be null here. It becomes null if channelInactive()
                     // or exceptionCaught() trigger, but it's unclear to me if userEventTriggered() can run
                     // after either of those. Check for null just to be safe ...
+                    // 不确定cnxn在这里是否为null。如果channelInactive（）或exceptionCaught（）触发它，
+                    // 它将变为null，但如果userEventTriggered（）可以在其中任何一个之后运行，则我不清楚。检查null只是为了安全...
                     if (cnxn != null) {
+                        // 处理以前积压的消息
                         cnxn.processQueuedBuffer();
                     }
                     ctx.channel().config().setAutoRead(true);
                 } else if (evt == NettyServerCnxn.AutoReadEvent.DISABLE) {
-                    LOG.debug("Received AutoReadEvent.DISABLE");
+                    LOG.debug("Received AutoReadEvent.DISABLE收到AutoReadEvent.DISABLE");
                     ctx.channel().config().setAutoRead(false);
                 }
             } finally {
@@ -179,9 +195,11 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
             }
         }
 
+        // 从服务器接收到数据后调用
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
             try {
+                //在这里可以处理发送过来的数据
                 if (LOG.isTraceEnabled()) {
                     LOG.trace("message received called {}", msg);
                 }
@@ -193,6 +211,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                     if (cnxn == null) {
                         LOG.error("channelRead() on a closed or closing NettyServerCnxn");
                     } else {
+                        // 处理消息
                         cnxn.processMessage((ByteBuf) msg);
                     }
                 } catch (Exception ex) {
@@ -210,7 +229,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         private final GenericFutureListener<Future<Void>> onWriteCompletedTracer = (f) -> {
             LOG.trace("write {}", f.isSuccess() ? "complete" : "failed");
         };
-
+        // 往客户端写数据
         @Override
         public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
             if (LOG.isTraceEnabled()) {
@@ -230,11 +249,12 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
 
             /**
              * Only allow the connection to stay open if certificate passes auth
+             * 如果证书通过身份验证，则仅允许连接保持打开状态
              */
             public void operationComplete(Future<Channel> future) throws SSLPeerUnverifiedException {
                 if (future.isSuccess()) {
                     if (LOG.isDebugEnabled()) {
-                        LOG.debug("Successful handshake with session 0x{}",
+                        LOG.debug("Successful handshake with session 0x{} 与会话0x {}的成功握手",
                                 Long.toHexString(cnxn.getSessionId()));
                     }
                     SSLEngine eng = sslHandler.engine();
@@ -266,7 +286,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
                     allChannels.add(Objects.requireNonNull(futureChannel));
                     addCnxn(cnxn);
                 } else {
-                    LOG.error("Unsuccessful handshake with session 0x{}",
+                    LOG.error("Unsuccessful handshake with session 0x{} 与会话0x {}的握手不成功",
                             Long.toHexString(cnxn.getSessionId()));
                     cnxn.close();
                 }
@@ -289,7 +309,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
 
     NettyServerCnxnFactory() {
         x509Util = new ClientX509Util();
-
+        // 创建netty服务端的模板代码
         EventLoopGroup bossGroup = NettyUtils.newNioOrEpollEventLoopGroup(
                 NettyUtils.getClientReachableLocalInetAddressCount());
         EventLoopGroup workerGroup = NettyUtils.newNioOrEpollEventLoopGroup();
@@ -343,7 +363,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
         SSLEngine sslEngine = sslContext.createSSLEngine();
         sslEngine.setUseClientMode(false);
         sslEngine.setNeedClientAuth(true);
-
+        // 向netty添加Ssl处理程序
         p.addLast("ssl", new SslHandler(sslEngine));
         LOG.info("SSL handler added for channel: {}", p.channel());
     }
@@ -374,6 +394,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     public void configure(InetSocketAddress addr, int maxClientCnxns, int backlog, boolean secure)
             throws IOException
     {
+        // 配置Sasl，使用父类的方法
         configureSaslLogin();
         localAddress = addr;
         this.maxClientCnxns = maxClientCnxns;
@@ -465,12 +486,19 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
     @Override
     public void start() {
         if (listenBacklog != -1) {
+            // ChannelOption.SO_BACKLOG对应的是tcp/ip协议listen函数中的backlog参数，
+            // 函数listen(int socketfd,int backlog)用来初始化服务端可连接队列，
+            // 服务端处理客户端连接请求是顺序处理的，所以同一时间只能处理一个客户端连接，多个客户端来的时候，
+            // 服务端将不能处理的客户端连接请求放在队列中等待处理，backlog参数指定了队列的大小
+            // 详情查看：https://www.jianshu.com/p/e6f2036621f4
             bootstrap.option(ChannelOption.SO_BACKLOG, listenBacklog);
         }
         LOG.info("binding to port {}", localAddress);
+        // 绑定端口
         parentChannel = bootstrap.bind(localAddress).syncUninterruptibly().channel();
-        // Port changes after bind() if the original port was 0, update
+        // Port changes aft er bind() if the original port was 0, update
         // localAddress to get the real port.
+        // 如果原始端口为0，则在bind（）之后更改端口，更新// localAddress以获取实际端口。
         localAddress = (InetSocketAddress) parentChannel.localAddress();
         LOG.info("bound to port " + getLocalPort());
     }
@@ -482,6 +510,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
            parentChannel = bootstrap.bind(addr).syncUninterruptibly().channel();
            // Port changes after bind() if the original port was 0, update
            // localAddress to get the real port.
+           // 如果原始端口为0，则在bind（）之后更改端口，更新localAddress以获取实际端口。
            localAddress = (InetSocketAddress) parentChannel.localAddress();
            LOG.info("bound to port " + getLocalPort());
        } catch (Exception e) {
@@ -490,7 +519,7 @@ public class NettyServerCnxnFactory extends ServerCnxnFactory {
            oldChannel.close();
        }
     }
-    
+    // 启动逻辑基本和NIOServerCnxnFactory一样，自己特有的逻辑全在start()中调用
     @Override
     public void startup(ZooKeeperServer zks, boolean startServer)
             throws IOException, InterruptedException {

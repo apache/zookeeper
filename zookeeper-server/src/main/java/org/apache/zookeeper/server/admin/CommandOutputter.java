@@ -23,6 +23,7 @@ import java.util.Map;
 
 /**
  * CommandOutputters are used to format the responses from Commands.
+ * CommandOutputters用于格式化命令的响应。
  *
  * @see Command
  * @see JettyAdminServer

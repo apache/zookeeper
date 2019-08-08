@@ -24,8 +24,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.zookeeper.metrics.Counter;
 
-public class SimpleCounter extends Metric
-                    implements Counter {
+public class SimpleCounter extends Metric implements Counter {
     private final String name;
     private final AtomicLong counter = new AtomicLong();
 

@@ -41,6 +41,8 @@ import org.slf4j.LoggerFactory;
  * Invocation of this class will clean up the datalogdir
  * files and snapdir files keeping the last "-n" snapshot files
  * and the corresponding logs.
+ * 此类用于清理快照和数据日志目录。这通常是作为zookeeper服务器机器上的cronjob运行的。
+ * 调用此类将清理datalogdir *文件和snapdir文件，保留最后的“-n”快照文件*和相应的日志。
  */
 @InterfaceAudience.Public
 public class PurgeTxnLog {
@@ -65,6 +67,9 @@ public class PurgeTxnLog {
      * corresponding logs. If logs are rolling or a new snapshot is created
      * during this process, these newest N snapshots or any data logs will be
      * excluded from current purging cycle.
+     * 清除快照和日志，保留最后的num快照和*对应的日志。如果在此过程中正在滚动日志或创建新快照，则将从当前清除周期中排除这些最新的N个快照或任何数据日志。
+     *
+     * 这个在DatadirCleanupManager类中调用，DatadirCleanupManager类主要做日志定期清理器
      *
      * @param dataDir the dir that has the logs
      * @param snapDir the dir that has the snapshots
@@ -77,23 +82,27 @@ public class PurgeTxnLog {
         }
 
         FileTxnSnapLog txnLog = new FileTxnSnapLog(dataDir, snapDir);
-
+        // 返回最新的num个快照
         List<File> snaps = txnLog.findNRecentSnapshots(num);
         int numSnaps = snaps.size();
         if (numSnaps > 0) {
+            // 清除旧的快照
+            // snaps.get(numSnaps - 1)取出前num个快照中的最后一个快照
             purgeOlderSnapshots(txnLog, snaps.get(numSnaps - 1));
         }
     }
 
-    // VisibleForTesting
+    // VisibleForTesting  这里根据快照的事务ID删除zookeeper的操作日志
     static void purgeOlderSnapshots(FileTxnSnapLog txnLog, File snapShot) {
-        final long leastZxidToBeRetain = Util.getZxidFromName(
-                snapShot.getName(), PREFIX_SNAPSHOT);
+        // 拿到事务ID
+        final long leastZxidToBeRetain = Util.getZxidFromName(snapShot.getName(), PREFIX_SNAPSHOT);
 
         /**
          * We delete all files with a zxid in their name that is less than leastZxidToBeRetain.
          * This rule applies to both snapshot files as well as log files, with the following
          * exception for log files.
+         * 我们删除名称中的zxid小于leastZxidToBeRetain的所有文件。
+         * 此规则适用于快照文件和日志文件，日志文件具有以下例外。
          *
          * A log file with zxid less than X may contain transactions with zxid larger than X.  More
          * precisely, a log file named log.(X-a) may contain transactions newer than snapshot.X if
@@ -108,19 +117,33 @@ public class PurgeTxnLog {
          * simple to just preserve log.(leastZxidToBeRetain-a) for the smallest 'a' to ensure
          * recoverability of all snapshots being retained.  We determine that log file here by
          * calling txnLog.getSnapshotLogs().
+         *
+         * zxid小于X的日志文件可能包含zxid大于X的事务。
+         * 更准确地说，如果没有其他日志文件在该间隔中启动zxid，则名为log。
+         * （Xa）的日志文件可能包含比snapshot.X更新的事务。
+         * （Xa，X]。假设后一个条件为真，则必须保留log。
+         * （Xa）以确保snapshot.X是可恢复的。
+         * 事实上，这个日志文件可以很好地扩展到snapshot.X以外的更新的快照文件较新的快照没有伴随日志翻转（在撰写本文时可能在学习者状态机中）。
+         * 我们可以更准确地确定是否实际需要最小的'a'的日志。（leastZxidToBeRetain-a）（例如，如果有一个名为log。（leastZxidToBeRetain + 1）的日志文件，
+         * 则不需要，但复杂性很快就会在不常见的情况下增加收益。保存日志的安全性和简单性。（leastZxidToBeRetain-a）用于最小的'a' '确保保留所有快照的可恢复性。我
+         * 们通过调用txnLog.getSnapshotLogs（）来确定这里的日志文件。
          */
         final Set<File> retainedTxnLogs = new HashSet<File>();
+        // 需要保留的操作日志文件
+        // txnLog.getSnapshotLogs这个方法是核心方法
         retainedTxnLogs.addAll(Arrays.asList(txnLog.getSnapshotLogs(leastZxidToBeRetain)));
 
         /**
          * Finds all candidates for deletion, which are files with a zxid in their name that is less
          * than leastZxidToBeRetain.  There's an exception to this rule, as noted above.
+         * 查找所有要删除的候选项，即名称中的zxid小于leastZxidToBeRetain的文件。如上所述，这条规则有一个例外。
          */
         class MyFileFilter implements FileFilter{
             private final String prefix;
             MyFileFilter(String prefix){
                 this.prefix=prefix;
             }
+            // 查找过期文件策略
             public boolean accept(File f){
                 if(!f.getName().startsWith(prefix + "."))
                     return false;
@@ -135,19 +158,22 @@ public class PurgeTxnLog {
             }
         }
         // add all non-excluded log files
-        File[] logs = txnLog.getDataDir().listFiles(new MyFileFilter(PREFIX_LOG));
+        // 找出要删除的操作日志
+        File[] logs = txnLog.getDataDir().listFiles(new MyFileFilter(PREFIX_LOG));//已"log"开头的文件
         List<File> files = new ArrayList<>();
         if (logs != null) {
             files.addAll(Arrays.asList(logs));
         }
 
         // add all non-excluded snapshot files to the deletion list
-        File[] snapshots = txnLog.getSnapDir().listFiles(new MyFileFilter(PREFIX_SNAPSHOT));
+        // 找出要删除的快照日志
+        File[] snapshots = txnLog.getSnapDir().listFiles(new MyFileFilter(PREFIX_SNAPSHOT));//已"snapshot"开头的文件
         if (snapshots != null) {
             files.addAll(Arrays.asList(snapshots));
         }
 
         // remove the old files
+        // 删除过期文件
         for(File f: files)
         {
             final String msg = "Removing file: "+
@@ -163,6 +189,8 @@ public class PurgeTxnLog {
     }
     
     /**
+     * 可以手动调用清理快照和日志
+     *
      * @param args dataLogDir [snapDir] -n count
      * dataLogDir -- path to the txn log directory
      * snapDir -- path to the snapshot directory

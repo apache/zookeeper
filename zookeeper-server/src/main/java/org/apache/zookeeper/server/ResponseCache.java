@@ -27,13 +27,14 @@ import org.apache.zookeeper.data.Stat;
 @SuppressWarnings("serial")
 public class ResponseCache {
     // Magic number chosen to be "big enough but not too big"
+    // 魔术数字被选为“足够大但不太大”
     private static final int DEFAULT_RESPONSE_CACHE_SIZE = 400;
 
     private static class Entry {
         public Stat stat;
         public byte[] data;
     }
-
+    // path -》 （data，stat）
     private Map<String, Entry> cache = Collections.synchronizedMap(
         new LRUCache<String, Entry>(getResponseCacheSize()));
 
@@ -54,6 +55,7 @@ public class ResponseCache {
         }
         if (!stat.equals(entry.stat)) {
             // The node has been modified, invalidate cache.
+            // 节点已被修改，缓存无效。
             cache.remove(key);
             return null;
         } else {
@@ -62,9 +64,10 @@ public class ResponseCache {
     }
 
     private static int getResponseCacheSize() {
+        // 缓存大小
         return Integer.getInteger("zookeeper.maxResponseCacheSize", DEFAULT_RESPONSE_CACHE_SIZE);
     }
-
+    // 如果配置的zookeeper.maxResponseCacheSize大于0就算开启了
     public static boolean isEnabled() {
         return getResponseCacheSize() > 0;
     }

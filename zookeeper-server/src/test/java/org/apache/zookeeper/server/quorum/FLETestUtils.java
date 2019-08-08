@@ -76,7 +76,7 @@ public class FLETestUtils extends ZKTestCase {
     }
 
     /*
-     * Creates a leader election notification message.
+     * Creates a leader election notification message.创建领导者选举通知消息。
      */
     static ByteBuffer createMsg(int state, long leader, long zxid, long epoch){
         return FastLeaderElection.buildMsg(state, leader, zxid, 1, epoch);

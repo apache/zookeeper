@@ -24,6 +24,7 @@ import java.io.IOException;
 
 /**
  * Interface that is implemented by generated classes.
+ * 所有用于网络传输或者本地存储的类型都实现该接口
  * 
  */
 @InterfaceAudience.Public

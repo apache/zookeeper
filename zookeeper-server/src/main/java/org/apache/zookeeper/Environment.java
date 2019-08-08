@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 
 /**
  * Provide insight into the runtime environment.
+ * 深入了解运行时环境。
  *
  */
 public class Environment {

@@ -40,19 +40,18 @@ import org.slf4j.LoggerFactory;
  * This class manages watches. It allows watches to be associated with a string
  * and removes watchers and their watches in addition to managing triggers.
  */
+//WatcherManager类用于管理watchers和相应的触发器。watchTable表示从节点路径到watcher集合的映射，而watch2Paths则表示从watcher到所有节点路径集合的映射。
 public class WatchManager implements IWatchManager {
     private static final Logger LOG = LoggerFactory.getLogger(WatchManager.class);
-
-    private final Map<String, Set<Watcher>> watchTable =
-        new HashMap<String, Set<Watcher>>();
-
-    private final Map<Watcher, Set<String>> watch2Paths =
-        new HashMap<Watcher, Set<String>>();
+    // watcher表 节点路径到watcher的映射
+    private final Map<String, Set<Watcher>> watchTable = new HashMap<String, Set<Watcher>>();
+    // watcher到节点路径的映射
+    private final Map<Watcher, Set<String>> watch2Paths = new HashMap<Watcher, Set<String>>();
     
     @Override
     public synchronized int size(){
         int result = 0;
-        for(Set<Watcher> watches : watchTable.values()) {
+        for(Set<Watcher> watches : watchTable.values()) { // 遍历watchTable所有的值集合(HashSet<Watcher>集合)
             result += watches.size();
         }
         return result;
@@ -65,10 +64,10 @@ public class WatchManager implements IWatchManager {
     @Override
     public synchronized boolean addWatch(String path, Watcher watcher) {
         if (isDeadWatcher(watcher)) {
-            LOG.debug("Ignoring addWatch with closed cnxn");
+            LOG.debug("Ignoring addWatch with closed cnxn忽略已经关闭的cnxn的addWatch");
             return false;
         }
-
+        // 根据路径获取对应的所有watcher
         Set<Watcher> list = watchTable.get(path);
         if (list == null) {
             // don't waste memory if there are few watches on a node
@@ -77,28 +76,34 @@ public class WatchManager implements IWatchManager {
             list = new HashSet<Watcher>(4);
             watchTable.put(path, list);
         }
+        // 将watcher直接添加至watcher集合
         list.add(watcher);
 
+        // 通过watcher获取对应的所有路径
         Set<String> paths = watch2Paths.get(watcher);
         if (paths == null) {
             // cnxns typically have many watches, so use default cap here
             paths = new HashSet<String>();
             watch2Paths.put(watcher, paths);
         }
+        // 将路径添加至paths集合
         return paths.add(path);
     }
 
+    //removeWatcher用作从watch2Paths和watchTable中中移除该watcher
     @Override
     public synchronized void removeWatcher(Watcher watcher) {
+        // 从wach2Paths中移除watcher，并返回watcher对应的path集合
         Set<String> paths = watch2Paths.remove(watcher);
-        if (paths == null) {
+        if (paths == null) {// 集合为空，直接返回
             return;
         }
-        for (String p : paths) {
+        for (String p : paths) {// 遍历路径集合
+            // 从watcher表中根据路径取出相应的watcher集合
             Set<Watcher> list = watchTable.get(p);
             if (list != null) {
                 list.remove(watcher);
-                if (list.isEmpty()) {
+                if (list.isEmpty()) {// 移除后list为空，则从watch表中移出
                     watchTable.remove(p);
                 }
             }
@@ -110,15 +115,16 @@ public class WatchManager implements IWatchManager {
         return triggerWatch(path, type, null);
     }
 
+    // 该方法主要用于触发watch事件，并对事件进行处理。
     @Override
-    public WatcherOrBitSet triggerWatch(
-            String path, EventType type, WatcherOrBitSet supress) {
-        WatchedEvent e = new WatchedEvent(type,
-                KeeperState.SyncConnected, path);
+    public WatcherOrBitSet triggerWatch(String path, EventType type, WatcherOrBitSet supress) {
+        // 根据事件类型、连接状态、节点路径创建WatchedEvent
+        WatchedEvent e = new WatchedEvent(type,KeeperState.SyncConnected, path);
         Set<Watcher> watchers;
         synchronized (this) {
-            watchers = watchTable.remove(path);
-            if (watchers == null || watchers.isEmpty()) {
+            // 从watcher表中移除path，并返回其对应的watcher集合
+            watchers = watchTable.remove(path); // 这里可以看出时间只要发生就会移除watch，所以需要发生回调之后反复注册
+            if (watchers == null || watchers.isEmpty()) { // watcher集合为空
                 if (LOG.isTraceEnabled()) {
                     ZooTrace.logTraceMessage(LOG,
                             ZooTrace.EVENT_DELIVERY_TRACE_MASK,
@@ -126,20 +132,24 @@ public class WatchManager implements IWatchManager {
                 }
                 return null;
             }
-            for (Watcher w : watchers) {
-                Set<String> paths = watch2Paths.get(w);
-                if (paths != null) {
+            for (Watcher w : watchers) {// 遍历watcher集合
+                Set<String> paths = watch2Paths.get(w);// 根据watcher从watcher表中取出路径集合
+                if (paths != null) {// 路径集合不为空
+                    // 则移除路径
                     paths.remove(path);
                 }
             }
         }
-        for (Watcher w : watchers) {
-            if (supress != null && supress.contains(w)) {
+
+        for (Watcher w : watchers) {// 遍历watcher集合
+            if (supress != null && supress.contains(w)) { // supress不为空并且包含watcher，则跳过
                 continue;
             }
+            // 进行处理
             w.process(e);
         }
 
+        // 更新各自的Metric
         switch (type) {
         case NodeCreated:
             ServerMetrics.getMetrics().NODE_CREATED_WATCHER.add(watchers.size());
@@ -164,38 +174,24 @@ public class WatchManager implements IWatchManager {
         return new WatcherOrBitSet(watchers);
     }
 
-    @Override
-    public synchronized String toString() {
-        StringBuilder sb = new StringBuilder();
-
-        sb.append(watch2Paths.size()).append(" connections watching ")
-            .append(watchTable.size()).append(" paths\n");
-
-        int total = 0;
-        for (Set<String> paths : watch2Paths.values()) {
-            total += paths.size();
-        }
-        sb.append("Total watches:").append(total);
-
-        return sb.toString();
-    }
-
+    //dumpWatches用作将watchTable或watch2Paths写入磁盘。
     @Override
     public synchronized void dumpWatches(PrintWriter pwriter, boolean byPath) {
-        if (byPath) {
-            for (Entry<String, Set<Watcher>> e : watchTable.entrySet()) {
-                pwriter.println(e.getKey());
-                for (Watcher w : e.getValue()) {
+        if (byPath) {// 控制写入watchTable或watch2Paths
+            for (Entry<String, Set<Watcher>> e : watchTable.entrySet()) {// 遍历每个键值对
+                pwriter.println(e.getKey());// 写入键
+                for (Watcher w : e.getValue()) { // 遍历值(HashSet<Watcher>)
                     pwriter.print("\t0x");
                     pwriter.print(Long.toHexString(((ServerCnxn)w).getSessionId()));
                     pwriter.print("\n");
                 }
             }
         } else {
-            for (Entry<Watcher, Set<String>> e : watch2Paths.entrySet()) {
+            for (Entry<Watcher, Set<String>> e : watch2Paths.entrySet()) { // 遍历每个键值对
+                // 遍历每个键值对
                 pwriter.print("0x");
                 pwriter.println(Long.toHexString(((ServerCnxn)e.getKey()).getSessionId()));
-                for (String path : e.getValue()) {
+                for (String path : e.getValue()) {// 遍历值(HashSet<String>)
                     pwriter.print("\t");
                     pwriter.println(path);
                 }
@@ -203,6 +199,7 @@ public class WatchManager implements IWatchManager {
         }
     }
 
+    // 这个路径下是否包含这个watcher
     @Override
     public synchronized boolean containsWatcher(String path, Watcher watcher) {
         Set<String> paths = watch2Paths.get(watcher);
@@ -212,6 +209,7 @@ public class WatchManager implements IWatchManager {
         return true;
     }
 
+    // 移除某个路径下的watcher
     @Override
     public synchronized boolean removeWatcher(String path, Watcher watcher) {
         Set<String> paths = watch2Paths.get(watcher);
@@ -235,6 +233,7 @@ public class WatchManager implements IWatchManager {
     public synchronized WatchesReport getWatches() {
         Map<Long, Set<String>> id2paths = new HashMap<Long, Set<String>>();
         for (Entry<Watcher, Set<String>> e: watch2Paths.entrySet()) {
+            // 通过Watcher拿到会话ID
             Long id = ((ServerCnxn) e.getKey()).getSessionId();
             Set<String> paths = new HashSet<String>(e.getValue());
             id2paths.put(id, paths);
@@ -265,7 +264,24 @@ public class WatchManager implements IWatchManager {
                                    totalWatches);
     }
 
+    // 这个类只存储了状态，关闭时不需要做什么
     @Override
     public void shutdown() { /* do nothing */ }
 
+
+    @Override
+    public synchronized String toString() {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(watch2Paths.size()).append(" connections watching ")
+                .append(watchTable.size()).append(" paths\n");
+
+        int total = 0;
+        for (Set<String> paths : watch2Paths.values()) {
+            total += paths.size();
+        }
+        sb.append("Total watches:").append(total);
+
+        return sb.toString();
+    }
 }

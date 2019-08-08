@@ -30,6 +30,7 @@ import java.util.Arrays;
 
 /**
  * This class contains constants for all the four letter commands
+ * 该类包含所有四个字母命令的常量
  */
 public class FourLetterCommands {
     /*

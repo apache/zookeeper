@@ -27,12 +27,13 @@ import java.nio.channels.FileChannel;
 
 public class FilePadding {
     private static final Logger LOG;
+    // 预分配大小 64M
     private static long preAllocSize = 65536 * 1024;
     private static final ByteBuffer fill = ByteBuffer.allocateDirect(1);
 
     static {
         LOG = LoggerFactory.getLogger(FileTxnLog.class);
-
+        // 预分配大小可以通过zookeeper.preAllocSize调整
         String size = System.getProperty("zookeeper.preAllocSize");
         if (size != null) {
             try {
@@ -43,7 +44,7 @@ public class FilePadding {
         }
     }
 
-    private long currentSize;
+    private long currentSize; // 目前的大小，在生成新问价的时候设置
 
     /**
      * Getter of preAllocSize has been added for testing
@@ -75,6 +76,7 @@ public class FilePadding {
     long padFile(FileChannel fileChannel) throws IOException {
         long newFileSize = calculateFileSizeWithPadding(fileChannel.position(), currentSize, preAllocSize);
         if (currentSize != newFileSize) {
+            // 填充0
             fileChannel.write((ByteBuffer) fill.position(0), newFileSize - fill.remaining());
             currentSize = newFileSize;
         }
@@ -85,6 +87,7 @@ public class FilePadding {
      * Calculates a new file size with padding. We only return a new size if
      * the current file position is sufficiently close (less than 4K) to end of
      * file and preAllocSize is > 0.
+     * 使用填充计算新文件大小。如果当前文件位置足够接近（小于4K）到file的结尾并且preAllocSize> 0，我们只返回一个新的大小。
      *
      * @param position     the point in the file we have written to
      * @param fileSize     application keeps track of the current file size
@@ -99,10 +102,11 @@ public class FilePadding {
         if (preAllocSize > 0 && position + 4096 >= fileSize) {
             // If we have written more than we have previously preallocated we need to make sure the new
             // file size is larger than what we already have
-            if (position > fileSize) {
+            if (position > fileSize) {// 写的超过了64M
                 fileSize = position + preAllocSize;
-                fileSize -= fileSize % preAllocSize;
+                fileSize -= fileSize % preAllocSize;// 减掉余数，其实就是减掉(文件头+写超出的部分)
             } else {
+                // 刚创建文件走这里
                 fileSize += preAllocSize;
             }
         }

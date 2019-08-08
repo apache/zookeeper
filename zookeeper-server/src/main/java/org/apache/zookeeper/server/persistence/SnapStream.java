@@ -151,8 +151,8 @@ public class SnapStream {
     public static void sealStream(CheckedOutputStream os, OutputArchive oa)
             throws IOException {
         long val = os.getChecksum().getValue();
-        oa.writeLong(val, "val");
-        oa.writeString("/", "path");
+        oa.writeLong(val, "val");//得到checksum，写入
+        oa.writeString("/", "path");//写入"\"作为结束标记,这也是判断是否highly valid的条件之一
     }
 
     /**
@@ -180,6 +180,7 @@ public class SnapStream {
      * @return true if the snapshot is valid
      * @throws IOException
      */
+    // 主要是通过文件名字对应不同的压缩算法进行校验
     public static boolean isValidSnapshot(File file) throws IOException {
         if (file == null || Util.getZxidFromName(file.getName(), FileSnap.SNAPSHOT_FILE_PREFIX) == -1) {
             return false;

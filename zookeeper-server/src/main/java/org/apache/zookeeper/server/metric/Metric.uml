@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>JAVA</ID>
+  <OriginalElement>org.apache.zookeeper.server.metric.Metric</OriginalElement>
+  <nodes>
+    <node x="0.0" y="79.0">org.apache.zookeeper.server.metric.AvgMinMaxCounterSet</node>
+    <node x="187.0" y="79.0">org.apache.zookeeper.server.metric.SimpleCounter</node>
+    <node x="794.0" y="79.0">org.apache.zookeeper.server.metric.AvgMinMaxCounter</node>
+    <node x="332.0" y="79.0">org.apache.zookeeper.server.metric.AvgMinMaxPercentileCounterSet</node>
+    <node x="401.0" y="0.0">org.apache.zookeeper.server.metric.Metric</node>
+    <node x="571.0" y="79.0">org.apache.zookeeper.server.metric.AvgMinMaxPercentileCounter</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="org.apache.zookeeper.server.metric.SimpleCounter" target="org.apache.zookeeper.server.metric.Metric">
+      <point x="0.0" y="-14.5" />
+      <point x="249.5" y="59.0" />
+      <point x="425.3" y="59.0" />
+      <point x="-16.19999999999999" y="14.5" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.metric.AvgMinMaxCounterSet" target="org.apache.zookeeper.server.metric.Metric">
+      <point x="0.0" y="-14.5" />
+      <point x="83.5" y="49.0" />
+      <point x="409.1" y="49.0" />
+      <point x="-32.39999999999998" y="14.5" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.metric.AvgMinMaxPercentileCounterSet" target="org.apache.zookeeper.server.metric.Metric">
+      <point x="0.0" y="-14.5" />
+      <point x="0.0" y="14.5" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.metric.AvgMinMaxPercentileCounter" target="org.apache.zookeeper.server.metric.Metric">
+      <point x="0.0" y="-14.5" />
+      <point x="672.5" y="59.0" />
+      <point x="457.7" y="59.0" />
+      <point x="16.19999999999999" y="14.5" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.metric.AvgMinMaxCounter" target="org.apache.zookeeper.server.metric.Metric">
+      <point x="0.0" y="-14.5" />
+      <point x="869.5" y="49.0" />
+      <point x="473.9" y="49.0" />
+      <point x="32.39999999999998" y="14.5" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic Group" zoom="1.0" x="507.0" y="55.0" />
+  <SelectedNodes />
+  <Categories />
+  <SCOPE>All</SCOPE>
+  <VISIBILITY>private</VISIBILITY>
+</Diagram>
+

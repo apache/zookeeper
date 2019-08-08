@@ -82,7 +82,7 @@ public class Util {
      * @return file name
      */
     public static String makeLogName(long zxid) {
-        return FileTxnLog.LOG_FILE_PREFIX + "." + Long.toHexString(zxid);
+        return FileTxnLog.LOG_FILE_PREFIX + "." + Long.toHexString(zxid);   // log."十六进制(zxid)"
     }
 
     /**
@@ -136,9 +136,11 @@ public class Util {
      */
     public static long getZxidFromName(String name, String prefix) {
         long zxid = -1;
+        // 对文件名进行分割
         String nameParts[] = name.split("\\.");
-        if (nameParts.length >= 2 && nameParts[0].equals(prefix)) {
+        if (nameParts.length >= 2 && nameParts[0].equals(prefix)) {// 前缀相同
             try {
+                // 转化成长整形
                 zxid = Long.parseLong(nameParts[1], 16);
             } catch (NumberFormatException e) {
             }
@@ -207,9 +209,9 @@ public class Util {
     /**
      * Compare file file names of form "prefix.version". Sort order result
      * returned in order of version.
+     * 比较“prefix.version”形式的文件文件名。排序顺序结果按版本顺序返回。
      */
-    private static class DataDirFileComparator
-        implements Comparator<File>, Serializable
+    private static class DataDirFileComparator implements Comparator<File>, Serializable
     {
         private static final long serialVersionUID = -2648639884525140318L;
 
@@ -244,6 +246,7 @@ public class Util {
         if(files==null)
             return new ArrayList<File>(0);
         List<File> filelist = Arrays.asList(files);
+        // 进行排序，Comparator是关键，根据zxid进行排序
         Collections.sort(filelist, new DataDirFileComparator(prefix, ascending));
         return filelist;
     }
@@ -255,6 +258,7 @@ public class Util {
      * @return
      */
     public static boolean isLogFileName(String fileName) {
+        // "log."开头的文件
         return fileName.startsWith(FileTxnLog.LOG_FILE_PREFIX + ".");
     }
 
@@ -265,6 +269,7 @@ public class Util {
      * @return
      */
     public static boolean isSnapshotFileName(String fileName) {
+        // "snapshot."开头的文件
         return fileName.startsWith(FileSnap.SNAPSHOT_FILE_PREFIX + ".");
     }
     

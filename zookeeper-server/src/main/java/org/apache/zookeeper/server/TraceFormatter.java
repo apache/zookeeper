@@ -27,6 +27,7 @@ import java.util.Date;
 
 import org.apache.zookeeper.ZooDefs.OpCode;
 
+// 读取可视化trace_file文件（追踪文件）
 public class TraceFormatter {
 
     public static String op2String(int op) {
@@ -117,9 +118,11 @@ public class TraceFormatter {
             int txnType = bb.getInt();
             int type = bb.getInt();
             int len = bb.getInt();
+
             bb = ByteBuffer.allocate(len);
             fc.read(bb);
             bb.flip();
+
             String path = "n/a";
             if (bb.remaining() > 0) {
                 if (type != OpCode.createSession) {
@@ -129,6 +132,7 @@ public class TraceFormatter {
                     path = new String(b);
                 }
             }
+
             System.out.println(DateFormat.getDateTimeInstance(DateFormat.SHORT,
                     DateFormat.LONG).format(new Date(time))
                     + ": "

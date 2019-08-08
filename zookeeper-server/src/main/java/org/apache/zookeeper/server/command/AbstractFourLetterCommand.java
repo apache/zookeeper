@@ -31,10 +31,10 @@ import org.slf4j.LoggerFactory;
  * Set of threads for command ports. All the 4 letter commands are run via a
  * thread. Each class maps to a corresponding 4 letter command. CommandThread is
  * the abstract class from which all the others inherit.
+ * 命令端口的线程集。所有4个字母的命令都是通过*线程运行的。每个类映射到相应的4个字母命令。 CommandThread是*所有其他人继承的抽象类。
  */
 public abstract class AbstractFourLetterCommand {
-    private static final Logger LOG = LoggerFactory
-        .getLogger(AbstractFourLetterCommand.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractFourLetterCommand.class);
 
     public static final String ZK_NOT_SERVING = "This ZooKeeper instance is not currently serving requests";
 

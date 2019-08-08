@@ -36,13 +36,14 @@ import org.slf4j.LoggerFactory;
  * Thread used to lazily clean up the closed watcher, it will trigger the
  * clean up when the dead watchers get certain number or some number of
  * seconds has elapsed since last clean up.
+ * 用于懒散地清理已关闭的观察者的线程，当死去的观察者从上次清理后获得一定数量或一些秒时，它将触发*清理。
  *
- * Cost of running it:
+ * Cost of running it运行成本:
  *
  * - need to go through all the paths even if the watcher may only
- *   watching a single path
+ *   watching a single path即使观察者只能观看单一路径，也需要经历所有路径
  * - block in the path BitHashSet when we try to check the dead watcher
- *   which won't block other stuff
+ *   which won't block other stuff 当我们尝试检查死观察者*时，阻塞路径BitHashSet，这将阻止其他东西
  */
 public class WatcherCleaner extends Thread {
 

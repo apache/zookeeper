@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>JAVA</ID>
+  <OriginalElement>org.apache.zookeeper.server.persistence.SnapShot</OriginalElement>
+  <nodes>
+    <node x="132.875" y="160.0">org.apache.zookeeper.server.persistence.FileTxnLog</node>
+    <node x="191.23611111111111" y="240.0">org.apache.zookeeper.server.persistence.FileTxnLog.PositionInputStream</node>
+    <node x="277.21428571428567" y="475.0">org.apache.zookeeper.server.persistence.FileTxnSnapLog.LogDirContentCheckException</node>
+    <node x="119.875" y="80.0">org.apache.zookeeper.server.persistence.TxnLog</node>
+    <node x="545.2142857142857" y="395.0">org.apache.zookeeper.server.persistence.FileHeader</node>
+    <node x="555.2142857142857" y="315.0">org.apache.jute.Record</node>
+    <node x="0.0" y="160.0">org.apache.zookeeper.server.persistence.TxnLog.TxnIterator</node>
+    <node x="0.0" y="550.0">org.apache.zookeeper.server.persistence.SnapShot</node>
+    <node x="262.5" y="160.0">java.io.FilterInputStream</node>
+    <node x="192.8392857142857" y="395.0">org.apache.zookeeper.server.persistence.FileTxnSnapLog.DatadirException</node>
+    <node x="114.5892857142857" y="315.0">org.apache.zookeeper.server.persistence.FileTxnSnapLog</node>
+    <node x="28.839285714285694" y="395.0">org.apache.zookeeper.server.persistence.FileTxnSnapLog.PlayBackListener</node>
+    <node x="112.37500000000003" y="0.0">java.io.Closeable</node>
+    <node x="3.5" y="630.0">org.apache.zookeeper.server.persistence.FileSnap</node>
+    <node x="40.236111111111114" y="240.0">org.apache.zookeeper.server.persistence.FileTxnLog.FileTxnIterator</node>
+    <node x="0.0" y="475.0">org.apache.zookeeper.server.persistence.FileTxnSnapLog.SnapDirContentCheckException</node>
+    <node x="276.5" y="80.0">java.io.InputStream</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="org.apache.zookeeper.server.persistence.FileTxnLog.PositionInputStream" target="java.io.FilterInputStream">
+      <point x="41.25" y="-15.0" />
+      <point x="314.9861111111111" y="215.0" />
+      <point x="336.0" y="215.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.persistence.TxnLog.TxnIterator" target="org.apache.zookeeper.server.persistence.TxnLog">
+      <point x="28.0" y="-15.0" />
+      <point x="84.0" y="135.0" />
+      <point x="142.375" y="135.0" />
+      <point x="-22.5" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.persistence.FileHeader" target="org.apache.jute.Record">
+      <point x="0.0" y="-15.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.persistence.TxnLog.TxnIterator" target="java.io.Closeable">
+      <point x="-28.0" y="-15.0" />
+      <point x="27.99999999999997" y="55.0" />
+      <point x="129.87500000000003" y="55.0" />
+      <point x="-35.0" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.persistence.FileTxnSnapLog.SnapDirContentCheckException" target="org.apache.zookeeper.server.persistence.FileTxnSnapLog">
+      <point x="-57.5" y="-15.0" />
+      <point x="57.5" y="450.0" />
+      <point x="18.339285714285694" y="450.0" />
+      <point x="18.339285714285694" y="365.0" />
+      <point x="131.8392857142857" y="365.0" />
+      <point x="-51.75" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.persistence.FileTxnSnapLog.PlayBackListener" target="org.apache.zookeeper.server.persistence.FileTxnSnapLog">
+      <point x="0.0" y="-15.0" />
+      <point x="100.8392857142857" y="375.0" />
+      <point x="166.3392857142857" y="375.0" />
+      <point x="-17.25" y="15.0" />
+    </edge>
+    <edge source="java.io.InputStream" target="java.io.Closeable">
+      <point x="0.0" y="-15.0" />
+      <point x="336.0" y="55.0" />
+      <point x="199.87500000000006" y="55.0" />
+      <point x="35.00000000000003" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.persistence.FileTxnSnapLog.LogDirContentCheckException" target="org.apache.zookeeper.server.persistence.FileTxnSnapLog.DatadirException">
+      <point x="-55.75" y="-15.0" />
+      <point x="332.96428571428567" y="450.0" />
+      <point x="303.08928571428567" y="450.0" />
+      <point x="36.75" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.persistence.FileTxnLog.PositionInputStream" target="org.apache.zookeeper.server.persistence.FileTxnLog">
+      <point x="-41.25" y="-15.0" />
+      <point x="232.48611111111111" y="215.0" />
+      <point x="214.625" y="215.0" />
+      <point x="27.25" y="15.0" />
+    </edge>
+    <edge source="java.io.FilterInputStream" target="java.io.InputStream">
+      <point x="0.0" y="-15.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.persistence.FileTxnSnapLog.DatadirException" target="org.apache.zookeeper.server.persistence.FileTxnSnapLog">
+      <point x="0.0" y="-15.0" />
+      <point x="266.33928571428567" y="375.0" />
+      <point x="200.8392857142857" y="375.0" />
+      <point x="17.25" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.persistence.FileTxnSnapLog.LogDirContentCheckException" target="org.apache.zookeeper.server.persistence.FileTxnSnapLog">
+      <point x="55.75" y="-15.0" />
+      <point x="444.46428571428567" y="450.0" />
+      <point x="403.375" y="450.0" />
+      <point x="403.375" y="365.0" />
+      <point x="235.3392857142857" y="365.0" />
+      <point x="51.75" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.persistence.FileTxnLog.FileTxnIterator" target="org.apache.zookeeper.server.persistence.FileTxnLog">
+      <point x="32.75" y="-15.0" />
+      <point x="138.48611111111111" y="215.0" />
+      <point x="160.125" y="215.0" />
+      <point x="-27.25" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.persistence.FileTxnLog.FileTxnIterator" target="org.apache.zookeeper.server.persistence.TxnLog.TxnIterator">
+      <point x="-32.75" y="-15.0" />
+      <point x="72.98611111111111" y="215.0" />
+      <point x="56.0" y="215.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.persistence.FileTxnSnapLog.SnapDirContentCheckException" target="org.apache.zookeeper.server.persistence.FileTxnSnapLog.DatadirException">
+      <point x="57.5" y="-15.0" />
+      <point x="172.5" y="450.0" />
+      <point x="229.5892857142857" y="450.0" />
+      <point x="-36.75" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.persistence.TxnLog" target="java.io.Closeable">
+      <point x="2.8421709430404007E-14" y="-15.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.persistence.FileTxnLog" target="org.apache.zookeeper.server.persistence.TxnLog">
+      <point x="2.8421709430404007E-14" y="-15.0" />
+      <point x="22.50000000000003" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.persistence.FileSnap" target="org.apache.zookeeper.server.persistence.SnapShot">
+      <point x="0.0" y="-15.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic Group" zoom="1.0" x="205.0" y="213.0" />
+  <SelectedNodes>
+    <node>org.apache.zookeeper.server.persistence.FileTxnSnapLog</node>
+  </SelectedNodes>
+  <Categories>
+    <Category>Inner Classes</Category>
+  </Categories>
+  <SCOPE>All</SCOPE>
+  <VISIBILITY>private</VISIBILITY>
+</Diagram>
+

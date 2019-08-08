@@ -20,13 +20,17 @@ package org.apache.zookeeper.metrics;
 /**
  * A MetricsContext is like a namespace for metrics. Each component/submodule
  * will have its own MetricsContext.
+ * MetricsContext就像指标的命名空间。每个组件子模块都有自己的MetricsContext。
  * <p>
  * In some cases it is possible to have a separate MetricsContext for each
  * instance of a component, for instance on the server side a possible usecase
  * it to gather metrics for every other peer.
+ * 在某些情况下，可以为组件的每个实例提供单独的MetricsContext，
+ * 例如在服务器端可能使用它来为每个其他对等方收集度量。
  * </p>
  * <p>
  * Contexts are organized in a hierarchy.
+ * 上下文按层次结构组织。
  * </p>
  *
  */
@@ -65,11 +69,13 @@ public interface MetricsContext {
         /**
          * The returned Summary is expected to track only simple aggregated
          * values, like min/max/avg
+         * 预期返回的摘要仅跟踪简单的聚合*值，例如min / max / avg
          */
         BASIC,
         /**
          * It is expected that the returned Summary performs expensive
          * aggregations, like percentiles.
+         * 预计返回的摘要执行昂贵的*聚合，如百分位数。
          */
         ADVANCED
     }

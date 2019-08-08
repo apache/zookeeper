@@ -23,6 +23,9 @@ package org.apache.zookeeper;
  * logins for both Zookeeper client and server.
  * See ZooKeeperSaslServer for server-side usage.
  * See ZooKeeperSaslClient for client-side usage.
+ * 此类负责刷新Zookeeper客户端和服务器的登录的Kerberos凭据。
+ * 有关服务器端的用法，请参阅ZooKeeperSaslServer。
+ * 有关客户端使用的信息，请参阅ZooKeeperSaslClient。
  */
 
 import javax.security.auth.kerberos.KerberosPrincipal;
@@ -49,15 +52,18 @@ import java.util.Set;
 public class Login {
     private static final String KINIT_COMMAND_DEFAULT = "/usr/bin/kinit";
     private static final Logger LOG = LoggerFactory.getLogger(Login.class);
+    // 回调处理
     public CallbackHandler callbackHandler;
 
     // LoginThread will sleep until 80% of time from last refresh to
     // ticket's expiry has been reached, at which time it will wake
     // and try to renew the ticket.
+    // LoginThread将一直睡到从上次刷新到//票证到期的80％的时间，此时它将唤醒//并尝试更新票证。
     private static final float TICKET_RENEW_WINDOW = 0.80f;
 
     /**
      * Percentage of random jitter added to the renewal time
+     * 添加到续订时间的随机抖动百分比
      */
     private static final float TICKET_RENEW_JITTER = 0.05f;
 
@@ -71,14 +77,14 @@ public class Login {
     private boolean isKrbTicket = false;
     private boolean isUsingTicketCache = false;
 
-    /** Random number generator */
+    /** Random number generator 随机数发生器*/
     private static Random rng = new Random();
 
     private LoginContext login = null;
     private String loginContextName = null;
     private String principal = null;
 
-    // Initialize 'lastLogin' to do a login at first time
+    // Initialize 'lastLogin' to do a login at first time初始化'lastLogin'以便在第一时间进行登录
     private long lastLogin = Time.currentElapsedTime() - MIN_TIME_BEFORE_RELOGIN;
     private final ZKConfig zkConfig;
 
@@ -277,7 +283,7 @@ public class Login {
             try {
                 t.join();
             } catch (InterruptedException e) {
-                LOG.warn("error while waiting for Login thread to shutdown: ", e);
+                LOG.warn("等待登录线程关闭时出错error while waiting for Login thread to shutdown: ", e);
             }
         }
     }

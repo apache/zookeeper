@@ -22,6 +22,7 @@ import org.apache.zookeeper.jmx.ZKMBeanInfo;
 
 /**
  * This class implements the data tree MBean.
+ * 此类实现数据树MBean。
  */
 public class DataTreeBean implements DataTreeMXBean, ZKMBeanInfo {
     DataTree dataTree;

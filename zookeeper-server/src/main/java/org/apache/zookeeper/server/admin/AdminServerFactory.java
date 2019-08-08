@@ -25,20 +25,23 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Factory class for creating an AdminServer.
+ * 用于创建AdminServer的工厂类。
  */
 public class AdminServerFactory {
     private static final Logger LOG = LoggerFactory.getLogger(AdminServerFactory.class);
 
     /**
      * This method encapsulates the logic for whether we should use a
-     * JettyAdminServer (i.e., the AdminServer is enabled) or a DummyAdminServer
-     * (i.e., the AdminServer is disabled). It uses reflection when attempting
-     * to create a JettyAdminServer, rather than referencing the class directly,
-     * so that it's ok to omit Jetty from the classpath if a user doesn't wish
-     * to pull in Jetty with ZooKeeper.
+     *      * JettyAdminServer (i.e., the AdminServer is enabled) or a DummyAdminServer
+     *      * (i.e., the AdminServer is disabled). It uses reflection when attempting
+     *      * to create a JettyAdminServer, rather than referencing the class directly,
+     *      * so that it's ok to omit Jetty from the classpath if a user doesn't wish
+     *      * to pull in Jetty with ZooKeeper.
+     *      此方法封装了我们是否应该使用* JettyAdminServer（即启用了AdminServer）或DummyAdminServer *（即禁用了AdminServer）的逻辑。
+     *      它在尝试*创建JettyAdminServer时使用反射，而不是直接引用该类，*因此如果用户不希望*使用ZooKeeper引入Jetty，则可以从类路径中省略Jetty。
      */
     public static AdminServer createAdminServer() {
-        if (!"false".equals(System.getProperty("zookeeper.admin.enableServer"))) {
+		if (!"false".equals(System.getProperty("zookeeper.admin.enableServer"))) {
             try {
                 Class<?> jettyAdminServerC = Class.forName("org.apache.zookeeper.server.admin.JettyAdminServer");
                 Object adminServer = jettyAdminServerC.getConstructor().newInstance();

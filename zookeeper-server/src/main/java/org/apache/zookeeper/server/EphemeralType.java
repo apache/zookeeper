@@ -72,11 +72,11 @@ public enum EphemeralType {
      */
     NORMAL,
     /**
-     * Container node
+     * Container node  容器节点
      */
     CONTAINER,
     /**
-     * TTL node
+     * TTL node    TTL节点
      */
     TTL() {
         @Override
@@ -141,7 +141,8 @@ public enum EphemeralType {
         map.put(EXTENDED_BIT_TTL, TTL);
         extendedFeatureMap = Collections.unmodifiableMap(map);
     }
-
+    // 1099511627775
+    // 二进制 ‭1111111111111111111111111111111111111111‬
     private static final long EXTENDED_FEATURE_VALUE_MASK = ~(EXTENDED_MASK | RESERVED_BITS_MASK);
 
     // Visible for testing
@@ -226,6 +227,7 @@ public enum EphemeralType {
     }
 
     private static long getExtendedFeatureValue(long ephemeralOwner) {
+        // 取ephemeralOwner的低40位
         return ephemeralOwner & EXTENDED_FEATURE_VALUE_MASK;
     }
 }

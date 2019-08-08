@@ -29,15 +29,19 @@ import org.slf4j.LoggerFactory;
 /**
  * This class manages the cleanup of snapshots and corresponding transaction
  * logs by scheduling the auto purge task with the specified
- * 'autopurge.purgeInterval'. It keeps the most recent
+ * 此类通过使用指定的自动清除任务计划来管理快照和相应事务日志的清理
+ * 'autopurge.purgeInterval'. It keeps the most recent它保持最新
  * 'autopurge.snapRetainCount' number of snapshots and corresponding transaction
- * logs.
+ * logs.快照数量和相应的事务日志。
+ *
+ *
  */
 public class DatadirCleanupManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(DatadirCleanupManager.class);
 
     /**
+     * dataDir清除任务的状态
      * Status of the dataDir purge task
      */
     public enum PurgeTaskStatus {
@@ -59,7 +63,9 @@ public class DatadirCleanupManager {
     /**
      * Constructor of DatadirCleanupManager. It takes the parameters to schedule
      * the purge task.
-     * 
+     *
+     * DatadirCleanupManager的构造函数。它需要参数来安排清除任务。
+     *
      * @param snapDir
      *            snapshot directory
      * @param dataLogDir
@@ -71,10 +77,10 @@ public class DatadirCleanupManager {
      */
     public DatadirCleanupManager(File snapDir, File dataLogDir, int snapRetainCount,
             int purgeInterval) {
-        this.snapDir = snapDir;
-        this.dataLogDir = dataLogDir;
-        this.snapRetainCount = snapRetainCount;
-        this.purgeInterval = purgeInterval;
+        this.snapDir = snapDir;     //配置文件中的dataDir
+        this.dataLogDir = dataLogDir;     //配置文件中的dataLogDir
+        this.snapRetainCount = snapRetainCount;   // 配置文件中的autopurge.snapRetainCount 这个参数指定了需要保留的文件数目。默认是保留3个
+        this.purgeInterval = purgeInterval;  // autopurge.purgeInterval  这个参数指定了清理频率，单位是小时，需要填写一个1或更大的整数，默认是0，表示不开启自己清理功能。
         LOG.info("autopurge.snapRetainCount set to " + snapRetainCount);
         LOG.info("autopurge.purgeInterval set to " + purgeInterval);
     }
@@ -93,18 +99,19 @@ public class DatadirCleanupManager {
      */
     public void start() {
         if (PurgeTaskStatus.STARTED == purgeTaskStatus) {
-            LOG.warn("Purge task is already running.");
+            LOG.warn("Purge task is already running.清除任务已在运行");
             return;
         }
-        // Don't schedule the purge task with zero or negative purge interval.
-        if (purgeInterval <= 0) {
+        // Don't schedule the purge task with zero or negative purge interval.不要将清除任务安排为零或负清除间隔。
+        if (purgeInterval <= 0) { //这个任务默认不开启
             LOG.info("Purge task is not scheduled.");
             return;
         }
-
-        timer = new Timer("PurgeTask", true);
+        // 这个定时任务是守护线程
+        timer = new Timer("PurgeTask清除任务", true);
         TimerTask task = new PurgeTask(dataLogDir, snapDir, snapRetainCount);
-        timer.scheduleAtFixedRate(task, 0, TimeUnit.HOURS.toMillis(purgeInterval));
+        // 启动zookeeper就会执行一次
+        timer.scheduleAtFixedRate(task, 0, TimeUnit.HOURS.toMillis(purgeInterval)); //purgeInterval的单位是小时
 
         purgeTaskStatus = PurgeTaskStatus.STARTED;
     }
@@ -122,6 +129,7 @@ public class DatadirCleanupManager {
         }
     }
 
+    // 定时清除任务
     static class PurgeTask extends TimerTask {
         private File logsDir;
         private File snapsDir;
@@ -135,13 +143,14 @@ public class DatadirCleanupManager {
 
         @Override
         public void run() {
-            LOG.info("Purge task started.");
+            LOG.info("Purge task started.清除任务已开始。");
             try {
+                // snapRetainCount小于3会抛错
                 PurgeTxnLog.purge(logsDir, snapsDir, snapRetainCount);
             } catch (Exception e) {
                 LOG.error("Error occurred while purging.", e);
             }
-            LOG.info("Purge task completed.");
+            LOG.info("Purge task completed.清除任务完成。");
         }
     }
 

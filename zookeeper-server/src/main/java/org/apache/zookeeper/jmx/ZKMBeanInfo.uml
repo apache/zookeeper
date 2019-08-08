@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>JAVA</ID>
+  <OriginalElement>org.apache.zookeeper.jmx.ZKMBeanInfo</OriginalElement>
+  <nodes>
+    <node x="0.0" y="198.0">org.apache.zookeeper.server.quorum.FollowerBean</node>
+    <node x="1672.519230769231" y="0.0">org.apache.zookeeper.server.quorum.ServerMXBean</node>
+    <node x="978.6538461538462" y="109.0">org.apache.zookeeper.server.quorum.LearnerHandlerBean</node>
+    <node x="174.0" y="272.0">org.apache.zookeeper.jmx.MBeanRegistry</node>
+    <node x="364.93509615384613" y="198.0">org.apache.zookeeper.server.quorum.LeaderBean</node>
+    <node x="1481.019230769231" y="0.0">org.apache.zookeeper.server.quorum.LeaderElectionMXBean</node>
+    <node x="621.6850961538462" y="109.0">org.apache.zookeeper.server.DataTreeBean</node>
+    <node x="1217.9350961538462" y="109.0">org.apache.zookeeper.server.quorum.RemotePeerBean</node>
+    <node x="1307.0192307692307" y="0.0">org.apache.zookeeper.server.quorum.RemotePeerMXBean</node>
+    <node x="1645.769230769231" y="198.0">org.apache.zookeeper.server.quorum.LocalPeerBean</node>
+    <node x="823.4663461538462" y="109.0">org.apache.zookeeper.server.ConnectionBean</node>
+    <node x="711.6899038461538" y="0.0">org.apache.zookeeper.server.ConnectionMXBean</node>
+    <node x="398.6899038461538" y="0.0">org.apache.zookeeper.server.quorum.QuorumMXBean</node>
+    <node x="910.6850961538462" y="0.0">org.apache.zookeeper.jmx.ZKMBeanInfo</node>
+    <node x="271.4350961538461" y="109.0">org.apache.zookeeper.server.ZooKeeperServerBean</node>
+    <node x="178.5024038461538" y="0.0">org.apache.zookeeper.server.ZooKeeperServerMXBean</node>
+    <node x="1113.0192307692307" y="0.0">org.apache.zookeeper.server.quorum.LearnerHandlerMXBean</node>
+    <node x="610.5192307692307" y="198.0">org.apache.zookeeper.server.quorum.ReadOnlyBean</node>
+    <node x="1570.1850961538462" y="109.0">org.apache.zookeeper.server.quorum.ServerBean</node>
+    <node x="0.0" y="272.0">org.apache.zookeeper.jmx.CommonNames</node>
+    <node x="1388.4350961538462" y="109.0">org.apache.zookeeper.server.quorum.LeaderElectionBean</node>
+    <node x="138.0" y="198.0">org.apache.zookeeper.server.ObserverBean</node>
+    <node x="466.43509615384613" y="109.0">org.apache.zookeeper.server.quorum.QuorumBean</node>
+    <node x="552.6899038461538" y="0.0">org.apache.zookeeper.server.DataTreeMXBean</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="org.apache.zookeeper.server.quorum.FollowerBean" target="org.apache.zookeeper.server.ZooKeeperServerBean">
+      <point x="29.5" y="-14.5" />
+      <point x="88.5" y="168.0" />
+      <point x="291.9350961538461" y="168.0" />
+      <point x="-61.5" y="14.5" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.quorum.ServerBean" target="org.apache.zookeeper.server.quorum.ServerMXBean">
+      <point x="27.0" y="-14.5" />
+      <point x="1651.1850961538462" y="89.0" />
+      <point x="1703.769230769231" y="89.0" />
+      <point x="-31.25" y="14.5" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.quorum.RemotePeerBean" target="org.apache.zookeeper.server.quorum.RemotePeerMXBean">
+      <point x="34.25" y="-14.5" />
+      <point x="1320.6850961538462" y="89.0" />
+      <point x="1384.0192307692307" y="89.0" />
+      <point x="0.0" y="14.5" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.quorum.LeaderBean" target="org.apache.zookeeper.server.ZooKeeperServerBean">
+      <point x="-27.5" y="-14.5" />
+      <point x="392.43509615384613" y="178.0" />
+      <point x="373.9350961538461" y="178.0" />
+      <point x="20.5" y="14.5" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.quorum.LocalPeerBean" target="org.apache.zookeeper.server.quorum.ServerMXBean">
+      <point x="31.0" y="-14.5" />
+      <point x="1738.769230769231" y="178.0" />
+      <point x="1741.269230769231" y="178.0" />
+      <point x="1741.269230769231" y="89.0" />
+      <point x="1766.269230769231" y="89.0" />
+      <point x="31.25" y="14.5" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.quorum.LearnerHandlerBean" target="org.apache.zookeeper.server.quorum.LearnerHandlerMXBean">
+      <point x="39.25" y="-14.5" />
+      <point x="1096.4038461538462" y="89.0" />
+      <point x="1200.0192307692307" y="89.0" />
+      <point x="0.0" y="14.5" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.quorum.RemotePeerBean" target="org.apache.zookeeper.jmx.ZKMBeanInfo">
+      <point x="-34.25" y="-14.5" />
+      <point x="1252.1850961538462" y="79.0" />
+      <point x="992.4975961538462" y="79.0" />
+      <point x="22.3125" y="14.5" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.ObserverBean" target="org.apache.zookeeper.server.ZooKeeperServerBean">
+      <point x="30.5" y="-14.5" />
+      <point x="229.5" y="178.0" />
+      <point x="332.9350961538461" y="178.0" />
+      <point x="-20.5" y="14.5" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.quorum.LeaderElectionBean" target="org.apache.zookeeper.server.quorum.LeaderElectionMXBean">
+      <point x="37.75" y="-14.5" />
+      <point x="1501.6850961538462" y="89.0" />
+      <point x="1565.019230769231" y="89.0" />
+      <point x="0.0" y="14.5" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.ZooKeeperServerBean" target="org.apache.zookeeper.jmx.ZKMBeanInfo">
+      <point x="41.0" y="-14.5" />
+      <point x="394.4350961538461" y="59.0" />
+      <point x="918.1225961538462" y="59.0" />
+      <point x="-52.0625" y="14.5" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.quorum.ServerBean" target="org.apache.zookeeper.jmx.ZKMBeanInfo">
+      <point x="-27.0" y="-14.5" />
+      <point x="1597.1850961538462" y="59.0" />
+      <point x="1022.2475961538462" y="59.0" />
+      <point x="52.0625" y="14.5" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.quorum.QuorumBean" target="org.apache.zookeeper.jmx.ZKMBeanInfo">
+      <point x="29.25" y="-14.5" />
+      <point x="554.1850961538462" y="69.0" />
+      <point x="932.9975961538462" y="69.0" />
+      <point x="-37.1875" y="14.5" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.DataTreeBean" target="org.apache.zookeeper.jmx.ZKMBeanInfo">
+      <point x="30.5" y="-14.5" />
+      <point x="713.1850961538462" y="79.0" />
+      <point x="947.8725961538462" y="79.0" />
+      <point x="-22.3125" y="14.5" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.quorum.LeaderBean" target="org.apache.zookeeper.server.ZooKeeperServerMXBean">
+      <point x="27.5" y="-14.5" />
+      <point x="447.43509615384613" y="178.0" />
+      <point x="455.93509615384613" y="178.0" />
+      <point x="455.93509615384613" y="49.0" />
+      <point x="336.8774038461538" y="49.0" />
+      <point x="67.875" y="14.5" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.ConnectionBean" target="org.apache.zookeeper.server.ConnectionMXBean">
+      <point x="-33.0" y="-14.5" />
+      <point x="856.4663461538462" y="49.0" />
+      <point x="786.1899038461538" y="49.0" />
+      <point x="0.0" y="14.5" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.ObserverBean" target="org.apache.zookeeper.server.ZooKeeperServerMXBean">
+      <point x="-30.5" y="-14.5" />
+      <point x="168.5" y="158.0" />
+      <point x="163.0" y="158.0" />
+      <point x="163.0" y="89.0" />
+      <point x="246.3774038461538" y="89.0" />
+      <point x="-22.625" y="14.5" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.quorum.ReadOnlyBean" target="org.apache.zookeeper.server.ZooKeeperServerBean">
+      <point x="0.0" y="-14.5" />
+      <point x="672.5192307692307" y="168.0" />
+      <point x="414.9350961538461" y="168.0" />
+      <point x="61.5" y="14.5" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.quorum.LeaderElectionBean" target="org.apache.zookeeper.jmx.ZKMBeanInfo">
+      <point x="-37.75" y="-14.5" />
+      <point x="1426.1850961538462" y="69.0" />
+      <point x="1007.3725961538462" y="69.0" />
+      <point x="37.1875" y="14.5" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.quorum.LearnerHandlerBean" target="org.apache.zookeeper.jmx.ZKMBeanInfo">
+      <point x="-39.25" y="-14.5" />
+      <point x="1017.9038461538462" y="89.0" />
+      <point x="977.6225961538462" y="89.0" />
+      <point x="7.4375" y="14.5" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.quorum.FollowerBean" target="org.apache.zookeeper.server.ZooKeeperServerMXBean">
+      <point x="-29.5" y="-14.5" />
+      <point x="29.5" y="79.0" />
+      <point x="201.1274038461538" y="79.0" />
+      <point x="-67.875" y="14.5" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.ConnectionBean" target="org.apache.zookeeper.jmx.ZKMBeanInfo">
+      <point x="33.0" y="-14.5" />
+      <point x="922.4663461538462" y="89.0" />
+      <point x="962.7475961538462" y="89.0" />
+      <point x="-7.4375" y="14.5" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.ZooKeeperServerBean" target="org.apache.zookeeper.server.ZooKeeperServerMXBean">
+      <point x="-41.0" y="-14.5" />
+      <point x="312.4350961538461" y="89.0" />
+      <point x="291.6274038461538" y="89.0" />
+      <point x="22.625" y="14.5" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.quorum.LocalPeerBean" target="org.apache.zookeeper.server.quorum.ServerBean">
+      <point x="-31.0" y="-14.5" />
+      <point x="1676.769230769231" y="178.0" />
+      <point x="1624.1850961538462" y="178.0" />
+      <point x="0.0" y="14.5" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.DataTreeBean" target="org.apache.zookeeper.server.DataTreeMXBean">
+      <point x="-30.5" y="-14.5" />
+      <point x="652.1850961538462" y="49.0" />
+      <point x="622.1899038461538" y="49.0" />
+      <point x="0.0" y="14.5" />
+    </edge>
+    <edge source="org.apache.zookeeper.server.quorum.QuorumBean" target="org.apache.zookeeper.server.quorum.QuorumMXBean">
+      <point x="-29.25" y="-14.5" />
+      <point x="495.68509615384613" y="49.0" />
+      <point x="465.6899038461538" y="49.0" />
+      <point x="0.0" y="14.5" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic Group" zoom="0.9782945736434108" x="624.1855478502083" y="562.4247837599294" />
+  <SelectedNodes />
+  <Categories>
+    <Category>Inner Classes</Category>
+  </Categories>
+  <SCOPE>All</SCOPE>
+  <VISIBILITY>private</VISIBILITY>
+</Diagram>
+

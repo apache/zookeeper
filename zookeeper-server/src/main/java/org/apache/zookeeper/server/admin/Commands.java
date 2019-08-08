@@ -18,7 +18,6 @@
 
 package org.apache.zookeeper.server.admin;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -52,6 +51,9 @@ import org.slf4j.LoggerFactory;
 /**
  * Class containing static methods for registering and running Commands, as well
  * as default Command definitions.
+ * 包含用于注册和运行命令的静态方法的类，以及作为缺省命令定义。
+ *
+ * 这个类是zookeeper启动web服务后用到的，具体看JettyAdminServer这个类
  *
  * @see Command
  * @see JettyAdminServer
@@ -60,12 +62,14 @@ public class Commands {
     static final Logger LOG = LoggerFactory.getLogger(Commands.class);
 
     /** Maps command names to Command instances */
+    // 将 命令名称 映射到 Command实例
     private static Map<String, Command> commands = new HashMap<String, Command>();
     private static Set<String> primaryNames = new HashSet<String>();
 
     /**
      * Registers the given command. Registered commands can be run by passing
      * any of their names to runCommand.
+     * 注册给定的命令。可以通过将*任何名称传递给runCommand来运行已注册的命令。
      */
     public static void registerCommand(Command command) {
         for (String name : command.getNames()) {
@@ -102,7 +106,7 @@ public class Commands {
     }
 
     /**
-     * Returns the primary names of all registered commands.
+     * Returns the primary names of all registered commands.返回所有已注册命令的主要名称。
      */
     public static Set<String> getPrimaryNames() {
         return primaryNames;
@@ -111,11 +115,12 @@ public class Commands {
     /**
      * Returns the commands registered under cmdName with registerCommand, or
      * null if no command is registered with that name.
+     * 返回使用registerCommand在cmdName下注册的命令，如果没有使用该名称注册命令，则返回* null。
      */
     public static Command getCommand(String cmdName) {
         return commands.get(cmdName);
     }
-
+    // 用静态代码块进行注册
     static {
         registerCommand(new CnxnStatResetCommand());
         registerCommand(new ConfCommand());
@@ -391,7 +396,7 @@ public class Commands {
             if (zkServer instanceof ObserverZooKeeperServer) {
                 response.put("observer_master_id", ((ObserverZooKeeperServer)zkServer).getObserver().getLearnerMasterId());
             }
-
+            // 输出说有Metric
             ServerMetrics.getMetrics()
                     .getMetricsProvider()
                     .dump(

@@ -104,10 +104,14 @@ class XmlInputArchive implements InputArchive {
     }
     
     private class XmlIndex implements Index {
+        // 是否已经完成
         public boolean done() {
+            // 根据索引获取值
             Value v = valList.get(vIdx);
-            if ("/array".equals(v.getType())) {
+            if ("/array".equals(v.getType())) { // 判断是否值的类型是否为/array
+                // 设置索引的值
                 valList.set(vIdx, null);
+                // 索引加1
                 vIdx++;
                 return true;
             } else {

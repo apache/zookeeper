@@ -39,7 +39,7 @@ public class CommandResponse {
     private final Map<String, Object> data;
 
     /**
-     * Creates a new response with no error string.
+     * Creates a new response with no error string.创建一个没有错误字符串的新响应。
      *
      * @param command command name
      */

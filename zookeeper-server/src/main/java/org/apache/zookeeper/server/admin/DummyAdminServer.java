@@ -21,7 +21,7 @@ package org.apache.zookeeper.server.admin;
 import org.apache.zookeeper.server.ZooKeeperServer;
 
 /**
- * An AdminServer that does nothing.
+ * An AdminServer that does nothing.一个什么都不做的AdminServer。
  *
  * We use this class when we wish to disable the AdminServer. (This way we only
  * have to consider whether the server is enabled when we create the

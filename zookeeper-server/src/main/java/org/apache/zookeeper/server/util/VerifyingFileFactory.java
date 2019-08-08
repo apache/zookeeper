@@ -21,7 +21,7 @@ package org.apache.zookeeper.server.util;
 import java.io.File;
 
 import org.slf4j.Logger;
-
+// 验证配置文件
 public final class VerifyingFileFactory {
 
     private final boolean warnForRelativePath;
@@ -40,9 +40,10 @@ public final class VerifyingFileFactory {
         return validate(file);
     }
 
+    // 验证配置文件主要方法
     public File validate(File file) {
-        if(warnForRelativePath) doWarnForRelativePath(file);
-        if(failForNonExistingPath) doFailForNonExistingPath(file);
+        if(warnForRelativePath) doWarnForRelativePath(file);//验证文件路径
+        if(failForNonExistingPath) doFailForNonExistingPath(file);//验证文件是否存在
         return file;
     }
 

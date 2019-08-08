@@ -31,7 +31,8 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
 /**
  * This class implements a validator for majority quorums. The implementation is
  * straightforward.
- * 
+ *
+ * 此类为多数仲裁实现验证器。实施是直截了当
  */
 public class QuorumMaj implements QuorumVerifier {
     private Map<Long, QuorumServer> allMembers = new HashMap<Long, QuorumServer>();

@@ -50,20 +50,28 @@ import org.apache.zookeeper.server.command.NopCommand;
 import org.apache.zookeeper.server.command.SetTraceMaskCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+// 使用Netty框架来高效处理与客户端之间的通信。
 public class NettyServerCnxn extends ServerCnxn {
     private static final Logger LOG = LoggerFactory.getLogger(NettyServerCnxn.class);
+    // 通道
     private final Channel channel;
+    // 通道缓存
     private CompositeByteBuf queuedBuffer;
+    // 节流与否
     private final AtomicBoolean throttled = new AtomicBoolean(false);
+    // Byte缓冲区
     private ByteBuffer bb;
+    // 四个字节的缓冲区
     private final ByteBuffer bbLen = ByteBuffer.allocate(4);
+    // 会话Id
     private long sessionId;
+    // 会话超时时间
     private int sessionTimeout;
     private Certificate[] clientChain;
     private volatile boolean closingChannel;
-
+    // NettyServerCnxn工厂
     private final NettyServerCnxnFactory factory;
+    // 初始化与否
     private boolean initialized;
 
     NettyServerCnxn(Channel channel, ZooKeeperServer zks, NettyServerCnxnFactory factory) {
@@ -71,7 +79,7 @@ public class NettyServerCnxn extends ServerCnxn {
         this.channel = channel;
         this.closingChannel = false;
         this.factory = factory;
-        if (this.factory.login != null) {
+        if (this.factory.login != null) {// 需要登录信息(用户名和密码登录)
             this.zooKeeperSaslServer = new ZooKeeperSaslServer(factory.login);
         }
     }
@@ -202,6 +210,7 @@ public class NettyServerCnxn extends ServerCnxn {
      * than cons'ing up a response fully in memory, which may be large
      * for some commands, this class chunks up the result.
      */
+    // 与NIOServerCnxn中相同，该类用来将给客户端的响应进行分块
     private class SendBufferWriter extends Writer {
         private StringBuffer sb = new StringBuffer();
 
@@ -209,8 +218,9 @@ public class NettyServerCnxn extends ServerCnxn {
          * Check if we are ready to send another chunk.
          * @param force force sending, even if not a full chunk
          */
+        // 是否准备好发送另一块
         private void checkFlush(boolean force) {
-            if ((force && sb.length() > 0) || sb.length() > 2048) {
+            if ((force && sb.length() > 0) || sb.length() > 2048) {// 当强制发送并且sb大小大于0，或者sb大小大于2048即发送缓存
                 sendBuffer(ByteBuffer.wrap(sb.toString().getBytes()));
                 // clear our internal buffer
                 sb.setLength(0);
@@ -220,6 +230,7 @@ public class NettyServerCnxn extends ServerCnxn {
         @Override
         public void close() throws IOException {
             if (sb == null) return;
+            // 关闭之前需要强制性发送缓存
             checkFlush(true);
             sb = null; // clear out the ref to ensure no reuse
         }
@@ -317,6 +328,8 @@ public class NettyServerCnxn extends ServerCnxn {
      * Note that this method does not call <code>buf.release()</code>. The caller
      * is responsible for making sure the buf is released after this method
      * returns.
+     * 处理传入消息。这应该只从事件*循环线程调用。
+     * 请注意，此方法不会调用<code> buf.release（）</ code>。调用者负责确保在此方法返回后释放buf。
      * @param buf the message bytes to process.
      */
     void processMessage(ByteBuf buf) {
@@ -377,6 +390,7 @@ public class NettyServerCnxn extends ServerCnxn {
     /**
      * Try to process previously queued message. This should only be called
      * from the event loop thread.
+     * 尝试处理以前排队的消息。这应该只从事件循环线程调用
      */
     void processQueuedBuffer() {
         checkIsInEventLoop("processQueuedBuffer");

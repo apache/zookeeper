@@ -59,6 +59,7 @@ import org.apache.zookeeper.server.util.VerifyingFileFactory;
 import static org.apache.zookeeper.common.NetUtils.formatInetAddr;
 import org.apache.zookeeper.metrics.impl.DefaultMetricsProvider;
 
+//zookeeper 配置类
 @InterfaceAudience.Public
 public class QuorumPeerConfig {
     private static final Logger LOG = LoggerFactory.getLogger(QuorumPeerConfig.class);
@@ -77,7 +78,7 @@ public class QuorumPeerConfig {
     protected File dataDir;
     protected File dataLogDir;
     protected String dynamicConfigFileStr = null;
-    protected String configFileStr = null;
+    protected String configFileStr = null; /* 加载的配置文件路径 */
     protected int tickTime = ZooKeeperServer.DEFAULT_TICK_TIME;
     protected int maxClientCnxns = 60;
     /** defaults to -1 if not set explicitly */
@@ -96,7 +97,7 @@ public class QuorumPeerConfig {
     protected int electionAlg = 3;
     protected int electionPort = 2182;
     protected boolean quorumListenOnAllIPs = false;
-
+    // 这个是读取的myid文件的值，默认是-1
     protected long serverId = UNSET_SERVERID;
 
     protected QuorumVerifier quorumVerifier = null, lastSeenQuorumVerifier = null;
@@ -118,28 +119,33 @@ public class QuorumPeerConfig {
     protected int quorumCnxnThreadsSize;
 
     /**
-     * Minimum snapshot retain count.
+     * Minimum snapshot retain count.最小快照保留计数。
      * @see org.apache.zookeeper.server.PurgeTxnLog#purge(File, File, int)
      */
     private final int MIN_SNAP_RETAIN_COUNT = 3;
 
     /**
      * JVM Pause Monitor feature switch
+     * JVM暂停监视器功能开关
      */
     protected boolean jvmPauseMonitorToRun = false;
     /**
      * JVM Pause Monitor warn threshold in ms
+     * JVM暂停监视器以ms为单位警告阈值
      */
     protected long jvmPauseWarnThresholdMs = JvmPauseMonitor.WARN_THRESHOLD_DEFAULT;
     /**
      * JVM Pause Monitor info threshold in ms
+     * JVM暂停监视器信息阈值，以毫秒为单位
      */
     protected long jvmPauseInfoThresholdMs = JvmPauseMonitor.INFO_THRESHOLD_DEFAULT;
     /**
      * JVM Pause Monitor sleep time in ms
+     * JVM暂停监视器休眠时间，以毫秒为单位
      */
     protected long jvmPauseSleepTimeMs = JvmPauseMonitor.SLEEP_TIME_MS_DEFAULT;
 
+    // 定义配置文件解析异常
     @SuppressWarnings("serial")
     public static class ConfigException extends Exception {
         public ConfigException(String msg) {
@@ -151,7 +157,7 @@ public class QuorumPeerConfig {
     }
 
     /**
-     * Parse a ZooKeeper configuration file
+     * 解析ZooKeeper配置文件
      * @param path the patch of the configuration file
      * @throws ConfigException error processing configuration
      */
@@ -159,6 +165,7 @@ public class QuorumPeerConfig {
         LOG.info("Reading configuration from: " + path);
        
         try {
+            // 验证文件路径以及文件是否存在
             File configFile = (new VerifyingFileFactory.Builder(LOG)
                 .warnForRelativePath()
                 .failForNonExistingPath()
@@ -172,27 +179,29 @@ public class QuorumPeerConfig {
             } finally {
                 in.close();
             }
-            
+            // 从属性中解析配置。 合作键值对
             parseProperties(cfg);
         } catch (IOException e) {
             throw new ConfigException("Error processing " + path, e);
         } catch (IllegalArgumentException e) {
             throw new ConfigException("Error processing " + path, e);
-        }   
-        
+        }
+        //dynamicConfigFile 如果配置了动态配置文件
         if (dynamicConfigFileStr!=null) {
            try {           
                Properties dynamicCfg = new Properties();
                FileInputStream inConfig = new FileInputStream(dynamicConfigFileStr);
                try {
                    dynamicCfg.load(inConfig);
-                   if (dynamicCfg.getProperty("version") != null) {
+                   if (dynamicCfg.getProperty("version") != null) {//动态文件里面不应该手动配置version字段
                        throw new ConfigException("dynamic file shouldn't have version inside");
                    }
 
                    String version = getVersionFromFilename(dynamicConfigFileStr);
                    // If there isn't any version associated with the filename,
                    // the default version is 0.
+                   // 如果没有与文件名关联的任何版本，
+                   // 默认版本为0。
                    if (version != null) {
                        dynamicCfg.setProperty("version", version);
                    }
@@ -252,19 +261,21 @@ public class QuorumPeerConfig {
     }
 
     /**
-     * Parse config from a Properties.
+     * 从属性中解析配置。
      * @param zkProp Properties to parse from.
      * @throws IOException
      * @throws ConfigException
      */
     public void parseProperties(Properties zkProp)
     throws IOException, ConfigException {
-        int clientPort = 0;
-        int secureClientPort = 0;
+        int clientPort = 0; // clientPort
+        int secureClientPort = 0; //clientPortAddress
         int observerMasterPort = 0;
         String clientPortAddress = null;
         String secureClientPortAddress = null;
+        // vff对象只验证文件路径，主要是验证配置文件中的dataDir和dataLogDir两个路径
         VerifyingFileFactory vff = new VerifyingFileFactory.Builder(LOG).warnForRelativePath().build();
+        // 遍历循环配置文件中配置的参数
         for (Entry<Object, Object> entry : zkProp.entrySet()) {
             String key = entry.getKey().toString().trim();
             String value = entry.getValue().toString().trim();
@@ -303,26 +314,25 @@ public class QuorumPeerConfig {
             } else if (key.equals("electionAlg")) {
                 electionAlg = Integer.parseInt(value);
                 if (electionAlg != 1 && electionAlg != 2 && electionAlg != 3) {
-                    throw new ConfigException("Invalid electionAlg value. Only 1, 2, 3 are supported.");
+                    throw new ConfigException("Invalid electionAlg value. Only 1, 2, 3 are supported.electAlg值无效。仅支持1,2,3");
                 }
             } else if (key.equals("quorumListenOnAllIPs")) {
                 quorumListenOnAllIPs = Boolean.parseBoolean(value);
-            } else if (key.equals("peerType")) {
+            } else if (key.equals("peerType")) {  //这里配置zk的角色。是否参与选举
                 if (value.toLowerCase().equals("observer")) {
                     peerType = LearnerType.OBSERVER;
                 } else if (value.toLowerCase().equals("participant")) {
                     peerType = LearnerType.PARTICIPANT;
-                } else
-                {
+                } else {
                     throw new ConfigException("Unrecognised peertype: " + value);
                 }
             } else if (key.equals( "syncEnabled" )) {
                 syncEnabled = Boolean.parseBoolean(value);
             } else if (key.equals("dynamicConfigFile")){
                 dynamicConfigFileStr = value;
-            } else if (key.equals("autopurge.snapRetainCount")) {
+            } else if (key.equals("autopurge.snapRetainCount")) {// autopurge.snapRetainCount 这个参数指定了需要保留的文件数目。默认是保留3个
                 snapRetainCount = Integer.parseInt(value);
-            } else if (key.equals("autopurge.purgeInterval")) {
+            } else if (key.equals("autopurge.purgeInterval")) {// autopurge.purgeInterval  这个参数指定了清理频率，单位是小时，需要填写一个1或更大的整数，默认是0，表示不开启自己清理功能。
                 purgeInterval = Integer.parseInt(value);
             } else if (key.equals("standaloneEnabled")) {
                 if (value.toLowerCase().equals("true")) {
@@ -332,7 +342,7 @@ public class QuorumPeerConfig {
                 } else {
                     throw new ConfigException("Invalid option " + value + " for standalone mode. Choose 'true' or 'false.'");
                 }
-            } else if (key.equals("reconfigEnabled")) {
+            } else if (key.equals("reconfigEnabled")) { // 热加载配置文件
                 if (value.toLowerCase().equals("true")) {
                     setReconfigEnabled(true);
                 } else if (value.toLowerCase().equals("false")) {
@@ -346,29 +356,31 @@ public class QuorumPeerConfig {
                 shouldUsePortUnification = Boolean.parseBoolean(value);
             } else if (key.equals("sslQuorumReloadCertFiles")) {
                 sslQuorumReloadCertFiles = Boolean.parseBoolean(value);
+                // 如果配置了dynamicConfigFile并且zoo.cfg中出现[server.,group,weight]中的任意一种就报错
+                // 配置了dynamicConfigFile的话这些参数要单独配置
             } else if ((key.startsWith("server.") || key.startsWith("group") || key.startsWith("weight")) && zkProp.containsKey("dynamicConfigFile")) {
-                throw new ConfigException("parameter: " + key + " must be in a separate dynamic config file");
-            } else if (key.equals(QuorumAuth.QUORUM_SASL_AUTH_ENABLED)) {
+                throw new ConfigException("parameter: " + key + " must be in a separate dynamic config file 参数：“+ key +”必须位于单独的动态配置文件中");
+            } else if (key.equals(QuorumAuth.QUORUM_SASL_AUTH_ENABLED)) {// quorum.auth.enableSasl
                 quorumEnableSasl = Boolean.parseBoolean(value);
-            } else if (key.equals(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED)) {
+            } else if (key.equals(QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED)) { // quorum.auth.serverRequireSasl
                 quorumServerRequireSasl = Boolean.parseBoolean(value);
-            } else if (key.equals(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED)) {
+            } else if (key.equals(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED)) { // quorum.auth.learnerRequireSasl
                 quorumLearnerRequireSasl = Boolean.parseBoolean(value);
-            } else if (key.equals(QuorumAuth.QUORUM_LEARNER_SASL_LOGIN_CONTEXT)) {
+            } else if (key.equals(QuorumAuth.QUORUM_LEARNER_SASL_LOGIN_CONTEXT)) { // quorum.auth.learner.saslLoginContext
                 quorumLearnerLoginContext = value;
-            } else if (key.equals(QuorumAuth.QUORUM_SERVER_SASL_LOGIN_CONTEXT)) {
+            } else if (key.equals(QuorumAuth.QUORUM_SERVER_SASL_LOGIN_CONTEXT)) { // quorum.auth.server.saslLoginContext
                 quorumServerLoginContext = value;
-            } else if (key.equals(QuorumAuth.QUORUM_KERBEROS_SERVICE_PRINCIPAL)) {
+            } else if (key.equals(QuorumAuth.QUORUM_KERBEROS_SERVICE_PRINCIPAL)) { // quorum.auth.kerberos.servicePrincipal
                 quorumServicePrincipal = value;
             } else if (key.equals("quorum.cnxn.threads.size")) {
                 quorumCnxnThreadsSize = Integer.parseInt(value);
-            } else if (key.equals(JvmPauseMonitor.INFO_THRESHOLD_KEY)) {
+            } else if (key.equals(JvmPauseMonitor.INFO_THRESHOLD_KEY)) { // jvm.pause.info-threshold.ms
                 jvmPauseInfoThresholdMs = Long.parseLong(value);
-            } else if (key.equals(JvmPauseMonitor.WARN_THRESHOLD_KEY)) {
+            } else if (key.equals(JvmPauseMonitor.WARN_THRESHOLD_KEY)) { // jvm.pause.warn-threshold.ms
                 jvmPauseWarnThresholdMs = Long.parseLong(value);
-            } else if (key.equals(JvmPauseMonitor.SLEEP_TIME_MS_KEY)) {
+            } else if (key.equals(JvmPauseMonitor.SLEEP_TIME_MS_KEY)) { // jvm.pause.sleep.time.ms
                 jvmPauseSleepTimeMs = Long.parseLong(value);
-            } else if (key.equals(JvmPauseMonitor.JVM_PAUSE_MONITOR_FEATURE_SWITCH_KEY)) {
+            } else if (key.equals(JvmPauseMonitor.JVM_PAUSE_MONITOR_FEATURE_SWITCH_KEY)) { // jvm.pause.monitor
                 jvmPauseMonitorToRun = Boolean.parseBoolean(value);
             } else if (key.equals("metricsProvider.className")) {
                 metricsProviderClassName = value;
@@ -379,13 +391,17 @@ public class QuorumPeerConfig {
                 System.setProperty("zookeeper." + key, value);
             }
         }
-
+        // quorumEnableSasl（quorum.auth.enableSasl）为false
+        // 并且quorumServerRequireSasl（quorum.auth.serverRequireSasl）为true抛出异常
         if (!quorumEnableSasl && quorumServerRequireSasl) {
             throw new IllegalArgumentException(
                     QuorumAuth.QUORUM_SASL_AUTH_ENABLED
                             + " is disabled, so cannot enable "
                             + QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED);
         }
+
+        // quorumEnableSasl（quorum.auth.enableSasl）为false
+        // 并且quorumLearnerRequireSasl（quorum.auth.learner.saslLoginContext）为true抛出异常
         if (!quorumEnableSasl && quorumLearnerRequireSasl) {
             throw new IllegalArgumentException(
                     QuorumAuth.QUORUM_SASL_AUTH_ENABLED
@@ -395,6 +411,9 @@ public class QuorumPeerConfig {
         // If quorumpeer learner is not auth enabled then self won't be able to
         // join quorum. So this condition is ensuring that the quorumpeer learner
         // is also auth enabled while enabling quorum server require sasl.
+
+        // quorumLearnerRequireSasl（quorum.auth.learner.saslLoginContext）为false
+        // 并且quorumServerRequireSasl（quorum.auth.serverRequireSasl）为true抛出异常
         if (!quorumLearnerRequireSasl && quorumServerRequireSasl) {
             throw new IllegalArgumentException(
                     QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED
@@ -405,6 +424,7 @@ public class QuorumPeerConfig {
         // Reset to MIN_SNAP_RETAIN_COUNT if invalid (less than 3)
         // PurgeTxnLog.purge(File, File, int) will not allow to purge less
         // than 3.
+        // 快照数量不能小于3
         if (snapRetainCount < MIN_SNAP_RETAIN_COUNT) {
             LOG.warn("Invalid autopurge.snapRetainCount: " + snapRetainCount
                     + ". Defaulting to " + MIN_SNAP_RETAIN_COUNT);
@@ -421,13 +441,13 @@ public class QuorumPeerConfig {
         if (clientPort == 0) {
             LOG.info("clientPort is not set");
             if (clientPortAddress != null) {
-                throw new IllegalArgumentException("clientPortAddress is set but clientPort is not set");
+                throw new IllegalArgumentException("clientPortAddress is set but clientPort is not set设置了clientPortAddress，但未设置clientPort");
             }
-        } else if (clientPortAddress != null) {
+        } else if (clientPortAddress != null) { // clientPort和clientPortAddress都配置了
             this.clientPortAddress = new InetSocketAddress(
                     InetAddress.getByName(clientPortAddress), clientPort);
             LOG.info("clientPortAddress is {}", formatInetAddr(this.clientPortAddress));
-        } else {
+        } else {// clientPort配置了,clientPortAddress没配置
             this.clientPortAddress = new InetSocketAddress(clientPort);
             LOG.info("clientPortAddress is {}", formatInetAddr(this.clientPortAddress));
         }
@@ -445,6 +465,7 @@ public class QuorumPeerConfig {
             this.secureClientPortAddress = new InetSocketAddress(secureClientPort);
             LOG.info("secureClientPortAddress is {}", formatInetAddr(this.secureClientPortAddress));
         }
+
         if (this.secureClientPortAddress != null) {
             configureSSLAuth();
         }
@@ -456,11 +477,13 @@ public class QuorumPeerConfig {
             LOG.info("observerMasterPort is {}", observerMasterPort);
         }
 
+        //  ZooKeeper 中使用的基本时间单元, 以毫秒为单位, 默认值是 2000。它用来调节心跳和超时
         if (tickTime == 0) {
             throw new IllegalArgumentException("tickTime is not set");
         }
-
+        // 默认是tickTime * 2
         minSessionTimeout = minSessionTimeout == -1 ? tickTime * 2 : minSessionTimeout;
+        // 默认是tickTime * 20
         maxSessionTimeout = maxSessionTimeout == -1 ? tickTime * 20 : maxSessionTimeout;
 
         if (minSessionTimeout > maxSessionTimeout) {
@@ -470,6 +493,8 @@ public class QuorumPeerConfig {
 
         LOG.info("metricsProvider.className is {}", metricsProviderClassName);
         try {
+            // 默认 DefaultMetricsProvider，可配置metricsProvider.className
+            // 这里预加载了一次，但是并没有用
             Class.forName(metricsProviderClassName, false, Thread.currentThread().getContextClassLoader());
         } catch (ClassNotFoundException error) {
             throw new IllegalArgumentException("metrics provider class was not found", error);
@@ -477,6 +502,7 @@ public class QuorumPeerConfig {
 
         // backward compatibility - dynamic configuration in the same file as
         // static configuration params see writeDynamicConfig()
+        //如果没有开启动态配置文件，没有配置动态配置文件路径
         if (dynamicConfigFileStr == null) {
             setupQuorumPeerConfig(zkProp, true);
             if (isDistributed() && isReconfigEnabled()) {
@@ -658,18 +684,26 @@ public class QuorumPeerConfig {
         }          
     }
 
+    /**
+     * 如果配置了动态配置文件，prop就是动态配置文件的Properties对象，configBackwardCompatibilityMode为false
+     * 如果没有配置动态配置文件，prop就是静态配置文件的Properties对象，configBackwardCompatibilityMode为true
+     * @param prop
+     * @param configBackwardCompatibilityMode
+     * @throws IOException
+     * @throws ConfigException
+     */
     void setupQuorumPeerConfig(Properties prop, boolean configBackwardCompatibilityMode)
             throws IOException, ConfigException {
         quorumVerifier = parseDynamicConfig(prop, electionAlg, true, configBackwardCompatibilityMode);
-        setupMyId();
+        setupMyId(); // 读取myid配置文件并赋值给serverId
         setupClientPort();
         setupPeerType();
         checkValidity();
     }
 
     /**
-     * Parse dynamic configuration file and return
-     * quorumVerifier for new configuration.
+     * Parse dynamic configuration file and return解析动态配置文件并返回
+     * quorumVerifier for new configuration. quorumVerifier用于新配置。
      * @param dynamicConfigProp Properties to parse from.
      * @throws IOException
      * @throws ConfigException
@@ -677,6 +711,8 @@ public class QuorumPeerConfig {
     public static QuorumVerifier parseDynamicConfig(Properties dynamicConfigProp, int eAlg, boolean warnings,
 	   boolean configBackwardCompatibilityMode) throws IOException, ConfigException {
        boolean isHierarchical = false;
+       // 如果configBackwardCompatibilityMode == true，则不会抛出异常，只要有一个key是已group或weight开头的，isHierarchical就等于true
+       // 如果configBackwardCompatibilityMode == false，只要有一个key是都不已group或weight开头，就会抛出异常，只要有一个key是已group或weight开头的，isHierarchical就等于true
         for (Entry<Object, Object> entry : dynamicConfigProp.entrySet()) {
             String key = entry.getKey().toString().trim();                    
             if (key.startsWith("group") || key.startsWith("weight")) {
@@ -686,7 +722,7 @@ public class QuorumPeerConfig {
                throw new ConfigException("Unrecognised parameter: " + key);                
             }
         }
-        
+        // isHierarchical=true说明dynamicConfigProp的key都是已group或weight开头的
         QuorumVerifier qv = createQuorumVerifier(dynamicConfigProp, isHierarchical);
                
         int numParticipators = qv.getVotingMembers().size();
@@ -710,10 +746,10 @@ public class QuorumPeerConfig {
             }
         } else {
             if (warnings) {
-                if (numParticipators <= 2) {
+                if (numParticipators <= 2) { //numParticipators小于2
                     LOG.warn("No server failure will be tolerated. " +
                         "You need at least 3 servers.");
-                } else if (numParticipators % 2 == 0) {
+                } else if (numParticipators % 2 == 0) {// numParticipators是偶数
                     LOG.warn("Non-optimial configuration, consider an odd number of servers.");
                 }
             }
@@ -729,7 +765,7 @@ public class QuorumPeerConfig {
 
     private void setupMyId() throws IOException {
         File myIdFile = new File(dataDir, "myid");
-        // standalone server doesn't need myid file.
+        // standalone 模式不需要 myid 文件
         if (!myIdFile.isFile()) {
             return;
         }
@@ -742,6 +778,7 @@ public class QuorumPeerConfig {
         }
         try {
             serverId = Long.parseLong(myIdString);
+            // 给日志框架中设置myid
             MDC.put("myid", myIdString);
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("serverid " + myIdString
@@ -750,7 +787,7 @@ public class QuorumPeerConfig {
     }
 
     private void setupClientPort() throws ConfigException {
-        if (serverId == UNSET_SERVERID) {
+        if (serverId == UNSET_SERVERID) {// standalone模式下运行或者没有myid文件的时候 serverId == UNSET_SERVERID
             return;
         }
         QuorumServer qs = quorumVerifier.getAllMembers().get(serverId);
@@ -769,7 +806,7 @@ public class QuorumPeerConfig {
             qs.isClientAddrFromStatic = true;
         }
     }
-
+    // 服务是否参加选举
     private void setupPeerType() {
         // Warn about inconsistent peer type
         LearnerType roleByServersList = quorumVerifier.getObservingMembers().containsKey(serverId) ? LearnerType.OBSERVER
@@ -866,6 +903,7 @@ public class QuorumPeerConfig {
 
     public long getServerId() { return serverId; }
 
+    // 是否是分布式的
     public boolean isDistributed() {
         return quorumVerifier!=null && (!standaloneEnabled || quorumVerifier.getVotingMembers().size() > 1);
     }
@@ -893,6 +931,7 @@ public class QuorumPeerConfig {
     public static boolean isReconfigEnabled() { return reconfigEnabled; }
 
     public static void setReconfigEnabled(boolean enabled) {
+        // 热加载配置文件
         reconfigEnabled = enabled;
     }
 

@@ -86,6 +86,7 @@ public class Observer extends Learner{
 
     /**
      * the main method called by the observer to observe the leader
+     * 观察者调用的主要方法是观察领导者
      * @throws Exception 
      */
     void observeLeader() throws Exception {

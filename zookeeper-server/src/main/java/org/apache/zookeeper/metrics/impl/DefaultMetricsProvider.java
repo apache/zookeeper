@@ -86,6 +86,11 @@ public class DefaultMetricsProvider implements MetricsProvider {
             return this;
         }
 
+        /**
+         * 创建SimpleCounter类型的Metric
+         * @param name
+         * @return
+         */
         @Override
         public Counter getCounter(String name) {
             return counters.computeIfAbsent(name, (n) -> {
@@ -93,12 +98,25 @@ public class DefaultMetricsProvider implements MetricsProvider {
             });
         }
 
+        /**
+         * 创建Gauge类型的Metric,目前还不支持
+         * @param name unique name of the Gauge in this context
+         * @param gauge the implementation of the Gauge
+         *
+         * @return
+         */
         @Override
         public boolean registerGauge(String name, Gauge gauge) {
             // Not supported
             return false;
         }
 
+        /**
+         * 创建AvgMinMaxCounter或者AvgMinMaxPercentileCounter类型的Metric
+         * @param name
+         * @param detailLevel
+         * @return
+         */
         @Override
         public Summary getSummary(String name, DetailLevel detailLevel) {
             if (detailLevel == DetailLevel.BASIC) {
@@ -118,6 +136,12 @@ public class DefaultMetricsProvider implements MetricsProvider {
             }
         }
 
+        /**
+         * 创建AvgMinMaxCounterSet或者AvgMinMaxPercentileCounterSet类型的Metric
+         * @param name
+         * @param detailLevel
+         * @return
+         */
         @Override
         public SummarySet getSummarySet(String name, DetailLevel detailLevel) {
             if (detailLevel == DetailLevel.BASIC) {

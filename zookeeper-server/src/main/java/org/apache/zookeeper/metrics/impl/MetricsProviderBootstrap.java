@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Utility for bootstrap process of MetricsProviders
+ * 创建MetricsProviders的引导程序
  */
 public abstract class MetricsProviderBootstrap {
 
@@ -33,6 +34,7 @@ public abstract class MetricsProviderBootstrap {
     public static MetricsProvider startMetricsProvider(String metricsProviderClassName, Properties configuration)
             throws MetricsProviderLifeCycleException {
         try {
+            // 反射创建MetricsProvider对象，默认是DefaultMetricsProvider
             MetricsProvider metricsProvider = (MetricsProvider) Class.forName(metricsProviderClassName,
                     true, Thread.currentThread().getContextClassLoader()).newInstance();
             metricsProvider.configure(configuration);

@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>JAVA</ID>
+  <OriginalElement>org.apache.zookeeper.cli.CliCommand</OriginalElement>
+  <nodes>
+    <node x="360.0" y="395.0">org.apache.zookeeper.cli.CommandNotFoundException</node>
+    <node x="3368.0" y="160.0">org.apache.zookeeper.cli.StatCommand</node>
+    <node x="602.0" y="395.0">org.apache.zookeeper.cli.MalformedCommandException</node>
+    <node x="504.0" y="160.0">org.apache.zookeeper.cli.DelQuotaCommand</node>
+    <node x="170.0" y="395.0">org.apache.zookeeper.cli.CliWrapperException</node>
+    <node x="2857.0" y="160.0">org.apache.zookeeper.cli.ListQuotaCommand</node>
+    <node x="1818.0" y="160.0">org.apache.zookeeper.cli.Ls2Command</node>
+    <node x="338.0" y="160.0">org.apache.zookeeper.cli.CreateCommand</node>
+    <node x="1031.0" y="160.0">org.apache.zookeeper.cli.DeleteCommand</node>
+    <node x="866.0" y="160.0">org.apache.zookeeper.cli.GetAclCommand</node>
+    <node x="1090.0" y="235.0">org.apache.zookeeper.cli.AclParser</node>
+    <node x="3040.0" y="160.0">org.apache.zookeeper.cli.SetCommand</node>
+    <node x="2105.0" y="160.0">org.apache.zookeeper.cli.ReconfigCommand</node>
+    <node x="3518.0" y="160.0">org.apache.zookeeper.cli.SyncCommand</node>
+    <node x="1820.5" y="0.0">org.apache.zookeeper.cli.CliCommand</node>
+    <node x="0.0" y="160.0">org.apache.zookeeper.cli.AddAuthCommand</node>
+    <node x="851.0" y="395.0">org.apache.zookeeper.cli.MalformedPathException</node>
+    <node x="178.0" y="160.0">org.apache.zookeeper.cli.CloseCommand</node>
+    <node x="3186.0" y="160.0">org.apache.zookeeper.cli.SetQuotaCommand</node>
+    <node x="687.0" y="160.0">org.apache.zookeeper.cli.DeleteAllCommand</node>
+    <node x="419.0" y="235.0">java.lang.Exception</node>
+    <node x="1196.0" y="160.0">org.apache.zookeeper.cli.GetAllChildrenNumberCommand</node>
+    <node x="1602.0" y="160.0">org.apache.zookeeper.cli.GetEphemeralsCommand</node>
+    <node x="1454.0" y="160.0">org.apache.zookeeper.cli.GetCommand</node>
+    <node x="2671.0" y="160.0">org.apache.zookeeper.cli.GetConfigCommand</node>
+    <node x="0.0" y="395.0">org.apache.zookeeper.cli.CliParseException</node>
+    <node x="2508.0" y="160.0">org.apache.zookeeper.cli.SetAclCommand</node>
+    <node x="412.0" y="315.0">org.apache.zookeeper.cli.CliException</node>
+    <node x="2284.0" y="160.0">org.apache.zookeeper.cli.RemoveWatchesCommand</node>
+    <node x="1965.0" y="160.0">org.apache.zookeeper.cli.LsCommand</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="org.apache.zookeeper.cli.GetEphemeralsCommand" target="org.apache.zookeeper.cli.CliCommand">
+      <point x="0.0" y="-15.0" />
+      <point x="1700.0" y="140.0" />
+      <point x="1875.6904761904761" y="140.0" />
+      <point x="-5.809523809523853" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.cli.LsCommand" target="org.apache.zookeeper.cli.CliCommand">
+      <point x="0.0" y="-15.0" />
+      <point x="2025.0" y="140.0" />
+      <point x="1887.3095238095239" y="140.0" />
+      <point x="5.809523809523853" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.cli.ReconfigCommand" target="org.apache.zookeeper.cli.CliCommand">
+      <point x="0.0" y="-15.0" />
+      <point x="2184.5" y="130.0" />
+      <point x="1893.1190476190477" y="130.0" />
+      <point x="11.619047619047706" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.cli.DelQuotaCommand" target="org.apache.zookeeper.cli.CliCommand">
+      <point x="0.0" y="-15.0" />
+      <point x="585.5" y="80.0" />
+      <point x="1840.8333333333333" y="80.0" />
+      <point x="-40.66666666666674" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.cli.CliParseException" target="org.apache.zookeeper.cli.CliException">
+      <point x="0.0" y="-15.0" />
+      <point x="75.0" y="365.0" />
+      <point x="423.79999999999995" y="365.0" />
+      <point x="-47.200000000000045" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.cli.SyncCommand" target="org.apache.zookeeper.cli.CliCommand">
+      <point x="0.0" y="-15.0" />
+      <point x="3585.0" y="50.0" />
+      <point x="1939.595238095238" y="50.0" />
+      <point x="58.095238095238074" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.cli.MalformedPathException" target="org.apache.zookeeper.cli.CliException">
+      <point x="0.0" y="-15.0" />
+      <point x="948.0" y="365.0" />
+      <point x="518.2" y="365.0" />
+      <point x="47.200000000000045" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.cli.CliException" target="java.lang.Exception">
+      <point x="0.0" y="-15.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.cli.DeleteCommand" target="org.apache.zookeeper.cli.CliCommand">
+      <point x="0.0" y="-15.0" />
+      <point x="1103.5" y="110.0" />
+      <point x="1858.2619047619048" y="110.0" />
+      <point x="-23.238095238095184" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.cli.SetAclCommand" target="org.apache.zookeeper.cli.CliCommand">
+      <point x="0.0" y="-15.0" />
+      <point x="2579.5" y="110.0" />
+      <point x="1904.7380952380952" y="110.0" />
+      <point x="23.238095238095184" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.cli.DeleteAllCommand" target="org.apache.zookeeper.cli.CliCommand">
+      <point x="0.0" y="-15.0" />
+      <point x="766.5" y="90.0" />
+      <point x="1846.642857142857" y="90.0" />
+      <point x="-34.85714285714289" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.cli.MalformedCommandException" target="org.apache.zookeeper.cli.CliException">
+      <point x="0.0" y="-15.0" />
+      <point x="716.5" y="375.0" />
+      <point x="494.6" y="375.0" />
+      <point x="23.600000000000023" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.cli.ListQuotaCommand" target="org.apache.zookeeper.cli.CliCommand">
+      <point x="0.0" y="-15.0" />
+      <point x="2938.5" y="90.0" />
+      <point x="1916.357142857143" y="90.0" />
+      <point x="34.85714285714289" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.cli.StatCommand" target="org.apache.zookeeper.cli.CliCommand">
+      <point x="0.0" y="-15.0" />
+      <point x="3433.0" y="60.0" />
+      <point x="1933.7857142857142" y="60.0" />
+      <point x="52.28571428571422" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.cli.GetConfigCommand" target="org.apache.zookeeper.cli.CliCommand">
+      <point x="0.0" y="-15.0" />
+      <point x="2754.0" y="100.0" />
+      <point x="1910.547619047619" y="100.0" />
+      <point x="29.047619047619037" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.cli.SetQuotaCommand" target="org.apache.zookeeper.cli.CliCommand">
+      <point x="0.0" y="-15.0" />
+      <point x="3267.0" y="70.0" />
+      <point x="1927.9761904761906" y="70.0" />
+      <point x="46.476190476190595" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.cli.RemoveWatchesCommand" target="org.apache.zookeeper.cli.CliCommand">
+      <point x="0.0" y="-15.0" />
+      <point x="2386.0" y="120.0" />
+      <point x="1898.9285714285716" y="120.0" />
+      <point x="17.42857142857156" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.cli.Ls2Command" target="org.apache.zookeeper.cli.CliCommand">
+      <point x="0.0" y="-15.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.cli.CreateCommand" target="org.apache.zookeeper.cli.CliCommand">
+      <point x="0.0" y="-15.0" />
+      <point x="411.0" y="70.0" />
+      <point x="1835.0238095238096" y="70.0" />
+      <point x="-46.47619047619037" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.cli.AddAuthCommand" target="org.apache.zookeeper.cli.CliCommand">
+      <point x="0.0" y="-15.0" />
+      <point x="79.0" y="50.0" />
+      <point x="1823.404761904762" y="50.0" />
+      <point x="-58.095238095238074" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.cli.GetCommand" target="org.apache.zookeeper.cli.CliCommand">
+      <point x="0.0" y="-15.0" />
+      <point x="1518.0" y="130.0" />
+      <point x="1869.8809523809523" y="130.0" />
+      <point x="-11.619047619047706" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.cli.SetCommand" target="org.apache.zookeeper.cli.CliCommand">
+      <point x="0.0" y="-15.0" />
+      <point x="3103.0" y="80.0" />
+      <point x="1922.1666666666667" y="80.0" />
+      <point x="40.66666666666674" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.cli.CliWrapperException" target="org.apache.zookeeper.cli.CliException">
+      <point x="0.0" y="-15.0" />
+      <point x="255.0" y="375.0" />
+      <point x="447.4" y="375.0" />
+      <point x="-23.600000000000023" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.cli.CommandNotFoundException" target="org.apache.zookeeper.cli.CliException">
+      <point x="0.0" y="-15.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.cli.CloseCommand" target="org.apache.zookeeper.cli.CliCommand">
+      <point x="0.0" y="-15.0" />
+      <point x="248.0" y="60.0" />
+      <point x="1829.2142857142858" y="60.0" />
+      <point x="-52.28571428571422" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.cli.GetAclCommand" target="org.apache.zookeeper.cli.CliCommand">
+      <point x="0.0" y="-15.0" />
+      <point x="938.5" y="100.0" />
+      <point x="1852.452380952381" y="100.0" />
+      <point x="-29.047619047619037" y="15.0" />
+    </edge>
+    <edge source="org.apache.zookeeper.cli.GetAllChildrenNumberCommand" target="org.apache.zookeeper.cli.CliCommand">
+      <point x="0.0" y="-15.0" />
+      <point x="1315.0" y="120.0" />
+      <point x="1864.0714285714287" y="120.0" />
+      <point x="-17.42857142857133" y="15.0" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic Group" zoom="0.5080494196929989" x="1325.5" y="80.0" />
+  <SelectedNodes />
+  <Categories />
+  <SCOPE>All</SCOPE>
+  <VISIBILITY>private</VISIBILITY>
+</Diagram>
+

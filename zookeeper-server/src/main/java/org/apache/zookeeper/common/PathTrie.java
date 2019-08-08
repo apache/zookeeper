@@ -27,10 +27,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * 字典树，又称为单词查找树
+ *
  * a class that implements prefix matching for 
  * components of a filesystem path. the trie
  * looks like a tree with edges mapping to 
  * the component of a path.
+ * 为文件系统路径的*组件实现前缀匹配的类。 trie 看起来像一棵树，边缘映射到路径的组件。
  * example /ab/bc/cf would map to a trie
  *           /
  *        ab/
@@ -49,18 +52,23 @@ public class PathTrie {
     
     /**
      * the root node of PathTrie
+     * PathTrie的根节点
      */
     private final TrieNode rootNode ;
     
     static class TrieNode {
+        //属性，看源码显示,就是设置了配额的节点
         boolean property = false;
+        //记录子节点相对路径 与 TrieNode的mapping
         final Map<String, TrieNode> children;
+        // 父节点
         TrieNode parent = null;
         /**
          * create a trienode with parent
          * as parameter
          * @param parent the parent of this trienode
          */
+        //构造时，设置parent
         private TrieNode(TrieNode parent) {
             children = new HashMap<String, TrieNode>();
             this.parent = parent;
@@ -100,6 +108,7 @@ public class PathTrie {
             return this.property;
         }
         /**
+         * 添加childName的相对路径到map,注意:在调用方设置node的parent
          * add a child to the existing node
          * @param childName the string name of the child
          * @param node the node that is the child
@@ -125,14 +134,14 @@ public class PathTrie {
                 }
                 TrieNode childNode = children.get(childName);
                 // this is the only child node.
-                if (childNode.getChildren().length == 1) { 
-                    childNode.setParent(null);
+                if (childNode.getChildren().length == 1) {  //如果这个儿子只有1个儿子,那么就把这个儿子丢掉
+                    childNode.setParent(null);//被删除的子节点,parent设置为空
                     children.remove(childName);
                 }
                 else {
                     // their are more child nodes
                     // so just reset property.
-                    childNode.setProperty(false);
+                    childNode.setProperty(false);//否则这个儿子还有其他儿子，标记它不是没有配额限制,这里有个bug，就是数量为0时，也进入这个逻辑
                 }
             }
         }
@@ -143,6 +152,7 @@ public class PathTrie {
          * @param childName the name of the child
          * @return the child of a node
          */
+        //根据childName从map中取出对应的TrieNode
         TrieNode getChild(String childName) {
             synchronized(children) {
                if (!children.containsKey(childName)) {
@@ -160,6 +170,7 @@ public class PathTrie {
          * @param node to get its children
          * @return the string list of its children
          */
+        //获取子节点String[]列表
         String[] getChildren() {
            synchronized(children) {
                return children.keySet().toArray(new String[0]);

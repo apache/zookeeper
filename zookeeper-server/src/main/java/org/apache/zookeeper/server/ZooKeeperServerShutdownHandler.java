@@ -25,6 +25,7 @@ import org.apache.zookeeper.server.ZooKeeperServer.State;
  * ZooKeeper server shutdown handler which will be used to handle ERROR or
  * SHUTDOWN server state transitions, which in turn releases the associated
  * shutdown latch.
+ * ZooKeeper服务器关闭处理程序，它将用于处理ERROR或 SHUTDOWN服务器状态转换，从而释放相关的 shutdown锁存器。
  */
 class ZooKeeperServerShutdownHandler {
     private final CountDownLatch shutdownLatch;

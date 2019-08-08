@@ -27,6 +27,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * This is a helper class to maintain the bit to specific value and the
  * reversed value to bit mapping.
+ * 这是一个辅助类，用于将位保持为特定值，并将反转值保持为位映射。
  */
 public class BitMap<T> {
 
@@ -35,7 +36,7 @@ public class BitMap<T> {
 
     private final BitSet freedBitSet = new BitSet();
     private Integer nextBit = Integer.valueOf(0);
-
+    // 读写锁
     private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 
     @SuppressFBWarnings(value = "DLS_DEAD_LOCAL_STORE",
@@ -47,6 +48,9 @@ public class BitMap<T> {
          * the same watcher may watching thousands or even millions of nodes,
          * which will call add the same value of this function, check exist
          * using read lock will optimize the performance here.
+         * 针对将一次又一次添加相同值的代码进行优化，
+         * 更具体地说，这用于为观察者添加新位，并且相同的观察者可以观看数千甚至数百万个节点，
+         * 这将调用添加该功能的相同值，检查 使用读锁定存在将优化这里的性能。
          */
         Integer bit = getBit(value);
         if (bit != null) {

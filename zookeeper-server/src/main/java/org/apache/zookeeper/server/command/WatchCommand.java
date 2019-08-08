@@ -22,7 +22,7 @@ import java.io.PrintWriter;
 
 import org.apache.zookeeper.server.DataTree;
 import org.apache.zookeeper.server.ServerCnxn;
-
+// 这个命令可以把zookeeper中的所有Watches都导出文件
 public class WatchCommand extends AbstractFourLetterCommand {
     int len = 0;
     public WatchCommand(PrintWriter pw, ServerCnxn serverCnxn, int len) {

@@ -48,8 +48,14 @@ import org.slf4j.LoggerFactory;
  *             be null. This change the semantic of txnlog on the observer
  *             since it only contains committed txns.
  */
-public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
-        RequestProcessor {
+// 继承ZooKeeperCriticalThread，是一个关键重要线程
+// SyncRequestProcessor，该处理器将请求存入磁盘，其将请求批量的存入磁盘以提高效率，请求在写入磁盘之前是不会被转发到下个处理器的。
+// SyncRequestProcessor也继承了Thread类并实现了RequestProcessor接口，表示其可以作为线程使用。
+// SyncRequestProcessor维护了ZooKeeperServer实例，其用于获取ZooKeeper的数据库和其他信息；
+// 维护了一个处理请求的队列，其用于存放请求；
+// 维护了一个处理快照的线程，用于处理快照；
+// 同时还维护了一个等待被刷新到磁盘的请求队列。
+public class SyncRequestProcessor extends ZooKeeperCriticalThread implements RequestProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(SyncRequestProcessor.class);
 
@@ -57,36 +63,38 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
 
     private static final Request REQUEST_OF_DEATH = Request.requestOfDeath;
 
-    /** The number of log entries to log before starting a snapshot */
+    /** The number of log entries to log before starting a snapshot启动快照之前要记录的日志条目数 */
+     // 最少是2个
     private static int snapCount = ZooKeeperServer.getSnapCount();
 
-    private final BlockingQueue<Request> queuedRequests =
-        new LinkedBlockingQueue<Request>();
-
+    // 请求队列
+    private final BlockingQueue<Request> queuedRequests = new LinkedBlockingQueue<Request>();
+    // 信号量
     private final Semaphore snapThreadMutex = new Semaphore(1);
-
+    // Zookeeper服务器
     private final ZooKeeperServer zks;
-
+    // 下一个请求处理链的处理类
     private final RequestProcessor nextProcessor;
 
     /**
      * Transactions that have been written and are waiting to be flushed to
      * disk. Basically this is the list of SyncItems whose callbacks will be
      * invoked after flush returns successfully.
+     * 已写入并等待刷新到磁盘的事务。
+     * 基本上这是SyncItems的列表，其回调将在flush返回成功后被调用。
      */
+     // 等待被刷新到磁盘的请求队列
     private final Queue<Request> toFlush = new ArrayDeque<>(FLUSH_SIZE);
 
-    public SyncRequestProcessor(ZooKeeperServer zks,
-            RequestProcessor nextProcessor) {
-        super("SyncThread:" + zks.getServerId(), zks
-                .getZooKeeperServerListener());
+    public SyncRequestProcessor(ZooKeeperServer zks, RequestProcessor nextProcessor) {
+        super("SyncThread:" + zks.getServerId(), zks.getZooKeeperServerListener());
         this.zks = zks;
         this.nextProcessor = nextProcessor;
     }
 
     /**
-     * used by tests to check for changing
-     * snapcounts
+     * used by tests to check for changing snapcounts
+     * 测试用于检查更改快照计数
      * @param count
      */
     public static void setSnapCount(int count) {
@@ -104,10 +112,12 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
     @Override
     public void run() {
         try {
+             // 写日志数量初始化为0
             int logCount = 0;
 
             // we do this in an attempt to ensure that not all of the servers
             // in the ensemble take a snapshot at the same time
+            // 我们这样做是为了确保并非整体中的所有服务器都同时拍摄快照
             int randRoll = ThreadLocalRandom.current().nextInt(snapCount / 2, snapCount);
             while (true) {
                 Request si = queuedRequests.poll();
@@ -117,6 +127,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
                 }
   
                 if (si == REQUEST_OF_DEATH) {
+                    // 执行了关闭操作
                     break;
                 }
 
@@ -169,6 +180,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
         LOG.info("SyncRequestProcessor exited!");
     }
 
+    // 主要是刷出toFlush队列中的Request
     private void flush() throws IOException, RequestProcessorException {
       if (this.toFlush.isEmpty()) {
           return;
@@ -177,13 +189,16 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
       zks.getZKDatabase().commit();
 
       if (this.nextProcessor == null) {
+          // 如果处理链没有下一个处理程序，就直接清除toFlush中的内容
         this.toFlush.clear();
       } else {
           while (!this.toFlush.isEmpty()) {
+              // 移除并取出Request执行下一个处理程序
               final Request i = this.toFlush.remove();
               this.nextProcessor.processRequest(i);
           }
           if (this.nextProcessor instanceof Flushable) {
+              //如果下一个请求处理程序是Flushable
               ((Flushable)this.nextProcessor).flush();
           } 
       }
@@ -191,13 +206,14 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
 
     public void shutdown() {
         LOG.info("Shutting down");
+        // 向请求队列中添加REQUEST_OF_DEATH
         queuedRequests.add(REQUEST_OF_DEATH);
         try {
-            this.join();
+            this.join();// 等待子线程处理结束
             this.flush();
         } catch (InterruptedException e) {
             LOG.warn("Interrupted while wating for " + this + " to finish");
-            Thread.currentThread().interrupt();
+            Thread.currentThread().interrupt(); // 中断线程
         } catch (IOException e) {
             LOG.warn("Got IO exception during shutdown");
         } catch (RequestProcessorException e) {

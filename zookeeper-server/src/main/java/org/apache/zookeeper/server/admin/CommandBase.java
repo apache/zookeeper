@@ -21,14 +21,14 @@ package org.apache.zookeeper.server.admin;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
+// web页面命令的基类
 public abstract class CommandBase implements Command {
     private final String primaryName;
     private final Set<String> names;
     private final String doc;
 
     /**
-     * @param names The possible names of this command, with the primary name first.
+     * @param names The possible names of this command, with the primary name first.此命令的可能名称，首先是主名称
      */
     protected CommandBase(List<String> names) {
         this(names, null);

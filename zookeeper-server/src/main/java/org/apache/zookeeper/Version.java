@@ -21,6 +21,9 @@ package org.apache.zookeeper;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.zookeeper.server.ExitCode;
 
+import static com.sun.org.apache.bcel.internal.Constants.MAJOR;
+import static com.sun.org.apache.bcel.internal.Constants.MINOR;
+
 public class Version implements org.apache.zookeeper.version.Info {
 
     /*

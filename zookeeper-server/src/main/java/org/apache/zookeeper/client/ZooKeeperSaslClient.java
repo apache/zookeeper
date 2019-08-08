@@ -99,7 +99,7 @@ public class ZooKeeperSaslClient {
     private SaslState saslState = SaslState.INITIAL;
 
     private boolean gotLastPacket = false;
-    /** informational message indicating the current configuration status */
+    /** informational message indicating the current configuration status 指示当前配置状态的信息性消息*/
     private final String configStatus;
 
     public SaslState getSaslState() {

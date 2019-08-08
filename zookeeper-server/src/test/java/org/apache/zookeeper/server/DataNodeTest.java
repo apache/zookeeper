@@ -29,7 +29,7 @@ public class DataNodeTest {
     public void testGetChildrenShouldReturnEmptySetWhenThereAreNoChidren() {
         // create DataNode and call getChildren
         DataNode dataNode = new DataNode();
-        Set<String> children = dataNode.getChildren();
+        Set<String> children = dataNode.getChildren();  // 返回的是DataNode.EMPTY_SET
         assertNotNull(children);
         assertEquals(0, children.size());
 
@@ -37,11 +37,11 @@ public class DataNodeTest {
         String child = "child";
         dataNode.addChild(child);
         dataNode.removeChild(child);
-        children = dataNode.getChildren();
+        children = dataNode.getChildren();  // 返回的是dataNode.children
         assertNotNull(children);
         assertEquals(0, children.size());
 
-        // Returned empty set must not be modifiable
+        // Returned empty set must not be modifiable返回的空集必须不可修改
         children = dataNode.getChildren();
         try {
             children.add("new child");

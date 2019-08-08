@@ -418,7 +418,9 @@ public class ClientCnxn {
     private Object eventOfDeath = new Object();
 
     private static class WatcherSetEventPair {
+        //事件触发需要被通知的watches集合
         private final Set<Watcher> watchers;
+        //事件
         private final WatchedEvent event;
 
         public WatcherSetEventPair(Set<Watcher> watchers, WatchedEvent event) {
@@ -1279,6 +1281,7 @@ public class ClientCnxn {
                         }
                         // At this point, there might still be new packets appended to outgoingQueue.
                         // they will be handled in next connection or cleared up if closed.
+                        // 此时，可能仍有新的数据包附加到outgoingQueue。 //它们将在下一个连接中处理或在关闭时清除。
                         cleanAndNotifyState();
                     }
                 }

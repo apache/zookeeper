@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * 共享实用程序
  * Shared utilities
  */
 public class ManagedUtil {
@@ -39,6 +40,7 @@ public class ManagedUtil {
         try {
             Class.forName("org.apache.log4j.spi.LoggerRepository");
 
+            // 系统配置里拿
             if (Boolean.getBoolean("zookeeper.jmx.log4j.disable")) {
                 LOG.info("Log4j found but jmx support is disabled.");
             } else {
@@ -55,11 +57,12 @@ public class ManagedUtil {
 
 
     /**
-     * Register the log4j JMX mbeans. Set environment variable
-     * "zookeeper.jmx.log4j.disable" to true to disable registration.
+     * Register the log4j JMX mbeans. Set environment variable注册log4j JMX mbeans。设置环境变量
+     * "zookeeper.jmx.log4j.disable" to true to disable registration. “zookeeper.jmx.log4j.disable”为true表示禁用注册。
      * @see http://logging.apache.org/log4j/1.2/apidocs/index.html?org/apache/log4j/jmx/package-summary.html
      * @throws JMException if registration fails
      */
+    // 注册Log4jMBeans
     @SuppressWarnings("rawtypes")
     public static void registerLog4jMBeans() throws JMException {
         if (isLog4jJmxEnabled()) {
@@ -67,17 +70,18 @@ public class ManagedUtil {
             MBeanServer mbs = MBeanRegistry.getInstance().getPlatformMBeanServer();
 
             try {
-                // Create and Register the top level Log4J MBean
+                // Create and Register the top level Log4J MBean 创建并注册顶级Log4J MBean
                 // org.apache.log4j.jmx.HierarchyDynamicMBean hdm = new org.apache.log4j.jmx.HierarchyDynamicMBean();
                 Object hdm = Class.forName("org.apache.log4j.jmx.HierarchyDynamicMBean").getConstructor().newInstance();
 
                 String mbean = System.getProperty("zookeeper.jmx.log4j.mbean", "log4j:hierarchy=default");
                 ObjectName mbo = new ObjectName(mbean);
+                // 往MBeanServer中注册org.apache.log4j.jmx.HierarchyDynamicMBean和zookeeper.jmx.log4j.mbean
                 mbs.registerMBean(hdm, mbo);
 
+                // 下面都是哎设置日志的MBean监控
                 // Add the root logger to the Hierarchy MBean
-                // org.apache.log4j.Logger rootLogger =
-                // org.apache.log4j.Logger.getRootLogger();
+                // org.apache.log4j.Logger rootLogger = org.apache.log4j.Logger.getRootLogger();
                 Object rootLogger = Class.forName("org.apache.log4j.Logger")
                         .getMethod("getRootLogger", (Class<?>[]) null)
                         .invoke(null, (Object[]) null);
@@ -91,8 +95,7 @@ public class ManagedUtil {
 
                 // Get each logger from the Log4J Repository and add it to the
                 // Hierarchy MBean created above.
-                // org.apache.log4j.spi.LoggerRepository r =
-                // org.apache.log4j.LogManager.getLoggerRepository();
+                // org.apache.log4j.spi.LoggerRepository r = org.apache.log4j.LogManager.getLoggerRepository();
                 Object r = Class.forName("org.apache.log4j.LogManager")
                         .getMethod("getLoggerRepository", (Class<?>[]) null)
                         .invoke(null, (Object[]) null);
