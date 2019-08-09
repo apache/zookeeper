@@ -404,7 +404,6 @@ public class Learner {
         boolean snapshotNeeded = true;
         boolean syncSnapshot = false;
         readPacket(qp);
-        Deque<Long> packetsCommitted = new ArrayDeque<>();
         Deque<PacketInFlight> packetsNotCommitted = new ArrayDeque<>();
         synchronized (zk) {
             if (qp.getType() == Leader.DIFF) {
@@ -467,6 +466,11 @@ public class Learner {
             //If we are not going to take the snapshot be sure the transactions are not applied in memory
             // but written out to the transaction log
             boolean writeToTxnLog = !snapshotNeeded;
+
+            // start zk here so that txns can be processed inside the pipeline
+            LOG.info("Startup ZK instance");
+            zk.startup();
+
             // we are now going to start getting transactions to apply followed by an UPTODATE
             outerLoop:
             while (self.isRunning()) {
@@ -503,15 +507,23 @@ public class Learner {
                             throw new Exception("changes proposed in reconfig");
                         }
                     }
-                    if (!writeToTxnLog) {
-                        if (pif.hdr.getZxid() != qp.getZxid()) {
-                            LOG.warn("Committing " + qp.getZxid() + ", but next proposal is " + pif.hdr.getZxid());
-                        } else {
-                            zk.processTxn(pif.hdr, pif.rec);
-                            packetsNotCommitted.remove();
-                        }
+                    long zxid = qp.getZxid();
+                    if (pif.hdr.getZxid() != zxid) {
+                        LOG.warn("Committing 0x{}, but next proposal is 0x{}", 
+                                Long.toHexString(qp.getZxid()), Long.toHexString(pif.hdr.getZxid()));
                     } else {
-                        packetsCommitted.add(qp.getZxid());
+                        if (!writeToTxnLog) {
+                            zk.processTxn(pif.hdr, pif.rec);
+                        } else {
+                            if (zk instanceof FollowerZooKeeperServer) {
+                                FollowerZooKeeperServer fzk = (FollowerZooKeeperServer)zk;
+                                fzk.logRequest(pif.hdr, pif.rec);
+                                fzk.commit(zxid);
+                            } else {
+                                throw new UnsupportedOperationException("Unsupported server type");
+                            }
+                        }
+                        packetsNotCommitted.remove();
                     }
                     break;
                 case Leader.INFORM:
@@ -546,8 +558,14 @@ public class Learner {
                         // Apply to db directly if we haven't taken the snapshot
                         zk.processTxn(packet.hdr, packet.rec);
                     } else {
-                        packetsNotCommitted.add(packet);
-                        packetsCommitted.add(qp.getZxid());
+                        if (zk instanceof ObserverZooKeeperServer) {
+                            ObserverZooKeeperServer ozk = (ObserverZooKeeperServer) zk;
+                            Request request = new Request(packet.hdr.getClientId(),
+                                    packet.hdr.getCxid(), packet.hdr.getType(), packet.hdr, packet.rec, packet.hdr.getZxid());
+                            ozk.commitRequest(request);
+                        } else {
+                            throw new UnsupportedOperationException("Unsupported server type");
+                        }
                     }
 
                     break;                
@@ -560,10 +578,22 @@ public class Learner {
                            throw new Exception("changes proposed in reconfig");
                        }
                     }
+                    // Handle all proposals which haven't been committed
+                    if (zk instanceof FollowerZooKeeperServer) {
+                        FollowerZooKeeperServer fzk = (FollowerZooKeeperServer)zk;
+                        for (PacketInFlight p: packetsNotCommitted) {
+                            fzk.logRequest(p.hdr, p.rec);
+                        }
+                    }
                     if (isPreZAB1_0) {
                         zk.takeSnapshot(syncSnapshot);
                         self.setCurrentEpoch(newEpoch);
                     }
+
+                    ack.setZxid(ZxidUtils.makeZxid(newEpoch, 0));
+                    writePacket(ack, true);
+
+                    LOG.info("Start serving client traffic");
                     self.setZooKeeperServer(zk);
                     self.adminServer.setZooKeeperServer(zk);
                     break outerLoop;
@@ -588,15 +618,14 @@ public class Learner {
                     writeToTxnLog = true; //Anything after this needs to go to the transaction log, not applied directly in memory
                     isPreZAB1_0 = false;
                     writePacket(new QuorumPacket(Leader.ACK, newLeaderZxid, null, null), true);
+
                     break;
                 }
             }
         }
-        ack.setZxid(ZxidUtils.makeZxid(newEpoch, 0));
-        writePacket(ack, true);
         sock.setSoTimeout(self.tickTime * self.syncLimit);
         self.setSyncMode(QuorumPeer.SyncMode.NONE);
-        zk.startup();
+
         /*
          * Update the election vote here to ensure that all members of the
          * ensemble report the same vote to new servers that start up and
@@ -605,41 +634,6 @@ public class Learner {
          * @see https://issues.apache.org/jira/browse/ZOOKEEPER-1732
          */
         self.updateElectionVote(newEpoch);
-
-        // We need to log the stuff that came in between the snapshot and the uptodate
-        if (zk instanceof FollowerZooKeeperServer) {
-            FollowerZooKeeperServer fzk = (FollowerZooKeeperServer)zk;
-            for(PacketInFlight p: packetsNotCommitted) {
-                fzk.logRequest(p.hdr, p.rec);
-            }
-            for(Long zxid: packetsCommitted) {
-                fzk.commit(zxid);
-            }
-        } else if (zk instanceof ObserverZooKeeperServer) {
-            // Similar to follower, we need to log requests between the snapshot
-            // and UPTODATE
-            ObserverZooKeeperServer ozk = (ObserverZooKeeperServer) zk;
-            for (PacketInFlight p : packetsNotCommitted) {
-                Long zxid = packetsCommitted.peekFirst();
-                if (p.hdr.getZxid() != zxid) {
-                    // log warning message if there is no matching commit
-                    // old leader send outstanding proposal to observer
-                    LOG.warn("Committing " + Long.toHexString(zxid)
-                            + ", but next proposal is "
-                            + Long.toHexString(p.hdr.getZxid()));
-                    continue;
-                }
-                packetsCommitted.remove();
-                Request request = new Request(null, p.hdr.getClientId(),
-                        p.hdr.getCxid(), p.hdr.getType(), null, null);
-                request.setTxn(p.rec);
-                request.setHdr(p.hdr);
-                ozk.commitRequest(request);
-            }
-        } else {
-            // New server type need to handle in-flight packets
-            throw new UnsupportedOperationException("Unknown server type");
-        }
     }
     
     protected void revalidate(QuorumPacket qp) throws IOException {
