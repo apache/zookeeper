@@ -256,7 +256,7 @@ public class DataTreeTest extends ZKTestCase {
         PathTrie pTrie = (PathTrie)pfield.get(dserTree);
 
         //Check that the node path is removed from pTrie
-        Assert.assertEquals("/bug is still in pTrie", "", pTrie.findMaxPrefix("/bug"));
+        Assert.assertEquals("/bug is still in pTrie", "/", pTrie.findMaxPrefix("/bug"));
     }
 
     /*
