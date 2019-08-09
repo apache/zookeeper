@@ -151,7 +151,7 @@ public class QuorumUtil {
 
         LOG.info("Checking ports " + hostPort);
         for (String hp : hostPort.split(",")) {
-            Assert.assertTrue("waiting for server up", ClientBase.waitForServerUp(hp,
+            Assert.assertTrue("waiting for server " + hp + " up", ClientBase.waitForServerUp(hp,
                     ClientBase.CONNECTION_TIMEOUT));
             LOG.info(hp + " is accepting client connections");
         }

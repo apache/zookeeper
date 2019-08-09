@@ -384,7 +384,6 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
           Assert.assertTrue("All servers should join the quorum", servers.mt[falseLeader].main.quorumPeer.follower != null);
 
           // to keep the quorum peer running and force it to go into the looking state, we kill leader election
-          // and close the connection to the leader
           servers.mt[falseLeader].main.quorumPeer.electionAlg.shutdown();
           servers.mt[falseLeader].main.quorumPeer.follower.getSocket().close();
 

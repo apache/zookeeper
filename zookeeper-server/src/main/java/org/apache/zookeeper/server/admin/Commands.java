@@ -18,16 +18,8 @@
 
 package org.apache.zookeeper.server.admin;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.net.InetSocketAddress;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
@@ -644,10 +636,8 @@ public class Commands {
                 this.view = view.entrySet().stream()
                         .filter(e -> e.getValue().addr != null)
                         .collect(Collectors.toMap(Map.Entry::getKey,
-                                e -> String.format("%s:%d%s:%s%s",
-                                        QuorumPeer.QuorumServer.delimitedHostString(e.getValue().addr),
-                                        e.getValue().addr.getPort(),
-                                        e.getValue().electionAddr == null ? "" : ":" + e.getValue().electionAddr.getPort(),
+                                e -> String.format("%s:%s%s",
+                                        getMultiAddressString(e.getValue()),
                                         e.getValue().type.equals(QuorumPeer.LearnerType.PARTICIPANT) ? "participant" : "observer",
                                         e.getValue().clientAddr ==null || e.getValue().isClientAddrFromStatic ? "" :
                                                 String.format(";%s:%d",
@@ -657,11 +647,31 @@ public class Commands {
                                 TreeMap::new));
             }
 
+            private String getMultiAddressString(QuorumPeer.QuorumServer qs) {
+                return qs.addr.getAllAddresses().stream()
+                        .map(address -> getSingleAddressString(qs, address))
+                        .collect(Collectors.joining(","));
+            }
+
+            private String getSingleAddressString(QuorumPeer.QuorumServer qs, InetSocketAddress address) {
+                final String addressHostString = address.getHostString();
+                final String delimitedHostString = QuorumPeer.QuorumServer.delimitedHostString(address);
+
+                Optional<InetSocketAddress> matchingElectionAddress = qs.electionAddr.getAllAddresses().stream()
+                        .filter(electionAddress -> electionAddress.getHostString().equals(addressHostString))
+                        .findFirst();
+                final String electionPort = matchingElectionAddress.map(e-> ":" + e.getPort()).orElse("");
+
+                return String.format("%s:%d%s", delimitedHostString, address.getPort(), electionPort);
+            }
+
             @JsonAnyGetter
             public Map<Long, String> getView() {
                 return view;
             }
         }
+
+
     }
 
     /**

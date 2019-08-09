@@ -20,6 +20,8 @@ package org.apache.zookeeper.server.quorum;
 
 import org.apache.zookeeper.jmx.ZKMBeanInfo;
 
+import java.util.stream.Collectors;
+
 /**
  * A remote peer bean only provides limited information about the remote peer,
  * and the peer cannot be managed remotely. 
@@ -45,11 +47,15 @@ public class RemotePeerBean implements RemotePeerMXBean,ZKMBeanInfo {
     }
 
     public String getQuorumAddress() {
-        return peer.addr.getHostString()+":"+peer.addr.getPort();
+        return peer.addr.getAllAddresses().stream()
+                .map(address -> String.format("%s:%d", address.getHostString(), address.getPort()))
+                .collect(Collectors.joining(","));
     }
 
     public String getElectionAddress() {
-        return peer.electionAddr.getHostString() + ":" + peer.electionAddr.getPort();
+        return peer.electionAddr.getAllAddresses().stream()
+                .map(address -> String.format("%s:%d", address.getHostString(), address.getPort()))
+                .collect(Collectors.joining(","));
     }
 
     public String getClientAddress() {

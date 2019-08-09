@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.net.Socket;
@@ -47,10 +47,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZKTestCase;
-import org.apache.zookeeper.server.quorum.QuorumCnxManager;
 import org.apache.zookeeper.server.quorum.QuorumCnxManager.Message;
 import org.apache.zookeeper.server.quorum.QuorumCnxManager.InitialMessage;
-import org.apache.zookeeper.server.quorum.QuorumPeer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
 import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
 import org.apache.zookeeper.server.quorum.QuorumPeer.ServerState;
@@ -196,15 +194,14 @@ public class CnxManagerTest extends ZKTestCase {
 
     @Test
     public void testCnxManagerTimeout() throws Exception {
-        Random rand = new Random();
-        byte b = (byte) rand.nextInt();
+        int address = ThreadLocalRandom.current().nextInt(1, 255);
         int deadPort = PortAssignment.unique();
-        String deadAddress = "10.1.1." + b;
+        String deadAddress = "10.1.1." + address;
 
         LOG.info("This is the dead address I'm trying: " + deadAddress);
 
         peers.put(Long.valueOf(2),
-                new QuorumServer(2,
+                new QuorumServer(2L,
                         new InetSocketAddress(deadAddress, deadPort),
                         new InetSocketAddress(deadAddress, PortAssignment.unique()),
                         new InetSocketAddress(deadAddress, PortAssignment.unique())));
@@ -223,7 +220,7 @@ public class CnxManagerTest extends ZKTestCase {
         cnxManager.toSend(2L, createMsg(ServerState.LOOKING.ordinal(), 1, -1, 1));
         long end = Time.currentElapsedTime();
 
-        if((end - begin) > 6000) Assert.fail("Waited more than necessary");
+        if((end - begin) > 10_000) Assert.fail("Waited more than necessary");
         cnxManager.halt();
         Assert.assertFalse(cnxManager.listener.isAlive());
     }
@@ -247,18 +244,18 @@ public class CnxManagerTest extends ZKTestCase {
             LOG.error("Null listener when initializing cnx manager");
         }
 
-        int port = peers.get(peer.getId()).electionAddr.getPort();
-        LOG.info("Election port: " + port);
+        InetSocketAddress address = peers.get(peer.getId()).electionAddr.getReachableOrOne();
+        LOG.info("Election port: " + address.getPort());
 
         Thread.sleep(1000);
 
         SocketChannel sc = SocketChannel.open();
-        sc.socket().connect(peers.get(1L).electionAddr, 5000);
+        sc.socket().connect(address, 5000);
 
-        InetSocketAddress otherAddr = peers.get(Long.valueOf(2)).electionAddr;
+        InetSocketAddress otherAddr = peers.get(2L).electionAddr.getReachableOrOne();
         DataOutputStream dout = new DataOutputStream(sc.socket().getOutputStream());
         dout.writeLong(QuorumCnxManager.PROTOCOL_VERSION);
-        dout.writeLong(2);
+        dout.writeLong(2L);
         String addr = otherAddr.getHostString()+ ":" + otherAddr.getPort();
         byte[] addr_bytes = addr.getBytes();
         dout.writeInt(addr_bytes.length);
@@ -309,7 +306,7 @@ public class CnxManagerTest extends ZKTestCase {
                                                2181, 3, myid, 1000, 2, 2, 2);
         final QuorumCnxManager cnxManager = peer.createCnxnManager();
         final QuorumCnxManager.Listener listener = cnxManager.listener;
-        final AtomicBoolean errorHappend = new AtomicBoolean();
+        final AtomicBoolean errorHappend = new AtomicBoolean(false);
         listener.setSocketBindErrorHandler(() -> errorHappend.set(true));
         listener.start();
         // listener thread should stop and throws error which notify QuorumPeer about error.
@@ -341,13 +338,13 @@ public class CnxManagerTest extends ZKTestCase {
         } else {
             LOG.error("Null listener when initializing cnx manager");
         }
-        int port = peers.get(peer.getId()).electionAddr.getPort();
-        LOG.info("Election port: " + port);
+        InetSocketAddress address = peers.get(peer.getId()).electionAddr.getReachableOrOne();
+        LOG.info("Election port: " + address.getPort());
 
         Thread.sleep(1000);
 
         SocketChannel sc = SocketChannel.open();
-        sc.socket().connect(peers.get(1L).electionAddr, 5000);
+        sc.socket().connect(address, 5000);
 
         /*
          * Write id (3.4.6 protocol). This previously caused a NPE in
@@ -388,12 +385,12 @@ public class CnxManagerTest extends ZKTestCase {
         } else {
             LOG.error("Null listener when initializing cnx manager");
         }
-        int port = peers.get(peer.getId()).electionAddr.getPort();
-        LOG.info("Election port: " + port);
+        InetSocketAddress address = peers.get(peer.getId()).electionAddr.getReachableOrOne();
+        LOG.info("Election port: " + address.getPort());
         Thread.sleep(1000);
 
         Socket sock = new Socket();
-        sock.connect(peers.get(1L).electionAddr, 5000);
+        sock.connect(address, 5000);
         long begin = Time.currentElapsedTime();
         // Read without sending data. Verify timeout.
         cnxManager.receiveConnection(sock);
