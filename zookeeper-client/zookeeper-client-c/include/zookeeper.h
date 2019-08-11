@@ -1694,11 +1694,6 @@ typedef int (*sasl_completion_t)(int rc, zhandle_t *zh, zoo_sasl_conn_t *conn,
 ZOOAPI int zoo_asasl(zhandle_t *zh, zoo_sasl_conn_t *conn, const char *clientout,
         unsigned clientoutlen, sasl_completion_t cptr);
 
-struct sasl_completion_ctx {
-    zhandle_t *zh;
-    zoo_sasl_conn_t *conn;
-};
-
 #ifdef THREADED
 /**
  * \brief create a node synchronously.

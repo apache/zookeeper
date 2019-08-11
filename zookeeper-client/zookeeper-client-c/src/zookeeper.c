@@ -2780,15 +2780,13 @@ static void deserialize_response(zhandle_t *zh, int type, int xid, int failed, i
         LOG_DEBUG(LOGCALLBACK(zh), "Calling COMPLETION_SASL for xid=%#x failed=%d rc=%d",
                   cptr->xid, failed, rc);
         if (failed) {
-            struct sasl_completion_ctx *sctx =
-                    (struct sasl_completion_ctx *) cptr->data;
-            cptr->c.sasl_result(rc, sctx->zh, sctx->conn, NULL, 0);
+            zoo_sasl_conn_t *conn = (zoo_sasl_conn_t *)cptr->data;
+            cptr->c.sasl_result(rc, zh, conn, NULL, 0);
         } else {
-            struct sasl_completion_ctx *sctx =
-                    (struct sasl_completion_ctx *) cptr->data;
+            zoo_sasl_conn_t *conn = (zoo_sasl_conn_t *)cptr->data;
             struct SetSASLResponse res;
             deserialize_SetSASLResponse(ia, "reply", &res);
-            cptr->c.sasl_result(rc, sctx->zh, sctx->conn,
+            cptr->c.sasl_result(rc, zh, conn,
                     res.token.buff, res.token.len);
             deallocate_SetSASLResponse(&res);
         }
@@ -3260,9 +3258,9 @@ static int add_multi_completion(zhandle_t *zh, int xid, void_completion_t dc,
 }
 
 static int add_sasl_completion(zhandle_t *zh, int xid, sasl_completion_t dc,
-        const void *data, completion_head_t *clist)
+        const void *data)
 {
-    return add_completion(zh, xid, COMPLETION_SASL, dc, data, 0,0, clist);
+    return add_completion(zh, xid, COMPLETION_SASL, dc, data, 0, 0, 0);
 }
 
 int zookeeper_close(zhandle_t *zh)
@@ -4289,7 +4287,7 @@ done:
 }
 
 static int queue_sasl_request(zhandle_t *zh, const char *data, unsigned len, void* cptr,
-        void *ctx) {
+        void *completion_data) {
     struct oarchive *oa;
     int rc;
 
@@ -4303,7 +4301,7 @@ static int queue_sasl_request(zhandle_t *zh, const char *data, unsigned len, voi
     rc = rc < 0 ? rc : serialize_GetSASLRequest(oa, "req", &req);
 
     enter_critical(zh);
-    rc = rc < 0 ? rc : add_sasl_completion(zh, h.xid, cptr, ctx, NULL);
+    rc = rc < 0 ? rc : add_sasl_completion(zh, h.xid, cptr, completion_data);
     rc = rc < 0 ? rc : queue_buffer_bytes(&zh->to_send, get_buffer(oa),
             get_buffer_len(oa));
     leave_critical(zh);
@@ -4317,14 +4315,8 @@ static int queue_sasl_request(zhandle_t *zh, const char *data, unsigned len, voi
 int zoo_asasl(zhandle_t *zh, zoo_sasl_conn_t *conn, const char *clientout,
         unsigned clientoutlen, sasl_completion_t cptr) {
     int r;
-    struct sasl_completion_ctx *sctx =
-            (struct sasl_completion_ctx *) malloc(
-                    sizeof(struct sasl_completion_ctx));
-    sctx->zh = zh;
-    sctx->conn = conn;
 
-    r = queue_sasl_request(zh, clientout, clientoutlen, cptr, sctx);
-    free(sctx);
+    r = queue_sasl_request(zh, clientout, clientoutlen, cptr, conn);
 
     return r;
 }
