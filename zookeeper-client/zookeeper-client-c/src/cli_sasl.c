@@ -68,6 +68,7 @@ char *host;
 char *mech;
 char *user;
 char *realm;
+char *password_file;
 #endif
 
 void processline(char *line);
@@ -117,9 +118,29 @@ static int getsecret(sasl_conn_t *conn, void *context __attribute__((unused)),
     )
         return SASL_BADPARAM;
 
-    password = getpassphrase("Password: ");
-    if (!password)
-        return SASL_FAIL;
+    if (password_file) {
+        char buf[1024];
+        char *p;
+        FILE *fh = fopen(password_file, "rt");
+        if (!fh)
+            return SASL_FAIL;
+
+        if (!fgets(buf, sizeof(buf), fh)) {
+            fclose(fh);
+            return SASL_FAIL;
+        }
+
+        p = strrchr(buf, '\n');
+        if (p)
+            *p = '\0';
+
+        password = buf;
+    } else {
+        password = getpassphrase("Password: ");
+
+        if (!password)
+            return SASL_FAIL;
+    }
 
     len = strlen(password);
 
@@ -628,7 +649,7 @@ int main(int argc, char **argv) {
     FILE *fh;
     int c;
 #ifdef SASL
-    while ((c = getopt(argc, argv, "u:h:i:s:m:c:r:")) != EOF) {
+    while ((c = getopt(argc, argv, "u:h:i:s:m:c:r:f:")) != EOF) {
     switch(c) {
     case 'u':
         user = optarg;
@@ -648,6 +669,10 @@ int main(int argc, char **argv) {
 
     case 'r':
         realm = optarg;
+        break;
+
+    case 'f':
+        password_file = optarg;
         break;
 #else
     while ((c = getopt(argc, argv, "i:c:")) != EOF) {
