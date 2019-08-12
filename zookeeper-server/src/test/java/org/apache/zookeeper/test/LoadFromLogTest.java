@@ -20,9 +20,11 @@ package org.apache.zookeeper.test;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException.NoNodeException;
+import org.apache.zookeeper.PortAssignment;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
+import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.SyncRequestProcessor;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnLog;
@@ -38,7 +40,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.io.StreamCorruptedException;
+import java.nio.channels.FileChannel;
+import java.util.List;
 
 public class LoadFromLogTest extends ClientBase {
     private static final int NUM_MESSAGES = 300;
@@ -76,14 +83,14 @@ public class LoadFromLogTest extends ClientBase {
         File logDir = new File(tmpDir, FileTxnSnapLog.version + FileTxnSnapLog.VERSION);
         FileTxnLog txnLog = new FileTxnLog(logDir);
         TxnIterator itr = txnLog.read(0);
-        
+
         // Check that storage space return some value
         FileTxnIterator fileItr = (FileTxnIterator) itr;
         long storageSize = fileItr.getStorageSize();
         LOG.info("Txnlog size: " + storageSize + " bytes");
         Assert.assertTrue("Storage size is greater than zero ",
                 (storageSize > 0));
-        
+
         long expectedZxid = 0;
         long lastZxid = 0;
         TxnHeader hdr;
@@ -306,5 +313,91 @@ public class LoadFromLogTest extends ClientBase {
         stopServer();
 
         startServer();
+    }
+
+    /**
+     * Verify that FileTxnIterator doesn't throw an EOFException when the
+     * transaction log header is incomplete.
+     */
+    @Test
+    public void testIncompleteHeader() throws Exception {
+        ClientBase.setupTestEnv();
+
+        // Generate some transactions that will get logged.
+        ZooKeeper zk = ClientBase.createZKClient(hostPort);
+        try {
+            for (int i = 0; i < NUM_MESSAGES; i++) {
+                zk.create("/load-database-" + i, new byte[0],
+                          Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            }
+        } finally {
+            zk.close();
+        }
+
+        File logDir = new File(tmpDir, FileTxnSnapLog.version +
+                                        FileTxnSnapLog.VERSION);
+        FileTxnLog.FileTxnIterator fileItr = new FileTxnLog.FileTxnIterator(logDir, 0);
+        List<File> logFiles = fileItr.getStoredFiles();
+        int numTransactions = 0;
+        while (fileItr.next()) {
+            numTransactions++;
+        }
+        Assert.assertTrue("Verify the number of log files",
+                          logFiles.size() > 0);
+        Assert.assertTrue("Verify the number of transactions",
+                          numTransactions >= NUM_MESSAGES);
+
+        // Truncate the last log file.
+        File lastLogFile = logFiles.get(logFiles.size() - 1);
+        FileChannel channel = new FileOutputStream(lastLogFile).getChannel();
+        channel.truncate(0);
+        channel.close();
+
+        // This shouldn't thow Exception.
+        fileItr = new FileTxnLog.FileTxnIterator(logDir, 0);
+        while (fileItr.next()) {
+        }
+
+        // Verify that the truncated log file does not exist anymore.
+        Assert.assertFalse("Verify truncated log file has been deleted",
+                           lastLogFile.exists());
+    }
+
+    /**
+     * Verifies that FileTxnIterator throws CorruptedStreamException if the
+     * magic number is corrupted.
+     */
+    @Test(expected = StreamCorruptedException.class)
+    public void testCorruptMagicNumber() throws Exception {
+        ClientBase.setupTestEnv();
+
+        // Generate some transactions that will get logged.
+        ZooKeeper zk = ClientBase.createZKClient(hostPort);
+        try {
+            for (int i = 0; i < NUM_MESSAGES; i++) {
+                zk.create("/load-database-" + i, new byte[0],
+                          Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+            }
+        } finally {
+            zk.close();
+        }
+
+        File logDir = new File(tmpDir, FileTxnSnapLog.version +
+                                        FileTxnSnapLog.VERSION);
+        FileTxnLog.FileTxnIterator fileItr = new FileTxnLog.FileTxnIterator(logDir, 0);
+        List<File> logFiles = fileItr.getStoredFiles();
+        Assert.assertTrue("Verify the number of log files",
+                          logFiles.size() > 0);
+
+        // Corrupt the magic number.
+        File lastLogFile = logFiles.get(logFiles.size() - 1);
+        RandomAccessFile file = new RandomAccessFile(lastLogFile, "rw");
+        file.seek(0);
+        file.writeByte(123);
+        file.close();
+
+        // This should throw CorruptedStreamException.
+        while (fileItr.next()) {
+        }
     }
 }
