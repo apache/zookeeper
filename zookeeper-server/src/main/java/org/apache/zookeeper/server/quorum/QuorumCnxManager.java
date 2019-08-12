@@ -1263,13 +1263,14 @@ public class QuorumCnxManager {
 
         public void asyncValidateIfSocketIsStillReachable() {
             if(ongoingAsyncValidation.compareAndSet(false, true)) {
-                Thread validator = new Thread(() -> {
+                new Thread(() -> {
                     LOG.debug("validate if destination address is reachable for sid {}", sid);
                     if(sock != null) {
                         InetAddress address = sock.getInetAddress();
                         try {
                             if (address.isReachable(500)) {
                                 LOG.debug("destination address {} is reachable for sid {}", address.toString(), sid);
+                                ongoingAsyncValidation.set(false);
                                 return;
                             }
                         } catch (NullPointerException | IOException ignored) {
@@ -1277,15 +1278,7 @@ public class QuorumCnxManager {
                         LOG.warn("destination address {} not reachable anymore, shutting down the SendWorker for sid {}", address.toString(), sid);
                         this.finish();
                     }
-                });
-                validator.start();
-                try {
-                    validator.join();
-                } catch (InterruptedException ignored) {
-                    // we don't care if the validation was interrupted. If SenderWorker is not working, we will
-                    // try to connect and re-validate later
-                }
-                ongoingAsyncValidation.set(false);
+                }).start();
             } else {
                 LOG.debug("validation of destination address for sid {} is skipped (it is already running)", sid);
             }
