@@ -792,6 +792,7 @@
             <exclude>src/main/resources/markdown/skin/*</exclude>
             <exclude>src/main/resources/markdown/html/*</exclude>
             <exclude>src/main/resources/markdown/images/*</exclude>
+            <exclude>tests/jaas.digest.server.conf</exclude>
             <!-- contrib -->
             <exclude>zookeeper-contrib-monitoring/JMX-RESOURCES</exclude>
             <exclude>zookeeper-contrib-fatjar/src/main/resources/mainClasses</exclude>
