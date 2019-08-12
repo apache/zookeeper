@@ -894,7 +894,7 @@ public class ZooKeeper implements AutoCloseable {
             HostProvider hostProvider, int sessionTimeout, ZooKeeper zooKeeper,
             ClientWatchManager watcher, ClientCnxnSocket clientCnxnSocket,
             boolean canBeReadOnly) throws IOException {
-        return new ClientCnxn(chrootPath, hostProvider, sessionTimeout, this,
+        return new ClientCnxn(chrootPath, hostProvider, sessionTimeout, zooKeeper,
                 watchManager, clientCnxnSocket, canBeReadOnly);
     }
 
