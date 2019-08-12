@@ -480,8 +480,7 @@ public class QuorumPeerMainTest extends QuorumPeerTestBase {
         LineNumberReader r = new LineNumberReader(new StringReader(os.toString()));
         String line;
         boolean found = false;
-        Pattern p =
-                Pattern.compile(".*Cannot open channel to .* at election address .*");
+        Pattern p = Pattern.compile(".*None of the addresses .* are reachable for sid 2");
         while ((line = r.readLine()) != null) {
             found = p.matcher(line).matches();
             if (found) {
