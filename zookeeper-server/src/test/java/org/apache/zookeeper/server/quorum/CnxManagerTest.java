@@ -29,6 +29,7 @@ import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -57,6 +58,8 @@ import org.apache.zookeeper.test.FLENewEpochTest;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 public class CnxManagerTest extends ZKTestCase {
     protected static final Logger LOG = LoggerFactory.getLogger(FLENewEpochTest.class);
@@ -608,7 +611,7 @@ public class CnxManagerTest extends ZKTestCase {
             Assert.fail("bad hostport accepted");
         } catch (InitialMessage.InitialMessageException ex) {}
 
-        // good message
+        // good message, single election address
         try {
 
             hostport = "10.0.0.2:3888";
@@ -621,6 +624,30 @@ public class CnxManagerTest extends ZKTestCase {
             // now parse it
             din = new DataInputStream(new ByteArrayInputStream(bos.toByteArray()));
             msg = InitialMessage.parse(QuorumCnxManager.PROTOCOL_VERSION, din);
+            assertEquals(new Long(5L), msg.sid);
+            assertEquals(Arrays.asList(new InetSocketAddress("10.0.0.2", 3888)), msg.electionAddr);
+        } catch (InitialMessage.InitialMessageException ex) {
+            Assert.fail(ex.toString());
+        }
+
+        // good message, multiple election addresses (ZOOKEEPER-3188)
+        try {
+
+            hostport = "1.1.1.1:9999,2.2.2.2:8888,3.3.3.3:7777";
+            bos = new ByteArrayOutputStream();
+            dout = new DataOutputStream(bos);
+            dout.writeLong(5L); // sid
+            dout.writeInt(hostport.getBytes().length);
+            dout.writeBytes(hostport);
+
+            // now parse it
+            din = new DataInputStream(new ByteArrayInputStream(bos.toByteArray()));
+            msg = InitialMessage.parse(QuorumCnxManager.PROTOCOL_VERSION, din);
+            assertEquals(new Long(5L), msg.sid);
+            assertEquals(Arrays.asList(new InetSocketAddress("1.1.1.1", 9999),
+                                       new InetSocketAddress("2.2.2.2", 8888),
+                                       new InetSocketAddress("3.3.3.3", 7777)),
+                         msg.electionAddr);
         } catch (InitialMessage.InitialMessageException ex) {
             Assert.fail(ex.toString());
         }

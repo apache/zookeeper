@@ -311,7 +311,7 @@ public class Leader extends LearnerMaster {
             serverSocket.bind(address);
             return serverSocket;
         } catch (BindException e) {
-            LOG.error("Couldn't bind to " + self.getQuorumAddress(), e);
+            LOG.error("Couldn't bind to " + address.toString(), e);
             throw e;
         }
     }

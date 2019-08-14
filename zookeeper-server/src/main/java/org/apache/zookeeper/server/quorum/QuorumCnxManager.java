@@ -114,7 +114,7 @@ public class QuorumCnxManager {
     /*
      * Protocol identifier used among peers
      */
-    public static final long PROTOCOL_VERSION = -65536L;
+    public static final long PROTOCOL_VERSION = -65535L;
 
     /*
      * Max buffer size to be read from the network.
