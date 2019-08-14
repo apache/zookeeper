@@ -32,6 +32,7 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.zookeeper.Environment;
 import org.apache.zookeeper.Environment.Entry;
 import org.apache.zookeeper.Version;
@@ -640,6 +641,7 @@ public class Commands {
             return response;
         }
 
+        @SuppressFBWarnings(value = "URF_UNREAD_FIELD", justification="class is used only for JSON serialization")
         private static class QuorumServerView {
 
             @JsonProperty
