@@ -138,12 +138,14 @@ static int getsecret(sasl_conn_t *conn, void *context __attribute__((unused)),
     return SASL_OK;
 }
 
+typedef int (* sasl_callback_fn_t)(void);
+
 /* callbacks we support */
 sasl_callback_t callbacks[] = {
-        { SASL_CB_GETREALM, &getrealm, NULL },
-        { SASL_CB_USER, &simple, NULL },
-        { SASL_CB_AUTHNAME, &simple, NULL },
-        { SASL_CB_PASS, &getsecret, NULL },
+        { SASL_CB_GETREALM, (sasl_callback_fn_t)&getrealm, NULL },
+        { SASL_CB_USER, (sasl_callback_fn_t)&simple, NULL },
+        { SASL_CB_AUTHNAME, (sasl_callback_fn_t)&simple, NULL },
+        { SASL_CB_PASS, (sasl_callback_fn_t)&getsecret, NULL },
         { SASL_CB_LIST_END, NULL, NULL } };
 #endif
 
